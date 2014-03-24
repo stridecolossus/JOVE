@@ -22,8 +22,8 @@ public class MutableVector extends Vector {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <V extends Vector> V getResultVector() {
-		return (V) this;
+	protected MutableVector getResultVector() {
+		return this;
 	}
 
 	/**
@@ -42,8 +42,7 @@ public class MutableVector extends Vector {
 	 * @return This vector
 	 */
 	public MutableVector set( Vector vec ) {
-		set( vec.x, vec.y, vec.z );
-		return this;
+		return set( vec.x, vec.y, vec.z );
 	}
 
 	/**

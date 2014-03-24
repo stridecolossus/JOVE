@@ -7,13 +7,13 @@ import org.sarge.jove.util.MathsUtil;
  * Plane in 3D space defined by a normal and distance from the origin.
  * @author Sarge
  */
-@SuppressWarnings("unused")
+@SuppressWarnings("unused")		// TODO - why are we getting this warning? why is it importing the Side class?
 public class Plane {
 	/**
 	 * Sides of a plane.
 	 * @see #getSide(Side)
 	 */
-	public enum Side {
+	public static enum Side {
 		/**
 		 * Object is in-front of the plane.
 		 */
@@ -27,7 +27,7 @@ public class Plane {
 		/**
 		 * Object is on the plane.
 		 */
-		INTERSECT,
+		INTERSECT
 	}
 
 	private final Vector normal;

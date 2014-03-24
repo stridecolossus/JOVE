@@ -7,14 +7,10 @@ import org.sarge.lib.util.ToString;
 
 /**
  * Animator for an {@link Animation}.
- * <p>
- * An animator cycles a floating-point position over the given duration.
- * <p>
  * @author Sarge
  */
 public class Animator extends AbstractPlayer implements FrameListener {
 	private final Animation animation;
-	private final long duration;
 	private final Interpolator interpolator;
 
 	private long time;
@@ -22,27 +18,24 @@ public class Animator extends AbstractPlayer implements FrameListener {
 	/**
 	 * Constructor.
 	 * @param animation		Animation managed by this animator
-	 * @param duration		Animation duration (ms)
 	 * @param interpolator	Position interpolator or <tt>null</tt> if none
 	 */
-	public Animator( Animation animation, long duration, Interpolator interpolator ) {
+	public Animator( Animation animation, Interpolator interpolator ) {
 		Check.notNull( animation );
-		Check.oneOrMore( duration );
 
 		this.animation = animation;
-		this.duration = duration;
 		this.interpolator = interpolator;
 
 		setRepeating( true );
 	}
 
 	/**
-	 * Constructor for an animation with no interpolation.
-	 * @param animation		Animation managed by this animator
-	 * @param duration		Animation duration (ms)
+	 * Constructor for an animation with linear interpolation.
+	 * @param animation Animation managed by this animator
+	 * @see Interpolator#LINEAR
 	 */
-	public Animator( Animation animation, long duration ) {
-		this( animation, duration, null );
+	public Animator( Animation animation ) {
+		this( animation, Interpolator.LINEAR );
 	}
 
 	/**
@@ -60,6 +53,8 @@ public class Animator extends AbstractPlayer implements FrameListener {
 		// Update animation time
 		time += elapsed * super.getSpeed();
 
+		// Quantize to animation duration and check whether finished
+		final long duration = animation.getDuration();
 		if( !isRepeating() && ( time > duration ) ) {
 			// Stop if past end and not repeating
 			setState( State.STOPPED );
@@ -71,16 +66,7 @@ public class Animator extends AbstractPlayer implements FrameListener {
 		}
 
 		// Apply interpolation
-		final float interpolated;
-		if( interpolator == null ) {
-			interpolated = time;
-		}
-		else {
-			interpolated = interpolator.interpolate( 0, duration, time );
-		}
-
-		// Clamp to animation range
-		final float pos = animation.getMinimum() + ( interpolated / duration ) * ( animation.getMaximum() - animation.getMinimum() );
+		final float pos = interpolator.interpolate( animation.getMinimum(), animation.getMaximum(), time / (float) duration );
 
 		// Update animation
 		animation.update( pos );

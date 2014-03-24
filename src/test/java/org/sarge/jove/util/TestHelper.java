@@ -1,18 +1,14 @@
 package org.sarge.jove.util;
 
-import org.junit.Before;
-import org.mockito.MockitoAnnotations;
-
 /**
- * Base-class for Mockito test cases.
+ * Test utilities.
  * @author Sarge
  */
-public abstract class MockitoTestCase {
-	@Before
-	public final void initMocks() {
-		MockitoAnnotations.initMocks( this );
+public final class TestHelper {
+	private TestHelper() {
+		// Utility class
 	}
-
+	
 	/**
 	 * Asserts the floating-point value is as expected.
 	 * @see MathsUtil#EPSILON

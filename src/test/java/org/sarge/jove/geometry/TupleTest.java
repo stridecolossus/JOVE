@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.Assert.assertEquals;
-import static org.sarge.jove.util.MockitoTestCase.assertFloatEquals;
+import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import java.nio.FloatBuffer;
 

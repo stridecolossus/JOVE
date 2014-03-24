@@ -6,6 +6,11 @@ package org.sarge.jove.animation;
  */
 public interface Animation {
 	/**
+	 * @return Duration of this animation
+	 */
+	long getDuration();
+	
+	/**
 	 * @return Minimum value
 	 */
 	float getMinimum();
@@ -17,7 +22,7 @@ public interface Animation {
 
 	/**
 	 * Updates this animation.
-	 * @param value Animation position
+	 * @param pos Animation position
 	 */
 	void update( float pos );
 }

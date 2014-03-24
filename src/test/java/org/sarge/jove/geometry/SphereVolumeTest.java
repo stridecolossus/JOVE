@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.sarge.jove.util.MockitoTestCase.assertFloatEquals;
+import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.Before;
 import org.junit.Test;

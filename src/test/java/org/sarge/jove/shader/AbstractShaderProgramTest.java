@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sarge.jove.util.MockitoTestCase.assertFloatEquals;
+import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;

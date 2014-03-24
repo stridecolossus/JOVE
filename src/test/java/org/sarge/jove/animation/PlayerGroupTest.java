@@ -2,20 +2,20 @@ package org.sarge.jove.animation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.sarge.jove.animation.Player.State;
-import org.sarge.jove.util.MockitoTestCase;
 
-public class PlayerGroupTest extends MockitoTestCase {
+public class PlayerGroupTest {
 	private PlayerGroup group;
-	private @Mock Player player;
+	private Player player;
 
 	@Before
 	public void before() {
+		player = mock( Player.class );
 		group = new PlayerGroup();
 	}
 

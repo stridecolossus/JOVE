@@ -16,7 +16,7 @@ public class Point extends Tuple {
 	/**
 	 * String-to-point converter.
 	 */
-	public static Converter<Point> CONVERTER = new Converter<Point>() {
+	public static final Converter<Point> CONVERTER = new Converter<Point>() {
 		@Override
 		public Point convert( String str ) throws NumberFormatException {
 			final float[] array = MathsUtil.convert( str, SIZE );
@@ -53,7 +53,7 @@ public class Point extends Tuple {
 	 * @param pt Point
 	 * @return Distance squared to the given point
 	 */
-	public float distanceSquared( Point pt ) {
+	public final float distanceSquared( Point pt ) {
 		final float dx = pt.x - x;
 		final float dy = pt.y - y;
 		final float dz = pt.z - z;

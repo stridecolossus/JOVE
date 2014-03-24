@@ -3,54 +3,38 @@ package org.sarge.jove.animation;
 import org.sarge.jove.geometry.Rotation;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
 
 /**
  * Animated rotation.
  * @author Sarge
  */
-public class RotationAnimation implements Animation {
+public class RotationAnimation extends AbstractAnimation {
 	private final Rotation rot;
-	private final float start, end;
 
 	/**
-	 * Default constructor that animates a circle.
-	 * @param rot Rotation to animate
+	 * Default constructor that animates a {@link Rotation} through 360 degrees.
+	 * @param duration	Animation duration (ms)
+	 * @param rot		Rotation to animate
 	 */
-	public RotationAnimation( Rotation rot ) {
-		this( rot, 0, MathsUtil.TWO_PI );
+	public RotationAnimation( long duration, Rotation rot ) {
+		this( duration, 0, MathsUtil.TWO_PI, rot );
 	}
 
 	/**
 	 * Constructor.
-	 * @param rot		Rotation to animate
+	 * @param duration	Animation duration (ms)
 	 * @param start		Start angle (radians)
 	 * @param end		End angle
+	 * @param rot		Rotation to animate
 	 */
-	public RotationAnimation( Rotation rot, float start, float end ) {
+	public RotationAnimation( long duration, float start, float end, Rotation rot ) {
+		super( duration, start, end );
 		Check.notNull( rot );
 		this.rot = rot;
-		this.start = start;
-		this.end = end;
-	}
-
-	@Override
-	public float getMinimum() {
-		return start;
-	}
-
-	@Override
-	public float getMaximum() {
-		return end;
 	}
 
 	@Override
 	public void update( float pos ) {
 		rot.setAngle( pos );
-	}
-
-	@Override
-	public String toString() {
-		return ToString.toString( this );
 	}
 }

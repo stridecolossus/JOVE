@@ -4,7 +4,7 @@ import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Converter;
 
 /**
- * Vector or direction.
+ * Immutable vector or direction.
  * @author Sarge
  */
 public class Vector extends Tuple {
@@ -26,7 +26,7 @@ public class Vector extends Tuple {
 	/**
 	 * String-to-vector converter.
 	 */
-	public static Converter<Vector> CONVERTER = new Converter<Vector>() {
+	public static final Converter<Vector> CONVERTER = new Converter<Vector>() {
 		@Override
 		public Vector convert( String str ) throws NumberFormatException {
 			final float[] array = MathsUtil.convert( str, SIZE );
@@ -62,22 +62,27 @@ public class Vector extends Tuple {
 	/**
 	 * @return Magnitude (or <i>length</i>) <b>squared</b> of this vector
 	 */
-	public float getMagnitudeSquared() {
+	public final float getMagnitudeSquared() {
 		return x * x + y * y + z * z;
 	}
 
 	/**
-	 * Calculates the angle between this and the given vector.
-	 * @param v Vector
+	 * Calculates the angle between this and the given vector (assumes both normalised).
+	 * @param vec Vector
 	 * @return Angle between vectors (radians)
 	 */
-	public float angle( Vector v ) {
-		final float left = MathsUtil.sqrt( this.getMagnitudeSquared() );
-		final float right = MathsUtil.sqrt( v.getMagnitudeSquared() );
-		final float inv = dot( v ) / ( left * right );
-		if( inv < -1 ) return -1;
-		if( inv > 1 ) return 1;
-		return MathsUtil.acos( inv );
+	public final float angle( Vector vec ) {
+		final float dot = dot( vec );
+		if( dot < -1 ) {
+			return -1;
+		}
+		else
+		if( dot > 1 ) {
+			return 1;
+		}
+		else {
+			return MathsUtil.acos( dot );
+		}
 	}
 
 	/**
@@ -105,19 +110,19 @@ public class Vector extends Tuple {
 
 	/**
 	 * Adds a vector to this vector.
-	 * @param v Vector to add
+	 * @param vec Vector to add
 	 * @return New vector
 	 */
-	public <V extends Vector> V add( Vector v ) {
+	public <V extends Vector> V add( Vector vec ) {
 		final V result = getResultVector();
-		result.x = this.x + v.x;
-		result.y = this.y + v.y;
-		result.z = this.z + v.z;
+		result.x = this.x + vec.x;
+		result.y = this.y + vec.y;
+		result.z = this.z + vec.z;
 		return result;
 	}
 
 	/**
-	 * Subtracts this vector from the given vector.
+	 * Subtracts the given vector from this vector.
 	 * @param vec Vector to subtract
 	 * @return Subtracted vector
 	 */
@@ -148,10 +153,12 @@ public class Vector extends Tuple {
 	 * @return Cross-product
 	 */
 	public <V extends Vector> V cross( Vector vec ) {
+		// Calc temporary values (cross uses all XYZ components)
 		final float dx = this.y * vec.z - this.z * vec.y;
 		final float dy = this.z * vec.x - this.x * vec.z;
 		final float dz = this.x * vec.y - this.y * vec.x;
 
+		// Set result
 		final V result = getResultVector();
 		result.x = dx;
 		result.y = dy;

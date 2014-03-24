@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.sarge.jove.geometry.BoundingVolume;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.MutableMatrix;
@@ -17,16 +16,17 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.light.Light;
 import org.sarge.jove.material.Material;
 import org.sarge.jove.scene.Node.Visitor;
-import org.sarge.jove.util.MockitoTestCase;
 
-public class NodeTest extends MockitoTestCase {
+public class NodeTest {
 	private Node node;
-	private @Mock RenderContext ctx;
-	private @Mock Scene scene;
+//	private RenderContext ctx;
+//	private Scene scene;
 
 	@Before
 	public void before() {
 		node = new Node( "node" );
+//		ctx = mock( RenderContext.class );
+//		scene = mock( Scene.class );
 	}
 
 	@Test

@@ -2,7 +2,7 @@ package org.sarge.jove.shader;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.sarge.jove.util.MockitoTestCase.assertFloatEquals;
+import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;

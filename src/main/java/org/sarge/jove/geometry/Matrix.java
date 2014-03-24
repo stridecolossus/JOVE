@@ -129,7 +129,7 @@ public class Matrix implements Transform, Bufferable {
 	/**
 	 * @return Order (or size) of this matrix
 	 */
-	public int getOrder() {
+	public final int getOrder() {
 		return matrix.length;
 	}
 
@@ -139,14 +139,14 @@ public class Matrix implements Transform, Bufferable {
 	 * @param c Column
 	 * @return Matrix value
 	 */
-	public float get( int r, int c ) {
+	public final float get( int r, int c ) {
 		return matrix[ r ][ c ];
 	}
 
 	/**
 	 * @return Transpose of this matrix
 	 */
-	public Matrix transpose() {
+	public final Matrix transpose() {
 		final Matrix m = new Matrix( matrix.length );
 
 		for( int r = 0; r < matrix.length; ++r ) {
@@ -285,14 +285,14 @@ public class Matrix implements Transform, Bufferable {
 	 * @param col	Column to extract
 	 * @param t		Tuple
 	 */
-	public void getColumn( int col, Tuple t ) {
+	public final void getColumn( int col, Tuple t ) {
 		t.x = matrix[ 0 ][ col ];
 		t.y = matrix[ 1 ][ col ];
 		t.z = matrix[ 2 ][ col ];
 	}
 
 	@Override
-	public int getComponentSize() {
+	public final int getComponentSize() {
 		return getOrder();
 	}
 
@@ -310,7 +310,7 @@ public class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public boolean equals( Object obj ) {
+	public final boolean equals( Object obj ) {
 		if( obj == this ) return true;
 		if( obj == null ) return false;
 		if( obj instanceof Matrix ) {

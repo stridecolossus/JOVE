@@ -19,7 +19,7 @@ public class Camera {
 	private final MutablePoint pos = new MutablePoint( 0, 0, 5 );
 	private final MutablePoint target = new MutablePoint( Point.ORIGIN );
 	private final MutableVector dir = new MutableVector( Vector.Z_AXIS.invert() );
-	private boolean dirty = true;
+	private boolean dirty;
 
 	// Axes
 	private Vector up = Vector.Y_AXIS;

@@ -16,7 +16,7 @@ public class RotationAnimationTest {
 	@Before
 	public void before() {
 		rot = new Rotation( Vector.Y_AXIS, 0 );
-		anim = new RotationAnimation( rot );
+		anim = new RotationAnimation( 5000, rot );
 	}
 
 	@Test

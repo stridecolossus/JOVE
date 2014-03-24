@@ -23,7 +23,6 @@ public abstract class Tuple implements Bufferable {
 	 * Origin constructor.
 	 */
 	protected Tuple() {
-		this( 0, 0, 0 );
 	}
 
 	/**
@@ -51,19 +50,19 @@ public abstract class Tuple implements Bufferable {
 	}
 
 	@Override
-	public int getComponentSize() {
+	public final int getComponentSize() {
 		return SIZE;
 	}
 
-	public float getX() {
+	public final float getX() {
 		return x;
 	}
 
-	public float getY() {
+	public final float getY() {
 		return y;
 	}
 
-	public float getZ() {
+	public final float getZ() {
 		return z;
 	}
 
@@ -72,12 +71,12 @@ public abstract class Tuple implements Bufferable {
 	 * @param t Tuple
 	 * @return Dot product
 	 */
-	public float dot( Tuple t ) {
+	public final float dot( Tuple t ) {
 		return x * t.x + y * t.y + z * t.z;
 	}
 
 	@Override
-	public void append( FloatBuffer buffer ) {
+	public final void append( FloatBuffer buffer ) {
 		buffer.put( x );
 		buffer.put( y );
 		buffer.put( z );
@@ -87,7 +86,7 @@ public abstract class Tuple implements Bufferable {
 	 * Stores to the given array.
 	 * @param array
 	 */
-	public void toArray( float[] array ) {
+	public final void toArray( float[] array ) {
 		array[0] = x;
 		array[1] = y;
 		array[2] = z;

@@ -1,6 +1,6 @@
 package org.sarge.jove.util;
 
-import static org.sarge.jove.util.MockitoTestCase.assertFloatEquals;
+import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.Test;
 
