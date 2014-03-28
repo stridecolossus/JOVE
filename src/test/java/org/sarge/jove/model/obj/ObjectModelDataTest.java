@@ -19,7 +19,8 @@ import org.sarge.jove.material.MutableMaterial;
 import org.sarge.jove.model.AbstractMesh;
 import org.sarge.jove.model.BufferedMesh;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.scene.Node;
+import org.sarge.jove.scene.NodeGroup;
+import org.sarge.jove.scene.RenderableNode;
 import org.sarge.lib.io.DataSource;
 
 @Ignore
@@ -64,15 +65,14 @@ public class ObjectModelDataTest {
 		when( sys.createMesh( any( BufferedMesh.class ) ) ).thenReturn( mesh );
 
 		// Check model root node
-		final Node root = data.getRootNode();
+		final NodeGroup root = data.getRootNode();
 		assertNotNull( root );
 		assertEquals( "root", root.getName() );
 		assertEquals( 1, root.getChildren().size() );
 
 		// Check node and mesh was built and added to the model
-		final Node node = root.getChildren().get( 0 );
+		final RenderableNode node = (RenderableNode) root.getChildren().get( 0 );
 		assertEquals( "new", node.getName() );
-		assertEquals( mesh, node.getChildren().get( 0 ) );
 	}
 
 	@Test

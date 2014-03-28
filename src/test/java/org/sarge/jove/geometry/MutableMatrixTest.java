@@ -30,7 +30,6 @@ public class MutableMatrixTest {
 	@Test
 	public void setRow() {
 		matrix.setRow( 1, vec );
-		assertEquals( vec, matrix.getRow( 1 ) );
 		assertFloatEquals( 1, matrix.get( 1, 0 ) );
 		assertFloatEquals( 2, matrix.get( 1, 1 ) );
 		assertFloatEquals( 3, matrix.get( 1, 2 ) );
@@ -39,7 +38,6 @@ public class MutableMatrixTest {
 	@Test
 	public void setColumn() {
 		matrix.setColumn( 1, vec );
-		assertEquals( vec, matrix.getColumn( 1 ) );
 		assertFloatEquals( 1, matrix.get( 0, 1 ) );
 		assertFloatEquals( 2, matrix.get( 1, 1 ) );
 		assertFloatEquals( 3, matrix.get( 2, 1 ) );

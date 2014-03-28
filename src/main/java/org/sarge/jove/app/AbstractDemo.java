@@ -10,7 +10,7 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.input.ActionBindings;
 import org.sarge.jove.input.InputEvent;
 import org.sarge.jove.material.DepthTestProperty;
-import org.sarge.jove.scene.Node;
+import org.sarge.jove.scene.NodeGroup;
 import org.sarge.jove.scene.PerspectiveProjection;
 import org.sarge.jove.scene.RenderContext;
 import org.sarge.jove.scene.Scene;
@@ -48,7 +48,7 @@ public abstract class AbstractDemo implements Application {
 		scenes.add( scene );
 
 		// Create root node
-		final Node root = new Node( "root" );
+		final NodeGroup root = new NodeGroup( "root" );
 		scene.setRoot( root );
 
 		// Init default render properties
@@ -66,7 +66,7 @@ public abstract class AbstractDemo implements Application {
 	 * @param sys		Rendering system
 	 * @throws Exception
 	 */
-	protected abstract void init( Scene scene, Node root, RenderingSystem sys ) throws Exception;
+	protected abstract void init( Scene scene, NodeGroup root, RenderingSystem sys ) throws Exception;
 
 	@Override
 	public boolean isRunning() {

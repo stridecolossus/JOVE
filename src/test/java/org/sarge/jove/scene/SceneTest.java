@@ -8,13 +8,11 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
 
 public class SceneTest {
 	private Scene scene;
-
 	private RenderContext ctx;
 	private Projection projection;
 	private Viewport viewport;
@@ -25,7 +23,7 @@ public class SceneTest {
 		// Create projection
 		rect = new Rectangle( 0, 0, 800, 600 );
 		projection = mock( Projection.class );
-		when( projection.getMatrix( 0.1f, 100f, rect.getDimensions() ) ).thenReturn( new Matrix( 4 ) );
+		when( projection.getMatrix( 0.1f, 1000f, rect.getDimensions() ) ).thenReturn( new Matrix( 4 ) );
 
 		// Create viewport
 		viewport = mock( Viewport.class );
@@ -41,9 +39,10 @@ public class SceneTest {
 	public void constructor() {
 		assertNotNull( scene.getCamera() );
 		assertEquals( rect, scene.getRectangle() );
+		assertNotNull( scene.getDistanceComparator() );
 		assertEquals( projection, scene.getProjection() );
 		assertNotNull( scene.getProjectionMatrix() );
-		verify( projection ).getMatrix( 0.1f, 100f, rect.getDimensions() );
+		verify( projection ).getMatrix( 0.1f, 1000f, rect.getDimensions() );
 	}
 
 	/*
@@ -65,9 +64,17 @@ public class SceneTest {
 	*/
 
 	@Test
+	public void getDistanceComparator() {
+		final NodeGroup node = mock( NodeGroup.class );
+		when( node.getWorldMatrix() ).thenReturn( Matrix.IDENTITY );
+		assertEquals( 0, scene.getDistanceComparator().compare( node, node ) );
+	}
+
+	/*
+	@Test
 	public void render() {
 		// Render scene with a node
-		final Node root = mock( Node.class );
+		final NodeGroup root = mock( NodeGroup.class );
 		scene.setRoot( root );
 		scene.setClearColour( Colour.BLACK );
 		scene.render( ctx );
@@ -75,11 +82,11 @@ public class SceneTest {
 		// Check viewport is initialised
 		verify( viewport ).init( rect );
 		verify( viewport ).clear( Colour.BLACK );
-		verify( viewport ).clear();
 
 		// Check scene is rendered
 		verify( ctx ).setScene( scene );
 		verify( root ).accept( ctx );
 		verify( ctx ).setScene( null );
 	}
+	*/
 }

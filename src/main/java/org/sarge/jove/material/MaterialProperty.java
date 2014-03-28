@@ -97,6 +97,7 @@ public enum MaterialProperty {
 	PROJECTION_MODELVIEW_MATRIX( PropertyScope.NODE ) {
 		@Override
 		public Object getValue( RenderContext ctx ) {
+			// TODO - re-use MODELVIEW_MATRIX.getValue() and so on to reduce number of matrix multiplications
 			final Matrix p = ctx.getScene().getProjectionMatrix();
 			final Matrix v = ctx.getScene().getCamera().getViewMatrix();
 			final Matrix m = ctx.getModelMatrix();
@@ -130,7 +131,9 @@ public enum MaterialProperty {
 	LIGHTS( PropertyScope.NODE ) {
 		@Override
 		public Object getValue( RenderContext ctx ) {
-			return ctx.getLights();
+			// TODO
+			return null;
+			//return ctx.getLights();
 		}
 	};
 

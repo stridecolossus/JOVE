@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.MathsUtil;
 
+// TODO - expand to tests for 2x2, 3x3 (?) and 4x4
 public class MatrixTest {
 	private Matrix matrix;
 
@@ -75,18 +76,22 @@ public class MatrixTest {
 	}
 
 	@Test
-	public void multiplyVector() {
-		final float[][] array = new float[ 4 ][ 4 ];
-		for( int r = 0; r < 4; ++r ) {
-			for( int c = 0; c < 4; ++c ) {
-				array[ r ][ c ] = r * 4 + c;
-			}
-		}
-		matrix = new Matrix( array );
+	public void getDeterminant() {
+		assertFloatEquals( ( 1 * 4 ) - ( 3 * 2 ), matrix.getDeterminant() );
+	}
 
-		final Vector vec = new Vector( 1, 2, 3 );
-		final Vector result = matrix.multiply( vec );
-		assertEquals( new Vector( 11, 39, 67 ), result );
+	@Test
+	public void invert() {
+		assertEquals( new Matrix( 2 ), matrix.invert() );
+	}
+
+	@Test
+	public void multiplyPoint() {
+		matrix = Matrix.rotation( new Rotation( Vector.Y_AXIS, MathsUtil.HALF_PI ) );
+		final MutablePoint pt = new MutablePoint( 1, 2, 3 );
+		final MutablePoint result = matrix.multiply( pt );
+		assertEquals( new Vector( 3, 2, -1 ), result );
+		assertEquals( result, pt );
 	}
 
 	@Test
@@ -95,11 +100,6 @@ public class MatrixTest {
 		final Matrix sub = matrix.getSubMatrix( 3 );
 		assertNotNull( sub );
 		assertEquals( 3, sub.getOrder() );
-	}
-
-	@Test
-	public void getColumn() {
-		// TODO
 	}
 
 	@Test

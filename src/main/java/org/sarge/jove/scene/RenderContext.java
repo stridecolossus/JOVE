@@ -1,16 +1,10 @@
 package org.sarge.jove.scene;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import org.sarge.jove.app.RenderingSystem;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.light.Light;
 import org.sarge.jove.material.Material;
-import org.sarge.jove.material.RenderProperty;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
@@ -18,7 +12,7 @@ import org.sarge.lib.util.ToString;
  * Rendering context.
  * @author Sarge
  */
-public class RenderContext implements Node.Visitor {
+public class RenderContext {
 	// Config
 	private final RenderingSystem sys;
 
@@ -30,11 +24,9 @@ public class RenderContext implements Node.Visitor {
 	private int count;
 
 	// Render state
-	private final LinkedList<Node> stack = new LinkedList<>();
-	private final List<Light> lights = new ArrayList<>();
-	private final Map<String, RenderProperty> removed = new HashMap<>();
-	private final Map<String, RenderProperty> prev = new HashMap<>();
+	private final LinkedList<Material> stack = new LinkedList<>();
 	private Scene current;
+	private Matrix model;
 
 	/**
 	 * Constructor.
@@ -74,42 +66,6 @@ public class RenderContext implements Node.Visitor {
 	}
 
 	/**
-	 * @return Scene currently being rendered
-	 */
-	public Scene getScene() {
-		return current;
-	}
-
-	/**
-	 * Sets the current scene.
-	 * @param scene
-	 */
-	protected void setScene( Scene scene ) {
-		this.current = scene;
-	}
-
-	/**
-	 * @return Current node stack
-	 */
-	protected LinkedList<Node> getStack() {
-		return stack;
-	}
-
-	/**
-	 * @return Active lights
-	 */
-	public List<Light> getLights() {
-		return lights;
-	}
-
-	/**
-	 * @return Local model matrix of the current node
-	 */
-	public Matrix getModelMatrix() {
-		return stack.peek().getWorldMatrix();
-	}
-
-	/**
 	 * Updates elapsed time and frame-rate stats.
 	 */
 	void update() {
@@ -126,88 +82,56 @@ public class RenderContext implements Node.Visitor {
 			count = 0;
 			total = total % 1000;
 		}
-	}
 
-	/**
-	 *
-	 * @param node
-	 * @param map
-	 */
-	private static void add( Node node, Map<String, RenderProperty> map ) {
-		final Material mat = node.getMaterial();
-		if( mat == null ) return;
-		map.putAll( mat.getRenderProperties() );
-	}
-
-	@Override
-	public boolean visit( Node node ) {
-		// Init
-		removed.clear();
-		prev.clear();
-/*
-		// Remove previous node(s) from stack and build set of applied properties
-		final Node parent = node.getParent();
-		if( parent != null ) {
-			while( true ) {
-				// Stop at parent and record properties to be restored
-				final Node n = stack.peek();
-				if( n == parent ) {
-					add( n, prev );
-					break;
-				}
-
-				// Remove siblings and record properties to be removed
-				stack.pop();
-				add( n, removed );
-			}
-		}
-*/
-		// Record node
-		stack.push( node );
-
-		// Remove properties applied from siblings
-		for( RenderProperty p : removed.values() ) {
-			p.reset( sys );
-		}
-
-		// Apply material
-		final Material mat = node.getMaterial();
-		if( mat != null ) {
-			mat.apply( this );
-//			for( String name : mat.getRenderProperties().keySet() ) {
-//				prev.remove( name );
-//			}
-		}
-
-//		// Restore parent properties
-//		for( RenderProperty p : prev.values() ) {
-//			p.apply( sys );
-//		}
-
-		// Render node
-		final Renderable r = node.getRenderable();
-		if( r != null ) {
-			r.render( this );
-		}
-
-		return true;
-	}
-
-	/**
-	 * Resets all render properties.
-	 */
-	protected void reset() {
-		/*
-		while( !stack.isEmpty() ) {
-			final Node node = stack.pop();
-			final Material mat = node.getMaterial();
-			if( mat == null ) continue;
-			for( RenderProperty p : mat.getRenderProperties().values() ) {
-				p.reset( sys );
-			}
-		}
-		*/
+		// Reset
 		stack.clear();
+	}
+
+	/**
+	 * @return Scene currently being rendered
+	 */
+	public Scene getScene() {
+		return current;
+	}
+
+	/**
+	 * Sets the current scene.
+	 * @param scene
+	 */
+	void setScene( Scene scene ) {
+		this.current = scene;
+	}
+
+	/**
+	 * @return Current model matrix
+	 */
+	public Matrix getModelMatrix() {
+		return model;
+	}
+
+	/**
+	 * Sets the model matrix for the current node.
+	 * @param model Model matrix
+	 */
+	void setModelMatrix( Matrix model ) {
+		this.model = model;
+	}
+
+	/**
+	 * Pushes a material onto the stack.
+	 * @param mat Material
+	 */
+	void push( Material mat ) {
+		Check.notNull( mat );
+		stack.add( mat );
+	}
+
+	/**
+	 * @return Most recent material from the stack or <tt>null</tt> if none
+	 */
+	Material pop() {
+		stack.removeLast();
+		return stack.peekLast();
 	}
 
 	@Override

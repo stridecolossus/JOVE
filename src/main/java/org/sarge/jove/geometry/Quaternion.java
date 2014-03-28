@@ -143,6 +143,7 @@ public class Quaternion implements Transform {
 	}
 
 	// TODO - this sucks
+	// TODO - change to MutablePoint and remove vector version, makes no sense to rotate a vector!
 	public Point rotate( Point pos ) {
 		final Quaternion vec = new Quaternion( 0, pos.x, pos.y, pos.z );
 		final Quaternion result = this.multiply( vec ).multiply( this.conjugate() );

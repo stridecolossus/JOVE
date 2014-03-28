@@ -52,8 +52,7 @@ public class Camera {
 	public void setPosition( Point pos ) {
 		Check.notNull( pos );
 		this.pos.set( pos );
-		dir.subtract( pos, target ).normalize();
-		dirty = true;
+		updateDirection();
 	}
 
 	/**
@@ -70,8 +69,7 @@ public class Camera {
 	public void setTarget( Point target ) {
 		Check.notNull( target );
 		this.target.set( target );
-		dir.subtract( pos, target ).normalize();
-		dirty = true;
+		updateDirection();
 	}
 
 	/**
@@ -125,7 +123,7 @@ public class Camera {
 	}
 
 	/**
-	 * Strafes the camera position (positive is to the right).
+	 * Strafes the camera position (positive is in the direction of the right axis).
 	 * @param amount
 	 * @see #getRightAxis()
 	 */
@@ -151,6 +149,7 @@ public class Camera {
 	public void rotate( Quaternion rot ) {
 		rot.rotate( dir );
 		// TODO - calc new target position
+		// TODO - rotate the target position and re-calc direction via updateDirection()
 		dirty = true;
 	}
 
@@ -159,6 +158,8 @@ public class Camera {
 	 * @param rot Rotation
 	 */
 	public void orbit( Quaternion rot ) {
+		// TODO - document and test
+
 		trans.subtract( target, pos );
 		pos.set( target );
 		rot.rotate( trans );
@@ -189,6 +190,15 @@ public class Camera {
 
 		// Note camera is updated
 		dirty = false;
+	}
+
+	/**
+	 * Updates camera direction.
+	 */
+	private void updateDirection() {
+		if( pos.equals( target ) ) throw new IllegalArgumentException( "Camera position cannot be same as its target" );
+		dir.subtract( pos, target ).normalize();
+		dirty = true;
 	}
 
 	@Override

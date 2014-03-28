@@ -9,12 +9,11 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Location;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.geometry.BoundingVolume;
 import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.geometry.MutablePoint;
 import org.sarge.jove.geometry.MutableVector;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.Node.Visitor;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
@@ -29,52 +28,64 @@ import org.sarge.lib.util.ToString;
  * <li>manages the various rendering buffers</li>
  * <li>contains the <i>root</i> of the scene-graph to be rendered</li>
  * </ul>
- *
+ * @see Viewport
  * @see Camera
  * @see Projection
- *
- * TODO
- * - make Camera an interface and add default impl?
- * - bit pointless to have dirty for projecton? it wont change much anyway
- *
  * @author Sarge
  */
 public class Scene {
-	// Picking results order
-	private final Comparator<Node> DISTANCE_ORDER = new Comparator<Node>() {
+	/**
+	 * Distance comparator for picking and distance ordering.
+	 */
+	private final Comparator<Node> comparator = new Comparator<Node>() {
+		private final MutablePoint pos = new MutablePoint();
+
 		@Override
 		public int compare( Node a, Node b ) {
 			return (int) ( distance( a ) - distance( b ) );
 		}
 
-		private float distance( Node n ) {
-			final Point centre = n.getBoundingVolume().getCentre();
-			final Point pos = n.getWorldMatrix().multiply( centre );
+		private float distance( Node node ) {
+			// TODO - should this be from bounding volume?
+			node.getWorldMatrix().getColumn( 3, pos );
 			return cam.getPosition().distanceSquared( pos );
 		}
 	};
 
+	// Scene
 	private final Camera cam = new Camera();
-	private final Viewport viewport;
-
-	private Rectangle rect;
-	private Colour col = new Colour( 0.6f, 0.6f, 0.6f, 1 );
-	private Node root;
-	private float near = 0.1f;
-	private float far = 100;
-
 	private Projection projection;
 	private Matrix matrix;
-	private boolean dirty = true;
+	private boolean dirty;
+	private Node root;
+
+	// Viewport
+	private final Viewport viewport;
+	private Rectangle rect;
+	private Colour col = new Colour( 0.6f, 0.6f, 0.6f, 1 );
+	private float near = 0.1f;
+	private float far = 1000f;
+
+	// Rendering
+	private final RenderManager mgr;
+
+	// Working
+	private final MutableVector vec = new MutableVector();
 
 	/**
 	 * Constructor.
-	 * @param dim			Viewport rectangle
+	 * @param viewport		Viewport
+	 * @param rect			Viewport rectangle
 	 * @param projection	Scene projection
+	 * @param mgr			Render manager
 	 */
-	public Scene( Viewport viewport, Rectangle rect, Projection projection ) {
+	public Scene( Viewport viewport, Rectangle rect, Projection projection, RenderManager mgr ) {
 		Check.notNull( viewport );
+		Check.notNull( mgr );
+
 		this.viewport = viewport;
+		this.mgr = mgr;
+
 		setRectangle( rect );
 		setProjection( projection );
 	}
@@ -104,7 +115,8 @@ public class Scene {
 	}
 
 	/**
-	 * @param root Root node in this scene
+	 * Sets the root node of this scene.
+	 * @param root Root node
 	 */
 	public void setRoot( Node root ) {
 		this.root = root;
@@ -112,7 +124,7 @@ public class Scene {
 
 	/**
 	 * Sets the clear colour.
-	 * @param col Clear colour or <tt>null</tt> for no buffer clearing
+	 * @param col Clear colour or <tt>null</tt> for no frame buffer clearing
 	 */
 	public void setClearColour( Colour col ) {
 		this.col = col;
@@ -169,6 +181,13 @@ public class Scene {
 	}
 
 	/**
+	 * @return Distance comparator for nodes in this scene
+	 */
+	public Comparator<Node> getDistanceComparator() {
+		return comparator;
+	}
+
+	/**
 	 * Renders this scene.
 	 * @param ctx Render context
 	 */
@@ -177,15 +196,16 @@ public class Scene {
 		viewport.init( rect );
 
 		// Clear buffers
-		if( col != null ) viewport.clear( col );
-		viewport.clear();
+		viewport.clear( col );
+
+		// Stop if nothing to render
+		if( root == null ) return;
 
 		// Render scene
 		ctx.setScene( this );
-		if( root != null ) {
-			root.accept( ctx );
-			ctx.reset();
-		}
+		mgr.visit( root );
+		mgr.sort( comparator );
+		mgr.render( ctx );
 		ctx.setScene( null );
 	}
 
@@ -200,8 +220,6 @@ public class Scene {
 		float anglex = atan(tang*ratio);
 		sphereFactorX = 1.0/cos(anglex);
 	 */
-
-	private final MutableVector vec = new MutableVector();
 
 	/**
 	 * Tests whether the given point is within the view frustum.
@@ -232,42 +250,78 @@ public class Scene {
 	}
 
 	/**
-	 * Picks from this scene.
-	 * @param pos Screen coordinates
-	 * @return Intersected objects ordered by distance (nearest first)
+	 * Un-projects the given <b>window</b> location to its point in this viewport.
+	 * @param loc		Screen coordinates
+	 * @param pt		Resultant point in the scene
+	 * TODO - test
 	 */
-	public List<Node> pick( Location loc ) {
+	public void unproject( Location loc, MutablePoint pt ) {
+		// Convert to viewport coordinates (inverting Y coordinate)
+		final int vx = loc.getX() - rect.getX();
+		final int vy = rect.getY() - loc.getY();
+
+		// Convert to NDC (also inverts Y)
+		final float nx = ( 2 * vx ) / (float) rect.getWidth() - 1;
+		final float ny = ( 2 * vy ) / (float) rect.getHeight() - 1;
+
+		// Un-project into scene
+		pt.set( nx, ny, -1 );
+		matrix.multiply( cam.getViewMatrix() ).invert().multiply( pt );
+	}
+
+	/**
+	 * Picks from this scene.
+	 * @param ray Picking ray
+	 * @return Intersected objects ordered by distance from camera (nearest first)
+	 */
+	public List<NodeGroup> pick( Ray ray ) {
+		/*
+		 * TODO - this is a right load of shite
+		 *
 		// Calc pick coords
 		final float x = loc.getX() / rect.getWidth();
 		final float y = loc.getY() / rect.getHeight();
 
 		// Project into the scene
-		final Vector v = matrix.multiply( Vector.Z_AXIS.invert() );
+		final Vector v = matrix.multiply( Vector.Z_AXIS.invert() ); // TODO - calc once, or make Z_AXIS mutable-vector?  dangerous?
 		final Ray ray = new Ray( new Point( x, y, 0 ), v );
+		*/
 
 		// Walk scene-graph and find intersected objects
-		final List<Node> nodes = new ArrayList<>();
+		final List<NodeGroup> nodes = new ArrayList<>();
 		final Visitor visitor = new Visitor() {
 			@Override
 			public boolean visit( Node node ) {
-				// Skip if cannot be picked
-				final BoundingVolume vol = node.getBoundingVolume();
-				if( vol == null ) return false;
-
-				// Check whether ray intersects node
-				if( vol.intersects( ray ) ) {
-					nodes.add( node );
-					return true;
+				/*
+				if( e instanceof NodeGroup ) {
+					// Check bounding volume intersection
+					final NodeGroup node = (NodeGroup) e;
+					final BoundingVolume vol = node.getBoundingVolume();
+					if( vol.intersects( ray ) ) {
+						// Intersects, recurse to children
+						nodes.add( node );
+						return true;
+					}
+					else {
+						// Does not intersect, stop recursion
+						return false;
+					}
 				}
 				else {
+					// Not pickable
 					return false;
 				}
+				*/
+
+				// TODO - add BV to node interface, def is NULL or delegates to parent?
+
+				return false;
 			}
 		};
 		root.accept( visitor );
 
 		// Order by distance
-		Collections.sort( nodes, DISTANCE_ORDER );
+		Collections.sort( nodes, comparator );
 
 		return nodes;
 	}

@@ -102,8 +102,7 @@ public class Matrix implements Transform, Bufferable {
 
 	protected final float[][] matrix;
 
-	private final float[] tupleArray = new float[ 4 ];
-	private final float[] homogenousArray = new float[ 4 ];
+//	private final float[] tupleArray = new float[ 4 ];
 
 	/**
 	 * Constructor.
@@ -127,6 +126,14 @@ public class Matrix implements Transform, Bufferable {
 	}
 
 	/**
+	 * Copy constructor.
+	 * @param m Matrix to copy
+	 */
+	public Matrix( Matrix m ) {
+		this( m.matrix );
+	}
+
+	/**
 	 * @return Order (or size) of this matrix
 	 */
 	public final int getOrder() {
@@ -144,18 +151,109 @@ public class Matrix implements Transform, Bufferable {
 	}
 
 	/**
-	 * @return Transpose of this matrix
+	 * Note that this approach is not used for mutators that require the whole matrix in their algorithm, e.g. transpose, multiply, etc.
+	 * @return Resultant matrix for mutator methods
 	 */
-	public final Matrix transpose() {
-		final Matrix m = new Matrix( matrix.length );
+	@SuppressWarnings("unchecked")
+	protected <M extends Matrix> M getResultMatrix() {
+		return (M) new Matrix( this );
+	}
 
+	/**
+	 * @return Transpose of this matrix (rows and columns swapped)
+	 */
+	public Matrix transpose() {
+		final Matrix m = new Matrix( matrix.length );
+		transpose( this.matrix, m );
+		return m;
+	}
+
+	/**
+	 * Transposes this matrix into the given matrix array.
+	 * @param m Transposed matrix
+	 */
+	protected static void transpose( float[][] matrix, Matrix m ) {
 		for( int r = 0; r < matrix.length; ++r ) {
 			for( int c = 0; c < matrix.length; ++c ) {
-				m.matrix[ r ][ c ] = this.matrix[ c ][ r ];
+				m.matrix[ r ][ c ] = matrix[ c ][ r ];
 			}
 		}
+	}
 
+	/**
+	 * Extracts a <i>minor</i> from this matrix.
+	 * A minor matrix is the n-1 order matrix comprised of this matrix except the i'th row and j'th column.
+	 * @param i Row to exclude
+	 * @param j column to exclude
+	 * @return Minor matrix
+	 */
+	private Matrix getMinor( int i, int j ) {
+		final Matrix minor = new Matrix( matrix.length - 1 );
+		int x = 0;
+		for( int r = 0; r < matrix.length; ++r ) {
+			int y = 0;
+			for( int c = 0; c < matrix.length; ++c ) {
+				minor.matrix[ x ][ y ] = this.matrix[ r ][ c ];
+				if( c != j ) ++y;
+			}
+			if( r != i ) ++x;
+		}
+		return minor;
+	}
+
+	/**
+	 * @return Determinant of this matrix
+	 */
+	public final float getDeterminant() {
+		switch( matrix.length ) {
+		case 1:
+			return matrix[0][0];
+
+		case 2:
+			return ( matrix[0][0] * matrix[1][1] ) - ( matrix[0][1] * matrix[1][0] );
+
+		default:
+			// Sums determinants of the minor matrices (arbitrarily in the first column)
+			float total = 0;
+			for( int r = 0; r < matrix.length; ++r ) {
+				float det = matrix[ r ][ 0 ] * getMinor( r, 0 ).getDeterminant();
+				if( !MathsUtil.isEven( r ) ) det = -det;
+				total += det;
+			}
+			return total;
+		}
+	}
+
+	/**
+	 * @return Cofactor matrix
+	 */
+	private Matrix cofactor() {
+		final Matrix m = new Matrix( matrix.length );
+		for( int r = 0; r < matrix.length; ++r ) {
+			for( int c = 0; c < matrix.length; ++c ) {
+				float det = getMinor( r, c ).getDeterminant();
+				if( MathsUtil.isEven( r + c ) ) det = -det;
+				m.matrix[ r ][ c ] = det;
+			}
+		}
 		return m;
+	}
+
+	/**
+	 * Inverts this matrix.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>The inverse of a square matrix with a non-zero determinant is the <i>adjoint</i> matrix divided by the determinant.</li>
+	 * <li>The adjoint is the transpose of the <i>cofactor</i> matrix.</li>
+	 * <li>The cofactor is the matrix of determinants of all minors of this matrix.</li>
+	 * </ul>
+	 * @return Inverted matrix
+	 */
+	public final <M extends Matrix> M invert() {
+		final float det = getDeterminant();
+		if( MathsUtil.isZero( det ) ) throw new IllegalArgumentException( "Cannot invert matrix with zero determinant" );
+		return cofactor().transpose().multiply( 1f / det );
 	}
 
 	/**
@@ -163,8 +261,8 @@ public class Matrix implements Transform, Bufferable {
 	 * @param scale Scaling value
 	 * @return Scaled matrix
 	 */
-	public Matrix multiply( float scale ) {
-		final Matrix m = new Matrix( matrix.length );
+	public <M extends Matrix> M multiply( float scale ) {
+		final M m = getResultMatrix();
 
 		for( int r = 0; r < matrix.length; ++r ) {
 			for( int c = 0; c < matrix.length; ++c ) {
@@ -181,10 +279,10 @@ public class Matrix implements Transform, Bufferable {
 	 * @return Summed matrix
 	 * @throws IllegalArgumentException if the matrices are not of the same order
 	 */
-	public Matrix add( Matrix m ) {
+	public <M extends Matrix> M add( Matrix m ) {
 		if( m.getOrder() != this.getOrder() ) throw new IllegalArgumentException( "Matrices must have same order" );
 
-		final Matrix result = new Matrix( matrix.length );
+		final M result = getResultMatrix();
 
 		for( int r = 0; r < matrix.length; ++r ) {
 			for( int c = 0; c < matrix.length; ++c ) {
@@ -202,33 +300,30 @@ public class Matrix implements Transform, Bufferable {
 	 * @throws IllegalArgumentException if the matrices are not of the same order
 	 */
 	public Matrix multiply( Matrix m ) {
-		if( m.getOrder() != this.getOrder() ) throw new IllegalArgumentException( "Matrices must have same order" );
+		final Matrix result = new Matrix( m.getOrder() );
+		multiply( this.matrix, m, result );
+		return result;
+	}
 
-		final Matrix result = new Matrix( matrix.length );
+	/**
+	 * Multiplies the given matrix with another matrix and stores the result.
+	 * @param matrix	This matrix
+	 * @param that		Matrix to multiply
+	 * @param result	Result matrix
+	 */
+	protected static void multiply( float[][] matrix, Matrix that, Matrix result ) {
+		if( matrix.length != that.getOrder() ) throw new IllegalArgumentException( "Matrices must have same order" );
 
 		float total;
 		for( int r = 0; r < matrix.length; ++r ) {
 			for( int c = 0; c < matrix.length; ++c ) {
 				total = 0;
 				for( int n = 0; n < matrix.length; ++n ) {
-					total += this.matrix[ r ][ n ] * m.matrix[ n ][ c ];
+					total += matrix[ r ][ n ] * that.matrix[ n ][ c ];
 				}
 				result.matrix[ r ][ c ] = total;
 			}
 		}
-
-		return result;
-	}
-
-	/**
-	 * Multiplies the given vector by this matrix.
-	 * @param v Vector to multiply
-	 * @return Multiplied vector
-	 * @throws IllegalArgumentException if this matrix is too small
-	 */
-	public Vector multiply( Vector v ) {
-		multiplyTuple( v );
-		return new Vector( homogenousArray );
 	}
 
 	/**
@@ -236,31 +331,25 @@ public class Matrix implements Transform, Bufferable {
 	 * @param pos Point to multiply
 	 * @return Multiplied point
 	 * @throws IllegalArgumentException if this matrix is too small
+	 * TODO - investigate difference between this and vec4 with 0 or 1
 	 */
-	public Point multiply( Point pos ) {
-		multiplyTuple( pos );
-		return new Point( homogenousArray );
+	public MutablePoint multiply( MutablePoint pos ) {
+		if( getOrder() < 3 ) throw new IllegalArgumentException( "Matrix too small" );
+
+		// Multiply by matrix
+		final float x = multiply( 0, pos );
+		final float y = multiply( 1, pos );
+		final float z = multiply( 2, pos );
+
+		// Update point
+		pos.x = x;
+		pos.y = y;
+		pos.z = z;
+		return pos;
 	}
 
-	/**
-	 * Helper.
-	 */
-	private void multiplyTuple( Tuple t ) {
-		if( getOrder() != 4 ) throw new IllegalArgumentException( "Matrix must have an order of 4 to multiply a vector or point" );
-
-		// Convert to homogeneous vector
-		t.toArray( tupleArray );
-		tupleArray[ 3 ] = 1;
-
-		// Multiple by matrix
-		float total;
-		for( int r = 0; r < matrix.length; ++r ) {
-			total = 0;
-			for( int c = 0; c < matrix.length; ++c ) {
-				total += matrix[ r ][ c ] * tupleArray[ c ];
-			}
-			homogenousArray[ r ] = total;
-		}
+	private float multiply( int r, Point pt ) {
+		return matrix[r][0] * pt.x + matrix[r][1] * pt.y + matrix[r][2] * pt.z;
 	}
 
 	/**

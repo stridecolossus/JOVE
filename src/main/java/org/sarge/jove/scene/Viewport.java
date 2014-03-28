@@ -15,13 +15,8 @@ public interface Viewport {
 	void init( Rectangle rect );
 
 	/**
-	 * Clears the frame buffer.
-	 * @param col Clear colour
+	 * Clears viewport buffers.
+	 * @param col Clear colour for frame buffer or <tt>null</tt> to skip
 	 */
 	void clear( Colour col );
-
-	/**
-	 * Clears the depth buffer.
-	 */
-	void clear();
 }

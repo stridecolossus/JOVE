@@ -1,5 +1,6 @@
 package org.sarge.jove.common;
 
+import org.sarge.lib.util.Check;
 import org.sarge.lib.util.EqualsBuilder;
 
 /**
@@ -7,7 +8,9 @@ import org.sarge.lib.util.EqualsBuilder;
  * @author Sarge
  */
 public class Rectangle {
-	private final int x, y, w, h;
+	// TODO - Location?
+	private final int x, y;
+	private final Dimensions dim;
 
 	/**
 	 * Constructor.
@@ -17,18 +20,28 @@ public class Rectangle {
 	 * @param h
 	 */
 	public Rectangle( int x, int y, int w, int h ) {
-		this.x = x;
-		this.y = y;
-		this.w = w;
-		this.h = h;
+		this( x, y, new Dimensions( w, h ) );
 	}
 
 	/**
-	 * Constructor given dimensions.
+	 * Constructor.
+	 * @param x
+	 * @param y
+	 * @param dim
+	 */
+	public Rectangle( int x, int y, Dimensions dim ) {
+		Check.notNull( dim );
+		this.x = x;
+		this.y = y;
+		this.dim = dim;
+	}
+
+	/**
+	 * Constructor at origin.
 	 * @param dim Width-height
 	 */
 	public Rectangle( Dimensions dim ) {
-		this( 0, 0, dim.getWidth(), dim.getHeight() );
+		this( 0, 0, dim );
 	}
 
 	public int getX() {
@@ -40,15 +53,15 @@ public class Rectangle {
 	}
 
 	public int getWidth() {
-		return w;
+		return dim.getWidth();
 	}
 
 	public int getHeight() {
-		return h;
+		return dim.getHeight();
 	}
 
 	public Dimensions getDimensions() {
-		return new Dimensions( w, h );
+		return dim;
 	}
 
 	@Override
@@ -58,6 +71,6 @@ public class Rectangle {
 
 	@Override
 	public String toString() {
-		return x + "," + y + "(" + w + "x" + h + ")";
+		return x + "," + y + "(" + dim + ")";
 	}
 }

@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 import org.sarge.jove.app.RenderingSystem;
 import org.sarge.jove.model.ModelLoader;
-import org.sarge.jove.scene.Node;
+import org.sarge.jove.scene.NodeGroup;
 import org.sarge.lib.io.DataSource;
 import org.sarge.lib.io.TextLoader;
 import org.sarge.lib.io.TextLoader.LineParser;
@@ -124,7 +124,7 @@ public class ObjectModelLoader implements ModelLoader {
 	}
 
 	@Override
-	public Node load( String path ) throws IOException {
+	public NodeGroup load( String path ) throws IOException {
 		// Create new model
 		data = new ObjectModelData( src, sys );
 
@@ -132,7 +132,7 @@ public class ObjectModelLoader implements ModelLoader {
 		loader.load( parser, path );
 
 		// Build model
-		final Node root = data.getRootNode();
+		final NodeGroup root = data.getRootNode();
 
 		// Cleanup
 		data = null;

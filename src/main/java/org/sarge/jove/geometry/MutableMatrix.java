@@ -20,7 +20,28 @@ public class MutableMatrix extends Matrix {
 	 * @param m Matrix
 	 */
 	public MutableMatrix( Matrix m ) {
-		super( m.matrix );
+		super( m );
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	protected MutableMatrix getResultMatrix() {
+		dirty = true;
+		return this;
+	}
+
+	@Override
+	public MutableMatrix transpose() {
+		super.transpose( matrix.clone(), this );
+		dirty = true;
+		return this;
+	}
+
+	@Override
+	public MutableMatrix multiply( Matrix m ) {
+		super.multiply( matrix.clone(), m, this );
+		dirty = true;
+		return this;
 	}
 
 	/**
@@ -34,16 +55,6 @@ public class MutableMatrix extends Matrix {
 		dirty = true;
 	}
 
-	// TODO - move to interface?
-	/**
-	 * Gets the left-most 3 elements of the given row as a vector.
-	 * @param row Row index
-	 * @return Vector
-	 */
-	public Vector getRow( int row ) {
-		return new Vector( matrix[ row ][ 0 ], matrix[ row ][ 1 ], matrix[ row ][ 2 ] );
-	}
-
 	/**
 	 * Sets the first 3 values of a row to the given vector.
 	 * @param row	Row to set
@@ -54,16 +65,6 @@ public class MutableMatrix extends Matrix {
 		matrix[ row ][ 1 ] = vec.y;
 		matrix[ row ][ 2 ] = vec.z;
 		dirty = true;
-	}
-
-	// TODO - move to interface?
-	/**
-	 * Gets the top-most 3 values of the given column as a vector.
-	 * @param col Column index
-	 * @return Vector
-	 */
-	public Vector getColumn( int col ) {
-		return new Vector( matrix[ 0 ][ col ], matrix[ 1 ][ col ], matrix[ 2 ][ col ] );
 	}
 
 	/**

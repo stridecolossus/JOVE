@@ -1,7 +1,7 @@
 package org.sarge.jove.scene;
 
 /**
- * Defines something that can be rendered.
+ * Defines an object that can be rendered.
  * @author Sarge
  */
 public interface Renderable {

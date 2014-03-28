@@ -14,7 +14,7 @@ import org.sarge.lib.util.ToString;
  * VBO based template implementation.
  * @author Sarge
  */
-public abstract class AbstractMesh extends AbstractGraphicResource implements Renderable {
+public abstract class AbstractMesh extends AbstractGraphicResource implements Renderable { // TODO - other methods
 	private final List<VertexBufferObject> vertexBuffers = new ArrayList<>();
 	private final IndexBufferObject indexBuffer;
 	private final int attributeCount;

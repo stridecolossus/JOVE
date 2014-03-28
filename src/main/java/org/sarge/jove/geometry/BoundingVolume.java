@@ -6,6 +6,26 @@ package org.sarge.jove.geometry;
  */
 public interface BoundingVolume {
 	/**
+	 * Null volume (always culled, never intersects).
+	 */
+	BoundingVolume NULL = new BoundingVolume() {
+		@Override
+		public boolean intersects( Ray ray ) {
+			return false;
+		}
+
+		@Override
+		public Point getCentre() {
+			return null;
+		}
+
+		@Override
+		public boolean contains( Point pt ) {
+			return false;
+		}
+	};
+
+	/**
 	 * @return Centre point of this volume
 	 */
 	Point getCentre();

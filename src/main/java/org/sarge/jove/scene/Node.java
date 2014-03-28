@@ -1,250 +1,60 @@
 package org.sarge.jove.scene;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.sarge.jove.geometry.BoundingVolume;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.geometry.Transform;
-import org.sarge.jove.light.Light;
-import org.sarge.jove.material.Material;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.StrictList;
 
 /**
  * Scene-graph node.
  * @author Sarge
  */
-public class Node {
+public interface Node {
 	/**
-	 * Node visitor.
+	 * Scene-graph visitor.
 	 * @see #accept(Visitor)
 	 */
-	public static interface Visitor {
+	interface Visitor {
 		/**
 		 * Visits the given node.
-		 * @param node Node
-		 * @return Whether to recurse to the children of the given node
-		 * TODO - do we need this return?
+		 * @param node Node being visited
+		 * @return Whether to recurse to children of this element
 		 */
 		boolean visit( Node node );
-	}
-
-	// Scene
-	private final List<Light> lights = new StrictList<>();
-	private final List<Node> children = new StrictList<>();
-	private Material mat;
-	private RenderStage stage = DefaultRenderStage.OPAQUE;
-	private Renderable renderable;
-
-	// Node details
-	private String name;
-	private Node parent;
-
-	// Geometry
-	private boolean dirty = true;
-	private Transform local = Matrix.IDENTITY;
-	private Matrix world;
-	private BoundingVolume vol;
-
-	/**
-	 * Constructor.
-	 * @param name Node name
-	 */
-	public Node( String name ) {
-		Check.notEmpty( name );
-		this.name = name;
 	}
 
 	/**
 	 * @return Node name
 	 */
-	public String getName() {
-		return name;
-	}
+	public String getName();
 
 	/**
-	 * @return Parent of this node or <tt>null</tt> if root
+	 * @return Parent of this node
 	 */
-	public Node getParent() {
-		return parent;
-	}
+	NodeGroup getParent();
 
 	/**
-	 * @return Scene-element
+	 * @return Rendering queue for this node
 	 */
-	public Renderable getRenderable() {
-		return renderable;
-	}
+	RenderQueue getRenderQueue();
 
 	/**
-	 * @param renderable Scene-element
+	 * @return World transformation matrix for this node
 	 */
-	public void setRenderable( Renderable renderable ) {
-		this.renderable = renderable;
-	}
+	Matrix getWorldMatrix();
 
 	/**
-	 * @return Rendering stage for this node (default is {@link DefaultRenderStage#OPAQUE})
+	 * Accepts the given scene-graph visitor.
+	 * @param visitor Visitor
 	 */
-	public RenderStage getRenderStage() {
-		return stage;
-	}
+	void accept( Visitor visitor );
 
 	/**
-	 * Sets the rendering stage for this node.
-	 * @param stage Rendering stage
+	 * Applies this nodes state changes.
+	 * @param ctx Rendering context
 	 */
-	public void setRenderStage( RenderStage stage ) {
-		Check.notNull( stage );
-		this.stage = stage;
-	}
+	void apply( RenderContext ctx );
 
 	/**
-	 * @return Bounding volume of this node or <tt>null</tt> if none
+	 * Resets this nodes state changes.
+	 * @param ctx Rendering context
 	 */
-	public BoundingVolume getBoundingVolume() {
-		return vol;
-	}
-
-	/**
-	 * Sets the bounding volume of this node.
-	 * @param vol Bounding volume or <tt>null</tt> if none
-	 */
-	public void setBoundingVolume( BoundingVolume vol ) {
-		this.vol = vol;
-	}
-
-	/**
-	 * @return Local transform
-	 */
-	public Transform getLocalTransform() {
-		return local;
-	}
-
-	/**
-	 * Sets the local transform.
-	 * @param local Local transform
-	 */
-	public void setLocalTransform( Transform local ) {
-		Check.notNull( local );
-		this.local = local;
-		dirty = true;
-	}
-
-	/**
-	 * @return World transform matrix
-	 */
-	public Matrix getWorldMatrix() {
-		if( parent == null ) {
-			dirty = false;
-			return local.toMatrix();
-		}
-		else {
-			if( dirty || parent.dirty || parent.local.isDirty() || local.isDirty() ) {
-				// TODO - return local if parent == IDENTITY?
-				world = parent.getWorldMatrix().multiply( local.toMatrix() );
-				dirty = false;
-			}
-			return world;
-		}
-	}
-
-	/**
-	 * @return Node material
-	 */
-	public Material getMaterial() {
-		return mat;
-	}
-
-	/**
-	 * Sets the material for this node.
-	 * @param mat Node material or <tt>null</tt> if none
-	 */
-	public void setMaterial( Material mat ) {
-		this.mat = mat;
-	}
-
-	/**
-	 * @return Children of this node
-	 */
-	public List<Node> getChildren() {
-		return new ArrayList<>( children );
-	}
-
-	/**
-	 * Adds a child node to this scene-graph.
-	 * @param node Node to add
-	 */
-	public void add( Node node ) {
-		// Check not already in a scene-graph
-		if( node.parent != null ) throw new IllegalArgumentException( "Node already has a parent: " + node.parent );
-		if( node == this ) throw new IllegalArgumentException( "Cannot add to self" );
-
-		// Check for cyclic dependency
-		Node n = this.parent;
-		while( n != null ) {
-			if( n == node ) throw new IllegalArgumentException( "Cyclic dependency" );
-			n = n.parent;
-		}
-
-		// Add to scene-graph
-		children.add( node );
-		node.parent = this;
-		node.dirty = true;
-	}
-
-	/**
-	 * Removes a child from this scene-graph node.
-	 * @param r Child to remove
-	 */
-	public void remove( Node node ) {
-		assert node.parent != null;
-		node.parent = null;
-		children.remove( node );
-	}
-
-	/**
-	 * @return Lights on this node
-	 */
-	public List<Light> getLights() {
-		return new ArrayList<>( lights );
-	}
-
-	/**
-	 * Adds a light to this node.
-	 * @param light Light to add
-	 */
-	public void add( Light light ) {
-		lights.add( light );
-	}
-
-	/**
-	 * Removes a light from this node.
-	 * @param light Light to remove
-	 */
-	public void remove( Light light ) {
-		lights.remove( light );
-	}
-
-	/**
-	 * Accepts the given visitor and optionally recurses to child nodes.
-	 * @param visitor Node visitor
-	 */
-	public void accept( Visitor visitor ) {
-		// Visit this node
-		final boolean recurse = visitor.visit( this );
-
-		// Recurse
-		if( recurse ) {
-			for( Node node : children ) {
-				node.accept( visitor );
-			}
-		}
-	}
-
-	@Override
-	public String toString() {
-		return name;
-	}
+	void reset( RenderContext ctx );
 }

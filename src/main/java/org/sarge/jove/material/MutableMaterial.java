@@ -161,12 +161,10 @@ shader.activate();
 	}
 
 	@Override
-	public void update( RenderContext ctx ) {
-		init( PropertyScope.NODE, ctx, shader );
-	}
+	public void reset( RenderContext ctx, Material prev ) {
 
-	@Override
-	public void reset() {
+		//
+
 		// Reset textures
 		for( TextureUnit tex : textures.values() ) {
 			tex.reset();

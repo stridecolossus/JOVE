@@ -46,13 +46,7 @@ public interface Material {
 	void apply( RenderContext ctx );
 
 	/**
-	 * Updates {@link PropertyScope#NODE} material properties.
-	 * @param ctx Rendering context
-	 */
-	void update( RenderContext ctx );
-
-	/**
 	 * Resets this material.
 	 */
-	void reset();
+	void reset( RenderContext ctx );
 }

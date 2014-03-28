@@ -15,7 +15,10 @@ import org.sarge.jove.model.MeshBuilder;
 import org.sarge.jove.model.MeshLayout;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.scene.Node;
+import org.sarge.jove.scene.NodeGroup;
+import org.sarge.jove.scene.RenderQueue;
+import org.sarge.jove.scene.RenderableNode;
+import org.sarge.jove.scene.SceneNode;
 import org.sarge.jove.util.ImageLoader;
 import org.sarge.lib.io.DataSource;
 import org.sarge.lib.util.Check;
@@ -39,8 +42,8 @@ public class ObjectModelData {
 	private final List<Vector> normals = new ArrayList<>();
 
 	// Current node
-	private Node root = new Node( "object" );
-	private Node node;
+	private SceneNode root = new SceneNode( "object" );
+	private SceneNode node;
 	private MeshBuilder builder;
 
 	/**
@@ -87,7 +90,7 @@ public class ObjectModelData {
 	/**
 	 * @return Current node
 	 */
-	public Node getNode() {
+	public SceneNode getNode() {
 		return node;
 	}
 
@@ -100,7 +103,7 @@ public class ObjectModelData {
 		build();
 
 		// Start new node
-		node = new Node( name );
+		node = new SceneNode( name );
 		builder.reset();
 	}
 
@@ -110,8 +113,9 @@ public class ObjectModelData {
 	private void build() {
 		if( ( builder != null ) && !builder.getVertices().isEmpty() ) {
 			final AbstractMesh mesh = sys.createMesh( builder.build() );
-			node.setRenderable( mesh );
-			root.add( node );
+			final RenderableNode r = new RenderableNode( "node", RenderQueue.Default.OPAQUE, mesh );
+			r.setParent( node );
+			node.setParent( root );
 		}
 	}
 
@@ -206,7 +210,7 @@ public class ObjectModelData {
 	/**
 	 * @return Root node of this model
 	 */
-	public Node getRootNode() {
+	public NodeGroup getRootNode() {
 		build();
 		return root;
 	}

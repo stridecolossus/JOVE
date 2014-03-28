@@ -9,7 +9,10 @@ import org.sarge.jove.material.DepthTestProperty;
 import org.sarge.jove.material.FaceCullProperty;
 import org.sarge.jove.material.MaterialProperty;
 import org.sarge.jove.material.MutableMaterial;
-import org.sarge.jove.scene.Node;
+import org.sarge.jove.scene.NodeGroup;
+import org.sarge.jove.scene.RenderQueue;
+import org.sarge.jove.scene.RenderableNode;
+import org.sarge.jove.scene.SceneNode;
 import org.sarge.jove.shader.ShaderLoader;
 import org.sarge.jove.shader.ShaderProgram;
 import org.sarge.jove.texture.Texture;
@@ -52,18 +55,19 @@ public class SkyBoxBuilder {
 	 * @return Sky-box node
 	 * @throws Exception if the textures or shader cannot be loaded
 	 */
-	public Node build( float size, String[] paths ) throws Exception {
+	public NodeGroup build( float size, String[] paths ) throws Exception {
 		Check.notEmpty( paths );
 		if( ( paths.length < 5 ) || ( paths.length > 6 ) ) throw new IllegalArgumentException( "Invalid number of textures" );
 
 		// Create node for sky-box
-		final Node root = new Node( "skybox" );
+		final SceneNode root = new SceneNode( "skybox", RenderQueue.Default.NONE );
 
 		// Construct sky-box
 		final CubeBuilder cubeBuilder = new CubeBuilder( MeshLayout.create( Primitive.TRIANGLES, "V", false ) );
 		final MeshBuilder meshBuilder = cubeBuilder.create( size );
 		final AbstractMesh mesh = sys.createMesh( meshBuilder.build() );
-		root.setRenderable( mesh );
+		final RenderableNode sky = new RenderableNode( "sky", RenderQueue.Default.SKY, mesh );
+		sky.setParent( root );
 
 		// Create material
 		final MutableMaterial mat = new MutableMaterial( "skybox" );
