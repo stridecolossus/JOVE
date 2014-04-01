@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.util.ImageLoader;
 import org.sarge.jove.util.Loader;
-import org.sarge.jove.util.TextureImage;
+import org.sarge.jove.util.JoveImage;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
@@ -34,7 +34,7 @@ public class HeightMapLoader implements Loader<HeightMap> {
 	 */
 	@Override
 	public HeightMap load( String path ) throws IOException {
-		final TextureImage image = loader.load( path );
+		final JoveImage image = loader.load( path );
 		return create( image );
 	}
 
@@ -45,7 +45,7 @@ public class HeightMapLoader implements Loader<HeightMap> {
 	 * @return Height map
 	 * @throws IllegalArgumentException if the image is not a gray-scale
 	 */
-	public static HeightMap create( TextureImage image ) {
+	public static HeightMap create( JoveImage image ) {
 		// Verify image
 		if( image.hasAlpha() ) throw new IllegalArgumentException( "Not a gray-scale image" );
 

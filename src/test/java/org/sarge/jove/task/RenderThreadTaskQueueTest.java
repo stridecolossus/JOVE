@@ -13,14 +13,14 @@ import org.sarge.lib.util.Util;
 
 public class RenderThreadTaskQueueTest {
 	private RenderThreadTaskQueue queue;
-	private DefaultTask task;
-	private RunnableTask runnable;
+	private Task task;
+	private Runnable runnable;
 
 	@Before
 	public void before() {
 		queue = new RenderThreadTaskQueue();
-		runnable = mock( RunnableTask.class );
-		task = new DefaultTask( runnable, 1 );
+		runnable = mock( Runnable.class );
+		task = new Task( runnable, 1, queue );
 	}
 
 	@Test
@@ -65,8 +65,8 @@ public class RenderThreadTaskQueueTest {
 		task.setState( State.QUEUED );
 
 		// Add high priority task
-		final RunnableTask high = mock( RunnableTask.class );
-		final DefaultTask highTask = new DefaultTask( high, 2 );
+		final Runnable high = mock( Runnable.class );
+		final Task highTask = new Task( high, 2, queue );
 		queue.add( highTask );
 		highTask.setState( State.QUEUED );
 
@@ -89,7 +89,7 @@ public class RenderThreadTaskQueueTest {
 		// Add two tasks
 		queue.add( task );
 		task.setState( State.QUEUED );
-		queue.add( new DefaultTask( mock( RunnableTask.class ), 0 ) );
+		queue.add( new Task( mock( Runnable.class ), 0, queue ) );
 
 		// Execute and check only one executed
 		final int count = queue.execute( null );
@@ -106,18 +106,13 @@ public class RenderThreadTaskQueueTest {
 		queue.setLimitParameter( 1 );
 
 		// Create an expensive task
-		final RunnableTask delay = new RunnableTask() {
-			@Override
-			public TaskQueue getQueue() {
-				return null;
-			}
-
+		final Runnable delay = new Runnable() {
 			@Override
 			public void run() {
 				Util.kip( 50 );
 			}
 		};
-		final DefaultTask delayedTask = new DefaultTask( delay, 999 );
+		final Task delayedTask = new Task( delay, 999, queue );
 		delayedTask.setState( State.QUEUED );
 
 		// Add another task that should miss the cut

@@ -14,7 +14,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.ImageLoader;
-import org.sarge.jove.util.TextureImage;
+import org.sarge.jove.util.JoveImage;
 
 @Ignore
 public class HeightMapLoaderTest {
@@ -41,7 +41,7 @@ public class HeightMapLoaderTest {
 		}
 
 		// Create a gray-scale image
-		final TextureImage image = mock( TextureImage.class );
+		final JoveImage image = mock( JoveImage.class );
 		when( image.hasAlpha() ).thenReturn( false );
 		when( image.getBuffer() ).thenReturn( buffer );
 		when( imageLoader.load( "path" ) ).thenReturn( image );

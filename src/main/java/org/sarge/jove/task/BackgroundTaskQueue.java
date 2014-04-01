@@ -12,7 +12,11 @@ import java.util.logging.Logger;
 import org.sarge.lib.util.ToString;
 
 /**
- * Background thread pool.
+ * Background task queue.
+ * <p>
+ * Continually consumes queued tasks using the configured thread pool.
+ * <p>
+ * @see ThreadPoolExecutor
  * @author Sarge
  */
 public class BackgroundTaskQueue implements TaskQueue {
@@ -60,6 +64,11 @@ public class BackgroundTaskQueue implements TaskQueue {
 	}
 
 	@Override
+	public String getName() {
+		return "background";
+	}
+
+	@Override
 	public int getSize() {
 		return executor.getQueue().size();
 	}
@@ -74,9 +83,9 @@ public class BackgroundTaskQueue implements TaskQueue {
 	 * @param task Background task
 	 */
 	@Override
-	public void add( DefaultTask task ) {
+	public void add( Runnable r ) {
 		// Queue task
-		executor.execute( task );
+		executor.execute( r );
 
 		// Update stats
 		final int size = getSize();
@@ -84,17 +93,8 @@ public class BackgroundTaskQueue implements TaskQueue {
 	}
 
 	@Override
-	public void cancel( DefaultTask task ) {
-		switch( task.getState() ) {
-		case QUEUED:
-			executor.remove( task );
-			// TODO - log warning if not removed?
-			break;
-
-		case RUNNING:
-			// TODO - how to interrupt thread?
-			break;
-		}
+	public void cancel( Runnable r ) {
+		executor.remove( r );
 	}
 
 	/**

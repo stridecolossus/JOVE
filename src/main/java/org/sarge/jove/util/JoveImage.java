@@ -5,11 +5,15 @@ import java.nio.ByteBuffer;
 import org.sarge.jove.common.Dimensions;
 
 /**
- * Wrapper for a texture image.
- * TODO - how to ensure image is released?
+ * Wrapper for an OpenGL format image.
+ * TODO
+ * - how to ensure image is released?
+ * - different formats
+ * - no point in RGB for grey-scale?
+ * - 1D images?
  * @author Sarge
  */
-public interface TextureImage {
+public interface JoveImage {
 	/**
 	 * @return Image dimensions
 	 */

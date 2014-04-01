@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 
 import org.sarge.jove.app.RenderingSystem;
 import org.sarge.jove.util.ImageLoader;
-import org.sarge.jove.util.TextureImage;
+import org.sarge.jove.util.JoveImage;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
@@ -37,7 +37,7 @@ public class TextureLoader {
 	 * @throws IOException if the texture image cannot be loaded
 	 */
 	public Texture load( String path ) throws IOException {
-		final TextureImage image = loader.load( path );
+		final JoveImage image = loader.load( path );
 		return create( image );
 	}
 
@@ -46,7 +46,7 @@ public class TextureLoader {
 	 * @param image Texture image
 	 * @return Texture
 	 */
-	public Texture create( TextureImage image ) {
+	public Texture create( JoveImage image ) {
 		// Define texture properties
 		final TextureDescriptor info = new TextureDescriptor( image.getDimensions() );
 		info.setTranslucent( image.hasAlpha() );

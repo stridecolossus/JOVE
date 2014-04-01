@@ -9,6 +9,25 @@ import org.sarge.lib.util.ToString;
 
 /**
  * Prioritised queue of tasks to be executed on the rendering thread.
+ * <p>
+ * Usage:
+ * <code>
+ * 		// Configure queue
+ * 		final TaskQueue queue = new RenderThreadQueue();
+ * 		queue.setLimitPolicy( LimitPolicy.DURATION );
+ * 		queue.setLimitParameter( 5 );
+ * 		...
+ *
+ * 		// Add some tasks
+ * 		queue.add( new ThisTask() );
+ * 		queue.add( new ThatTask() );
+ * 		...
+ *
+ * 		// Periodically execute tasks according to configured policy
+ * 		final int done = queue.execute();
+ * 		final int remaining = queue.getSize();
+ * </code>
+ * <p>
  * @author Sarge
  */
 public class RenderThreadTaskQueue implements TaskQueue {
@@ -32,7 +51,7 @@ public class RenderThreadTaskQueue implements TaskQueue {
 		DURATION
 	}
 
-	private final Queue<DefaultTask> queue = new PriorityBlockingQueue<>();
+	private final Queue<Runnable> queue = new PriorityBlockingQueue<>();
 
 	// Config
 	private LimitPolicy policy = LimitPolicy.NONE;
@@ -44,6 +63,11 @@ public class RenderThreadTaskQueue implements TaskQueue {
 	// Limit stats
 	private long start;
 	private int count;
+
+	@Override
+	public String getName() {
+		return "render-thread";
+	}
 
 	/**
 	 * Sets the policy for throttling the number of tasks to be executed per iteration.
@@ -57,6 +81,7 @@ public class RenderThreadTaskQueue implements TaskQueue {
 	/**
 	 * Sets the limit to be applied to the throttling policy.
 	 * @param limit Limit (depends on the current policy, default is <b>50</b>)
+	 * TODO - needs to be by nanos?
 	 */
 	public void setLimitParameter( long limit ) {
 		Check.oneOrMore( limit );
@@ -74,9 +99,9 @@ public class RenderThreadTaskQueue implements TaskQueue {
 	}
 
 	@Override
-	public void add( DefaultTask task ) {
+	public void add( Runnable r ) {
 		// Queue task
-		queue.add( task );
+		queue.add( r );
 
 		// Update stats
 		final int size = queue.size();
@@ -84,8 +109,8 @@ public class RenderThreadTaskQueue implements TaskQueue {
 	}
 
 	@Override
-	public void cancel( DefaultTask task ) {
-		queue.remove( task );
+	public void cancel( Runnable r ) {
+		queue.remove( r );
 	}
 
 	/**
@@ -109,13 +134,13 @@ public class RenderThreadTaskQueue implements TaskQueue {
 		// Execute pending tasks until all done or throttle limit exceeded
 		while( true ) {
 			// Get next task in priority order
-			final DefaultTask task = queue.poll();
+			final Runnable r = queue.poll();
 
 			// Stop if no pending tasks remaining
-			if( task == null ) break;
+			if( r == null ) break;
 
 			// Perform task
-			task.run();
+			r.run();
 			++count;
 
 			// Check throttle limit

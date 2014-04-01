@@ -11,12 +11,12 @@ import org.sarge.lib.util.Util;
 
 public class BackgroundTaskQueueTest {
 	private BackgroundTaskQueue queue;
-	private DefaultTask task;
+	private Task task;
 
 	@Before
 	public void before() {
 		queue = new BackgroundTaskQueue();
-		task = new DefaultTask( mock( RunnableTask.class ), 0 );
+		task = new Task( mock( Runnable.class ), 0, queue );
 	}
 
 	@After

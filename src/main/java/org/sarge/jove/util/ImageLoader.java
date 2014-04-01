@@ -6,7 +6,7 @@ import java.io.IOException;
  * Loader for texture images.
  * @author Sarge
  */
-public interface ImageLoader extends Loader<TextureImage> {
+public interface ImageLoader extends Loader<JoveImage> {
 	/**
 	 * @param flip Whether to flip images vertically (default is <tt>true</tt>)
 	 */
@@ -19,5 +19,5 @@ public interface ImageLoader extends Loader<TextureImage> {
 	 * @throws IOException if the file is not found or the image cannot be loaded
 	 */
 	@Override
-	TextureImage load( String path ) throws IOException;
+	JoveImage load( String path ) throws IOException;
 }

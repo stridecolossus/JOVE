@@ -6,6 +6,11 @@ package org.sarge.jove.task;
  */
 public interface TaskQueue {
 	/**
+	 * @return Queue identifier
+	 */
+	String getName();
+
+	/**
 	 * @return Current queue size
 	 */
 	int getSize();
@@ -17,13 +22,13 @@ public interface TaskQueue {
 
 	/**
 	 * Adds a task to this queue.
-	 * @param task Task
+	 * @param r Task to run
 	 */
-	void add( DefaultTask task );
+	void add( Runnable r );
 
 	/**
 	 * Removes the task from the queue and terminates execution if running.
-	 * @param task Task to cancel
+	 * @param r Task to cancel
 	 */
-	void cancel( DefaultTask task );
+	void cancel( Runnable r );
 }

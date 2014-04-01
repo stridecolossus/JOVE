@@ -19,7 +19,7 @@ import org.sarge.jove.texture.Texture;
 import org.sarge.jove.texture.TextureDescriptor;
 import org.sarge.jove.texture.TextureDescriptor.WrapPolicy;
 import org.sarge.jove.util.ImageLoader;
-import org.sarge.jove.util.TextureImage;
+import org.sarge.jove.util.JoveImage;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
@@ -78,7 +78,7 @@ public class SkyBoxBuilder {
 		final ByteBuffer[] buffers = new ByteBuffer[ paths.length ];
 		for( int n = 0; n < buffers.length; ++n ) {
 			// Load image
-			final TextureImage image = imageLoader.load( paths[ n ] );
+			final JoveImage image = imageLoader.load( paths[ n ] );
 			buffers[ n ] = image.getBuffer();
 
 			// Verify size
