@@ -51,12 +51,16 @@ public class ToggleProperty implements RenderProperty, Action {
 
 	@Override
 	public void apply( RenderingSystem sys ) {
-		if( active ) property.apply( sys );
+		if( active ) {
+			property.apply( sys );
+		}
 	}
 
 	@Override
 	public void reset( RenderingSystem sys ) {
-		if( active ) property.reset( sys );
+		if( active ) {
+			property.reset( sys );
+		}
 	}
 
 	@Override

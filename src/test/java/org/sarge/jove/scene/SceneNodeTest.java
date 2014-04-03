@@ -34,7 +34,6 @@ public class SceneNodeTest {
 		assertEquals( Matrix.IDENTITY, node.getTransform() );
 		assertEquals( Matrix.IDENTITY, node.getWorldMatrix() );
 		assertEquals( RenderQueue.Default.OPAQUE, node.getRenderQueue() );
-		NodeGroupTest.checkEmpty( node );
 	}
 
 	@Test
@@ -47,7 +46,7 @@ public class SceneNodeTest {
 
 		// Get world transform and check no longer dirty
 		assertEquals( trans, node.getWorldMatrix() );
-		NodeGroupTest.checkEmpty( node );
+		assertEquals( false, node.isFlagged( Flag.TRANSFORM ) );
 	}
 
 	@Test
@@ -59,11 +58,9 @@ public class SceneNodeTest {
 		// Set transform of parent
 		final Matrix parentTrans = MutableMatrix.scale( 2 );
 		parent.setTransform( parentTrans );
-		NodeGroupTest.checkEmpty( node );
 
 		// Get world transform and check inherits from parent
 		assertEquals( parentTrans, node.getWorldMatrix() );
-		NodeGroupTest.checkEmpty( node );
 
 		// Set local transform and check matrices are combined
 		final Matrix trans = MutableMatrix.translation( new Vector( 1, 2, 3 ) );

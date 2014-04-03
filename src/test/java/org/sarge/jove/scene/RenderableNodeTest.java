@@ -31,10 +31,6 @@ public class RenderableNodeTest {
 
 	@Test
 	public void render() {
-		// Attach a renderable object
-		final Renderable other = mock( Renderable.class );
-		node.setRenderable( other );
-
 		// Render node
 		node.apply( null );
 		verify( renderable ).render( null );

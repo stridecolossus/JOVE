@@ -3,7 +3,6 @@ package org.sarge.jove.common;
 import org.sarge.jove.util.DefaultObjectPool;
 import org.sarge.jove.util.ObjectPool;
 import org.sarge.lib.util.EqualsBuilder;
-import org.sarge.lib.util.ToString;
 
 /**
  * 2D integer coordinates.
@@ -85,6 +84,6 @@ public class Location {
 
 	@Override
 	public String toString() {
-		return ToString.toString( x, y );
+		return x + "," + y;
 	}
 }

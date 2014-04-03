@@ -161,7 +161,7 @@ shader.activate();
 	}
 
 	@Override
-	public void reset( RenderContext ctx, Material prev ) {
+	public void reset( RenderContext ctx ) {
 
 		//
 

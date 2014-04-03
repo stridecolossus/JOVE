@@ -8,8 +8,7 @@ import org.sarge.lib.util.EqualsBuilder;
  * @author Sarge
  */
 public class Rectangle {
-	// TODO - Location?
-	private final int x, y;
+	private final Location loc;
 	private final Dimensions dim;
 
 	/**
@@ -20,19 +19,18 @@ public class Rectangle {
 	 * @param h
 	 */
 	public Rectangle( int x, int y, int w, int h ) {
-		this( x, y, new Dimensions( w, h ) );
+		this( new Location( x, y ), new Dimensions( w, h ) );
 	}
 
 	/**
 	 * Constructor.
-	 * @param x
-	 * @param y
+	 * @param loc
 	 * @param dim
 	 */
-	public Rectangle( int x, int y, Dimensions dim ) {
+	public Rectangle( Location loc, Dimensions dim ) {
+		Check.notNull( loc );
 		Check.notNull( dim );
-		this.x = x;
-		this.y = y;
+		this.loc = loc;
 		this.dim = dim;
 	}
 
@@ -41,23 +39,27 @@ public class Rectangle {
 	 * @param dim Width-height
 	 */
 	public Rectangle( Dimensions dim ) {
-		this( 0, 0, dim );
+		this( new Location(), dim );
 	}
 
 	public int getX() {
-		return x;
+		return loc.x;
 	}
 
 	public int getY() {
-		return y;
+		return loc.y;
 	}
 
 	public int getWidth() {
-		return dim.getWidth();
+		return dim.w;
 	}
 
 	public int getHeight() {
-		return dim.getHeight();
+		return dim.h;
+	}
+
+	public Location getLocation() {
+		return loc;
 	}
 
 	public Dimensions getDimensions() {
@@ -71,6 +73,6 @@ public class Rectangle {
 
 	@Override
 	public String toString() {
-		return x + "," + y + "(" + dim + ")";
+		return loc + "(" + dim + ")";
 	}
 }

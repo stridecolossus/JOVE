@@ -2,7 +2,7 @@ package org.sarge.jove.particle;
 
 import org.sarge.jove.geometry.BoundingBox;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.util.RandomUtil;
+import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
@@ -10,7 +10,7 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class BoundingBoxEmitter implements Emitter {
-	private final BoundingBox box;
+	private final Point min, max;
 
 	/**
 	 * Constructor.
@@ -18,22 +18,21 @@ public class BoundingBoxEmitter implements Emitter {
 	 */
 	public BoundingBoxEmitter( BoundingBox box ) {
 		Check.notNull( box );
-		this.box = box;
+		this.min = box.getMinimum();
+		this.max = box.getMaximum();
 	}
 
 	@Override
 	public Point emit() {
-		final Point min = box.getMin();
-		final Point max = box.getMax();
 		return new Point(
-			RandomUtil.nextFloat( min.getX(), max.getX() ),
-			RandomUtil.nextFloat( min.getY(), max.getY() ),
-			RandomUtil.nextFloat( min.getZ(), max.getZ() )
+			MathsUtil.nextFloat( min.getX(), max.getX() ),
+			MathsUtil.nextFloat( min.getY(), max.getY() ),
+			MathsUtil.nextFloat( min.getZ(), max.getZ() )
 		);
 	}
 
 	@Override
 	public String toString() {
-		return box.toString();
+		return min.toString() + "/" + max.toString();
 	}
 }

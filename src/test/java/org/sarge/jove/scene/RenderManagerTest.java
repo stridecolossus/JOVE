@@ -52,7 +52,6 @@ public class RenderManagerTest {
 
 	@Test
 	public void sort() {
-		@SuppressWarnings("unchecked")
 		final Comparator<Node> comparator = mock( Comparator.class );
 		add();
 		add();

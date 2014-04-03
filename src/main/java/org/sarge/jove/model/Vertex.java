@@ -1,7 +1,9 @@
 package org.sarge.jove.model;
 
 import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.MutableColour;
 import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.geometry.MutablePoint;
 import org.sarge.jove.geometry.MutableVector;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -14,9 +16,9 @@ import org.sarge.lib.util.ToString;
  * @author Sarge
  */
 public class Vertex {
-	protected Point pos;
+	protected MutablePoint pos;
 	protected MutableVector normal;
-	protected Colour col;
+	protected MutableColour col;
 	protected TextureCoord coords;
 
 	/**
@@ -25,7 +27,7 @@ public class Vertex {
 	 */
 	public Vertex( Point pos ) {
 		Check.notNull( pos );
-		this.pos = pos;
+		this.pos = new MutablePoint( pos );
 	}
 
 	/**
@@ -39,7 +41,7 @@ public class Vertex {
 	 */
 	public Vertex( Point pos, Vector normal, Colour col, TextureCoord coords ) {
 		Check.notNull( pos );
-		this.pos = pos;
+		this.pos = new MutablePoint( pos );
 		setNormal( normal );
 		setColour( col );
 		setTextureCoords( coords );
@@ -87,7 +89,7 @@ public class Vertex {
 	 * @param col Vertex colour
 	 */
 	public void setColour( Colour col ) {
-		this.col = col;
+		this.col = new MutableColour( col );
 	}
 
 	/**

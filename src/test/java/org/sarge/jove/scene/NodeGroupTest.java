@@ -7,6 +7,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.sarge.jove.geometry.Matrix;
@@ -15,33 +18,40 @@ import org.sarge.jove.scene.NodeGroup.Flag;
 
 public class NodeGroupTest {
 	private NodeGroup group;
+	private Node node;
 
-	private static NodeGroup create() {
-		return new NodeGroup( "node", mock( RenderQueue.class ) ) {
-			@Override
-			public void apply( RenderContext ctx ) {
-			}
+	private static class MockNodeGroup extends NodeGroup {
+		public MockNodeGroup() {
+			super( "group", RenderQueue.Default.OPAQUE );
+		}
 
-			@Override
-			public void reset( RenderContext ctx ) {
-			}
-		};
+		@Override
+		public void apply( RenderContext ctx ) {
+			// Does nowt
+		}
+
+		@Override
+		public void reset( RenderContext ctx ) {
+			// Does nowt
+		}
 	}
 
-	static void checkEmpty( NodeGroup group ) {
+	private void check( Flag... flags ) {
+		final Collection<Flag> c = Arrays.asList( flags );
 		for( Flag f : Flag.values() ) {
-			assertEquals( false, group.isFlagged( f ) );
+			assertEquals( c.contains( f ), group.isFlagged( f ) );
 		}
 	}
 
 	@Before
 	public void before() {
-		group = create();
+		group = new MockNodeGroup();
+		node = mock( Node.class );
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals( "node", group.getName() );
+		assertEquals( "group", group.getName() );
 		assertEquals( null, group.getParent() );
 		assertEquals( group, group.getRoot() );
 		assertNotNull( group.getChildren() );
@@ -49,86 +59,70 @@ public class NodeGroupTest {
 		assertEquals( Matrix.IDENTITY, group.getWorldMatrix() );
 		assertEquals( false, group.isDirtyTransform() );
 		assertNotNull( group.getRenderQueue() );
-		checkEmpty( group );
+		check();
 	}
 
 	@Test
-	public void setParent() {
+	public void add() {
 		// Attach to parent
-		final NodeGroup parent = create();
-		group.setParent( parent );
-		assertEquals( parent, group.getParent() );
-		assertEquals( 1, parent.getChildren().size() );
-		assertEquals( group, parent.getChildren().get( 0 ) );
-		assertEquals( true, parent.isFlagged( Flag.GRAPH ) );
-		checkEmpty( group );
+		group.add( node );
+		assertEquals( 1, group.getChildren().size() );
+		assertEquals( node, group.getChildren().get( 0 ) );
+		check( Flag.GRAPH );
 
 		// Remove from scene-graph
-		group.setParent( null );
-		assertEquals( null, group.getParent() );
-		assertEquals( 0, parent.getChildren().size() );
-		assertEquals( true, parent.isFlagged( Flag.GRAPH ) );
-		checkEmpty( group );
+		group.remove( node );
+		assertEquals( 0, group.getChildren().size() );
+		assertEquals( true, group.isFlagged( Flag.GRAPH ) );
+		check( Flag.GRAPH );
 	}
 
 	@Test( expected=IllegalArgumentException.class )
-	public void setParentAlreadyAdded() {
-		// Add child node
-		final NodeGroup parent = create();
-		group.setParent( parent );
-
-		// Try to add it again
-		final NodeGroup other = create();
-		group.setParent( other );
+	public void addAlreadyHasParent() {
+		group.add( node );
+		group.add( node );
 	}
 
 	@Test( expected=IllegalArgumentException.class )
-	public void setParentSelf() {
-		group.setParent( group );
+	public void addSelf() {
+		group.add( group );
 	}
 
 	@Test( expected=IllegalArgumentException.class )
-	public void setParentAncestor() {
-		final NodeGroup parent = create();
-		group.setParent( parent );
-		parent.setParent( group );
+	public void addCyclic() {
+		final NodeGroup other = new MockNodeGroup();
+		other.add( group );
+		group.add( other );
 	}
 
 	@Test
 	public void setFlag() {
+		// Set flag
 		final Flag flag = Flag.TRANSFORM;
 		group.set( flag );
-		assertEquals( true, group.isFlagged( flag ) );
+		check( flag );
+
+		// Clear flag
 		group.clear( flag );
-		assertEquals( false, group.isFlagged( flag ) );
+		check();
 	}
 
 	@Test
 	public void propagate() {
-		// Create a scene-graph three deep
-		final NodeGroup grandparent = create();
-		final NodeGroup parent = create();
-		parent.setParent( grandparent );
+		// Create a scene-graph
+		final NodeGroup parent = new MockNodeGroup();
 		group.setParent( parent );
 
-		// Propagate from parent
-		parent.propagate( Flag.BOUNDING_VOLUME );
-		assertEquals( true, grandparent.isFlagged( Flag.BOUNDING_VOLUME ) );
+		// Propagate and check passed up
+		group.propagate( Flag.BOUNDING_VOLUME );
+		check( Flag.BOUNDING_VOLUME );
 		assertEquals( true, parent.isFlagged( Flag.BOUNDING_VOLUME ) );
-		checkEmpty( group );
-
-		// Propagate from bottom and check all set
-		group.propagate( Flag.GRAPH );
-		assertEquals( true, grandparent.isFlagged( Flag.GRAPH ) );
-		assertEquals( true, parent.isFlagged( Flag.GRAPH ) );
-		assertEquals( true, group.isFlagged( Flag.GRAPH ) );
 	}
 
 	@Test
 	public void accept() {
 		// Add a child to be visited
-		final NodeGroup child = create();
-		child.setParent( group );
+		group.add( node );
 
 		// Create a scene visitor
 		final Visitor visitor = mock( Visitor.class );
@@ -137,6 +131,6 @@ public class NodeGroupTest {
 		// Visit scene-graph and check recurses
 		group.accept( visitor );
 		verify( visitor ).visit( group );
-		verify( visitor ).visit( child );
+		verify( node ).accept( visitor );
 	}
 }

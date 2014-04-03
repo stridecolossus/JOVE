@@ -106,6 +106,7 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 	@Override
 	public void restore( T obj ) throws PoolException {
 		Check.notNull( obj );
+		if( pool.size() >= created ) throw new PoolException( "Pool size exceeds number of created objects" );
 		if( pool.size() >= max ) throw new PoolException( "Maximum pool size exceeded" );
 		pool.add( obj );
 	}
@@ -138,6 +139,9 @@ public class DefaultObjectPool<T> implements ObjectPool<T> {
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		final ToString str = new ToString( this );
+		str.append( "size", pool.size() );
+		str.append( "created", created );
+		return str.toString();
 	}
 }

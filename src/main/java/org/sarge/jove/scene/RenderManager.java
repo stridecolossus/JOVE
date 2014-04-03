@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,7 +20,8 @@ import org.sarge.lib.util.ToString;
  */
 public class RenderManager implements Visitor {
 	private final Map<RenderQueue, List<Node>> queues = new LinkedHashMap<>();
-	private final List<Node> stack = new ArrayList<>();
+	private final LinkedList<Node> path = new LinkedList<>();
+	private final List<Node> prev = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -52,8 +54,8 @@ public class RenderManager implements Visitor {
 		if( q == RenderQueue.Default.NONE ) return false;
 
 		// Add to queue
-		final List<Node> nodes = queues.get( node.getRenderQueue() );
-		if( nodes == null ) throw new IllegalArgumentException( "Queue not registered: " + node.getRenderQueue() );
+		final List<Node> nodes = queues.get( q );
+		if( nodes == null ) throw new IllegalArgumentException( "Queue not registered: " + q );
 		nodes.add( node );
 
 		// Recurse
@@ -95,24 +97,37 @@ public class RenderManager implements Visitor {
 	 */
 	private void render( Node node, RenderContext ctx ) {
 		// Build stack of nodes from root
-		stack.clear();
-		do {
-			stack.add( node );
-			node = node.getParent();
-		}
-		while( node != null );
-		Collections.reverse( stack );
+		path.clear();
+		Node n = node;
+		while( true ) {
+			// Lookup this node in the previous render
+			final int idx = prev.indexOf( n );
 
-		// Apply material and render nodes
-		// TODO - remember stack and only apply/remove differences to reduce state changes, would work nicely with OPAQUE_UNSORTED
-		for( Node n : stack ) {
-			n.apply( ctx );
+			if( idx >= 0 ) {
+				// Splice previous path and stop
+				//path.addAll( prev.subList( 0, idx ) );
+				// Restore at idx then render path
+				break;
+			}
+			else {
+				// Otherwise walk up to parent
+				path.push( n );
+				n = n.getParent();
+
+				// Stop at root
+				if( n == null ) {
+					break;
+				}
+			}
 		}
 
-		// Reset materials
-		Collections.reverse( stack );
-		for( Node n : stack ) {
-			n.reset( ctx );
+		// Store path for next render
+		prev.clear();
+		prev.addAll( path );
+
+		// Render nodes
+		for( Node r : path ) {
+			r.apply( ctx );
 		}
 	}
 

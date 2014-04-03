@@ -1,7 +1,7 @@
 package org.sarge.jove.particle;
 
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.RandomUtil;
+import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
@@ -37,9 +37,9 @@ public class ConeDirectionFactory implements DirectionFactory {
 	@Override
 	public Vector getDirection() {
 		return new Vector(
-			axis.getX() + RandomUtil.nextFloat( -spread, spread ),
+			axis.getX() + MathsUtil.nextFloat( -spread, spread ),
 			axis.getY(),
-			axis.getZ() + RandomUtil.nextFloat( -spread, spread )
+			axis.getZ() + MathsUtil.nextFloat( -spread, spread )
 		);
 	}
 

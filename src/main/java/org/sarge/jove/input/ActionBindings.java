@@ -1,6 +1,8 @@
 package org.sarge.jove.input;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -26,6 +28,10 @@ import org.sarge.lib.util.ToString;
  *
  * 		// Bind some events
  * 		bindings.bind( new InputEvent( ... ), "action-identifier" );
+ * 		...
+ *
+ * 		// Bind an event and register action handler in one call
+ * 		bindings.bind( new InputEvent( ... ), new SomeOtherAction() );
  * 		...
  *
  * 		// Persist bindings
@@ -103,22 +109,33 @@ public class ActionBindings implements InputEventHandler {
 	}
 
 	/**
-	 * Persists this set of bindings to the given properties file.
-	 * @param props Properties set
+	 * Persists this set of bindings to the given output stream.
+	 * @param out Output stream
+	 * @throws IOException if the bindings cannot be persisted
 	 */
-	public void save( Properties props ) {
+	public void save( OutputStream out ) throws IOException {
+		// Build properties file
+		final Properties props = new Properties();
 		for( Entry<EventKey, String> entry : bindings.entrySet() ) {
 			final EventKey key = entry.getKey();
 			final String id = entry.getValue();
 			props.put( key.toString(), id );
 		}
+
+		// Persist bindings
+		props.store( out, null );
 	}
 
 	/**
 	 * Loads bindings from the given properties file.
 	 * @param props Properties set
 	 */
-	public void load( Properties props ) throws IOException {
+	public void load( InputStream in ) throws IOException {
+		// Load properties
+		final Properties props = new Properties();
+		props.load( in );
+
+		// Build bindings
 		for( Entry<Object, Object> entry : props.entrySet() ) {
 			final EventKey key = loadEventKey( (String) entry.getKey() );
 			final String id = (String) entry.getValue();
@@ -167,6 +184,7 @@ public class ActionBindings implements InputEventHandler {
 		}
 
 		// Re-pool event
+		EventKey.POOL.restore( event.getEventKey() );
 		InputEvent.POOL.restore( event );
 	}
 

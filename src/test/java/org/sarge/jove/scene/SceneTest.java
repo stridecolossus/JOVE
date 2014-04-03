@@ -8,41 +8,57 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
 
 public class SceneTest {
 	private Scene scene;
-	private RenderContext ctx;
-	private Projection projection;
 	private Viewport viewport;
-	private Rectangle rect;
+	private Projection projection;
+	private RenderManager mgr;
 
 	@Before
 	public void before() {
-		// Create projection
-		rect = new Rectangle( 0, 0, 800, 600 );
 		projection = mock( Projection.class );
-		when( projection.getMatrix( 0.1f, 1000f, rect.getDimensions() ) ).thenReturn( new Matrix( 4 ) );
-
-		// Create viewport
 		viewport = mock( Viewport.class );
-
-		// Create scene
-		scene = new Scene( viewport, rect, projection );
-
-		// Create rendering context
-		ctx = mock( RenderContext.class );
+		mgr = mock( RenderManager.class );
+		scene = new Scene( viewport, new Rectangle( 0, 0, 640, 480 ), projection, mgr );
 	}
 
 	@Test
 	public void constructor() {
+		assertEquals( new Rectangle( 0, 0, 640, 480 ), scene.getRectangle() );
 		assertNotNull( scene.getCamera() );
-		assertEquals( rect, scene.getRectangle() );
 		assertNotNull( scene.getDistanceComparator() );
 		assertEquals( projection, scene.getProjection() );
-		assertNotNull( scene.getProjectionMatrix() );
-		verify( projection ).getMatrix( 0.1f, 1000f, rect.getDimensions() );
+	}
+
+	@Test
+	public void setRectangle() {
+		final Rectangle rect = new Rectangle( 1, 2, 3, 4 );
+		scene.setRectangle( rect );
+		assertEquals( rect, scene.getRectangle() );
+		scene.getProjectionMatrix();
+		verify( projection ).getMatrix( 0.1f, 1000f, new Dimensions( 3, 4 ) );
+	}
+
+	@Test
+	public void setFrustumPlanes() {
+		scene.setNearPlane( 1 );
+		scene.setFarPlane( 2 );
+		scene.getProjectionMatrix();
+		verify( projection ).getMatrix( 1, 2, new Dimensions( 640, 480 ) );
+	}
+
+	@Test
+	public void setProjection() {
+		final Projection proj = mock( Projection.class );
+		scene.setProjection( proj );
+		assertEquals( proj, scene.getProjection() );
+		scene.getProjectionMatrix();
+		verify( proj ).getMatrix( 0.1f, 1000f, new Dimensions( 640, 480 ) );
 	}
 
 	/*
@@ -70,23 +86,27 @@ public class SceneTest {
 		assertEquals( 0, scene.getDistanceComparator().compare( node, node ) );
 	}
 
-	/*
 	@Test
 	public void render() {
-		// Render scene with a node
-		final NodeGroup root = mock( NodeGroup.class );
-		scene.setRoot( root );
-		scene.setClearColour( Colour.BLACK );
+		// Init scene
+		final Node node = mock( Node.class );
+		final RenderContext ctx = mock( RenderContext.class );
+		scene.setClearColour( Colour.WHITE );
+		scene.setRoot( node );
+
+		// Render scene and check viewport
 		scene.render( ctx );
+		verify( viewport ).init( new Rectangle( 0, 0, 640, 480 ) );
+		verify( viewport ).clear( Colour.WHITE );
 
-		// Check viewport is initialised
-		verify( viewport ).init( rect );
-		verify( viewport ).clear( Colour.BLACK );
-
-		// Check scene is rendered
-		verify( ctx ).setScene( scene );
-		verify( root ).accept( ctx );
-		verify( ctx ).setScene( null );
+		// Check manager
+		verify( node ).accept( mgr );
+		verify( mgr ).sort( scene.getDistanceComparator() );
+		verify( mgr ).render( ctx );
 	}
-	*/
+
+	// TODO
+	// - unproject
+	// - pick
+	// - contains
 }

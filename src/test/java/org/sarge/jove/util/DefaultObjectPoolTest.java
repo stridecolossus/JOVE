@@ -31,15 +31,20 @@ public class DefaultObjectPoolTest {
 
 	@Test
 	public void restore() {
-		// Restore an object to the pool
-		final Object obj = new Object();
+		// Get and restore an object to the pool
+		final Object obj = pool.get();
 		pool.restore( obj );
-		assertEquals( 0, pool.getNumberCreated() );
+		assertEquals( 1, pool.getNumberCreated() );
 		assertEquals( 1, pool.getSize() );
 
 		// Check same object is restored
 		assertEquals( obj, pool.get() );
 		assertEquals( 0, pool.getSize() );
+	}
+
+	@Test(expected=PoolException.class)
+	public void restoreNotMember() {
+		pool.restore( new Object() );
 	}
 
 	@Test

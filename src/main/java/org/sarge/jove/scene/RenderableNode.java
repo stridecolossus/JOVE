@@ -29,14 +29,6 @@ public class RenderableNode extends AbstractNode {
 		this.renderable = r;
 	}
 
-	/**
-	 * Ignores visitors.
-	 */
-	@Override
-	public void accept( Visitor visitor ) {
-		// Does nowt
-	}
-
 	@Override
 	public void apply( RenderContext ctx ) {
 		renderable.render( ctx );

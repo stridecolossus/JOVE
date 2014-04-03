@@ -6,8 +6,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Properties;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +51,10 @@ public class ActionBindingsTest {
 		bindings.bind( key, "name" );
 
 		// Create an event
-		final InputEvent event = new InputEvent( mock( Device.class ), key, null, null );
+		key = EventKey.POOL.get();
+		key.init( EventType.PRESS, "press" );
+		final InputEvent event = InputEvent.POOL.get();
+		event.init( mock( Device.class ), key );
 		bindings.handle( event );
 
 		// Check action invoked
@@ -59,8 +63,11 @@ public class ActionBindingsTest {
 
 		// Check event re-pooled
 		assertEquals( 1, InputEvent.POOL.getSize() );
+		assertEquals( 1, EventKey.POOL.getSize() );
 
 		// Un-bind action
+		EventKey.POOL.get();
+		InputEvent.POOL.get();
 		bindings.clear();
 		bindings.handle( event );
 		verifyNoMoreInteractions( action );
@@ -75,33 +82,19 @@ public class ActionBindingsTest {
 	}
 
 	@Test
-	public void persist() {
+	public void persist() throws IOException {
 		// Bind an action
 		bindings.add( action );
 		bindings.bind( key, "name" );
 
 		// Persist bindings
-		final Properties props = new Properties();
-		bindings.save( props );
+		final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		bindings.save( out );
+		assertEquals( true, out.toString().trim().endsWith( "PRESS+press=name" ) );
 
-		// Check saved bindings
-		assertEquals( 1, props.size() );
-		assertEquals( "name", props.get( EventType.PRESS.name() + "+press" ) );
-	}
-
-	@Test
-	public void load() throws IOException {
-		// Bind an action
-		bindings.add( action );
-		bindings.bind( key, "name" );
-
-		// Persist bindings
-		final Properties props = new Properties();
-		bindings.save( props );
-
-		// Load and check bindings restored
+		// Re-load bindings and check restored
 		bindings.clear();
-		bindings.load( props );
+		bindings.load( new ByteArrayInputStream( out.toByteArray() ) );
 		assertEquals( action, bindings.getAction( key ) );
 	}
 }

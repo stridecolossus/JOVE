@@ -25,11 +25,6 @@ import org.sarge.lib.io.DataSource;
  */
 public interface RenderingSystem {
 	/**
-	 * Creates the display.
-	 */
-	void open();
-
-	/**
 	 * Updates the display after rendering a frame.
 	 */
 	void update();

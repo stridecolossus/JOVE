@@ -2,18 +2,23 @@ package org.sarge.jove.app;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.FaceCulling;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.input.ActionBindings;
+import org.sarge.jove.input.Device;
 import org.sarge.jove.input.InputEvent;
+import org.sarge.jove.input.InputEventBuffer;
 import org.sarge.jove.material.DepthTestProperty;
-import org.sarge.jove.scene.NodeGroup;
 import org.sarge.jove.scene.PerspectiveProjection;
 import org.sarge.jove.scene.RenderContext;
+import org.sarge.jove.scene.RenderManager;
+import org.sarge.jove.scene.RenderQueue;
 import org.sarge.jove.scene.Scene;
+import org.sarge.jove.scene.SceneNode;
 import org.sarge.jove.task.RenderThreadTaskQueue;
 import org.sarge.jove.util.ImageLoader;
 import org.sarge.lib.io.DataSource;
@@ -29,6 +34,7 @@ public abstract class AbstractDemo implements Application {
 	private final FrameListenerGroup update = new FrameListenerGroup();
 	private final DataSource src = new FileDataSource( new File( "./resource" ) );
 	private final ActionBindings bindings = new ActionBindings();
+	private final InputEventBuffer handler = new InputEventBuffer( bindings );
 	private final RenderThreadTaskQueue queue = new RenderThreadTaskQueue();
 
 	private ImageLoader imageLoader;
@@ -43,17 +49,25 @@ public abstract class AbstractDemo implements Application {
 		// Create image loader
 		imageLoader = sys.getImageLoader( src );
 
+		// Create render manager
+		final RenderManager mgr = new RenderManager( Arrays.asList( getRenderQueues() ) );
+
 		// Create scene
-		final Scene scene = new Scene( sys.createViewport(), new Rectangle( size ), new PerspectiveProjection() );
+		final Scene scene = new Scene( sys.createViewport(), new Rectangle( size ), new PerspectiveProjection(), mgr );
 		scenes.add( scene );
 
 		// Create root node
-		final NodeGroup root = new NodeGroup( "root" );
+		final SceneNode root = new SceneNode( "root" );
 		scene.setRoot( root );
 
 		// Init default render properties
 		sys.setFaceCulling( FaceCulling.BACK );
 		sys.setDepthTest( new DepthTestProperty( "<" ) );
+
+		// Init devices
+		for( Device dev : sys.getDevices() ) {
+			dev.start( handler );
+		}
 
 		// Init scene
 		init( scene, root, sys );
@@ -66,7 +80,18 @@ public abstract class AbstractDemo implements Application {
 	 * @param sys		Rendering system
 	 * @throws Exception
 	 */
-	protected abstract void init( Scene scene, NodeGroup root, RenderingSystem sys ) throws Exception;
+	protected abstract void init( Scene scene, SceneNode root, RenderingSystem sys ) throws Exception;
+
+	/**
+	 * @return Render queues for this demo
+	 */
+	protected RenderQueue[] getRenderQueues() {
+		return new RenderQueue[] {
+				RenderQueue.Default.OPAQUE,
+				RenderQueue.Default.SKY,
+				RenderQueue.Default.TRANSLUCENT
+		};
+	}
 
 	@Override
 	public boolean isRunning() {
@@ -84,6 +109,7 @@ public abstract class AbstractDemo implements Application {
 	public void update( RenderContext ctx ) {
 		update.update( ctx.getTime(), ctx.getElapsed() );
 		queue.execute( ctx );
+		handler.execute();
 	}
 
 	/**

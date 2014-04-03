@@ -1,7 +1,7 @@
 package org.sarge.jove.particle;
 
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.RandomUtil;
+import org.sarge.jove.util.MathsUtil;
 
 /**
  * Generates random (normalised) directions.
@@ -21,9 +21,9 @@ public class SphereDirectionFactory implements DirectionFactory {
 	@Override
 	public Vector getDirection() {
 		final Vector vec = new Vector(
-			RandomUtil.nextFloat( -1, 1 ),
-			RandomUtil.nextFloat( -1, 1 ),
-			RandomUtil.nextFloat( -1, 1 )
+			MathsUtil.nextFloat( -1, 1 ),
+			MathsUtil.nextFloat( -1, 1 ),
+			MathsUtil.nextFloat( -1, 1 )
 		);
 
 		return vec.normalize().multiply( speed );

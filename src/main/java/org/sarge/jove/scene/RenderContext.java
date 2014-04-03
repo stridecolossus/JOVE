@@ -117,23 +117,6 @@ public class RenderContext {
 		this.model = model;
 	}
 
-	/**
-	 * Pushes a material onto the stack.
-	 * @param mat Material
-	 */
-	void push( Material mat ) {
-		Check.notNull( mat );
-		stack.add( mat );
-	}
-
-	/**
-	 * @return Most recent material from the stack or <tt>null</tt> if none
-	 */
-	Material pop() {
-		stack.removeLast();
-		return stack.peekLast();
-	}
-
 	@Override
 	public String toString() {
 		return ToString.toString( this );

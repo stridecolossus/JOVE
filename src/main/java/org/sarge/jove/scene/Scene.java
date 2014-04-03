@@ -193,6 +193,7 @@ public class Scene {
 	 */
 	public void render( RenderContext ctx ) {
 		// Init viewport
+		// TODO - should we be doing this frame or only on init or resize?
 		viewport.init( rect );
 
 		// Clear buffers
@@ -203,9 +204,10 @@ public class Scene {
 
 		// Render scene
 		ctx.setScene( this );
-		mgr.visit( root );
+		root.accept( mgr );
 		mgr.sort( comparator );
 		mgr.render( ctx );
+		mgr.clear();
 		ctx.setScene( null );
 	}
 

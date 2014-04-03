@@ -87,48 +87,36 @@ public abstract class NodeGroup extends AbstractNode {
 	}
 
 	/**
-	 * Maintains scene-graph structure and notifies parent nodes of changes.
+	 * Adds the given node to this group.
+	 * @param node Node to add
+	 * @throws IllegalArgumentException if the node cannot be added to this group
 	 */
-	@Override
-	public void setParent( NodeGroup parent ) {
-		// Update scene-graph
-		if( parent == null ) {
-			// Remove from existing parent
-			final NodeGroup current = this.getParent();
-			if( current != null ) {
-				current.children.remove( this );
-				current.propagate( Flag.GRAPH );
+	void add( Node node ) {
+		if( node.getParent() != null ) throw new IllegalArgumentException( "Node already has a parent: " + this );
+		if( node == this ) throw new IllegalArgumentException( "Cannot add to self" );
+		checkNotCyclic( node );
+
+		children.add( node );
+		propagate( Flag.GRAPH );
+	}
+
+	private void checkNotCyclic( Node node ) {
+		if( node instanceof NodeGroup ) {
+			final NodeGroup group = (NodeGroup) node;
+			for( Node n : group.children ) {
+				if( n == this ) throw new IllegalArgumentException( "Cyclic dependency" );
+				checkNotCyclic( n );
 			}
 		}
-		else {
-			// Add to scene-graph
-			verify( parent );
-			parent.children.add( this );
-			parent.propagate( Flag.GRAPH );
-		}
-
-		// Delegate
-		super.setParent( parent );
 	}
 
 	/**
-	 * Verifies this node can be added to the given parent.
-	 * @param parent New parent node
+	 * Removes the given node from this group.
+	 * @param node Node to remove
 	 */
-	private void verify( NodeGroup parent ) {
-		assert !parent.children.contains( this );
-		if( this.getParent() != null ) throw new IllegalArgumentException( "Node already has a parent: " + this );
-		if( parent == this ) throw new IllegalArgumentException( "Cannot add to self" );
-		verifyNotCyclic( this, parent );
-	}
-
-	private static void verifyNotCyclic( NodeGroup node, NodeGroup parent ) {
-		for( Node e : node.children ) {
-			if( e == parent ) throw new IllegalArgumentException( "Cyclic dependency" );
-			if( e instanceof NodeGroup ) {
-				verifyNotCyclic( (NodeGroup) e, parent );
-			}
-		}
+	void remove( Node node ) {
+		children.remove( node );
+		propagate( Flag.GRAPH );
 	}
 
 	/**

@@ -38,6 +38,15 @@ public abstract class AbstractNode implements Node {
 	 * @param parent New parent or <tt>null</tt> if none
 	 */
 	public void setParent( NodeGroup parent ) {
+		if( this.parent != null ) {
+			this.parent.remove( this );
+			this.parent = null;
+		}
+
+		if( parent != null ) {
+			parent.add( this );
+		}
+
 		this.parent = parent;
 	}
 
@@ -74,6 +83,11 @@ public abstract class AbstractNode implements Node {
 		else {
 			return parent.getWorldMatrix();
 		}
+	}
+
+	@Override
+	public void accept( Visitor visitor ) {
+		visitor.visit( this );
 	}
 
 	@Override

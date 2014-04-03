@@ -2,6 +2,7 @@ package org.sarge.jove.scene;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
@@ -18,14 +19,17 @@ public class AbstractNodeTest {
 		node = new AbstractNode( "node", queue ) {
 			@Override
 			public void accept( Visitor visitor ) {
+				// Does nowt
 			}
 
 			@Override
 			public void apply( RenderContext ctx ) {
+				// Does nowt
 			}
 
 			@Override
 			public void reset( RenderContext ctx ) {
+				// Does nowt
 			}
 		};
 	}
@@ -45,6 +49,34 @@ public class AbstractNodeTest {
 		node.setParent( parent );
 		assertEquals( parent, node.getParent() );
 		assertEquals( parent, node.getRoot() );
+		verify( parent ).add( node );
+	}
+
+	@Test
+	public void moveParent() {
+		// Add to parent
+		final NodeGroup parent = mock( NodeGroup.class );
+		node.setParent( parent );
+
+		// Move to another
+		final NodeGroup other = mock( NodeGroup.class );
+		node.setParent( other );
+
+		// Check moved
+		verify( parent ).remove( node );
+		verify( other ).add( node );
+		assertEquals( other, node.getParent() );
+	}
+
+	@Test
+	public void clearParent() {
+		final NodeGroup parent = mock( NodeGroup.class );
+		node.setParent( parent );
+		node.setParent( null );
+		assertEquals( null, node.getParent() );
+		assertEquals( node, node.getRoot() );
+		verify( parent ).add( node );
+		verify( parent ).remove( node );
 	}
 
 	@Test

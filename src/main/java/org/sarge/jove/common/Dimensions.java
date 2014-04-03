@@ -7,7 +7,7 @@ import org.sarge.lib.util.EqualsBuilder;
  * @author Sarge
  */
 public class Dimensions {
-	private final int w, h;
+	protected final int w, h;
 
 	/**
 	 * Constructor.

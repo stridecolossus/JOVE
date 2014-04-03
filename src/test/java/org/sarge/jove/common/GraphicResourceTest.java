@@ -16,8 +16,8 @@ public class GraphicResourceTest {
 
 		final ReferenceQueue<Thing> queue = new ReferenceQueue<>();
 
-		new WeakReference<Thing>( t, queue );
-		//final WeakReference<Thing> ref = new WeakReference<Thing>( t, queue ) {
+		//new WeakReference<Thing>( t, queue );
+		final WeakReference<Thing> ref = new WeakReference<>( t, queue );
 
 
 

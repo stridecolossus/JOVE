@@ -81,6 +81,28 @@ public class BoundingBox implements BoundingVolume {
 	}
 
 	/**
+	 * @return Minimum point of this box
+	 */
+	public Point getMinimum() {
+		return new Point(
+			centre.x - extents.x,
+			centre.y - extents.y,
+			centre.z - extents.z
+		);
+	}
+
+	/**
+	 * @return Minimum point of this box
+	 */
+	public Point getMaximum() {
+		return new Point(
+			centre.x + extents.x,
+			centre.y + extents.y,
+			centre.z + extents.z
+		);
+	}
+
+	/**
 	 * @param pt Point to test
 	 * @return Whether this bounding box contains the given point
 	 */

@@ -20,18 +20,45 @@ public abstract class AbstractGraphicResource implements GraphicResource {
 
 	private static final int DELETED = -1;
 
-//	private class ResourceRef extends WeakReference<GraphicResource> {
+//	private static final Map<Class<? extends GraphicResource>, Releaser> registry = new StrictMap<>();
+//	private static final Map<Class<? extends GraphicResource>, ReferenceQueue<? extends GraphicResource>> queues = new StrictMap<>();
+
+//	/**
+//	 * Releaser for graphic resources.
+//	 */
+//	protected static interface Releaser {
+//		/**
+//		 * Releases the given resource.
+//		 * @param id Resource id
+//		 */
+//		void release( int id );
+//	}
+//
+//	/**
+//	 * Registers the releaser for the given class.
+//	 * @param clazz			Graphic resource class
+//	 * @param releaser		Releaser
+//	 */
+//	protected static <T extends GraphicResource> void register( Class<T> clazz, Releaser releaser ) {
+//		registry.put( clazz, releaser );
+//		queues.put( clazz, new ReferenceQueue<T>() );
+//	}
+//
+//	private static class ResourceReference <T extends GraphicResource> extends WeakReference<T> {
 //		private final int id;
 //
-//		public ResourceRef( GraphicResource referent, int id ) {
-//			super( referent );
+//		public ResourceReference( T res, int id, ReferenceQueue<T> q ) {
+//			super( res, q );
 //			this.id = id;
 //		}
 //	}
-
-//	private static final Map<Class<? extends GraphicResource>, ResourceRef> resources = new StrictMap<>();
-
-//	private ResourceRef ref;
+//
+//	public static void clean() {
+//		for( ReferenceQueue<?> q : queues.values() ) {
+//			final ResourceReference<?> ref = q.poll();
+//
+//		}
+//	}
 
 	private int id = DELETED;
 
@@ -49,6 +76,11 @@ public abstract class AbstractGraphicResource implements GraphicResource {
 		if( id < 1 ) throw new IllegalArgumentException( "Invalid resource ID: " + id );
 		if( this.id != DELETED ) throw new IllegalArgumentException( "Resource already allocated: " + this );
 		this.id = id;
+
+//		final ReferenceQueue<?> q = queues.get( this.getClass() );
+//		if( q == null ) throw new RuntimeException( "Resource class not registered: " + this.getClass().getName() );
+//
+//		new ResourceReference<>( this, id, q );
 	}
 
 	/**
