@@ -4,76 +4,72 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.sarge.jove.animation.Player.State;
+import org.sarge.jove.animation.Animator.Animation;
+import org.sarge.jove.util.MathsUtil;
 
-public class AnimatorTest  {
+public class AnimatorTest {
+	private static final long DURATION = 5000;
+	
 	private Animator animator;
 	private Animation animation;
 
 	@Before
 	public void before() {
-		animation = mock( Animation.class );
-		when( animation.getDuration() ).thenReturn( 5000L );
-		when( animation.getMinimum() ).thenReturn( 3f );
-		when( animation.getMaximum() ).thenReturn( 5f );
-		animator = new Animator( animation );
-		animator.setState( State.PLAYING );
+		animation = mock(Animation.class);
+		animator = new Animator(animation, 5000L);
+		animator.play();
 	}
 
 	@Test
 	public void constructor() {
-		assertFloatEquals( 1f, animator.getSpeed() );
-		assertEquals( 0, animator.getTime() );
-	}
-
-	private void check( float expected ) {
-		final ArgumentCaptor<Float> captor = ArgumentCaptor.forClass( Float.class );
-		verify( animation ).update( captor.capture() );
-		assertFloatEquals( expected, captor.getValue() );
+		assertFloatEquals(1f, animator.getSpeed());
+		assertEquals(0, animator.getTime());
 	}
 
 	@Test
 	public void update() {
-		animator.update( 0, 2500L );
-		assertEquals( 2500L, animator.getTime() );
-		check( 4f );
+		final long elapsed = 2500;
+		animator.update(0, elapsed);
+		assertEquals(elapsed, animator.getTime());
+		verify(animation).update(elapsed, DURATION);
 	}
 
 	@Test
 	public void updateRepeating() {
-		animator.update( 0, 7500L );
-		assertEquals( 2500L, animator.getTime() );
-		check( 4f );
+		final long elapsed = 7500;
+		animator.update(0, elapsed);
+		assertEquals(elapsed % DURATION, animator.getTime());
+		verify(animation).update(elapsed % DURATION, DURATION);
 	}
 
 	@Test
 	public void updateNotRepeating() {
-		animator.setRepeating( false );
-		animator.update( 0, 6000L );
-		assertEquals( 5000L, animator.getTime() );
-		assertEquals( false, animator.isPlaying() );
-		check( 5f );
+		final long elapsed = 7500;
+		animator.setRepeating(false);
+		animator.update(0, elapsed);
+		assertEquals(DURATION, animator.getTime());
+		assertEquals(false, animator.isPlaying());
+		verify(animation).update(DURATION, DURATION);
 	}
 
 	@Test
 	public void setSpeed() {
-		animator.setSpeed( 0.5f );
-		animator.update( 0, 5000L );
-		assertEquals( 2500L, animator.getTime() );
-		check( 4f );
+		final long elapsed = 5000;
+		animator.setSpeed(MathsUtil.HALF);
+		animator.update(0, elapsed);
+		assertEquals(elapsed / 2, animator.getTime());
+		verify(animation).update(elapsed / 2, DURATION);
 	}
 
 	@Test
 	public void notPlaying() {
-		animator.setState( State.PAUSED );
-		animator.update( 0, 2500L );
-		assertEquals( 0, animator.getTime() );
-		verifyZeroInteractions( animation );
+		animator.pause();
+		animator.update(0, 2500L);
+		assertEquals(0, animator.getTime());
+		verifyZeroInteractions(animation);
 	}
 }

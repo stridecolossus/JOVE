@@ -14,50 +14,48 @@ public class InputEventTest {
 
 	@Before
 	public void before() {
-		event = InputEvent.POOL.get();
-		key = EventKey.POOL.get();
-		dev = mock( Device.class );
+		key = new EventKey(EventType.PRESS, "name");
+		dev = mock(Device.class);
+		event = new InputEvent(dev, key);
 	}
 
 	@Test
-	public void init() {
-		key.init( EventType.PRESS, "key" );
-		event.init( dev, key );
-		assertEquals( dev, event.getDevice() );
-		assertEquals( key, event.getEventKey() );
-		assertEquals( null, event.getLocation() );
-		assertEquals( null, event.getZoom() );
+	public void constructor() {
+		assertEquals(dev, event.getDevice());
+		assertEquals(key, event.getEventKey());
+		assertEquals(null, event.getLocation());
+		assertEquals(null, event.getZoom());
 	}
 
 	@Test
 	public void setLocation() {
-		key.init( EventType.PRESS, "key" );
-		event.init( dev, key );
+		key.init(EventType.PRESS, "key");
+		event.init(dev, key);
 		final Location loc = new Location();
-		event.setLocation( loc );
-		assertEquals( loc, event.getLocation() );
+		event.setLocation(loc);
+		assertEquals(loc, event.getLocation());
 	}
 
-	@Test(expected=IllegalArgumentException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void setLocationInvalid() {
-		key.init( EventType.ORIENTATE, "key" );
-		event.init( dev, key );
-		event.setLocation( new Location() );
+		key.init(EventType.ORIENTATE, "key");
+		event.init(dev, key);
+		event.setLocation(new Location());
 	}
 
 	@Test
 	public void setZoom() {
-		key.init( EventType.ZOOM, null );
-		event.init( dev, key );
+		key.init(EventType.ZOOM, null);
+		event.init(dev, key);
 		final Integer zoom = 42;
-		event.setZoom( zoom );
-		assertEquals( zoom, event.getZoom() );
+		event.setZoom(zoom);
+		assertEquals(zoom, event.getZoom());
 	}
 
-	@Test(expected=IllegalArgumentException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void setZoomInvalid() {
-		key.init( EventType.ORIENTATE, null );
-		event.init( dev, key );
-		event.setZoom( 42 );
+		key.init(EventType.ORIENTATE, null);
+		event.init(dev, key);
+		event.setZoom(42);
 	}
 }

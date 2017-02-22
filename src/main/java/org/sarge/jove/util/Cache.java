@@ -18,6 +18,7 @@ public class Cache<T> {
 	/**
 	 * Cache limiting policy.
 	 */
+	@FunctionalInterface
 	public static interface CacheLimit {
 		/**
 		 * Applies this limit to the given cache.

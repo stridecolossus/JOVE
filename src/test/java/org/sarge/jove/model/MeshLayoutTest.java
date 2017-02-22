@@ -11,7 +11,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.BufferFactory;
 
@@ -34,7 +34,7 @@ public class MeshLayoutTest {
 		// Add vertex
 		final Vertex vertex = new Vertex( new Point( 7, 8, 9 ) );
 		vertex.setColour( Colour.WHITE );
-		vertex.setTextureCoords( new TextureCoord( 0.4f, 0.5f ) );
+		vertex.setTextureCoords( new TextureCoordinate( 0.4f, 0.5f ) );
 		final FloatBuffer buffer = BufferFactory.createFloatBuffer( 100 );
 		one.append( vertex, buffer );
 		two.append( vertex, buffer );

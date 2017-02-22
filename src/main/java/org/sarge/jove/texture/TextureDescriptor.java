@@ -8,7 +8,7 @@ import org.sarge.lib.util.ToString;
  * Descriptor for texture parameters.
  * @author Sarge
  */
-public class TextureDescriptor {
+public final class TextureDescriptor {
 	/**
 	 * Texture wrapping policy.
 	 */
@@ -40,8 +40,8 @@ public class TextureDescriptor {
 	 * @param size	Image dimensions
 	 * @param cube	Whether the texture is a cube-map
 	 */
-	public TextureDescriptor( Dimensions size, boolean cube ) {
-		Check.notNull( size );
+	public TextureDescriptor(Dimensions size, boolean cube) {
+		Check.notNull(size);
 		this.size = size;
 		this.dim = cube ? 3 : 2;
 	}
@@ -50,16 +50,16 @@ public class TextureDescriptor {
 	 * Constructor for a 2D texture.
 	 * @param size	Image dimensions
 	 */
-	public TextureDescriptor( Dimensions size ) {
-		this( size, false );
+	public TextureDescriptor(Dimensions size) {
+		this(size, false);
 	}
 
 	/**
 	 * Constructor for 1D texture.
 	 * @param w width
 	 */
-	public TextureDescriptor( int w ) {
-		this.size = new Dimensions( w, 0 );
+	public TextureDescriptor(int w) {
+		this.size = new Dimensions(w, 0);
 		this.dim = 1;
 	}
 
@@ -88,7 +88,7 @@ public class TextureDescriptor {
 	 * Sets whether the texture has an alpha channel.
 	 * @param alpha Whether texture has an alpha channel, default is <tt>true</tt>
 	 */
-	public void setTranslucent( boolean alpha ) {
+	public void setTranslucent(boolean alpha) {
 		this.alpha = alpha;
 	}
 
@@ -103,11 +103,10 @@ public class TextureDescriptor {
 	 * Sets the wrapping policy.
 	 * @param wrap Wrap policy, default is {@link WrapPolicy#REPEAT}
 	 */
-	public void setWrapPolicy( WrapPolicy wrap ) {
-		Check.notNull( wrap );
+	public void setWrapPolicy(WrapPolicy wrap) {
+		Check.notNull(wrap);
 		this.wrap = wrap;
 	}
-
 
 	/**
 	 * @return Whether the texture is mip-mapped
@@ -120,7 +119,7 @@ public class TextureDescriptor {
 	 * Sets whether the texture is mip-mapped.
 	 * @param mipmap Whether texture is mip-mapped, default is <tt>true</tt>
 	 */
-	public void setMipMapped( boolean mipmap ) {
+	public void setMipMapped(boolean mipmap) {
 		this.mipmap = mipmap;
 	}
 
@@ -135,8 +134,8 @@ public class TextureDescriptor {
 	 * Sets the wrapping policy.
 	 * @param min Minification filter, default is {@link Filter#LINEAR}
 	 */
-	public void setMinificationFilter( Filter min ) {
-		Check.notNull( min );
+	public void setMinificationFilter(Filter min) {
+		Check.notNull(min);
 		this.min = min;
 	}
 
@@ -151,13 +150,13 @@ public class TextureDescriptor {
 	 * Sets the magnification filter.
 	 * @param mag Magnification filter, default is {@link Filter#LINEAR}
 	 */
-	public void setMagnificationFilter( Filter mag ) {
-		Check.notNull( mag );
+	public void setMagnificationFilter(Filter mag) {
+		Check.notNull(mag);
 		this.mag = mag;
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

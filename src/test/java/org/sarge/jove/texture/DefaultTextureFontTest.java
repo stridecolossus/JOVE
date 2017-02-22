@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 
 public class DefaultTextureFontTest {
 	private DefaultTextureFont font;
@@ -27,12 +27,12 @@ public class DefaultTextureFontTest {
 
 	@Test
 	public void getTextureCoords() {
-		final TextureCoord[] coords = font.getTextureCoords( (char) 15 );
+		final TextureCoordinate[] coords = font.getTextureCoords( (char) 15 );
 		assertNotNull( coords );
 		assertEquals( 4, coords.length );
-		assertEquals( new TextureCoord( 0.5f, 0.9f ), coords[ 0 ] );
-		assertEquals( new TextureCoord( 0.5f, 0.8f ), coords[ 1 ] );
-		assertEquals( new TextureCoord( 0.6f, 0.9f ), coords[ 2 ] );
-		assertEquals( new TextureCoord( 0.6f, 0.8f ), coords[ 3 ] );
+		assertEquals( new TextureCoordinate( 0.5f, 0.9f ), coords[ 0 ] );
+		assertEquals( new TextureCoordinate( 0.5f, 0.8f ), coords[ 1 ] );
+		assertEquals( new TextureCoordinate( 0.6f, 0.9f ), coords[ 2 ] );
+		assertEquals( new TextureCoordinate( 0.6f, 0.8f ), coords[ 3 ] );
 	}
 }

@@ -14,25 +14,15 @@ public class Rotation implements Transform {
 	private Matrix matrix;
 	private float angle;
 
-	private boolean dirty = true;
-
 	/**
 	 * Constructor.
 	 * @param axis		Rotation axis
 	 * @param angle		Angle (radians)
 	 */
-	public Rotation( Vector axis, float angle ) {
-		Check.notNull( axis );
+	public Rotation(Vector axis, float angle) {
+		Check.notNull(axis);
 		this.axis = axis.normalize();
-		setAngle( angle );
-	}
-
-	/**
-	 * Constructor for zero rotation.
-	 * @param axis Rotation axis
-	 */
-	public Rotation( Vector axis ) {
-		this( axis, 0 );
+		setAngle(angle);
 	}
 
 	/**
@@ -53,36 +43,31 @@ public class Rotation implements Transform {
 	 * Sets the rotation angle.
 	 * @param angle Angle (radians)
 	 */
-	public void setAngle( float angle ) {
+	protected void setAngle(float angle) {
 		this.angle = angle;
-		dirty = true;
+		// TODO - use proper rot -> matrix
+		final Quaternion q = new Quaternion(axis, angle);
+		matrix = q.toMatrix();
 	}
 
 	@Override
 	public boolean isDirty() {
-		return dirty;
+		return false;
 	}
 
 	@Override
 	public Matrix toMatrix() {
-		if( dirty ) {
-			// TODO - use proper rot -> matrix
-			final Quaternion q = new Quaternion( axis, angle );
-			matrix = q.toMatrix();
-			dirty = false;
-		}
-
 		return matrix;
 	}
-
+	
 	@Override
-	public boolean equals( Object obj ) {
-		if( obj == this ) return true;
-		if( obj == null ) return false;
-		if( obj instanceof Rotation ) {
+	public boolean equals(Object obj) {
+		if(obj == this) return true;
+		if(obj == null) return false;
+		if(obj instanceof Rotation) {
 			final Rotation that = (Rotation) obj;
-			if( !this.axis.equals( that.axis ) ) return false;
-			if( !MathsUtil.isEqual( this.angle, that.angle ) ) return false;
+			if(!this.axis.equals(that.axis)) return false;
+			if(!MathsUtil.isEqual(this.angle, that.angle)) return false;
 			return true;
 		}
 		else {
@@ -92,6 +77,6 @@ public class Rotation implements Transform {
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

@@ -11,32 +11,32 @@ public class PointTest {
 
 	@Before
 	public void before() {
-		pt = new Point( 1, 2, 3 );
+		pt = new Point(1, 2, 3);
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals( new Point( 1, 2, 3 ), pt );
+		assertEquals(new Point(1, 2, 3), pt);
 	}
 
 	@Test
 	public void distanceSquared() {
-		assertFloatEquals( 0, pt.distanceSquared( pt ) );
-		assertFloatEquals( 27, pt.distanceSquared( new Point( 4, 5, 6 ) ) );
+		assertFloatEquals(0, pt.distanceSquared(pt));
+		assertFloatEquals(27, pt.distanceSquared(new Point(4, 5, 6)));
 	}
 
 	@Test
 	public void add() {
-		assertEquals( new Point( 2, 4, 6 ), pt.add( new Point( 1, 2, 3 ) ) );
+		assertEquals(new Point(2, 4, 6), pt.add(new Point(1, 2, 3)));
 	}
 
 	@Test
 	public void multiply() {
-		assertEquals( new Point( 2, 4, 6 ), pt.multiply( 2 ) );
+		assertEquals(new Point(2, 4, 6), pt.scale(2));
 	}
 
 	@Test
 	public void project() {
-		assertEquals( new Point( 3, 6, 9 ), pt.project( Vector.Z_AXIS ) );
+		assertEquals(new Point(3, 6, 9), pt.project(Vector.Z_AXIS));
 	}
 }

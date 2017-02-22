@@ -8,7 +8,7 @@ import org.sarge.lib.util.ToString;
  * @author Sarge
  * @see BoundingVolume
  */
-public class Ray {
+public final class Ray {
 	private final Point origin;
 	private final Vector dir;
 
@@ -17,12 +17,11 @@ public class Ray {
 	 * @param origin	Ray origin
 	 * @param dir		Ray direction vector
 	 */
-	public Ray( Point origin, Vector dir ) {
-		Check.notNull( origin );
-		Check.notNull( dir );
-
-		this.origin = new MutablePoint( origin );
-		this.dir = new MutableVector( dir ).normalize();
+	public Ray(Point origin, Vector dir) {
+		Check.notNull(origin);
+		Check.notNull(dir);
+		this.origin = origin;
+		this.dir = dir.normalize();
 	}
 
 	/**
@@ -41,6 +40,6 @@ public class Ray {
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

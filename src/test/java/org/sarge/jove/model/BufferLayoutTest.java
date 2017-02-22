@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.BufferFactory;
@@ -47,7 +47,7 @@ public class BufferLayoutTest {
 		// Create a vertex
 		final Vertex vertex = new Vertex( new Point() );
 		vertex.setNormal( new Vector( 1, 2, 3 ) );
-		vertex.setTextureCoords( new TextureCoord( 0.4f, 0.5f ) );
+		vertex.setTextureCoords( new TextureCoordinate( 0.4f, 0.5f ) );
 
 		// Append vertex to buffer
 		final FloatBuffer buffer = BufferFactory.createFloatBuffer( 100 );

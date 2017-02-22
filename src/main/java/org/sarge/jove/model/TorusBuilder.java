@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
@@ -49,7 +49,7 @@ public class TorusBuilder {
 				// Create vertex
 				final Point pos = new Point( cosTheta * d, sinTheta * d, r * sinPhi );
 				final Vector normal = new Vector( cosTheta * cosPhi, sinTheta * cosPhi, sinPhi );
-				final TextureCoord coords = new TextureCoord( s, t );
+				final TextureCoordinate coords = new TextureCoordinate( s, t );
 
 				// Add vertex to model
 				final Vertex v = new Vertex( pos );

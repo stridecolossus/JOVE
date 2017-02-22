@@ -1,10 +1,7 @@
 package org.sarge.jove.model;
 
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.MutableColour;
-import org.sarge.jove.common.TextureCoord;
-import org.sarge.jove.geometry.MutablePoint;
-import org.sarge.jove.geometry.MutableVector;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
@@ -16,18 +13,18 @@ import org.sarge.lib.util.ToString;
  * @author Sarge
  */
 public class Vertex {
-	protected MutablePoint pos;
-	protected MutableVector normal;
-	protected MutableColour col;
-	protected TextureCoord coords;
+	protected Point pos;
+	protected Vector normal;
+	protected Colour col;
+	protected TextureCoordinate coords;
 
 	/**
 	 * Constructor.
 	 * @param pos Vertex position
 	 */
-	public Vertex( Point pos ) {
-		Check.notNull( pos );
-		this.pos = new MutablePoint( pos );
+	public Vertex(Point pos) {
+		Check.notNull(pos);
+		this.pos = pos;
 	}
 
 	/**
@@ -39,12 +36,11 @@ public class Vertex {
 	 * @param col		Colour
 	 * @param coords	Texture coords
 	 */
-	public Vertex( Point pos, Vector normal, Colour col, TextureCoord coords ) {
-		Check.notNull( pos );
-		this.pos = new MutablePoint( pos );
-		setNormal( normal );
-		setColour( col );
-		setTextureCoords( coords );
+	public Vertex(Point pos, Vector normal, Colour col, TextureCoordinate coords) {
+		this(pos);
+		setNormal(normal);
+		setColour(col);
+		setTextureCoords(coords);
 	}
 
 	/**
@@ -65,16 +61,16 @@ public class Vertex {
 	 * Sets the vertex normal.
 	 * @param normal Normal
 	 */
-	public void setNormal( Vector normal ) {
-		this.normal = new MutableVector( normal );
+	public void setNormal(Vector normal) {
+		this.normal = normal;
 	}
 
 	/**
 	 * Adds the given normal to this vertex.
 	 * @param n Normal to add
 	 */
-	public void addNormal( Vector n ) {
-		this.normal.add( n );
+	public void addNormal(Vector n) {
+		this.normal.add(n);
 	}
 
 	/**
@@ -88,14 +84,14 @@ public class Vertex {
 	 * Sets the vertex colour.
 	 * @param col Vertex colour
 	 */
-	public void setColour( Colour col ) {
-		this.col = new MutableColour( col );
+	public void setColour(Colour col) {
+		this.col = col;
 	}
 
 	/**
 	 * @return Vertex texture coordinates
 	 */
-	public TextureCoord getTextureCoords() {
+	public TextureCoordinate getTextureCoords() {
 		return coords;
 	}
 
@@ -103,17 +99,17 @@ public class Vertex {
 	 * Sets the vertex texture coordinates.
 	 * @param coords Texture coordinates
 	 */
-	public void setTextureCoords( TextureCoord coords ) {
+	public void setTextureCoords(TextureCoordinate coords) {
 		this.coords = coords;
 	}
 
 	@Override
-	public boolean equals( Object obj ) {
-		return EqualsBuilder.equals( this, obj );
+	public boolean equals(Object obj) {
+		return EqualsBuilder.equals(this, obj);
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

@@ -1,8 +1,8 @@
 package org.sarge.jove.model;
 
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.lib.util.Check;
 
@@ -11,10 +11,10 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class BufferedMesh {
-	private final MeshLayout layout;
-	private final FloatBuffer[] vertexBuffers;
-	private final int len;
-	private final IntBuffer indexBuffer;
+//	private final MeshLayout layout;
+//	private final FloatBuffer[] vertexBuffers;
+//	private final int len;
+//	private final IntBuffer indexBuffer;
 
 	/**
 	 * Constructor.
@@ -72,10 +72,36 @@ public class BufferedMesh {
 		return vertexBuffers;
 	}
 
-	/**
-	 * @return Index buffer or <tt>null</tt> if not indexed
-	 */
-	public IntBuffer getIndexBuffer() {
-		return indexBuffer;
+//	/**
+//	 * @return Index buffer or <tt>null</tt> if not indexed
+//	 */
+//	public IntBuffer getIndexBuffer() {
+//		return indexBuffer;
+//	}
+	
+	public static class Builder {
+		private FloatBuffer buffer;
+		
+		public BufferedMeshBuilder(int size) {
+			this.buffer = BufferFactory.createFloatBuffer(size);
+		}
+		
+		public void add(float... values) {
+			for(float f : values) {
+				buffer.put(f);
+			}
+		}
+		
+		public void add(Bufferable... objects) {
+			for(Bufferable obj : objects) {
+				obj.append(buffer);
+			}
+		}
+		
+		public FloatBuffer build() {
+			final FloatBuffer result = buffer;
+			buffer = BufferFactory.createFloatBuffer(buffer.limit());
+			return result;
+		}
 	}
 }

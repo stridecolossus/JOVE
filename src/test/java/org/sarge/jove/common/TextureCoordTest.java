@@ -11,11 +11,11 @@ import org.junit.Test;
 import org.sarge.jove.util.BufferFactory;
 
 public class TextureCoordTest {
-	private TextureCoord coords;
+	private TextureCoordinate coords;
 
 	@Before
 	public void before() {
-		coords = new TextureCoord( 0.1f, 0.2f );
+		coords = new TextureCoordinate( 0.1f, 0.2f );
 	}
 
 	@Test
@@ -30,8 +30,8 @@ public class TextureCoordTest {
 	@Test
 	public void equals() {
 		assertTrue( coords.equals( coords ) );
-		assertTrue( coords.equals( new TextureCoord( 0.1f, 0.2f ) ) );
+		assertTrue( coords.equals( new TextureCoordinate( 0.1f, 0.2f ) ) );
 		assertFalse( coords.equals( null ) );
-		assertFalse( coords.equals( new TextureCoord( 0.3f, 0.4f ) ) );
+		assertFalse( coords.equals( new TextureCoordinate( 0.3f, 0.4f ) ) );
 	}
 }

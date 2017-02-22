@@ -16,16 +16,16 @@ public class FrameListenerGroup implements FrameListener {
 	 * Adds a listener to this group.
 	 * @param listener Listener to add
 	 */
-	public void add( FrameListener listener ) {
-		listeners.add( listener );
+	public void add(FrameListener listener) {
+		listeners.add(listener);
 	}
 
 	/**
 	 * Removes a listener from this group.
 	 * @param listener Listener to remove
 	 */
-	public void remove( FrameListener listener ) {
-		listeners.remove( listener );
+	public void remove(FrameListener listener) {
+		listeners.remove(listener);
 	}
 
 	/**
@@ -36,14 +36,14 @@ public class FrameListenerGroup implements FrameListener {
 	}
 
 	@Override
-	public void update( long time, long elapsed ) {
-		for( FrameListener listener : listeners ) {
-			listener.update( time, elapsed );
+	public void update(long time, long elapsed) {
+		for(FrameListener listener : listeners) {
+			listener.update(time, elapsed);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

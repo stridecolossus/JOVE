@@ -7,7 +7,7 @@ import org.sarge.lib.util.EqualsBuilder;
  * 2D rectangle.
  * @author Sarge
  */
-public class Rectangle {
+public final class Rectangle {
 	private final Location loc;
 	private final Dimensions dim;
 
@@ -18,8 +18,8 @@ public class Rectangle {
 	 * @param w
 	 * @param h
 	 */
-	public Rectangle( int x, int y, int w, int h ) {
-		this( new Location( x, y ), new Dimensions( w, h ) );
+	public Rectangle(int x, int y, int w, int h) {
+		this(new Location(x, y), new Dimensions(w, h));
 	}
 
 	/**
@@ -27,9 +27,9 @@ public class Rectangle {
 	 * @param loc
 	 * @param dim
 	 */
-	public Rectangle( Location loc, Dimensions dim ) {
-		Check.notNull( loc );
-		Check.notNull( dim );
+	public Rectangle(Location loc, Dimensions dim) {
+		Check.notNull(loc);
+		Check.notNull(dim);
 		this.loc = loc;
 		this.dim = dim;
 	}
@@ -38,8 +38,8 @@ public class Rectangle {
 	 * Constructor at origin.
 	 * @param dim Width-height
 	 */
-	public Rectangle( Dimensions dim ) {
-		this( new Location(), dim );
+	public Rectangle(Dimensions dim) {
+		this(new Location(), dim);
 	}
 
 	public int getX() {
@@ -67,8 +67,8 @@ public class Rectangle {
 	}
 
 	@Override
-	public boolean equals( Object obj ) {
-		return EqualsBuilder.equals( this, obj );
+	public boolean equals(Object obj) {
+		return EqualsBuilder.equals(this, obj);
 	}
 
 	@Override

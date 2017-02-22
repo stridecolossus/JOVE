@@ -9,22 +9,12 @@ public interface PruneStrategy {
 	/**
 	 * Prunes the oldest entries.
 	 */
-	PruneStrategy OLDEST = new PruneStrategy() {
-		@Override
-		public long evaluate( CacheEntry<?> entry ) {
-			return entry.getTime();
-		}
-	};
+	PruneStrategy OLDEST = entry -> entry.getTime();
 
 	/**
 	 * Prune least-used entries.
 	 */
-	PruneStrategy LEAST_USED = new PruneStrategy() {
-		@Override
-		public long evaluate( CacheEntry<?> entry ) {
-			return entry.getCount();
-		}
-	};
+	PruneStrategy LEAST_USED = entry -> entry.getCount();
 
 	/**
 	 * Calculates a <i>score</i> for the given entry according to this pruning strategy.
@@ -32,5 +22,5 @@ public interface PruneStrategy {
 	 * @return Score for the given entry
 	 * @see #prune()
 	 */
-	long evaluate( CacheEntry<?> entry );
+	long evaluate(CacheEntry<?> entry);
 }

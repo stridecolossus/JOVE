@@ -1,7 +1,6 @@
 package org.sarge.jove.input;
 
-import org.sarge.jove.geometry.MutablePoint;
-import org.sarge.jove.geometry.MutableVector;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.Camera;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
@@ -19,14 +18,9 @@ public class CameraZoomAction implements Action {
 	 * Constructor.
 	 * @param cam Camera
 	 */
-	public CameraZoomAction( Camera cam ) {
-		Check.notNull( cam );
+	public CameraZoomAction(Camera cam) {
+		Check.notNull(cam);
 		this.cam = cam;
-	}
-
-	@Override
-	public String getName() {
-		return "camera-zoom";
 	}
 
 	/**
@@ -40,30 +34,24 @@ public class CameraZoomAction implements Action {
 	 * Sets the rotation sensitivity.
 	 * @param sensitivity
 	 */
-	public void setSensitivity( float sensitivity ) {
+	public void setSensitivity(float sensitivity) {
 		this.sensitivity = sensitivity;
 	}
 
-	private final MutableVector dir = new MutableVector();
-	private final MutablePoint pos = new MutablePoint();
-
 	@Override
-	public void execute( InputEvent event ) {
+	public void execute(InputEvent event) {
 		// Verify event
-		if( event.getEventKey().getType() != EventType.ZOOM ) throw new IllegalArgumentException( "Expected zoom event" );
+		if(event.getEventKey().getType() != EventType.ZOOM) throw new IllegalArgumentException("Expected zoom event");
 
 		// Calc zoom vector
-		dir.set( cam.getDirection() );
-		dir.multiply( -event.getZoom() * sensitivity );
+		final Vector dir = cam.getDirection().multiply(-event.getZoom() * sensitivity);
 
 		// Add to camera
-		pos.set( cam.getPosition() );
-		pos.add( dir );
-		cam.setPosition( pos );
+		cam.setPosition(cam.getPosition().add(dir));
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

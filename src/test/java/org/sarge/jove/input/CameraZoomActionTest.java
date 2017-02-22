@@ -16,25 +16,24 @@ public class CameraZoomActionTest {
 
 	@Before
 	public void before() {
-		cam = mock( Camera.class );
-		action = new CameraZoomAction( cam );
+		cam = mock(Camera.class);
+		action = new CameraZoomAction(cam);
 	}
 
 	@Test
 	public void execute() {
 		// Mock camera
-		when( cam.getPosition() ).thenReturn( new Point( 0, 0, -5 ) );
-		when( cam.getDirection() ).thenReturn( Vector.Z_AXIS.invert() );
+		when(cam.getPosition()).thenReturn(new Point(0, 0, -5));
+		when(cam.getDirection()).thenReturn(Vector.Z_AXIS.invert());
 
 		// Create zoom action
-		final EventKey key = EventKey.POOL.get();
-		key.init( EventType.ZOOM, null );
-		final InputEvent event = InputEvent.POOL.get();
-		event.init( mock( Device.class ), key );
-		event.setZoom( 10 );
-
+		final Device dev = mock(Device.class);
+		final InputEvent event = new InputEvent(dev, new EventKey(EventType.ZOOM));
+		event.setZoom(2);
+		
 		// Run action and check position updated
-		action.execute( event );
-		verify( cam ).setPosition( new Point( 0, 0, -2.5f ) );
+		action.setSensitivity(1);
+		action.execute(event);
+		verify(cam).setPosition(new Point(0, 0, -3f));
 	}
 }

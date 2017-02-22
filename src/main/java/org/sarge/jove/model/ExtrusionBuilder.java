@@ -85,7 +85,7 @@ public class ExtrusionBuilder {
 
 		// Add top polygon
 //		final Vector vec = normal.multiply( h );
-		final MutableVector vec = new MutableVector( normal ).multiply( h );
+		final MutableVector vec = new MutableVector( normal ).scale( h );
 		for( Point p : polygon ) {
 //			final MutablePoint vp = p.add( vec );
 			final MutablePoint vp = new MutablePoint( p ).add( vec );

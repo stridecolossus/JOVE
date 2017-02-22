@@ -1,6 +1,6 @@
 package org.sarge.jove.texture;
 
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
@@ -39,7 +39,7 @@ public class DefaultTextureFont implements TextureFont {
 	}
 
 	@Override
-	public TextureCoord[] getTextureCoords( char ch ) {
+	public TextureCoordinate[] getTextureCoords( char ch ) {
 		// Calc top-left and bottom-right coordinates
 		final float x = ( ch % num ) * size;
 		final float y = 1f - ( ( ch / num ) * size );
@@ -47,11 +47,11 @@ public class DefaultTextureFont implements TextureFont {
 		final float dy = y - size;
 
 		// Build coords in triangle order (top-left, bottom-right)
-		final TextureCoord[] coords = new TextureCoord[ 4 ];
-		coords[ 0 ] = new TextureCoord(  x,  y );
-		coords[ 1 ] = new TextureCoord(  x, dy );
-		coords[ 2 ] = new TextureCoord( dx,  y );
-		coords[ 3 ] = new TextureCoord( dx, dy );
+		final TextureCoordinate[] coords = new TextureCoordinate[ 4 ];
+		coords[ 0 ] = new TextureCoordinate(  x,  y );
+		coords[ 1 ] = new TextureCoordinate(  x, dy );
+		coords[ 2 ] = new TextureCoordinate( dx,  y );
+		coords[ 3 ] = new TextureCoordinate( dx, dy );
 
 		return coords;
 	}

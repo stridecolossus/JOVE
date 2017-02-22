@@ -16,11 +16,10 @@ public class SphereVolume implements BoundingVolume {
 	 * @param centre Sphere centre
 	 * @param radius Radius
 	 */
-	public SphereVolume( Point centre, float radius ) {
-		Check.notNull( centre );
-		Check.zeroOrMore( radius );
-
-		this.centre = new MutablePoint( centre );
+	public SphereVolume(Point centre, float radius) {
+		Check.notNull(centre);
+		Check.zeroOrMore(radius);
+		this.centre = centre;
 		this.radius = radius;
 	}
 
@@ -28,8 +27,8 @@ public class SphereVolume implements BoundingVolume {
 	 * Constructor for a sphere at the origin.
 	 * @param radius Radius
 	 */
-	public SphereVolume( float radius ) {
-		this( Point.ORIGIN, radius );
+	public SphereVolume(float radius) {
+		this(Point.ORIGIN, radius);
 	}
 
 	@Override
@@ -45,24 +44,19 @@ public class SphereVolume implements BoundingVolume {
 	}
 
 	@Override
-	public boolean contains( Point pos ) {
-		return pos.distanceSquared( centre ) <= radius * radius;
+	public boolean contains(Point pos) {
+		return pos.distanceSquared(centre) <= radius * radius;
 	}
 
-	private final MutableVector vec = new MutableVector();
-	private final MutablePoint proj = new MutablePoint();
-
-	// TODO - calc intersection point?
-
 	@Override
-	public boolean intersects( Ray ray ) {
+	public boolean intersects(Ray ray) {
 		// Build vector from sphere to ray origin
-		vec.subtract( centre, ray.getOrigin() );
+		Vector vec = Vector.between(centre, ray.getOrigin());
 
 		// Project sphere onto ray (unless behind ray)
-		if( vec.dot( ray.getDirection() ) >= 0 ) {
-			proj.project( ray.getDirection() );
-			vec.subtract( centre, proj );
+		if(vec.dot(ray.getDirection()) >= 0) {
+			final Point pos = centre.project(ray.getDirection());
+			vec = Vector.between(centre, pos);
 		}
 
 		// Check distance to sphere centre
@@ -71,6 +65,6 @@ public class SphereVolume implements BoundingVolume {
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

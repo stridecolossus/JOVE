@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.sarge.jove.animation.AbstractPlayer;
+import org.sarge.jove.animation.Player;
 import org.sarge.jove.app.FrameListener;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
@@ -24,7 +24,7 @@ import org.sarge.lib.util.ToString;
  * TODO - separate into model and controller
  * @author Sarge
  */
-public class ParticleSystem extends AbstractPlayer implements FrameListener, Renderable {
+public class ParticleSystem extends Player implements FrameListener, Renderable {
 	/**
 	 * Listener for particle system events.
 	 */

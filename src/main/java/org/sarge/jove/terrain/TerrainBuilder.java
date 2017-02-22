@@ -3,7 +3,7 @@ package org.sarge.jove.terrain;
 import java.util.Iterator;
 
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DefaultBufferDataType;
@@ -96,7 +96,7 @@ public class TerrainBuilder {
 				final Point pt = new Point( vx, vy, vz );
 
 				// Build vertex texture coordinate
-				final TextureCoord coords = new TextureCoord( tx, ty );
+				final TextureCoordinate coords = new TextureCoordinate( tx, ty );
 				ty += dy;
 
 				// Add vertex

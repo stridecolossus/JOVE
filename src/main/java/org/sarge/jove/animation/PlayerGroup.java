@@ -7,33 +7,32 @@ import org.sarge.lib.util.StrictSet;
 
 /**
  * Group of players.
- * Note that {@link #setSpeed(float)} and {@link #setRepeating(boolean)} is not supported by this player.
  * @author Sarge
  */
-public class PlayerGroup extends AbstractPlayer {
+public class PlayerGroup extends Player {
 	private final Set<Player> players = new StrictSet<>();
 
 	/**
 	 * @return Players in this group
 	 */
 	public Set<Player> getPlayers() {
-		return Collections.unmodifiableSet( players );
+		return Collections.unmodifiableSet(players);
 	}
 
 	/**
 	 * Adds a player to this group.
 	 * @param p Player to add
 	 */
-	public void add( Player p ) {
-		players.add( p );
+	public void add(Player p) {
+		players.add(p);
 	}
 
 	/**
 	 * Removes a player from this group.
 	 * @param p Player to remove
 	 */
-	public void remove( Player p ) {
-		players.remove( p );
+	public void remove(Player p) {
+		players.remove(p);
 	}
 
 	/**
@@ -44,23 +43,42 @@ public class PlayerGroup extends AbstractPlayer {
 	}
 
 	@Override
-	public void setState( State state ) {
-		// Delegate
-		super.setState( state );
-
-		// Broadcast to group
-		for( Player p : players ) {
-			p.setState( state );
+	public void play() {
+		super.play();
+		for(Player player : players) {
+			player.play();
 		}
 	}
 
 	@Override
-	public void setSpeed( float speed ) {
-		throw new UnsupportedOperationException();
+	public void pause() {
+		super.pause();
+		for(Player player : players) {
+			player.pause();
+		}
 	}
 
 	@Override
-	public void setRepeating( boolean repeating ) {
-		throw new UnsupportedOperationException();
+	public void stop() {
+		super.stop();
+		for(Player player : players) {
+			player.stop();
+		}
+	}
+
+	@Override
+	public void setSpeed(float speed) {
+		super.setSpeed(speed);
+		for(Player player : players) {
+			player.setSpeed(speed);
+		}
+	}
+
+	@Override
+	public void setRepeating(boolean repeating) {
+		super.setRepeating(repeating);
+		for(Player player : players) {
+			player.setRepeating(repeating);
+		}
 	}
 }

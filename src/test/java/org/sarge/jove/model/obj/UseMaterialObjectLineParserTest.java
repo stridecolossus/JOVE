@@ -1,39 +1,37 @@
 package org.sarge.jove.model.obj;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.Scanner;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.sarge.jove.app.RenderingSystem;
-import org.sarge.jove.material.Material;
-import org.sarge.jove.material.MutableMaterial;
-import org.sarge.lib.io.DataSource;
 
-@Ignore
-public class UseMaterialObjectLineParserTest {
-	private UseMaterialObjectLineParser parser;
-	private ObjectModelData model;
-
+public class UseMaterialObjectLineParserTest extends AbstractParserTest {
+	private Parser parser;
+	
 	@Before
 	public void before() {
-		parser = new UseMaterialObjectLineParser();
-		model = new ObjectModelData( mock( DataSource.class ), mock( RenderingSystem.class ) );
+		parser = new UseMaterialParser();
 	}
-
+	
 	@Test
-	public void parse() {
+	public void parse() throws IOException {
 		// Add a material
-		final Material mat = new MutableMaterial( "mat" );
-		model.add( mat );
-
-		// Check material added to node
-		parser.parse( new String[]{ "mat" }, model );
-		// TODO - check material added to node
+		final String name = "mat";
+		final ObjectMaterial mat = mock(ObjectMaterial.class);
+		when(model.getMaterial(name)).thenReturn(mat);
+		
+		// Use material and check added to current group
+		parser.parse(new Scanner(name), model);
+		verify(group).setMaterial(mat);
 	}
 
 	@Test( expected = IllegalArgumentException.class )
-	public void parseUnknownMaterial() {
-		parser.parse( new String[]{ "cobblers" }, model );
+	public void parseUnknownMaterial() throws IOException {
+		parser.parse(new Scanner("cobblers"), model);
 	}
 }

@@ -1,7 +1,7 @@
 package org.sarge.jove.model;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.lib.util.Check;
 
 /**
@@ -46,7 +46,7 @@ public class TextureBufferDataType implements BufferDataType {
 
 	@Override
 	public int getSize() {
-		return TextureCoord.SIZE;
+		return TextureCoordinate.SIZE;
 	}
 
 	@Override

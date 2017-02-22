@@ -3,11 +3,11 @@ package org.sarge.jove.common;
 import org.sarge.lib.util.EqualsBuilder;
 
 /**
- * Dimensions.
+ * Rectangular dimensions.
  * @author Sarge
  */
-public class Dimensions {
-	protected final int w, h;
+public final class Dimensions {
+	public final int w, h;
 
 	/**
 	 * Constructor.

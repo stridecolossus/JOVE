@@ -1,142 +1,117 @@
 package org.sarge.jove.model.obj;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Scanner;
 
-import org.sarge.jove.app.RenderingSystem;
-import org.sarge.jove.model.ModelLoader;
-import org.sarge.jove.scene.NodeGroup;
-import org.sarge.lib.io.DataSource;
-import org.sarge.lib.io.TextLoader;
-import org.sarge.lib.io.TextLoader.LineParser;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.StrictMap;
+import org.sarge.lib.util.MapBuilder;
 
 /**
  * Loader for <tt>OBJ</tt> format models.
- *
- * TODO
- * - this is a bit mixed up, separate into
- * - 1. load OBJ to model data
- * - 2. generate tasks for loading textures and building VBOs OR do it all in one go
- * - 3. build meshes and scene-graph
- * - 4. attach textures, materials, etc
- *
- *
  * @author Sarge
+ * TODO
+ * - break into two *instances* of this map-lookup-delegate
+ * - how to deal with fact that material loader/parser needs to know directory?
  */
-public class ObjectModelLoader implements ModelLoader {
-	private static final Logger LOG = Logger.getLogger( ObjectModelLoader.class.getName() );
-
-	private final Map<String, ObjectLineParser> registry = new StrictMap<>();
-
-	/**
-	 * Registers an <tt>OBJ</tt> parser.
-	 * @param cmd		Command identifier
-	 * @param p			Parser
-	 */
-	public void register( String cmd, ObjectLineParser p ) {
-		registry.put( cmd, p );
-	}
-
-	private final DataSource src;
-	private final RenderingSystem sys;
-
-	private final LineParser parser = new LineParser() {
-		@Override
-		public void parse( String line, int lineno ) {
-			// Split line into command and arguments
-			final String cmd;
-			final String[] args;
-			final int idx = findDelimiterIndex( line );
-			if( idx == -1 ) {
-				cmd = line;
-				args = null;
-			}
-			else {
-				cmd = line.substring( 0, idx );
-				args = line.substring( idx + 1 ).split( " " );
-				for( int n = 0; n < args.length; ++n ) args[ n ] = args[ n ].trim();
-			}
-
-			// Lookup parser
-			final ObjectLineParser p = registry.get( cmd );
-			if( p == null ) {
-				LOG.log( Level.WARNING, "Unsupported command: " + cmd + " at line " + lineno );
-				return;
-			}
-
-			// Delegate
-			p.parse( args, data );
-		}
-
-		private int findDelimiterIndex( String line ) {
-			int idx = 0;
-			for( char ch : line.toCharArray() ) {
-				if( Character.isWhitespace( ch ) ) return idx;
-				++idx;
-			}
-			return -1;
-		}
-	};
-
-	private final TextLoader loader;
-
-	private ObjectModelData data;
+public class ObjectModelLoader {
+	private final Map<String, Parser> materialParsers = registerMaterialParsers().build();
+	private final Map<String, Parser> modelParsers = registerModelParsers().build();
 
 	/**
-	 * Constructor.
-	 * @param src Data-source (for all assets)
-	 * @param sys Rendering system
+	 * @return Model parsers
 	 */
-	public ObjectModelLoader( DataSource src, RenderingSystem sys ) {
-		Check.notNull( src );
-		Check.notNull( sys );
+	protected MapBuilder<String, Parser> registerModelParsers() {
+		return new MapBuilder<String, Parser>()
+				// Vertex data
+				.add("v", new VertexParser())
+				.add("vt", new TextureCoordinateParser())
+				.add("vn", new NormalParser())
 
-		this.src = src;
-		this.sys = sys;
+				// Polygons
+				.add("f", new FaceParser())
 
-		loader = new TextLoader( src );
-		loader.setSkipEmptyLines( true );
-		loader.setCommentIdentifier( "#" );
+				// Object groups
+				.add("g", new GroupParser())
+				.add("o", new GroupParser())
 
-		register();
+				// Material library
+				.add("usemtl", new UseMaterialParser())
+				.add("mtllib", new MaterialLibraryParser(materialParsers));
 	}
 
-	private void register() {
-		// Vertex data
-		register( "v", new VertexObjectLineParser() );
-		register( "vt", new TextureCoordObjectLineParser() );
-		register( "vn", new NormalObjectLineParser() );
+	/**
+	 * @return Material parsers
+	 */
+	protected MapBuilder<String, Parser> registerMaterialParsers() {
+		return new MapBuilder<String, Parser>()
+				// Control
+				.add("newmtl", new NewMaterialParser())
+				
+				// Colours
+				.add("Ka", new ColourParser("Ka"))
+				.add("Kd", new ColourParser("Kd"))
+				.add("Ks", new ColourParser("Ks"))
 
-		// Polygons
-		register( "f", new FaceObjectLineParser() );
+				// Illumination model
+				.add("illum", new IlluminationParser())
 
-		// Object groups
-		register( "g", new GroupObjectLineParser() );
-		register( "o", new GroupObjectLineParser() );
+				// Textures
+				.add("map_Kd", new TextureParser("colourMap"));
 
-		// Material library
-		register( "usemtl", new UseMaterialObjectLineParser() );
-		register( "mtllib", new MaterialLibraryObjectLineParser( new ObjectMaterialLoader( src, sys ) ) );
+		//			final TextureLoader textureLoader = new TextureLoader( sys.getImageLoader( src ), sys );
+		//			register( "map_Kd", new TextureMaterialParser( "colourMap", textureLoader ) );
+
+		// TODO
+		// - Ns			specular coefficient 0..1000
+		// - Tr or d	transparency
+		// - map_Kd		diffuse (usually same as ambient)
+		// - map_Ks		specular
+		// - map_Ns		highlight component
+		// - map_d		alpha texture
+		// - map_bump	bump texture (can be bump)
+		// - options
+		// http://en.wikipedia.org/wiki/Wavefront_.obj_file
 	}
 
-	@Override
-	public NodeGroup load( String path ) throws IOException {
-		// Create new model
-		data = new ObjectModelData( src, sys );
+	/**
+	 * Loads an OBJ model from the given data-stream.
+	 * @param src		Data-source
+	 * @param path		OBJ file
+	 * @return Model
+	 * @throws IOException if the model cannot be loaded
+	 */
+	public ObjectModel load(Reader in) throws IOException {
+		final ObjectModel model = new ObjectModel();
+		load(in, modelParsers, model);
+		return model;
+	}
+	
+	/**
+	 * Helper - Loads and parses an OBJ model or material file.
+	 * @param path			File-path
+	 * @param parsers		Parsers ordered by command
+	 * @param model			Model
+	 * @throws IOException if the file cannot be parsed
+	 */
+	public static <T> void load(Reader in, Map<String, Parser> parsers, ObjectModel model) throws IOException {
+		try(final BufferedReader r = new BufferedReader(in)) {
+			final Scanner scanner = new Scanner(in);
+			while(true) {
+				// Stop at EOF
+				if(!scanner.hasNext()) {
+					break;
+				}
 
-		// Load model data
-		loader.load( parser, path );
-
-		// Build model
-		final NodeGroup root = data.getRootNode();
-
-		// Cleanup
-		data = null;
-
-		return root;
+				// Lookup parser for next command
+				final String cmd = scanner.next();
+				final Parser p = parsers.get(cmd);
+				if(p == null) throw new IOException("Unknown OBJ command: " + cmd);
+				
+				// Delegate
+				p.parse(scanner, model);
+			}
+		}
 	}
 }

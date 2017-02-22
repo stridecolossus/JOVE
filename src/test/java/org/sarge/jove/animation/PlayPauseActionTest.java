@@ -1,7 +1,6 @@
 package org.sarge.jove.animation;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -12,13 +11,13 @@ public class PlayPauseActionTest {
 
 	@Before
 	public void before() {
-		player = mock( AbstractPlayer.class );
-		action = new PlayPauseAction( player );
+		player = new Player();
+		action = new PlayPauseAction(player);
 	}
 
 	@Test
 	public void execute() {
-		action.execute( null );
-		verify( player ).setState( Player.State.PLAYING );
+		action.execute(null);
+		assertEquals(true, player.isPlaying());
 	}
 }

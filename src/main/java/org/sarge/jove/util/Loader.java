@@ -7,6 +7,7 @@ import java.io.IOException;
  * @author Sarge
  * @param <T> Resource type
  */
+@FunctionalInterface
 public interface Loader<T> {
 	/**
 	 * Loads a resource from the given path.
@@ -14,5 +15,5 @@ public interface Loader<T> {
 	 * @return Resource
 	 * @throws IOException if the resource cannot be loaded
 	 */
-	T load( String path ) throws IOException;
+	T load(String path) throws IOException;
 }

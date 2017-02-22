@@ -3,26 +3,21 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Converter;
 
+
 /**
  * Point in 3D space.
  * @author Sarge
  */
-public class Point extends Tuple {
+public final class Point extends Tuple {
 	/**
 	 * Origin.
 	 */
 	public static final Point ORIGIN = new Point();
-
+	
 	/**
 	 * String-to-point converter.
 	 */
-	public static final Converter<Point> CONVERTER = new Converter<Point>() {
-		@Override
-		public Point convert( String str ) throws NumberFormatException {
-			final float[] array = MathsUtil.convert( str, SIZE );
-			return new Point( array );
-		}
-	};
+	public static final Converter<Point> CONVERTER = str -> new Point(MathsUtil.convert(str, SIZE));
 
 	/**
 	 * Origin constructor.
@@ -37,23 +32,23 @@ public class Point extends Tuple {
 	 * @param y
 	 * @param z
 	 */
-	public Point( float x, float y, float z ) {
-		super( x, y, z );
+	public Point(float x, float y, float z) {
+		super(x, y, z);
 	}
 
 	/**
 	 * Array constructor.
 	 * @param array Point array
 	 */
-	public Point( float[] array ) {
-		super( array );
+	public Point(float[] array) {
+		super(array);
 	}
 
 	/**
 	 * @param pt Point
 	 * @return Distance squared to the given point
 	 */
-	public final float distanceSquared( Point pt ) {
+	public float distanceSquared(Point pt) {
 		final float dx = pt.x - x;
 		final float dy = pt.y - y;
 		final float dz = pt.z - z;
@@ -61,47 +56,37 @@ public class Point extends Tuple {
 	}
 
 	/**
-	 * @return Result for mutators
-	 */
-	@SuppressWarnings("unchecked")
-	protected <P extends Point> P getResult() {
-		return (P) new Point( x, y, z );
-	}
-
-	/**
 	 * Adds to this point.
 	 * @param pt Point to add
-	 * @return This point
+	 * @return New point
 	 */
-	public <P extends Point> P add( Tuple t ) {
-		final P result = getResult();
-		result.x = this.x + t.x;
-		result.y = this.y + t.y;
-		result.z = this.z + t.z;
-		return result;
+	public Point add(Tuple t) {
+		return new Point(
+			this.x + t.x,
+			this.y + t.y,
+			this.z + t.z
+		);
 	}
 
 	/**
 	 * Scales this point.
 	 * @param scale Scalar
-	 * @return This point
+	 * @return Scaled point
 	 */
-	public <P extends Point> P multiply( float scale ) {
-		final P result = getResult();
-		result.x = this.x * scale;
-		result.y = this.y * scale;
-		result.z = this.z * scale;
-		return result;
+	public Point scale(float scale) {
+		return new Point(
+			this.x * scale,
+			this.y * scale,
+			this.z * scale
+		);
 	}
-
 
 	/**
 	 * Projects this point onto the given vector.
 	 * @param vec Vector to project onto (assumes normalised)
 	 * @return Projected point
 	 */
-	public <P extends Point> P project( Vector vec ) {
-		final P result = getResult();
-		return result.multiply( vec.dot( this ) );
+	public Point project(Vector vec) {
+		return scale(vec.dot(this));
 	}
 }

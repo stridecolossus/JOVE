@@ -9,7 +9,7 @@ import java.nio.IntBuffer;
  * Factory for NIO buffers.
  * @author Sarge
  */
-public class BufferFactory {
+public final class BufferFactory {
 	private static final int INTEGER_SIZE = Integer.SIZE / Byte.SIZE;
 	private static final int FLOAT_SIZE = Float.SIZE / Byte.SIZE;
 	private static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();

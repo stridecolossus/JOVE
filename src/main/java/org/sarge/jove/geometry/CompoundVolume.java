@@ -1,5 +1,8 @@
 package org.sarge.jove.geometry;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
@@ -8,42 +11,35 @@ import org.sarge.lib.util.ToString;
  * @author Sarge
  */
 public class CompoundVolume implements BoundingVolume {
-	private final BoundingVolume[] volumes;
+	private final List<BoundingVolume> volumes;
 
 	/**
 	 * Constructor.
 	 * @param volumes List of volumes
 	 */
-	public CompoundVolume( BoundingVolume[] volumes ) {
-		Check.notEmpty( volumes );
-		this.volumes = volumes.clone();
+	public CompoundVolume(List<BoundingVolume> volumes) {
+		Check.notEmpty(volumes);
+		this.volumes = new ArrayList<>(volumes);
 	}
 
 	@Override
 	public Point getCentre() {
-		return volumes[ 0 ].getCentre();
+		// TODO
+		return volumes.get(0).getCentre();
 	}
 
 	@Override
-	public boolean contains( Point pt ) {
-		for( BoundingVolume vol : volumes ) {
-			if( !vol.contains( pt ) ) return false;
-		}
-
-		return true;
+	public boolean contains(Point pt) {
+		return volumes.stream().anyMatch(vol -> vol.contains(pt));
 	}
 
 	@Override
-	public boolean intersects( Ray ray ) {
-		for( BoundingVolume vol : volumes ) {
-			if( !vol.intersects( ray ) ) return false;
-		}
-
-		return false;
+	public boolean intersects(Ray ray) {
+		return volumes.stream().anyMatch(vol -> vol.intersects(ray));
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

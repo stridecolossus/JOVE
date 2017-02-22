@@ -19,14 +19,14 @@ import org.sarge.jove.texture.Texture;
 import org.sarge.jove.texture.TextureUnit;
 
 public class MutableMaterialTest {
-	private MutableMaterial mat;
+	private MaterialBuilder mat;
 	private ShaderProgram shader;
 	private ShaderParameter param;
 	private RenderContext ctx;
 
 	@Before
 	public void before() {
-		mat = new MutableMaterial( "test" );
+		mat = new MaterialBuilder( "test" );
 		ctx = mock( RenderContext.class );
 		shader = mock( ShaderProgram.class );
 		param = mock( ShaderParameter.class );

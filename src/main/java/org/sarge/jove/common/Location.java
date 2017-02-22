@@ -1,7 +1,5 @@
 package org.sarge.jove.common;
 
-import org.sarge.jove.util.DefaultObjectPool;
-import org.sarge.jove.util.ObjectPool;
 import org.sarge.lib.util.EqualsBuilder;
 
 /**
@@ -9,29 +7,6 @@ import org.sarge.lib.util.EqualsBuilder;
  * @author Sarge
  */
 public class Location {
-	/**
-	 * Pool for locations.
-	 */
-	public static final ObjectPool<Location> POOL = new DefaultObjectPool<Location>() {
-		@Override
-		protected Location create() {
-			return new Location();
-		}
-	};
-
-	/**
-	 * Get a new location from the pool.
-	 * @param x
-	 * @param y
-	 * @return Location
-	 */
-	public static Location get( int x, int y ) {
-		final Location loc = POOL.get();
-		loc.x = x;
-		loc.y = y;
-		return loc;
-	}
-
 	protected int x, y;
 
 	/**
@@ -39,7 +14,7 @@ public class Location {
 	 * @param x
 	 * @param y
 	 */
-	public Location( int x, int y ) {
+	public Location(int x, int y) {
 		this.x = x;
 		this.y = y;
 	}
@@ -48,15 +23,15 @@ public class Location {
 	 * Copy constructor.
 	 * @param loc
 	 */
-	public Location( Location loc ) {
-		this( loc.x, loc.y );
+	public Location(Location loc) {
+		this(loc.x, loc.y);
 	}
 
 	/**
 	 * Origin constructor.
 	 */
 	public Location() {
-		this( 0, 0 );
+		this(0, 0);
 	}
 
 	public int getX() {
@@ -71,15 +46,15 @@ public class Location {
 	 * @param loc Location
 	 * @return Distance-squared to the given location
 	 */
-	public float distanceSquared( Location loc ) {
+	public float distanceSquared(Location loc) {
 		final float dx = this.x - loc.x;
 		final float dy = this.y - loc.y;
 		return dx * dx + dy * dy;
 	}
 
 	@Override
-	public boolean equals( Object obj ) {
-		return EqualsBuilder.equals( this, obj );
+	public boolean equals(Object obj) {
+		return EqualsBuilder.equals(this, obj);
 	}
 
 	@Override

@@ -1,45 +1,36 @@
 package org.sarge.jove.util;
 
 /**
- * Interpolates a value.
+ * Defines a floating-point interpolator function.
  * @author Sarge
  */
-public abstract class Interpolator {
+@FunctionalInterface
+public interface Interpolator {
+	/**
+	 * Interpolates a value.
+	 * @param value Value to be interpolated
+	 * @return Interpolated value
+	 */
+	float interpolate(float value);
+
 	/**
 	 * Linear interpolator.
 	 */
-	public static final Interpolator LINEAR = new Interpolator() {
-		@Override
-		protected float interpolate( float pos ) {
-			return pos;
-		}
-	};
-
+	Interpolator LINEAR = x -> x;
+	
 	/**
 	 * Sine interpolator.
 	 */
-	public static final Interpolator SINE = new Interpolator() {
-		@Override
-		protected float interpolate( float value ) {
-			return ( 1 - MathsUtil.cos( value * MathsUtil.PI ) ) / 2f;
-		}
-	};
+	Interpolator SINE = x -> (1 - MathsUtil.cos(x * MathsUtil.PI)) / 2f;
 
 	/**
-	 * Interpolates the given value.
-	 * @param value Initial value
-	 * @return Interpolated value
+	 * Factory for an interpolator that operates over the given range.
+	 * @param start				Start value
+	 * @param end				End value
+	 * @param interpolator		Interpolator function
+	 * @return Interpolator
 	 */
-	protected abstract float interpolate( float value );
-
-	/**
-	 * Interpolates the given value between the two positions.
-	 * @param start		Start position
-	 * @param end		End
-	 * @param value		Initial value
-	 * @return Interpolated value
-	 */
-	public float interpolate( float start, float end, float value ) {
-		return start + ( end - start ) * interpolate( value );
+	static Interpolator interpolator(float start, float end, Interpolator interpolator) {
+		return x -> start + (end - start) * interpolator.interpolate(x);
 	}
 }

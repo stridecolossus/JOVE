@@ -8,7 +8,7 @@ import org.sarge.jove.common.FaceCulling;
 import org.sarge.jove.material.DepthTestProperty;
 import org.sarge.jove.material.FaceCullProperty;
 import org.sarge.jove.material.MaterialProperty;
-import org.sarge.jove.material.MutableMaterial;
+import org.sarge.jove.material.MaterialBuilder;
 import org.sarge.jove.scene.NodeGroup;
 import org.sarge.jove.scene.RenderQueue;
 import org.sarge.jove.scene.RenderableNode;
@@ -70,7 +70,7 @@ public class SkyBoxBuilder {
 		sky.setParent( root );
 
 		// Create material
-		final MutableMaterial mat = new MutableMaterial( "skybox" );
+		final MaterialBuilder mat = new MaterialBuilder( "skybox" );
 		root.setMaterial( mat );
 
 		// Load texture images

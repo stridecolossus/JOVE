@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.jove.geometry.MutableMatrix;
+import org.sarge.jove.geometry.MatrixBuilder;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Quaternion;
 import org.sarge.jove.geometry.Vector;
@@ -29,7 +29,7 @@ public class CameraTest {
 
 	@Test
 	public void getViewMatrix() {
-		final MutableMatrix expected = new MutableMatrix( 4 );
+		final MatrixBuilder expected = new MatrixBuilder( 4 );
 		expected.set( 2, 3, -5 );
 		assertEquals( expected, cam.getViewMatrix() );
 	}

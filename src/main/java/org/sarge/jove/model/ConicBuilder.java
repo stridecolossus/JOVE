@@ -1,7 +1,7 @@
 package org.sarge.jove.model;
 
-import org.sarge.jove.common.TextureCoord;
-import org.sarge.jove.geometry.MutablePoint;
+import org.sarge.jove.common.TextureCoordinate;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.UnitCircle.CirclePoint;
 import org.sarge.lib.util.Check;
@@ -21,8 +21,8 @@ public class ConicBuilder {
 	 * @param layout	Mesh layout
 	 * @param circle	Unit-circle for sphere rings
 	 */
-	public ConicBuilder( MeshLayout layout, UnitCircle circle ) {
-		Check.notNull( layout );
+	public ConicBuilder(MeshLayout layout, UnitCircle circle) {
+		Check.notNull(layout);
 		this.layout = layout;
 		this.circle = circle.getPoints();
 		this.step = 1f / this.circle.length;
@@ -34,34 +34,34 @@ public class ConicBuilder {
 	 * @param radius	Radius
 	 * @param builder	Output mesh
 	 */
-	public void addRing( float y, float radius, IndexedMeshBuilder builder ) {
-		Check.range( y, 0, 1 );
-		Check.zeroOrMore( radius );
+	public void addRing(float y, float radius, IndexedMeshBuilder builder) {
+		Check.range(y, 0, 1);
+		Check.zeroOrMore(radius);
 
 		// Note current start index
 		final int start = builder.getVertices().size();
 
 		// Add ring vertices
 		float x = 0;
-		for( CirclePoint pt : circle ) {
+		for(CirclePoint pt : circle) {
 			// Create vertex
-			final MutablePoint pos = new MutablePoint( pt.getX(), y, pt.getY() );
-			final Vector normal = new Vector( pt.getX(), y, pt.getY() );
-			final TextureCoord coords = new TextureCoord( x, y );
+			final Point pos = new Point(pt.getX(), y, pt.getY());
+			final Vector normal = new Vector(pt.getX(), y, pt.getY());
+			final TextureCoordinate coords = new TextureCoordinate(x, y);
 
 			// Add to sphere
-			final Vertex v = new Vertex( pos.multiply( radius ) );
-			v.setNormal( normal.normalize() );
-			v.setTextureCoords( coords );
-			builder.add( v );
+			final Vertex v = new Vertex(pos.scale(radius));
+			v.setNormal(normal.normalize());
+			v.setTextureCoords(coords);
+			builder.add(v);
 
 			// Move to next texture coord
 			x += step;
 		}
 
 		// Join strip to previous ring
-		if( start > 0 ) {
-			builder.addStrip( start, circle.length );
+		if(start > 0) {
+			builder.addStrip(start, circle.length);
 		}
 	}
 
@@ -72,19 +72,19 @@ public class ConicBuilder {
 	 * @param rings		Number of rings
 	 * @return Mesh builder
 	 */
-	public MeshBuilder createSphere( float radius, int rings ) {
-		Check.oneOrMore( rings );
+	public MeshBuilder createSphere(float radius, int rings) {
+		Check.oneOrMore(rings);
 
 		// Create builder
-		final IndexedMeshBuilder builder = new IndexedMeshBuilder( layout );
+		final IndexedMeshBuilder builder = new IndexedMeshBuilder(layout);
 
 		// Determine ring step-size
-		final float ystep = ( 2 * radius ) / ( rings + 1 );
+		final float ystep = (2 * radius) / (rings + 1);
 
 		// Build rings
 		float y = radius;
-		for( int n = 0; n < rings; ++n ) {
-			addRing( y, radius, builder );
+		for(int n = 0; n < rings; ++n) {
+			addRing(y, radius, builder);
 			y -= ystep;
 		}
 
@@ -97,11 +97,11 @@ public class ConicBuilder {
 	 * @param height	Cone height
 	 * @return Mesh builder
 	 */
-	public MeshBuilder createCone( float radius, float height ) {
-		final IndexedMeshBuilder builder = new IndexedMeshBuilder( layout );
+	public MeshBuilder createCone(float radius, float height) {
+		final IndexedMeshBuilder builder = new IndexedMeshBuilder(layout);
 		final float half = height / 2f;
-		addRing( half, 0, builder );
-		addRing( -half, radius, builder );
+		addRing(half, 0, builder);
+		addRing(-half, radius, builder);
 		return builder;
 	}
 
@@ -111,16 +111,16 @@ public class ConicBuilder {
 	 * @param height	Height
 	 * @return Mesh builder
 	 */
-	public MeshBuilder createCylinder( float radius, float height ) {
-		final IndexedMeshBuilder builder = new IndexedMeshBuilder( layout );
+	public MeshBuilder createCylinder(float radius, float height) {
+		final IndexedMeshBuilder builder = new IndexedMeshBuilder(layout);
 		final float half = height / 2f;
-		addRing( half, radius, builder );
-		addRing( -half, radius, builder );
+		addRing(half, radius, builder);
+		addRing(-half, radius, builder);
 		return builder;
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

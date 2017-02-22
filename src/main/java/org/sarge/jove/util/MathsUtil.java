@@ -8,7 +8,7 @@ import org.sarge.lib.util.Check;
  * Fast maths operations.
  * @author Sarge
  */
-public class MathsUtil {
+public final class MathsUtil {
 	/**
 	 * PI as floating-point.
 	 */

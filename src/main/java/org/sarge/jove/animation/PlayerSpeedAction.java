@@ -10,7 +10,7 @@ import org.sarge.lib.util.ToString;
  * @author Sarge
  */
 public class PlayerSpeedAction implements Action {
-	private final AbstractPlayer player;
+	private final Player player;
 	private final float speed;
 	private final boolean scale;
 
@@ -20,30 +20,25 @@ public class PlayerSpeedAction implements Action {
 	 * @param speed		Speed
 	 * @param scale		Whether to explicitly <b>set</b> the speed or <b>scale</b> the current player speed
 	 */
-	public PlayerSpeedAction( AbstractPlayer player, float speed, boolean scale ) {
-		Check.notNull( player );
+	public PlayerSpeedAction(Player player, float speed, boolean scale) {
+		Check.notNull(player);
 		this.player = player;
 		this.speed = speed;
 		this.scale = scale;
 	}
 
 	@Override
-	public String getName() {
-		return "player-speed:" + speed;
-	}
-
-	@Override
-	public void execute( InputEvent data ) {
-		if( scale ) {
-			player.setSpeed( player.getSpeed() * speed );
+	public void execute(InputEvent data) {
+		if(scale) {
+			player.setSpeed(player.getSpeed() * speed);
 		}
 		else {
-			player.setSpeed( speed );
+			player.setSpeed(speed);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

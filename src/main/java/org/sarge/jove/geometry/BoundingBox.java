@@ -1,105 +1,56 @@
 package org.sarge.jove.geometry;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.function.DoubleBinaryOperator;
+import java.util.stream.Stream;
 
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
- * Axis-aligned bounds specified by a centre point and extents in each axis.
- * TODO
- * - min/max coords? store as member?
- * - get positive/negative corners?
+ * Axis-aligned bounding-box volume specified by min/max points.
  * @author Sarge
  */
 public class BoundingBox implements BoundingVolume {
+	private final Point min, max;
 	private final Point centre;
-	private final Vector extents;
 
 	/**
 	 * Constructor given min/max points.
 	 * @param min Minimum coordinate
 	 * @param max Maximum coordinate
 	 */
-	public BoundingBox( Point min, Point max ) {
-		this( Arrays.asList( min, max ) );
+	public BoundingBox(Point min, Point max) {
+		Check.notNull(min);
+		Check.notNull(max);
+		this.min = min;
+		this.max = max;
+		this.centre = calculateCentre(min, max);
 	}
-
-	/**
-	 * Constructor given a set of points.
-	 * @param points Points
-	 */
-	public BoundingBox( Collection<Point> points ) {
-		// Init min/max
-		final float[] min = init( Float.MAX_VALUE );
-		final float[] max = init( Float.MIN_VALUE );
-
-		// Calculate min/max bounds
-		final float[] array = new float[ 3 ];
-		for( Point pos : points ) {
-			pos.toArray( array );
-			for( int n = 0; n < 3; ++n ) {
-				final float f = array[ n ];
-				if( f < min[ n ] ) {
-					min[ n ] = f;
-				}
-				if( f > max[ n ] ) {
-					max[ n ] = f;
-				}
-			}
-		}
-
-		// Derive extents and centre point
-		final float[] ext = new float[ 3 ];
-		final float[] mid = new float[ 3 ];
-		for( int n = 0; n < 3; ++n ) {
-			ext[ n ] = ( max[ n ] - min[ n ] ) * MathsUtil.HALF;
-			mid[ n ] = min[ n ] + ext[ n ];
-		}
-
-		// Convert to box
-		this.centre = new MutablePoint( new Point( mid ) );
-		this.extents = new MutableVector( new Vector( ext ) );
+	
+	private static Point calculateCentre(Point min, Point max) {
+		final Point extents = max.add(min.scale(-1));
+		final Point half = extents.scale(MathsUtil.HALF);
+		return min.add(half);
 	}
-
-	private static float[] init( float f ) {
-		final float[] array = new float[ 3 ];
-		Arrays.fill( array, f );
-		return array;
-	}
-
+	
 	@Override
 	public Point getCentre() {
 		return centre;
 	}
 
 	/**
-	 * @return Extents in each axis
-	 */
-	public Vector getExtents() {
-		return extents;
-	}
-
-	/**
 	 * @return Minimum point of this box
 	 */
 	public Point getMinimum() {
-		return new Point(
-			centre.x - extents.x,
-			centre.y - extents.y,
-			centre.z - extents.z
-		);
+		return min;
 	}
 
 	/**
 	 * @return Minimum point of this box
 	 */
 	public Point getMaximum() {
-		return new Point(
-			centre.x + extents.x,
-			centre.y + extents.y,
-			centre.z + extents.z
-		);
+		return max;
 	}
 
 	/**
@@ -107,25 +58,101 @@ public class BoundingBox implements BoundingVolume {
 	 * @return Whether this bounding box contains the given point
 	 */
 	@Override
-	public boolean contains( Point pt ) {
-		if( !contains( pt.x, centre.x, extents.x ) ) return false;
-		if( !contains( pt.y, centre.y, extents.y ) ) return false;
-		if( !contains( pt.z, centre.z, extents.z ) ) return false;
+	public boolean contains(Point pt) {
+		if(!contains(pt.x, min.x, max.x)) return false;
+		if(!contains(pt.y, min.y, max.y)) return false;
+		if(!contains(pt.z, min.z, max.z)) return false;
 		return true;
 	}
 
-	private static boolean contains( float value, float centre, float extent ) {
-		return Math.abs( centre - value ) <= extent;
+	private static boolean contains(float value, float min, float max) {
+		return (value >= min) && (value <= max);
 	}
 
 	@Override
-	public boolean intersects( Ray ray ) {
+	public boolean intersects(Ray ray) {
 		// TODO
 		return false;
 	}
 
 	@Override
 	public String toString() {
-		return centre + "(" + extents + ")";
+		return min + "/" + max;
+	}
+	
+	/**
+	 * Bounding box collector.
+	 */
+	private static class BoundsCollector {
+		/**
+		 * Initialises a min/max working array.
+		 * @param value Initial value
+		 * @return Array
+		 */
+		private static double[] init(double value) {
+			final double[] array = new double[3];
+			Arrays.fill(array, value);
+			return array;
+		}
+
+		private final double[] min = init(Double.MAX_VALUE);
+		private final double[] max = init(Double.MIN_VALUE);
+		private final double[] array = new double[3];
+
+		/**
+		 * Updates this set of bounds with the given point.
+		 * @param pos Point
+		 */
+		public void accept(Point pos) {
+			array[0] = pos.x;
+			array[1] = pos.y;
+			array[2] = pos.z;
+			merge(array, Math::min, min);
+			merge(array, Math::max, max);
+		}
+		
+		/**
+		 * Merges min/max bounds.
+		 * @param accum		Min/max accumulator array
+		 * @param array		Array to merge
+		 * @param op		Operator
+		 */
+		private static void merge(double[] array, DoubleBinaryOperator op, double[] accum) {
+			for(int n = 0; n < accum.length; ++n) {
+				accum[n] = op.applyAsDouble(accum[n], array[n]);
+			}
+		}
+		
+		/**
+		 * Combine the given bounds with this bounds.
+		 * @param other Bounds to combine
+		 */
+		public void combine(BoundsCollector other) {
+			merge(other.min, Math::min, min);
+			merge(other.max, Math::max, max);
+		}
+
+		/**
+		 * Helper: Converts a bounds array to a min/max point.
+		 * @param array Min/max array
+		 * @return Point
+		 */
+		public static Point toFloatArray(double[] array) {
+			final float[] out = new float[array.length];
+			for(int n = 0; n < array.length; ++n) out[n] = (float) array[n];
+			return new Point(out);
+		}
+	}
+
+	/**
+	 * Builds a bounding box from the given stream of points.
+	 * @param points Stream of points
+	 * @return Bounding box
+	 */
+	public static BoundingBox of(Stream<Point> points) {
+		final BoundsCollector stats = points.collect(BoundsCollector::new, BoundsCollector::accept, BoundsCollector::combine);
+		final Point min = BoundsCollector.toFloatArray(stats.min);
+		final Point max = BoundsCollector.toFloatArray(stats.max);
+		return new BoundingBox(min, max);
 	}
 }

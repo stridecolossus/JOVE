@@ -29,16 +29,16 @@ public class SceneNode extends NodeGroup {
 	 * Constructor with a specific render queue.
 	 * @param name Node name
 	 */
-	public SceneNode( String name, RenderQueue queue ) {
-		super( name, queue );
+	public SceneNode(String name, RenderQueue queue) {
+		super(name, queue);
 	}
 
 	/**
 	 * Convenience constructor for an opaque node.
 	 * @param name Node name
 	 */
-	public SceneNode( String name ) {
-		this( name, RenderQueue.Default.OPAQUE );
+	public SceneNode(String name) {
+		this(name, RenderQueue.Default.OPAQUE);
 	}
 
 	/**
@@ -52,10 +52,10 @@ public class SceneNode extends NodeGroup {
 	 * Sets the bounding volume of this node.
 	 * @param vol Bounding volume or <tt>null</tt> if none
 	 */
-	public void setBoundingVolume( BoundingVolume vol ) {
-		Check.notNull( vol );
+	public void setBoundingVolume(BoundingVolume vol) {
+		Check.notNull(vol);
 		this.vol = vol;
-		propagate( Flag.BOUNDING_VOLUME );
+		propagate(Flag.BOUNDING_VOLUME);
 	}
 
 	/**
@@ -69,10 +69,10 @@ public class SceneNode extends NodeGroup {
 	 * Sets the local transform.
 	 * @param local Local transform
 	 */
-	public void setTransform( Transform local ) {
-		Check.notNull( local );
+	public void setTransform(Transform local) {
+		Check.notNull(local);
 		this.local = local;
-		set( Flag.TRANSFORM );
+		set(Flag.TRANSFORM);
 	}
 
 	/**
@@ -81,16 +81,16 @@ public class SceneNode extends NodeGroup {
 	@Override
 	public Matrix getWorldMatrix() {
 		final NodeGroup parent = getParent();
-		if( parent == null ) {
+		if(parent == null) {
 			// Local is equivalent to world transform if at root of the scene-graph
-			clear( Flag.TRANSFORM );
+			clear(Flag.TRANSFORM);
 			return local.toMatrix();
 		}
 		else {
 			// Update world transform as required
-			if( this.isDirtyTransform() || parent.isDirtyTransform() ) {
-				world = parent.getWorldMatrix().multiply( local.toMatrix() );
-				clear( Flag.TRANSFORM );
+			if(this.isDirtyTransform() || parent.isDirtyTransform()) {
+				world = parent.getWorldMatrix().multiply(local.toMatrix());
+				clear(Flag.TRANSFORM);
 			}
 			return world;
 		}
@@ -98,8 +98,8 @@ public class SceneNode extends NodeGroup {
 
 	@Override
 	protected boolean isDirtyTransform() {
-		if( isFlagged( Flag.TRANSFORM ) ) return true;
-		if( local.isDirty() ) return true;
+		if(isFlagged(Flag.TRANSFORM)) return true;
+		if(local.isDirty()) return true;
 		return false;
 	}
 
@@ -114,25 +114,25 @@ public class SceneNode extends NodeGroup {
 	 * Sets the material for this node.
 	 * @param mat Node material or <tt>null</tt> if none
 	 */
-	public void setMaterial( Material mat ) {
+	public void setMaterial(Material mat) {
 		this.mat = mat;
 	}
 
 	@Override
-	public void apply( RenderContext ctx ) {
+	public void apply(RenderContext ctx) {
 		// Record matrix for this node
-		ctx.setModelMatrix( local.toMatrix() );
+		ctx.setModelMatrix(local.toMatrix());
 
 		// Apply material and add entry to stack
-		if( mat != null ) {
-			mat.apply( ctx );
-			ctx.push( mat );
+		if(mat != null) {
+			mat.apply(ctx);
+			ctx.push(mat);
 		}
 	}
 
 	@Override
-	public void reset( RenderContext ctx ) {
-		if( mat != null ) {
+	public void reset(RenderContext ctx) {
+		if(mat != null) {
 			// 1. need to maintain stack of the current 'merged' material so we can restore previous states w/o having to walk up the stack
 			// 1a. actually do we need this stack? we are now just walking the chain of nodes from root
 			// 2. is there some cunning means of grouping into states: texture-unit, material vars (e.g. time), render properties (e.g. blend), shader params???

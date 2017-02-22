@@ -14,7 +14,7 @@ import org.sarge.lib.util.ToString;
  * @author Sarge
  */
 public class MeshLayout {
-	private static MeshLayout DEFAULT_LAYOUT = create( Primitive.TRIANGLE_STRIP, "VN0", false );
+	private static MeshLayout DEFAULT_LAYOUT = create(Primitive.TRIANGLE_STRIP, "VN0", false);
 
 	/**
 	 * @return Default mesh layout (triangle-strip with normals and texture coordinates in slot zero)
@@ -27,8 +27,8 @@ public class MeshLayout {
 	 * Sets the default mesh layout.
 	 * @param layout Default mesh layout
 	 */
-	public static void setDefaultLayout( MeshLayout layout ) {
-		Check.notNull( layout );
+	public static void setDefaultLayout(MeshLayout layout) {
+		Check.notNull(layout);
 		MeshLayout.DEFAULT_LAYOUT = layout;
 	}
 
@@ -59,16 +59,16 @@ public class MeshLayout {
 	 * @param dynamicIndices	Whether the index buffer is dynamic or static
 	 * @return Mesh-layout
 	 */
-	public static MeshLayout create( Primitive primitive, String layout, boolean dynamicIndices ) {
-		Check.notNull( primitive );
-		Check.notEmpty( layout );
+	public static MeshLayout create(Primitive primitive, String layout, boolean dynamicIndices) {
+		Check.notNull(primitive);
+		Check.notEmpty(layout);
 
 		// Build buffer layout(s)
 		final List<BufferLayout> buffers = new ArrayList<>();
-		for( String str : layout.split( " " ) ) {
+		for(String str : layout.split(" ")) {
 			// Determine access mode
 			final AccessMode mode;
-			switch( str.charAt( 0 ) ) {
+			switch(str.charAt(0)) {
 			case '~':
 				mode = AccessMode.STREAM;
 				break;
@@ -83,40 +83,43 @@ public class MeshLayout {
 			}
 
 			// Skip prefix
-			if( mode != AccessMode.STATIC ) {
-				str = str.substring( 1 );
+			if(mode != AccessMode.STATIC) {
+				str = str.substring(1);
 			}
 
 			// Build list of data-types in this buffer
 			final List<BufferDataType> types = new ArrayList<>();
-			for( char ch : str.toCharArray() ) {
-				types.add( mapType( ch ) );
+			for(char ch : str.toCharArray()) {
+				types.add(mapType(ch));
 			}
 
 			// Create buffer layout
-			buffers.add( new BufferLayout( types, mode ) );
+			buffers.add(new BufferLayout(types, mode));
 		}
 
 		// Create mesh layout
-		return new MeshLayout( primitive, buffers, dynamicIndices );
+		return new MeshLayout(primitive, buffers, dynamicIndices);
 	}
 
 	/**
 	 * Maps a data-type character to the actual data-type.
 	 */
-	private static BufferDataType mapType( char ch ) {
-		if( Character.isDigit( ch ) ) {
-			return TextureBufferDataType.get( ch - '0' );
+	private static BufferDataType mapType(char ch) {
+		if(Character.isDigit(ch)) {
+			return TextureBufferDataType.get(ch - '0');
 		}
 		else {
-			switch( ch ) {
-			case 'V' : return DefaultBufferDataType.VERTICES;
-			case 'N' : return DefaultBufferDataType.NORMALS;
-			case 'C' : return DefaultBufferDataType.COLOURS;
+			switch(ch) {
+			case 'V':
+				return DefaultBufferDataType.VERTICES;
+			case 'N':
+				return DefaultBufferDataType.NORMALS;
+			case 'C':
+				return DefaultBufferDataType.COLOURS;
 			}
 		}
 
-		throw new IllegalArgumentException( "Invalid data type: " + ch );
+		throw new IllegalArgumentException("Invalid data type: " + ch);
 	}
 
 	private final Primitive primitive;
@@ -132,44 +135,54 @@ public class MeshLayout {
 	 * @param dynamicIndices	Whether the index buffer is dynamic or static
 	 * @throws IllegalArgumentException if the layout is invalid
 	 */
-	public MeshLayout( Primitive primitive, List<BufferLayout> layout, boolean dynamicIndices ) {
-		Check.notNull( primitive );
+	public MeshLayout(Primitive primitive, List<BufferLayout> layout, boolean dynamicIndices) {
+		Check.notNull(primitive);
 
 		// Init layout properties
 		boolean vertexData = false;
 		boolean dynamic = false;
 		boolean normals = false;
 		final Set<BufferDataType> used = new HashSet<>();
-		for( BufferLayout b : layout ) {
+		for(BufferLayout b : layout) {
 			// Check for duplicate buffers
 			final List<BufferDataType> types = b.getBufferDataTypes();
-			BufferLayout.checkDuplicates( types, used );
+			BufferLayout.checkDuplicates(types, used);
 
 			// Check for mandatory vertex data
-			if( types.contains( DefaultBufferDataType.VERTICES ) ) vertexData = true;
+			if(types.contains(DefaultBufferDataType.VERTICES)) {
+				vertexData = true;
+			}
 
 			// Note whether layout supports normals
-			if( types.contains( DefaultBufferDataType.NORMALS ) ) normals = true;
+			if(types.contains(DefaultBufferDataType.NORMALS)) {
+				normals = true;
+			}
 
 			// Note whether layout is dynamic
-			if( b.getAccessMode().isDynamic() ) dynamic = true;
+			if(b.getAccessMode().isDynamic()) {
+				dynamic = true;
+			}
 		}
 
 		// Check vertex data was specified
-		if( !vertexData ) throw new IllegalArgumentException( "No vertex data specified" );
+		if(!vertexData) {
+			throw new IllegalArgumentException("No vertex data specified");
+		}
 
 		// Check normals are logical for this primitive
-		if( normals && !primitive.hasNormals() ) throw new IllegalArgumentException( "Primitive does not support normals: " + primitive );
+		if(normals && !primitive.hasNormals()) {
+			throw new IllegalArgumentException("Primitive does not support normals: " + primitive);
+		}
 
 		this.primitive = primitive;
-		this.layout = Collections.unmodifiableList( layout );
+		this.layout = Collections.unmodifiableList(layout);
 		this.dynamicBuffers = dynamic;
 		this.dynamicIndices = dynamicIndices;
 		this.hasNormals = normals;
 	}
 
-	public MeshLayout( Primitive primitive, List<BufferLayout> layout ) {
-		this( primitive, layout, false );
+	public MeshLayout(Primitive primitive, List<BufferLayout> layout) {
+		this(primitive, layout, false);
 	}
 
 	/**
@@ -212,10 +225,10 @@ public class MeshLayout {
 	/**
 	 * @return Whether this layout contains the given component-type
 	 */
-	public boolean contains( BufferDataType type ) {
-		for( BufferLayout b : layout ) {
-			for( BufferDataType t : b.getBufferDataTypes() ) {
-				if( t == type ) return true;
+	public boolean contains(BufferDataType type) {
+		for(BufferLayout b : layout) {
+			for(BufferDataType t : b.getBufferDataTypes()) {
+				if(t == type) return true;
 			}
 		}
 
@@ -224,6 +237,6 @@ public class MeshLayout {
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

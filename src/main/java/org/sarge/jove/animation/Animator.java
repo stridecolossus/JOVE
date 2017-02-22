@@ -1,7 +1,6 @@
 package org.sarge.jove.animation;
 
 import org.sarge.jove.app.FrameListener;
-import org.sarge.jove.util.Interpolator;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
@@ -9,33 +8,36 @@ import org.sarge.lib.util.ToString;
  * Animator for an {@link Animation}.
  * @author Sarge
  */
-public class Animator extends AbstractPlayer implements FrameListener {
+public class Animator extends Player implements FrameListener {
+	/**
+	 * Defines something that can be animated.
+	 */
+	@FunctionalInterface
+	public interface Animation {
+		/**
+		 * Updates this animation.
+		 * @param time			Current animation time (ms)
+		 * @param duration		Animation duration (ms)
+		 */
+		void update(long time, long duration);
+	}
+	
 	private final Animation animation;
-	private final Interpolator interpolator;
+	private final long duration;
 
 	private long time;
 
 	/**
 	 * Constructor.
 	 * @param animation		Animation managed by this animator
-	 * @param interpolator	Position interpolator or <tt>null</tt> if none
+	 * @param duration		Animation duration (ms)
 	 */
-	public Animator( Animation animation, Interpolator interpolator ) {
-		Check.notNull( animation );
-
+	public Animator(Animation animation, long duration) {
+		Check.notNull(animation);
+		Check.oneOrMore(duration);
 		this.animation = animation;
-		this.interpolator = interpolator;
-
-		setRepeating( true );
-	}
-
-	/**
-	 * Constructor for an animation with linear interpolation.
-	 * @param animation Animation managed by this animator
-	 * @see Interpolator#LINEAR
-	 */
-	public Animator( Animation animation ) {
-		this( animation, Interpolator.LINEAR );
+		this.duration = duration;
+		setRepeating(true);
 	}
 
 	/**
@@ -46,34 +48,32 @@ public class Animator extends AbstractPlayer implements FrameListener {
 	}
 
 	@Override
-	public void update( long t, long elapsed ) {
+	public void update(long t, long elapsed) {
 		// Ignore if not running
-		if( !isPlaying() ) return;
+		if(!isPlaying()) return;
 
 		// Update animation time
 		time += elapsed * super.getSpeed();
 
-		// Quantize to animation duration and check whether finished
-		final long duration = animation.getDuration();
-		if( !isRepeating() && ( time > duration ) ) {
-			// Stop if past end and not repeating
-			setState( State.STOPPED );
+		// Check whether finished
+		final boolean finished = !isRepeating() && (time > duration);
+		
+		if(finished) {
+			// Stop at end of non-repeating animation
 			time = duration;
+			stop();
 		}
 		else {
-			// Quantize to duration
+			// Quantize to animation duration
 			time = time % duration;
 		}
 
-		// Apply interpolation
-		final float pos = interpolator.interpolate( animation.getMinimum(), animation.getMaximum(), time / (float) duration );
-
 		// Update animation
-		animation.update( pos );
+		animation.update(time, duration);
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

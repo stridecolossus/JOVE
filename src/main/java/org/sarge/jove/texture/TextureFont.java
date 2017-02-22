@@ -1,6 +1,6 @@
 package org.sarge.jove.texture;
 
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 
 /**
  * Properties for a texture-based font.
@@ -24,5 +24,5 @@ public interface TextureFont {
 	 * @param ch Character
 	 * @return Glyph texture coordinates for the specified character
 	 */
-	TextureCoord[] getTextureCoords( char ch );
+	TextureCoordinate[] getTextureCoords( char ch );
 }

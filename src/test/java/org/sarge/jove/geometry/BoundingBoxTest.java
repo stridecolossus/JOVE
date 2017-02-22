@@ -14,31 +14,32 @@ public class BoundingBoxTest {
 
 	@Before
 	public void before() {
-		box = new BoundingBox( new Point( 1, 2, 3 ), new Point( 3, 4, 5 ) );
+		box = new BoundingBox(new Point(1, 2, 3), new Point(4, 5, 6));
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals( new Point( 2, 3, 4 ), box.getCentre() );
-		assertEquals( new Point( 1, 1, 1 ), box.getExtents() );
+		assertEquals(new Point(1, 2, 3), box.getMinimum());
+		assertEquals(new Point(4, 5, 6), box.getMaximum());
+		assertEquals(new Point(2.5f, 3.5f, 4.5f), box.getCentre());
 	}
 
 	@Test
 	public void contains() {
-		assertTrue( box.contains( new Point( 1, 2, 3 ) ) );
-		assertTrue( box.contains( new Point( 3, 4, 5 ) ) );
-		assertFalse( box.contains( new Point( 0, 0, 0 ) ) );
+		assertTrue(box.contains(new Point(1, 2, 3)));
+		assertTrue(box.contains(new Point(3, 4, 5)));
+		assertFalse(box.contains(new Point(0, 0, 0)));
 	}
 
 	@Test
 	public void pointsConstructor() {
 		final Point[] points = {
-			new Point( 1, 2, 3 ),
-			new Point( 4, 5, 6 ),
-			new Point( 7, 8, 9 ),
+				new Point(1, 0, 0),
+				new Point(0, 2, 0),
+				new Point(0, 0, 3),
 		};
-		box = new BoundingBox( Arrays.asList( points ) );
-		assertEquals( new Point( 4, 5, 6 ), box.getCentre() );
-		assertEquals( new Point( 3, 3, 3 ), box.getExtents() );
+		box = BoundingBox.of(Arrays.asList(points).stream());
+		assertEquals(new Point(0, 0, 0), box.getMinimum());
+		assertEquals(new Point(1, 2, 3), box.getMaximum());
 	}
 }

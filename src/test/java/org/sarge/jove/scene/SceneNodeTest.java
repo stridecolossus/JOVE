@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sarge.jove.geometry.BoundingVolume;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.geometry.MutableMatrix;
+import org.sarge.jove.geometry.MatrixBuilder;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.material.Material;
 import org.sarge.jove.scene.NodeGroup.Flag;
@@ -39,7 +39,7 @@ public class SceneNodeTest {
 	@Test
 	public void setTransform() {
 		// Set local transform
-		final Matrix trans = MutableMatrix.translation( new Vector( 1, 2, 3 ) );
+		final Matrix trans = MatrixBuilder.translation( new Vector( 1, 2, 3 ) );
 		node.setTransform( trans );
 		assertEquals( trans, node.getTransform() );
 		assertEquals( true, node.isFlagged( Flag.TRANSFORM ) );
@@ -56,14 +56,14 @@ public class SceneNodeTest {
 		node.setParent( parent );
 
 		// Set transform of parent
-		final Matrix parentTrans = MutableMatrix.scale( 2 );
+		final Matrix parentTrans = MatrixBuilder.scale( 2 );
 		parent.setTransform( parentTrans );
 
 		// Get world transform and check inherits from parent
 		assertEquals( parentTrans, node.getWorldMatrix() );
 
 		// Set local transform and check matrices are combined
-		final Matrix trans = MutableMatrix.translation( new Vector( 1, 2, 3 ) );
+		final Matrix trans = MatrixBuilder.translation( new Vector( 1, 2, 3 ) );
 		node.setTransform( trans );
 		assertEquals( parentTrans.multiply( trans ), node.getWorldMatrix() );
 	}

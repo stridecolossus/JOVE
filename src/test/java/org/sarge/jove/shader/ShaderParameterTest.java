@@ -14,7 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.BufferFactory;
@@ -206,7 +206,7 @@ public class ShaderParameterTest {
 	@Test(expected=IllegalArgumentException.class)
 	public void setInvalidComponentSize() {
 		final ShaderParameter param = new ShaderParameter( "name", ParameterType.FLOAT, 1, 3, 123 );
-		param.set( new TextureCoord(), shader );
+		param.set( new TextureCoordinate(), shader );
 	}
 
 	@Test(expected=UnsupportedOperationException.class)

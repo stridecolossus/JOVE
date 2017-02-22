@@ -41,10 +41,10 @@ public enum EventType {
 		switch( this ) {
 		case ZOOM:
 		case ORIENTATE:
-			return true;
+			return false;
 
 		default:
-			return false;
+			return true;
 		}
 	}
 

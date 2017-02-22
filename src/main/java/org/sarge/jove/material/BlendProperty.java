@@ -11,9 +11,9 @@ import org.sarge.lib.util.ToString;
 public class BlendProperty implements RenderProperty {
 	private final String src, dest;
 
-	public BlendProperty( String src, String dest ) {
-		Check.notEmpty( src );
-		Check.notEmpty( dest );
+	public BlendProperty(String src, String dest) {
+		Check.notEmpty(src);
+		Check.notEmpty(dest);
 
 		this.src = src;
 		this.dest = dest;
@@ -33,17 +33,17 @@ public class BlendProperty implements RenderProperty {
 	}
 
 	@Override
-	public void apply( RenderingSystem sys ) {
-		sys.setBlend( this );
+	public void apply(RenderingSystem sys) {
+		sys.setBlend(this);
 	}
 
 	@Override
-	public void reset( RenderingSystem sys ) {
-		sys.setBlend( null );
+	public void reset(RenderingSystem sys) {
+		sys.setBlend(null);
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

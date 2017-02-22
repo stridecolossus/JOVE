@@ -19,14 +19,9 @@ public class ToggleProperty implements RenderProperty, Action {
 	 * Constructor.
 	 * @param property Delegate property
 	 */
-	public ToggleProperty( RenderProperty property ) {
-		Check.notNull( property );
+	public ToggleProperty(RenderProperty property) {
+		Check.notNull(property);
 		this.property = property;
-	}
-
-	@Override
-	public String getName() {
-		return property.getType();
 	}
 
 	@Override
@@ -45,31 +40,31 @@ public class ToggleProperty implements RenderProperty, Action {
 	 * Sets whether this effect is active
 	 * @param active Active flag
 	 */
-	public void setActive( boolean active ) {
+	public void setActive(boolean active) {
 		this.active = active;
 	}
 
 	@Override
-	public void apply( RenderingSystem sys ) {
-		if( active ) {
-			property.apply( sys );
+	public void apply(RenderingSystem sys) {
+		if(active) {
+			property.apply(sys);
 		}
 	}
 
 	@Override
-	public void reset( RenderingSystem sys ) {
-		if( active ) {
-			property.reset( sys );
+	public void reset(RenderingSystem sys) {
+		if(active) {
+			property.reset(sys);
 		}
 	}
 
 	@Override
-	public void execute( InputEvent event ) {
+	public void execute(InputEvent event) {
 		active = !active;
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

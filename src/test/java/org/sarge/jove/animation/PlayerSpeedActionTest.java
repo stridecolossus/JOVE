@@ -1,33 +1,32 @@
 package org.sarge.jove.animation;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.sarge.jove.util.MathsUtil;
 
 public class PlayerSpeedActionTest {
+	private Player player;
 	private PlayerSpeedAction action;
-	private AbstractPlayer player;
-
+	
 	@Before
 	public void before() {
-		player = mock( AbstractPlayer.class );
-		when( player.getSpeed() ).thenReturn( 0.5f );
-		action = new PlayerSpeedAction( player, 0.5f, true );
+		action = null;
+		player = new Player();
 	}
 
 	@Test
 	public void executeScale() {
-		action.execute( null );
-		verify( player ).setSpeed( 0.25f );
+		action = new PlayerSpeedAction(player, MathsUtil.HALF, true);
+		action.execute(null);
+		assertFloatEquals(MathsUtil.HALF, player.getSpeed());
 	}
 
 	@Test
 	public void executeAbsolute() {
-		action = new PlayerSpeedAction( player, 0.5f, false );
-		action.execute( null );
-		verify( player ).setSpeed( 0.5f );
+		action = new PlayerSpeedAction(player, MathsUtil.HALF, false);
+		action.execute(null);
+		assertFloatEquals(MathsUtil.HALF, player.getSpeed());
 	}
 }

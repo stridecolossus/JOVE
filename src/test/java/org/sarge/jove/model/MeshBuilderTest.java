@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.jove.geometry.BoundingBox;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -27,7 +27,7 @@ public class MeshBuilderTest {
 	private static Vertex createVertex() {
 		final Vertex v = new Vertex( new Point( 1, 2, 3 ) );
 		v.setNormal( new Vector( 4, 5, 6 ) );
-		v.setTextureCoords( new TextureCoord( 0.7f, 0.8f ) );
+		v.setTextureCoords( new TextureCoordinate( 0.7f, 0.8f ) );
 		return v;
 	}
 
@@ -137,7 +137,7 @@ public class MeshBuilderTest {
 		assertEquals( 0, builder.getVertexCount() );
 	}
 
-	private void verifyMesh( BufferedMesh mesh, TextureCoord coord ) {
+	private void verifyMesh( BufferedMesh mesh, TextureCoordinate coord ) {
 		final FloatBuffer expected = BufferFactory.createFloatBuffer( 3 * ( 3 + 3 + 2 ) );
 		for( int n = 0; n < 3; ++n ) {
 			vertex.getPosition().append( expected );
@@ -184,7 +184,7 @@ public class MeshBuilderTest {
 		final BufferedMesh mesh = builder.build();
 
 		// Fiddle different texture coords
-		final TextureCoord coords = new TextureCoord( 0.5f, 0.5f );
+		final TextureCoordinate coords = new TextureCoordinate( 0.5f, 0.5f );
 		vertex.setTextureCoords( coords );
 
 		// Update mesh and check coordinates
@@ -201,7 +201,7 @@ public class MeshBuilderTest {
 		final BufferedMesh mesh = builder.build();
 
 		// Fiddle different texture coords
-		final TextureCoord coords = new TextureCoord( 0.5f, 0.5f );
+		final TextureCoordinate coords = new TextureCoordinate( 0.5f, 0.5f );
 		vertex.setTextureCoords( coords );
 
 		// Update mesh and check coordinates

@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.TextureCoord;
+import org.sarge.jove.common.TextureCoordinate;
 import org.sarge.jove.geometry.Point;
 
 public class TextureBufferDataTypeTest {
@@ -26,7 +26,7 @@ public class TextureBufferDataTypeTest {
 	public void getData() {
 		// Add some coords to a vertex
 		final Vertex vertex = new Vertex( new Point() );
-		final TextureCoord coords = new TextureCoord( 0.1f, 0.2f );
+		final TextureCoordinate coords = new TextureCoordinate( 0.1f, 0.2f );
 		vertex.setTextureCoords( coords );
 
 		// Check coords can be retrieved

@@ -7,8 +7,8 @@ import org.sarge.lib.util.ToString;
  * Rotation represented by a quaternion.
  * @author Sarge
  */
-public class Quaternion implements Transform {
-	private final float w, x, y, z;
+public final class Quaternion implements Transform {
+	public final float w, x, y, z;
 
 	/**
 	 * Constructor.
@@ -17,7 +17,7 @@ public class Quaternion implements Transform {
 	 * @param y
 	 * @param z
 	 */
-	public Quaternion( float w, float x, float y, float z ) {
+	public Quaternion(float w, float x, float y, float z) {
 		this.w = w;
 		this.x = x;
 		this.y = y;
@@ -29,10 +29,10 @@ public class Quaternion implements Transform {
 	 * @param axis		Rotation axis
 	 * @param angle		Angle (radians)
 	 */
-	public Quaternion( Vector axis, float angle ) {
+	public Quaternion(Vector axis, float angle) {
 		final float half = angle * MathsUtil.HALF;
-		final float sin = MathsUtil.sin( half );
-		this.w = MathsUtil.cos( half );
+		final float sin = MathsUtil.sin(half);
+		this.w = MathsUtil.cos(half);
 		this.x = axis.x * sin;
 		this.y = axis.y * sin;
 		this.z = axis.z * sin;
@@ -42,8 +42,8 @@ public class Quaternion implements Transform {
 	 * Convenience constructor.
 	 * @param rot Axis-angle
 	 */
-	public Quaternion( Rotation rot ) {
-		this( rot.getAxis(), rot.getAngle() );
+	public Quaternion(Rotation rot) {
+		this(rot.getAxis(), rot.getAngle());
 	}
 
 	/**
@@ -53,9 +53,9 @@ public class Quaternion implements Transform {
 	public Quaternion normalize() {
 		final float magSquared = w * w + x * x + y * y + z * z;
 
-		if( Math.abs( magSquared ) > MathsUtil.EPSILON ) {
-			final float mag = 1f / MathsUtil.sqrt( magSquared );
-			return new Quaternion( w * mag, x * mag, y * mag, z * mag );
+		if(Math.abs(magSquared) > MathsUtil.EPSILON) {
+			final float mag = 1f / MathsUtil.sqrt(magSquared);
+			return new Quaternion(w * mag, x * mag, y * mag, z * mag);
 		}
 		else {
 			return this;
@@ -66,7 +66,7 @@ public class Quaternion implements Transform {
 	 * @return Conjugate of this quaternion (assuming this quaternion is normalized)
 	 */
 	public Quaternion conjugate() {
-		return new Quaternion( w, -x, -y, -z );
+		return new Quaternion(w, -x, -y, -z);
 	}
 
 	@Override
@@ -86,33 +86,33 @@ public class Quaternion implements Transform {
 		final float zz = z * z;
 		final float zw = z * w;
 
-		final float[][] matrix = new float[ 4 ][ 4 ];
+		final MatrixBuilder m = new MatrixBuilder();
+		
+		m.set(0, 0, 1 - 2 * (yy + zz));
+		m.set(1, 0, 2 * (xy + zw));
+		m.set(2, 0, 2 * (xz - yw));
 
-		matrix[0][0] = 1 - 2 * ( yy + zz );
-	    matrix[1][0] = 2 * ( xy + zw );
-	    matrix[2][0] = 2 * ( xz - yw );
+		m.set(0, 1, 2 * (xy - zw));
+		m.set(1, 1, 1 - 2 * (xx + zz));
+		m.set(2, 1, 2 * (yz + xw));
 
-	    matrix[0][1] = 2 * ( xy - zw );
-	    matrix[1][1] = 1 - 2 * ( xx + zz );
-	    matrix[2][1] = 2 * ( yz + xw );
+		m.set(0, 2, 2 * (xz + yw));
+		m.set(1, 2, 2 * (yz - xw));
+		m.set(2, 2, 1 - 2 * (xx + yy));
 
-	    matrix[0][2] = 2 * ( xz + yw );
-	    matrix[1][2] = 2 * ( yz - xw );
-	    matrix[2][2] = 1 - 2 * ( xx + yy );
+		m.set(3, 3, 1);
 
-	    matrix[3][3] = 1;
-
-	    return new Matrix( matrix );
+		return m.build();
 	}
 
 	/**
 	 * @return This quaternion as an axis-angle rotation
 	 */
 	public Rotation toRotation() {
-		final float scale = 1f / MathsUtil.sqrt( x * x + y * y + z * z  ); // TODO - is this actually required if its assumed normalised?
-		final Vector axis = new Vector( x * scale, y * scale, z * scale );
-		final float angle = 2f * MathsUtil.acos( w );
-		return new Rotation( axis, angle );
+		final float scale = 1f / MathsUtil.sqrt(x * x + y * y + z * z); // TODO - is this actually required if its assumed normalised?
+		final Vector axis = new Vector(x * scale, y * scale, z * scale);
+		final float angle = 2f * MathsUtil.acos(w);
+		return new Rotation(axis, angle);
 	}
 
 	/**
@@ -120,13 +120,12 @@ public class Quaternion implements Transform {
 	 * @param q
 	 * @return Result
 	 */
-	public Quaternion multiply( Quaternion q ) {
+	public Quaternion multiply(Quaternion q) {
 		return new Quaternion(
-			w * q.w - x * q.x - y * q.y - z * q.z,
-			w * q.x + x * q.w + y * q.z - z * q.y,
-			w * q.y + y * q.w + z * q.x - x * q.z,
-			w * q.z + z * q.w + x * q.y - y * q.x
-		);
+				w * q.w - x * q.x - y * q.y - z * q.z,
+				w * q.x + x * q.w + y * q.z - z * q.y,
+				w * q.y + y * q.w + z * q.x - x * q.z,
+				w * q.z + z * q.w + x * q.y - y * q.x);
 	}
 
 	/**
@@ -134,32 +133,31 @@ public class Quaternion implements Transform {
 	 * @param v Vector to rotate (assumes normalized)
 	 * @return Rotated vector
 	 */
-	public void rotate( MutableVector v ) {
+	public Vector rotate(Vector v) {
 		// TODO - using working values
-		final Quaternion vec = new Quaternion( 0, v.x, v.y, v.z );
-		final Quaternion result = this.multiply( vec ).multiply( this.conjugate() );
-		//return new Vector( result.x, result.y, result.z );
-		v.set( result.x, result.y, result.z );
+		final Quaternion vec = new Quaternion(0, v.x, v.y, v.z);
+		final Quaternion result = this.multiply(vec).multiply(this.conjugate());
+		return new Vector(result.x, result.y, result.z);
 	}
 
 	// TODO - this sucks
 	// TODO - change to MutablePoint and remove vector version, makes no sense to rotate a vector!
-	public Point rotate( Point pos ) {
-		final Quaternion vec = new Quaternion( 0, pos.x, pos.y, pos.z );
-		final Quaternion result = this.multiply( vec ).multiply( this.conjugate() );
-		return new Point( result.x, result.y, result.z );
+	public Point rotate(Point pos) {
+		final Quaternion vec = new Quaternion(0, pos.x, pos.y, pos.z);
+		final Quaternion result = this.multiply(vec).multiply(this.conjugate());
+		return new Point(result.x, result.y, result.z);
 	}
 
 	@Override
-	public boolean equals( Object obj ) {
-		if( obj == this ) return true;
-		if( obj == null ) return false;
-		if( obj instanceof Quaternion ) {
+	public boolean equals(Object obj) {
+		if(obj == this) return true;
+		if(obj == null) return false;
+		if(obj instanceof Quaternion) {
 			final Quaternion q = (Quaternion) obj;
-			if( !MathsUtil.isEqual( w, q.w ) ) return false;
-			if( !MathsUtil.isEqual( x, q.x ) ) return false;
-			if( !MathsUtil.isEqual( y, q.y ) ) return false;
-			if( !MathsUtil.isEqual( z, q.z ) ) return false;
+			if(!MathsUtil.isEqual(w, q.w)) return false;
+			if(!MathsUtil.isEqual(x, q.x)) return false;
+			if(!MathsUtil.isEqual(y, q.y)) return false;
+			if(!MathsUtil.isEqual(z, q.z)) return false;
 			return true;
 		}
 		else {
@@ -169,6 +167,6 @@ public class Quaternion implements Transform {
 
 	@Override
 	public String toString() {
-		return ToString.toString( w, x, y, z );
+		return ToString.toString(w, x, y, z);
 	}
 }

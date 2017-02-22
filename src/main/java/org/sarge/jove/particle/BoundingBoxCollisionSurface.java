@@ -16,24 +16,24 @@ public class BoundingBoxCollisionSurface implements CollisionSurface {
 	 * Constructor.
 	 * @param box Bounding box
 	 */
-	public BoundingBoxCollisionSurface( BoundingBox box ) {
-		Check.notNull( box );
+	public BoundingBoxCollisionSurface(BoundingBox box) {
+		Check.notNull(box);
 		this.box = box;
 	}
 
 	@Override
-	public boolean intersects( Particle p ) {
-		return box.contains( p.getPosition() );
+	public boolean intersects(Particle p) {
+		return box.contains(p.getPosition());
 	}
 
 	@Override
-	public Vector reflect( Vector vec ) {
+	public Vector reflect(Vector vec) {
 		// TODO - really needs to be against each side of the box
 		return vec.invert();
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

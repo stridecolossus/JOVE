@@ -10,17 +10,17 @@ public interface BoundingVolume {
 	 */
 	BoundingVolume NULL = new BoundingVolume() {
 		@Override
-		public boolean intersects( Ray ray ) {
+		public boolean intersects(Ray ray) {
 			return false;
 		}
 
 		@Override
 		public Point getCentre() {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public boolean contains( Point pt ) {
+		public boolean contains(Point pt) {
 			return false;
 		}
 	};
@@ -34,11 +34,11 @@ public interface BoundingVolume {
 	 * @param pt Point to test
 	 * @return Whether this volume contains the given point
 	 */
-	boolean contains( Point pt );
+	boolean contains(Point pt);
 
 	/**
 	 * @param ray Picking ray
 	 * @return Whether this volume is intersected by the given ray
 	 */
-	boolean intersects( Ray ray );
+	boolean intersects(Ray ray);
 }

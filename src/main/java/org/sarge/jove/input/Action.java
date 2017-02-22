@@ -5,15 +5,11 @@ package org.sarge.jove.input;
  * @see ActionBindings
  * @author Sarge
  */
+@FunctionalInterface
 public interface Action {
-	/**
-	 * @return Action identifier
-	 */
-	String getName();
-
 	/**
 	 * Performs this action.
 	 * @param event Input event
 	 */
-	void execute( InputEvent event );
+	void execute(InputEvent event);
 }

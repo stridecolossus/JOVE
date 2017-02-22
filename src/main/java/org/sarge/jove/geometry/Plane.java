@@ -1,17 +1,14 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.geometry.Plane.Side;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * Plane in 3D space defined by a normal and distance from the origin.
  * @author Sarge
  */
-@SuppressWarnings("unused")		// TODO - why are we getting this warning? why is it importing the Side class?
 public class Plane {
 	/**
-	 * Sides of a plane.
-	 * @see #getSide(Side)
+	 * Sides of the plane.
 	 */
 	public static enum Side {
 		/**
@@ -38,7 +35,7 @@ public class Plane {
 	 * @param normal	Normal
 	 * @param d			Distance from origin
 	 */
-	public Plane( Vector normal, float d ) {
+	public Plane(Vector normal, float d) {
 		this.normal = normal.normalize();
 		this.d = d;
 	}
@@ -48,8 +45,8 @@ public class Plane {
 	 * @param normal	Normal
 	 * @param pt		Point on the plane
 	 */
-	public Plane( Vector normal, Point pt ) {
-		this( normal, -pt.dot( normal ) );
+	public Plane(Vector normal, Point pt) {
+		this(normal, -pt.dot(normal));
 	}
 
 	/**
@@ -58,14 +55,14 @@ public class Plane {
 	 * @param p2
 	 * @param p3
 	 */
-	public Plane( Point p1, Point p2, Point p3 ) {
+	public Plane(Point p1, Point p2, Point p3) {
 		// Calc two edges of the triangle of points
-		final Vector u = new MutableVector().subtract( p1, p2 );
-		final Vector v = new MutableVector().subtract( p2, p3 );
+		final Vector u = Vector.between(p1, p2);
+		final Vector v = Vector.between(p2, p3);
 
 		// Init plane
-		this.normal = u.cross( v ).normalize();
-		this.d = -p1.dot( normal );
+		this.normal = u.cross(v).normalize();
+		this.d = -p1.dot(normal);
 	}
 
 	/**
@@ -87,8 +84,8 @@ public class Plane {
 	 * @return Distance from this plane to the given point
 	 * @see #getSide(Point)
 	 */
-	public float distanceTo( Point pt ) {
-		return normal.dot( pt ) - d;
+	public float distanceTo(Point pt) {
+		return normal.dot(pt) - d;
 	}
 
 	/**
@@ -96,22 +93,22 @@ public class Plane {
 	 * @param ray Intersecting ray
 	 * @return Intersection point or <tt>null</tt> if not intersecting
 	 */
-	public Point intersect( Ray ray ) {
+	public Point intersect(Ray ray) {
 		// Determine whether ray is co-planar
-		final float dot = normal.dot( ray.getDirection() );
-		if( MathsUtil.isZero( dot ) ) {
+		final float dot = normal.dot(ray.getDirection());
+		if(MathsUtil.isZero(dot)) {
 			return null;
 		}
 
 		// Check whether ray behind plane
-		final float dist = distanceTo( ray.getOrigin() );
+		final float dist = distanceTo(ray.getOrigin());
 		final float ratio = -dist / dot;
-		if( ratio < MathsUtil.EPSILON ) {
+		if(ratio < MathsUtil.EPSILON) {
 			return null;
 		}
 
 		// Calc intersection point
-		return ray.getOrigin().add( ray.getDirection().multiply( ratio ) );
+		return ray.getOrigin().add(ray.getDirection().multiply(ratio));
 	}
 
 	/**
@@ -120,13 +117,12 @@ public class Plane {
 	 * @return Plane side or {@link Side#Intersect} if the point is on the plane
 	 * @see #distanceTo(Point)
 	 */
-	public Side getSide( Point pt ) {
-		final float dist = distanceTo( pt );
-		if( dist < 0 ) {
+	public Side getSide(Point pt) {
+		final float dist = distanceTo(pt);
+		if(dist < 0) {
 			return Side.BACK;
 		}
-		else
-		if( dist > 0 ) {
+		else if(dist > 0) {
 			return Side.FRONT;
 		}
 		else {

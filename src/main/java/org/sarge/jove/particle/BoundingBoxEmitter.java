@@ -16,8 +16,8 @@ public class BoundingBoxEmitter implements Emitter {
 	 * Constructor.
 	 * @param box Bounding box
 	 */
-	public BoundingBoxEmitter( BoundingBox box ) {
-		Check.notNull( box );
+	public BoundingBoxEmitter(BoundingBox box) {
+		Check.notNull(box);
 		this.min = box.getMinimum();
 		this.max = box.getMaximum();
 	}
@@ -25,9 +25,9 @@ public class BoundingBoxEmitter implements Emitter {
 	@Override
 	public Point emit() {
 		return new Point(
-			MathsUtil.nextFloat( min.getX(), max.getX() ),
-			MathsUtil.nextFloat( min.getY(), max.getY() ),
-			MathsUtil.nextFloat( min.getZ(), max.getZ() )
+			MathsUtil.nextFloat(min.x, max.x),
+			MathsUtil.nextFloat(min.y, max.y),
+			MathsUtil.nextFloat(min.z, max.z)
 		);
 	}
 

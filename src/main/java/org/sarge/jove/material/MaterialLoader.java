@@ -68,12 +68,12 @@ public class MaterialLoader {
 	 * @return Material
 	 * @throws Exception if the file descriptor is invalid or the material cannot be created
 	 */
-	public MutableMaterial load( String path ) throws Exception {
+	public MaterialBuilder load( String path ) throws Exception {
 		// Load XML
 		final DocumentElement root = DocumentElement.load( src.open( path ) );
 
 		// Create material
-		final MutableMaterial mat = new MutableMaterial( root.getString( "name", null ) );
+		final MaterialBuilder mat = new MaterialBuilder( root.getString( "name", null ) );
 		final Set<String> flags = new HashSet<>();
 
 		// Load colours
