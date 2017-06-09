@@ -1,8 +1,9 @@
 package org.sarge.jove.scene;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+
+import java.util.Optional;
 
 import org.junit.Test;
 import org.sarge.jove.common.Colour;
@@ -17,41 +18,31 @@ public class LightTest {
 	@Test
 	public void ambient() {
 		final Light ambient = Light.ambient(COL);
-		checkLight(ambient, false, false);
+		checkLight(ambient, null, null);
 	}
 
 	@Test
 	public void directional() {
 		final Light directional = Light.directional(COL, DIR);
-		checkLight(directional, true, false);
+		checkLight(directional, null, DIR);
 	}
 
 	@Test
 	public void point() {
-		final Light point = Light.point(COL, POS);
-		checkLight(point, false, true);
+		final Light point = Light.pointSource(COL, POS);
+		checkLight(point, POS, null);
 	}
 
 	@Test
 	public void spotLight() {
-		final Light spotLight = Light.spotLight(COL, DIR, POS);
-		checkLight(spotLight, true, true);
+		final Light spotLight = Light.spotLight(COL, POS, DIR);
+		checkLight(spotLight, POS, DIR);
 	}
 	
-	private static void checkLight(Light light, boolean dir, boolean pos) {
+	private static void checkLight(Light light, Point pos, Vector dir) {
 		assertNotNull(light);
 		assertEquals(COL, light.getColour());
-		if(dir) {
-			assertEquals(DIR, light.getDirection().get());
-		}
-		else {
-			assertFalse(light.getDirection().isPresent());
-		}
-		if(pos) {
-			assertEquals(POS, light.getPosition().get());
-		}
-		else {
-			assertFalse(light.getPosition().isPresent());
-		}
+		assertEquals(Optional.ofNullable(pos), light.getPosition());
+		assertEquals(Optional.ofNullable(dir), light.getDirection());
 	}
 }

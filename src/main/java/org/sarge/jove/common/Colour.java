@@ -55,7 +55,7 @@ public final class Colour implements Bufferable {
 	}
 
 	/**
-	 * Constructor given an array.
+	 * Constructor given an RGBA array.
 	 * @param array Colour as an array
 	 */
 	public Colour(float[] array) {

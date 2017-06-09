@@ -1,6 +1,7 @@
 package org.sarge.jove.particle;
 
 import org.sarge.jove.geometry.Vector;
+import org.sarge.lib.util.ToString;
 
 /**
  * Defines a surface for collisions with particles.
@@ -20,4 +21,28 @@ public interface CollisionSurface {
 	 * @return Reflected vector
 	 */
 	Vector reflect(Vector vec);
+
+	/**
+	 * Creates the inverse of the given surface.
+	 * @param surface Collision surface
+	 * @return Inverted surface
+	 */
+	static CollisionSurface inverse(CollisionSurface surface) {
+		return new CollisionSurface() {
+			@Override
+			public boolean intersects(Particle p) {
+				return !surface.intersects(p);
+			}
+
+			@Override
+			public Vector reflect(Vector vec) {
+				return surface.reflect(vec);
+			}
+
+			@Override
+			public String toString() {
+				return ToString.toString(this);
+			}
+		};
+	}
 }

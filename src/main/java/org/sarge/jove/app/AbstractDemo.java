@@ -32,9 +32,9 @@ import org.sarge.lib.util.ToString;
 public abstract class AbstractDemo implements Application {
 	private final List<Scene> scenes = new ArrayList<>();
 	private final FrameListenerGroup update = new FrameListenerGroup();
-	private final DataSource src = new FileDataSource( new File( "./resource" ) );
+	private final DataSource src = new FileDataSource(new File("./resource"));
 	private final ActionBindings bindings = new ActionBindings();
-	private final InputEventBuffer handler = new InputEventBuffer( bindings );
+	private final InputEventBuffer handler = new InputEventBuffer(bindings);
 	private final RenderThreadTaskQueue queue = new RenderThreadTaskQueue();
 
 	private ImageLoader imageLoader;
@@ -45,32 +45,32 @@ public abstract class AbstractDemo implements Application {
 	}
 
 	@Override
-	public final void init( Dimensions size, RenderingSystem sys ) throws Exception {
+	public final void init(Dimensions size, RenderingSystem sys) throws Exception {
 		// Create image loader
-		imageLoader = sys.getImageLoader( src );
+		imageLoader = sys.getImageLoader(src);
 
 		// Create render manager
-		final RenderManager mgr = new RenderManager( Arrays.asList( getRenderQueues() ) );
+		final RenderManager mgr = new RenderManager(Arrays.asList(getRenderQueues()));
 
 		// Create scene
-		final Scene scene = new Scene( sys.createViewport(), new Rectangle( size ), new PerspectiveProjection(), mgr );
-		scenes.add( scene );
+		final Scene scene = new Scene(sys.createViewport(), new Rectangle(size), new PerspectiveProjection(), mgr);
+		scenes.add(scene);
 
 		// Create root node
-		final SceneNode root = new SceneNode( "root" );
-		scene.setRoot( root );
+		final SceneNode root = new SceneNode("root");
+		scene.setRoot(root);
 
 		// Init default render properties
-		sys.setFaceCulling( FaceCulling.BACK );
-		sys.setDepthTest( new DepthTestProperty( "<" ) );
+		sys.setFaceCulling(FaceCulling.BACK);
+		sys.setDepthTest(new DepthTestProperty("<"));
 
 		// Init devices
-		for( Device dev : sys.getDevices() ) {
-			dev.start( handler );
+		for(Device dev : sys.getDevices()) {
+			dev.start(handler);
 		}
 
 		// Init scene
-		init( scene, root, sys );
+		init(scene, root, sys);
 	}
 
 	/**
@@ -80,13 +80,13 @@ public abstract class AbstractDemo implements Application {
 	 * @param sys		Rendering system
 	 * @throws Exception
 	 */
-	protected abstract void init( Scene scene, SceneNode root, RenderingSystem sys ) throws Exception;
+	protected abstract void init(Scene scene, SceneNode root, RenderingSystem sys) throws Exception;
 
 	/**
 	 * @return Render queues for this demo
 	 */
 	protected RenderQueue[] getRenderQueues() {
-		return new RenderQueue[] {
+		return new RenderQueue[]{
 				RenderQueue.Default.OPAQUE,
 				RenderQueue.Default.SKY,
 				RenderQueue.Default.TRANSLUCENT
@@ -99,16 +99,16 @@ public abstract class AbstractDemo implements Application {
 	}
 
 	@Override
-	public void render( RenderContext ctx ) {
-		for( Scene scene : scenes ) {
-			scene.render( ctx );
+	public void render(RenderContext ctx) {
+		for(Scene scene : scenes) {
+			scene.render(ctx);
 		}
 	}
 
 	@Override
-	public void update( RenderContext ctx ) {
-		update.update( ctx.getTime(), ctx.getElapsed() );
-		queue.execute( ctx );
+	public void update(RenderContext ctx) {
+		update.update(ctx.getTime(), ctx.getElapsed());
+		queue.execute(ctx);
 		handler.execute();
 	}
 
@@ -120,16 +120,16 @@ public abstract class AbstractDemo implements Application {
 	}
 
 	@Override
-	public void handle( InputEvent event ) {
-		bindings.handle( event );
+	public void handle(InputEvent event) {
+		bindings.handle(event);
 	}
 
 	/**
 	 * Adds a frame listener.
 	 * @param listener Listener to add
 	 */
-	protected void add( FrameListener listener ) {
-		update.add( listener );
+	protected void add(FrameListener listener) {
+		update.add(listener);
 	}
 
 	/**
@@ -153,6 +153,6 @@ public abstract class AbstractDemo implements Application {
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }

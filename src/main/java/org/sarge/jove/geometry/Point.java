@@ -3,7 +3,6 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Converter;
 
-
 /**
  * Point in 3D space.
  * @author Sarge

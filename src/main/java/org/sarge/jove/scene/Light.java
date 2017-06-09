@@ -12,58 +12,62 @@ import org.sarge.lib.util.ToString;
  * Light.
  * @author Sarge
  */
-public class Light {
+public final class Light {
 	/**
-	 * Creates an ambient light.
-	 * @param col Colour of this ambient light
-	 * @return Ambient light
+	 * Creates an ambient light-source.
+	 * @param col Colour
+	 * @return Ambient light-source
 	 */
 	public static Light ambient(Colour col) {
 		return new Light(col, null, null);
 	}
-	
+
 	/**
-	 * Creates a directional light.
-	 * @param col Colour of this light
+	 * Creates a directional light-source, e.g. sunlight
+	 * @param col Colour
 	 * @param dir Direction
-	 * @return Directional light
+	 * @return Directional light-source
 	 */
 	public static Light directional(Colour col, Vector dir) {
+		Check.notNull(col);
 		return new Light(col, dir, null);
 	}
-	
+
 	/**
-	 * Creates a point-light.
-	 * @param col Colour of this light
-	 * @param pos Light position
-	 * @return Point-light
+	 * Creates a point-source light, e.g. a bulb
+	 * @param col Colour
+	 * @param pos Position
+	 * @return Point-source light
 	 */
-	public static Light point(Colour col, Point pos) {
+	public static Light pointSource(Colour col, Point pos) {
+		Check.notNull(col);
 		return new Light(col, null, pos);
 	}
-	
+
 	/**
 	 * Creates a spot-light.
-	 * @param col Colour of this light
+	 * @param col Colour
+	 * @param pos Position
 	 * @param dir Direction
-	 * @param pos Light position
 	 * @return Spot-light
 	 */
-	public static Light spotLight(Colour col, Vector dir, Point pos) {
+	public static Light spotLight(Colour col, Point pos, Vector dir) {
+		Check.notNull(col);
+		Check.notNull(col);
 		return new Light(col, dir, pos);
+		// TODO
+		//		cutoff
+		//		exponent
+		//		attenuation: constant, linear, quadratic
 	}
-// TODO
-//		cutoff
-//		exponent
-//		attenuation: constant, linear, quadratic
-
+	
 	private final Colour col;
 	private final Optional<Vector> dir;
 	private final Optional<Point> pos;
 
 	/**
-	 * constructor.
-	 * @param col colour
+	 * Constructor.
+	 * @param col Colour
 	 * @param dir Direction
 	 * @param pos Position
 	 */
@@ -80,6 +84,13 @@ public class Light {
 	public Colour getColour() {
 		return col;
 	}
+	
+	/**
+	 * @return Position of this light
+	 */
+	public Optional<Point> getPosition() {
+		return pos;
+	}
 
 	/**
 	 * @return Direction of this light
@@ -87,20 +98,9 @@ public class Light {
 	public Optional<Vector> getDirection() {
 		return dir;
 	}
-
-	/**
-	 * @return Position of this light
-	 */
-	public Optional<Point> getPosition() {
-		return pos;
-	}
 	
 	@Override
 	public String toString() {
-		final ToString ts = new ToString(this);
-		ts.append("col", col);
-		dir.ifPresent(d -> ts.append("dir", d));
-		pos.ifPresent(p -> ts.append("pos", p));
-		return ts.toString();
+		return ToString.toString(this);
 	}
 }
