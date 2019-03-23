@@ -119,7 +119,7 @@ public class VulkanInstance extends VulkanHandle {
 		 * @return New instance
 		 * @throws ServiceException if the instance cannot be created
 		 * @throws ServiceException if the required extensions or layers are not supported
-		 * @see VulkanInstance#supported(VulkanLibrary)
+		 * @see Vulkan#supported()
 		 */
 		public VulkanInstance build() {
 			// Validate required extensions and layers
@@ -232,7 +232,7 @@ public class VulkanInstance extends VulkanHandle {
 	 * <pre>
 	 * // Get handler factory from instance
 	 * final VulkanInstance instance = ...
-	 * final MessageHandlerFactory factory = instance.factory();
+	 * final MessageHandlerFactory factory = instance.handlerFactory();
 	 *
 	 * // Create callback
 	 * final MessageCallback callback = (severity, type, pCallbackData, pUserData) -> {
@@ -281,8 +281,7 @@ public class VulkanInstance extends VulkanHandle {
 		 * @return Create messenger function pointer
 		 */
 		private Function function(String name) {
-			final VulkanLibrary lib = Vulkan.instance().library();
-			final Pointer ptr = lib.vkGetInstanceProcAddr(VulkanInstance.this.handle(), name);
+			final Pointer ptr = vulkan.library().vkGetInstanceProcAddr(VulkanInstance.this.handle(), name);
 			if(ptr == null) throw new ServiceException("Cannot find debug function pointer: " + name);
 			return Function.getFunction(ptr);
 		}
@@ -308,7 +307,7 @@ public class VulkanInstance extends VulkanHandle {
 			info.pUserData = user;
 
 			// Create handler
-			final PointerByReference ref = Vulkan.instance().factory().reference();
+			final PointerByReference ref = vulkan.factory().reference();
 			check(create.invokeInt(new Object[]{VulkanInstance.this.handle(), info, null, ref}));
 
 			// Create handler wrapper
