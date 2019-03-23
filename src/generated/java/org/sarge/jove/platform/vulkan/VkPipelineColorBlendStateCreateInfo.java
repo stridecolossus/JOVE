@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -20,10 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pAttachments",
 	"blendConstants"
 })
-public class VkPipelineColorBlendStateCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkPipelineColorBlendStateCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkPipelineColorBlendStateCreateInfo implements Structure.ByReference { }
-
+public class VkPipelineColorBlendStateCreateInfo extends VulkanStructure implements ByReference {
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;

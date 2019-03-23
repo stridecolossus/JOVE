@@ -77,7 +77,7 @@ public class Pipeline extends VulkanHandle {
 		 * Builder for the viewport stage descriptor.
 		 */
 		public class ViewportStageBuilder {
-			private final VkPipelineViewportStateCreateInfo.ByReference info = new VkPipelineViewportStateCreateInfo.ByReference();
+			private final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 			private final Deque<VkViewport> viewports = new ArrayDeque<>();
 			private final List<VkRect2D> scissors = new ArrayList<>();
 
@@ -198,8 +198,7 @@ public class Pipeline extends VulkanHandle {
 		 * Builder for a shader stage.
 		 */
 		public class ColourBlendStageBuilder {
-			// TODO - could enforce the ByReference as this is ONLY ever used to pass to Vulkan?
-			private final VkPipelineColorBlendStateCreateInfo.ByReference info = new VkPipelineColorBlendStateCreateInfo.ByReference();
+			private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
 			private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
 
 			private VkPipelineColorBlendAttachmentState current;
@@ -260,10 +259,10 @@ public class Pipeline extends VulkanHandle {
 		 * Initialises default pipeline stages.
 		 */
 		private void init() {
-			pipeline.pVertexInputState = new VkPipelineVertexInputStateCreateInfo.ByReference();
-			pipeline.pInputAssemblyState = new VkPipelineInputAssemblyStateCreateInfo.ByReference();
-			pipeline.pRasterizationState = new VkPipelineRasterizationStateCreateInfo.ByReference();
-			pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo.ByReference();
+			pipeline.pVertexInputState = new VkPipelineVertexInputStateCreateInfo();
+			pipeline.pInputAssemblyState = new VkPipelineInputAssemblyStateCreateInfo();
+			pipeline.pRasterizationState = new VkPipelineRasterizationStateCreateInfo();
+			pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo();
 			new ColourBlendStageBuilder().build();
 		}
 

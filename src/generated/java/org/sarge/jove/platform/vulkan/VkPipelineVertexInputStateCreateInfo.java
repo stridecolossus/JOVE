@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
-import com.sun.jna.Pointer;
 
-import com.sun.jna.Structure;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -19,10 +19,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"vertexAttributeDescriptionCount",
 	"pVertexAttributeDescriptions"
 })
-public class VkPipelineVertexInputStateCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkPipelineVertexInputStateCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkPipelineVertexInputStateCreateInfo implements Structure.ByReference { }
-	
+public class VkPipelineVertexInputStateCreateInfo extends VulkanStructure implements ByReference {
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
