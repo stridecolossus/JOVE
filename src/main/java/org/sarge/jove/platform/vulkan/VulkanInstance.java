@@ -126,7 +126,7 @@ public class VulkanInstance extends VulkanHandle {
 			validate();
 
 			// Init application info
-			final VkApplicationInfo.ByReference app = new VkApplicationInfo.ByReference();
+			final VkApplicationInfo app = new VkApplicationInfo();
 			app.pApplicationName = name;
 			app.applicationVersion = ver.toInteger();
 
