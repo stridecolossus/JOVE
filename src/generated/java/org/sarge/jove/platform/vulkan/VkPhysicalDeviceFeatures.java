@@ -67,9 +67,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"inheritedQueries"
 })
 public class VkPhysicalDeviceFeatures extends VulkanStructure implements ByReference {
-	//public static class ByValue extends VkPhysicalDeviceFeatures implements Structure.ByValue { }
-	//public static class ByReference extends VkPhysicalDeviceFeatures implements Structure.ByReference { }
-
 	public VulkanBoolean robustBufferAccess;
 	public VulkanBoolean fullDrawIndexUint32;
 	public VulkanBoolean imageCubeArray;

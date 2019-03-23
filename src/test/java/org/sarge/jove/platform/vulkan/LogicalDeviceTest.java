@@ -13,11 +13,13 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
@@ -114,6 +116,14 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 		@Test
 		public void buildInvalidPriority() {
 			assertThrows(IllegalArgumentException.class, () -> builder.queue(family, new float[]{2}).build());
+		}
+
+		@Test
+		public void buildUnsupportedFeature() {
+			final VkPhysicalDeviceFeatures required = new VkPhysicalDeviceFeatures();
+			when(parent.enumerateUnsupportedFeatures(required)).thenReturn(Set.of("doh"));
+			builder.features(required);
+			assertThrows(ServiceException.class, () -> builder.build());
 		}
 	}
 }

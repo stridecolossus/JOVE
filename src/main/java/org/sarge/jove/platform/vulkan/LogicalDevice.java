@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
@@ -106,7 +107,7 @@ public class LogicalDevice extends VulkanHandle {
 		 * @param features Required features
 		 */
 		public Builder features(VkPhysicalDeviceFeatures features) {
-			this.features = features;
+			this.features = notNull(features);
 			return this;
 		}
 
@@ -166,10 +167,15 @@ public class LogicalDevice extends VulkanHandle {
 		/**
 		 * Constructs this logical device.
 		 * @return New logical device
+		 * @throws ServiceException if the deviuce cannot be created or the required features are not supported by the physical device
 		 */
 		public LogicalDevice build() {
 			// Create descriptor
 			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
+
+			// Add required features
+			final var unsupported = device.enumerateUnsupportedFeatures(features);
+			if(!unsupported.isEmpty()) throw new ServiceException("Logical device requires features that are not supported byy the physical device: " + unsupported);
 			info.pEnabledFeatures = features;
 
 			// Add queue descriptors
