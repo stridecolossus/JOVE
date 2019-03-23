@@ -69,7 +69,7 @@ public interface IntegerEnumeration {
 	 * @return Constant
 	 * @throws IllegalArgumentException if the enumeration does not contain the given value
 	 */
-	public static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
+	static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
 		final Cache.Entry entry = Cache.CACHE.get(clazz);
 		return entry.get(value);
 	}
@@ -80,7 +80,7 @@ public interface IntegerEnumeration {
 	 * @param constant		Enumeration constant
 	 * @return Whether is present
 	 */
-	public static <E extends IntegerEnumeration> boolean contains(int mask, E constant) {
+	static <E extends IntegerEnumeration> boolean contains(int mask, E constant) {
 		return (constant.value() & mask) != 0;
 	}
 
@@ -90,7 +90,7 @@ public interface IntegerEnumeration {
 	 * @param mask		Mask
 	 * @return Constants
 	 */
-	public static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
+	static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
 		final Cache.Entry entry = Cache.CACHE.get(clazz);
 		final Set<E> set = new HashSet<>();
 		final int max = Integer.highestOneBit(mask);
@@ -109,7 +109,7 @@ public interface IntegerEnumeration {
 	 * @return Mask
 	 * @see #MASK
 	 */
-	public static <E extends IntegerEnumeration> int mask(Collection<E> values) {
+	static <E extends IntegerEnumeration> int mask(Collection<E> values) {
 		return values.stream().distinct().mapToInt(IntegerEnumeration::value).reduce(0, MASK);
 	}
 
@@ -119,7 +119,7 @@ public interface IntegerEnumeration {
 	 * @return Mask
 	 */
 	@SuppressWarnings("unchecked")
-	public static <E extends IntegerEnumeration> int mask(E... values) {
+	static <E extends IntegerEnumeration> int mask(E... values) {
 		return mask(Arrays.asList(values));
 	}
 

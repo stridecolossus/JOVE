@@ -53,6 +53,16 @@ public abstract class Feature<T extends Feature<T>> extends AbstractEqualsObject
 	 */
 	public static final class Extension extends Feature<Extension> {
 		/**
+		 * Debug utility extension.
+		 */
+		public static final Extension DEBUG_UTILS = new Extension("VK_EXT_debug_utils");
+
+		/**
+		 * Swap-chain extension.
+		 */
+		public static final Extension SWAP_CHAIN = new Extension("VK_KHR_swapchain");
+
+		/**
 		 * Constructor.
 		 * @param name Extension name
 		 */
@@ -65,6 +75,11 @@ public abstract class Feature<T extends Feature<T>> extends AbstractEqualsObject
 	 * Validation layer descriptor.
 	 */
 	public static final class ValidationLayer extends Feature<ValidationLayer> {
+		/**
+		 * Standard validation layer.
+		 */
+		public static final ValidationLayer STANDARD_VALIDATION = new ValidationLayer("VK_LAYER_LUNARG_standard_validation", 1);
+
 		private final int ver;
 
 		/**
@@ -275,16 +290,24 @@ public abstract class Feature<T extends Feature<T>> extends AbstractEqualsObject
 		 */
 		public T extension(FeatureSet<Extension> extensions) {
 			this.requiredExtensions.addAll(extensions.features());
-			return builder();
+			return parent();
 		}
 
 		/**
-		 * Convenience method - Adds a required extension by name.
+		 * Adds a required extension.
+		 * @param ext Extension
+		 */
+		public T extension(Extension ext) {
+			requiredExtensions.add(ext);
+			return parent();
+		}
+
+		/**
+		 * Adds a required extension by name.
 		 * @param ext Extension name
 		 */
 		public T extension(String ext) {
-			requiredExtensions.add(new Extension(ext));
-			return builder();
+			return extension(new Extension(ext));
 		}
 
 		/**
@@ -300,21 +323,30 @@ public abstract class Feature<T extends Feature<T>> extends AbstractEqualsObject
 		 */
 		public T layers(FeatureSet<ValidationLayer> layers) {
 			this.requiredLayers.addAll(layers.features());
-			return builder();
+			return parent();
 		}
 
 		/**
-		 * Convenience method - Adds a required layer.
+		 * Adds a required layer.
 		 * @param layer 	Layer name
 		 * @param ver		Version
 		 */
 		public T layer(String layer, int ver) {
-			requiredLayers.add(new ValidationLayer(layer, ver));
-			return builder();
+			return layer(new ValidationLayer(layer, ver));
+		}
+
+		/**
+		 * Adds a required layer.
+		 * @param layer 	Layer name
+		 * @param ver		Version
+		 */
+		public T layer(ValidationLayer layer) {
+			requiredLayers.add(layer);
+			return parent();
 		}
 
 		@SuppressWarnings("unchecked")
-		private T builder() {
+		private T parent() {
 			return (T) this;
 		}
 

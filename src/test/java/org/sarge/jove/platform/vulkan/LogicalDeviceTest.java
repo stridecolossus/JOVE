@@ -32,6 +32,7 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 	@BeforeEach
 	public void before() {
 		family = mock(QueueFamily.class);
+		when(family.count()).thenReturn(1);
 		queue = mock(WorkQueue.class);
 		dev = new LogicalDevice(new VulkanHandle(new Pointer(42), Destructor.NULL), Map.of(family, List.of(queue)));
 	}
@@ -75,13 +76,6 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 			when(parent.supported()).thenReturn(mock(Supported.class));
 			when(parent.families()).thenReturn(List.of(family));
 
-			// Create queue family and entry
-			final QueueFamily.Entry entry = mock(QueueFamily.Entry.class);
-			when(entry.priorities()).thenReturn(new float[]{1});
-			when(parent.families()).thenReturn(List.of(family));
-			when(family.queue()).thenReturn(entry);
-			when(entry.family()).thenReturn(family);
-
 			// Create builder
 			builder = new LogicalDevice.Builder(parent);
 		}
@@ -90,7 +84,7 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 		public void build() {
 			// Create logical device with one queue
 			dev = builder
-				.queue(family.queue())
+				.queue(family)
 				.extension("ext")
 				.layer("layer", 1)
 				.build();
@@ -109,8 +103,17 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 
 		@Test
 		public void buildQueueInvalid() {
-			when(parent.families()).thenReturn(List.of());
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(family.queue()).build());
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(QueueFamily.class)).build());
+		}
+
+		@Test
+		public void buildTooManyQueues() {
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(family, 2).build());
+		}
+
+		@Test
+		public void buildInvalidPriority() {
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(family, new float[]{2}).build());
 		}
 	}
 }

@@ -19,6 +19,8 @@ import org.sarge.jove.platform.Service;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
+import org.sarge.jove.platform.vulkan.Feature.Extension;
+import org.sarge.jove.platform.vulkan.Feature.ValidationLayer;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracker;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
@@ -234,8 +236,8 @@ public class VulkanIntegrationTest {
 		final VulkanInstance.Builder builder = new VulkanInstance.Builder(vulkan)
 			.extension("VK_KHR_surface")
 			.extension("VK_KHR_win32_surface")
-			.extension("VK_EXT_debug_utils")
-			.layer("VK_LAYER_LUNARG_standard_validation", 1)
+			.extension(Extension.DEBUG_UTILS)
+			.layer(ValidationLayer.STANDARD_VALIDATION)
 			.layer("VK_LAYER_VALVE_steam_overlay", 1);
 
 		// Create instance
@@ -276,9 +278,9 @@ public class VulkanIntegrationTest {
 		features.geometryShader = VulkanBoolean.TRUE;
 
 		final LogicalDevice dev = new LogicalDevice.Builder(physical)
-			.queue(family.queue())
-			.extension("VK_KHR_swapchain")
-			.layer("VK_LAYER_LUNARG_standard_validation", 1)
+			.queue(family)
+			.extension(Extension.SWAP_CHAIN)
+			.layer(ValidationLayer.STANDARD_VALIDATION)
 			.layer("VK_LAYER_VALVE_steam_overlay", 1)
 			.features(features)
 			.build();

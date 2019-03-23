@@ -2,10 +2,8 @@ package org.sarge.jove.platform.vulkan;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sarge.jove.util.TestHelper.assertFloatArrayEquals;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
-import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily.Entry;
 
 import com.sun.jna.Pointer;
 
@@ -103,58 +100,6 @@ public class PhysicalDeviceTest extends AbstractVulkanTest {
 			final Surface surface = mock(Surface.class);
 			when(surface.handle()).thenReturn(mock(Pointer.class));
 			family.isPresentationSupported(surface);
-		}
-	}
-
-	@Nested
-	class QueueEntryTests {
-		private QueueFamily family;
-
-		@BeforeEach
-		public void before() {
-			family = device.families().iterator().next();
-		}
-
-		@Test
-		public void queue() {
-			final Entry entry = family.queue();
-			assertNotNull(entry);
-			assertFloatArrayEquals(new float[]{1}, entry.priorities());
-			assertEquals(family, entry.family());
-		}
-
-		@Test
-		public void multiple() {
-			final Entry entry = family.queues(2);
-			assertNotNull(entry);
-			assertFloatArrayEquals(new float[]{1, 1}, entry.priorities());
-			assertEquals(family, entry.family());
-		}
-
-		@Test
-		public void multiplePrioritised() {
-			final Entry entry = family.queues(2, 0.5f);
-			assertNotNull(entry);
-			assertFloatArrayEquals(new float[]{0.5f, 0.5f}, entry.priorities());
-			assertEquals(family, entry.family());
-		}
-
-		@Test
-		public void priorities() {
-			final Entry entry = family.queues(0.5f);
-			assertNotNull(entry);
-			assertFloatArrayEquals(new float[]{0.5f}, entry.priorities());
-			assertEquals(family, entry.family());
-		}
-
-		@Test
-		public void multipleTooMany() {
-			assertThrows(IllegalArgumentException.class, () -> family.queues(3));
-		}
-
-		@Test
-		public void invalidPriority() {
-			assertThrows(IllegalArgumentException.class, () -> family.queues(1, 999));
 		}
 	}
 }

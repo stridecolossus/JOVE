@@ -4,6 +4,7 @@ import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.StringArray;
@@ -86,7 +88,7 @@ public class LogicalDevice extends VulkanHandle {
 	 */
 	public static class Builder extends Feature.AbstractBuilder<Builder> {
 		private final PhysicalDevice device;
-		private final List<QueueFamily.Entry> entries = new StrictList<>();
+		private final List<VkDeviceQueueCreateInfo> queues = new StrictList<>();
 
 		private VkPhysicalDeviceFeatures features;
 
@@ -109,13 +111,55 @@ public class LogicalDevice extends VulkanHandle {
 		}
 
 		/**
-		 * Adds a queue family used by this device.
-		 * @param entry Queue family entry
-		 * @throws IllegalArgumentException if the queue family does not belong to this device
+		 * Adds a single queue of the given family to this device (with the default priority of <b>one</b>).
+		 * @param family Queue family
+		 * @throws IllegalArgumentException if the queue family does not belong to the physical device
 		 */
-		public Builder queue(QueueFamily.Entry entry) {
-			if(!device.families().contains(entry.family())) throw new IllegalArgumentException("Invalid queue family for device: " + entry);
-			entries.add(entry);
+		public Builder queue(QueueFamily family) {
+			return queue(family, 1);
+		}
+
+		/**
+		 * Adds multiple queues of the given family to this device (all with the default priority of <b>one</b>).
+		 * @param family 	Queue family
+		 * @param num		Number of queues
+		 * @throws IllegalArgumentException if the queue family does not belong to the physical device
+		 * @throws IllegalArgumentException if the number of queues is zero or exceeds the number available in the given family
+		 */
+		public Builder queue(QueueFamily family, int num) {
+			final float[] priorities = new float[num];
+			Arrays.fill(priorities, 1);
+			return queue(family, priorities);
+		}
+
+		/**
+		 * Adds multiple queues of the given family to this device with the specified priorities.
+		 * @param family 			Queue family
+		 * @param priorities		Queue priorities
+		 * @throws IllegalArgumentException if the queue family does not belong to the physical device
+		 * @throws IllegalArgumentException if any priority is not in the range 0..1
+		 * @throws IllegalArgumentException if the number of queues is zero or exceeds the number available in the given family
+		 */
+		public Builder queue(QueueFamily family, float[] priorities) {
+			// Validate
+			if(!device.families().contains(family)) {
+				throw new IllegalArgumentException("Invalid queue family for device: " + family);
+			}
+			Check.notEmpty(priorities);
+			for(float f : priorities) {
+				Check.range(f, 0, 1);
+			}
+			if(priorities.length > family.count()) {
+				throw new IllegalArgumentException(String.format("Number of requested queues exceeds number available in family: num=%d family=%s", priorities.length, family));
+			}
+
+			// Add queue descriptor
+			final VkDeviceQueueCreateInfo info = new VkDeviceQueueCreateInfo();
+			info.queueCount = priorities.length;
+			info.queueFamilyIndex = family.index();
+			info.pQueuePriorities = StructureHelper.floats(priorities);
+			queues.add(info);
+
 			return this;
 		}
 
@@ -129,19 +173,8 @@ public class LogicalDevice extends VulkanHandle {
 			info.pEnabledFeatures = features;
 
 			// Add queue descriptors
-			// TODO - convert to stream approach (could be helper on entry?) and use StructureHelper
-			final VkDeviceQueueCreateInfo[] queueInfos = (VkDeviceQueueCreateInfo[]) new VkDeviceQueueCreateInfo().toArray(entries.size());
-			for(int n = 0; n < queueInfos.length; ++n) {
-				final VkDeviceQueueCreateInfo q = queueInfos[n];
-				final QueueFamily.Entry entry = entries.get(0);
-				final float[] priorities = entry.priorities();
-				q.queueCount = priorities.length;
-				q.queueFamilyIndex = entry.family().index();
-				q.pQueuePriorities = StructureHelper.floats(priorities);
-				q.write(); // <--- needed? TODO
-			}
-			info.queueCreateInfoCount = queueInfos.length;
-			info.pQueueCreateInfos = queueInfos[0].getPointer();
+			info.queueCreateInfoCount = queues.size();
+			info.pQueueCreateInfos = StructureHelper.structures(queues);
 
 			// Add required extensions
 			final String[] extensions = super.extensions();
@@ -160,13 +193,17 @@ public class LogicalDevice extends VulkanHandle {
 			check(lib.vkCreateDevice(device.handle(), info, null, logical));
 
 			// Retrieve queue handles
-			final Map<QueueFamily, List<WorkQueue>> queues = new HashMap<>();
-			for(QueueFamily.Entry entry : entries) {
-				final List<WorkQueue> handles = queues.computeIfAbsent(entry.family(), ignored -> new ArrayList<>());
-				for(int n = 0; n < entry.priorities().length; ++n) {
-					// Lookup queue
+			final Map<QueueFamily, List<WorkQueue>> map = new HashMap<>();
+			for(VkDeviceQueueCreateInfo q : queues) {
+				// Create entry for each family
+				final QueueFamily family = device.families().get(q.queueFamilyIndex);
+				final List<WorkQueue> handles = map.computeIfAbsent(family, ignored -> new ArrayList<>());
+
+				// Retrieve queue handles for this family
+				for(int n = 0; n < q.queueCount; ++n) {
+					// Retrieve queue handle
 					final PointerByReference ref = vulkan.factory().reference();
-					lib.vkGetDeviceQueue(logical.getValue(), entry.family().index(), n, ref);
+					lib.vkGetDeviceQueue(logical.getValue(), q.queueFamilyIndex, n, ref);
 
 					// Create work-queue
 					final WorkQueue queue = new WorkQueue(ref.getValue());
@@ -177,7 +214,7 @@ public class LogicalDevice extends VulkanHandle {
 			// Create logical device
 			final Pointer handle = logical.getValue();
 			final Destructor destructor = () -> lib.vkDestroyDevice(handle, null);
-			return new LogicalDevice(new VulkanHandle(handle, destructor), queues);
+			return new LogicalDevice(new VulkanHandle(handle, destructor), map);
 			// TODO - resource/track
 		}
 	}

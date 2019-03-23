@@ -17,7 +17,6 @@ import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.AbstractEqualsObject;
 import org.sarge.lib.util.AbstractObject;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -74,76 +73,6 @@ public class PhysicalDevice extends AbstractObject {
 			final IntByReference supported = vulkan.factory().integer();
 			check(vulkan.library().vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice.this.handle(), index(), surface.handle(), supported));
 			return VulkanBoolean.of(supported.getValue()).isTrue();
-		}
-
-		/**
-		 * Prioritised queue entry.
-		 * TODO - discrete queue priorities?
-		 */
-		public class Entry extends AbstractObject {
-			private final float[] priorities;
-
-			/**
-			 * Constructor.
-			 * @param priorities Queue priorities
-			 * @throws IllegalArgumentException if any priority is not in the range 0..1
-			 * @throws IllegalArgumentException if the number of queues exceeds the number available in this family
-			 */
-			private Entry(float[] priorities) {
-				Check.notEmpty(priorities);
-				if(priorities.length > QueueFamily.this.count) throw new IllegalArgumentException("Requested number of queues exceeds the family");
-				for(float f : priorities) {
-					Check.range(f, 0, 1);
-				}
-				this.priorities = priorities.clone();
-			}
-
-			/**
-			 * @return Queue priorities
-			 */
-			float[] priorities() {
-				return priorities.clone();
-			}
-
-			/**
-			 * @return Queue family
-			 */
-			QueueFamily family() {
-				return QueueFamily.this;
-			}
-		}
-
-		/**
-		 * Creates a single queue entry with a priority of <tt>one</tt>.
-		 */
-		public Entry queue() {
-			return queues(1);
-		}
-
-		/**
-		 * Creates multiple queue entries with a priority of <tt>one</tt>.
-		 * @param count Number of queues
-		 * @throws IllegalArgumentException if the number of queues exceeds the number available in this family
-		 */
-		public Entry queues(int count) {
-			return queues(count, 1);
-		}
-
-		/**
-		 * creates multiple queue entries with the given priority.
-		 * @param count			Number of queues
-		 * @param priority		Priority
-		 * @throws IllegalArgumentException if any priority is not in the range 0..1
-		 * @throws IllegalArgumentException if the number of queues exceeds the number available in this family
-		 */
-		public Entry queues(int count, float priority) {
-			final float[] priorities = new float[count];
-			Arrays.fill(priorities, priority);
-			return new Entry(priorities);
-		}
-
-		public Entry queues(float... priorities) {
-			return new Entry(priorities);
 		}
 	}
 
