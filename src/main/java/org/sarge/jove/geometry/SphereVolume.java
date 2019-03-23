@@ -1,13 +1,28 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.zeroOrMore;
+
+import java.util.Optional;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.util.MathsUtil;
 
 /**
- * Sphere volume.
+ * Bounding volume defined by a simple sphere.
  * @author Sarge
  */
 public class SphereVolume implements BoundingVolume {
+	/**
+	 * Creates a sphere volume from the given extents.
+	 * @param extents Extents
+	 * @return Sphere volume
+	 */
+	public static SphereVolume of(Extents extents) {
+		final float radius = extents.size() * MathsUtil.HALF;
+		return new SphereVolume(extents.centre(), radius);
+	}
+
 	private final Point centre;
 	private final float radius;
 
@@ -17,54 +32,130 @@ public class SphereVolume implements BoundingVolume {
 	 * @param radius Radius
 	 */
 	public SphereVolume(Point centre, float radius) {
-		Check.notNull(centre);
-		Check.zeroOrMore(radius);
-		this.centre = centre;
-		this.radius = radius;
+		this.centre = notNull(centre);
+		this.radius = zeroOrMore(radius);
 	}
 
 	/**
-	 * Constructor for a sphere at the origin.
-	 * @param radius Radius
+	 * @return Centre-point of this sphere
 	 */
-	public SphereVolume(float radius) {
-		this(Point.ORIGIN, radius);
-	}
-
-	@Override
-	public Point getCentre() {
+	public Point centre() {
 		return centre;
 	}
 
 	/**
 	 * @return Sphere radius
 	 */
-	public float getRadius() {
+	public float radius() {
 		return radius;
 	}
 
 	@Override
-	public boolean contains(Point pos) {
-		return pos.distanceSquared(centre) <= radius * radius;
+	public Extents extents() {
+		final Point min = new Point(-radius, -radius, -radius);
+		final Point max = new Point(radius, radius, radius);
+		return new Extents(centre.add(min), centre.add(max));
 	}
 
 	@Override
-	public boolean intersects(Ray ray) {
+	public boolean contains(Point pt) {
+		return centre.distance(pt) <= radius * radius;
+	}
+
+	// http://www.lighthouse3d.com/tutorials/maths/ray-sphere-intersection/
+	@Override
+	public Optional<Point> intersect(Ray ray) {
 		// Build vector from sphere to ray origin
-		Vector vec = Vector.between(centre, ray.getOrigin());
+		final Vector vec = Vector.of(centre, ray.origin());
 
-		// Project sphere onto ray (unless behind ray)
-		if(vec.dot(ray.getDirection()) >= 0) {
-			final Point pos = centre.project(ray.getDirection());
-			vec = Vector.between(centre, pos);
+		if(vec.dot(ray.direction()) < 0) {
+			// Sphere is behind the ray origin
+			final float dist = radius * radius - vec.magnitude();
+			if(dist > 0) {
+				// No intersection
+				return Optional.empty();
+			}
+			else
+			if(dist < 0) {
+				// Ray origin is within the sphere
+				final Point pc = new Point(ray.direction().project(vec));
+				final float d = MathsUtil.sqrt(dist - Vector.of(pc, ray.origin()).magnitude());
+				final Tuple result = ray.origin().add(ray.direction().scale(d));
+				return Optional.of(new Point(result));
+			}
+			else {
+				// Ray origin touching sphere
+				return Optional.of(ray.origin());
+			}
 		}
+		else {
+			// Determine intersection point
+			final Tuple pt = ray.direction().project(vec);
+			final float dist = centre.distance(pt);
+			final float r = radius * radius;
+			if(dist > r) {
+				// Ray does not intersect
+				return Optional.empty();
+			}
+			else {
+				final float len = vec.magnitude();
+				if(len > r) {
+					// Origin is outside of the sphere
+					// TODO
+					return Optional.empty();
+				}
+				else
+				if(len < r) {
+					// Origin is inside the sphere
+					// TODO
+					return Optional.empty();
+				}
+				else {
+					// Ray touches sphere
+					return Optional.of(new Point(pt));
+				}
+			}
+		}
+	}
 
-		// Check distance to sphere centre
-		return vec.getMagnitudeSquared() <= radius * radius;
+	@Override
+	public boolean intersects(BoundingVolume vol) {
+		return vol.intersects(centre, radius);
+	}
+
+	@Override
+	public boolean intersects(Point centre, float radius) {
+		final float dist = this.centre.distance(centre);
+		return intersects(dist, this.radius) || intersects(dist, radius);
+	}
+
+	private static boolean intersects(float dist, float radius) {
+		return dist <= radius * radius;
+	}
+
+	@Override
+	public boolean intersects(Extents extents) {
+		// TODO
+		return false;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == this) return true;
+		if(obj == null) return false;
+		if(obj instanceof SphereVolume) {
+			final SphereVolume that = (SphereVolume) obj;
+			if(!MathsUtil.equals(this.radius, that.radius)) return false;
+			if(!this.centre.equals(that.centre)) return false;
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString(this);
+		return ToStringBuilder.reflectionToString(this);
 	}
 }

@@ -1,86 +1,68 @@
 package org.sarge.jove.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MathsUtilTest {
 	@Test
-	public void sqrt() {
-		assertFloatEquals( (float) Math.sqrt( 42 ), MathsUtil.sqrt( 42 ) );
-	}
-
-	@Test
-	public void isPowerOfTwo() {
-		assertTrue( MathsUtil.isPowerOfTwo( 1 ) );
-		assertTrue( MathsUtil.isPowerOfTwo( 2 ) );
-		assertTrue( MathsUtil.isPowerOfTwo( 4 ) );
-		assertTrue( MathsUtil.isPowerOfTwo( 8 ) );
-		assertTrue( MathsUtil.isPowerOfTwo( 16 ) );
-		assertFalse( MathsUtil.isPowerOfTwo( 0 ) );
-		assertFalse( MathsUtil.isPowerOfTwo( 3 ) );
+	public void equals() {
+		assertEquals(true, MathsUtil.equals(42, 42));
+		assertEquals(true, MathsUtil.equals(42, 42.0001f));
+		assertEquals(false, MathsUtil.equals(42, 999));
+		assertEquals(false, MathsUtil.equals(42, 42.01f));
 	}
 
 	@Test
 	public void isZero() {
-		assertTrue( MathsUtil.isZero( 0 ) );
-		assertTrue( MathsUtil.isZero( 0.000001f ) );
-		assertFalse( MathsUtil.isZero( 0.001f ) );
-	}
-
-	@Test
-	public void isFloatEqual() {
-		assertTrue( MathsUtil.isEqual( 0, 0 ) );
-		assertTrue( MathsUtil.isEqual( 0.000001f, 0.000001f ) );
-		assertFalse( MathsUtil.isEqual( 0.0001f, 0.000001f ) );
-	}
-
-	@Test
-	public void clamp() {
-		assertFloatEquals( 0, MathsUtil.clamp( 0 ) );
-		assertFloatEquals( 0.5f, MathsUtil.clamp( 0.5f ) );
-		assertFloatEquals( 1, MathsUtil.clamp( 1 ) );
-		assertFloatEquals( 0, MathsUtil.clamp( -1 ) );
-		assertFloatEquals( 1, MathsUtil.clamp( 2 ) );
+		assertEquals(true, MathsUtil.equals(42, 42));
 	}
 
 	@Test
 	public void isEven() {
-		assertTrue( MathsUtil.isEven( 2 ) );
-		assertFalse( MathsUtil.isEven( 3 ) );
+		assertEquals(true, MathsUtil.isEven(0));
+		assertEquals(false, MathsUtil.isEven(1));
+		assertEquals(true, MathsUtil.isEven(2));
 	}
 
 	@Test
-	public void convertFloatArray() {
-		final float[] array = MathsUtil.convert( "1, 2, 3", 3 );
-		assertNotNull( array );
-		assertEquals( 3, array.length );
-		for( int n = 0; n < 3; ++n ) {
-			assertFloatEquals( n + 1, array[ n ] );
-		}
+	public void isPowerOfTwo() {
+		assertEquals(false, MathsUtil.isPowerOfTwo(0));
+		assertEquals(true, MathsUtil.isPowerOfTwo(1));
+		assertEquals(true, MathsUtil.isPowerOfTwo(2));
+		assertEquals(false, MathsUtil.isPowerOfTwo(3));
+		assertEquals(true, MathsUtil.isPowerOfTwo(4));
+		assertEquals(true, MathsUtil.isPowerOfTwo(8));
 	}
 
 	@Test
 	public void toDegrees() {
-		assertFloatEquals( 90, MathsUtil.toDegrees( MathsUtil.HALF_PI ) );
+		assertEquals(0, MathsUtil.toDegrees(0));
+		assertEquals(90, MathsUtil.toDegrees(MathsUtil.HALF_PI));
+		assertEquals(180, MathsUtil.toDegrees(MathsUtil.PI));
+		assertEquals(360, MathsUtil.toDegrees(MathsUtil.TWO_PI));
 	}
 
 	@Test
 	public void toRadians() {
-		assertFloatEquals( MathsUtil.HALF_PI, MathsUtil.toRadians( 90 ) );
+		assertEquals(0, MathsUtil.toRadians(0));
+		assertEquals(MathsUtil.HALF_PI, MathsUtil.toRadians(90));
+		assertEquals(MathsUtil.PI, MathsUtil.toRadians(180));
+		assertEquals(MathsUtil.TWO_PI, MathsUtil.toRadians(360));
 	}
 
 	@Test
-	public void trigFunctions() {
-		assertFloatEquals( (float) Math.sin( 0.5f ), MathsUtil.sin( 0.5f ) );
-		assertFloatEquals( (float) Math.cos( 0.5f ), MathsUtil.cos( 0.5f ) );
-		assertFloatEquals( (float) Math.tan( 0.5f ), MathsUtil.tan( 0.5f ) );
-		assertFloatEquals( (float) Math.asin( 0.5f ), MathsUtil.asin( 0.5f ) );
-		assertFloatEquals( (float) Math.acos( 0.5f ), MathsUtil.acos( 0.5f ) );
-		assertFloatEquals( (float) Math.atan( 0.5f ), MathsUtil.atan( 0.5f ) );
+	public void sqrt() {
+		assertEquals((float) Math.sqrt(42), MathsUtil.sqrt(42));
+	}
+
+	@Test
+	public void trigonetry() {
+		assertEquals((float) Math.sin(0.5f), MathsUtil.sin(0.5f), 0.0001f);
+		assertEquals((float) Math.cos(0.5f), MathsUtil.cos(0.5f), 0.0001f);
+		assertEquals((float) Math.tan(0.5f), MathsUtil.tan(0.5f), 0.0001f);
+		assertEquals((float) Math.asin(0.5f), MathsUtil.asin(0.5f), 0.0001f);
+		assertEquals((float) Math.acos(0.5f), MathsUtil.acos(0.5f), 0.0001f);
+		assertEquals((float) Math.atan(0.5f), MathsUtil.atan(0.5f), 0.0001f);
 	}
 }

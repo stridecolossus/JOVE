@@ -1,0 +1,25 @@
+package $package;
+
+import org.sarge.jove.platform.IntegerEnumeration;
+
+/**
+ * Vulkan enumeration wrapper.
+ * This class has been code-generated.
+ */
+public enum $name implements IntegerEnumeration {
+#foreach($entry in $values.entrySet())
+ 	${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
+ 	
+#end
+
+	private final int value;
+	
+	private $name(int value) {
+		this.value = value;
+	}
+
+	@Override
+	public int value() {
+		return value;
+	}
+}

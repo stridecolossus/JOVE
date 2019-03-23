@@ -1,42 +1,25 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.Assert.assertEquals;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PointTest {
-	protected Point pt;
-
-	@Before
-	public void before() {
-		pt = new Point(1, 2, 3);
+	@Test
+	public void origin() {
+		assertEquals(new Point(0, 0, 0), Point.ORIGIN);
 	}
 
 	@Test
-	public void constructor() {
-		assertEquals(new Point(1, 2, 3), pt);
+	public void distance() {
+		final Point start = new Point(1, 2, 3);
+		final Point end = new Point(4, 5, 6);
+		assertEquals(27f, start.distance(end), 0.0001f);
 	}
 
 	@Test
-	public void distanceSquared() {
-		assertFloatEquals(0, pt.distanceSquared(pt));
-		assertFloatEquals(27, pt.distanceSquared(new Point(4, 5, 6)));
-	}
-
-	@Test
-	public void add() {
-		assertEquals(new Point(2, 4, 6), pt.add(new Point(1, 2, 3)));
-	}
-
-	@Test
-	public void multiply() {
-		assertEquals(new Point(2, 4, 6), pt.scale(2));
-	}
-
-	@Test
-	public void project() {
-		assertEquals(new Point(3, 6, 9), pt.project(Vector.Z_AXIS));
+	public void converter() {
+		final Point result = Point.CONVERTER.apply("1,2,3");
+		assertEquals(new Point(1, 2, 3), result);
 	}
 }

@@ -1,0 +1,37 @@
+package $package;
+
+import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
+#foreach($import in $imports)
+import $import;
+#end
+
+import com.sun.jna.Structure;
+import com.sun.jna.Structure.FieldOrder;
+
+/**
+ * Vulkan structure.
+ * This class has been code-generated.
+ */
+@FieldOrder({
+#foreach($field in $fields)
+	"$field.name"#if($foreach.hasNext),
+#end
+#end
+
+})
+public class $name extends VulkanStructure {
+	public static class ByValue extends $name implements Structure.ByValue { }
+	public static class ByReference extends $name implements Structure.ByReference { }
+	
+#foreach($field in $fields)
+#if($field.name == "sType")
+	public $field.type $field.name = VkStructureType.VK_STRUCTURE_TYPE_${sType};
+#else
+#if($field.length == 0)
+	public $field.type $field.name;
+#else
+	public ${field.type}[] $field.name = new ${field.type}[${field.length}];
+#end
+#end
+#end
+}

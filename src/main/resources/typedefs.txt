@@ -1,0 +1,48 @@
+# Maps C/C++ types to Java/JNA
+
+# Primitives
+int8_t 					-> byte
+uint8_t 				-> byte
+int32_t 				-> int
+uint32_t 				-> int
+int64_t 				-> long
+uint64_t 				-> long
+size_t 					-> long
+
+# Pointers
+void* 					-> com.sun.jna.Pointer
+char* 					-> String
+char**					-> com.sun.jna.Pointer
+
+# Arrays
+char[]					-> byte
+
+# Over-rides
+VkBool32				-> org.sarge.jove.platform.vulkan.VulkanBoolean
+
+# Macros
+VkInstance				-> com.sun.jna.Pointer
+VkPhysicalDevice		-> com.sun.jna.Pointer
+VkDevice				-> com.sun.jna.Pointer
+VkCommandBuffer			-> com.sun.jna.Pointer
+VkSemaphore				-> com.sun.jna.Pointer
+VkCommandBuffer			-> com.sun.jna.Pointer
+VkFence					-> com.sun.jna.Pointer
+VkDeviceMemory			-> com.sun.jna.Pointer
+VkBuffer				-> com.sun.jna.Pointer
+VkImage					-> com.sun.jna.Pointer
+VkEvent					-> com.sun.jna.Pointer
+VkQueryPool				-> com.sun.jna.Pointer
+VkBufferView			-> com.sun.jna.Pointer
+VkImageView				-> com.sun.jna.Pointer
+VkShaderModule			-> com.sun.jna.Pointer
+VkPipelineCache			-> com.sun.jna.Pointer
+VkPipelineLayout		-> com.sun.jna.Pointer
+VkRenderPass			-> com.sun.jna.Pointer
+VkPipeline				-> com.sun.jna.Pointer
+VkDescriptorSetLayout	-> com.sun.jna.Pointer
+VkSampler				-> com.sun.jna.Pointer
+VkDescriptorPool		-> com.sun.jna.Pointer
+VkDescriptorSet			-> com.sun.jna.Pointer
+VkFramebuffer			-> com.sun.jna.Pointer
+VkCommandPool			-> com.sun.jna.Pointer

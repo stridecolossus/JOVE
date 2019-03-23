@@ -1,48 +1,65 @@
 package org.sarge.jove.common;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import java.nio.FloatBuffer;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.jove.util.BufferFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ColourTest {
 	private Colour col;
 
-	@Before
+	@BeforeEach
 	public void before() {
-		col = new Colour(0.1f, 0.2f, 0.3f, 0.4f);
+		col = new Colour(0.1f, 0.2f, 0.3f, 1f);
 	}
 
 	@Test
 	public void constructor() {
-		assertFloatEquals(0.1f, col.r);
-		assertFloatEquals(0.2f, col.g);
-		assertFloatEquals(0.3f, col.b);
-		assertFloatEquals(0.4f, col.a);
+		assertEquals(0.1f, col.r, 0.0001f);
+		assertEquals(0.2f, col.g, 0.0001f);
+		assertEquals(0.3f, col.b, 0.0001f);
+		assertEquals(1.0f, col.a, 0.0001f);
+		assertEquals(4, col.size());
 	}
 
 	@Test
-	public void appendFloatBuffer() {
-		final FloatBuffer buffer = BufferFactory.createFloatBuffer(4);
-		col.append(buffer);
+	public void arrayConstructor() {
+		assertEquals(col, new Colour(new float[]{col.r, col.g, col.b, 1f}));
+		assertEquals(col, new Colour(new float[]{col.r, col.g, col.b}));
+	}
+
+	@Test
+	public void constructorInvalid() {
+		assertThrows(IllegalArgumentException.class, () -> new Colour(0, 0, 0, 999));
+	}
+
+	@Test
+	public void buffer() {
+		final FloatBuffer buffer = FloatBuffer.allocate(4);
+		col.buffer(buffer);
 		buffer.flip();
-		assertFloatEquals(0.1f, buffer.get());
-		assertFloatEquals(0.2f, buffer.get());
-		assertFloatEquals(0.3f, buffer.get());
-		assertFloatEquals(0.4f, buffer.get());
+		assertFloatEquals(col.r, buffer.get());
+		assertFloatEquals(col.g, buffer.get());
+		assertFloatEquals(col.b, buffer.get());
+		assertFloatEquals(col.a, buffer.get());
+	}
+
+	@Test
+	public void pixel() {
+		final int pixel = Colour.WHITE.toPixel();
+		assertEquals(Colour.WHITE, Colour.of(pixel));
 	}
 
 	@Test
 	public void equals() {
-		final Colour other = new Colour(0.1f, 0.2f, 0.3f, 0.4f);
-		assertEquals(true, col.equals(col));
-		assertEquals(true, col.equals(other));
-		assertEquals(true, other.equals(col));
-		assertEquals(false, col.equals(Colour.BLACK));
-		assertEquals(false, col.equals(null));
+		assertTrue(col.equals(col));
+		assertFalse(col.equals(null));
+		assertFalse(col.equals(Colour.WHITE));
 	}
 }

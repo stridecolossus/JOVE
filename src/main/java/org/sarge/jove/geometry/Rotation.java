@@ -1,82 +1,93 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
+import static org.sarge.lib.util.Check.notNull;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * Rotation specified as an axis-angle.
+ * Counter-clockwise rotation about an arbitrary axis.
  * @author Sarge
  */
-public class Rotation implements Transform {
-	private final Vector axis;
-
-	private Matrix matrix;
-	private float angle;
-
-	/**
-	 * Constructor.
-	 * @param axis		Rotation axis
-	 * @param angle		Angle (radians)
-	 */
-	public Rotation(Vector axis, float angle) {
-		Check.notNull(axis);
-		this.axis = axis.normalize();
-		setAngle(angle);
-	}
-
+public interface Rotation extends Transform {
 	/**
 	 * @return Rotation axis
 	 */
-	public Vector getAxis() {
-		return axis;
-	}
+	Vector axis();
 
 	/**
 	 * @return Rotation angle (radians)
 	 */
-	public float getAngle() {
-		return angle;
+	float angle();
+
+	/**
+	 * Creates a fixed rotation.
+	 * @param axis		Axis
+	 * @param angle		Rotation angle (radians)
+	 * @return Rotation
+	 */
+	static Rotation of(Vector axis, float angle) {
+		return new MutableRotation(axis, angle);
 	}
 
 	/**
-	 * Sets the rotation angle.
-	 * @param angle Angle (radians)
+	 * Mutable implementation.
 	 */
-	protected void setAngle(float angle) {
-		this.angle = angle;
-		// TODO - use proper rot -> matrix
-		final Quaternion q = new Quaternion(axis, angle);
-		matrix = q.toMatrix();
-	}
+	class MutableRotation implements Rotation {
+		private final Vector axis;
+		private float angle;
+		private boolean dirty;
+		private transient Matrix matrix;
 
-	@Override
-	public boolean isDirty() {
-		return false;
-	}
-
-	@Override
-	public Matrix toMatrix() {
-		return matrix;
-	}
-	
-	@Override
-	public boolean equals(Object obj) {
-		if(obj == this) return true;
-		if(obj == null) return false;
-		if(obj instanceof Rotation) {
-			final Rotation that = (Rotation) obj;
-			if(!this.axis.equals(that.axis)) return false;
-			if(!MathsUtil.isEqual(this.angle, that.angle)) return false;
-			return true;
+		/**
+		 * Constructor.
+		 * @param axis		Rotation axis
+		 * @param angle		Angle (radians)
+		 */
+		public MutableRotation(Vector axis, float angle) {
+			this.axis = notNull(axis);
+			angle(angle);
 		}
-		else {
-			return false;
-		}
-	}
 
-	@Override
-	public String toString() {
-		return ToString.toString(this);
+		@Override
+		public Vector axis() {
+			return axis;
+		}
+
+		@Override
+		public float angle() {
+			return angle;
+		}
+
+		/**
+		 * Sets the rotation angle.
+		 * @param angle Angle (radians)
+		 */
+		public void angle(float angle) {
+			this.angle = angle;
+			this.matrix = Quaternion.of(this).matrix();
+			this.dirty = true;
+		}
+
+		@Override
+		public Matrix matrix() {
+			dirty = false;
+			return matrix;
+		}
+
+		@Override
+		public boolean isDirty() {
+			return dirty;
+		}
+
+		@Override
+		public boolean equals(Object that) {
+			return EqualsBuilder.reflectionEquals(this, that);
+		}
+
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this);
+		}
 	}
 }

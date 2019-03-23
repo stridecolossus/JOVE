@@ -1,12 +1,12 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
+import static org.sarge.lib.util.Check.notNull;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A ray defined by an origin and direction, used for scene picking.
+ * Projection ray.
  * @author Sarge
- * @see BoundingVolume
  */
 public final class Ray {
 	private final Point origin;
@@ -14,32 +14,30 @@ public final class Ray {
 
 	/**
 	 * Constructor.
-	 * @param origin	Ray origin
-	 * @param dir		Ray direction vector
+	 * @param origin		Ray origin
+	 * @param dir			Direction vector
 	 */
 	public Ray(Point origin, Vector dir) {
-		Check.notNull(origin);
-		Check.notNull(dir);
-		this.origin = origin;
-		this.dir = dir.normalize();
+		this.origin = notNull(origin);
+		this.dir = notNull(dir);
 	}
 
 	/**
-	 * @return Origin of this ray
+	 * @return Ray origin
 	 */
-	public Point getOrigin() {
+	public Point origin() {
 		return origin;
 	}
 
 	/**
-	 * @return Direction vector
+	 * @return Ray direction
 	 */
-	public Vector getDirection() {
+	public Vector direction() {
 		return dir;
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString(this);
+		return ToStringBuilder.reflectionToString(this);
 	}
 }

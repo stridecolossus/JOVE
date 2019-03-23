@@ -1,52 +1,55 @@
 package org.sarge.jove.geometry;
 
+import org.sarge.jove.util.JoveUtil;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Randomiser;
 import org.sarge.lib.util.Converter;
 
 /**
- * Immutable vector or direction.
+ * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
 public final class Vector extends Tuple {
 	/**
-	 * X axis.
+	 * X-axis vector.
 	 */
 	public static final Vector X_AXIS = new Vector(1, 0, 0);
 
 	/**
-	 * Y axis.
+	 * Y-axis vector.
 	 */
 	public static final Vector Y_AXIS = new Vector(0, 1, 0);
 
 	/**
-	 * Z axis.
+	 * Z-axis vector.
 	 */
 	public static final Vector Z_AXIS = new Vector(0, 0, 1);
 
 	/**
-	 * String-to-vector converter.
+	 * Vector converter.
 	 */
-	public static final Converter<Vector> CONVERTER = str -> new Vector(MathsUtil.convert(str, SIZE));
-	
+	public static final Converter<Vector> CONVERTER = JoveUtil.converter(3, Vector::new);
+
 	/**
-	 * Calculates a vector between the given points.
-	 * @param start		Start point
+	 * Creates a vector between the given points.
+	 * @param start		Starting point
 	 * @param end		End point
-	 * @return Vector
+	 * @return Vector between the given points
 	 */
-	public static Vector between(Point start, Point end) {
-		return new Vector(
-			end.x - start.x,
-			end.y - start.y,
-			end.z - start.z
-		);
+	public static Vector of(Point start, Point end) {
+		return new Vector(end.x - start.x, end.y - start.y, end.z - start.z);
 	}
 
 	/**
-	 * Origin constructor.
+	 * Creates a randomised vector.
+	 * @return Randomised vector (normalized)
 	 */
-	public Vector() {
-		super();
+	public static Vector random() {
+		final float[] array = new float[SIZE];
+		for(int n = 0; n < SIZE; ++n) {
+			array[n] = Randomiser.RANDOM.nextFloat();
+		}
+		return new Vector(array).normalize();
 	}
 
 	/**
@@ -68,23 +71,72 @@ public final class Vector extends Tuple {
 	}
 
 	/**
-	 * @return Magnitude (or <i>length</i>) <b>squared</b> of this vector
+	 * Copy constructor.
+	 * @param tuple Tuple
 	 */
-	public final float getMagnitudeSquared() {
-		return x * x + y * y + z * z;
+	public Vector(Tuple tuple) {		// TODO - protected?
+		super(tuple);
 	}
 
 	/**
-	 * Calculates the angle between this and the given vector (assumes both normalised).
+	 * @return Magnitude (<b>squared</b>) of this vector
+	 */
+	public float magnitude() {
+		return (x * x) + (y * y) + (z * z);
+	}
+
+	/**
+	 * @return Inverse of this vector
+	 */
+	public Vector invert() {
+		return new Vector(-x, -y, -z);
+	}
+
+	/**
+	 * Adds the given vector to this vector.
+	 * @param vec Vector to add
+	 * @return Added vector
+	 */
+	public Vector add(Vector vec) {
+		return new Vector(x + vec.x, y + vec.y, z + vec.z);
+	}
+
+	/**
+	 * Scales this vector.
+	 * @param f Scalar
+	 * @return New scaled vector
+	 */
+	public Vector scale(float f) {
+		return new Vector(x * f, y * f, z * f);
+	}
+
+	/**
+	 * @return Normalized (or unit) vector
+	 */
+	public Vector normalize() {
+		final float len = magnitude();
+		if(MathsUtil.equals(1, len)) {
+			return this;
+		}
+		else {
+			final float f = 1f / MathsUtil.sqrt(len);
+			return scale(f);
+		}
+	}
+
+	/**
+	 * Calculates the angle between this and the given vector.
+	 * Assumes both vectors have been normalized.
 	 * @param vec Vector
 	 * @return Angle between vectors (radians)
 	 */
-	public final float angle(Vector vec) {
+	public float angle(Vector vec) {
 		final float dot = dot(vec);
 		if(dot < -1) {
 			return -1;
 		}
-		else if(dot > 1) {
+		else
+		if(dot > 1) {
 			return 1;
 		}
 		else {
@@ -93,80 +145,34 @@ public final class Vector extends Tuple {
 	}
 
 	/**
-	 * @return Normalised vector
-	 */
-	public Vector normalize() {
-		// Calc length
-		final float len = getMagnitudeSquared();
-
-		// Skip if already normalised
-		if(MathsUtil.isEqual(len, 1)) return this;
-
-		// Normalise
-		return multiply(1f / MathsUtil.sqrt(len));
-	}
-
-	/**
-	 * Adds a vector to this vector.
-	 * @param vec Vector to add
-	 * @return New vector
-	 */
-	public Vector add(Vector vec) {
-		return new Vector(
-			this.x + vec.x,
-			this.y + vec.y,
-			this.z + vec.z
-		);
-	}
-
-	/**
-	 * Subtracts the given vector from this vector.
-	 * @param vec Vector to subtract
-	 * @return Subtracted vector
-	 */
-	public Vector subtract(Vector vec) {
-		return add(vec.invert());
-	}
-
-	/**
-	 * Multiplies this vector.
-	 * @param scale Scalar
-	 * @return Scaled vector
-	 */
-	public Vector multiply(float scale) {
-		return new Vector(
-			this.x * scale,
-			this.y * scale,
-			this.z * scale
-		);
-	}
-
-	/**
-	 * Computes the cross-product of this and the given vector.
+	 * Calculates the <i>cross product</i> of this and the given vector.
+	 * Assumes both vectors have been normalized.
 	 * @param vec Vector
-	 * @return Cross-product
+	 * @return Cross product
 	 */
 	public Vector cross(Vector vec) {
-		final float dx = this.y * vec.z - this.z * vec.y;
-		final float dy = this.z * vec.x - this.x * vec.z;
-		final float dz = this.x * vec.y - this.y * vec.x;
-		return new Vector(dx, dy, dz);
+		final float x = this.y * vec.z - this.z * vec.y;
+		final float y = this.z * vec.x - this.x * vec.z;
+		final float z = this.x * vec.y - this.y * vec.x;
+		return new Vector(x, y, z);
 	}
 
 	/**
-	 * @return Inverted vector
+	 * Projects the given vector onto this vector.
+	 * @param vec Vector to project
+	 * @return Projected vector as a tuple
 	 */
-	public Vector invert() {
-		return new Vector(-x, -y, -z);
+	public Vector project(Vector vec) {
+		return scale(this.dot(vec));
 	}
 
 	/**
 	 * Reflects this vector about the given normal.
 	 * @param normal Normal
-	 * @return This reflected vector
+	 * @return Reflected vector
 	 */
 	public Vector reflect(Vector normal) {
 		final float f = this.dot(normal) * -2f;
-		return normal.multiply(f).add(this);
+		return normal.scale(f).add(this);
 	}
 }

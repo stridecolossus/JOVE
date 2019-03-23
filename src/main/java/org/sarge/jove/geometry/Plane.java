@@ -1,128 +1,101 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.MathsUtil;
+import static org.sarge.lib.util.Check.notNull;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * Plane in 3D space defined by a normal and distance from the origin.
+ * Plane in 3D space.
  * @author Sarge
  */
-public class Plane {
+public final class Plane {
 	/**
-	 * Sides of the plane.
+	 * Sides of a plane.
 	 */
-	public static enum Side {
-		/**
-		 * Object is in-front of the plane.
-		 */
+	public enum Side {
 		FRONT,
-
-		/**
-		 * Object is behind the plane.
-		 */
 		BACK,
-
-		/**
-		 * Object is on the plane.
-		 */
 		INTERSECT
 	}
 
+	// TODO
+	// - invert?
+	// - ctors for XYZ planes and XY XZ YZ etc?
+
+	/**
+	 * Creates a plane from the given triangle of points.
+	 * @param a
+	 * @param b
+	 * @param c
+	 * @return Plane
+	 */
+	public static Plane of(Point a, Point b, Point c) {
+		final Vector u = Vector.of(a, b);
+		final Vector v = Vector.of(b, c);
+		final Vector normal = u.cross(v).normalize();
+		final float dist = -a.dot(normal);
+		return new Plane(normal, dist);
+	}
+
+	/**
+	 * Creates a plane given a normal and a point on the plane.
+	 * @param normal		Plane normal
+	 * @param pt			Point on the plane
+	 * @return Plane
+	 */
+	public static Plane of(Vector normal, Point pt) {
+		return new Plane(normal, -pt.dot(normal));
+	}
+
 	private final Vector normal;
-	private final float d;
+	private final float dist;
 
 	/**
 	 * Constructor.
-	 * @param normal	Normal
-	 * @param d			Distance from origin
+	 * @param normal		Plane normal
+	 * @param dist			Distance of the plane from the origin
 	 */
-	public Plane(Vector normal, float d) {
-		this.normal = normal.normalize();
-		this.d = d;
-	}
-
-	/**
-	 * Constructor given a point on the plane.
-	 * @param normal	Normal
-	 * @param pt		Point on the plane
-	 */
-	public Plane(Vector normal, Point pt) {
-		this(normal, -pt.dot(normal));
-	}
-
-	/**
-	 * Constructor given three points in the plane.
-	 * @param p1
-	 * @param p2
-	 * @param p3
-	 */
-	public Plane(Point p1, Point p2, Point p3) {
-		// Calc two edges of the triangle of points
-		final Vector u = Vector.between(p1, p2);
-		final Vector v = Vector.between(p2, p3);
-
-		// Init plane
-		this.normal = u.cross(v).normalize();
-		this.d = -p1.dot(normal);
+	public Plane(Vector normal, float dist) {
+		this.normal = notNull(normal);
+		this.dist = dist;
 	}
 
 	/**
 	 * @return Plane normal
 	 */
-	public Vector getNormal() {
+	public Vector normal() {
 		return normal;
 	}
 
 	/**
-	 * @return Distance from origin
+	 * @return Distance of this plane from the origin
 	 */
-	public float getDistance() {
-		return d;
+	public float distance() {
+		return dist;
 	}
 
 	/**
+	 * Determines the distance of the given point from this plane.
 	 * @param pt Point
-	 * @return Distance from this plane to the given point
-	 * @see #getSide(Point)
+	 * @return Distance to the given point
 	 */
-	public float distanceTo(Point pt) {
-		return normal.dot(pt) - d;
+	public float distance(Point pt) {
+		return normal.dot(pt) - dist;
 	}
 
 	/**
-	 * Calculates the intersection point of this plane with the given ray.
-	 * @param ray Intersecting ray
-	 * @return Intersection point or <tt>null</tt> if not intersecting
+	 * Determines on which side of this plane the given point lies.
+	 * @param pt Point
+	 * @return Side
 	 */
-	public Point intersect(Ray ray) {
-		// Determine whether ray is co-planar
-		final float dot = normal.dot(ray.getDirection());
-		if(MathsUtil.isZero(dot)) {
-			return null;
-		}
-
-		// Check whether ray behind plane
-		final float dist = distanceTo(ray.getOrigin());
-		final float ratio = -dist / dot;
-		if(ratio < MathsUtil.EPSILON) {
-			return null;
-		}
-
-		// Calc intersection point
-		return ray.getOrigin().add(ray.getDirection().multiply(ratio));
-	}
-
-	/**
-	 * Determines which side of the plane the given point is on.
-	 * @param pt Point being tested
-	 * @return Plane side or {@link Side#Intersect} if the point is on the plane
-	 * @see #distanceTo(Point)
-	 */
-	public Side getSide(Point pt) {
-		final float dist = distanceTo(pt);
-		if(dist < 0) {
+	public Side side(Point pt) {
+		final float d = distance(pt);
+		if(d < 0) {
 			return Side.BACK;
 		}
-		else if(dist > 0) {
+		else
+		if(d > 0) {
 			return Side.FRONT;
 		}
 		else {
@@ -131,7 +104,12 @@ public class Plane {
 	}
 
 	@Override
+	public boolean equals(Object that) {
+		return EqualsBuilder.reflectionEquals(this, that);
+	}
+
+	@Override
 	public String toString() {
-		return normal + "(" + d + ")";
+		return ToStringBuilder.reflectionToString(this);
 	}
 }

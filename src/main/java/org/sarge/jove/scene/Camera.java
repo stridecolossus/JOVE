@@ -1,31 +1,31 @@
 package org.sarge.jove.scene;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.geometry.MatrixBuilder;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Quaternion;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
+import org.sarge.jove.material.BufferPropertyBinder;
+import org.sarge.jove.material.Material;
+import org.sarge.jove.material.Material.Property;
+import org.sarge.lib.util.AbstractObject;
 
 /**
- * Camera position and view.
+ * Model for a camera within a scene.
  * @author Sarge
  */
-public class Camera {
-	// Camera model
-	private Point pos = new Point(0, 0, 5);
-	private Point target = Point.ORIGIN;
+public class Camera extends AbstractObject {
+	// Camera state
+	private Point pos = Point.ORIGIN;
 	private Vector dir = Vector.Z_AXIS.invert();
 
 	// Axes
 	private Vector up = Vector.Y_AXIS;
-	private Vector right = new Vector();
+	private transient Vector right;
 
 	// Matrix
-	private final MatrixBuilder builder = new MatrixBuilder();
-	private Matrix matrix;
-	private boolean dirty;
+	private transient Matrix matrix;
+	private transient boolean dirty;
 
 	/**
 	 * Constructor.
@@ -35,100 +35,19 @@ public class Camera {
 	}
 
 	/**
-	 * @return Camera location
+	 * @return Camera position
 	 */
-	public Point getPosition() {
+	public Point position() {
 		return pos;
 	}
 
 	/**
-	 * Sets the location of the camera.
-	 * @param pos
+	 * Moves the camera to a new position.
+	 * @param pos New position
 	 */
-	public void setPosition(Point pos) {
-		Check.notNull(pos);
-		this.pos = pos;
-		updateDirection();
-	}
-
-	/**
-	 * @return Camera target position
-	 */
-	public Point getTarget() {
-		return target;
-	}
-
-	/**
-	 * Sets the camera target.
-	 * @param target Camera target
-	 */
-	public void setTarget(Point target) {
-		Check.notNull(target);
-		this.target = target;
-		updateDirection();
-	}
-
-	/**
-	 * @return Camera view direction
-	 */
-	public Vector getDirection() {
-		return dir;
-	}
-
-	/**
-	 * @return Up axis
-	 */
-	public Vector getUpDirection() {
-		return up;
-	}
-
-	/**
-	 * Sets the camera up direction.
-	 * @param up
-	 */
-	public void setUpDirection(Vector up) {
-		Check.notNull(up);
-		this.up = up.normalize();
-		dirty = true;
-	}
-
-	/**
-	 * @return Right axis of this camera
-	 */
-	public Vector getRightAxis() {
-		return right;
-	}
-
-	/**
-	 * @return View matrix for this camera
-	 */
-	public Matrix getViewMatrix() {
-		if(dirty) {
-			update();
-			dirty = false;
-		}
-
-		return matrix;
-	}
-
-	/**
-	 * Moves the camera position in the current direction.
-	 * @param amount Movement amount
-	 * @see #getDirection()
-	 * @see #move(Vector)
-	 */
-	public void move(float amount) {
-		move(dir.multiply(amount));
-	}
-
-	/**
-	 * Helper - Strafes the camera position (positive is in the direction of the <b>right</b> axis).
-	 * @param amount
-	 * @see #getRightAxis()
-	 * @see #move(Vector)
-	 */
-	public void strafe(float amount) {
-		move(right.multiply(amount));
+	public void move(Point pos) {
+		this.pos = notNull(pos);
+		dirty();
 	}
 
 	/**
@@ -136,80 +55,143 @@ public class Camera {
 	 * @param vec Movement vector
 	 */
 	public void move(Vector vec) {
-		pos.add(vec);
-		target.add(vec);
-		dirty = true;
+		pos = pos.add(vec);
+		dirty();
 	}
 
 	/**
-	 * Rotates this camera counter-clockwise about the given axis.
-	 * @param axis		Rotation axis
-	 * @param angle		Angle (radians)
+	 * Moves the camera by the given distance in the current view direction.
+	 * @param dist Distance to move
 	 */
-	public void rotate(Quaternion rot) {
-		rot.rotate(dir);
-		// TODO - calc new target position
-		// TODO - rotate the target position and re-calc direction via updateDirection()
-		dirty = true;
+	public void move(float dist) {
+		move(dir.scale(dist));
+		dirty();
 	}
 
 	/**
-	 * Orbits the camera by the given rotation about the target position.
-	 * @param rot Rotation
+	 * @return Camera view direction
 	 */
-	public void orbit(Quaternion rot) {
-		// TODO
-		/*
-		// TODO - document and test
-
-		trans.subtract(target, pos);
-		pos.set(target);
-		rot.rotate(trans);
-
-		pos.add(trans);
-		dir.subtract(pos, target).normalize();
-
-		dirty = true;
-		*/
+	public Vector direction() {
+		return dir;
 	}
 
 	/**
-	 * Updates the camera axes and view matrix after a change in position or orientation.
+	 * Points the camera in the given direction.
+	 * @param dir View direction
+	 */
+	public void point(Vector dir) {
+		this.dir = notNull(dir);
+		dirty();
+	}
+
+	/**
+	 * Points the camera at the given location.
+	 * @param pt Camera point-of-interest
+	 */
+	public void look(Point pt) {
+		this.dir = Vector.of(pos, pt);
+		dirty();
+	}
+	// TODO - could extend camera to have a specific POI, orbit, etc?
+
+	/**
+	 * @return Camera up axis
+	 */
+	public Vector up() {
+		return up;
+	}
+
+	/**
+	 * Sets the up axis of this camera.
+	 * @param up Up axis
+	 */
+	public void up(Vector up) {
+		this.up = notNull(up);
+		dirty();
+	}
+
+	/**
+	 * @return Camera right axis
+	 */
+	public Vector right() {
+		return right;
+	}
+
+	/**
+	 * @return Whether the camera has been modified
+	 */
+	public boolean isDirty() {
+		return dirty;
+	}
+
+	/**
+	 * Marks the camera matrix as dirty.
+	 */
+	private void dirty() {
+		dirty = true;
+	}
+
+	/**
+	 * @return Camera view matrix
+	 */
+	public Matrix matrix() {
+		if(dirty) {
+			update();
+			dirty = false;
+		}
+		return matrix;
+	}
+
+	/**
+	 * Creates a material property for the view matrix of this camera.
+	 * @return View matrix property
+	 */
+	public Material.Property viewMatrixProperty() {
+		return property(BufferPropertyBinder.matrix(this::matrix));
+	}
+
+	/**
+	 * Creates a material property for the position of this camera.
+	 * @return Camera position property
+	 */
+	public Material.Property positionProperty() {
+		return property(BufferPropertyBinder.tuple(this::position));
+	}
+
+	/**
+	 * Creates a material property for the view direction of this camera.
+	 * @return Camera view direction property
+	 */
+	public Material.Property directionProperty() {
+		return property(BufferPropertyBinder.tuple(this::direction));
+	}
+
+	/**
+	 * Creates a per-frame material property binder.
+	 */
+	private static Material.Property property(BufferPropertyBinder binder) {
+		return new Material.Property(binder, Property.Policy.FRAME);
+	}
+
+	/**
+	 * Updates the camera axes and matrix.
 	 */
 	private void update() {
 		// Derive camera axes
 		final Vector z = dir.invert();
-		this.right = up.cross(z).normalize();
+		right = up.cross(z).normalize();
 		final Vector y = z.cross(right).normalize();
-		
+
 		// Calculate camera translation
-		final Vector trans = new Vector(
-			right.dot(pos),
-			y.dot(pos),
-			z.dot(pos)
-		);
+		final Vector trans = new Vector(right.dot(pos),	y.dot(pos),	z.dot(pos));
 
 		// Construct camera matrix
-		matrix = builder
+		matrix = new Matrix.Builder()
 			.identity()
-			.setRow(0, right)
-			.setRow(1, y)
-			.setRow(2, z)
-			.setColumn(3, trans.invert())
+			.row(0, right)
+			.row(1, y)
+			.row(2, z)
+			.column(3, trans.invert())
 			.build();
-	}
-
-	/**
-	 * Updates camera direction.
-	 */
-	private void updateDirection() {
-		if(pos.equals(target)) throw new IllegalArgumentException("Camera position cannot be same as its target");
-		dir = Vector.between(pos, target).normalize();
-		dirty = true;
-	}
-
-	@Override
-	public String toString() {
-		return ToString.toString(this);
 	}
 }

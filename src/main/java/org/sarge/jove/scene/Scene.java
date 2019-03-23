@@ -1,329 +1,177 @@
 package org.sarge.jove.scene;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import static org.sarge.lib.util.Check.notNull;
 
+import java.util.Optional;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Location;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.scene.Node.Visitor;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
+import org.sarge.jove.material.BufferPropertyBinder;
+import org.sarge.jove.material.Material;
+import org.sarge.jove.material.Material.Property;
 
 /**
- * Scene/viewport.
- * <p>
- * The scene:
- * <ul>
- * <li>encapsulates the projection and camera view matrix</li>
- * <li>defines the rendering viewport dimensions</li>
- * <li>manages the various rendering buffers</li>
- * <li>contains the <i>root</i> of the scene-graph to be rendered</li>
- * </ul>
- * @see Viewport
- * @see Camera
- * @see Projection
+ * A <i>scene</i> comprises a scene-graph and viewport.
  * @author Sarge
  */
 public class Scene {
-	/**
-	 * Distance comparator for picking and distance ordering.
-	 */
-	private final Comparator<Node> comparator = new Comparator<Node>() {
-		@Override
-		public int compare(Node a, Node b) {
-			return (int) (distance(a) - distance(b));
-		}
-
-		private float distance(Node node) {
-			// TODO - should this be from bounding volume?
-			final Point pos = node.getWorldMatrix().getPosition();
-			return cam.getPosition().distanceSquared(pos);
-		}
-	};
-
-	// Scene
+	// Camera
 	private final Camera cam = new Camera();
-	private Projection projection;
-	private Matrix matrix;
-	private boolean dirty;
-	private Node root;
+	private transient Frustum frustum;
 
 	// Viewport
-	private final Viewport viewport;
-	private Rectangle rect;
-	private Colour col = new Colour(0.6f, 0.6f, 0.6f, 1);
-	private float near = 0.1f;
-	private float far = 1000f;
+	private Viewport viewport;
+	private transient Matrix projection;
 
-	// Rendering
-	private final RenderManager mgr;
+	// Scene
+	private Optional<Colour> clear;
+	private Node root;
 
 	/**
 	 * Constructor.
-	 * @param viewport		Viewport
-	 * @param rect			Viewport rectangle
-	 * @param projection	Scene projection
-	 * @param mgr			Render manager
+	 * @param viewport Scene viewport
 	 */
-	public Scene(Viewport viewport, Rectangle rect, Projection projection, RenderManager mgr) {
-		Check.notNull(viewport);
-		Check.notNull(mgr);
-
-		this.viewport = viewport;
-		this.mgr = mgr;
-
-		setRectangle(rect);
-		setProjection(projection);
+	public Scene(Viewport viewport) {
+		clear(Colour.BLACK);
+		root(new Node("root"));
+		viewport(viewport);
 	}
 
 	/**
-	 * @return Camera
+	 * @return Camera for this scene
 	 */
-	public Camera getCamera() {
+	public Camera camera() {
 		return cam;
 	}
 
 	/**
-	 * @return Scene viewport rectangle
+	 * @return View frustum
 	 */
-	public Rectangle getRectangle() {
-		return rect;
+	public Frustum frustum() {
+		if(cam.isDirty()) {
+			build();
+		}
+		return frustum;
 	}
 
 	/**
-	 * Resets the viewport rectangle.
-	 * @param rect
+	 * @return Viewport clear colour for this scene (default is {@link Colour#BLACK})
 	 */
-	public void setRectangle(Rectangle rect) {
-		Check.notNull(rect);
-		this.rect = rect;
-		dirty = true;
+	public Optional<Colour> clear() {
+		return clear;
 	}
 
 	/**
-	 * Sets the root node of this scene.
+	 * Sets the viewport clear colour
+	 * @param clear Clear colour (optional)
+	 */
+	public void clear(Colour clear) {
+		this.clear = Optional.ofNullable(clear);
+	}
+
+	/**
+	 * @return Scene-graph root node
+	 */
+	public Node root() {
+		return root;
+	}
+
+	/**
+	 * Sets the scene-graph root node.
 	 * @param root Root node
 	 */
-	public void setRoot(Node root) {
-		this.root = root;
+	public void root(Node root) {
+		this.root = notNull(root);
 	}
 
 	/**
-	 * Sets the clear colour.
-	 * @param col Clear colour or <tt>null</tt> for no frame buffer clearing
+	 * @return Scene viewport
 	 */
-	public void setClearColour(Colour col) {
-		this.col = col;
+	public Viewport viewport() {
+		return viewport;
 	}
 
 	/**
-	 * Sets the near clipping plane.
-	 * @param near Near clipping distance
+	 * Sets the scene viewport.
+	 * @param viewport Viewport
 	 */
-	public void setNearPlane(float near) {
-		Check.zeroOrMore(near);
-		this.near = near;
-		dirty = true;
+	public void viewport(Viewport viewport) {
+		this.viewport = notNull(viewport);
+		this.projection = viewport.matrix();
+		build();
 	}
 
 	/**
-	 * Sets the far clipping plane.
-	 * @param far Far clipping distance
+	 * @return Projection matrix for this scene
 	 */
-	public void setFarPlane(float far) {
-		Check.zeroOrMore(far);
-		this.far = far;
-		dirty = true;
-	}
-
-	/**
-	 * @return Scene projection
-	 */
-	public Projection getProjection() {
+	public Matrix projection() {
 		return projection;
 	}
 
 	/**
-	 * Sets the projection for this scene.
-	 * @param projection New projection
+	 * Creates a material property for the projection matrix of this scene.
+	 * @return Projection matrix material projection
 	 */
-	public void setProjection(Projection projection) {
-		Check.notNull(projection);
-		this.projection = projection;
-		dirty = true;
+	public Material.Property projectionMatrixProperty() {
+		return new Material.Property(BufferPropertyBinder.matrix(() -> projection), Property.Policy.MANUAL);
 	}
 
 	/**
-	 * @return Projection matrix
-	 * @see #setProjection(Projection)
+	 * Builds the view frustum for this scene.
 	 */
-	public Matrix getProjectionMatrix() {
-		if(dirty) {
-			matrix = projection.getMatrix(near, far, rect.getDimensions());
-			dirty = false;
-		}
+	private void build() {
+		// Retrieve the frustum inputs
+		// http://www.lighthouse3d.com/tutorials/view-frustum-culling/geometric-approach-implementation/
+		final Plane[] planes = new Plane[6];
+		final Point pos = cam.position();
+		final Vector dir = cam.direction();
+		final Vector up = cam.up();
+		final Vector right = cam.right();
 
-		return matrix;
-	}
+		// Calculate centre of near and far planes
+		final Point nc = pos.add(dir.scale(viewport.near()));
+		final Point fc = pos.add(dir.scale(viewport.far()));
 
-	/**
-	 * @return Distance comparator for nodes in this scene
-	 */
-	public Comparator<Node> getDistanceComparator() {
-		return comparator;
-	}
+		// Build near plane
+		planes[0] = Plane.of(dir, nc);
 
-	/**
-	 * Renders this scene.
-	 * @param ctx Render context
-	 */
-	public void render(RenderContext ctx) {
-		// Init viewport
-		// TODO - should we be doing this frame or only on init or resize?
-		viewport.init(rect);
+		// Build far plane
+		planes[1] = Plane.of(dir.invert(), fc);
 
-		// Clear buffers
-		viewport.clear(col);
+		// Determine viewport half-dimensions
+		final float h = viewport.height();
+		final float w = viewport.width();
 
-		// Stop if nothing to render
-		if(root == null) return;
+		// Calculate top-left corner vector
+		final Point top = nc.add(up.scale(h)).add(right.scale(-w));
+		final Vector tv = Vector.of(nc, top).normalize();
 
-		// Render scene
-		ctx.setScene(this);
-		root.accept(mgr);
-		mgr.sort(comparator);
-		mgr.render(ctx);
-		mgr.clear();
-		ctx.setScene(null);
-	}
+		// Calculate bottom-right corner vector
+		final Point bottom = nc.add(up.scale(-h)).add(right.scale(w));
+		final Vector bv = Vector.of(nc, bottom).normalize();
 
-	/*
-	* TODO - add radius?
-	*
-	// compute width and height of the near and far plane sections
-	tang = tan(angle);
-	sphereFactorY = 1.0/cos(angle);
+		// Top plane
+		planes[2] = Plane.of(tv.cross(right), top);
 
-	// compute half of the the horizontal field of view and sphereFactorX
-	float anglex = atan(tang*ratio);
-	sphereFactorX = 1.0/cos(anglex);
-	*/
+		// Bottom plane
+		planes[3] = Plane.of(right.cross(tv), bottom);
 
-	/**
-	 * Tests whether the given point is within the view frustum.
-	 * @param pt Point being tested
-	 * @return Whether the point is contained by the frustum
-	 */
-	public boolean contains(Point pt) {
-		// Calc vector from point to eye position
-		final Vector vec = Vector.between(pt, cam.getPosition());
+		// Left plane
+		planes[4] = Plane.of(bv.cross(up), top);
 
-		// Test distance by projecting onto vector
-		final float z = vec.dot(cam.getDirection());
-		if((z < near) || (z > far)) return false;
+		// Right plane
+		planes[5] = Plane.of(up.cross(bv), bottom);
 
-		// Test against frustum half-height at this distance
-		final Dimensions dim = rect.getDimensions();
-		final float y = vec.dot(cam.getUpDirection());
-		final float h = z * projection.getHeight(dim);
-		if((y < -h) || (y > h)) return false;
-
-		// Test against frustum width
-		final float x = vec.dot(cam.getRightAxis());
-		final float w = h * (dim.getWidth() / (float) dim.getHeight());
-		if((x < -w) || (x > w)) return false;
-
-		// Point is within frustum
-		return true;
-	}
-
-	/**
-	 * Un-projects the given <b>window</b> location to its point in this viewport.
-	 * @param loc		Screen coordinates
-	 * @param pt		Resultant point in the scene
-	 * TODO - test
-	 */
-	public Point unproject(Location loc) {
-		// Convert to viewport coordinates (inverting Y coordinate)
-		final int vx = loc.getX() - rect.getX();
-		final int vy = rect.getY() - loc.getY();
-
-		// Convert to NDC (also inverts Y)
-		final float nx = (2 * vx) / (float) rect.getWidth() - 1;
-		final float ny = (2 * vy) / (float) rect.getHeight() - 1;
-
-		// Un-project into scene
-		final Point pt = new Point(nx, ny, -1);
-		return matrix.multiply(cam.getViewMatrix()).invert().multiply(pt);
-	}
-
-	/**
-	 * Picks from this scene.
-	 * @param ray Picking ray
-	 * @return Intersected objects ordered by distance from camera (nearest first)
-	 */
-	public List<NodeGroup> pick(Ray ray) {
-		/*
-		 * TODO - this is a right load of shite
-		 *
-		// Calc pick coords
-		final float x = loc.getX() / rect.getWidth();
-		final float y = loc.getY() / rect.getHeight();
-
-		// Project into the scene
-		final Vector v = matrix.multiply( Vector.Z_AXIS.invert() ); // TODO - calc once, or make Z_AXIS mutable-vector?  dangerous?
-		final Ray ray = new Ray( new Point( x, y, 0 ), v );
-		*/
-
-		// Walk scene-graph and find intersected objects
-		final List<NodeGroup> nodes = new ArrayList<>();
-		final Visitor visitor = new Visitor() {
-			@Override
-			public boolean visit(Node node) {
-				/*
-				if( e instanceof NodeGroup ) {
-					// Check bounding volume intersection
-					final NodeGroup node = (NodeGroup) e;
-					final BoundingVolume vol = node.getBoundingVolume();
-					if( vol.intersects( ray ) ) {
-						// Intersects, recurse to children
-						nodes.add( node );
-						return true;
-					}
-					else {
-						// Does not intersect, stop recursion
-						return false;
-					}
-				}
-				else {
-					// Not pickable
-					return false;
-				}
-				*/
-
-				// TODO - add BV to node interface, def is NULL or delegates to parent?
-
-				return false;
-			}
-		};
-		root.accept(visitor);
-
-		// Order by distance
-		Collections.sort(nodes, comparator);
-
-		return nodes;
+		// Create frustum volume
+		frustum = new Frustum(planes);
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString(this);
+		return ToStringBuilder.reflectionToString(this);
 	}
 }

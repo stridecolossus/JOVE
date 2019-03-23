@@ -1,112 +1,90 @@
 package org.sarge.jove.scene;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.Before;
-import org.junit.Test;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.common.ScreenCoordinate;
+import org.sarge.jove.geometry.Plane;
+import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.material.Material;
 
 public class SceneTest {
 	private Scene scene;
 	private Viewport viewport;
-	private Projection projection;
-	private RenderManager mgr;
 
-	@Before
+	@BeforeEach
 	public void before() {
-		projection = mock( Projection.class );
-		viewport = mock( Viewport.class );
-		mgr = mock( RenderManager.class );
-		scene = new Scene( viewport, new Rectangle( 0, 0, 640, 480 ), projection, mgr );
+		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), new Dimensions(640, 480));
+		viewport = new Viewport(rect, 1, 100, Projection.DEFAULT);
+		scene = new Scene(viewport);
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals( new Rectangle( 0, 0, 640, 480 ), scene.getRectangle() );
-		assertNotNull( scene.getCamera() );
-		assertNotNull( scene.getDistanceComparator() );
-		assertEquals( projection, scene.getProjection() );
+		assertNotNull(scene.camera());
+		assertNotNull(scene.frustum());
+		assertNotNull(scene.root());
+		assertEquals(viewport, scene.viewport());
+		assertEquals(Optional.of(Colour.BLACK), scene.clear());
+		assertEquals(viewport.matrix(), scene.projection());
 	}
 
 	@Test
-	public void setRectangle() {
-		final Rectangle rect = new Rectangle( 1, 2, 3, 4 );
-		scene.setRectangle( rect );
-		assertEquals( rect, scene.getRectangle() );
-		scene.getProjectionMatrix();
-		verify( projection ).getMatrix( 0.1f, 1000f, new Dimensions( 3, 4 ) );
+	public void setRootNode() {
+		final Node root = new Node("root");
+		scene.root(root);
+		assertEquals(root, scene.root());
 	}
 
 	@Test
-	public void setFrustumPlanes() {
-		scene.setNearPlane( 1 );
-		scene.setFarPlane( 2 );
-		scene.getProjectionMatrix();
-		verify( projection ).getMatrix( 1, 2, new Dimensions( 640, 480 ) );
+	public void setClearColour() {
+		scene.clear(Colour.WHITE);
+		assertEquals(Optional.of(Colour.WHITE), scene.clear());
 	}
 
 	@Test
-	public void setProjection() {
-		final Projection proj = mock( Projection.class );
-		scene.setProjection( proj );
-		assertEquals( proj, scene.getProjection() );
-		scene.getProjectionMatrix();
-		verify( proj ).getMatrix( 0.1f, 1000f, new Dimensions( 640, 480 ) );
-	}
-
-	/*
-	@Test
-	public void contains() {
-		proj = new PerspectiveProjection();
-
-		// Test inside frustum
-		assertTrue( scene.contains( new Point( 0, 0, -10f ) ) );
-
-		// Test points on near/far planes
-		assertTrue( scene.contains( new Point( 0, 0, -0.01f ) ) );
-		assertTrue( scene.contains( new Point( 0, 0, -95f ) ) );
-
-		// Test outside frustum
-		assertFalse( scene.contains( new Point( 0, 0, 5f ) ) );
-		assertFalse( scene.contains( new Point( 0, 0, -100f ) ) );
-	}
-	*/
-
-	@Test
-	public void getDistanceComparator() {
-		final NodeGroup node = mock( NodeGroup.class );
-		when( node.getWorldMatrix() ).thenReturn( Matrix.IDENTITY );
-		assertEquals( 0, scene.getDistanceComparator().compare( node, node ) );
+	public void setClearColourNone() {
+		scene.clear(null);
+		assertEquals(Optional.empty(), scene.clear());
 	}
 
 	@Test
-	public void render() {
-		// Init scene
-		final Node node = mock( Node.class );
-		final RenderContext ctx = mock( RenderContext.class );
-		scene.setClearColour( Colour.WHITE );
-		scene.setRoot( node );
-
-		// Render scene and check viewport
-		scene.render( ctx );
-		verify( viewport ).init( new Rectangle( 0, 0, 640, 480 ) );
-		verify( viewport ).clear( Colour.WHITE );
-
-		// Check manager
-		verify( node ).accept( mgr );
-		verify( mgr ).sort( scene.getDistanceComparator() );
-		verify( mgr ).render( ctx );
+	public void setViewport() {
+		final Frustum prev = scene.frustum();
+		scene.viewport(viewport);
+		assertEquals(viewport, scene.viewport());
+		assertNotEquals(prev, scene.frustum());
 	}
 
-	// TODO
-	// - unproject
-	// - pick
-	// - contains
+	@Test
+	public void frustum() {
+		// Lookup frustum planes
+		final Frustum frustum = scene.frustum();
+		final Plane[] planes = frustum.planes();
+		assertNotNull(planes);
+		assertEquals(6, planes.length);
+
+		// Check planes
+		assertEquals(new Plane(Vector.Z_AXIS.invert(), -1), planes[0]);
+		assertEquals(new Plane(Vector.Z_AXIS, 100), planes[1]);
+//		assertEquals(new Plane(Vector.Y_AXIS.invert(), 1), planes[2]);
+//		assertEquals(new Plane(Vector.Y_AXIS, -1), planes[3]);
+//		assertEquals(new Plane(Vector.X_AXIS, -1), planes[4]);
+//		assertEquals(new Plane(Vector.X_AXIS.invert(), 1), planes[5]);
+		// TODO
+	}
+
+	@Test
+	public void projectionProperty() {
+		final Material.Property prop = scene.projectionMatrixProperty();
+		assertNotNull(prop);
+	}
 }

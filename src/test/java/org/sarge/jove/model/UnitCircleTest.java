@@ -1,40 +1,31 @@
 package org.sarge.jove.model;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
-import org.sarge.jove.model.UnitCircle.CirclePoint;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.MathsUtil;
 
 public class UnitCircleTest {
-	private UnitCircle circle;
-
-	@Test
-	public void unitCircle() {
-		circle = new UnitCircle( 4 );
-		final CirclePoint[] pts = circle.getPoints();
-		assertNotNull( pts );
-		assertEquals( 4, pts.length );
-		check( pts[ 0 ], 0, 1 );
-		check( pts[ 1 ], 1, 0 );
-		check( pts[ 2 ], 0, -1 );
-		check( pts[ 3 ], -1, 0 );
-	}
-
 	@Test
 	public void segment() {
-		circle = new UnitCircle( 2, 0, MathsUtil.toRadians( 180 ) );
-		final CirclePoint[] pts = circle.getPoints();
-		assertNotNull( pts );
-		assertEquals( 2, pts.length );
-		check( pts[ 0 ], 0, 1 );
-		check( pts[ 1 ], 1, 0 );
+		final var segment = UnitCircle.segment(3, 4, 0f, MathsUtil.toRadians(90));
+		final float angle = 4 * MathsUtil.sin(MathsUtil.toRadians(45));
+		final Point top = new Point(0, 4, 0);
+		final Point middle = new Point(angle, angle, 0);
+		final Point right = new Point(4, 0, 0);
+		assertEquals(List.of(top, middle, right), segment);
 	}
 
-	private static void check( CirclePoint pt, float x, float y ) {
-		assertFloatEquals( x, pt.getX() );
-		assertFloatEquals( y, pt.getY() );
+	@Test
+	public void circle() {
+		final var circle = UnitCircle.circle(5, 4);
+		final Point top = new Point(0, 4, 0);
+		final Point right = new Point(4, 0, 0);
+		final Point bottom = new Point(0, -4, 0);
+		final Point left = new Point(-4, 0, 0);
+		assertEquals(List.of(top, right, bottom, left, top), circle);
 	}
 }

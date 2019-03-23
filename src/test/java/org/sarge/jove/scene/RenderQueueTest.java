@@ -1,65 +1,134 @@
 package org.sarge.jove.scene;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.jove.scene.RenderQueue.SortOrder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.scene.RenderQueue.Entry;
+import org.sarge.jove.scene.RenderQueue.Order;
+import org.sarge.jove.scene.RenderQueue.Renderable;
 
 public class RenderQueueTest {
-	private Node one, two;
+	private RenderQueue queue;
+	private Renderable model;
+	private Entry entry;
 
-	@Before
+	@BeforeEach
 	public void before() {
-		one = mock( Node.class );
-		two = mock( Node.class );
+		queue = new RenderQueue(Order.NONE);
+		model = mock(Renderable.class);
+		entry = new Entry(model, queue);
 	}
 
 	@Test
-	public void getSortOrder() {
-		assertEquals( SortOrder.FRONT_TO_BACK, RenderQueue.Default.OPAQUE.getSortOrder() );
-		assertEquals( SortOrder.NONE, RenderQueue.Default.SKY.getSortOrder() );
-		assertEquals( SortOrder.BACK_TO_FRONT, RenderQueue.Default.TRANSLUCENT.getSortOrder() );
-		assertEquals( SortOrder.BACK_TO_FRONT, RenderQueue.Default.POST.getSortOrder() );
-		assertEquals( null, RenderQueue.Default.NONE.getSortOrder() );
+	public void constructor() {
+		assertEquals(Order.NONE, queue.order());
+		assertNotNull(queue.queue(Point.ORIGIN));
+		assertEquals(0, queue.queue(Point.ORIGIN).count());
 	}
 
-	public void sort( SortOrder order, Node... expected ) {
-		// Create a queue
-		final List<Node> nodes = Arrays.asList( two, one );
+	@Nested
+	class EntryTests {
+		private Node node;
 
-		// Mock a distance comparator that always returns ONE first
-		final Comparator<Node> comparator = new Comparator<Node>() {
-			@Override
-			public int compare( Node a, Node b ) {
-				if( a == one ) {
-					return -1;
-				}
-				else
-				if( b == one ) {
-					return +1;
-				}
-				else {
-					return 0;
-				}
-			}
-		};
+		@BeforeEach
+		public void before() {
+			node = new Node("node");
+		}
 
-		// Apply default sort and check expected order
-		order.sort( nodes, comparator );
-		assertEquals( expected[ 0 ], nodes.get( 0 ) );
-		assertEquals( expected[ 1 ], nodes.get( 1 ) );
+		@Test
+		public void entry() {
+			assertEquals(model, entry.model());
+			assertEquals(queue, entry.queue());
+		}
+
+		@Test
+		public void equals() {
+			assertEquals(true, entry.equals(entry));
+			assertEquals(false, entry.equals(null));
+			assertEquals(false, entry.equals(new Entry(mock(Renderable.class), queue)));
+		}
+
+		@Test
+		public void add() {
+			queue.add(node);
+			assertArrayEquals(new Node[]{node}, queue.queue(Point.ORIGIN).toArray());
+		}
+
+		@Test
+		public void remove() {
+			queue.add(node);
+			queue.remove(node);
+			assertEquals(0, queue.queue(Point.ORIGIN).count());
+		}
+
+		@Test
+		public void addNotVisible() {
+			node.volume(mock(LocalVolume.class));
+			queue.add(node);
+			assertEquals(0, queue.queue(Point.ORIGIN).count());
+		}
+
+		@Test
+		public void queues() {
+			node.model(entry);
+			assertEquals(Set.of(queue), RenderQueue.queues(node));
+		}
+
+		@Test
+		public void queuesEmpty() {
+			assertEquals(Set.of(), RenderQueue.queues(node));
+		}
 	}
 
-	@Test
-	public void sort() {
-		sort( SortOrder.FRONT_TO_BACK, one, two );
-		sort( SortOrder.BACK_TO_FRONT, two, one );
-		sort( SortOrder.NONE, two, one );
+	@Nested
+	class OrderTests {
+		private Node one, two;
+
+		@BeforeEach
+		public void before() {
+			one = new Node("one");
+			two = new Node("two");
+		}
+
+		private void build() {
+			add(one, 1, new Entry(model, queue));
+			add(two, 2, new Entry(model, queue));
+		}
+
+		private void add(Node node, int dist, Entry entry) {
+			node.model(entry);
+			node.transform(new LocalTransform(Matrix.translation(new Vector(dist, 0, 0))));
+			node.transform().update(Matrix.IDENTITY);
+		}
+
+		@Test
+		public void none() {
+			build();
+			assertArrayEquals(new Node[]{one, two}, queue.queue(Point.ORIGIN).toArray());
+		}
+
+		@Test
+		public void nearest() {
+			queue = new RenderQueue(Order.NEAREST);
+			build();
+			assertArrayEquals(new Node[]{one, two}, queue.queue(Point.ORIGIN).toArray());
+		}
+
+		@Test
+		public void furthest() {
+			queue = new RenderQueue(Order.FARTHEST);
+			build();
+			assertArrayEquals(new Node[]{two, one}, queue.queue(Point.ORIGIN).toArray());
+		}
 	}
 }

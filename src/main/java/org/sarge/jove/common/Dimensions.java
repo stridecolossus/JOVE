@@ -1,39 +1,75 @@
 package org.sarge.jove.common;
 
-import org.sarge.lib.util.EqualsBuilder;
+import static org.sarge.lib.util.Check.zeroOrMore;
+
+import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
- * Rectangular dimensions.
+ * Viewport or window dimensions.
  * @author Sarge
  */
-public final class Dimensions {
-	public final int w, h;
+public final class Dimensions extends AbstractEqualsObject {
+	public final int width, height;
 
 	/**
 	 * Constructor.
-	 * @param w width
-	 * @param h Height
+	 * @param width 	Width
+	 * @param height	Height
 	 */
-	public Dimensions( int w, int h ) {
-		this.w = w;
-		this.h = h;
+	public Dimensions(int width, int height) {
+		this.width = zeroOrMore(width);
+		this.height = zeroOrMore(height);
 	}
 
-	public int getWidth() {
-		return w;
+	/**
+	 * @return Width
+	 */
+	public int width() {
+		return width;
 	}
 
-	public int getHeight() {
-		return h;
+	/**
+	 * @return Height
+	 */
+	public int height() {
+		return height;
 	}
 
-	@Override
-	public boolean equals( Object obj ) {
-		return EqualsBuilder.equals( this, obj );
+	/**
+	 * @return Ratio
+	 */
+	public float ratio() {
+		return width / (float) height;
+	}
+
+	/**
+	 * @return Whether these dimension are <i>square</i>
+	 */
+	public boolean isSquare() {
+		return width == height;
+	}
+
+	/**
+	 * @return Whether these dimensions are square and a power-of-two
+	 * @see #isSquare()
+	 * @see MathsUtil#isPowerOfTwo(int)
+	 */
+	public boolean isPowerOfTwo() {
+		return isSquare() && MathsUtil.isPowerOfTwo(width);
+	}
+
+	/**
+	 * Tests whether this dimensions is larger than the given dimensions.
+	 * @param dim Dimensions
+	 * @return Whether exceeded
+	 */
+	public boolean exceeds(Dimensions dim) {
+		return (width > dim.width) || (height > dim.height);
 	}
 
 	@Override
 	public String toString() {
-		return w + "x" + h;
+		return width + "x" + height;
 	}
 }

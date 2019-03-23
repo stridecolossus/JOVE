@@ -1,22 +1,87 @@
 package org.sarge.jove.scene;
 
-import org.sarge.jove.common.Colour;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.zeroOrMore;
+
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.geometry.Matrix;
+import org.sarge.lib.util.AbstractObject;
 
 /**
- * Viewport.
+ * A <i>viewport</i> defines the view window dimensions and projection.
  * @author Sarge
  */
-public interface Viewport {
-	/**
-	 * Initialises the dimensions of this viewport.
-	 * @param rect Viewport rectangle
-	 */
-	void init( Rectangle rect );
+public final class Viewport extends AbstractObject {
+	private final Rectangle rect;
+	private final float near, far;
+	private final Projection projection;
+	private final float width;
+	private final float height;
 
 	/**
-	 * Clears viewport buffers.
-	 * @param col Clear colour for frame buffer or <tt>null</tt> to skip
+	 * Constructor.
+	 * @param rect				Viewport rectangle
+	 * @param near				Near plane distance
+	 * @param far				Far plane distance
+	 * @param projection		View projection
 	 */
-	void clear( Colour col );
+	public Viewport(Rectangle rect, float near, float far, Projection projection) {
+		if(far < near) throw new IllegalArgumentException("Invalid near/far plane distance");
+		this.rect = notNull(rect);
+		this.near = zeroOrMore(near);
+		this.far = zeroOrMore(far);
+		this.projection = notNull(projection);
+		this.height = projection.height(rect.dimensions());
+		this.width = this.height * rect.dimensions().ratio();
+	}
+
+	/**
+	 * @return Viewport rectangle
+	 */
+	public Rectangle rectangle() {
+		return rect;
+	}
+
+	/**
+	 * @return Near plane distance
+	 */
+	public float near() {
+		return near;
+	}
+
+	/**
+	 * @return Far plane distance
+	 */
+	public float far() {
+		return far;
+	}
+
+	/**
+	 * @return View projection
+	 */
+	public Projection projection() {
+		return projection;
+	}
+
+	/**
+	 * @return Viewport half-height
+	 * @see Projection#height(org.sarge.jove.common.Dimensions)
+	 */
+	public float height() {
+		return height;
+	}
+
+	/**
+	 * @return Viewport half-width
+	 */
+	public float width() {
+		return width;
+	}
+
+	/**
+	 * @return Projection matrix for this viewport
+	 */
+	public Matrix matrix() {
+		return projection.matrix(near, far, rect.dimensions());
+	}
 }

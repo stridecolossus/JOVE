@@ -1,71 +1,84 @@
 package org.sarge.jove.texture;
 
+import static org.sarge.lib.util.Check.zeroOrMore;
+
+import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.lib.util.Check;
-import org.sarge.lib.util.EqualsBuilder;
-import org.sarge.lib.util.HashCodeBuilder;
-import org.sarge.lib.util.ToString;
 
 /**
- * Encapsulates a texture and associated texture unit.
- * @author Sarge
+ * Texture unit.
  */
 public final class TextureUnit {
-	private final Texture texture;
+	/**
+	 * Factory for texture units.
+	 */
+	public static final class Factory {
+		private final TextureUnit[] units;
+
+		/**
+		 * Constructor.
+		 * @param max Maximum number of texture units supported by the graphics system
+		 */
+		public Factory(int max) {
+			Check.oneOrMore(max);
+			this.units = IntStream.range(0, max).mapToObj(TextureUnit::new).toArray(TextureUnit[]::new);
+		}
+
+		/**
+		 * @return Maximum number of texture units
+		 */
+		public int max() {
+			return units.length;
+		}
+
+		/**
+		 * Retrieves a texture unit.
+		 * @param unit Texture unit index
+		 * @return Texture unit
+		 * @throws ArrayIndexOutOfBoundsException if the unit index is not valid for this factory
+		 */
+		public TextureUnit unit(int unit) {
+			return units[unit];
+		}
+
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this);
+		}
+	}
+
+	/**
+	 * Default texture unit factory.
+	 */
+	public static final TextureUnit.Factory DEFAULT = new Factory(8);
+
 	private final int unit;
 
 	/**
 	 * Constructor.
-	 * @param texture	Texture image
-	 * @param unit		Texture unit index 0..7
+	 * @param unit Texture unit index
 	 */
-	public TextureUnit(Texture texture, int unit) {
-		Check.notNull(texture);
-		Check.range(unit, 0, 7); // TODO - configurable?
-
-		this.texture = texture;
-		this.unit = unit;
+	private TextureUnit(int unit) {
+		this.unit = zeroOrMore(unit);
 	}
 
 	/**
-	 * @return Texture
+	 * @return Texture unit index
 	 */
-	public Texture getTexture() {
-		return texture;
-	}
-
-	/**
-	 * @return Texture unit
-	 */
-	public int getTextureUnit() {
+	public int index() {
 		return unit;
 	}
 
-	/**
-	 * Activates the texture.
-	 */
-	public void activate() {
-		texture.activate(unit);
-	}
-
-	/**
-	 * Deactivates the texture.
-	 */
-	public void reset() {
-		texture.reset(unit);
-	}
-
 	@Override
-	public boolean equals(Object obj) {
-		return EqualsBuilder.equals(this, obj);
-	}
-
-	@Override
-	public int hashCode() {
-		return HashCodeBuilder.hashCode(this);
+	public boolean equals(Object that) {
+		return EqualsBuilder.reflectionEquals(this, that);
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString(this);
+		return ToStringBuilder.reflectionToString(this);
 	}
 }

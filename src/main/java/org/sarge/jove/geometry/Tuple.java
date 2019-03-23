@@ -1,30 +1,51 @@
 package org.sarge.jove.geometry;
 
 import java.nio.FloatBuffer;
+import java.util.function.UnaryOperator;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.util.JoveUtil;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
+import org.sarge.lib.util.Converter;
 
 /**
- * Common base-class for 3D points and vectors.
+ * Base-class for geometry with an XYZ tuple.
  * @author Sarge
  */
-public abstract class Tuple implements Bufferable {
+public class Tuple implements Bufferable {
 	/**
-	 * Number of values in a point.
+	 * Size of a tuple.
 	 */
 	public static final int SIZE = 3;
 
-	public final float x, y, z;
-
 	/**
-	 * Origin constructor.
+	 * A <i>swizzle</i> is used to swap tuple values.
 	 */
-	protected Tuple() {
-		this(0, 0, 0);
+	public enum Swizzle implements UnaryOperator<Tuple> {
+		NONE,
+		XY,
+		XZ,
+		YZ;
+
+		/**
+		 * Swizzle string converter.
+		 */
+		public static final Converter<Swizzle> CONVERTER = Converter.enumeration(Swizzle.class);
+
+		@Override
+		public Tuple apply(Tuple t) {
+			switch(this) {
+			case NONE:	return t;
+			case XY: 	return new Tuple(t.y, t.x, t.z);
+			case XZ: 	return new Tuple(t.z, t.y, t.x);
+			case YZ: 	return new Tuple(t.x, t.z, t.y);
+			default: 	throw new RuntimeException();
+			}
+		}
 	}
+
+	public final float x, y, z;
 
 	/**
 	 * Constructor.
@@ -32,27 +53,30 @@ public abstract class Tuple implements Bufferable {
 	 * @param y
 	 * @param z
 	 */
-	protected Tuple(float x, float y, float z) {
+	public Tuple(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
 	}
 
 	/**
-	 * Constructor given an array.
-	 * @param array
+	 * Array constructor.
+	 * @param array Tuple array
+	 * @throws IllegalArgumentException if the given array does not have exactly three values
 	 */
 	protected Tuple(float[] array) {
-		Check.notNull(array);
-		if(array.length < 3) throw new IllegalArgumentException("Expected tuple array");
-		this.x = array[0];
-		this.y = array[1];
-		this.z = array[2];
+		if(array.length != 3) throw new IllegalArgumentException("Invalid tuple array length: " + array.length);
+		x = array[0];
+		y = array[1];
+		z = array[2];
 	}
 
-	@Override
-	public final int getComponentSize() {
-		return SIZE;
+	/**
+	 * Copy constructor.
+	 * @param t Tuple
+	 */
+	protected Tuple(Tuple t) {
+		this(t.x, t.y, t.z);
 	}
 
 	/**
@@ -60,36 +84,38 @@ public abstract class Tuple implements Bufferable {
 	 * @param t Tuple
 	 * @return Dot product
 	 */
-	public final float dot(Tuple t) {
+	public float dot(Tuple t) {
+		// TODO - |v| * |u| * cos(angle)
 		return x * t.x + y * t.y + z * t.z;
 	}
 
-	@Override
-	public final void append(FloatBuffer buffer) {
-		buffer.put(x);
-		buffer.put(y);
-		buffer.put(z);
+	/**
+	 * @return This tuple as an array
+	 */
+	public float[] toArray() {
+		return new float[]{x, y, z};
 	}
 
-	/**
-	 * Stores to the given array.
-	 * @param array
-	 */
-	public final void toArray(float[] array) {
-		array[0] = x;
-		array[1] = y;
-		array[2] = z;
+	@Override
+	public int size() {
+		return SIZE;
+	}
+
+	@Override
+	public void buffer(FloatBuffer buffer) {
+		buffer.put(x).put(y).put(z);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if(obj == this) return true;
 		if(obj == null) return false;
-		if(obj instanceof Tuple) {
-			final Tuple t = (Tuple) obj;
-			if(!MathsUtil.isEqual(x, t.x)) return false;
-			if(!MathsUtil.isEqual(y, t.y)) return false;
-			if(!MathsUtil.isEqual(z, t.z)) return false;
+		final Class<? extends Tuple> clazz = this.getClass();
+		if(clazz == obj.getClass()) {
+			final Tuple that = (Tuple) obj;
+			if(!MathsUtil.equals(this.x, that.x)) return false;
+			if(!MathsUtil.equals(this.y, that.y)) return false;
+			if(!MathsUtil.equals(this.z, that.z)) return false;
 			return true;
 		}
 		else {
@@ -98,7 +124,12 @@ public abstract class Tuple implements Bufferable {
 	}
 
 	@Override
+	public int hashCode() {
+		return HashCodeBuilder.reflectionHashCode(this);
+	}
+
+	@Override
 	public String toString() {
-		return ToString.toString(x, y, z);
+		return JoveUtil.toString(x, y, z);
 	}
 }

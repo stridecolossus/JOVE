@@ -1,64 +1,47 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.Assert.assertEquals;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.jove.geometry.Plane.Side;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PlaneTest {
 	private Plane plane;
 
-	@Before
+	@BeforeEach
 	public void before() {
-		plane = new Plane( Vector.Y_AXIS, 5 );
+		plane = new Plane(Vector.X_AXIS, 3);
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals( Vector.Y_AXIS, plane.getNormal() );
-		assertFloatEquals( 5, plane.getDistance() );
+		assertEquals(Vector.X_AXIS, plane.normal());
+		assertEquals(3, plane.distance(), 0.0001f);
 	}
 
 	@Test
-	public void distanceTo() {
-		assertFloatEquals( -5, plane.distanceTo( new Point( 0, 0, 0 ) ) );
-		assertFloatEquals( 0, plane.distanceTo( new Point( 0, 5, 0 ) ) );
-		assertFloatEquals( 5, plane.distanceTo( new Point( 0, 10, 0 ) ) );
+	public void distance() {
+		assertEquals(-3, plane.distance(Point.ORIGIN));
+		// TODO - what is distance used for anyway?
+		//assertEquals(-5, plane.distance(new Point(0, 4, 0)));
 	}
 
 	@Test
-	public void getSide() {
-		assertEquals( Side.BACK, plane.getSide( new Point( 0, 0, 0 ) ) );
-		assertEquals( Side.INTERSECT, plane.getSide( new Point( 0, 5, 0 ) ) );
-		assertEquals( Side.FRONT, plane.getSide( new Point( 0, 10, 0 ) ) );
+	public void side() {
+		assertEquals(Plane.Side.FRONT, plane.side(new Point(4, 0, 0)));
+		assertEquals(Plane.Side.BACK, plane.side(Point.ORIGIN));
+		assertEquals(Plane.Side.INTERSECT, plane.side(new Point(3, 0, 0)));
 	}
 
 	@Test
-	public void intersect() {
-		// Check ray above plane
-		assertEquals( new Point( 0, 5, 0 ), plane.intersect( new Ray( new Point( 0, 10, 0 ), Vector.Y_AXIS.invert() ) ) );
-
-		// Check ray above but facing away
-		assertEquals( null, plane.intersect( new Ray( new Point( 0, 10, 0 ), Vector.Y_AXIS ) ) );
-
-		// Check ray below
-		assertEquals( new Point( 0, 5, 0 ), plane.intersect( new Ray( new Point( 0, 0, 0 ), Vector.Y_AXIS ) ) );
-
-		// Check ray below but facing away
-		assertEquals( null, plane.intersect( new Ray( new Point( 0, 0, 0 ), Vector.Y_AXIS.invert() ) ) );
+	public void createFromTriangle() {
+		final Plane result = Plane.of(new Point(-3, 0, 0), new Point(-3, 1, 0), new Point(-3, 0, 1));
+		assertEquals(plane, result);
 	}
 
 	@Test
-	public void constructorNormalPoint() {
-		plane = new Plane( new Vector( 0, 1, 0 ), new Point( 0, -5, 0 ) );
-		constructor();
-	}
-
-	@Test
-	public void constructorPlanePoints() {
-		plane = new Plane( new Point( 1, -5, 0 ), new Point( 0, -5, 0 ), new Point( 0, -5, 1 ) );
-		constructor();
+	public void createFromPointNormal() {
+		final Plane result = Plane.of(Vector.X_AXIS, new Point(-3, 0, 0));
+		assertEquals(plane, result);
 	}
 }

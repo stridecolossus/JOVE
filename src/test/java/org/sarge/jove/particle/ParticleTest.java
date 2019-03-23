@@ -1,53 +1,46 @@
 package org.sarge.jove.particle;
 
-import static org.junit.Assert.assertEquals;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.jove.common.Colour;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
 public class ParticleTest {
 	private Particle particle;
+	private Vector vec;
 
-	@Before
+	@BeforeEach
 	public void before() {
-		particle = new Particle(new Point(1, 2, 3), new Vector(4, 5, 6), Colour.WHITE, 123);
+		particle = new Particle(Point.ORIGIN);
+		vec = new Vector(1, 2, 3);
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals(new Point(1, 2, 3), particle.getPosition());
-		assertEquals(new Vector(4, 5, 6), particle.getDirection());
-		assertEquals(Colour.WHITE, particle.getColour());
-		assertEquals(123L, particle.getCreationTime());
-		assertFloatEquals(1, particle.getAlpha());
+		assertEquals(Point.ORIGIN, particle.position());
+		assertEquals(new Vector(0, 0, 0), particle.vector());
 	}
 
 	@Test
 	public void add() {
-		particle.add(new Vector(7, 8, 9));
-		assertEquals(new Vector(11, 13, 15), particle.getDirection());
+		particle.add(vec);
+		particle.add(vec);
+		assertEquals(vec.add(vec), particle.vector());
+	}
+
+	@Test
+	public void stop() {
+		particle.add(vec);
+		particle.stop();
+		assertEquals(new Vector(0, 0, 0), particle.vector());
 	}
 
 	@Test
 	public void update() {
-		particle.update(1);
-		assertEquals(new Point(5, 7, 9), particle.getPosition());
-	}
-
-	@Test
-	public void setDirection() {
-		final Vector dir = new Vector();
-		particle.setDirection(dir);
-		assertEquals(dir, particle.getDirection());
-	}
-	
-	@Test
-	public void setAlpha() {
-		particle.setAlpha(0.5f);
-		assertFloatEquals(0.5f, particle.getAlpha());
+		particle.add(vec);
+		particle.update();
+		assertEquals(new Point(vec), particle.position());
 	}
 }

@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.JoveUtil;
 import org.sarge.lib.util.Converter;
 
 /**
@@ -9,21 +9,14 @@ import org.sarge.lib.util.Converter;
  */
 public final class Point extends Tuple {
 	/**
-	 * Origin.
+	 * Origin point.
 	 */
-	public static final Point ORIGIN = new Point();
-	
-	/**
-	 * String-to-point converter.
-	 */
-	public static final Converter<Point> CONVERTER = str -> new Point(MathsUtil.convert(str, SIZE));
+	public static final Point ORIGIN = new Point(0, 0, 0);
 
 	/**
-	 * Origin constructor.
+	 * Point converter.
 	 */
-	public Point() {
-		super();
-	}
+	public static final Converter<Point> CONVERTER = JoveUtil.converter(3, Point::new);
 
 	/**
 	 * Constructor.
@@ -44,48 +37,31 @@ public final class Point extends Tuple {
 	}
 
 	/**
-	 * @param pt Point
-	 * @return Distance squared to the given point
+	 * Copy constructor.
+	 * @param t Tuple to copy
 	 */
-	public float distanceSquared(Point pt) {
-		final float dx = pt.x - x;
-		final float dy = pt.y - y;
-		final float dz = pt.z - z;
-		return dx * dx + dy * dy + dz * dz;
+	public Point(Tuple t) {
+		super(t);
 	}
 
 	/**
-	 * Adds to this point.
-	 * @param pt Point to add
+	 * Adds the given tuple to this point.
+	 * @param t Tuple to add
 	 * @return New point
 	 */
 	public Point add(Tuple t) {
-		return new Point(
-			this.x + t.x,
-			this.y + t.y,
-			this.z + t.z
-		);
+		return new Point(x + t.x, y + t.y, z + t.z);
 	}
 
 	/**
-	 * Scales this point.
-	 * @param scale Scalar
-	 * @return Scaled point
+	 * Calculates the distance (<b>squared</b>) to the given point.
+	 * @param point Destination point
+	 * @return Distance squared
 	 */
-	public Point scale(float scale) {
-		return new Point(
-			this.x * scale,
-			this.y * scale,
-			this.z * scale
-		);
-	}
-
-	/**
-	 * Projects this point onto the given vector.
-	 * @param vec Vector to project onto (assumes normalised)
-	 * @return Projected point
-	 */
-	public Point project(Vector vec) {
-		return scale(vec.dot(this));
+	public float distance(Tuple point) {
+		final float dx = point.x - x;
+		final float dy = point.y - y;
+		final float dz = point.z - z;
+		return dx * dx + dy * dy + dz * dz;
 	}
 }

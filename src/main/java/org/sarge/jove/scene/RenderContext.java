@@ -1,124 +1,48 @@
 package org.sarge.jove.scene;
 
-import java.util.LinkedList;
+import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.app.RenderingSystem;
-import org.sarge.jove.geometry.Matrix;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Frame;
+import org.sarge.jove.material.IntegerPropertyBinder;
 import org.sarge.jove.material.Material;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
+import org.sarge.jove.material.Material.Property;
 
 /**
- * Rendering context.
+ * The <i>render context</i>
+ * TODO
  * @author Sarge
  */
 public class RenderContext {
-	// Config
-	private final RenderingSystem sys;
-
-	// Frame stats
-	private long time = System.currentTimeMillis();
-	private long elapsed;
-	private long total;
-	private float fps;
-	private int count;
-
-	// Render state
-	private final LinkedList<Material> stack = new LinkedList<>();
-	private Scene current;
-	private Matrix model;
+	private final Frame frame;
 
 	/**
 	 * Constructor.
-	 * @param sys Rendering system
+	 * @param frame Current frame
 	 */
-	public RenderContext( RenderingSystem sys ) {
-		Check.notNull( sys );
-		this.sys = sys;
+	public RenderContext(Frame frame) {
+		this.frame = notNull(frame);
 	}
 
 	/**
-	 * @return Rendering system
+	 * @return Current frame statistics
 	 */
-	public RenderingSystem getRenderingSystem() {
-		return sys;
+	public Frame frame() {
+		return frame;
 	}
 
 	/**
-	 * @return Current system time (ms)
+	 * Creates a material property for the elapsed frame-time.
+	 * @return Elapsed-time material property
+	 * @see Frame#elapsed()
 	 */
-	public long getTime() {
-		return time;
-	}
-
-	/**
-	 * @return Time since last frame (ms)
-	 */
-	public long getElapsed() {
-		return elapsed;
-	}
-
-	/**
-	 * @return Current frames-per-second
-	 */
-	public float getFramesPerSecond() {
-		return fps;
-	}
-
-	/**
-	 * Updates elapsed time and frame-rate stats.
-	 */
-	void update() {
-		// Update times
-		final long now = System.currentTimeMillis();
-		elapsed = now - time;
-		time = now;
-
-		// Update frames-per-second
-		++count;
-		total += elapsed;
-		if( total > 1000 ) {
-			fps = count * 1000f / total;
-			count = 0;
-			total = total % 1000;
-		}
-
-		// Reset
-		stack.clear();
-	}
-
-	/**
-	 * @return Scene currently being rendered
-	 */
-	public Scene getScene() {
-		return current;
-	}
-
-	/**
-	 * Sets the current scene.
-	 * @param scene
-	 */
-	void setScene( Scene scene ) {
-		this.current = scene;
-	}
-
-	/**
-	 * @return Current model matrix
-	 */
-	public Matrix getModelMatrix() {
-		return model;
-	}
-
-	/**
-	 * Sets the model matrix for the current node.
-	 * @param model Model matrix
-	 */
-	void setModelMatrix( Matrix model ) {
-		this.model = model;
+	public Material.Property elapsed() {
+		final Property.Binder binder = new IntegerPropertyBinder(() -> (int) frame.elapsed());
+		return new Material.Property(binder, Property.Policy.FRAME);
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToStringBuilder.reflectionToString(this);
 	}
 }

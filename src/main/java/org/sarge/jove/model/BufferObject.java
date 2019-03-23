@@ -1,36 +1,75 @@
 package org.sarge.jove.model;
 
-import java.nio.Buffer;
+import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.common.GraphicResource;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * Base-interface for vertex and index buffers.
+ * Base-class for vertex and index buffers.
  * @author Sarge
- * @param <T> Buffer type
  */
-interface BufferObject<T extends Buffer> extends GraphicResource {
+public abstract class BufferObject {
 	/**
-	 * Binds this buffer object to the context.
+	 * Update modes.
 	 */
-	void activate();
+	public enum Mode {
+		/**
+		 * Fixed buffer that is pushed once.
+		 */
+		STATIC,
+
+		/**
+		 * Dynamic buffer that can be pushed programmatically.
+		 */
+		DYNAMIC,
+
+		/**
+		 * Buffer that is pushed every frame.
+		 */
+		STREAM
+	}
+
+	private final Mode mode;
 
 	/**
-	 * Uploads static data.
-	 * @param data Data
-	 * @param mode Buffer access mode
+	 * Constructor.
+	 * @param mode Update mode
 	 */
-	void buffer( T data, AccessMode mode );
+	protected BufferObject(Mode mode) {
+		this.mode = notNull(mode);
+	}
 
 	/**
-	 * Uploads dynamic data.
-	 * @param data		Data
-	 * @param start		Start index
+	 * @return Component size of this buffer
 	 */
-	void buffer( T data, int start );
+	public abstract int size();
 
 	/**
-	 * Binds the default buffer object.
+	 * @return Length of this buffer
 	 */
-	void deactivate();
+	public abstract int length();
+
+	/**
+	 * @return Update mode
+	 */
+	public final Mode mode() {
+		return mode;
+	}
+
+	/**
+	 * @throws IllegalStateException if this buffer is not mutable
+	 */
+	protected void checkMutable() {
+		if(mode == Mode.STATIC) throw new IllegalStateException("Buffer cannot be modified");
+	}
+
+	/**
+	 * Pushes this buffer to the graphics system.
+	 */
+	public abstract void push();
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this);
+	}
 }

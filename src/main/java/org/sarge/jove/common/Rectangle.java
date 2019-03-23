@@ -1,78 +1,54 @@
 package org.sarge.jove.common;
 
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.EqualsBuilder;
+import static org.sarge.lib.util.Check.notNull;
+
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * 2D rectangle.
  * @author Sarge
  */
-public final class Rectangle {
-	private final Location loc;
+public final class Rectangle extends AbstractEqualsObject {
+	private final ScreenCoordinate pos;
 	private final Dimensions dim;
+
+	/**
+	 * Constructor.
+	 * @param pos Position
+	 * @param dim Dimensions
+	 */
+	public Rectangle(ScreenCoordinate pos, Dimensions dim) {
+		this.pos = notNull(pos);
+		this.dim = notNull(dim);
+	}
 
 	/**
 	 * Constructor.
 	 * @param x
 	 * @param y
-	 * @param w
-	 * @param h
+	 * @param width
+	 * @param height
 	 */
-	public Rectangle(int x, int y, int w, int h) {
-		this(new Location(x, y), new Dimensions(w, h));
+	public Rectangle(int x, int y, int width, int height) {
+		this(new ScreenCoordinate(x, y), new Dimensions(width, height));
 	}
 
 	/**
-	 * Constructor.
-	 * @param loc
-	 * @param dim
+	 * @return Position
 	 */
-	public Rectangle(Location loc, Dimensions dim) {
-		Check.notNull(loc);
-		Check.notNull(dim);
-		this.loc = loc;
-		this.dim = dim;
+	public ScreenCoordinate position() {
+		return pos;
 	}
 
 	/**
-	 * Constructor at origin.
-	 * @param dim Width-height
+	 * @return Dimensions
 	 */
-	public Rectangle(Dimensions dim) {
-		this(new Location(), dim);
-	}
-
-	public int getX() {
-		return loc.x;
-	}
-
-	public int getY() {
-		return loc.y;
-	}
-
-	public int getWidth() {
-		return dim.w;
-	}
-
-	public int getHeight() {
-		return dim.h;
-	}
-
-	public Location getLocation() {
-		return loc;
-	}
-
-	public Dimensions getDimensions() {
+	public Dimensions dimensions() {
 		return dim;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return EqualsBuilder.equals(this, obj);
-	}
-
-	@Override
 	public String toString() {
-		return loc + "(" + dim + ")";
+		return pos + "(" + dim + ")";
 	}
 }

@@ -1,58 +1,42 @@
 package org.sarge.jove.model;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.jove.common.Colour;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Tuple;
+import org.sarge.jove.texture.TextureCoordinate;
 
 public class QuadTest {
-	private Quad quad;
-
-	@Before
-	public void before() {
-		quad = new Quad( new Point( 1, 2, 3 ), 4, 6 );
-	}
-
 	@Test
-	public void constructor() {
-		final Vertex[] vertices = quad.getVertices();
-		assertNotNull( vertices );
-		assertEquals( 4, vertices.length );
-		assertEquals( new Point( -1, +5, 3 ), vertices[ 0 ].getPosition() );
-		assertEquals( new Point( -1, -1, 3 ), vertices[ 1 ].getPosition() );
-		assertEquals( new Point( +3, +5, 3 ), vertices[ 2 ].getPosition() );
-		assertEquals( new Point( +3, -1, 3 ), vertices[ 3 ].getPosition() );
-	}
+	public void builder() {
+		// Build a custom quad in the X-Z plane
+		final Quad quad = new Quad.Builder()
+			.size(3)
+			.depth(-1)
+			.swizzle(Tuple.Swizzle.XZ)
+			.reverse()
+			.build();
 
-	@Test
-	public void topLeftConstructor() {
-		quad = new Quad( new Point( 1, 2, 3 ), 4, 6, false );
-		final Vertex[] vertices = quad.getVertices();
-		assertNotNull( vertices );
-		assertEquals( 4, vertices.length );
-		assertEquals( new Point( +1, +2, 3 ), vertices[ 0 ].getPosition() );
-		assertEquals( new Point( +1, -4, 3 ), vertices[ 1 ].getPosition() );
-		assertEquals( new Point( +5, +2, 3 ), vertices[ 2 ].getPosition() );
-		assertEquals( new Point( +5, -4, 3 ), vertices[ 3 ].getPosition() );
-	}
+		// Check quad
+		assertNotNull(quad);
+		assertNotNull(quad.vertices());
+		assertEquals(4, quad.vertices().size());
 
-	@Test
-	public void setColour() {
-		quad.setColour( Colour.WHITE );
-		for( Vertex v : quad.getVertices() ) {
-			assertEquals( Colour.WHITE, v.getColour() );
-		}
-	}
+		// Check vertices
+		final List<Vertex> vertices = quad.vertices();
+		assertEquals(new Point(-3, +3, +3), vertices.get(0).position());
+		assertEquals(new Point(-3, -3, +3), vertices.get(1).position());
+		assertEquals(new Point(-3, +3, -3), vertices.get(2).position());
+		assertEquals(new Point(-3, -3, -3), vertices.get(3).position());
 
-	@Test
-	public void setDefaultTextureCoords() {
-		quad.setDefaultTextureCoords();
-		assertEquals( Quad.TOP_LEFT, quad.getVertices()[ 0 ].getTextureCoords() );
-		assertEquals( Quad.BOTTOM_LEFT, quad.getVertices()[ 1 ].getTextureCoords() );
-		assertEquals( Quad.TOP_RIGHT, quad.getVertices()[ 2 ].getTextureCoords() );
-		assertEquals( Quad.BOTTOM_RIGHT, quad.getVertices()[ 3 ].getTextureCoords() );
+		// Check texture coordinates
+		assertEquals(TextureCoordinate.of(0, 1), vertices.get(0).coords());
+		assertEquals(TextureCoordinate.of(0, 0), vertices.get(1).coords());
+		assertEquals(TextureCoordinate.of(1, 1), vertices.get(2).coords());
+		assertEquals(TextureCoordinate.of(1, 0), vertices.get(3).coords());
 	}
 }

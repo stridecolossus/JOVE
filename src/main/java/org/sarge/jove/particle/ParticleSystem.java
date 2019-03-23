@@ -1,297 +1,142 @@
 package org.sarge.jove.particle;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
-import org.sarge.jove.animation.Player;
-import org.sarge.jove.app.FrameListener;
-import org.sarge.jove.common.Colour;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.scene.RenderContext;
-import org.sarge.jove.scene.Renderable;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.StrictList;
-import org.sarge.lib.util.StrictMap;
-import org.sarge.lib.util.StrictSet;
-import org.sarge.lib.util.ToString;
 
 /**
- * Particle system manager.
- * TODO - separate into model and controller
+ * Model for a particle system.
  * @author Sarge
  */
-public class ParticleSystem extends Player implements FrameListener, Renderable {
-	/**
-	 * Listener for particle system events.
-	 */
-	public static interface Listener {
-		/**
-		 * Notifies the given particle system has finished (zero particles and no more can be created).
-		 * @param particleSystem Finished particle system
-		 */
-		void finished( ParticleSystem particleSystem );
-	}
-
-	/**
-	 * Action for a collision surface.
-	 */
-	public static enum CollisionAction {
-		/**
-		 * Particle is culled.
-		 */
-		KILL,
-
-		/**
-		 * Particle sticks to the surface.
-		 */
-		STICK,
-
-		/**
-		 * Particle is reflected.
-		 */
-		REFLECT,
-	}
-
-	// Factories
-	private final Emitter emitter;
-	private final DirectionFactory dirFactory;
-	private final ColourFactory colFactory;
-
-	// State
-	private PointGroup<Particle> group;
-	private final List<Particle> particles = new StrictList<>();
-	private final List<Influence> influences = new StrictList<>();
-	private final Map<CollisionSurface, CollisionAction> surfaces = new StrictMap<>();
-	private final Set<Listener> listeners = new StrictSet<>();
-
-	// Config
-	private Float creationRate;
-	private Long ageLimit;
-	private int max = Integer.MAX_VALUE;
-
-	private float pending;				// Contribution towards creation of next particle(s)
+public class ParticleSystem {
+	private final PositionFactory pos;
+	private final VectorFactory vec;
+	private final float rate;
+	private final int max;
+	private final List<Particle> particles = new ArrayList<>();
 
 	/**
 	 * Constructor.
-	 * @param emitter		Emitter for new particles
-	 * @param dirFactory	Generates initial direction for new particles
-	 * @param colFactory	Particle colour or <tt>null</tt> if un-coloured
+	 * @param pos		Position factory
+	 * @param vec		Vector factory
+	 * @param rate		Generation rate
+	 * @param max		Maximum number of particles
 	 */
-	public ParticleSystem( Emitter emitter, DirectionFactory dirFactory, ColourFactory colFactory ) {
-		Check.notNull( emitter );
-		Check.notNull( dirFactory );
-
-		this.emitter = emitter;
-		this.dirFactory = dirFactory;
-		this.colFactory = colFactory;
-		//this.group = new PointGroup<>( colFactory != null, true, particles );
+	public ParticleSystem(PositionFactory pos, VectorFactory vec, float rate, int max) {
+		this.pos = notNull(pos);
+		this.vec = notNull(vec);
+		this.rate = zeroOrMore(rate);
+		this.max = oneOrMore(max);
 	}
 
 	/**
-	 * @return List of active particles
+	 * @return Particles
 	 */
-	public List<Particle> getParticles() {
-		return particles;
+	public Stream<Particle> particles() {
+		return particles.stream();
 	}
 
 	/**
-	 * Specifies the maximum number of particles to be automatically created on an update.
-	 * Note that this limit does not apply if the particles are created explicitly via {@link #create(int, long)}.
-	 * @param max Maximum number of particles
-	 * @see #setCreationRate(float)
+	 * Adds a new particle to this system.
 	 */
-	public void setMaximumParticleCount( int max ) {
-		Check.zeroOrMore( max );
-		this.max = max;
+	void add() {
+		final Point start = pos.position();
+		final Particle p = new Particle(start);
+		p.add(vec.vector(start));
+		particles.add(p);
 	}
 
 	/**
-	 * Defines the maximum number of particles that can be created per unit-time.
-	 * @param creationRate Number of particles to create per second or <tt>null</tt> to create as many as are needed on each iteration
-	 * @see #setMaximumParticleCount(int)
+	 * Updates all particles in this system.
 	 */
-	public void setCreationRate( Float creationRate ) {
-		if( ( creationRate != null ) && ( creationRate <= 0 ) ) throw new IllegalArgumentException( "Creation rate must be positive" );
-		this.creationRate = creationRate;
-	}
-
-	/**
-	 * Sets the maximum age for particles.
-	 * @param ageLimit Age limit (ms) or <tt>null</tt> if particles are never culled
-	 * @see Particle#getCreationTime()
-	 */
-	public void setAgeLimit( Long ageLimit ) {
-		if( ( ageLimit != null ) && ( ageLimit <= 0 ) ) throw new IllegalArgumentException( "Age limit must be positive" );
-		this.ageLimit = ageLimit;
-	}
-
-	/**
-	 * Adds a particle influence.
-	 * @param inf Influence to add
-	 */
-	public void add( Influence inf ) {
-		influences.add( inf );
-	}
-
-	/**
-	 * Removes a particle influence.
-	 * @param inf Influence to remove
-	 */
-	public void remove( Influence inf ) {
-		influences.remove( inf );
-	}
-
-	/**
-	 * Adds a particle-system listener.
-	 * @param listener Listener
-	 */
-	public void add( Listener listener ) {
-		listeners.add( listener );
-	}
-
-	/**
-	 * Removes a particle-system listener.
-	 * @param listener Listener
-	 */
-	public void remove( Listener listener ) {
-		listeners.remove( listener );
-	}
-
-	/**
-	 * Adds a collision surface.
-	 * @param s			Surface
-	 * @param action	Collision action
-	 */
-	public void add( CollisionSurface s, CollisionAction action ) {
-		surfaces.put( s, action );
-	}
-
-	/**
-	 * Removes a collision surface.
-	 * @param s Surface
-	 */
-	public void remove( CollisionSurface s ) {
-		surfaces.remove( s );
-	}
-
-	@Override
-	public void update( long time, long elapsed ) {
-		// Ignore if not running
-		if( !isPlaying() ) return;
-
-		// Cull expired particles
-		if( ageLimit != null ) {
-			for( Iterator<Particle> itr = particles.iterator(); itr.hasNext(); ) {
-				final Particle p = itr.next();
-				if( time - p.getCreationTime() > ageLimit ) {
-					itr.remove();
-				}
-			}
-		}
-
-		// Apply influences
-		for( Iterator<Particle> itr = particles.iterator(); itr.hasNext(); ) {
-			final Particle p = itr.next();
-
-			// Apply influences
-			for( Influence inf : influences ) {
-				inf.apply( p, elapsed );
-			}
-
-			// Check for collisions
-			for( Entry<CollisionSurface, CollisionAction> entry : surfaces.entrySet() ) {
-				final CollisionSurface surface = entry.getKey();
-				if( surface.intersects( p ) ) {
-					switch( entry.getValue() ) {
-					case KILL:
-						itr.remove();
-						break;
-
-					case STICK:
-						p.setDirection( new Vector() );
-						break;
-
-					case REFLECT:
-						p.setDirection( surface.reflect( p.getDirection() ) );
-						break;
-					}
-				}
-			}
-		}
-
-		// Update particle position
-		final float speed = elapsed;
-		for( Particle p : particles ) {
-			p.update( speed );
-		}
-
-		// Create new particles as required
-		if( particles.size() < max ) {
-			// Determine number to create
-			final int num;
-			if( creationRate == null ) {
-				// Create as many as needed to maintain maximum
-				num = max - particles.size();
-			}
-			else {
-				// Otherwise throttle number of new particles
-				pending += elapsed / 1000f * creationRate;
-				num = (int) Math.min( pending, max - particles.size() );
-				if( num > 0 ) {
-					pending -= num;
-				}
-			}
-
-			// Create particles
-			create( num, time );
-		}
-
-		if( particles.isEmpty() ) {
-			// Notify finished particle system
-			for( Listener listener : listeners ) {
-				listener.finished( this );
-			}
-
-			// Stop if not repeating
-			// TODO - how to test this since previous clause will CREATE more!
-//			if( !isRepeating() ) {
-//				setState( Player.State.STOPPED );
-//			}
-		}
-	}
-
-	@Override
-	public void render( RenderContext ctx ) {
-		group.render( ctx );
-	}
-
-	/**
-	 * Creates new particles.
-	 * @param num 		Number of new particles to create
-	 * @param created	Creation time (ms)
-	 */
-	public void create( int num, long created ) {
-		for( int n = 0; n < num; ++n ) {
-			final Point pos = emitter.emit();
-			final Vector dir = dirFactory.getDirection();
-			final Colour col;
-			if( colFactory == null ) {
-				col = null;
-			}
-			else {
-				col = colFactory.getColour();
-			}
-			final Particle p = new Particle( pos, dir, col, created );		// TODO - extension point? another factory?
-			particles.add( p );
-		}
+	void update() {
+		particles.forEach(Particle::update);
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToStringBuilder.reflectionToString(this);
+	}
+
+	/**
+	 * Builder for a particle system.
+	 * TODO
+	 * - vector influences
+	 * - others?
+	 * - collision surfaces
+	 * - lifetimes?
+	 * - colours?
+	 */
+	public static class Builder {
+		private PositionFactory pos = PositionFactory.ORIGIN;
+		private VectorFactory vec = VectorFactory.literal(Vector.Y_AXIS);
+		private float rate = 1;
+		private int num;
+		private int max = Integer.MAX_VALUE;
+
+		/**
+		 * Sets the position factory for new particles generated by this system.
+		 * @param pos Position factory
+		 */
+		public Builder position(PositionFactory pos) {
+			this.pos = notNull(pos);
+			return this;
+		}
+
+		/**
+		 * Sets the vector factory for new particles generated by this system.
+		 * @param vec Vector factory
+		 */
+		public Builder vector(VectorFactory vec) {
+			this.vec = notNull(vec);
+			return this;
+		}
+
+		/**
+		 * Sets the rate at which new particles are generated by this system.
+		 * @param rate Particle generation rate (per second) or zero to suppress particle generation
+		 */
+		public Builder rate(float rate) {
+			this.rate = zeroOrMore(rate);
+			return this;
+		}
+
+		/**
+		 * Sets the initial number of particles in this system (default is zero).
+		 * @param num Initial number of particles
+		 * @see #max(int)
+		 */
+		public Builder initial(int num) {
+			this.num = zeroOrMore(num);
+			return this;
+		}
+
+		/**
+		 * Sets the maximum number of particles in this system (default is unlimited).
+		 * @param max Maximum number of particles
+		 */
+		public Builder max(int max) {
+			this.max = zeroOrMore(max);
+			return this;
+		}
+
+		/**
+		 * Constructs this particle system.
+		 * @return New particle system
+		 * @throws IllegalArgumentException if the configured initial number of particles is larger than the configured maximum
+		 */
+		public ParticleSystem build() {
+			final ParticleSystem sys = new ParticleSystem(pos, vec, rate, max);
+			// TODO - initial
+			return sys;
+		}
 	}
 }

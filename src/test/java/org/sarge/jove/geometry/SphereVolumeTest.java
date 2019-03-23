@@ -1,49 +1,58 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SphereVolumeTest {
 	private SphereVolume sphere;
 
-	@Before
+	@BeforeEach
 	public void before() {
-		sphere = new SphereVolume( new Point( 1, 2, 3 ), 5 );
+		sphere = new SphereVolume(Point.ORIGIN, 5);
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals( new Point( 1, 2, 3 ), sphere.getCentre() );
-		assertFloatEquals( 5, sphere.getRadius() );
+		assertEquals(Point.ORIGIN, sphere.centre());
+		assertEquals(5f, sphere.radius(), 0.0001f);
+	}
+
+	@Test
+	public void extentsConstructor() {
+		sphere = SphereVolume.of(new Extents(new Point(1, 2, 3), new Point(5, 6, 7)));
+		assertNotNull(sphere);
+		assertEquals(new Point(3, 4, 5), sphere.centre());
+		assertEquals(2f, sphere.radius(), 0.0001f);
 	}
 
 	@Test
 	public void contains() {
-		assertTrue( sphere.contains( sphere.getCentre() ) );
-		assertTrue( sphere.contains( new Point( 1 + 5, 2, 3 ) ) );
-		assertFalse( sphere.contains( new Point( 2 + 5, 2, 3 ) ) );
+		assertEquals(true, sphere.contains(Point.ORIGIN));
+		assertEquals(true, sphere.contains(new Point(5, 0, 0)));
+		assertEquals(false, sphere.contains(new Point(6, 0, 0)));
 	}
 
 	@Test
-	public void intersectsRay() {
-		// Check intersects at origin
-		assertTrue( sphere.intersects( new Ray( new Point( 1, 2, 3 ), Vector.X_AXIS ) ) );
+	public void intersectsSelf() {
+		assertEquals(true, sphere.intersects(sphere));
+	}
 
-		// Check intersects when behind ray origin
-		assertTrue( sphere.intersects( new Ray( new Point( -2, 2, 3 ), Vector.X_AXIS ) ) );
+	@Test
+	public void intersectsSphere() {
+		assertEquals(true, sphere.intersects(new SphereVolume(new Point(3, 0, 0), 1)));
+		assertEquals(false, sphere.intersects(new SphereVolume(new Point(6, 0, 0), 1)));
+	}
 
-		// Check intersects ahead of ray origin
-		assertTrue( sphere.intersects( new Ray( new Point( +2, 2, 3 ), Vector.X_AXIS ) ) );
+	@Test
+	public void intersectsExtents() {
+		// TODO
+	}
 
-		// Check intersects on edge
-		assertTrue( sphere.intersects( new Ray( new Point( 1, 2 + 5, 3 ), Vector.X_AXIS ) ) );
-
-		// Check does not intersect
-		assertFalse( sphere.intersects( new Ray( new Point( -2, 2 + 5, 3 ), Vector.X_AXIS ) ) );
+	@Test
+	public void extents() {
+		assertEquals(new Extents(new Point(-5, -5, -5), new Point(5, 5, 5)), sphere.extents());
 	}
 }

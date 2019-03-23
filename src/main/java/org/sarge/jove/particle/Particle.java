@@ -1,118 +1,69 @@
 package org.sarge.jove.particle;
 
-import org.sarge.jove.common.Colour;
+import static org.sarge.lib.util.Check.notNull;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.ToString;
 
 /**
- * Particle instance in a {@link ParticleSystem}.
+ * Particle instance.
  * @author Sarge
+ * TODO
+ * - reflect
  */
 public class Particle {
-	private final long created;
+	private static final Vector IDLE = new Vector(0, 0, 0);
 
 	private Point pos;
-	private Vector dir;
-	private Colour col;
-	private float alpha = 1;
+	private Vector vec = IDLE;
 
 	/**
 	 * Constructor.
-	 * @param pos		Initial particle position
-	 * @param dir		Initial vector
-	 * @param col		Colour (optional)
-	 * @param created	Creation time (ms)
+	 * @param pos Initial particle position
 	 */
-	public Particle(Point pos, Vector dir, Colour col, long created) {
-		Check.notNull(pos);
-		Check.notNull(dir);
-		this.dir = dir;
-		this.col = col;
-		this.created = created;
+	public Particle(Point pos) {
+		this.pos = notNull(pos);
 	}
 
 	/**
-	 * Updates the position of this particle.
-	 * @param speed Speed scalar
-	 */
-	public void update(float speed) {
-		pos = pos.add(dir.multiply(speed));
-	}
-	
-	/**
 	 * @return Particle position
 	 */
-	public Point getPosition() {
+	public Point position() {
 		return pos;
 	}
 
 	/**
-	 * Sets the position of this particle.
-	 * @param p Position
+	 * @return Particle movement vector
 	 */
-	public void setPosition(Point p) {
-		Check.notNull(p);
-		pos = p;
+	public Vector vector() {
+		return vec;
 	}
 
 	/**
-	 * @return Current direction vector
+	 * Adds to this particles movement vector.
+	 * @param vec Additional vector
 	 */
-	public Vector getDirection() {
-		return dir;
+	void add(Vector vec) {
+		this.vec = this.vec.add(vec);
 	}
 
 	/**
-	 * Sets the particle direction.
-	 * @param dir Direction
+	 * Stops this particle.
 	 */
-	public void setDirection(Vector dir) {
-		Check.notNull(dir);
-		this.dir = dir;
+	void stop() {
+		vec = IDLE;
 	}
 
 	/**
-	 * Adds the given vector to the current direction of this particle.
-	 * @param vec Movement vector
+	 * Updates the position of this particle.
 	 */
-	public void add(Vector vec) {
-		dir = dir.add(vec);
-	}
-
-	/**
-	 * @return Creation time of this particle (ms)
-	 */
-	public long getCreationTime() {
-		return created;
-	}
-
-	/**
-	 * @return Particle colour
-	 */
-	public Colour getColour() {
-		return col;
-	}
-	
-	/**
-	 * @return Colour alpha
-	 */
-	public float getAlpha() {
-		return alpha;
-	}
-
-	/**
-	 * Sets the alpha value of this particle.
-	 * @param alpha Alpha value
-	 */
-	public void setAlpha(float alpha) {
-		Check.isPercentile(alpha);
-		this.alpha = alpha;
+	void update() {
+		pos = pos.add(vec);
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString(this);
+		return ToStringBuilder.reflectionToString(this);
 	}
 }
