@@ -4,12 +4,13 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Plane in 3D space.
  * @author Sarge
  */
-public final class Plane {
+public final class Plane extends AbstractEqualsObject {
 	/**
 	 * Sides of a plane.
 	 */
@@ -101,15 +102,5 @@ public final class Plane {
 		else {
 			return Side.INTERSECT;
 		}
-	}
-
-	@Override
-	public boolean equals(Object that) {
-		return EqualsBuilder.reflectionEquals(this, that);
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 }

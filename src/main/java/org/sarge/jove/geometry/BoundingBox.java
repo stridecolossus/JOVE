@@ -4,14 +4,13 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Optional;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Bounding volume defined by an axis-aligned box.
  * @author Sarge
  */
-public final class BoundingBox implements BoundingVolume {
+public final class BoundingBox extends AbstractEqualsObject implements BoundingVolume {
 	private final Point min, max;
 
 	/**
@@ -70,15 +69,5 @@ public final class BoundingBox implements BoundingVolume {
 	public boolean intersects(Extents extents) {
 		// TODO
 		return false;
-	}
-
-	@Override
-	public boolean equals(Object that) {
-		return EqualsBuilder.reflectionEquals(this, that);
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 }

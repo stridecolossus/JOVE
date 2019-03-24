@@ -1,6 +1,5 @@
 package org.sarge.jove.util;
 
-import java.util.Arrays;
 import java.util.function.Function;
 
 import org.sarge.lib.util.Converter;
@@ -12,15 +11,6 @@ import org.sarge.lib.util.Converter;
 public final class JoveUtil {
 	private JoveUtil() {
 		// Utilities class
-	}
-
-	/**
-	 * Converts the given array of floating-point values to a comma-delimited string.
-	 * @param values Floating-point values
-	 * @return String representation
-	 */
-	public static String toString(float... values) {
-		return Arrays.toString(values);
 	}
 
 	/**

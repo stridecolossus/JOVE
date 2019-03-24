@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.JoveUtil;
+import java.util.Arrays;
+
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -147,6 +148,6 @@ public final class Quaternion implements Transform {
 
 	@Override
 	public String toString() {
-		return JoveUtil.toString(w, x, y, z);
+		return Arrays.toString(new float[]{w, x, y, z});
 	}
 }

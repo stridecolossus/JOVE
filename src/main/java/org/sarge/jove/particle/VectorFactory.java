@@ -4,7 +4,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
 /**
- * Factory for the initial particle movement vector.
+ * A <i>vector factory</i> generates the initial movement vector of a {@link Particle}.
  * @author Sarge
  */
 @FunctionalInterface

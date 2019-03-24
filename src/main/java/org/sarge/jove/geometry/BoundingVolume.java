@@ -3,8 +3,6 @@ package org.sarge.jove.geometry;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
  * Bounding volume.
  * @author Sarge
@@ -168,11 +166,6 @@ public interface BoundingVolume {
 			public boolean intersects(Extents extents) {
 				// TODO
 				return false;
-			}
-
-			@Override
-			public String toString() {
-				return ToStringBuilder.reflectionToString(this);
 			}
 		};
 	}

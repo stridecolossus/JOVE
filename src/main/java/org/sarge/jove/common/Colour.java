@@ -3,6 +3,7 @@ package org.sarge.jove.common;
 import static org.sarge.lib.util.Check.isPercentile;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.sarge.jove.util.JoveUtil;
@@ -148,6 +149,6 @@ public final class Colour implements Bufferable {
 
 	@Override
 	public String toString() {
-		return JoveUtil.toString(r, g, b, a);
+		return Arrays.toString(new float[]{r, g, b, a});
 	}
 }

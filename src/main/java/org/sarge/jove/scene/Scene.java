@@ -142,16 +142,12 @@ public class Scene {
 		// Build far plane
 		planes[1] = Plane.of(dir.invert(), fc);
 
-		// Determine viewport half-dimensions
-		final float h = viewport.height();
-		final float w = viewport.width();
-
 		// Calculate top-left corner vector
-		final Point top = nc.add(up.scale(h)).add(right.scale(-w));
+		final Point top = nc.add(up.scale(viewport.height())).add(right.scale(-viewport.width()));
 		final Vector tv = Vector.of(nc, top).normalize();
 
 		// Calculate bottom-right corner vector
-		final Point bottom = nc.add(up.scale(-h)).add(right.scale(w));
+		final Point bottom = nc.add(up.scale(-viewport.height())).add(right.scale(viewport.width()));
 		final Vector bv = Vector.of(nc, bottom).normalize();
 
 		// Top plane

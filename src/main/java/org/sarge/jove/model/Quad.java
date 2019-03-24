@@ -1,5 +1,7 @@
 package org.sarge.jove.model;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,11 +35,10 @@ public final class Quad {
 	}
 
 	/**
-	 * Builder for a quad.
+	 * Builder for a quad in the XZ plane.
 	 */
 	public static class Builder {
 		private float size = 1;
-		private float depth = 0;
 		private Tuple.Swizzle swizzle = Swizzle.NONE;
 		private boolean reverse;
 
@@ -51,20 +52,11 @@ public final class Quad {
 		}
 
 		/**
-		 * Sets the depth (or Z coordinate) of this quad.
-		 * @param depth Depth
-		 */
-		public Builder depth(float depth) {
-			this.depth = depth;
-			return this;
-		}
-
-		/**
 		 * Applies the given swizzle to the quad vertices.
 		 * @param swizzle Swizzle
 		 */
 		public Builder swizzle(Tuple.Swizzle swizzle) {
-			this.swizzle = swizzle;
+			this.swizzle = notNull(swizzle);
 			return this;
 		}
 
@@ -77,8 +69,8 @@ public final class Quad {
 		}
 
 		/**
-		 * Sets the size of this quad.
-		 * @param size Size
+		 * Constructs this quad.
+		 * @return New quad
 		 */
 		public Quad build() {
 			// Build quad corner vertices
@@ -86,12 +78,11 @@ public final class Quad {
 			for(int n = 0; n < vertices.length; ++n) {
 				// Calculate vertex coordinates
 				final float x = size * (VERTICES[n][0] * 2 - 1);
-				final float y = size * (VERTICES[n][1] * 2 - 1);
-				final float z = size * depth;
+				final float z = size * (VERTICES[n][1] * 2 - 1);
 
 				// Create vertex position
 				final float dx = reverse ? -x : +x;
-				final Tuple pos = swizzle.apply(new Tuple(dx, y, z));
+				final Tuple pos = swizzle.apply(new Point(dx, 0, z));
 
 				// Create vertex
 				vertices[n] = new Vertex(new Point(pos)).coords(TextureCoordinate.of(VERTICES[n]));

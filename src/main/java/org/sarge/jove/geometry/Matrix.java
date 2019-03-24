@@ -98,6 +98,7 @@ public final class Matrix implements Transform, Bufferable {
 		}
 		else {
 			throw new UnsupportedOperationException("Arbitrary rotation axis not supported");
+			// TODO - return Quaternion(rotation)?
 		}
 		return rot.build();
 	}

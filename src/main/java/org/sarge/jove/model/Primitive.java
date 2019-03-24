@@ -3,7 +3,6 @@ package org.sarge.jove.model;
 /**
  * Drawing primitives.
  * @author Sarge
- * TODO - valid to assume all strips append exactly one vertex?
  * TODO - triangle fan?
  */
 public enum Primitive {

@@ -1,11 +1,11 @@
 package org.sarge.jove.geometry;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 import java.util.function.UnaryOperator;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.util.JoveUtil;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Converter;
 
@@ -53,7 +53,7 @@ public class Tuple implements Bufferable {
 	 * @param y
 	 * @param z
 	 */
-	public Tuple(float x, float y, float z) {
+	protected Tuple(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -130,6 +130,6 @@ public class Tuple implements Bufferable {
 
 	@Override
 	public String toString() {
-		return JoveUtil.toString(x, y, z);
+		return Arrays.toString(toArray());
 	}
 }

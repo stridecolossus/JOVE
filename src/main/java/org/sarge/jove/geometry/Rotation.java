@@ -2,8 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Counter-clockwise rotation about an arbitrary axis.
@@ -33,7 +32,7 @@ public interface Rotation extends Transform {
 	/**
 	 * Mutable implementation.
 	 */
-	class MutableRotation implements Rotation {
+	class MutableRotation extends AbstractEqualsObject implements Rotation {
 		private final Vector axis;
 		private float angle;
 		private boolean dirty;
@@ -78,16 +77,6 @@ public interface Rotation extends Transform {
 		@Override
 		public boolean isDirty() {
 			return dirty;
-		}
-
-		@Override
-		public boolean equals(Object that) {
-			return EqualsBuilder.reflectionEquals(this, that);
-		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
 		}
 	}
 }

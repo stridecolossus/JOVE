@@ -16,8 +16,7 @@ public class QuadTest {
 		// Build a custom quad in the X-Z plane
 		final Quad quad = new Quad.Builder()
 			.size(3)
-			.depth(-1)
-			.swizzle(Tuple.Swizzle.XZ)
+			.swizzle(Tuple.Swizzle.XY)
 			.reverse()
 			.build();
 
@@ -28,10 +27,10 @@ public class QuadTest {
 
 		// Check vertices
 		final List<Vertex> vertices = quad.vertices();
-		assertEquals(new Point(-3, +3, +3), vertices.get(0).position());
-		assertEquals(new Point(-3, -3, +3), vertices.get(1).position());
-		assertEquals(new Point(-3, +3, -3), vertices.get(2).position());
-		assertEquals(new Point(-3, -3, -3), vertices.get(3).position());
+		assertEquals(new Point(0, +3, +3), vertices.get(0).position());
+		assertEquals(new Point(0, +3, -3), vertices.get(1).position());
+		assertEquals(new Point(0, -3, +3), vertices.get(2).position());
+		assertEquals(new Point(0, -3, -3), vertices.get(3).position());
 
 		// Check texture coordinates
 		assertEquals(TextureCoordinate.of(0, 1), vertices.get(0).coords());

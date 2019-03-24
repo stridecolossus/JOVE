@@ -2,13 +2,13 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Projection ray.
  * @author Sarge
  */
-public final class Ray {
+public final class Ray extends AbstractEqualsObject {
 	private final Point origin;
 	private final Vector dir;
 
@@ -34,10 +34,5 @@ public final class Ray {
 	 */
 	public Vector direction() {
 		return dir;
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 }

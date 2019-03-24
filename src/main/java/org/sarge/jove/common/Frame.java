@@ -2,14 +2,14 @@ package org.sarge.jove.common;
 
 import java.util.Collection;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.lib.collection.StrictSet;
+import org.sarge.lib.util.AbstractObject;
 
 /**
  * A <i>frame</i> is a model for frame statistics.
  * @author Sarge
  */
-public class Frame {
+public class Frame extends AbstractObject {
 	/**
 	 * Listener for frame updates.
 	 */
@@ -95,10 +95,5 @@ public class Frame {
 	 */
 	public void add(Listener listener) {
 		listeners.add(listener);
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 }

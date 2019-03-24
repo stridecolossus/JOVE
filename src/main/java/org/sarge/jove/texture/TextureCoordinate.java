@@ -4,11 +4,10 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.util.JoveUtil;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * Texture coordinates.
+ * A <i>texture coordinate</i> is a 1D, 2D or 3D coordinate.
  */
 public interface TextureCoordinate extends Bufferable {
 	/**
@@ -21,7 +20,7 @@ public interface TextureCoordinate extends Bufferable {
 	 * @param u
 	 * @return 1D texture coordinate
 	 */
-	public static TextureCoordinate of(float u) {
+	static TextureCoordinate of(float u) {
 		return new Coordinate1D(u);
 	}
 
@@ -31,7 +30,7 @@ public interface TextureCoordinate extends Bufferable {
 	 * @param v
 	 * @return 2D texture coordinate
 	 */
-	public static TextureCoordinate of(float u, float v) {
+	static TextureCoordinate of(float u, float v) {
 		return new Coordinate2D(u, v);
 	}
 
@@ -42,7 +41,7 @@ public interface TextureCoordinate extends Bufferable {
 	 * @param w
 	 * @return Texture cube coordinate
 	 */
-	public static TextureCoordinate of(float u, float v, float w) {
+	static TextureCoordinate of(float u, float v, float w) {
 		return new Coordinate3D(u, v, w);
 	}
 
@@ -52,7 +51,7 @@ public interface TextureCoordinate extends Bufferable {
 	 * @return Texture coordinate
 	 * @throws IllegalArgumentException if the array length is not in the range 1..3
 	 */
-	public static TextureCoordinate of(float[] array) {
+	static TextureCoordinate of(float[] array) {
 		switch(array.length) {
 		case 1:		return of(array[0]);
 		case 2:		return of(array[0], array[1]);
@@ -65,7 +64,7 @@ public interface TextureCoordinate extends Bufferable {
 	 * One-dimensional texture coordinate.
 	 */
 	class Coordinate1D implements TextureCoordinate {
-		protected final float u;
+		public final float u;
 
 		/**
 		 * Constructor.
@@ -110,7 +109,7 @@ public interface TextureCoordinate extends Bufferable {
 
 		@Override
 		public final String toString() {
-			return JoveUtil.toString(toArray());
+			return Arrays.toString(toArray());
 		}
 	}
 
@@ -118,7 +117,7 @@ public interface TextureCoordinate extends Bufferable {
 	 * Two-dimensional texture coordinate.
 	 */
 	class Coordinate2D extends Coordinate1D {
-		protected final float v;
+		public final float v;
 
 		/**
 		 * Constructor.
@@ -145,7 +144,7 @@ public interface TextureCoordinate extends Bufferable {
 	 * Three-dimensional texture coordinate.
 	 */
 	class Coordinate3D extends Coordinate2D {
-		private final float w;
+		public final float w;
 
 		/**
 		 * Constructor.

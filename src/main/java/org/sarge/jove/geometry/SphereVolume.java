@@ -5,14 +5,14 @@ import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.Optional;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.AbstractObject;
 
 /**
  * Bounding volume defined by a simple sphere.
  * @author Sarge
  */
-public class SphereVolume implements BoundingVolume {
+public class SphereVolume extends AbstractObject implements BoundingVolume {
 	/**
 	 * Creates a sphere volume from the given extents.
 	 * @param extents Extents
@@ -152,10 +152,5 @@ public class SphereVolume implements BoundingVolume {
 		else {
 			return false;
 		}
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 }

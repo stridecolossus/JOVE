@@ -15,8 +15,7 @@ public final class Viewport extends AbstractObject {
 	private final Rectangle rect;
 	private final float near, far;
 	private final Projection projection;
-	private final float width;
-	private final float height;
+	private final float width, height;
 
 	/**
 	 * Constructor.
@@ -32,7 +31,7 @@ public final class Viewport extends AbstractObject {
 		this.far = zeroOrMore(far);
 		this.projection = notNull(projection);
 		this.height = projection.height(rect.dimensions());
-		this.width = this.height * rect.dimensions().ratio();
+		this.width = height * rect.dimensions().ratio();
 	}
 
 	/**
@@ -64,18 +63,17 @@ public final class Viewport extends AbstractObject {
 	}
 
 	/**
-	 * @return Viewport half-height
-	 * @see Projection#height(org.sarge.jove.common.Dimensions)
-	 */
-	public float height() {
-		return height;
-	}
-
-	/**
-	 * @return Viewport half-width
+	 * @return Viewport width
 	 */
 	public float width() {
 		return width;
+	}
+
+	/**
+	 * @return Viewport height
+	 */
+	public float height() {
+		return height;
 	}
 
 	/**
