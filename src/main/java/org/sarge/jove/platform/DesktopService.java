@@ -35,10 +35,10 @@ public interface DesktopService extends Service {
 
 	/**
 	 * Creates a new window.
-	 * @param props Window properties
+	 * @param descriptor Window descriptor
 	 * @return New window
 	 */
-	Window window(Window.Properties props);
+	Window window(Window.Descriptor descriptor);
 
 	/**
 	 * Creates a Vulkan surface for the given window.

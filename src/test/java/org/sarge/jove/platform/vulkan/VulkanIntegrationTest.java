@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sarge.jove.common.Colour;
@@ -301,10 +302,9 @@ public class VulkanIntegrationTest {
 
 	private Window window(DesktopService service) {
 		System.out.println("Creating window");
-		final Window.Properties props = new Window.Properties("demo", new Dimensions(640, 480), null);
-		// TODO - glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); -> properties
-		final Window window = service.window(props);
-		return window;
+		final Set<Window.Descriptor.Property> props = Set.of(Window.Descriptor.Property.DISABLE_OPENGL);
+		final Window.Descriptor descriptor = new Window.Descriptor("demo", new Dimensions(640, 480), null, props);
+		return service.window(descriptor);
 	}
 
 	private Surface surface(VulkanInstance instance, PhysicalDevice dev, DesktopService service, Window window) {

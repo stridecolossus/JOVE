@@ -25,21 +25,20 @@ import com.sun.jna.Pointer;
 public class FrameworkWindowTest {
 	private FrameworkWindow window;
 	private FrameworkLibrary instance;
-	private Window.Properties props;
+	private Window.Descriptor props;
 	private Pointer handle;
 
 	@BeforeEach
 	public void before() {
 		handle = new Pointer(42);
 		instance = mock(FrameworkLibrary.class);
-		props = new Window.Properties.Builder().title("title").size(new Dimensions(640, 480)).build();
+		props = new Window.Descriptor.Builder().title("title").size(new Dimensions(640, 480)).property(Window.Descriptor.Property.DECORATED).build();
 		window = new FrameworkWindow(handle, instance, props);
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals(props, window.properties());
-		assertEquals(false, window.isFullScreen());
+		assertEquals(props, window.descriptor());
 	}
 
 	@Test

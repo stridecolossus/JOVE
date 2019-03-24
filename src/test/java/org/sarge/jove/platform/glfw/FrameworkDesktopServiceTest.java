@@ -82,7 +82,7 @@ public class FrameworkDesktopServiceTest {
 
 	@Test
 	public void window() {
-		final Window.Properties props = new Window.Properties.Builder().title("title").size(new Dimensions(1, 2)).build();
+		final Window.Descriptor props = new Window.Descriptor.Builder().title("title").size(new Dimensions(1, 2)).build();
 		when(instance.glfwCreateWindow(1, 2, "title", null, null)).thenReturn(new Pointer(42));
 		final FrameworkWindow window = service.window(props);
 		assertNotNull(window);
@@ -93,7 +93,7 @@ public class FrameworkDesktopServiceTest {
 		final Pointer handle = new Pointer(42);
 		final Monitor.DisplayMode mode = new Monitor.DisplayMode(new Dimensions(3, 4), new int[]{1, 2, 3}, 60);
 		final Monitor monitor = new Monitor(handle, "name", new Dimensions(1, 2), List.of(mode));
-		final Window.Properties props = new Window.Properties.Builder().title("title").size(new Dimensions(1, 2)).monitor(monitor).build();
+		final Window.Descriptor props = new Window.Descriptor.Builder().title("title").size(new Dimensions(1, 2)).monitor(monitor).build();
 		when(instance.glfwCreateWindow(1, 2, "title", handle, null)).thenReturn(new Pointer(42));
 		final FrameworkWindow window = service.window(props);
 		assertNotNull(window);

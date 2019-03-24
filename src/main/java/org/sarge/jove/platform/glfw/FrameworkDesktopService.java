@@ -138,23 +138,56 @@ public class FrameworkDesktopService extends AbstractObject implements DesktopSe
 	}
 
 	@Override
-	public FrameworkWindow window(Window.Properties props) {
+	public FrameworkWindow window(Window.Descriptor descriptor) {
 		// Lookup monitor handle
 		final Pointer monitor;
-		if(props.monitor().isPresent()) {
-			monitor = (Pointer) props.monitor().get().handle();
+		if(descriptor.monitor().isPresent()) {
+			monitor = (Pointer) descriptor.monitor().get().handle();
 		}
 		else {
 			monitor = null;
 		}
 
-		// Prevent GLFW creating an OpenGL context by default
-		// TODO - option in properties?
-		instance.glfwWindowHint(0x00022001, 0);
+//		// Prevent GLFW creating an OpenGL context by default
+//		// TODO - option in properties?
+//		// glfwDefaultWindowHints
+//		instance.glfwWindowHint(0x00022001, 0);
+
+		// Apply window hints
+		instance.glfwDefaultWindowHints();
+		for(Window.Descriptor.Property prop : descriptor.properties()) {
+			final int hint = apply(prop);
+			final int flag = flag(prop);
+			instance.glfwWindowHint(hint, flag);
+		}
 
 		// Create window
-		final Pointer window = instance.glfwCreateWindow(props.size().width(), props.size().height(), props.title(), monitor, null);
-		return new FrameworkWindow(window, instance, props);
+		final Pointer window = instance.glfwCreateWindow(descriptor.size().width(), descriptor.size().height(), descriptor.title(), monitor, null);
+		return new FrameworkWindow(window, instance, descriptor);
+	}
+
+	/**
+	 * Maps a window property to the GLFW hint.
+	 */
+	private static int apply(Window.Descriptor.Property prop) {
+		switch(prop) {
+		case RESIZABLE:			return 0x00020003;
+		case DECORATED:			return 0x00020005;
+		case AUTO_ICONIFY:		return 0x00020006;
+		case MAXIMISED:			return 0x00020008;
+		case DISABLE_OPENGL:	return 0x00022001;
+		default:				throw new UnsupportedOperationException(prop.name());
+		}
+	}
+
+	/**
+	 * Maps a window property to the GLFW hint flag.
+	 */
+	private static int flag(Window.Descriptor.Property prop) {
+		switch(prop) {
+		case DISABLE_OPENGL:		return 0;
+		default:					return 1;
+		}
 	}
 
 	@Override

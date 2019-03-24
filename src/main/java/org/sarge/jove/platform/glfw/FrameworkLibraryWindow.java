@@ -25,6 +25,11 @@ interface FrameworkLibraryWindow {
 	void glfwDestroyWindow(Pointer window);
 
 	/**
+	 * Resets all window hints to their default values.
+	 */
+	void glfwDefaultWindowHints();
+
+	/**
 	 * Sets a creation window hint.
 	 * @param hint		Hint
 	 * @param value		Value

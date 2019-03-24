@@ -22,7 +22,7 @@ import com.sun.jna.Pointer;
  */
 class FrameworkWindow extends Handle implements Window, Resource {
 	private final FrameworkLibrary instance;
-	private final Properties props;
+	private final Descriptor props;
 	private final Device<?> device;
 
 	/**
@@ -31,7 +31,7 @@ class FrameworkWindow extends Handle implements Window, Resource {
 	 * @param instance		GLFW API
 	 * @param props			Window properties
 	 */
-	FrameworkWindow(Pointer window, FrameworkLibrary instance, Properties props) {
+	FrameworkWindow(Pointer window, FrameworkLibrary instance, Descriptor props) {
 		super(window);
 		this.instance = notNull(instance);
 		this.props = notNull(props);
@@ -39,14 +39,8 @@ class FrameworkWindow extends Handle implements Window, Resource {
 	}
 
 	@Override
-	public Properties properties() {
+	public Descriptor descriptor() {
 		return props;
-	}
-
-	@Override
-	public boolean isFullScreen() {
-		// TODO
-		return false;
 	}
 
 	@Override

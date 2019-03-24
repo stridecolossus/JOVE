@@ -4,8 +4,10 @@ import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
+import org.sarge.lib.collection.StrictSet;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
@@ -13,23 +15,61 @@ import org.sarge.lib.util.AbstractEqualsObject;
  */
 public interface Window {
 	/**
-	 * Window properties.
+	 * Creation descriptor for a window.
 	 */
-	final class Properties extends AbstractEqualsObject {
+	final class Descriptor extends AbstractEqualsObject {
+		/**
+		 * Window properties.
+		 */
+		public enum Property {
+			/**
+			 * Window can be resized.
+			 */
+			RESIZABLE,
+
+			/**
+			 * Window has standard decorations (border, close icon, etc).
+			 */
+			DECORATED,
+
+			/**
+			 * Full-screen windows are iconified on focus loss.
+			 */
+			AUTO_ICONIFY,
+
+			/**
+			 * Window is initially maximised (ignores dimensions).
+			 */
+			MAXIMISED,
+
+			/**
+			 * Disables creation of an OpenGL context for this window.
+			 */
+			DISABLE_OPENGL,
+
+			/**
+			 * Whether this window should be full-screen.
+			 */
+			FULL_SCREEN,
+		}
+
 		private final String title;
 		private final Dimensions size;
 		private final Optional<Monitor> monitor;
+		private final Set<Property> props;
 
 		/**
 		 * Constructor.
 		 * @param title			Window title
 		 * @param size			Size
 		 * @param monitor		Monitor
+		 * @param props			Properties
 		 */
-		public Properties(String title, Dimensions size, Monitor monitor) {
+		public Descriptor(String title, Dimensions size, Monitor monitor, Set<Property> props) {
 			this.title = notEmpty(title);
 			this.size = notNull(size);
 			this.monitor = Optional.ofNullable(monitor);
+			this.props = Set.copyOf(props);
 		}
 
 		/**
@@ -47,19 +87,24 @@ public interface Window {
 		}
 
 		/**
-		 * @return Monitor that this window
+		 * @return Monitor for this window
 		 */
 		public Optional<Monitor> monitor() {
 			return monitor;
 		}
 
+		public Set<Property> properties() {
+			return props;
+		}
+
 		/**
-		 * Builder for a set of window properties.
+		 * Builder for a window descriptor.
 		 */
 		public static class Builder {
 			private String title;
 			private Dimensions size;
 			private Monitor monitor;
+			private final Set<Property> props = new StrictSet<>();
 
 			/**
 			 * Sets the window title.
@@ -89,24 +134,28 @@ public interface Window {
 			}
 
 			/**
-			 * Constructs this set of properties.
-			 * @param New properties
+			 * Adds a window property.
+			 * @param p Property
 			 */
-			public Properties build() {
-				return new Properties(title, size, monitor);
+			public Builder property(Property p) {
+				props.add(p);
+				return this;
+			}
+
+			/**
+			 * Constructs this descriptor.
+			 * @param New descriptor
+			 */
+			public Descriptor build() {
+				return new Descriptor(title, size, monitor, props);
 			}
 		}
 	}
 
 	/**
-	 * @return Properties of this window
+	 * @return Descriptor of this window
 	 */
-	Properties properties();
-
-	/**
-	 * @return Whether this window is full-screen
-	 */
-	boolean isFullScreen();
+	Descriptor descriptor();
 
 	/**
 	 * Input device for this window.
