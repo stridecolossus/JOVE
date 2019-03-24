@@ -87,7 +87,7 @@ public class PhysicalDevice extends AbstractObject {
 		// Get device properties
 		final Vulkan vulkan = Vulkan.instance();
 		final VulkanLibrary lib = vulkan.library();
-		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties.ByReference();
+		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
 		lib.vkGetPhysicalDeviceProperties(handle, props);
 
 		// Get device features
@@ -181,6 +181,9 @@ public class PhysicalDevice extends AbstractObject {
 	public Supported supported() {
 		return supported;
 	}
+
+	// TODO
+	// boolean supports(VkPhysicalDeviceFeatures required)
 
 	/**
 	 * Enumerates the required features that this device does <b>not</b> support.

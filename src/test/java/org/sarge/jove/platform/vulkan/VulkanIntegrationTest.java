@@ -49,7 +49,8 @@ public class VulkanIntegrationTest {
 		final VulkanInstance instance = instance();
 
 		System.out.println("Initialising debug handler");
-		final Handle debugger = instance.handlerFactory().builder()
+		instance.handlerFactory()
+			.builder()
 			.init()
 			//.severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
 			.build();
@@ -279,6 +280,7 @@ public class VulkanIntegrationTest {
 
 		final LogicalDevice dev = new LogicalDevice.Builder(physical)
 			.queue(family)
+			// TODO - others?
 			.extension(Extension.SWAP_CHAIN)
 			.layer(ValidationLayer.STANDARD_VALIDATION)
 			.layer("VK_LAYER_VALVE_steam_overlay", 1)
