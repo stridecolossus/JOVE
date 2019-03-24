@@ -20,16 +20,16 @@ final class FrameworkHelper {
 	}
 
 	/**
-	 * Maps a GLFW action to an event type.
-	 * @param action Action
-	 * @return Event type
+	 * Maps a GLFW action to an event operation.
+	 * @param action GLFW action
+	 * @return Event operation
 	 * @throws IllegalArgumentException if the action is not supported
 	 */
-	static Event.Type action(int action) {
+	static Event.Operation operation(int action) {
 		switch(action) {
-		case 0: return Event.Type.RELEASE;
-		case 1: return Event.Type.PRESS;
-		case 2: return Event.Type.DOUBLE; // TODO
+		case 0: return Event.Operation.RELEASE;
+		case 1: return Event.Operation.PRESS;
+		case 2: return Event.Operation.REPEAT; // TODO
 		default: throw new IllegalArgumentException("Unknown GLFW action: " + action);
 		}
 	}

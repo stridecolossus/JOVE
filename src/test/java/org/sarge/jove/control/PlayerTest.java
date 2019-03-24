@@ -1,7 +1,6 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -9,8 +8,6 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.Event;
-import org.sarge.jove.control.Player;
 import org.sarge.jove.control.Player.Listener;
 import org.sarge.jove.control.Player.Playable;
 import org.sarge.jove.control.Player.State;
@@ -104,14 +101,5 @@ public class PlayerTest {
 		verify(listener).update(State.PLAY);
 		verify(listener).update(State.PAUSE);
 		verify(listener).update(State.STOP);
-	}
-
-	@Test
-	public void handler() {
-		final Event.Handler handler = player.handler(State.PLAY);
-		assertNotNull(handler);
-		final Event.Key key = Event.Key.of(Event.Category.BUTTON, Event.Type.PRESS, 42);
-		handler.handle(key.event());
-		assertEquals(true, player.isPlaying());
 	}
 }

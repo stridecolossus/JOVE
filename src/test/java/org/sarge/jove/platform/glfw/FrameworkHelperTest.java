@@ -13,14 +13,14 @@ import org.sarge.jove.platform.glfw.FrameworkHelper;
 public class FrameworkHelperTest {
 	@Test
 	public void action() {
-		assertEquals(Event.Type.RELEASE, FrameworkHelper.action(0));
-		assertEquals(Event.Type.PRESS, FrameworkHelper.action(1));
-		assertEquals(Event.Type.DOUBLE, FrameworkHelper.action(2));
+		assertEquals(Event.Operation.RELEASE, FrameworkHelper.operation(0));
+		assertEquals(Event.Operation.PRESS, FrameworkHelper.operation(1));
+		assertEquals(Event.Operation.REPEAT, FrameworkHelper.operation(2));
 	}
 
 	@Test
 	public void actionInvalid() {
-		assertThrows(IllegalArgumentException.class, () -> FrameworkHelper.action(999));
+		assertThrows(IllegalArgumentException.class, () -> FrameworkHelper.operation(999));
 	}
 
 	@Test

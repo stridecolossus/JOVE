@@ -152,21 +152,4 @@ public class Player extends AbstractObject {
 		Check.notNull(listener);
 		listeners.add(listener);
 	}
-
-	/**
-	 * Creates an event handler of the given state for this player.
-	 * @param state Player state
-	 * @return Event handler
-	 */
-	public Event.Handler handler(State state) {
-		Check.notNull(state);
-		return new Event.Handler() {
-			@Override
-			public void handle(Event event) {
-				if(event.key().type() == Event.Type.PRESS) {
-					set(state);
-				}
-			}
-		};
-	}
 }

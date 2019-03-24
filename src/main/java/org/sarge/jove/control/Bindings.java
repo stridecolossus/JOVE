@@ -62,7 +62,7 @@ public class Bindings<T> extends AbstractObject {
 	public class Action extends AbstractObject {
 		private final T action;
 		private final Event.Handler handler;
-		private final List<Event.Key> keys = new ArrayList<>();
+		private final List<Event.Descriptor> events = new ArrayList<>();
 
 		/**
 		 * Constructor.
@@ -96,36 +96,35 @@ public class Bindings<T> extends AbstractObject {
 		}
 
 		/**
-		 * @return Event-keys bound to this action
+		 * @return Events bound to this action
 		 */
-		public Stream<Event.Key> keys() {
-			return keys.stream();
+		public Stream<Event.Descriptor> events() {
+			return events.stream();
 		}
 
 		/**
-		 * Binds an event-key to this action.
-		 * @param key Event-key
-		 * @throws IllegalArgumentException if the key is already bound to another action
-		 * @see Event.Handler#category()
+		 * Binds an event to this action.
+		 * @param descriptor Event descriptor
+		 * @throws IllegalArgumentException if the event is already bound to another action
 		 */
-		public void bind(Event.Key key) {
-			Check.notNull(key);
-			if(bindings.containsKey(key)) throw new IllegalArgumentException("Key already bound: " + key);
-			keys.add(key);
-			bindings.put(key, this);
+		public void bind(Event.Descriptor descriptor) {
+			Check.notNull(descriptor);
+			if(bindings.containsKey(descriptor)) throw new IllegalArgumentException("Event already bound to this action: " + descriptor);
+			events.add(descriptor);
+			bindings.put(descriptor, this);
 		}
 
 		/**
 		 * Clears all events bound to this action.
 		 */
 		public void clear() {
-			keys.stream().forEach(bindings::remove);
-			keys.clear();
+			events.stream().forEach(bindings::remove);
+			events.clear();
 		}
 	}
 
 	private final List<Action> actions = new ArrayList<>();
-	private final Map<Event.Key, Action> bindings = new HashMap<>();
+	private final Map<Event.Descriptor, Action> bindings = new HashMap<>();
 
 	/**
 	 * @return Actions
@@ -140,7 +139,7 @@ public class Bindings<T> extends AbstractObject {
 	 */
 	public Event.Handler handler() {
 		return event -> {
-			final Action action = bindings.get(event.key());
+			final Action action = bindings.get(event.descriptor());
 			if(action != null) {
 				action.handler.handle(event);
 			}
@@ -165,53 +164,53 @@ public class Bindings<T> extends AbstractObject {
 	}
 
 	/**
-	 * Finds the action bound to the given key.
-	 * @param key Event key
+	 * Finds the action bound to the given event.
+	 * @param descriptor Event descriptor
 	 * @return Action
 	 */
-	public Optional<Action> find(Event.Key key) {
-		return Optional.ofNullable(bindings.get(key));
+	public Optional<Action> find(Event.Descriptor descriptor) {
+		return Optional.ofNullable(bindings.get(descriptor));
 	}
 
 	/**
 	 * Removes an existing binding.
-	 * @param key Event-key to remove
-	 * @return Action that the given key was previously bound to
-	 * @throws IllegalArgumentException if there is no binding for the given key
+	 * @param descriptor Event to remove
+	 * @return Action that the given event was previously bound to
+	 * @throws IllegalArgumentException if there is no binding for the given event
 	 */
-	public Action remove(Event.Key key) {
-		final Action action = find(key).orElseThrow(() -> new IllegalArgumentException("Key not bound: " + key));
-		action.keys.remove(key);
-		bindings.remove(key);
+	public Action remove(Event.Descriptor descriptor) {
+		final Action action = find(descriptor).orElseThrow(() -> new IllegalArgumentException("Event not bound: " + descriptor));
+		action.events.remove(descriptor);
+		bindings.remove(descriptor);
 		return action;
 	}
 
 	/**
 	 * Writes this set of bindings to the given writer.
 	 * <p>
-	 * Bindings have the following format: <tt>action event-key</tt>
+	 * Bindings have the following format: <tt>action event-descriptor</tt>
 	 * <p>
 	 * where:
 	 * <ul>
 	 * <li><i>action</i> is the action name</li>
-	 * <li><i>event-key</i> is the key of the bound event</li>
+	 * <li><i>event-descriptor</i> is the string representation of the bound event</li>
 	 * </ul>
 	 * <p>
 	 * Notes:
 	 * <ul>
-	 * <li>A line is output for each key bound to an action and delimited by the line-separator</li>
+	 * <li>A line is output for each binding and delimited by the line-separator</li>
 	 * <li>The <i>action</i> name is returned by the {@link Action#toString()} method</li>
 	 * <li>Binding entries are case-sensitive</li>
 	 * </ul>
 	 * @param out Output writer
-	 * @see Event.Key#toString()
+	 * @see Event.Descriptor#toString()
 	 */
 	public void write(PrintWriter out) {
 		for(Action action : actions) {
-			for(Event.Key key : action.keys) {
+			for(Event.Descriptor e : action.events) {
 				out.print(action.action);
 				out.print(DELIMITER);
-				out.print(key);
+				out.print(e);
 				out.println();
 			}
 		}
@@ -223,7 +222,7 @@ public class Bindings<T> extends AbstractObject {
 	 * @throws IOException if the bindings cannot be loaded
 	 * @throws IllegalArgumentException if a binding is not valid or an action cannot be found in this set of bindings
 	 * @see #write(PrintWriter)
-	 * @see Event.Key#parse(String)
+	 * @see Event.Descriptor#parse(String)
 	 */
 	public void read(Reader r) throws IOException {
 		// Binding loader
@@ -242,11 +241,11 @@ public class Bindings<T> extends AbstractObject {
 				final Action action = map.get(tokens[0]);
 				if(action == null) throw new IllegalArgumentException("Unknown action: " + tokens[0]);
 
-				// Parse event key
-				final Event.Key key = Event.Key.parse(tokens[1]);
+				// Parse event
+				final Event.Descriptor descriptor = Event.Descriptor.parse(tokens[1]);
 
 				// Bind event to action
-				action.bind(key);
+				action.bind(descriptor);
 			}
 		}
 

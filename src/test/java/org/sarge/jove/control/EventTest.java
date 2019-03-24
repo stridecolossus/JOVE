@@ -1,79 +1,136 @@
 package org.sarge.jove.control;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.Event.Key;
+import org.sarge.jove.control.Event.Category;
+import org.sarge.jove.control.Event.Descriptor;
+import org.sarge.jove.control.Event.Operation;
 
 public class EventTest {
-	private Event.Key key;
-
-	@BeforeEach
-	public void before() {
-		key = Event.Key.of(Event.Category.BUTTON, Event.Type.PRESS, 42);
-	}
-
 	@Nested
-	class KeyTests {
+	class DescriptorTests {
 		@Test
-		public void constructor() {
-			assertEquals(Event.Category.BUTTON, key.category());
-			assertEquals(Event.Type.PRESS, key.type());
-			assertEquals(42, key.identifier());
+		public void move() {
+			assertEquals(Descriptor.MOVE, Descriptor.of(Category.MOVE));
+			assertEquals(Category.MOVE, Descriptor.MOVE.category());
+			assertEquals(0, Descriptor.MOVE.id());
+			assertEquals(null, Descriptor.MOVE.operation());
+			assertEquals(Descriptor.MOVE, Descriptor.parse("MOVE"));
 		}
 
 		@Test
-		public void invalidNullType() {
-			assertThrows(NullPointerException.class, () -> Event.Key.of(Event.Category.BUTTON, null, 42));
+		public void zoom() {
+			assertEquals(Descriptor.ZOOM, Descriptor.of(Category.ZOOM));
+			assertEquals(Category.ZOOM, Descriptor.ZOOM.category());
+			assertEquals(0, Descriptor.ZOOM.id());
+			assertEquals(null, Descriptor.ZOOM.operation());
+			assertEquals(Descriptor.ZOOM, Descriptor.parse("ZOOM"));
 		}
 
 		@Test
-		public void invalidIdentifier() {
-			assertThrows(ArrayIndexOutOfBoundsException.class, () -> Event.Key.of(Event.Category.BUTTON, Event.Type.PRESS, -1));
+		public void button() {
+			final Descriptor descriptor = Descriptor.of(Category.BUTTON, 42, Operation.PRESS);
+			assertNotNull(descriptor);
+			assertEquals(Category.BUTTON, descriptor.category());
+			assertEquals(42, descriptor.id());
+			assertEquals(Operation.PRESS, descriptor.operation());
+			assertEquals(descriptor, Descriptor.parse("BUTTON-PRESS-42"));
 		}
 
 		@Test
-		public void event() {
-			assertNotNull(key.event());
-			assertEquals(null, Event.Key.MOVE.event());
-			assertEquals(null, Event.Key.ZOOM.event());
+		public void click() {
+			final Descriptor descriptor = Descriptor.of(Category.CLICK, 42, Operation.PRESS);
+			assertNotNull(descriptor);
+			assertEquals(Category.CLICK, descriptor.category());
+			assertEquals(42, descriptor.id());
+			assertEquals(Operation.PRESS, descriptor.operation());
+			assertEquals(descriptor, Descriptor.parse("CLICK-PRESS-42"));
 		}
 
 		@Test
-		public void equals() {
-			assertEquals(true, key.equals(key));
-			assertEquals(false, key.equals(null));
-			assertEquals(false, key.equals(Event.Key.of(Event.Category.BUTTON, Event.Type.PRESS, 999)));
+		public void invalidCategory() {
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.of(Category.BUTTON));
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.of(Category.CLICK));
 		}
 
 		@Test
-		public void string() {
-			assertEquals("BUTTON-PRESS-42", key.toString());
+		public void invalidNamedCategory() {
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.of(Category.ZOOM, 42, Operation.PRESS));
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.of(Category.MOVE, 42, Operation.PRESS));
 		}
 
 		@Test
-		public void parse() {
-			assertEquals(key, Key.parse("BUTTON-PRESS-42"));
+		public void invalidClickOperation() {
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.of(Category.CLICK, 42, Operation.REPEAT));
+		}
+
+		@Test
+		public void parseInvalid() {
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.parse(""));
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.parse("cobblers"));
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.parse("ZOOM-cobblers"));
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.parse("BUTTON"));
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.parse("BUTTON-PRESS"));
+			assertThrows(IllegalArgumentException.class, () -> Descriptor.parse("BUTTON-PRESS-42-cobblers"));
 		}
 	}
 
 	@Nested
 	class EventTests {
 		@Test
-		public void constructor() {
-			final Event event = new Event(Event.Key.MOVE, 1, 2);
-			assertEquals(Event.Key.MOVE, event.key());
+		public void move() {
+			final Event event = Event.of(Descriptor.MOVE, 1, 2);
+			assertNotNull(event);
+			assertEquals(Descriptor.MOVE, event.descriptor());
 			assertEquals(1, event.x());
 			assertEquals(2, event.y());
 		}
 
 		@Test
-		public void constructorSuperfluousLocation() {
-			assertThrows(IllegalArgumentException.class, () -> new Event(key, 1, 2));
+		public void zoom() {
+			final Event event = Event.of(Descriptor.ZOOM, 1, 2);
+			assertNotNull(event);
+			assertEquals(Descriptor.ZOOM, event.descriptor());
+			assertEquals(1, event.x());
+			assertEquals(2, event.y());
+		}
+
+		@Test
+		public void button() {
+			final Descriptor descriptor = Descriptor.of(Category.BUTTON, 42, Operation.PRESS);
+			final Event event = Event.of(descriptor);
+			assertNotNull(event);
+			assertEquals(descriptor, event.descriptor());
+			assertEquals(0, event.x());
+			assertEquals(0, event.y());
+		}
+
+		@Test
+		public void click() {
+			final Descriptor descriptor = Descriptor.of(Category.CLICK, 42, Operation.PRESS);
+			final Event event = Event.of(descriptor, 1, 2);
+			assertNotNull(event);
+			assertEquals(descriptor, event.descriptor());
+			assertEquals(1, event.x());
+			assertEquals(2, event.y());
+		}
+
+		@Test
+		public void invalidEvent() {
+			final Descriptor click = Descriptor.of(Category.CLICK, 42, Operation.PRESS);
+			assertThrows(IllegalArgumentException.class, () -> Event.of(click));
+			assertThrows(IllegalArgumentException.class, () -> Event.of(Descriptor.MOVE));
+			assertThrows(IllegalArgumentException.class, () -> Event.of(Descriptor.ZOOM));
+		}
+
+		@Test
+		public void invalidLocationEvent() {
+			final Descriptor button = Descriptor.of(Category.BUTTON, 42, Operation.PRESS);
+			assertThrows(IllegalArgumentException.class, () -> Event.of(button, 1, 2));
 		}
 	}
 }

@@ -21,12 +21,12 @@ public class BindingsTest {
 
 	private Bindings<String> bindings;
 	private Event.Handler handler;
-	private Event.Key key;
+	private Event.Descriptor descriptor;
 
 	@BeforeEach
 	public void before() {
 		bindings = new Bindings<>();
-		key = Event.Key.of(Event.Category.BUTTON, Event.Type.PRESS, 42);
+		descriptor = Event.Descriptor.of(Event.Category.BUTTON, 1, Event.Operation.PRESS);
 		handler = mock(Event.Handler.class);
 	}
 
@@ -42,12 +42,18 @@ public class BindingsTest {
 
 	@Test
 	public void handler() {
+		// Create bindings handler
 		final Event.Handler wrapper = bindings.handler();
 		assertNotNull(wrapper);
+
+		// Register an action
 		final var action = addAction();
-		action.bind(key);
-		wrapper.handle(key.event());
-		verify(handler).handle(key.event());
+		action.bind(descriptor);
+
+		// Generate an event and check delegated to action
+		final Event event = Event.of(descriptor);
+		wrapper.handle(event);
+		verify(handler).handle(event);
 	}
 
 	@Test
@@ -58,8 +64,8 @@ public class BindingsTest {
 		assertNotNull(action);
 		assertEquals(ACTION, action.action());
 		assertEquals(handler, action.handler());
-		assertNotNull(action.keys());
-		assertEquals(0, action.keys().count());
+		assertNotNull(action.events());
+		assertEquals(0, action.events().count());
 	}
 
 	@Test
@@ -71,54 +77,54 @@ public class BindingsTest {
 	@Test
 	public void find() {
 		final var action = addAction();
-		action.bind(key);
-		assertEquals(Optional.of(action), bindings.find(key));
+		action.bind(descriptor);
+		assertEquals(Optional.of(action), bindings.find(descriptor));
 	}
 
 	@Test
 	public void findNotBound() {
-		assertEquals(Optional.empty(), bindings.find(key));
+		assertEquals(Optional.empty(), bindings.find(descriptor));
 	}
 
 	@Test
 	public void bind() {
 		final var action = addAction();
-		action.bind(key);
-		assertEquals(1, action.keys().count());
-		assertEquals(key, action.keys().iterator().next());
+		action.bind(descriptor);
+		assertEquals(1, action.events().count());
+		assertEquals(descriptor, action.events().iterator().next());
 	}
 
 	@Test
 	public void bindAlreadyBound() {
 		final var action = addAction();
-		action.bind(key);
-		assertThrows(IllegalArgumentException.class, () -> action.bind(key));
+		action.bind(descriptor);
+		assertThrows(IllegalArgumentException.class, () -> action.bind(descriptor));
 	}
 
 	@Test
 	public void remove() {
 		final var action = addAction();
-		action.bind(key);
-		bindings.remove(key);
-		assertEquals(0, action.keys().count());
-		assertEquals(Optional.empty(), bindings.find(key));
+		action.bind(descriptor);
+		bindings.remove(descriptor);
+		assertEquals(0, action.events().count());
+		assertEquals(Optional.empty(), bindings.find(descriptor));
 	}
 
 	@Test
 	public void removeNotBound() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.remove(key));
+		assertThrows(IllegalArgumentException.class, () -> bindings.remove(descriptor));
 	}
 
 	@Test
 	public void write() {
 		// Add an action with a couple of bindings
 		final var action = addAction();
-		action.bind(key);
-		action.bind(Event.Key.of(Event.Category.BUTTON, Event.Type.RELEASE, 2));
+		action.bind(descriptor);
+		action.bind(Event.Descriptor.of(Event.Category.BUTTON, 2, Event.Operation.RELEASE));
 
 		// Add another action and binding
 		final Event.Handler other = mock(Event.Handler.class);
-		bindings.add("other", other).bind(Event.Key.ZOOM);
+		bindings.add("other", other).bind(Event.Descriptor.ZOOM);
 
 		// Output bindings
 		final StringWriter out = new StringWriter();
@@ -126,7 +132,7 @@ public class BindingsTest {
 
 		// Check output
 		final String[] expected = {
-			"action BUTTON-PRESS-42",
+			"action BUTTON-PRESS-1",
 			"action BUTTON-RELEASE-2",
 			"other ZOOM",
 			"",
@@ -137,13 +143,13 @@ public class BindingsTest {
 	@Test
 	public void read() throws IOException {
 		final var action = addAction();
-		bindings.read(new StringReader("action BUTTON-PRESS-42"));
-		assertArrayEquals(new Event.Key[]{key}, action.keys().toArray());
+		bindings.read(new StringReader("action BUTTON-PRESS-1"));
+		assertArrayEquals(new Event.Descriptor[]{descriptor}, action.events().toArray());
 	}
 
 	@Test
 	public void readUnknownAction() throws IOException {
-		assertThrows(IllegalArgumentException.class, () -> bindings.read(new StringReader("cobblers BUTTON-PRESS-42")));
+		assertThrows(IllegalArgumentException.class, () -> bindings.read(new StringReader("cobblers BUTTON-PRESS-999")));
 	}
 
 	@Test

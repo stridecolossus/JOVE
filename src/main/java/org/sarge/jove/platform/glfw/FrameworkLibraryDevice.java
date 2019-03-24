@@ -46,7 +46,7 @@ interface FrameworkLibraryDevice {
 		 * @param button	Button index 0..n
 		 * @param action	Button action
 		 * @param mods		Modifiers
-		 * @see FrameworkLibraryDevice#action(int)
+		 * @see FrameworkLibraryDevice#operation(int)
 		 */
 		void button(Pointer window, int button, int action, int mods);
 	}

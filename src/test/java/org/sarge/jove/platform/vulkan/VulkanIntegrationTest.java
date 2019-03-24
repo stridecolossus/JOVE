@@ -98,7 +98,7 @@ public class VulkanIntegrationTest {
 		final AtomicBoolean running = new AtomicBoolean(true);
 
 		final Event.Handler hdlr = event -> {
-			if(event.key().identifier() == 256) {
+			if(event.descriptor().id() == 256) {
 				running.set(false);
 			}
 		};

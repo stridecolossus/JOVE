@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Map;
 
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Handle;
@@ -14,7 +13,6 @@ import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.KeyListener;
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MousePositionListener;
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MouseScrollListener;
-import org.sarge.lib.util.Util;
 
 import com.sun.jna.Pointer;
 
@@ -86,10 +84,10 @@ class FrameworkWindow extends Handle implements Window, Resource {
 		return new KeyListener() {
 			@Override
 			public void key(Pointer window, int num, int scancode, int action, int mods) {
-				//System.out.println(num+" "+scancode+" "+KeyEvent.getKeyText(num)+" "+KeyEvent.getKeyText(scancode));
-				final Event.Type type = FrameworkHelper.action(action);
-				final Event.Key key = Event.Key.of(Event.Category.BUTTON, type, num);
-				handler.handle(key.event());
+				final Event.Operation op = FrameworkHelper.operation(action);
+				final Event.Descriptor descriptor = Event.Descriptor.of(Event.Category.BUTTON, num, op);
+				final Event event = Event.of(descriptor);
+				handler.handle(event);
 			}
 		};
 	}
@@ -101,7 +99,7 @@ class FrameworkWindow extends Handle implements Window, Resource {
 	 */
 	private static MousePositionListener move(Event.Handler handler) {
 		return (window, x, y) -> {
-			final Event event = new Event(Event.Key.MOVE, (int) x, (int) y);
+			final Event event = Event.of(Event.Descriptor.MOVE, (int) x, (int) y);
 			handler.handle(event);
 		};
 	}
@@ -113,9 +111,10 @@ class FrameworkWindow extends Handle implements Window, Resource {
 	 */
 	private static MouseButtonListener button(Event.Handler handler) {
 		return (window, button, action, mods) -> {
-			final Event.Type type = FrameworkHelper.action(action);
-			final Event.Key key = Event.Key.of(Event.Category.CLICK, type, button);
-			handler.handle(key.event());
+			final Event.Operation op = FrameworkHelper.operation(action);
+			final Event.Descriptor descriptor = Event.Descriptor.of(Event.Category.CLICK, button, op);
+			final Event event = Event.of(descriptor);
+			handler.handle(event);
 		};
 	}
 
@@ -126,28 +125,13 @@ class FrameworkWindow extends Handle implements Window, Resource {
 	 */
 	private static MouseScrollListener scroll(Event.Handler handler) {
 		return (window, x, y) -> {
-			final Event event = new Event(Event.Key.ZOOM, (int) x, (int) y);
+			final Event event = Event.of(Event.Descriptor.ZOOM, (int) x, (int) y);
 			handler.handle(event);
 		};
 	}
 
 	@Override
-	public synchronized void destroy() {
+	public void destroy() {
 		instance.glfwDestroyWindow(super.handle());
-	}
-
-	/////////////////////////
-
-	public static void main(String[] args) {
-		final FrameworkDesktopService service = new FrameworkDesktopService(FrameworkLibrary.create());
-		final FrameworkWindow window = service.window(new Properties("title", new Dimensions(640, 480), null));
-		final Event.Handler handler = event -> System.out.println(event);
-		for(Event.Category cat : Event.Category.values()) {
-			window.device().bind(cat, handler);
-		}
-		while(true) {
-			Util.kip(100L);
-			window.poll();
-		}
 	}
 }
