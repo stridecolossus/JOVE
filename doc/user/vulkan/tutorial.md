@@ -144,13 +144,16 @@ We glossed over the surface used to find the presentation queue earlier, this re
 The GLFW service is used to create a window:
 
 ```java
-Window.Properties props = new Window.Properties().Builder()
+Window.Descriptor descriptor = new Window.Descriptor().Builder()
 	.title("title")
 	.size(640, 480)
+	.property(Window.Descriptor.DISABLE_OPENGL)
 	.build();
 	
-Window window = desktop.window(props);
+Window window = desktop.window(descriptor);
 ```
+
+The `Window.Descriptor.DISABLE_OPENGL` prevents GLFW from automatically creating an OpenGL context for the window (which breaks subsequent code).
 
 ### Creating the Vulkan Surface
 

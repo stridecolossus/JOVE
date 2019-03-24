@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.lib.collection.StrictSet;
 import org.sarge.lib.util.AbstractEqualsObject;
@@ -308,6 +309,16 @@ public abstract class Feature<T extends Feature<T>> extends AbstractEqualsObject
 		 */
 		public T extension(String ext) {
 			return extension(new Extension(ext));
+		}
+
+		/**
+		 * Convenience methods to adds multiple required extensions by name.
+		 * @param ext Array of extension names
+		 * @see DesktopService#extensions()
+		 */
+		public T extensions(String[] extensions) {
+			Arrays.stream(extensions).map(Extension::new).forEach(requiredExtensions::add);
+			return parent();
 		}
 
 		/**
