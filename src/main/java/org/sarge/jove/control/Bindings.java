@@ -17,24 +17,49 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Event.Handler;
+import org.sarge.lib.util.AbstractObject;
 import org.sarge.lib.util.Check;
 
 /**
- * Set of bindings that map controller events to action handlers.
+ * A <i>bindings</i> maps controller events to action handlers.
  * <p>
- * TODO
+ * Usage:
+ * <pre>
+ * // Create bindings
+ * class CustomAction { ... }
+ * final Bindings<CustomAction> bindings = new Bindings<>();
+ *
+ * // Register actions
+ * final CustomAction action = new CustomAction(...)
+ * final Event.Handler handler = ...
+ * bindings.add(action, handler);
+ * ...
+ *
+ * // Bind an event to the action
+ * final Event.Key event = Event.Key.of(Event.Category.BUTTON, Event.Type.PRESS, "Space");
+ * action.bind(event);
+ *
+ * // Remove a binding
+ * bindings.remove(event);
+ *
+ * // Remove all bindings on an action
+ * action.clear();
+ *
+ * // Lookup the action bound to an event
+ * final Event.Key event = ...
+ * final Optional<Action> action = bindings.find(event);
+ * </pre>
  * @author Sarge
  * @param <T> Action type
  */
-public class Bindings<T> {
+public class Bindings<T> extends AbstractObject {
 	private static final String DELIMITER = " ";
 
 	/**
 	 * Action entry.
 	 */
-	public class Action {
+	public class Action extends AbstractObject {
 		private final T action;
 		private final Event.Handler handler;
 		private final List<Event.Key> keys = new ArrayList<>();
@@ -81,7 +106,7 @@ public class Bindings<T> {
 		 * Binds an event-key to this action.
 		 * @param key Event-key
 		 * @throws IllegalArgumentException if the key is already bound to another action
-		 * @see Handler#category()
+		 * @see Event.Handler#category()
 		 */
 		public void bind(Event.Key key) {
 			Check.notNull(key);
@@ -90,9 +115,12 @@ public class Bindings<T> {
 			bindings.put(key, this);
 		}
 
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
+		/**
+		 * Clears all events bound to this action.
+		 */
+		public void clear() {
+			keys.stream().forEach(bindings::remove);
+			keys.clear();
 		}
 	}
 
@@ -230,10 +258,5 @@ public class Bindings<T> {
 				.filter(Predicate.not(String::isEmpty))
 				.forEach(loader::load);
 		}
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 }

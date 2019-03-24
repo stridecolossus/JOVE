@@ -3,18 +3,18 @@ package org.sarge.jove.control;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Frame;
 import org.sarge.jove.control.Player.Playable;
 import org.sarge.jove.control.Player.State;
 import org.sarge.jove.geometry.Rotation.MutableRotation;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.AbstractObject;
 
 /**
  * An <i>animator</i> cycles a value over a given period.
  * @author Sarge
  */
-public class Animator implements Playable, Frame.Listener {
+public class Animator extends AbstractObject implements Playable, Frame.Listener {
 	/**
 	 * Animation.
 	 */
@@ -130,10 +130,5 @@ public class Animator implements Playable, Frame.Listener {
 
 		// Update animation
 		animation.update(this);
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 }
