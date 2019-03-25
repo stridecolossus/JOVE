@@ -9,17 +9,17 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.Vertex.MutableVertex;
 
 public class IndexedModelTest {
 	private IndexedModel model;
-	private Vertex a, b;
+	private MutableVertex a, b;
 
 	@BeforeEach
 	public void before() {
-		a = new Vertex(new Point(1, 0, 0));
-		b = new Vertex(new Point(2, 0, 0));
-		final Model.Builder builder = new Model.Builder()
+		a = new MutableVertex();
+		b = new MutableVertex();
+		final Model.Builder<MutableVertex> builder = new Model.Builder<>()
 			.primitive(Primitive.LINE_STRIP)
 			.add(a)
 			.add(b);
@@ -36,7 +36,7 @@ public class IndexedModelTest {
 
 	@Test
 	public void constructorInvalidIndices() {
-		final Model.Builder builder = new Model.Builder()
+		final Model.Builder<MutableVertex> builder = new Model.Builder<>()
 			.primitive(Primitive.LINE_STRIP)
 			.add(a)
 			.add(b);

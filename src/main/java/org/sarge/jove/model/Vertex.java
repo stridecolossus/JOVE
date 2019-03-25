@@ -4,84 +4,75 @@ import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
+import java.nio.FloatBuffer;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
+import java.util.stream.IntStream;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.texture.TextureCoordinate;
-import org.sarge.lib.util.Converter;
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
- * A <i>vertex</i> is a mutable descriptor for vertex attributes in a {@link Model}.
+ * A <i>vertex</i> is comprised of {@link Bufferable} data.
  * @author Sarge
  */
-public class Vertex {
+public interface Vertex extends Bufferable {
 	/**
-	 * Descriptor for a component of a vertex.
+	 * Vertex component descriptor.
+	 * TODO - assumes size = number of floats
 	 */
-	public static final class Component {
+	class Component extends AbstractEqualsObject {
 		/**
 		 * Vertex position component.
 		 */
-		public static final Component POSITION = new Component(Point.SIZE, Vertex::position);
+		public static final Component POSITION = new Component(Point.SIZE);
 
 		/**
 		 * Normal component.
 		 */
-		public static final Component NORMAL = new Component(Vector.SIZE, Vertex::normal);
-
-		/**
-		 * 2D texture coordinate component.
-		 * TODO - assumes is 2D!
-		 */
-		public static final Component TEXTURE_COORDINATE = new Component(2, Vertex::coords);
+		public static final Component NORMAL = new Component(Vector.SIZE);
 
 		/**
 		 * Colour component.
 		 */
-		public static final Component COLOUR = new Component(Colour.SIZE, Vertex::colour);
+		public static final Component COLOUR = new Component(Colour.SIZE);
 
 		/**
-		 * Converter for a string-representation of vertex components.
+		 * Texture coordinate components with 1..3 dimensions.
 		 */
-		public static final Converter<List<Component>> CONVERTER = line -> {
-			return line.toUpperCase().chars().mapToObj(Component::of).collect(toList());
-		};
+		private static final List<Component> TEXTURE_COORDINATE = IntStream.range(1, 4).mapToObj(Component::new).collect(toList());
 
 		/**
-		 * Maps a character to a component.
-		 * @param ch Character
-		 * @return Component
-		 * TODO - multiple texture coordinates? 0..8 = texture units? what is more than 8?
+		 * Looks up a texture coordinate component of the given dimension.
+		 * @param dim Dimension 1..3
+		 * @return Texture coordinate component
+		 * @throws IndexOutOfBoundsException if the dimension is not in the range 1..3
 		 */
-		private static Component of(int ch) {
-			switch(ch) {
-			case 'V':	return POSITION;
-			case 'N':	return NORMAL;
-			case 'T':	return TEXTURE_COORDINATE;
-			case 'C':	return COLOUR;
-			default:	throw new NumberFormatException("Invalid vertex component: " + ch);
-			}
+		public static Component coordinate(int dim) {
+			return TEXTURE_COORDINATE.get(dim - 1);
+		}
+
+		/**
+		 * Helper - Calculates the total size of the given components.
+		 * @param components Components
+		 * @return Total size
+		 */
+		public static int size(Collection<Component> components) {
+			return components.stream().mapToInt(Component::size).sum();
 		}
 
 		private final int size;
-		private final Function<Vertex, Bufferable> mapper;
 
 		/**
 		 * Constructor.
-		 * @param size			Component size
-		 * @param mapper		Maps a vertex to a component
+		 * @param size Size of this component
 		 */
-		public Component(int size, Function<Vertex, Bufferable> mapper) {
+		public Component(int size) {
 			this.size = oneOrMore(size);
-			this.mapper = notNull(mapper);
 		}
 
 		/**
@@ -92,108 +83,90 @@ public class Vertex {
 		}
 	}
 
-	private Point pos;
-	private Vector normal;
-	private TextureCoordinate coords;
-	private Colour col;
-
 	/**
-	 * Constructor.
-	 * @param pos Vertex position
+	 * A <i>mutable normal vertex</i> defines a vertex with a normal that can be accumulated.
 	 */
-	public Vertex(Point pos) {
-		position(pos);
-	}
+	interface MutableNormalVertex extends Vertex {
+		/**
+		 * @return Vertex position
+		 */
+		Point position();
 
-	/**
-	 * @return Vertex position
-	 */
-	public Point position() {
-		return pos;
-	}
+		/**
+		 * @return Vertex normal
+		 */
+		Vector normal();
 
-	/**
-	 * Sets the position of this vertex.
-	 * @param pos Vertex position
-	 */
-	public Vertex position(Point pos) {
-		this.pos = notNull(pos);
-		return this;
+		/**
+		 * Sets the vertex normal.
+		 * @param normal Normal
+		 */
+		void normal(Vector normal);
 	}
 
 	/**
-	 * @return Vertex normal
+	 * A <i>mutable vertex</i> is a default implementation used to construct a model consisting of a vertex position, normal and 2D texture-coordinate components.
 	 */
-	public Vector normal() {
-		return normal;
-	}
+	class MutableVertex extends AbstractEqualsObject implements MutableNormalVertex {
+		/**
+		 * Size of a mutable vertex.
+		 */
+		public static final int SIZE = Component.size(List.of(Component.POSITION, Component.NORMAL, Component.coordinate(2)));
 
-	/**
-	 * Sets the normal of this vertex.
-	 * @param normal Vertex normal
-	 */
-	public Vertex normal(Vector normal) {
-		this.normal = notNull(normal);
-		return this;
-	}
+		private static final Vector EMPTY = new Vector(0, 0, 0);
 
-	/**
-	 * @return Vertex texture coordinates
-	 */
-	public TextureCoordinate coords() {
-		return coords;
-	}
+		private Point pos = Point.ORIGIN;
+		private Vector normal = EMPTY;
+		private TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.Corner.BOTTOM_LEFT.coordinates();
 
-	/**
-	 * Sets the texture coordinates of this vertex.
-	 * @param coords Texture coordinates
-	 */
-	public Vertex coords(TextureCoordinate coords) {
-		this.coords = notNull(coords);
-		return this;
-	}
+		@Override
+		public Point position() {
+			return pos;
+		}
 
-	/**
-	 * @return Vertex colour
-	 */
-	public Colour colour() {
-		return col;
-	}
+		/**
+		 * Sets the position of this vertex.
+		 * @param pos Vertex position
+		 */
+		public void position(Point pos) {
+			this.pos = notNull(pos);
+		}
 
-	/**
-	 * Sets the colour of this vertex.
-	 * @param col Vertex colour
-	 */
-	public Vertex colour(Colour col) {
-		this.col = notNull(col);
-		return this;
-	}
+		@Override
+		public Vector normal() {
+			return normal;
+		}
 
-	/**
-	 * Checks this vertex against the given component specification.
-	 * @param components Components
-	 * @return Whether this vertex contains the given components
-	 */
-	public boolean matches(Collection<Component> components) {
-		return components.stream().map(c -> c.mapper.apply(this)).allMatch(Objects::nonNull);
-	}
+		@Override
+		public void normal(Vector normal) {
+			this.normal = notNull(normal);
+		}
 
-	/**
-	 * Retrieves the given component in this vertex.
-	 * @param c Component
-	 * @return Vertex component or <tt>null</tt> if not present
-	 */
-	public Bufferable map(Component c) {
-		return c.mapper.apply(this);
-	}
+		/**
+		 * @return Texture coordinates
+		 */
+		public TextureCoordinate coordinates() {
+			return coords;
+		}
 
-	@Override
-	public boolean equals(Object that) {
-		return EqualsBuilder.reflectionEquals(this, that);
-	}
+		/**
+		 * Sets the texture coordinates.
+		 * @param coords Coordinates
+		 */
+		public void coordinates(TextureCoordinate.Coordinate2D coords) {
+			this.coords = notNull(coords);
+		}
 
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		@Override
+		public int size() {
+			return SIZE;
+		}
+
+		@Override
+		public void buffer(FloatBuffer buffer) {
+			pos.buffer(buffer);
+			normal.buffer(buffer);
+			coords.buffer(buffer);
+		}
 	}
 }

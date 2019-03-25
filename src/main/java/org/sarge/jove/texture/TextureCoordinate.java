@@ -16,36 +16,6 @@ public interface TextureCoordinate extends Bufferable {
 	float[] toArray();
 
 	/**
-	 * Creates a one-dimensional texture coordinate.
-	 * @param u
-	 * @return 1D texture coordinate
-	 */
-	static TextureCoordinate of(float u) {
-		return new Coordinate1D(u);
-	}
-
-	/**
-	 * Creates a two-dimensional texture coordinate.
-	 * @param u
-	 * @param v
-	 * @return 2D texture coordinate
-	 */
-	static TextureCoordinate of(float u, float v) {
-		return new Coordinate2D(u, v);
-	}
-
-	/**
-	 * Creates a three-dimensional (or cube) texture coordinate.
-	 * @param u
-	 * @param v
-	 * @param w
-	 * @return Texture cube coordinate
-	 */
-	static TextureCoordinate of(float u, float v, float w) {
-		return new Coordinate3D(u, v, w);
-	}
-
-	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
 	 * @return Texture coordinate
@@ -53,9 +23,9 @@ public interface TextureCoordinate extends Bufferable {
 	 */
 	static TextureCoordinate of(float[] array) {
 		switch(array.length) {
-		case 1:		return of(array[0]);
-		case 2:		return of(array[0], array[1]);
-		case 3:		return of(array[0], array[1], array[2]);
+		case 1:		return new Coordinate1D(array[0]);
+		case 2:		return new Coordinate2D(array[0], array[1]);
+		case 3:		return new Coordinate3D(array[0], array[1], array[2]);
 		default:	throw new IllegalArgumentException("Invalid array length for texture coordinate: " + Arrays.toString(array));
 		}
 	}
@@ -70,7 +40,7 @@ public interface TextureCoordinate extends Bufferable {
 		 * Constructor.
 		 * @param u
 		 */
-		private Coordinate1D(float u) {
+		public Coordinate1D(float u) {
 			this.u = u;
 		}
 
@@ -117,6 +87,29 @@ public interface TextureCoordinate extends Bufferable {
 	 * Two-dimensional texture coordinate.
 	 */
 	class Coordinate2D extends Coordinate1D {
+		/**
+		 * Texture coordinates for a quad.
+		 */
+		public enum Corner {
+			BOTTOM_LEFT(0, 0),
+			TOP_LEFT(0, 1),
+			TOP_RIGHT(1, 1),
+			BOTTOM_RIGHT(1, 0);
+
+			private final Coordinate2D coords;
+
+			private Corner(float u, float v) {
+				coords = new Coordinate2D(u, v);
+			}
+
+			/**
+			 * @return Texture coordinates of this corner
+			 */
+			public Coordinate2D coordinates() {
+				return coords;
+			}
+		}
+
 		public final float v;
 
 		/**
@@ -124,9 +117,17 @@ public interface TextureCoordinate extends Bufferable {
 		 * @param u
 		 * @param v
 		 */
-		private Coordinate2D(float u, float v) {
+		public Coordinate2D(float u, float v) {
 			super(u);
 			this.v = v;
+		}
+
+		/**
+		 * Array constructor.
+		 * @param array Array
+		 */
+		public Coordinate2D(float[] array) {
+			this(array[0], array[1]);
 		}
 
 		@Override
@@ -152,7 +153,7 @@ public interface TextureCoordinate extends Bufferable {
 		 * @param v
 		 * @param w
 		 */
-		private Coordinate3D(float u, float v, float w) {
+		public Coordinate3D(float u, float v, float w) {
 			super(u, v);
 			this.w = w;
 		}

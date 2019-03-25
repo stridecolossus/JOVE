@@ -16,27 +16,29 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model.Builder;
 import org.sarge.jove.model.Vertex.Component;
+import org.sarge.jove.model.Vertex.MutableVertex;
 
 public class ModelTest {
-	private Vertex a, b, c;
+	private MutableVertex a, b, c;
 
 	@BeforeEach
 	public void before() {
-		a = new Vertex(new Point(0, 1, 0));
-		b = new Vertex(new Point(0, 0, 0));
-		c = new Vertex(new Point(1, 1, 0));
+		a = new MutableVertex();
+		b = new MutableVertex();
+		c = new MutableVertex();
 	}
 
 	@Nested
 	class DefaultModelTests {
-		private Model model;
-		private Vertex d;
+		private Model<MutableVertex> model;
+		private MutableVertex d;
 
 		@BeforeEach
 		public void before() {
-			d = new Vertex(new Point(1, 0, 0));
-			model = new Model.Builder()
+			d = new MutableVertex();
+			model = new Model.Builder<>()
 				.primitive(Primitive.TRIANGLE_STRIP)
+
 				.add(a)
 				.add(b)
 				.add(c)
@@ -77,12 +79,12 @@ public class ModelTest {
 		public void computeNormals() {
 			model.computeNormals();
 			assertEquals(true, model.components().contains(Vertex.Component.NORMAL));
-			assertEquals(true, model.vertices().stream().map(Vertex::normal).allMatch(Vector.Z_AXIS::equals));
+			assertEquals(true, model.vertices().stream().map(MutableVertex::normal).allMatch(Vector.Z_AXIS::equals));
 		}
 
 		@Test
 		public void computeNormalsInvalidPrimitive() {
-			model = new Model.Builder().primitive(Primitive.LINE).add(a).add(b).build();
+			model = new Model.Builder<>().primitive(Primitive.LINE).add(a).add(b).build();
 			assertThrows(IllegalStateException.class, () -> model.computeNormals());
 		}
 
@@ -95,11 +97,11 @@ public class ModelTest {
 
 	@Nested
 	class BuilderTests {
-		private Builder builder;
+		private Builder<MutableVertex> builder;
 
 		@BeforeEach
 		public void before() {
-			builder = new Builder();
+			builder = new Builder<>();
 		}
 
 		/**

@@ -1,86 +1,99 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.FloatBuffer;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex.Component;
-import org.sarge.jove.texture.TextureCoordinate;
+import org.sarge.jove.model.Vertex.MutableVertex;
+import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 
 public class VertexTest {
-	private Vertex vertex;
+	@Nested
+	class ComponentTests {
+		@Test
+		public void constructor() {
+			final Component c = new Component(3);
+			assertEquals(3, c.size());
+		}
 
-	@BeforeEach
-	public void before() {
-		vertex = new Vertex(Point.ORIGIN);
+		@Test
+		public void position() {
+			assertEquals(3, Component.POSITION.size());
+		}
+
+		@Test
+		public void normal() {
+			assertEquals(3, Component.NORMAL.size());
+		}
+
+		@Test
+		public void colour() {
+			assertEquals(4, Component.COLOUR.size());
+		}
+
+		@Test
+		public void coordinates() {
+			assertEquals(1, Component.coordinate(1).size());
+			assertEquals(2, Component.coordinate(2).size());
+			assertEquals(3, Component.coordinate(3).size());
+		}
+
+		@Test
+		public void size() {
+			assertEquals(3 + 4, Component.size(List.of(Component.NORMAL, Component.COLOUR)));
+		}
 	}
 
-	@Test
-	public void constructor() {
-		assertEquals(Point.ORIGIN, vertex.position());
-		assertEquals(null, vertex.normal());
-		assertEquals(null, vertex.coords());
-		assertEquals(null, vertex.colour());
-	}
+	@Nested
+	class MutableVertexTests {
+		private MutableVertex vertex;
 
-	@Test
-	public void converter() {
-		assertEquals(List.of(Component.POSITION, Component.NORMAL, Component.TEXTURE_COORDINATE, Component.COLOUR), Component.CONVERTER.apply("VNTC"));
-	}
+		@BeforeEach
+		public void before() {
+			vertex = new MutableVertex();
+		}
 
-	@Test
-	public void normal() {
-		vertex = vertex.normal(Vector.X_AXIS);
-		assertEquals(Vector.X_AXIS, vertex.normal());
-		assertEquals(true, vertex.matches(Set.of(Component.NORMAL)));
-		assertEquals(Vector.X_AXIS, vertex.map(Component.NORMAL));
-	}
+		@Test
+		public void constructor() {
+			assertEquals(Point.ORIGIN, vertex.position());
+			assertEquals(new Vector(0, 0, 0), vertex.normal());
+			assertEquals(Coordinate2D.Corner.BOTTOM_LEFT.coordinates(), vertex.coordinates());
+		}
 
-	@Test
-	public void coords() {
-		final TextureCoordinate coords = TextureCoordinate.of(1, 2);
-		vertex = vertex.coords(coords);
-		assertEquals(coords, vertex.coords());
-		assertEquals(true, vertex.matches(Set.of(Component.TEXTURE_COORDINATE)));
-		assertEquals(coords, vertex.map(Component.TEXTURE_COORDINATE));
-	}
+		@Test
+		public void position() {
+			final Point pos = new Point(1, 2, 3);
+			vertex.position(pos);
+			assertEquals(pos, vertex.position());
+		}
 
-	@Test
-	public void colour() {
-		vertex = vertex.colour(Colour.WHITE);
-		assertEquals(Colour.WHITE, vertex.colour());
-		assertEquals(true, vertex.matches(Set.of(Component.COLOUR)));
-		assertEquals(Colour.WHITE, vertex.map(Component.COLOUR));
-	}
+		@Test
+		public void normal() {
+			vertex.normal(Vector.X_AXIS);
+			assertEquals(Vector.X_AXIS, vertex.normal());
+		}
 
-	@Test
-	public void matches() {
-		assertEquals(true, vertex.matches(Set.of(Component.POSITION)));
-		assertEquals(false, vertex.matches(Set.of(Component.NORMAL)));
-		assertEquals(false, vertex.matches(Set.of(Component.TEXTURE_COORDINATE)));
-		assertEquals(false, vertex.matches(Set.of(Component.COLOUR)));
-	}
+		@Test
+		public void coords() {
+			final Coordinate2D coords = new Coordinate2D(1, 1);
+			vertex.coordinates(coords);
+			assertEquals(coords, vertex.coordinates());
+		}
 
-	@Test
-	public void map() {
-		assertEquals(vertex.position(), vertex.map(Component.POSITION));
-		assertEquals(null, vertex.map(Component.NORMAL));
-		assertEquals(null, vertex.map(Component.TEXTURE_COORDINATE));
-		assertEquals(null, vertex.map(Component.COLOUR));
-	}
-
-	@Test
-	public void equals() {
-		assertTrue(vertex.equals(vertex));
-		assertFalse(vertex.equals(null));
-		assertFalse(vertex.equals(new Vertex(new Point(1, 2, 3))));
+		@Test
+		public void buffer() {
+			final FloatBuffer buffer = FloatBuffer.allocate(3 + 3 + 2);
+			final FloatBuffer expected = FloatBuffer.allocate(3 + 3 + 2);
+			vertex.buffer(buffer);
+			buffer.flip();
+			assertEquals(expected, buffer);
+		}
 	}
 }

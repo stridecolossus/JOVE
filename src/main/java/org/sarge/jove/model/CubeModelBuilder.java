@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sarge.jove.model.Model.Builder;
+import org.sarge.jove.model.Vertex.MutableVertex;
 
 /**
  * Builder for a cube model.
@@ -24,7 +25,7 @@ public class CubeModelBuilder {
 	 * @param size Cube size
 	 * @return Cube model
 	 */
-	public Model build(float size) {
+	public Model<MutableVertex> build(float size) {
 		// Create concatenated list of front and back cube vertices
 		final Quad.Builder quad = new Quad.Builder().size(size);
 		final List<Vertex> front = quad.build().vertices();
@@ -32,12 +33,8 @@ public class CubeModelBuilder {
 		final List<Vertex> vertices = new ArrayList<>(front);
 		vertices.addAll(back);
 
-		// Init model
-		final Builder model = new Builder()
-			.primitive(Primitive.TRIANGLE)
-			.component(Vertex.Component.TEXTURE_COORDINATE);
-
 		// Build cube consisting of two triangles per face
+		final Builder<MutableVertex> model = new Builder<>().primitive(Primitive.TRIANGLE);
 		for(int[] face : FACES) {
 			add(vertices, face, 0, model);
 			add(vertices, face, 1, model);
@@ -54,9 +51,10 @@ public class CubeModelBuilder {
 	 * @param start		Start index (0 or 1)
 	 * @param model		Model builder
 	 */
-	private static void add(List<Vertex> vertices, int[] face, int start, Builder model) {
+	private static void add(List<Vertex> vertices, int[] face, int start, Builder<MutableVertex> model) {
 		for(int n = start; n < start + 3; ++n) {
-			model.add(vertices.get(n));
+			// TODO - need to sort this hierarchy
+			model.add((MutableVertex) vertices.get(n));
 		}
 	}
 }

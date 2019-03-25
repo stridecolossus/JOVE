@@ -12,30 +12,29 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.BufferObject.Mode;
 import org.sarge.jove.model.Vertex.Component;
-import org.sarge.jove.model.VertexBufferObject.Attribute;
+import org.sarge.jove.model.Vertex.MutableNormalVertex;
+import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.lib.collection.StrictList;
 
 /**
  * A <i>model</i> is a renderable object comprised of mutable vertices.
  * @author Sarge
  */
-public class Model {
+public class Model<V extends MutableNormalVertex> {
 	private final Primitive primitive;
-	private final List<Vertex.Component> components;
-	private final List<Vertex> vertices;
+	private final List<Component> components;
+	private final List<V> vertices;
 	private final Extents extents;
 
 	/**
 	 * Constructor.
 	 * @param primitive		Rendering primitive
-	 * @param components	Vertex components
 	 * @param vertices		Vertices
 	 * @param extents		Model extents
 	 * @throws IllegalArgumentException if the model is empty, the number of vertices is not valid for the rendering primitive, or there is no {@link Component#POSITION} component
 	 */
-	public Model(Primitive primitive, List<Vertex.Component> components, List<Vertex> vertices, Extents extents) {
+	public Model(Primitive primitive, List<Component> components, List<V> vertices, Extents extents) {
 		this.primitive = notNull(primitive);
 		this.components = List.copyOf(components);
 		this.vertices = List.copyOf(vertices);
@@ -48,7 +47,7 @@ public class Model {
 	 * @param model Model to copy
 	 * @see #Model(Primitive, List, List, Extents)
 	 */
-	protected Model(Model model) {
+	protected Model(Model<V> model) {
 		this(model.primitive, model.components, model.vertices, model.extents);
 	}
 
@@ -92,7 +91,7 @@ public class Model {
 	/**
 	 * @return Model vertices
 	 */
-	public final List<Vertex> vertices() {
+	public final List<V> vertices() {
 		return vertices;
 	}
 
@@ -107,17 +106,17 @@ public class Model {
 	/**
 	 * @return Iterator over model faces
 	 */
-	public Iterator<List<Vertex>> faces() {
+	public Iterator<List<V>> faces() {
 		return new FaceIterator(vertices.iterator());
 	}
 
 	/**
 	 * Face iterator implementation.
 	 */
-	protected class FaceIterator implements Iterator<List<Vertex>> {
+	protected class FaceIterator implements Iterator<List<V>> {
 		private final int size = primitive.size();
-		private final Iterator<Vertex> iterator;
-		private final List<Vertex> face = new ArrayList<>(size);
+		private final Iterator<V> iterator;
+		private final List<V> face = new ArrayList<>(size);
 
 		private boolean more = true;
 
@@ -125,7 +124,7 @@ public class Model {
 		 * Constructor.
 		 * @param iterator Face vertex iterator
 		 */
-		protected FaceIterator(Iterator<Vertex> iterator) {
+		protected FaceIterator(Iterator<V> iterator) {
 			this.iterator = iterator;
 			init();
 		}
@@ -145,10 +144,10 @@ public class Model {
 		}
 
 		@Override
-		public List<Vertex> next() {
+		public List<V> next() {
 			// Clone face
 			if(!more) throw new NoSuchElementException();
-			final var next = List.copyOf(face);
+			final var<V> next = List.copyOf(face);
 
 			if(iterator.hasNext()) {
 				// Init next face
@@ -178,21 +177,23 @@ public class Model {
 		}
 	}
 
+	// TODO - this should be moved to builder?
+
 	/**
 	 * Generates normals for this model.
 	 * @return This model with generated normals
 	 * @throws IllegalStateException if this model already has normals or the rendering primitive does not support normals
 	 * @throws UnsupportedOperationException if the primitive is not a triangle/strip
 	 */
-	public Model computeNormals() {
+	public Model<V> computeNormals() {
 		// Check model supports generated normals
-		if(components.contains(Vertex.Component.NORMAL)) throw new IllegalStateException("Model already has normals");
+//		if(components.contains(Vertex.Component.NORMAL)) throw new IllegalStateException("Model already has normals");
 		if(!primitive.hasNormals()) throw new IllegalStateException("Primitive does not support normals: " + primitive);
 		if(primitive.size() != 3) throw new UnsupportedOperationException("Only triangle/strip primitives support normal generation");
 
-		// Add normals component
-		final var components = new ArrayList<>(this.components);
-		components.add(Vertex.Component.NORMAL);
+//		// Add normals component
+//		final var components = new ArrayList<>(this.components);
+//		components.add(Vertex.Component.NORMAL);
 
 		// Generate normals
 		// TODO - faces() could return actual Face class with the following logic
@@ -201,9 +202,9 @@ public class Model {
 		while(faces.hasNext()) {
 			// Lookup triangle vertices
 			final var triangle = faces.next();
-			final Vertex a = triangle.get(0);
-			final Vertex b = triangle.get(1);
-			final Vertex c = triangle.get(2);
+			final V a = triangle.get(0);
+			final V b = triangle.get(1);
+			final V c = triangle.get(2);
 
 			// Build triangle edges
 			final Vector ab = edge(a, b);
@@ -220,6 +221,12 @@ public class Model {
 			even = !even;
 		}
 
+		// Normalize
+		for(V vertex : vertices) {
+			final Vector normal = vertex.normal().normalize();
+			vertex.normal(normal);
+		}
+
 		return this;
 	}
 
@@ -229,7 +236,7 @@ public class Model {
 	 * @param end		End point
 	 * @return Edge
 	 */
-	private static Vector edge(Vertex start, Vertex end) {
+	private Vector edge(V start, V end) {
 		return Vector.of(start.position(), end.position());
 	}
 
@@ -239,54 +246,13 @@ public class Model {
 	 * @param u			Left-hand edge
 	 * @param v			Right-hand edge
 	 * @param invert	Whether to invert the normal
+	 * @see MutableNormalVertex
 	 */
-	private static void add(Vertex vertex, Vector u, Vector v, boolean even) {
+	private void add(V vertex, Vector u, Vector v, boolean even) {
 		final Vector normal = u.cross(v);
-		if(even) {
-			add(vertex, normal);
-		}
-		else {
-			add(vertex, normal.invert());
-		}
-	}
-
-	/**
-	 * Accumulates a vertex normal.
-	 */
-	private static void add(Vertex vertex, Vector normal) {
-		final Vector prev = vertex.normal();
-		if(prev == null) {
-			vertex.normal(normal);
-		}
-		else {
-			vertex.normal(prev.add(normal));
-		}
-	}
-
-	/**
-	 * Creates an interleaved VBO from this model.
-	 * @param mode Buffer update mode
-	 * @return VBO
-	 * TODO - non-interleaved?
-	 * TODO - re-order component? e.g. if built by CubeBuilder
-	 */
-	public VertexBufferObject buffer(Mode mode) {
-		// Init builder
-		final VertexBufferObject.Builder builder = new VertexBufferObject.Builder()
-			.mode(mode)
-			.length(vertices.size());
-
-		// Add attributes
-		components.stream().map(Vertex.Component::size).map(Attribute::new).forEach(builder::attribute);
-
-		// Create VBO
-		final VertexBufferObject vbo = builder.build();
-
-		// Update model data
-		final var data = vertices.stream().flatMap(v -> components.stream().map(v::map));
-		vbo.update(data);
-
-		return vbo;
+		final Vector actual = even ? normal : normal.invert();
+		final Vector result = vertex.normal().add(actual);
+		vertex.normal(result);
 	}
 
 	@Override
@@ -302,10 +268,10 @@ public class Model {
 	/**
 	 * Builder for a model.
 	 */
-	public static class Builder {
+	public static class Builder<V extends MutableVertex> {
 		private Primitive primitive = Primitive.TRIANGLE;
 		private final List<Vertex.Component> components = new StrictList<>();
-		private final List<Vertex> vertices = new ArrayList<>();
+		private final List<V> vertices = new ArrayList<>();
 		private final Extents.Builder extents = new Extents.Builder();
 
 		/**
@@ -321,7 +287,7 @@ public class Model {
 		 * @param primitive Rendering primitive
 		 * @throws IllegalStateException if this model configuration is not valid
 		 */
-		public Builder primitive(Primitive primitive) {
+		public Builder<V> primitive(Primitive primitive) {
 			this.primitive = notNull(primitive);
 			verify();
 			return this;
@@ -333,7 +299,7 @@ public class Model {
 		 * @throws IllegalStateException if this model configuration is not valid
 		 * @throws IllegalArgumentException for a duplicate component
 		 */
-		public Builder component(Vertex.Component c) {
+		public Builder<V> component(Vertex.Component c) {
 			components.add(c);
 			verify();
 			return this;
@@ -357,21 +323,10 @@ public class Model {
 		/**
 		 * Adds a vertex to this model.
 		 * @param vertex Vertex to add
-		 * @throws IllegalArgumentException if the vertex is not valid for this model
-		 * @see Vertex#matches(java.util.Collection)
 		 */
-		public Builder add(Vertex vertex) {
-			// Verify vertex has the required components
-			if(!vertex.matches(components)) {
-				throw new IllegalArgumentException(String.format("Invalid vertex components: components=%s vertex=%s", components, vertex));
-			}
-
-			// Add vertex
+		public Builder<V> add(V vertex) {
 			vertices.add(vertex);
-
-			// Track extents
 			extents.add(vertex.position());
-
 			return this;
 		}
 
@@ -379,8 +334,8 @@ public class Model {
 		 * Constructs this model.
 		 * @return New model
 		 */
-		public Model build() {
-			return new Model(primitive, components, vertices, extents.build());
+		public Model<V> build() {
+			return new Model<>(primitive, components, vertices, extents.build());
 		}
 	}
 }

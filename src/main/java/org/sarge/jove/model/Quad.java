@@ -8,7 +8,9 @@ import java.util.List;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Tuple;
 import org.sarge.jove.geometry.Tuple.Swizzle;
-import org.sarge.jove.texture.TextureCoordinate;
+import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.Vertex.MutableVertex;
+import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 
 /**
  * A <i>quad</i> is a square set of vertices.
@@ -84,8 +86,16 @@ public final class Quad {
 				final float dx = reverse ? -x : +x;
 				final Tuple pos = swizzle.apply(new Point(dx, 0, z));
 
+				// Determine normal
+				final Vector normal = reverse ? Vector.Z_AXIS : Vector.Z_AXIS.invert();
+
 				// Create vertex
-				vertices[n] = new Vertex(new Point(pos)).coords(TextureCoordinate.of(VERTICES[n]));
+				// TODO - need to reverse coords?
+				final MutableVertex vertex = new MutableVertex();
+				vertex.position(new Point(pos));
+				vertex.normal(normal);
+				vertex.coordinates(new Coordinate2D(VERTICES[n][0], VERTICES[n][1])); // TODO - array ctor
+				vertices[n] = vertex;
 			}
 
 			// Create quad

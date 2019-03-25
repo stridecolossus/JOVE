@@ -18,6 +18,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.obj.ObjectModel.Face;
 import org.sarge.jove.obj.ObjectModel.Group;
 
@@ -146,7 +147,7 @@ public class ObjectModelTest {
 			group.face(new Face(3, 0, 1));
 
 			// Create generic model
-			final Model model = group.build();
+			final Model<MutableVertex> model = group.build();
 			assertNotNull(model);
 			assertEquals(Set.of(Vertex.Component.POSITION, Vertex.Component.NORMAL), model.components());
 			assertEquals(false, model.isIndexed());
@@ -158,11 +159,10 @@ public class ObjectModelTest {
 			checkVertex(vertices.get(2), c);
 		}
 
-		private void checkVertex(Vertex vertex, Point pos) {
+		private void checkVertex(MutableVertex vertex, Point pos) {
 			assertEquals(pos, vertex.position());
 			assertEquals(Vector.Z_AXIS, vertex.normal());
-			assertEquals(null, vertex.coords());
-			assertEquals(null, vertex.colour());
+			assertEquals(null, vertex.coordinates());
 		}
 	}
 }

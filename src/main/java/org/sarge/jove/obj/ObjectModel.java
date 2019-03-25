@@ -15,7 +15,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.lib.util.Check;
 
@@ -139,7 +139,7 @@ public class ObjectModel {
 		private ObjectMaterial mat;
 		private final List<Point> vertices = new ArrayList<>();
 		private final List<Vector> normals = new ArrayList<>();
-		private final List<TextureCoordinate> coords = new ArrayList<>();
+		private final List<TextureCoordinate.Coordinate2D> coords = new ArrayList<>();
 		private final List<Face> faces = new ArrayList<>();
 
 		/**
@@ -194,7 +194,7 @@ public class ObjectModel {
 		 * Adds a texture coordinate to this group.
 		 * @param coords Texture coordinates
 		 */
-		public void coords(TextureCoordinate coords) {
+		public void coords(TextureCoordinate.Coordinate2D coords) {
 			Check.notNull(coords);
 			this.coords.add(coords);
 		}
@@ -215,30 +215,24 @@ public class ObjectModel {
 		 * @return Model
 		 * @see Model.Builder#build()
 		 */
-		public Model build() {
+		public Model<MutableVertex> build() {
 			// Create model
-			final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLE);
+			final Model.Builder<MutableVertex> builder = new Model.Builder<>().primitive(Primitive.TRIANGLE);
 			// TODO - flag for whether to generate extents? or just always do it?
 
-			// Init model components
+			// Determine model components
 			final boolean hasCoords = !coords.isEmpty();
 			final boolean hasNormals = !normals.isEmpty();
-			if(hasCoords) {
-				builder.component(Vertex.Component.TEXTURE_COORDINATE);
-			}
-			if(hasNormals) {
-				builder.component(Vertex.Component.NORMAL);
-			}
 
 			// Build model vertices
 			for(Face face : faces) {
 				// Create vertex
-				final Point pos = vertices.get(face.vertex);
-				final Vertex vertex = new Vertex(pos);
+				final MutableVertex vertex = new MutableVertex();
+				vertex.position(vertices.get(face.vertex));
 
 				// Add texture coordinate
 				if(hasCoords) {
-					vertex.coords(coords.get(face.coords));
+					vertex.coordinates(coords.get(face.coords));
 				}
 
 				// Add normal

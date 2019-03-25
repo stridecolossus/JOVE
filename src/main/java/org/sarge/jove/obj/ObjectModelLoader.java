@@ -117,9 +117,9 @@ public class ObjectModelLoader extends DefaultObjectLoader<ObjectModel> {
 	 */
 	public ObjectModelLoader() {
 		// Vertex parsers
-		add("v", new ArrayParser<>(3, Point::new, (v, model) -> model.group().vertex(v)));
-		add("vn", new ArrayParser<>(3, Vector::new, (n, model) -> model.group().normal(n)));
-		add("vt", new ArrayParser<>(2, TextureCoordinate::of, (tc, model) -> model.group().coords(tc)));
+		add("v", new ArrayParser<>(Point.SIZE, Point::new, (v, model) -> model.group().vertex(v)));
+		add("vn", new ArrayParser<>(Vector.SIZE, Vector::new, (n, model) -> model.group().normal(n)));
+		add("vt", new ArrayParser<>(2, TextureCoordinate.Coordinate2D::new, (tc, model) -> model.group().coords(tc)));
 
 		// Object/group parser
 		add("g", GROUP);
