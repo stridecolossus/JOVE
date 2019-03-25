@@ -19,6 +19,9 @@ import org.sarge.lib.util.AbstractObject;
 
 /**
  * A <i>vertex</i> is comprised of {@link Bufferable} data.
+ * <p>
+ * Note that the order that components are written using {@link #buffer(FloatBuffer)} is assumed to be dependant on the implementing vertex class.
+ * It is the responsibility of the user to ensure that the location of components within a vertex matches the target shader.
  * @author Sarge
  */
 public interface Vertex extends Bufferable {
@@ -107,6 +110,13 @@ public interface Vertex extends Bufferable {
 
 	/**
 	 * A <i>mutable vertex</i> is a default implementation used to construct a model consisting of a vertex position, normal and 2D texture-coordinate components.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>the default normal is undefined</li>
+	 * <li><b>all</b> components are written by the {@link #buffer(FloatBuffer)}</li>
+	 * <li>it is the responsibility of the user to select the required components, see {@link Vertex}</li>
+	 * </ul>
 	 */
 	class MutableVertex extends AbstractEqualsObject implements MutableNormalVertex {
 		/**
