@@ -36,7 +36,7 @@ public class Model<V extends MutableNormalVertex> {
 	 */
 	public Model(Primitive primitive, List<Component> components, List<V> vertices, Extents extents) {
 		this.primitive = notNull(primitive);
-		this.components = List.copyOf(components);
+		this.components = new ArrayList<>(components);
 		this.vertices = List.copyOf(vertices);
 		this.extents = notNull(extents);
 		verify();
@@ -187,13 +187,12 @@ public class Model<V extends MutableNormalVertex> {
 	 */
 	public Model<V> computeNormals() {
 		// Check model supports generated normals
-//		if(components.contains(Vertex.Component.NORMAL)) throw new IllegalStateException("Model already has normals");
+		if(components.contains(Vertex.Component.NORMAL)) throw new IllegalStateException("Model already has normals");
 		if(!primitive.hasNormals()) throw new IllegalStateException("Primitive does not support normals: " + primitive);
 		if(primitive.size() != 3) throw new UnsupportedOperationException("Only triangle/strip primitives support normal generation");
 
-//		// Add normals component
-//		final var components = new ArrayList<>(this.components);
-//		components.add(Vertex.Component.NORMAL);
+		// Add normals component
+		components.add(Vertex.Component.NORMAL);
 
 		// Generate normals
 		// TODO - faces() could return actual Face class with the following logic

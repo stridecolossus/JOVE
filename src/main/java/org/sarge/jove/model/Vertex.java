@@ -15,6 +15,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.lib.util.AbstractEqualsObject;
+import org.sarge.lib.util.AbstractObject;
 
 /**
  * A <i>vertex</i> is comprised of {@link Bufferable} data.
@@ -25,7 +26,7 @@ public interface Vertex extends Bufferable {
 	 * Vertex component descriptor.
 	 * TODO - assumes size = number of floats
 	 */
-	class Component extends AbstractEqualsObject {
+	class Component extends AbstractObject {
 		/**
 		 * Vertex position component.
 		 */
@@ -115,9 +116,24 @@ public interface Vertex extends Bufferable {
 
 		private static final Vector EMPTY = new Vector(0, 0, 0);
 
-		private Point pos = Point.ORIGIN;
+		private Point pos;
 		private Vector normal = EMPTY;
 		private TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.Corner.BOTTOM_LEFT.coordinates();
+
+		/**
+		 * Default constructor.
+		 */
+		public MutableVertex() {
+			this(Point.ORIGIN);
+		}
+
+		/**
+		 * Constructor.
+		 * @param pos Vertex position
+		 */
+		public MutableVertex(Point pos) {
+			position(pos);
+		}
 
 		@Override
 		public Point position() {

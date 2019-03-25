@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -23,9 +22,9 @@ public class ModelTest {
 
 	@BeforeEach
 	public void before() {
-		a = new MutableVertex();
-		b = new MutableVertex();
-		c = new MutableVertex();
+		a = new MutableVertex(new Point(0, 1, 0));
+		b = new MutableVertex(new Point(0, 0, 0));
+		c = new MutableVertex(new Point(1, 1, 0));
 	}
 
 	@Nested
@@ -35,10 +34,9 @@ public class ModelTest {
 
 		@BeforeEach
 		public void before() {
-			d = new MutableVertex();
+			d = new MutableVertex(new Point(1, 0, 0));
 			model = new Model.Builder<>()
 				.primitive(Primitive.TRIANGLE_STRIP)
-
 				.add(a)
 				.add(b)
 				.add(c)
@@ -51,7 +49,7 @@ public class ModelTest {
 			assertNotNull(model);
 			assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
 			assertEquals(false, model.isIndexed());
-			assertEquals(Set.of(), model.components());
+			assertEquals(List.of(Component.POSITION), model.components());
 			assertEquals(4, model.size());
 		}
 
@@ -139,12 +137,6 @@ public class ModelTest {
 			// Check vertices
 			assertNotNull(model.vertices());
 			assertArrayEquals(new Vertex[]{a, b, c}, model.vertices().toArray());
-		}
-
-		@Test
-		public void addVertexMissingComponent() {
-			builder.component(Component.COLOUR);
-			assertThrows(IllegalArgumentException.class, () -> builder.add(a));
 		}
 
 		@Test
