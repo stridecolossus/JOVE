@@ -43,4 +43,27 @@ public interface VulkanLibraryImage {
 	 * @param pAllocator		Allocator
 	 */
 	void vkDestroyImageView(Pointer device, Pointer imageView, Pointer pAllocator);
+
+	// TODO
+	int vkCreateBuffer(Pointer device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
+	void vkDestroyBuffer(Pointer device, Pointer buffer, Pointer pAllocator);
+
+	void vkGetBufferMemoryRequirements(Pointer device, Pointer buffer, VkMemoryRequirements pMemoryRequirements);
+
+	int vkAllocateMemory(Pointer device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
+	void vkFreeMemory(Pointer device, Pointer memory, Pointer pAllocator);
+
+	int vkBindBufferMemory(Pointer device, Pointer buffer, Pointer memory, long memoryOffset);
+	//int vkBindImageMemory(Pointer device, VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset);
+
+
+	int vkMapMemory(Pointer device, Pointer memory, long offset, long size, int flags, PointerByReference ppData);
+	void vkUnmapMemory(Pointer device, Pointer memory);
+
+
+
+
+	//void vkCmdBindIndexBuffer(Pointer commandBuffer, Pointer buffer, long offset, VkIndexType indexType);
+	void vkCmdBindVertexBuffers(Pointer commandBuffer, int firstBinding, int bindingCount, Pointer[] pBuffers, long[] pOffsets);
+
 }

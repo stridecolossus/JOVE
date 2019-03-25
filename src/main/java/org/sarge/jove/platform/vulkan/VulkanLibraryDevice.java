@@ -25,6 +25,9 @@ interface VulkanLibraryDevice {
 	 */
 	void vkGetPhysicalDeviceProperties(Pointer device, VkPhysicalDeviceProperties props);
 
+	// TODO
+	void vkGetPhysicalDeviceMemoryProperties(Pointer device, VkPhysicalDeviceMemoryProperties pMemoryProperties);
+
 	/**
 	 * Retrieves the features of the given physical device.
 	 * @param device		Device handle

@@ -1,8 +1,11 @@
 package org.sarge.jove.platform.vulkan;
 
 import static org.junit.Assert.assertNotNull;
+import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Set;
@@ -13,9 +16,11 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Service;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
@@ -27,6 +32,7 @@ import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracke
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class VulkanIntegrationTest {
 
@@ -75,6 +81,8 @@ public class VulkanIntegrationTest {
 
 		final RenderPass pass = pass();
 
+		final Pointer vbo = vertexBuffer(physical);
+
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass);
 
 		System.out.println("Creating command pool");
@@ -89,7 +97,7 @@ public class VulkanIntegrationTest {
 			frameBuffers[n] = fb;
 
 			final Command.Buffer cb = cmds.get(n);
-			record(cb, fb, pass, pipeline);
+			record(cb, fb, pass, pipeline, vbo);
 		}
 
 		System.out.println("Creating frame tracker");
@@ -368,21 +376,111 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline) {
+	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, Pointer vbo) {
 		System.out.println("Recording command");
 
 		final Rectangle extent = new Rectangle(0, 0, 640, 480);
 		final Colour[] clear = {new Colour(0.3f, 0.3f, 0.3f, 1)};
 
 		// TODO - created from VBO?
+		final Command bindVBO = (lib, cmd) -> lib.vkCmdBindVertexBuffers(cmd, 0, 1, new Pointer[]{vbo}, new long[]{0});
 		final Command draw = (api, cb) -> api.vkCmdDraw(cb, 3, 1, 0, 0);
 
 		buffer
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
 			.add(pass.begin(fb, extent, clear))
 			.add(pipeline.bind())
+			.add(bindVBO)
 			.add(draw)
 			.add(RenderPass.END_COMMAND)
 			.end();
+	}
+
+	private Pointer vertexBuffer(PhysicalDevice physical) {
+		// Create buffer
+
+		final VkBufferCreateInfo info = new VkBufferCreateInfo();
+		info.size = 3 * (3 + 4) * Float.BYTES;
+		info.usage = VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT.value();
+		info.sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+System.out.println("size="+info.size);
+
+		final PointerByReference ref = new PointerByReference();
+		check(lib.vkCreateBuffer(dev.handle(), info, null, ref));
+		final Pointer handle = ref.getValue();
+
+		// Allocate memory
+
+		final VkMemoryRequirements reqs = new VkMemoryRequirements();
+		lib.vkGetBufferMemoryRequirements(dev.handle(), handle, reqs);
+System.out.println("reqs="+reqs);
+
+		final VkPhysicalDeviceMemoryProperties props = new VkPhysicalDeviceMemoryProperties();
+		lib.vkGetPhysicalDeviceMemoryProperties(physical.handle(), props);
+		//System.out.println("memory properties");
+		//System.out.println(props);
+
+		final int mask = IntegerEnumeration.mask(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
+		int index = -1;
+		for(int n = 0; n < props.memoryTypeCount; ++n) {
+			//final var flags = IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, props.memoryTypes[n].propertyFlags);
+			if(mask == props.memoryTypes[n].propertyFlags) {
+				index = n;
+				break;
+			}
+		}
+		if(index == -1) throw new RuntimeException("Cannot find memory type");
+
+		final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
+		alloc.allocationSize = reqs.size;
+		alloc.memoryTypeIndex = index;
+
+		final PointerByReference mem = new PointerByReference();
+		check(lib.vkAllocateMemory(dev.handle(), alloc, null, mem));
+
+		// Fill buffer
+
+		check(lib.vkBindBufferMemory(dev.handle(), handle, mem.getValue(), 0L));
+
+//		final ByteBuffer bb = BufferFactory.byteBuffer((int) info.size);
+//		final FloatBuffer fb = bb.asFloatBuffer(); // BufferFactory.floatBuffer(3 * MutableVertex.SIZE);
+//System.out.println("bb="+bb.capacity()+" fb="+fb.capacity());
+//		new Point(0, -0.5f, 0).buffer(fb);
+//		new Colour(1, 0, 0, 1).buffer(fb);
+//		new Point(0.5f, 0.5f, 0).buffer(fb);
+//		new Colour(1, 1, 1, 1).buffer(fb);
+//		new Point(-0.5f, 0.5f, 0).buffer(fb);
+//		new Colour(0, 0, 1, 1).buffer(fb);
+//		fb.flip();
+
+		//System.out.println("bb="+bb.capacity());
+
+		final PointerByReference buffer = new PointerByReference();
+		check(lib.vkMapMemory(dev.handle(), mem.getValue(), 0, info.size, 0, buffer));
+
+//			float[] array = {
+//				0, -0.5f, 0,
+//				1, 0, 0, 1,
+//
+//				0.5f, 0.5f, 0,
+//				0, 1, 0, 1,
+//
+//				-0.5f, 0.5f, 0,
+//				0, 0, 1, 1,
+//			};
+//			buffer.getValue().write(0, array, 0, array.length);
+
+			final ByteBuffer target = buffer.getValue().getByteBuffer(0, info.size);
+			final FloatBuffer fb = target.asFloatBuffer();
+			new Point(0, -0.5f, 0).buffer(fb);
+			new Colour(1, 0, 0, 1).buffer(fb);
+			new Point(0.5f, 0.5f, 0).buffer(fb);
+			new Colour(1, 1, 1, 1).buffer(fb);
+			new Point(-0.5f, 0.5f, 0).buffer(fb);
+			new Colour(0, 0, 1, 1).buffer(fb);
+			fb.flip();
+		lib.vkUnmapMemory(dev.handle(), mem.getValue());
+
+		return handle;
 	}
 }
