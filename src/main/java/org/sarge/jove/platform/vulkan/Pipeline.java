@@ -3,6 +3,8 @@ package org.sarge.jove.platform.vulkan;
 import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.model.Primitive;
+import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.util.StructureHelper;
 
@@ -63,15 +66,84 @@ public class Pipeline extends VulkanHandle {
 	 * @see Layout.Builder
 	 */
 	public static class Builder {
-		// TODO - builders
 		// fixed:
-		// - vertex input
 		// - primitive assembly
 		// - rasterization
 		// shader:
 		// - tesselation
 		// - multi-sample
 		// - stencil
+
+		/**
+		 * Builder for the vertex input stage descriptor.
+		 */
+		public class VertexInputStageBuilder {
+			private final Deque<VkVertexInputBindingDescription> descriptions = new ArrayDeque<>();
+			private final List<VkVertexInputAttributeDescription> attributes = new ArrayList<>();
+
+			private VertexInputStageBuilder() {
+				pipeline.pVertexInputState = new VkPipelineVertexInputStateCreateInfo();
+			}
+
+			// TODO - make most params optional / inferred
+
+			/**
+			 * Adds a binding description.
+			 * @param binding		Binding index
+			 * @param stride		Stride (bytes per vertex)
+			 * @param rate			Input rate
+			 * @throws IllegalArgumentException for a duplicate binding index
+			 */
+			public VertexInputStageBuilder binding(int binding, int stride, VkVertexInputRate rate) {
+				if(descriptions.stream().anyMatch(d -> d.binding == binding)) throw new IllegalArgumentException("Duplicate binding index: " + binding);
+
+				final VkVertexInputBindingDescription desc = new VkVertexInputBindingDescription();
+				desc.binding = zeroOrMore(binding);
+				desc.stride = oneOrMore(stride);
+				desc.inputRate = notNull(rate);
+				descriptions.add(desc);
+
+				return this;
+			}
+
+			/**
+			 * Adds a vertex attribute.
+			 * @param loc			Location
+			 * @param component		Component descriptor
+			 * @param offset		Offset into vertex (bytes)
+			 * @throws IllegalArgumentException if no binding description is present
+			 * @throws IllegalArgumentException for a duplicate location
+			 */
+			public VertexInputStageBuilder attribute(int loc, Vertex.Component component, int offset) {
+				if(descriptions.isEmpty()) throw new IllegalStateException("No binding descriptions specified");
+				if(attributes.stream().anyMatch(attr -> attr.location == loc)) throw new IllegalArgumentException("Duplicate attribute location: " + loc);
+
+				final VkVertexInputAttributeDescription attr = new VkVertexInputAttributeDescription();
+				attr.binding = descriptions.getLast().binding;
+				attr.location = zeroOrMore(loc);
+				attr.format = new VulkanHelper.FormatBuilder().components(component.size()).build();
+				attr.offset = zeroOrMore(offset);
+				attributes.add(attr);
+
+				return this;
+			}
+
+			/**
+			 * Constructs this vertex input stage.
+			 * @return New vertex input stage
+			 */
+			public Builder build() {
+				// Add binding descriptions
+				pipeline.pVertexInputState.vertexBindingDescriptionCount = descriptions.size();
+				pipeline.pVertexInputState.pVertexBindingDescriptions = StructureHelper.structures(descriptions);
+
+				// Add attributes
+				pipeline.pVertexInputState.vertexAttributeDescriptionCount = attributes.size();
+				pipeline.pVertexInputState.pVertexAttributeDescriptions = StructureHelper.structures(attributes);
+
+				return Builder.this;
+			}
+		}
 
 		/**
 		 * Builder for the viewport stage descriptor.
@@ -120,6 +192,11 @@ public class Pipeline extends VulkanHandle {
 				scissors.add(new VkRect2D(rect));
 				return this;
 			}
+
+			// TODO
+			// - what does multiple viewports actually do?
+			// - have to have same number of scissors as viewports? or none?
+			// - add auto method for scissor = last viewport?
 
 			/**
 			 * Constructs the viewport stage.
@@ -198,7 +275,7 @@ public class Pipeline extends VulkanHandle {
 		 * Builder for a shader stage.
 		 */
 		public class ColourBlendStageBuilder {
-			private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
+			private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo(); // TODO - replace default
 			private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
 
 			private VkPipelineColorBlendAttachmentState current;
@@ -264,6 +341,14 @@ public class Pipeline extends VulkanHandle {
 			pipeline.pRasterizationState = new VkPipelineRasterizationStateCreateInfo();
 			pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo();
 			new ColourBlendStageBuilder().build();
+		}
+
+		/**
+		 * Starts the vertex input stage.
+		 * @return New vertex input stage builder
+		 */
+		public VertexInputStageBuilder input() {
+			return new VertexInputStageBuilder();
 		}
 
 		/**

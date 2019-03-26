@@ -2,7 +2,6 @@
 
 TODO
 
-* pipeline
 * render loop
 * cleanup
 
@@ -24,13 +23,13 @@ The GLFW library can be used to determine the required Vulkan extensions in a pl
 
 ```java
 // Init GLFW service
-final DesktopService desktop = new FrameworkDesktopService();
+DesktopService desktop = new FrameworkDesktopService();
 
 // Check Vulkan is supported
 if(!desktop.isVulkanSupported()) ...
 
 // Query platform-dependent required extensions
-final String[] requiredExtensions = desktop.extensions();
+String[] requiredExtensions = desktop.extensions();
 ```
 
 ### Creating the Vulkan Instance
@@ -38,7 +37,7 @@ final String[] requiredExtensions = desktop.extensions();
 A `VulkanInstance` is the 'root' object used to configure the required Vulkan functionality:
 
 ```java
-final VulkanInstance instance = new VulkanInstance.Builder(vulkan)
+VulkanInstance instance = new VulkanInstance.Builder(vulkan)
 	.extensions(requiredExtensions)
 	.extension(Extension.DEBUG_UTILS)
 	.layer(ValidationLayer.STANDARD_VALIDATION)
@@ -77,21 +76,21 @@ By default the message handler dumps messages to the console but a custom callba
 From the instance we can enumerate the available physical devices:
 
 ```
-final Collection<Pointer> devices = instance.devices();
+Collection<Pointer> devices = instance.devices();
 ```
 
 or create _all_ the physical devices:
 
 ```
-final List<PhysicalDevice> devices = PhysicalDevice.create(instance);
+List<PhysicalDevice> devices = PhysicalDevice.create(instance);
 ```
 
 We can then filter the physical devices to find one that supports the functionality we require:
 
 ```java
-final VkPhysicalDeviceFeatures requiredFeatures = new VkPhysicalDeviceFeatures();
+VkPhysicalDeviceFeatures requiredFeatures = new VkPhysicalDeviceFeatures();
 required.geometryShader = VulkanBoolean.TRUE;
-final PhysicalDevice physical = devices.stream().filter(dev -> dev.supports(requiredFeatures).findAny().orElse(...);
+PhysicalDevice physical = devices.stream().filter(dev -> dev.supports(requiredFeatures).findAny().orElse(...);
 ```
 
 In practice most systems will have a single Vulkan physical device (i.e. a single GPU).
@@ -102,11 +101,12 @@ A physical device can be queried for the queue families that it provides and the
 
 ```java
 // Find the graphics queue
+List<QueueFamily> families = physical.families();
 Predicate<QueueFamily> isGraphics = family -> family.flags().contains(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-QueueFamily graphicsFamily = physical.families().stream().filter(isGraphics).orElse(...);
+QueueFamily graphicsFamily = families.stream().filter(isGraphics).orElse(...);
 
 // Find the presentation queue
-QueueFamily presentFamily = physical.families().stream().filter(f -> f.isPresentationSupport(surface)).orElse(...);
+QueueFamily presentFamily = families.stream().filter(f -> f.isPresentationSupport(surface)).orElse(...);
 ```
 
 The `surface` used in the predicate for the presentation queue is explained below.
@@ -118,7 +118,7 @@ Generally one would query the device features and the available queue families i
 Having selected the physical device we can now create a logical device:
 
 ```java
-final LogicalDevice dev = new LogicalDevice.Builder(physical)
+LogicalDevice dev = new LogicalDevice.Builder(physical)
 	.queue(graphicsFamily)
 	.queue(presentFamily)
 	.extension(Extension.SWAP_CHAIN)
@@ -127,8 +127,9 @@ final LogicalDevice dev = new LogicalDevice.Builder(physical)
 	.build();
 ```
 
-The `queue()` clause specified that we require a queue of the given family.
-There are several overloaded versions of the method that allow us to specify multiple queues, specific priorities, etc.
+where `queue()` clauses specify the queues that we require.
+
+There are several overloaded versions of the `queue` method that allow us to specify multiple queues, specific priorities, etc.
 
 The logical device is our view of the Vulkan functionality and will be the central collaborator in most of the rest of the code. 
 
@@ -160,7 +161,15 @@ The `Window.Descriptor.DISABLE_OPENGL` prevents GLFW from automatically creating
 Again we use GLFW to create a Vulkan surface for the window:
 
 ```
-Surface surface = Surface.create(window.surface(instance), dev); 
+Pointer ptr = window.surface(instance.handle(), window.handle());
+```
+
+where `instance` is the Vulkan instance created above.
+
+We then invoke `Surface::create` to instantiate the surface object:
+
+```
+Surface surface = Surface.create(ptr, dev); 
 ```
 
 Note that Vulkan provides functionality to create a platform-specific surface (though not the window) but in general the platform-independent approach is simpler.
@@ -187,13 +196,36 @@ frame buffers?
 
 ## Graphics Pipeline
 
-TODO
+The graphics pipeline can require a large of configuration.  The following example illustrates a minimum viable pipeline with a (mandatory) vertex shader and viewport:
+
+```
+Pipeline pipeline = new Pipeline.Builder(dev, pass)
+	.shader()
+		.module(vert)
+		.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+		.build()
+	.viewport()
+		.viewport(rect)
+		.scissor(rect)
+		.build()
+	.build();
+```
+
+The `module` refers to a shader module loaded as follows:
+
+```
+VulkanShader vert = VulkanShader.create(dev, code);
+```
+
+TODO - link to other examples
+TODO - shader loading, data sources 
+glslangValidator -V triangle.frag
 
 ## Command Pools and Buffers
 
 ### Creating a Command Pool
 
-A command pool and buffers is created from the logical device:
+A command pool and a set of buffers is created from the logical device:
 
 ```
 // Create a command pool for the rendering work

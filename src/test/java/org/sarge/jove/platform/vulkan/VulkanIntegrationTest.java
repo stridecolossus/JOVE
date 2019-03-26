@@ -17,6 +17,7 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Handle;
@@ -333,7 +334,7 @@ public class VulkanIntegrationTest {
 		System.out.println("Creating render pass");
 		return new RenderPass.Builder(dev)
 			.attachment()
-				.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)
+				.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)				// <--- use FormatBuilder, but what is UNORM?
 				.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
 				.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
 				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
@@ -361,6 +362,14 @@ public class VulkanIntegrationTest {
 		System.out.println("Creating pipeline");
 		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), extent);
 		return new Pipeline.Builder(dev, pass)
+			.input()
+				.binding(0, (3 + 4) * Float.BYTES, VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX)
+				// TODO - binding(model.component.size)
+				.attribute(0, Vertex.Component.POSITION, 0)
+				.attribute(1, Vertex.Component.COLOUR, 3 * Float.BYTES)
+				// TODO - optionals for most
+				// TODO - attributes(model.components)
+				.build()
 			.shader()
 				.module(vert)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
