@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex.Component;
+import org.sarge.jove.model.Vertex.Component.Type;
 import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 
@@ -19,35 +20,49 @@ public class VertexTest {
 	class ComponentTests {
 		@Test
 		public void constructor() {
-			final Component c = new Component(3);
-			assertEquals(3, c.size());
+			final Component c = new Component(Type.INT, false, 2, 4);
+			assertEquals(Type.INT, c.type());
+			assertEquals(false, c.isSigned());
+			assertEquals(2, c.size());
+			assertEquals(4, c.bytes());
 		}
 
 		@Test
 		public void position() {
+			assertEquals(Type.FLOAT, Component.POSITION.type());
+			assertEquals(true, Component.POSITION.isSigned());
 			assertEquals(3, Component.POSITION.size());
+			assertEquals(4, Component.POSITION.bytes());
 		}
 
 		@Test
 		public void normal() {
+			assertEquals(Type.FLOAT, Component.NORMAL.type());
+			assertEquals(true, Component.NORMAL.isSigned());
 			assertEquals(3, Component.NORMAL.size());
+			assertEquals(4, Component.NORMAL.bytes());
 		}
 
 		@Test
 		public void colour() {
+			assertEquals(Type.FLOAT, Component.COLOUR.type());
+			assertEquals(true, Component.COLOUR.isSigned());
 			assertEquals(4, Component.COLOUR.size());
+			assertEquals(4, Component.COLOUR.bytes());
 		}
 
 		@Test
 		public void coordinates() {
-			assertEquals(1, Component.coordinate(1).size());
-			assertEquals(2, Component.coordinate(2).size());
-			assertEquals(3, Component.coordinate(3).size());
+			final Component tc = Component.coordinate(2);
+			assertEquals(Type.FLOAT, tc.type());
+			assertEquals(true, tc.isSigned());
+			assertEquals(2, tc.size());
+			assertEquals(4, tc.bytes());
 		}
 
 		@Test
 		public void size() {
-			assertEquals(3 + 4, Component.size(List.of(Component.NORMAL, Component.COLOUR)));
+			assertEquals(3 + 4, Component.size(List.of(Component.POSITION, Component.COLOUR)));
 		}
 	}
 

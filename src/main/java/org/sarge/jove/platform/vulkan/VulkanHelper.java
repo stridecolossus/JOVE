@@ -3,10 +3,11 @@ package org.sarge.jove.platform.vulkan;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.range;
 
-import java.util.Set;
 import java.util.StringJoiner;
 
+import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.util.MathsUtil;
 
 /**
  * General Vulkan utilities.
@@ -17,28 +18,44 @@ public final class VulkanHelper {
 	}
 
 	/**
-	 * Builds for a Vulkan format.
+	 * Maps a JOVE component descriptor to the equivalent Vulkan format.
+	 * @param c Component
+	 * @return Format
+	 * @throws IllegalArgumentException if the format is not supported
+	 */
+	public static VkFormat format(Vertex.Component c) {
+		return new FormatBuilder()
+			.type(c.type())
+			.components(c.size())
+			.bytes(c.bytes())
+			.build();
+	}
+
+	/**
+	 * Builder for a Vulkan format.
+	 * <p>
+	 * Finding a format within the enumeration can be difficult given the number available and the naming strategy.
+	 * This intention of this builder is to simply specifying the common data/image formats.
+	 * <p>
+	 * Example:
+	 * <pre>
+	 * VkFormat format = new FormatBuilder()
+	 *  .type(Type.NORMALIZED)		// NORM
+	 *  .signed(false)				// U
+	 *  .components(3)				// RGB
+	 *  .bytes(2)					// 16
+	 *  .build();
+	 * // Returns <tt>VK_FORMAT_R16G16B16_UNORM</tt>
+	 * </pre>
 	 * @see VkFormat
 	 */
 	public static class FormatBuilder {
-		/**
-		 * Format data type.
-		 */
-		public enum Type {
-			INT,
-			FLOAT,
-			NORMALIZED,
-			SCALED,
-			SRGB,
-		}
-
-		private static final Set<Integer> SIZES = Set.of(8, 16, 32, 64);
 		private static final String RGBA = "RGBA";
 		private static final String ARGB = "ARGB"; // TODO - swap builder option
 
 		private int components = 3;
-		private int size = 32;
-		private Type type = Type.FLOAT;
+		private int bytes = 4;
+		private Vertex.Component.Type type = Vertex.Component.Type.FLOAT;
 		private boolean signed = true;
 
 		/**
@@ -52,13 +69,15 @@ public final class VulkanHelper {
 		}
 
 		/**
-		 * Sets the component size: 8, 16, 32 or 64.
-		 * @param size Component size (default is <tt>32</tt>)
-		 * @throws IllegalArgumentException if the size is invalid
+		 * Sets the number of bytes per component: 1, 2, 4 or 8.
+		 * @param bytes Number of bytes per component (default is <tt>4</tt>)
+		 * @throws IllegalArgumentException if the number of bytes is invalid
 		 */
-		public FormatBuilder size(int size) {
-			if(!SIZES.contains(size)) throw new IllegalArgumentException("Unsupported component size: " + size);
-			this.size = size;
+		public FormatBuilder bytes(int bytes) {
+			if((bytes < 1) || (bytes > 8) || !MathsUtil.isPowerOfTwo(bytes)) {
+				throw new IllegalArgumentException("Unsupported number of component bytes: " + bytes);
+			}
+			this.bytes = bytes;
 			return this;
 		}
 
@@ -73,9 +92,9 @@ public final class VulkanHelper {
 
 		/**
 		 * Sets the data type.
-		 * @param type Data type (default is {@link Type#FLOAT})
+		 * @param type Data type (default is {@link Vertex.Component.Type#FLOAT})
 		 */
-		public FormatBuilder type(Type type) {
+		public FormatBuilder type(Vertex.Component.Type type) {
 			this.type = notNull(type);
 			return this;
 		}
@@ -83,14 +102,14 @@ public final class VulkanHelper {
 		/**
 		 * Builds the format identifier.
 		 * @return Vulkan format
-		 * @throws IllegalArgumentException TODO
+		 * @throws IllegalArgumentException if the format is not supported
 		 */
 		public VkFormat build() {
 			// Build component layout
 			final StringBuilder layout = new StringBuilder();
 			for(int n = 0; n < components; ++n) {
 				layout.append(RGBA.charAt(n));
-				layout.append(size);
+				layout.append(bytes * Byte.SIZE);
 			}
 
 			// Build format string

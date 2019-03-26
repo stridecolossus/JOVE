@@ -5,152 +5,190 @@ import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.util.BufferFactory;
-import org.sarge.lib.collection.StrictList;
+import org.sarge.jove.model.Vertex.Component;
+import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkVertexInputRate;
+import org.sarge.jove.platform.vulkan.VulkanHelper;
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
- * A <i>vertex buffer object</i> (VBO) contains floating-point vertex data to be pushed to the graphics system.
+ * A <i>vertex buffer object</i> (VBO) defines the layout of data to be pushed to the graphics system.
  * @author Sarge
  */
-public class VertexBufferObject extends BufferObject {
-	/**
-	 * VBO attribute descriptor.
-	 */
-	public static final class Attribute {
-		private final int size;
-//		private final int location;
-//		private final int offset;
+public interface VertexBufferObject { // extends BufferObject {
 
-		// TODO - size of each (bytes) => convert float -> n bytes, i.e. could have smaller than float
-		// - map to VkFormat
-		// - do all the components HAVE to be the same size?
+	void push(); // TODO
+
+	/**
+	 * VBO layout descriptor.
+	 */
+	public static class Layout extends AbstractEqualsObject {
+		/**
+		 * VBO attribute descriptor.
+		 */
+		public static final class Attribute extends AbstractEqualsObject {
+			private final int loc;
+			private final Vertex.Component component;
+			private final int offset;
+			private final VkFormat format;
+
+			/**
+			 * Constructor.
+			 * @param loc				Shader location index
+			 * @param component			Component descriptor
+			 * @param offset			Offset into vertex (bytes)
+			 */
+			public Attribute(int loc, Component component, int offset) {
+				this.loc = zeroOrMore(loc);
+				this.component = notNull(component);
+				this.offset = zeroOrMore(offset);
+				this.format = VulkanHelper.format(component);
+			}
+
+			/**
+			 * @return Shader location
+			 */
+			public int location() {
+				return loc;
+			}
+
+			/**
+			 * @return Component descriptor
+			 */
+			public Vertex.Component component() {
+				return component;
+			}
+
+			/**
+			 * @return Offset into vertex of this attribute (bytes)
+			 */
+			public int offset() {
+				return offset;
+			}
+
+			/**
+			 * @return Vulkan format for this attribute
+			 */
+			public VkFormat format() {
+				return format;
+			}
+		}
+
+		private final int binding;
+		private final VkVertexInputRate rate;
+		private final List<Attribute> layout;
+		private final int stride;
 
 		/**
 		 * Constructor.
-		 * @param size Component size of this buffer attribute
+		 * @param binding		Binding index
+		 * @param rate			Input rate
+		 * @param layout		Layout
+		 * @param stride		Stride per vertex (bytes)
+		 * @throws IllegalArgumentException if the layout is empty
+		 * @throws IllegalArgumentException for a duplicate attribute location
 		 */
-		public Attribute(int size) {
-			this.size = oneOrMore(size);
+		public Layout(int binding, VkVertexInputRate rate, List<Attribute> layout, int stride) {
+			this.binding = zeroOrMore(binding);
+			this.rate = notNull(rate);
+			this.layout = List.copyOf(notEmpty(layout));
+			this.stride = oneOrMore(stride);
+			verify();
+		}
+
+		private void verify() {
+			if(layout.stream().map(Attribute::location).distinct().count() != layout.size()) {
+				throw new IllegalArgumentException("Layout cannot contains duplicate attribute location(s)");
+			}
 		}
 
 		/**
-		 * @return Component size of this attribute
+		 * @return Binding index
 		 */
-		public int size() {
-			return size;
-		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
-		}
-	}
-
-	private final List<Attribute> layout;
-	private final FloatBuffer buffer;
-	private final int size; // TODO - stride
-	// private final int binding?
-
-	/**
-	 * Constructor.
-	 * @param layout		Buffer layout
-	 * @param mode			Update mode
-	 * @param buffer		Buffer
-	 */
-	public VertexBufferObject(List<Attribute> layout, Mode mode, FloatBuffer buffer) {
-		super(mode);
-		this.layout = List.copyOf(notEmpty(layout));
-		this.buffer = notNull(buffer);
-		this.size = size(layout);
-	}
-
-	/**
-	 * @return Buffer layout
-	 */
-	public List<Attribute> layout() {
-		return layout;
-	}
-
-	/**
-	 * Calculates the total component size of the given buffer layout.
-	 */
-	private static int size(List<Attribute> layout) {
-		return layout.stream().mapToInt(Attribute::size).sum();
-	}
-
-	@Override
-	public int size() {
-		return size;
-	}
-
-	@Override
-	public int length() {
-		return buffer.capacity();
-	}
-
-	/**
-	 * Updates this buffer.
-	 * @param data Data to buffer
-	 */
-	public void update(Stream<Bufferable> data) {
-		checkMutable();
-		data.forEach(b -> b.buffer(buffer));
-		buffer.flip();
-	}
-
-	@Override
-	public void push() {
-		// TODO
-	}
-
-	/**
-	 * Builder for a vertex buffer.
-	 */
-	public static class Builder {
-		private final List<Attribute> layout = new StrictList<>();
-		private Mode mode = Mode.STATIC;
-		private int len;
-
-		/**
-		 * Adds an attribute to this buffer.
-		 * @param attr Attribute
-		 */
-		public Builder attribute(Attribute attr) {
-			layout.add(attr);
-			return this;
+		public int binding() {
+			return binding;
 		}
 
 		/**
-		 * Sets the update mode of this buffer.
-		 * @param mode Update mode
+		 * @return Stride per vertex (bytes)
 		 */
-		public Builder mode(Mode mode) {
-			this.mode = notNull(mode);
-			return this;
+		public int stride() {
+			return stride;
 		}
 
 		/**
-		 * Sets the length of the buffer.
-		 * @param len Buffer length
+		 * @return Input rate
 		 */
-		public Builder length(int len) {
-			this.len = zeroOrMore(len);
-			return this;
+		public VkVertexInputRate rate() {
+			return rate;
 		}
 
 		/**
-		 * Constructs this buffer.
-		 * @return New buffer
+		 * @return Layout
 		 */
-		public VertexBufferObject build() {
-			final FloatBuffer buffer = BufferFactory.floatBuffer(len * size(layout));
-			return new VertexBufferObject(layout, mode, buffer);
+		public List<Attribute> layout() {
+			return layout;
+		}
+
+		/**
+		 * Builder for a VBO layout.
+		 */
+		public static class Builder {
+			private int binding;
+			private VkVertexInputRate rate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX;
+			private final List<Attribute> layout = new ArrayList<>();
+			private int offset;
+			private int next = 0;
+
+			/**
+			 * Sets the binding index for this VBO.
+			 * @param binding Binding index
+			 */
+			public Builder binding(int binding) {
+				this.binding = binding;
+				return this;
+			}
+
+			/**
+			 * Sets the input rate for this VBO.
+			 * @param rate Input rate
+			 */
+			public Builder rate(VkVertexInputRate rate) {
+				this.rate = rate;
+				return this;
+			}
+
+			/**
+			 * Adds an attribute descriptor at the given location.
+			 * @param loc			Location
+			 * @param component		Component descriptor
+			 */
+			public Builder add(int loc, Component component) {
+				final Attribute attr = new Attribute(loc, component, offset);
+				layout.add(attr);
+				offset += component.size() * component.bytes();
+				next = loc + 1;
+				return this;
+			}
+
+			/**
+			 * Sets an attribute descriptor at the <i>next</i> location.
+			 * @param component Component descriptor
+			 */
+			public Builder add(Component component) {
+				return add(next, component);
+			}
+
+			/**
+			 * Constructs this VBO layout.
+			 * @return New layout
+			 */
+			public Layout build() {
+				return new Layout(binding, rate, layout, offset);
+			}
 		}
 	}
 }

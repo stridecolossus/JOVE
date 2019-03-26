@@ -8,6 +8,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VulkanHelper.FormatBuilder;
 
@@ -15,7 +16,7 @@ public class VulkanHelperTest {
 	@Nested
 	class ColourComponentTests {
 		@Test
-		public void mask() {
+		public void colourComponent() {
 			final int result = VulkanHelper.colourComponent("ARGB");
 			final VkColorComponentFlag[] set = {
 				VkColorComponentFlag.VK_COLOR_COMPONENT_R_BIT,
@@ -29,7 +30,7 @@ public class VulkanHelperTest {
 		}
 
 		@Test
-		public void ofInvalidCharacter() {
+		public void colourComponentInvalidCharacter() {
 			assertThrows(IllegalArgumentException.class, () -> VulkanHelper.colourComponent("cobblers"));
 		}
 	}
@@ -46,12 +47,12 @@ public class VulkanHelperTest {
 		@Test
 		public void build() {
 			final VkFormat format = builder
-				.components(2)
-				.size(16)
+				.type(Vertex.Component.Type.INT)
+				.components(3)
+				.bytes(2)
 				.signed(false)
-				.type(FormatBuilder.Type.INT)
 				.build();
-			assertEquals(VkFormat.VK_FORMAT_R16G16_UINT, format);
+			assertEquals(VkFormat.VK_FORMAT_R16G16B16_UINT, format);
 		}
 
 		@Test
@@ -61,12 +62,19 @@ public class VulkanHelperTest {
 
 		@Test
 		public void invalidComponents() {
-			assertThrows(IllegalArgumentException.class, () -> builder.components(999));
+			assertThrows(IllegalArgumentException.class, () -> builder.components(0));
+			assertThrows(IllegalArgumentException.class, () -> builder.components(5));
 		}
 
 		@Test
-		public void invalidComponentSize() {
-			assertThrows(IllegalArgumentException.class, () -> builder.size(24));
+		public void invalidBytesPerComponent() {
+			assertThrows(IllegalArgumentException.class, () -> builder.bytes(0));
+			assertThrows(IllegalArgumentException.class, () -> builder.bytes(3));
+		}
+
+		@Test
+		public void component() {
+			assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, VulkanHelper.format(Vertex.Component.COLOUR));
 		}
 	}
 }

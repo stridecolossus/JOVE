@@ -27,9 +27,19 @@ import org.sarge.lib.util.AbstractObject;
 public interface Vertex extends Bufferable {
 	/**
 	 * Vertex component descriptor.
-	 * TODO - assumes size = number of floats
 	 */
 	class Component extends AbstractObject {
+		/**
+		 * Component data type.
+		 */
+		public enum Type {
+			INT,
+			FLOAT,
+			NORMALIZED,
+			SCALED,
+			SRGB,				// TODO - required?
+		}
+
 		/**
 		 * Vertex position component.
 		 */
@@ -69,14 +79,45 @@ public interface Vertex extends Bufferable {
 			return components.stream().mapToInt(Component::size).sum();
 		}
 
+		private final Type type;
+		private final boolean signed;
 		private final int size;
+		private final int bytes;
 
 		/**
 		 * Constructor.
+		 * @param type		Data type
+		 * @param signed	Whether the data type is signed
+		 * @param size 		Size of this component
+		 * @param bytes		Bytes per component
+		 */
+		public Component(Type type, boolean signed, int size, int bytes) {
+			this.type = notNull(type);
+			this.signed = signed;
+			this.size = oneOrMore(size);
+			this.bytes = oneOrMore(bytes);
+		}
+
+		/**
+		 * Convenience constructor for a signed floating-point component.
 		 * @param size Size of this component
 		 */
 		public Component(int size) {
-			this.size = oneOrMore(size);
+			this(Type.FLOAT, true, size, Float.BYTES);
+		}
+
+		/**
+		 * @return Data type
+		 */
+		public Type type() {
+			return type;
+		}
+
+		/**
+		 * @return Whether this component is signed
+		 */
+		public boolean isSigned() {
+			return signed;
 		}
 
 		/**
@@ -84,6 +125,13 @@ public interface Vertex extends Bufferable {
 		 */
 		public int size() {
 			return size;
+		}
+
+		/**
+		 * @return Bytes per component
+		 */
+		public int bytes() {
+			return bytes;
 		}
 	}
 
