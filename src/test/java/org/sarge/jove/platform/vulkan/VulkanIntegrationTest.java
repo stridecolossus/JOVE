@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import static org.junit.Assert.assertNotNull;
-import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -18,10 +17,10 @@ import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.VertexBufferObject;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Handle;
-import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Service;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
@@ -31,9 +30,9 @@ import org.sarge.jove.platform.vulkan.Feature.ValidationLayer;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracker;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
+import org.sarge.jove.util.BufferFactory;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class VulkanIntegrationTest {
 
@@ -82,7 +81,7 @@ public class VulkanIntegrationTest {
 
 		final RenderPass pass = pass();
 
-		final Pointer vbo = vertexBuffer(physical);
+		final VertexBufferObject vbo = vertexBuffer();
 
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass);
 
@@ -385,14 +384,15 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, Pointer vbo) {
+	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VertexBufferObject vbo) {
 		System.out.println("Recording command");
 
 		final Rectangle extent = new Rectangle(0, 0, 640, 480);
 		final Colour[] clear = {new Colour(0.3f, 0.3f, 0.3f, 1)};
 
 		// TODO - created from VBO?
-		final Command bindVBO = (lib, cmd) -> lib.vkCmdBindVertexBuffers(cmd, 0, 1, new Pointer[]{vbo}, new long[]{0});
+		final Pointer ptr = ((Handle) vbo).handle();
+		final Command bindVBO = (lib, cmd) -> lib.vkCmdBindVertexBuffers(cmd, 0, 1, new Pointer[]{ptr}, new long[]{0});
 		final Command draw = (api, cb) -> api.vkCmdDraw(cb, 3, 1, 0, 0);
 
 		buffer
@@ -405,7 +405,32 @@ public class VulkanIntegrationTest {
 			.end();
 	}
 
-	private Pointer vertexBuffer(PhysicalDevice physical) {
+	private VertexBufferObject vertexBuffer() {
+		final VertexBufferObject vbo = new VulkanVertexBufferObject.Builder(dev)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+			.size(3 * (3 + 4) * Float.BYTES)
+			.build();
+
+		// TODO
+		final ByteBuffer bb = BufferFactory.byteBuffer(3 * (3 + 4) * Float.BYTES);
+		final FloatBuffer fb = bb.asFloatBuffer();
+		new Point(0, -0.5f, 0).buffer(fb);
+		new Colour(1, 0, 0, 1).buffer(fb);
+		new Point(0.5f, 0.5f, 0).buffer(fb);
+		new Colour(1, 1, 1, 1).buffer(fb);
+		new Point(-0.5f, 0.5f, 0).buffer(fb);
+		new Colour(0, 0, 1, 1).buffer(fb);
+		fb.flip();
+
+		vbo.push(bb);
+
+		return vbo;
+	}
+
+/*
+
 		// Create buffer
 
 		final VkBufferCreateInfo info = new VkBufferCreateInfo();
@@ -449,7 +474,8 @@ System.out.println("reqs="+reqs);
 
 		// Fill buffer
 
-		check(lib.vkBindBufferMemory(dev.handle(), handle, mem.getValue(), 0L));
+		//check(lib.vkBindBufferMemory(dev.handle(), handle, mem.getValue(), 0L));
+		vbo.bind();
 
 //		final ByteBuffer bb = BufferFactory.byteBuffer((int) info.size);
 //		final FloatBuffer fb = bb.asFloatBuffer(); // BufferFactory.floatBuffer(3 * MutableVertex.SIZE);
@@ -492,4 +518,6 @@ System.out.println("reqs="+reqs);
 
 		return handle;
 	}
+*/
+
 }

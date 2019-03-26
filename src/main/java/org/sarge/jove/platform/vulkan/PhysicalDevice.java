@@ -13,6 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.AbstractEqualsObject;
@@ -77,6 +78,37 @@ public class PhysicalDevice extends AbstractObject {
 	}
 
 	/**
+	 * Memory selection helper.
+	 */
+	public static class MemorySelector {
+		private final VkPhysicalDeviceMemoryProperties props;
+
+		/**
+		 * Constructor.
+		 * @param props
+		 */
+		protected MemorySelector(VkPhysicalDeviceMemoryProperties props) {
+			this.props = notNull(props);
+		}
+
+		/**
+		 * Finds a memory type for the given memory properties.
+		 * @param flags Memory properties
+		 * @return Memory type index
+		 * @throws ServiceException if no suitable memory type is available
+		 */
+		public int findMemoryType(Set<VkMemoryPropertyFlag> flags) {
+			final int mask = IntegerEnumeration.mask(flags);
+			for(int n = 0; n < props.memoryTypeCount; ++n) {
+				if(props.memoryTypes[n].propertyFlags == mask) {
+					return n;
+				}
+			}
+			throw new ServiceException("No memory type available for specified memory properties:" + flags);
+		}
+	}
+
+	/**
 	 * Creates a physical device and retrieves associated data.
 	 * @param handle 		Device handle
 	 * @param instance		Parent instance
@@ -94,6 +126,10 @@ public class PhysicalDevice extends AbstractObject {
 		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		lib.vkGetPhysicalDeviceFeatures(handle, features);
 
+		// Get memory properties
+		final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
+		lib.vkGetPhysicalDeviceMemoryProperties(handle, mem);
+
 		// Get queue families
 		final VulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
 			lib.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
@@ -107,7 +143,7 @@ public class PhysicalDevice extends AbstractObject {
 		final Supported supported = new Supported(extensions, layers);
 
 		// Create device
-		return new PhysicalDevice(handle, instance, props, features, Arrays.asList(families), supported);
+		return new PhysicalDevice(handle, instance, props, mem, features, Arrays.asList(families), supported);
 	}
 
 	static List<PhysicalDevice> create(VulkanInstance instance) {
@@ -118,6 +154,7 @@ public class PhysicalDevice extends AbstractObject {
 	private final Pointer handle;
 	private final VulkanInstance instance;
 	private final VkPhysicalDeviceProperties props;
+	private final VkPhysicalDeviceMemoryProperties mem;
 	private final VkPhysicalDeviceFeatures features;
 	private final List<QueueFamily> families;
 	private final Supported supported;
@@ -126,15 +163,17 @@ public class PhysicalDevice extends AbstractObject {
 	 * Constructor.
 	 * @param handle			Device handle
 	 * @param lib				Vulkan instance
-	 * @param props				Properties
+	 * @param props				Device properties
+	 * @param mem				Memory properties
 	 * @param features			Features
 	 * @param families			Queue families
 	 * @param supported			Supported device features
 	 */
-	PhysicalDevice(Pointer handle, VulkanInstance instance, VkPhysicalDeviceProperties props, VkPhysicalDeviceFeatures features, List<VkQueueFamilyProperties> families, Supported supported) {
+	PhysicalDevice(Pointer handle, VulkanInstance instance, VkPhysicalDeviceProperties props, VkPhysicalDeviceMemoryProperties mem, VkPhysicalDeviceFeatures features, List<VkQueueFamilyProperties> families, Supported supported) {
 		this.handle = notNull(handle);
 		this.instance = notNull(instance);
 		this.props = notNull(props);
+		this.mem = notNull(mem);
 		this.features = notNull(features);
 		this.families = families.stream().map(QueueFamily::new).collect(toList());
 		this.supported = notNull(supported);
@@ -165,7 +204,14 @@ public class PhysicalDevice extends AbstractObject {
 	 * @return Properties of this device
 	 */
 	public VkPhysicalDeviceProperties properties() {
-		return StructureHelper.copy(props, new VkPhysicalDeviceProperties());
+		return StructureHelper.copy(props, new VkPhysicalDeviceProperties()); // TODO - nasty
+	}
+
+	/**
+	 * @return Memory selector for this device
+	 */
+	public MemorySelector selector() {
+		return new MemorySelector(mem);
 	}
 
 	/**

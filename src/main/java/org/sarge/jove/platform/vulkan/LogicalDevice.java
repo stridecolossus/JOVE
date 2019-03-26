@@ -25,16 +25,26 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class LogicalDevice extends VulkanHandle {
+	private final PhysicalDevice parent;
 	private final Map<QueueFamily, List<WorkQueue>> queues;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Device handle
+	 * @param parent		Parent physical device
 	 * @param queues		Queues ordered by family
 	 */
-	LogicalDevice(VulkanHandle handle, Map<QueueFamily, List<WorkQueue>> queues) {
+	LogicalDevice(VulkanHandle handle, PhysicalDevice parent, Map<QueueFamily, List<WorkQueue>> queues) {
 		super(handle);
+		this.parent = notNull(parent);
 		this.queues = Map.copyOf(queues);
+	}
+
+	/**
+	 * @return Parent physical device
+	 */
+	public PhysicalDevice parent() {
+		return parent;
 	}
 
 	/**
@@ -88,18 +98,18 @@ public class LogicalDevice extends VulkanHandle {
 	 * Builder for a logical device.
 	 */
 	public static class Builder extends Feature.AbstractBuilder<Builder> {
-		private final PhysicalDevice device;
+		private final PhysicalDevice parent;
 		private final List<VkDeviceQueueCreateInfo> queues = new StrictList<>();
 
 		private VkPhysicalDeviceFeatures features;
 
 		/**
 		 * Constructor.
-		 * @param device Parent physical device
+		 * @param parent Parent physical device
 		 */
-		public Builder(PhysicalDevice device) {
-			super(device.supported());
-			this.device = notNull(device);
+		public Builder(PhysicalDevice parent) {
+			super(parent.supported());
+			this.parent = notNull(parent);
 		}
 
 		/**
@@ -143,7 +153,7 @@ public class LogicalDevice extends VulkanHandle {
 		 */
 		public Builder queue(QueueFamily family, float[] priorities) {
 			// Validate
-			if(!device.families().contains(family)) {
+			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for device: " + family);
 			}
 			Check.notEmpty(priorities);
@@ -167,14 +177,14 @@ public class LogicalDevice extends VulkanHandle {
 		/**
 		 * Constructs this logical device.
 		 * @return New logical device
-		 * @throws ServiceException if the deviuce cannot be created or the required features are not supported by the physical device
+		 * @throws ServiceException if the device cannot be created or the required features are not supported by the physical device
 		 */
 		public LogicalDevice build() {
 			// Create descriptor
 			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
 
 			// Add required features
-			final var unsupported = device.enumerateUnsupportedFeatures(features);
+			final var unsupported = parent.enumerateUnsupportedFeatures(features);
 			if(!unsupported.isEmpty()) throw new ServiceException("Logical device requires features that are not supported byy the physical device: " + unsupported);
 			info.pEnabledFeatures = features;
 
@@ -196,13 +206,13 @@ public class LogicalDevice extends VulkanHandle {
 			final Vulkan vulkan = Vulkan.instance();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference logical = vulkan.factory().reference();
-			check(lib.vkCreateDevice(device.handle(), info, null, logical));
+			check(lib.vkCreateDevice(parent.handle(), info, null, logical));
 
 			// Retrieve queue handles
 			final Map<QueueFamily, List<WorkQueue>> map = new HashMap<>();
 			for(VkDeviceQueueCreateInfo q : queues) {
 				// Create entry for each family
-				final QueueFamily family = device.families().get(q.queueFamilyIndex);
+				final QueueFamily family = parent.families().get(q.queueFamilyIndex);
 				final List<WorkQueue> handles = map.computeIfAbsent(family, ignored -> new ArrayList<>());
 
 				// Retrieve queue handles for this family
@@ -220,7 +230,7 @@ public class LogicalDevice extends VulkanHandle {
 			// Create logical device
 			final Pointer handle = logical.getValue();
 			final Destructor destructor = () -> lib.vkDestroyDevice(handle, null);
-			return new LogicalDevice(new VulkanHandle(handle, destructor), map);
+			return new LogicalDevice(new VulkanHandle(handle, destructor), parent, map);
 			// TODO - resource/track
 		}
 	}

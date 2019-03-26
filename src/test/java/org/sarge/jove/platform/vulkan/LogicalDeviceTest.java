@@ -28,15 +28,22 @@ import com.sun.jna.Pointer;
 
 public class LogicalDeviceTest extends AbstractVulkanTest {
 	private LogicalDevice dev;
+	private PhysicalDevice parent;
 	private QueueFamily family;
 	private WorkQueue queue;
 
 	@BeforeEach
 	public void before() {
+		parent = mock(PhysicalDevice.class);
 		family = mock(QueueFamily.class);
 		when(family.count()).thenReturn(1);
 		queue = mock(WorkQueue.class);
-		dev = new LogicalDevice(new VulkanHandle(new Pointer(42), Destructor.NULL), Map.of(family, List.of(queue)));
+		dev = new LogicalDevice(new VulkanHandle(new Pointer(42), Destructor.NULL), parent, Map.of(family, List.of(queue)));
+	}
+
+	@Test
+	public void constructor() {
+		assertEquals(parent, dev.parent());
 	}
 
 	@Test
@@ -68,13 +75,11 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 
 	@Nested
 	class BuilderTests {
-		private PhysicalDevice parent;
 		private LogicalDevice.Builder builder;
 
 		@BeforeEach
 		public void before() {
 			// Create parent device
-			parent = mock(PhysicalDevice.class);
 			when(parent.supported()).thenReturn(mock(Supported.class));
 			when(parent.families()).thenReturn(List.of(family));
 
