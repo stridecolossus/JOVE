@@ -28,7 +28,7 @@ public class IndexedModelTest {
 
 	@Test
 	public void constructor() {
-		assertEquals(3, model.size());
+		assertEquals(3, model.length());
 		assertEquals(2, model.vertices().size());
 		assertEquals(true, model.isIndexed());
 		assertArrayEquals(new int[]{1, 0, 1}, model.indices().toArray());

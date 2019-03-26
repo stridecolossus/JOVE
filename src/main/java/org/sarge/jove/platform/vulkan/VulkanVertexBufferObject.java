@@ -65,6 +65,11 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 		lib.vkUnmapMemory(dev, mem);
 	}
 
+	@Override
+	public Command bind() {
+		return (lib, cmd) -> lib.vkCmdBindVertexBuffers(cmd, 0, 1, new Pointer[]{super.handle()}, new long[]{0});
+	}
+
 	/**
 	 * Builder for a VBO.
 	 */

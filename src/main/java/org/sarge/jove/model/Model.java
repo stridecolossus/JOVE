@@ -82,9 +82,9 @@ public class Model<V extends MutableNormalVertex> {
 	}
 
 	/**
-	 * @return Size of this model
+	 * @return Number of vertices
 	 */
-	public int size() {
+	public int length() {
 		return vertices.size();
 	}
 
@@ -260,7 +260,7 @@ public class Model<V extends MutableNormalVertex> {
 			.setExcludeFieldNames("vertices", "indices")
 			.append("indexed", isIndexed())
 			.append("vertices", vertices.size())
-			.append("size", size())
+			.append("size", length())
 			.toString();
 	}
 

@@ -30,7 +30,7 @@ public class IndexedModel extends Model {
 	}
 
 	@Override
-	public int size() {
+	public int length() {
 		return indices.length;
 	}
 

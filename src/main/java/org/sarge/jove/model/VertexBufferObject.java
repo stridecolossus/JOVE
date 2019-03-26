@@ -11,13 +11,14 @@ import java.util.List;
 
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.platform.Resource;
+import org.sarge.jove.platform.vulkan.Command;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
 import org.sarge.jove.platform.vulkan.VulkanHelper;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
- * A <i>vertex buffer object</i> (VBO) defines the layout of data to be pushed to the graphics system.
+ * A <i>vertex buffer object</i> (VBO) is used to upload vertex data to the hardware.
  * @author Sarge
  */
 public interface VertexBufferObject extends Resource {
@@ -25,6 +26,11 @@ public interface VertexBufferObject extends Resource {
 	 * Pushes data to this VBO.
 	 */
 	void push(ByteBuffer buffer);
+
+	/**
+	 * @return Command to bind this VBO
+	 */
+	Command bind();
 
 	/**
 	 * VBO layout descriptor.

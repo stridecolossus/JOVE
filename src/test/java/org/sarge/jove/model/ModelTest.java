@@ -50,7 +50,7 @@ public class ModelTest {
 			assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
 			assertEquals(false, model.isIndexed());
 			assertEquals(List.of(Component.POSITION), model.components());
-			assertEquals(4, model.size());
+			assertEquals(4, model.length());
 		}
 
 		@Test
