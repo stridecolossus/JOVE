@@ -108,7 +108,7 @@ public class WorkQueue extends Handle {
 		}
 	}
 
-	private final VulkanLibraryDevice lib = Vulkan.instance().library();
+	private final VulkanLibrarySystem lib = Vulkan.instance().library();
 
 	/**
 	 * Constructor.

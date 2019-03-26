@@ -30,5 +30,5 @@ public class VkPipelineColorBlendAttachmentState extends VulkanStructure {
 	public VkBlendFactor srcAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE;
 	public VkBlendFactor dstAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ZERO;
 	public VkBlendOp alphaBlendOp = VkBlendOp.VK_BLEND_OP_ADD;
-	public int colorWriteMask = VkColorComponentFlag.DEFAULT;
+	public int colorWriteMask = VulkanHelper.DEFAULT_COLOUR_COMPONENT;
 }

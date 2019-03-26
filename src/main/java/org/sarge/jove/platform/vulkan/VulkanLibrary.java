@@ -18,7 +18,7 @@ import com.sun.jna.Structure;
 /**
  * Vulkan API.
  */
-interface VulkanLibrary extends Library, VulkanLibraryInstance, VulkanLibraryDevice, VulkanLibraryCommandBuffer, VulkanLibrarySurface, VulkanLibraryPipeline, VulkanLibraryImage, VulkanLibrarySynchronize {
+interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraphics, VulkanLibraryUtility {
 	/**
 	 * Vulkan API version.
 	 */
