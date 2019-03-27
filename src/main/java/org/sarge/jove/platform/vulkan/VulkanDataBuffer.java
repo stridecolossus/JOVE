@@ -7,7 +7,7 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-import org.sarge.jove.model.VertexBufferObject;
+import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.lib.collection.StrictSet;
 
@@ -18,7 +18,7 @@ import com.sun.jna.ptr.PointerByReference;
  * Vulkan implementation.
  * @author Sarge
  */
-class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObject {
+class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 	private final long len;
 	private final Pointer mem;
 	private final Pointer dev;
@@ -30,7 +30,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 	 * @param mem			VBO memory
 	 * @param dev			Logical device
 	 */
-	protected VulkanVertexBufferObject(VulkanHandle handle, long len, Pointer mem, LogicalDevice dev) {
+	protected VulkanDataBuffer(VulkanHandle handle, long len, Pointer mem, LogicalDevice dev) {
 		super(handle);
 		this.len = oneOrMore(len);
 		this.mem = notNull(mem);
@@ -65,15 +65,21 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 	}
 
 	@Override
-	public Command bind() {
-		return (lib, cmd) -> lib.vkCmdBindVertexBuffers(cmd, 0, 1, new Pointer[]{super.handle()}, new long[]{0});
+	public Command bindVertexBuffer() {
+		return (api, cb) -> api.vkCmdBindVertexBuffers(cb, 0, 1, new Pointer[]{super.handle()}, new long[]{0});
+	}
+
+	@Override
+	public Command bindIndex() {
+		return (api, cb) -> api.vkCmdBindIndexBuffer(cb, super.handle(), 0L, VkIndexType.VK_INDEX_TYPE_UINT32);
 	}
 
 	/**
 	 * Builder for a VBO.
 	 */
 	static class Builder {
-		private final LogicalDevice dev;
+		protected final LogicalDevice dev;
+
 		private final Set<VkBufferUsageFlag> usage = new StrictSet<>();
 		private final Set<VkMemoryPropertyFlag> props = new StrictSet<>();
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
@@ -83,7 +89,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 		 * Constructor.
 		 * @param dev Logical device
 		 */
-		public Builder(LogicalDevice dev) {
+		protected Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
 		}
 
@@ -127,7 +133,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 		 * Constructs this VBO.
 		 * @return New VBO
 		 */
-		public VulkanVertexBufferObject build() {
+		public VulkanDataBuffer build() {
 			// Validate
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
 			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
@@ -169,7 +175,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 				lib.vkFreeMemory(logical, mem.getValue(), null);
 				lib.vkDestroyBuffer(logical, handle, null);
 			};
-			return new VulkanVertexBufferObject(new VulkanHandle(handle, destructor), len, mem.getValue(), dev);
+			return new VulkanDataBuffer(new VulkanHandle(handle, destructor), len, mem.getValue(), dev);
 		}
 	}
 }

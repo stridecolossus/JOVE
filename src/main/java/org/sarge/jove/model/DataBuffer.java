@@ -15,19 +15,16 @@ import org.sarge.jove.platform.vulkan.Command;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
- * A <i>vertex buffer object</i> (VBO) is used to upload vertex data to the hardware.
+ * A <i>vertex buffer</i> (VBO) is used to upload vertex data to the hardware.
  * @author Sarge
  */
-public interface VertexBufferObject extends Resource {
-	/**
-	 * Pushes data to this VBO.
-	 */
+public interface DataBuffer extends Resource {
+
 	void push(ByteBuffer buffer);
 
-	/**
-	 * @return Command to bind this VBO
-	 */
-	Command bind();
+	Command bindVertexBuffer();
+
+	Command bindIndex();
 
 	/**
 	 * VBO layout descriptor.

@@ -19,11 +19,11 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.MutableVertex;
-import org.sarge.jove.model.VertexBufferObject;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Handle;
@@ -106,13 +106,13 @@ public class VulkanIntegrationTest {
 
 		final Model<?> model = model();
 
-		final VertexBufferObject.Layout layout = new VertexBufferObject.Layout.Builder()
+		final DataBuffer.Layout layout = new DataBuffer.Layout.Builder()
 			.add(Component.POSITION)
 			.add(Component.COLOUR)
 			.build();
 
-		final VertexBufferObject vbo = vertexBuffer(model, layout);
-		final VertexBufferObject indexBuffer = indexBuffer();
+		final DataBuffer vbo = vertexBuffer(model, layout);
+		final DataBuffer indexBuffer = indexBuffer();
 
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout);
 
@@ -389,7 +389,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, VertexBufferObject.Layout layout) {
+	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, DataBuffer.Layout layout) {
 		System.out.println("Creating pipeline");
 		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), extent);
 		return new Pipeline.Builder(dev, pass)
@@ -411,14 +411,13 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VertexBufferObject vbo, VertexBufferObject index) {
+	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, DataBuffer vbo, DataBuffer index) {
 		System.out.println("Recording command");
 
 		final Rectangle extent = new Rectangle(0, 0, 640, 480);
 		final Colour[] clear = {new Colour(0.3f, 0.3f, 0.3f, 1)};
 
 		// TODO - created from VBO?
-		final Command bindIndex = (api, cb) -> api.vkCmdBindIndexBuffer(cb, ((VulkanVertexBufferObject) index).handle(), 0L, VkIndexType.VK_INDEX_TYPE_UINT32);
 		final Command draw = (api, cb) -> api.vkCmdDrawIndexed(cb, 3, 1, 0, 0, 0);
 		//final Command draw = (api, cb) -> api.vkCmdDraw(cb, 3, 1, 0, 0);
 
@@ -426,8 +425,8 @@ public class VulkanIntegrationTest {
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
 			.add(pass.begin(fb, extent, clear))
 			.add(pipeline.bind())
-			.add(vbo.bind())
-			.add(bindIndex)
+			.add(vbo.bindVertexBuffer())
+			.add(index.bindIndex())
 			.add(draw)
 			.add(RenderPass.END_COMMAND)
 			.end();
@@ -462,10 +461,10 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private VertexBufferObject vertexBuffer(Model<?> model, VertexBufferObject.Layout layout) {
+	private DataBuffer vertexBuffer(Model<?> model, DataBuffer.Layout layout) {
 		System.out.println("Creating VBO");
 		final long size = model.length() * layout.stride();
-		final VulkanVertexBufferObject vbo = new VulkanVertexBufferObject.Builder(dev)
+		final DataBuffer vbo = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -484,10 +483,10 @@ public class VulkanIntegrationTest {
 		return vbo;
 	}
 
-	private VertexBufferObject indexBuffer() {
+	private DataBuffer indexBuffer() {
 		System.out.println("Creating index buffer");
 		final int len = 3 * Integer.BYTES;
-		final VulkanVertexBufferObject index = new VulkanVertexBufferObject.Builder(dev)
+		final VulkanDataBuffer index = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -505,10 +504,10 @@ public class VulkanIntegrationTest {
 		return index;
 	}
 
-	private void copy(VulkanVertexBufferObject buffer, ByteBuffer data) {
+	private void copy(DataBuffer buffer, ByteBuffer data) {
 		System.out.println("Creating staging buffer");
 		final long len = data.capacity();
-		final VulkanVertexBufferObject staging = new VulkanVertexBufferObject.Builder(dev)
+		final VulkanDataBuffer staging = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -521,7 +520,10 @@ public class VulkanIntegrationTest {
 		System.out.println("Recording copy operation");
 		final VkBufferCopy info = new VkBufferCopy();
 		info.size = len;
-		final Command copy = (lib, cb) -> lib.vkCmdCopyBuffer(cb, staging.handle(), buffer.handle(), 1, new VkBufferCopy[]{info});
+		final Command copy = (lib, cb) -> {
+			final Handle dest = (VulkanDataBuffer) buffer;
+			lib.vkCmdCopyBuffer(cb, staging.handle(), dest.handle(), 1, new VkBufferCopy[]{info});
+		};
 		final Command.Buffer cmd = pool.allocate(1, true).iterator().next();
 		cmd
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)

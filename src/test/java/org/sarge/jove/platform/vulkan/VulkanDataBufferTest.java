@@ -15,24 +15,33 @@ import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 
 import com.sun.jna.Pointer;
 
-public class VulkanVertexBufferObjectTest extends AbstractVulkanTest {
-	private VulkanVertexBufferObject vbo;
+public class VulkanDataBufferTest extends AbstractVulkanTest {
+	private VulkanDataBuffer vbo;
 	private Pointer mem;
 
 	@BeforeEach
 	public void before() {
 		mem = mock(Pointer.class);
-		vbo = new VulkanVertexBufferObject(new VulkanHandle(mock(Pointer.class), Destructor.NULL), 3, mem, device);
+		vbo = new VulkanDataBuffer(new VulkanHandle(mock(Pointer.class), Destructor.NULL), 3, mem, device);
 	}
 
 	@Test
-	public void bind() {
+	public void bindVertexBuffer() {
 		final Pointer buffer = mock(Pointer.class);
-		final Command cmd = vbo.bind();
+		final Command cmd = vbo.bindVertexBuffer();
 		assertNotNull(cmd);
 		cmd.execute(library, buffer);
 		verify(library).vkCmdBindVertexBuffers(buffer, 0, 1, new Pointer[]{vbo.handle()}, new long[]{0});
 	}
+
+//	@Test
+//	public void bindIndexBuffer() {
+//		final Pointer buffer = mock(Pointer.class);
+//		final Command cmd = vbo.bindIndex();
+//		assertNotNull(cmd);
+//		cmd.execute(library, buffer);
+//		verify(library).vkCmdBindVertexBuffers(buffer, 0, 1, new Pointer[]{vbo.handle()}, new long[]{0});
+//	}
 
 	@Test
 	public void push() {
@@ -48,11 +57,11 @@ public class VulkanVertexBufferObjectTest extends AbstractVulkanTest {
 
 	@Nested
 	class BuilderTests {
-		private VulkanVertexBufferObject.Builder builder;
+		private VulkanDataBuffer.Builder builder;
 
 		@BeforeEach
 		public void before() {
-			builder = new VulkanVertexBufferObject.Builder(device);
+			builder = new VulkanDataBuffer.Builder(device);
 		}
 
 		@Disabled("how to mock selector, etc") // TODO

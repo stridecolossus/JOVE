@@ -10,12 +10,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.model.Vertex.Component;
-import org.sarge.jove.model.VertexBufferObject.Layout;
-import org.sarge.jove.model.VertexBufferObject.Layout.Attribute;
-import org.sarge.jove.model.VertexBufferObject.Layout.Builder;
-import org.sarge.jove.model.VertexBufferObject.Layout.Rate;
+import org.sarge.jove.model.DataBuffer.Layout;
+import org.sarge.jove.model.DataBuffer.Layout.Attribute;
+import org.sarge.jove.model.DataBuffer.Layout.Builder;
+import org.sarge.jove.model.DataBuffer.Layout.Rate;
 
-public class VertexBufferObjectTest {
+public class DataBufferTest {
 	@Nested
 	class AttributeTests {
 		@Test
