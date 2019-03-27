@@ -31,7 +31,7 @@ public interface VertexBuffer extends Resource {
 	Command bind();
 
 	/**
-	 * VBO layout descriptor.
+	 * A <i>vertex buffer layout</i> defines the structure of a VBO.
 	 */
 	public static class Layout extends AbstractEqualsObject {
 		/**

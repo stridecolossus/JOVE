@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.sarge.jove.platform.Resource;
 
 /**
- * A <i>data buffer</i> is used to upload vertex data to the hardware.
+ * A <i>data buffer</i> is used to upload buffered data to the hardware.
  * @author Sarge
  */
 public interface DataBuffer extends Resource {

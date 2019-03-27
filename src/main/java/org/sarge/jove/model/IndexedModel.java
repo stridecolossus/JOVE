@@ -5,11 +5,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import org.sarge.jove.model.Vertex.MutableNormalVertex;
+
 /**
  * An <i>indexed model</i> is a model with indexed vertices.
  * @author Sarge
  */
-public class IndexedModel extends Model {
+public class IndexedModel<T extends MutableNormalVertex> extends Model<T> {
 	private final int[] indices;
 
 	/**
@@ -18,7 +20,7 @@ public class IndexedModel extends Model {
 	 * @param indices		Indices
 	 * @throws IllegalArgumentException if the number of vertices/indices is not valid for the drawing primitive
 	 */
-	public IndexedModel(Model model, int[] indices) {
+	public IndexedModel(Model<T> model, int[] indices) {
 		super(model);
 		this.indices = Arrays.copyOf(indices, indices.length);
 		if(!model.primitive().isValidVertexCount(indices.length)) throw new IllegalArgumentException("Invalid number of indices for primitive: " + this);
@@ -35,7 +37,7 @@ public class IndexedModel extends Model {
 	}
 
 	@Override
-	public Iterator<List<Vertex>> faces() {
+	public Iterator<List<T>> faces() {
 		final var vertices = super.vertices();
 		final var itr = Arrays.stream(indices).mapToObj(vertices::get).iterator();
 		return new FaceIterator(itr);

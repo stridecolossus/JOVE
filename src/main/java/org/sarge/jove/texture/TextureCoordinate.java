@@ -88,6 +88,11 @@ public interface TextureCoordinate extends Bufferable {
 	 */
 	class Coordinate2D extends Coordinate1D {
 		/**
+		 * Size of 2D coordinates.
+		 */
+		public static final int SIZE = 2;
+
+		/**
 		 * Texture coordinates for a quad.
 		 */
 		public enum Corner {

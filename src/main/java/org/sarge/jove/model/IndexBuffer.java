@@ -17,7 +17,7 @@ public interface IndexBuffer extends Resource {
 	void push(ByteBuffer buffer);
 
 	/**
-	 * @return Command to bind this buffer
+	 * @return Command to bind this index buffer
 	 */
 	Command bind();
 }

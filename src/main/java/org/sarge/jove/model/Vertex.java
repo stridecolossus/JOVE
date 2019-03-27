@@ -23,6 +23,21 @@ import org.sarge.lib.util.AbstractObject;
  * Note that the order that components are written using {@link #buffer(FloatBuffer)} is assumed to be dependant on the implementing vertex class.
  * It is the responsibility of the user to ensure that the location of components within a vertex matches the target shader.
  *
+ * For example, the convenience {@link MutableVertex} class could be extended to omit components or over-ride the buffering order:
+ * <pre>
+ * class CustomVertex extends MutableVertex {
+ *     public int size() {
+ *         return Coordinate2D.SIZE + Point.SIZE;
+ *     }
+ *
+ *     public void buffer(FloatBuffer fb) {
+ *         coords.buffer(fb);
+ *         pos.buffer(fb);
+ *     }
+ * }
+ * </pre>
+ *
+ *
  * TODO - revert to vertex returning components[]? has to return size anyway
  *
  * @author Sarge
@@ -177,9 +192,9 @@ public interface Vertex extends Bufferable {
 
 		private static final Vector EMPTY = new Vector(0, 0, 0);
 
-		private Point pos;
-		private Vector normal = EMPTY;
-		private TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.Corner.BOTTOM_LEFT.coordinates();
+		protected Point pos;
+		protected Vector normal = EMPTY;
+		protected TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.Corner.BOTTOM_LEFT.coordinates();
 
 		/**
 		 * Default constructor.
