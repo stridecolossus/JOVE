@@ -7,6 +7,7 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
+import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.IndexBuffer;
 import org.sarge.jove.model.VertexBuffer;
 import org.sarge.jove.platform.IntegerEnumeration;
@@ -19,7 +20,7 @@ import com.sun.jna.ptr.PointerByReference;
  * Vulkan implementation.
  * @author Sarge
  */
-class VulkanDataBuffer extends VulkanHandle { //implements DataBuffer {
+class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 	private final long len;
 	private final Pointer mem;
 	private final Pointer dev;
@@ -45,8 +46,8 @@ class VulkanDataBuffer extends VulkanHandle { //implements DataBuffer {
 		return len;
 	}
 
-	//@Override
-	protected void push(ByteBuffer buffer) {
+	@Override
+	public void push(ByteBuffer buffer) {
 		// Check buffer
 		final int actual = buffer.capacity();
 		if(actual > len) throw new IllegalArgumentException(String.format("Buffer exceeds VBO size: len=%d max=%d", actual, len));
@@ -65,15 +66,46 @@ class VulkanDataBuffer extends VulkanHandle { //implements DataBuffer {
 		lib.vkUnmapMemory(dev, mem);
 	}
 
-//	@Override
-//	public Command bindVertexBuffer() {
-//		return (api, cb) -> api.vkCmdBindVertexBuffers(cb, 0, 1, new Pointer[]{super.handle()}, new long[]{0});
-//	}
-//
-//	@Override
-//	public Command bindIndex() {
-//		return (api, cb) -> api.vkCmdBindIndexBuffer(cb, super.handle(), 0L, VkIndexType.VK_INDEX_TYPE_UINT32);
-//	}
+
+	@Override
+	public VertexBuffer toVertexBuffer() {
+		return new VertexBuffer() {
+			@Override
+			public void push(ByteBuffer buffer) {
+				push(buffer);
+			}
+
+			@Override
+			public Command bind() {
+				return (api, cb) -> api.vkCmdBindVertexBuffers(cb, 0, 1, new Pointer[]{handle()}, new long[]{0});
+			}
+
+			@Override
+			public void destroy() {
+				VulkanDataBuffer.this.destroy();
+			}
+		};
+	}
+
+	@Override
+	public IndexBuffer toIndexBuffer() {
+		return new IndexBuffer() {
+			@Override
+			public void push(ByteBuffer bb) {
+				push(bb);
+			}
+
+			@Override
+			public Command bind() {
+				return (api, cb) -> api.vkCmdBindIndexBuffer(cb, handle(), 0L, VkIndexType.VK_INDEX_TYPE_UINT32); // TODO - both sizes
+			}
+
+			@Override
+			public void destroy() {
+				VulkanDataBuffer.this.destroy();
+			}
+		};
+	}
 
 	/**
 	 * Builder for a VBO.
@@ -131,10 +163,10 @@ class VulkanDataBuffer extends VulkanHandle { //implements DataBuffer {
 		}
 
 		/**
-		 * Constructs this VBO.
-		 * @return New VBO
+		 * Constructs this buffer.
+		 * @return New data buffer
 		 */
-		protected VulkanDataBuffer build() {
+		public VulkanDataBuffer build() {
 			// Validate
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
 			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
@@ -177,54 +209,6 @@ class VulkanDataBuffer extends VulkanHandle { //implements DataBuffer {
 				lib.vkDestroyBuffer(logical, handle, null);
 			};
 			return new VulkanDataBuffer(new VulkanHandle(handle, destructor), len, mem.getValue(), dev);
-		}
-
-		/**
-		 *
-		 * @return
-		 */
-		public VertexBuffer toVertexBuffer() {
-			final VulkanDataBuffer buffer = build();
-			return new VertexBuffer() {
-				@Override
-				public void push(ByteBuffer bb) {
-					buffer.push(bb);
-				}
-
-				@Override
-				public Command bind() {
-					return (api, cb) -> api.vkCmdBindVertexBuffers(cb, 0, 1, new Pointer[]{buffer.handle()}, new long[]{0});
-				}
-
-				@Override
-				public void destroy() {
-					buffer.destroy();
-				}
-			};
-		}
-
-		/**
-		 *
-		 * @return
-		 */
-		public IndexBuffer toIndexBuffer() {
-			final VulkanDataBuffer buffer = build();
-			return new IndexBuffer() {
-				@Override
-				public void push(ByteBuffer bb) {
-					buffer.push(bb);
-				}
-
-				@Override
-				public Command bind() {
-					return (api, cb) -> api.vkCmdBindIndexBuffer(cb, buffer.handle(), 0L, VkIndexType.VK_INDEX_TYPE_UINT32); // TODO - both sizes
-				}
-
-				@Override
-				public void destroy() {
-					buffer.destroy();
-				}
-			};
 		}
 	}
 }

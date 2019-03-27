@@ -11,7 +11,6 @@ import java.util.List;
 
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.platform.Resource;
-import org.sarge.jove.platform.vulkan.Command;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
@@ -19,15 +18,21 @@ import org.sarge.lib.util.AbstractEqualsObject;
  * @author Sarge
  */
 public interface DataBuffer extends Resource {
-
+	/**
+	 * Pushes data to the hardware.
+	 * @param buffer Data buffer
+	 */
 	void push(ByteBuffer buffer);
 
-	Command bind();
+	/**
+	 * @return VBO
+	 */
+	VertexBuffer toVertexBuffer();
 
-	// TODO - here?
-	// - toVertexBuffer
-	// - toIndexBuffer
-	// => UOE if already converted
+	/**
+	 * @return Index buffer
+	 */
+	IndexBuffer toIndexBuffer();
 
 	/**
 	 * VBO layout descriptor.

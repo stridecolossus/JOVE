@@ -7,8 +7,6 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -113,8 +111,8 @@ public class VulkanIntegrationTest {
 			.add(Component.COLOUR)
 			.build();
 
-		final DataBuffer vbo = vertexBuffer(model, layout);
-		final DataBuffer indexBuffer = indexBuffer();
+		final VertexBuffer vbo = vertexBuffer(model, layout);
+		final IndexBuffer indexBuffer = indexBuffer();
 
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout);
 
@@ -320,19 +318,15 @@ public class VulkanIntegrationTest {
 		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		features.geometryShader = VulkanBoolean.TRUE;
 
-		final LogicalDevice.Builder builder = new LogicalDevice.Builder(physical)
-			// TODO - others?
+		return new LogicalDevice.Builder(physical)
+			.queue(graphics)
+			.queue(present)
+			.queue(transfer)
 			.extension(Extension.SWAP_CHAIN)
 			.layer(ValidationLayer.STANDARD_VALIDATION)
 			//.layer("VK_LAYER_VALVE_steam_overlay", 1)
-			.features(features);
-
-		// TODO - function of logical dev? i.e. user works with families but doesn't care if they are actually the same ones
-		for(QueueFamily f : new HashSet<>(Arrays.asList(graphics, present, transfer))) {
-			builder.queue(f);
-		}
-
-		return builder.build();
+			.features(features)
+			.build();
 	}
 
 	private DesktopService desktop() {
@@ -413,7 +407,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, DataBuffer vbo, DataBuffer index) {
+	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VertexBuffer vbo, IndexBuffer index) {
 		System.out.println("Recording command");
 
 		final Rectangle extent = new Rectangle(0, 0, 640, 480);
@@ -463,15 +457,15 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private DataBuffer vertexBuffer(Model<?> model, DataBuffer.Layout layout) {
+	private VertexBuffer vertexBuffer(Model<?> model, DataBuffer.Layout layout) {
 		System.out.println("Creating VBO");
 		final long size = model.length() * layout.stride();
-		final VertexBuffer vbo = new VulkanDataBuffer.Builder(dev)
+		final VulkanDataBuffer vbo = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.length(size)
-			.toVertexBuffer();
+			.build();
 
 		System.out.println("Buffering vertices");
 		// TODO - helper
@@ -482,18 +476,18 @@ public class VulkanIntegrationTest {
 
 		copy(vbo, bb);
 
-		return vbo;
+		return vbo.toVertexBuffer();
 	}
 
-	private DataBuffer indexBuffer() {
+	private IndexBuffer indexBuffer() {
 		System.out.println("Creating index buffer");
 		final int len = 3 * Integer.BYTES;
-		final IndexBuffer index = new VulkanDataBuffer.Builder(dev)
+		final VulkanDataBuffer index = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.length(len)
-			.toIndexBuffer();
+			.build();
 
 		final ByteBuffer bb = BufferFactory.byteBuffer(len);
 		final IntBuffer fb = bb.asIntBuffer();
@@ -503,7 +497,7 @@ public class VulkanIntegrationTest {
 
 		copy(index, bb);
 
-		return index;
+		return index.toIndexBuffer();
 	}
 
 	private void copy(DataBuffer buffer, ByteBuffer data) {
@@ -523,7 +517,7 @@ public class VulkanIntegrationTest {
 		final VkBufferCopy info = new VkBufferCopy();
 		info.size = len;
 		final Command copy = (lib, cb) -> {
-			final Handle dest = (VulkanDataBuffer) buffer;
+			final Handle dest = (Handle) buffer;
 			lib.vkCmdCopyBuffer(cb, staging.handle(), dest.handle(), 1, new VkBufferCopy[]{info});
 		};
 		final Command.Buffer cmd = pool.allocate(1, true).iterator().next();

@@ -127,7 +127,11 @@ public class LogicalDevice extends VulkanHandle {
 		 * @throws IllegalArgumentException if the queue family does not belong to the physical device
 		 */
 		public Builder queue(QueueFamily family) {
-			return queue(family, 1);
+			// TODO - dedup, need to work out what the requirements for this actually are
+			if(queues.stream().noneMatch(info -> info.queueFamilyIndex == family.index())) {
+				queue(family, 1);
+			}
+			return this;
 		}
 
 		/**

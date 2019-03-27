@@ -14,13 +14,13 @@ import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 import com.sun.jna.Pointer;
 
 public class VulkanDataBufferTest extends AbstractVulkanTest {
-	private VulkanDataBuffer vbo;
+	private VulkanDataBuffer buffer;
 	private Pointer mem;
 
 	@BeforeEach
 	public void before() {
 		mem = mock(Pointer.class);
-		vbo = new VulkanDataBuffer(new VulkanHandle(mock(Pointer.class), Destructor.NULL), 3, mem, device);
+		buffer = new VulkanDataBuffer(new VulkanHandle(mock(Pointer.class), Destructor.NULL), 3, mem, device);
 	}
 
 //	@Test
@@ -50,7 +50,7 @@ public class VulkanDataBufferTest extends AbstractVulkanTest {
 	@Test
 	public void pushInvalidBuffer() {
 		final ByteBuffer bb = ByteBuffer.allocate(999);
-		assertThrows(IllegalArgumentException.class, () -> vbo.push(bb));
+		assertThrows(IllegalArgumentException.class, () -> buffer.push(bb));
 	}
 
 	@Nested
@@ -65,7 +65,7 @@ public class VulkanDataBufferTest extends AbstractVulkanTest {
 		@Disabled("how to mock selector, etc") // TODO
 		@Test
 		public void build() {
-			vbo = builder
+			buffer = builder
 				.length(1)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.build();
