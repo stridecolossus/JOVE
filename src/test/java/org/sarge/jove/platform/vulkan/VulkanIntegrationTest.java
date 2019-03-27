@@ -20,10 +20,12 @@ import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DataBuffer;
+import org.sarge.jove.model.IndexBuffer;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.MutableVertex;
+import org.sarge.jove.model.VertexBuffer;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Handle;
@@ -425,8 +427,8 @@ public class VulkanIntegrationTest {
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
 			.add(pass.begin(fb, extent, clear))
 			.add(pipeline.bind())
-			.add(vbo.bindVertexBuffer())
-			.add(index.bindIndex())
+			.add(vbo.bind())
+			.add(index.bind())
 			.add(draw)
 			.add(RenderPass.END_COMMAND)
 			.end();
@@ -464,12 +466,12 @@ public class VulkanIntegrationTest {
 	private DataBuffer vertexBuffer(Model<?> model, DataBuffer.Layout layout) {
 		System.out.println("Creating VBO");
 		final long size = model.length() * layout.stride();
-		final DataBuffer vbo = new VulkanDataBuffer.Builder(dev)
+		final VertexBuffer vbo = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.length(size)
-			.build();
+			.toVertexBuffer();
 
 		System.out.println("Buffering vertices");
 		// TODO - helper
@@ -486,12 +488,12 @@ public class VulkanIntegrationTest {
 	private DataBuffer indexBuffer() {
 		System.out.println("Creating index buffer");
 		final int len = 3 * Integer.BYTES;
-		final VulkanDataBuffer index = new VulkanDataBuffer.Builder(dev)
+		final IndexBuffer index = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.length(len)
-			.build();
+			.toIndexBuffer();
 
 		final ByteBuffer bb = BufferFactory.byteBuffer(len);
 		final IntBuffer fb = bb.asIntBuffer();

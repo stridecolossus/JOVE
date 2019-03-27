@@ -5,30 +5,17 @@ import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.sarge.jove.model.Vertex.Component;
-import org.sarge.jove.platform.Resource;
-import org.sarge.jove.platform.vulkan.Command;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * A <i>vertex buffer</i> (VBO) is used to upload vertex data to the hardware.
  * @author Sarge
  */
-public interface DataBuffer extends Resource {
-
-	void push(ByteBuffer buffer);
-
-	Command bind();
-
-	// TODO - here?
-	// - toVertexBuffer
-	// - toIndexBuffer
-	// => UOE if already converted
-
+public interface VertexBuffer extends DataBuffer {
 	/**
 	 * VBO layout descriptor.
 	 */
