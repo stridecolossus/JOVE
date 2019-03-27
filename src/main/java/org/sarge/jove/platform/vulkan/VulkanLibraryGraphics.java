@@ -246,7 +246,7 @@ interface VulkanLibraryRenderPass {
 	void vkCmdNextSubpass(Pointer commandBuffer, VkSubpassContents contents);
 
 	/**
-	 * Command -
+	 * Command - Draws vertices.
 	 * @param commandBuffer			Command buffer
 	 * @param vertexCount			Number of vertices
 	 * @param instanceCount			Number of instances
@@ -254,6 +254,17 @@ interface VulkanLibraryRenderPass {
 	 * @param firstInstance			First index index
 	 */
 	void vkCmdDraw(Pointer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
+
+	/**
+	 * Command - Draws indexed vertices.
+	 * @param commandBuffer			Command buffer
+	 * @param indexCount			Number of indices
+	 * @param instanceCount			Number of instances
+	 * @param vertexCount			First index
+	 * @param vertexCount			Vertex offset
+	 * @param firstInstance			First instance
+	 */
+	void vkCmdDrawIndexed(Pointer commandBuffer, int indexCount, int instanceCount, int firstIndex, int vertexOffset, int firstInstance);
 }
 
 /**

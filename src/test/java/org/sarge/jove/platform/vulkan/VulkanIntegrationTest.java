@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ public class VulkanIntegrationTest {
 	private VulkanLibrary lib;
 	private LogicalDevice dev;
 	private QueueFamily graphics, present, transfer;
+	private Command.Pool pool;
 
 	public static void main(String[] args) throws Exception {
 		final VulkanIntegrationTest test = new VulkanIntegrationTest();
@@ -95,7 +97,7 @@ public class VulkanIntegrationTest {
 		final RenderPass pass = pass();
 
 		System.out.println("Creating command pool");
-		final Command.Pool pool = Command.Pool.create(dev, graphics);
+		pool = Command.Pool.create(dev, graphics);
 
 		////
 
@@ -109,7 +111,8 @@ public class VulkanIntegrationTest {
 			.add(Component.COLOUR)
 			.build();
 
-		final VertexBufferObject vbo = vertexBuffer(model, layout, pool);
+		final VertexBufferObject vbo = vertexBuffer(model, layout);
+		final VertexBufferObject indexBuffer = indexBuffer();
 
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout);
 
@@ -126,7 +129,7 @@ public class VulkanIntegrationTest {
 			frameBuffers[n] = fb;
 
 			final Command.Buffer cb = cmds.get(n);
-			record(cb, fb, pass, pipeline, vbo);
+			record(cb, fb, pass, pipeline, vbo, indexBuffer);
 		}
 
 		System.out.println("Creating frame tracker");
@@ -408,20 +411,23 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VertexBufferObject vbo) {
+	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VertexBufferObject vbo, VertexBufferObject index) {
 		System.out.println("Recording command");
 
 		final Rectangle extent = new Rectangle(0, 0, 640, 480);
 		final Colour[] clear = {new Colour(0.3f, 0.3f, 0.3f, 1)};
 
 		// TODO - created from VBO?
-		final Command draw = (api, cb) -> api.vkCmdDraw(cb, 3, 1, 0, 0);
+		final Command bindIndex = (api, cb) -> api.vkCmdBindIndexBuffer(cb, ((VulkanVertexBufferObject) index).handle(), 0L, VkIndexType.VK_INDEX_TYPE_UINT32);
+		final Command draw = (api, cb) -> api.vkCmdDrawIndexed(cb, 3, 1, 0, 0, 0);
+		//final Command draw = (api, cb) -> api.vkCmdDraw(cb, 3, 1, 0, 0);
 
 		buffer
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
 			.add(pass.begin(fb, extent, clear))
 			.add(pipeline.bind())
 			.add(vbo.bind())
+			.add(bindIndex)
 			.add(draw)
 			.add(RenderPass.END_COMMAND)
 			.end();
@@ -456,7 +462,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private VertexBufferObject vertexBuffer(Model<?> model, VertexBufferObject.Layout layout, Command.Pool pool) {
+	private VertexBufferObject vertexBuffer(Model<?> model, VertexBufferObject.Layout layout) {
 		System.out.println("Creating VBO");
 		final long size = model.length() * layout.stride();
 		final VulkanVertexBufferObject vbo = new VulkanVertexBufferObject.Builder(dev)
@@ -466,42 +472,70 @@ public class VulkanIntegrationTest {
 			.length(size)
 			.build();
 
-		System.out.println("Creating staging buffer");
-		final VulkanVertexBufferObject staging = new VulkanVertexBufferObject.Builder(dev)
-			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-			.length(size)
-			.build();
-
-		System.out.println("Pushing vertex data to staging");
+		System.out.println("Buffering vertices");
 		// TODO - helper
 		// TODO - Bufferable -> bytes?
 		final ByteBuffer bb = BufferFactory.byteBuffer((int) size);
 		final FloatBuffer fb = bb.asFloatBuffer();
 		model.vertices().forEach(v -> v.buffer(fb));
-		staging.push(bb);
+
+		copy(vbo, bb);
+
+		return vbo;
+	}
+
+	private VertexBufferObject indexBuffer() {
+		System.out.println("Creating index buffer");
+		final int len = 3 * Integer.BYTES;
+		final VulkanVertexBufferObject index = new VulkanVertexBufferObject.Builder(dev)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			.length(len)
+			.build();
+
+		final ByteBuffer bb = BufferFactory.byteBuffer(len);
+		final IntBuffer fb = bb.asIntBuffer();
+		fb.put(0);
+		fb.put(1);
+		fb.put(2);
+
+		copy(index, bb);
+
+		return index;
+	}
+
+	private void copy(VulkanVertexBufferObject buffer, ByteBuffer data) {
+		System.out.println("Creating staging buffer");
+		final long len = data.capacity();
+		final VulkanVertexBufferObject staging = new VulkanVertexBufferObject.Builder(dev)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+			.length(len)
+			.build();
+
+		System.out.println("Copying to staging");
+		staging.push(data);
 
 		System.out.println("Recording copy operation");
 		final VkBufferCopy info = new VkBufferCopy();
-		info.size = size;
-		final Command copy = (lib, cb) -> lib.vkCmdCopyBuffer(cb, staging.handle(), vbo.handle(), 1, new VkBufferCopy[]{info});
-		final Command.Buffer buffer = pool.allocate(1, true).iterator().next();
-		buffer
+		info.size = len;
+		final Command copy = (lib, cb) -> lib.vkCmdCopyBuffer(cb, staging.handle(), buffer.handle(), 1, new VkBufferCopy[]{info});
+		final Command.Buffer cmd = pool.allocate(1, true).iterator().next();
+		cmd
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
 			.add(copy)
 			.end();
 
 		System.out.println("Copying...");
 		final WorkQueue queue = dev.queue(transfer, 0);
-		final WorkQueue.Work work = new WorkQueue.Work.Builder().add(buffer).build();
+		final WorkQueue.Work work = new WorkQueue.Work.Builder().add(cmd).build();
 		queue.submit(work);
 		queue.waitIdle();
 
 		System.out.println("Releasing resources");
 		staging.destroy();
-		buffer.free();
-
-		return vbo;
+		cmd.free();
 	}
 }

@@ -143,12 +143,13 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 			final Vulkan vulkan = Vulkan.instance();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference buffer = vulkan.factory().reference();
-			check(lib.vkCreateBuffer(dev.handle(), info, null, buffer));
+			final Pointer logical = dev.handle();
+			check(lib.vkCreateBuffer(logical, info, null, buffer));
 
 			// Query memory requirements for this VBO
 			final Pointer handle = buffer.getValue();
 			final VkMemoryRequirements reqs = new VkMemoryRequirements();
-			lib.vkGetBufferMemoryRequirements(dev.handle(), handle, reqs);
+			lib.vkGetBufferMemoryRequirements(logical, handle, reqs);
 
 			// Determine memory type for this VBO
 			final int type = dev.parent().selector().findMemoryType(props);
@@ -158,15 +159,15 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 			final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
 			alloc.allocationSize = reqs.size;
 			alloc.memoryTypeIndex = type;
-			check(lib.vkAllocateMemory(dev.handle(), alloc, null, mem));
+			check(lib.vkAllocateMemory(logical, alloc, null, mem));
 
 			// Bind memory
-			check(lib.vkBindBufferMemory(dev.handle(), handle, mem.getValue(), 0L));
+			check(lib.vkBindBufferMemory(logical, handle, mem.getValue(), 0L));
 
 			// Create VBO
 			final Destructor destructor = () -> {
-				lib.vkFreeMemory(dev.handle(), mem.getValue(), null);
-				lib.vkDestroyBuffer(dev.handle(), handle, null);
+				lib.vkFreeMemory(logical, mem.getValue(), null);
+				lib.vkDestroyBuffer(logical, handle, null);
 			};
 			return new VulkanVertexBufferObject(new VulkanHandle(handle, destructor), len, mem.getValue(), dev);
 		}
