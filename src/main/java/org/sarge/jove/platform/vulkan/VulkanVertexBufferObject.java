@@ -17,10 +17,9 @@ import com.sun.jna.ptr.PointerByReference;
 /**
  * Vulkan implementation.
  * @author Sarge
- * TODO - test
  */
 class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObject {
-	private final int size;
+	private final int len;
 	private final Pointer mem;
 	private final Pointer dev;
 
@@ -33,7 +32,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 	 */
 	protected VulkanVertexBufferObject(VulkanHandle handle, int size, Pointer mem, LogicalDevice dev) {
 		super(handle);
-		this.size = oneOrMore(size);
+		this.len = oneOrMore(size);
 		this.mem = notNull(mem);
 		this.dev = dev.handle();
 	}
@@ -42,23 +41,23 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 	 * @return Size of this VBO
 	 */
 	public int size() {
-		return size;
+		return len;
 	}
 
 	@Override
 	public void push(ByteBuffer buffer) {
 		// Check buffer
-		final int len = buffer.capacity();
-		if(len > size) throw new IllegalArgumentException(String.format("Buffer exceeds VBO size: buffer=%d vbo=%d", buffer.capacity(), size));
+		final int actual = buffer.capacity();
+		if(actual > len) throw new IllegalArgumentException(String.format("Buffer exceeds VBO size: len=%d max=%d", actual, len));
 
 		// Map VBO memory
 		final Vulkan vulkan = Vulkan.instance();
 		final VulkanLibrary lib = vulkan.library();
 		final PointerByReference data = vulkan.factory().reference();
-		lib.vkMapMemory(dev, mem, 0, len, 0, data);
+		lib.vkMapMemory(dev, mem, 0, actual, 0, data);
 
 		// Copy buffer to VBO memory
-		final ByteBuffer bb = data.getValue().getByteBuffer(0, len);
+		final ByteBuffer bb = data.getValue().getByteBuffer(0, actual);
 		bb.put(buffer);
 
 		// Cleanup
@@ -78,7 +77,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 		private final Set<VkBufferUsageFlag> usage = new StrictSet<>();
 		private final Set<VkMemoryPropertyFlag> props = new StrictSet<>();
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
-		private int size;
+		private int len;
 
 		/**
 		 * Constructor.
@@ -89,11 +88,11 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 		}
 
 		/**
-		 * Sets the buffer size.
-		 * @param size Buffer size (bytes)
+		 * Sets the length of this buffer.
+		 * @param len Buffer length (bytes)
 		 */
-		public Builder size(int size) {
-			this.size = oneOrMore(size);
+		public Builder length(int len) {
+			this.len = oneOrMore(len);
 			return this;
 		}
 
@@ -130,14 +129,14 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 		 */
 		public VulkanVertexBufferObject build() {
 			// Validate
-			if(usage.isEmpty()) throw new IllegalArgumentException("No VBO usage flags specified");
-			if(size == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
+			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
+			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
 
 			// Build VBO descriptor
 			final VkBufferCreateInfo info = new VkBufferCreateInfo();
 			info.usage = IntegerEnumeration.mask(usage);
 			info.sharingMode = mode;
-			info.size = size;
+			info.size = len;
 			// TODO - queue families
 
 			// Allocate VBO
@@ -169,7 +168,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 				lib.vkFreeMemory(dev.handle(), mem.getValue(), null);
 				lib.vkDestroyBuffer(dev.handle(), handle, null);
 			};
-			return new VulkanVertexBufferObject(new VulkanHandle(handle, destructor), size, mem.getValue(), dev);
+			return new VulkanVertexBufferObject(new VulkanHandle(handle, destructor), len, mem.getValue(), dev);
 		}
 	}
 }

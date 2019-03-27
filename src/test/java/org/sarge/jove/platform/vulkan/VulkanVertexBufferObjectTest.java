@@ -59,14 +59,14 @@ public class VulkanVertexBufferObjectTest extends AbstractVulkanTest {
 		@Test
 		public void build() {
 			vbo = builder
-				.size(1)
+				.length(1)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.build();
 		}
 
 		@Test
 		public void buildEmptyUsageFlags() {
-			assertThrows(IllegalArgumentException.class, () -> builder.size(42).build());
+			assertThrows(IllegalArgumentException.class, () -> builder.length(42).build());
 		}
 
 		@Test

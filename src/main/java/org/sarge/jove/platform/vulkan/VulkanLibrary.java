@@ -12,6 +12,7 @@ import org.sarge.lib.util.AbstractEqualsObject;
 import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 
@@ -52,7 +53,18 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 	static VulkanLibrary create() {
 		final Map<String, Object> options = new HashMap<>();
 		options.put(Library.OPTION_TYPE_MAPPER, VulkanStructure.MAPPER);
-		return Native.load("vulkan-1", VulkanLibrary.class, options);
+		return Native.load(library(), VulkanLibrary.class, options);
+	}
+
+	/**
+	 * @return Vulkan library name
+	 */
+	private static String library() {
+		switch(Platform.getOSType()) {
+		case Platform.WINDOWS:		return "vulkan-1";
+		case Platform.LINUX:		return "libvulkan";
+		default:					throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
+		}
 	}
 
 	/**

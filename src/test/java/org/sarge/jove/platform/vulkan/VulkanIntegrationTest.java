@@ -38,7 +38,6 @@ import org.sarge.jove.util.BufferFactory;
 import com.sun.jna.Pointer;
 
 public class VulkanIntegrationTest {
-
 	private Vulkan vulkan;
 	private VulkanLibrary lib;
 	private LogicalDevice dev;
@@ -440,7 +439,7 @@ public class VulkanIntegrationTest {
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-			.size(size)
+			.length(size)
 			.build();
 
 		final ByteBuffer bb = BufferFactory.byteBuffer(size);
