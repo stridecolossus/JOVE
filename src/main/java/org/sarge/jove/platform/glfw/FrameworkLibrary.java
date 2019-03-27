@@ -3,6 +3,7 @@ package org.sarge.jove.platform.glfw;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -17,8 +18,16 @@ interface FrameworkLibrary extends Library, FrameworkLibraryWindow, FrameworkLib
 	 * @throws RuntimeException if the instance cannot be created
 	 */
 	static FrameworkLibrary create() {
-		// TODO
-		return Native.load("C:/GLFW/lib-mingw-w64/glfw3.dll", FrameworkLibrary.class);
+//		return Native.load("C:/GLFW/lib-mingw-w64/glfw3.dll", FrameworkLibrary.class);
+		return Native.load(library(), FrameworkLibrary.class);
+	}
+
+	private static String library() {
+		switch(Platform.getOSType()) {
+		case Platform.WINDOWS:		return "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO
+		case Platform.LINUX:		return "libglfw";
+		default:					throw new UnsupportedOperationException("Unsupported platform for GLFW: " + Platform.getOSType());
+		}
 	}
 
 	/**

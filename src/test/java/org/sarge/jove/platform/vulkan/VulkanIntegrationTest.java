@@ -298,7 +298,7 @@ public class VulkanIntegrationTest {
 			// TODO - others?
 			.extension(Extension.SWAP_CHAIN)
 			.layer(ValidationLayer.STANDARD_VALIDATION)
-			.layer("VK_LAYER_VALVE_steam_overlay", 1)
+			//.layer("VK_LAYER_VALVE_steam_overlay", 1)
 			.features(features)
 			.build();
 
