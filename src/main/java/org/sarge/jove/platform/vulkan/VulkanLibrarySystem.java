@@ -70,7 +70,11 @@ interface VulkanLibraryPhysicalDevice {
 	 */
 	void vkGetPhysicalDeviceProperties(Pointer device, VkPhysicalDeviceProperties props);
 
-	// TODO
+	/**
+	 * Retrieves the memory properties of the given physical device.
+	 * @param device				Device
+	 * @param pMemoryProperties		Returned memory properties
+	 */
 	void vkGetPhysicalDeviceMemoryProperties(Pointer device, VkPhysicalDeviceMemoryProperties pMemoryProperties);
 
 	/**
@@ -130,6 +134,11 @@ interface VulkanLibraryLogicalDevice {
 	 */
 	int vkDestroyDevice(Pointer device, Pointer pAllocator);
 
+	/**
+	 * Waits for the given device to become idle.
+	 * @param device Logical device
+	 * @return Result code
+	 */
 	int vkDeviceWaitIdle(Pointer device);
 
 	/**
@@ -141,8 +150,29 @@ interface VulkanLibraryLogicalDevice {
 	 */
 	void vkGetDeviceQueue(Pointer device, int queueFamilyIndex, int queueIndex, PointerByReference pQueue);
 
+	/**
+	 * Submits work to a queue.
+	 * @param queue					Queue
+	 * @param submitCount			Number of submissions
+	 * @param pSubmits				Work submissions
+	 * @param fence					Optional fence
+	 * @return Result code
+	 */
 	int vkQueueSubmit(Pointer queue, int submitCount, VkSubmitInfo[] pSubmits, Pointer fence);
+
+	/**
+	 * Waits for the given queue to become idle.
+	 * @param queue Queue
+	 * @return Result code
+	 */
 	int vkQueueWaitIdle(Pointer queue);
+
+	/**
+	 * Presents to the swap-chain.
+	 * @param queue					Presentation queue
+	 * @param pPresentInfo			Descriptor(s)
+	 * @return Result code
+	 */
 	int vkQueuePresentKHR(Pointer queue, VkPresentInfoKHR[] pPresentInfo);
 }
 

@@ -12,9 +12,6 @@ import java.util.List;
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.platform.Resource;
 import org.sarge.jove.platform.vulkan.Command;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkVertexInputRate;
-import org.sarge.jove.platform.vulkan.VulkanHelper;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
@@ -43,7 +40,6 @@ public interface VertexBufferObject extends Resource {
 			private final int loc;
 			private final Vertex.Component component;
 			private final int offset;
-			private final VkFormat format;
 
 			/**
 			 * Constructor.
@@ -55,7 +51,6 @@ public interface VertexBufferObject extends Resource {
 				this.loc = zeroOrMore(loc);
 				this.component = notNull(component);
 				this.offset = zeroOrMore(offset);
-				this.format = VulkanHelper.format(component);
 			}
 
 			/**
@@ -78,17 +73,18 @@ public interface VertexBufferObject extends Resource {
 			public int offset() {
 				return offset;
 			}
+		}
 
-			/**
-			 * @return Vulkan format for this attribute
-			 */
-			public VkFormat format() {
-				return format;
-			}
+		/**
+		 * Vertex input rate.
+		 */
+		public enum Rate {
+			VERTEX,
+			INSTANCE
 		}
 
 		private final int binding;
-		private final VkVertexInputRate rate;
+		private final Rate rate;
 		private final List<Attribute> layout;
 		private final int stride;
 
@@ -101,7 +97,7 @@ public interface VertexBufferObject extends Resource {
 		 * @throws IllegalArgumentException if the layout is empty
 		 * @throws IllegalArgumentException for a duplicate attribute location
 		 */
-		public Layout(int binding, VkVertexInputRate rate, List<Attribute> layout, int stride) {
+		public Layout(int binding, Rate rate, List<Attribute> layout, int stride) {
 			this.binding = zeroOrMore(binding);
 			this.rate = notNull(rate);
 			this.layout = List.copyOf(notEmpty(layout));
@@ -132,14 +128,14 @@ public interface VertexBufferObject extends Resource {
 		/**
 		 * @return Input rate
 		 */
-		public VkVertexInputRate rate() {
+		public Rate rate() {
 			return rate;
 		}
 
 		/**
-		 * @return Layout
+		 * @return Layout attributes
 		 */
-		public List<Attribute> layout() {
+		public List<Attribute> attributes() {
 			return layout;
 		}
 
@@ -148,7 +144,7 @@ public interface VertexBufferObject extends Resource {
 		 */
 		public static class Builder {
 			private int binding;
-			private VkVertexInputRate rate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX;
+			private Rate rate = Rate.VERTEX;
 			private final List<Attribute> layout = new ArrayList<>();
 			private int offset;
 			private int next = 0;
@@ -166,7 +162,7 @@ public interface VertexBufferObject extends Resource {
 			 * Sets the input rate for this VBO.
 			 * @param rate Input rate
 			 */
-			public Builder rate(VkVertexInputRate rate) {
+			public Builder rate(Rate rate) {
 				this.rate = rate;
 				return this;
 			}

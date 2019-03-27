@@ -17,7 +17,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkVertexInputBindingDescription extends VulkanStructure {
 	public static class ByValue extends VkVertexInputBindingDescription implements Structure.ByValue { }
 	public static class ByReference extends VkVertexInputBindingDescription implements Structure.ByReference { }
-	
+
 	public int binding;
 	public int stride;
 	public VkVertexInputRate inputRate;

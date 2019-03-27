@@ -59,7 +59,7 @@ public class RenderPass extends VulkanHandle {
 		info.pClearValues = Bufferable.create(clear);
 
 		// Create command
-		return (lib, ptr) -> lib.vkCmdBeginRenderPass(ptr, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE.value());
+		return (lib, ptr) -> lib.vkCmdBeginRenderPass(ptr, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE); // TODO - secondary
 	}
 
 	/**

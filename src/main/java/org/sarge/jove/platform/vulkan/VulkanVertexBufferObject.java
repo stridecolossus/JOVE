@@ -19,28 +19,28 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObject {
-	private final int len;
+	private final long len;
 	private final Pointer mem;
 	private final Pointer dev;
 
 	/**
 	 * Constructor.
 	 * @param handle 		VBO handle
-	 * @param size			Size of this VBO
+	 * @param len			Length of this VBO
 	 * @param mem			VBO memory
 	 * @param dev			Logical device
 	 */
-	protected VulkanVertexBufferObject(VulkanHandle handle, int size, Pointer mem, LogicalDevice dev) {
+	protected VulkanVertexBufferObject(VulkanHandle handle, long len, Pointer mem, LogicalDevice dev) {
 		super(handle);
-		this.len = oneOrMore(size);
+		this.len = oneOrMore(len);
 		this.mem = notNull(mem);
 		this.dev = dev.handle();
 	}
 
 	/**
-	 * @return Size of this VBO
+	 * @return Length of this VBO
 	 */
-	public int size() {
+	public long length() {
 		return len;
 	}
 
@@ -77,7 +77,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 		private final Set<VkBufferUsageFlag> usage = new StrictSet<>();
 		private final Set<VkMemoryPropertyFlag> props = new StrictSet<>();
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
-		private int len;
+		private long len;
 
 		/**
 		 * Constructor.
@@ -91,7 +91,7 @@ class VulkanVertexBufferObject extends VulkanHandle implements VertexBufferObjec
 		 * Sets the length of this buffer.
 		 * @param len Buffer length (bytes)
 		 */
-		public Builder length(int len) {
+		public Builder length(long len) {
 			this.len = oneOrMore(len);
 			return this;
 		}

@@ -3,8 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -15,7 +13,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.VertexBufferObject;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.util.StructureHelper;
 
@@ -78,71 +76,69 @@ public class Pipeline extends VulkanHandle {
 		 * Builder for the vertex input stage descriptor.
 		 */
 		public class VertexInputStageBuilder {
-			private final Deque<VkVertexInputBindingDescription> descriptions = new ArrayDeque<>();
+			private final List<VkVertexInputBindingDescription> bindings = new ArrayList<>();
 			private final List<VkVertexInputAttributeDescription> attributes = new ArrayList<>();
 
 			private VertexInputStageBuilder() {
-				pipeline.pVertexInputState = new VkPipelineVertexInputStateCreateInfo();
 			}
-
-			// TODO - make most params optional / inferred
 
 			/**
 			 * Adds a binding description.
-			 * @param binding		Binding index
-			 * @param stride		Stride (bytes per vertex)
-			 * @param rate			Input rate
+			 * @param layout Buffer layout
 			 * @throws IllegalArgumentException for a duplicate binding index
+			 * @throws IllegalArgumentException for a duplicate attribute location index
 			 */
-			public VertexInputStageBuilder binding(int binding, int stride, VkVertexInputRate rate) {
-				if(descriptions.stream().anyMatch(d -> d.binding == binding)) throw new IllegalArgumentException("Duplicate binding index: " + binding);
+			public VertexInputStageBuilder binding(VertexBufferObject.Layout layout) {
+				// Add binding descriptor
+				if(bindings.stream().anyMatch(d -> d.binding == layout.binding())) throw new IllegalArgumentException("Duplicate binding index: " + layout.binding());
+				final VkVertexInputBindingDescription binding = new VkVertexInputBindingDescription();
+				binding.binding = layout.binding();
+				binding.stride = layout.stride();
+				binding.inputRate = rate(layout);
+				bindings.add(binding);
 
-				final VkVertexInputBindingDescription desc = new VkVertexInputBindingDescription();
-				desc.binding = zeroOrMore(binding);
-				desc.stride = oneOrMore(stride);
-				desc.inputRate = notNull(rate);
-				descriptions.add(desc);
+				// Add attribute descriptors
+				for(VertexBufferObject.Layout.Attribute attribute : layout.attributes()) {
+					if(attributes.stream().anyMatch(attr -> attr.location == attribute.location())) throw new IllegalArgumentException("Duplicate attribute location: " + attribute.location());
+					final VkVertexInputAttributeDescription attr = new VkVertexInputAttributeDescription();
+					attr.binding = binding.binding;
+					attr.location = attribute.location();
+					attr.format = VulkanHelper.format(attribute.component());
+					attr.offset = attribute.offset();
+					attributes.add(attr);
+				}
 
 				return this;
 			}
 
-			/**
-			 * Adds a vertex attribute.
-			 * @param loc			Location
-			 * @param component		Component descriptor
-			 * @param offset		Offset into vertex (bytes)
-			 * @throws IllegalArgumentException if no binding description is present
-			 * @throws IllegalArgumentException for a duplicate location
-			 */
-			public VertexInputStageBuilder attribute(int loc, Vertex.Component component, int offset) {
-				if(descriptions.isEmpty()) throw new IllegalStateException("No binding descriptions specified");
-				if(attributes.stream().anyMatch(attr -> attr.location == loc)) throw new IllegalArgumentException("Duplicate attribute location: " + loc);
-
-				final VkVertexInputAttributeDescription attr = new VkVertexInputAttributeDescription();
-				attr.binding = descriptions.getLast().binding;
-				attr.location = zeroOrMore(loc);
-				attr.format = new VulkanHelper.FormatBuilder().components(component.size()).build();
-				attr.offset = zeroOrMore(offset);
-				attributes.add(attr);
-
-				return this;
+			private VkVertexInputRate rate(VertexBufferObject.Layout layout) {
+				switch(layout.rate()) {
+				case VERTEX:		return VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX;
+				case INSTANCE:		return VkVertexInputRate.VK_VERTEX_INPUT_RATE_INSTANCE;
+				default:			throw new UnsupportedOperationException("Unsupported input rate: " + layout.rate());
+				}
 			}
-
-			// TODO - convenience binding/attributes <--- model.components
 
 			/**
 			 * Constructs this vertex input stage.
 			 * @return New vertex input stage
+			 * @throws IllegalArgumentException if no bindings were specified
 			 */
 			public Builder build() {
+				// Init descriptor
+				if(bindings.isEmpty()) throw new IllegalArgumentException("Bindings cannot be empty");
+				final VkPipelineVertexInputStateCreateInfo info = new VkPipelineVertexInputStateCreateInfo();
+
 				// Add binding descriptions
-				pipeline.pVertexInputState.vertexBindingDescriptionCount = descriptions.size();
-				pipeline.pVertexInputState.pVertexBindingDescriptions = StructureHelper.structures(descriptions);
+				info.vertexBindingDescriptionCount = bindings.size();
+				info.pVertexBindingDescriptions = StructureHelper.structures(bindings);
 
 				// Add attributes
-				pipeline.pVertexInputState.vertexAttributeDescriptionCount = attributes.size();
-				pipeline.pVertexInputState.pVertexAttributeDescriptions = StructureHelper.structures(attributes);
+				info.vertexAttributeDescriptionCount = attributes.size();
+				info.pVertexAttributeDescriptions = StructureHelper.structures(attributes);
 
+				// Set vertex input stage descriptor
+				pipeline.pVertexInputState = info;
 				return Builder.this;
 			}
 		}

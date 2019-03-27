@@ -126,6 +126,14 @@ public interface Command {
 			check(lib.vkResetCommandBuffer(handle, mask));
 			state = State.UNDEFINED;
 		}
+
+		/**
+		 * Releases this buffer back to the pool.
+		 * TODO - requires handle to parent pool
+		 */
+		public void free() {
+			// TODO
+		}
 	}
 
 	/**

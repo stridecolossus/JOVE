@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,6 +43,7 @@ public class VulkanIntegrationTest {
 	private Vulkan vulkan;
 	private VulkanLibrary lib;
 	private LogicalDevice dev;
+	private QueueFamily graphics, present, transfer;
 
 	public static void main(String[] args) throws Exception {
 		final VulkanIntegrationTest test = new VulkanIntegrationTest();
@@ -51,8 +53,8 @@ public class VulkanIntegrationTest {
 	public void run() throws Exception {
 		// Init GLFW
 		final DesktopService desktop = desktop();
+		final Window window = window(desktop);
 		final String[] required = desktop.extensions();
-		System.out.println(Arrays.toString(required));
 
 		// Init Vulkan
 		System.out.println("Initialising Vulkan");
@@ -72,13 +74,17 @@ public class VulkanIntegrationTest {
 
 		final PhysicalDevice physical = physical(instance);
 
-		// Create window and surface
-		final Window window = window(desktop);
+		// Create surface
 		final Surface surface = surface(instance, physical, desktop, window);
 
-		// Create logical device with appropriate queues
-		final QueueFamily family = family(physical, surface);
-		dev = logical(physical, family);
+		// Determine queue families
+		final var families = physical.families();
+		graphics = families.stream().filter(f -> f.flags().contains(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT)).findAny().orElseThrow(() -> new IllegalArgumentException("No graphics queue"));
+		present = families.stream().filter(f -> f.isPresentationSupported(surface)).findAny().orElseThrow(() -> new IllegalArgumentException("No presentation queue"));
+		transfer = families.stream().filter(f -> f.flags().contains(VkQueueFlag.VK_QUEUE_TRANSFER_BIT)).findAny().orElseThrow(() -> new IllegalArgumentException("No transfer queue"));
+
+		// Create logical device
+		dev = logical(physical);
 
 		final SwapChain chain = chain(dev, surface);
 
@@ -88,12 +94,28 @@ public class VulkanIntegrationTest {
 
 		final RenderPass pass = pass();
 
-		final Model<?> model = model();
-		final VertexBufferObject vbo = vertexBuffer(model);
-		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, model);
-
 		System.out.println("Creating command pool");
-		final Command.Pool pool = Command.Pool.create(dev, family);
+		final Command.Pool pool = Command.Pool.create(dev, graphics);
+
+		////
+
+		// TODO
+		// vertex layout -> VBO layout (REPLACES!)
+
+		final Model<?> model = model();
+
+		final VertexBufferObject.Layout layout = new VertexBufferObject.Layout.Builder()
+			.add(Component.POSITION)
+			.add(Component.COLOUR)
+			.build();
+
+		final VertexBufferObject vbo = vertexBuffer(model, layout, pool);
+
+		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout);
+
+		////
+
+		System.out.println("Allocating command buffers");
 		final List<Command.Buffer> cmds = pool.allocate(3, true);
 
 		// TODO - how to wrap 3 x FB and 3 x commands -> object?
@@ -108,7 +130,7 @@ public class VulkanIntegrationTest {
 		}
 
 		System.out.println("Creating frame tracker");
-		final WorkQueue queue = dev.queue(family, 0);
+		final WorkQueue queue = dev.queue(present, 0);
 		final FrameTracker tracker = new DefaultFrameTracker(dev, 2, queue);
 
 		final AtomicBoolean running = new AtomicBoolean(true);
@@ -275,36 +297,37 @@ public class VulkanIntegrationTest {
 		throw new ServiceException("No suitable device");
 	}
 
-	private QueueFamily family(PhysicalDevice dev, Surface surface) {
-		System.out.println("Enumerating queue families");
-		final var families = dev.families();
-		for(QueueFamily family : families) {
-			// TODO - assumes same family for both, should select family for each requirement
-			if(!family.flags().contains(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT)) continue;
-			if(!family.isPresentationSupported(surface)) continue;
-			return family;
-		}
-		throw new ServiceException("No suitable queue");
-	}
+//	private QueueFamily families(PhysicalDevice dev, Surface surface) {
+//		System.out.println("Enumerating queue families");
+//		final var families = dev.families();
+//		for(QueueFamily family : families) {
+//			// TODO - assumes same family for both, should select family for each requirement
+//			if(!family.flags().contains(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT)) continue;
+//			if(!family.isPresentationSupported(surface)) continue;
+//			return family;
+//		}
+//		throw new ServiceException("No suitable queue");
+//	}
 
-	private LogicalDevice logical(PhysicalDevice physical, QueueFamily family) {
+	private LogicalDevice logical(PhysicalDevice physical) {
 		System.out.println("Creating logical device");
 
 		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		features.geometryShader = VulkanBoolean.TRUE;
 
-		final LogicalDevice dev = new LogicalDevice.Builder(physical)
-			.queue(family)
+		final LogicalDevice.Builder builder = new LogicalDevice.Builder(physical)
 			// TODO - others?
 			.extension(Extension.SWAP_CHAIN)
 			.layer(ValidationLayer.STANDARD_VALIDATION)
 			//.layer("VK_LAYER_VALVE_steam_overlay", 1)
-			.features(features)
-			.build();
+			.features(features);
 
-		dev.queues();
+		// TODO - function of logical dev? i.e. user works with families but doesn't care if they are actually the same ones
+		for(QueueFamily f : new HashSet<>(Arrays.asList(graphics, present, transfer))) {
+			builder.queue(f);
+		}
 
-		return dev;
+		return builder.build();
 	}
 
 	private DesktopService desktop() {
@@ -363,15 +386,12 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, Model<?> model) {
+	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, VertexBufferObject.Layout layout) {
 		System.out.println("Creating pipeline");
 		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), extent);
 		return new Pipeline.Builder(dev, pass)
 			.input()
-				// TODO - how to make this nicer?
-				.binding(0, (3 + 4) * Float.BYTES, VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX)
-				.attribute(0, Vertex.Component.POSITION, 0)
-				.attribute(1, Vertex.Component.COLOUR, 3 * Float.BYTES)
+				.binding(layout)
 				.build()
 			.shader()
 				.module(vert)
@@ -436,21 +456,51 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private VertexBufferObject vertexBuffer(Model<?> model) {
-		final int size = model.length() * Component.size(model.components()) * Float.BYTES;
-
-		final VertexBufferObject vbo = new VulkanVertexBufferObject.Builder(dev)
+	private VertexBufferObject vertexBuffer(Model<?> model, VertexBufferObject.Layout layout, Command.Pool pool) {
+		System.out.println("Creating VBO");
+		final long size = model.length() * layout.stride();
+		final VulkanVertexBufferObject vbo = new VulkanVertexBufferObject.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			.length(size)
+			.build();
+
+		System.out.println("Creating staging buffer");
+		final VulkanVertexBufferObject staging = new VulkanVertexBufferObject.Builder(dev)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 			.length(size)
 			.build();
 
-		final ByteBuffer bb = BufferFactory.byteBuffer(size);
+		System.out.println("Pushing vertex data to staging");
+		// TODO - helper
+		// TODO - Bufferable -> bytes?
+		final ByteBuffer bb = BufferFactory.byteBuffer((int) size);
 		final FloatBuffer fb = bb.asFloatBuffer();
 		model.vertices().forEach(v -> v.buffer(fb));
+		staging.push(bb);
 
-		vbo.push(bb);
+		System.out.println("Recording copy operation");
+		final VkBufferCopy info = new VkBufferCopy();
+		info.size = size;
+		final Command copy = (lib, cb) -> lib.vkCmdCopyBuffer(cb, staging.handle(), vbo.handle(), 1, new VkBufferCopy[]{info});
+		final Command.Buffer buffer = pool.allocate(1, true).iterator().next();
+		buffer
+			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+			.add(copy)
+			.end();
+
+		System.out.println("Copying...");
+		final WorkQueue queue = dev.queue(transfer, 0);
+		final WorkQueue.Work work = new WorkQueue.Work.Builder().add(buffer).build();
+		queue.submit(work);
+		queue.waitIdle();
+
+		System.out.println("Releasing resources");
+		staging.destroy();
+		buffer.free();
 
 		return vbo;
 	}

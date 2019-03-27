@@ -193,6 +193,12 @@ interface VulkanLibraryPipeline {
 	 */
 	void vkDestroyPipeline(Pointer device, Pointer pipeline, Pointer pAllocator);
 
+	/**
+	 * Command to bind a pipeline.
+	 * @param commandBuffer			Command buffer
+	 * @param pipelineBindPoint		Bind-point
+	 * @param pipeline				Pipeline to bind
+	 */
 	void vkCmdBindPipeline(Pointer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pointer pipeline);
 }
 
@@ -218,10 +224,35 @@ interface VulkanLibraryRenderPass {
 	 */
 	void vkDestroyRenderPass(Pointer device, Pointer renderPass, Pointer pAllocator);
 
-	// TODO
-	void vkCmdBeginRenderPass(Pointer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, int contents);
-	void vkCmdNextSubpass(Pointer commandBuffer, int contents);
+	/**
+	 * Command - Begins a render pass.
+	 * @param commandBuffer			Command buffer
+	 * @param pRenderPassBegin		Descriptor
+	 * @param contents				Sub-pass contents
+	 */
+	void vkCmdBeginRenderPass(Pointer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
+
+	/**
+	 * Command - Ends a render pass.
+	 * @param commandBuffer Command buffer
+	 */
 	void vkCmdEndRenderPass(Pointer commandBuffer);
+
+	/**
+	 * Command - Starts the next sub-pass.
+	 * @param commandBuffer			Command buffer
+	 * @param contents				Sub-pass contents
+	 */
+	void vkCmdNextSubpass(Pointer commandBuffer, VkSubpassContents contents);
+
+	/**
+	 * Command -
+	 * @param commandBuffer			Command buffer
+	 * @param vertexCount			Number of vertices
+	 * @param instanceCount			Number of instances
+	 * @param firstVertex			First vertex index
+	 * @param firstInstance			First index index
+	 */
 	void vkCmdDraw(Pointer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
 }
 
@@ -229,7 +260,21 @@ interface VulkanLibraryRenderPass {
  * Frame buffer API.
  */
 interface VulkanLibraryFrameBuffer {
+	/**
+	 * Creates a frame buffer.
+	 * @param device			Logical device
+	 * @param pCreateInfo		Descriptor
+	 * @param pAllocator		Allocator
+	 * @param pFramebuffer		Returned frame buffer
+	 * @return Result code
+	 */
 	int vkCreateFramebuffer(Pointer device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
 
+	/**
+	 * Destroys a frame buffer.
+	 * @param device			Logical device
+	 * @param framebuffer		Frame buffer
+	 * @param pAllocator		Allocator
+	 */
 	void vkDestroyFramebuffer(Pointer device, Pointer framebuffer, Pointer pAllocator);
 }
