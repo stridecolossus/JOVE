@@ -6,6 +6,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,6 +49,11 @@ public class VulkanIntegrationTest {
 	}
 
 	public void run() throws Exception {
+		// Init GLFW
+		final DesktopService desktop = desktop();
+		final String[] required = desktop.extensions();
+		System.out.println(Arrays.toString(required));
+
 		// Init Vulkan
 		System.out.println("Initialising Vulkan");
 		Vulkan.init();
@@ -55,7 +61,7 @@ public class VulkanIntegrationTest {
 		lib = vulkan.library();
 
 		System.out.println("Creating instance");
-		final VulkanInstance instance = instance();
+		final VulkanInstance instance = instance(required);
 
 		System.out.println("Initialising debug handler");
 		instance.handlerFactory()
@@ -67,7 +73,6 @@ public class VulkanIntegrationTest {
 		final PhysicalDevice physical = physical(instance);
 
 		// Create window and surface
-		final DesktopService desktop = desktop();
 		final Window window = window(desktop);
 		final Surface surface = surface(instance, physical, desktop, window);
 
@@ -242,12 +247,11 @@ public class VulkanIntegrationTest {
 	/**
 	 * Initialises the vulkan instance.
 	 */
-	private VulkanInstance instance() {
+	private VulkanInstance instance(String[] extensions) {
 		// Create builder
 		System.out.println("Creating instance builder");
 		final VulkanInstance.Builder builder = new VulkanInstance.Builder(vulkan)
-			.extension("VK_KHR_surface")
-			.extension("VK_KHR_win32_surface")
+			.extensions(extensions)
 			.extension(Extension.DEBUG_UTILS)
 			.layer(ValidationLayer.STANDARD_VALIDATION)
 			.layer("VK_LAYER_VALVE_steam_overlay", 1);
