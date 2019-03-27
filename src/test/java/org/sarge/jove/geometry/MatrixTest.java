@@ -20,7 +20,7 @@ public class MatrixTest {
 
 	@BeforeEach
 	public void before() {
-		matrix = new Matrix(new float[][]{{1, 2}, {3, 4}});
+		matrix = new Matrix(new float[]{1, 2, 3, 4});
 		identity = Matrix.identity(4);
 	}
 
@@ -37,8 +37,8 @@ public class MatrixTest {
 
 	@Test
 	public void constructorInvalidArrayDimensions() {
-		assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[][]{{1, 2}, {3}}));
-		assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[][]{}));
+		assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[]{1, 2, 3}));
+		assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[]{}));
 	}
 
 	@Test
@@ -46,15 +46,14 @@ public class MatrixTest {
 		final FloatBuffer buffer = FloatBuffer.allocate(2 * 2);
 		matrix.buffer(buffer);
 		buffer.flip();
-		assertFloatEquals(1, buffer.get());
-		assertFloatEquals(3, buffer.get());
-		assertFloatEquals(2, buffer.get());
-		assertFloatEquals(4, buffer.get());
+		for(int n = 0; n < 4; ++n) {
+			assertFloatEquals(n + 1, buffer.get());
+		}
 	}
 
 	@Test
 	public void transpose() {
-		assertEquals(new Matrix(new float[][]{{1, 3}, {2, 4}}), matrix.transpose());
+		assertEquals(new Matrix(new float[]{1, 3, 2, 4}), matrix.transpose());
 		assertEquals(identity, identity.transpose());
 	}
 
@@ -71,17 +70,17 @@ public class MatrixTest {
 	@Test
 	public void equals() {
 		assertTrue(matrix.equals(matrix));
-		assertTrue(matrix.equals(new Matrix(new float[][]{{1, 2}, {3, 4}})));
+		assertTrue(matrix.equals(new Matrix(new float[]{1, 2, 3, 4})));
 		assertFalse(matrix.equals(null));
-		assertFalse(matrix.equals(new Matrix(new float[][]{{1}})));
-		assertFalse(matrix.equals(new Matrix(new float[][]{{1, 2}, {3, 999}})));
+		assertFalse(matrix.equals(new Matrix(new float[]{1})));
+		assertFalse(matrix.equals(new Matrix(new float[]{1, 2, 3, 999})));
 	}
 
 	@Nested
 	class FactoryMethods {
 		@Test
 		public void identity() {
-			assertEquals(new Matrix(new float[][]{{1, 0}, {0, 1}}), Matrix.identity(2));
+			assertEquals(new Matrix(new float[]{1, 0, 0, 1}), Matrix.identity(2));
 		}
 
 		@Test
@@ -125,25 +124,25 @@ public class MatrixTest {
 		@Test
 		public void identity() {
 			final Matrix result = new Builder(2).identity().build();
-			assertEquals(new Matrix(new float[][]{{1, 0}, {0, 1}}), result);
+			assertEquals(new Matrix(new float[]{1, 0, 0, 1}), result);
 		}
 
 		@Test
 		public void set() {
 			final Matrix result = new Builder(2).set(0, 1, 2).build();
-			assertEquals(new Matrix(new float[][]{{0, 2}, {0, 0}}), result);
+			assertEquals(new Matrix(new float[]{0, 2, 0, 0}), result);
 		}
 
 		@Test
 		public void row() {
 			final Matrix result = new Builder(3).row(1, new Vector(1, 2, 3)).build();
-			assertEquals(new Matrix(new float[][]{{0, 0, 0}, {1, 2, 3}, {0, 0, 0}}), result);
+			assertEquals(new Matrix(new float[]{0, 0, 0, 1, 2, 3, 0, 0, 0}), result);
 		}
 
 		@Test
 		public void column() {
 			final Matrix result = new Builder(3).column(1, new Vector(1, 2, 3)).build();
-			assertEquals(new Matrix(new float[][]{{0, 1, 0}, {0, 2, 0}, {0, 3, 0}}), result);
+			assertEquals(new Matrix(new float[]{0, 1, 0, 0, 2, 0, 0, 3, 0}), result);
 		}
 	}
 }

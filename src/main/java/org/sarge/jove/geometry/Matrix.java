@@ -3,22 +3,23 @@ package org.sarge.jove.geometry;
 import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>matrix</i> is a 2D square array used for geometry transformation and projection.
  * <p>
  * Notes:
  * <ul>
- * <li>The {@link #buffer(FloatBuffer)} operation buffers the matrix contents in <i>column major</i> order</li>
+ * <li>the matrix is stored <i>column major</i> for buffering convenience</li>
  * </ul>
  * @author Sarge
  */
 // TODO
 // - determinant, invert, etc
-// - consider single array column-major
 // http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
 public final class Matrix implements Transform, Bufferable {
 	private static final String LINE_SEPARATOR = System.lineSeparator();
@@ -103,30 +104,31 @@ public final class Matrix implements Transform, Bufferable {
 		return rot.build();
 	}
 
-	private final float[][] matrix;
+	private final float[] matrix;
+	private final int order;
 
 	/**
 	 * Constructor.
 	 * @param matrix 2D matrix array
-	 * @throws IllegalArgumentException if the given array is not square
+	 * @throws IllegalArgumentException if the given array is empty or not <i>square</i>
 	 */
-	public Matrix(float[][] matrix) {
-		final int order = matrix.length;
-		if(order < 1) throw new IllegalArgumentException("Matrix order must be one-or-more");
-		this.matrix = new float[order][order];
-		for(int r = 0; r < order; ++r) {
-			if(matrix[r].length != order) throw new IllegalArgumentException("Invalid matrix dimensions");
-			for(int c = 0; c < order; ++c) {
-				this.matrix[r][c] = matrix[r][c];
-			}
-		}
+	public Matrix(float[] matrix) {
+		Check.oneOrMore(matrix.length);
+		this.order = order(matrix.length);
+		this.matrix = Arrays.copyOf(matrix, matrix.length);
+	}
+
+	private static int order(int len) {
+		final int order = (int) MathsUtil.sqrt(len);
+		if(order * order != len) throw new IllegalArgumentException("Matrix is not square");
+		return order;
 	}
 
 	/**
 	 * @return Order (or size) of this matrix
 	 */
 	public int order() {
-		return matrix.length;
+		return order;
 	}
 
 	@Override
@@ -136,16 +138,12 @@ public final class Matrix implements Transform, Bufferable {
 
 	@Override
 	public int size() {
-		return matrix.length * matrix.length;
+		return matrix.length;
 	}
 
 	@Override
 	public void buffer(FloatBuffer buffer) {
-		for(int c = 0; c < matrix.length; ++c) {
-			for(int r = 0; r < matrix.length; ++r) {
-				buffer.put(matrix[r][c]);
-			}
-		}
+		buffer.put(matrix);
 	}
 
 	/**
@@ -153,23 +151,34 @@ public final class Matrix implements Transform, Bufferable {
 	 * @param row Matrix row
 	 * @param col Column
 	 * @return Matrix element
+	 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 	 */
 	public float get(int row, int col) {
-		return matrix[row][col];
+		final int index = index(row, col);
+		return matrix[index];
+	}
+
+	/**
+	 * @param row
+	 * @param col
+	 * @return Matrix index
+	 */
+	private int index(int row, int col) {
+		return row * order + col;
 	}
 
 	/**
 	 * @return Transpose of this matrix
 	 */
 	public Matrix transpose() {
-		final int order = order();
-		final Builder transpose = new Builder(order);
+		final float[] trans = new float[matrix.length];
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				transpose.set(c, r, matrix[r][c]);
+				final int index = index(c, r);
+				trans[index] = get(r, c);
 			}
 		}
-		return transpose.build();
+		return new Matrix(trans);
 	}
 
 	/**
@@ -178,16 +187,20 @@ public final class Matrix implements Transform, Bufferable {
 	 * @return New matrix
 	 */
 	public Matrix multiply(Matrix m) {
-		final int order = order();
-		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
-		final float[][] result = new float[order][order];
-		for(int r = 0; r < order; ++r) {
-			for(int c = 0; c < order; ++c) {
+		if(m.order != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
+		final float[] result = new float[matrix.length];
+		int index = 0;
+		for(int c = 0; c < order; ++c) {
+			for(int r = 0; r < order; ++r) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
-					total += matrix[r][n] * m.matrix[n][c];
+					total += get(r, n) * m.get(n, c);
+//					matrix[r][n] * m.matrix[n][c];
 				}
-				result[r][c] = total;
+//				result[r][c] = total;
+				assert result[index] == 0;
+				result[index] = total;
+				++index;
 			}
 		}
 		return new Matrix(result);
@@ -199,12 +212,9 @@ public final class Matrix implements Transform, Bufferable {
 		if(obj == null) return false;
 		if(obj instanceof Matrix) {
 			final Matrix that = (Matrix) obj;
-			final int order = this.order();
-			if(order != that.order()) return false;
-			for(int r = 0; r < order; ++r) {
-				for(int c = 0; c < order; ++c) {
-					if(!MathsUtil.equals(matrix[r][c], that.matrix[r][c])) return false;
-				}
+			if(matrix.length != that.matrix.length) return false;
+			for(int n = 0; n < matrix.length; ++n) {
+				if(!MathsUtil.equals(matrix[n], that.matrix[n])) return false;
 			}
 			return true;
 		}
@@ -222,7 +232,7 @@ public final class Matrix implements Transform, Bufferable {
 				if(c > 0) {
 					sb.append(",");
 				}
-				sb.append(String.format("%10.5f", matrix[r][c]));
+				sb.append(String.format("%10.5f", get(r, c)));
 			}
 			sb.append(LINE_SEPARATOR);
 		}
@@ -233,7 +243,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private final float[][] matrix;
+		private final float[] matrix;
 		private final int order;
 
 		/**
@@ -242,7 +252,7 @@ public final class Matrix implements Transform, Bufferable {
 		 */
 		public Builder(int order) {
 			this.order = oneOrMore(order);
-			this.matrix = new float[order][order];
+			this.matrix = new float[order * order];
 		}
 
 		/**
@@ -258,7 +268,7 @@ public final class Matrix implements Transform, Bufferable {
 		 */
 		public Builder identity() {
 			for(int n = 0; n < order; ++n) {
-				matrix[n][n] = 1;
+				set(n, n, 1);
 			}
 			return this;
 		}
@@ -268,9 +278,11 @@ public final class Matrix implements Transform, Bufferable {
 		 * @param row 		Row
 		 * @param col		Column
 		 * @param value		Matrix element
+		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			matrix[row][col] = value;
+			final int index = row * order + col;
+			matrix[index] = value;
 			return this;
 		}
 
@@ -278,11 +290,12 @@ public final class Matrix implements Transform, Bufferable {
 		 * Sets a matrix row to the given vector.
 		 * @param row Row index
 		 * @param vec Vector
+		 * @throws ArrayIndexOutOfBoundsException if the row is out-of-bounds
 		 */
 		public Builder row(int row, Tuple vec) {
-			matrix[row][0] = vec.x;
-			matrix[row][1] = vec.y;
-			matrix[row][2] = vec.z;
+			set(row, 0, vec.x);
+			set(row, 1, vec.y);
+			set(row, 2, vec.z);
 			return this;
 		}
 
@@ -290,11 +303,12 @@ public final class Matrix implements Transform, Bufferable {
 		 * Sets a matrix column to the given vector.
 		 * @param col Column index
 		 * @param vec Vector
+		 * @throws ArrayIndexOutOfBoundsException if the column is out-of-bounds
 		 */
 		public Builder column(int col, Tuple vec) {
-			matrix[0][col] = vec.x;
-			matrix[1][col] = vec.y;
-			matrix[2][col] = vec.z;
+			set(0, col, vec.x);
+			set(1, col, vec.y);
+			set(2, col, vec.z);
 			return this;
 		}
 
