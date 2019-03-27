@@ -6,13 +6,13 @@ import org.sarge.jove.platform.Resource;
 import org.sarge.jove.platform.vulkan.Command;
 
 /**
- * A <i>vertex buffer</i> (VBO) is used to upload vertex data to the hardware.
+ * A <i>index buffer</i> (IBO) is used to upload index data to the hardware.
  * @author Sarge
  */
 public interface IndexBuffer extends Resource {
 	/**
-	 * Pushes data to the hardware.
-	 * @param buffer Data buffer
+	 * Pushes indices to the hardware.
+	 * @param buffer Indices buffer
 	 */
 	void push(ByteBuffer buffer);
 

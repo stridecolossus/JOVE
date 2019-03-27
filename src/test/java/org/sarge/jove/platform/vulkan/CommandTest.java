@@ -30,8 +30,9 @@ public class CommandTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		public void before() {
+			final Pool pool = new Pool(mock(Pointer.class), Destructor.NULL, device, library);
 			handle = mock(Pointer.class);
-			buffer = new Buffer(handle, library);
+			buffer = new Buffer(handle, pool);
 		}
 
 		@Test
@@ -108,6 +109,11 @@ public class CommandTest extends AbstractVulkanTest {
 		public void resetRecording() {
 			buffer.begin();
 			assertThrows(IllegalStateException.class, () -> buffer.reset());
+		}
+
+		@Test
+		public void free() {
+			buffer.free();
 		}
 	}
 

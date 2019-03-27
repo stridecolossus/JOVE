@@ -44,17 +44,18 @@ public interface Command {
 		}
 
 		private final Pointer handle;
-		private final VulkanLibrary lib;
+		private final Command.Pool pool;
 
 		private State state = State.UNDEFINED;
 
 		/**
 		 * Constructor.
-		 * @param handle Command buffer handle
+		 * @param handle 		Command buffer handle
+		 * @param pool			Parent pool
 		 */
-		Buffer(Pointer handle, VulkanLibrary lib) {
+		Buffer(Pointer handle, Command.Pool pool) {
 			this.handle = notNull(handle);
-			this.lib = notNull(lib);
+			this.pool = notNull(pool);
 		}
 
 		/**
@@ -85,7 +86,7 @@ public interface Command {
 			final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
 			info.flags = IntegerEnumeration.mask(flags);
 			info.pInheritanceInfo = null;
-			check(lib.vkBeginCommandBuffer(handle, info));
+			check(pool.lib.vkBeginCommandBuffer(handle, info));
 
 			// Start recording
 			state = State.RECORDING;
@@ -99,7 +100,7 @@ public interface Command {
 		 */
 		public Buffer add(Command cmd) {
 			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording");
-			cmd.execute(lib, handle);
+			cmd.execute(pool.lib, handle);
 			return this;
 		}
 
@@ -111,7 +112,7 @@ public interface Command {
 		public void end() {
 			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording");
 			// TODO - count?
-			check(lib.vkEndCommandBuffer(handle));
+			check(pool.lib.vkEndCommandBuffer(handle));
 			state = State.READY;
 		}
 
@@ -123,16 +124,16 @@ public interface Command {
 		public void reset(VkCommandBufferResetFlag... flags) {
 			if(state != State.READY) throw new IllegalStateException("Buffer has not been recorded");
 			final int mask = IntegerEnumeration.mask(flags);
-			check(lib.vkResetCommandBuffer(handle, mask));
+			check(pool.lib.vkResetCommandBuffer(handle, mask));
 			state = State.UNDEFINED;
 		}
 
 		/**
 		 * Releases this buffer back to the pool.
-		 * TODO - requires handle to parent pool
 		 */
-		public void free() {
-			// TODO
+		public synchronized void free() {
+			pool.free(new Pointer[]{handle});
+			pool.buffers.remove(this);
 		}
 	}
 
@@ -166,7 +167,7 @@ public interface Command {
 		}
 
 		private final LogicalDevice dev;
-		private final VulkanLibraryCommandBuffer lib;
+		private final VulkanLibrary lib;
 		private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
 
 		/**
@@ -209,7 +210,7 @@ public interface Command {
 			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
 
 			// Create buffer wrappers
-			final var list = Arrays.stream(handles).map(ptr -> new Buffer(ptr, lib)).collect(toList());
+			final var list = Arrays.stream(handles).map(ptr -> new Buffer(ptr, this)).collect(toList());
 			buffers.addAll(list);
 			return list;
 		}
@@ -228,11 +229,16 @@ public interface Command {
 		 * TODO - need to be able to free subset?
 		 */
 		public synchronized void free() {
-			if(!buffers.isEmpty()) {
-				final Pointer[] array = buffers.stream().map(Buffer::handle).toArray(Pointer[]::new);
-				lib.vkFreeCommandBuffers(dev.handle(), super.handle(), buffers.size(), array);
-				buffers.clear();
-			}
+			final Pointer[] array = buffers.stream().map(Buffer::handle).toArray(Pointer[]::new);
+			free(array);
+			buffers.clear();
+		}
+
+		/**
+		 * Frees command buffers.
+		 */
+		private void free(Pointer[] array) {
+			lib.vkFreeCommandBuffers(dev.handle(), super.handle(), array.length, array);
 		}
 
 		@Override
@@ -241,4 +247,3 @@ public interface Command {
 		}
 	}
 }
-

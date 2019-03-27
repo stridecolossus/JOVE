@@ -13,7 +13,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.DataBuffer;
+import org.sarge.jove.model.VertexBuffer;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.util.StructureHelper;
 
@@ -88,7 +88,7 @@ public class Pipeline extends VulkanHandle {
 			 * @throws IllegalArgumentException for a duplicate binding index
 			 * @throws IllegalArgumentException for a duplicate attribute location index
 			 */
-			public VertexInputStageBuilder binding(DataBuffer.Layout layout) {
+			public VertexInputStageBuilder binding(VertexBuffer.Layout layout) {
 				// Add binding descriptor
 				if(bindings.stream().anyMatch(d -> d.binding == layout.binding())) throw new IllegalArgumentException("Duplicate binding index: " + layout.binding());
 				final VkVertexInputBindingDescription binding = new VkVertexInputBindingDescription();
@@ -98,7 +98,7 @@ public class Pipeline extends VulkanHandle {
 				bindings.add(binding);
 
 				// Add attribute descriptors
-				for(DataBuffer.Layout.Attribute attribute : layout.attributes()) {
+				for(VertexBuffer.Layout.Attribute attribute : layout.attributes()) {
 					if(attributes.stream().anyMatch(attr -> attr.location == attribute.location())) throw new IllegalArgumentException("Duplicate attribute location: " + attribute.location());
 					final VkVertexInputAttributeDescription attr = new VkVertexInputAttributeDescription();
 					attr.binding = binding.binding;
@@ -111,7 +111,7 @@ public class Pipeline extends VulkanHandle {
 				return this;
 			}
 
-			private VkVertexInputRate rate(DataBuffer.Layout layout) {
+			private VkVertexInputRate rate(VertexBuffer.Layout layout) {
 				switch(layout.rate()) {
 				case VERTEX:		return VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX;
 				case INSTANCE:		return VkVertexInputRate.VK_VERTEX_INPUT_RATE_INSTANCE;

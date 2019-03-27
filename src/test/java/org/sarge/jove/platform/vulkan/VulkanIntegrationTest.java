@@ -21,7 +21,6 @@ import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.IndexBuffer;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.model.VertexBuffer;
 import org.sarge.jove.platform.DesktopService;
@@ -105,14 +104,10 @@ public class VulkanIntegrationTest {
 		// vertex layout -> VBO layout (REPLACES!)
 
 		final Model<?> model = model();
-
-		final DataBuffer.Layout layout = new DataBuffer.Layout.Builder()
-			.add(Component.POSITION)
-			.add(Component.COLOUR)
-			.build();
+		final VertexBuffer.Layout layout = VertexBuffer.Layout.of(model.components());
 
 		final VertexBuffer vbo = vertexBuffer(model, layout);
-		final IndexBuffer indexBuffer = indexBuffer();
+		final IndexBuffer indexBuffer = indexBuffer(model);
 
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout);
 
@@ -385,7 +380,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, DataBuffer.Layout layout) {
+	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, VertexBuffer.Layout layout) {
 		System.out.println("Creating pipeline");
 		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), extent);
 		return new Pipeline.Builder(dev, pass)
@@ -457,7 +452,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private VertexBuffer vertexBuffer(Model<?> model, DataBuffer.Layout layout) {
+	private VertexBuffer vertexBuffer(Model<?> model, VertexBuffer.Layout layout) {
 		System.out.println("Creating VBO");
 		final long size = model.length() * layout.stride();
 		final VulkanDataBuffer vbo = new VulkanDataBuffer.Builder(dev)
@@ -479,9 +474,9 @@ public class VulkanIntegrationTest {
 		return vbo.toVertexBuffer();
 	}
 
-	private IndexBuffer indexBuffer() {
+	private IndexBuffer indexBuffer(Model<?> model) {
 		System.out.println("Creating index buffer");
-		final int len = 3 * Integer.BYTES;
+		final int len = model.length() * Integer.BYTES;
 		final VulkanDataBuffer index = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)

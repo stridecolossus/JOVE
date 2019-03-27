@@ -22,6 +22,9 @@ import org.sarge.lib.util.AbstractObject;
  * <p>
  * Note that the order that components are written using {@link #buffer(FloatBuffer)} is assumed to be dependant on the implementing vertex class.
  * It is the responsibility of the user to ensure that the location of components within a vertex matches the target shader.
+ *
+ * TODO - revert to vertex returning components[]? has to return size anyway
+ *
  * @author Sarge
  */
 public interface Vertex extends Bufferable {

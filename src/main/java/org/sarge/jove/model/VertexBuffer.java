@@ -6,12 +6,12 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.platform.Resource;
 import org.sarge.jove.platform.vulkan.Command;
+import org.sarge.lib.collection.StrictList;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
@@ -84,6 +84,19 @@ public interface VertexBuffer extends Resource {
 			INSTANCE
 		}
 
+		/**
+		 * Helper - Creates a layout from the given components.
+		 * @param components Vertex components
+		 * @return Layout
+		 */
+		public static Layout of(List<Component> components) {
+			final Builder builder = new Builder();
+			for(Component c : components) {
+				builder.add(c);
+			}
+			return builder.build();
+		}
+
 		private final int binding;
 		private final Rate rate;
 		private final List<Attribute> layout;
@@ -146,7 +159,7 @@ public interface VertexBuffer extends Resource {
 		public static class Builder {
 			private int binding;
 			private Rate rate = Rate.VERTEX;
-			private final List<Attribute> layout = new ArrayList<>();
+			private final List<Attribute> layout = new StrictList<>();
 			private int offset;
 			private int next = 0;
 
@@ -182,7 +195,7 @@ public interface VertexBuffer extends Resource {
 			}
 
 			/**
-			 * Sets an attribute descriptor at the <i>next</i> location.
+			 * Adds an attribute descriptor at the <i>next</i> location.
 			 * @param component Component descriptor
 			 */
 			public Builder add(Component component) {
