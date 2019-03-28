@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
-import com.sun.jna.Pointer;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
@@ -20,10 +20,10 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDescriptorSetLayoutBinding extends VulkanStructure {
 	public static class ByValue extends VkDescriptorSetLayoutBinding implements Structure.ByValue { }
 	public static class ByReference extends VkDescriptorSetLayoutBinding implements Structure.ByReference { }
-	
+
 	public int binding;
 	public VkDescriptorType descriptorType;
 	public int descriptorCount;
-	public VkShaderStageFlags stageFlags;
+	public int stageFlags;
 	public Pointer pImmutableSamplers;
 }

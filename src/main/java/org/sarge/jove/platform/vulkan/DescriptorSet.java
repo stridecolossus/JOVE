@@ -1,0 +1,386 @@
+package org.sarge.jove.platform.vulkan;
+
+import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+
+import org.sarge.jove.material.Shader;
+import org.sarge.jove.model.DataBuffer;
+import org.sarge.jove.platform.Handle;
+import org.sarge.jove.util.StructureHelper;
+import org.sarge.lib.collection.StrictList;
+import org.sarge.lib.util.Check;
+
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
+
+/**
+ * A <i>descriptor set</i> defines resources (uniform buffers, samplers, etc) used by a {@link Shader}.
+ * @author Sarge
+ */
+public class DescriptorSet extends Handle {
+	private final Layout layout;
+	private final VkDescriptorSetLayoutBinding binding;
+
+	/**
+	 * Constructor.
+	 * @param handle 		Handle
+	 * @param layout		Layout entry for this descriptor set
+	 */
+	protected DescriptorSet(Pointer handle, Layout layout, VkDescriptorSetLayoutBinding binding) {
+		super(handle);
+		this.layout = notNull(layout);
+		this.binding = notNull(binding);
+	}
+
+	/**
+	 * @return Command to bind this descriptor set
+	 */
+	public Command bind() {
+		return (lib, cmd) -> lib.vkCmdBindDescriptorSets(cmd, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, layout.handle(), 0, 1, new Pointer[]{super.handle()}, 0, null);
+	}
+
+	/**
+	 * Updates this descriptor set with the given uniform buffer.
+	 * @param buffer		Uniform buffer
+	 * @param offset		Offset
+	 * @param size			Buffer size
+	 * @throws IllegalArgumentException if this descriptor set is not a uniform buffer
+	 */
+	public void uniform(DataBuffer buffer, int offset, long size) {
+		final VkDescriptorBufferInfo info = new VkDescriptorBufferInfo();
+		info.buffer = ((Handle) buffer).handle(); // TODO - will this work? nasty anyway!
+		info.offset = zeroOrMore(offset);
+		info.range = oneOrMore(size);
+		update(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, write -> write.pBufferInfo = info);
+	}
+
+	private void update(VkDescriptorType type, Consumer<VkWriteDescriptorSet> updater) {
+		// Validate
+		if(type != binding.descriptorType) throw new IllegalArgumentException(String.format("Incorrect descriptor set update: type=%s expected=%s", type, binding.descriptorType));
+
+		// Init update descriptor
+		final VkWriteDescriptorSet write = new VkWriteDescriptorSet();
+		write.dstSet = super.handle(); // TODO - will this work?
+		write.dstBinding = binding.binding;
+		write.descriptorType = binding.descriptorType;
+		write.descriptorCount = binding.descriptorCount;
+		write.dstArrayElement = 0; // TODO
+
+		// Populate appropriate field
+		updater.accept(write);
+
+		// Update descriptor set
+		final Vulkan vulkan = Vulkan.instance();
+		final VulkanLibraryDescriptorSet lib = vulkan.library();
+		lib.vkUpdateDescriptorSets(layout.dev.handle(), 1, new VkWriteDescriptorSet[]{write}, 0, null);
+	}
+
+	/**
+	 * A <i>descriptor set layout</i> defines the structure of a set resource descriptors that can be bound to a {@link Pipeline}.
+	 */
+	public static class Layout extends VulkanHandle {
+		private final List<VkDescriptorSetLayoutBinding> bindings;
+		private final LogicalDevice dev;
+
+		/**
+		 * Constructor.
+		 * @param handle 		Layout handle
+		 * @param bindings		Binding descriptors
+		 * @param dev			Logical device
+		 */
+		Layout(VulkanHandle handle, List<VkDescriptorSetLayoutBinding> bindings, LogicalDevice dev) {
+			super(handle);
+			this.bindings = List.copyOf(bindings);
+			this.dev = notNull(dev);
+		}
+
+		/**
+		 * Builder for a descriptor set layout.
+		 * <p>
+		 * Usage:
+		 * <pre>
+		 * Layout layout = new Builder(dev)
+		 * 		// Add a uniform buffer
+		 * 		.binding(1)
+		 * 			.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+		 *			.stage(VkShaderStageFlag.VK_SHADER_STAGE_ALL)
+		 *		// Add a sampler (at binding index 2)
+		 *		.binding()
+		 *			.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER)
+		 *			.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+		 *			.size(2)
+		 *      .build();
+		 * </pre>
+		 */
+		public static class Builder {
+			private final LogicalDevice dev;
+
+			private final List<VkDescriptorSetLayoutBinding> bindings = new ArrayList<>();
+
+			private VkDescriptorSetLayoutBinding current;
+			private int next;
+
+			/**
+			 * Constructor.
+			 * @param dev Logical device
+			 */
+			public Builder(LogicalDevice dev) {
+				this.dev = notNull(dev);
+			}
+
+			/**
+			 * Starts a new layout binding.
+			 * @param binding Binding index
+			 * @throws IllegalArgumentException if a binding index is a duplicate (assumes bindings are declared in ascending index order)
+			 */
+			public Builder binding(int binding) {
+				// Validate
+				if(binding < next) throw new IllegalArgumentException("Invalid or duplicate binding index: " + binding);
+				if(current != null) {
+					verify(current);
+				}
+
+				// Init binding
+				current = new VkDescriptorSetLayoutBinding();
+				current.binding = binding;
+				current.descriptorCount = 1;
+
+				// Add binding
+				bindings.add(current);
+				next = binding + 1;
+				return this;
+			}
+
+			/**
+			 * Verifies a descriptor set binding.
+			 */
+			private static void verify(VkDescriptorSetLayoutBinding binding) {
+				if(binding.descriptorType == null) throw new IllegalArgumentException("Binding requires a descriptor type: " + binding);
+				if(binding.stageFlags == 0) throw new IllegalArgumentException("No shader stages specified: " + binding);
+			}
+
+			/**
+			 * Starts a new layout binding at the <i>next</i> binding index.
+			 */
+			public Builder binding() {
+				return binding(next);
+			}
+
+			/**
+			 * Sets the type of this layout binding.
+			 * @param type Type
+			 */
+			public Builder type(VkDescriptorType type) {
+				current.descriptorType = type;
+				return this;
+			}
+
+			/**
+			 * Sets the size of this layout binding  (for an array type).
+			 * @param size Array size
+			 */
+			public Builder size(int size) {
+				current.descriptorCount = size;
+				return this;
+			}
+
+			/**
+			 * Adds a shader stage for this layout binding.
+			 * @param stage Shader stage
+			 */
+			public Builder stage(VkShaderStageFlag stage) {
+				current.stageFlags |= stage.value();
+				return this;
+			}
+
+			/**
+			 * Constructs this layout.
+			 * @return New descriptor set layout
+			 */
+			public Layout build() {
+				// Validate bindings
+				if(current == null) throw new IllegalArgumentException("No layout bindings specified");
+				verify(current);
+
+				// Init layout descriptor
+				final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
+				info.bindingCount = bindings.size();
+				info.pBindings = StructureHelper.structures(bindings);
+
+				// Allocate layout
+				final Vulkan vulkan = Vulkan.instance();
+				final VulkanLibraryDescriptorSet lib = vulkan.library();
+				final PointerByReference layout = vulkan.factory().reference();
+				check(lib.vkCreateDescriptorSetLayout(dev.handle(), info, null, layout));
+
+				// Create layout
+				final Destructor destructor = () -> lib.vkDestroyDescriptorSetLayout(dev.handle(), layout.getValue(), null);
+				return new Layout(new VulkanHandle(layout.getValue(), destructor), bindings, dev);
+			}
+		}
+	}
+
+	/**
+	 * A <i>descriptor set pool</i> allocates and manages descriptor sets.
+	 */
+	public static class Pool extends VulkanHandle {
+		private final int max;
+		private final LogicalDevice dev;
+
+		/**
+		 * Constructor.
+		 * @param handle 		Pool handle
+		 * @param max			Maximum number of descriptor sets
+		 * @param dev			Logical device
+		 */
+		Pool(VulkanHandle handle, int max, LogicalDevice dev) {
+			super(handle);
+			this.max = oneOrMore(max);
+			this.dev = notNull(dev);
+		}
+
+		/**
+		 * Allocates a number of descriptor sets from this pool.
+		 * @param layout Descriptor set layout(s)
+		 * @return Descriptor sets
+		 */
+		public List<DescriptorSet> allocate(int count, Layout layout) {
+			// Validate
+			Check.oneOrMore(count);
+			if(count > max) throw new IllegalArgumentException("Number of descriptor sets exceeds pool maximum size");
+			// TODO - what is max actually for? do we need to track number allocated?
+
+			// Build allocation descriptor
+			final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
+			info.descriptorPool = super.handle();
+			info.descriptorSetCount = count;
+
+			// Duplicate layout for each descriptor set
+			final List<Pointer> pointers = new ArrayList<>(count);
+			Collections.fill(pointers, layout.handle());
+			info.pSetLayouts = StructureHelper.pointers(pointers);
+
+			// Allocate descriptor sets
+			final Vulkan vulkan = Vulkan.instance();
+			final VulkanLibraryDescriptorSet lib = vulkan.library();
+			final Pointer[] array = vulkan.factory().pointers(count);
+			check(lib.vkAllocateDescriptorSets(dev.handle(), info, array));
+
+			// Create descriptor sets
+			final List<DescriptorSet> sets = new ArrayList<>();
+			for(int n = 0; n < array.length; ++n) {
+				final DescriptorSet ds = new DescriptorSet(array[n], layout, layout.bindings.get(n));
+				sets.add(ds);
+			}
+			return sets;
+		}
+
+		/**
+		 * Resets this descriptor set pool.
+		 */
+		public void reset() {
+			final Vulkan vulkan = Vulkan.instance();
+			final VulkanLibraryDescriptorSet lib = vulkan.library();
+			check(lib.vkResetDescriptorPool(dev.handle(), super.handle(), 0));
+		}
+
+		/**
+		 * Releases descriptor sets and resources back to this pool.
+		 * @param descriptors Descriptors to release
+		 */
+		public void free(Collection<DescriptorSet> descriptors) {
+			final Pointer[] array = descriptors.stream().map(Handle::handle).toArray(Pointer[]::new);
+			final Vulkan vulkan = Vulkan.instance();
+			final VulkanLibraryDescriptorSet lib = vulkan.library();
+			check(lib.vkFreeDescriptorSets(dev.handle(), super.handle(), array.length, array));
+		}
+
+		/**
+		 * Builder for a descriptor set pool.
+		 */
+		public static class Builder {
+			private final LogicalDevice dev;
+			private final List<VkDescriptorPoolSize> entries = new StrictList<>();
+			private int flags;
+			private int max = 1;
+
+			/**
+			 * Constructor.
+			 * @param dev Logical device
+			 */
+			public Builder(LogicalDevice dev) {
+				this.dev = notNull(dev);
+			}
+
+			/**
+			 * Adds a descriptor type that this pool will contain.
+			 * @param count			Number of this type
+			 * @param type			Descriptor type
+			 */
+			public Builder add(int count, VkDescriptorType type) {
+				final VkDescriptorPoolSize entry = new VkDescriptorPoolSize();
+				entry.descriptorCount = oneOrMore(count);
+				entry.type = notNull(type);
+				entries.add(entry);
+				return this;
+			}
+
+			/**
+			 * Sets the maximum number of descriptors that are available.
+			 * @param max Maximum number of descriptors
+			 */
+			public Builder max(int max) {
+				this.max = oneOrMore(max);
+				return this;
+			}
+
+			/**
+			 * Adds a create flag for this pool.
+			 * @param flag Pool create flag
+			 */
+			public Builder flag(VkDescriptorPoolCreateFlag flag) {
+				this.flags |= flag.value();
+				return this;
+			}
+
+			/**
+			 * Constructs this pool.
+			 * @return New descriptor pool
+			 * @throws IllegalArgumentException if no descriptor types have been added
+			 * @throws IllegalArgumentException if the maximum number of descriptor sets is not valid
+			 * @see #add(int, VkDescriptorType)
+			 * @see #max(int)
+			 */
+			public Pool build() {
+				// Validate
+				if(entries.isEmpty()) throw new IllegalArgumentException("No descriptor types specified");
+				if(max < entries.size()) throw new IllegalArgumentException(""); // TODO
+
+				// Init pool descriptor
+				final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
+				info.flags = flags;
+				info.poolSizeCount = entries.size();
+				info.pPoolSizes = StructureHelper.structures(entries);
+				info.maxSets = max;
+
+				// Allocate pool
+				final Vulkan vulkan = Vulkan.instance();
+				final VulkanLibraryDescriptorSet lib = vulkan.library();
+				final PointerByReference pool = vulkan.factory().reference();
+				check(lib.vkCreateDescriptorPool(dev.handle(), info, null, pool));
+
+				// Create pool
+				final Destructor destructor = () -> lib.vkDestroyDescriptorPool(dev.handle(), pool.getValue(), null);
+				return new Pool(new VulkanHandle(pool.getValue(), destructor), max, dev);
+			}
+		}
+	}
+}
