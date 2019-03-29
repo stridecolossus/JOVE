@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.vulkan.WorkQueue.Work;
 import org.sarge.jove.util.StructureHelper;
 
@@ -59,7 +59,7 @@ public class WorkQueueTest extends AbstractVulkanTest {
 		when(cmd.isReady()).thenReturn(true);
 
 		// Create semaphore
-		final Handle semaphore = mock(Handle.class);
+		final PointerHandle semaphore = mock(PointerHandle.class);
 		when(semaphore.handle()).thenReturn(mock(Pointer.class));
 
 		// Create work

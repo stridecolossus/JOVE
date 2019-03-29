@@ -2,11 +2,17 @@ package org.sarge.jove.platform.vulkan;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 
 import com.sun.jna.Pointer;
 
-public class VulkanImage extends Handle {
+// TODO
+
+/**
+ *
+ * @author Sarge
+ */
+public class VulkanImage extends PointerHandle {
 	private final VkFormat format;
 	private final VkExtent2D extent;
 

@@ -4,8 +4,8 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 
-import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.Resource;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.lib.util.AbstractEqualsObject;
 import org.sarge.lib.util.AbstractObject;
 
@@ -14,8 +14,8 @@ import org.sarge.lib.util.AbstractObject;
  * @author Sarge
  */
 public class FrameState extends AbstractEqualsObject {
-	private final Handle available;
-	private final Handle finished;
+	private final PointerHandle available;
+	private final PointerHandle finished;
 	private final Fence fence;
 	private final Fence.Group group;
 
@@ -33,14 +33,14 @@ public class FrameState extends AbstractEqualsObject {
 	/**
 	 * @return Semaphore indicating a frame is available
 	 */
-	public Handle available() {
+	public PointerHandle available() {
 		return available;
 	}
 
 	/**
 	 * @return Semaphore indicating the next frame has been rendered
 	 */
-	public Handle finished() {
+	public PointerHandle finished() {
 		return finished;
 	}
 
@@ -64,7 +64,7 @@ public class FrameState extends AbstractEqualsObject {
 	 * Destroys a resource if present.
 	 * @param handle Resource to destroy
 	 */
-	private static void destroy(Handle handle) {
+	private static void destroy(PointerHandle handle) {
 		if(handle != null) {
 			handle.destroy();
 		}

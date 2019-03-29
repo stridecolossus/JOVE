@@ -6,7 +6,6 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Collection;
 import java.util.function.IntSupplier;
 
-import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.lib.util.AbstractEqualsObject;
 import org.sarge.lib.util.Check;

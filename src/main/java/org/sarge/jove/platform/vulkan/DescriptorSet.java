@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 
 import org.sarge.jove.material.Shader;
 import org.sarge.jove.model.DataBuffer;
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
 import org.sarge.lib.util.Check;
@@ -25,7 +25,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>descriptor set</i> defines resources (uniform buffers, samplers, etc) used by a {@link Shader}.
  * @author Sarge
  */
-public class DescriptorSet extends Handle {
+public class DescriptorSet extends PointerHandle {
 	private final Layout layout;
 	private final VkDescriptorSetLayoutBinding binding;
 
@@ -63,7 +63,7 @@ public class DescriptorSet extends Handle {
 	 */
 	public void uniform(DataBuffer buffer, int offset, long size) {
 		final VkDescriptorBufferInfo info = new VkDescriptorBufferInfo();
-		info.buffer = ((Handle) buffer).handle(); // TODO - will this work? nasty anyway!
+		info.buffer = ((PointerHandle) buffer).handle(); // TODO - will this work? nasty anyway!
 		info.offset = zeroOrMore(offset);
 		info.range = oneOrMore(size);
 		update(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, write -> write.pBufferInfo = info);

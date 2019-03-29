@@ -1,10 +1,15 @@
 package org.sarge.jove.platform;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.lib.util.AbstractEqualsObject;
+
+import com.sun.jna.Pointer;
 
 /**
  * A <i>resource</i> is a platform-specific object allocated by a service.
@@ -17,6 +22,57 @@ public interface Resource {
 	 * @throws IllegalStateException if this resource has already been destroyed
 	 */
 	void destroy();
+
+	/**
+	 * A <i>handle</i> is an accessor for a native resource.
+	 * @param <T> Handle type
+	 */
+	class Handle<T> extends AbstractEqualsObject implements Resource {
+		private T handle;
+
+		/**
+		 * Constructor.
+		 * @param handle Resource handle
+		 */
+		public Handle(T handle) {
+			this.handle = notNull(handle);
+		}
+
+		/**
+		 * @return Whether this resource has been destroyed
+		 */
+		public boolean isDestroyed() {
+			return handle == null;
+		}
+
+		/**
+		 * @return Handle
+		 * @throws IllegalStateException if this handle has been destroyed
+		 */
+		public T handle() {
+			if(handle == null) throw new IllegalStateException("Handle has been destroyed: " + this);
+			return handle;
+		}
+
+		@Override
+		public synchronized void destroy() {
+			if(handle == null) throw new IllegalStateException("Handle has already been destroyed: " + this);
+			handle = null;
+		}
+	}
+
+	/**
+	 * A <i>pointer handle</i> is a resource implemented using a JNA pointer as a handle.
+	 */
+	class PointerHandle extends Handle<Pointer> {
+		/**
+		 * Constructor.
+		 * @param handle Pointer handle
+		 */
+		public PointerHandle(Pointer handle) {
+			super(handle);
+		}
+	}
 
 	/**
 	 * A <i>resource tracker</i> is a utility that can be used by a service implementation to maintain resources allocated by that service.

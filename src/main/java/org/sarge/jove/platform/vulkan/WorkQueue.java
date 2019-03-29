@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.vulkan.Command.Buffer;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictSet;
@@ -19,7 +19,7 @@ import com.sun.jna.Pointer;
  * A <i>work queue</i> is used to submit {@link Work}.
  * @author Sarge
  */
-public class WorkQueue extends Handle {
+public class WorkQueue extends PointerHandle {
 	/**
 	 * Work submitted to this queue.
 	 * @see WorkQueue#submit(Work)
@@ -64,7 +64,7 @@ public class WorkQueue extends Handle {
 			 * Adds a semaphore to wait on.
 			 * @param semaphore Wait semaphore
 			 */
-			public Builder wait(Handle semaphore) {
+			public Builder wait(PointerHandle semaphore) {
 				waitSemaphores.add(semaphore.handle());
 				return this;
 			}
@@ -73,7 +73,7 @@ public class WorkQueue extends Handle {
 			 * Adds a semaphore to be signalled after execution.
 			 * @param semaphore Signal semaphore
 			 */
-			public Builder signal(Handle semaphore) {
+			public Builder signal(PointerHandle semaphore) {
 				signalSemaphores.add(semaphore.handle());
 				return this;
 			}

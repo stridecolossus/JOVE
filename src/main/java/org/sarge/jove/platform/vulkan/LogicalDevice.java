@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.util.StructureHelper;
@@ -24,7 +24,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>logical device</i> is an instance of a {@link PhysicalDevice} that can be used to perform work.
  * @author Sarge
  */
-public class LogicalDevice extends Handle {
+public class LogicalDevice extends PointerHandle {
 	private final PhysicalDevice parent;
 	private final Map<QueueFamily, List<WorkQueue>> queues;
 
@@ -81,7 +81,7 @@ public class LogicalDevice extends Handle {
 	 * Creates a semaphore.
 	 * @return New semaphore
 	 */
-	public Handle semaphore() {
+	public PointerHandle semaphore() {
 		// Allocate semaphore
 		final VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
 		final Vulkan vulkan = parent.vulkan();

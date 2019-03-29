@@ -20,7 +20,7 @@ public class VulkanRenderingSystemTest {
 
 	@Test
 	public void constructor() {
-		assertEquals("vulkan", sys.name());
+		assertEquals("Vulkan", sys.name());
 		assertEquals(new Version(1, 0, 2).toString(), sys.version());
 	}
 

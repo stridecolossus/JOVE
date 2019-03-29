@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
 
 import com.sun.jna.Pointer;
@@ -19,7 +19,7 @@ import com.sun.jna.ptr.IntByReference;
  * A <i>surface</i> is used to render to a window.
  * @author Sarge
  */
-public class Surface extends Handle {
+public class Surface extends PointerHandle {
 	/**
 	 * Constructor.
 	 * @param surface		Surface handle

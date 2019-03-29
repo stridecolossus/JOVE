@@ -18,7 +18,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
@@ -70,7 +70,7 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 
 	@Test
 	public void semaphore() {
-		final Handle semaphore = dev.semaphore();
+		final PointerHandle semaphore = dev.semaphore();
 		final Pointer prev = semaphore.handle();
 		assertNotNull(semaphore);
 		verify(library).vkCreateSemaphore(eq(dev.handle()), argThat(structure(new VkSemaphoreCreateInfo())), isNull(), eq(factory.reference()));

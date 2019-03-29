@@ -6,8 +6,7 @@ import java.util.Map;
 
 import org.sarge.jove.control.Event;
 import org.sarge.jove.platform.Device;
-import org.sarge.jove.platform.Handle;
-import org.sarge.jove.platform.Resource;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.KeyListener;
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MouseButtonListener;
@@ -20,7 +19,7 @@ import com.sun.jna.Pointer;
  * GLFW window.
  * @author Sarge
  */
-class FrameworkWindow extends Handle implements Window, Resource {
+class FrameworkWindow extends PointerHandle implements Window {
 	private final FrameworkLibrary instance;
 	private final Descriptor props;
 	private final Device<?> device;

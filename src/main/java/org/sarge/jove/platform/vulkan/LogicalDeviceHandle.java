@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.function.Function;
 
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 
 import com.sun.jna.Pointer;
 
@@ -18,7 +18,7 @@ import com.sun.jna.Pointer;
  * </pre>
  * @author Sarge
  */
-public class LogicalDeviceHandle extends Handle {
+public class LogicalDeviceHandle extends PointerHandle {
 	/**
 	 * Destructor.
 	 */

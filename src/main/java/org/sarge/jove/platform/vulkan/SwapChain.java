@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 import org.sarge.jove.util.StructureHelper;
@@ -60,13 +59,13 @@ public class SwapChain extends LogicalDeviceHandle {
 	 * @param semaphore		Optional semaphore
 	 * @param fence			Optional fence
 	 */
-	public int next(Handle semaphore, Fence fence) {
+	public int next(PointerHandle semaphore, Fence fence) {
 		final VulkanLibrarySwapChain lib = dev.parent().vulkan().library();
 		lib.vkAcquireNextImageKHR(dev.handle(), super.handle(), Long.MAX_VALUE, toPointer(semaphore), toPointer(fence), index);
 		return index.getValue();
 	}
 
-	private static Pointer toPointer(Handle handle) {
+	private static Pointer toPointer(PointerHandle handle) {
 		if(handle == null) {
 			return null;
 		}
@@ -85,7 +84,7 @@ public class SwapChain extends LogicalDeviceHandle {
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 
 		// Add semaphore
-		final Handle semaphore = frame.finished();
+		final PointerHandle semaphore = frame.finished();
 		if(semaphore != null) {
 			info.waitSemaphoreCount = 1;
 			info.pWaitSemaphores = StructureHelper.pointers(Arrays.asList(semaphore.handle()));

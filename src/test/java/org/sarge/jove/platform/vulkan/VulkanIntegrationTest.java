@@ -25,7 +25,7 @@ import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.model.VertexBuffer;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
@@ -339,7 +339,7 @@ public class VulkanIntegrationTest {
 
 	private Surface surface(VulkanInstance instance, PhysicalDevice dev, DesktopService service, Window window) {
 		System.out.println("Creating surface");
-		final Handle handle = (Handle) window;
+		final PointerHandle handle = (PointerHandle) window; // TODO - assumes JNA pointer
 		final Pointer ptr = service.surface(instance.handle(), handle.handle());
 		return Surface.create(ptr, instance, dev);
 	}
@@ -511,7 +511,7 @@ public class VulkanIntegrationTest {
 		final VkBufferCopy info = new VkBufferCopy();
 		info.size = len;
 		final Command copy = (lib, cb) -> {
-			final Handle dest = (Handle) buffer;
+			final PointerHandle dest = (PointerHandle) buffer; // TODO
 			lib.vkCmdCopyBuffer(cb, staging.handle(), dest.handle(), 1, new VkBufferCopy[]{info});
 		};
 		final Command.Buffer cmd = pool.allocate(1, true).iterator().next();

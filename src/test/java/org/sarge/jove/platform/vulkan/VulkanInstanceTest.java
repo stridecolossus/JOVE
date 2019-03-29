@@ -14,8 +14,8 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Feature.Extension;
 import org.sarge.jove.platform.vulkan.Feature.FeatureSet;
@@ -114,7 +114,7 @@ public class VulkanInstanceTest extends AbstractVulkanTest {
 
 		@Test
 		public void create() {
-			final Handle handler = handlerFactory.builder()
+			final PointerHandle handler = handlerFactory.builder()
 				.callback(MessageCallback.CONSOLE)
 				.severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 				.type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
@@ -124,14 +124,14 @@ public class VulkanInstanceTest extends AbstractVulkanTest {
 
 		@Test
 		public void destroy() {
-			final Handle handler = handlerFactory.builder().init().build();
+			final PointerHandle handler = handlerFactory.builder().init().build();
 			handler.destroy();
 			assertEquals(true, handler.isDestroyed());
 		}
 
 		@Test
 		public void destroyHandlers() {
-			final Handle handler = handlerFactory.builder().init().build();
+			final PointerHandle handler = handlerFactory.builder().init().build();
 			handlerFactory.destroyHandlers();
 			assertEquals(true, handler.isDestroyed());
 		}

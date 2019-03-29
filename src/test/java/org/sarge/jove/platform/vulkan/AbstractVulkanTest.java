@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
-import org.sarge.jove.platform.Handle;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -56,7 +56,7 @@ public abstract class AbstractVulkanTest {
 		// Create logical device
 		device = mock(LogicalDevice.class);
 		when(device.handle()).thenReturn(mock(Pointer.class));
-		when(device.semaphore()).thenReturn(mock(Handle.class));
+		when(device.semaphore()).thenReturn(mock(PointerHandle.class));
 
 		// Create physical device
 		final PhysicalDevice parent = mock(PhysicalDevice.class);

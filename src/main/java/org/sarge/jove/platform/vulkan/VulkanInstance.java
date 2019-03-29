@@ -9,9 +9,9 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.StringJoiner;
 
-import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Resource;
+import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.VulkanLibrary.Version;
@@ -33,7 +33,7 @@ import com.sun.jna.ptr.PointerByReference;
  * </ul>
  * @author Sarge
  */
-public class VulkanInstance extends Handle {
+public class VulkanInstance extends PointerHandle {
 	private final Vulkan vulkan;
 
 	private MessageHandlerFactory handlerFactory;
@@ -262,7 +262,7 @@ public class VulkanInstance extends Handle {
 	 * @see <a href="chrome-extension://oemmndcbldboiebfnladdacbdfmadadm/https://www.lunarg.com/wp-content/uploads/2018/05/Vulkan-Debug-Utils_05_18_v1.pdf">Vulkan-Debug-Utils_05_18_v1.pdf</a>
 	 */
 	public class MessageHandlerFactory {
-		private final Resource.Tracker<Handle> tracker = new Resource.Tracker<>();
+		private final Resource.Tracker<PointerHandle> tracker = new Resource.Tracker<>();
 
 		private final Function create;
 		private final Function destroy;
@@ -304,7 +304,7 @@ public class VulkanInstance extends Handle {
 		 * @return Message handle opaque handle
 		 * @throws ServiceException if the handler cannot be created
 		 */
-		public Handle create(MessageCallback callback, Set<VkDebugUtilsMessageSeverityFlagEXT> severity, Set<VkDebugUtilsMessageTypeFlagEXT> type, Pointer user) {
+		public PointerHandle create(MessageCallback callback, Set<VkDebugUtilsMessageSeverityFlagEXT> severity, Set<VkDebugUtilsMessageTypeFlagEXT> type, Pointer user) {
 			Check.notEmpty(severity);
 			Check.notEmpty(type);
 
@@ -320,7 +320,7 @@ public class VulkanInstance extends Handle {
 			check(create.invokeInt(new Object[]{VulkanInstance.this.handle(), info, null, ref}));
 
 			// Create handler wrapper
-			final Handle handler = new Handle(ref.getValue()) {
+			final PointerHandle handler = new PointerHandle(ref.getValue()) {
 				@Override
 				public synchronized void destroy() {
 					tracker.remove(this);
@@ -413,7 +413,7 @@ public class VulkanInstance extends Handle {
 			 * Constructs this handler.
 			 * @return New message handler
 			 */
-			public Handle build() {
+			public PointerHandle build() {
 				return create(callback, severity, types, user);
 			}
 		}
