@@ -37,12 +37,34 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		}
 
 		@Test
+		public void constructor() {
+			assertEquals(binding, set.binding());
+		}
+
+		@Test
 		public void bind() {
 			final Pointer buffer = mock(Pointer.class);
 			final Command bind = set.bind();
 			assertNotNull(bind);
 			bind.execute(library, buffer);
 			verify(library).vkCmdBindDescriptorSets(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, layout.handle(), 0, 1, new Pointer[]{set.handle()}, 0, null);
+		}
+	}
+
+	@Nested
+	class LayoutTests {
+		private Layout layout;
+		private VkDescriptorSetLayoutBinding binding;
+
+		@BeforeEach
+		public void before() {
+			binding = new VkDescriptorSetLayoutBinding();
+			layout = new Layout(new VulkanHandle(mock(Pointer.class), Destructor.NULL), List.of(binding), device);
+		}
+
+		@Test
+		public void constructor() {
+			assertEquals(List.of(binding), layout.bindings());
 		}
 	}
 
@@ -114,7 +136,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		public void constructor() {
-			// TODO
+			assertEquals(1, pool.max());
 		}
 
 		@Test

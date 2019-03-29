@@ -41,6 +41,13 @@ public class DescriptorSet extends Handle {
 	}
 
 	/**
+	 * @return Binding
+	 */
+	public VkDescriptorSetLayoutBinding binding() {
+		return binding;
+	}
+
+	/**
 	 * @return Command to bind this descriptor set
 	 */
 	public Command bind() {
@@ -100,6 +107,13 @@ public class DescriptorSet extends Handle {
 			super(handle);
 			this.bindings = List.copyOf(bindings);
 			this.dev = notNull(dev);
+		}
+
+		/**
+		 * @return Binding descriptors
+		 */
+		public List<VkDescriptorSetLayoutBinding> bindings() {
+			return bindings;
 		}
 
 		/**
@@ -245,6 +259,13 @@ public class DescriptorSet extends Handle {
 			super(handle);
 			this.max = oneOrMore(max);
 			this.dev = notNull(dev);
+		}
+
+		/**
+		 * @return Maximum number of descriptor sets
+		 */
+		public int max() {
+			return max;
 		}
 
 		/**
