@@ -121,13 +121,11 @@ public class CommandTest extends AbstractVulkanTest {
 	class CommandPoolTests {
 		private Pool pool;
 		private QueueFamily family;
-		private LogicalDevice dev;
 
 		@BeforeEach
 		public void before() {
 			family = mock(QueueFamily.class);
-			dev = mock(LogicalDevice.class);
-			pool = new Pool(new Pointer(42), Destructor.NULL, dev, library);
+			pool = new Pool(new Pointer(42), Destructor.NULL, device, library);
 		}
 
 		@Test
@@ -148,13 +146,13 @@ public class CommandTest extends AbstractVulkanTest {
 			info.level = VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			info.commandBufferCount = 1;
 			info.commandPool = pool.handle();
-			verify(library).vkAllocateCommandBuffers(eq(dev.handle()), argThat(structure(info)), eq(factory.pointers(1)));
+			verify(library).vkAllocateCommandBuffers(eq(device.handle()), argThat(structure(info)), eq(factory.pointers(1)));
 		}
 
 		@Test
 		public void reset() {
 			pool.reset();
-			verify(library).vkResetCommandPool(dev.handle(), pool.handle(), 0);
+			verify(library).vkResetCommandPool(device.handle(), pool.handle(), 0);
 		}
 
 		@Test
@@ -163,13 +161,13 @@ public class CommandTest extends AbstractVulkanTest {
 			final Command.Buffer b = buffers.iterator().next();
 			pool.free();
 			assertEquals(0, pool.buffers().count());
-			verify(library).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, new Pointer[]{b.handle()});
+			verify(library).vkFreeCommandBuffers(device.handle(), pool.handle(), 1, new Pointer[]{b.handle()});
 		}
 
 		@Test
 		public void create() {
 			// Create pool
-			pool = Pool.create(dev, family, VkCommandPoolCreateFlag.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+			pool = Pool.create(device, family, VkCommandPoolCreateFlag.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 			pool.allocate(1, true);
 			assertNotNull(pool);
 			assertEquals(1, pool.buffers().count());
@@ -178,13 +176,13 @@ public class CommandTest extends AbstractVulkanTest {
 			final VkCommandPoolCreateInfo info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = 0;
 			info.flags = VkCommandPoolCreateFlag.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT.value();
-			verify(library).vkCreateCommandPool(eq(dev.handle()), argThat(structure(info)), isNull(), eq(factory.reference()));
+			verify(library).vkCreateCommandPool(eq(device.handle()), argThat(structure(info)), isNull(), eq(factory.reference()));
 
 			// Destroy pool
 			final Pointer handle = pool.handle();
 			pool.destroy();
 			assertEquals(0, pool.buffers().count());
-			verify(library).vkDestroyCommandPool(dev.handle(), handle, null);
+			verify(library).vkDestroyCommandPool(device.handle(), handle, null);
 		}
 	}
 }

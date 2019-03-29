@@ -22,7 +22,7 @@ public class WorkQueueTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	public void before() {
-		queue = new WorkQueue(mock(Pointer.class));
+		queue = new WorkQueue(mock(Pointer.class), library);
 	}
 
 	@Test

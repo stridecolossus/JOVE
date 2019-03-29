@@ -70,7 +70,6 @@ public class PhysicalDevice extends AbstractObject {
 		 * @return Whether presentation is supported
 		 */
 		public boolean isPresentationSupported(Surface surface) {
-			final Vulkan vulkan = Vulkan.instance();
 			final IntByReference supported = vulkan.factory().integer();
 			check(vulkan.library().vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice.this.handle(), index(), surface.handle(), supported));
 			return VulkanBoolean.of(supported.getValue()).isTrue();
@@ -111,14 +110,12 @@ public class PhysicalDevice extends AbstractObject {
 	/**
 	 * Creates a physical device and retrieves associated data.
 	 * @param handle 		Device handle
-	 * @param instance		Parent instance
-	 * @param factory		Reference factory
+	 * @param vulkan		Vulkan context
 	 * @return Physical device
 	 */
-	static PhysicalDevice create(Pointer handle, VulkanInstance instance) {
+	static PhysicalDevice create(Pointer handle, Vulkan vulkan) {
 		// Get device properties
-		final Vulkan vulkan = Vulkan.instance();
-		final VulkanLibrary lib = vulkan.library();
+		final VulkanLibrarySystem lib = vulkan.library();
 		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
 		lib.vkGetPhysicalDeviceProperties(handle, props);
 
@@ -135,24 +132,25 @@ public class PhysicalDevice extends AbstractObject {
 			lib.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 			return VulkanLibrary.SUCCESS;
 		};
-		final var families = VulkanFunction.enumerate(func, new VkQueueFamilyProperties());
+		final var families = VulkanFunction.enumerate(func, vulkan.factory().integer(), new VkQueueFamilyProperties());
 
 		// Enumerate device-specific extensions and layers
 		final VulkanFunction<VkExtensionProperties> extensions = (count, ext) -> lib.vkEnumerateDeviceExtensionProperties(handle, null, count, ext);
 		final VulkanFunction<VkLayerProperties> layers = (count, ext) -> lib.vkEnumerateDeviceLayerProperties(handle, count, ext);
-		final Supported supported = new Supported(extensions, layers);
+		final Supported supported = new Supported(extensions, layers, vulkan.factory());
 
 		// Create device
-		return new PhysicalDevice(handle, instance, props, mem, features, Arrays.asList(families), supported);
+		return new PhysicalDevice(handle, vulkan, props, mem, features, Arrays.asList(families), supported);
 	}
 
 	static List<PhysicalDevice> create(VulkanInstance instance) {
 		final var devices = instance.devices();
-		return devices.stream().map(handle -> PhysicalDevice.create(handle, instance)).collect(toList());
+		final Vulkan vulkan = instance.vulkan();
+		return devices.stream().map(handle -> PhysicalDevice.create(handle, vulkan)).collect(toList());
 	}
 
 	private final Pointer handle;
-	private final VulkanInstance instance;
+	private final Vulkan vulkan;
 	private final VkPhysicalDeviceProperties props;
 	private final VkPhysicalDeviceMemoryProperties mem;
 	private final VkPhysicalDeviceFeatures features;
@@ -162,16 +160,16 @@ public class PhysicalDevice extends AbstractObject {
 	/**
 	 * Constructor.
 	 * @param handle			Device handle
-	 * @param lib				Vulkan instance
+	 * @param vulkan			Vulkan context
 	 * @param props				Device properties
 	 * @param mem				Memory properties
 	 * @param features			Features
 	 * @param families			Queue families
 	 * @param supported			Supported device features
 	 */
-	PhysicalDevice(Pointer handle, VulkanInstance instance, VkPhysicalDeviceProperties props, VkPhysicalDeviceMemoryProperties mem, VkPhysicalDeviceFeatures features, List<VkQueueFamilyProperties> families, Supported supported) {
+	PhysicalDevice(Pointer handle, Vulkan vulkan, VkPhysicalDeviceProperties props, VkPhysicalDeviceMemoryProperties mem, VkPhysicalDeviceFeatures features, List<VkQueueFamilyProperties> families, Supported supported) {
 		this.handle = notNull(handle);
-		this.instance = notNull(instance);
+		this.vulkan = notNull(vulkan);
 		this.props = notNull(props);
 		this.mem = notNull(mem);
 		this.features = notNull(features);
@@ -187,10 +185,10 @@ public class PhysicalDevice extends AbstractObject {
 	}
 
 	/**
-	 * @return Vulkan instance
+	 * @return Vulkan context
 	 */
-	VulkanInstance instance() {
-		return instance;
+	Vulkan vulkan() {
+		return vulkan;
 	}
 
 	/**

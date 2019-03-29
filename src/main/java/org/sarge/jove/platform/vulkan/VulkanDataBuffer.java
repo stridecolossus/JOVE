@@ -23,7 +23,7 @@ import com.sun.jna.ptr.PointerByReference;
 class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 	private final long len;
 	private final Pointer mem;
-	private final Pointer dev;
+	private final LogicalDevice dev;
 
 	/**
 	 * Constructor.
@@ -36,7 +36,7 @@ class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 		super(handle);
 		this.len = oneOrMore(len);
 		this.mem = notNull(mem);
-		this.dev = dev.handle();
+		this.dev = notNull(dev);
 	}
 
 	/**
@@ -53,17 +53,17 @@ class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 		if(actual > len) throw new IllegalArgumentException(String.format("Buffer exceeds VBO size: len=%d max=%d", actual, len));
 
 		// Map VBO memory
-		final Vulkan vulkan = Vulkan.instance();
-		final VulkanLibrary lib = vulkan.library();
+		final Vulkan vulkan = dev.parent().vulkan();
+		final VulkanLibraryMemory lib = vulkan.library();
 		final PointerByReference data = vulkan.factory().reference();
-		lib.vkMapMemory(dev, mem, 0, actual, 0, data);
+		lib.vkMapMemory(dev.handle(), mem, 0, actual, 0, data);
 
 		// Copy buffer to VBO memory
 		final ByteBuffer bb = data.getValue().getByteBuffer(0, actual);
 		bb.put(buffer);
 
 		// Cleanup
-		lib.vkUnmapMemory(dev, mem);
+		lib.vkUnmapMemory(dev.handle(), mem);
 	}
 
 
@@ -179,7 +179,7 @@ class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 			// TODO - queue families
 
 			// Allocate VBO
-			final Vulkan vulkan = Vulkan.instance();
+			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference buffer = vulkan.factory().reference();
 			final Pointer logical = dev.handle();

@@ -14,11 +14,13 @@ import java.util.function.Predicate;
 
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 import org.sarge.lib.collection.StrictSet;
 import org.sarge.lib.util.AbstractEqualsObject;
 import org.sarge.lib.util.AbstractObject;
 
 import com.sun.jna.Native;
+import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>feature</i> represents functionality supported by Vulkan.
@@ -217,10 +219,11 @@ public abstract class Feature<T extends Feature<T>> extends AbstractEqualsObject
 		 * Constructor given enumeration functions.
 		 * @param extensions		Extensions function
 		 * @param layers			Layers function
+		 * @param factory			Reference factory
 		 */
-		public Supported(VulkanFunction<VkExtensionProperties> extensions, VulkanFunction<VkLayerProperties> layers) {
-			this.extensions = enumerateExtensions(extensions);
-			this.layers = enumerateLayers(layers);
+		public Supported(VulkanFunction<VkExtensionProperties> extensions, VulkanFunction<VkLayerProperties> layers, ReferenceFactory factory) {
+			this.extensions = enumerateExtensions(extensions, factory.integer());
+			this.layers = enumerateLayers(layers, factory.integer());
 		}
 
 		/**
@@ -239,22 +242,24 @@ public abstract class Feature<T extends Feature<T>> extends AbstractEqualsObject
 
 		/**
 		 * Enumerates supported extensions.
-		 * @param func Extension function
+		 * @param func 		Extension function
+		 * @param count		Returned count
 		 * @return Supported extensions
 		 */
-		private static FeatureSet<Extension> enumerateExtensions(VulkanFunction<VkExtensionProperties> func) {
-			final VkExtensionProperties[] array = VulkanFunction.enumerate(func, new VkExtensionProperties());
+		private static FeatureSet<Extension> enumerateExtensions(VulkanFunction<VkExtensionProperties> func, IntByReference count) {
+			final VkExtensionProperties[] array = VulkanFunction.enumerate(func, count, new VkExtensionProperties());
 			final var extensions = Arrays.stream(array).map(e -> e.extensionName).map(Native::toString).map(Extension::new).collect(toSet());
 			return new FeatureSet<>(extensions);
 		}
 
 		/**
 		 * Enumerates supported validation layers.
-		 * @param func Layer function
+		 * @param func 		Layer function
+		 * @param count		Returned count
 		 * @return Supported layers
 		 */
-		private static FeatureSet<ValidationLayer> enumerateLayers(VulkanFunction<VkLayerProperties> func) {
-			final VkLayerProperties[] array = VulkanFunction.enumerate(func, new VkLayerProperties());
+		private static FeatureSet<ValidationLayer> enumerateLayers(VulkanFunction<VkLayerProperties> func, IntByReference count) {
+			final VkLayerProperties[] array = VulkanFunction.enumerate(func, count, new VkLayerProperties());
 			final var layers = Arrays.stream(array).map(layer -> new ValidationLayer(Native.toString(layer.layerName), layer.implementationVersion)).collect(toSet());
 			return new FeatureSet<>(layers);
 		}

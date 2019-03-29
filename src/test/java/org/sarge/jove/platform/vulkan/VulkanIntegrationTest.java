@@ -59,8 +59,7 @@ public class VulkanIntegrationTest {
 
 		// Init Vulkan
 		System.out.println("Initialising Vulkan");
-		Vulkan.init();
-		vulkan = Vulkan.instance();
+		vulkan = Vulkan.create();
 		lib = vulkan.library();
 
 		System.out.println("Creating instance");
@@ -342,7 +341,7 @@ public class VulkanIntegrationTest {
 		System.out.println("Creating surface");
 		final Handle handle = (Handle) window;
 		final Pointer ptr = service.surface(instance.handle(), handle.handle());
-		return Surface.create(ptr, dev);
+		return Surface.create(ptr, instance, dev);
 	}
 
 	private SwapChain chain(LogicalDevice dev, Surface surface) {

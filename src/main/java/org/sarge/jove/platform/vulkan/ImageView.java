@@ -110,7 +110,7 @@ public class ImageView extends VulkanHandle {
 		 */
 		public ImageView build() {
 			// Create image view
-			final Vulkan vulkan = Vulkan.instance();
+			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference view = vulkan.factory().reference();
 			check(lib.vkCreateImageView(dev.handle(), info, null, view));

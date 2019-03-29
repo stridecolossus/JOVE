@@ -11,6 +11,7 @@ import java.util.List;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
@@ -25,8 +26,7 @@ public class SwapChain extends VulkanHandle {
 	private final List<ImageView> views;
 	private final Dimensions extent;
 	private final LogicalDevice dev;
-	private final IntByReference index = Vulkan.instance().factory().integer();
-	private final VulkanLibrary lib = Vulkan.instance().library();
+	private final IntByReference index;
 
 	/**
 	 * Constructor.
@@ -40,6 +40,7 @@ public class SwapChain extends VulkanHandle {
 		this.extent = notNull(extent);
 		this.views = List.copyOf(views);
 		this.dev = notNull(dev);
+		this.index = dev.parent().vulkan().factory().integer();
 	}
 
 	/**
@@ -62,6 +63,7 @@ public class SwapChain extends VulkanHandle {
 	 * @param fence			Optional fence
 	 */
 	public int next(Handle semaphore, Fence fence) {
+		final VulkanLibrarySwapChain lib = dev.parent().vulkan().library();
 		lib.vkAcquireNextImageKHR(dev.handle(), super.handle(), Long.MAX_VALUE, toPointer(semaphore), toPointer(fence), index);
 		return index.getValue();
 	}
@@ -101,6 +103,7 @@ public class SwapChain extends VulkanHandle {
 
 		// Present frame
 		// TODO - check
+		final VulkanLibrary lib = dev.parent().vulkan().library();
 		lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info});
 	}
 
@@ -309,14 +312,15 @@ public class SwapChain extends VulkanHandle {
 			// TODO - check format matches surface.formats
 
 			// Allocate swap-chain
-			final Vulkan vulkan = Vulkan.instance();
+			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
-			final PointerByReference chain = vulkan.factory().reference();
+			final ReferenceFactory factory = vulkan.factory();
+			final PointerByReference chain = factory.reference();
 			check(lib.vkCreateSwapchainKHR(dev.handle(), info, null, chain));
 
 			// Get swap-chain image views
 			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
-			final var handles = VulkanFunction.array(func, vulkan.factory()::pointers);
+			final var handles = VulkanFunction.array(func, factory.integer(), factory::pointers);
 			final var views = Arrays.stream(handles).map(this::image).map(this::view).collect(toList());
 
 			// Create swap-chain

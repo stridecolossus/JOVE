@@ -34,8 +34,8 @@ public class VulkanShader extends VulkanHandle {
 		info.pCode = buffer;
 
 		// Create shader
-		final Vulkan vulkan = Vulkan.instance();
-		final VulkanLibrary lib = vulkan.library();
+		final Vulkan vulkan = dev.parent().vulkan();
+		final VulkanLibraryShader lib = vulkan.library();
 		final PointerByReference shader = vulkan.factory().reference();
 		check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));
 

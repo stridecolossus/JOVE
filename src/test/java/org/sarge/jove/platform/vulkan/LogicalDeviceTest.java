@@ -34,9 +34,15 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	public void before() {
+		// Create parent physical device
 		parent = mock(PhysicalDevice.class);
+		when(parent.vulkan()).thenReturn(vulkan);
+
+		// Create a queue family
 		family = mock(QueueFamily.class);
 		when(family.count()).thenReturn(1);
+
+		// Create logical device
 		queue = mock(WorkQueue.class);
 		dev = new LogicalDevice(new VulkanHandle(new Pointer(42), Destructor.NULL), parent, Map.of(family, List.of(queue)));
 	}

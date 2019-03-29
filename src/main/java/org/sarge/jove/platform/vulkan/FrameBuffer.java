@@ -30,7 +30,7 @@ public class FrameBuffer extends VulkanHandle {
 	 * Builder for a frame buffer.
 	 */
 	public static class Builder {
-		private final Pointer dev;
+		private final LogicalDevice dev;
 		private final RenderPass pass;
 		private final List<Pointer> views = new ArrayList<>();
 		private Dimensions extent;
@@ -42,7 +42,7 @@ public class FrameBuffer extends VulkanHandle {
 		 * @param pass		Render pass
 		 */
 		public Builder(LogicalDevice dev, RenderPass pass) {
-			this.dev = dev.handle();
+			this.dev = notNull(dev);
 			this.pass = notNull(pass);
 		}
 
@@ -94,14 +94,14 @@ public class FrameBuffer extends VulkanHandle {
 			info.layers = layers;
 
 			// Create frame buffer
-			final Vulkan vulkan = Vulkan.instance();
+			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference buffer = vulkan.factory().reference();
-			check(lib.vkCreateFramebuffer(dev, info, null, buffer));
+			check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
 
 			// Create wrapper
 			final Pointer handle = buffer.getValue();
-			final Destructor destructor = () -> lib.vkDestroyFramebuffer(dev, handle, null);
+			final Destructor destructor = () -> lib.vkDestroyFramebuffer(dev.handle(), handle, null);
 			return new FrameBuffer(new VulkanHandle(handle, destructor));
 		}
 	}

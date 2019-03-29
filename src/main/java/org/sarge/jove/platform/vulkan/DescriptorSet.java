@@ -85,7 +85,7 @@ public class DescriptorSet extends Handle {
 		updater.accept(write);
 
 		// Update descriptor set
-		final Vulkan vulkan = Vulkan.instance();
+		final Vulkan vulkan = layout.dev.parent().vulkan();
 		final VulkanLibraryDescriptorSet lib = vulkan.library();
 		lib.vkUpdateDescriptorSets(layout.dev.handle(), 1, new VkWriteDescriptorSet[]{write}, 0, null);
 	}
@@ -230,7 +230,7 @@ public class DescriptorSet extends Handle {
 				info.pBindings = StructureHelper.structures(bindings);
 
 				// Allocate layout
-				final Vulkan vulkan = Vulkan.instance();
+				final Vulkan vulkan = dev.parent().vulkan();
 				final VulkanLibraryDescriptorSet lib = vulkan.library();
 				final PointerByReference layout = vulkan.factory().reference();
 				check(lib.vkCreateDescriptorSetLayout(dev.handle(), info, null, layout));
@@ -290,7 +290,7 @@ public class DescriptorSet extends Handle {
 			info.pSetLayouts = StructureHelper.pointers(pointers);
 
 			// Allocate descriptor sets
-			final Vulkan vulkan = Vulkan.instance();
+			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibraryDescriptorSet lib = vulkan.library();
 			final Pointer[] array = vulkan.factory().pointers(count);
 			check(lib.vkAllocateDescriptorSets(dev.handle(), info, array));
@@ -308,8 +308,7 @@ public class DescriptorSet extends Handle {
 		 * Resets this descriptor set pool.
 		 */
 		public void reset() {
-			final Vulkan vulkan = Vulkan.instance();
-			final VulkanLibraryDescriptorSet lib = vulkan.library();
+			final VulkanLibraryDescriptorSet lib = dev.parent().vulkan().library();
 			check(lib.vkResetDescriptorPool(dev.handle(), super.handle(), 0));
 		}
 
@@ -319,8 +318,7 @@ public class DescriptorSet extends Handle {
 		 */
 		public void free(Collection<DescriptorSet> descriptors) {
 			final Pointer[] array = descriptors.stream().map(Handle::handle).toArray(Pointer[]::new);
-			final Vulkan vulkan = Vulkan.instance();
-			final VulkanLibraryDescriptorSet lib = vulkan.library();
+			final VulkanLibraryDescriptorSet lib = dev.parent().vulkan().library();
 			check(lib.vkFreeDescriptorSets(dev.handle(), super.handle(), array.length, array));
 		}
 
@@ -393,7 +391,7 @@ public class DescriptorSet extends Handle {
 				info.maxSets = max;
 
 				// Allocate pool
-				final Vulkan vulkan = Vulkan.instance();
+				final Vulkan vulkan = dev.parent().vulkan();
 				final VulkanLibraryDescriptorSet lib = vulkan.library();
 				final PointerByReference pool = vulkan.factory().reference();
 				check(lib.vkCreateDescriptorPool(dev.handle(), info, null, pool));

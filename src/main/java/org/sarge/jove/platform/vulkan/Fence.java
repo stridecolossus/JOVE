@@ -32,7 +32,7 @@ public class Fence extends VulkanHandle {
 		}
 
 		// Allocate fence
-		final Vulkan vulkan = Vulkan.instance();
+		final Vulkan vulkan = dev.parent().vulkan();
 		final VulkanLibrarySynchronize lib = vulkan.library();
 		final PointerByReference fence = vulkan.factory().reference();
 		check(lib.vkCreateFence(dev.handle(), info, null, fence));
@@ -48,8 +48,7 @@ public class Fence extends VulkanHandle {
 	 * Group of fences.
 	 */
 	public static class Group extends AbstractEqualsObject {
-		private final VulkanLibrarySynchronize lib = Vulkan.instance().library();
-		private final Pointer dev;
+		private final LogicalDevice dev;
 		private final Pointer[] fences;
 
 		/**
@@ -60,7 +59,7 @@ public class Fence extends VulkanHandle {
 		 */
 		public Group(LogicalDevice dev, Collection<Fence> fences) {
 			Check.notEmpty(fences);
-			this.dev = dev.handle();
+			this.dev = notNull(dev);
 			this.fences = fences.stream().map(Handle::handle).toArray(Pointer[]::new);
 		}
 
@@ -69,14 +68,16 @@ public class Fence extends VulkanHandle {
 		 * @param all Whether to wait for <b>all</b> fences or <b>any</b> fence in this group
 		 */
 		public void wait(boolean all) {
-			check(lib.vkWaitForFences(dev, fences.length, fences, VulkanBoolean.of(all), Long.MAX_VALUE));
+			final VulkanLibrarySynchronize lib = dev.parent().vulkan().library();
+			check(lib.vkWaitForFences(dev.handle(), fences.length, fences, VulkanBoolean.of(all), Long.MAX_VALUE));
 		}
 
 		/**
 		 * Resets <b>all</b> the fences in this group.
 		 */
 		public void reset() {
-			check(lib.vkResetFences(dev, fences.length, fences));
+			final VulkanLibrarySynchronize lib = dev.parent().vulkan().library();
+			check(lib.vkResetFences(dev.handle(), fences.length, fences));
 		}
 	}
 

@@ -53,6 +53,7 @@ public interface VulkanFunction<T> {
 	 * invoke(count, array[0]);
 	 * </pre>
 	 * @param func		Vulkan function
+	 * @param count		Returned count
 	 * @param obj		Identity object
 	 * @return Array
 	 * @param <T> Structure type
@@ -60,9 +61,8 @@ public interface VulkanFunction<T> {
 	 * @see ReferenceFactory#integer()
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T extends Structure> T[] enumerate(VulkanFunction<T> func, T obj) {
+	public static <T extends Structure> T[] enumerate(VulkanFunction<T> func, IntByReference count, T obj) {
 		// Count number of values
-		final IntByReference count = Vulkan.instance().factory().integer();
 		check(func.enumerate(count, null));
 
 		// Retrieve values
@@ -79,15 +79,15 @@ public interface VulkanFunction<T> {
 	/**
 	 * Retrieves an arbitrary-typed array from Vulkan.
 	 * @param func			Vulkan function
+	 * @param count			Returned count
 	 * @param factory		Allocates the array
 	 * @return Array
 	 * @param <T> Array component type
 	 * @see #enumerate(IntByReference, Object)
 	 * @see ReferenceFactory#integer()
 	 */
-	public static <T> T[] array(VulkanFunction<T[]> func, IntFunction<T[]> factory) {
+	public static <T> T[] array(VulkanFunction<T[]> func, IntByReference count, IntFunction<T[]> factory) {
 		// Count number of values
-		final IntByReference count = Vulkan.instance().factory().integer();
 		check(func.enumerate(count, null));
 
 		// Allocate array

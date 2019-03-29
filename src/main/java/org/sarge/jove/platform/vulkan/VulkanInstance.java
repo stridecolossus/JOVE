@@ -42,11 +42,17 @@ public class VulkanInstance extends VulkanHandle {
 	 * Constructor.
 	 * @param instance 		Instance handle
 	 * @param lib			Vulkan library
-	 * @param references	Reference factory
 	 */
 	VulkanInstance(VulkanHandle handle, Vulkan vulkan) {
 		super(handle);
 		this.vulkan = notNull(vulkan);
+	}
+
+	/**
+	 * @return Vulkan context
+	 */
+	Vulkan vulkan() {
+		return vulkan;
 	}
 
 	/**
@@ -56,7 +62,7 @@ public class VulkanInstance extends VulkanHandle {
 	public Collection<Pointer> devices() {
 		final VulkanFunction<Pointer[]> func = (count, array) -> vulkan.library().vkEnumeratePhysicalDevices(super.handle(), count, array);
 		final ReferenceFactory factory = vulkan.factory();
-		final Pointer[] devices = VulkanFunction.array(func, factory::pointers);
+		final Pointer[] devices = VulkanFunction.array(func, vulkan.factory().integer(), factory::pointers);
 		return Arrays.asList(devices);
 	}
 

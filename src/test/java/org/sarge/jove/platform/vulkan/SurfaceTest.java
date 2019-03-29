@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Set;
@@ -32,9 +33,11 @@ public class SurfaceTest extends AbstractVulkanTest {
 
 	@Test
 	public void create() {
-		final PhysicalDevice dev = createPhysicalDevice();
+		final VulkanInstance instance = mock(VulkanInstance.class);
+		final PhysicalDevice dev = mock(PhysicalDevice.class);
+		when(dev.vulkan()).thenReturn(vulkan);
 		final Pointer handle = mock(Pointer.class);
-		surface = Surface.create(handle, dev);
+		surface = Surface.create(handle, instance, dev);
 		assertNotNull(surface);
 		assertEquals(handle, surface.handle());
 	}

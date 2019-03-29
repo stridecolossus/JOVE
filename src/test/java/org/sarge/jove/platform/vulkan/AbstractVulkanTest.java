@@ -15,6 +15,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 public abstract class AbstractVulkanTest {
+	protected Vulkan vulkan;
 	protected VulkanLibrary library;
 	protected ReferenceFactory factory;
 	protected LogicalDevice device;
@@ -48,15 +49,19 @@ public abstract class AbstractVulkanTest {
 		};
 
 		// Initialise mock implementation
-		final Vulkan vulkan = mock(Vulkan.class);
+		vulkan = mock(Vulkan.class);
 		when(vulkan.library()).thenReturn(library);
 		when(vulkan.factory()).thenReturn(factory);
-		Vulkan.init(vulkan);
 
 		// Create logical device
 		device = mock(LogicalDevice.class);
 		when(device.handle()).thenReturn(mock(Pointer.class));
 		when(device.semaphore()).thenReturn(mock(Handle.class));
+
+		// Create physical device
+		final PhysicalDevice parent = mock(PhysicalDevice.class);
+		when(parent.vulkan()).thenReturn(vulkan);
+		when(device.parent()).thenReturn(parent);
 	}
 
 	/**
@@ -72,10 +77,8 @@ public abstract class AbstractVulkanTest {
 	 * @return Mock physical device
 	 */
 	protected PhysicalDevice createPhysicalDevice() {
-		final VulkanInstance instance = createInstance();
 		final PhysicalDevice dev = mock(PhysicalDevice.class);
 		when(dev.handle()).thenReturn(mock(Pointer.class));
-		when(dev.instance()).thenReturn(instance);
 		return dev;
 	}
 

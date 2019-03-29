@@ -154,7 +154,7 @@ public interface Command {
 			info.flags = IntegerEnumeration.mask(Arrays.asList(flags));
 
 			// Create pool
-			final Vulkan vulkan = Vulkan.instance();
+			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference pool = vulkan.factory().reference();
 			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
@@ -204,7 +204,7 @@ public interface Command {
 			info.commandPool = super.handle();
 
 			// Allocate buffers
-			final Vulkan vulkan = Vulkan.instance();
+			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final Pointer[] handles = vulkan.factory().pointers(num);
 			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));

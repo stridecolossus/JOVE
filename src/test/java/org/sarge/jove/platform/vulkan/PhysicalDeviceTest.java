@@ -23,14 +23,10 @@ import com.sun.jna.Pointer;
 public class PhysicalDeviceTest extends AbstractVulkanTest {
 	private Pointer handle;
 	private PhysicalDevice dev;
-	private VulkanInstance instance;
 	private VkQueueFamilyProperties familyProps;
 
 	@BeforeEach
 	public void before() {
-		// Create parent instance
-		instance = mock(VulkanInstance.class);
-
 		// Create device properties
 		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
 		props.deviceType = VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
@@ -46,7 +42,7 @@ public class PhysicalDeviceTest extends AbstractVulkanTest {
 
 		// Create device
 		handle = mock(Pointer.class);
-		dev = new PhysicalDevice(handle, instance, props, new VkPhysicalDeviceMemoryProperties(), features, List.of(familyProps), mock(Supported.class));
+		dev = new PhysicalDevice(handle, vulkan, props, new VkPhysicalDeviceMemoryProperties(), features, List.of(familyProps), mock(Supported.class));
 	}
 
 	@Test

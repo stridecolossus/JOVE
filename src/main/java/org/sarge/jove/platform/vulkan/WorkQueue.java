@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,14 +109,15 @@ public class WorkQueue extends Handle {
 		}
 	}
 
-	private final VulkanLibrarySystem lib = Vulkan.instance().library();
+	private final VulkanLibraryLogicalDevice lib;
 
 	/**
 	 * Constructor.
 	 * @param handle Handle
 	 */
-	protected WorkQueue(Pointer handle) {
+	protected WorkQueue(Pointer handle, VulkanLibraryLogicalDevice lib) {
 		super(handle);
+		this.lib = notNull(lib);
 	}
 
 	/**

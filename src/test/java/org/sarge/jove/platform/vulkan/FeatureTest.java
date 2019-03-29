@@ -18,6 +18,7 @@ import org.sarge.jove.platform.vulkan.Feature.Extension;
 import org.sarge.jove.platform.vulkan.Feature.FeatureSet;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.platform.vulkan.Feature.ValidationLayer;
+import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 
 public class FeatureTest {
 	@Nested
@@ -153,7 +154,7 @@ public class FeatureTest {
 		public void before() {
 			final VulkanFunction<VkExtensionProperties> extensions = (count, array) -> 0;
 			final VulkanFunction<VkLayerProperties> layers = (count, array) -> 0;
-			supported = new Supported(extensions, layers);
+			supported = new Supported(extensions, layers, ReferenceFactory.DEFAULT);
 		}
 
 		@Test

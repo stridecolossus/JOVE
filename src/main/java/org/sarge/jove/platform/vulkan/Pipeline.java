@@ -419,7 +419,7 @@ public class Pipeline extends VulkanHandle {
 			pipeline.basePipelineIndex = -1;
 
 			// Allocate pipeline
-			final Vulkan vulkan = Vulkan.instance();
+			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final Pointer[] pipelines = vulkan.factory().pointers(1);
 			check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
@@ -468,7 +468,7 @@ public class Pipeline extends VulkanHandle {
 			 */
 			public Layout build() {
 				// Create pipeline layout
-				final Vulkan vulkan = Vulkan.instance();
+				final Vulkan vulkan = dev.parent().vulkan();
 				final VulkanLibrary lib = vulkan.library();
 				final PointerByReference layout = vulkan.factory().reference();
 				check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));

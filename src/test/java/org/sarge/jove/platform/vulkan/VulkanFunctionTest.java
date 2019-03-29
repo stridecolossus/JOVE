@@ -16,7 +16,7 @@ public class VulkanFunctionTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	public void before() {
-		count = factory.integer();
+		count = new IntByReference(1);
 	}
 
 	@Test
@@ -25,7 +25,7 @@ public class VulkanFunctionTest extends AbstractVulkanTest {
 		final VulkanFunction<Structure> func = mock(VulkanFunction.class);
 		final Structure struct = mock(Structure.class);
 		when(struct.toArray(1)).thenReturn(new Structure[]{struct});
-		final var results = VulkanFunction.enumerate(func, struct);
+		final var results = VulkanFunction.enumerate(func, count, struct);
 		assertNotNull(results);
 		verify(func).enumerate(count, null);
 		verify(func).enumerate(count, struct);
@@ -35,7 +35,7 @@ public class VulkanFunctionTest extends AbstractVulkanTest {
 	public void array() {
 		@SuppressWarnings("unchecked")
 		final VulkanFunction<String[]> func = mock(VulkanFunction.class);
-		final var array = VulkanFunction.array(func, String[]::new);
+		final var array = VulkanFunction.array(func, count, String[]::new);
 		assertNotNull(array);
 		verify(func).enumerate(count, null);
 		verify(func).enumerate(count, new String[1]);

@@ -9,12 +9,26 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * The <i>Vulkan</i> object is a singleton encapsulating global access to the Vulkan library and supporting features.
+ * The <i>Vulkan</i> context encapsulates global access to the Vulkan library and supporting features.
+ * <p>
+ * Usage:
+ * <pre>
+ * // Production code
+ * Vulkan vulkan = Vulkan.create();
+ *
+ * // Test code
+ * Vulkan vulkan = new Vulkan.create(...);
+ * </pre>
  * @author Sarge
  */
 public class Vulkan {
 	/**
-	 * Factory for return-by-reference types.
+	 * The <i>reference factory</i> creates return-by-reference types used when invoking the Vulkan API.
+	 * <p>
+	 * The purpose of the reference factory is to centralise instantiation of return-by-reference types to support unit-testing.
+	 * Test code should implement a factory that gives unit-tests access to the generated references (which is virtually impossible to mock otherwise).
+	 * <p>
+	 * The {@link #DEFAULT} production-code implementation simply generates <i>new</i> references.
 	 */
 	public interface ReferenceFactory {
 		/**
@@ -54,32 +68,17 @@ public class Vulkan {
 		};
 	}
 
-	private static Vulkan instance;
+	private static boolean created;
 
 	/**
-	 * Initialises Vulkan.
-	 * @return Vulkan singleton
+	 * Creates the global Vulkan context.
+	 * @return Vulkan context
+	 * @throws IllegalStateException if the context has already been created
 	 */
-	public static synchronized void init() {
-		if(instance != null) throw new IllegalStateException("Vulkan instance has already been initialised");
-		final VulkanLibrary lib = VulkanLibrary.create();
-		instance = new Vulkan(lib, ReferenceFactory.DEFAULT);
-	}
-
-	/**
-	 * Initialises Vulkan with a mock implementation.
-	 * @param vulkan Vulkan singleton
-	 */
-	protected static void init(Vulkan vulkan) {
-		instance = notNull(vulkan);
-	}
-
-	/**
-	 * @return Vulkan singleton
-	 */
-	protected static Vulkan instance() {
-		assert instance != null : "Vulkan has not been initialised";
-		return instance;
+	public static synchronized Vulkan create() {
+		if(created) throw new IllegalStateException("Vulkan has already been created");
+		created = true;
+		return new Vulkan(VulkanLibrary.create(), ReferenceFactory.DEFAULT);
 	}
 
 	private final VulkanLibrary lib;
@@ -90,9 +89,9 @@ public class Vulkan {
 	/**
 	 * Constructor.
 	 * @param lib 			Vulkan API
-	 * @param factory		References factory
+	 * @param factory		Reference factory
 	 */
-	protected Vulkan(VulkanLibrary lib, ReferenceFactory factory) {
+	private Vulkan(VulkanLibrary lib, ReferenceFactory factory) {
 		this.lib = notNull(lib);
 		this.factory = notNull(factory);
 	}
@@ -105,21 +104,21 @@ public class Vulkan {
 	}
 
 	/**
-	 * @return References factory
+	 * @return Reference factory
 	 */
 	public ReferenceFactory factory() {
 		return factory;
 	}
 
 	/**
-	 * Retrieves the supported Vulkan features.
+	 * Retrieves the global supported Vulkan features.
 	 * @return Supported features
 	 */
 	public synchronized Supported supported() {
 		if(supported == null) {
 			final VulkanFunction<VkExtensionProperties> extensions = (count, array) -> lib.vkEnumerateInstanceExtensionProperties(null, count, array);
 			final VulkanFunction<VkLayerProperties> layers = (count, array) -> lib.vkEnumerateInstanceLayerProperties(count, array);
-			supported = new Supported(extensions, layers);
+			supported = new Supported(extensions, layers, factory);
 		}
 
 		return supported;

@@ -33,11 +33,9 @@ import com.sun.jna.ptr.PointerByReference;
 public class VulkanInstanceTest extends AbstractVulkanTest {
 	private VulkanInstance instance;
 	private Pointer handle;
-	private Vulkan vulkan;
 
 	@BeforeEach
 	public void before() {
-		vulkan = Vulkan.instance();
 		handle = mock(Pointer.class);
 		instance = new VulkanInstance(new VulkanHandle(handle, Destructor.NULL), vulkan);
 	}

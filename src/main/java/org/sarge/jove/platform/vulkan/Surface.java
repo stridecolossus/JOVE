@@ -22,26 +22,25 @@ public class Surface extends VulkanHandle {
 	/**
 	 * Constructor.
 	 * @param surface		Surface handle
-	 * @param device		Physical device
+	 * @param dev			Physical device
 	 * @see FrameworkDesktopService#surface(Pointer, Pointer)
 	 */
-	public static Surface create(Pointer surface, PhysicalDevice device) {
+	public static Surface create(Pointer surface, VulkanInstance instance, PhysicalDevice dev) {
 		// Get surface capabilities
-		final Vulkan vulkan = Vulkan.instance();
+		final Vulkan vulkan = dev.vulkan();
 		final VulkanLibrary lib = vulkan.library();
 		final VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR.ByReference();
-		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.handle(), surface, caps));
+		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.handle(), surface, caps));
 
 		// Get supported formats
-		final VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(device.handle(), surface, count, array);
-		final var formats = Arrays.asList(VulkanFunction.enumerate(func, new VkSurfaceFormatKHR()));
+		final VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.handle(), surface, count, array);
+		final var formats = Arrays.asList(VulkanFunction.enumerate(func, vulkan.factory().integer(), new VkSurfaceFormatKHR()));
 
 		// Get supported presentation modes
-		final var modes = loadModes(lib, device, surface);
+		final var modes = loadModes(lib, dev, surface);
 
 		// Create surface
-		final Pointer instance = device.instance().handle();
-		final Destructor destructor = () -> lib.vkDestroySurfaceKHR(instance, surface, null);
+		final Destructor destructor = () -> lib.vkDestroySurfaceKHR(instance.handle(), surface, null);
 		return new Surface(new VulkanHandle(surface, destructor), caps, formats, modes);
 	}
 

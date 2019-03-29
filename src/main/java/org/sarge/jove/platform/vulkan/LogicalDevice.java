@@ -84,8 +84,8 @@ public class LogicalDevice extends VulkanHandle {
 	public Handle semaphore() {
 		// Allocate semaphore
 		final VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
-		final Vulkan vulkan = Vulkan.instance();
-		final VulkanLibrary lib = vulkan.library();
+		final Vulkan vulkan = parent.vulkan();
+		final VulkanLibrarySynchronize lib = vulkan.library();
 		final PointerByReference semaphore = vulkan.factory().reference();
 		check(lib.vkCreateSemaphore(super.handle(), info, null, semaphore));
 
@@ -207,8 +207,8 @@ public class LogicalDevice extends VulkanHandle {
 			info.enabledLayerCount = layers.length;
 
 			// Create device
-			final Vulkan vulkan = Vulkan.instance();
-			final VulkanLibrary lib = vulkan.library();
+			final Vulkan vulkan = parent.vulkan();
+			final VulkanLibraryLogicalDevice lib = vulkan.library();
 			final PointerByReference logical = vulkan.factory().reference();
 			check(lib.vkCreateDevice(parent.handle(), info, null, logical));
 
@@ -226,7 +226,7 @@ public class LogicalDevice extends VulkanHandle {
 					lib.vkGetDeviceQueue(logical.getValue(), q.queueFamilyIndex, n, ref);
 
 					// Create work-queue
-					final WorkQueue queue = new WorkQueue(ref.getValue());
+					final WorkQueue queue = new WorkQueue(ref.getValue(), parent.vulkan().library());
 					handles.add(queue);
 				}
 			}
