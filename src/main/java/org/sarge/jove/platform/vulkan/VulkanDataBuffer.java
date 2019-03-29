@@ -8,8 +8,6 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.sarge.jove.model.DataBuffer;
-import org.sarge.jove.model.IndexBuffer;
-import org.sarge.jove.model.VertexBuffer;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.lib.collection.StrictSet;
 
@@ -18,6 +16,9 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * Vulkan implementation.
+ * <p>
+ * Note that this class does not differentiate between index buffers and vertex buffers.
+ * The user is responsible for selecting the correct bind command, either {@link #bindVertexBuffer()} or {@link #bindIndexBuffer()}.
  * @author Sarge
  */
 class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
@@ -26,10 +27,10 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 
 	/**
 	 * Constructor.
-	 * @param handle 		VBO handle
+	 * @param handle 		Buffer handle
 	 * @param dev			Logical device
-	 * @param len			Length of this VBO
-	 * @param mem			VBO memory
+	 * @param len			Length of this buffer (bytes)
+	 * @param mem			Buffer memory
 	 */
 	protected VulkanDataBuffer(Pointer handle, LogicalDevice dev, long len, Pointer mem) {
 		super(handle, dev, lib -> lib::vkDestroyBuffer);
@@ -38,7 +39,7 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 	}
 
 	/**
-	 * @return Length of this VBO
+	 * @return Length of this buffer
 	 */
 	public long length() {
 		return len;
@@ -48,15 +49,15 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 	public void push(ByteBuffer buffer) {
 		// Check buffer
 		final int actual = buffer.capacity();
-		if(actual > len) throw new IllegalArgumentException(String.format("Buffer exceeds VBO size: len=%d max=%d", actual, len));
+		if(actual > len) throw new IllegalArgumentException(String.format("Buffer exceeds length of this data buffer: len=%d max=%d", actual, len));
 
-		// Map VBO memory
+		// Map buffer memory
 		final Vulkan vulkan = dev.parent().vulkan();
 		final VulkanLibraryMemory lib = vulkan.library();
 		final PointerByReference data = vulkan.factory().reference();
 		lib.vkMapMemory(dev.handle(), mem, 0, actual, 0, data);
 
-		// Copy buffer to VBO memory
+		// Copy to buffer memory
 		final ByteBuffer bb = data.getValue().getByteBuffer(0, actual);
 		bb.put(buffer);
 
@@ -64,45 +65,36 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 		lib.vkUnmapMemory(dev.handle(), mem);
 	}
 
+	// TODO - add a flag to builder to indicate the buffer purpose?
 
-	@Override
-	public VertexBuffer toVertexBuffer() {
-		return new VertexBuffer() {
-			@Override
-			public void push(ByteBuffer buffer) {
-				push(buffer);
-			}
-
-			@Override
-			public Command bind() {
-				return (api, cb) -> api.vkCmdBindVertexBuffers(cb, 0, 1, new Pointer[]{handle()}, new long[]{0});
-			}
-
-			@Override
-			public void destroy() {
-				VulkanDataBuffer.this.destroy();
-			}
-		};
+	/**
+	 * Command - Binds this index buffer.
+	 * @return Command to bind this index buffer
+	 */
+	public Command bindVertexBuffer() {
+		return (api, cb) -> api.vkCmdBindVertexBuffers(cb, 0, 1, new Pointer[]{super.handle()}, new long[]{0});
 	}
 
-	@Override
-	public IndexBuffer toIndexBuffer() {
-		return new IndexBuffer() {
-			@Override
-			public void push(ByteBuffer bb) {
-				push(bb);
-			}
+	/**
+	 * Command - Binds this vertex buffer.
+	 * @return Command to bind this vertex buffer
+	 * @see #bindIndexBuffer(int)
+	 */
+	public Command bindIndexBuffer() {
+		return bindIndexBuffer(Integer.BYTES);
+	}
 
-			@Override
-			public Command bind() {
-				return (api, cb) -> api.vkCmdBindIndexBuffer(cb, handle(), 0L, VkIndexType.VK_INDEX_TYPE_UINT32); // TODO - both sizes
-			}
-
-			@Override
-			public void destroy() {
-				VulkanDataBuffer.this.destroy();
-			}
-		};
+	/**
+	 * Command - Binds this vertex buffer.
+	 * @param size Size of the indices
+	 * @return Command to bind this vertex buffer
+	 * @throws IllegalArgumentException if the size is not {@link Integer#SIZE} or {@link Short#SIZE}
+	 * @see #bindIndexBuffer()
+	 */
+	public Command bindIndexBuffer(int size) {
+		if((size != Integer.SIZE) && (size != Short.SIZE)) throw new IllegalArgumentException("Invalid index buffer component size: " + size);
+		final VkIndexType type = size == Integer.SIZE ? VkIndexType.VK_INDEX_TYPE_UINT32 : VkIndexType.VK_INDEX_TYPE_UINT16;
+		return (api, cb) -> api.vkCmdBindIndexBuffer(cb, super.handle(), 0L, type);
 	}
 
 	@Override
@@ -112,7 +104,7 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 	}
 
 	/**
-	 * Builder for a VBO.
+	 * Builder for a data buffer.
 	 */
 	public static class Builder {
 		protected final LogicalDevice dev;

@@ -7,12 +7,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.model.DataBuffer.Layout.Attribute;
+import org.sarge.jove.model.DataBuffer.Layout.Rate;
 import org.sarge.jove.model.Vertex.Component;
-import org.sarge.jove.model.VertexBuffer.Layout;
-import org.sarge.jove.model.VertexBuffer.Layout.Attribute;
-import org.sarge.jove.model.VertexBuffer.Layout.Rate;
 
-public class VertexBufferTest {
+public class DataBufferTest {
 	private Attribute attribute;
 
 	@BeforeEach
@@ -29,7 +28,7 @@ public class VertexBufferTest {
 
 	@Test
 	public void layout() {
-		final Layout layout = new Layout(3, Rate.INSTANCE, List.of(attribute), 4);
+		final DataBuffer.Layout layout = new DataBuffer.Layout(3, Rate.INSTANCE, List.of(attribute), 4);
 		assertEquals(3, layout.binding());
 		assertEquals(Rate.INSTANCE, layout.rate());
 		assertEquals(List.of(attribute), layout.attributes());
@@ -39,7 +38,7 @@ public class VertexBufferTest {
 	@Test
 	public void builder() {
 		// Build layout
-		final Layout layout = new Layout.Builder()
+		final DataBuffer.Layout layout = new DataBuffer.Layout.Builder()
 			.binding(42)
 			.add(1, Component.POSITION)
 			.add(Component.COLOUR)
@@ -68,7 +67,7 @@ public class VertexBufferTest {
 
 	@Test
 	public void of() {
-		final Layout layout = Layout.of(List.of(Component.POSITION, Component.COLOUR));
+		final DataBuffer.Layout layout = DataBuffer.Layout.of(List.of(Component.POSITION, Component.COLOUR));
 		assertNotNull(layout);
 		assertEquals(0, layout.binding());
 		assertEquals(Rate.VERTEX, layout.rate());

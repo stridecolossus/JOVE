@@ -18,11 +18,9 @@ import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DataBuffer;
-import org.sarge.jove.model.IndexBuffer;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.MutableVertex;
-import org.sarge.jove.model.VertexBuffer;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Resource.PointerHandle;
@@ -103,10 +101,10 @@ public class VulkanIntegrationTest {
 		// vertex layout -> VBO layout (REPLACES!)
 
 		final Model<?> model = model();
-		final VertexBuffer.Layout layout = VertexBuffer.Layout.of(model.components());
+		final DataBuffer.Layout layout = DataBuffer.Layout.of(model.components());
 
-		final VertexBuffer vbo = vertexBuffer(model, layout);
-		final IndexBuffer indexBuffer = indexBuffer(model);
+		final VulkanDataBuffer vbo = vertexBuffer(model, layout);
+		final VulkanDataBuffer indexBuffer = indexBuffer(model);
 
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout);
 
@@ -379,7 +377,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, VertexBuffer.Layout layout) {
+	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, DataBuffer.Layout layout) {
 		System.out.println("Creating pipeline");
 		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), extent);
 		return new Pipeline.Builder(dev, pass)
@@ -401,7 +399,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VertexBuffer vbo, IndexBuffer index) {
+	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VulkanDataBuffer vbo, VulkanDataBuffer index) {
 		System.out.println("Recording command");
 
 		final Rectangle extent = new Rectangle(0, 0, 640, 480);
@@ -415,8 +413,8 @@ public class VulkanIntegrationTest {
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
 			.add(pass.begin(fb, extent, clear))
 			.add(pipeline.bind())
-			.add(vbo.bind())
-			.add(index.bind())
+			.add(vbo.bindVertexBuffer())
+			.add(index.bindIndexBuffer())
 			.add(draw)
 			.add(RenderPass.END_COMMAND)
 			.end();
@@ -451,7 +449,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private VertexBuffer vertexBuffer(Model<?> model, VertexBuffer.Layout layout) {
+	private VulkanDataBuffer vertexBuffer(Model<?> model, DataBuffer.Layout layout) {
 		System.out.println("Creating VBO");
 		final long size = model.length() * layout.stride();
 		final VulkanDataBuffer vbo = new VulkanDataBuffer.Builder(dev)
@@ -470,10 +468,10 @@ public class VulkanIntegrationTest {
 
 		copy(vbo, bb);
 
-		return vbo.toVertexBuffer();
+		return vbo;
 	}
 
-	private IndexBuffer indexBuffer(Model<?> model) {
+	private VulkanDataBuffer indexBuffer(Model<?> model) {
 		System.out.println("Creating index buffer");
 		final int len = model.length() * Integer.BYTES;
 		final VulkanDataBuffer index = new VulkanDataBuffer.Builder(dev)
@@ -491,7 +489,7 @@ public class VulkanIntegrationTest {
 
 		copy(index, bb);
 
-		return index.toIndexBuffer();
+		return index;
 	}
 
 	private void copy(DataBuffer buffer, ByteBuffer data) {
