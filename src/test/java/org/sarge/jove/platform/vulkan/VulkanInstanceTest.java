@@ -21,7 +21,6 @@ import org.sarge.jove.platform.vulkan.Feature.Extension;
 import org.sarge.jove.platform.vulkan.Feature.FeatureSet;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.platform.vulkan.Feature.ValidationLayer;
-import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 import org.sarge.jove.platform.vulkan.VulkanInstance.MessageCallback;
 import org.sarge.jove.platform.vulkan.VulkanInstance.MessageHandlerFactory;
 import org.sarge.jove.platform.vulkan.VulkanLibrary.Version;
@@ -37,7 +36,7 @@ public class VulkanInstanceTest extends AbstractVulkanTest {
 	@BeforeEach
 	public void before() {
 		handle = mock(Pointer.class);
-		instance = new VulkanInstance(new VulkanHandle(handle, Destructor.NULL), vulkan);
+		instance = new VulkanInstance(handle, vulkan);
 	}
 
 	@Test

@@ -22,7 +22,6 @@ import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
-import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 
 import com.sun.jna.Pointer;
 
@@ -44,7 +43,7 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 
 		// Create logical device
 		queue = mock(WorkQueue.class);
-		dev = new LogicalDevice(new VulkanHandle(new Pointer(42), Destructor.NULL), parent, Map.of(family, List.of(queue)));
+		dev = new LogicalDevice(new Pointer(42), parent, Map.of(family, List.of(queue)));
 	}
 
 	@Test

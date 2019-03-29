@@ -33,7 +33,7 @@ import com.sun.jna.ptr.PointerByReference;
  * </ul>
  * @author Sarge
  */
-public class VulkanInstance extends VulkanHandle {
+public class VulkanInstance extends Handle {
 	private final Vulkan vulkan;
 
 	private MessageHandlerFactory handlerFactory;
@@ -43,7 +43,7 @@ public class VulkanInstance extends VulkanHandle {
 	 * @param instance 		Instance handle
 	 * @param lib			Vulkan library
 	 */
-	VulkanInstance(VulkanHandle handle, Vulkan vulkan) {
+	VulkanInstance(Pointer handle, Vulkan vulkan) {
 		super(handle);
 		this.vulkan = notNull(vulkan);
 	}
@@ -78,10 +78,15 @@ public class VulkanInstance extends VulkanHandle {
 	}
 
 	@Override
-	protected void cleanup() {
+	public synchronized void destroy() {
+		// Destroy debug handlers
 		if(handlerFactory != null) {
 			handlerFactory.destroyHandlers();
 		}
+
+		// Destroy instance
+		vulkan.library().vkDestroyInstance(super.handle(), null);
+		super.destroy();
 	}
 
 	/**
@@ -156,9 +161,7 @@ public class VulkanInstance extends VulkanHandle {
 			check(lib.vkCreateInstance(info, null, instance));
 
 			// Create instance wrapper
-			final Pointer handle = instance.getValue();
-			final Destructor destructor = () -> lib.vkDestroyInstance(handle, null);
-			return new VulkanInstance(new VulkanHandle(handle, destructor), vulkan);
+			return new VulkanInstance(instance.getValue(), vulkan);
 		}
 	}
 

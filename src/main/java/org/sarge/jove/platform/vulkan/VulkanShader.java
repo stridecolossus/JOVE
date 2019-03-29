@@ -14,8 +14,9 @@ import com.sun.jna.ptr.PointerByReference;
 /**
  * Vulkan shader implementation.
  * @author Sarge
+ * TODO - opaque handle? i.e. no functionality
  */
-public class VulkanShader extends VulkanHandle {
+public class VulkanShader extends LogicalDeviceHandle {
 	/**
 	 * Creates a shader.
 	 * @param dev		Device
@@ -33,17 +34,15 @@ public class VulkanShader extends VulkanHandle {
 		info.codeSize = code.length;
 		info.pCode = buffer;
 
-		// Create shader
+		// Allocate shader
 		final Vulkan vulkan = dev.parent().vulkan();
 		final VulkanLibraryShader lib = vulkan.library();
 		final PointerByReference shader = vulkan.factory().reference();
 		check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));
 
-		// Create shader wrapper
+		// Create shader
 		// TODO - tracking
-		final Pointer handle = shader.getValue();
-		final Destructor destructor = () -> lib.vkDestroyShaderModule(dev.handle(), handle, null);
-		return new VulkanShader(new VulkanHandle(handle, destructor));
+		return new VulkanShader(shader.getValue(), dev);
 	}
 
 	/**
@@ -61,13 +60,7 @@ public class VulkanShader extends VulkanHandle {
 	 * Constructor.
 	 * @param handle Shader handle
 	 */
-	VulkanShader(VulkanHandle handle) {
-		super(handle);
+	VulkanShader(Pointer handle, LogicalDevice dev) {
+		super(handle, dev, lib -> lib::vkDestroyShaderModule);
 	}
-
-	// TODO
-	// - select
-	// - parameters
-	// - peer
-	// - upload data
 }

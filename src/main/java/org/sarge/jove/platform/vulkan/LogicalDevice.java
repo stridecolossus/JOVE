@@ -24,7 +24,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>logical device</i> is an instance of a {@link PhysicalDevice} that can be used to perform work.
  * @author Sarge
  */
-public class LogicalDevice extends VulkanHandle {
+public class LogicalDevice extends Handle {
 	private final PhysicalDevice parent;
 	private final Map<QueueFamily, List<WorkQueue>> queues;
 
@@ -34,7 +34,7 @@ public class LogicalDevice extends VulkanHandle {
 	 * @param parent		Parent physical device
 	 * @param queues		Queues ordered by family
 	 */
-	LogicalDevice(VulkanHandle handle, PhysicalDevice parent, Map<QueueFamily, List<WorkQueue>> queues) {
+	LogicalDevice(Pointer handle, PhysicalDevice parent, Map<QueueFamily, List<WorkQueue>> queues) {
 		super(handle);
 		this.parent = notNull(parent);
 		this.queues = Map.copyOf(queues);
@@ -90,8 +90,14 @@ public class LogicalDevice extends VulkanHandle {
 		check(lib.vkCreateSemaphore(super.handle(), info, null, semaphore));
 
 		// Create semaphore
-		final Pointer handle = semaphore.getValue();
-		return new VulkanHandle(handle, () -> lib.vkDestroySemaphore(super.handle(), handle, null));
+		return new LogicalDeviceHandle(semaphore.getValue(), LogicalDevice.this, ignored -> lib::vkDestroySemaphore);
+	}
+
+	@Override
+	public synchronized void destroy() {
+		final VulkanLibrary lib = parent.vulkan().library();
+		lib.vkDestroyDevice(super.handle(), null);
+		super.destroy();
 	}
 
 	/**
@@ -232,9 +238,7 @@ public class LogicalDevice extends VulkanHandle {
 			}
 
 			// Create logical device
-			final Pointer handle = logical.getValue();
-			final Destructor destructor = () -> lib.vkDestroyDevice(handle, null);
-			return new LogicalDevice(new VulkanHandle(handle, destructor), parent, map);
+			return new LogicalDevice(logical.getValue(), parent, map);
 			// TODO - resource/track
 		}
 	}

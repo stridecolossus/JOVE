@@ -24,13 +24,13 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>pipeline</i> specifies the stages for rendering.
  * @author Sarge
  */
-public class Pipeline extends VulkanHandle {
+public class Pipeline extends LogicalDeviceHandle {
 	/**
 	 * Constructor.
 	 * @param handle Pipeline handle
 	 */
-	Pipeline(VulkanHandle handle) {
-		super(handle);
+	Pipeline(Pointer handle, LogicalDevice dev) {
+		super(handle, dev, lib -> lib::vkDestroyPipeline);
 	}
 
 	/**
@@ -425,9 +425,7 @@ public class Pipeline extends VulkanHandle {
 			check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 			// Create pipeline
-			final Pointer handle = pipelines[0];
-			final Destructor destructor = () -> lib.vkDestroyPipeline(dev.handle(), handle, null);
-			return new Pipeline(new VulkanHandle(handle, destructor));
+			return new Pipeline(pipelines[0], dev);
 		}
 	}
 
@@ -435,13 +433,13 @@ public class Pipeline extends VulkanHandle {
 	 * Pipeline layout.
 	 * TODO - just a handle?
 	 */
-	public static class Layout extends VulkanHandle {
+	public static class Layout extends LogicalDeviceHandle {
 		/**
 		 * Constructor.
 		 * @param handle Handle
 		 */
-		Layout(VulkanHandle handle) {
-			super(handle);
+		Layout(Pointer handle, LogicalDevice dev) {
+			super(handle, dev, lib -> lib::vkDestroyPipelineLayout);
 		}
 
 		/**
@@ -467,16 +465,14 @@ public class Pipeline extends VulkanHandle {
 			 * @return New pipeline layout
 			 */
 			public Layout build() {
-				// Create pipeline layout
+				// Allocate layout
 				final Vulkan vulkan = dev.parent().vulkan();
 				final VulkanLibrary lib = vulkan.library();
 				final PointerByReference layout = vulkan.factory().reference();
 				check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));
 
-				// Create wrapper
-				final Pointer handle = layout.getValue();
-				final Destructor destructor = () -> lib.vkDestroyPipelineLayout(dev.handle(), handle, null);
-				return new Layout(new VulkanHandle(handle, destructor));
+				// Create layout
+				return new Layout(layout.getValue(), dev);
 			}
 		}
 	}

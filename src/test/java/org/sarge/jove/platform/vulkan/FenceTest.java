@@ -11,7 +11,6 @@ import java.util.function.IntSupplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 
 import com.sun.jna.Pointer;
 
@@ -25,7 +24,7 @@ public class FenceTest extends AbstractVulkanTest {
 		@BeforeEach
 		public void before() {
 			status = mock(IntSupplier.class);
-			fence = new Fence(new VulkanHandle(mock(Pointer.class), Destructor.NULL), status);
+			fence = new Fence(mock(Pointer.class), device, status);
 		}
 
 		@Test
@@ -74,7 +73,7 @@ public class FenceTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		public void before() {
-			fence = new Fence(new VulkanHandle(mock(Pointer.class), Destructor.NULL), () -> 42);
+			fence = new Fence(mock(Pointer.class), device, () -> 42);
 			group = new Fence.Group(device, Arrays.asList(fence));
 		}
 

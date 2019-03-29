@@ -140,7 +140,7 @@ public interface Command {
 	/**
 	 * A <i>command pool</i> allocates and maintains command buffers.
 	 */
-	class Pool extends VulkanHandle {
+	class Pool extends LogicalDeviceHandle {
 		/**
 		 * Constructor.
 		 * @param dev			Device
@@ -160,27 +160,20 @@ public interface Command {
 			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
 
 			// Create wrapper
-			final Pointer handle = pool.getValue();
-			final Destructor destructor = () -> lib.vkDestroyCommandPool(dev.handle(), handle, null);
-			return new Pool(handle, destructor, dev, lib);
-			// TODO - need family in pool?
+			return new Pool(pool.getValue(), dev);
 		}
 
-		private final LogicalDevice dev;
 		private final VulkanLibrary lib;
 		private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
 
 		/**
 		 * Constructor.
-		 * @param handle 			Command pool native handle
-		 * @param destructor		Destructor
+		 * @param handle 			Command pool handle
 		 * @param dev				Device
-		 * @param lib				Vulkan API
 		 */
-		protected Pool(Pointer handle, Destructor destructor, LogicalDevice dev, VulkanLibrary lib) {
-			super(handle, destructor);
-			this.dev = notNull(dev);
-			this.lib = notNull(lib);
+		protected Pool(Pointer handle, LogicalDevice dev) {
+			super(handle, dev, lib -> lib::vkDestroyCommandPool);
+			this.lib = dev.parent().vulkan().library();
 		}
 
 		/**

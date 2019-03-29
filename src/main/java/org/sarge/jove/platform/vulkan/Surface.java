@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import org.sarge.jove.platform.Handle;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
 
@@ -18,7 +19,7 @@ import com.sun.jna.ptr.IntByReference;
  * A <i>surface</i> is used to render to a window.
  * @author Sarge
  */
-public class Surface extends VulkanHandle {
+public class Surface extends Handle {
 	/**
 	 * Constructor.
 	 * @param surface		Surface handle
@@ -40,8 +41,7 @@ public class Surface extends VulkanHandle {
 		final var modes = loadModes(lib, dev, surface);
 
 		// Create surface
-		final Destructor destructor = () -> lib.vkDestroySurfaceKHR(instance.handle(), surface, null);
-		return new Surface(new VulkanHandle(surface, destructor), caps, formats, modes);
+		return new Surface(surface, instance, caps, formats, modes);
 	}
 
 	/**
@@ -63,6 +63,7 @@ public class Surface extends VulkanHandle {
 		return Arrays.stream(modes).mapToObj(n -> IntegerEnumeration.map(VkPresentModeKHR.class, n)).collect(toSet());
 	}
 
+	private final VulkanInstance instance;
 	private final VkSurfaceCapabilitiesKHR caps;
 	private final List<VkSurfaceFormatKHR> formats;
 	private final Set<VkPresentModeKHR> modes;
@@ -70,12 +71,14 @@ public class Surface extends VulkanHandle {
 	/**
 	 * Constructor.
 	 * @param handle		Handle
+	 * @param instance		Vulkan instance
 	 * @param caps 			Surface capabilities
 	 * @param formats		Supported formats
 	 * @param modes			Supported presentation modes
 	 */
-	protected Surface(VulkanHandle handle, VkSurfaceCapabilitiesKHR caps, List<VkSurfaceFormatKHR> formats, Set<VkPresentModeKHR> modes) {
+	protected Surface(Pointer handle, VulkanInstance instance, VkSurfaceCapabilitiesKHR caps, List<VkSurfaceFormatKHR> formats, Set<VkPresentModeKHR> modes) {
 		super(handle);
+		this.instance = notNull(instance);
 		this.caps = notNull(caps);
 		this.formats = List.copyOf(formats);
 		this.modes = Set.copyOf(modes);
@@ -100,5 +103,11 @@ public class Surface extends VulkanHandle {
 	 */
 	public Set<VkPresentModeKHR> modes() {
 		return modes;
+	}
+
+	@Override
+	public synchronized void destroy() {
+		final VulkanLibrarySurface lib = instance.vulkan().library();
+		lib.vkDestroySurfaceKHR(instance.handle(), super.handle(), null);
 	}
 }

@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.SwapChain.Builder;
-import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 
 import com.sun.jna.Pointer;
 
@@ -30,7 +29,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 		public void before() {
 			extent = new Dimensions(640, 480);
 			view = mock(ImageView.class);
-			chain = new SwapChain(new VulkanHandle(mock(Pointer.class), Destructor.NULL), extent, List.of(view), device);
+			chain = new SwapChain(mock(Pointer.class), device, extent, List.of(view));
 		}
 
 		@Test

@@ -22,7 +22,7 @@ import com.sun.jna.ptr.PointerByReference;
  * - lots of nasty indices, better to refer to actual objects? => less checking needed, more explicit
  * - subpass dependencies restricted to current subpass builder, too restrictive?
  */
-public class RenderPass extends VulkanHandle {
+public class RenderPass extends LogicalDeviceHandle {
 	/**
 	 * End render pass command.
 	 */
@@ -37,8 +37,8 @@ public class RenderPass extends VulkanHandle {
 	 * Constructor.
 	 * @param handle Handle
 	 */
-	RenderPass(VulkanHandle handle) {
-		super(handle);
+	RenderPass(Pointer handle, LogicalDevice dev) {
+		super(handle, dev, lib -> lib::vkDestroyRenderPass);
 	}
 
 	/**
@@ -351,9 +351,7 @@ public class RenderPass extends VulkanHandle {
 			check(lib.vkCreateRenderPass(dev.handle(), info, null, pass));
 
 			// Create render pass wrapper
-			final Pointer handle = pass.getValue();
-			final Destructor destructor = () -> lib.vkDestroyRenderPass(dev.handle(), handle, null);
-			return new RenderPass(new VulkanHandle(handle, destructor));
+			return new RenderPass(pass.getValue(), dev);
 		}
 	}
 }

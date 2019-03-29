@@ -10,17 +10,17 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 
 import com.sun.jna.Pointer;
 
 public class SurfaceTest extends AbstractVulkanTest {
 	private Surface surface;
+	private VulkanInstance instance;
 
 	@BeforeEach
 	public void before() {
-		final VulkanHandle handle = new VulkanHandle(new Pointer(42), mock(Destructor.class));
-		surface = new Surface(handle, new VkSurfaceCapabilitiesKHR(), List.of(new VkSurfaceFormatKHR()), Set.of(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR));
+		instance = mock(VulkanInstance.class);
+		surface = new Surface(mock(Pointer.class), instance, new VkSurfaceCapabilitiesKHR(), List.of(new VkSurfaceFormatKHR()), Set.of(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR));
 	}
 
 	@Test

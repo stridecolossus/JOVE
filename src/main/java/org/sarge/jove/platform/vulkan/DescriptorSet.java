@@ -93,20 +93,18 @@ public class DescriptorSet extends Handle {
 	/**
 	 * A <i>descriptor set layout</i> defines the structure of a set resource descriptors that can be bound to a {@link Pipeline}.
 	 */
-	public static class Layout extends VulkanHandle {
+	public static class Layout extends LogicalDeviceHandle {
 		private final List<VkDescriptorSetLayoutBinding> bindings;
-		private final LogicalDevice dev;
 
 		/**
 		 * Constructor.
 		 * @param handle 		Layout handle
-		 * @param bindings		Binding descriptors
 		 * @param dev			Logical device
+		 * @param bindings		Binding descriptors
 		 */
-		Layout(VulkanHandle handle, List<VkDescriptorSetLayoutBinding> bindings, LogicalDevice dev) {
-			super(handle);
+		Layout(Pointer handle, LogicalDevice dev, List<VkDescriptorSetLayoutBinding> bindings) {
+			super(handle, dev, lib -> lib::vkDestroyDescriptorSetLayout);
 			this.bindings = List.copyOf(bindings);
-			this.dev = notNull(dev);
 		}
 
 		/**
@@ -236,8 +234,7 @@ public class DescriptorSet extends Handle {
 				check(lib.vkCreateDescriptorSetLayout(dev.handle(), info, null, layout));
 
 				// Create layout
-				final Destructor destructor = () -> lib.vkDestroyDescriptorSetLayout(dev.handle(), layout.getValue(), null);
-				return new Layout(new VulkanHandle(layout.getValue(), destructor), bindings, dev);
+				return new Layout(layout.getValue(), dev, bindings);
 			}
 		}
 	}
@@ -245,20 +242,18 @@ public class DescriptorSet extends Handle {
 	/**
 	 * A <i>descriptor set pool</i> allocates and manages descriptor sets.
 	 */
-	public static class Pool extends VulkanHandle {
+	public static class Pool extends LogicalDeviceHandle {
 		private final int max;
-		private final LogicalDevice dev;
 
 		/**
 		 * Constructor.
 		 * @param handle 		Pool handle
-		 * @param max			Maximum number of descriptor sets
 		 * @param dev			Logical device
+		 * @param max			Maximum number of descriptor sets
 		 */
-		Pool(VulkanHandle handle, int max, LogicalDevice dev) {
-			super(handle);
+		Pool(Pointer handle, LogicalDevice dev, int max) {
+			super(handle, dev, lib -> lib::vkDestroyDescriptorPool);
 			this.max = oneOrMore(max);
-			this.dev = notNull(dev);
 		}
 
 		/**
@@ -397,8 +392,7 @@ public class DescriptorSet extends Handle {
 				check(lib.vkCreateDescriptorPool(dev.handle(), info, null, pool));
 
 				// Create pool
-				final Destructor destructor = () -> lib.vkDestroyDescriptorPool(dev.handle(), pool.getValue(), null);
-				return new Pool(new VulkanHandle(pool.getValue(), destructor), max, dev);
+				return new Pool(pool.getValue(), dev, max);
 			}
 		}
 	}

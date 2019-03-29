@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -10,13 +11,13 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  * TODO - no destroy for swap-chain images
  */
-public class ImageView extends VulkanHandle {
+public class ImageView extends LogicalDeviceHandle {
 	/**
 	 * Constructor.
 	 * @param handle Image view handle
 	 */
-	ImageView(VulkanHandle handle) {
-		super(handle);
+	ImageView(Pointer handle, LogicalDevice dev) {
+		super(handle, dev, lib -> lib::vkDestroyImageView);
 	}
 
 	/**
@@ -109,15 +110,14 @@ public class ImageView extends VulkanHandle {
 		 * @return New image view
 		 */
 		public ImageView build() {
-			// Create image view
+			// Allocate image view
 			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference view = vulkan.factory().reference();
 			check(lib.vkCreateImageView(dev.handle(), info, null, view));
 
-			// Create wrapper
-			Destructor destructor = () -> lib.vkDestroyImageView(dev.handle(), view.getValue(), null);
-			return new ImageView(new VulkanHandle(view.getValue(), destructor));
+			// Create image view
+			return new ImageView(view.getValue(), dev);
 		}
 	}
 }

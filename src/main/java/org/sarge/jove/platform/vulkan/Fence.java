@@ -18,7 +18,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>fence</i> is a Vulkan synchronisation mechanism.
  * @author Sarge
  */
-public class Fence extends VulkanHandle {
+public class Fence extends LogicalDeviceHandle {
 	/**
 	 * Creates a fence.
 	 * @param dev Logical device
@@ -40,8 +40,7 @@ public class Fence extends VulkanHandle {
 		// Create fence
 		final Pointer handle = fence.getValue();
 		final IntSupplier status = () -> lib.vkGetFenceStatus(dev.handle(), handle);
-		final Destructor destructor = () -> lib.vkDestroyFence(dev.handle(), handle, null);
-		return new Fence(new VulkanHandle(handle, destructor), status);
+		return new Fence(fence.getValue(), dev, status);
 	}
 
 	/**
@@ -95,11 +94,12 @@ public class Fence extends VulkanHandle {
 
 	/**
 	 * Constructor.
-	 * @param handle 	Handle
-	 * @param status	Status supplier
+	 * @param handle 		Handle
+	 * @param dev			Logical device
+	 * @param status		Status supplier
 	 */
-	Fence(VulkanHandle handle, IntSupplier status) {
-		super(handle);
+	Fence(Pointer handle, LogicalDevice dev, IntSupplier status) {
+		super(handle, dev, lib -> lib::vkDestroyFence);
 		this.status = notNull(status);
 	}
 

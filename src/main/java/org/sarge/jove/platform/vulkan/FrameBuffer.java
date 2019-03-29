@@ -16,14 +16,15 @@ import com.sun.jna.ptr.PointerByReference;
 /**
  * A <i>frame buffer</i> is the target for a {@link RenderPass}.
  * @author Sarge
+ * TODO - opaque handle, i.e. no functionality?
  */
-public class FrameBuffer extends VulkanHandle {
+public class FrameBuffer extends LogicalDeviceHandle {
 	/**
 	 * Constructor.
 	 * @param handle Handle
 	 */
-	FrameBuffer(VulkanHandle handle) {
-		super(handle);
+	FrameBuffer(Pointer handle, LogicalDevice dev) {
+		super(handle, dev, lib -> lib::vkDestroyFramebuffer);
 	}
 
 	/**
@@ -93,16 +94,14 @@ public class FrameBuffer extends VulkanHandle {
 			info.height = extent.height;
 			info.layers = layers;
 
-			// Create frame buffer
+			// Allocate frame buffer
 			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference buffer = vulkan.factory().reference();
 			check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
 
-			// Create wrapper
-			final Pointer handle = buffer.getValue();
-			final Destructor destructor = () -> lib.vkDestroyFramebuffer(dev.handle(), handle, null);
-			return new FrameBuffer(new VulkanHandle(handle, destructor));
+			// Create frame buffer
+			return new FrameBuffer(buffer.getValue(), dev);
 		}
 	}
 }

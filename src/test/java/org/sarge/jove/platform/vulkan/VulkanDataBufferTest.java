@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 
 import com.sun.jna.Pointer;
 
@@ -20,7 +19,7 @@ public class VulkanDataBufferTest extends AbstractVulkanTest {
 	@BeforeEach
 	public void before() {
 		mem = mock(Pointer.class);
-		buffer = new VulkanDataBuffer(new VulkanHandle(mock(Pointer.class), Destructor.NULL), 3, mem, device);
+		buffer = new VulkanDataBuffer(mock(Pointer.class), device, 3, mem);
 	}
 
 //	@Test

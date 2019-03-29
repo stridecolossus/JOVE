@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.Command.Buffer;
 import org.sarge.jove.platform.vulkan.Command.Pool;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
-import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 
 import com.sun.jna.Pointer;
 
@@ -30,7 +29,7 @@ public class CommandTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		public void before() {
-			final Pool pool = new Pool(mock(Pointer.class), Destructor.NULL, device, library);
+			final Pool pool = new Pool(mock(Pointer.class), device);
 			handle = mock(Pointer.class);
 			buffer = new Buffer(handle, pool);
 		}
@@ -125,7 +124,7 @@ public class CommandTest extends AbstractVulkanTest {
 		@BeforeEach
 		public void before() {
 			family = mock(QueueFamily.class);
-			pool = new Pool(new Pointer(42), Destructor.NULL, device, library);
+			pool = new Pool(new Pointer(42), device);
 		}
 
 		@Test

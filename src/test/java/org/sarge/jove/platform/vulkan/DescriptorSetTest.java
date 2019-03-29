@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.DescriptorSet.Layout;
 import org.sarge.jove.platform.vulkan.DescriptorSet.Pool;
-import org.sarge.jove.platform.vulkan.VulkanHandle.Destructor;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
@@ -59,7 +58,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@BeforeEach
 		public void before() {
 			binding = new VkDescriptorSetLayoutBinding();
-			layout = new Layout(new VulkanHandle(mock(Pointer.class), Destructor.NULL), List.of(binding), device);
+			layout = new Layout(mock(Pointer.class), device, List.of(binding));
 		}
 
 		@Test
@@ -131,7 +130,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		public void before() {
-			pool = new Pool(new VulkanHandle(mock(Pointer.class), Destructor.NULL), 1, device);
+			pool = new Pool(mock(Pointer.class), device, 1);
 		}
 
 		@Test
@@ -143,7 +142,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		public void allocate() {
 			// Create a layout
 			final VkDescriptorSetLayoutBinding binding = new VkDescriptorSetLayoutBinding();
-			final Layout layout = new Layout(new VulkanHandle(mock(Pointer.class), Destructor.NULL), List.of(binding), device);
+			final Layout layout = new Layout(mock(Pointer.class), device, List.of(binding));
 
 			// Allocate descriptor sets
 			final var sets = pool.allocate(1, layout);

@@ -20,23 +20,21 @@ import com.sun.jna.ptr.PointerByReference;
  * Vulkan implementation.
  * @author Sarge
  */
-class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
+class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 	private final long len;
 	private final Pointer mem;
-	private final LogicalDevice dev;
 
 	/**
 	 * Constructor.
 	 * @param handle 		VBO handle
+	 * @param dev			Logical device
 	 * @param len			Length of this VBO
 	 * @param mem			VBO memory
-	 * @param dev			Logical device
 	 */
-	protected VulkanDataBuffer(VulkanHandle handle, long len, Pointer mem, LogicalDevice dev) {
-		super(handle);
+	protected VulkanDataBuffer(Pointer handle, LogicalDevice dev, long len, Pointer mem) {
+		super(handle, dev, lib -> lib::vkDestroyBuffer);
 		this.len = oneOrMore(len);
 		this.mem = notNull(mem);
-		this.dev = notNull(dev);
 	}
 
 	/**
@@ -107,6 +105,12 @@ class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 		};
 	}
 
+	@Override
+	protected void cleanup() {
+		final VulkanLibraryMemory lib = dev.parent().vulkan().library();
+		lib.vkFreeMemory(dev.handle(), mem, null);
+	}
+
 	/**
 	 * Builder for a VBO.
 	 */
@@ -171,29 +175,29 @@ class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
 			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
 
-			// Build VBO descriptor
+			// Build buffer descriptor
 			final VkBufferCreateInfo info = new VkBufferCreateInfo();
 			info.usage = IntegerEnumeration.mask(usage);
 			info.sharingMode = mode;
 			info.size = len;
 			// TODO - queue families
 
-			// Allocate VBO
+			// Allocate buffer
 			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference buffer = vulkan.factory().reference();
 			final Pointer logical = dev.handle();
 			check(lib.vkCreateBuffer(logical, info, null, buffer));
 
-			// Query memory requirements for this VBO
+			// Query memory requirements
 			final Pointer handle = buffer.getValue();
 			final VkMemoryRequirements reqs = new VkMemoryRequirements();
 			lib.vkGetBufferMemoryRequirements(logical, handle, reqs);
 
-			// Determine memory type for this VBO
+			// Determine memory type
 			final int type = dev.parent().selector().findMemoryType(props);
 
-			// Allocate VBO memory
+			// Allocate buffer memory
 			final PointerByReference mem = vulkan.factory().reference();
 			final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
 			alloc.allocationSize = reqs.size;
@@ -203,12 +207,8 @@ class VulkanDataBuffer extends VulkanHandle implements DataBuffer {
 			// Bind memory
 			check(lib.vkBindBufferMemory(logical, handle, mem.getValue(), 0L));
 
-			// Create VBO
-			final Destructor destructor = () -> {
-				lib.vkFreeMemory(logical, mem.getValue(), null);
-				lib.vkDestroyBuffer(logical, handle, null);
-			};
-			return new VulkanDataBuffer(new VulkanHandle(handle, destructor), len, mem.getValue(), dev);
+			// Create buffer
+			return new VulkanDataBuffer(handle, dev, len, mem.getValue());
 		}
 	}
 }
