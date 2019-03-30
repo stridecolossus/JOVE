@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.platform.Resource;
 import org.sarge.lib.collection.StrictSet;
 
 import com.sun.jna.Pointer;
@@ -19,9 +20,54 @@ import com.sun.jna.ptr.PointerByReference;
  * <p>
  * Note that this class does not differentiate between index buffers and vertex buffers.
  * The user is responsible for selecting the correct bind command, either {@link #bindVertexBuffer()} or {@link #bindIndexBuffer()}.
+ * <p>
+ * Usage:
+ * <pre>
+ * // Create buffer to copy directly to the hardware
+ * VulkanDataBuffer buffer = new VulkanDataBuffer.Builder(dev)
+ *     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+ *     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+ *     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+ *     .length(len)
+ *     .build();
+ *
+ * // Populate buffer
+ * ByteBuffer bytes = ...
+ * buffer.push(bytes);
+ *
+ * // Bind the buffer
+ * commandBuffer.bind(buffer.bindVertexBuffer()));
+ * </pre>
+ * A common approach to improve performance is to use a <i>staging buffer</i> to copy data to the device, this involves:
+ * <ol>
+ * <li>create a staging buffer visible to both the host and the device</li>
+ * <li>copy data to the staging buffer</li>
+ * <li>create a destination buffer that is only visible to the device</li>
+ * <li>queue a command to copy from staging to the device</li>
+ * <li>wait for the copy to finish</li>
+ * </ol>
+ * The {@link #staging(LogicalDevice, long)} helper creates a staging buffer which can be used in conjunction with the {@link BufferCopyHelper}.
+ * <p>
+ * @see VulkanLibraryBuffer#vkCmdCopyBuffer(Pointer, Pointer, Pointer, int, VkBufferCopy[])
+ * @see BufferCopyHelper
  * @author Sarge
  */
 class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
+	/**
+	 * Helper - Creates a staging buffer visible to both the host and the device.
+	 * @param dev Logical device
+	 * @param len Buffer length (bytes)
+	 * @return staging buffer
+	 */
+	public static VulkanDataBuffer staging(LogicalDevice dev, long len) {
+		return new VulkanDataBuffer.Builder(dev)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+			.length(len)
+			.build();
+	}
+
 	private final long len;
 	private final Pointer mem;
 
@@ -201,6 +247,53 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 
 			// Create buffer
 			return new VulkanDataBuffer(handle, dev, len, mem.getValue());
+		}
+	}
+
+	// TODO
+	public static class CopyGroup implements Resource {
+
+//		public static class Entry {
+//			private final ByteBuffer src;
+//			private final VulkanDataBuffer staging;
+//			private final VulkanDataBuffer dest;
+//
+//			/**
+//			 * Constructor.
+//			 * @param src			Source data buffer
+//			 * @param staging
+//			 * @param dest
+//			 */
+//			public Entry(ByteBuffer src, VulkanDataBuffer dest, LogicalDevice dev) {
+//				this.src = src;
+//				this.staging = staging;
+//				this.dest = dest;
+//			}
+//
+//			public Entry(ByteBuffer src, VkBufferUsageFlag usage, LogicalDevice dev) {
+//
+//			}
+//		}
+//
+//		private final LogicalDevice dev;
+//		private final Collection<Entry> entries;
+//
+//		/**
+//		 * Constructor.
+//		 * @param dev
+//		 * @param entries
+//		 */
+//		public CopyGroup(LogicalDevice dev, Collection<Entry> entries) {
+//			this.dev = dev;
+//			this.entries = entries;
+//		}
+//
+//		public void copy() {
+//
+//		}
+
+		@Override
+		public void destroy() {
 		}
 	}
 }

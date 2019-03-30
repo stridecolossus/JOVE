@@ -19,6 +19,7 @@ import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.platform.DesktopService;
@@ -440,7 +441,7 @@ public class VulkanIntegrationTest {
 		final Colour[] clear = {new Colour(0.3f, 0.3f, 0.3f, 1)};
 
 		// TODO - created from VBO?
-		final Command draw = (api, cb) -> api.vkCmdDrawIndexed(cb, 3, 1, 0, 0, 0);
+		final Command draw = (api, cb) -> api.vkCmdDrawIndexed(cb, 4, 1, 0, 0, 0);
 		//final Command draw = (api, cb) -> api.vkCmdDraw(cb, 3, 1, 0, 0);
 
 		final Command bind = ds.bind(pipeline.layout());
@@ -479,10 +480,12 @@ public class VulkanIntegrationTest {
 		}
 
 		return new Model.Builder<>()
+			.primitive(Primitive.TRIANGLE_STRIP)
 			.component(Vertex.Component.COLOUR)
-			.add(new ColourVertex(new Point(0, -0.5f, 0), new Colour(1, 0, 0, 1)))
-			.add(new ColourVertex(new Point(0.5f, 0.5f, 0), new Colour(0, 1, 0, 1)))
-			.add(new ColourVertex(new Point(-0.5f, 0.5f, 0), new Colour(0, 0, 1, 1)))
+			.add(new ColourVertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1)))
+			.add(new ColourVertex(new Point(-0.5f, +0.5f, 0), new Colour(0, 1, 0, 1)))
+			.add(new ColourVertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 0, 1, 1)))
+			.add(new ColourVertex(new Point(+0.5f, +0.5f, 0), new Colour(1, 1, 1, 1)))
 			.build();
 	}
 
@@ -510,7 +513,7 @@ public class VulkanIntegrationTest {
 
 	private VulkanDataBuffer indexBuffer(Model<?> model) {
 		System.out.println("Creating index buffer");
-		final int len = model.length() * Integer.BYTES;
+		final int len = 4 * Integer.BYTES;
 		final VulkanDataBuffer index = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
@@ -523,6 +526,7 @@ public class VulkanIntegrationTest {
 		fb.put(0);
 		fb.put(1);
 		fb.put(2);
+		fb.put(3);
 
 		copy(index, bb);
 
