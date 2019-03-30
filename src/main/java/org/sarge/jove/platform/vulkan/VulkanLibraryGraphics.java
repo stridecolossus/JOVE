@@ -24,7 +24,7 @@ interface VulkanLibraryImage {
 	 * @param pImage			Returned image
 	 * @return Result code
 	 */
-	int vkCreateImage(Pointer device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, Pointer pImage);
+	int vkCreateImage(Pointer device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pImage);
 
 	/**
 	 * Destroys an image.
@@ -33,6 +33,27 @@ interface VulkanLibraryImage {
 	 * @param pAllocator		Allocator
 	 */
 	void vkDestroyImage(Pointer device, Pointer image, Pointer pAllocator);
+
+	/**
+	 * Retrieves the memory requirements for the given image.
+	 * @param device				Logical device
+	 * @param image					Image
+	 * @param pMemoryRequirements	Returned memory requirements
+	 */
+	void vkGetImageMemoryRequirements(Pointer device, Pointer image, VkMemoryRequirements pMemoryRequirements);
+
+	/**
+	 * Binds image memory.
+	 * @param device			Logical device
+	 * @param image				Image
+	 * @param memory			Image memory
+	 * @param memoryOffset		Offset
+	 * @return Result code
+	 */
+	int vkBindImageMemory(Pointer device, Pointer image, Pointer memory, long memoryOffset);
+
+	void vkCmdCopyBufferToImage(Pointer commandBuffer, Pointer srcBuffer, Pointer dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy pRegions);
+	void vkCmdCopyImageToBuffer(Pointer commandBuffer, Pointer srcImage, VkImageLayout srcImageLayout, Pointer dstBuffer, int regionCount, VkBufferImageCopy pRegions);
 
 	/**
 	 * Creates an image view.
@@ -51,6 +72,9 @@ interface VulkanLibraryImage {
 	 * @param pAllocator		Allocator
 	 */
 	void vkDestroyImageView(Pointer device, Pointer imageView, Pointer pAllocator);
+
+	int vkCreateSampler(Pointer device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
+	void vkDestroySampler(Pointer device, Pointer sampler, Pointer pAllocator);
 }
 
 /**
@@ -200,6 +224,8 @@ interface VulkanLibraryPipeline {
 	 * @param pipeline				Pipeline to bind
 	 */
 	void vkCmdBindPipeline(Pointer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pointer pipeline);
+
+	void vkCmdPipelineBarrier(Pointer commandBuffer, int srcStageMask, int dstStageMask, int dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 }
 
 /**

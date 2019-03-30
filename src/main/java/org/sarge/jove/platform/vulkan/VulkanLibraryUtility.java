@@ -198,8 +198,6 @@ interface VulkanLibraryMemory {
 	 */
 	void vkFreeMemory(Pointer device, Pointer memory, Pointer pAllocator);
 
-	//int vkBindImageMemory(Pointer device, VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset);
-
 	/**
 	 * Maps buffer memory.
 	 * @param device			Logical device

@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkImageSubresourceLayers extends VulkanStructure {
 	public static class ByValue extends VkImageSubresourceLayers implements Structure.ByValue { }
 	public static class ByReference extends VkImageSubresourceLayers implements Structure.ByReference { }
-	
-	public VkImageAspectFlags aspectMask;
+
+	public int aspectMask;
 	public int mipLevel;
 	public int baseArrayLayer;
 	public int layerCount;

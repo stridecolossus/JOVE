@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
-import com.sun.jna.Pointer;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
@@ -25,11 +25,11 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkImageMemoryBarrier extends VulkanStructure {
 	public static class ByValue extends VkImageMemoryBarrier implements Structure.ByValue { }
 	public static class ByReference extends VkImageMemoryBarrier implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	public Pointer pNext;
-	public VkAccessFlags srcAccessMask;
-	public VkAccessFlags dstAccessMask;
+	public int srcAccessMask;
+	public int dstAccessMask;
 	public VkImageLayout oldLayout;
 	public VkImageLayout newLayout;
 	public int srcQueueFamilyIndex;

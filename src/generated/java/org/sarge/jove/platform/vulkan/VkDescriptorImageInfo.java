@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
-import com.sun.jna.Pointer;
 
-import com.sun.jna.Structure;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -15,10 +15,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"imageView",
 	"imageLayout"
 })
-public class VkDescriptorImageInfo extends VulkanStructure {
-	public static class ByValue extends VkDescriptorImageInfo implements Structure.ByValue { }
-	public static class ByReference extends VkDescriptorImageInfo implements Structure.ByReference { }
-	
+public class VkDescriptorImageInfo extends VulkanStructure implements ByReference {
 	public Pointer sampler;
 	public Pointer imageView;
 	public VkImageLayout imageLayout;

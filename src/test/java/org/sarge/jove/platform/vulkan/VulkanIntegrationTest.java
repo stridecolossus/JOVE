@@ -1,12 +1,16 @@
 package org.sarge.jove.platform.vulkan;
 
 import static org.junit.Assert.assertNotNull;
+import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,6 +28,7 @@ import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
+import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -34,9 +39,13 @@ import org.sarge.jove.platform.vulkan.Feature.ValidationLayer;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracker;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
+import org.sarge.jove.texture.DefaultImage;
+import org.sarge.jove.texture.Image;
 import org.sarge.jove.util.BufferFactory;
+import org.sarge.lib.collection.StrictSet;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class VulkanIntegrationTest {
 	private Vulkan vulkan;
@@ -85,6 +94,8 @@ public class VulkanIntegrationTest {
 		// Create logical device
 		dev = logical(physical);
 
+		///////////////////
+
 		final SwapChain chain = chain(dev, surface);
 
 		System.out.println("Creating shaders");
@@ -97,7 +108,7 @@ public class VulkanIntegrationTest {
 		System.out.println("Creating command pool");
 		pool = Command.Pool.create(dev, graphics);
 
-		////
+		///////////////////
 
 		final Model<?> model = model();
 		final DataBuffer.Layout layout = DataBuffer.Layout.of(model.components());
@@ -105,7 +116,7 @@ public class VulkanIntegrationTest {
 		final VulkanDataBuffer vbo = vertexBuffer(model, layout);
 		final VulkanDataBuffer indexBuffer = indexBuffer(model);
 
-		////
+		///////////////////
 
 		System.out.println("Allocating command buffers");
 		final List<Command.Buffer> cmds = pool.allocate(3, true);
@@ -126,7 +137,11 @@ public class VulkanIntegrationTest {
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout, dsLayout);
 
 		System.out.println("Allocating descriptor sets");
-		final DescriptorSet[] sets = setPool.allocate(cmds.size(), dsLayout).toArray(DescriptorSet[]::new);
+		final DescriptorSet.Layout[] array = new DescriptorSet.Layout[cmds.size()];
+		Arrays.fill(array, dsLayout);
+		final DescriptorSet[] sets = setPool.allocate(Arrays.asList(array)).toArray(DescriptorSet[]::new);
+
+		///////////////////
 
 		// TODO - how to wrap 3 x FB and 3 x commands -> object?
 		System.out.println("Creating frame buffer and commands");
@@ -138,11 +153,19 @@ public class VulkanIntegrationTest {
 
 			final VulkanDataBuffer uniform = uniform();
 			uniforms[n] = uniform;
-			sets[n].uniform(uniform, 0, 4); // (~0L)); // 4);
+			// TODO
+			sets[n].uniform(0, uniform, 0, 4); // (~0L)); // 4);
 
 			final Command.Buffer cb = cmds.get(n);
 			record(cb, fb, pass, pipeline, vbo, indexBuffer, sets[n]);
 		}
+
+		///////////////////
+
+		texture();
+		sampler();
+
+		//////////////////
 
 		System.out.println("Creating frame tracker");
 		final WorkQueue queue = dev.queue(present, 0);
@@ -212,75 +235,6 @@ public class VulkanIntegrationTest {
 	// https://www.eshayne.com/jnaex/index.html?example=10
 	// https://stackoverflow.com/questions/10109723/using-jna-to-access-a-struct-containing-an-array-of-structs
 
-// missing???
-//	1 [VK_KHX_device_group_creation]
-//	1 [VK_KHX_external_semaphore_capabilities]
-
-// instance extensions
-//	VK_EXT_debug_report
-//	VK_KHR_win32_surface
-//	VK_KHR_surface
-//	VK_EXT_display_surface_counter
-//	VK_NV_external_memory_capabilities
-//	VK_KHR_get_physical_device_properties2
-//	VK_EXT_debug_utils
-
-// instance layers
-//	VK_LAYER_NV_optimus 1
-//	VK_LAYER_LUNARG_vktrace 1
-//	VK_LAYER_GOOGLE_threading 1
-//	VK_LAYER_LUNARG_device_simulation 1
-//	VK_LAYER_LUNARG_screenshot 1
-//	VK_LAYER_LUNARG_parameter_validation 1
-//	VK_LAYER_VALVE_steam_fossilize 1
-//	VK_LAYER_GOOGLE_unique_objects 1
-//	VK_LAYER_VALVE_steam_overlay 1
-//	VK_LAYER_LUNARG_core_validation 1
-//	VK_LAYER_LUNARG_object_tracker 1
-//	VK_LAYER_LUNARG_api_dump 2
-//	VK_LAYER_LUNARG_standard_validation 1
-//	VK_LAYER_LUNARG_monitor 1
-//	VK_LAYER_LUNARG_assistant_layer 1
-
-// device extensions
-//VK_KHR_swapchain,
-//VK_NV_win32_keyed_mutex,
-//VK_KHX_external_memory,
-//VK_KHX_external_memory_win32,
-//VK_KHX_device_group,
-//VK_KHX_external_semaphore_win32,
-//VK_EXT_shader_subgroup_vote,
-//VK_KHR_descriptor_update_template,
-//VK_NV_glsl_shader,
-//VK_KHX_multiview,
-//VK_NV_dedicated_allocation,
-//VK_KHR_sampler_mirror_clamp_to_edge,
-//VK_NV_viewport_array2,
-//VK_NV_external_memory,
-//VK_KHX_external_semaphore,
-//VK_NVX_multiview_per_view_attributes,
-//VK_NV_sample_mask_override_coverage,
-//VK_NV_geometry_shader_passthrough,
-//VK_KHR_push_descriptor,
-//VK_KHX_win32_keyed_mutex,
-//VK_NV_external_memory_win32,
-//VK_EXT_discard_rectangles,
-//VK_NVX_device_generated_commands,
-//VK_NV_viewport_swizzle,
-//VK_EXT_shader_subgroup_ballot,
-//VK_KHR_shader_draw_parameters,
-//VK_KHR_maintenance1
-
-// device layers
-//VK_LAYER_GOOGLE_threading,
-//VK_LAYER_VALVE_steam_overlay,
-//VK_LAYER_LUNARG_object_tracker,
-//VK_LAYER_LUNARG_standard_validation,
-//VK_LAYER_LUNARG_parameter_validation,
-//VK_LAYER_GOOGLE_unique_objects,
-//VK_LAYER_NV_optimus,
-//VK_LAYER_LUNARG_core_validation
-
 	/**
 	 * Initialises the vulkan instance.
 	 */
@@ -329,6 +283,7 @@ public class VulkanIntegrationTest {
 
 		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		features.geometryShader = VulkanBoolean.TRUE;
+		features.samplerAnisotropy = VulkanBoolean.TRUE;
 
 		return new LogicalDevice.Builder(physical)
 			.queue(graphics)
@@ -340,6 +295,8 @@ public class VulkanIntegrationTest {
 			.features(features)
 			.build();
 	}
+
+	////////////////////////////////
 
 	private DesktopService desktop() {
 		System.out.println("Initialised desktop service");
@@ -377,6 +334,8 @@ public class VulkanIntegrationTest {
 			.colour(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 			.build();
 	}
+
+	////////////////////////////////
 
 	private RenderPass pass(VkFormat format) {
 		System.out.println("Creating render pass");
@@ -434,6 +393,8 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
+	////////////////////////////////
+
 	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VulkanDataBuffer vbo, VulkanDataBuffer index, DescriptorSet ds) {
 		System.out.println("Recording command");
 
@@ -457,6 +418,8 @@ public class VulkanIntegrationTest {
 			.add(RenderPass.END_COMMAND)
 			.end();
 	}
+
+	////////////////////////////////
 
 	private Model<MutableVertex> model() {
 		class ColourVertex extends MutableVertex {
@@ -488,6 +451,8 @@ public class VulkanIntegrationTest {
 			.add(new ColourVertex(new Point(+0.5f, +0.5f, 0), new Colour(1, 1, 1, 1)))
 			.build();
 	}
+
+	////////////////////////////////
 
 	private VulkanDataBuffer vertexBuffer(Model<?> model, DataBuffer.Layout layout) {
 		System.out.println("Creating VBO");
@@ -587,4 +552,195 @@ public class VulkanIntegrationTest {
 		staging.destroy();
 		cmd.free();
 	}
+
+	//////////////////////////
+
+	public ImageView texture() throws Exception {
+		// Load texture image
+		final Image image = new DefaultImage.Loader().load(new FileInputStream("src/test/resources/statue.jpg"));
+		final Image.Header header = image.header();
+System.out.println("**** header="+header.size().width*header.size().height);
+
+		// Create image
+		//
+
+		// Init image dimensions
+		final Dimensions dim = header.size();
+		final VkExtent3D extent = new VkExtent3D();
+		extent.width = dim.width;
+		extent.height = dim.height;
+		extent.depth = 1;
+
+		// Init image descriptor
+		final VkImageCreateInfo info = new VkImageCreateInfo();
+		info.imageType = VkImageType.VK_IMAGE_TYPE_2D;
+		info.extent = extent;
+		info.mipLevels = 1;
+		info.arrayLayers = 1;
+		info.samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
+		info.format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build(); // TODO - derive from header.format, check supported
+		info.tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL;
+		info.initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+		info.usage = IntegerEnumeration.mask(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT, VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT);
+		info.sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+
+		// Allocate image
+		final PointerByReference handle = vulkan.factory().reference();
+		check(lib.vkCreateImage(dev.handle(), info, null, handle));
+
+		// Allocate image memory
+		//
+
+		// Allocate image memory
+		final VkMemoryRequirements reqs = new VkMemoryRequirements();
+		lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
+System.out.println("**** reqs="+reqs.size);
+
+		// Determine memory type
+		// TODO - factor our common code from here and VulkanDataBuffer -> helper, how to handle props?
+		final Set<VkMemoryPropertyFlag> props = new StrictSet<>();
+		props.add(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		final int type = dev.parent().selector().findMemoryType(props);
+
+		// Allocate buffer memory
+		final PointerByReference mem = vulkan.factory().reference();
+		final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
+		alloc.allocationSize = reqs.size;
+		alloc.memoryTypeIndex = type;
+		check(lib.vkAllocateMemory(dev.handle(), alloc, null, mem));
+
+		// Bind memory
+		check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.getValue(), 0L));
+
+		// Copy image data to staging buffer
+		//
+		final long len = dim.width * dim.height * 4; // TODO - from image format
+System.out.println("len="+len);
+		final VulkanDataBuffer staging = VulkanDataBuffer.staging(dev, len);
+		staging.push(image.buffer());
+
+		// TODO - destroy image?
+
+		// Transition to destination
+		//
+		transition(handle.getValue(), VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+
+		// Copy buffer to image
+		//
+
+		// Init copy descriptor
+		final VkBufferImageCopy region = new VkBufferImageCopy();
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+		region.imageSubresource = new VkImageSubresourceLayers();
+		region.imageSubresource.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageOffset = new VkOffset3D();
+		region.imageExtent = new VkExtent3D();
+		region.imageExtent.width = dim.width;
+		region.imageExtent.height = dim.height;
+		region.imageExtent.depth = 1;
+
+		// Copy image
+		final Command.Buffer cb = pool.allocate(1, true).iterator().next();
+		cb
+			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+			.add((lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, staging.handle(), handle.getValue(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, region))
+			.end();
+		final WorkQueue queue = dev.queue(transfer, 0);
+		queue.submit(new WorkQueue.Work.Builder().add(cb).build());
+		queue.waitIdle();
+		cb.free();
+
+		// Transition to final
+		//
+		transition(handle.getValue(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+
+		// Release staging buffer
+		//
+		staging.destroy();
+
+		final VulkanImage img = new VulkanImage(handle.getValue(), info.format, new VkExtent2D(header.size()));
+
+		return new ImageView.Builder(dev, img).build();
+	}
+
+	private void transition(Pointer image, VkImageLayout prev, VkImageLayout next, boolean first) {		// TODO - bodge
+		// Init memory barrier descriptor
+		final VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
+		barrier.oldLayout = notNull(prev);
+		barrier.newLayout = notNull(next);
+		barrier.srcQueueFamilyIndex = -1;
+		barrier.dstQueueFamilyIndex = -1;
+		barrier.image = notNull(image);
+
+		// Init range
+		barrier.subresourceRange = new VkImageSubresourceRange();
+		barrier.subresourceRange.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		// Init access flags
+		VkPipelineStageFlag src, dest;
+		if(first) {
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT.value();
+			src = VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT;
+		}
+		else {
+			barrier.srcAccessMask = VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT.value();
+			barrier.dstAccessMask = VkAccessFlag.VK_ACCESS_SHADER_READ_BIT.value();
+			src = VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT;
+			dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+
+		// Apply barrier
+		final Command.Buffer cb = pool.allocate(1, true).iterator().next();
+		cb
+			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+			.add((lib, cmd) -> lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier}))
+			.end();
+		final WorkQueue queue = dev.queue(transfer, 0);
+		queue.submit(new WorkQueue.Work.Builder().add(cb).build());
+		queue.waitIdle();
+		cb.free();
+	}
+
+	public void sampler() {
+		// TODO - replicate texture.descriptor?
+
+		final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
+		info.minFilter = VkFilter.VK_FILTER_LINEAR;
+		info.magFilter = VkFilter.VK_FILTER_LINEAR;
+
+		info.addressModeU = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		info.addressModeV = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		info.addressModeW = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		info.borderColor = VkBorderColor.VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+
+		info.anisotropyEnable = VulkanBoolean.TRUE;
+		info.maxAnisotropy = 16;
+		info.unnormalizedCoordinates = VulkanBoolean.FALSE;
+
+		info.compareEnable = VulkanBoolean.FALSE;
+		info.compareOp = VkCompareOp.VK_COMPARE_OP_ALWAYS;
+
+		info.mipmapMode = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		info.mipLodBias = 0;
+		info.minLod = 0;
+		info.maxLod = 0;
+
+		final PointerByReference sampler = vulkan.factory().reference();
+		lib.vkCreateSampler(dev.handle(), info, null, sampler);
+
+		// TODO - class
+	}
+
+	///////////////////////
 }

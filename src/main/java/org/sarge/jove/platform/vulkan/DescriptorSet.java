@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
+import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
@@ -16,7 +16,6 @@ import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -27,24 +26,15 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class DescriptorSet extends PointerHandle {
 	private final Layout layout;
-	private final VkDescriptorSetLayoutBinding binding;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Handle
-	 * @param layout		Layout entry for this descriptor set
+	 * @param layout		Layout
 	 */
-	protected DescriptorSet(Pointer handle, Layout layout, VkDescriptorSetLayoutBinding binding) {
+	protected DescriptorSet(Pointer handle, Layout layout) {
 		super(handle);
 		this.layout = notNull(layout);
-		this.binding = notNull(binding);
-	}
-
-	/**
-	 * @return Binding
-	 */
-	public VkDescriptorSetLayoutBinding binding() {
-		return binding;
 	}
 
 	/**
@@ -53,25 +43,48 @@ public class DescriptorSet extends PointerHandle {
 	public Command bind(Pipeline.Layout layout) {
 		return (lib, cmd) -> lib.vkCmdBindDescriptorSets(cmd, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, layout.handle(), 0, 1, new Pointer[]{super.handle()}, 0, null);
 	}
-	// TODO - refers to pipeline.layout!
+	// TODO - refers to pipeline.layout! maybe factor this out somehow?
 
 	/**
 	 * Updates this descriptor set with the given uniform buffer.
+	 * @param binding		Binding index
 	 * @param buffer		Uniform buffer
 	 * @param offset		Offset
 	 * @param size			Buffer size
 	 * @throws IllegalArgumentException if this descriptor set is not a uniform buffer
 	 */
-	public void uniform(DataBuffer buffer, int offset, long size) {
+	public void uniform(int binding, DataBuffer buffer, int offset, long size) {
 		final VkDescriptorBufferInfo info = new VkDescriptorBufferInfo();
 		info.buffer = ((PointerHandle) buffer).handle(); // TODO - nasty!
 		info.offset = zeroOrMore(offset);
-		// TODO - positive or whole
-		info.range = size; // oneOrMore(size);
-		update(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, write -> write.pBufferInfo = info);
+		info.range = oneOrMore(size);
+		update(binding, VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, write -> write.pBufferInfo = info);
 	}
 
-	private void update(VkDescriptorType type, Consumer<VkWriteDescriptorSet> updater) {
+	/**
+	 *
+	 * @param binding
+	 * @param view
+	 * @param sampler
+	 */
+	public void sampler(int binding, ImageView view, PointerHandle sampler) {
+		final VkDescriptorImageInfo info = new VkDescriptorImageInfo();
+		info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		info.imageView = view.handle();
+		info.sampler = sampler.handle();
+		update(binding, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, write -> write.pImageInfo = info);
+	}
+
+	/**
+	 *
+	 * @param id			Binding ID
+	 * @param type			Expected descriptor type
+	 * @param updater		Update callback
+	 */
+	private void update(int id, VkDescriptorType type, Consumer<VkWriteDescriptorSet> updater) {
+		// Lookup layout binding
+		final VkDescriptorSetLayoutBinding binding = layout.bindings.stream().filter(b -> b.binding == id).findAny().orElseThrow(() -> new IllegalArgumentException("Binding not present: " + id));
+
 		// Validate
 		if(type != binding.descriptorType) throw new IllegalArgumentException(String.format("Incorrect descriptor set update: type=%s expected=%s", type, binding.descriptorType));
 
@@ -83,6 +96,10 @@ public class DescriptorSet extends PointerHandle {
 		write.descriptorCount = binding.descriptorCount;
 		write.dstArrayElement = 0; // TODO
 
+//		write.pBufferInfo = null;
+//		write.pImageInfo = null;
+//		write.pTexelBufferView = null;
+
 		// Populate appropriate field
 		updater.accept(write);
 
@@ -91,6 +108,7 @@ public class DescriptorSet extends PointerHandle {
 		final VulkanLibraryDescriptorSet lib = vulkan.library();
 		lib.vkUpdateDescriptorSets(layout.dev.handle(), 1, new VkWriteDescriptorSet[]{write}, 0, null);
 	}
+	// TODO - back to updater approach to group updates into one call
 
 	/**
 	 * A <i>descriptor set layout</i> defines the structure of a set resource descriptors that can be bound to a {@link Pipeline}.
@@ -267,36 +285,29 @@ public class DescriptorSet extends PointerHandle {
 
 		/**
 		 * Allocates a number of descriptor sets from this pool.
-		 * @param layout Descriptor set layout(s)
+		 * @param layouts Descriptor set layout(s)
 		 * @return Descriptor sets
 		 */
-		public List<DescriptorSet> allocate(int count, Layout layout) {
-			// Validate
-			Check.oneOrMore(count);
-			if(count > max) throw new IllegalArgumentException("Number of descriptor sets exceeds pool maximum size");
-			// TODO - what is max actually for? do we need to track number allocated?
-
+		public List<DescriptorSet> allocate(List<Layout> layouts) {
 			// Build allocation descriptor
 			final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
 			info.descriptorPool = super.handle();
-			info.descriptorSetCount = count;
+			info.descriptorSetCount = layouts.size();
 
-			// Duplicate layout for each descriptor set
-			// TODO - better for method to accept array of layouts?
-			final Pointer[] pointers = new Pointer[count];
-			Arrays.setAll(pointers, ignored -> layout.handle());
-			info.pSetLayouts = StructureHelper.pointers(Arrays.asList(pointers));
+			// Populate layouts
+			final var pointers = layouts.stream().map(Layout::handle).collect(toList());
+			info.pSetLayouts = StructureHelper.pointers(pointers);
 
 			// Allocate descriptor sets
 			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibraryDescriptorSet lib = vulkan.library();
-			final Pointer[] array = vulkan.factory().pointers(count);
+			final Pointer[] array = vulkan.factory().pointers(layouts.size());
 			check(lib.vkAllocateDescriptorSets(dev.handle(), info, array));
 
 			// Create descriptor sets
 			final List<DescriptorSet> sets = new ArrayList<>();
-			for(int n = 0; n < count; ++n) {
-				final DescriptorSet ds = new DescriptorSet(array[n], layout, layout.bindings.get(0)); // TODO - why > 1?
+			for(int n = 0; n < layouts.size(); ++n) {
+				final DescriptorSet ds = new DescriptorSet(array[n], layouts.get(0));
 				sets.add(ds);
 			}
 			return sets;
