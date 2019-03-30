@@ -77,9 +77,9 @@ public class VulkanIntegrationTest {
 
 		// Determine queue families
 		final var families = physical.families();
+		transfer = families.stream().filter(f -> f.flags().contains(VkQueueFlag.VK_QUEUE_TRANSFER_BIT)).findAny().orElseThrow(() -> new IllegalArgumentException("No transfer queue"));
 		graphics = families.stream().filter(f -> f.flags().contains(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT)).findAny().orElseThrow(() -> new IllegalArgumentException("No graphics queue"));
 		present = families.stream().filter(f -> f.isPresentationSupported(surface)).findAny().orElseThrow(() -> new IllegalArgumentException("No presentation queue"));
-		transfer = families.stream().filter(f -> f.flags().contains(VkQueueFlag.VK_QUEUE_TRANSFER_BIT)).findAny().orElseThrow(() -> new IllegalArgumentException("No transfer queue"));
 
 		// Create logical device
 		dev = logical(physical);
@@ -87,18 +87,16 @@ public class VulkanIntegrationTest {
 		final SwapChain chain = chain(dev, surface);
 
 		System.out.println("Creating shaders");
-		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/triangle.vert.spv").toPath()));
+		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/triangle.ibo.vert.spv").toPath()));
+//		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/triangle.vert.spv").toPath()));
 		final VulkanShader frag = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/triangle.frag.spv").toPath()));
 
-		final RenderPass pass = pass();
+		final RenderPass pass = pass(chain.format());
 
 		System.out.println("Creating command pool");
 		pool = Command.Pool.create(dev, graphics);
 
 		////
-
-		// TODO
-		// vertex layout -> VBO layout (REPLACES!)
 
 		final Model<?> model = model();
 		final DataBuffer.Layout layout = DataBuffer.Layout.of(model.components());
@@ -106,22 +104,43 @@ public class VulkanIntegrationTest {
 		final VulkanDataBuffer vbo = vertexBuffer(model, layout);
 		final VulkanDataBuffer indexBuffer = indexBuffer(model);
 
-		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout);
-
 		////
 
 		System.out.println("Allocating command buffers");
 		final List<Command.Buffer> cmds = pool.allocate(3, true);
 
+		System.out.println("Allocating descriptor set pool");
+		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
+			.add(3, VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+			.max(3)
+			.build();
+
+		System.out.println("Creating descriptor set layout");
+		final DescriptorSet.Layout dsLayout = new DescriptorSet.Layout.Builder(dev)
+			.binding(0)
+			.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+			.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+			.build();
+
+		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout, dsLayout);
+
+		System.out.println("Allocating descriptor sets");
+		final DescriptorSet[] sets = setPool.allocate(cmds.size(), dsLayout).toArray(DescriptorSet[]::new);
+
 		// TODO - how to wrap 3 x FB and 3 x commands -> object?
 		System.out.println("Creating frame buffer and commands");
 		final FrameBuffer[] frameBuffers = new FrameBuffer[cmds.size()];
+		final VulkanDataBuffer[] uniforms = new VulkanDataBuffer[cmds.size()];
 		for(int n = 0; n < cmds.size(); ++n) {
 			final FrameBuffer fb = frameBuffer(pass, chain.extent(), chain.images().get(n));
 			frameBuffers[n] = fb;
 
+			final VulkanDataBuffer uniform = uniform();
+			uniforms[n] = uniform;
+			sets[n].uniform(uniform, 0, 4); // (~0L)); // 4);
+
 			final Command.Buffer cb = cmds.get(n);
-			record(cb, fb, pass, pipeline, vbo, indexBuffer);
+			record(cb, fb, pass, pipeline, vbo, indexBuffer, sets[n]);
 		}
 
 		System.out.println("Creating frame tracker");
@@ -344,16 +363,25 @@ public class VulkanIntegrationTest {
 
 	private SwapChain chain(LogicalDevice dev, Surface surface) {
 		System.out.println("Creating swap-chain");
+
+		final VkFormat format = new VulkanHelper.FormatBuilder()
+			.components(VulkanHelper.FormatBuilder.BGRA)
+			.bytes(1)
+			.signed(false)
+			.type(Vertex.Component.Type.NORM)
+			.build();
+
 		return new SwapChain.Builder(dev, surface)
-			.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)
+			.format(format)
+			.colour(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 			.build();
 	}
 
-	private RenderPass pass() {
+	private RenderPass pass(VkFormat format) {
 		System.out.println("Creating render pass");
 		return new RenderPass.Builder(dev)
 			.attachment()
-				.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)				// <--- use FormatBuilder, but what is UNORM?
+				.format(format)
 				.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
 				.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
 				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
@@ -377,12 +405,18 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, DataBuffer.Layout layout) {
+	private Pipeline pipeline(VulkanShader vert, VulkanShader frag, Dimensions extent, RenderPass pass, DataBuffer.Layout dataLayout, DescriptorSet.Layout dsLayout) {
+		System.out.println("Creating pipeline layout");
+		final Pipeline.Layout layout = new Pipeline.Layout.Builder(dev)
+			.add(dsLayout)
+			.build();
+
 		System.out.println("Creating pipeline");
 		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), extent);
 		return new Pipeline.Builder(dev, pass)
+			.layout(layout)
 			.input()
-				.binding(layout)
+				.binding(dataLayout)
 				.build()
 			.shader()
 				.module(vert)
@@ -399,7 +433,7 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VulkanDataBuffer vbo, VulkanDataBuffer index) {
+	private void record(Command.Buffer buffer, FrameBuffer fb, RenderPass pass, Pipeline pipeline, VulkanDataBuffer vbo, VulkanDataBuffer index, DescriptorSet ds) {
 		System.out.println("Recording command");
 
 		final Rectangle extent = new Rectangle(0, 0, 640, 480);
@@ -409,12 +443,15 @@ public class VulkanIntegrationTest {
 		final Command draw = (api, cb) -> api.vkCmdDrawIndexed(cb, 3, 1, 0, 0, 0);
 		//final Command draw = (api, cb) -> api.vkCmdDraw(cb, 3, 1, 0, 0);
 
+		final Command bind = ds.bind(pipeline.layout());
+
 		buffer
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
 			.add(pass.begin(fb, extent, clear))
 			.add(pipeline.bind())
 			.add(vbo.bindVertexBuffer())
 			.add(index.bindIndexBuffer())
+			.add(bind)
 			.add(draw)
 			.add(RenderPass.END_COMMAND)
 			.end();
@@ -490,6 +527,24 @@ public class VulkanIntegrationTest {
 		copy(index, bb);
 
 		return index;
+	}
+
+	private VulkanDataBuffer uniform() {
+		System.out.println("Creating uniform buffer");
+		final VulkanDataBuffer uniform = new VulkanDataBuffer.Builder(dev)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+			.length(4)
+			.build();
+
+		System.out.println("Writing uniform buffer");
+		final ByteBuffer bb = BufferFactory.byteBuffer(4);
+		final IntBuffer fb = bb.asIntBuffer();
+		fb.put(0);
+		uniform.push(bb);
+
+		return uniform;
 	}
 
 	private void copy(DataBuffer buffer, ByteBuffer data) {

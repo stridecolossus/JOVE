@@ -92,8 +92,8 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 	 * @see #bindIndexBuffer()
 	 */
 	public Command bindIndexBuffer(int size) {
-		if((size != Integer.SIZE) && (size != Short.SIZE)) throw new IllegalArgumentException("Invalid index buffer component size: " + size);
-		final VkIndexType type = size == Integer.SIZE ? VkIndexType.VK_INDEX_TYPE_UINT32 : VkIndexType.VK_INDEX_TYPE_UINT16;
+		if((size != Integer.BYTES) && (size != Short.BYTES)) throw new IllegalArgumentException("Invalid index buffer component size: " + size);
+		final VkIndexType type = size == Integer.BYTES ? VkIndexType.VK_INDEX_TYPE_UINT32 : VkIndexType.VK_INDEX_TYPE_UINT16;
 		return (api, cb) -> api.vkCmdBindIndexBuffer(cb, super.handle(), 0L, type);
 	}
 

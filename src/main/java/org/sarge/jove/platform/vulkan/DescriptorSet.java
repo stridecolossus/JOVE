@@ -6,8 +6,8 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -50,9 +50,10 @@ public class DescriptorSet extends PointerHandle {
 	/**
 	 * @return Command to bind this descriptor set
 	 */
-	public Command bind() {
+	public Command bind(Pipeline.Layout layout) {
 		return (lib, cmd) -> lib.vkCmdBindDescriptorSets(cmd, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, layout.handle(), 0, 1, new Pointer[]{super.handle()}, 0, null);
 	}
+	// TODO - refers to pipeline.layout!
 
 	/**
 	 * Updates this descriptor set with the given uniform buffer.
@@ -63,9 +64,10 @@ public class DescriptorSet extends PointerHandle {
 	 */
 	public void uniform(DataBuffer buffer, int offset, long size) {
 		final VkDescriptorBufferInfo info = new VkDescriptorBufferInfo();
-		info.buffer = ((PointerHandle) buffer).handle(); // TODO - will this work? nasty anyway!
+		info.buffer = ((PointerHandle) buffer).handle(); // TODO - nasty!
 		info.offset = zeroOrMore(offset);
-		info.range = oneOrMore(size);
+		// TODO - positive or whole
+		info.range = size; // oneOrMore(size);
 		update(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, write -> write.pBufferInfo = info);
 	}
 
@@ -75,7 +77,7 @@ public class DescriptorSet extends PointerHandle {
 
 		// Init update descriptor
 		final VkWriteDescriptorSet write = new VkWriteDescriptorSet();
-		write.dstSet = super.handle(); // TODO - will this work?
+		write.dstSet = super.handle();
 		write.dstBinding = binding.binding;
 		write.descriptorType = binding.descriptorType;
 		write.descriptorCount = binding.descriptorCount;
@@ -175,8 +177,8 @@ public class DescriptorSet extends PointerHandle {
 			 * Verifies a descriptor set binding.
 			 */
 			private static void verify(VkDescriptorSetLayoutBinding binding) {
-				if(binding.descriptorType == null) throw new IllegalArgumentException("Binding requires a descriptor type: " + binding);
-				if(binding.stageFlags == 0) throw new IllegalArgumentException("No shader stages specified: " + binding);
+				if(binding.descriptorType == null) throw new IllegalArgumentException("Binding requires a descriptor type: " + binding.binding);
+				if(binding.stageFlags == 0) throw new IllegalArgumentException("No shader stages specified: " + binding.binding);
 			}
 
 			/**
@@ -280,9 +282,10 @@ public class DescriptorSet extends PointerHandle {
 			info.descriptorSetCount = count;
 
 			// Duplicate layout for each descriptor set
-			final List<Pointer> pointers = new ArrayList<>(count);
-			Collections.fill(pointers, layout.handle());
-			info.pSetLayouts = StructureHelper.pointers(pointers);
+			// TODO - better for method to accept array of layouts?
+			final Pointer[] pointers = new Pointer[count];
+			Arrays.setAll(pointers, ignored -> layout.handle());
+			info.pSetLayouts = StructureHelper.pointers(Arrays.asList(pointers));
 
 			// Allocate descriptor sets
 			final Vulkan vulkan = dev.parent().vulkan();
@@ -292,8 +295,8 @@ public class DescriptorSet extends PointerHandle {
 
 			// Create descriptor sets
 			final List<DescriptorSet> sets = new ArrayList<>();
-			for(int n = 0; n < array.length; ++n) {
-				final DescriptorSet ds = new DescriptorSet(array[n], layout, layout.bindings.get(n));
+			for(int n = 0; n < count; ++n) {
+				final DescriptorSet ds = new DescriptorSet(array[n], layout, layout.bindings.get(0)); // TODO - why > 1?
 				sets.add(ds);
 			}
 			return sets;

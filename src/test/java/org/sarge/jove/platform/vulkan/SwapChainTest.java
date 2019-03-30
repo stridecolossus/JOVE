@@ -29,11 +29,12 @@ public class SwapChainTest extends AbstractVulkanTest {
 		public void before() {
 			extent = new Dimensions(640, 480);
 			view = mock(ImageView.class);
-			chain = new SwapChain(mock(Pointer.class), device, extent, List.of(view));
+			chain = new SwapChain(mock(Pointer.class), device, VkFormat.VK_FORMAT_B8G8R8A8_UNORM, extent, List.of(view));
 		}
 
 		@Test
 		public void constructor() {
+			assertEquals(VkFormat.VK_FORMAT_B8G8R8A8_UNORM, chain.format());
 			assertEquals(extent, chain.extent());
 			assertEquals(List.of(view), chain.images());
 		}

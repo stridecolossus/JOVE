@@ -16,6 +16,7 @@ import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.util.StructureHelper;
+import org.sarge.lib.collection.StrictList;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -25,12 +26,23 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Pipeline extends LogicalDeviceHandle {
+	private final Pipeline.Layout layout;
+
 	/**
 	 * Constructor.
-	 * @param handle Pipeline handle
+	 * @param handle 		Pipeline handle
+	 * @param layout		Pipeline layout
 	 */
-	Pipeline(Pointer handle, LogicalDevice dev) {
+	Pipeline(Pointer handle, LogicalDevice dev, Pipeline.Layout layout) {
 		super(handle, dev, lib -> lib::vkDestroyPipeline);
+		this.layout = notNull(layout);
+	}
+
+	/**
+	 * @return Layout of this pipeline
+	 */
+	public Pipeline.Layout layout() {
+		return layout;
 	}
 
 	/**
@@ -425,7 +437,7 @@ public class Pipeline extends LogicalDeviceHandle {
 			check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 			// Create pipeline
-			return new Pipeline(pipelines[0], dev);
+			return new Pipeline(pipelines[0], dev, layout);
 		}
 	}
 
@@ -447,17 +459,28 @@ public class Pipeline extends LogicalDeviceHandle {
 		 */
 		public static class Builder {
 			private final LogicalDevice dev;
-			private final VkPipelineLayoutCreateInfo info = new VkPipelineLayoutCreateInfo();
+			private final List<Pointer> sets = new StrictList<>();
+			// TODO - push constant layouts
 
+			/**
+			 * Constructor.
+			 * @param dev Logical device
+			 */
 			public Builder(LogicalDevice dev) {
 				this.dev = notNull(dev);
 			}
 
-			// TODO
-//			public int setLayoutCount;
-//			public Pointer pSetLayouts;
-//			public int pushConstantRangeCount;
-//			public Pointer pPushConstantRanges;
+			/**
+			 * Adds a descriptor set layout.
+			 * @param layout Descriptor set layout
+			 */
+			public Builder add(DescriptorSet.Layout layout) {
+				// TODO - check for duplicates?
+				sets.add(layout.handle());
+				return this;
+			}
+
+			// TODO - push constants
 
 			/**
 			 * Constructs this layout.
@@ -465,6 +488,19 @@ public class Pipeline extends LogicalDeviceHandle {
 			 * @return New pipeline layout
 			 */
 			public Layout build() {
+				// Validate
+				// TODO - error if both empty
+
+				// Init pipeline layout descriptor
+				final VkPipelineLayoutCreateInfo info = new VkPipelineLayoutCreateInfo();
+
+				// Add descriptor set layouts
+				info.setLayoutCount = sets.size();
+				info.pSetLayouts = StructureHelper.pointers(sets);
+
+				// Add push constants
+				// TODO
+
 				// Allocate layout
 				final Vulkan vulkan = dev.parent().vulkan();
 				final VulkanLibrary lib = vulkan.library();

@@ -53,7 +53,7 @@ public interface Vertex extends Bufferable {
 		public enum Type {
 			INT,
 			FLOAT,
-			NORMALIZED,
+			NORM,
 			SCALED,
 			SRGB,				// TODO - required?
 		}

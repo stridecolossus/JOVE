@@ -1,13 +1,13 @@
 package org.sarge.jove.platform.vulkan;
 
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.range;
 
 import java.util.StringJoiner;
 
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * General Vulkan utilities.
@@ -18,7 +18,7 @@ public final class VulkanHelper {
 	}
 
 	/**
-	 * Maps a JOVE component descriptor to the equivalent Vulkan format.
+	 * Maps a JOVE component descriptor to the equivalent RGBA-based Vulkan format.
 	 * @param c Component
 	 * @return Format
 	 * @throws IllegalArgumentException if the format is not supported
@@ -26,7 +26,7 @@ public final class VulkanHelper {
 	public static VkFormat format(Vertex.Component c) {
 		return new FormatBuilder()
 			.type(c.type())
-			.components(c.size())
+			.components(FormatBuilder.RGBA.substring(0, c.size()))
 			.bytes(c.bytes())
 			.build();
 	}
@@ -40,31 +40,45 @@ public final class VulkanHelper {
 	 * Example:
 	 * <pre>
 	 * VkFormat format = new FormatBuilder()
-	 *  .type(Type.NORMALIZED)		// NORM
-	 *  .signed(false)				// U
-	 *  .components(3)				// RGB
-	 *  .bytes(2)					// 16
-	 *  .build();
-	 * // Returns <tt>VK_FORMAT_R16G16B16_UNORM</tt>
+	 *      .components("BGRA")			// BGRA
+	 *      .bytes(2)					// 16
+	 *      .signed(false)				// U
+	 *      .type(Type.NORMALIZED)		// NORM
+	 *      .build();
+	 * // Returns <tt>VK_FORMAT_B16G16R16A16_UNORM</tt>
 	 * </pre>
 	 * @see VkFormat
 	 */
 	public static class FormatBuilder {
-		private static final String RGBA = "RGBA";
-		private static final String ARGB = "ARGB"; // TODO - swap builder option
+		/**
+		 * Default component layout.
+		 */
+		public static final String RGBA = "RGBA";
 
-		private int components = 3;
+		/**
+		 * Reverse component layout.
+		 */
+		public static final String ARGB = "ARGB";
+
+		/**
+		 * Surface format components.
+		 */
+		public static final String BGRA = "BGRA";
+
+		private String components = RGBA;
 		private int bytes = 4;
 		private Vertex.Component.Type type = Vertex.Component.Type.FLOAT;
 		private boolean signed = true;
 
 		/**
-		 * Sets the number of components, e.g. 3 for RGB.
-		 * @param components Number of components 1..4 (default is 3)
-		 * @throws IllegalArgumentException if the number of components is not 1..4
+		 * Sets the colour components, e.g. <tt>ARGB</tt>
+		 * @param components Colour component string
+		 * @throws IllegalArgumentException if the given components string is empty, contains an invalid character, or is longer than 4 components
 		 */
-		public FormatBuilder components(int components) {
-			this.components = range(components, 1, 4);
+		public FormatBuilder components(String components) {
+			Check.range(components.length(), 1, 4);
+			if(components.chars().anyMatch(ch -> RGBA.indexOf(ch) == -1)) throw new IllegalArgumentException("Invalid components specifier: " + components);
+			this.components = components;
 			return this;
 		}
 
@@ -107,8 +121,8 @@ public final class VulkanHelper {
 		public VkFormat build() {
 			// Build component layout
 			final StringBuilder layout = new StringBuilder();
-			for(int n = 0; n < components; ++n) {
-				layout.append(RGBA.charAt(n));
+			for(int n = 0; n < components.length(); ++n) {
+				layout.append(components.charAt(n));
 				layout.append(bytes * Byte.SIZE);
 			}
 

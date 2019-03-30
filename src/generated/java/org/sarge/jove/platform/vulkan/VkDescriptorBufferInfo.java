@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
-import com.sun.jna.Pointer;
 
-import com.sun.jna.Structure;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -15,10 +15,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"offset",
 	"range"
 })
-public class VkDescriptorBufferInfo extends VulkanStructure {
-	public static class ByValue extends VkDescriptorBufferInfo implements Structure.ByValue { }
-	public static class ByReference extends VkDescriptorBufferInfo implements Structure.ByReference { }
-	
+public class VkDescriptorBufferInfo extends VulkanStructure implements ByReference {
 	public Pointer buffer;
 	public long offset;
 	public long range;

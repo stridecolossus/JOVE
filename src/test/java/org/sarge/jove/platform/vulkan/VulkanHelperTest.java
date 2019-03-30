@@ -48,22 +48,23 @@ public class VulkanHelperTest {
 		public void build() {
 			final VkFormat format = builder
 				.type(Vertex.Component.Type.INT)
-				.components(3)
+				.components("RGBA")
 				.bytes(2)
 				.signed(false)
 				.build();
-			assertEquals(VkFormat.VK_FORMAT_R16G16B16_UINT, format);
+			assertEquals(VkFormat.VK_FORMAT_R16G16B16A16_UINT, format);
 		}
 
 		@Test
 		public void buildDefaults() {
-			assertEquals(VkFormat.VK_FORMAT_R32G32B32_SFLOAT, builder.build());
+			assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, builder.build());
 		}
 
 		@Test
 		public void invalidComponents() {
-			assertThrows(IllegalArgumentException.class, () -> builder.components(0));
-			assertThrows(IllegalArgumentException.class, () -> builder.components(5));
+			assertThrows(IllegalArgumentException.class, () -> builder.components(""));
+			assertThrows(IllegalArgumentException.class, () -> builder.components("cobblers"));
+			assertThrows(IllegalArgumentException.class, () -> builder.components("RGBA?"));
 		}
 
 		@Test

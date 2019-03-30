@@ -22,22 +22,32 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class SwapChain extends LogicalDeviceHandle {
-	private final List<ImageView> views;
+	private final VkFormat format;
 	private final Dimensions extent;
+	private final List<ImageView> views;
 	private final IntByReference index;
 
 	/**
 	 * Constructor.
-	 * @param handle 	Swap-chain handle
-	 * @param dev		Logical device
-	 * @param extent	Image extent
-	 * @param views		Image views
+	 * @param handle 		Swap-chain handle
+	 * @param dev			Logical device
+	 * @param format		Image format
+	 * @param extent		Image extent
+	 * @param views			Image views
 	 */
-	SwapChain(Pointer handle, LogicalDevice dev, Dimensions extent, List<ImageView> views) {
+	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extent, List<ImageView> views) {
 		super(handle, dev, lib -> lib::vkDestroySwapchainKHR);
+		this.format = notNull(format);
 		this.extent = notNull(extent);
 		this.views = List.copyOf(views);
 		this.index = dev.parent().vulkan().factory().integer();
+	}
+
+	/**
+	 * @return Image format
+	 */
+	public VkFormat format() {
+		return format;
 	}
 
 	/**
@@ -322,12 +332,7 @@ public class SwapChain extends LogicalDeviceHandle {
 
 			// Create swap-chain
 			final Dimensions extent = new Dimensions(info.imageExtent.width, info.imageExtent.height);
-//			final Pointer handle = chain.getValue();
-//			final Destructor destructor = () -> {
-//				views.forEach(ImageView::destroy);
-//				lib.vkDestroySwapchainKHR(dev.handle(), handle, null);
-//			};
-			return new SwapChain(chain.getValue(), dev, extent, views);
+			return new SwapChain(chain.getValue(), dev, info.imageFormat, extent, views);
 		}
 
 		// TODO

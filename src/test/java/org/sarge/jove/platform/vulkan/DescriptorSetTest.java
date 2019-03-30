@@ -42,11 +42,18 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		public void bind() {
+			// Create pipeline layout
+			final Pipeline.Layout pipelineLayout = mock(Pipeline.Layout.class);
+			when(pipelineLayout.handle()).thenReturn(mock(Pointer.class));
+
+			// Create command
 			final Pointer buffer = mock(Pointer.class);
-			final Command bind = set.bind();
+			final Command bind = set.bind(pipelineLayout);
 			assertNotNull(bind);
+
+			// Bind descriptor set
 			bind.execute(library, buffer);
-			verify(library).vkCmdBindDescriptorSets(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, layout.handle(), 0, 1, new Pointer[]{set.handle()}, 0, null);
+			verify(library).vkCmdBindDescriptorSets(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.handle(), 0, 1, new Pointer[]{set.handle()}, 0, null);
 		}
 	}
 
