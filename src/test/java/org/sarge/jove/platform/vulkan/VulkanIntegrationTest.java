@@ -20,6 +20,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
+import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Model;
@@ -41,6 +42,7 @@ import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracke
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.texture.DefaultImage;
 import org.sarge.jove.texture.Image;
+import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.lib.collection.StrictSet;
 
@@ -99,9 +101,8 @@ public class VulkanIntegrationTest {
 		final SwapChain chain = chain(dev, surface);
 
 		System.out.println("Creating shaders");
-		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/triangle.ibo.vert.spv").toPath()));
-//		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/triangle.vert.spv").toPath()));
-		final VulkanShader frag = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/triangle.frag.spv").toPath()));
+		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/quad.vert.spv").toPath()));
+		final VulkanShader frag = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/quad.frag.spv").toPath()));
 
 		final RenderPass pass = pass(chain.format());
 
@@ -124,14 +125,18 @@ public class VulkanIntegrationTest {
 		System.out.println("Allocating descriptor set pool");
 		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
 			.add(3, VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+			.add(3, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 			.max(3)
 			.build();
 
 		System.out.println("Creating descriptor set layout");
 		final DescriptorSet.Layout dsLayout = new DescriptorSet.Layout.Builder(dev)
 			.binding(0)
-			.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-			.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+			.binding(1)
+				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 			.build();
 
 		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout, dsLayout);
@@ -140,6 +145,11 @@ public class VulkanIntegrationTest {
 		final DescriptorSet.Layout[] array = new DescriptorSet.Layout[cmds.size()];
 		Arrays.fill(array, dsLayout);
 		final DescriptorSet[] sets = setPool.allocate(Arrays.asList(array)).toArray(DescriptorSet[]::new);
+
+		///////////////////
+
+		final ImageView textureImageView = texture();
+		final PointerHandle sampler = sampler();
 
 		///////////////////
 
@@ -154,16 +164,12 @@ public class VulkanIntegrationTest {
 			final VulkanDataBuffer uniform = uniform();
 			uniforms[n] = uniform;
 			// TODO
-			sets[n].uniform(0, uniform, 0, 4); // (~0L)); // 4);
+			sets[n].uniform(0, uniform, 0, 2 * 16 * Float.BYTES); // (~0L)); // 4);
+			sets[n].sampler(1, textureImageView, sampler);
 
 			final Command.Buffer cb = cmds.get(n);
 			record(cb, fb, pass, pipeline, vbo, indexBuffer, sets[n]);
 		}
-
-		///////////////////
-
-		texture();
-		sampler();
 
 		//////////////////
 
@@ -424,31 +430,40 @@ public class VulkanIntegrationTest {
 	private Model<MutableVertex> model() {
 		class ColourVertex extends MutableVertex {
 			private final Colour col;
+			//private final TextureCoordinate.Coordinate2D coords;
 
-			public ColourVertex(Point pos, Colour col) {
+			public ColourVertex(Point pos, Colour col, TextureCoordinate.Coordinate2D coords) {
 				super(pos);
 				this.col = col;
+				this.coords = coords;
 			}
 
 			@Override
 			public int size() {
-				return Point.SIZE + Colour.SIZE;
+				return Point.SIZE + Colour.SIZE + 2;
 			}
 
 			@Override
 			public void buffer(FloatBuffer buffer) {
-				position().buffer(buffer);
+				pos.buffer(buffer);
 				col.buffer(buffer);
+				coords.buffer(buffer);
 			}
 		}
 
 		return new Model.Builder<>()
 			.primitive(Primitive.TRIANGLE_STRIP)
 			.component(Vertex.Component.COLOUR)
-			.add(new ColourVertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1)))
-			.add(new ColourVertex(new Point(-0.5f, +0.5f, 0), new Colour(0, 1, 0, 1)))
-			.add(new ColourVertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 0, 1, 1)))
-			.add(new ColourVertex(new Point(+0.5f, +0.5f, 0), new Colour(1, 1, 1, 1)))
+			.component(Vertex.Component.coordinate(2))
+//			.add(new ColourVertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1), new TextureCoordinate.Coordinate2D(1, 0)))
+//			.add(new ColourVertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 1, 0, 1), new TextureCoordinate.Coordinate2D(0, 0)))
+//			.add(new ColourVertex(new Point(+0.5f, +0.5f, 0), new Colour(0, 0, 1, 1), new TextureCoordinate.Coordinate2D(0, 1)))
+//			.add(new ColourVertex(new Point(-0.5f, +0.5f, 0), new Colour(1, 1, 1, 1), new TextureCoordinate.Coordinate2D(1, 1)))
+
+			.add(new ColourVertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1), new TextureCoordinate.Coordinate2D(0, 0)))
+			.add(new ColourVertex(new Point(-0.5f, +0.5f, 0), new Colour(0, 1, 0, 1), new TextureCoordinate.Coordinate2D(0, 1)))
+			.add(new ColourVertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 0, 1, 1), new TextureCoordinate.Coordinate2D(1, 0)))
+			.add(new ColourVertex(new Point(+0.5f, +0.5f, 0), new Colour(1, 1, 1, 1), new TextureCoordinate.Coordinate2D(1, 1)))
 			.build();
 	}
 
@@ -500,17 +515,19 @@ public class VulkanIntegrationTest {
 
 	private VulkanDataBuffer uniform() {
 		System.out.println("Creating uniform buffer");
+		final int len = 2 * 16 * Float.BYTES;
 		final VulkanDataBuffer uniform = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-			.length(4)
+			.length(len)
 			.build();
 
 		System.out.println("Writing uniform buffer");
-		final ByteBuffer bb = BufferFactory.byteBuffer(4);
-		final IntBuffer fb = bb.asIntBuffer();
-		fb.put(0);
+		final ByteBuffer bb = BufferFactory.byteBuffer(len);
+		final FloatBuffer fb = bb.asFloatBuffer();
+		Matrix.IDENTITY.buffer(fb);
+		Matrix.IDENTITY.buffer(fb);
 		uniform.push(bb);
 
 		return uniform;
@@ -558,43 +575,40 @@ public class VulkanIntegrationTest {
 	public ImageView texture() throws Exception {
 		// Load texture image
 		final Image image = new DefaultImage.Loader().load(new FileInputStream("src/test/resources/statue.jpg"));
-		final Image.Header header = image.header();
-System.out.println("**** header="+header.size().width*header.size().height);
 
-		// Create image
+		// Create texture
 		//
 
-		// Init image dimensions
-		final Dimensions dim = header.size();
+		// Init texture dimensions
+		final Dimensions dim = image.header().size();
 		final VkExtent3D extent = new VkExtent3D();
 		extent.width = dim.width;
 		extent.height = dim.height;
 		extent.depth = 1;
 
-		// Init image descriptor
+		// Init texture descriptor
 		final VkImageCreateInfo info = new VkImageCreateInfo();
 		info.imageType = VkImageType.VK_IMAGE_TYPE_2D;
 		info.extent = extent;
 		info.mipLevels = 1;
 		info.arrayLayers = 1;
 		info.samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
-		info.format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build(); // TODO - derive from header.format, check supported
+		info.format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build();
 		info.tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL;
 		info.initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
 		info.usage = IntegerEnumeration.mask(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT, VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT);
 		info.sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
 
-		// Allocate image
+		// Allocate texture
 		final PointerByReference handle = vulkan.factory().reference();
 		check(lib.vkCreateImage(dev.handle(), info, null, handle));
 
-		// Allocate image memory
+		// Allocate texture memory
 		//
 
-		// Allocate image memory
+		// Allocate texture memory
 		final VkMemoryRequirements reqs = new VkMemoryRequirements();
 		lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
-System.out.println("**** reqs="+reqs.size);
 
 		// Determine memory type
 		// TODO - factor our common code from here and VulkanDataBuffer -> helper, how to handle props?
@@ -602,7 +616,7 @@ System.out.println("**** reqs="+reqs.size);
 		props.add(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		final int type = dev.parent().selector().findMemoryType(props);
 
-		// Allocate buffer memory
+		// Allocate texture memory
 		final PointerByReference mem = vulkan.factory().reference();
 		final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
 		alloc.allocationSize = reqs.size;
@@ -612,10 +626,9 @@ System.out.println("**** reqs="+reqs.size);
 		// Bind memory
 		check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.getValue(), 0L));
 
-		// Copy image data to staging buffer
+		// Copy image to staging buffer
 		//
 		final long len = dim.width * dim.height * 4; // TODO - from image format
-System.out.println("len="+len);
 		final VulkanDataBuffer staging = VulkanDataBuffer.staging(dev, len);
 		staging.push(image.buffer());
 
@@ -644,7 +657,7 @@ System.out.println("len="+len);
 		region.imageExtent.height = dim.height;
 		region.imageExtent.depth = 1;
 
-		// Copy image
+		// Copy texture
 		final Command.Buffer cb = pool.allocate(1, true).iterator().next();
 		cb
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
@@ -663,9 +676,9 @@ System.out.println("len="+len);
 		//
 		staging.destroy();
 
-		final VulkanImage img = new VulkanImage(handle.getValue(), info.format, new VkExtent2D(header.size()));
+		final VulkanImage texture = new VulkanImage(handle.getValue(), info.format, new VkExtent2D(image.header().size()));
 
-		return new ImageView.Builder(dev, img).build();
+		return new ImageView.Builder(dev, texture).build();
 	}
 
 	private void transition(Pointer image, VkImageLayout prev, VkImageLayout next, boolean first) {		// TODO - bodge
@@ -712,7 +725,7 @@ System.out.println("len="+len);
 		cb.free();
 	}
 
-	public void sampler() {
+	public PointerHandle sampler() {
 		// TODO - replicate texture.descriptor?
 
 		final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
@@ -740,6 +753,7 @@ System.out.println("len="+len);
 		lib.vkCreateSampler(dev.handle(), info, null, sampler);
 
 		// TODO - class
+		return new PointerHandle(sampler.getValue());
 	}
 
 	///////////////////////

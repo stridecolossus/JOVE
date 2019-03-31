@@ -30,14 +30,15 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@BeforeEach
 		public void before() {
 			layout = mock(Layout.class);
-			when(layout.handle()).thenReturn(mock(Pointer.class));
 			binding = mock(VkDescriptorSetLayoutBinding.class);
-			set = new DescriptorSet(mock(Pointer.class), layout, binding);
+			when(layout.handle()).thenReturn(mock(Pointer.class));
+			when(layout.bindings()).thenReturn(List.of(binding));
+			set = new DescriptorSet(mock(Pointer.class), layout);
 		}
 
 		@Test
 		public void constructor() {
-			assertEquals(binding, set.binding());
+			assertEquals(layout, set.layout());
 		}
 
 		@Test
@@ -152,7 +153,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			final Layout layout = new Layout(mock(Pointer.class), device, List.of(binding));
 
 			// Allocate descriptor sets
-			final var sets = pool.allocate(1, layout);
+			final var sets = pool.allocate(List.of(layout));
 			assertNotNull(sets);
 			assertEquals(1, sets.size());
 

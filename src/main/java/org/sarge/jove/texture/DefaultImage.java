@@ -85,8 +85,21 @@ public class DefaultImage implements Image {
 		// TODO - helper?
 		// TODO - do all image types automatically do this or do we need to convert first?
 		final DataBufferByte data = (DataBufferByte) image.getRaster().getDataBuffer();
-		final ByteBuffer buffer = BufferFactory.byteBuffer(data.getSize());
-		buffer.put(data.getData());
+
+		// Convert ABGR to RGBA
+		// TODO - this sucks? is probably hopelessly inefficient? only works for ABGR images?
+		final byte[] bytes = data.getData();
+		final byte[] rgba = new byte[bytes.length];
+		for(int n = 0; n < rgba.length; n += 4) {
+			rgba[n] = bytes[n + 3];
+			rgba[n + 1] = bytes[n + 2];
+			rgba[n + 2] = bytes[n + 1];
+			rgba[n + 3] = bytes[n];
+		}
+
+		// Buffer
+		final ByteBuffer buffer = BufferFactory.byteBuffer(rgba.length);
+		buffer.put(rgba);
 		buffer.flip();
 		return buffer;
 	}
@@ -121,6 +134,29 @@ public class DefaultImage implements Image {
 		}
 	}
 
+//	BufferedImage createFloatBufferedImage(int w, int h, int bands) {
+//	    // Define dimensions and layout of the image
+//	    //int bands = 4; // 4 bands for ARGB, 3 for RGB etc
+//	    int[] bandOffsets = {0, 1, 2, 3}; // length == bands, 0 == R, 1 == G, 2 == B and 3 == A
+//
+//	    // Create a TYPE_FLOAT sample model (specifying how the pixels are stored)
+//	    SampleModel sampleModel = new PixelInterleavedSampleModel(DataBuffer.TYPE_FLOAT, w, h, bands, w  * bands, bandOffsets);
+//	    // ...and data buffer (where the pixels are stored)
+//	    DataBuffer buffer = new DataBufferFloat(w * h * bands);
+//
+//	    // Wrap it in a writable raster
+//	    WritableRaster raster = Raster.createWritableRaster(sampleModel, buffer, null);
+//
+//	    // Create a color model compatible with this sample model/raster (TYPE_FLOAT)
+//	    // Note that the number of bands must equal the number of color components in the
+//	    // color space (3 for RGB) + 1 extra band if the color model contains alpha
+//	    ColorSpace colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+//	    ColorModel colorModel = new ComponentColorModel(colorSpace, true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_FLOAT);
+//
+//	    // And finally create an image with this raster
+//	    return new BufferedImage(colorModel, raster, colorModel.isAlphaPremultiplied(), null);
+//	}
+
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this);
@@ -150,12 +186,19 @@ public class DefaultImage implements Image {
 		 */
 		public Image load(InputStream in) throws IOException {
 			// Load image
-			final DefaultImage image = new DefaultImage(ImageIO.read(in));
+			/*final*/ Image image = new DefaultImage(ImageIO.read(in));
+
+			// TODO - add alpha channel
+			if(image.header().format() == Format.RGB) {
+				image = image.convert(new Image.Header(Format.RGBA, image.header().size()));
+			}
 
 			// Flip as required
 			if(flip) {
-				final Dimensions size = image.header.size();
-				return image.convert(image.header, size.height(), size.width());
+				// TODO - messy
+				final Dimensions size = image.header().size();
+				final Image.Header flipped = new Image.Header(image.header().format(), new Dimensions(size.height, size.width));
+				return image.convert(flipped);
 			}
 			else {
 				return image;

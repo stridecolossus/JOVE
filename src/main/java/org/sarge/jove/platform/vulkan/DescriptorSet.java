@@ -37,6 +37,10 @@ public class DescriptorSet extends PointerHandle {
 		this.layout = notNull(layout);
 	}
 
+	public Layout layout() {
+		return layout;
+	}
+
 	/**
 	 * @return Command to bind this descriptor set
 	 */
@@ -83,6 +87,7 @@ public class DescriptorSet extends PointerHandle {
 	 */
 	private void update(int id, VkDescriptorType type, Consumer<VkWriteDescriptorSet> updater) {
 		// Lookup layout binding
+		// TODO - lookup map
 		final VkDescriptorSetLayoutBinding binding = layout.bindings.stream().filter(b -> b.binding == id).findAny().orElseThrow(() -> new IllegalArgumentException("Binding not present: " + id));
 
 		// Validate
