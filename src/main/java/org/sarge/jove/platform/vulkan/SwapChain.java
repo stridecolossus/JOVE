@@ -160,7 +160,7 @@ public class SwapChain extends LogicalDeviceHandle {
 			info.preTransform = caps.currentTransform;
 			info.compositeAlpha = VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 			info.presentMode = VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
-			info.clipped = VulkanBoolean.FALSE;
+			info.clipped = VulkanBoolean.TRUE;
 			info.oldSwapchain = null;
 		}
 

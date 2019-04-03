@@ -17,6 +17,7 @@ import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -274,8 +275,9 @@ public class Pipeline extends LogicalDeviceHandle {
 			 * @throws IllegalArgumentException for a duplicate shader stage
 			 */
 			public Builder build() {
+				Check.notNull(info.stage);
+				Check.notNull(info.module);
 				if(contains(info.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + info.stage);
-				info.verify();
 				shaders.add(info);
 				return Builder.this;
 			}

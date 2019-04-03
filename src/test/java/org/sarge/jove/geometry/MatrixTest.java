@@ -11,7 +11,10 @@ import java.nio.FloatBuffer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix.Builder;
+import org.sarge.jove.scene.Camera;
+import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.MathsUtil;
 
 public class MatrixTest {
@@ -20,17 +23,17 @@ public class MatrixTest {
 
 	@BeforeEach
 	public void before() {
-		matrix = new Matrix(new float[]{1, 2, 3, 4});
-		identity = Matrix.identity(4);
+		matrix = new Matrix(new float[]{1, 2, 3, 4}); // TODO - should array ctor have row/col major boolean?
+		identity = Matrix.identity(2);
 	}
 
 	@Test
 	public void constructor() {
 		assertEquals(2, matrix.order());
-		assertEquals(1, matrix.get(0, 0), 0.0001f);
-		assertEquals(2, matrix.get(0, 1), 0.0001f);
-		assertEquals(3, matrix.get(1, 0), 0.0001f);
-		assertEquals(4, matrix.get(1, 1), 0.0001f);
+		assertFloatEquals(1, matrix.get(0, 0));
+		assertFloatEquals(2, matrix.get(1, 0));
+		assertFloatEquals(3, matrix.get(0, 1));
+		assertFloatEquals(4, matrix.get(1, 1));
 		assertEquals(matrix, matrix.matrix());
 		assertEquals(2 * 2, matrix.size());
 	}
@@ -59,12 +62,69 @@ public class MatrixTest {
 
 	@Test
 	public void multiply() {
-		// TODO
+		final float[] expected = {
+			1 * 1 + 3 * 2,
+			2 * 1 + 4 * 2,
+			1 * 3 + 3 * 4,
+			2 * 3 + 4 * 4,
+		};
+		assertEquals(new Matrix(expected), matrix.multiply(matrix));
 	}
 
 	@Test
 	public void multiplyIndentity() {
-		assertEquals(identity, identity.multiply(identity));
+		assertEquals(matrix, matrix.multiply(identity));
+		assertEquals(matrix, identity.multiply(matrix));
+	}
+
+	@Test
+	public void multiplyPoint() {
+		matrix = new Matrix.Builder()
+			.identity()
+			.set(0, 1, 2)
+			.set(0, 2, 3)
+			.set(0, 3, 4)
+			.build();
+		final Point pos = new Point(1, 2, 3);
+		assertEquals(new Point((1 * 1) + (2 * 2) + (3 * 3) + (1 * 4), 2, 3), matrix.multiply(pos));
+	}
+
+	@Test
+	public void multiplyIdentityPoint() {
+		final Point pos = new Point(1, 2, 3);
+		assertEquals(pos, Matrix.IDENTITY.multiply(pos));
+	}
+
+	// TODO - REMOVE
+	// https://github.com/JOML-CI/JOML/blob/master/src/org/joml/Matrix4f.java
+	// private Matrix4f perspectiveGeneric(float fovy, float aspect, float zNear, float zFar, boolean zZeroToOne, Matrix4f dest) {
+	@Test
+	public void test() {
+		final Matrix projection = Projection.DEFAULT.matrix(0.01f, 100f, new Dimensions(640, 480));
+		System.out.println(projection);
+
+		final Camera cam = new Camera();
+		System.out.println(cam.matrix());
+
+		final Matrix pmv = projection.multiply(cam.matrix());
+		//final Matrix pmv = cam.matrix().multiply(projection);
+		System.out.println(pmv);
+		//System.out.println(cam.matrix().multiply(projection));
+
+		final float z = 0;
+		final Point[] pts = new Point[] {
+			new Point(-0.5f, -0.5f, z),
+			new Point(-0.5f, +0.5f, z),
+			new Point(+0.5f, -0.5f, z),
+			new Point(+0.5f, +0.5f, z),
+		};
+		for(int n = 0; n < pts.length; ++n) {
+			final Point result = cam.matrix().multiply(pts[n]);
+			projection.multiply(result);
+			System.out.println();
+			//Point result = pmv.multiply(pts[n]);
+			//System.out.println(result);
+		}
 	}
 
 	@Test
@@ -130,19 +190,19 @@ public class MatrixTest {
 		@Test
 		public void set() {
 			final Matrix result = new Builder(2).set(0, 1, 2).build();
-			assertEquals(new Matrix(new float[]{0, 2, 0, 0}), result);
+			assertEquals(new Matrix(new float[]{0, 0, 2, 0}), result);
 		}
 
 		@Test
 		public void row() {
 			final Matrix result = new Builder(3).row(1, new Vector(1, 2, 3)).build();
-			assertEquals(new Matrix(new float[]{0, 0, 0, 1, 2, 3, 0, 0, 0}), result);
+			assertEquals(new Matrix(new float[]{0, 1, 0, 0, 2, 0, 0, 3, 0}), result);
 		}
 
 		@Test
 		public void column() {
 			final Matrix result = new Builder(3).column(1, new Vector(1, 2, 3)).build();
-			assertEquals(new Matrix(new float[]{0, 1, 0, 0, 2, 0, 0, 3, 0}), result);
+			assertEquals(new Matrix(new float[]{0, 0, 0, 1, 2, 3, 0, 0, 0}), result);
 		}
 	}
 }

@@ -20,8 +20,12 @@ import org.sarge.lib.util.Check;
  */
 // TODO
 // - determinant, invert, etc
-// http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
 public final class Matrix implements Transform, Bufferable {
+
+	// http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
+	// https://stackoverflow.com/questions/28075743/how-do-i-compose-a-rotation-matrix-with-human-readable-angles-from-scratch/28084380#28084380
+	//https://www.reddit.com/r/vulkan/comments/9l7s2y/vulkan_fps_camera_example/
+
 	private static final String LINE_SEPARATOR = System.lineSeparator();
 
 	/**
@@ -164,7 +168,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * @return Matrix index
 	 */
 	private int index(int row, int col) {
-		return row * order + col;
+		return row + order * col;
 	}
 
 	/**
@@ -188,22 +192,41 @@ public final class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix multiply(Matrix m) {
 		if(m.order != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
-		final float[] result = new float[matrix.length];
-		int index = 0;
-		for(int c = 0; c < order; ++c) {
-			for(int r = 0; r < order; ++r) {
+		final Builder result = new Builder(order);		// TODO - uses builder, needs optimisation to column-major
+		for(int r = 0; r < order; ++r) {
+			for(int c = 0; c < order; ++c) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
 					total += get(r, n) * m.get(n, c);
-//					matrix[r][n] * m.matrix[n][c];
 				}
-//				result[r][c] = total;
-				assert result[index] == 0;
-				result[index] = total;
-				++index;
+				result.set(r, c, total);
 			}
 		}
-		return new Matrix(result);
+		return result.build();
+	}
+
+	public Point multiply(Point pt) {
+		// Convert to homogeneous array
+		if(order != DEFAULT_ORDER) throw new IllegalArgumentException("Can only multiply a vector by a matrix with order of 4");
+		final float[] array = new float[4];
+		array[0] = pt.x;
+		array[1] = pt.y;
+		array[2] = pt.z;
+		array[3] = 1;
+
+		// Multiply
+		final float[] result = new float[4];
+		for(int r = 0; r < order; ++r) {
+			float total = 0;
+			for(int c = 0; c < order; ++c) {
+				total += get(r, c) * array[c];
+			}
+			result[r] = total;
+		}
+
+		// Convert back to point
+		System.out.print(Arrays.toString(result));
+		return new Point(result[0], result[1], result[2]);
 	}
 
 	@Override
@@ -281,7 +304,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			final int index = row * order + col;
+			final int index = row + order * col;
 			matrix[index] = value;
 			return this;
 		}

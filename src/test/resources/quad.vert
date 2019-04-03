@@ -14,7 +14,7 @@ layout(location = 0) out vec4 fragColour;
 layout(location = 1) out vec2 fragCoords;
 
 void main() {
-    gl_Position = vec4(pos, 1.0);
+    gl_Position = view.projection * view.modelview * vec4(pos, 1.0);
     fragColour = col;
     fragCoords = coords;
 }

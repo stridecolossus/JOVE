@@ -16,9 +16,9 @@ public final class Vector extends Tuple {
 	public static final Vector X_AXIS = new Vector(1, 0, 0);
 
 	/**
-	 * Y-axis vector (note positive Y is <b>down</b>).
+	 * Y-axis vector (note Vulkan positive Y axis is <b>down</b>).
 	 */
-	public static final Vector Y_AXIS = new Vector(0, -1, 0);
+	public static final Vector Y_AXIS = new Vector(0, 1, 0);
 
 	/**
 	 * Z-axis vector.

@@ -40,6 +40,8 @@ import org.sarge.jove.platform.vulkan.Feature.ValidationLayer;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracker;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
+import org.sarge.jove.scene.Camera;
+import org.sarge.jove.scene.Projection;
 import org.sarge.jove.texture.DefaultImage;
 import org.sarge.jove.texture.Image;
 import org.sarge.jove.texture.TextureCoordinate;
@@ -101,8 +103,8 @@ public class VulkanIntegrationTest {
 		final SwapChain chain = chain(dev, surface);
 
 		System.out.println("Creating shaders");
-		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/quad.vert.spv").toPath()));
-		final VulkanShader frag = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/quad.frag.spv").toPath()));
+		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/vert.spv").toPath()));
+		final VulkanShader frag = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/frag.spv").toPath()));
 
 		final RenderPass pass = pass(chain.format());
 
@@ -164,7 +166,7 @@ public class VulkanIntegrationTest {
 			final VulkanDataBuffer uniform = uniform();
 			uniforms[n] = uniform;
 			// TODO
-			sets[n].uniform(0, uniform, 0, 2 * 16 * Float.BYTES); // (~0L)); // 4);
+			sets[n].uniform(0, uniform, 0, uniform.length()); // (~0L)); // 4);
 			sets[n].sampler(1, textureImageView, sampler);
 
 			final Command.Buffer cb = cmds.get(n);
@@ -190,11 +192,15 @@ public class VulkanIntegrationTest {
 		// Start render loop
 		System.out.println("Starting render loop...");
 		while(running.get()) {
+
+
 			//
 			final FrameState frame = tracker.waitReady();
 
 			// Acquire next image
 			final int index = chain.next(frame.available(), null);
+
+			update(uniforms[index]);
 
 			// Submit render command
 			final Command.Buffer cmd = cmds.get(index);
@@ -337,6 +343,7 @@ public class VulkanIntegrationTest {
 
 		return new SwapChain.Builder(dev, surface)
 			.format(format)
+			.count(3)
 			.colour(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 			.build();
 	}
@@ -451,6 +458,8 @@ public class VulkanIntegrationTest {
 			}
 		}
 
+		float z = 0;
+
 		return new Model.Builder<>()
 			.primitive(Primitive.TRIANGLE_STRIP)
 			.component(Vertex.Component.COLOUR)
@@ -459,11 +468,10 @@ public class VulkanIntegrationTest {
 //			.add(new ColourVertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 1, 0, 1), new TextureCoordinate.Coordinate2D(0, 0)))
 //			.add(new ColourVertex(new Point(+0.5f, +0.5f, 0), new Colour(0, 0, 1, 1), new TextureCoordinate.Coordinate2D(0, 1)))
 //			.add(new ColourVertex(new Point(-0.5f, +0.5f, 0), new Colour(1, 1, 1, 1), new TextureCoordinate.Coordinate2D(1, 1)))
-
-			.add(new ColourVertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1), new TextureCoordinate.Coordinate2D(0, 0)))
-			.add(new ColourVertex(new Point(-0.5f, +0.5f, 0), new Colour(0, 1, 0, 1), new TextureCoordinate.Coordinate2D(0, 1)))
-			.add(new ColourVertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 0, 1, 1), new TextureCoordinate.Coordinate2D(1, 0)))
-			.add(new ColourVertex(new Point(+0.5f, +0.5f, 0), new Colour(1, 1, 1, 1), new TextureCoordinate.Coordinate2D(1, 1)))
+			.add(new ColourVertex(new Point(-0.5f, -0.5f, z), new Colour(1, 0, 0, 1), new TextureCoordinate.Coordinate2D(0, 0)))
+			.add(new ColourVertex(new Point(-0.5f, +0.5f, z), new Colour(0, 1, 0, 1), new TextureCoordinate.Coordinate2D(0, 1)))
+			.add(new ColourVertex(new Point(+0.5f, -0.5f, z), new Colour(0, 0, 1, 1), new TextureCoordinate.Coordinate2D(1, 0)))
+			.add(new ColourVertex(new Point(+0.5f, +0.5f, z), new Colour(1, 1, 1, 1), new TextureCoordinate.Coordinate2D(1, 1)))
 			.build();
 	}
 
@@ -523,15 +531,59 @@ public class VulkanIntegrationTest {
 			.length(len)
 			.build();
 
-		System.out.println("Writing uniform buffer");
-		final ByteBuffer bb = BufferFactory.byteBuffer(len);
-		final FloatBuffer fb = bb.asFloatBuffer();
-		Matrix.IDENTITY.buffer(fb);
-		Matrix.IDENTITY.buffer(fb);
-		uniform.push(bb);
-
 		return uniform;
 	}
+
+
+
+	private void update(VulkanDataBuffer uniform) {
+
+
+		// TODO
+
+		final Matrix projection = Projection.DEFAULT.matrix(0.01f, 100f, new Dimensions(640, 480));
+//		System.out.println(projection);
+
+		final float z = ((System.currentTimeMillis() % 5000L) / 5000f * 10) - 5;
+
+		final Camera cam = new Camera();
+		//cam.point(Vector.Z_AXIS);
+		//cam.move(new Point(0, 0, z));
+//		cam.point(Vector.Z_AXIS);
+//		cam.move(new Point(0, 0, -1.0f));
+//		System.out.println(cam.matrix());
+//		cam.move(new Vector(0, 0, 0.5f));
+//		cam.move(new Point(0, 0, -1.5f));
+
+//		System.out.println("Writing uniform buffer");
+		final ByteBuffer bb = BufferFactory.byteBuffer((int) uniform.length());
+		final FloatBuffer fb = bb.asFloatBuffer();
+		Matrix.IDENTITY.buffer(fb);
+		//projection.buffer(fb);
+		cam.matrix().buffer(fb);
+		//Matrix.IDENTITY.buffer(fb);
+
+//		Matrix.IDENTITY.buffer(fb);
+//		Matrix.IDENTITY.buffer(fb);
+
+		uniform.push(bb);
+	}
+
+//	// THIS WORKS BUT NO DEPTH! with projection matrix fiddled with 1
+//	final Camera cam = new Camera();
+//	cam.move(new Vector(0, 0, -2));
+//	final Matrix m = cam.matrix().multiply(projection);
+
+//	// THIS PUTS YELLOW AT FRONT PLANE! without fiddled projection matrix
+//	final Camera cam = new Camera();
+//	cam.move(new Vector(0, 0, 1));
+//	System.out.println("Writing uniform buffer");
+//	final ByteBuffer bb = BufferFactory.byteBuffer(len);
+//	final FloatBuffer fb = bb.asFloatBuffer();
+//	projection.buffer(fb);
+//	cam.matrix().buffer(fb);
+
+// SAME IF point(Vector.Z_AXIS) and (0, 0, -1)
 
 	private void copy(DataBuffer buffer, ByteBuffer data) {
 		System.out.println("Creating staging buffer");

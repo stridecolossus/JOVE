@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
@@ -31,10 +30,4 @@ public class VkPipelineShaderStageCreateInfo extends VulkanStructure {
 	public Pointer module;
 	public String pName = "main";
 	public Pointer pSpecializationInfo;
-
-	public void verify() {
-		Check.notNull(sType);
-		Check.notNull(stage);
-		Check.notNull(module);
-	}
 }

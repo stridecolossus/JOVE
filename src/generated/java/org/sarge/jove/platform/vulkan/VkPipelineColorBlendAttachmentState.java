@@ -23,7 +23,7 @@ public class VkPipelineColorBlendAttachmentState extends VulkanStructure {
 	public static class ByValue extends VkPipelineColorBlendAttachmentState implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineColorBlendAttachmentState implements Structure.ByReference { }
 
-	public VulkanBoolean blendEnable = VulkanBoolean.TRUE;
+	public VulkanBoolean blendEnable = VulkanBoolean.FALSE;
 	public VkBlendFactor srcColorBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA;
 	public VkBlendFactor dstColorBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	public VkBlendOp colorBlendOp = VkBlendOp.VK_BLEND_OP_ADD;

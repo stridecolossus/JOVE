@@ -9,6 +9,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.lib.util.AbstractEqualsObject;
 
+import com.sun.jna.FromNativeContext;
+import com.sun.jna.NativeMapped;
 import com.sun.jna.Pointer;
 
 /**
@@ -62,15 +64,30 @@ public interface Resource {
 	}
 
 	/**
-	 * A <i>pointer handle</i> is a resource implemented using a JNA pointer as a handle.
+	 * A <i>pointer handle</i> is a resource implemented using a JNA pointer as a native handle.
 	 */
-	class PointerHandle extends Handle<Pointer> {
+	class PointerHandle extends Handle<Pointer> implements NativeMapped {
 		/**
 		 * Constructor.
 		 * @param handle Pointer handle
 		 */
 		public PointerHandle(Pointer handle) {
 			super(handle);
+		}
+
+		@Override
+		public Class<?> nativeType() {
+			return Pointer.class;
+		}
+
+		@Override
+		public Object toNative() {
+			return super.handle;
+		}
+
+		@Override
+		public Object fromNative(Object nativeValue, FromNativeContext context) {
+			throw new UnsupportedOperationException();
 		}
 	}
 
