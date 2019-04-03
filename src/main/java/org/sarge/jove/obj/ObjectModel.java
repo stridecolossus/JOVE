@@ -217,7 +217,7 @@ public class ObjectModel {
 		 */
 		public Model<MutableVertex> build() {
 			// Create model
-			final Model.Builder<MutableVertex> builder = new Model.Builder<>().primitive(Primitive.TRIANGLE);
+			final Model.Builder<MutableVertex> builder = new Model.Builder<>().primitive(Primitive.TRIANGLE_LIST);
 			// TODO - flag for whether to generate extents? or just always do it?
 
 			// Determine model components

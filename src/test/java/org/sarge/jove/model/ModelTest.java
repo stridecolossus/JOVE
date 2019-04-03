@@ -82,7 +82,7 @@ public class ModelTest {
 
 		@Test
 		public void computeNormalsInvalidPrimitive() {
-			model = new Model.Builder<>().primitive(Primitive.LINE).add(a).add(b).build();
+			model = new Model.Builder<>().primitive(Primitive.LINE_LIST).add(a).add(b).build();
 			assertThrows(IllegalStateException.class, () -> model.computeNormals());
 		}
 
@@ -114,13 +114,13 @@ public class ModelTest {
 		@Test
 		public void invalidModelNotEmpty() {
 			builder.add(a);
-			assertThrows(IllegalStateException.class, () -> builder.primitive(Primitive.TRIANGLE));
+			assertThrows(IllegalStateException.class, () -> builder.primitive(Primitive.TRIANGLE_LIST));
 			assertThrows(IllegalStateException.class, () -> builder.component(Vertex.Component.COLOUR));
 		}
 
 		@Test
 		public void invalidNormalsForPrimitive() {
-			builder.primitive(Primitive.LINE);
+			builder.primitive(Primitive.LINE_LIST);
 			assertThrows(IllegalStateException.class, () -> builder.component(Vertex.Component.NORMAL));
 		}
 
@@ -130,9 +130,9 @@ public class ModelTest {
 			triangle();
 
 			// Build model
-			final Model model = builder.build();
+			final Model<?> model = builder.build();
 			assertNotNull(model);
-			assertEquals(Primitive.TRIANGLE, model.primitive());
+			assertEquals(Primitive.TRIANGLE_LIST, model.primitive());
 
 			// Check vertices
 			assertNotNull(model.vertices());

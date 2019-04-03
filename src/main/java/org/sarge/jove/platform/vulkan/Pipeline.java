@@ -60,7 +60,7 @@ public class Pipeline extends LogicalDeviceHandle {
 	 * The following stages are initialised to suitable defaults:
 	 * <ul>
 	 * <li>vertex input stage - defaults to an empty state, i.e. not vertices</li>
-	 * <li>primitive assembly stage - assumes {@link Primitive#TRIANGLE}</li>
+	 * <li>primitive assembly stage - assumes {@link Primitive#TRIANGLE_LIST}</li>
 	 * <li>rasterization stage</li>
 	 * </ul>
 	 * The following stages are mandatory:
@@ -72,19 +72,11 @@ public class Pipeline extends LogicalDeviceHandle {
 	 * <p>
 	 * Notes:
 	 * <ul>
-	 * <li>the pipeline will employ a default layout if none is provided using {@link #layout}</li>
+	 * <li>a default pipeline layout will be created if none is provided using {@link #layout}</li>
 	 * </ul>
 	 * @see Layout.Builder
 	 */
 	public static class Builder {
-		// fixed:
-		// - primitive assembly
-		// - rasterization
-		// shader:
-		// - tesselation
-		// - multi-sample
-		// - stencil
-
 		/**
 		 * Builder for the vertex input stage descriptor.
 		 */
@@ -157,10 +149,53 @@ public class Pipeline extends LogicalDeviceHandle {
 		}
 
 		/**
+		 * Builder for the rasterization stage.
+		 */
+		public class RasterizationStageBuilder {
+			private RasterizationStageBuilder() {
+				// TODO - init here?
+			}
+
+			/**
+			 * Sets the polygon fill mode.
+			 * @param mode Polygon mode
+			 */
+			public RasterizationStageBuilder mode(VkPolygonMode mode) {
+				pipeline.pRasterizationState.polygonMode = notNull(mode);
+				return this;
+			}
+
+			/**
+			 * Sets the face culling mode.
+			 * @param mode culling mode
+			 */
+			public RasterizationStageBuilder cull(VkCullModeFlag mode) {
+				pipeline.pRasterizationState.cullMode = notNull(mode);
+				return this;
+			}
+
+			/**
+			 * Sets the front-face winding order.
+			 * @param front Front face winding order
+			 */
+			public RasterizationStageBuilder front(VkFrontFace front) {
+				pipeline.pRasterizationState.frontFace = notNull(front);
+				return this;
+			}
+
+			/**
+			 * Constructs this rasterization stage.
+			 * @return Parent builder
+			 */
+			public Builder build() {
+				return Builder.this;
+			}
+		}
+
+		/**
 		 * Builder for the viewport stage descriptor.
 		 */
 		public class ViewportStageBuilder {
-			private final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 			private final Deque<VkViewport> viewports = new ArrayDeque<>();
 			private final List<VkRect2D> scissors = new ArrayList<>();
 
@@ -215,6 +250,7 @@ public class Pipeline extends LogicalDeviceHandle {
 			 */
 			public Builder build() {
 				// Add viewports
+				final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 				if(viewports.isEmpty()) throw new IllegalArgumentException("No viewports specified");
 				info.pViewports = StructureHelper.structures(viewports);
 				info.viewportCount = viewports.size();
@@ -226,6 +262,97 @@ public class Pipeline extends LogicalDeviceHandle {
 
 				// Add viewport stage
 				pipeline.pViewportState = info;
+				return Builder.this;
+			}
+		}
+
+		/**
+		 * Builder for the depth-stencil stage.
+		 */
+		public class DepthStencilStageBuilder {
+			/**
+			 * Constructor.
+			 */
+			private DepthStencilStageBuilder() {
+				pipeline.pDepthStencilState = new VkPipelineDepthStencilStateCreateInfo();
+				enable(true);
+				write(true);
+				operation(VkCompareOp.VK_COMPARE_OP_LESS);
+			}
+
+			/**
+			 * Sets whether depth-testing is enabled.
+			 * @param depth Whether depth-test is enabled
+			 */
+			public DepthStencilStageBuilder enable(boolean depth) {
+				pipeline.pDepthStencilState.depthTestEnable = VulkanBoolean.of(depth);
+				return this;
+			}
+
+			/**
+			 * Sets whether depth-test writing is enabled.
+			 * @param depth Whether new depths are written to the buffer
+			 */
+			public DepthStencilStageBuilder write(boolean write) {
+				pipeline.pDepthStencilState.depthWriteEnable = VulkanBoolean.of(write);
+				return this;
+			}
+
+			/**
+			 * Sets the comparison operation for the depth test.
+			 * @param op Comparison operator
+			 */
+			public DepthStencilStageBuilder operation(VkCompareOp op) {
+				pipeline.pDepthStencilState.depthCompareOp = notNull(op);
+				return this;
+			}
+
+			// TODO - depthBoundsTestEnable, min, max
+			// TODO - stencil, front, back
+
+			/**
+			 * Constructs this colour blend stage.
+			 * @return Parent builder
+			 */
+			public Builder build() {
+				return Builder.this;
+			}
+		}
+
+		/**
+		 * Builder for a shader stage.
+		 */
+		public class ColourBlendStageBuilder {
+			private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
+
+			private VkPipelineColorBlendAttachmentState current;
+
+			private ColourBlendStageBuilder() {
+				attachment();
+			}
+
+			/**
+			 * Starts a colour blend attachment.
+			 * @param stage Stage
+			 */
+			public ColourBlendStageBuilder attachment() {
+				current = new VkPipelineColorBlendAttachmentState();
+				attachments.add(current);
+				return this;
+			}
+
+			// TODO - factor out attachment builder?
+			// TODO - attachment fields
+			// TODO - other info fields
+
+			/**
+			 * Constructs this colour blend stage.
+			 * @return Parent builder
+			 */
+			public Builder build() {
+				assert !attachments.isEmpty();
+				pipeline.pColorBlendState.attachmentCount = attachments.size();
+				pipeline.pColorBlendState.pAttachments = StructureHelper.structures(attachments);
 				return Builder.this;
 			}
 		}
@@ -283,49 +410,6 @@ public class Pipeline extends LogicalDeviceHandle {
 			}
 		}
 
-		/**
-		 * Builder for a shader stage.
-		 */
-		public class ColourBlendStageBuilder {
-			private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo(); // TODO - replace default
-			private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
-
-			private VkPipelineColorBlendAttachmentState current;
-
-			private ColourBlendStageBuilder() {
-				attachment();
-			}
-
-			/**
-			 * Starts a colour blend attachment.
-			 * @param stage Stage
-			 */
-			public ColourBlendStageBuilder attachment() {
-				current = new VkPipelineColorBlendAttachmentState();
-				attachments.add(current);
-				return this;
-			}
-
-			// TODO - factor out attachment builder?
-			// TODO - attachment fields
-			// TODO - other info fields
-
-			/**
-			 * Constructs this colour blend stage.
-			 * @return Parent builder
-			 */
-			public Builder build() {
-				// Add colour attachments
-				assert !attachments.isEmpty();
-				info.attachmentCount = attachments.size();
-				info.pAttachments = StructureHelper.structures(attachments);
-
-				// Attach colour blend stage
-				pipeline.pColorBlendState = info;
-				return Builder.this;
-			}
-		}
-
 		private final LogicalDevice dev;
 		private final RenderPass pass;
 		private final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
@@ -356,11 +440,71 @@ public class Pipeline extends LogicalDeviceHandle {
 		}
 
 		/**
+		 * Sets the pipeline layout.
+		 * @param layout Pipeline layout
+		 */
+		public Builder layout(Layout layout) {
+			this.layout = notNull(layout);
+			return this;
+		}
+		// TODO - should return layout builder?
+
+		/**
 		 * Starts the vertex input stage.
 		 * @return New vertex input stage builder
 		 */
 		public VertexInputStageBuilder input() {
 			return new VertexInputStageBuilder();
+		}
+
+		/**
+		 * Starts the depth-stencil stage.
+		 * @return New depth-stencil builder
+		 */
+		public DepthStencilStageBuilder depthStencil() {
+			return new DepthStencilStageBuilder();
+		}
+
+		/**
+		 * Sets the primitive topology.
+		 * @param primitive Primitive
+		 */
+		public Builder primitive(Primitive primitive) {
+			pipeline.pInputAssemblyState.topology = VulkanHelper.topology(primitive);
+			return this;
+		}
+
+		/**
+		 * Sets whether primitive restart is enabled.
+		 * @param restart Whether restart is enabled
+		 */
+		public Builder restart(boolean restart) {
+			pipeline.pInputAssemblyState.primitiveRestartEnable = VulkanBoolean.of(restart);
+			return this;
+		}
+
+		/**
+		 * Starts the viewport stage.
+		 * @return New viewport stage builder
+		 */
+		public ViewportStageBuilder viewport() {
+			return new ViewportStageBuilder();
+		}
+
+		/**
+		 * Starts the rasterization stage.
+		 * @return New rasterization stage builder
+		 */
+		public RasterizationStageBuilder rasterization() {
+			return new RasterizationStageBuilder();
+		}
+
+		/**
+		 * Starts the colour blend stage.
+		 * @return New colour blend stage builder
+		 */
+		public ColourBlendStageBuilder blend() {
+			return new ColourBlendStageBuilder();
 		}
 
 		/**
@@ -377,31 +521,6 @@ public class Pipeline extends LogicalDeviceHandle {
 		 */
 		private boolean contains(VkShaderStageFlag stage) {
 			return shaders.stream().anyMatch(s -> s.stage == stage);
-		}
-
-		/**
-		 * Starts the viewport stage.
-		 * @return New viewport stage builder
-		 */
-		public ViewportStageBuilder viewport() {
-			return new ViewportStageBuilder();
-		}
-
-		/**
-		 * Starts the colour blend stage.
-		 * @return New colour blend stage builder
-		 */
-		public ColourBlendStageBuilder blend() {
-			return new ColourBlendStageBuilder();
-		}
-
-		/**
-		 * Sets the pipeline layout.
-		 * @param layout Pipeline layout
-		 */
-		public Builder layout(Layout layout) {
-			this.layout = notNull(layout);
-			return this;
 		}
 
 		/**

@@ -117,6 +117,17 @@ public interface Command {
 		}
 
 		/**
+		 * Records a one-off command buffer for a single command.
+		 * @param cmd Command
+		 * @see VkCommandBufferUsageFlag#VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+		 */
+		public void record(Command cmd) {
+			begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+			add(cmd);
+			end();
+		}
+
+		/**
 		 * Resets this command buffer.
 		 * @param flags Flags
 		 * @throws IllegalStateException if this buffer has not been recorded
@@ -184,7 +195,7 @@ public interface Command {
 		}
 
 		/**
-		 * Allocates a number of command buffers in this pool.
+		 * Allocates a number of command buffers from this pool.
 		 * @param num			Number of buffers to allocate
 		 * @param primary		Whether primary or secondary
 		 * @return Allocated buffers

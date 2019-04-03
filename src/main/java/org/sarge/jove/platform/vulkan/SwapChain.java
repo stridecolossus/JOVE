@@ -328,23 +328,28 @@ public class SwapChain extends LogicalDeviceHandle {
 			// Get swap-chain image views
 			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
 			final var handles = VulkanFunction.array(func, factory.integer(), factory::pointers);
-			final var views = Arrays.stream(handles).map(this::image).map(this::view).collect(toList());
+			final var views = Arrays.stream(handles).map(this::view).collect(toList());
 
 			// Create swap-chain
 			final Dimensions extent = new Dimensions(info.imageExtent.width, info.imageExtent.height);
 			return new SwapChain(chain.getValue(), dev, info.imageFormat, extent, views);
 		}
 
-		// TODO
+		/**
+		 * Creates the image and view for the given swap-chain image.
+		 */
+		private ImageView view(Pointer handle) {
+			// Build image extents
+			final VkExtent3D extent = new VkExtent3D();
+			extent.width = info.imageExtent.width;
+			extent.height = info.imageExtent.height;
+			extent.depth = 1;
 
-		private VulkanImage image(Pointer handle) {
-			// TODO - format.value()
-			return new VulkanImage(handle, info.imageFormat, info.imageExtent);
-		}
+			// Create image
+			final VulkanImage image = new VulkanImage(handle, dev, info.imageFormat, extent);
 
-		private ImageView view(VulkanImage image) {
-			return new ImageView.Builder(dev, image)
-				.build();
+			// Create view
+			return new ImageView.Builder(dev, image).build();
 		}
 	}
 }

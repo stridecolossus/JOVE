@@ -268,7 +268,7 @@ public class Model<V extends MutableNormalVertex> {
 	 * Builder for a model.
 	 */
 	public static class Builder<V extends MutableVertex> {
-		private Primitive primitive = Primitive.TRIANGLE;
+		private Primitive primitive = Primitive.TRIANGLE_LIST;
 		private final List<Vertex.Component> components = new StrictList<>();
 		private final List<V> vertices = new ArrayList<>();
 		private final Extents.Builder extents = new Extents.Builder();

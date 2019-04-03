@@ -3,13 +3,12 @@ package org.sarge.jove.model;
 /**
  * Drawing primitives.
  * @author Sarge
- * TODO - triangle fan?
  */
 public enum Primitive {
 	/**
 	 * Triangles.
 	 */
-	TRIANGLE(3),
+	TRIANGLE_LIST(3),
 
 	/**
 	 * Strip of triangles.
@@ -17,19 +16,19 @@ public enum Primitive {
 	TRIANGLE_STRIP(3),
 
 	/**
-	 * Quad.
+	 * Triangle fan.
 	 */
-	QUAD(4),
+	TRIANGLE_FAN(3),
 
 	/**
 	 * Points.
 	 */
-	POINT(1),
+	POINT_LIST(1),
 
 	/**
 	 * Lines.
 	 */
-	LINE(2),
+	LINE_LIST(2),
 
 	/**
 	 * Strip of lines.
@@ -60,6 +59,7 @@ public enum Primitive {
 		switch(this) {
 		case TRIANGLE_STRIP:
 		case LINE_STRIP:
+		case TRIANGLE_FAN:
 			return true;
 
 		default:
@@ -72,9 +72,9 @@ public enum Primitive {
 	 */
 	public boolean hasNormals() {
 		switch(this) {
-		case TRIANGLE:
+		case TRIANGLE_LIST:
 		case TRIANGLE_STRIP:
-		case QUAD:
+		case TRIANGLE_FAN:
 			return true;
 
 		default:

@@ -2,8 +2,11 @@ package org.sarge.jove.platform.vulkan;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.StringJoiner;
 
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
@@ -165,5 +168,28 @@ public final class VulkanHelper {
 		case 'A':	return VkColorComponentFlag.VK_COLOR_COMPONENT_A_BIT;
 		default:	throw new IllegalArgumentException("Invalid colour component: " + String.valueOf((char) ch));
 		}
+	}
+
+	private static final Map<Primitive, VkPrimitiveTopology> PRIMITIVES;
+
+	static {
+		final EnumMap<Primitive, VkPrimitiveTopology> map = new EnumMap<>(Primitive.class);
+		for(Primitive p : Primitive.values()) {
+			final String name = "VK_PRIMITIVE_TOPOLOGY_" + p.name().toUpperCase();
+			final VkPrimitiveTopology top = VkPrimitiveTopology.valueOf(name);
+			map.put(p, top);
+		}
+		PRIMITIVES = Map.copyOf(map);
+	}
+
+	/**
+	 * Maps a JOVE primitive to the Vulkan equivalent.
+	 * @param primitive Primitive
+	 * @return Topology
+	 */
+	public static VkPrimitiveTopology topology(Primitive primitive) {
+		final VkPrimitiveTopology top = PRIMITIVES.get(primitive);
+		if(top == null) throw new UnsupportedOperationException("Unsupported primitive: " + primitive);
+		return top;
 	}
 }

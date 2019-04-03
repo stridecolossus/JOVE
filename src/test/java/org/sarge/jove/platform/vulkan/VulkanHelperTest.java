@@ -8,11 +8,25 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VulkanHelper.FormatBuilder;
 
 public class VulkanHelperTest {
+	@Nested
+	class Utilities {
+		@Test
+		public void topology() {
+			assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_POINT_LIST, VulkanHelper.topology(Primitive.POINT_LIST));
+			assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VulkanHelper.topology(Primitive.LINE_LIST));
+			assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_STRIP, VulkanHelper.topology(Primitive.LINE_STRIP));
+			assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VulkanHelper.topology(Primitive.TRIANGLE_LIST));
+			assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, VulkanHelper.topology(Primitive.TRIANGLE_STRIP));
+			assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN, VulkanHelper.topology(Primitive.TRIANGLE_FAN));
+		}
+	}
+
 	@Nested
 	class ColourComponentTests {
 		@Test

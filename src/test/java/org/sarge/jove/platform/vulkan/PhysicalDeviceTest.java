@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
-import org.sarge.jove.platform.vulkan.PhysicalDevice.MemorySelector;
+import org.sarge.jove.platform.vulkan.PhysicalDevice.MemoryAllocator;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
@@ -40,9 +40,18 @@ public class PhysicalDeviceTest extends AbstractVulkanTest {
 		final var features = new VkPhysicalDeviceFeatures();
 		features.geometryShader = VulkanBoolean.TRUE;
 
+		// Create memory type
+		final VkMemoryType type = new VkMemoryType();
+		type.propertyFlags = VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT.value();
+
+		// Create device memory properties
+		final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
+		mem.memoryTypeCount = 1;
+		mem.memoryTypes = new VkMemoryType[]{type};
+
 		// Create device
 		handle = mock(Pointer.class);
-		dev = new PhysicalDevice(handle, vulkan, props, new VkPhysicalDeviceMemoryProperties(), features, List.of(familyProps), mock(Supported.class));
+		dev = new PhysicalDevice(handle, vulkan, props, mem, features, List.of(familyProps), mock(Supported.class));
 	}
 
 	@Test
@@ -50,7 +59,7 @@ public class PhysicalDeviceTest extends AbstractVulkanTest {
 		assertEquals(handle, dev.handle());
 		assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, dev.type());
 		assertNotNull(dev.properties());
-		assertNotNull(dev.selector());
+		assertNotNull(dev.allocator());
 		assertNotNull(dev.families());
 		assertNotNull(dev.supported());
 		assertNotNull(dev.families());
@@ -104,35 +113,29 @@ public class PhysicalDeviceTest extends AbstractVulkanTest {
 	}
 
 	@Nested
-	class MemorySelectorTests {
-		private MemorySelector selector;
-		private VkPhysicalDeviceMemoryProperties props;
+	class MemoryAllocatorTests {
+		private MemoryAllocator allocator;
 
 		@BeforeEach
 		public void before() {
-			// Create a memory type
-			final VkMemoryType type = new VkMemoryType();
-			type.propertyFlags = VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT.value();
-
-			// Init memory properties
-			props = new VkPhysicalDeviceMemoryProperties();
-			props.memoryTypes[0] = type;
-			props.memoryTypeCount = 1;
-
-			// Create selector
-			selector = new MemorySelector(props);
+			allocator = dev.allocator();
 		}
 
 		@Test
 		public void findMemoryType() {
-			assertEquals(0, selector.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT)));
+			assertEquals(0, allocator.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT)));
 		}
 
 		@Test
 		public void findMemoryTypeUnsupported() {
-			assertThrows(ServiceException.class, () -> selector.findMemoryType(Set.of()));
-			assertThrows(ServiceException.class, () -> selector.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)));
-			assertThrows(ServiceException.class, () -> selector.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT, VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
+			assertThrows(ServiceException.class, () -> allocator.findMemoryType(Set.of()));
+			assertThrows(ServiceException.class, () -> allocator.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)));
+			assertThrows(ServiceException.class, () -> allocator.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT, VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
+		}
+
+		@Test
+		public void allocate() {
+			// TODO
 		}
 	}
 }

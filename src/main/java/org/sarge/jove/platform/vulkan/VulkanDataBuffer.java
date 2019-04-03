@@ -232,21 +232,14 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 			final VkMemoryRequirements reqs = new VkMemoryRequirements();
 			lib.vkGetBufferMemoryRequirements(logical, handle, reqs);
 
-			// Determine memory type
-			final int type = dev.parent().selector().findMemoryType(props);
-
 			// Allocate buffer memory
-			final PointerByReference mem = vulkan.factory().reference();
-			final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
-			alloc.allocationSize = reqs.size;
-			alloc.memoryTypeIndex = type;
-			check(lib.vkAllocateMemory(logical, alloc, null, mem));
+			final Pointer mem = dev.parent().allocator().allocate(reqs, props);
 
 			// Bind memory
-			check(lib.vkBindBufferMemory(logical, handle, mem.getValue(), 0L));
+			check(lib.vkBindBufferMemory(logical, handle, mem, 0L));
 
 			// Create buffer
-			return new VulkanDataBuffer(handle, dev, len, mem.getValue());
+			return new VulkanDataBuffer(handle, dev, len, mem);
 		}
 	}
 

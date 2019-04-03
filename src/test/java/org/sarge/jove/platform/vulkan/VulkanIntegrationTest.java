@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import static org.junit.Assert.assertNotNull;
-import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.io.File;
@@ -22,6 +21,7 @@ import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
@@ -29,7 +29,6 @@ import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
-import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -41,12 +40,11 @@ import org.sarge.jove.platform.vulkan.FrameState.FrameTracker;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracker;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.scene.Camera;
-import org.sarge.jove.scene.Projection;
 import org.sarge.jove.texture.DefaultImage;
 import org.sarge.jove.texture.Image;
 import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.jove.util.BufferFactory;
-import org.sarge.lib.collection.StrictSet;
+import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -447,13 +445,13 @@ public class VulkanIntegrationTest {
 
 			@Override
 			public int size() {
-				return Point.SIZE + Colour.SIZE + 2;
+				return Point.SIZE + 2;
 			}
 
 			@Override
 			public void buffer(FloatBuffer buffer) {
 				pos.buffer(buffer);
-				col.buffer(buffer);
+				//col.buffer(buffer);
 				coords.buffer(buffer);
 			}
 		}
@@ -462,7 +460,7 @@ public class VulkanIntegrationTest {
 
 		return new Model.Builder<>()
 			.primitive(Primitive.TRIANGLE_STRIP)
-			.component(Vertex.Component.COLOUR)
+//			.component(Vertex.Component.COLOUR)
 			.component(Vertex.Component.coordinate(2))
 //			.add(new ColourVertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1), new TextureCoordinate.Coordinate2D(1, 0)))
 //			.add(new ColourVertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 1, 0, 1), new TextureCoordinate.Coordinate2D(0, 0)))
@@ -541,10 +539,10 @@ public class VulkanIntegrationTest {
 
 		// TODO
 
-		final Matrix projection = Projection.DEFAULT.matrix(0.01f, 100f, new Dimensions(640, 480));
+//		final Matrix projection = Projection.DEFAULT.matrix(0.01f, 100f, new Dimensions(640, 480));
 //		System.out.println(projection);
 
-		final float z = ((System.currentTimeMillis() % 5000L) / 5000f * 10) - 5;
+		final float t = (System.currentTimeMillis() % 5000L) / 5000f;
 
 		final Camera cam = new Camera();
 		//cam.point(Vector.Z_AXIS);
@@ -555,16 +553,26 @@ public class VulkanIntegrationTest {
 //		cam.move(new Vector(0, 0, 0.5f));
 //		cam.move(new Point(0, 0, -1.5f));
 
+		final Matrix scale = new Matrix.Builder()
+			.identity()
+			.set(0, 0, t)
+			.set(1, 1, t)
+			.build();
+
+		final Matrix rot = Matrix.rotation(Vector.Z_AXIS, t * MathsUtil.HALF_PI);
+
 //		System.out.println("Writing uniform buffer");
 		final ByteBuffer bb = BufferFactory.byteBuffer((int) uniform.length());
 		final FloatBuffer fb = bb.asFloatBuffer();
-		Matrix.IDENTITY.buffer(fb);
-		//projection.buffer(fb);
-		cam.matrix().buffer(fb);
-		//Matrix.IDENTITY.buffer(fb);
+
+		scale.buffer(fb);
+		rot.buffer(fb);
+
 
 //		Matrix.IDENTITY.buffer(fb);
-//		Matrix.IDENTITY.buffer(fb);
+//		//projection.buffer(fb);
+//		cam.matrix().buffer(fb);
+//		//Matrix.IDENTITY.buffer(fb);
 
 		uniform.push(bb);
 	}
@@ -585,6 +593,8 @@ public class VulkanIntegrationTest {
 
 // SAME IF point(Vector.Z_AXIS) and (0, 0, -1)
 
+
+	// TODO - factor out to helper, also group + optional fence
 	private void copy(DataBuffer buffer, ByteBuffer data) {
 		System.out.println("Creating staging buffer");
 		final long len = data.capacity();
@@ -631,64 +641,71 @@ public class VulkanIntegrationTest {
 		// Create texture
 		//
 
-		// Init texture dimensions
 		final Dimensions dim = image.header().size();
-		final VkExtent3D extent = new VkExtent3D();
-		extent.width = dim.width;
-		extent.height = dim.height;
-		extent.depth = 1;
+		final VkFormat format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build();
 
-		// Init texture descriptor
-		final VkImageCreateInfo info = new VkImageCreateInfo();
-		info.imageType = VkImageType.VK_IMAGE_TYPE_2D;
-		info.extent = extent;
-		info.mipLevels = 1;
-		info.arrayLayers = 1;
-		info.samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
-		info.format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build();
-		info.tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL;
-		info.initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
-		info.usage = IntegerEnumeration.mask(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT, VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT);
-		info.sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+		final VulkanImage texture = new VulkanImage.Builder(dev)
+			.format(format)
+			.extents(dim)
+			.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
+			.build();
 
-		// Allocate texture
-		final PointerByReference handle = vulkan.factory().reference();
-		check(lib.vkCreateImage(dev.handle(), info, null, handle));
+//		// Init texture dimensions
+//		final Dimensions dim = image.header().size();
+//		final VkExtent3D extent = new VkExtent3D();
+//		extent.width = dim.width;
+//		extent.height = dim.height;
+//		extent.depth = 1;
+//
+//		// Init texture descriptor
+//		final VkImageCreateInfo info = new VkImageCreateInfo();
+//		info.imageType = VkImageType.VK_IMAGE_TYPE_2D;
+//		info.extent = extent;
+//		info.mipLevels = 1;
+//		info.arrayLayers = 1;
+//		info.samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
+//		info.format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build();
+//		info.tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL;
+//		info.initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+//		info.usage = IntegerEnumeration.mask(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT, VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT);
+//		info.sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+//
+//		// Allocate texture
+//		final PointerByReference handle = vulkan.factory().reference();
+//		check(lib.vkCreateImage(dev.handle(), info, null, handle));
+//
+//		// Allocate texture memory
+//		//
+//
+//		// Allocate texture memory
+//		final VkMemoryRequirements reqs = new VkMemoryRequirements();
+//		lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
+//
+//		// Determine memory type
+//		// TODO - factor our common code from here and VulkanDataBuffer -> helper, how to handle props?
+//		final Set<VkMemoryPropertyFlag> props = new StrictSet<>();
+//		props.add(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+//		final int type = dev.parent().allocator().findMemoryType(props);
+//
+//		// Allocate texture memory
+//		final PointerByReference mem = vulkan.factory().reference();
+//		final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
+//		alloc.allocationSize = reqs.size;
+//		alloc.memoryTypeIndex = type;
+//		check(lib.vkAllocateMemory(dev.handle(), alloc, null, mem));
+//
+//		// Bind memory
+//		check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.getValue(), 0L));
 
-		// Allocate texture memory
-		//
-
-		// Allocate texture memory
-		final VkMemoryRequirements reqs = new VkMemoryRequirements();
-		lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
-
-		// Determine memory type
-		// TODO - factor our common code from here and VulkanDataBuffer -> helper, how to handle props?
-		final Set<VkMemoryPropertyFlag> props = new StrictSet<>();
-		props.add(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		final int type = dev.parent().selector().findMemoryType(props);
-
-		// Allocate texture memory
-		final PointerByReference mem = vulkan.factory().reference();
-		final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
-		alloc.allocationSize = reqs.size;
-		alloc.memoryTypeIndex = type;
-		check(lib.vkAllocateMemory(dev.handle(), alloc, null, mem));
-
-		// Bind memory
-		check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.getValue(), 0L));
-
-		// Copy image to staging buffer
+		// Copy image data to staging buffer
 		//
 		final long len = dim.width * dim.height * 4; // TODO - from image format
 		final VulkanDataBuffer staging = VulkanDataBuffer.staging(dev, len);
 		staging.push(image.buffer());
 
-		// TODO - destroy image?
-
 		// Transition to destination
 		//
-		transition(handle.getValue(), VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+		transition(texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
 
 		// Copy buffer to image
 		//
@@ -713,7 +730,7 @@ public class VulkanIntegrationTest {
 		final Command.Buffer cb = pool.allocate(1, true).iterator().next();
 		cb
 			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-			.add((lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, staging.handle(), handle.getValue(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, region))
+			.add((lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, staging.handle(), texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, region))
 			.end();
 		final WorkQueue queue = dev.queue(transfer, 0);
 		queue.submit(new WorkQueue.Work.Builder().add(cb).build());
@@ -722,16 +739,25 @@ public class VulkanIntegrationTest {
 
 		// Transition to final
 		//
-		transition(handle.getValue(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+		transition(texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
 
 		// Release staging buffer
 		//
 		staging.destroy();
 
-		final VulkanImage texture = new VulkanImage(handle.getValue(), info.format, new VkExtent2D(image.header().size()));
+		//final VulkanImage texture = new VulkanImage(handle.getValue(), info.format, new VkExtent2D(image.header().size()));
 
 		return new ImageView.Builder(dev, texture).build();
 	}
+
+	/**
+	 * TODO
+	 * - barrier class?
+	 * - helper to create a one-off command buffer with a single command
+	 * - ditto for Work
+	 * - option on submit() to wait
+	 *
+	 */
 
 	private void transition(Pointer image, VkImageLayout prev, VkImageLayout next, boolean first) {		// TODO - bodge
 		// Init memory barrier descriptor
@@ -777,6 +803,8 @@ public class VulkanIntegrationTest {
 		cb.free();
 	}
 
+	// TODO - factor to out to class + builder? or just a static factory method that returns PointerHandle() { ... }
+	// TODO - replaces texture descriptor?
 	public PointerHandle sampler() {
 		// TODO - replicate texture.descriptor?
 

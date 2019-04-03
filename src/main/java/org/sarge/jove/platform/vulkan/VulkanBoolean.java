@@ -85,7 +85,7 @@ public final class VulkanBoolean {
 
 	/**
 	 * Constructor.
-	 * @param value Native value (0 for <tt>false</tt>, non-zero for <tt>true</tt>).
+	 * @param value Underlying boolean value
 	 */
 	private VulkanBoolean(boolean value) {
 		this.value = value;

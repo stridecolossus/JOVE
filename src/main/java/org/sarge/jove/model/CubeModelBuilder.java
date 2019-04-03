@@ -34,7 +34,7 @@ public class CubeModelBuilder {
 		vertices.addAll(back);
 
 		// Build cube consisting of two triangles per face
-		final Builder<MutableVertex> model = new Builder<>().primitive(Primitive.TRIANGLE);
+		final Builder<MutableVertex> model = new Builder<>().primitive(Primitive.TRIANGLE_LIST);
 		for(int[] face : FACES) {
 			add(vertices, face, 0, model);
 			add(vertices, face, 1, model);

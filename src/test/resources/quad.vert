@@ -7,14 +7,11 @@ layout(binding = 0) uniform View {
 } view;
 
 layout(location = 0) in vec3 pos;
-layout(location = 1) in vec4 col;
-layout(location = 2) in vec2 coords;
+layout(location = 1) in vec2 coords;
 
-layout(location = 0) out vec4 fragColour;
-layout(location = 1) out vec2 fragCoords;
+layout(location = 0) out vec2 fragCoords;
 
 void main() {
     gl_Position = view.projection * view.modelview * vec4(pos, 1.0);
-    fragColour = col;
     fragCoords = coords;
 }
