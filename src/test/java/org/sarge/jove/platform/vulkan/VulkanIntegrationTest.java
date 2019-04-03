@@ -385,7 +385,7 @@ public class VulkanIntegrationTest {
 		System.out.println("Creating pipeline");
 		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), extent);
 		return new Pipeline.Builder(dev, pass)
-			.layout(layout)
+			.layout(layout)			// TODO - return builder
 			.input()
 				.binding(dataLayout)
 				.build()
@@ -532,11 +532,7 @@ public class VulkanIntegrationTest {
 		return uniform;
 	}
 
-
-
 	private void update(VulkanDataBuffer uniform) {
-
-
 		// TODO
 
 //		final Matrix projection = Projection.DEFAULT.matrix(0.01f, 100f, new Dimensions(640, 480));
@@ -636,6 +632,7 @@ public class VulkanIntegrationTest {
 
 	public ImageView texture() throws Exception {
 		// Load texture image
+		System.out.println("loading texture...");
 		final Image image = new DefaultImage.Loader().load(new FileInputStream("src/test/resources/statue.jpg"));
 
 		// Create texture
@@ -648,6 +645,9 @@ public class VulkanIntegrationTest {
 			.format(format)
 			.extents(dim)
 			.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
+			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.build();
 
 //		// Init texture dimensions
@@ -807,6 +807,7 @@ public class VulkanIntegrationTest {
 	// TODO - replaces texture descriptor?
 	public PointerHandle sampler() {
 		// TODO - replicate texture.descriptor?
+		System.out.println("creating sampler");
 
 		final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
 		info.minFilter = VkFilter.VK_FILTER_LINEAR;

@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -91,6 +92,31 @@ public class LogicalDevice extends PointerHandle {
 
 		// Create semaphore
 		return new LogicalDeviceHandle(semaphore.getValue(), LogicalDevice.this, ignored -> lib::vkDestroySemaphore);
+	}
+
+	/**
+	 * Allocates device memory.
+	 * @param reqs		Memory requirements
+	 * @param flags		Flags
+	 * @return Memory handle
+	 * @throws ServiceException if the memory cannot be allocated
+	 */
+	public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
+		// Find memory type
+		final int type = parent.findMemoryType(flags);
+
+		// Init memory descriptor
+		final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
+        info.allocationSize = reqs.size;
+        info.memoryTypeIndex = type;
+
+        // Allocate memory
+        final Vulkan vulkan = parent.vulkan();
+        final PointerByReference mem = vulkan.factory().reference();
+        check(vulkan.library().vkAllocateMemory(super.handle(), info, null, mem));
+
+        // Get memory handle
+        return mem.getValue();
 	}
 
 	@Override

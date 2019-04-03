@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
-import org.sarge.jove.platform.vulkan.PhysicalDevice.MemoryAllocator;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
@@ -59,11 +58,22 @@ public class PhysicalDeviceTest extends AbstractVulkanTest {
 		assertEquals(handle, dev.handle());
 		assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, dev.type());
 		assertNotNull(dev.properties());
-		assertNotNull(dev.allocator());
 		assertNotNull(dev.families());
 		assertNotNull(dev.supported());
 		assertNotNull(dev.families());
 		assertEquals(1, dev.families().size());
+	}
+
+	@Test
+	public void findMemoryType() {
+		assertEquals(0, dev.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT)));
+	}
+
+	@Test
+	public void findMemoryTypeUnsupported() {
+		assertThrows(ServiceException.class, () -> dev.findMemoryType(Set.of()));
+		assertThrows(ServiceException.class, () -> dev.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)));
+		assertThrows(ServiceException.class, () -> dev.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT, VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
 	}
 
 	@Nested
@@ -109,33 +119,6 @@ public class PhysicalDeviceTest extends AbstractVulkanTest {
 			final Surface surface = mock(Surface.class);
 			when(surface.handle()).thenReturn(mock(Pointer.class));
 			family.isPresentationSupported(surface);
-		}
-	}
-
-	@Nested
-	class MemoryAllocatorTests {
-		private MemoryAllocator allocator;
-
-		@BeforeEach
-		public void before() {
-			allocator = dev.allocator();
-		}
-
-		@Test
-		public void findMemoryType() {
-			assertEquals(0, allocator.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT)));
-		}
-
-		@Test
-		public void findMemoryTypeUnsupported() {
-			assertThrows(ServiceException.class, () -> allocator.findMemoryType(Set.of()));
-			assertThrows(ServiceException.class, () -> allocator.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)));
-			assertThrows(ServiceException.class, () -> allocator.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT, VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
-		}
-
-		@Test
-		public void allocate() {
-			// TODO
 		}
 	}
 }

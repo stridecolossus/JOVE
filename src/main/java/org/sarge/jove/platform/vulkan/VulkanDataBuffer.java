@@ -233,7 +233,7 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 			lib.vkGetBufferMemoryRequirements(logical, handle, reqs);
 
 			// Allocate buffer memory
-			final Pointer mem = dev.parent().allocator().allocate(reqs, props);
+			final Pointer mem = dev.allocate(reqs, props);
 
 			// Bind memory
 			check(lib.vkBindBufferMemory(logical, handle, mem, 0L));

@@ -21,7 +21,6 @@ import org.sarge.lib.util.AbstractObject;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>physical device</i> is a Vulkan system component such as a GPU.
@@ -119,49 +118,6 @@ public class PhysicalDevice extends AbstractObject {
 		return devices.stream().map(handle -> PhysicalDevice.create(handle, vulkan)).collect(toList());
 	}
 
-	/**
-	 * Memory allocation helper.
-	 * TODO - only one method => pretty pointless as a separate class, Q - is findMemoryType() used anywhere else?
-	 */
-	public class MemoryAllocator {
-		/**
-		 * Finds a memory type for the given memory properties.
-		 * @param flags Memory properties
-		 * @return Memory type index
-		 * @throws ServiceException if no suitable memory type is available
-		 */
-		int findMemoryType(Set<VkMemoryPropertyFlag> flags) {
-			final int mask = IntegerEnumeration.mask(flags);
-			for(int n = 0; n < mem.memoryTypeCount; ++n) {
-				if(mem.memoryTypes[n].propertyFlags == mask) {
-					return n;
-				}
-			}
-			throw new ServiceException("No memory type available for specified memory properties:" + flags);
-		}
-
-		/**
-		 * Allocates device memory.
-		 * @param reqs		Memory requirements
-		 * @param flags		Flags
-		 * @return Memory handle
-		 * @throws ServiceException if the memory cannot be allocated
-		 */
-		public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
-			// Init memory descriptor
-			final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
-	        info.allocationSize = reqs.size;
-	        info.memoryTypeIndex = findMemoryType(flags);
-
-	        // Allocate memory
-	        final PointerByReference mem = vulkan.factory().reference();
-	        check(vulkan.library().vkAllocateMemory(handle, info, null, mem));
-
-	        // Get memory handle
-	        return mem.getValue();
-		}
-	}
-
 	private final Pointer handle;
 	private final Vulkan vulkan;
 	private final VkPhysicalDeviceProperties props;
@@ -219,10 +175,19 @@ public class PhysicalDevice extends AbstractObject {
 	}
 
 	/**
-	 * @return Memory allocator for this device
+	 * Finds a memory type for the given memory properties.
+	 * @param flags Memory properties
+	 * @return Memory type index
+	 * @throws ServiceException if no suitable memory type is available
 	 */
-	public MemoryAllocator allocator() {
-		return new MemoryAllocator();
+	public int findMemoryType(Set<VkMemoryPropertyFlag> flags) {
+		final int mask = IntegerEnumeration.mask(flags);
+		for(int n = 0; n < mem.memoryTypeCount; ++n) {
+			if(mem.memoryTypes[n].propertyFlags == mask) {
+				return n;
+			}
+		}
+		throw new ServiceException("No memory type available for specified memory properties:" + flags);
 	}
 
 	/**

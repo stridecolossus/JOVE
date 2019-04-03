@@ -323,6 +323,7 @@ public class Pipeline extends LogicalDeviceHandle {
 		 * Builder for a shader stage.
 		 */
 		public class ColourBlendStageBuilder {
+			private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
 			private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
 
 			private VkPipelineColorBlendAttachmentState current;
@@ -351,8 +352,9 @@ public class Pipeline extends LogicalDeviceHandle {
 			 */
 			public Builder build() {
 				assert !attachments.isEmpty();
-				pipeline.pColorBlendState.attachmentCount = attachments.size();
-				pipeline.pColorBlendState.pAttachments = StructureHelper.structures(attachments);
+				info.attachmentCount = attachments.size();
+				info.pAttachments = StructureHelper.structures(attachments);
+				pipeline.pColorBlendState = info;
 				return Builder.this;
 			}
 		}

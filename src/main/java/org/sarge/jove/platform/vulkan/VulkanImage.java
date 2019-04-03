@@ -96,20 +96,20 @@ public class VulkanImage extends LogicalDeviceHandle {
 			Check.range(extents.length, 1, 3);
 
 			// Init width
-			final VkExtent3D ext = new VkExtent3D();
-			ext.width = extents[0];
+			info.extent = new VkExtent3D();
+			info.extent.width = extents[0];
 
 			// Add height for 2D
 			if(extents.length > 1) {
-				ext.height = extents[1];
+				info.extent.height = extents[1];
 			}
 
 			// Add depth for 3D
 			if(extents.length > 2) {
-				ext.depth = extents[2];
+				info.extent.depth = extents[2];
 			}
 			else {
-				ext.depth = 1;
+				info.extent.depth = 1;
 			}
 
 			return this;
@@ -225,7 +225,7 @@ public class VulkanImage extends LogicalDeviceHandle {
 			lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate image memory
-			final Pointer mem = parent.allocator().allocate(reqs, props);
+			final Pointer mem = dev.allocate(reqs, props);
 
 			// Bind image memory
 			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem, 0L));
