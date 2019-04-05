@@ -33,7 +33,7 @@ public class VkSubpassDescription extends VulkanStructure {
 	public int colorAttachmentCount;
 	public Pointer pColorAttachments;
 	public Pointer pResolveAttachments;
-	public Pointer pDepthStencilAttachment;
+	public VkAttachmentReference pDepthStencilAttachment;
 	public int preserveAttachmentCount;
 	public Pointer pPreserveAttachments;
 }

@@ -237,7 +237,7 @@ public interface Vertex extends Bufferable {
 		/**
 		 * @return Texture coordinates
 		 */
-		public TextureCoordinate coordinates() {
+		public TextureCoordinate.Coordinate2D coordinates() {
 			return coords;
 		}
 

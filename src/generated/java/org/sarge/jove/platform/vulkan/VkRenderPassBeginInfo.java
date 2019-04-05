@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.vulkan;
 
-import java.nio.FloatBuffer;
-
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
@@ -31,5 +29,5 @@ public class VkRenderPassBeginInfo extends VulkanStructure {
 	public Pointer framebuffer;
 	public VkRect2D renderArea;
 	public int clearValueCount;
-	public FloatBuffer pClearValues;
+	public VkClearValue pClearValues;
 }

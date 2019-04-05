@@ -21,7 +21,7 @@ public final class Vector extends Tuple {
 	public static final Vector Y_AXIS = new Vector(0, 1, 0);
 
 	/**
-	 * Z-axis vector.
+	 * Z-axis vector (negative Z is <i>into</i> the screen).
 	 */
 	public static final Vector Z_AXIS = new Vector(0, 0, 1);
 

@@ -278,6 +278,14 @@ public class Pipeline extends LogicalDeviceHandle {
 				enable(true);
 				write(true);
 				operation(VkCompareOp.VK_COMPARE_OP_LESS);
+				// TODO
+//				pipeline.pDepthStencilState.depthBoundsTestEnable = VulkanBoolean.FALSE;
+//				pipeline.pDepthStencilState.stencilTestEnable = VulkanBoolean.FALSE;
+//				pipeline.pDepthStencilState.front = new VkStencilOpState();
+//				pipeline.pDepthStencilState.front.failOp = VkStencilOp.VK_STENCIL_OP_REPLACE;
+//				pipeline.pDepthStencilState.back = new VkStencilOpState();
+//				pipeline.pDepthStencilState.minDepthBounds = 0;
+//				pipeline.pDepthStencilState.maxDepthBounds = 1;
 			}
 
 			/**

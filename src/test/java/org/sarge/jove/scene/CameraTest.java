@@ -13,6 +13,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.material.Material;
 import org.sarge.jove.material.Shader;
+import org.sarge.jove.util.MathsUtil;
 
 public class CameraTest {
 	private Camera cam;
@@ -29,23 +30,6 @@ public class CameraTest {
 		assertEquals(Vector.Y_AXIS, cam.up());
 		assertEquals(Vector.X_AXIS, cam.right());
 		assertNotNull(cam.matrix());
-		assertEquals(false, cam.isDirty());
-	}
-
-	@Test
-	public void matrix() {
-		cam.move(new Point(0, 0, -5));
-		cam.point(Vector.X_AXIS);
-		final Matrix matrix = new Matrix.Builder()
-			.identity()
-			.set(0, 0, 0)
-			.set(0, 2, 1)
-			.set(0, 3, 5)
-			.set(2, 0, -1)
-			.set(2, 2, 0)
-			.build();
-		assertEquals(matrix, cam.matrix());
-		assertEquals(false, cam.isDirty());
 	}
 
 	@Test
@@ -54,7 +38,6 @@ public class CameraTest {
 		cam.move(pos);
 		assertEquals(pos, cam.position());
 		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
-		assertEquals(true, cam.isDirty());
 	}
 
 	@Test
@@ -64,23 +47,26 @@ public class CameraTest {
 		cam.move(vec);
 		assertEquals(new Point(vec.scale(2)), cam.position());
 		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
-		assertEquals(true, cam.isDirty());
 	}
 
 	@Test
 	public void moveDistance() {
 		cam.move(3);
-		assertEquals(new Point(0, 0, -3), cam.position());
+		assertEquals(new Point(0, 0, 3), cam.position());
 		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
-		assertEquals(true, cam.isDirty());
 	}
 
 	@Test
-	public void point() {
-		cam.point(Vector.X_AXIS);
+	public void strafe() {
+		cam.strafe(3);
+		assertEquals(new Point(3, 0, 0), cam.position());
+	}
+
+	@Test
+	public void direction() {
+		cam.direction(Vector.X_AXIS);
 		assertEquals(Vector.X_AXIS, cam.direction());
 		assertEquals(Point.ORIGIN, cam.position());
-		assertEquals(true, cam.isDirty());
 	}
 
 	@Test
@@ -88,16 +74,35 @@ public class CameraTest {
 		cam.look(new Point(0, 1, 0));
 		assertEquals(Vector.Y_AXIS, cam.direction());
 		assertEquals(Point.ORIGIN, cam.position());
-		assertEquals(true, cam.isDirty());
 	}
 
 	@Test
 	public void up() {
 		cam.up(Vector.X_AXIS);
-		assertEquals(true, cam.isDirty());
 		cam.matrix();
 		assertEquals(Vector.X_AXIS, cam.up());
 		assertEquals(new Vector(0, -1, 0), cam.right());
+	}
+
+	@Test
+	public void rotate() {
+		cam.rotate(MathsUtil.toRadians(-90), MathsUtil.toRadians(90));
+		assertEquals(new Vector(0, -1, 0), cam.direction());
+	}
+
+	@Test
+	public void matrix() {
+		cam.move(new Point(0, 0, -5));
+		cam.direction(Vector.X_AXIS);
+		final Matrix expected = new Matrix.Builder()
+			.identity()
+			.set(0, 0, 0)
+			.set(0, 2, 1)
+			.set(0, 3, -5)
+			.set(2, 0, -1)
+			.set(2, 2, 0)
+			.build();
+		assertEquals(expected, cam.matrix());
 	}
 
 	@Nested

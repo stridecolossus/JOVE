@@ -36,7 +36,7 @@ import org.sarge.lib.util.AbstractEqualsObject;
  * </ul>
  * @author Sarge
  */
-public interface Event {
+public final class Event extends AbstractEqualsObject {
 	// TODO
 	// https://stackoverflow.com/questions/15313469/java-keyboard-keycodes-list
 
@@ -134,26 +134,6 @@ public interface Event {
 		public static final Descriptor ZOOM = new Descriptor(Event.Category.ZOOM);
 
 		/**
-		 * Default event implementation.
-		 */
-		private class DefaultEvent extends AbstractEqualsObject implements Event {
-			@Override
-			public Descriptor descriptor() {
-				return Descriptor.this;
-			}
-
-			@Override
-			public int x() {
-				return 0;
-			}
-
-			@Override
-			public int y() {
-				return 0;
-			}
-		}
-
-		/**
 		 * Descriptor for a cached button or click event.
 		 */
 		protected static class ButtonDescriptor extends Descriptor {
@@ -175,7 +155,7 @@ public interface Event {
 				this.id = zeroOrMore(id);
 				this.op = notNull(op);
 				this.hash = new HashCodeBuilder().append(cat).append(id).append(op).hashCode();
-				this.event = new DefaultEvent();
+				this.event = new Event(this, 0, 0);
 			}
 
 			@Override
@@ -354,7 +334,7 @@ public interface Event {
 	 * @return Button event
 	 * @throws IllegalArgumentException if the given descriptor is not {@link Category#BUTTON}
 	 */
-	static Event of(Descriptor descriptor) {
+	public static Event of(Descriptor descriptor) {
 		if(descriptor.cat != Category.BUTTON) throw new IllegalArgumentException("Expected button event descriptor: " + descriptor);
 		final ButtonDescriptor button = (ButtonDescriptor) descriptor;
 		return button.event;
@@ -369,34 +349,31 @@ public interface Event {
 	 * @throws IllegalArgumentException if the given descriptor does not have a location
 	 * @see Category#isLocationEvent()
 	 */
-	static Event of(Descriptor descriptor, int x, int y) {
+	public static Event of(Descriptor descriptor, int x, int y) {
 		if(!descriptor.cat.isLocationEvent()) throw new IllegalArgumentException("Invalid location event descriptor: " + descriptor);
+		return new Event(descriptor, x, y);
+	}
 
-		return descriptor.new DefaultEvent() {
-			@Override
-			public int x() {
-				return x;
-			}
+	private final Descriptor descriptor;
 
-			@Override
-			public int y() {
-				return y;
-			}
-		};
+	public final int x, y;
+
+	/**
+	 * Constructor.
+	 * @param descriptor		Event descriptor
+	 * @param x
+	 * @param y
+	 */
+	private Event(Descriptor descriptor, int x, int y) {
+		this.descriptor = notNull(descriptor);
+		this.x = x;
+		this.y = y;
 	}
 
 	/**
 	 * @return Event descriptor
 	 */
-	Descriptor descriptor();
-
-	/**
-	 * @return X coordinate
-	 */
-	int x();
-
-	/**
-	 * @return Y coordinate
-	 */
-	int y();
+	public Descriptor descriptor() {
+		return descriptor;
+	}
 }

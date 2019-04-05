@@ -225,7 +225,6 @@ public final class Matrix implements Transform, Bufferable {
 		}
 
 		// Convert back to point
-		System.out.print(Arrays.toString(result));
 		return new Point(result[0], result[1], result[2]);
 	}
 

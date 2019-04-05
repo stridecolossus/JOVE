@@ -17,11 +17,11 @@ public interface Projection {
 	float height(Dimensions dim);
 
 	/**
-	 * Builds the view matrix for this projection.
+	 * Builds the matrix for this projection.
 	 * @param near		Near plane
 	 * @param far		Far plane
 	 * @param dim		Viewport dimensions
-	 * @return View matrix
+	 * @return Projection matrix
 	 */
 	Matrix matrix(float near, float far, Dimensions dim);
 
@@ -45,19 +45,25 @@ public interface Projection {
 
 			@Override
 			public Matrix matrix(float near, float far, Dimensions dim) {
-//				final float f = 1f / height;
+				final float range = near - far;
 				return new Matrix.Builder()
 					.set(0, 0, 1f / (height * dim.ratio()))
 					.set(1, 1, 1f / height)
-					.set(2, 2, far / (near - far) * 0.5f)
-					.set(2, 3, -1 * 0.5f)
-					.set(3, 2, (near * far) / (near - far))
-					//.set(3, 3, 1)
+					.set(2, 2, far / range)
+					.set(2, 3, (near * far) / range)
+					.set(3, 2, -1)
+//					.set(3, 3, 1)
 					.build();
 			}
 		};
 	}
 
+//	.set(2, 2, far / range * 0.5f)
+//	.set(3, 2, -1)
+//	.set(3, 2, (near * far) / range * 0.5f)
+//	.set(3, 3, 1)
+
+	// https://dovo329.github.io/DeriveOpenGLPerspectiveProjectionMatrix/
 	// https://stackoverflow.com/questions/51318119/what-is-the-role-of-gl-position-w-in-vulkan
 //	.set(0, 0, f / dim.ratio())
 //	.set(1, 1, -f)

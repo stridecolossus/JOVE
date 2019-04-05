@@ -52,9 +52,9 @@ public class Scene {
 	 * @return View frustum
 	 */
 	public Frustum frustum() {
-		if(cam.isDirty()) {
+		// TODO if(cam.isDirty()) {
 			build();
-		}
+		//}
 		return frustum;
 	}
 

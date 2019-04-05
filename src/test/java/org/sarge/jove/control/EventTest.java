@@ -86,8 +86,8 @@ public class EventTest {
 			final Event event = Event.of(Descriptor.MOVE, 1, 2);
 			assertNotNull(event);
 			assertEquals(Descriptor.MOVE, event.descriptor());
-			assertEquals(1, event.x());
-			assertEquals(2, event.y());
+			assertEquals(1, event.x);
+			assertEquals(2, event.y);
 		}
 
 		@Test
@@ -95,8 +95,8 @@ public class EventTest {
 			final Event event = Event.of(Descriptor.ZOOM, 1, 2);
 			assertNotNull(event);
 			assertEquals(Descriptor.ZOOM, event.descriptor());
-			assertEquals(1, event.x());
-			assertEquals(2, event.y());
+			assertEquals(1, event.x);
+			assertEquals(2, event.y);
 		}
 
 		@Test
@@ -105,8 +105,8 @@ public class EventTest {
 			final Event event = Event.of(descriptor);
 			assertNotNull(event);
 			assertEquals(descriptor, event.descriptor());
-			assertEquals(0, event.x());
-			assertEquals(0, event.y());
+			assertEquals(0, event.x);
+			assertEquals(0, event.y);
 		}
 
 		@Test
@@ -115,8 +115,8 @@ public class EventTest {
 			final Event event = Event.of(descriptor, 1, 2);
 			assertNotNull(event);
 			assertEquals(descriptor, event.descriptor());
-			assertEquals(1, event.x());
-			assertEquals(2, event.y());
+			assertEquals(1, event.x);
+			assertEquals(2, event.y);
 		}
 
 		@Test

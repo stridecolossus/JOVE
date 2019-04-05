@@ -6,7 +6,6 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.util.StructureHelper;
@@ -55,8 +54,28 @@ public class RenderPass extends LogicalDeviceHandle {
 		info.renderPass = this.handle();
 		info.framebuffer = fb.handle();
 		info.renderArea = new VkRect2D(extent);
-		info.clearValueCount = clear.length;
-		info.pClearValues = Bufferable.create(clear);
+
+		/////////
+
+		info.clearValueCount = 2; // clear.length;
+
+		final VkClearValue[] array = (VkClearValue[]) new VkClearValue().toArray(2);
+
+		final VkClearValue col = array[0];
+		col.color = new VkClearColorValue();
+		col.color.float32 = new float[]{0.3f, 0.3f, 0.3f, 1};
+
+		final VkClearValue depth = array[1];
+		depth.depthStencil = new VkClearDepthStencilValue();
+		depth.depthStencil.depth = 1f;
+		depth.depthStencil.stencil = 0;
+
+		info.pClearValues = array[0]; //StructureHelper.structures(List.of(col, depth))[0];
+//		info.pClearValues = StructureHelper.structures(Arrays.asList(array));
+
+		//info.pClearValues = Bufferable.create(clear);
+
+		/////////
 
 		// Create command
 		return (lib, ptr) -> lib.vkCmdBeginRenderPass(ptr, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE); // TODO - secondary
@@ -187,6 +206,13 @@ public class RenderPass extends LogicalDeviceHandle {
 				return this;
 			}
 
+			public SubpassBuilder depth(int index) {
+				subpass.pDepthStencilAttachment = new VkAttachmentReference();
+				subpass.pDepthStencilAttachment.attachment = index;
+				subpass.pDepthStencilAttachment.layout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				return this;
+			}
+
 			// TODO - others
 
 			/**
@@ -205,8 +231,6 @@ public class RenderPass extends LogicalDeviceHandle {
 				// Add colour attachments
 				subpass.pColorAttachments = StructureHelper.structures(colour);
 				subpass.colorAttachmentCount = colour.size();
-
-				// TODO - others
 
 				// Add sub-pass
 				subpasses.add(subpass);

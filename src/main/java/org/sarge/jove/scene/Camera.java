@@ -4,6 +4,8 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Quaternion;
+import org.sarge.jove.geometry.Rotation;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.material.BufferPropertyBinder;
 import org.sarge.jove.material.Material;
@@ -17,7 +19,7 @@ import org.sarge.lib.util.AbstractObject;
 public class Camera extends AbstractObject {
 	// Camera state
 	private Point pos = Point.ORIGIN;
-	private Vector dir = Vector.Z_AXIS.invert();
+	private Vector dir = Vector.Z_AXIS;
 
 	// Axes
 	private Vector up = Vector.Y_AXIS;
@@ -62,25 +64,34 @@ public class Camera extends AbstractObject {
 	/**
 	 * Moves the camera by the given distance in the current view direction.
 	 * @param dist Distance to move
+	 * @see #direction()
 	 */
 	public void move(float dist) {
 		move(dir.scale(dist));
-		dirty();
+	}
+
+	/**
+	 * Moves the camera by the given distance in the current right axis.
+	 * @param dist Distance to strafe
+	 * @see #right()
+	 */
+	public void strafe(float dist) {
+		move(right.scale(dist));
 	}
 
 	/**
 	 * @return Camera view direction
 	 */
 	public Vector direction() {
-		return dir;
+		return dir.invert();
 	}
 
 	/**
-	 * Points the camera in the given direction.
-	 * @param dir View direction
+	 * Sets the camera view direction.
+	 * @param dir View direction (assumes normalized)
 	 */
-	public void point(Vector dir) {
-		this.dir = notNull(dir);
+	public void direction(Vector dir) {
+		this.dir = dir.invert(); // notNull(dir);
 		dirty();
 	}
 
@@ -89,10 +100,30 @@ public class Camera extends AbstractObject {
 	 * @param pt Camera point-of-interest
 	 */
 	public void look(Point pt) {
-		this.dir = Vector.of(pos, pt);
-		dirty();
+		direction(Vector.of(pos, pt));
 	}
-	// TODO - could extend camera to have a specific POI, orbit, etc?
+
+	/**
+	 * Rotates the camera.
+	 * @param yaw Horizontal angle
+	 * @param pitch Vertical angle
+	 */
+	public void rotate(float yaw, float pitch) {
+		// TODO - remove rotation
+		final Quaternion qyaw = Quaternion.of(Rotation.of(up, yaw));
+		final Quaternion qpitch = Quaternion.of(Rotation.of(right, pitch));
+		final Quaternion rot = qyaw.multiply(qpitch);
+		// TODO - quaternion and matrix multiply by tuple
+		final Point result = rot.matrix().multiply(new Point(dir));
+		direction(new Vector(result).normalize());
+
+//		final float cos = MathsUtil.cos(pitch);
+//		final float x = MathsUtil.cos(yaw) * cos;
+//		final float y = MathsUtil.sin(pitch);
+//		final float z = MathsUtil.sin(yaw) * cos;
+//		final Vector result = new Vector(x, y, z).normalize();
+//		direction(result);
+	}
 
 	/**
 	 * @return Camera up axis
@@ -115,13 +146,6 @@ public class Camera extends AbstractObject {
 	 */
 	public Vector right() {
 		return right;
-	}
-
-	/**
-	 * @return Whether the camera has been modified
-	 */
-	public boolean isDirty() {
-		return dirty;
 	}
 
 	/**
@@ -177,6 +201,33 @@ public class Camera extends AbstractObject {
 	 * Updates the camera axes and matrix.
 	 */
 	private void update() {
+		// Determine right axis
+		right = up.cross(dir).normalize();
+
+		// Determine up axis
+		final Vector y = dir.cross(right).normalize();
+
+		// Build axes matrix
+		final Matrix look = new Matrix.Builder()
+			.identity()
+			.row(0, right)
+			.row(1, y)
+			.row(2, dir)
+			.build();
+
+		// Build translation matrix
+		final Matrix trans = new Matrix.Builder()
+			.identity()
+			.column(3, new Vector(pos))
+			.build();
+
+		// Build camera view matrix
+		// TODO - combine?
+		matrix = look.multiply(trans);
+	}
+
+	// TODO
+	private void updateOLD() {
 		// Derive camera axes
 		final Vector z = dir.invert();
 		right = up.cross(z).normalize();

@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -24,11 +25,14 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.MutableVertex;
+import org.sarge.jove.obj.ObjectModel;
+import org.sarge.jove.obj.ObjectModel.Group;
+import org.sarge.jove.obj.ObjectModelLoader;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
+import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -40,9 +44,9 @@ import org.sarge.jove.platform.vulkan.FrameState.FrameTracker;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracker;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.scene.Camera;
+import org.sarge.jove.scene.Projection;
 import org.sarge.jove.texture.DefaultImage;
 import org.sarge.jove.texture.Image;
-import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.MathsUtil;
 
@@ -50,6 +54,9 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class VulkanIntegrationTest {
+	private static final Matrix PROJECTION = Projection.DEFAULT.matrix(0.01f, 100f, new Dimensions(640, 480));
+
+	private final Camera cam = new Camera();
 	private Vulkan vulkan;
 	private VulkanLibrary lib;
 	private LogicalDevice dev;
@@ -104,18 +111,22 @@ public class VulkanIntegrationTest {
 		final VulkanShader vert = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/vert.spv").toPath()));
 		final VulkanShader frag = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/frag.spv").toPath()));
 
-		final RenderPass pass = pass(chain.format());
-
 		System.out.println("Creating command pool");
 		pool = Command.Pool.create(dev, graphics);
 
+		System.out.println("Creating depth attachment");
+		final ImageView depth = depth(chain.extent());
+
+		final RenderPass pass = renderPass(chain.format());
+
 		///////////////////
 
-		final Model<?> model = model();
-		final DataBuffer.Layout layout = DataBuffer.Layout.of(model.components());
+		final Model<MutableVertex> model = model();
+		final DataBuffer.Layout layout = DataBuffer.Layout.of(List.of(Vertex.Component.POSITION, Vertex.Component.coordinate(2))); // model.components());
+		System.out.println("model layout="+layout+" vertices="+model.vertices().size());
 
 		final VulkanDataBuffer vbo = vertexBuffer(model, layout);
-		final VulkanDataBuffer indexBuffer = indexBuffer(model);
+		final VulkanDataBuffer indexBuffer = null; // indexBuffer(model);
 
 		///////////////////
 
@@ -158,7 +169,7 @@ public class VulkanIntegrationTest {
 		final FrameBuffer[] frameBuffers = new FrameBuffer[cmds.size()];
 		final VulkanDataBuffer[] uniforms = new VulkanDataBuffer[cmds.size()];
 		for(int n = 0; n < cmds.size(); ++n) {
-			final FrameBuffer fb = frameBuffer(pass, chain.extent(), chain.images().get(n));
+			final FrameBuffer fb = frameBuffer(pass, chain.extent(), chain.images().get(n), depth);
 			frameBuffers[n] = fb;
 
 			final VulkanDataBuffer uniform = uniform();
@@ -177,21 +188,14 @@ public class VulkanIntegrationTest {
 		final WorkQueue queue = dev.queue(present, 0);
 		final FrameTracker tracker = new DefaultFrameTracker(dev, 2, queue);
 
+		System.out.println("Initialising controller");
 		final AtomicBoolean running = new AtomicBoolean(true);
-
-		final Event.Handler hdlr = event -> {
-			if(event.descriptor().id() == 256) {
-				running.set(false);
-			}
-		};
 		final Device<?> input = window.device();
-		input.bind(Event.Category.BUTTON, hdlr);
+		controller(input, running, chain.extent());
 
 		// Start render loop
 		System.out.println("Starting render loop...");
 		while(running.get()) {
-
-
 			//
 			final FrameState frame = tracker.waitReady();
 
@@ -348,7 +352,7 @@ public class VulkanIntegrationTest {
 
 	////////////////////////////////
 
-	private RenderPass pass(VkFormat format) {
+	private RenderPass renderPass(VkFormat format) {
 		System.out.println("Creating render pass");
 		return new RenderPass.Builder(dev)
 			.attachment()
@@ -357,8 +361,15 @@ public class VulkanIntegrationTest {
 				.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
 				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
 				.build()
+			.attachment()
+				.format(VkFormat.VK_FORMAT_D32_SFLOAT)
+				.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
+				.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE)
+				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+				.build()
 			.subpass()
 				.attachment(0)			// TODO - or move this into the attachment builder somehow?
+				.depth(1)
 				.dependency()
 					.sourceStage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 					.destinationStage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
@@ -369,10 +380,11 @@ public class VulkanIntegrationTest {
 			.build();
 	}
 
-	private FrameBuffer frameBuffer(RenderPass pass, Dimensions extent, ImageView view) {
+	private FrameBuffer frameBuffer(RenderPass pass, Dimensions extent, ImageView view, ImageView depth) {
 		return new FrameBuffer.Builder(dev, pass)
 			.extent(extent)
 			.view(view)
+			.view(depth)
 			.build();
 	}
 
@@ -401,6 +413,9 @@ public class VulkanIntegrationTest {
 				.viewport(rect)
 				.scissor(rect)
 				.build()
+			.depthStencil()
+				.operation(VkCompareOp.VK_COMPARE_OP_GREATER)		// TODO - hmmm
+				.build()
 			.build();
 	}
 
@@ -413,8 +428,8 @@ public class VulkanIntegrationTest {
 		final Colour[] clear = {new Colour(0.3f, 0.3f, 0.3f, 1)};
 
 		// TODO - created from VBO?
-		final Command draw = (api, cb) -> api.vkCmdDrawIndexed(cb, 4, 1, 0, 0, 0);
-		//final Command draw = (api, cb) -> api.vkCmdDraw(cb, 3, 1, 0, 0);
+		//final Command draw = (api, cb) -> api.vkCmdDrawIndexed(cb, 4, 1, 0, 0, 0);
+		final Command draw = (api, cb) -> api.vkCmdDraw(cb, 1500000, 1, 0, 0);
 
 		final Command bind = ds.bind(pipeline.layout());
 
@@ -423,7 +438,7 @@ public class VulkanIntegrationTest {
 			.add(pass.begin(fb, extent, clear))
 			.add(pipeline.bind())
 			.add(vbo.bindVertexBuffer())
-			.add(index.bindIndexBuffer())
+//			.add(index.bindIndexBuffer())
 			.add(bind)
 			.add(draw)
 			.add(RenderPass.END_COMMAND)
@@ -432,50 +447,21 @@ public class VulkanIntegrationTest {
 
 	////////////////////////////////
 
-	private Model<MutableVertex> model() {
-		class ColourVertex extends MutableVertex {
-			private final Colour col;
-			//private final TextureCoordinate.Coordinate2D coords;
+	private Model<MutableVertex> model() throws Exception {
+		System.out.println("Loading model...");
 
-			public ColourVertex(Point pos, Colour col, TextureCoordinate.Coordinate2D coords) {
-				super(pos);
-				this.col = col;
-				this.coords = coords;
-			}
+		final ObjectModelLoader loader = new ObjectModelLoader();
+		loader.ignoreUnsupportedCommands();
 
-			@Override
-			public int size() {
-				return Point.SIZE + 2;
-			}
+		final ObjectModel obj = loader.load(new FileReader("./src/test/resources/chalet.obj"));
 
-			@Override
-			public void buffer(FloatBuffer buffer) {
-				pos.buffer(buffer);
-				//col.buffer(buffer);
-				coords.buffer(buffer);
-			}
-		}
-
-		float z = 0;
-
-		return new Model.Builder<>()
-			.primitive(Primitive.TRIANGLE_STRIP)
-//			.component(Vertex.Component.COLOUR)
-			.component(Vertex.Component.coordinate(2))
-//			.add(new ColourVertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1), new TextureCoordinate.Coordinate2D(1, 0)))
-//			.add(new ColourVertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 1, 0, 1), new TextureCoordinate.Coordinate2D(0, 0)))
-//			.add(new ColourVertex(new Point(+0.5f, +0.5f, 0), new Colour(0, 0, 1, 1), new TextureCoordinate.Coordinate2D(0, 1)))
-//			.add(new ColourVertex(new Point(-0.5f, +0.5f, 0), new Colour(1, 1, 1, 1), new TextureCoordinate.Coordinate2D(1, 1)))
-			.add(new ColourVertex(new Point(-0.5f, -0.5f, z), new Colour(1, 0, 0, 1), new TextureCoordinate.Coordinate2D(0, 0)))
-			.add(new ColourVertex(new Point(-0.5f, +0.5f, z), new Colour(0, 1, 0, 1), new TextureCoordinate.Coordinate2D(0, 1)))
-			.add(new ColourVertex(new Point(+0.5f, -0.5f, z), new Colour(0, 0, 1, 1), new TextureCoordinate.Coordinate2D(1, 0)))
-			.add(new ColourVertex(new Point(+0.5f, +0.5f, z), new Colour(1, 1, 1, 1), new TextureCoordinate.Coordinate2D(1, 1)))
-			.build();
+		final Group group = obj.group();
+		return group.build();
 	}
 
 	////////////////////////////////
 
-	private VulkanDataBuffer vertexBuffer(Model<?> model, DataBuffer.Layout layout) {
+	private VulkanDataBuffer vertexBuffer(Model<MutableVertex> model, DataBuffer.Layout layout) {
 		System.out.println("Creating VBO");
 		final long size = model.length() * layout.stride();
 		final VulkanDataBuffer vbo = new VulkanDataBuffer.Builder(dev)
@@ -490,7 +476,11 @@ public class VulkanIntegrationTest {
 		// TODO - Bufferable -> bytes?
 		final ByteBuffer bb = BufferFactory.byteBuffer((int) size);
 		final FloatBuffer fb = bb.asFloatBuffer();
-		model.vertices().forEach(v -> v.buffer(fb));
+		model.vertices().forEach(v -> {
+			v.position().buffer(fb);
+			fb.put(v.coordinates().u);
+			fb.put(-v.coordinates().v);
+		});
 
 		copy(vbo, bb);
 
@@ -529,66 +519,18 @@ public class VulkanIntegrationTest {
 			.length(len)
 			.build();
 
+		update(uniform);
+
 		return uniform;
 	}
 
 	private void update(VulkanDataBuffer uniform) {
-		// TODO
-
-//		final Matrix projection = Projection.DEFAULT.matrix(0.01f, 100f, new Dimensions(640, 480));
-//		System.out.println(projection);
-
-		final float t = (System.currentTimeMillis() % 5000L) / 5000f;
-
-		final Camera cam = new Camera();
-		//cam.point(Vector.Z_AXIS);
-		//cam.move(new Point(0, 0, z));
-//		cam.point(Vector.Z_AXIS);
-//		cam.move(new Point(0, 0, -1.0f));
-//		System.out.println(cam.matrix());
-//		cam.move(new Vector(0, 0, 0.5f));
-//		cam.move(new Point(0, 0, -1.5f));
-
-		final Matrix scale = new Matrix.Builder()
-			.identity()
-			.set(0, 0, t)
-			.set(1, 1, t)
-			.build();
-
-		final Matrix rot = Matrix.rotation(Vector.Z_AXIS, t * MathsUtil.HALF_PI);
-
-//		System.out.println("Writing uniform buffer");
 		final ByteBuffer bb = BufferFactory.byteBuffer((int) uniform.length());
 		final FloatBuffer fb = bb.asFloatBuffer();
-
-		scale.buffer(fb);
-		rot.buffer(fb);
-
-
-//		Matrix.IDENTITY.buffer(fb);
-//		//projection.buffer(fb);
-//		cam.matrix().buffer(fb);
-//		//Matrix.IDENTITY.buffer(fb);
-
+		PROJECTION.buffer(fb);
+		cam.matrix().buffer(fb);
 		uniform.push(bb);
 	}
-
-//	// THIS WORKS BUT NO DEPTH! with projection matrix fiddled with 1
-//	final Camera cam = new Camera();
-//	cam.move(new Vector(0, 0, -2));
-//	final Matrix m = cam.matrix().multiply(projection);
-
-//	// THIS PUTS YELLOW AT FRONT PLANE! without fiddled projection matrix
-//	final Camera cam = new Camera();
-//	cam.move(new Vector(0, 0, 1));
-//	System.out.println("Writing uniform buffer");
-//	final ByteBuffer bb = BufferFactory.byteBuffer(len);
-//	final FloatBuffer fb = bb.asFloatBuffer();
-//	projection.buffer(fb);
-//	cam.matrix().buffer(fb);
-
-// SAME IF point(Vector.Z_AXIS) and (0, 0, -1)
-
 
 	// TODO - factor out to helper, also group + optional fence
 	private void copy(DataBuffer buffer, ByteBuffer data) {
@@ -633,7 +575,7 @@ public class VulkanIntegrationTest {
 	public ImageView texture() throws Exception {
 		// Load texture image
 		System.out.println("loading texture...");
-		final Image image = new DefaultImage.Loader().load(new FileInputStream("src/test/resources/statue.jpg"));
+		final Image image = new DefaultImage.Loader().load(new FileInputStream("src/test/resources/chalet.jpg"));
 
 		// Create texture
 		//
@@ -650,53 +592,6 @@ public class VulkanIntegrationTest {
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.build();
 
-//		// Init texture dimensions
-//		final Dimensions dim = image.header().size();
-//		final VkExtent3D extent = new VkExtent3D();
-//		extent.width = dim.width;
-//		extent.height = dim.height;
-//		extent.depth = 1;
-//
-//		// Init texture descriptor
-//		final VkImageCreateInfo info = new VkImageCreateInfo();
-//		info.imageType = VkImageType.VK_IMAGE_TYPE_2D;
-//		info.extent = extent;
-//		info.mipLevels = 1;
-//		info.arrayLayers = 1;
-//		info.samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
-//		info.format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build();
-//		info.tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL;
-//		info.initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
-//		info.usage = IntegerEnumeration.mask(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT, VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT);
-//		info.sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
-//
-//		// Allocate texture
-//		final PointerByReference handle = vulkan.factory().reference();
-//		check(lib.vkCreateImage(dev.handle(), info, null, handle));
-//
-//		// Allocate texture memory
-//		//
-//
-//		// Allocate texture memory
-//		final VkMemoryRequirements reqs = new VkMemoryRequirements();
-//		lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
-//
-//		// Determine memory type
-//		// TODO - factor our common code from here and VulkanDataBuffer -> helper, how to handle props?
-//		final Set<VkMemoryPropertyFlag> props = new StrictSet<>();
-//		props.add(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-//		final int type = dev.parent().allocator().findMemoryType(props);
-//
-//		// Allocate texture memory
-//		final PointerByReference mem = vulkan.factory().reference();
-//		final VkMemoryAllocateInfo alloc = new VkMemoryAllocateInfo();
-//		alloc.allocationSize = reqs.size;
-//		alloc.memoryTypeIndex = type;
-//		check(lib.vkAllocateMemory(dev.handle(), alloc, null, mem));
-//
-//		// Bind memory
-//		check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.getValue(), 0L));
-
 		// Copy image data to staging buffer
 		//
 		final long len = dim.width * dim.height * 4; // TODO - from image format
@@ -705,7 +600,7 @@ public class VulkanIntegrationTest {
 
 		// Transition to destination
 		//
-		transition(texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+		transition(texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0);
 
 		// Copy buffer to image
 		//
@@ -739,7 +634,7 @@ public class VulkanIntegrationTest {
 
 		// Transition to final
 		//
-		transition(texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+		transition(texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 
 		// Release staging buffer
 		//
@@ -759,7 +654,7 @@ public class VulkanIntegrationTest {
 	 *
 	 */
 
-	private void transition(Pointer image, VkImageLayout prev, VkImageLayout next, boolean first) {		// TODO - bodge
+	private void transition(Pointer image, VkImageLayout prev, VkImageLayout next, int type) {		// TODO - bodge
 		// Init memory barrier descriptor
 		final VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
 		barrier.oldLayout = notNull(prev);
@@ -770,7 +665,6 @@ public class VulkanIntegrationTest {
 
 		// Init range
 		barrier.subresourceRange = new VkImageSubresourceRange();
-		barrier.subresourceRange.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
@@ -778,17 +672,33 @@ public class VulkanIntegrationTest {
 
 		// Init access flags
 		VkPipelineStageFlag src, dest;
-		if(first) {
+		switch(type) {
+		case 0:
+			barrier.subresourceRange.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
 			barrier.srcAccessMask = 0;
 			barrier.dstAccessMask = VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT.value();
 			src = VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT;
-		}
-		else {
+			break;
+
+		case 1:
+			barrier.subresourceRange.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
 			barrier.srcAccessMask = VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT.value();
 			barrier.dstAccessMask = VkAccessFlag.VK_ACCESS_SHADER_READ_BIT.value();
 			src = VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			break;
+
+		case 2:
+			barrier.subresourceRange.aspectMask = IntegerEnumeration.mask(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT); // , VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT);
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = IntegerEnumeration.mask(Set.of(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT, VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT));
+			src = VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+			break;
+
+		default:
+			throw new RuntimeException();
 		}
 
 		// Apply barrier
@@ -838,4 +748,119 @@ public class VulkanIntegrationTest {
 	}
 
 	///////////////////////
+
+	public ImageView depth(Dimensions dim) {
+		final VulkanImage depth = new VulkanImage.Builder(dev)
+			.extents(dim)
+			.format(VkFormat.VK_FORMAT_D32_SFLOAT)
+			.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
+			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			.build();
+
+		// TODO - sub-builder
+		final VkImageSubresourceRange range = new VkImageSubresourceRange();
+			range.aspectMask = IntegerEnumeration.mask(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT); // , VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT);
+			range.baseMipLevel = 0;
+			range.levelCount = 1;
+			range.baseArrayLayer = 0;
+			range.layerCount = 1;
+
+		final ImageView view = new ImageView.Builder(dev, depth)
+			.range(range)
+			.build();
+
+		transition(depth.handle(), VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 2);
+
+		return view;
+	}
+
+	//////////////////////////
+
+	private static final float STEP = 0.1f;
+	private static final float ANGLE = MathsUtil.HALF_PI;
+//	private static final float INVERSE_PI = 1f / MathsUtil.PI;
+	private static final float SENSITIVITY = 0.05f;
+
+	private void controller(Device<?> input, AtomicBoolean running, Dimensions dim) {
+		final Event.Handler key = event -> {
+			switch(event.descriptor().id()) {
+			case 256:
+				running.set(false);
+				break;
+
+			case 265:
+				// forward
+				cam.move(+STEP);
+				break;
+
+			case 264:
+				// back
+				cam.move(-STEP);
+				break;
+
+			case 263:
+				// left
+				cam.strafe(-STEP);
+				break;
+
+			case 262:
+				// right
+				cam.strafe(+STEP);
+				break;
+
+			case 266:
+				// up
+				cam.move(new Vector(0, -STEP, 0));
+				break;
+
+			case 267:
+				// down
+				cam.move(new Vector(0, +STEP, 0));
+				break;
+
+			case 268:
+				// home - reset to original state
+				cam.move(new Point(0, 0, -2));
+				cam.direction(Vector.Z_AXIS.invert());
+				break;
+
+			default:
+				System.out.println(event.descriptor().id());
+				break;
+			}
+			System.out.println(cam.matrix());
+		};
+		input.bind(Event.Category.BUTTON, key);
+
+		final Event.Handler mouse = event -> {
+			//System.out.println(event);
+			final float yaw = event.x / (float) dim.width * ANGLE * SENSITIVITY;
+			final float pitch = event.y / (float) dim.height * ANGLE * SENSITIVITY;
+			cam.rotate(yaw, pitch);
+			System.out.println(cam.matrix());
+		};
+//		input.bind(Event.Category.MOVE, mouse);
+
+		final Event.Handler mouse2 = new Event.Handler() {
+			private int prev;
+			//private boolean first = true;
+
+			@Override
+			public void handle(Event event) {
+				final int dx = event.x - prev;
+				if(dx > 0) {
+					final float yaw = dx  / (float) dim.width * 1f * MathsUtil.HALF_PI;
+					//event.x() / (float) dim.width * ANGLE * SENSITIVITY;
+					prev = event.x;
+					cam.rotate(yaw, 0);
+				}
+			}
+		};
+		input.bind(Event.Category.MOVE, mouse2);
+
+		cam.move(-2);
+		System.out.println(cam.direction());
+		System.out.println(cam.matrix());
+	}
 }
