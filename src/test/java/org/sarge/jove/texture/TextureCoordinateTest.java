@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.sarge.jove.util.TestHelper.assertFloatArrayEquals;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.texture.TextureCoordinate.Coordinate1D;
 import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
@@ -61,5 +63,14 @@ public class TextureCoordinateTest {
 	public void arrayInvalidLength() {
 		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.of(new float[]{}));
 		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.of(new float[]{1, 2, 3, 4}));
+	}
+
+	@Test
+	public void quad() {
+		assertEquals(new Coordinate2D(0, 1), Coordinate2D.TOP_LEFT);
+		assertEquals(new Coordinate2D(0, 0), Coordinate2D.BOTTOM_LEFT);
+		assertEquals(new Coordinate2D(1, 1), Coordinate2D.TOP_RIGHT);
+		assertEquals(new Coordinate2D(1, 0), Coordinate2D.BOTTOM_RIGHT);
+		assertEquals(List.of(Coordinate2D.TOP_LEFT, Coordinate2D.BOTTOM_LEFT, Coordinate2D.TOP_RIGHT, Coordinate2D.BOTTOM_RIGHT), Coordinate2D.QUAD);
 	}
 }

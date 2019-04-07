@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Tuple;
@@ -17,30 +18,44 @@ import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
  * @author Sarge
  */
 public final class Quad {
-	private static final float[][] VERTICES = {{0, 1}, {0, 0}, {1, 1}, {1, 0}};
+	private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2D[]::new);
 
-	private final List<Vertex> vertices;
+	private static final int[] TRIANGLES = {
+		0, 1, 2,
+		2, 1, 3
+	};
+
+	private final List<MutableVertex> vertices;
 
 	/**
 	 * Constructor.
 	 * @param vertices Quad vertices
 	 */
-	private Quad(Vertex[] vertices) {
+	public Quad(MutableVertex[] vertices) {
 		this.vertices = Arrays.asList(vertices);
 	}
 
 	/**
-	 * @return Quad vertices in clockwise order
+	 * @return Quad vertices
 	 */
-	public List<Vertex> vertices() {
+	public List<MutableVertex> vertices() {
 		return vertices;
 	}
 
 	/**
-	 * Builder for a quad in the XZ plane.
+	 * Creates the two counter-clockwise triangles comprising this quad.
+	 * @return Quad triangle vertices
+	 */
+	public Stream<MutableVertex> triangles() {
+		return Arrays.stream(TRIANGLES).mapToObj(vertices::get);
+	}
+
+	/**
+	 * Builder for a quad in the XY plane.
 	 */
 	public static class Builder {
 		private float size = 1;
+		private float depth = 0;
 		private Tuple.Swizzle swizzle = Swizzle.NONE;
 		private boolean reverse;
 
@@ -54,6 +69,15 @@ public final class Quad {
 		}
 
 		/**
+		 * Sets the depth (or Z coordinate) of this quad.
+		 * @param depth Depth
+		 */
+		public Builder depth(float depth) {
+			this.depth = depth;
+			return this;
+		}
+
+		/**
 		 * Applies the given swizzle to the quad vertices.
 		 * @param swizzle Swizzle
 		 */
@@ -63,10 +87,10 @@ public final class Quad {
 		}
 
 		/**
-		 * Creates a reverse quad, i.e. back-to-front.
+		 * Builds a reverse facing quad.
 		 */
 		public Builder reverse() {
-			reverse = true;
+			this.reverse = true;
 			return this;
 		}
 
@@ -75,26 +99,26 @@ public final class Quad {
 		 * @return New quad
 		 */
 		public Quad build() {
-			// Build quad corner vertices
-			final Vertex[] vertices = new Vertex[VERTICES.length];
-			for(int n = 0; n < vertices.length; ++n) {
-				// Calculate vertex coordinates
-				final float x = size * (VERTICES[n][0] * 2 - 1);
-				final float z = size * (VERTICES[n][1] * 2 - 1);
+			// Build quad vertices
+			final MutableVertex[] vertices = new MutableVertex[QUAD.length];
+			for(int n = 0; n < QUAD.length; ++n) {
+				// Create vertex coordinates
+				final Coordinate2D coords = QUAD[n];
+				final float x = size * (coords.u * 2 - 1);
+				final float y = size * (coords.v * 2 - 1);
 
 				// Create vertex position
-				final float dx = reverse ? -x : +x;
-				final Tuple pos = swizzle.apply(new Point(dx, 0, z));
+				final float dx = reverse ? -x : x;
+				final Tuple pos = swizzle.apply(new Point(dx, -y, depth));
 
 				// Determine normal
-				final Vector normal = reverse ? Vector.Z_AXIS : Vector.Z_AXIS.invert();
+				final Tuple normal = swizzle.apply(Vector.Z_AXIS.invert());
 
 				// Create vertex
-				// TODO - need to reverse coords?
 				final MutableVertex vertex = new MutableVertex();
 				vertex.position(new Point(pos));
-				vertex.normal(normal);
-				vertex.coordinates(new Coordinate2D(VERTICES[n][0], VERTICES[n][1])); // TODO - array ctor
+				vertex.normal(new Vector(normal));
+				vertex.coordinates(coords);
 				vertices[n] = vertex;
 			}
 

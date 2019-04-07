@@ -2,6 +2,7 @@ package org.sarge.jove.texture;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
+import java.util.List;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
@@ -93,27 +94,18 @@ public interface TextureCoordinate extends Bufferable {
 		public static final int SIZE = 2;
 
 		/**
-		 * Texture coordinates for a quad.
+		 * Quad coordinates.
 		 */
-		public enum Corner {
-			BOTTOM_LEFT(0, 0),
-			TOP_LEFT(0, 1),
-			TOP_RIGHT(1, 1),
-			BOTTOM_RIGHT(1, 0);
+		public static final Coordinate2D
+			TOP_LEFT		= new Coordinate2D(0, 1),
+			BOTTOM_LEFT 	= new Coordinate2D(0, 0),
+			TOP_RIGHT 		= new Coordinate2D(1, 1),
+			BOTTOM_RIGHT 	= new Coordinate2D(1, 0);
 
-			private final Coordinate2D coords;
-
-			private Corner(float u, float v) {
-				coords = new Coordinate2D(u, v);
-			}
-
-			/**
-			 * @return Texture coordinates of this corner
-			 */
-			public Coordinate2D coordinates() {
-				return coords;
-			}
-		}
+		/**
+		 * List of quad coordinates.
+		 */
+		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
 
 		public final float v;
 

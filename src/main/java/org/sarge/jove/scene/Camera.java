@@ -67,7 +67,7 @@ public class Camera extends AbstractObject {
 	 * @see #direction()
 	 */
 	public void move(float dist) {
-		move(dir.scale(dist));
+		move(dir.scale(-dist));
 	}
 
 	/**
@@ -91,7 +91,7 @@ public class Camera extends AbstractObject {
 	 * @param dir View direction (assumes normalized)
 	 */
 	public void direction(Vector dir) {
-		this.dir = dir.invert(); // notNull(dir);
+		this.dir = dir.invert();
 		dirty();
 	}
 
@@ -100,7 +100,8 @@ public class Camera extends AbstractObject {
 	 * @param pt Camera point-of-interest
 	 */
 	public void look(Point pt) {
-		direction(Vector.of(pos, pt));
+		final Vector vec = Vector.of(pos, pt).normalize();
+		direction(vec);
 	}
 
 	/**
@@ -207,42 +208,14 @@ public class Camera extends AbstractObject {
 		// Determine up axis
 		final Vector y = dir.cross(right).normalize();
 
-		// Build axes matrix
-		final Matrix look = new Matrix.Builder()
-			.identity()
-			.row(0, right)
-			.row(1, y)
-			.row(2, dir)
-			.build();
-
-		// Build translation matrix
-		final Matrix trans = new Matrix.Builder()
-			.identity()
-			.column(3, new Vector(pos))
-			.build();
-
-		// Build camera view matrix
-		// TODO - combine?
-		matrix = look.multiply(trans);
-	}
-
-	// TODO
-	private void updateOLD() {
-		// Derive camera axes
-		final Vector z = dir.invert();
-		right = up.cross(z).normalize();
-		final Vector y = z.cross(right).normalize();
-
-		// Calculate camera translation
-		final Vector trans = new Vector(right.dot(pos),	y.dot(pos),	z.dot(pos));
-
-		// Construct camera matrix
+		// Build camera matrix
 		matrix = new Matrix.Builder()
 			.identity()
 			.row(0, right)
 			.row(1, y)
-			.row(2, z)
-			.column(3, trans.invert())
+			.row(2, dir)
+			.column(3, new Vector(pos).invert())
 			.build();
 	}
+	// https://github.com/fynnfluegge/oreon-engine/blob/master/oreonengine/oe-core/src/main/java/org/oreon/core/scenegraph/Camera.java
 }

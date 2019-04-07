@@ -36,11 +36,11 @@ public class Tuple implements Bufferable {
 		@Override
 		public Tuple apply(Tuple t) {
 			switch(this) {
-			case NONE:	return t;
-			case XY: 	return new Tuple(t.y, t.x, t.z);
-			case XZ: 	return new Tuple(t.z, t.y, t.x);
-			case YZ: 	return new Tuple(t.x, t.z, t.y);
-			default: 	throw new RuntimeException();
+			case NONE:		return t;
+			case XY: 		return new Tuple(t.y, t.x, t.z);
+			case XZ: 		return new Tuple(t.z, t.y, t.x);
+			case YZ: 		return new Tuple(t.x, t.z, t.y);
+			default: 		throw new RuntimeException();
 			}
 		}
 	}

@@ -194,7 +194,7 @@ public interface Vertex extends Bufferable {
 
 		protected Point pos;
 		protected Vector normal = EMPTY;
-		protected TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.Corner.BOTTOM_LEFT.coordinates();
+		protected TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.BOTTOM_LEFT;
 
 		/**
 		 * Default constructor.

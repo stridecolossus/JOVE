@@ -2,13 +2,19 @@ package org.sarge.jove.texture;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Hashtable;
 
 import javax.imageio.ImageIO;
 
@@ -19,7 +25,7 @@ import org.sarge.jove.util.BufferFactory;
 /**
  * Default image implemented using AWT.
  * @author Sarge
- * TODO - Windows/AWT only
+ * TODO - Windows/AWT only, no point in base interface
  */
 public class DefaultImage implements Image {
 	private final Header header;
@@ -29,22 +35,22 @@ public class DefaultImage implements Image {
 	 * Constructor.
 	 * @param image Image
 	 */
-	public DefaultImage(BufferedImage image) {
-		final Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
-		final Format format = map(image.getColorModel());
-		this.header = new Header(format, size);
+	public DefaultImage(Header header, BufferedImage image) {
+//		final Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
+//		final Format format = map(image.getColorModel());
+		this.header = notNull(header); // new Header(format, size);
 		this.image = notNull(image);
 	}
 
-	/**
-	 * Constructor.
-	 * @param header	Image header
-	 * @param image		Image
-	 */
-	private DefaultImage(Header header, BufferedImage image) {
-		this.header = notNull(header);
-		this.image = notNull(image);
-	}
+//	/**
+//	 * Constructor.
+//	 * @param header	Image header
+//	 * @param image		Image
+//	 */
+//	private DefaultImage(Header header, BufferedImage image) {
+//		this.header = notNull(header);
+//		this.image = notNull(image);
+//	}
 
 	/**
 	 * Maps the given colour model to the image format.
@@ -82,58 +88,66 @@ public class DefaultImage implements Image {
 
 	@Override
 	public ByteBuffer buffer() {
-		// TODO - helper?
-		// TODO - do all image types automatically do this or do we need to convert first?
 		final DataBufferByte data = (DataBufferByte) image.getRaster().getDataBuffer();
-
-		// Convert ABGR to RGBA
-		// TODO - this sucks? is probably hopelessly inefficient? only works for ABGR images?
 		final byte[] bytes = data.getData();
-		final byte[] rgba = new byte[bytes.length];
-		for(int n = 0; n < rgba.length; n += 4) {
-			rgba[n] = bytes[n + 3];
-			rgba[n + 1] = bytes[n + 2];
-			rgba[n + 2] = bytes[n + 1];
-			rgba[n + 3] = bytes[n];
-		}
-
-		// Buffer
-		final ByteBuffer buffer = BufferFactory.byteBuffer(rgba.length);
-		buffer.put(rgba);
+		final ByteBuffer buffer = BufferFactory.byteBuffer(bytes.length);
+		buffer.put(bytes);
 		buffer.flip();
 		return buffer;
+
+//		// TODO - helper?
+//		// TODO - do all image types automatically do this or do we need to convert first?
+//		final DataBufferByte data = (DataBufferByte) image.getRaster().getDataBuffer();
+//
+//		// Convert ABGR to RGBA
+//		// TODO - this sucks? is probably hopelessly inefficient? only works for ABGR images?
+//		final byte[] bytes = data.getData();
+//		final byte[] rgba = new byte[bytes.length];
+//		for(int n = 0; n < rgba.length; n += 4) {
+//			rgba[n] = bytes[n + 3];
+//			rgba[n + 1] = bytes[n + 2];
+//			rgba[n + 2] = bytes[n + 1];
+//			rgba[n + 3] = bytes[n];
+//		}
+//
+//		// Buffer
+//		final ByteBuffer buffer = BufferFactory.byteBuffer(rgba.length);
+//		buffer.put(rgba);
+//		buffer.flip();
+//		return buffer;
 	}
 
 	@Override
 	public Image convert(Header header) {
-		final Dimensions size = header.size();
-		return convert(header, size.width(), size.height());
+		throw new UnsupportedOperationException();
+//		final Dimensions size = header.size();
+//		return convert(header, size.width(), size.height());
 	}
 
-	public Image convert(Header descriptor, int w, int h) {
-		// Create target image
-		final int type = map(descriptor.format());
-		final Dimensions size = descriptor.size();
-		final BufferedImage result = new BufferedImage(size.width(), size.height(), type);
-
-		// Draw image to target
-		final Graphics g = result.getGraphics();
-		g.drawImage(image, 0, 0, size.width(), size.height(), 0, 0, w, h, null);
-		g.dispose();
-
-		// Create new image wrapper
-		return new DefaultImage(descriptor, result);
-	}
-
-	private static int map(Format format) {
-		switch(format) {
-		case RGB:			return BufferedImage.TYPE_3BYTE_BGR;
-		case RGBA:			return BufferedImage.TYPE_4BYTE_ABGR;
-		case GRAY_SCALE:	return BufferedImage.TYPE_BYTE_GRAY;
-		default:			throw new RuntimeException();
-		}
-	}
-
+//	public Image convert(Header descriptor, int w, int h) {
+//		// Create target image
+//		final int type = map(descriptor.format());
+//		final Dimensions size = descriptor.size();
+//		final BufferedImage result = new BufferedImage(size.width(), size.height(), type);
+//
+//		// Draw image to target
+//		final Graphics g = result.getGraphics();
+//		g.drawImage(image, 0, 0, size.width(), size.height(), 0, 0, w, h, null);
+//		g.dispose();
+//
+//		// Create new image wrapper
+//		return new DefaultImage(descriptor, result);
+//	}
+//
+//	private static int map(Format format) {
+//		switch(format) {
+//		case RGB:			return BufferedImage.TYPE_3BYTE_BGR;
+//		case RGBA:			return BufferedImage.TYPE_4BYTE_ABGR;
+//		case GRAY_SCALE:	return BufferedImage.TYPE_BYTE_GRAY;
+//		default:			throw new RuntimeException();
+//		}
+//	}
+//
 //	BufferedImage createFloatBufferedImage(int w, int h, int bands) {
 //	    // Define dimensions and layout of the image
 //	    //int bands = 4; // 4 bands for ARGB, 3 for RGB etc
@@ -162,20 +176,37 @@ public class DefaultImage implements Image {
 		return ToStringBuilder.reflectionToString(this);
 	}
 
+	private static final ColorModel TRANSLUCENT = createColourModel(true);
+	private static final ColorModel OPAQUE = createColourModel(false);
+
+	/**
+	 * Creates OpenGL format colour models.
+	 */
+	private static ColorModel createColourModel(boolean alpha) {
+		return new ComponentColorModel(
+			ColorSpace.getInstance(ColorSpace.CS_sRGB),
+			new int[]{8, 8, 8, alpha ? 8 : 0},
+			alpha,
+			false,
+			alpha ? ComponentColorModel.TRANSLUCENT : ComponentColorModel.OPAQUE,
+			DataBuffer.TYPE_BYTE);
+	}
+
 	/**
 	 * Loader for a default image.
 	 * @see ImageIO
 	 * TODO - this should be a platform-specific service
 	 */
 	public static class Loader {
-		private boolean flip;
+		private boolean flip; // = true;
 
 		/**
 		 * Sets whether to flip images in the Y direction.
 		 * @param flip Whether to flip
 		 */
-		public void flip(boolean flip) {
+		public Loader flip(boolean flip) {
 			this.flip = flip;
+			return this;
 		}
 
 		/**
@@ -186,23 +217,33 @@ public class DefaultImage implements Image {
 		 */
 		public Image load(InputStream in) throws IOException {
 			// Load image
-			/*final*/ Image image = new DefaultImage(ImageIO.read(in));
+			final BufferedImage image = ImageIO.read(in);
 
-			// TODO - add alpha channel
-			if(image.header().format() == Format.RGB) {
-				image = image.convert(new Image.Header(Format.RGBA, image.header().size()));
-			}
+//			// Select colour model
+//			final boolean alpha = image.getColorModel().hasAlpha();
+//			final ColorModel model = alpha ? TRANSLUCENT : OPAQUE;
 
-			// Flip as required
+			// TODO - only need to do this is image does not already have alpha?
+
+			// Create ARGB image
+			final Dimensions dim = new Dimensions(image.getWidth(), image.getHeight());
+			final WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, dim.width, dim.height, 4, null);
+			final BufferedImage texture = new BufferedImage(TRANSLUCENT, raster, false, new Hashtable<>());
+
+			// Draw image
+			final Graphics2D g = texture.createGraphics();
 			if(flip) {
-				// TODO - messy
-				final Dimensions size = image.header().size();
-				final Image.Header flipped = new Image.Header(image.header().format(), new Dimensions(size.height, size.width));
-				return image.convert(flipped);
+				g.drawImage(image, 0, 0, dim.width, dim.height, 0, dim.height, dim.width, 0, null);
 			}
 			else {
-				return image;
+				g.drawImage(image, 0, 0, null);
 			}
+			g.dispose();
+
+			// Create Vulkan image
+			final Format format = map(TRANSLUCENT);
+			final Header header = new Header(format, dim);
+			return new DefaultImage(header, texture);
 		}
 	}
 }

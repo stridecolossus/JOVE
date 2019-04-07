@@ -14,7 +14,7 @@ A descriptor is retrieved using `Event.Descriptor.of()` and an event is instanti
 
 The following code illustrates a fictitious input device handler for a mouse movement event:
 
-```
+```java
 void mousemove(int x, int y) {
 	final Event event = Event.of(Event.Descriptor.MOVE, x, y);
 	...
@@ -25,7 +25,7 @@ Note that the descriptor in this case is the `Event.Descriptor.MOVE` constant si
 
 This code illustrates a keyboard event:
 
-```
+```java
 void key(int key, int action, int mods) {
 	final Event.Operation op = ...
 	final Event.Descriptor descriptor = Event.Descriptor.of(Event.Category.BUTTON, key, op);

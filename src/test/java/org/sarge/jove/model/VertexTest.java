@@ -79,7 +79,7 @@ public class VertexTest {
 		public void constructor() {
 			assertEquals(Point.ORIGIN, vertex.position());
 			assertEquals(new Vector(0, 0, 0), vertex.normal());
-			assertEquals(Coordinate2D.Corner.BOTTOM_LEFT.coordinates(), vertex.coordinates());
+			assertEquals(Coordinate2D.BOTTOM_LEFT, vertex.coordinates());
 		}
 
 		@Test
@@ -104,8 +104,8 @@ public class VertexTest {
 
 		@Test
 		public void buffer() {
-			final FloatBuffer buffer = FloatBuffer.allocate(3 + 3 + 2);
 			final FloatBuffer expected = FloatBuffer.allocate(3 + 3 + 2);
+			final FloatBuffer buffer = FloatBuffer.allocate(3 + 3 + 2);
 			vertex.buffer(buffer);
 			buffer.flip();
 			assertEquals(expected, buffer);

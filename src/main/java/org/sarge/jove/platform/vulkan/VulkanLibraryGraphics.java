@@ -291,6 +291,8 @@ interface VulkanLibraryRenderPass {
 	 * @param firstInstance			First instance
 	 */
 	void vkCmdDrawIndexed(Pointer commandBuffer, int indexCount, int instanceCount, int firstIndex, int vertexOffset, int firstInstance);
+
+	void vkCmdClearDepthStencilImage(Pointer commandBuffer, Pointer image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
 }
 
 /**

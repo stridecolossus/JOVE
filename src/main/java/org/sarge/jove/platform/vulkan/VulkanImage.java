@@ -147,6 +147,7 @@ public class VulkanImage extends LogicalDeviceHandle {
 		 */
 		public Builder format(VkFormat format) {
 			info.format = notNull(format);
+			// TODO - check format supported by device
 			return this;
 		}
 
@@ -212,6 +213,7 @@ public class VulkanImage extends LogicalDeviceHandle {
 			// Validate
 			if(info.extent == null) throw new IllegalArgumentException("Image extents not specified");
 			if(info.format == null) throw new IllegalArgumentException("Image format not specified");
+			// TODO - check format supported by device
 
 			// Allocate image
 			final PhysicalDevice parent = dev.parent();

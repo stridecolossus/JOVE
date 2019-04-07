@@ -12,12 +12,19 @@ import com.sun.jna.ptr.PointerByReference;
  * TODO - no destroy for swap-chain images
  */
 public class ImageView extends LogicalDeviceHandle {
+	private final VulkanImage image;
+
 	/**
 	 * Constructor.
 	 * @param handle Image view handle
 	 */
-	ImageView(Pointer handle, LogicalDevice dev) {
+	ImageView(Pointer handle, LogicalDevice dev, VulkanImage image) {
 		super(handle, dev, lib -> lib::vkDestroyImageView);
+		this.image = notNull(image);
+	}
+
+	public VulkanImage image() {
+		return image;
 	}
 
 	/**
@@ -117,7 +124,7 @@ public class ImageView extends LogicalDeviceHandle {
 			check(lib.vkCreateImageView(dev.handle(), info, null, view));
 
 			// Create image view
-			return new ImageView(view.getValue(), dev);
+			return new ImageView(view.getValue(), dev, image);
 		}
 	}
 }

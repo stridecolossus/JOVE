@@ -11,10 +11,7 @@ import java.nio.FloatBuffer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix.Builder;
-import org.sarge.jove.scene.Camera;
-import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.MathsUtil;
 
 public class MatrixTest {
@@ -77,7 +74,7 @@ public class MatrixTest {
 		assertEquals(matrix, identity.multiply(matrix));
 	}
 
-	//@Test
+	@Test
 	public void multiplyPoint() {
 		matrix = new Matrix.Builder()
 			.identity()
@@ -89,49 +86,10 @@ public class MatrixTest {
 		assertEquals(new Point((1 * 1) + (2 * 2) + (3 * 3) + (1 * 4), 2, 3), matrix.multiply(pos));
 	}
 
-	//@Test
+	@Test
 	public void multiplyIdentityPoint() {
 		final Point pos = new Point(1, 2, 3);
 		assertEquals(pos, Matrix.IDENTITY.multiply(pos));
-	}
-
-	// TODO - REMOVE
-	// https://github.com/JOML-CI/JOML/blob/master/src/org/joml/Matrix4f.java
-	// private Matrix4f perspectiveGeneric(float fovy, float aspect, float zNear, float zFar, boolean zZeroToOne, Matrix4f dest) {
-	@Test
-	public void test() {
-		//final Matrix projection = Projection.DEFAULT.matrix(0.01f, 100f, new Dimensions(640, 480));
-		final Matrix projection = Projection.perspective(MathsUtil.toRadians(60)).matrix(0.1f, 256f, new Dimensions(1280, 720));
-		System.out.println(projection);
-
-		final Camera cam = new Camera();
-		cam.move(new Point(0, 0, -1));
-		System.out.println(cam.matrix());
-
-		//final Matrix pmv = projection.multiply(cam.matrix());
-		//final Matrix pmv = cam.matrix().multiply(projection);
-		//System.out.println(pmv);
-		//System.out.println(cam.matrix().multiply(projection));
-
-//		final Matrix pmv = new Matrix.Builder()
-//			.identity()
-//			.set(3, 2, -1f / 2)
-//			.build();
-
-		final float z = 0.25f;
-		final Point[] pts = new Point[] {
-			new Point(-0.5f, -0.5f, z),
-			new Point(-0.5f, +0.5f, z),
-			new Point(+0.5f, -0.5f, z),
-			new Point(+0.5f, +0.5f, z),
-		};
-		for(int n = 0; n < pts.length; ++n) {
-			final Point result = cam.matrix().multiply(pts[n]);
-			projection.multiply(result);
-//			final Point result = projection.multiply(pts[n]);
-//			cam.matrix().multiply(result);
-			System.out.println();
-		}
 	}
 
 	@Test

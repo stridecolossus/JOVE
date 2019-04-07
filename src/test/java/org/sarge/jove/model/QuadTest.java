@@ -1,21 +1,25 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Tuple;
+import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Tuple.Swizzle;
+import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.Vertex.MutableVertex;
+import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 
 public class QuadTest {
 	@Test
 	public void builder() {
-		// Build a custom quad in the X-Z plane
+		// Build a backwards quad in the X-Z plane
 		final Quad quad = new Quad.Builder()
 			.size(3)
-			.swizzle(Tuple.Swizzle.XY)
+			.depth(4)
 			.reverse()
+			.swizzle(Swizzle.YZ)
 			.build();
 
 		// Check quad
@@ -24,17 +28,18 @@ public class QuadTest {
 		assertEquals(4, quad.vertices().size());
 
 		// Check vertices
-		final List<Vertex> vertices = quad.vertices();
-// TODO
-//		assertEquals(new Point(0, +3, +3), vertices.get(0).position());
-//		assertEquals(new Point(0, +3, -3), vertices.get(1).position());
-//		assertEquals(new Point(0, -3, +3), vertices.get(2).position());
-//		assertEquals(new Point(0, -3, -3), vertices.get(3).position());
-//
-//		// Check texture coordinates
-//		assertEquals(TextureCoordinate.of(0, 1), vertices.get(0).coords());
-//		assertEquals(TextureCoordinate.of(0, 0), vertices.get(1).coords());
-//		assertEquals(TextureCoordinate.of(1, 1), vertices.get(2).coords());
-//		assertEquals(TextureCoordinate.of(1, 0), vertices.get(3).coords());
+		final var vertices = quad.vertices();
+		assertEquals(new Point(+3, 4, -3), vertices.get(0).position());
+		assertEquals(new Point(+3, 4, +3), vertices.get(1).position());
+		assertEquals(new Point(-3, 4, -3), vertices.get(2).position());
+		assertEquals(new Point(-3, 4, +3), vertices.get(3).position());
+
+		// Check normals
+		for(MutableVertex v : vertices) {
+			assertEquals(Vector.Y_AXIS.invert(), v.normal());
+		}
+
+		// Check texture coordinates
+		assertEquals(Coordinate2D.QUAD, vertices.stream().map(MutableVertex::coordinates).collect(toList()));
 	}
 }

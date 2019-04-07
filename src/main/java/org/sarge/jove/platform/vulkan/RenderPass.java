@@ -48,7 +48,7 @@ public class RenderPass extends LogicalDeviceHandle {
 	 * @return Begin rendering command
 	 * @throws NullPointerException if any clear colour element is {@code null}
 	 */
-	public Command begin(FrameBuffer fb, Rectangle extent, Colour[] clear) {
+	public Command begin(FrameBuffer fb, Rectangle extent, Colour[] clear) {		// TODO - args should be properties: fb.extent, pass.clear[]
 		// Create descriptor
 		final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
 		info.renderPass = this.handle();
@@ -57,21 +57,24 @@ public class RenderPass extends LogicalDeviceHandle {
 
 		/////////
 
+		// TODO
+
 		info.clearValueCount = 2; // clear.length;
 
-		final VkClearValue[] array = (VkClearValue[]) new VkClearValue().toArray(2);
+//		final VkClearValue[] array = (VkClearValue[]) new VkClearValue().toArray(2);
+//		final VkClearValue[] array = (VkClearValue[]) new VkClearValue().toArray(2);
 
-		final VkClearValue col = array[0];
-		col.color = new VkClearColorValue();
+		final VkClearValue col = new VkClearValue(); // [0];
+		col.color = new VkClearColorValue.ByValue();
 		col.color.float32 = new float[]{0.3f, 0.3f, 0.3f, 1};
 
-		final VkClearValue depth = array[1];
-		depth.depthStencil = new VkClearDepthStencilValue();
+		final VkClearValue depth = new VkClearValue(); // [1];
+		depth.depthStencil = new VkClearDepthStencilValue.ByValue();
 		depth.depthStencil.depth = 1f;
 		depth.depthStencil.stencil = 0;
 
-		info.pClearValues = array[0]; //StructureHelper.structures(List.of(col, depth))[0];
-//		info.pClearValues = StructureHelper.structures(Arrays.asList(array));
+//		info.pClearValues = array[0]; //StructureHelper.structures(List.of(col, depth))[0];
+		info.pClearValues = StructureHelper.structures(List.of(col, depth));
 
 		//info.pClearValues = Bufferable.create(clear);
 
@@ -182,7 +185,7 @@ public class RenderPass extends LogicalDeviceHandle {
 		public class SubpassBuilder {
 			private final VkSubpassDescription subpass = new VkSubpassDescription();
 			private final List<VkAttachmentReference> colour = new ArrayList<>();
-			private final int index;
+			private final int index; // TODO - what is this for?
 
 			/**
 			 * Constructor.
