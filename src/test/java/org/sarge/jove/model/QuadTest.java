@@ -1,8 +1,10 @@
 package org.sarge.jove.model;
 
-import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
@@ -12,6 +14,33 @@ import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 
 public class QuadTest {
+	@Test
+	public void constructor() {
+		// Build quad points
+		final Point[] array = new Point[4];
+		Arrays.fill(array, Point.ORIGIN);
+
+		// Create quad
+		final Quad quad = new Quad(array, Vector.X_AXIS);
+		final var vertices = quad.vertices();
+		assertNotNull(vertices);
+
+		// Check normals
+		for(MutableVertex v : vertices) {
+			assertEquals(Vector.X_AXIS, v.normal());
+		}
+
+		// Check texture coordinates
+		for(int n = 0; n < 4; ++n) {
+			assertEquals(Coordinate2D.QUAD.get(n), vertices.get(n).coordinates());
+		}
+	}
+
+	@Test
+	public void constructorInvalidVertices() {
+		assertThrows(IllegalArgumentException.class, () -> new Quad(new Point[]{}, Vector.X_AXIS));
+	}
+
 	@Test
 	public void builder() {
 		// Build a backwards quad in the X-Z plane
@@ -40,6 +69,8 @@ public class QuadTest {
 		}
 
 		// Check texture coordinates
-		assertEquals(Coordinate2D.QUAD, vertices.stream().map(MutableVertex::coordinates).collect(toList()));
+		for(int n = 0; n < 4; ++n) {
+			assertEquals(Coordinate2D.QUAD.get(n), vertices.get(n).coordinates());
+		}
 	}
 }

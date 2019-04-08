@@ -192,9 +192,9 @@ public interface Vertex extends Bufferable {
 
 		private static final Vector EMPTY = new Vector(0, 0, 0);
 
-		protected Point pos;
-		protected Vector normal = EMPTY;
-		protected TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.BOTTOM_LEFT;
+		private Point pos;
+		private Vector normal = EMPTY;
+		private TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.BOTTOM_LEFT;
 
 		/**
 		 * Default constructor.

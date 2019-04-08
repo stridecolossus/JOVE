@@ -66,11 +66,16 @@ public class TextureCoordinateTest {
 	}
 
 	@Test
+	public void coordinates() {
+		assertEquals(new Coordinate2D(0, 0), Coordinate2D.TOP_LEFT);
+		assertEquals(new Coordinate2D(0, 1), Coordinate2D.BOTTOM_LEFT);
+		assertEquals(new Coordinate2D(1, 0), Coordinate2D.TOP_RIGHT);
+		assertEquals(new Coordinate2D(1, 1), Coordinate2D.BOTTOM_RIGHT);
+	}
+
+	@Test
 	public void quad() {
-		assertEquals(new Coordinate2D(0, 1), Coordinate2D.TOP_LEFT);
-		assertEquals(new Coordinate2D(0, 0), Coordinate2D.BOTTOM_LEFT);
-		assertEquals(new Coordinate2D(1, 1), Coordinate2D.TOP_RIGHT);
-		assertEquals(new Coordinate2D(1, 0), Coordinate2D.BOTTOM_RIGHT);
-		assertEquals(List.of(Coordinate2D.TOP_LEFT, Coordinate2D.BOTTOM_LEFT, Coordinate2D.TOP_RIGHT, Coordinate2D.BOTTOM_RIGHT), Coordinate2D.QUAD);
+		final var expected = List.of(Coordinate2D.BOTTOM_RIGHT, Coordinate2D.TOP_RIGHT, Coordinate2D.BOTTOM_LEFT, Coordinate2D.TOP_LEFT);
+		assertEquals(expected, Coordinate2D.QUAD);
 	}
 }

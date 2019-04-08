@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.texture.Image.Format;
@@ -17,7 +18,7 @@ public class DefaultImageTest {
 
 	@BeforeEach
 	public void before() {
-		image = new DefaultImage(new BufferedImage(3, 4, BufferedImage.TYPE_4BYTE_ABGR));
+		image = new DefaultImage(new Image.Header(Format.RGBA, new Dimensions(3, 4)), new BufferedImage(3, 4, BufferedImage.TYPE_4BYTE_ABGR));
 	}
 
 	@Test
@@ -39,6 +40,7 @@ public class DefaultImageTest {
 		assertEquals(4 * 3 * 4, buffer.capacity());
 	}
 
+	@Disabled("removed?")
 	@Test
 	public void convert() {
 		final Image.Header header = new Image.Header(Format.RGB, new Dimensions(6, 8));
@@ -55,7 +57,7 @@ public class DefaultImageTest {
 		assertNotNull(image);
 
 		// Check image format
-		final Image.Header expected = new Image.Header(Format.RGB, new Dimensions(128, 128));
+		final Image.Header expected = new Image.Header(Format.RGBA, new Dimensions(128, 128));
 		assertEquals(expected, image.header());
 	}
 }

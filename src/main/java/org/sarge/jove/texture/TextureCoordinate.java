@@ -97,15 +97,15 @@ public interface TextureCoordinate extends Bufferable {
 		 * Quad coordinates.
 		 */
 		public static final Coordinate2D
-			TOP_LEFT		= new Coordinate2D(0, 1),
-			BOTTOM_LEFT 	= new Coordinate2D(0, 0),
-			TOP_RIGHT 		= new Coordinate2D(1, 1),
-			BOTTOM_RIGHT 	= new Coordinate2D(1, 0);
+			TOP_LEFT		= new Coordinate2D(0, 0),
+			BOTTOM_LEFT 	= new Coordinate2D(0, 1),
+			TOP_RIGHT 		= new Coordinate2D(1, 0),
+			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
 
 		/**
-		 * List of quad coordinates.
+		 * List of quad coordinates (flipped in both directions to match Vulkan coordinate system).
 		 */
-		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
+		public static final List<Coordinate2D> QUAD = List.of(BOTTOM_RIGHT, TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT);
 
 		public final float v;
 

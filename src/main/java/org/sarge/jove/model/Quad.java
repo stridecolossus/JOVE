@@ -18,21 +18,46 @@ import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
  * @author Sarge
  */
 public final class Quad {
-	private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2D[]::new);
-
-	private static final int[] TRIANGLES = {
-		0, 1, 2,
-		2, 1, 3
+	/**
+	 * Unit quad vertices in X-Y plane.
+	 */
+	private static final int[][] VERTICES = {
+			{-1, -1},
+			{-1, +1},
+			{+1, -1},
+			{+1, +1}
 	};
+
+	/**
+	 * Quad triangle indices in counter-clockwise order.
+	 */
+	private static final int[] TRIANGLES = {
+			0, 1, 2,
+			2, 1, 3
+	};
+
+	private static final int LENGTH = 4;
 
 	private final List<MutableVertex> vertices;
 
 	/**
 	 * Constructor.
-	 * @param vertices Quad vertices
+	 * @param vertices		Quad vertices
+	 * @param normal		Normal
+	 * @throws IllegalArgumentException if the given array is not of length four
 	 */
-	public Quad(MutableVertex[] vertices) {
-		this.vertices = Arrays.asList(vertices);
+	public Quad(Point[] vertices, Vector normal) {
+		if(vertices.length != LENGTH) throw new IllegalArgumentException("Quad must be comprised of 4 vertices");
+
+		final MutableVertex[] quad = new MutableVertex[LENGTH];
+		for(int n = 0; n < LENGTH; ++n) {
+			final MutableVertex v = new MutableVertex(vertices[n]);
+			v.normal(normal);
+			v.coordinates(Coordinate2D.QUAD.get(n));
+			quad[n] = v;
+		}
+
+		this.vertices = Arrays.asList(quad);
 	}
 
 	/**
@@ -51,7 +76,7 @@ public final class Quad {
 	}
 
 	/**
-	 * Builder for a quad in the XY plane.
+	 * Builder for a quad.
 	 */
 	public static class Builder {
 		private float size = 1;
@@ -100,30 +125,19 @@ public final class Quad {
 		 */
 		public Quad build() {
 			// Build quad vertices
-			final MutableVertex[] vertices = new MutableVertex[QUAD.length];
-			for(int n = 0; n < QUAD.length; ++n) {
-				// Create vertex coordinates
-				final Coordinate2D coords = QUAD[n];
-				final float x = size * (coords.u * 2 - 1);
-				final float y = size * (coords.v * 2 - 1);
-
-				// Create vertex position
-				final float dx = reverse ? -x : x;
-				final Tuple pos = swizzle.apply(new Point(dx, -y, depth));
-
-				// Determine normal
-				final Tuple normal = swizzle.apply(Vector.Z_AXIS.invert());
-
-				// Create vertex
-				final MutableVertex vertex = new MutableVertex();
-				vertex.position(new Point(pos));
-				vertex.normal(new Vector(normal));
-				vertex.coordinates(coords);
-				vertices[n] = vertex;
+			final Point[] vertices = new Point[LENGTH];
+			for(int n = 0; n < LENGTH; ++n) {
+				final float x = VERTICES[n][0] * size;
+				final float y = VERTICES[n][1] * size;
+				final Tuple pos = swizzle.apply(new Point(reverse ? -x : x, y, depth));
+				vertices[n] = new Point(pos);
 			}
 
+			// Determine normal
+			final Tuple normal = swizzle.apply(Vector.Z_AXIS.invert());
+
 			// Create quad
-			return new Quad(vertices);
+			return new Quad(vertices, new Vector(normal));
 		}
 	}
 }

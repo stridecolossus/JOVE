@@ -24,6 +24,6 @@ public class CubeModelBuilderTest {
 		assertEquals(false, cube.isIndexed());
 		assertEquals(Primitive.TRIANGLE_LIST, cube.primitive());
 		assertEquals(List.of(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.coordinate(2)), cube.components());
-//		assertEquals(6 * 2 * 3, cube.vertices().size());
+		assertEquals(6 * 2 * 3, cube.vertices().size());
 	}
 }

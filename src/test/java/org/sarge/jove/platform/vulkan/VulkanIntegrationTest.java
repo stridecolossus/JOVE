@@ -492,7 +492,8 @@ public class VulkanIntegrationTest {
 		model.vertices().forEach(v -> {
 			v.position().buffer(fb);
 			//v.coordinates().buffer(fb);
-			fb.put(1 - v.coordinates().u); // TODO - hmmm
+//			fb.put(1 - v.coordinates().u); // TODO - hmmm
+			fb.put(v.coordinates().u);
 			fb.put(v.coordinates().v);
 		});
 
@@ -596,6 +597,8 @@ public class VulkanIntegrationTest {
 	}
 
 	//////////////////////////
+
+	// TODO - use this as example of de-composition
 
 	public ImageView texture() throws Exception {
 		// Load texture image
