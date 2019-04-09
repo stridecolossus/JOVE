@@ -411,9 +411,7 @@ public class VulkanIntegrationTest {
 				.scissor(rect)
 				.build()
 			.depthStencil()
-			// vkCmdClearAttachments
 				.operation(VkCompareOp.VK_COMPARE_OP_LESS_OR_EQUAL)
-				//.operation(VkCompareOp.VK_COMPARE_OP_GREATER)		// TODO - hmmm
 				.build()
 			.build();
 	}
@@ -576,16 +574,11 @@ public class VulkanIntegrationTest {
 			final PointerHandle dest = (PointerHandle) buffer; // TODO
 			lib.vkCmdCopyBuffer(cb, staging.handle(), dest.handle(), 1, new VkBufferCopy[]{info});
 		};
-		final Command.Buffer cmd = pool.allocate(1, true).iterator().next();
-		cmd
-			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-			.add(copy)
-			.end();
+		final Command.Buffer cmd = pool.allocate(copy);
 
 		System.out.println("Copying...");
 		final WorkQueue queue = dev.queue(transfer, 0);
-		final WorkQueue.Work work = new WorkQueue.Work.Builder().add(cmd).build();
-		queue.submit(work);
+		queue.submit(cmd);
 		queue.waitIdle();
 
 		System.out.println("Releasing resources");
@@ -647,13 +640,9 @@ public class VulkanIntegrationTest {
 		region.imageExtent.depth = 1;
 
 		// Copy texture
-		final Command.Buffer cb = pool.allocate(1, true).iterator().next();
-		cb
-			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-			.add((lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, staging.handle(), texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, region))
-			.end();
+		final Command.Buffer cb = pool.allocate((lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, staging.handle(), texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, region));
 		final WorkQueue queue = dev.queue(transfer, 0);
-		queue.submit(new WorkQueue.Work.Builder().add(cb).build());
+		queue.submit(cb);
 		queue.waitIdle();
 		cb.free();
 
@@ -727,13 +716,9 @@ public class VulkanIntegrationTest {
 		}
 
 		// Apply barrier
-		final Command.Buffer cb = pool.allocate(1, true).iterator().next();
-		cb
-			.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-			.add((lib, cmd) -> lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier}))
-			.end();
+		final Command.Buffer cb = pool.allocate((lib, cmd) -> lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier}));
 		final WorkQueue queue = dev.queue(transfer, 0);
-		queue.submit(new WorkQueue.Work.Builder().add(cb).build());
+		queue.submit(cb);
 		queue.waitIdle();
 		cb.free();
 	}

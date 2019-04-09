@@ -22,6 +22,13 @@ import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import com.sun.jna.Pointer;
 
 public class CommandTest extends AbstractVulkanTest {
+	private Command cmd;
+
+	@BeforeEach
+	public void before() {
+		cmd = mock(Command.class);
+	}
+
 	@Nested
 	class CommandBufferTests {
 		private Buffer buffer;
@@ -75,7 +82,6 @@ public class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		public void add() {
-			final Command cmd = mock(Command.class);
 			buffer.begin();
 			buffer.add(cmd);
 			verify(cmd).execute(library, handle);
@@ -85,6 +91,14 @@ public class CommandTest extends AbstractVulkanTest {
 		@Test
 		public void addNotRecording() {
 			assertThrows(IllegalStateException.class, () -> buffer.add(mock(Command.class)));
+		}
+
+		@Test
+		public void once() {
+			buffer.once(cmd);
+			verify(library).vkBeginCommandBuffer(eq(handle), any(VkCommandBufferBeginInfo.class));
+			verify(cmd).execute(library, buffer.handle());
+			verify(library).vkEndCommandBuffer(handle);
 		}
 
 		@Test
@@ -146,6 +160,12 @@ public class CommandTest extends AbstractVulkanTest {
 			info.commandBufferCount = 1;
 			info.commandPool = pool.handle();
 			verify(library).vkAllocateCommandBuffers(eq(device.handle()), argThat(structure(info)), eq(factory.pointers(1)));
+		}
+
+		@Test
+		public void allocateOnce() {
+			final Buffer buffer = pool.allocate(cmd);
+			assertNotNull(buffer);
 		}
 
 		@Test

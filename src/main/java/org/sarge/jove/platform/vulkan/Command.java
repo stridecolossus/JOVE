@@ -121,7 +121,7 @@ public interface Command {
 		 * @param cmd Command
 		 * @see VkCommandBufferUsageFlag#VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
 		 */
-		public void record(Command cmd) {
+		public void once(Command cmd) {
 			begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 			add(cmd);
 			end();
@@ -217,6 +217,18 @@ public interface Command {
 			final var list = Arrays.stream(handles).map(ptr -> new Buffer(ptr, this)).collect(toList());
 			buffers.addAll(list);
 			return list;
+		}
+
+		/**
+		 * Helper - Allocates a one-off command buffer to process the given command.
+		 * @param cmd Command
+		 * @return One-off command buffer
+		 * @see Buffer#once(Command)
+		 */
+		public Buffer allocate(Command cmd) {
+			final Buffer buffer = allocate(1, true).iterator().next();
+			buffer.once(cmd);
+			return buffer;
 		}
 
 		/**

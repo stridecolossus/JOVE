@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.sarge.jove.platform.Resource.PointerHandle;
-import org.sarge.jove.platform.vulkan.Command.Buffer;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictSet;
 
@@ -22,90 +21,118 @@ import com.sun.jna.Pointer;
 public class WorkQueue extends PointerHandle {
 	/**
 	 * Work submitted to this queue.
-	 * @see WorkQueue#submit(Work)
 	 */
-	public static interface Work {
-		/**
-		 * @return Work descriptor
-		 */
-		VkSubmitInfo descriptor();
+	public class Work {
+		private final VkSubmitInfo info;
+		private final Pointer fence;
 
 		/**
-		 * Builder for work to be submitted to a queue.
+		 * Constructor.
+		 * @param queue		Work queue
+		 * @param info		Descriptor
 		 */
-		public static class Builder {
-			private final Collection<Pointer> buffers = new ArrayList<>();
-			private final Collection<Integer> waitStages = new StrictSet<>();
-			private final List<Pointer> waitSemaphores = new ArrayList<>();
-			private final List<Pointer> signalSemaphores = new ArrayList<>();
+		private Work(VkSubmitInfo info, Pointer fence) {
+			this.info = info;
+			this.fence = fence;
+		}
 
-			/**
-			 * Adds a command buffer to submit.
-			 * @param buffer Buffer to submit
-			 * @throws IllegalArgumentException if the command buffer has not been recorded
-			 */
-			public Builder add(Buffer buffer) {
-				if(!buffer.isReady()) throw new IllegalArgumentException("Command buffer has not been recorded: " + buffer);
-				buffers.add(buffer.handle());
-				return this;
-			}
+		/**
+		 * Submits this work for execution.
+		 */
+		public void submit() {
+			// TODO - multiple
+			check(lib.vkQueueSubmit(WorkQueue.this.handle(), 1, new VkSubmitInfo[]{info}, fence));
+		}
+	}
 
-			/**
-			 * Adds a pipeline wait stage.
-			 * @param stage Wait stage
-			 * @throws IllegalArgumentException for a duplicate wait state
-			 */
-			public Builder wait(VkPipelineStageFlag stage) {
-				waitStages.add(stage.value());
-				return this;
-			}
+	/**
+	 * Builder for work to be submitted to this queue.
+	 */
+	public class WorkBuilder {
+		private final Collection<Pointer> buffers = new ArrayList<>();
+		private final Collection<Integer> waitStages = new StrictSet<>();
+		private final List<Pointer> waitSemaphores = new ArrayList<>();
+		private final List<Pointer> signalSemaphores = new ArrayList<>();
+		private Pointer fence;
 
-			/**
-			 * Adds a semaphore to wait on.
-			 * @param semaphore Wait semaphore
-			 */
-			public Builder wait(PointerHandle semaphore) {
-				waitSemaphores.add(semaphore.handle());
-				return this;
-			}
+		private WorkBuilder() {
+		}
 
-			/**
-			 * Adds a semaphore to be signalled after execution.
-			 * @param semaphore Signal semaphore
-			 */
-			public Builder signal(PointerHandle semaphore) {
-				signalSemaphores.add(semaphore.handle());
-				return this;
-			}
+		/**
+		 * Adds a command buffer to submit.
+		 * @param buffer Buffer to submit
+		 * @throws IllegalArgumentException if the command buffer has not been recorded
+		 */
+		public WorkBuilder add(Command.Buffer buffer) {
+			if(!buffer.isReady()) throw new IllegalArgumentException("Command buffer has not been recorded: " + buffer);
+			buffers.add(buffer.handle());
+			return this;
+		}
 
-			/**
-			 * Constructs this submission.
-			 * @return New submission
-			 */
-			public Work build() {
-				// Init descriptor
-				final VkSubmitInfo info = new VkSubmitInfo();
+		/**
+		 * Adds a pipeline wait stage.
+		 * @param stage Wait stage
+		 * @throws IllegalArgumentException for a duplicate wait state
+		 */
+		public WorkBuilder wait(VkPipelineStageFlag stage) {
+			waitStages.add(stage.value());
+			return this;
+		}
 
-				// Add wait stages
-				// TODO - a lot if buggering about
-				info.pWaitDstStageMask = StructureHelper.integers(ArrayUtils.toPrimitive(waitStages.toArray(Integer[]::new)));
+		/**
+		 * Adds a semaphore to wait on.
+		 * @param semaphore Wait semaphore
+		 */
+		public WorkBuilder wait(PointerHandle semaphore) {
+			waitSemaphores.add(semaphore.handle());
+			return this;
+		}
 
-				// Add command buffers to submit
-				if(buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
-				info.commandBufferCount = buffers.size();
-				info.pCommandBuffers = StructureHelper.pointers(buffers);
+		/**
+		 * Adds a semaphore to be signalled after execution.
+		 * @param semaphore Signal semaphore
+		 */
+		public WorkBuilder signal(PointerHandle semaphore) {
+			signalSemaphores.add(semaphore.handle());
+			return this;
+		}
 
-				// Add wait semaphores
-				info.waitSemaphoreCount = waitSemaphores.size();
-				info.pWaitSemaphores = StructureHelper.pointers(waitSemaphores);
+		/**
+		 * Sets the fence for this work.
+		 * @param fence Fence
+		 */
+		public WorkBuilder fence(Fence fence) {
+			this.fence = fence.handle();
+			return this;
+		}
 
-				// Add signal semaphores
-				info.signalSemaphoreCount = signalSemaphores.size();
-				info.pSignalSemaphores = StructureHelper.pointers(signalSemaphores);
+		/**
+		 * Constructs this work.
+		 * @return New work
+		 */
+		public Work build() {
+			// Init work descriptor
+			final VkSubmitInfo info = new VkSubmitInfo();
 
-				// Create work
-				return () -> info;
-			}
+			// Add wait stages
+			// TODO - a lot if buggering about
+			info.pWaitDstStageMask = StructureHelper.integers(ArrayUtils.toPrimitive(waitStages.toArray(Integer[]::new)));
+
+			// Add command buffers to submit
+			if(buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
+			info.commandBufferCount = buffers.size();
+			info.pCommandBuffers = StructureHelper.pointers(buffers);
+
+			// Add wait semaphores
+			info.waitSemaphoreCount = waitSemaphores.size();
+			info.pWaitSemaphores = StructureHelper.pointers(waitSemaphores);
+
+			// Add signal semaphores
+			info.signalSemaphoreCount = signalSemaphores.size();
+			info.pSignalSemaphores = StructureHelper.pointers(signalSemaphores);
+
+			// Create work
+			return new Work(info, fence);
 		}
 	}
 
@@ -113,7 +140,8 @@ public class WorkQueue extends PointerHandle {
 
 	/**
 	 * Constructor.
-	 * @param handle Handle
+	 * @param handle 	Handle
+	 * @param lib		Vulkan API
 	 */
 	protected WorkQueue(Pointer handle, VulkanLibraryLogicalDevice lib) {
 		super(handle);
@@ -121,28 +149,19 @@ public class WorkQueue extends PointerHandle {
 	}
 
 	/**
-	 * Submits work to this queue.
-	 * @param work Work to be submitted
+	 * Creates a work builder.
+	 * @return New work builder
 	 */
-	public void submit(Work work) {
-		submitLocal(work, null);
+	public WorkBuilder work() {
+		return new WorkBuilder();
 	}
 
 	/**
-	 * Submits work with a fence to this queue.
-	 * @param work 		Work to be submitted
-	 * @param fence		Fence
+	 * Helper - Submits the given command buffer for execution.
+	 * @param buffer Command buffer
 	 */
-	public void submit(Work work, Fence fence) {
-		submitLocal(work, fence.handle());
-	}
-
-	/**
-	 * Submits work to this queue.
-	 */
-	private void submitLocal(Work work, Pointer fence) {
-		// TODO - multiple
-		check(lib.vkQueueSubmit(super.handle(), 1, new VkSubmitInfo[]{work.descriptor()}, fence));
+	public void submit(Command.Buffer buffer) {
+		new WorkBuilder().add(buffer).build().submit();
 	}
 
 	/**

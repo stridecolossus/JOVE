@@ -134,15 +134,14 @@ public class FrameState extends AbstractEqualsObject {
 			public FrameState submit(Command.Buffer cmd) {
 				// Create work entry for next frame
 				final FrameState frame = frames[index];
-				final WorkQueue.Work work = new WorkQueue.Work.Builder()
+				queue.work()
 					.add(cmd)
 					.wait(frame.available)
 					.wait(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 					.signal(frame.finished)
-					.build();
-
-				// Submit next frame
-				queue.submit(work, frame.fence);
+					.fence(frame.fence)
+					.build()
+					.submit();
 
 				// Move to next frame
 				++index;
