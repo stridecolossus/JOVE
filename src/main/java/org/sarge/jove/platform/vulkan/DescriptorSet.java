@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.material.Shader;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.Resource.PointerHandle;
+import org.sarge.jove.platform.vulkan.ImageView.VulkanSampler;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
 
@@ -66,15 +67,15 @@ public class DescriptorSet extends PointerHandle {
 	}
 
 	/**
-	 *
+	 * TODO
 	 * @param binding
 	 * @param view
 	 * @param sampler
 	 */
-	public void sampler(int binding, ImageView view, PointerHandle sampler) {
+	public void sampler(int binding, VulkanSampler sampler) {
 		final VkDescriptorImageInfo info = new VkDescriptorImageInfo();
 		info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		info.imageView = view.handle();
+		info.imageView = sampler.view().handle();
 		info.sampler = sampler.handle();
 		update(binding, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, write -> write.pImageInfo = info);
 	}

@@ -39,16 +39,17 @@ import org.sarge.jove.platform.vulkan.Feature.Extension;
 import org.sarge.jove.platform.vulkan.Feature.ValidationLayer;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracker;
+import org.sarge.jove.platform.vulkan.ImageView.VulkanSampler;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.scene.Camera;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.texture.DefaultImage;
 import org.sarge.jove.texture.Image;
+import org.sarge.jove.texture.Sampler;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class VulkanIntegrationTest {
 	private static final Matrix PROJECTION = Projection.perspective(MathsUtil.toRadians(60)).matrix(0.1f, 256f, new Dimensions(1280, 760));
@@ -157,7 +158,7 @@ public class VulkanIntegrationTest {
 		///////////////////
 
 		final ImageView textureImageView = texture();
-		final PointerHandle sampler = sampler();
+		final VulkanSampler sampler = textureImageView.sampler(Sampler.Descriptor.DEFAULT);
 
 		///////////////////
 
@@ -173,7 +174,7 @@ public class VulkanIntegrationTest {
 			uniforms[n] = uniform;
 			// TODO
 			sets[n].uniform(0, uniform, 0, uniform.length()); // (~0L)); // 4);
-			sets[n].sampler(1, textureImageView, sampler);
+			sets[n].sampler(1, sampler); // TODO - just sampler
 
 			final Command.Buffer cb = cmds.get(n);
 			record(cb, fb, pass, pipeline, vbo, indexBuffer, sets[n], depth.image());
@@ -721,40 +722,6 @@ public class VulkanIntegrationTest {
 		queue.submit(cb);
 		queue.waitIdle();
 		cb.free();
-	}
-
-	// TODO - factor to out to class + builder? or just a static factory method that returns PointerHandle() { ... }
-	// TODO - replaces texture descriptor?
-	public PointerHandle sampler() {
-		// TODO - replicate texture.descriptor?
-		System.out.println("creating sampler");
-
-		final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
-		info.minFilter = VkFilter.VK_FILTER_LINEAR;
-		info.magFilter = VkFilter.VK_FILTER_LINEAR;
-
-		info.addressModeU = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		info.addressModeV = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		info.addressModeW = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		info.borderColor = VkBorderColor.VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-
-		info.anisotropyEnable = VulkanBoolean.TRUE;
-		info.maxAnisotropy = 16;
-		info.unnormalizedCoordinates = VulkanBoolean.FALSE;
-
-		info.compareEnable = VulkanBoolean.FALSE;
-		info.compareOp = VkCompareOp.VK_COMPARE_OP_ALWAYS;
-
-		info.mipmapMode = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		info.mipLodBias = 0;
-		info.minLod = 0;
-		info.maxLod = 0;
-
-		final PointerByReference sampler = vulkan.factory().reference();
-		lib.vkCreateSampler(dev.handle(), info, null, sampler);
-
-		// TODO - class
-		return new PointerHandle(sampler.getValue());
 	}
 
 	///////////////////////

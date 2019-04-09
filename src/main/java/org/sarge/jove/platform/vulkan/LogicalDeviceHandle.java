@@ -49,6 +49,14 @@ public class LogicalDeviceHandle extends PointerHandle {
 		this.destructor = mapper.apply(dev.parent().vulkan().library());
 	}
 
+	/**
+	 * Helper.
+	 * @return Vulkan
+	 */
+	protected Vulkan vulkan() {
+		return dev.parent().vulkan();
+	}
+
 	@Override
 	public final synchronized void destroy() {
 		cleanup();

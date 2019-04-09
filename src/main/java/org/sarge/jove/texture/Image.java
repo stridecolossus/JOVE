@@ -73,6 +73,16 @@ public interface Image {
 	}
 
 	/**
+	 * Determines the number of mipmap levels for the given image dimensions.
+	 * @param dim Image dimensions
+	 * @return Number of mipmap levels
+	 */
+	static int levels(Dimensions dim) {
+		final float max = Math.max(dim.width(), dim.height());
+		return 1 + (int) Math.floor(Math.log(max) / Math.log(2));
+	}
+
+	/**
 	 * @return Image header
 	 */
 	Header header();
