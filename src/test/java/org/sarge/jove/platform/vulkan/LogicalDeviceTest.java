@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.Feature.Supported;
+import org.sarge.jove.platform.vulkan.LogicalDevice.Queue;
+import org.sarge.jove.platform.vulkan.LogicalDevice.Work;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
@@ -29,7 +31,6 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 	private LogicalDevice dev;
 	private PhysicalDevice parent;
 	private QueueFamily family;
-	private WorkQueue queue;
 
 	@BeforeEach
 	public void before() {
@@ -42,8 +43,7 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 		when(family.count()).thenReturn(1);
 
 		// Create logical device
-		queue = mock(WorkQueue.class);
-		dev = new LogicalDevice(new Pointer(42), parent, Map.of(family, List.of(queue)));
+		dev = new LogicalDevice(new Pointer(42), parent, Map.of(family, List.of(mock(Pointer.class))));
 	}
 
 	@Test
@@ -53,19 +53,25 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 
 	@Test
 	public void queues() {
-		assertEquals(Map.of(family, List.of(queue)), dev.queues());
-		assertEquals(List.of(queue), dev.queues(family));
+		final Queue queue = dev.queue(family);
+		assertNotNull(queue);
+		assertEquals(family, queue.family());
+		assertEquals(dev, queue.device());
 		assertEquals(queue, dev.queue(family, 0));
+		assertEquals(List.of(queue), dev.queues(family));
+		assertEquals(Map.of(family, List.of(queue)), dev.queues());
 	}
 
 	@Test
 	public void queuesInvalidFamily() {
-		assertThrows(IllegalArgumentException.class, () -> dev.queues(mock(QueueFamily.class)));
+		final QueueFamily other = mock(QueueFamily.class);
+		assertThrows(IllegalArgumentException.class, () -> dev.queues(other));
+		assertThrows(IllegalArgumentException.class, () -> dev.queue(other));
 	}
 
 	@Test
-	public void queuesInvalidIndex() {
-		assertThrows(IndexOutOfBoundsException.class, () -> dev.queue(family, 999));
+	public void queueInvalidIndex() {
+		assertThrows(IllegalArgumentException.class, () -> dev.queue(family, 999));
 	}
 
 	@Test
@@ -76,6 +82,49 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 		verify(library).vkCreateSemaphore(eq(dev.handle()), argThat(structure(new VkSemaphoreCreateInfo())), isNull(), eq(factory.reference()));
 		semaphore.destroy();
 		verify(library).vkDestroySemaphore(dev.handle(), prev, null);
+	}
+
+	@Nested
+	class QueueTests {
+		private Queue queue;
+
+		@BeforeEach
+		public void before() {
+			queue = dev.queue(family);
+		}
+
+		@Test
+		public void constructor() {
+			assertEquals(device, queue.device());
+			assertEquals(family, queue.family());
+		}
+
+		@Test
+		public void work() {
+			// Create dependencies
+			final PointerHandle semaphore = mock(PointerHandle.class);
+			final Fence fence = mock(Fence.class);
+			final Command.Buffer buffer = mock(Command.Buffer.class);
+			when(buffer.isReady()).thenReturn(true);
+
+			// Create work
+			final Work work = queue.work()
+				.signal(semaphore)
+				.wait(semaphore)
+				.fence(fence)
+				.add(buffer)
+				.build();
+
+			// Submit work
+			assertNotNull(work);
+			work.submit();
+			// TODO - verify
+		}
+
+		@Test
+		public void workMissingCommand() {
+			assertThrows(IllegalArgumentException.class, () -> queue.work().build());
+		}
 	}
 
 	@Nested

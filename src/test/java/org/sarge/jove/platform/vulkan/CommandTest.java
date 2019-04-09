@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -133,11 +134,9 @@ public class CommandTest extends AbstractVulkanTest {
 	@Nested
 	class CommandPoolTests {
 		private Pool pool;
-		private QueueFamily family;
 
 		@BeforeEach
 		public void before() {
-			family = mock(QueueFamily.class);
 			pool = new Pool(new Pointer(42), device);
 		}
 
@@ -185,8 +184,14 @@ public class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		public void create() {
+			// Create work queue
+			final LogicalDevice.Queue queue = mock(LogicalDevice.Queue.class);
+			final QueueFamily family = mock(QueueFamily.class);
+			when(queue.family()).thenReturn(family);
+			when(queue.device()).thenReturn(device);
+
 			// Create pool
-			pool = Pool.create(device, family, VkCommandPoolCreateFlag.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+			pool = Pool.create(queue, VkCommandPoolCreateFlag.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 			pool.allocate(1, true);
 			assertNotNull(pool);
 			assertEquals(1, pool.buffers().count());

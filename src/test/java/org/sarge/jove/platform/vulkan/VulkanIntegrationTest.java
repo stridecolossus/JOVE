@@ -111,7 +111,7 @@ public class VulkanIntegrationTest {
 		final VulkanShader frag = VulkanShader.create(dev, Files.readAllBytes(new File("src/test/resources/frag.spv").toPath()));
 
 		System.out.println("Creating command pool");
-		pool = Command.Pool.create(dev, graphics);
+		pool = Command.Pool.create(dev.queue(graphics));
 
 		System.out.println("Creating depth attachment");
 		final ImageView depth = depth(chain.extent());
@@ -174,7 +174,7 @@ public class VulkanIntegrationTest {
 			uniforms[n] = uniform;
 			// TODO
 			sets[n].uniform(0, uniform, 0, uniform.length()); // (~0L)); // 4);
-			sets[n].sampler(1, sampler); // TODO - just sampler
+			sets[n].sampler(1, sampler);
 
 			final Command.Buffer cb = cmds.get(n);
 			record(cb, fb, pass, pipeline, vbo, indexBuffer, sets[n], depth.image());
@@ -183,7 +183,7 @@ public class VulkanIntegrationTest {
 		//////////////////
 
 		System.out.println("Creating frame tracker");
-		final WorkQueue queue = dev.queue(present, 0);
+		final LogicalDevice.Queue queue = dev.queue(present);
 		final FrameTracker tracker = new DefaultFrameTracker(dev, 2, queue);
 
 		System.out.println("Initialising controller");
@@ -433,12 +433,14 @@ public class VulkanIntegrationTest {
 
 		final VkClearDepthStencilValue info = new VkClearDepthStencilValue();
 		info.depth = 1;
+
 		final VkImageSubresourceRange range = new VkImageSubresourceRange();
 		range.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT.value();
 		range.baseMipLevel = 0;
 		range.levelCount = 1;
 		range.baseArrayLayer = 0;
 		range.layerCount = 1;
+
 		final Command clear = (api, cb) -> api.vkCmdClearDepthStencilImage(cb, depth.handle(), VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, info, 1, range);
 
 		buffer
@@ -578,7 +580,7 @@ public class VulkanIntegrationTest {
 		final Command.Buffer cmd = pool.allocate(copy);
 
 		System.out.println("Copying...");
-		final WorkQueue queue = dev.queue(transfer, 0);
+		final LogicalDevice.Queue queue = dev.queue(transfer);
 		queue.submit(cmd);
 		queue.waitIdle();
 
@@ -642,7 +644,7 @@ public class VulkanIntegrationTest {
 
 		// Copy texture
 		final Command.Buffer cb = pool.allocate((lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, staging.handle(), texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, region));
-		final WorkQueue queue = dev.queue(transfer, 0);
+		final LogicalDevice.Queue queue = dev.queue(transfer);
 		queue.submit(cb);
 		queue.waitIdle();
 		cb.free();
@@ -718,7 +720,7 @@ public class VulkanIntegrationTest {
 
 		// Apply barrier
 		final Command.Buffer cb = pool.allocate((lib, cmd) -> lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier}));
-		final WorkQueue queue = dev.queue(transfer, 0);
+		final LogicalDevice.Queue queue = dev.queue(transfer);
 		queue.submit(cb);
 		queue.waitIdle();
 		cb.free();

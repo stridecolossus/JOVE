@@ -89,7 +89,7 @@ public class SwapChain extends LogicalDeviceHandle {
 	 * @param frame Frame
 	 * @param queue Presentation queue
 	 */
-	public void present(FrameState frame, WorkQueue queue) {
+	public void present(FrameState frame, LogicalDevice.Queue queue) {
 		// Create presentation descriptor
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 

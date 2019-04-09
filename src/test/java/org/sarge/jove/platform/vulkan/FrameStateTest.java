@@ -16,15 +16,21 @@ import com.sun.jna.Pointer;
 
 public class FrameStateTest extends AbstractVulkanTest {
 	private DefaultFrameTracker tracker;
-	private WorkQueue queue;
+	private LogicalDevice.Queue queue;
 	private Command.Buffer buffer;
 
 	@BeforeEach
 	public void before() {
-		//queue = mock(WorkQueue.class);
-		queue = new WorkQueue(mock(Pointer.class), library);
+		// Create work queue
+		queue = mock(LogicalDevice.Queue.class);
+		when(queue.device()).thenReturn(device);
+		when(queue.work()).thenReturn(new LogicalDevice.Work.Builder(queue));
+
+		// Create command
 		buffer = mock(Command.Buffer.class);
 		when(buffer.isReady()).thenReturn(true);
+
+		// Create frame tracker
 		tracker = new DefaultFrameTracker(device, 2, queue);
 	}
 

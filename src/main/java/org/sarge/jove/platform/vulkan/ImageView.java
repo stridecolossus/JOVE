@@ -172,6 +172,7 @@ public class ImageView extends LogicalDeviceHandle {
 		 * 		- would prevent more errors since can then assume structs are valid?
 		 */
 		private static VkComponentMapping mapping() {
+			// VulkanHelper.colourComponent(components)
 			final VkComponentSwizzle identity = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY;
 			final VkComponentMapping mapping = new VkComponentMapping();
 			mapping.r = identity;

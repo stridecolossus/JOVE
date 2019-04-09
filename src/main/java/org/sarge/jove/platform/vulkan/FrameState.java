@@ -90,7 +90,7 @@ public class FrameState extends AbstractEqualsObject {
 		 * Default implementation.
 		 */
 		class DefaultFrameTracker extends AbstractObject implements FrameTracker {
-			private final WorkQueue queue;
+			private final LogicalDevice.Queue queue;
 			private final FrameState[] frames;
 
 			private int index;
@@ -101,7 +101,7 @@ public class FrameState extends AbstractEqualsObject {
 			 * @param frames 		Number of in-flight frames
 			 * @param queue			Graphics queue
 			 */
-			public DefaultFrameTracker(LogicalDevice dev, int frames, WorkQueue queue) {
+			public DefaultFrameTracker(LogicalDevice dev, int frames, LogicalDevice.Queue queue) {
 				this.queue = notNull(queue);
 				this.frames = create(frames, dev);
 			}

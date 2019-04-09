@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 import com.sun.jna.Pointer;
@@ -153,18 +152,18 @@ public interface Command {
 	 */
 	class Pool extends LogicalDeviceHandle {
 		/**
-		 * Constructor.
-		 * @param dev			Device
-		 * @param family		Queue family
-		 * @param flags			Flags
+		 * Creates a command pool for the given queue.
+		 * @param queue		Work queue
+		 * @param flags		Flags
 		 */
-		public static Pool create(LogicalDevice dev, QueueFamily family, VkCommandPoolCreateFlag... flags) {
+		public static Pool create(LogicalDevice.Queue queue, VkCommandPoolCreateFlag... flags) {
 			// Init pool descriptor
 			final VkCommandPoolCreateInfo info = new VkCommandPoolCreateInfo();
-			info.queueFamilyIndex = family.index(); // TODO - check correct family for device?
+			info.queueFamilyIndex = queue.family().index();
 			info.flags = IntegerEnumeration.mask(Arrays.asList(flags));
 
 			// Create pool
+			final LogicalDevice dev = queue.device();
 			final Vulkan vulkan = dev.parent().vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference pool = vulkan.factory().reference();

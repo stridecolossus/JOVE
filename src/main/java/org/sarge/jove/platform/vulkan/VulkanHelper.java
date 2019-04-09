@@ -170,6 +170,8 @@ public final class VulkanHelper {
 		}
 	}
 
+	// TODO - move all this pipeline builder
+
 	private static final Map<Primitive, VkPrimitiveTopology> PRIMITIVES;
 
 	static {
