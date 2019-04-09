@@ -3,29 +3,27 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex.Component;
-import org.sarge.jove.model.Vertex.MutableNormalVertex;
-import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.lib.collection.StrictList;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>model</i> is a renderable object comprised of mutable vertices.
  * @author Sarge
  */
-public class Model<V extends MutableNormalVertex> {
+public class Model<V extends Vertex> {
 	private final Primitive primitive;
 	private final List<Component> components;
 	private final List<V> vertices;
-	private final Extents extents;
+	private final List<Integer> indices;
 
 	/**
 	 * Constructor.
@@ -34,21 +32,12 @@ public class Model<V extends MutableNormalVertex> {
 	 * @param extents		Model extents
 	 * @throws IllegalArgumentException if the model is empty, the number of vertices is not valid for the rendering primitive, or there is no {@link Component#POSITION} component
 	 */
-	public Model(Primitive primitive, List<Component> components, List<V> vertices, Extents extents) {
+	public Model(Primitive primitive, List<Component> components, List<V> vertices, List<Integer> indices) {
 		this.primitive = notNull(primitive);
 		this.components = new ArrayList<>(components);
 		this.vertices = List.copyOf(vertices);
-		this.extents = notNull(extents);
+		this.indices = List.copyOf(indices);
 		verify();
-	}
-
-	/**
-	 * Copy constructor.
-	 * @param model Model to copy
-	 * @see #Model(Primitive, List, List, Extents)
-	 */
-	protected Model(Model<V> model) {
-		this(model.primitive, model.components, model.vertices, model.extents);
 	}
 
 	/**
@@ -56,7 +45,7 @@ public class Model<V extends MutableNormalVertex> {
 	 */
 	private void verify() {
 		if(vertices.isEmpty()) throw new IllegalArgumentException("Empty model");
-		if(!components.contains(Component.POSITION)) throw new IllegalArgumentException("Model requires a vertex position component");
+		if(!components.contains(Component.POSITION)) throw new IllegalArgumentException("Model must have a vertex position component");
 		if(!isIndexed() && !primitive.isValidVertexCount(vertices.size())) throw new IllegalArgumentException("Invalid number of vertices for primitive: " + this);
 	}
 
@@ -75,13 +64,6 @@ public class Model<V extends MutableNormalVertex> {
 	}
 
 	/**
-	 * @return Whether this model is indexed
-	 */
-	public boolean isIndexed() {
-		return false;
-	}
-
-	/**
 	 * @return Number of vertices
 	 */
 	public int length() {
@@ -96,45 +78,61 @@ public class Model<V extends MutableNormalVertex> {
 	}
 
 	/**
-	 * @return Extents of this model
-	 * @see Component#EXTENTS
+	 * @return Whether this model is indexed
 	 */
-	public final Extents extents() {
-		return extents;
+	public boolean isIndexed() {
+		return !indices.isEmpty();
 	}
 
 	/**
-	 * @return Iterator over model faces
+	 * @return Model indices
 	 */
-	public Iterator<List<V>> faces() {
-		return new FaceIterator(vertices.iterator());
+	public IntStream indices() {
+		return indices.stream().mapToInt(Integer::intValue);
 	}
 
 	/**
-	 * Face iterator implementation.
+	 * @return Iterator over model triangles
+	 * @throws IllegalArgumentException if this model does not consist of triangles
 	 */
-	protected class FaceIterator implements Iterator<List<V>> {
-		private final int size = primitive.size();
+	public TriangleIterator triangles() {
+		if(isIndexed()) {
+			final var iterator = indices.stream().map(vertices::get).iterator();
+			return new TriangleIterator(iterator);
+		}
+		else {
+			return new TriangleIterator(vertices.iterator());
+		}
+	}
+
+	/**
+	 * Triangle iterator implementation.
+	 */
+	public class TriangleIterator implements Iterator<Vertex[]> {
+		private static final int SIZE = 3;
+
 		private final Iterator<V> iterator;
-		private final List<V> face = new ArrayList<>(size);
+		private final Vertex[] triangle = new Vertex[SIZE];
 
 		private boolean more = true;
 
 		/**
 		 * Constructor.
-		 * @param iterator Face vertex iterator
+		 * @param iterator Vertex iterator
+		 * @throws IllegalArgumentException if this model does not consist of triangles
 		 */
-		protected FaceIterator(Iterator<V> iterator) {
+		private TriangleIterator(Iterator<V> iterator) {
+			if(primitive.size() != SIZE) throw new IllegalStateException("Not a triangle: " + primitive);
 			this.iterator = iterator;
 			init();
 		}
 
 		/**
-		 * Initialises the first face.
+		 * Populates the next triangle.
 		 */
 		private void init() {
-			for(int n = 0; n < size; ++n) {
-				face.add(iterator.next());
+			for(int n = 0; n < SIZE; ++n) {
+				triangle[n] = iterator.next();
 			}
 		}
 
@@ -144,40 +142,30 @@ public class Model<V extends MutableNormalVertex> {
 		}
 
 		@Override
-		public List<V> next() {
-			// Clone face
+		public Vertex[] next() {
+			// Clone next triangle
 			if(!more) throw new NoSuchElementException();
-			final var<V> next = List.copyOf(face);
+			final Vertex[] next = triangle.clone();
 
 			if(iterator.hasNext()) {
-				// Init next face
+				// Populate next triangle
 				if(primitive.isStrip()) {
-					// Shift strip face by one and append next vertex
-					Collections.rotate(face, -1);
-					face.set(size - 1, iterator.next());
+					triangle[0] = triangle[1];
+					triangle[1] = triangle[2];
+					triangle[2] = iterator.next();
 				}
 				else {
-					// Populate non-strip face
-					for(int n = 0; n < size; ++n) {
-						face.set(n, iterator.next());
-					}
+					init();
 				}
 			}
 			else {
-				// Note end of faces
+				// Note end of vertices
 				more = false;
 			}
 
 			return next;
 		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
-		}
 	}
-
-	// TODO - this should be moved to builder?
 
 	/**
 	 * Generates normals for this model.
@@ -194,30 +182,32 @@ public class Model<V extends MutableNormalVertex> {
 		// Add normals component
 		components.add(Vertex.Component.NORMAL);
 
+		// Initialise normals
+		for(V vertex : vertices) {
+			vertex.normal(new Vector(0, 0, 0));
+		}
+
 		// Generate normals
-		// TODO - faces() could return actual Face class with the following logic
-		final var faces = faces();
+		final TriangleIterator triangles = triangles();
 		boolean even = true;
-		while(faces.hasNext()) {
-			// Lookup triangle vertices
-			final var triangle = faces.next();
-			final V a = triangle.get(0);
-			final V b = triangle.get(1);
-			final V c = triangle.get(2);
+		while(triangles.hasNext()) {
+			// Get next triangle
+			final Vertex[] triangle = triangles.next();
 
 			// Build triangle edges
-			final Vector ab = edge(a, b);
-			final Vector bc = edge(b, c);
-			final Vector ac = edge(a, c);
+			final Vector ab = edge(triangle[0], triangle[1]);
+			final Vector bc = edge(triangle[1], triangle[2]);
+			final Vector ac = edge(triangle[0], triangle[2]);
 
 			// Accumulate normals
-			add(a, ab, ac, even);
-			add(b, bc, ab.invert(), even);
-			add(c, ac.invert(), bc.invert(), even);
+			add(triangle[0], ab, ac, even);
+			add(triangle[1], bc, ab.invert(), even);
+			add(triangle[2], ac.invert(), bc.invert(), even);
 
-			// Invert normals
-			// TODO - only valid for triangle-strip
-			even = !even;
+			// Flip alternate winding order for triangle strips
+			if(primitive == Primitive.TRIANGLE_STRIP) {
+				even = !even;
+			}
 		}
 
 		// Normalize
@@ -235,7 +225,7 @@ public class Model<V extends MutableNormalVertex> {
 	 * @param end		End point
 	 * @return Edge
 	 */
-	private Vector edge(V start, V end) {
+	private static Vector edge(Vertex start, Vertex end) {
 		return Vector.of(start.position(), end.position());
 	}
 
@@ -247,7 +237,7 @@ public class Model<V extends MutableNormalVertex> {
 	 * @param invert	Whether to invert the normal
 	 * @see MutableNormalVertex
 	 */
-	private void add(V vertex, Vector u, Vector v, boolean even) {
+	private static void add(Vertex vertex, Vector u, Vector v, boolean even) {
 		final Vector normal = u.cross(v);
 		final Vector actual = even ? normal : normal.invert();
 		final Vector result = vertex.normal().add(actual);
@@ -258,19 +248,19 @@ public class Model<V extends MutableNormalVertex> {
 	public String toString() {
 		return new ReflectionToStringBuilder(this)
 			.setExcludeFieldNames("vertices", "indices")
-			.append("indexed", isIndexed())
 			.append("vertices", vertices.size())
-			.append("size", length())
+			.append("indices", indices.size())
 			.toString();
 	}
 
 	/**
 	 * Builder for a model.
 	 */
-	public static class Builder<V extends MutableVertex> {
+	public static class Builder<V extends Vertex> {
 		private Primitive primitive = Primitive.TRIANGLE_LIST;
 		private final List<Vertex.Component> components = new StrictList<>();
 		private final List<V> vertices = new ArrayList<>();
+		private final List<Integer> indices = new ArrayList<>();
 		private final Extents.Builder extents = new Extents.Builder();
 
 		/**
@@ -330,11 +320,30 @@ public class Model<V extends MutableNormalVertex> {
 		}
 
 		/**
+		 * Adds a vertex index to this model.
+		 * @param index Index
+		 * @throws IllegalArgumentException if the index is negative or exceeds the number of vertices
+		 */
+		public Builder<V> add(int index) {
+			Check.zeroOrMore(index);
+			if(index >= vertices.size()) throw new IllegalArgumentException("Invalid index for this model: " + index);
+			indices.add(index);
+			return this;
+		}
+
+		/**
 		 * Constructs this model.
 		 * @return New model
 		 */
 		public Model<V> build() {
-			return new Model<>(primitive, components, vertices, extents.build());
+			return new Model<>(primitive, components, vertices, indices);
+		}
+
+		/**
+		 * @return Model extents
+		 */
+		public Extents extents() {
+			return extents.build();
 		}
 	}
 }

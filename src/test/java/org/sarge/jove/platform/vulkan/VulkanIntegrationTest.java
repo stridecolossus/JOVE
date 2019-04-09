@@ -491,10 +491,7 @@ public class VulkanIntegrationTest {
 		final FloatBuffer fb = bb.asFloatBuffer();
 		model.vertices().forEach(v -> {
 			v.position().buffer(fb);
-			//v.coordinates().buffer(fb);
-//			fb.put(1 - v.coordinates().u); // TODO - hmmm
-			fb.put(v.coordinates().u);
-			fb.put(v.coordinates().v);
+			v.coordinates().buffer(fb);
 		});
 
 		copy(vbo, bb);
@@ -888,7 +885,6 @@ public class VulkanIntegrationTest {
 		};
 		//input.bind(Event.Category.MOVE, mouse2);
 
-		//cam.move(-4);
 		cam.move(new Vector(0, 1.25f, 6));
 		cam.look(Point.ORIGIN);
 		//cam.move(new Vector(0, -1f, -4));

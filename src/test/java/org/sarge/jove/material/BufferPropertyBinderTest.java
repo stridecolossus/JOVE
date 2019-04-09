@@ -26,11 +26,6 @@ public class BufferPropertyBinderTest {
 	public void before() {
 		final Bufferable obj = new Bufferable() {
 			@Override
-			public int size() {
-				return 2;
-			}
-
-			@Override
 			public void buffer(FloatBuffer buffer) {
 				buffer.put(1).put(2);
 			}

@@ -24,7 +24,6 @@ public class TupleTest {
 		assertFloatEquals(1, tuple.x);
 		assertFloatEquals(2, tuple.y);
 		assertFloatEquals(3, tuple.z);
-		assertEquals(3, tuple.size());
 	}
 
 	@Test

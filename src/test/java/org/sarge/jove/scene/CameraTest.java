@@ -52,7 +52,7 @@ public class CameraTest {
 	@Test
 	public void moveDistance() {
 		cam.move(3);
-		assertEquals(new Point(0, 0, 3), cam.position());
+		assertEquals(new Point(0, 0, -3), cam.position());
 		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
 	}
 
@@ -98,9 +98,9 @@ public class CameraTest {
 			.identity()
 			.set(0, 0, 0)
 			.set(0, 2, 1)
-			.set(0, 3, -5)
 			.set(2, 0, -1)
 			.set(2, 2, 0)
+			.set(2, 3, 5)
 			.build();
 		assertEquals(expected, cam.matrix());
 	}

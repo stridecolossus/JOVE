@@ -18,17 +18,15 @@ public class ProjectionTest {
 
 	@Test
 	public void perspective() {
-		final Projection perspective = Projection.DEFAULT;
-		System.out.println(perspective.matrix(0.1f, 1000f, dim));
 		final Matrix expected = new Matrix.Builder()
 			.set(0, 0, 0.75f)
 			.set(1, 1, -1)
 			.set(2, 2, -1.0001f)
-			.set(2, 3, -1)
-			.set(3, 2, -0.10001f)
+			.set(2, 3, -0.10001f)
+			.set(3, 2, -1)
 			.build();
-		assertFloatEquals(1, perspective.height(dim));
-		assertEquals(expected, perspective.matrix(0.1f, 1000f, dim));
+		assertFloatEquals(1, Projection.DEFAULT.height(dim));
+		assertEquals(expected, Projection.DEFAULT.matrix(0.1f, 1000f, dim));
 	}
 
 	@Test

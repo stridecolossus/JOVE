@@ -32,7 +32,6 @@ public class MatrixTest {
 		assertFloatEquals(3, matrix.get(0, 1));
 		assertFloatEquals(4, matrix.get(1, 1));
 		assertEquals(matrix, matrix.matrix());
-		assertEquals(2 * 2, matrix.size());
 	}
 
 	@Test

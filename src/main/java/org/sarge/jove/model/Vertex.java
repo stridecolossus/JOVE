@@ -18,33 +18,18 @@ import org.sarge.lib.util.AbstractEqualsObject;
 import org.sarge.lib.util.AbstractObject;
 
 /**
- * A <i>vertex</i> is comprised of {@link Bufferable} data.
+ * A <i>vertex</i> is comprised of a vertex position, normal and texture coordinates.
  * <p>
- * Note that the order that components are written using {@link #buffer(FloatBuffer)} is assumed to be dependant on the implementing vertex class.
- * It is the responsibility of the user to ensure that the location of components within a vertex matches the target shader.
- *
- * For example, the convenience {@link MutableVertex} class could be extended to omit components or over-ride the buffering order:
- * <pre>
- * class CustomVertex extends MutableVertex {
- *     public int size() {
- *         return Coordinate2D.SIZE + Point.SIZE;
- *     }
- *
- *     public void buffer(FloatBuffer fb) {
- *         coords.buffer(fb);
- *         pos.buffer(fb);
- *     }
- * }
- * </pre>
- *
- *
- * TODO - revert to vertex returning components[]? has to return size anyway
- *
+ * Notes:
+ * <ul>
+ * <li>only the vertex position is mandatory</li>
+ * <li>it is the responsibility of the vertex implementation to ensure that components are output by {@link #buffer(FloatBuffer)} in the expected order</li>
+ * </ul>
  * @author Sarge
  */
 public interface Vertex extends Bufferable {
 	/**
-	 * Vertex component descriptor.
+	 * A <i>vertex component</i> describes the structure of part of a vertex.
 	 */
 	class Component extends AbstractObject {
 		/**
@@ -154,61 +139,23 @@ public interface Vertex extends Bufferable {
 	}
 
 	/**
-	 * A <i>mutable normal vertex</i> defines a vertex with a normal that can be accumulated.
-	 */
-	interface MutableNormalVertex extends Vertex {
-		/**
-		 * @return Vertex position
-		 */
-		Point position();
-
-		/**
-		 * @return Vertex normal
-		 */
-		Vector normal();
-
-		/**
-		 * Sets the vertex normal.
-		 * @param normal Normal
-		 */
-		void normal(Vector normal);
-	}
-
-	/**
-	 * A <i>mutable vertex</i> is a default implementation used to construct a model consisting of a vertex position, normal and 2D texture-coordinate components.
+	 * Partial implementation comprised only of a vertex position.
 	 * <p>
 	 * Notes:
 	 * <ul>
-	 * <li>the default normal is undefined</li>
-	 * <li><b>all</b> components are written by the {@link #buffer(FloatBuffer)}</li>
-	 * <li>it is the responsibility of the user to select the required components, see {@link Vertex}</li>
+	 * <li>the vertex normal and texture coordinates are initially <tt>null</tt></li>
+	 * <li>{@link AbstractVertex#normal(Vector)} throws {@link UnsupportedOperationException} by default
 	 * </ul>
 	 */
-	class MutableVertex extends AbstractEqualsObject implements MutableNormalVertex {
-		/**
-		 * Size of a mutable vertex.
-		 */
-		public static final int SIZE = Component.size(List.of(Component.POSITION, Component.NORMAL, Component.coordinate(2)));
-
-		private static final Vector EMPTY = new Vector(0, 0, 0);
-
-		private Point pos;
-		private Vector normal = EMPTY;
-		private TextureCoordinate.Coordinate2D coords = TextureCoordinate.Coordinate2D.BOTTOM_LEFT;
-
-		/**
-		 * Default constructor.
-		 */
-		public MutableVertex() {
-			this(Point.ORIGIN);
-		}
+	abstract class AbstractVertex extends AbstractEqualsObject implements Vertex {
+		protected final Point pos;
 
 		/**
 		 * Constructor.
 		 * @param pos Vertex position
 		 */
-		public MutableVertex(Point pos) {
-			position(pos);
+		protected AbstractVertex(Point pos) {
+			this.pos = notNull(pos);
 		}
 
 		@Override
@@ -216,12 +163,41 @@ public interface Vertex extends Bufferable {
 			return pos;
 		}
 
+		@Override
+		public Vector normal() {
+			return null;
+		}
+
+		@Override
+		public void normal(Vector normal) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public TextureCoordinate coordinates() {
+			return null;
+		}
+	}
+
+	/**
+	 * A <i>mutable vertex</i> is a default implementation used by model builders.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>the vertex normal and texture coordinates are initially {@code null}</li>
+	 * <li>the user is responsible for ensuring that {@code null} components are not passed to {@link #buffer(FloatBuffer)}</li>
+	 * </ul>
+	 */
+	class MutableVertex extends AbstractVertex {
+		private Vector normal;
+		private TextureCoordinate coords;
+
 		/**
-		 * Sets the position of this vertex.
+		 * Constructor.
 		 * @param pos Vertex position
 		 */
-		public void position(Point pos) {
-			this.pos = notNull(pos);
+		public MutableVertex(Point pos) {
+			super(pos);
 		}
 
 		@Override
@@ -234,10 +210,8 @@ public interface Vertex extends Bufferable {
 			this.normal = notNull(normal);
 		}
 
-		/**
-		 * @return Texture coordinates
-		 */
-		public TextureCoordinate.Coordinate2D coordinates() {
+		@Override
+		public TextureCoordinate coordinates() {
 			return coords;
 		}
 
@@ -245,13 +219,8 @@ public interface Vertex extends Bufferable {
 		 * Sets the texture coordinates.
 		 * @param coords Coordinates
 		 */
-		public void coordinates(TextureCoordinate.Coordinate2D coords) {
+		public void coordinates(TextureCoordinate coords) {
 			this.coords = notNull(coords);
-		}
-
-		@Override
-		public int size() {
-			return SIZE;
 		}
 
 		@Override
@@ -261,4 +230,25 @@ public interface Vertex extends Bufferable {
 			coords.buffer(buffer);
 		}
 	}
+
+	/**
+	 * @return Vertex position
+	 */
+	Point position();
+
+	/**
+	 * @return Vertex normal
+	 */
+	Vector normal();
+
+	/**
+	 * Sets the vertex normal
+	 * @return Vertex normal
+	 */
+	void normal(Vector normal);
+
+	/**
+	 * @return Vertex texture coordinates
+	 */
+	TextureCoordinate coordinates();
 }

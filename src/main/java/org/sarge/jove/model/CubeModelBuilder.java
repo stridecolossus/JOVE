@@ -56,7 +56,7 @@ public class CubeModelBuilder {
 		add(back, vertices);
 
 		// Init model
-		final Model.Builder<MutableVertex> model = new Model.Builder<>()
+		final Model.Builder<MutableVertex> model = new Model.Builder<MutableVertex>()
 			.primitive(Primitive.TRIANGLE_LIST)
 			.component(Vertex.Component.NORMAL)
 			.component(Vertex.Component.coordinate(2));

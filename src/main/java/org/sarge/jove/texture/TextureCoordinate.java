@@ -46,11 +46,6 @@ public interface TextureCoordinate extends Bufferable {
 		}
 
 		@Override
-		public int size() {
-			return 1;
-		}
-
-		@Override
 		public float[] toArray() {
 			return new float[]{u};
 		}
@@ -128,11 +123,6 @@ public interface TextureCoordinate extends Bufferable {
 		}
 
 		@Override
-		public int size() {
-			return 2;
-		}
-
-		@Override
 		public float[] toArray() {
 			return new float[]{u, v};
 		}
@@ -153,11 +143,6 @@ public interface TextureCoordinate extends Bufferable {
 		public Coordinate3D(float u, float v, float w) {
 			super(u, v);
 			this.w = w;
-		}
-
-		@Override
-		public int size() {
-			return 3;
 		}
 
 		@Override

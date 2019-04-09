@@ -100,11 +100,6 @@ public final class Colour implements Bufferable {
 	}
 
 	@Override
-	public int size() {
-		return SIZE;
-	}
-
-	@Override
 	public void buffer(FloatBuffer buffer) {
 		buffer.put(r).put(g).put(b).put(a);
 	}

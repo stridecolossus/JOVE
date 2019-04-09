@@ -72,21 +72,14 @@ public class VertexTest {
 
 		@BeforeEach
 		public void before() {
-			vertex = new MutableVertex();
+			vertex = new MutableVertex(Point.ORIGIN);
 		}
 
 		@Test
 		public void constructor() {
 			assertEquals(Point.ORIGIN, vertex.position());
-			assertEquals(new Vector(0, 0, 0), vertex.normal());
-			assertEquals(Coordinate2D.BOTTOM_LEFT, vertex.coordinates());
-		}
-
-		@Test
-		public void position() {
-			final Point pos = new Point(1, 2, 3);
-			vertex.position(pos);
-			assertEquals(pos, vertex.position());
+			assertEquals(null, vertex.normal());
+			assertEquals(null, vertex.coordinates());
 		}
 
 		@Test
@@ -104,10 +97,15 @@ public class VertexTest {
 
 		@Test
 		public void buffer() {
-			final FloatBuffer expected = FloatBuffer.allocate(3 + 3 + 2);
 			final FloatBuffer buffer = FloatBuffer.allocate(3 + 3 + 2);
+			vertex.normal(Vector.X_AXIS);
+			vertex.coordinates(Coordinate2D.TOP_RIGHT);
 			vertex.buffer(buffer);
-			buffer.flip();
+
+			final FloatBuffer expected = FloatBuffer.allocate(3 + 3 + 2);
+			Point.ORIGIN.buffer(expected);
+			Vector.X_AXIS.buffer(expected);
+			Coordinate2D.TOP_RIGHT.buffer(expected);
 			assertEquals(expected, buffer);
 		}
 	}

@@ -97,11 +97,6 @@ public class Tuple implements Bufferable {
 	}
 
 	@Override
-	public int size() {
-		return SIZE;
-	}
-
-	@Override
 	public void buffer(FloatBuffer buffer) {
 		buffer.put(x).put(y).put(z);
 	}

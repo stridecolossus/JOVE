@@ -25,7 +25,6 @@ public class ColourTest {
 		assertEquals(0.2f, col.g, 0.0001f);
 		assertEquals(0.3f, col.b, 0.0001f);
 		assertEquals(1.0f, col.a, 0.0001f);
-		assertEquals(4, col.size());
 	}
 
 	@Test

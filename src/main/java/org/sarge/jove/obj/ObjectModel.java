@@ -217,7 +217,7 @@ public class ObjectModel {
 		 */
 		public Model<MutableVertex> build() {
 			// Create model
-			final Model.Builder<MutableVertex> builder = new Model.Builder<>().primitive(Primitive.TRIANGLE_LIST);
+			final Model.Builder<MutableVertex> builder = new Model.Builder<MutableVertex>().primitive(Primitive.TRIANGLE_LIST);
 			// TODO - flag for whether to generate extents? or just always do it?
 
 			// Determine model components
@@ -227,8 +227,8 @@ public class ObjectModel {
 			// Build model vertices
 			for(Face face : faces) {
 				// Create vertex
-				final MutableVertex vertex = new MutableVertex();
-				vertex.position(vertices.get(face.vertex));
+				final Point pos = vertices.get(face.vertex);
+				final MutableVertex vertex = new MutableVertex(pos);
 
 				// Add texture coordinate
 				if(hasCoords) {

@@ -141,11 +141,6 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public int size() {
-		return matrix.length;
-	}
-
-	@Override
 	public void buffer(FloatBuffer buffer) {
 		buffer.put(matrix);
 	}

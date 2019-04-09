@@ -28,14 +28,14 @@ public class ModelTest {
 	}
 
 	@Nested
-	class DefaultModelTests {
+	class ModelTests {
 		private Model<MutableVertex> model;
 		private MutableVertex d;
 
 		@BeforeEach
 		public void before() {
 			d = new MutableVertex(new Point(1, 0, 0));
-			model = new Model.Builder<>()
+			model = new Model.Builder<MutableVertex>()
 				.primitive(Primitive.TRIANGLE_STRIP)
 				.add(a)
 				.add(b)
@@ -51,6 +51,8 @@ public class ModelTest {
 			assertEquals(false, model.isIndexed());
 			assertEquals(List.of(Component.POSITION), model.components());
 			assertEquals(4, model.length());
+			assertNotNull(model.indices());
+			assertEquals(0, model.indices().count());
 		}
 
 		@Test
@@ -60,17 +62,22 @@ public class ModelTest {
 		}
 
 		@Test
-		public void extents() {
-			assertEquals(new Extents(Point.ORIGIN, c.position()), model.extents());
+		public void triangles() {
+			final var triangles = model.triangles();
+			assertNotNull(triangles);
+			assertArrayEquals(new MutableVertex[]{a, b, c}, triangles.next());
+			assertArrayEquals(new MutableVertex[]{b, c, d}, triangles.next());
+			assertEquals(false, triangles.hasNext());
 		}
 
 		@Test
-		public void faces() {
-			final var faces = model.faces();
-			assertNotNull(faces);
-			assertEquals(List.of(a, b, c), faces.next());
-			assertEquals(List.of(b, c, d), faces.next());
-			assertEquals(false, faces.hasNext());
+		public void trianglesInvalidPrimitive() {
+			model = new Model.Builder<MutableVertex>()
+				.primitive(Primitive.LINE_LIST)
+				.add(a)
+				.add(b)
+				.build();
+			assertThrows(IllegalStateException.class, () -> model.triangles());
 		}
 
 		@Test
@@ -82,7 +89,7 @@ public class ModelTest {
 
 		@Test
 		public void computeNormalsInvalidPrimitive() {
-			model = new Model.Builder<>().primitive(Primitive.LINE_LIST).add(a).add(b).build();
+			model = new Model.Builder<MutableVertex>().primitive(Primitive.LINE_LIST).add(a).add(b).build();
 			assertThrows(IllegalStateException.class, () -> model.computeNormals());
 		}
 
@@ -90,6 +97,49 @@ public class ModelTest {
 		public void computeNormalsAlreadyPresent() {
 			model.computeNormals();
 			assertThrows(IllegalStateException.class, () -> model.computeNormals());
+		}
+	}
+
+	@Nested
+	class IndexedModelTests {
+		private Model<MutableVertex> model;
+
+		@BeforeEach
+		public void before() {
+			model = new Model.Builder<MutableVertex>()
+				.primitive(Primitive.TRIANGLE_LIST)
+				.add(a)
+				.add(b)
+				.add(c)
+				.add(2)
+				.add(1)
+				.add(0)
+				.build();
+		}
+
+		@Test
+		public void constructor() {
+			assertNotNull(model);
+			assertEquals(Primitive.TRIANGLE_LIST, model.primitive());
+			assertEquals(true, model.isIndexed());
+			assertEquals(List.of(Component.POSITION), model.components());
+			assertEquals(3, model.length());
+			assertNotNull(model.indices());
+			assertArrayEquals(new int[]{2, 1, 0}, model.indices().toArray());
+		}
+
+		@Test
+		public void vertices() {
+			assertNotNull(model.vertices());
+			assertArrayEquals(new Vertex[]{a, b, c}, model.vertices().toArray());
+		}
+
+		@Test
+		public void triangles() {
+			final var triangles = model.triangles();
+			assertNotNull(triangles);
+			assertArrayEquals(new MutableVertex[]{c, b, a}, triangles.next());
+			assertEquals(false, triangles.hasNext());
 		}
 	}
 
@@ -149,6 +199,12 @@ public class ModelTest {
 			builder.add(a);
 			builder.add(b);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		public void extents() {
+			triangle();
+			assertEquals(new Extents(Point.ORIGIN, c.position()), builder.extents());
 		}
 	}
 }
