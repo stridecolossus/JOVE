@@ -33,9 +33,8 @@ public class LogicalDeviceHandle extends PointerHandle {
 		void destroy(Pointer dev, Pointer handle, Pointer allocator);
 	}
 
-	protected final LogicalDevice dev;
-
-	private Destructor destructor;
+	private final transient LogicalDevice dev;
+	private final transient Destructor destructor;
 
 	/**
 	 * Constructor.
@@ -46,12 +45,18 @@ public class LogicalDeviceHandle extends PointerHandle {
 	protected LogicalDeviceHandle(Pointer handle, LogicalDevice dev, Function<VulkanLibrary, Destructor> mapper) {
 		super(handle);
 		this.dev = notNull(dev);
-		this.destructor = mapper.apply(dev.parent().vulkan().library());
+		this.destructor = mapper.apply(dev.vulkan().library());
 	}
 
 	/**
-	 * Helper.
-	 * @return Vulkan
+	 * @return Logical device
+	 */
+	public LogicalDevice device() {
+		return dev;
+	}
+
+	/**
+	 * @return Vulkan context
 	 */
 	protected Vulkan vulkan() {
 		return dev.parent().vulkan();

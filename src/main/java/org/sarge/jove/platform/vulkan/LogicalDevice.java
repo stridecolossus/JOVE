@@ -133,7 +133,7 @@ public class LogicalDevice extends PointerHandle {
 
 				// Create work
 				return () -> {
-					final VulkanLibraryLogicalDevice lib = queue.device().parent().vulkan().library();
+					final VulkanLibraryLogicalDevice lib = queue.device().vulkan().library();
 					check(lib.vkQueueSubmit(queue.handle(), 1, new VkSubmitInfo[]{info}, fence));
 				};
 			}
@@ -189,7 +189,7 @@ public class LogicalDevice extends PointerHandle {
 		 * Waits for this queue to become idle.
 		 */
 		public void waitIdle() {
-			final VulkanLibrary lib = device().parent().vulkan().library();
+			final VulkanLibrary lib = device().vulkan().library();
 			check(lib.vkQueueWaitIdle(super.handle()));
 		}
 
@@ -229,14 +229,14 @@ public class LogicalDevice extends PointerHandle {
 	/**
 	 * @return Parent physical device
 	 */
-	public PhysicalDevice parent() {
+	protected PhysicalDevice parent() {
 		return parent;
 	}
 
 	/**
 	 * @return Vulkan context
 	 */
-	public Vulkan vulkan() {
+	protected Vulkan vulkan() {
 		return parent.vulkan();
 	}
 

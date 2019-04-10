@@ -106,7 +106,8 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 		if(actual > len) throw new IllegalArgumentException(String.format("Buffer exceeds length of this data buffer: len=%d max=%d", actual, len));
 
 		// Map buffer memory
-		final Vulkan vulkan = dev.parent().vulkan();
+		final LogicalDevice dev = super.device();
+		final Vulkan vulkan = dev.vulkan();
 		final VulkanLibraryMemory lib = vulkan.library();
 		final PointerByReference data = vulkan.factory().reference();
 		lib.vkMapMemory(dev.handle(), mem, 0, actual, 0, data);
@@ -153,7 +154,8 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 
 	@Override
 	protected void cleanup() {
-		final VulkanLibraryMemory lib = dev.parent().vulkan().library();
+		final LogicalDevice dev = super.device();
+		final VulkanLibraryMemory lib = dev.vulkan().library();
 		lib.vkFreeMemory(dev.handle(), mem, null);
 	}
 
@@ -229,7 +231,7 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 			// TODO - queue families
 
 			// Allocate buffer
-			final Vulkan vulkan = dev.parent().vulkan();
+			final Vulkan vulkan = dev.vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference buffer = vulkan.factory().reference();
 			final Pointer logical = dev.handle();

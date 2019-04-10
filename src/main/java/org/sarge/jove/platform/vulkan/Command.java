@@ -181,7 +181,7 @@ public interface Command {
 
 			// Create pool
 			final LogicalDevice dev = queue.device();
-			final Vulkan vulkan = dev.parent().vulkan();
+			final Vulkan vulkan = dev.vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference pool = vulkan.factory().reference();
 			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
@@ -233,7 +233,8 @@ public interface Command {
 			info.commandPool = super.handle();
 
 			// Allocate buffers
-			final Vulkan vulkan = dev.parent().vulkan();
+			final LogicalDevice dev = super.device();
+			final Vulkan vulkan = dev.vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final Pointer[] handles = vulkan.factory().pointers(num);
 			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
@@ -262,7 +263,7 @@ public interface Command {
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
 			final int mask = IntegerEnumeration.mask(Arrays.asList(flags));
-			check(lib.vkResetCommandPool(dev.handle(), super.handle(), mask));
+			check(lib.vkResetCommandPool(device().handle(), super.handle(), mask));
 		}
 
 		/**
@@ -279,7 +280,7 @@ public interface Command {
 		 * Frees command buffers.
 		 */
 		private void free(Pointer[] array) {
-			lib.vkFreeCommandBuffers(dev.handle(), super.handle(), array.length, array);
+			lib.vkFreeCommandBuffers(device().handle(), super.handle(), array.length, array);
 		}
 
 		@Override

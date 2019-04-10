@@ -41,7 +41,7 @@ public class SwapChain extends LogicalDeviceHandle {
 		this.format = notNull(format);
 		this.extents = notNull(extents);
 		this.views = List.copyOf(views);
-		this.index = dev.parent().vulkan().factory().integer();
+		this.index = dev.vulkan().factory().integer();
 	}
 
 	/**
@@ -71,7 +71,8 @@ public class SwapChain extends LogicalDeviceHandle {
 	 * @param fence			Optional fence
 	 */
 	public int next(PointerHandle semaphore, Fence fence) {
-		final VulkanLibrarySwapChain lib = dev.parent().vulkan().library();
+		final LogicalDevice dev = super.device();
+		final VulkanLibrarySwapChain lib = dev.vulkan().library();
 		lib.vkAcquireNextImageKHR(dev.handle(), super.handle(), Long.MAX_VALUE, toPointer(semaphore), toPointer(fence), index);
 		return index.getValue();
 	}
@@ -111,7 +112,7 @@ public class SwapChain extends LogicalDeviceHandle {
 
 		// Present frame
 		// TODO - check
-		final VulkanLibrary lib = dev.parent().vulkan().library();
+		final VulkanLibrary lib = device().vulkan().library();
 		lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info});
 	}
 
@@ -320,7 +321,7 @@ public class SwapChain extends LogicalDeviceHandle {
 			// TODO - check format matches surface.formats
 
 			// Allocate swap-chain
-			final Vulkan vulkan = dev.parent().vulkan();
+			final Vulkan vulkan = dev.vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final ReferenceFactory factory = vulkan.factory();
 			final PointerByReference chain = factory.reference();

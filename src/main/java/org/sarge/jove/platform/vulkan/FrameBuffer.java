@@ -95,7 +95,7 @@ public class FrameBuffer extends LogicalDeviceHandle {
 			info.layers = layers;
 
 			// Allocate frame buffer
-			final Vulkan vulkan = dev.parent().vulkan();
+			final Vulkan vulkan = dev.vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference buffer = vulkan.factory().reference();
 			check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));

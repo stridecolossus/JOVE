@@ -32,7 +32,8 @@ public class LogicalDeviceHandleTest extends AbstractVulkanTest {
 	@Test
 	public void constructor() {
 		assertEquals(ptr, handle.handle());
-		assertEquals(device, handle.dev);
+		assertEquals(device, handle.device());
+		assertEquals(vulkan, handle.vulkan());
 		assertEquals(false, handle.isDestroyed());
 	}
 

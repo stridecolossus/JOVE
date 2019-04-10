@@ -322,8 +322,7 @@ public class VulkanImage extends LogicalDeviceHandle {
 			VALID_TRANSITIONS.validate(aspect, info.initialLayout);
 
 			// Allocate image
-			final PhysicalDevice parent = dev.parent();
-			final Vulkan vulkan = parent.vulkan();
+			final Vulkan vulkan = dev.vulkan();
 			final VulkanLibraryImage lib = vulkan.library();
 			final PointerByReference handle = vulkan.factory().reference();
 			check(lib.vkCreateImage(dev.handle(), info, null, handle));

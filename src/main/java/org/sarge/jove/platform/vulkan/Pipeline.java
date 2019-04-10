@@ -562,7 +562,7 @@ public class Pipeline extends LogicalDeviceHandle {
 			pipeline.basePipelineIndex = -1;
 
 			// Allocate pipeline
-			final Vulkan vulkan = dev.parent().vulkan();
+			final Vulkan vulkan = dev.vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final Pointer[] pipelines = vulkan.factory().pointers(1);
 			check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
@@ -633,7 +633,7 @@ public class Pipeline extends LogicalDeviceHandle {
 				// TODO
 
 				// Allocate layout
-				final Vulkan vulkan = dev.parent().vulkan();
+				final Vulkan vulkan = dev.vulkan();
 				final VulkanLibrary lib = vulkan.library();
 				final PointerByReference layout = vulkan.factory().reference();
 				check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));

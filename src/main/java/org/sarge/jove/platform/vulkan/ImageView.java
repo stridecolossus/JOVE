@@ -23,7 +23,7 @@ public class ImageView extends LogicalDeviceHandle {
 	 * @return Image view
 	 */
 	public static ImageView create(VulkanImage image) {
-		return new Builder(image.dev, image).build();
+		return new Builder(image.device(), image).build();
 	}
 
 	private final VulkanImage image;
@@ -49,7 +49,7 @@ public class ImageView extends LogicalDeviceHandle {
 	 */
 	public class VulkanSampler extends LogicalDeviceHandle implements Sampler {
 		private VulkanSampler(Pointer handle) {
-			super(handle, ImageView.this.dev, lib -> lib::vkDestroySampler);
+			super(handle, ImageView.this.device(), lib -> lib::vkDestroySampler);
 		}
 
 		/**
@@ -98,7 +98,7 @@ public class ImageView extends LogicalDeviceHandle {
 		// Create sampler
 		final Vulkan vulkan = super.vulkan();
 		final PointerByReference sampler = vulkan.factory().reference();
-		check(vulkan.library().vkCreateSampler(super.dev.handle(), info, null, sampler));
+		check(vulkan.library().vkCreateSampler(device().handle(), info, null, sampler));
 		return new VulkanSampler(sampler.getValue());
 	}
 
@@ -241,7 +241,7 @@ public class ImageView extends LogicalDeviceHandle {
 		 */
 		public ImageView build() {
 			// Allocate image view
-			final Vulkan vulkan = dev.parent().vulkan();
+			final Vulkan vulkan = dev.vulkan();
 			final VulkanLibrary lib = vulkan.library();
 			final PointerByReference view = vulkan.factory().reference();
 			check(lib.vkCreateImageView(dev.handle(), info, null, view));
