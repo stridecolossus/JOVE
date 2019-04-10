@@ -20,7 +20,7 @@ public class HeightMap {
 	 * @throws IllegalArgumentException if the height-map is not square
 	 */
 	public static HeightMap of(Image image) {
-		if(!image.header().size().isSquare()) throw new IllegalArgumentException("Height-map image is not square");
+		if(!image.size().isSquare()) throw new IllegalArgumentException("Height-map image is not square");
 		// TODO - this sucks: assumes 4 components, assumes RGBA mapping -> int
 		final ByteBuffer buffer = image.buffer();
 		final int[] map = new int[buffer.capacity() / 4];

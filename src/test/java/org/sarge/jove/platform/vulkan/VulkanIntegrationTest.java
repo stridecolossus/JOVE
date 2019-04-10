@@ -43,7 +43,6 @@ import org.sarge.jove.platform.vulkan.ImageView.VulkanSampler;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.scene.Camera;
 import org.sarge.jove.scene.Projection;
-import org.sarge.jove.texture.DefaultImage;
 import org.sarge.jove.texture.Image;
 import org.sarge.jove.texture.Sampler;
 import org.sarge.jove.util.BufferFactory;
@@ -595,18 +594,14 @@ public class VulkanIntegrationTest {
 	public ImageView texture() throws Exception {
 		// Load texture image
 		System.out.println("loading texture...");
-		final Image image = new DefaultImage.Loader().load(new FileInputStream("src/test/resources/thiswayup.jpg"));
+		final Image image = new Image.Loader().load(new FileInputStream("src/test/resources/thiswayup.jpg"));
 
 		// Create texture
 		//
 
-		final Dimensions dim = image.header().size();
-		final VkFormat format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build();
-
+		final Dimensions dim = image.size();
 		final VulkanImage texture = new VulkanImage.Builder(dev)
 			.image(image)
-//			.format(format)
-//			.extents(dim)
 			.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
 			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)

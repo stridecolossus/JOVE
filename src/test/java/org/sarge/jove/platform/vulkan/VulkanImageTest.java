@@ -16,6 +16,7 @@ public class VulkanImageTest extends AbstractVulkanTest {
 		final VulkanImage image = new VulkanImage(mock(Pointer.class), device, VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, extents);
 		assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, image.format());
 		assertTrue(extents.dataEquals(image.extents()));
+		assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, image.layout());
 	}
 
 	@Test
@@ -38,5 +39,6 @@ public class VulkanImageTest extends AbstractVulkanTest {
 		assertNotNull(image);
 		assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, image.format());
 		assertTrue(VulkanImage.extents(1, 2, 3).dataEquals(image.extents()));
+		assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, image.layout());
 	}
 }

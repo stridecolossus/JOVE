@@ -69,6 +69,8 @@ public class VulkanImage extends LogicalDeviceHandle {
 	private final VkFormat format;
 	private final VkExtent3D extents;
 
+	private VkImageLayout layout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+
 	/**
 	 * Constructor.
 	 * @param handle		Image handle
@@ -94,6 +96,13 @@ public class VulkanImage extends LogicalDeviceHandle {
 	 */
 	public VkExtent3D extents() {
 		return clone(extents);
+	}
+
+	/**
+	 * @return Image layout
+	 */
+	public VkImageLayout layout() {
+		return layout;
 	}
 
 	/**
@@ -133,7 +142,7 @@ public class VulkanImage extends LogicalDeviceHandle {
 		public Builder image(Image image) {
 			final VkFormat format = format(image);
 			format(format);
-			extents(image.header().size());
+			extents(image.size());
 			return this;
 		}
 

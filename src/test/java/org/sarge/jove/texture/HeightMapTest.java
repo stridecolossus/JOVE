@@ -74,7 +74,8 @@ public class HeightMapTest {
 
 			// Create image
 			final Image image = mock(Image.class);
-			when(image.header()).thenReturn(new Image.Header(Image.Format.GRAY_SCALE, new Dimensions(2, 2)));
+			when(image.format()).thenReturn(Image.Format.GRAY_SCALE);
+			when(image.size()).thenReturn(new Dimensions(2, 2));
 			when(image.buffer()).thenReturn(buffer);
 
 			// Create height-map from image
@@ -90,7 +91,8 @@ public class HeightMapTest {
 		@Test
 		public void imageNotSquare() {
 			final Image image = mock(Image.class);
-			when(image.header()).thenReturn(new Image.Header(Image.Format.GRAY_SCALE, new Dimensions(2, 3)));
+			when(image.format()).thenReturn(Image.Format.GRAY_SCALE);
+			when(image.size()).thenReturn(new Dimensions(2, 3));
 			assertThrows(IllegalArgumentException.class, () -> HeightMap.of(image));
 		}
 	}
