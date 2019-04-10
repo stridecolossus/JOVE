@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.IntegerEnumeration;
-import org.sarge.jove.platform.Resource;
 import org.sarge.lib.collection.StrictSet;
 
 import com.sun.jna.Pointer;
@@ -46,10 +45,7 @@ import com.sun.jna.ptr.PointerByReference;
  * <li>queue a command to copy from staging to the device</li>
  * <li>wait for the copy to finish</li>
  * </ol>
- * The {@link #staging(LogicalDevice, long)} helper creates a staging buffer which can be used in conjunction with the {@link BufferCopyHelper}.
- * <p>
- * @see VulkanLibraryBuffer#vkCmdCopyBuffer(Pointer, Pointer, Pointer, int, VkBufferCopy[])
- * @see BufferCopyHelper
+ * The {@link #staging(LogicalDevice, long)} helper creates and populates a staging buffer.
  * @author Sarge
  */
 class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
@@ -57,7 +53,7 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 	 * Helper - Creates a staging buffer visible to both the host and the device.
 	 * @param dev Logical device
 	 * @param len Buffer length (bytes)
-	 * @return staging buffer
+	 * @return Staging buffer
 	 */
 	public static VulkanDataBuffer staging(LogicalDevice dev, long len) {
 		return new VulkanDataBuffer.Builder(dev)
@@ -66,6 +62,18 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 			.length(len)
 			.build();
+	}
+
+	/**
+	 * Helper - Creates and populates a staging buffer visible to both the host and the device.
+	 * @param dev 			Logical device
+	 * @param buffer		data buffer
+	 * @return Staging buffer
+	 */
+	public static VulkanDataBuffer staging(LogicalDevice dev, ByteBuffer buffer) {
+		final VulkanDataBuffer staging = staging(dev, buffer.capacity());
+		staging.push(buffer);
+		return staging;
 	}
 
 	private final long len;
@@ -240,53 +248,6 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 
 			// Create buffer
 			return new VulkanDataBuffer(handle, dev, len, mem);
-		}
-	}
-
-	// TODO
-	public static class CopyGroup implements Resource {
-
-//		public static class Entry {
-//			private final ByteBuffer src;
-//			private final VulkanDataBuffer staging;
-//			private final VulkanDataBuffer dest;
-//
-//			/**
-//			 * Constructor.
-//			 * @param src			Source data buffer
-//			 * @param staging
-//			 * @param dest
-//			 */
-//			public Entry(ByteBuffer src, VulkanDataBuffer dest, LogicalDevice dev) {
-//				this.src = src;
-//				this.staging = staging;
-//				this.dest = dest;
-//			}
-//
-//			public Entry(ByteBuffer src, VkBufferUsageFlag usage, LogicalDevice dev) {
-//
-//			}
-//		}
-//
-//		private final LogicalDevice dev;
-//		private final Collection<Entry> entries;
-//
-//		/**
-//		 * Constructor.
-//		 * @param dev
-//		 * @param entries
-//		 */
-//		public CopyGroup(LogicalDevice dev, Collection<Entry> entries) {
-//			this.dev = dev;
-//			this.entries = entries;
-//		}
-//
-//		public void copy() {
-//
-//		}
-
-		@Override
-		public void destroy() {
 		}
 	}
 }

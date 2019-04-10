@@ -67,7 +67,7 @@ public class DataBufferTest {
 
 	@Test
 	public void of() {
-		final DataBuffer.Layout layout = DataBuffer.Layout.of(List.of(Component.POSITION, Component.COLOUR));
+		final DataBuffer.Layout layout = DataBuffer.Layout.create(List.of(Component.POSITION, Component.COLOUR));
 		assertNotNull(layout);
 		assertEquals(0, layout.binding());
 		assertEquals(Rate.VERTEX, layout.rate());

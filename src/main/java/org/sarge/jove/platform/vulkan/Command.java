@@ -22,6 +22,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>command</i> encapsulates an atomic piece of work performed on a {@link Command.Buffer}.
  * @author Sarge
  */
+@FunctionalInterface
 public interface Command {
 	/**
 	 * Executes this command.

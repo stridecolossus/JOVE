@@ -90,7 +90,7 @@ public interface DataBuffer extends Resource {
 		 * @param components Vertex components
 		 * @return Layout
 		 */
-		public static Layout of(List<Component> components) {
+		public static Layout create(List<Component> components) {
 			final Builder builder = new Builder();
 			for(Component c : components) {
 				builder.add(c);

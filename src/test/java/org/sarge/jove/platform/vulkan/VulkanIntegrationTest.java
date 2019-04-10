@@ -118,7 +118,7 @@ public class VulkanIntegrationTest {
 		///////////////////
 
 		final Model<MutableVertex> model = model();
-		final DataBuffer.Layout layout = DataBuffer.Layout.of(List.of(Vertex.Component.POSITION, Vertex.Component.coordinate(2))); // model.components());
+		final DataBuffer.Layout layout = DataBuffer.Layout.create(List.of(Vertex.Component.POSITION, Vertex.Component.coordinate(2))); // model.components());
 
 		final VulkanDataBuffer vbo = vertexBuffer(model, layout);
 		final VulkanDataBuffer indexBuffer = null; // indexBuffer(model);
@@ -587,15 +587,12 @@ public class VulkanIntegrationTest {
 
 	//////////////////////////
 
-	// TODO - use this as example of de-composition
-
 	public ImageView texture() throws Exception {
 		// Load texture image
 		System.out.println("loading texture...");
 		final Image image = new Image.Loader().load(new FileInputStream("src/test/resources/thiswayup.jpg"));
 
 		// Create texture
-		//
 		final VulkanImage texture = new VulkanImage.Builder(dev)
 			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 			.image(image)
@@ -605,14 +602,7 @@ public class VulkanIntegrationTest {
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.build();
 
-		// Copy image data to staging buffer
-		//
-		final ByteBuffer bytes = image.buffer();
-		final VulkanDataBuffer staging = VulkanDataBuffer.staging(dev, bytes.capacity());
-		staging.push(bytes);
-
 		// Transition to destination
-		//
 		texture
 			.barrier()
 			.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
@@ -621,34 +611,15 @@ public class VulkanIntegrationTest {
 			.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
 			.transition(pool);
 
-		// Copy buffer to image
-		//
+		// Copy image to staging buffer
+		final VulkanDataBuffer staging = VulkanDataBuffer.staging(dev, image.buffer());
 
-		// Init copy descriptor
-		final Dimensions dim = image.size();
-		final VkBufferImageCopy region = new VkBufferImageCopy();
-		region.bufferOffset = 0;
-		region.bufferRowLength = 0;
-		region.bufferImageHeight = 0;
-		region.imageSubresource = new VkImageSubresourceLayers();
-		region.imageSubresource.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
-		region.imageSubresource.mipLevel = 0;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-		region.imageOffset = new VkOffset3D();
-		region.imageExtent = new VkExtent3D();
-		region.imageExtent.width = dim.width;
-		region.imageExtent.height = dim.height;
-		region.imageExtent.depth = 1;
+		// Copy from staging to image
+		final Command copy = texture.copier().from(staging);
+		pool.allocate(copy).submit();
+		staging.destroy();
 
-		// Copy texture
-		final Command.Buffer cb = pool.allocate((lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, staging.handle(), texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, region));
-		cb.submit();
-		cb.queue().waitIdle();
-		cb.free();
-
-		// Transition to final
-		//
+		// Transition to final layout
 		texture
 			.barrier()
 			.layout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -658,11 +629,8 @@ public class VulkanIntegrationTest {
 			.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
 			.transition(pool);
 
-		// Release staging buffer
-		//
-		staging.destroy();
-
-		return new ImageView.Builder(dev, texture).build();
+		// Create view
+		return ImageView.create(texture);
 	}
 
 	///////////////////////
@@ -685,9 +653,7 @@ public class VulkanIntegrationTest {
 //			range.baseArrayLayer = 0;
 //			range.layerCount = 1;
 
-		final ImageView view = new ImageView.Builder(dev, depth)
-			//.range(range)
-			.build();
+		final ImageView view = ImageView.create(depth);
 
 		depth
 			.barrier()

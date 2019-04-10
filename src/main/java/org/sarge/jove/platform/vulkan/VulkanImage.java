@@ -128,51 +128,12 @@ public class VulkanImage extends LogicalDeviceHandle {
 	}
 
 	/**
-	 * Valid transitions helper.
+	 * Creates and configures a copier for this image.
+	 * @return New image copier
 	 */
-	private static class ValidTransitions {
-		private final Map<VkImageLayout, Set<VkImageAspectFlag>> transitions = new HashMap<>();
-
-		/**
-		 * Constructor.
-		 */
-		private ValidTransitions() {
-			// Colour images
-			add(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-			add(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-			// Depth image
-			add(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-		}
-
-		/**
-		 * Registers a valid transition.
-		 */
-		private void add(VkImageAspectFlag aspect, VkImageLayout layout) {
-			transitions.computeIfAbsent(layout, ignored -> new HashSet<>()).add(aspect);
-		}
-
-		/**
-		 * Validates an image layout transition.
-		 * @param aspect		Image aspect(s)
-		 * @param layout		Destination layout
-		 * @throws IllegalArgumentException if the aspect and layout are not compatible
-		 */
-		private void validate(Set<VkImageAspectFlag> aspect, VkImageLayout layout) {
-			// All transitions from undefined are valid
-			if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) {
-				return;
-			}
-
-			// Otherwise check for valid transition
-			final var valid = transitions.get(layout);
-			if((valid == null) || valid.stream().noneMatch(aspect::contains)) {
-				throw new IllegalStateException(String.format("Invalid image transition: layout=%s aspects=%s", layout, aspect));
-			}
-		}
+	public Copier copier() {
+		return new Copier();
 	}
-
-	private static final ValidTransitions VALID_TRANSITIONS = new ValidTransitions();
 
 	/**
 	 * Builder for a Vulkan image.
@@ -383,6 +344,53 @@ public class VulkanImage extends LogicalDeviceHandle {
 	}
 
 	/**
+	 * Valid transitions helper.
+	 */
+	private static class ValidTransitions {
+		private final Map<VkImageLayout, Set<VkImageAspectFlag>> transitions = new HashMap<>();
+
+		/**
+		 * Constructor.
+		 */
+		private ValidTransitions() {
+			// Colour images
+			add(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			add(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+			// Depth image
+			add(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		}
+
+		/**
+		 * Registers a valid transition.
+		 */
+		private void add(VkImageAspectFlag aspect, VkImageLayout layout) {
+			transitions.computeIfAbsent(layout, ignored -> new HashSet<>()).add(aspect);
+		}
+
+		/**
+		 * Validates an image layout transition.
+		 * @param aspect		Image aspect(s)
+		 * @param layout		Destination layout
+		 * @throws IllegalArgumentException if the aspect and layout are not compatible
+		 */
+		private void validate(Set<VkImageAspectFlag> aspect, VkImageLayout layout) {
+			// All transitions from undefined are valid
+			if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) {
+				return;
+			}
+
+			// Otherwise check for valid transition
+			final var valid = transitions.get(layout);
+			if((valid == null) || valid.stream().noneMatch(aspect::contains)) {
+				throw new IllegalStateException(String.format("Invalid image transition: layout=%s aspects=%s", layout, aspect));
+			}
+		}
+	}
+
+	private static final ValidTransitions VALID_TRANSITIONS = new ValidTransitions();
+
+	/**
 	 * A <i>pipeline barrier</i> is used to transition the layout of this image.
 	 * <p>
 	 * Example:
@@ -493,5 +501,42 @@ public class VulkanImage extends LogicalDeviceHandle {
 			buffer.queue().waitIdle();
 			buffer.free();
 		}
+	}
+
+	/**
+	 * An <i>image copier</i> is used to copy this image to/from a data buffer.
+	 */
+	public class Copier {
+		private final VkBufferImageCopy copy = new VkBufferImageCopy();
+
+		/**
+		 * Constructor.
+		 */
+		private Copier() {
+			copy.bufferOffset = 0;
+			copy.bufferRowLength = 0;
+			copy.bufferImageHeight = 0;
+			copy.imageSubresource.aspectMask = IntegerEnumeration.mask(aspect);
+			copy.imageSubresource.mipLevel = 0;
+			copy.imageSubresource.baseArrayLayer = 0;
+			copy.imageSubresource.layerCount = 1;
+			copy.imageExtent = extents;
+		}
+
+		/**
+		 * Creates a command to copy <b>from</b> the given data buffer to this image.
+		 * @param buffer Source buffer
+		 * @return Copy command
+		 */
+		public Command from(VulkanDataBuffer buffer) {
+			// TODO
+			// - validate
+			// - layout
+			// - copy descriptor
+			return (lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, buffer.handle(), VulkanImage.this.handle(), layout, 1, copy);
+		}
+
+		// TODO - copy-to-buffer command
+		// TODO - configure VkBufferImageCopy
 	}
 }

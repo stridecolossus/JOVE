@@ -17,6 +17,15 @@ import com.sun.jna.ptr.PointerByReference;
  * TODO - no destroy for swap-chain images
  */
 public class ImageView extends LogicalDeviceHandle {
+	/**
+	 * Creates a simple view of the given image.
+	 * @param image Image
+	 * @return Image view
+	 */
+	public static ImageView create(VulkanImage image) {
+		return new Builder(image.dev, image).build();
+	}
+
 	private final VulkanImage image;
 
 	/**

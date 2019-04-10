@@ -46,4 +46,8 @@ public class VulkanImageTest extends AbstractVulkanTest {
 		assertTrue(VulkanImage.extents(1, 2, 3).dataEquals(image.extents()));
 		assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, image.layout());
 	}
+
+	// TODO
+	// - barrier
+	// - copier
 }

@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Event;
-import org.sarge.jove.platform.glfw.FrameworkHelper;
 
 public class FrameworkHelperTest {
 	@Test

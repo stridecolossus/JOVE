@@ -68,7 +68,7 @@ public class ObjectModelLoaderTest {
 		assertEquals(Optional.of(mat), group.material());
 
 		// Build generic model
-		final Model model = group.build();
+		final Model<?> model = group.build();
 		assertEquals(false, model.isIndexed());
 		assertEquals(3 * 3, model.vertices().size());
 	}
