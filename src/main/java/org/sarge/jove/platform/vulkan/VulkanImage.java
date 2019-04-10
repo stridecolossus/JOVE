@@ -4,10 +4,14 @@ import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.model.Vertex;
+import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.texture.Image;
 import org.sarge.lib.collection.StrictSet;
 
@@ -36,11 +40,11 @@ public class VulkanImage extends LogicalDeviceHandle {
 		switch(extents.length) {
 		case 3:
 			result.depth = oneOrMore(extents[2]);
-			//$FALL-THROUGH$
+			// $FALL-THROUGH$
 
 		case 2:
 			result.height = oneOrMore(extents[1]);
-			//$FALL-THROUGH$
+			// $FALL-THROUGH$
 
 		case 1:
 			result.width = oneOrMore(extents[0]);
@@ -66,6 +70,7 @@ public class VulkanImage extends LogicalDeviceHandle {
 		return clone;
 	}
 
+	private final Set<VkImageAspectFlag> aspect;
 	private final VkFormat format;
 	private final VkExtent3D extents;
 
@@ -75,13 +80,22 @@ public class VulkanImage extends LogicalDeviceHandle {
 	 * Constructor.
 	 * @param handle		Image handle
 	 * @param dev			Logical device
+	 * @param aspect		Image aspect(s)
 	 * @param format		Image format
 	 * @param extents		Image extents
 	 */
-	public VulkanImage(Pointer handle, LogicalDevice dev, VkFormat format, VkExtent3D extents) {
+	public VulkanImage(Pointer handle, LogicalDevice dev, Set<VkImageAspectFlag> aspect, VkFormat format, VkExtent3D extents) {
 		super(handle, dev, lib -> lib::vkDestroyImage); // TODO - not required for swap-chain images
+		this.aspect = Set.copyOf(aspect);
 		this.format = notNull(format);
 		this.extents = clone(extents);
+	}
+
+	/**
+	 * @return Image aspect(s)
+	 */
+	public Set<VkImageAspectFlag> aspect() {
+		return aspect;
 	}
 
 	/**
@@ -106,12 +120,68 @@ public class VulkanImage extends LogicalDeviceHandle {
 	}
 
 	/**
+	 * Creates and configures a pipeline barrier for this image.
+	 * @return New pipeline barrier
+	 */
+	public Barrier barrier() {
+		return new Barrier();
+	}
+
+	/**
+	 * Valid transitions helper.
+	 */
+	private static class ValidTransitions {
+		private final Map<VkImageLayout, Set<VkImageAspectFlag>> transitions = new HashMap<>();
+
+		/**
+		 * Constructor.
+		 */
+		private ValidTransitions() {
+			// Colour images
+			add(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			add(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+			// Depth image
+			add(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		}
+
+		/**
+		 * Registers a valid transition.
+		 */
+		private void add(VkImageAspectFlag aspect, VkImageLayout layout) {
+			transitions.computeIfAbsent(layout, ignored -> new HashSet<>()).add(aspect);
+		}
+
+		/**
+		 * Validates an image layout transition.
+		 * @param aspect		Image aspect(s)
+		 * @param layout		Destination layout
+		 * @throws IllegalArgumentException if the aspect and layout are not compatible
+		 */
+		private void validate(Set<VkImageAspectFlag> aspect, VkImageLayout layout) {
+			// All transitions from undefined are valid
+			if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) {
+				return;
+			}
+
+			// Otherwise check for valid transition
+			final var valid = transitions.get(layout);
+			if((valid == null) || valid.stream().noneMatch(aspect::contains)) {
+				throw new IllegalStateException(String.format("Invalid image transition: layout=%s aspects=%s", layout, aspect));
+			}
+		}
+	}
+
+	private static final ValidTransitions VALID_TRANSITIONS = new ValidTransitions();
+
+	/**
 	 * Builder for a Vulkan image.
 	 */
 	public static class Builder {
 		private final LogicalDevice dev;
 		private final VkImageCreateInfo info = new VkImageCreateInfo();
 		private final Set<VkMemoryPropertyFlag> props = new StrictSet<>();
+		private final Set<VkImageAspectFlag> aspect = new StrictSet<>();
 
 		/**
 		 * Constructor.
@@ -161,6 +231,15 @@ public class VulkanImage extends LogicalDeviceHandle {
 		}
 
 		/**
+		 * Sets the aspect of this image.
+		 * @param aspect Image aspect
+		 */
+		public Builder aspect(VkImageAspectFlag aspect) {
+			this.aspect.add(aspect);
+			return this;
+		}
+
+		/**
 		 * Sets the type of this image.
 		 * @param type Image type
 		 */
@@ -179,8 +258,8 @@ public class VulkanImage extends LogicalDeviceHandle {
 		}
 
 		/**
-		 * Sets the extents of a 2D image.
-		 * @param extents Image extents
+		 * Convenience method to set the extents of a 2D image.
+		 * @param dim Image dimensions
 		 */
 		public Builder extents(Dimensions dim) {
 			info.extent = VulkanImage.extents(dim.width, dim.height);
@@ -278,6 +357,8 @@ public class VulkanImage extends LogicalDeviceHandle {
 			if(info.extent == null) throw new IllegalArgumentException("Image extents not specified");
 			if(info.format == null) throw new IllegalArgumentException("Image format not specified");
 			// TODO - check format supported by device
+			if(aspect.isEmpty()) throw new IllegalArgumentException("Image aspect(s) not specified");
+			VALID_TRANSITIONS.validate(aspect, info.initialLayout);
 
 			// Allocate image
 			final PhysicalDevice parent = dev.parent();
@@ -297,7 +378,120 @@ public class VulkanImage extends LogicalDeviceHandle {
 			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem, 0L));
 
 			// Create image
-			return new VulkanImage(handle.getValue(), dev, info.format, info.extent);
+			return new VulkanImage(handle.getValue(), dev, aspect, info.format, info.extent);
+		}
+	}
+
+	/**
+	 * A <i>pipeline barrier</i> is used to transition the layout of this image.
+	 * <p>
+	 * Example:
+	 * <pre>
+	 * image
+	 *     .barrier()
+	 *     .layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	 *     .source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+	 *     .destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
+	 *     .destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+	 *     .transition(pool);
+	 * </pre>
+	 * where {@code pool} is this case would be a transfer command pool.
+	 */
+	public class Barrier {
+		private final VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
+		private VkPipelineStageFlag src = VkPipelineStageFlag.VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+		private VkPipelineStageFlag dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+
+		/**
+		 * Constructor.
+		 */
+		private Barrier() {
+			// Init descriptor
+			final VulkanImage image = VulkanImage.this;
+			barrier.image = image.handle();
+			barrier.oldLayout = image.layout;
+			barrier.srcQueueFamilyIndex = -1;
+			barrier.dstQueueFamilyIndex = -1;
+
+			// Init resource range
+			// TODO - expose as builder?
+			barrier.subresourceRange.aspectMask = IntegerEnumeration.mask(image.aspect);
+			barrier.subresourceRange.baseMipLevel = 0;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
+		}
+
+		/**
+		 * Sets the new layout.
+		 * @param layout New layout
+		 */
+		public Barrier layout(VkImageLayout layout) {
+			barrier.newLayout = notNull(layout);
+			return this;
+		}
+
+		/**
+		 * Adds a source access flag.
+		 * @param access Access flag
+		 */
+		public Barrier source(VkAccessFlag access) {
+			barrier.srcAccessMask |= access.value();
+			return this;
+		}
+
+		/**
+		 * Sets the source pipeline stage.
+		 * @param src Pipeline stage
+		 */
+		public Barrier source(VkPipelineStageFlag src) {
+			this.src = notNull(src);
+			return this;
+		}
+
+		/**
+		 * Adds a destination access flag.
+		 * @param access Access flag
+		 */
+		public Barrier destination(VkAccessFlag access) {
+			barrier.dstAccessMask |= access.value();
+			return this;
+		}
+
+		/**
+		 * Sets the destination pipeline stage.
+		 * @param dest Pipeline stage
+		 */
+		public Barrier destination(VkPipelineStageFlag dest) {
+			this.dest = notNull(dest);
+			return this;
+		}
+
+		/**
+		 * Creates a command for this barrier.
+		 * @return New barrier command
+		 * @throws IllegalArgumentException if the new layout is not valid for this image
+		 */
+		public Command command() {
+			if(barrier.newLayout == null) throw new IllegalArgumentException("New layout not specified");
+			if(barrier.newLayout == VulkanImage.this.layout) throw new IllegalArgumentException("Cannot transition to existing layout: " + layout);
+			VALID_TRANSITIONS.validate(aspect, barrier.newLayout);
+			return (lib, cmd) -> lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier});
+		}
+
+		/**
+		 * Helper - Performs this pipeline barrier transition.
+		 * The transition is executed using a once-only command buffer and blocks until completion.
+		 * @param pool Command pool
+		 * @throws IllegalArgumentException if the new layout is not valid for this image
+		 * @see Command.Pool#allocate(Command)
+		 * @see #command()
+		 */
+		public synchronized void transition(Command.Pool pool) {
+			final Command.Buffer buffer = pool.allocate(command());
+			buffer.submit();
+			buffer.queue().waitIdle();
+			buffer.free();
 		}
 	}
 }

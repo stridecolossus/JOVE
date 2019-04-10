@@ -7,6 +7,7 @@ import static org.sarge.lib.util.Check.range;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -339,16 +340,8 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * Creates the image and view for the given swap-chain image.
 		 */
 		private ImageView view(Pointer handle) {
-			// Build image extents
-			final VkExtent3D extent = new VkExtent3D();
-			extent.width = info.imageExtent.width;
-			extent.height = info.imageExtent.height;
-			extent.depth = 1;
-
-			// Create image
-			final VulkanImage image = new VulkanImage(handle, dev, info.imageFormat, extent);
-
-			// Create view
+			final VkExtent3D extent = VulkanImage.extents(info.imageExtent.width, info.imageExtent.height);
+			final VulkanImage image = new VulkanImage(handle, dev, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT), info.imageFormat, extent);
 			return new ImageView.Builder(dev, image).build();
 		}
 	}

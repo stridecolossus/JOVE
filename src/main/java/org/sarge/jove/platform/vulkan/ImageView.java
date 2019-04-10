@@ -3,6 +3,9 @@ package org.sarge.jove.platform.vulkan;
 import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.Set;
+
+import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.texture.Sampler;
 
 import com.sun.jna.Pointer;
@@ -163,7 +166,7 @@ public class ImageView extends LogicalDeviceHandle {
 			info.viewType = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D;
 			info.format = image.format();
 			info.components = mapping();
-			info.subresourceRange = range();
+			info.subresourceRange = range(image.aspect());
 		}
 
 		/**
@@ -185,9 +188,10 @@ public class ImageView extends LogicalDeviceHandle {
 		/**
 		 * @return Default image sub-resource descriptor
 		 */
-		private static VkImageSubresourceRange range() {
+		private static VkImageSubresourceRange range(Set<VkImageAspectFlag> aspect) {
+			// TODO - is this not the same as the one we use to create the image?
 			final VkImageSubresourceRange range = new VkImageSubresourceRange();
-			range.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
+			range.aspectMask = IntegerEnumeration.mask(aspect); //VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
 			range.baseMipLevel = 0;
 			range.levelCount = 1;
 			range.baseArrayLayer = 0;

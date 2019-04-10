@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import static org.junit.Assert.assertNotNull;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,7 +28,6 @@ import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
-import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -598,9 +596,8 @@ public class VulkanIntegrationTest {
 
 		// Create texture
 		//
-
-		final Dimensions dim = image.size();
 		final VulkanImage texture = new VulkanImage.Builder(dev)
+			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 			.image(image)
 			.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
 			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
@@ -610,18 +607,25 @@ public class VulkanIntegrationTest {
 
 		// Copy image data to staging buffer
 		//
-		final long len = dim.width * dim.height * 4; // TODO - from image format
-		final VulkanDataBuffer staging = VulkanDataBuffer.staging(dev, len);
-		staging.push(image.buffer());
+		final ByteBuffer bytes = image.buffer();
+		final VulkanDataBuffer staging = VulkanDataBuffer.staging(dev, bytes.capacity());
+		staging.push(bytes);
 
 		// Transition to destination
 		//
-		transition(texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0);
+		texture
+			.barrier()
+			.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+			.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+			.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
+			.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+			.transition(pool);
 
 		// Copy buffer to image
 		//
 
 		// Init copy descriptor
+		final Dimensions dim = image.size();
 		final VkBufferImageCopy region = new VkBufferImageCopy();
 		region.bufferOffset = 0;
 		region.bufferRowLength = 0;
@@ -645,84 +649,27 @@ public class VulkanIntegrationTest {
 
 		// Transition to final
 		//
-		transition(texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
+		texture
+			.barrier()
+			.layout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+			.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
+			.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+			.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+			.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
+			.transition(pool);
 
 		// Release staging buffer
 		//
 		staging.destroy();
 
-		//final VulkanImage texture = new VulkanImage(handle.getValue(), info.format, new VkExtent2D(image.header().size()));
-
 		return new ImageView.Builder(dev, texture).build();
-	}
-
-	/**
-	 * TODO
-	 * - barrier class?
-	 * - helper to create a one-off command buffer with a single command
-	 * - ditto for Work
-	 * - option on submit() to wait
-	 *
-	 */
-
-	private void transition(Pointer image, VkImageLayout prev, VkImageLayout next, int type) {		// TODO - bodge
-		// Init memory barrier descriptor
-		final VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
-		barrier.oldLayout = notNull(prev);
-		barrier.newLayout = notNull(next);
-		barrier.srcQueueFamilyIndex = -1;
-		barrier.dstQueueFamilyIndex = -1;
-		barrier.image = notNull(image);
-
-		// Init range
-		barrier.subresourceRange = new VkImageSubresourceRange();
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		// Init access flags
-		VkPipelineStageFlag src, dest;
-		switch(type) {
-		case 0:
-			barrier.subresourceRange.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT.value();
-			src = VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT;
-			break;
-
-		case 1:
-			barrier.subresourceRange.aspectMask = VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value();
-			barrier.srcAccessMask = VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT.value();
-			barrier.dstAccessMask = VkAccessFlag.VK_ACCESS_SHADER_READ_BIT.value();
-			src = VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT;
-			dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			break;
-
-		case 2:
-			barrier.subresourceRange.aspectMask = IntegerEnumeration.mask(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT); // , VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT);
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = IntegerEnumeration.mask(Set.of(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT, VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT));
-			src = VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			dest = VkPipelineStageFlag.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-			break;
-
-		default:
-			throw new RuntimeException();
-		}
-
-		// Apply barrier
-		final Command.Buffer cb = pool.allocate((lib, cmd) -> lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier}));
-		cb.submit();
-		cb.queue().waitIdle();
-		cb.free();
 	}
 
 	///////////////////////
 
 	public ImageView depth(Dimensions dim) {
 		final VulkanImage depth = new VulkanImage.Builder(dev)
+			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
 			.extents(dim)
 			.format(VkFormat.VK_FORMAT_D32_SFLOAT)
 			.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
@@ -730,19 +677,26 @@ public class VulkanIntegrationTest {
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.build();
 
-		// TODO - sub-builder
-		final VkImageSubresourceRange range = new VkImageSubresourceRange();
-			range.aspectMask = IntegerEnumeration.mask(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT); // , VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT);
-			range.baseMipLevel = 0;
-			range.levelCount = 1;
-			range.baseArrayLayer = 0;
-			range.layerCount = 1;
+//		// TODO - sub-builder
+//		final VkImageSubresourceRange range = new VkImageSubresourceRange();
+//			range.aspectMask = IntegerEnumeration.mask(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT); // , VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT);
+//			range.baseMipLevel = 0;
+//			range.levelCount = 1;
+//			range.baseArrayLayer = 0;
+//			range.layerCount = 1;
 
 		final ImageView view = new ImageView.Builder(dev, depth)
-			.range(range)
+			//.range(range)
 			.build();
 
-		transition(depth.handle(), VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 2);
+		depth
+			.barrier()
+			.layout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+			.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+			.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT)
+			.destination(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
+			.destination(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
+			.transition(pool);
 
 		return view;
 	}
