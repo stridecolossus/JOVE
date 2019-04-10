@@ -56,6 +56,7 @@ public abstract class AbstractVulkanTest {
 		// Create logical device
 		device = mock(LogicalDevice.class);
 		when(device.handle()).thenReturn(mock(Pointer.class));
+		when(device.vulkan()).thenReturn(vulkan);
 		when(device.semaphore()).thenReturn(mock(PointerHandle.class));
 
 		// Create physical device

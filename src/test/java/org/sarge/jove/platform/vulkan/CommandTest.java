@@ -18,16 +18,20 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.Command.Buffer;
 import org.sarge.jove.platform.vulkan.Command.Pool;
+import org.sarge.jove.platform.vulkan.LogicalDevice.Queue;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
 
 public class CommandTest extends AbstractVulkanTest {
 	private Command cmd;
+	private Queue queue;
 
 	@BeforeEach
 	public void before() {
 		cmd = mock(Command.class);
+		queue = mock(Queue.class);
+		when(queue.device()).thenReturn(device);
 	}
 
 	@Nested
@@ -37,7 +41,7 @@ public class CommandTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		public void before() {
-			final Pool pool = new Pool(mock(Pointer.class), device);
+			final Pool pool = new Pool(mock(Pointer.class), queue);
 			handle = mock(Pointer.class);
 			buffer = new Buffer(handle, pool);
 		}
@@ -45,6 +49,7 @@ public class CommandTest extends AbstractVulkanTest {
 		@Test
 		public void constructor() {
 			assertEquals(handle, buffer.handle());
+			assertEquals(queue, buffer.queue());
 			assertEquals(false, buffer.isReady());
 		}
 
@@ -103,6 +108,12 @@ public class CommandTest extends AbstractVulkanTest {
 		}
 
 		@Test
+		public void submit() {
+			buffer.submit();
+			verify(queue).submit(buffer);
+		}
+
+		@Test
 		public void reset() {
 			buffer.begin();
 			buffer.end();
@@ -137,11 +148,12 @@ public class CommandTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		public void before() {
-			pool = new Pool(new Pointer(42), device);
+			pool = new Pool(new Pointer(42), queue);
 		}
 
 		@Test
 		public void constructor() {
+			assertEquals(queue, pool.queue());
 			assertNotNull(pool.buffers());
 			assertEquals(0, pool.buffers().count());
 		}

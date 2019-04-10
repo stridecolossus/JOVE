@@ -35,7 +35,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 		@Test
 		public void constructor() {
 			assertEquals(VkFormat.VK_FORMAT_B8G8R8A8_UNORM, chain.format());
-			assertEquals(extent, chain.extent());
+			assertEquals(extent, chain.extents());
 			assertEquals(List.of(view), chain.images());
 		}
 	}

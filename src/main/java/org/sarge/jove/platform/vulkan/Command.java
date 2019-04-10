@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.platform.vulkan.LogicalDevice.Queue;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 import com.sun.jna.Pointer;
@@ -62,6 +63,13 @@ public interface Command {
 		 */
 		Pointer handle() {
 			return handle;
+		}
+
+		/**
+		 * @return Work queue for this command buffer
+		 */
+		public Queue queue() {
+			return pool.queue();
 		}
 
 		/**
@@ -127,6 +135,14 @@ public interface Command {
 		}
 
 		/**
+		 * Submit this command buffer to its work queue.
+		 * @see Queue#submit(Buffer)
+		 */
+		public void submit() {
+			pool.queue().submit(this);
+		}
+
+		/**
 		 * Resets this command buffer.
 		 * @param flags Flags
 		 * @throws IllegalStateException if this buffer has not been recorded
@@ -156,7 +172,7 @@ public interface Command {
 		 * @param queue		Work queue
 		 * @param flags		Flags
 		 */
-		public static Pool create(LogicalDevice.Queue queue, VkCommandPoolCreateFlag... flags) {
+		public static Pool create(Queue queue, VkCommandPoolCreateFlag... flags) {
 			// Init pool descriptor
 			final VkCommandPoolCreateInfo info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
@@ -170,10 +186,11 @@ public interface Command {
 			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
 
 			// Create wrapper
-			return new Pool(pool.getValue(), dev);
+			return new Pool(pool.getValue(), queue);
 		}
 
 		private final VulkanLibrary lib;
+		private final Queue queue;
 		private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
 
 		/**
@@ -181,9 +198,17 @@ public interface Command {
 		 * @param handle 			Command pool handle
 		 * @param dev				Device
 		 */
-		protected Pool(Pointer handle, LogicalDevice dev) {
-			super(handle, dev, lib -> lib::vkDestroyCommandPool);
-			this.lib = dev.parent().vulkan().library();
+		protected Pool(Pointer handle, Queue queue) {
+			super(handle, queue.device(), lib -> lib::vkDestroyCommandPool);
+			this.queue = notNull(queue);
+			this.lib = queue.device().vulkan().library();
+		}
+
+		/**
+		 * @return Work queue for this pool
+		 */
+		public Queue queue() {
+			return queue;
 		}
 
 		/**

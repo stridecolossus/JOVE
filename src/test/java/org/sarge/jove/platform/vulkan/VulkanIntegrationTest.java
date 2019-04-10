@@ -114,7 +114,7 @@ public class VulkanIntegrationTest {
 		pool = Command.Pool.create(dev.queue(graphics));
 
 		System.out.println("Creating depth attachment");
-		final ImageView depth = depth(chain.extent());
+		final ImageView depth = depth(chain.extents());
 
 		final RenderPass pass = renderPass(chain.format());
 
@@ -148,7 +148,7 @@ public class VulkanIntegrationTest {
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 			.build();
 
-		final Pipeline pipeline = pipeline(vert, frag, chain.extent(), pass, layout, dsLayout);
+		final Pipeline pipeline = pipeline(vert, frag, chain.extents(), pass, layout, dsLayout);
 
 		System.out.println("Allocating descriptor sets");
 		final DescriptorSet.Layout[] array = new DescriptorSet.Layout[cmds.size()];
@@ -167,7 +167,7 @@ public class VulkanIntegrationTest {
 		final FrameBuffer[] frameBuffers = new FrameBuffer[cmds.size()];
 		final VulkanDataBuffer[] uniforms = new VulkanDataBuffer[cmds.size()];
 		for(int n = 0; n < cmds.size(); ++n) {
-			final FrameBuffer fb = frameBuffer(pass, chain.extent(), chain.images().get(n), depth);
+			final FrameBuffer fb = frameBuffer(pass, chain.extents(), chain.images().get(n), depth);
 			frameBuffers[n] = fb;
 
 			final VulkanDataBuffer uniform = uniform();
@@ -189,7 +189,7 @@ public class VulkanIntegrationTest {
 		System.out.println("Initialising controller");
 		final AtomicBoolean running = new AtomicBoolean(true);
 		final Device<?> input = window.device();
-		controller(input, running, chain.extent());
+		controller(input, running, chain.extents());
 
 		// Start render loop
 		System.out.println("Starting render loop...");
@@ -216,7 +216,7 @@ public class VulkanIntegrationTest {
 		/////
 
 		System.out.println("Waiting...");
-		lib.vkDeviceWaitIdle(dev.handle());
+		dev.waitIdle();
 
 		System.out.println("Cleaning up...");
 
@@ -580,9 +580,8 @@ public class VulkanIntegrationTest {
 		final Command.Buffer cmd = pool.allocate(copy);
 
 		System.out.println("Copying...");
-		final LogicalDevice.Queue queue = dev.queue(transfer);
-		queue.submit(cmd);
-		queue.waitIdle();
+		cmd.submit();
+		cmd.queue().waitIdle();
 
 		System.out.println("Releasing resources");
 		staging.destroy();
@@ -605,8 +604,9 @@ public class VulkanIntegrationTest {
 		final VkFormat format = new VulkanHelper.FormatBuilder().bytes(1).signed(false).type(Vertex.Component.Type.NORM).build();
 
 		final VulkanImage texture = new VulkanImage.Builder(dev)
-			.format(format)
-			.extents(dim)
+			.image(image)
+//			.format(format)
+//			.extents(dim)
 			.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
 			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
@@ -644,9 +644,8 @@ public class VulkanIntegrationTest {
 
 		// Copy texture
 		final Command.Buffer cb = pool.allocate((lib, cmd) -> lib.vkCmdCopyBufferToImage(cmd, staging.handle(), texture.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, region));
-		final LogicalDevice.Queue queue = dev.queue(transfer);
-		queue.submit(cb);
-		queue.waitIdle();
+		cb.submit();
+		cb.queue().waitIdle();
 		cb.free();
 
 		// Transition to final
@@ -720,9 +719,8 @@ public class VulkanIntegrationTest {
 
 		// Apply barrier
 		final Command.Buffer cb = pool.allocate((lib, cmd) -> lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier}));
-		final LogicalDevice.Queue queue = dev.queue(transfer);
-		queue.submit(cb);
-		queue.waitIdle();
+		cb.submit();
+		cb.queue().waitIdle();
 		cb.free();
 	}
 

@@ -28,7 +28,6 @@ import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import com.sun.jna.Pointer;
 
 public class LogicalDeviceTest extends AbstractVulkanTest {
-	private LogicalDevice dev;
 	private PhysicalDevice parent;
 	private QueueFamily family;
 
@@ -43,45 +42,52 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 		when(family.count()).thenReturn(1);
 
 		// Create logical device
-		dev = new LogicalDevice(new Pointer(42), parent, Map.of(family, List.of(mock(Pointer.class))));
+		device = new LogicalDevice(new Pointer(42), parent, Map.of(family, List.of(mock(Pointer.class))));
 	}
 
 	@Test
 	public void constructor() {
-		assertEquals(parent, dev.parent());
+		assertEquals(parent, device.parent());
+		assertEquals(vulkan, device.vulkan());
 	}
 
 	@Test
 	public void queues() {
-		final Queue queue = dev.queue(family);
+		final Queue queue = device.queue(family);
 		assertNotNull(queue);
 		assertEquals(family, queue.family());
-		assertEquals(dev, queue.device());
-		assertEquals(queue, dev.queue(family, 0));
-		assertEquals(List.of(queue), dev.queues(family));
-		assertEquals(Map.of(family, List.of(queue)), dev.queues());
+		assertEquals(device, queue.device());
+		assertEquals(queue, device.queue(family, 0));
+		assertEquals(List.of(queue), device.queues(family));
+		assertEquals(Map.of(family, List.of(queue)), device.queues());
 	}
 
 	@Test
 	public void queuesInvalidFamily() {
 		final QueueFamily other = mock(QueueFamily.class);
-		assertThrows(IllegalArgumentException.class, () -> dev.queues(other));
-		assertThrows(IllegalArgumentException.class, () -> dev.queue(other));
+		assertThrows(IllegalArgumentException.class, () -> device.queues(other));
+		assertThrows(IllegalArgumentException.class, () -> device.queue(other));
 	}
 
 	@Test
 	public void queueInvalidIndex() {
-		assertThrows(IllegalArgumentException.class, () -> dev.queue(family, 999));
+		assertThrows(IllegalArgumentException.class, () -> device.queue(family, 999));
 	}
 
 	@Test
 	public void semaphore() {
-		final PointerHandle semaphore = dev.semaphore();
+		final PointerHandle semaphore = device.semaphore();
 		final Pointer prev = semaphore.handle();
 		assertNotNull(semaphore);
-		verify(library).vkCreateSemaphore(eq(dev.handle()), argThat(structure(new VkSemaphoreCreateInfo())), isNull(), eq(factory.reference()));
+		verify(library).vkCreateSemaphore(eq(device.handle()), argThat(structure(new VkSemaphoreCreateInfo())), isNull(), eq(factory.reference()));
 		semaphore.destroy();
-		verify(library).vkDestroySemaphore(dev.handle(), prev, null);
+		verify(library).vkDestroySemaphore(device.handle(), prev, null);
+	}
+
+	@Test
+	public void waitIdle() {
+		device.waitIdle();
+		verify(library).vkDeviceWaitIdle(device.handle());
 	}
 
 	@Nested
@@ -90,7 +96,7 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		public void before() {
-			queue = dev.queue(family);
+			queue = device.queue(family);
 		}
 
 		@Test
@@ -144,19 +150,19 @@ public class LogicalDeviceTest extends AbstractVulkanTest {
 		@Test
 		public void build() {
 			// Create logical device with one queue
-			dev = builder
+			device = builder
 				.queue(family)
 				.extension("ext")
 				.layer("layer", 1)
 				.build();
 
 			// Check created device
-			assertNotNull(dev);
+			assertNotNull(device);
 			verify(library).vkCreateDevice(eq(parent.handle()), any(VkDeviceCreateInfo.class), isNull(), eq(factory.reference()));
 
 			// Check queue
-			assertNotNull(dev.queue(family, 0));
-			verify(library).vkGetDeviceQueue(eq(dev.handle()), eq(0), eq(0), eq(factory.reference()));
+			assertNotNull(device.queue(family, 0));
+			verify(library).vkGetDeviceQueue(eq(device.handle()), eq(0), eq(0), eq(factory.reference()));
 
 			// Check extensions and layers
 			// TODO

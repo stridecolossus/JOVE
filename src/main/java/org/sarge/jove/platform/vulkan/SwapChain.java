@@ -23,7 +23,7 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class SwapChain extends LogicalDeviceHandle {
 	private final VkFormat format;
-	private final Dimensions extent;
+	private final Dimensions extents;
 	private final List<ImageView> views;
 	private final IntByReference index;
 
@@ -35,10 +35,10 @@ public class SwapChain extends LogicalDeviceHandle {
 	 * @param extent		Image extent
 	 * @param views			Image views
 	 */
-	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extent, List<ImageView> views) {
+	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extents, List<ImageView> views) {
 		super(handle, dev, lib -> lib::vkDestroySwapchainKHR);
 		this.format = notNull(format);
-		this.extent = notNull(extent);
+		this.extents = notNull(extents);
 		this.views = List.copyOf(views);
 		this.index = dev.parent().vulkan().factory().integer();
 	}
@@ -51,10 +51,10 @@ public class SwapChain extends LogicalDeviceHandle {
 	}
 
 	/**
-	 * @return Swap-chain extent
+	 * @return Swap-chain extents
 	 */
-	public Dimensions extent() {
-		return extent;
+	public Dimensions extents() {
+		return extents;
 	}
 
 	/**

@@ -7,8 +7,9 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.model.Vertex;
+import org.sarge.jove.texture.Image;
 import org.sarge.lib.collection.StrictSet;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -18,20 +19,67 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class VulkanImage extends LogicalDeviceHandle {
+	/**
+	 * Helper - Builds image extents.
+	 * @param extents Extents array
+	 * @return Image extents
+	 * @throws IllegalArgumentException if the number of extents is not 1..3
+	 * @throws IllegalArgumentException if any extent is not one-or-more
+	 */
+	public static VkExtent3D extents(int... extents) {
+		// Init extents
+		final VkExtent3D result = new VkExtent3D();
+		result.depth = 1;
+		result.height = 1;
+
+		// Populate extents from array
+		switch(extents.length) {
+		case 3:
+			result.depth = oneOrMore(extents[2]);
+			//$FALL-THROUGH$
+
+		case 2:
+			result.height = oneOrMore(extents[1]);
+			//$FALL-THROUGH$
+
+		case 1:
+			result.width = oneOrMore(extents[0]);
+			break;
+
+		default:
+			throw new IllegalArgumentException("Invalid extents");
+		}
+
+		return result;
+	}
+
+	/**
+	 * Helper - Clones the given image extents.
+	 * @param extents Extents
+	 * @return Clone
+	 */
+	public static VkExtent3D clone(VkExtent3D extents) {
+		final VkExtent3D clone = new VkExtent3D();
+		clone.width = extents.width;
+		clone.height = extents.height;
+		clone.depth = extents.depth;
+		return clone;
+	}
+
 	private final VkFormat format;
-	private final VkExtent3D extent;
+	private final VkExtent3D extents;
 
 	/**
 	 * Constructor.
 	 * @param handle		Image handle
 	 * @param dev			Logical device
 	 * @param format		Image format
-	 * @param extent		Extents
+	 * @param extents		Image extents
 	 */
-	public VulkanImage(Pointer handle, LogicalDevice dev, VkFormat format, VkExtent3D extent) {
-		super(handle, dev, lib -> lib::vkDestroyImage); // TODO - no required for swap-chain images
+	public VulkanImage(Pointer handle, LogicalDevice dev, VkFormat format, VkExtent3D extents) {
+		super(handle, dev, lib -> lib::vkDestroyImage); // TODO - not required for swap-chain images
 		this.format = notNull(format);
-		this.extent = notNull(extent);
+		this.extents = clone(extents);
 	}
 
 	/**
@@ -44,8 +92,8 @@ public class VulkanImage extends LogicalDeviceHandle {
 	/**
 	 * @return Image extents
 	 */
-	public VkExtent3D extent() {
-		return extent;
+	public VkExtent3D extents() {
+		return clone(extents);
 	}
 
 	/**
@@ -79,6 +127,31 @@ public class VulkanImage extends LogicalDeviceHandle {
 		}
 
 		/**
+		 * Initialises the format and extents of this image.
+		 * @param image Image
+		 */
+		public Builder image(Image image) {
+			final VkFormat format = format(image);
+			format(format);
+			extents(image.header().size());
+			return this;
+		}
+
+		/**
+		 * Determines the Vulkan format for the given image.
+		 * @param image Image
+		 * @return Image format
+		 */
+		private static VkFormat format(Image image) {
+			// TODO - assumes RGBA bytes
+			return new VulkanHelper.FormatBuilder()
+				.bytes(1)
+				.signed(false)
+				.type(Vertex.Component.Type.NORM)
+				.build();
+		}
+
+		/**
 		 * Sets the type of this image.
 		 * @param type Image type
 		 */
@@ -90,28 +163,9 @@ public class VulkanImage extends LogicalDeviceHandle {
 		/**
 		 * Sets the extents of this image.
 		 * @param extents Image extents
-		 * @throws IllegalArgumentException if the number of extents is not 1..3
 		 */
-		public Builder extents(int... extents) {
-			Check.range(extents.length, 1, 3);
-
-			// Init width
-			info.extent = new VkExtent3D();
-			info.extent.width = extents[0];
-
-			// Add height for 2D
-			if(extents.length > 1) {
-				info.extent.height = extents[1];
-			}
-
-			// Add depth for 3D
-			if(extents.length > 2) {
-				info.extent.depth = extents[2];
-			}
-			else {
-				info.extent.depth = 1;
-			}
-
+		public Builder extents(VkExtent3D extents) {
+			info.extent = VulkanImage.clone(extents);
 			return this;
 		}
 
@@ -119,8 +173,9 @@ public class VulkanImage extends LogicalDeviceHandle {
 		 * Sets the extents of a 2D image.
 		 * @param extents Image extents
 		 */
-		public Builder extents(Dimensions extents) {
-			return extents(extents.width, extents.height);
+		public Builder extents(Dimensions dim) {
+			info.extent = VulkanImage.extents(dim.width, dim.height);
+			return this;
 		}
 
 		/**

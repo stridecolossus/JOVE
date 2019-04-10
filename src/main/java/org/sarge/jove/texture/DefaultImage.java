@@ -198,17 +198,6 @@ public class DefaultImage implements Image {
 	 * TODO - this should be a platform-specific service
 	 */
 	public static class Loader {
-		private boolean flip; // = true;
-
-		/**
-		 * Sets whether to flip images in the Y direction.
-		 * @param flip Whether to flip
-		 */
-		public Loader flip(boolean flip) {
-			this.flip = flip;
-			return this;
-		}
-
 		/**
 		 * Loads an image.
 		 * @param in Input stream
@@ -232,12 +221,7 @@ public class DefaultImage implements Image {
 
 			// Draw image
 			final Graphics2D g = texture.createGraphics();
-			if(flip) {
-				g.drawImage(image, 0, 0, dim.width, dim.height, 0, dim.height, dim.width, 0, null);
-			}
-			else {
-				g.drawImage(image, 0, 0, null);
-			}
+			g.drawImage(image, 0, 0, null);
 			g.dispose();
 
 			// Create Vulkan image

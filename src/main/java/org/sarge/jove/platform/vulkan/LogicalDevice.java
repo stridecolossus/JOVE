@@ -234,6 +234,13 @@ public class LogicalDevice extends PointerHandle {
 	}
 
 	/**
+	 * @return Vulkan context
+	 */
+	public Vulkan vulkan() {
+		return parent.vulkan();
+	}
+
+	/**
 	 * Retrieves all queues.
 	 * @return All queues for this device ordered by family
 	 */
@@ -282,11 +289,10 @@ public class LogicalDevice extends PointerHandle {
 	 */
 	public PointerHandle semaphore() {
 		// Allocate semaphore
-		final VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
-		final Vulkan vulkan = parent.vulkan();
+		final Vulkan vulkan = vulkan();
 		final VulkanLibrarySynchronize lib = vulkan.library();
 		final PointerByReference semaphore = vulkan.factory().reference();
-		check(lib.vkCreateSemaphore(super.handle(), info, null, semaphore));
+		check(lib.vkCreateSemaphore(super.handle(), new VkSemaphoreCreateInfo(), null, semaphore));
 
 		// Create semaphore
 		return new LogicalDeviceHandle(semaphore.getValue(), LogicalDevice.this, ignored -> lib::vkDestroySemaphore);
@@ -315,6 +321,13 @@ public class LogicalDevice extends PointerHandle {
 
         // Get memory handle
         return mem.getValue();
+	}
+
+	/**
+	 * Waits for this device to become idle.
+	 */
+	public void waitIdle() {
+		vulkan().library().vkDeviceWaitIdle(super.handle());
 	}
 
 	@Override

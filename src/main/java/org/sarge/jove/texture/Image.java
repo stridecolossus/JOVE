@@ -4,9 +4,8 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Generic image.
@@ -32,7 +31,7 @@ public interface Image {
 	/**
 	 * Image header.
 	 */
-	class Header {
+	class Header extends AbstractEqualsObject {
 		private final Format format;
 		private final Dimensions size;
 		// TODO - component size? compressed?
@@ -59,16 +58,6 @@ public interface Image {
 		 */
 		public Dimensions size() {
 			return size;
-		}
-
-		@Override
-		public boolean equals(Object that) {
-			return EqualsBuilder.reflectionEquals(this, that);
-		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
 		}
 	}
 
