@@ -483,7 +483,10 @@ public class VulkanImage extends LogicalDeviceHandle {
 			if(barrier.newLayout == null) throw new IllegalArgumentException("New layout not specified");
 			if(barrier.newLayout == VulkanImage.this.layout) throw new IllegalArgumentException("Cannot transition to existing layout: " + layout);
 			VALID_TRANSITIONS.validate(aspect, barrier.newLayout);
-			return (lib, cmd) -> lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier});
+			return (lib, cmd) -> {
+				lib.vkCmdPipelineBarrier(cmd, src.value(), dest.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{barrier});
+				layout = barrier.newLayout;
+			};
 		}
 
 		/**

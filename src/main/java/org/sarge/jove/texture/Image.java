@@ -171,6 +171,7 @@ public class Image {
 			final BufferedImage texture = new BufferedImage(TRANSLUCENT, raster, false, new Hashtable<>());
 
 			// Draw image
+			// TODO - VERY slow (~1sec on average) - simpler to loop over image.getRGB() and put() to buffer, with put(1) for alpha?
 			final Graphics2D g = texture.createGraphics();
 			g.drawImage(image, 0, 0, null);
 			g.dispose();

@@ -4,6 +4,8 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
@@ -21,11 +23,12 @@ import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.CubeModelBuilder;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.MutableVertex;
+import org.sarge.jove.obj.ObjectModel;
+import org.sarge.jove.obj.ObjectModelLoader;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Resource.PointerHandle;
@@ -117,10 +120,11 @@ public class VulkanIntegrationTest {
 
 		///////////////////
 
-		final Model<MutableVertex> model = model();
+		//final Model<MutableVertex> model = model();
 		final DataBuffer.Layout layout = DataBuffer.Layout.create(List.of(Vertex.Component.POSITION, Vertex.Component.coordinate(2))); // model.components());
 
-		final VulkanDataBuffer vbo = vertexBuffer(model, layout);
+//		final VulkanDataBuffer vbo = vertexBuffer(model, layout);
+		final VulkanDataBuffer vbo = vertexBuffer();
 		final VulkanDataBuffer indexBuffer = null; // indexBuffer(model);
 
 		///////////////////
@@ -424,7 +428,7 @@ public class VulkanIntegrationTest {
 
 		// TODO - created from VBO?
 		//final Command draw = (api, cb) -> api.vkCmdDrawIndexed(cb, 4, 1, 0, 0, 0);
-		final Command draw = (api, cb) -> api.vkCmdDraw(cb, 36 /*1500000*/, 1, 0, 0);
+		final Command draw = (api, cb) -> api.vkCmdDraw(cb, 1500000, 1, 0, 0);
 
 		final Command bind = ds.bind(pipeline.layout());
 
@@ -456,41 +460,94 @@ public class VulkanIntegrationTest {
 	////////////////////////////////
 
 	private Model<MutableVertex> model() throws Exception {
-//		final ObjectModelLoader loader = new ObjectModelLoader();
-//		loader.ignoreUnsupportedCommands();
-//
-//		final ObjectModel obj = loader.load(new FileReader("./src/test/resources/chalet.obj"));
-//		// TODO - vertex de-duplication, index buffer
-//
-//		final Group group = obj.group();
-//		return group.build();
+		System.out.println("Loading model...");
+		final ObjectModelLoader loader = new ObjectModelLoader();
+		loader.ignoreUnsupportedCommands();
 
-		System.out.println("Building model...");
-		final Model<MutableVertex> model = new CubeModelBuilder().build(1);
-		return model;
+		final ObjectModel obj = loader.load(new FileReader("./src/test/resources/chalet.obj"));
+		// TODO - vertex de-duplication, index buffer
+
+		final ObjectModel.Group group = obj.group();
+		return group.build();
+
+//		System.out.println("Building model...");
+//		final Model<MutableVertex> model = new CubeModelBuilder().build(1);
+//		return model;
 	}
 
 	////////////////////////////////
 
-	private VulkanDataBuffer vertexBuffer(Model<MutableVertex> model, DataBuffer.Layout layout) {
+	private VulkanDataBuffer vertexBuffer(Model<MutableVertex> model, DataBuffer.Layout layout) throws Exception {
 		System.out.println("Creating VBO");
-		final long size = model.length() * layout.stride();
+		final long len = model.length() * layout.stride();
 		final VulkanDataBuffer vbo = new VulkanDataBuffer.Builder(dev)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-			.length(size)
+			.length(len)
 			.build();
 
 		System.out.println("Buffering vertices");
 		// TODO - helper
 		// TODO - Bufferable -> bytes?
-		final ByteBuffer bb = BufferFactory.byteBuffer((int) size);
+		final ByteBuffer bb = BufferFactory.byteBuffer((int) len);
 		final FloatBuffer fb = bb.asFloatBuffer();
 		model.vertices().forEach(v -> {
 			v.position().buffer(fb);
 			v.coordinates().buffer(fb);
+//			float[] array = v.coordinates().toArray();
+//			fb.put(array[0]);
+//			fb.put(1-array[1]);
 		});
+
+		copy(vbo, bb);
+
+		return vbo;
+	}
+
+	private VulkanDataBuffer vertexBuffer() throws Exception {
+		System.out.println("Loading VBO");
+		final File file = new File("./src/test/resources/chalet.vbo");
+		final int len = (int) file.length();
+		final byte[] bytes = new byte[len];
+		try(final InputStream in = new FileInputStream(file)) {
+			in.read(bytes);
+		}
+
+		System.out.println("Creating VBO");
+//		final long size = model.length() * layout.stride();
+		final VulkanDataBuffer vbo = new VulkanDataBuffer.Builder(dev)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+			.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			.length(len)
+			.build();
+
+		System.out.println("Buffering vertices");
+		// TODO - helper
+		// TODO - Bufferable -> bytes?
+		final ByteBuffer bb = BufferFactory.byteBuffer(len);
+		bb.put(bytes);
+		bb.flip();
+
+		/*
+		final FloatBuffer fb = bb.asFloatBuffer();
+		model.vertices().forEach(v -> {
+			v.position().buffer(fb);
+			v.coordinates().buffer(fb);
+//			float[] array = v.coordinates().toArray();
+//			fb.put(array[0]);
+//			fb.put(1-array[1]);
+		});
+		*/
+
+//		System.out.println("********* WRITING");
+//		final byte[] bytes = new byte[(int) size];
+//		bb.get(bytes);
+//		try(final OutputStream out = new FileOutputStream(new File("./src/test/resources/chalet.vbo"))) {
+//			out.write(bytes);
+//		}
+//		//out.close();
 
 		copy(vbo, bb);
 
@@ -540,14 +597,19 @@ public class VulkanIntegrationTest {
 		final ByteBuffer bb = BufferFactory.byteBuffer((int) uniform.length());
 		final FloatBuffer fb = bb.asFloatBuffer();
 
+		/*
 		final float angle = (System.currentTimeMillis() % 5000) / 5000f * MathsUtil.TWO_PI;
 		final Matrix x = Matrix.rotation(Vector.Y_AXIS, angle);
 		//final Matrix y = Matrix.rotation(Vector.Y_AXIS, angle);
 		final Matrix view = x; // Matrix.translation(new Vector(0, 0, -3)).multiply(x);
 //		final Matrix view = x.multiply(Matrix.translation(new Vector(0, 0, -3)));
+		 */
+
+		final Matrix x = Matrix.rotation(Vector.X_AXIS, MathsUtil.HALF_PI);
+		final Matrix y = Matrix.rotation(Vector.Y_AXIS, -MathsUtil.HALF_PI);
+		final Matrix view = y.multiply(x);
 
 		PROJECTION.buffer(fb);
-		//Matrix.IDENTITY.buffer(fb);
 		cam.matrix().buffer(fb);
 		view.buffer(fb);
 		uniform.push(bb);
@@ -590,9 +652,11 @@ public class VulkanIntegrationTest {
 	public ImageView texture() throws Exception {
 		// Load texture image
 		System.out.println("loading texture...");
-		final Image image = new Image.Loader().load(new FileInputStream("src/test/resources/thiswayup.jpg"));
+//		final Image image = new Image.Loader().load(new FileInputStream("src/test/resources/thiswayup.jpg"));
+		final Image image = new Image.Loader().load(new FileInputStream("src/test/resources/chalet.jpg"));
 
 		// Create texture
+		System.out.println("creating texture...");
 		final VulkanImage texture = new VulkanImage.Builder(dev)
 			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 			.image(image)
@@ -603,6 +667,7 @@ public class VulkanIntegrationTest {
 			.build();
 
 		// Transition to destination
+		System.out.println("transition to destination");
 		texture
 			.barrier()
 			.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
@@ -612,14 +677,19 @@ public class VulkanIntegrationTest {
 			.transition(pool);
 
 		// Copy image to staging buffer
+		System.out.println("copy to staging");
 		final VulkanDataBuffer staging = VulkanDataBuffer.staging(dev, image.buffer());
 
 		// Copy from staging to image
+		System.out.println("copy to image buffer");
 		final Command copy = texture.copier().from(staging);
-		pool.allocate(copy).submit();
+		final Command.Buffer cb = pool.allocate(copy);
+		cb.submit();
+		cb.queue().waitIdle();
 		staging.destroy();
 
 		// Transition to final layout
+		System.out.println("transition to final layout");
 		texture
 			.barrier()
 			.layout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -728,9 +798,9 @@ public class VulkanIntegrationTest {
 
 		final Event.Handler mouse = event -> {
 			//System.out.println(event);
-			final float yaw = event.x / (float) dim.width * ANGLE * SENSITIVITY;
+			final float yaw = event.x / (float) dim.width * ANGLE; // * SENSITIVITY;
 			final float pitch = event.y / (float) dim.height * ANGLE * SENSITIVITY;
-			cam.rotate(yaw, pitch);
+			cam.rotate(yaw, 0); // pitch);
 			System.out.println(cam.matrix());
 		};
 //		input.bind(Event.Category.MOVE, mouse);
@@ -742,20 +812,23 @@ public class VulkanIntegrationTest {
 			@Override
 			public void handle(Event event) {
 				final int dx = event.x - prev;
-				if(dx > 0) {
+//				if(dx > 0) {
 					final float yaw = dx  / (float) dim.width * 1f * MathsUtil.HALF_PI;
 					//event.x() / (float) dim.width * ANGLE * SENSITIVITY;
 					prev = event.x;
+					System.out.println(event+" "+yaw);
 					cam.rotate(yaw, 0);
-				}
+//				}
 			}
 		};
 		//input.bind(Event.Category.MOVE, mouse2);
 
-		cam.move(new Vector(0, 1.25f, 6));
-		cam.look(Point.ORIGIN);
-		//cam.move(new Vector(0, -1f, -4));
-//		System.out.println(cam.direction());
-//		System.out.println(cam.matrix());
+		cam.move(-2);
+//		cam.move(new Vector(-1.5f, 0.0f, 0.8f));
+//		cam.direction(new Vector(1, 0, 0));
+
+//		cam.move(new Vector(0, 1.25f, 6));
+//		cam.look(Point.ORIGIN);
+
 	}
 }

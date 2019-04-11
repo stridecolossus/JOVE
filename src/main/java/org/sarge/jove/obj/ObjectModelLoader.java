@@ -124,6 +124,7 @@ public class ObjectModelLoader extends DefaultObjectLoader<ObjectModel> {
 		// Object/group parser
 		add("g", GROUP);
 		add("o", GROUP);
+		// TODO - "s" shading group
 
 		// Face parser
 		add("f", new FaceParser());

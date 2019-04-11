@@ -195,8 +195,9 @@ public class ObjectModel {
 		 * @param coords Texture coordinates
 		 */
 		public void coords(TextureCoordinate.Coordinate2D coords) {
-			Check.notNull(coords);
-			this.coords.add(coords);
+			// TODO - option
+			final TextureCoordinate.Coordinate2D flip = new TextureCoordinate.Coordinate2D(coords.u, 1 - coords.v);
+			this.coords.add(flip);
 		}
 
 		/**
@@ -245,6 +246,7 @@ public class ObjectModel {
 			}
 
 			// Construct model for this group
+			System.out.println(builder.extents());
 			return builder.build();
 		}
 

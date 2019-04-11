@@ -66,7 +66,6 @@ public class CubeModelBuilder {
 			final int[] face = FACES[f];
 			final Point[] array = Arrays.stream(face).mapToObj(vertices::get).toArray(Point[]::new);
 			final Quad quad = new Quad(array, NORMALS[f]);
-			System.out.println(quad.vertices());
 			quad.triangles().forEach(model::add);
 		}
 

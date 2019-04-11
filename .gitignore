@@ -7,3 +7,4 @@ hs_err_pid*
 src/test/resources/frag.spv
 src/test/resources/vert.spv
 src/test/resources/frag.spv
+*.spv
