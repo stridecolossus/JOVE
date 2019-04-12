@@ -3,12 +3,8 @@ package org.sarge.jove.control;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.sarge.jove.control.Event.Descriptor.ButtonDescriptor;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
@@ -37,9 +33,6 @@ import org.sarge.lib.util.AbstractEqualsObject;
  * @author Sarge
  */
 public final class Event extends AbstractEqualsObject {
-	// TODO
-	// https://stackoverflow.com/questions/15313469/java-keyboard-keycodes-list
-
 	/**
 	 * Event handler.
 	 */
@@ -117,7 +110,7 @@ public final class Event extends AbstractEqualsObject {
 	/**
 	 * An <i>event descriptor</i> is the static description of an event.
 	 */
-	public static class Descriptor extends AbstractEqualsObject {
+	public static final class Descriptor extends AbstractEqualsObject {
 		/**
 		 * String delimiter.
 		 */
@@ -132,123 +125,6 @@ public final class Event extends AbstractEqualsObject {
 		 * Descriptor for a zoom event.
 		 */
 		public static final Descriptor ZOOM = new Descriptor(Event.Category.ZOOM);
-
-		/**
-		 * Descriptor for a cached button or click event.
-		 */
-		protected static class ButtonDescriptor extends Descriptor {
-			private final int id;
-			private final Operation op;
-
-			private final transient int hash;
-			private final transient Event event;
-
-			/**
-			 * Constructor.
-			 * @param cat		Event category
-			 * @param id		Button identifier
-			 * @param op		Button operation
-			 */
-			private ButtonDescriptor(Category cat, int id, Operation op) {
-				super(cat);
-				assert (cat == Category.BUTTON) || (cat == Category.CLICK);
-				this.id = zeroOrMore(id);
-				this.op = notNull(op);
-				this.hash = new HashCodeBuilder().append(cat).append(id).append(op).hashCode();
-				this.event = new Event(this, 0, 0);
-			}
-
-			@Override
-			public int id() {
-				return id;
-			}
-
-			@Override
-			public Operation operation() {
-				return op;
-			}
-
-			@Override
-			public int hashCode() {
-				return hash;
-			}
-
-			@Override
-			public String toString() {
-				final StringBuilder sb = new StringBuilder();
-				sb.append(cat);
-				sb.append(DELIMITER);
-				sb.append(op);
-				sb.append(DELIMITER);
-				sb.append(id);
-				return sb.toString();
-			}
-		}
-
-		/**
-		 * Descriptor cache.
-		 */
-		private static class Cache {
-			private final Category cat;
-			private final Map<String, ButtonDescriptor> cache = new HashMap<>();
-
-			/**
-			 * Constructor.
-			 * @param cat Category
-			 */
-			private Cache(Category cat) {
-				this.cat = cat;
-			}
-
-			/**
-			 * Looks up a cached button descriptor.
-			 * @param id Button id
-			 * @param op Button operation
-			 * @return Button descriptor
-			 */
-			private ButtonDescriptor get(int id, Operation op) {
-				final String key = op.name() + String.valueOf(id);
-				return cache.computeIfAbsent(key, ignored -> new ButtonDescriptor(cat, id, op));
-			}
-		}
-
-		private static final Cache BUTTON = new Cache(Category.BUTTON);
-		private static final Cache CLICK = new Cache(Category.CLICK);
-
-		/**
-		 * Creates an event descriptor for the given category.
-		 * @param cat Event category
-		 * @return Descriptor
-		 * @return if the given category is not {@link Category#MOVE} or {@link Category#ZOOM}
-		 */
-		public static Descriptor of(Category cat) {
-			switch(cat) {
-			case MOVE:		return Descriptor.MOVE;
-			case ZOOM:		return Descriptor.ZOOM;
-			default:		throw new IllegalArgumentException("Expected ZOOM or MOVE category");
-			}
-		}
-
-		/**
-		 * Creates an event descriptor for the given category.
-		 * @param cat		Category
-		 * @param id		Button identifier
-		 * @param op		Button operation
-		 * @return if the given category is not {@link Category#BUTTON} or {@link Category#CLICK}
-		 */
-		public static Descriptor of(Category cat, int id, Operation op) {
-			switch(cat) {
-			case BUTTON:
-				return BUTTON.get(id, op);
-
-			case CLICK:
-				if(op == Operation.REPEAT) throw new IllegalArgumentException(String.format("Invalid operation for category: cat=%s op=%s", cat, op));
-				return CLICK.get(id, op);
-
-			default:
-				throw new IllegalArgumentException("Expected BUTTON or CLICK category");
-			}
-		}
 
 		/**
 		 * Parses an event descriptor.
@@ -275,18 +151,30 @@ public final class Event extends AbstractEqualsObject {
 			final Category cat = Category.valueOf(tokens[0]);
 			if(tokens.length == 1) {
 				// Simple descriptor
-				return Descriptor.of(cat);
+				if(tokens[0].equals(MOVE.toString())) {
+					return MOVE;
+				}
+				else
+				if(tokens[0].equals(ZOOM.toString())) {
+					return ZOOM;
+				}
+				else {
+					throw new IllegalArgumentException("Invalid event descriptor: " + str);
+				}
 			}
 			else {
-				// Named descriptor
+				// Button or click descriptor
 				if(tokens.length != 3) throw new IllegalArgumentException("Invalid button event descriptor: " + str);
 				final Operation op = Operation.valueOf(tokens[1]);
 				final int id = Integer.parseInt(tokens[2]);
-				return Descriptor.of(cat, id, op);
+				return new Descriptor(cat, id, op);
 			}
 		}
 
-		protected final Category cat;
+		private final Category cat;
+		private final int id;
+		private final Operation op;
+		private final transient int hash;
 
 		/**
 		 * Constructor.
@@ -294,6 +182,34 @@ public final class Event extends AbstractEqualsObject {
 		 */
 		private Descriptor(Category cat) {
 			this.cat = notNull(cat);
+			this.id = 0;
+			this.op = null;
+			this.hash = cat.hashCode();
+			assert (cat == Category.MOVE) || (cat == Category.ZOOM);
+		}
+
+		/**
+		 * Constructor.
+		 * @param cat Event category
+		 */
+		public Descriptor(Category cat, int id, Operation op) {
+			this.cat = notNull(cat);
+			this.id = zeroOrMore(id);
+			this.op = notNull(op);
+			this.hash = new HashCodeBuilder().append(cat).append(id).append(op).hashCode();
+			verify();
+		}
+
+		private void verify() {
+			switch(cat) {
+			case MOVE:
+			case ZOOM:
+				throw new IllegalArgumentException("Expected BUTTON or CLICK category");
+
+			case CLICK:
+				if(op == Operation.REPEAT) throw new IllegalArgumentException("Invalid operation for category: " + this);
+				break;
+			}
 		}
 
 		/**
@@ -307,51 +223,36 @@ public final class Event extends AbstractEqualsObject {
 		 * @return Button identifier
 		 */
 		public int id() {
-			return 0;
+			return id;
 		}
 
 		/**
 		 * @return Button operation
 		 */
 		public Operation operation() {
-			return null;
+			return op;
 		}
 
 		@Override
 		public int hashCode() {
-			return cat.hashCode();
+			return hash;
 		}
 
 		@Override
 		public String toString() {
-			return cat.name();
+			if(op == null) {
+				return cat.name();
+			}
+			else {
+				final StringBuilder sb = new StringBuilder();
+				sb.append(cat);
+				sb.append(DELIMITER);
+				sb.append(op);
+				sb.append(DELIMITER);
+				sb.append(id);
+				return sb.toString();
+			}
 		}
-	}
-
-	/**
-	 * Creates a button event.
-	 * @param descriptor Button descriptor
-	 * @return Button event
-	 * @throws IllegalArgumentException if the given descriptor is not {@link Category#BUTTON}
-	 */
-	public static Event of(Descriptor descriptor) {
-		if(descriptor.cat != Category.BUTTON) throw new IllegalArgumentException("Expected button event descriptor: " + descriptor);
-		final ButtonDescriptor button = (ButtonDescriptor) descriptor;
-		return button.event;
-	}
-
-	/**
-	 * Creates a location event.
-	 * @param descriptor	Descriptor
-	 * @param x				X coordinate
-	 * @param y				Y coordinate
-	 * @return Location event
-	 * @throws IllegalArgumentException if the given descriptor does not have a location
-	 * @see Category#isLocationEvent()
-	 */
-	public static Event of(Descriptor descriptor, int x, int y) {
-		if(!descriptor.cat.isLocationEvent()) throw new IllegalArgumentException("Invalid location event descriptor: " + descriptor);
-		return new Event(descriptor, x, y);
 	}
 
 	private final Descriptor descriptor;
@@ -360,14 +261,26 @@ public final class Event extends AbstractEqualsObject {
 
 	/**
 	 * Constructor.
-	 * @param descriptor		Event descriptor
+	 * @param descriptor Event descriptor
 	 * @param x
 	 * @param y
 	 */
-	private Event(Descriptor descriptor, int x, int y) {
+	public Event(Descriptor descriptor, int x, int y) {
+		if(!descriptor.cat.isLocationEvent()) throw new IllegalArgumentException("Invalid location event descriptor: " + descriptor);
 		this.descriptor = notNull(descriptor);
 		this.x = x;
 		this.y = y;
+	}
+
+	/**
+	 * Constructor.
+	 * @param descriptor Event descriptor
+	 */
+	public Event(Descriptor descriptor) {
+		if(descriptor.cat.isLocationEvent()) throw new IllegalArgumentException("Invalid event descriptor: " + descriptor);
+		this.descriptor = notNull(descriptor);
+		this.x = 0;
+		this.y = 0;
 	}
 
 	/**

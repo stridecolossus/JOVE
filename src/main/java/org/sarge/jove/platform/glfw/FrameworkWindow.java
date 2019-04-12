@@ -78,8 +78,8 @@ class FrameworkWindow extends PointerHandle implements Window {
 			@Override
 			public void key(Pointer window, int num, int scancode, int action, int mods) {
 				final Event.Operation op = FrameworkHelper.operation(action);
-				final Event.Descriptor descriptor = Event.Descriptor.of(Event.Category.BUTTON, num, op);
-				final Event event = Event.of(descriptor);
+				final Event.Descriptor descriptor = new Event.Descriptor(Event.Category.BUTTON, num, op);
+				final Event event = new Event(descriptor);
 				handler.handle(event);
 			}
 		};
@@ -92,7 +92,7 @@ class FrameworkWindow extends PointerHandle implements Window {
 	 */
 	private static MousePositionListener move(Event.Handler handler) {
 		return (window, x, y) -> {
-			final Event event = Event.of(Event.Descriptor.MOVE, (int) x, (int) y);
+			final Event event = new Event(Event.Descriptor.MOVE, (int) x, (int) y);
 			handler.handle(event);
 		};
 	}
@@ -105,8 +105,8 @@ class FrameworkWindow extends PointerHandle implements Window {
 	private static MouseButtonListener button(Event.Handler handler) {
 		return (window, button, action, mods) -> {
 			final Event.Operation op = FrameworkHelper.operation(action);
-			final Event.Descriptor descriptor = Event.Descriptor.of(Event.Category.CLICK, button, op);
-			final Event event = Event.of(descriptor);
+			final Event.Descriptor descriptor = new Event.Descriptor(Event.Category.CLICK, button, op);
+			final Event event = new Event(descriptor);
 			handler.handle(event);
 		};
 	}
@@ -118,7 +118,7 @@ class FrameworkWindow extends PointerHandle implements Window {
 	 */
 	private static MouseScrollListener scroll(Event.Handler handler) {
 		return (window, x, y) -> {
-			final Event event = Event.of(Event.Descriptor.ZOOM, (int) x, (int) y);
+			final Event event = new Event(Event.Descriptor.ZOOM, (int) x, (int) y);
 			handler.handle(event);
 		};
 	}

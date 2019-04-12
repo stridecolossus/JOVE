@@ -26,7 +26,7 @@ public class BindingsTest {
 	@BeforeEach
 	public void before() {
 		bindings = new Bindings<>();
-		descriptor = Event.Descriptor.of(Event.Category.BUTTON, 1, Event.Operation.PRESS);
+		descriptor = new Event.Descriptor(Event.Category.BUTTON, 1, Event.Operation.PRESS);
 		handler = mock(Event.Handler.class);
 	}
 
@@ -51,7 +51,7 @@ public class BindingsTest {
 		action.bind(descriptor);
 
 		// Generate an event and check delegated to action
-		final Event event = Event.of(descriptor);
+		final Event event = new Event(descriptor);
 		wrapper.handle(event);
 		verify(handler).handle(event);
 	}
@@ -120,7 +120,7 @@ public class BindingsTest {
 		// Add an action with a couple of bindings
 		final var action = addAction();
 		action.bind(descriptor);
-		action.bind(Event.Descriptor.of(Event.Category.BUTTON, 2, Event.Operation.RELEASE));
+		action.bind(new Event.Descriptor(Event.Category.BUTTON, 2, Event.Operation.RELEASE));
 
 		// Add another action and binding
 		final Event.Handler other = mock(Event.Handler.class);
