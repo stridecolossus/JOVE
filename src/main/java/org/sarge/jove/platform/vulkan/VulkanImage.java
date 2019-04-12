@@ -171,24 +171,21 @@ public class VulkanImage extends LogicalDeviceHandle {
 		 * @param image Image
 		 */
 		public Builder image(Image image) {
-			final VkFormat format = format(image);
-			format(format);
-			extents(image.size());
-			return this;
-		}
-
-		/**
-		 * Determines the Vulkan format for the given image.
-		 * @param image Image
-		 * @return Image format
-		 */
-		private static VkFormat format(Image image) {
-			// TODO - assumes RGBA bytes
-			return new VulkanHelper.FormatBuilder()
+			// Determine Vulkan format for this image
+			final Image.Format f = image.format();
+			final Vertex.Component.Type type = Vertex.Component.Type.of(f.type());
+			final VkFormat format = new VulkanHelper.FormatBuilder()
+				.components(f.components())
 				.bytes(1)
 				.signed(false)
-				.type(Vertex.Component.Type.NORM)
+				.type(type)
 				.build();
+
+			// Initialise relevant fields
+			format(format);
+			extents(image.size());
+
+			return this;
 		}
 
 		/**

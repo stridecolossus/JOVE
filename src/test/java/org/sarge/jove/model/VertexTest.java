@@ -13,6 +13,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.Component.Type;
 import org.sarge.jove.model.Vertex.MutableVertex;
+import org.sarge.jove.texture.Image;
 import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 
 public class VertexTest {
@@ -63,6 +64,13 @@ public class VertexTest {
 		@Test
 		public void size() {
 			assertEquals(3 + 4, Component.size(List.of(Component.POSITION, Component.COLOUR)));
+		}
+
+		@Test
+		public void typeMapping() {
+			assertEquals(Component.Type.NORM, Component.Type.of(Image.Type.BYTE));
+			assertEquals(Component.Type.INT, Component.Type.of(Image.Type.INT));
+			assertEquals(Component.Type.FLOAT, Component.Type.of(Image.Type.FLOAT));
 		}
 	}
 

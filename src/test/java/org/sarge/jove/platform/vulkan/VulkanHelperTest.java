@@ -75,7 +75,12 @@ public class VulkanHelperTest {
 		}
 
 		@Test
-		public void invalidComponents() {
+		public void buildComponents() {
+			assertEquals(VkFormat.VK_FORMAT_R32G32_SFLOAT, builder.components(2).build());
+		}
+
+		@Test
+		public void invalidComponentString() {
 			assertThrows(IllegalArgumentException.class, () -> builder.components(""));
 			assertThrows(IllegalArgumentException.class, () -> builder.components("cobblers"));
 			assertThrows(IllegalArgumentException.class, () -> builder.components("RGBA?"));
@@ -88,8 +93,8 @@ public class VulkanHelperTest {
 		}
 
 		@Test
-		public void component() {
-			assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, VulkanHelper.format(Vertex.Component.COLOUR));
+		public void invalidComponentNumber() {
+			assertThrows(IllegalArgumentException.class, () -> builder.components("RGB").components(4).build());
 		}
 	}
 }

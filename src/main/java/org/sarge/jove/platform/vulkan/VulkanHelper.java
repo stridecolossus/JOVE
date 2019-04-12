@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.range;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -21,24 +22,10 @@ public final class VulkanHelper {
 	}
 
 	/**
-	 * Maps a JOVE component descriptor to the equivalent RGBA-based Vulkan format.
-	 * @param c Component
-	 * @return Format
-	 * @throws IllegalArgumentException if the format is not supported
-	 */
-	public static VkFormat format(Vertex.Component c) {
-		return new FormatBuilder()
-			.type(c.type())
-			.components(FormatBuilder.RGBA.substring(0, c.size()))
-			.bytes(c.bytes())
-			.build();
-	}
-
-	/**
 	 * Builder for a Vulkan format.
 	 * <p>
 	 * Finding a format within the enumeration can be difficult given the number available and the naming strategy.
-	 * This intention of this builder is to simply specifying the common data/image formats.
+	 * This intention of this builder is to provide a programmatic means of specifying common data/image formats.
 	 * <p>
 	 * Example:
 	 * <pre>
@@ -69,12 +56,13 @@ public final class VulkanHelper {
 		public static final String BGRA = "BGRA";
 
 		private String components = RGBA;
+		private int num = 4;
 		private int bytes = 4;
 		private Vertex.Component.Type type = Vertex.Component.Type.FLOAT;
 		private boolean signed = true;
 
 		/**
-		 * Sets the colour components, e.g. <tt>ARGB</tt>
+		 * Sets the colour component characters, e.g. <tt>ARGB</tt>
 		 * @param components Colour component string
 		 * @throws IllegalArgumentException if the given components string is empty, contains an invalid character, or is longer than 4 components
 		 */
@@ -82,6 +70,15 @@ public final class VulkanHelper {
 			Check.range(components.length(), 1, 4);
 			if(components.chars().anyMatch(ch -> RGBA.indexOf(ch) == -1)) throw new IllegalArgumentException("Invalid components specifier: " + components);
 			this.components = components;
+			return this;
+		}
+
+		/**
+		 * Sets the number of components.
+		 * @param num Number of components 1..4
+		 */
+		public FormatBuilder components(int len) {
+			this.num = range(len, 1, 4);
 			return this;
 		}
 
@@ -123,8 +120,9 @@ public final class VulkanHelper {
 		 */
 		public VkFormat build() {
 			// Build component layout
+			if(num > components.length()) throw new IllegalArgumentException(String.format("Invalid components specification: components=%s length=%d", components, num));
 			final StringBuilder layout = new StringBuilder();
-			for(int n = 0; n < components.length(); ++n) {
+			for(int n = 0; n < num; ++n) {
 				layout.append(components.charAt(n));
 				layout.append(bytes * Byte.SIZE);
 			}

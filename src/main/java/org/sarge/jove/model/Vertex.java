@@ -13,6 +13,7 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.texture.Image;
 import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.lib.util.AbstractEqualsObject;
 import org.sarge.lib.util.AbstractObject;
@@ -40,7 +41,21 @@ public interface Vertex extends Bufferable {
 			FLOAT,
 			NORM,
 			SCALED,
-			SRGB,				// TODO - required?
+			SRGB;				// TODO - required?
+
+			/**
+			 * Maps the given image type to the corresponding component type.
+			 * @param type Image type
+			 * @return Component type
+			 */
+			public static Type of(Image.Type type) {
+				switch(type) {
+				case INT:		return Type.INT;
+				case FLOAT:		return Type.FLOAT;
+				case BYTE:		return Type.NORM;
+				default:		throw new RuntimeException();
+				}
+			}
 		}
 
 		/**

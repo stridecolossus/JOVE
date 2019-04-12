@@ -14,7 +14,9 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Primitive;
+import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.platform.vulkan.VulkanHelper.FormatBuilder;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
 import org.sarge.lib.util.Check;
@@ -104,11 +106,22 @@ public class Pipeline extends LogicalDeviceHandle {
 
 				// Add attribute descriptors
 				for(DataBuffer.Layout.Attribute attribute : layout.attributes()) {
+					// Check location
 					if(attributes.stream().anyMatch(attr -> attr.location == attribute.location())) throw new IllegalArgumentException("Duplicate attribute location: " + attribute.location());
+
+					// Determine Vulkan format for this attribute
+					final Vertex.Component component = attribute.component();
+					final VkFormat format = new FormatBuilder()
+						.components(component.size())
+						.type(component.type())
+						.bytes(component.bytes())
+						.build();
+
+					// Add attribute descriptor
 					final VkVertexInputAttributeDescription attr = new VkVertexInputAttributeDescription();
 					attr.binding = binding.binding;
 					attr.location = attribute.location();
-					attr.format = VulkanHelper.format(attribute.component());
+					attr.format = format;
 					attr.offset = attribute.offset();
 					attributes.add(attr);
 				}
