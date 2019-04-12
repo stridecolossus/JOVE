@@ -3,8 +3,6 @@ package org.sarge.jove.texture;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
 
@@ -63,36 +61,21 @@ public class HeightMapTest {
 	class ImageTests {
 		@Test
 		public void image() {
-			// Create image buffer
-			// TODO - this is nasty!
-			final byte zero = (byte) 0;
-			final ByteBuffer buffer = ByteBuffer.allocate(2 * 2 * 4);
-			for(int n = 0; n < 4; ++n) {
-				buffer.put(zero).put(zero).put(zero).put((byte) n);
-			}
-			buffer.flip();
-
-			// Create image
-			final Image image = mock(Image.class);
-			when(image.format()).thenReturn(Image.Format.GRAY_SCALE);
-			when(image.size()).thenReturn(new Dimensions(2, 2));
-			when(image.buffer()).thenReturn(buffer);
-
-			// Create height-map from image
+			final Image image = new Image(new Image.Format(1, Image.Type.BYTE), new Dimensions(3, 3), ByteBuffer.allocate(3 * 3));
 			final HeightMap map = HeightMap.of(image);
 			assertNotNull(map);
-			assertEquals(2, map.size());
-			assertEquals(0, map.height(0, 0));
-			assertEquals(1, map.height(1, 0));
-			assertEquals(2, map.height(0, 1));
-			assertEquals(3, map.height(1, 1));
+			assertEquals(3, map.size());
 		}
 
 		@Test
 		public void imageNotSquare() {
-			final Image image = mock(Image.class);
-			when(image.format()).thenReturn(Image.Format.GRAY_SCALE);
-			when(image.size()).thenReturn(new Dimensions(2, 3));
+			final Image image = new Image(new Image.Format(1, Image.Type.BYTE), new Dimensions(3, 4), ByteBuffer.allocate(3 * 4));
+			assertThrows(IllegalArgumentException.class, () -> HeightMap.of(image));
+		}
+
+		@Test
+		public void imageInvalidFormat() {
+			final Image image = new Image(new Image.Format(2, Image.Type.BYTE), new Dimensions(3, 4), ByteBuffer.allocate(3 * 4 * 2));
 			assertThrows(IllegalArgumentException.class, () -> HeightMap.of(image));
 		}
 	}

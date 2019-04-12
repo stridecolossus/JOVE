@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.junit.platform.commons.util.ToStringBuilder;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -17,14 +18,25 @@ public class HeightMap {
 	 * Creates a height-map from the given image.
 	 * @param image Image
 	 * @return Height-map
-	 * @throws IllegalArgumentException if the height-map is not square
+	 * @throws IllegalArgumentException if the height-map is not square or the image format is not supported
 	 */
 	public static HeightMap of(Image image) {
+		// Check image dimensions
+		final Dimensions size = image.size();
 		if(!image.size().isSquare()) throw new IllegalArgumentException("Height-map image is not square");
-		// TODO - this sucks: assumes 4 components, assumes RGBA mapping -> int
+
+		// Check supported format
+		if((image.format().components() != 1) || (image.format().type() != Image.Type.BYTE)) throw new IllegalArgumentException("Invalid height-map image: " + image);
+		// TODO - others?
+
+		// Create height-map from image
+		final int[] map = new int[size.width * size.height];
 		final ByteBuffer buffer = image.buffer();
-		final int[] map = new int[buffer.capacity() / 4];
-		image.buffer().asIntBuffer().get(map);
+		for(int n = 0; n < map.length; ++n) {
+			map[n] = buffer.get();
+		}
+
+		// Create height-map
 		return new HeightMap(map);
 	}
 
