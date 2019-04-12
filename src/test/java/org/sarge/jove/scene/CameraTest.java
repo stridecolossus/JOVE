@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Rotation;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.material.Material;
 import org.sarge.jove.material.Shader;
@@ -85,8 +86,14 @@ public class CameraTest {
 	}
 
 	@Test
+	public void orientation() {
+		cam.orientation(-MathsUtil.HALF_PI, MathsUtil.HALF_PI);
+		assertEquals(new Vector(0, -1, 0), cam.direction());
+	}
+
+	@Test
 	public void rotate() {
-		cam.rotate(MathsUtil.toRadians(-90), MathsUtil.toRadians(90));
+		cam.rotate(Rotation.of(cam.right(), -MathsUtil.HALF_PI));
 		assertEquals(new Vector(0, -1, 0), cam.direction());
 	}
 
@@ -100,7 +107,7 @@ public class CameraTest {
 			.set(0, 2, 1)
 			.set(2, 0, -1)
 			.set(2, 2, 0)
-			.set(2, 3, 5)
+			.set(0, 3, 5)
 			.build();
 		assertEquals(expected, cam.matrix());
 	}

@@ -10,6 +10,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.material.BufferPropertyBinder;
 import org.sarge.jove.material.Material;
 import org.sarge.jove.material.Material.Property;
+import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.AbstractObject;
 
 /**
@@ -105,56 +106,6 @@ public class Camera extends AbstractObject {
 	}
 
 	/**
-	 * Rotates the camera.
-	 * @param yaw		Horizontal angle
-	 * @param pitch		Vertical angle
-	 */
-	public void rotate(float yaw, float pitch) {
-		// http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
-		// https://www.gamedev.net/articles/programming/math-and-physics/a-simple-quaternion-based-camera-r1997/
-
-		// TODO - can probably just multiply X and Y rotations in one go
-		final Quaternion qyaw = Quaternion.of(Rotation.of(up, yaw));
-		final Quaternion qview = new Quaternion(0, dir.x, dir.y, dir.z);
-		final Quaternion result = qyaw.multiply(qview).multiply(qyaw.conjugate());
-
-//		// TODO - remove rotation
-//		final Quaternion qyaw = Quaternion.of(Rotation.of(up, yaw));
-//		final Quaternion qpitch = Quaternion.of(Rotation.of(right, pitch));
-//		final Quaternion rot = qyaw.multiply(qpitch);
-
-		System.out.print(yaw+" "+dir+" -> ");
-//		dir = new Vector(rot.x, rot.y, rot.z);
-		dir = new Vector(result.x, result.y, result.z).normalize();
-		System.out.println(dir);
-		dirty();
-
-
-//		glm::quaternion rotation(glm::angleAxis(mVerticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)));
-//	    rotation = rotation * glm::angleAxis(mHorizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-
-//		// TODO - quaternion and matrix multiply by tuple
-//		final Point result = rot.matrix().multiply(new Point(dir));
-//		System.out.println(dir+" -> "+result);
-//		direction(new Vector(result).normalize());
-
-//		final float cos = MathsUtil.cos(pitch);
-//		final float x = MathsUtil.cos(yaw) * cos;
-//		final float y = MathsUtil.sin(pitch);
-//		final float z = MathsUtil.sin(yaw) * cos;
-//		final Vector result = new Vector(x, y, z).normalize();
-//		direction(result);
-	}
-
-//	protected void rotate(Vector axis, float angle) {
-//		final Quaternion qaxis = Quaternion.of(axis, angle);
-//		final Quaternion view = Quaternion.of(dir);
-//		final Quaternion result = qaxis.multiply(view).multiply(qaxis.conjugate());
-//		dir = result.vector();
-//		dirty();
-//	}
-
-	/**
 	 * @return Camera up axis
 	 */
 	public Vector up() {
@@ -175,6 +126,30 @@ public class Camera extends AbstractObject {
 	 */
 	public Vector right() {
 		return right;
+	}
+
+	/**
+	 * Sets the camera orientation to the given yaw and pitch angles (radians 0..{@link MathsUtil#TWO_PI})
+	 * @param yaw		Yaw
+	 * @param pitch		Pitch
+	 */
+	public void orientation(float yaw, float pitch) {
+		final float cos = MathsUtil.cos(pitch);
+		final float x = MathsUtil.cos(yaw) * cos;
+		final float y = MathsUtil.sin(pitch);
+		final float z = MathsUtil.sin(-yaw) * cos;
+		dir = new Vector(x, y, z).normalize();
+		dirty();
+	}
+
+	/**
+	 * Rotates the camera.
+	 * @param rot Rotation
+	 * @see Quaternion#rotate(Vector)
+	 */
+	public void rotate(Rotation rot) {
+		dir = Quaternion.of(rot).rotate(dir);
+		dirty();
 	}
 
 	/**
@@ -248,6 +223,7 @@ public class Camera extends AbstractObject {
 			.column(3, trans)
 			.build();
 	}
+
 	// https://github.com/fynnfluegge/oreon-engine/blob/master/oreonengine/oe-core/src/main/java/org/oreon/core/scenegraph/Camera.java
 	// http://www.songho.ca/opengl/gl_camera.html
 }

@@ -6,8 +6,6 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import org.sarge.jove.common.Frame;
 import org.sarge.jove.control.Player.Playable;
 import org.sarge.jove.control.Player.State;
-import org.sarge.jove.geometry.Rotation.MutableRotation;
-import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.AbstractObject;
 
 /**
@@ -25,15 +23,6 @@ public class Animator extends AbstractObject implements Playable, Frame.Listener
 		 * @param animator Updated animator
 		 */
 		void update(Animator animator);
-	}
-
-	/**
-	 * Creates an animation for the given rotation.
-	 * @param rot Rotation
-	 * @return Rotation animation
-	 */
-	public static Animation rotation(MutableRotation rot) {
-		return animator -> rot.angle(animator.position() * MathsUtil.TWO_PI);
 	}
 
 	private final long duration;

@@ -2,13 +2,15 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import org.sarge.jove.control.Animator.Animation;
+import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Counter-clockwise rotation about an arbitrary axis.
  * @author Sarge
  */
-public interface Rotation extends Transform {
+public interface Rotation {
 	/**
 	 * @return Rotation axis
 	 */
@@ -26,16 +28,27 @@ public interface Rotation extends Transform {
 	 * @return Rotation
 	 */
 	static Rotation of(Vector axis, float angle) {
-		return new MutableRotation(axis, angle);
+		return new Rotation() {
+			@Override
+			public Vector axis() {
+				return axis;
+			}
+
+			@Override
+			public float angle() {
+				return angle;
+			}
+		};
 	}
 
 	/**
 	 * Mutable implementation.
 	 */
-	class MutableRotation extends AbstractEqualsObject implements Rotation {
+	class MutableRotation extends AbstractEqualsObject implements Rotation, Transform {
 		private final Vector axis;
 		private float angle;
-		private boolean dirty;
+
+		private transient boolean dirty;
 		private transient Matrix matrix;
 
 		/**
@@ -77,6 +90,16 @@ public interface Rotation extends Transform {
 		@Override
 		public boolean isDirty() {
 			return dirty;
+		}
+
+		/**
+		 * @return This rotation as an animation
+		 */
+		public Animation animation() {
+			return animator -> {
+				final float angle = animator.position() * MathsUtil.TWO_PI;
+				angle(angle);
+			};
 		}
 	}
 }

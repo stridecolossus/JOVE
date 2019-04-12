@@ -22,6 +22,7 @@ import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Rotation;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Model;
@@ -257,8 +258,8 @@ public class VulkanIntegrationTest {
 		final VulkanInstance.Builder builder = new VulkanInstance.Builder(vulkan)
 			.extensions(extensions)
 			.extension(Extension.DEBUG_UTILS)
-			.layer(ValidationLayer.STANDARD_VALIDATION)
-			.layer("VK_LAYER_VALVE_steam_overlay", 1);
+			.layer(ValidationLayer.STANDARD_VALIDATION);
+			//.layer("VK_LAYER_VALVE_steam_overlay", 1);
 
 		// Create instance
 		System.out.println("Creating instance");
@@ -741,9 +742,7 @@ public class VulkanIntegrationTest {
 
 	// TODO - camera controller
 	private static final float STEP = 0.1f;
-	private static final float ANGLE = MathsUtil.HALF_PI;
-//	private static final float INVERSE_PI = 1f / MathsUtil.PI;
-	private static final float SENSITIVITY = 0.05f;
+	private static final float ANGLE = MathsUtil.toRadians(5);
 
 	private void controller(Device<?> input, AtomicBoolean running, Dimensions dim) {
 		final Event.Handler key = event -> {
@@ -788,47 +787,31 @@ public class VulkanIntegrationTest {
 				cam.direction(Vector.Z_AXIS.invert());
 				break;
 
+			case 81:
+				// rotate left
+				cam.rotate(Rotation.of(cam.up(), -ANGLE));
+				break;
+
+			case 69:
+				// rotate right
+				cam.rotate(Rotation.of(cam.up(), +ANGLE));
+				break;
+
 			default:
 				System.out.println(event.descriptor().id());
 				break;
 			}
-			System.out.println("handler\n"+cam.matrix());
+			//System.out.println("handler\n"+cam.matrix());
 		};
 		input.bind(Event.Category.BUTTON, key);
 
 		final Event.Handler mouse = event -> {
-			//System.out.println(event);
-			final float yaw = event.x / (float) dim.width * ANGLE; // * SENSITIVITY;
-			final float pitch = event.y / (float) dim.height * ANGLE * SENSITIVITY;
-			cam.rotate(yaw, 0); // pitch);
-			System.out.println(cam.matrix());
+			final float yaw = event.x / (float) dim.width;
+			final float pitch = event.y / (float) dim.height;
+			cam.orientation(yaw * MathsUtil.TWO_PI - MathsUtil.HALF_PI, pitch * MathsUtil.TWO_PI);
 		};
-//		input.bind(Event.Category.MOVE, mouse);
-
-		final Event.Handler mouse2 = new Event.Handler() {
-			private int prev;
-			//private boolean first = true;
-
-			@Override
-			public void handle(Event event) {
-				final int dx = event.x - prev;
-//				if(dx > 0) {
-					final float yaw = dx  / (float) dim.width * 1f * MathsUtil.HALF_PI;
-					//event.x() / (float) dim.width * ANGLE * SENSITIVITY;
-					prev = event.x;
-					System.out.println(event+" "+yaw);
-					cam.rotate(yaw, 0);
-//				}
-			}
-		};
-		//input.bind(Event.Category.MOVE, mouse2);
+		input.bind(Event.Category.MOVE, mouse);
 
 		cam.move(-2);
-//		cam.move(new Vector(-1.5f, 0.0f, 0.8f));
-//		cam.direction(new Vector(1, 0, 0));
-
-//		cam.move(new Vector(0, 1.25f, 6));
-//		cam.look(Point.ORIGIN);
-
 	}
 }

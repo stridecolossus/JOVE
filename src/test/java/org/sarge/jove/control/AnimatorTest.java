@@ -9,12 +9,7 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Frame;
-import org.sarge.jove.control.Animator;
-import org.sarge.jove.control.Player;
 import org.sarge.jove.control.Animator.Animation;
-import org.sarge.jove.geometry.Rotation.MutableRotation;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.MathsUtil;
 
 public class AnimatorTest {
 	private Animator animator;
@@ -86,15 +81,5 @@ public class AnimatorTest {
 		verify(animation).update(animator);
 		assertEquals(true, animator.isPlaying());
 		assertEquals(2500L, animator.time());
-	}
-
-	@Test
-	public void rotation() {
-		final MutableRotation rot = new MutableRotation(Vector.Y_AXIS, 0);
-		animator = new Animator(5000L, Animator.rotation(rot));
-		animator.apply(Player.State.PLAY);
-		when(frame.elapsed()).thenReturn(2500L);
-		animator.update(frame);
-		assertEquals(MathsUtil.PI, rot.angle());
 	}
 }
