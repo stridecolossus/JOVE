@@ -27,65 +27,55 @@ import org.sarge.lib.util.Check;
  * Usage:
  * <pre>
  * // Create bindings
- * class CustomAction { ... }
- * final Bindings<CustomAction> bindings = new Bindings<>();
+ * final Bindings bindings = new Bindings<>();
  *
  * // Register actions
- * final CustomAction action = new CustomAction(...)
  * final Event.Handler handler = ...
- * bindings.add(action, handler);
+ * final Bindings.Action action = bindings.add(handler);
  * ...
  *
  * // Bind an event to the action
- * final Event.Key event = Event.Key.of(Event.Category.BUTTON, Event.Type.PRESS, "Space");
+ * final Event.Descriptor event = new Event.Descriptor(Event.Category.BUTTON, Event.Type.PRESS, "Space");
  * action.bind(event);
  *
  * // Remove a binding
- * bindings.remove(event);
+ * action.remove(event);
  *
  * // Remove all bindings on an action
  * action.clear();
  *
- * // Lookup the action bound to an event
- * final Event.Key event = ...
- * final Optional<Action> action = bindings.find(event);
+ * // Delegate an event to a bound action
+ * final Event event = ...
+ * final Optional<Action> action = bindings.find(event.descriptor());
+ * action.handler().ifPresent(handler -> handler.handle(event));
+ *
+ * // Or more simply
+ * final Event.Handler handler = bindings.handler();
+ * handler.handle(event);
  * </pre>
+ * Notes:
+ * <ul>
+ * <li>the bindings class is not thread-safe</li>
+ * <li>it is assumed that event handlers have {@link Event.Handler#equals(Object)} and {@link Event.Handler#toString()} correctly implemented</li>
+ * </ul>
  * @author Sarge
- * @param <T> Action type
  */
-public class Bindings<T> extends AbstractObject {
+public class Bindings extends AbstractObject {
 	private static final String DELIMITER = " ";
 
 	/**
-	 * Action entry.
+	 * Binding entry.
 	 */
 	public class Action extends AbstractObject {
-		private final T action;
 		private final Event.Handler handler;
 		private final List<Event.Descriptor> events = new ArrayList<>();
 
 		/**
 		 * Constructor.
-		 * @param action		Action
-		 * @param handler		Event handler
+		 * @param action Action
 		 */
-		private Action(T action, Handler handler) {
-			this.action = notNull(action);
+		private Action(Handler handler) {
 			this.handler = notNull(handler);
-		}
-
-		/**
-		 * @return Action
-		 */
-		public T action() {
-			return action;
-		}
-
-		/**
-		 * @return Name of this action
-		 */
-		public String name() {
-			return action.toString();
 		}
 
 		/**
@@ -112,6 +102,18 @@ public class Bindings<T> extends AbstractObject {
 			if(bindings.containsKey(descriptor)) throw new IllegalArgumentException("Event already bound to this action: " + descriptor);
 			events.add(descriptor);
 			bindings.put(descriptor, this);
+		}
+
+		/**
+		 * Removes an existing binding.
+		 * @param descriptor Event to remove
+		 * @return Action that the given event was previously bound to
+		 * @throws IllegalArgumentException if there is no binding for the given event
+		 */
+		public Action remove(Event.Descriptor descriptor) {
+			if(!bindings.containsKey(descriptor)) throw new IllegalArgumentException("Event not bound: " + descriptor);
+			events.remove(descriptor);
+			return bindings.remove(descriptor);
 		}
 
 		/**
@@ -148,17 +150,16 @@ public class Bindings<T> extends AbstractObject {
 
 	/**
 	 * Registers an action.
-	 * @param action		Action
-	 * @param handler		Handler
+	 * @param handler Event handler
 	 * @return New action entry
 	 * @throws IllegalArgumentException if the action has already been added
 	 */
-	public Action add(T action, Event.Handler handler) {
-		if(actions.stream().map(Action::action).anyMatch(action::equals)) {
-			throw new IllegalArgumentException("Duplicate action: " + action);
+	public Action add(Event.Handler handler) {
+		if(actions.stream().map(Action::handler).anyMatch(handler::equals)) {
+			throw new IllegalArgumentException("Duplicate action handler: " + handler);
 		}
 
-		final Action entry = new Action(action, handler);
+		final Action entry = new Action(handler);
 		actions.add(entry);
 		return entry;
 	}
@@ -170,19 +171,6 @@ public class Bindings<T> extends AbstractObject {
 	 */
 	public Optional<Action> find(Event.Descriptor descriptor) {
 		return Optional.ofNullable(bindings.get(descriptor));
-	}
-
-	/**
-	 * Removes an existing binding.
-	 * @param descriptor Event to remove
-	 * @return Action that the given event was previously bound to
-	 * @throws IllegalArgumentException if there is no binding for the given event
-	 */
-	public Action remove(Event.Descriptor descriptor) {
-		final Action action = find(descriptor).orElseThrow(() -> new IllegalArgumentException("Event not bound: " + descriptor));
-		action.events.remove(descriptor);
-		bindings.remove(descriptor);
-		return action;
 	}
 
 	/**
@@ -208,7 +196,7 @@ public class Bindings<T> extends AbstractObject {
 	public void write(PrintWriter out) {
 		for(Action action : actions) {
 			for(Event.Descriptor e : action.events) {
-				out.print(action.action);
+				out.print(action.handler);
 				out.print(DELIMITER);
 				out.print(e);
 				out.println();
@@ -227,7 +215,7 @@ public class Bindings<T> extends AbstractObject {
 	public void read(Reader r) throws IOException {
 		// Binding loader
 		class Loader {
-			private final Map<String, Action> map = actions.stream().collect(toMap(action -> action.action.toString(), Function.identity()));
+			private final Map<String, Action> map = actions.stream().collect(toMap(action -> action.handler.toString(), Function.identity()));
 
 			/**
 			 * Loads a binding.
@@ -239,7 +227,7 @@ public class Bindings<T> extends AbstractObject {
 
 				// Lookup action
 				final Action action = map.get(tokens[0]);
-				if(action == null) throw new IllegalArgumentException("Unknown action: " + tokens[0]);
+				if(action == null) throw new IllegalArgumentException("Unknown action handler: " + tokens[0]);
 
 				// Parse event
 				final Event.Descriptor descriptor = Event.Descriptor.parse(tokens[1]);

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -19,15 +20,16 @@ import org.junit.jupiter.api.Test;
 public class BindingsTest {
 	private static final String ACTION = "action";
 
-	private Bindings<String> bindings;
+	private Bindings bindings;
 	private Event.Handler handler;
 	private Event.Descriptor descriptor;
 
 	@BeforeEach
 	public void before() {
-		bindings = new Bindings<>();
+		bindings = new Bindings();
 		descriptor = new Event.Descriptor(Event.Category.BUTTON, 1, Event.Operation.PRESS);
 		handler = mock(Event.Handler.class);
+		when(handler.toString()).thenReturn(ACTION);
 	}
 
 	@Test
@@ -36,8 +38,8 @@ public class BindingsTest {
 		assertEquals(0, bindings.actions().count());
 	}
 
-	private Bindings<String>.Action addAction() {
-		return bindings.add(ACTION, handler);
+	private Bindings.Action addAction() {
+		return bindings.add(handler);
 	}
 
 	@Test
@@ -62,7 +64,6 @@ public class BindingsTest {
 		assertEquals(1, bindings.actions().count());
 		assertEquals(action, bindings.actions().iterator().next());
 		assertNotNull(action);
-		assertEquals(ACTION, action.action());
 		assertEquals(handler, action.handler());
 		assertNotNull(action.events());
 		assertEquals(0, action.events().count());
@@ -71,7 +72,7 @@ public class BindingsTest {
 	@Test
 	public void addAlreadyAdded() {
 		addAction();
-		assertThrows(IllegalArgumentException.class, () -> bindings.add(ACTION, handler));
+		assertThrows(IllegalArgumentException.class, () -> bindings.add(handler));
 	}
 
 	@Test
@@ -105,14 +106,15 @@ public class BindingsTest {
 	public void remove() {
 		final var action = addAction();
 		action.bind(descriptor);
-		bindings.remove(descriptor);
+		action.remove(descriptor);
 		assertEquals(0, action.events().count());
 		assertEquals(Optional.empty(), bindings.find(descriptor));
 	}
 
 	@Test
 	public void removeNotBound() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.remove(descriptor));
+		final var action = addAction();
+		assertThrows(IllegalArgumentException.class, () -> action.remove(Event.Descriptor.MOVE));
 	}
 
 	@Test
@@ -124,7 +126,8 @@ public class BindingsTest {
 
 		// Add another action and binding
 		final Event.Handler other = mock(Event.Handler.class);
-		bindings.add("other", other).bind(Event.Descriptor.ZOOM);
+		when(other.toString()).thenReturn("other");
+		bindings.add(other).bind(Event.Descriptor.ZOOM);
 
 		// Output bindings
 		final StringWriter out = new StringWriter();

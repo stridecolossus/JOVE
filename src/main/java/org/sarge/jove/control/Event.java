@@ -13,22 +13,15 @@ import org.sarge.lib.util.AbstractEqualsObject;
  * Examples:
  * <pre>
  * // Create a move event
- * final Event move = Event.of(Descriptor.MOVE, x, y);
- *
- * // Create a zoom event
- * final Event zoom = Event.of(Descriptor.ZOOM, x, y);
+ * final Event move = new Event(Descriptor.MOVE, x, y);
  *
  * // Create a button event
- * final Event button = Event.of(Descriptor.of(Category.BUTTON, key, Operation.PRESS));
- *
- * // Create a click event
- * final Operation op = ...
- * final Event button = Event.of(Descriptor.of(Category.CLICK, mouseButton, op), x, y);
+ * final Event button = new Event(new Descriptor(Category.BUTTON, key, Operation.PRESS));
  * </pre>
  * Notes:
  * <ul>
- * <li>button and click event descriptors are cached internally</li>
  * <li>the {@link Operation#REPEAT} operation is only valid for a {@link Category#BUTTON} event</li>
+ * <li>{@link Descriptor#parse(String)} can be used to load an event descriptor</li>
  * </ul>
  * @author Sarge
  */

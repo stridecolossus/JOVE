@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.sarge.lib.util.Check;
 
@@ -47,6 +49,20 @@ public final class KeyName {
 		else {
 			return name;
 		}
+	}
+
+	/**
+	 * Creates a reverse lookup table for key name to index.
+	 * @return Key indices indexed by key names
+	 */
+	public static Map<String, Integer> reverse() {
+		final Map<String, Integer> map = new HashMap<>();
+		for(int n = 0; n < NAMES.length; ++n) {
+			if(NAMES[n] != null) {
+				map.put(NAMES[n], n);
+			}
+		}
+		return map;
 	}
 
 	/**
