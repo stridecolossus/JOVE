@@ -32,21 +32,6 @@ public class MessageHandler {
 }
 ```
 
-```java
-public class MessageHandler {
-	public interface MessageCallback extends Callback {
-		boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData);
-	}
-
-	private final MessageCallback callback;
-	private final Set<VkDebugUtilsMessageSeverityFlagEXT> severities;
-	private final Set<VkDebugUtilsMessageTypeFlagEXT> types;
-
-	public MessageHandler(MessageCallback callback, Set<VkDebugUtilsMessageSeverityFlagEXT> severities, Set<VkDebugUtilsMessageTypeFlagEXT> types) {
-	}
-}
-```
-
 # Builder
 
 ```java
@@ -148,6 +133,15 @@ public class MessageHandler {
 		// Create and register handler
 		final Pointer handle = factory.create(handler);
 		handlers.put(handler, handle);
+	}
+```
+# Helper
+
+```java
+	public Function function(String name) {
+		final Pointer ptr = vulkan.api().vkGetInstanceProcAddr(handle, name);
+		if(ptr == null) throw new ServiceException("Cannot find function pointer: " + name);
+		return Function.getFunction(ptr);
 	}
 ```
 
