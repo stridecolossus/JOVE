@@ -1,22 +1,36 @@
 package org.sarge.jove.platform.vulkan;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
-import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 
 public class VulkanTest {
-	@Tag("Vulkan")
+	private Vulkan vulkan;
+	private VulkanLibrary api;
+
+	@BeforeEach
+	void before() {
+		api = mock(VulkanLibrary.class);
+		vulkan = new Vulkan(api);
+	}
+
 	@Test
-	public void init() {
-		final Vulkan vulkan = Vulkan.create();
-		assertNotNull(vulkan);
-		assertNotNull(vulkan.library());
-		assertEquals(ReferenceFactory.DEFAULT, vulkan.factory());
-		assertNotNull(vulkan.supported());
-		assertThrows(IllegalStateException.class, () -> Vulkan.create());
+	void constructor() {
+		assertEquals(api, vulkan.api());
+	}
+
+	@Test
+	void references() {
+		assertNotNull(vulkan.pointer());
+		assertNotNull(vulkan.integer());
+	}
+
+	@Test
+	void supported() {
+		assertNotNull(vulkan.extensions());
+		assertNotNull(vulkan.layers());
 	}
 }

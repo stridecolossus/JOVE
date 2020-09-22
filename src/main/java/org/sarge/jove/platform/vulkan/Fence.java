@@ -32,7 +32,7 @@ public class Fence extends LogicalDeviceHandle {
 
 		// Allocate fence
 		final Vulkan vulkan = dev.vulkan();
-		final VulkanLibrarySynchronize lib = vulkan.library();
+		final VulkanLibrarySynchronize lib = vulkan.api();
 		final PointerByReference fence = vulkan.factory().reference();
 		check(lib.vkCreateFence(dev.handle(), info, null, fence));
 
@@ -66,7 +66,7 @@ public class Fence extends LogicalDeviceHandle {
 		 * @param all Whether to wait for <b>all</b> fences or <b>any</b> fence in this group
 		 */
 		public void wait(boolean all) {
-			final VulkanLibrarySynchronize lib = dev.vulkan().library();
+			final VulkanLibrarySynchronize lib = dev.vulkan().api();
 			check(lib.vkWaitForFences(dev.handle(), fences.length, fences, VulkanBoolean.of(all), Long.MAX_VALUE));
 		}
 
@@ -74,7 +74,7 @@ public class Fence extends LogicalDeviceHandle {
 		 * Resets <b>all</b> the fences in this group.
 		 */
 		public void reset() {
-			final VulkanLibrarySynchronize lib = dev.vulkan().library();
+			final VulkanLibrarySynchronize lib = dev.vulkan().api();
 			check(lib.vkResetFences(dev.handle(), fences.length, fences));
 		}
 	}

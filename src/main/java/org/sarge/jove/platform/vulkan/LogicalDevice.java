@@ -6,21 +6,18 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 import org.sarge.jove.util.StructureHelper;
-import org.sarge.lib.collection.StrictList;
-import org.sarge.lib.collection.StrictSet;
 import org.sarge.lib.util.Check;
 
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.StringArray;
 import com.sun.jna.ptr.PointerByReference;
@@ -29,131 +26,29 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>logical device</i> is an instance of a {@link PhysicalDevice} that can be used to perform work.
  * @author Sarge
  */
-public class LogicalDevice extends PointerHandle {
+public class LogicalDevice {
 	/**
-	 * Work submitted to a {@link Queue}.
+	 * A <i>work queue</i> is used to submit work to this logical device.
 	 */
-	public interface Work {
-		/**
-		 * Submits this work to the queue.
-		 */
-		void submit();
-
-		/**
-		 * Builder for work to be submitted to this queue.
-		 */
-		public static class Builder {
-			private final Queue queue;
-			private final Collection<Pointer> buffers = new ArrayList<>();
-			private final Collection<Integer> waitStages = new StrictSet<>();
-			private final List<Pointer> waitSemaphores = new ArrayList<>();
-			private final List<Pointer> signalSemaphores = new ArrayList<>();
-			private Pointer fence;
-
-			/**
-			 * Constructor.
-			 * @param queue Work queue
-			 */
-			protected Builder(Queue queue) {
-				this.queue = notNull(queue);
-			}
-
-			/**
-			 * Adds a command buffer to submit.
-			 * @param buffer Buffer to submit
-			 * @throws IllegalArgumentException if the command buffer has not been recorded
-			 */
-			public Builder add(Command.Buffer buffer) {
-				if(!buffer.isReady()) throw new IllegalArgumentException("Command buffer has not been recorded: " + buffer);
-				buffers.add(buffer.handle());
-				return this;
-			}
-
-			/**
-			 * Adds a pipeline wait stage.
-			 * @param stage Wait stage
-			 * @throws IllegalArgumentException for a duplicate wait state
-			 */
-			public Builder wait(VkPipelineStageFlag stage) {
-				waitStages.add(stage.value());
-				return this;
-			}
-
-			/**
-			 * Adds a semaphore to wait on.
-			 * @param semaphore Wait semaphore
-			 */
-			public Builder wait(PointerHandle semaphore) {
-				waitSemaphores.add(semaphore.handle());
-				return this;
-			}
-
-			/**
-			 * Adds a semaphore to be signalled after execution.
-			 * @param semaphore Signal semaphore
-			 */
-			public Builder signal(PointerHandle semaphore) {
-				signalSemaphores.add(semaphore.handle());
-				return this;
-			}
-
-			/**
-			 * Sets the fence for this work.
-			 * @param fence Fence
-			 */
-			public Builder fence(Fence fence) {
-				this.fence = fence.handle();
-				return this;
-			}
-
-			/**
-			 * Constructs this work.
-			 * @return New work
-			 */
-			public Work build() {
-				// Init work descriptor
-				final VkSubmitInfo info = new VkSubmitInfo();
-
-				// Add wait stages
-				// TODO - a lot if buggering about
-				info.pWaitDstStageMask = StructureHelper.integers(ArrayUtils.toPrimitive(waitStages.toArray(Integer[]::new)));
-
-				// Add command buffers to submit
-				if(buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
-				info.commandBufferCount = buffers.size();
-				info.pCommandBuffers = StructureHelper.pointers(buffers);
-
-				// Add wait semaphores
-				info.waitSemaphoreCount = waitSemaphores.size();
-				info.pWaitSemaphores = StructureHelper.pointers(waitSemaphores);
-
-				// Add signal semaphores
-				info.signalSemaphoreCount = signalSemaphores.size();
-				info.pSignalSemaphores = StructureHelper.pointers(signalSemaphores);
-
-				// Create work
-				return () -> {
-					final VulkanLibraryLogicalDevice lib = queue.device().vulkan().library();
-					check(lib.vkQueueSubmit(queue.handle(), 1, new VkSubmitInfo[]{info}, fence));
-				};
-			}
-		}
-	}
-
-	/**
-	 * Work queue for this device.
-	 */
-	public class Queue extends Handle<Pointer> {
+	public class Queue {
+		private final Pointer queue;
 		private final QueueFamily family;
 
 		/**
 		 * Constructor.
-		 * @param handle		Queue handle
-		 * @param family		Queue family
+		 * @param handle Queue handle
+		 * @param family Queue family
 		 */
 		private Queue(Pointer handle, QueueFamily family) {
-			super(handle);
+			this.queue = notNull(handle);
 			this.family = notNull(family);
+		}
+
+		/**
+		 * @return Queue handle
+		 */
+		Pointer handle() {
+			return queue;
 		}
 
 		/**
@@ -164,195 +59,113 @@ public class LogicalDevice extends PointerHandle {
 		}
 
 		/**
-		 * @return Logical device owning this queue
+		 * @return Logical device for this queue
 		 */
 		public LogicalDevice device() {
 			return LogicalDevice.this;
 		}
 
 		/**
-		 * @return New work builder
-		 */
-		public Work.Builder work() {
-			return new Work.Builder(this);
-		}
-
-		/**
-		 * Helper - Submits a command to this queue.
-		 * @param buffer Command buffer
-		 */
-		public void submit(Command.Buffer buffer) {
-			new Work.Builder(this).add(buffer).build().submit();
-		}
-
-		/**
 		 * Waits for this queue to become idle.
 		 */
 		public void waitIdle() {
-			final VulkanLibrary lib = device().vulkan().library();
-			check(lib.vkQueueWaitIdle(super.handle()));
-		}
-
-		@Override
-		public final synchronized void destroy() {
-			throw new UnsupportedOperationException();
+			final VulkanLibrary api = device().parent.vulkan().api();
+			check(api.vkQueueWaitIdle(queue));
 		}
 	}
 
+	private final Pointer handle;
 	private final PhysicalDevice parent;
 	private final Map<QueueFamily, List<Queue>> queues;
 
 	/**
 	 * Constructor.
-	 * @param handle 		Device handle
-	 * @param parent		Parent physical device
-	 * @param queues		Queue handles ordered by family
+	 * @param handle Device handle
+	 * @param parent Parent physical device
+	 * @param queues Work queues ordered by family
 	 */
-	protected LogicalDevice(Pointer handle, PhysicalDevice parent, Map<QueueFamily, List<Pointer>> queues) {
-		super(handle);
+	LogicalDevice(Pointer handle, PhysicalDevice parent, Map<QueueFamily, List<Pointer>> queues) {
+		this.handle = notNull(handle);
 		this.parent = notNull(parent);
 		this.queues = build(queues);
 	}
 
 	/**
-	 * Builds the work queues for this device.
+	 * Creates work queue instances for the given handles.
 	 */
 	private Map<QueueFamily, List<Queue>> build(Map<QueueFamily, List<Pointer>> queues) {
 		final Map<QueueFamily, List<Queue>> map = new HashMap<>();
-		for(QueueFamily family : queues.keySet()) {
-			final var list = queues.get(family).stream().map(handle -> new Queue(handle, family)).collect(toList());
-			map.put(family, list);
+		for(final var entry : queues.entrySet()) {
+			final QueueFamily family = entry.getKey();
+			final List<Queue> list = build(family, entry.getValue());
+			map.put(family, List.copyOf(list));
 		}
 		return Map.copyOf(map);
 	}
 
 	/**
+	 * Creates work queue instances for the given handles.
+	 */
+	private List<Queue> build(QueueFamily family, List<Pointer> handles) {
+		return handles
+				.stream()
+				.map(ptr -> new Queue(ptr, family))
+				.collect(toList());
+	}
+
+	/**
+	 * @return Device handle
+	 */
+	Pointer handle() {
+		return handle;
+	}
+
+	/**
 	 * @return Parent physical device
 	 */
-	protected PhysicalDevice parent() {
+	public PhysicalDevice parent() {
 		return parent;
 	}
 
 	/**
-	 * @return Vulkan context
-	 */
-	protected Vulkan vulkan() {
-		return parent.vulkan();
-	}
-
-	/**
-	 * Retrieves all queues.
-	 * @return All queues for this device ordered by family
+	 * @return Work queues for this device ordered by family
 	 */
 	public Map<QueueFamily, List<Queue>> queues() {
 		return queues;
 	}
 
 	/**
-	 * Retrieve all queues of the given family.
-	 * @param family Family
-	 * @return Queues for this device in the given family
-	 * @throws IllegalArgumentException if there are no queues in the given family
-	 */
-	public List<Queue> queues(QueueFamily family) {
-		final var results = queues.get(family);
-		if(results == null) throw new IllegalArgumentException("No queues for family: " + family);
-		return results;
-	}
-
-	/**
-	 * Retrieves a queue belonging to this device.
-	 * @param family	Queue family
-	 * @param index		Index
-	 * @return Queue
-	 * @throws IllegalArgumentException if there are no queues in the given family
-	 */
-	public Queue queue(QueueFamily family, int index) {
-		final var list = queues(family);
-		Check.range(index, 0, list.size());
-		return list.get(index);
-	}
-
-	/**
-	 * Retrieves the <b>first</b> queue of the given family belonging to this device.
-	 * @param family Queue family
-	 * @return Queue
-	 * @throws IllegalArgumentException if there are no queues in the given family
-	 */
-	public Queue queue(QueueFamily family) {
-		return queues(family).get(0);
-	}
-
-	/**
-	 * Creates a semaphore.
-	 * @return New semaphore
-	 */
-	public PointerHandle semaphore() {
-		// Allocate semaphore
-		final Vulkan vulkan = vulkan();
-		final VulkanLibrarySynchronize lib = vulkan.library();
-		final PointerByReference semaphore = vulkan.factory().reference();
-		check(lib.vkCreateSemaphore(super.handle(), new VkSemaphoreCreateInfo(), null, semaphore));
-
-		// Create semaphore
-		return new LogicalDeviceHandle(semaphore.getValue(), LogicalDevice.this, ignored -> lib::vkDestroySemaphore);
-	}
-
-	/**
-	 * Allocates device memory.
-	 * @param reqs		Memory requirements
-	 * @param flags		Flags
-	 * @return Memory handle
-	 * @throws ServiceException if the memory cannot be allocated
-	 */
-	public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
-		// Find memory type
-		final int type = parent.findMemoryType(flags);
-
-		// Init memory descriptor
-		final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
-        info.allocationSize = reqs.size;
-        info.memoryTypeIndex = type;
-
-        // Allocate memory
-        final Vulkan vulkan = parent.vulkan();
-        final PointerByReference mem = vulkan.factory().reference();
-        check(vulkan.library().vkAllocateMemory(super.handle(), info, null, mem));
-
-        // Get memory handle
-        return mem.getValue();
-	}
-
-	/**
 	 * Waits for this device to become idle.
 	 */
 	public void waitIdle() {
-		vulkan().library().vkDeviceWaitIdle(super.handle());
+		parent.vulkan().api().vkDeviceWaitIdle(handle);
 	}
 
-	@Override
-	public synchronized void destroy() {
-		final VulkanLibrary lib = parent.vulkan().library();
-		lib.vkDestroyDevice(super.handle(), null);
-		super.destroy();
+	/**
+	 * Destroys this device.
+	 */
+	public void destroy() {
+		final VulkanLibrary api = parent.vulkan().api();
+		check(api.vkDestroyDevice(handle, null));
 	}
 
 	/**
 	 * Builder for a logical device.
 	 */
-	public static class Builder extends Feature.AbstractBuilder<Builder> {
-		private final PhysicalDevice parent;
-		private final List<VkDeviceQueueCreateInfo> queues = new StrictList<>();
-
-		private VkPhysicalDeviceFeatures features;
+	public static class Builder {
+		private PhysicalDevice parent;
+		private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
+		private final Set<String> extensions = new HashSet<>();
+		private final Set<String> layers = new HashSet<>();
+		private final List<VkDeviceQueueCreateInfo> queues = new ArrayList<>();
 
 		/**
-		 * Constructor.
+		 * Sets the parent of this device.
 		 * @param parent Parent physical device
 		 */
-		public Builder(PhysicalDevice parent) {
-			super(parent.supported());
+		public Builder parent(PhysicalDevice parent) {
 			this.parent = notNull(parent);
+			return this;
 		}
 
 		/**
@@ -365,24 +178,37 @@ public class LogicalDevice extends PointerHandle {
 		}
 
 		/**
-		 * Adds a single queue of the given family to this device (with the default priority of <b>one</b>).
-		 * @param family Queue family
-		 * @throws IllegalArgumentException if the queue family does not belong to the physical device
+		 * Adds an extension required for this device.
+		 * @param ext Extension name
 		 */
-		public Builder queue(QueueFamily family) {
-			// TODO - dedup, need to work out what the requirements for this actually are
-			if(queues.stream().noneMatch(info -> info.queueFamilyIndex == family.index())) {
-				queue(family, 1);
-			}
+		public Builder extension(String ext) {
+			Check.notEmpty(ext);
+			extensions.add(ext);
 			return this;
 		}
 
 		/**
-		 * Adds multiple queues of the given family to this device (all with the default priority of <b>one</b>).
-		 * @param family 	Queue family
+		 * Adds a validation layer required for this device.
+		 * @param layer Validation layer
+		 */
+		public Builder layer(ValidationLayer layer) {
+			layers.add(layer.name());
+			return this;
+		}
+
+		/**
+		 * Adds a <b>single</b> queue of the given family to this device.
+		 * @param family Queue family
+		 */
+		public Builder queue(QueueFamily family) {
+			return queue(family, 1);
+		}
+
+		/**
+		 * Adds the specified number of queues of the given family to this device.
+		 * @param family	Queue family
 		 * @param num		Number of queues
-		 * @throws IllegalArgumentException if the queue family does not belong to the physical device
-		 * @throws IllegalArgumentException if the number of queues is zero or exceeds the number available in the given family
+		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
 		public Builder queue(QueueFamily family, int num) {
 			final float[] priorities = new float[num];
@@ -391,31 +217,31 @@ public class LogicalDevice extends PointerHandle {
 		}
 
 		/**
-		 * Adds multiple queues of the given family to this device with the specified priorities.
-		 * @param family 			Queue family
-		 * @param priorities		Queue priorities
-		 * @throws IllegalArgumentException if the queue family does not belong to the physical device
-		 * @throws IllegalArgumentException if any priority is not in the range 0..1
-		 * @throws IllegalArgumentException if the number of queues is zero or exceeds the number available in the given family
+		 * Adds multiple queues of the given family with the specified work priorities to this device.
+		 * @param family		Queue family
+		 * @param priorities	Queue priorities
+		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
+		 * @throws IllegalArgumentException if the priorities array is empty or any value is not a valid 0..1 percentile
 		 */
 		public Builder queue(QueueFamily family, float[] priorities) {
-			// Validate
-			if(!parent.families().contains(family)) {
-				throw new IllegalArgumentException("Invalid queue family for device: " + family);
-			}
+			// Validate priorities
 			Check.notEmpty(priorities);
+			if(priorities.length > family.count()) throw new IllegalArgumentException(String.format("Requested number of queues exceeds family pool size: num=%d family=%s", priorities.length, family));
 			for(float f : priorities) {
-				Check.range(f, 0, 1);
-			}
-			if(priorities.length > family.count()) {
-				throw new IllegalArgumentException(String.format("Number of requested queues exceeds number available in family: num=%d family=%s", priorities.length, family));
+				if((f < 0) || (f > 1)) throw new IllegalArgumentException("Invalid queue priority: " + Arrays.toString(priorities));
 			}
 
-			// Add queue descriptor
+			// Allocate contiguous memory block for the priorities
+			final Memory mem = new Memory(priorities.length * Float.BYTES);
+			mem.write(0, priorities, 0, priorities.length);
+
+			// Init descriptor
 			final VkDeviceQueueCreateInfo info = new VkDeviceQueueCreateInfo();
 			info.queueCount = priorities.length;
 			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = StructureHelper.floats(priorities);
+			info.pQueuePriorities = mem;
+
+			// Add queue
 			queues.add(info);
 
 			return this;
@@ -428,46 +254,42 @@ public class LogicalDevice extends PointerHandle {
 		 */
 		public LogicalDevice build() {
 			// Create descriptor
+			if(parent == null) throw new IllegalArgumentException("Parent physical device not specified");
 			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
 
 			// Add required features
-			final var unsupported = parent.enumerateUnsupportedFeatures(features);
-			if(!unsupported.isEmpty()) throw new ServiceException("Logical device requires features that are not supported byy the physical device: " + unsupported);
 			info.pEnabledFeatures = features;
+
+			// Add required extensions
+			info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
+			info.enabledExtensionCount = extensions.size();
+
+			// Add validation layers
+			info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
+			info.enabledLayerCount = layers.size();
 
 			// Add queue descriptors
 			info.queueCreateInfoCount = queues.size();
 			info.pQueueCreateInfos = StructureHelper.structures(queues);
 
-			// Add required extensions
-			final String[] extensions = super.extensions();
-			info.ppEnabledExtensionNames = new StringArray(extensions);
-			info.enabledExtensionCount = extensions.length;
-
-			// Add validation layers
-			final String[] layers = super.layers();
-			info.ppEnabledLayerNames = new StringArray(layers);
-			info.enabledLayerCount = layers.length;
-
 			// Allocate device
 			final Vulkan vulkan = parent.vulkan();
-			final VulkanLibraryLogicalDevice lib = vulkan.library();
-			final PointerByReference logical = vulkan.factory().reference();
-			check(lib.vkCreateDevice(parent.handle(), info, null, logical));
+			final VulkanLibraryLogicalDevice api = vulkan.api();
+			final PointerByReference logical = vulkan.pointer();
+			check(api.vkCreateDevice(parent.handle(), info, null, logical));
 
 			// Retrieve queues
 			final Map<QueueFamily, List<Pointer>> map = new HashMap<>();
 			for(VkDeviceQueueCreateInfo queueInfo : queues) {
 				final QueueFamily family = parent.families().get(queueInfo.queueFamilyIndex);
 				for(int n = 0; n < queueInfo.queueCount; ++n) {
-					final PointerByReference ref = vulkan.factory().reference();
-					lib.vkGetDeviceQueue(logical.getValue(), family.index(), n, ref);
+					final PointerByReference ref = vulkan.pointer();
+					api.vkGetDeviceQueue(logical.getValue(), family.index(), n, ref);
 					map.computeIfAbsent(family, ignored -> new ArrayList<>()).add(ref.getValue());
 				}
 			}
 
 			// Create logical device
-			// TODO - resource/track
 			return new LogicalDevice(logical.getValue(), parent, map);
 		}
 	}

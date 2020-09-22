@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.Command.Buffer;
 import org.sarge.jove.platform.vulkan.Command.Pool;
 import org.sarge.jove.platform.vulkan.LogicalDevice.Queue;
-import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
 

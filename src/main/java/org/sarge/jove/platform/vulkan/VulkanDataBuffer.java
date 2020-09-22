@@ -108,7 +108,7 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 		// Map buffer memory
 		final LogicalDevice dev = super.device();
 		final Vulkan vulkan = dev.vulkan();
-		final VulkanLibraryMemory lib = vulkan.library();
+		final VulkanLibraryMemory lib = vulkan.api();
 		final PointerByReference data = vulkan.factory().reference();
 		lib.vkMapMemory(dev.handle(), mem, 0, actual, 0, data);
 
@@ -155,7 +155,7 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 	@Override
 	protected void cleanup() {
 		final LogicalDevice dev = super.device();
-		final VulkanLibraryMemory lib = dev.vulkan().library();
+		final VulkanLibraryMemory lib = dev.vulkan().api();
 		lib.vkFreeMemory(dev.handle(), mem, null);
 	}
 
@@ -232,7 +232,7 @@ class VulkanDataBuffer extends LogicalDeviceHandle implements DataBuffer {
 
 			// Allocate buffer
 			final Vulkan vulkan = dev.vulkan();
-			final VulkanLibrary lib = vulkan.library();
+			final VulkanLibrary lib = vulkan.api();
 			final PointerByReference buffer = vulkan.factory().reference();
 			final Pointer logical = dev.handle();
 			check(lib.vkCreateBuffer(logical, info, null, buffer));

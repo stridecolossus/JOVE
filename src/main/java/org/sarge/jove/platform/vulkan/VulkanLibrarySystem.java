@@ -48,6 +48,14 @@ interface VulkanLibraryInstance {
 	 * @return Result
 	 */
 	int vkEnumerateInstanceLayerProperties(IntByReference count, VkLayerProperties layers);
+
+	/**
+	 * Looks up an instance function.
+	 * @param instance		Vulkan instance
+	 * @param name			Function name
+	 * @return Function pointer
+	 */
+	Pointer vkGetInstanceProcAddr(Pointer instance, String name);
 }
 
 /**

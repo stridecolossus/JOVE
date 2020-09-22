@@ -1,0 +1,244 @@
+package org.sarge.jove.platform.vulkan;
+
+import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.lib.util.Check;
+
+import com.sun.jna.Function;
+import com.sun.jna.Pointer;
+import com.sun.jna.StringArray;
+import com.sun.jna.ptr.PointerByReference;
+
+/**
+ * An <i>instance</i> is the root object for a Vulkan application.
+ * @author Sarge
+ */
+public class Instance {
+	private final Vulkan vulkan;
+	private final Pointer handle;
+
+	private final Map<MessageHandler, Pointer> handlers = new HashMap<>();
+	private HandlerFactory factory;
+
+	/**
+	 * Constructor.
+	 * @param vulkan		Vulkan
+	 * @param handle		Instance handle
+	 */
+	private Instance(Vulkan vulkan, Pointer handle) {
+		this.vulkan = notNull(vulkan);
+		this.handle = notNull(handle);
+	}
+
+	/**
+	 * @return Vulkan
+	 */
+	Vulkan vulkan() {
+		return vulkan;
+	}
+
+	/**
+	 * @return Instance handle
+	 */
+	public Pointer handle() {
+		return handle;
+	}
+
+	/**
+	 * Looks up a Vulkan function by name.
+	 * @param name Function name
+	 * @return Vulkan function
+	 * @throws ServiceException if the function cannot be found
+	 */
+	public Function function(String name) {
+		final Pointer ptr = vulkan.api().vkGetInstanceProcAddr(handle, name);
+		if(ptr == null) throw new ServiceException("Cannot find function pointer: " + name);
+		return Function.getFunction(ptr);
+	}
+
+	/**
+	 * The <i>handler factory</i> is a lazily instantiated local helper class used to manage message handlers attached to this instance.
+	 * @see <a href="https://www.lunarg.com/wp-content/uploads/2018/05/Vulkan-Debug-Utils_05_18_v1.pdf">Vulkan-Debug-Utils_05_18_v1.pdf</a>
+	 */
+	private class HandlerFactory {
+		private final Function create;
+		private final Function destroy;
+
+		private HandlerFactory() {
+			this.create = function("vkCreateDebugUtilsMessengerEXT");
+			this.destroy = function("vkDestroyDebugUtilsMessengerEXT");
+		}
+
+		/**
+		 * Creates a message handler.
+		 * @param handler Message handler descriptor
+		 * @return Handle
+		 */
+		private Pointer create(MessageHandler handler) {
+			final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
+			final PointerByReference handle = vulkan.pointer();
+			final Object[] args = {Instance.this.handle, info, null, handle};
+			VulkanLibrary.check(create.invokeInt(args));
+			return handle.getValue();
+		}
+
+		/**
+		 * Destroys a message handler.
+		 * @param handle Handle
+		 */
+		private void destroy(Pointer handle) {
+			destroy.invoke(new Object[]{Instance.this.handle, handle, null});
+		}
+	}
+
+	/**
+	 * Adds a diagnostics message handler to this instance.
+	 * @param handler Message handler
+	 * @throws IllegalArgumentException if the handler has already been added to this instance
+	 * @throws ServiceException if the handler cannot be created
+	 */
+	public synchronized void add(MessageHandler handler) {
+		// Check handler is valid
+		Check.notNull(handler);
+		if(handlers.containsKey(handler)) throw new IllegalArgumentException("Duplicate message handler: " + handler);
+
+		// Init factory
+		if(factory == null) {
+			factory = new HandlerFactory();
+		}
+
+		// Create and register handler
+		final Pointer handle = factory.create(handler);
+		handlers.put(handler, handle);
+	}
+
+	/**
+	 * Removes (and destroys) a diagnostics message handler from this instance.
+	 * @param handler Message handler to remove
+	 * @throws IllegalArgumentException if the handler is not present or has already been removed
+	 * @throws ServiceException if the handler cannot be destroyed
+	 */
+	public synchronized void remove(MessageHandler handler) {
+		if(!handlers.containsKey(handler)) throw new IllegalArgumentException("Handler not present: " + handler);
+		final Pointer handle = handlers.remove(handler);
+		factory.destroy(handle);
+	}
+
+	/**
+	 * Destroys this instance and any active message handlers.
+	 */
+	public synchronized void destroy() {
+		// Destroy active handlers
+		if(!handlers.isEmpty()) {
+			handlers.values().forEach(factory::destroy);
+			handlers.clear();
+		}
+
+		// Destroy instance
+		vulkan.api().vkDestroyInstance(handle, null);
+	}
+
+	/**
+	 * Builder for a Vulkan instance.
+	 */
+	public static class Builder {
+		private final Vulkan vulkan;
+
+		private String name;
+		private Version ver = VulkanLibrary.VERSION;
+		private final Set<String> extensions = new HashSet<>();
+		private final Set<ValidationLayer> layers = new HashSet<>();
+
+		/**
+		 * Constructor.
+		 * @param vulkan Vulkan
+		 */
+		public Builder(Vulkan vulkan) {
+			this.vulkan = notNull(vulkan);
+		}
+
+		/**
+		 * Sets the application name.
+		 * @param name Application name
+		 */
+		public Builder name(String name) {
+			this.name = notEmpty(name);
+			return this;
+		}
+
+		/**
+		 * Sets the required minimum Vulkan version.
+		 * @param ver Minimum version, default is {@link VulkanLibrary#VERSION}
+		 */
+		public Builder version(Version ver) {
+			this.ver = notNull(ver);
+			return this;
+		}
+
+		/**
+		 * Registers a required extension.
+		 * @param ext Extension name
+		 * @see Vulkan#extensions()
+		 */
+		public Builder extension(String ext) {
+			Check.notEmpty(ext);
+			extensions.add(ext);
+			return this;
+		}
+
+		/**
+		 * Registers a required validation layer.
+		 * @param layer Validation layer descriptor
+		 * @see Vulkan#layers()
+		 */
+		public Builder layer(ValidationLayer layer) {
+			Check.notNull(layer);
+			layers.add(layer);
+			return this;
+		}
+
+		/**
+		 * Constructs this instance.
+		 * @return New instance
+		 * @throws IllegalArgumentException if the {@link #name(String)} has not been set
+		 * @throws VulkanException if the instance cannot be created
+		 */
+		public Instance build() {
+			// Init application descriptor
+			Check.notEmpty(name);
+			final VkApplicationInfo app = new VkApplicationInfo();
+			app.pEngineName = "JOVE";
+			app.pApplicationName = name;
+			app.apiVersion = ver.toInteger();
+
+			// Init instance descriptor
+			final VkInstanceCreateInfo info = new VkInstanceCreateInfo();
+			info.pApplicationInfo = app;
+
+			// Populate required extensions
+			info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
+			info.enabledExtensionCount = extensions.size();
+
+			// Populate required layers
+			final String[] layerNames = layers.stream().map(ValidationLayer::name).toArray(String[]::new);
+			info.ppEnabledLayerNames = new StringArray(layerNames);
+			info.enabledLayerCount = layerNames.length;
+
+			// Create instance
+			final VulkanLibrary api = vulkan.api();
+			final PointerByReference handle = vulkan.pointer();
+			check(api.vkCreateInstance(info, null, handle));
+
+			// Create instance wrapper
+			return new Instance(vulkan, handle.getValue());
+		}
+	}
+}

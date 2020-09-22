@@ -7,11 +7,21 @@ import com.sun.jna.TypeConverter;
 /**
  * A <i>Vulkan boolean</i> is a custom JNA type wrapper for boolean values.
  * <p>
- * A Vulkan boolean class is mapped to a native <tt>int</tt> with a value that is explicitly 1 for <tt>true</tt> and 0 for <tt>false</tt>.
- * This circumvents the default JNA mapping for a Java <tt>boolean</tt> which is an <i>arbitrary non-zero</i> value for <tt>true</tt> (-1 in this case, Vulkan explicitly checks for <tt>one</tt>).
+ * A Vulkan boolean class is mapped to a native <code>int</code> with a value that is explicitly 1 for <code>true</code> and 0 for <code>false</code>.
+ * This circumvents the default JNA mapping for a Java <code>boolean</code> which is an <i>arbitrary non-zero</i> value for <code>true</code> (-1 in this case, Vulkan explicitly checks for <code>one</code>).
  * @author Sarge
  */
 public final class VulkanBoolean {
+	/**
+	 * Boolean <tt>true</tt>.
+	 */
+	public static final VulkanBoolean TRUE = new VulkanBoolean(true);
+
+	/**
+	 * Boolean <tt>false</tt>.
+	 */
+	public static final VulkanBoolean FALSE = new VulkanBoolean(false);
+
 	/**
 	 * JNA type converter.
 	 */
@@ -44,16 +54,6 @@ public final class VulkanBoolean {
 	};
 
 	/**
-	 * Boolean <tt>true</tt>.
-	 */
-	public static final VulkanBoolean TRUE = new VulkanBoolean(true);
-
-	/**
-	 * Boolean <tt>false</tt>.
-	 */
-	public static final VulkanBoolean FALSE = new VulkanBoolean(false);
-
-	/**
 	 * Converts a boolean represented as a native <tt>int</tt>.
 	 * @param value Native value
 	 * @return Vulkan boolean
@@ -68,7 +68,7 @@ public final class VulkanBoolean {
 	}
 
 	/**
-	 * Converts a boolean to a Vulkan boolean.
+	 * Converts a primitive boolean to a Vulkan boolean.
 	 * @param bool Boolean
 	 * @return Vulkan boolean
 	 */
@@ -92,14 +92,14 @@ public final class VulkanBoolean {
 	}
 
 	/**
-	 * @return Whether this boolean is <tt>true</tt>
+	 * @return Whether this boolean is <code>true</code>
 	 */
 	public boolean isTrue() {
 		return value;
 	}
 
 	/**
-	 * @return Vulkan integer representation (1 for <tt>true</tt>, 0 for <tt>false</tt>)
+	 * @return Vulkan integer representation (1 for <code>true</code>, 0 for <code>false</code>)
 	 */
 	public int toInteger() {
 		return value ? 1 : 0;
@@ -112,12 +112,7 @@ public final class VulkanBoolean {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj instanceof VulkanBoolean) {
-			return (this == TRUE) == (obj == TRUE);
-		}
-		else {
-			return false;
-		}
+		return (obj instanceof VulkanBoolean b) && (this.value == b.value);
 	}
 
 	@Override

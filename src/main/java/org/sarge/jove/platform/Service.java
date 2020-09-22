@@ -25,15 +25,13 @@ public interface Service {
 		/**
 		 * Error handler that wraps errors in a {@link ServiceException}.
 		 */
-		ErrorHandler THROW = error -> {
-			throw new ServiceException(error);
-		};
+		ErrorHandler THROW = ServiceException::new;
 
 		/**
 		 * Error handler that logs error.
 		 * TODO - log4J
 		 */
-		ErrorHandler LOGGER = error -> System.err.println(error);
+		ErrorHandler LOGGER = System.err::println;
 	}
 
 	/**

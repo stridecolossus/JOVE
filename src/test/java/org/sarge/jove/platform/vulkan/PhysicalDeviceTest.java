@@ -1,124 +1,106 @@
 package org.sarge.jove.platform.vulkan;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.IntegerEnumeration;
-import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.vulkan.Feature.Supported;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 
-public class PhysicalDeviceTest extends AbstractVulkanTest {
-	private Pointer handle;
+public class PhysicalDeviceTest {
 	private PhysicalDevice dev;
-	private VkQueueFamilyProperties familyProps;
+	private Vulkan vulkan;
 
 	@BeforeEach
-	public void before() {
-		// Create device properties
-		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-		props.deviceType = VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+	void before() {
+		// Create Vulkan
+		vulkan = mock(Vulkan.class);
+		when(vulkan.api()).thenReturn(mock(VulkanLibrary.class));
 
 		// Create a queue family
-		familyProps = new VkQueueFamilyProperties();
-		familyProps.queueCount = 2;
-		familyProps.queueFlags = IntegerEnumeration.mask(Set.of(VkQueueFlag.VK_QUEUE_COMPUTE_BIT));
-
-		// Create device features
-		final var features = new VkPhysicalDeviceFeatures();
-		features.geometryShader = VulkanBoolean.TRUE;
-
-		// Create memory type
-		final VkMemoryType type = new VkMemoryType();
-		type.propertyFlags = VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT.value();
-
-		// Create device memory properties
-		final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
-		mem.memoryTypeCount = 1;
-		mem.memoryTypes = new VkMemoryType[]{type};
+		final VkQueueFamilyProperties family = new VkQueueFamilyProperties();
+		family.queueCount = 1;
+		family.queueFlags = IntegerEnumeration.mask(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT);
 
 		// Create device
-		handle = mock(Pointer.class);
-		dev = new PhysicalDevice(handle, vulkan, props, mem, features, List.of(familyProps), mock(Supported.class));
+		dev = new PhysicalDevice(new Pointer(42), vulkan, new VkQueueFamilyProperties[]{family, family});
 	}
 
 	@Test
-	public void constructor() {
-		assertEquals(handle, dev.handle());
-		assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, dev.type());
-		assertNotNull(dev.properties());
+	void constructor() {
+		assertNotNull(dev.handle());
+		assertEquals(vulkan, dev.vulkan());
 		assertNotNull(dev.families());
-		assertNotNull(dev.supported());
-		assertNotNull(dev.families());
-		assertEquals(1, dev.families().size());
+		assertEquals(2, dev.families().size());
+		assertNotNull(dev.extensions());
+		assertNotNull(dev.layers());
 	}
 
 	@Test
-	public void findMemoryType() {
-		assertEquals(0, dev.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT)));
+	void properties() {
+		final var props = dev.properties();
+		verify(vulkan.api()).vkGetPhysicalDeviceProperties(dev.handle(), props);
 	}
 
 	@Test
-	public void findMemoryTypeUnsupported() {
-		assertThrows(ServiceException.class, () -> dev.findMemoryType(Set.of()));
-		assertThrows(ServiceException.class, () -> dev.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)));
-		assertThrows(ServiceException.class, () -> dev.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT, VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
+	void memory() {
+		final var mem = dev.memory();
+		verify(vulkan.api()).vkGetPhysicalDeviceMemoryProperties(dev.handle(), mem);
+	}
+
+	@Test
+	void features() {
+		final var features = dev.features();
+		verify(vulkan.api()).vkGetPhysicalDeviceFeatures(dev.handle(), features);
 	}
 
 	@Nested
-	class FeatureTests {
-		@Test
-		public void enumerateUnsupportedFeaturesEmpty() {
-			assertEquals(Set.of(), dev.enumerateUnsupportedFeatures(new VkPhysicalDeviceFeatures()));
-		}
-
-		@Test
-		public void enumerateUnsupportedFeaturesSame() {
-			final VkPhysicalDeviceFeatures required = new VkPhysicalDeviceFeatures();
-			required.geometryShader = VulkanBoolean.TRUE;
-			assertEquals(Set.of(), dev.enumerateUnsupportedFeatures(required));
-		}
-
-		@Test
-		public void enumerateUnsupportedFeatures() {
-			final VkPhysicalDeviceFeatures required = new VkPhysicalDeviceFeatures();
-			required.geometryShader = VulkanBoolean.TRUE;
-			required.tessellationShader = VulkanBoolean.TRUE;
-			assertEquals(Set.of("tessellationShader"), dev.enumerateUnsupportedFeatures(required));
-		}
-	}
-
-	@Nested
-	class QueueFamilyTests {
-		private QueueFamily family;
+	class FamilyTests {
+		private QueueFamily one, two;
 
 		@BeforeEach
-		public void before() {
-			family = dev.families().iterator().next();
+		void before() {
+			one = dev.families().get(0);
+			two = dev.families().get(1);
 		}
 
 		@Test
-		public void family() {
-			assertEquals(2, family.count());
-			assertEquals(Set.of(VkQueueFlag.VK_QUEUE_COMPUTE_BIT), family.flags());
+		void family() {
+			assertNotNull(one);
+			assertEquals(1, one.count());
+			assertEquals(Set.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT), one.flags());
 		}
 
 		@Test
-		public void isPresentationSupported() {
+		void indices() {
+			assertEquals(0, one.index());
+			assertEquals(1, two.index());
+		}
+
+		@Test
+		void equals() {
+			assertEquals(true, one.equals(one));
+			assertEquals(false, one.equals(null));
+			assertEquals(false, one.equals(two));
+		}
+
+		@Test
+		void isPresentationSupported() {
 			final Surface surface = mock(Surface.class);
-			when(surface.handle()).thenReturn(mock(Pointer.class));
-			family.isPresentationSupported(surface);
+			final IntByReference ref = new IntByReference(1);
+			when(vulkan.integer()).thenReturn(ref);
+			assertEquals(true, one.isPresentationSupported(surface));
+			verify(vulkan.api()).vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), 0, surface.handle(), ref);
 		}
 	}
 }

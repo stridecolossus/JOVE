@@ -320,7 +320,7 @@ public class VulkanImage extends LogicalDeviceHandle {
 
 			// Allocate image
 			final Vulkan vulkan = dev.vulkan();
-			final VulkanLibraryImage lib = vulkan.library();
+			final VulkanLibraryImage lib = vulkan.api();
 			final PointerByReference handle = vulkan.factory().reference();
 			check(lib.vkCreateImage(dev.handle(), info, null, handle));
 

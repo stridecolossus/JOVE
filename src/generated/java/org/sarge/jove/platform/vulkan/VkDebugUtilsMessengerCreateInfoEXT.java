@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.VulkanInstance.MessageCallback;
+import org.sarge.jove.platform.vulkan.MessageHandler.MessageCallback;
 import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;

@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
@@ -72,7 +71,7 @@ public class SwapChain extends LogicalDeviceHandle {
 	 */
 	public int next(PointerHandle semaphore, Fence fence) {
 		final LogicalDevice dev = super.device();
-		final VulkanLibrarySwapChain lib = dev.vulkan().library();
+		final VulkanLibrarySwapChain lib = dev.vulkan().api();
 		lib.vkAcquireNextImageKHR(dev.handle(), super.handle(), Long.MAX_VALUE, toPointer(semaphore), toPointer(fence), index);
 		return index.getValue();
 	}
@@ -112,7 +111,7 @@ public class SwapChain extends LogicalDeviceHandle {
 
 		// Present frame
 		// TODO - check
-		final VulkanLibrary lib = device().vulkan().library();
+		final VulkanLibrary lib = device().vulkan().api();
 		lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info});
 	}
 
@@ -322,7 +321,7 @@ public class SwapChain extends LogicalDeviceHandle {
 
 			// Allocate swap-chain
 			final Vulkan vulkan = dev.vulkan();
-			final VulkanLibrary lib = vulkan.library();
+			final VulkanLibrary lib = vulkan.api();
 			final ReferenceFactory factory = vulkan.factory();
 			final PointerByReference chain = factory.reference();
 			check(lib.vkCreateSwapchainKHR(dev.handle(), info, null, chain));

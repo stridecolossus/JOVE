@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
 import org.sarge.jove.platform.Resource.PointerHandle;
-import org.sarge.jove.platform.vulkan.Vulkan.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
@@ -15,6 +14,11 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 public abstract class AbstractVulkanTest {
+
+	// TODO
+	public static final String INTEGRATION_TEST = "vulkan-integration-test";
+
+
 	protected Vulkan vulkan;
 	protected VulkanLibrary library;
 	protected ReferenceFactory factory;
@@ -50,7 +54,7 @@ public abstract class AbstractVulkanTest {
 
 		// Initialise mock implementation
 		vulkan = mock(Vulkan.class);
-		when(vulkan.library()).thenReturn(library);
+		when(vulkan.api()).thenReturn(library);
 		when(vulkan.factory()).thenReturn(factory);
 
 		// Create logical device

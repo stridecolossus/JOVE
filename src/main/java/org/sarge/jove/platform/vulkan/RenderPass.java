@@ -373,7 +373,7 @@ public class RenderPass extends LogicalDeviceHandle {
 
 			// Create render pass
 			final Vulkan vulkan = dev.vulkan();
-			final VulkanLibrary lib = vulkan.library();
+			final VulkanLibrary lib = vulkan.api();
 			final PointerByReference pass = vulkan.factory().reference();
 			check(lib.vkCreateRenderPass(dev.handle(), info, null, pass));
 

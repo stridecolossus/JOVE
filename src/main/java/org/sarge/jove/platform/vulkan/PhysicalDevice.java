@@ -1,46 +1,46 @@
 package org.sarge.jove.platform.vulkan;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Predicate;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.IntegerEnumeration;
-import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.vulkan.Feature.Supported;
-import org.sarge.jove.util.StructureHelper;
-import org.sarge.lib.util.AbstractEqualsObject;
-import org.sarge.lib.util.AbstractObject;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
 /**
- * A <i>physical device</i> is a Vulkan system component such as a GPU.
+ * A <i>physical device</i> represents a Vulkan system component such as a GPU.
  * @author Sarge
  */
-public class PhysicalDevice extends AbstractObject {
+public class PhysicalDevice {
 	/**
-	 * Queue family.
+	 * Queue family implementation.
 	 */
-	public class QueueFamily extends AbstractEqualsObject {
+	public class QueueFamily {
 		private final int count;
+		private final int index;
 		private final Set<VkQueueFlag> flags;
+		private final transient int hash;
 
 		/**
 		 * Constructor.
-		 * @param props Properties
+		 * @param index		Family index
+		 * @param props 	Properties
 		 */
-		private QueueFamily(VkQueueFamilyProperties props) {
+		private QueueFamily(int index, VkQueueFamilyProperties props) {
 			this.count = props.queueCount;
+			this.index = index;
 			this.flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
+			this.hash = new HashCodeBuilder().append(index).append(parent()).hashCode();
 		}
 
 		/**
@@ -51,197 +51,168 @@ public class PhysicalDevice extends AbstractObject {
 		}
 
 		/**
-		 * @return Queue flags
+		 * @return Queue family index
+		 */
+		public int index() {
+			return index;
+		}
+
+		/**
+		 * @return Flags for this family
 		 */
 		public Set<VkQueueFlag> flags() {
 			return flags;
 		}
 
 		/**
-		 * @return Queue index
-		 */
-		public int index() {
-			return PhysicalDevice.this.families().indexOf(this);
-		}
-
-		/**
-		 * Tests whether this family supports presentation to the given surface.
-		 * @param surface Surface
-		 * @return Whether presentation is supported
+		 *
+		 * @param surface Rendering surface
+		 * @return Whether this family supports presentation to the given surface
 		 */
 		public boolean isPresentationSupported(Surface surface) {
-			final IntByReference supported = vulkan.factory().integer();
-			check(vulkan.library().vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice.this.handle(), index(), surface.handle(), supported));
+			final IntByReference supported = vulkan.integer();
+			check(vulkan.api().vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice.this.handle(), index(), surface.handle(), supported));
 			return VulkanBoolean.of(supported.getValue()).isTrue();
+		}
+
+		@Override
+		public int hashCode() {
+			return hash;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					obj instanceof QueueFamily that &&
+					this.parent() == that.parent() &&
+					this.index() == that.index();
+		}
+
+		private PhysicalDevice parent() {
+			return PhysicalDevice.this;
+		}
+
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this);
 		}
 	}
 
 	/**
-	 * Creates a physical device and retrieves associated data.
-	 * @param handle 		Device handle
-	 * @param vulkan		Vulkan context
-	 * @return Physical device
+	 * Enumerates the physical devices for the given instance.
+	 * @param instance Vulkan instance
+	 * @return Physical devices
 	 */
-	static PhysicalDevice create(Pointer handle, Vulkan vulkan) {
-		// Get device properties
-		final VulkanLibrarySystem lib = vulkan.library();
-		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-		lib.vkGetPhysicalDeviceProperties(handle, props);
-
-		// Get device features
-		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
-		lib.vkGetPhysicalDeviceFeatures(handle, features);
-
-		// Get memory properties
-		final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
-		lib.vkGetPhysicalDeviceMemoryProperties(handle, mem);
-
-		// Get queue families
-		final VulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
-			lib.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
-			return VulkanLibrary.SUCCESS;
-		};
-		final var families = VulkanFunction.enumerate(func, vulkan.factory().integer(), new VkQueueFamilyProperties());
-
-		// Enumerate device-specific extensions and layers
-		final VulkanFunction<VkExtensionProperties> extensions = (count, ext) -> lib.vkEnumerateDeviceExtensionProperties(handle, null, count, ext);
-		final VulkanFunction<VkLayerProperties> layers = (count, ext) -> lib.vkEnumerateDeviceLayerProperties(handle, count, ext);
-		final Supported supported = new Supported(extensions, layers, vulkan.factory());
-
-		// Create device
-		return new PhysicalDevice(handle, vulkan, props, mem, features, Arrays.asList(families), supported);
+	public static Stream<PhysicalDevice> devices(Instance instance) {
+		final Vulkan vulkan = instance.vulkan();
+		final VulkanLibrary api = vulkan.api();
+		final VulkanFunction<Pointer[]> func = (count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
+		final Pointer[] handles = VulkanFunction.array(func, vulkan.integer(), Pointer[]::new);
+		return Arrays.stream(handles).map(ptr -> create(ptr, vulkan));
 	}
 
-	static List<PhysicalDevice> create(VulkanInstance instance) {
-		final var devices = instance.devices();
-		final Vulkan vulkan = instance.vulkan();
-		return devices.stream().map(handle -> PhysicalDevice.create(handle, vulkan)).collect(toList());
+	/**
+	 * Creates and initialises a physical device with the given handle.
+	 * @param handle Device handle
+	 * @return New physical device
+	 */
+	private static PhysicalDevice create(Pointer handle, Vulkan vulkan) {
+		// Enumerate queue families for this device (for some reason this API method is void)
+		final VulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
+			vulkan.api().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
+			return VulkanLibrary.SUCCESS;
+		};
+		final VkQueueFamilyProperties[] families = VulkanFunction.enumerate(func, vulkan.integer(), new VkQueueFamilyProperties());
+
+		// Create device
+		return new PhysicalDevice(handle, vulkan, families);
 	}
 
 	private final Pointer handle;
 	private final Vulkan vulkan;
-	private final VkPhysicalDeviceProperties props;
-	private final VkPhysicalDeviceMemoryProperties mem;
-	private final VkPhysicalDeviceFeatures features;
 	private final List<QueueFamily> families;
-	private final Supported supported;
 
 	/**
 	 * Constructor.
-	 * @param handle			Device handle
-	 * @param vulkan			Vulkan context
-	 * @param props				Device properties
-	 * @param mem				Memory properties
-	 * @param features			Features
-	 * @param families			Queue families
-	 * @param supported			Supported device features
+	 * @param handle		Device handle
+	 * @param vulkan		Vulkan
+	 * @param families		Queue families
 	 */
-	PhysicalDevice(Pointer handle, Vulkan vulkan, VkPhysicalDeviceProperties props, VkPhysicalDeviceMemoryProperties mem, VkPhysicalDeviceFeatures features, List<VkQueueFamilyProperties> families, Supported supported) {
+	PhysicalDevice(Pointer handle, Vulkan vulkan, VkQueueFamilyProperties[] families) {
 		this.handle = notNull(handle);
 		this.vulkan = notNull(vulkan);
-		this.props = notNull(props);
-		this.mem = notNull(mem);
-		this.features = notNull(features);
-		this.families = families.stream().map(QueueFamily::new).collect(toList());
-		this.supported = notNull(supported);
+		this.families = List.copyOf(build(families));
 	}
 
 	/**
-	 * @return Handle
+	 * @return List of queue families from the given structure array
 	 */
-	Pointer handle() {
+	private List<QueueFamily> build(VkQueueFamilyProperties[] families) {
+		return IntStream
+				.range(0, families.length)
+				.mapToObj(n -> new QueueFamily(n, families[n]))
+				.collect(toList());
+	}
+
+	/**
+	 * @return Device handle
+	 */
+	public Pointer handle() {
 		return handle;
 	}
 
 	/**
-	 * @return Vulkan context
+	 * @return Vulkan
 	 */
-	Vulkan vulkan() {
+	public Vulkan vulkan() {
 		return vulkan;
 	}
 
 	/**
-	 * @return Type of this device
-	 */
-	public VkPhysicalDeviceType type() {
-		return props.deviceType;
-	}
-
-	/**
-	 * @return Properties of this device
-	 */
-	public VkPhysicalDeviceProperties properties() {
-		return StructureHelper.copy(props, new VkPhysicalDeviceProperties()); // TODO - nasty
-	}
-
-	/**
-	 * Finds a memory type for the given memory properties.
-	 * @param flags Memory properties
-	 * @return Memory type index
-	 * @throws ServiceException if no suitable memory type is available
-	 */
-	public int findMemoryType(Set<VkMemoryPropertyFlag> flags) {
-		final int mask = IntegerEnumeration.mask(flags);
-		for(int n = 0; n < mem.memoryTypeCount; ++n) {
-			if(mem.memoryTypes[n].propertyFlags == mask) {
-				return n;
-			}
-		}
-		throw new ServiceException("No memory type available for specified memory properties:" + flags);
-	}
-
-	/**
-	 * @return Queue families provided by this device
+	 * @return Queue families for this device
 	 */
 	public List<QueueFamily> families() {
 		return families;
 	}
 
 	/**
-	 * @return Supported extensions and layers
+	 * @return Device properties
 	 */
-	public Supported supported() {
-		return supported;
+	public VkPhysicalDeviceProperties properties() {
+		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+		vulkan.api().vkGetPhysicalDeviceProperties(handle, props);
+		return props;
 	}
 
-	// TODO
-	// boolean supports(VkPhysicalDeviceFeatures required)
+	/**
+	 * @return Memory properties of this device
+	 */
+	public VkPhysicalDeviceMemoryProperties memory() {
+		final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
+		vulkan.api().vkGetPhysicalDeviceMemoryProperties(handle, mem);
+		return mem;
+	}
 
 	/**
-	 * Enumerates the required features that this device does <b>not</b> support.
-	 * @param required Required features
-	 * @return Unsupported feature names
+	 * @return Features supported by this device
 	 */
-	public Set<String> enumerateUnsupportedFeatures(VkPhysicalDeviceFeatures required) {
-		// Extracts a feature flag from the given structure
-		final BiFunction<VkPhysicalDeviceFeatures, Field, VulkanBoolean> getter = (struct, field) -> {
-			try {
-				return (VulkanBoolean) field.get(struct);
-			}
-			catch(Exception e) {
-				throw new RuntimeException(e);
-			}
-		};
+	public VkPhysicalDeviceFeatures features() {
+		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
+		vulkan.api().vkGetPhysicalDeviceFeatures(handle, features);
+		return features;
+	}
 
-		// Tests whether a feature is required
-		final Predicate<Field> isRequired = field -> {
-			final VulkanBoolean bool = getter.apply(required, field);
-			if(bool == null) return false;
-			return bool.isTrue();
-		};
+	/**
+	 * @return Supported extensions function
+	 */
+	public VulkanFunction<VkExtensionProperties> extensions() {
+		return (count, extensions) -> vulkan.api().vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
+	}
 
-		// Tests whether a required feature is supported
-		final Predicate<Field> isSupported = field -> {
-			final VulkanBoolean bool = getter.apply(features, field);
-			if(bool == null) return false;
-			return bool.isTrue();
-		};
-
-		// Enumerate unsupported fields
-		return StructureHelper.fields(required)
-			.filter(isRequired)
-			.filter(isSupported.negate())
-			.map(Field::getName)
-			.collect(toSet());
+	/**
+	 * @return Supported validation layers function
+	 */
+	public VulkanFunction<VkLayerProperties> layers() {
+		return (count, layers) -> vulkan.api().vkEnumerateDeviceLayerProperties(handle, count, layers);
 	}
 }

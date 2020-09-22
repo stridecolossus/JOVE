@@ -14,7 +14,8 @@
 					<source>14</source>
 					<target>14</target>
 					<release>14</release>
-					<compilerArgs> --enable-preview </compilerArgs>
+					<compilerArgs>--enable-preview</compilerArgs>
+					<compilerArgs>-XX:+ShowCodeDetailsInExceptionMessages</compilerArgs>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -69,7 +70,7 @@
 			<artifactId>lib</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
@@ -86,7 +87,8 @@
 		    <groupId>org.apache.velocity</groupId>
 		    <artifactId>velocity</artifactId>
 		    <version>1.7</version>
-		    </dependency>
+		</dependency>
+		
 		<dependency>
 		     <groupId>org.apache.velocity</groupId>
 		     <artifactId>velocity-tools</artifactId>

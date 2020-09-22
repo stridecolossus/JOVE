@@ -182,7 +182,7 @@ public interface Command {
 			// Create pool
 			final LogicalDevice dev = queue.device();
 			final Vulkan vulkan = dev.vulkan();
-			final VulkanLibrary lib = vulkan.library();
+			final VulkanLibrary lib = vulkan.api();
 			final PointerByReference pool = vulkan.factory().reference();
 			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
 
@@ -202,7 +202,7 @@ public interface Command {
 		protected Pool(Pointer handle, Queue queue) {
 			super(handle, queue.device(), lib -> lib::vkDestroyCommandPool);
 			this.queue = notNull(queue);
-			this.lib = queue.device().vulkan().library();
+			this.lib = queue.device().vulkan().api();
 		}
 
 		/**
@@ -235,7 +235,7 @@ public interface Command {
 			// Allocate buffers
 			final LogicalDevice dev = super.device();
 			final Vulkan vulkan = dev.vulkan();
-			final VulkanLibrary lib = vulkan.library();
+			final VulkanLibrary lib = vulkan.api();
 			final Pointer[] handles = vulkan.factory().pointers(num);
 			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
 

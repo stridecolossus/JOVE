@@ -1,19 +1,14 @@
 package org.sarge.jove.platform.vulkan;
 
-import static org.sarge.lib.util.Check.zeroOrMore;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import org.sarge.jove.platform.IntegerEnumeration;
-import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.lib.util.AbstractEqualsObject;
 
 import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 
 /**
@@ -50,7 +45,7 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 	/**
 	 * @return Vulkan API
 	 */
-	static VulkanLibrary create() {
+	public static VulkanLibrary create() {
 		final Map<String, Object> options = new HashMap<>();
 		options.put(Library.OPTION_TYPE_MAPPER, VulkanStructure.MAPPER);
 		return Native.load(library(), VulkanLibrary.class, options);
@@ -69,6 +64,7 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 
 	/**
 	 * Base-class Vulkan JNA structure.
+	 * Note that this class must be defined as a member of the associated API in order for the type mappers to work correctly.
 	 */
 	abstract class VulkanStructure extends Structure {
 		private static final DefaultTypeMapper MAPPER = new DefaultTypeMapper();
@@ -86,70 +82,11 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 	/**
 	 * Checks the result of a Vulkan operation.
 	 * @param result Result code
-	 * @throws ServiceException if the given result is not {@link VkResult#VK_SUCCESS}
+	 * @throws VulkanException if the given result is not {@link VkResult#VK_SUCCESS}
 	 */
 	static void check(int result) {
 		if(result != SUCCESS) {
-			try {
-				final VkResult value = IntegerEnumeration.map(VkResult.class, result);
-				throw new ServiceException(String.format("Vulkan error: result=%d [%s]", result, value.name()));
-			}
-			catch(IllegalArgumentException e) {
-				throw new ServiceException("Unknown Vulkan error: result=" + result);
-			}
+			throw new VulkanException(result);
 		}
 	}
-
-	/**
-	 * Vulkan version.
-	 */
-	final class Version extends AbstractEqualsObject implements Comparable<Version> {
-		private static final char DELIMITER = '.';
-
-		private final int major, minor, patch;
-
-		/**
-		 * Constructor.
-		 * @param major
-		 * @param minor
-		 * @param patch
-		 */
-		public Version(int major, int minor, int patch) {
-			// TODO - shifting => need maximums?
-			this.major = zeroOrMore(major);
-			this.minor = zeroOrMore(minor);
-			this.patch = zeroOrMore(patch);
-		}
-
-		/**
-		 * @return Packed version integer
-		 */
-		public int toInteger() {
-	        return (major << 22) | (minor << 12) | patch;
-		}
-
-		@Override
-		public int compareTo(Version that) {
-			return this.toInteger() - that.toInteger();
-		}
-
-		@Override
-		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			sb.append(major);
-			sb.append(DELIMITER);
-			sb.append(minor);
-			sb.append(DELIMITER);
-			sb.append(patch);
-			return sb.toString();
-		}
-	}
-
-	/**
-	 * Looks up a function.
-	 * @param instance		Vulkan instance
-	 * @param name			Function name
-	 * @return Function pointer
-	 */
-	Pointer vkGetInstanceProcAddr(Pointer instance, String name);
 }
