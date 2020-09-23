@@ -54,7 +54,7 @@ public class MessageHandlerTest {
 	}
 
 	@Test
-	void console() {
+	void writer() {
 		// Create callback
 		final StringWriter out = new StringWriter();
 		callback = MessageHandler.writer(new PrintWriter(out));

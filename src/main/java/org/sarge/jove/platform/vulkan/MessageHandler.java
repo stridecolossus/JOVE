@@ -17,14 +17,13 @@ import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 
 /**
- * A <i>message handler</i> defines how diagnostic and error messages reported by Vulkan are handled.
+ * A <i>message handler</i> specifies how diagnostic and error messages reported by Vulkan are handled.
  * @see Instance#add(MessageHandler)
  * @author Sarge
  */
 public class MessageHandler {
 	/**
 	 * A message handler <i>callback</i> is invoked by Vulkan to report errors, diagnostics, etc.
-	 * Note that JNA will complain if this interface has multiple methods (even if they are private).
 	 */
 	public interface MessageCallback extends Callback {
 		/**
@@ -39,10 +38,26 @@ public class MessageHandler {
 	}
 
 	/**
-	 * Standard message callback that formats and dumps messages to the console.
-	 * @see #writer(PrintWriter)
+	 * Adapter for a message callback that maps the severity and type fields to the corresponding enumerations.
+	 * @see #message(VkDebugUtilsMessageSeverityFlagEXT, Set, VkDebugUtilsMessengerCallbackDataEXT)
 	 */
-	public static final MessageCallback CONSOLE = writer(new PrintWriter(System.out));
+	public static abstract class AbstractMessageCallback implements MessageCallback {
+		@Override
+		public final boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData) {
+			final var messageSeverity = IntegerEnumeration.map(VkDebugUtilsMessageSeverityFlagEXT.class, severity);
+			final var messageTypes = IntegerEnumeration.enumerate(VkDebugUtilsMessageTypeFlagEXT.class, type);
+			message(messageSeverity, messageTypes, pCallbackData);
+			return false;
+		}
+
+		/**
+		 * Delegate method handler for an incoming message.
+		 * @param severity		Message severity
+		 * @param types			Type(s)
+		 * @param data			Additional data
+		 */
+		protected abstract void message(VkDebugUtilsMessageSeverityFlagEXT severity, Set<VkDebugUtilsMessageTypeFlagEXT> types, VkDebugUtilsMessengerCallbackDataEXT data);
+	}
 
 	/**
 	 * Creates a standard message callback that formats a debug message to a human-readable string which is output to the given writer.
@@ -58,55 +73,60 @@ public class MessageHandler {
 	 * @return New callback
 	 */
 	public static MessageCallback writer(PrintWriter out) {
-		return (severity, types, pCallbackData, pUserData) -> {
-			// Build compound types token
-			final String compound = IntegerEnumeration.enumerate(VkDebugUtilsMessageTypeFlagEXT.class, types)
-					.stream()
-					.map(MessageHandler::toString)
-					.collect(joining("-"));
+		return new AbstractMessageCallback() {
+			@Override
+			protected void message(VkDebugUtilsMessageSeverityFlagEXT severity, Set<VkDebugUtilsMessageTypeFlagEXT> types, VkDebugUtilsMessengerCallbackDataEXT data) {
+				// Build compound types token
+				final String compoundTypes = types.stream().map(this::toString).collect(joining("-"));
 
-			// Build message
-			final String message = new StringJoiner(":")
-				.add(toString(IntegerEnumeration.map(VkDebugUtilsMessageSeverityFlagEXT.class, severity)))
-				.add(compound)
-				.add(pCallbackData.pMessageIdName)
-				.add(pCallbackData.pMessage)
-				.toString();
+				// Build message
+				final String message = new StringJoiner(":")
+					.add(toString(severity))
+					.add(compoundTypes)
+					.add(data.pMessageIdName)
+					.add(data.pMessage)
+					.toString();
 
-			// Output
-			out.println(message);
-			return false;
+				// Output
+				out.println(message);
+			}
+
+			/**
+			 * Helper - Converts the given message severity to a human-readable token.
+			 * @param severity Message severity
+			 * @return Severity token
+			 */
+			private String toString(VkDebugUtilsMessageSeverityFlagEXT severity) {
+				return switch(severity) {
+				case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT -> "ERROR";
+				case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT -> "WARN";
+				case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT -> "INFO";
+				case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT -> "VERBOSE";
+				default -> String.valueOf(severity.value());
+				};
+			}
+
+			/**
+			 * Helper - Converts the given message type to a human readable token.
+			 * @param type Message type
+			 * @return Message type token
+			 */
+			private String toString(VkDebugUtilsMessageTypeFlagEXT type) {
+				return switch(type) {
+				case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT -> "VALIDATION";
+				case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT -> "GENERAL";
+				case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT -> "PERFORMANCE";
+				default -> String.valueOf(type.value());
+				};
+			}
 		};
 	}
 
 	/**
-	 * Helper - Converts the given message severity to a human-readable token.
-	 * @param severity Message severity
-	 * @return Severity token
+	 * Standard message callback that formats and dumps messages to the console.
+	 * @see #writer(PrintWriter)
 	 */
-	private static String toString(VkDebugUtilsMessageSeverityFlagEXT severity) {
-		return switch(severity) {
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT -> "ERROR";
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT -> "WARN";
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT -> "INFO";
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT -> "VERBOSE";
-		default -> String.valueOf(severity.value());
-		};
-	}
-
-	/**
-	 * Helper - Converts the given message type to a human readable token.
-	 * @param type Message type
-	 * @return Message type token
-	 */
-	private static String toString(VkDebugUtilsMessageTypeFlagEXT type) {
-		return switch(type) {
-		case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT -> "VALIDATION";
-		case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT -> "GENERAL";
-		case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT -> "PERFORMANCE";
-		default -> String.valueOf(type.value());
-		};
-	}
+	public static final MessageCallback CONSOLE = writer(new PrintWriter(System.out));
 
 	private final MessageCallback callback;
 	private final Pointer data;

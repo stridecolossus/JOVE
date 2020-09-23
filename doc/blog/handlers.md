@@ -71,6 +71,22 @@ public class MessageHandler {
 }
 ```
 
+# Create
+
+```java
+	/**
+	 * @return Creation descriptor for this handler
+	 */
+	protected VkDebugUtilsMessengerCreateInfoEXT create() {
+		final VkDebugUtilsMessengerCreateInfoEXT info = new VkDebugUtilsMessengerCreateInfoEXT();
+		info.messageSeverity = IntegerEnumeration.mask(severities);
+		info.messageType = IntegerEnumeration.mask(types);
+		info.pfnUserCallback = callback;
+		info.pUserData = data;
+		return info;
+	}
+```
+
 # Handlers
 
 ```java
@@ -143,6 +159,15 @@ public class MessageHandler {
 		if(ptr == null) throw new ServiceException("Cannot find function pointer: " + name);
 		return Function.getFunction(ptr);
 	}
+```
+
+# Mocking
+
+```java
+			instance = Mockito.spy(instance);
+			func = mock(Function.class);
+			doReturn(func).when(instance).function("vkCreateDebugUtilsMessengerEXT");
+			doReturn(func).when(instance).function("vkDestroyDebugUtilsMessengerEXT");
 ```
 
 # Factory
