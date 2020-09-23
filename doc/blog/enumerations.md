@@ -1,25 +1,6 @@
-package org.sarge.jove.platform;
+# Interface outline
 
-import static java.util.stream.Collectors.toMap;
-import static org.sarge.lib.util.Check.notNull;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.IntBinaryOperator;
-
-import com.sun.jna.FromNativeContext;
-import com.sun.jna.ToNativeContext;
-import com.sun.jna.TypeConverter;
-
-/**
- * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <code>typedef enum</code>.
- * @author Sarge
- */
+```java
 public interface IntegerEnumeration {
 	/**
 	 * @return Enum literal
@@ -27,10 +8,54 @@ public interface IntegerEnumeration {
 	int value();
 
 	/**
-	 * Integer <i>or</i> binary operator used to reduce a stream of masked integer values.
+	 * Maps an enumeration literal to the corresponding enumeration constant.
+	 * @param clazz Enumeration class
+	 * @param value Literal
+	 * @return Constant
+	 * @throws IllegalArgumentException if the enumeration does not contain the given value
 	 */
-	IntBinaryOperator MASK = (a, b) -> a | b;
+	static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
+	}
 
+	/**
+	 * Tests whether an integer mask contains the given enumeration value.
+	 * @param mask			Mask
+	 * @param constant		Enumeration constant
+	 * @return Whether is present
+	 */
+	static <E extends IntegerEnumeration> boolean contains(int mask, E constant) {
+	}
+
+	/**
+	 * Converts an integer mask to a set of enumeration constants.
+	 * @param clazz		Enumeration class
+	 * @param mask		Mask
+	 * @return Constants
+	 */
+	static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
+	}
+
+	/**
+	 * Builds an integer mask from the given enumeration constants.
+	 * @param values Enumeration constants
+	 * @return Mask
+	 * @see #MASK
+	 */
+	static <E extends IntegerEnumeration> int mask(Collection<E> values) {
+	}
+
+	/**
+	 * Builds an integer mask from the given enumeration constants.
+	 * @param values Enumeration constants
+	 * @return Mask
+	 */
+	static <E extends IntegerEnumeration> int mask(E... values) {
+	}
+```
+
+# Converter
+
+```java
 	/**
 	 * Converts an integer enumeration to/from a native <code>int</code> value.
 	 * @see <a href="http://technofovea.com/blog/archives/815">enumeration type converter example</a>
@@ -57,39 +82,15 @@ public interface IntegerEnumeration {
 		public Object fromNative(Object nativeValue, FromNativeContext context) {
 			final Class<?> type = context.getTargetType();
 			if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new IllegalStateException("Invalid native enumeration class: " + type.getSimpleName());
-			final Cache.Entry entry = Cache.CACHE.get((Class<? extends IntegerEnumeration>) type);
-			return entry.get((int) nativeValue);
+			final Class<? extends IntegerEnumeration> clazz = (Class<? extends IntegerEnumeration>) type;
+			return Cache.CACHE.get(clazz).get((int) nativeValue);
 		}
 	};
+```
 
-	/**
-	 * Maps an enumeration literal to the corresponding enumeration constant.
-	 * @param clazz Enumeration class
-	 * @param value Literal
-	 * @return Constant
-	 * @throws IllegalArgumentException if the enumeration does not contain the given value
-	 */
-	static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
-		final Cache.Entry entry = Cache.CACHE.get(clazz);
-		return entry.get(value);
-	}
+# Enumerate
 
-	/**
-	 * Tests whether an integer mask contains the given enumeration value.
-	 * @param mask			Mask
-	 * @param constant		Enumeration constant
-	 * @return Whether is present
-	 */
-	static <E extends IntegerEnumeration> boolean contains(int mask, E constant) {
-		return (constant.value() & mask) != 0;
-	}
-
-	/**
-	 * Converts an integer mask to a set of enumeration constants.
-	 * @param clazz		Enumeration class
-	 * @param mask		Mask
-	 * @return Constants
-	 */
+```java
 	static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
 		final Cache.Entry entry = Cache.CACHE.get(clazz);
 		final Set<E> set = new HashSet<>();
@@ -102,29 +103,11 @@ public interface IntegerEnumeration {
 		}
 		return set;
 	}
+```
 
-	/**
-	 * Builds an integer mask from the given enumeration constants.
-	 * @param values Enumeration constants
-	 * @return Mask
-	 */
-	static <E extends IntegerEnumeration> int mask(Collection<E> values) {
-		return values.stream().distinct().mapToInt(IntegerEnumeration::value).reduce(0, MASK);
-	}
+# Cache
 
-	/**
-	 * Builds an integer mask from the given enumeration constants.
-	 * @param values Enumeration constants
-	 * @return Mask
-	 */
-	@SuppressWarnings("unchecked")
-	static <E extends IntegerEnumeration> int mask(E... values) {
-		return mask(Arrays.asList(values));
-	}
-
-	/**
-	 * Internal enumeration cache.
-	 */
+```java
 	final class Cache {
 		private static final Cache CACHE = new Cache();
 
@@ -171,4 +154,4 @@ public interface IntegerEnumeration {
 			return cache.computeIfAbsent(clazz, Entry::new);
 		}
 	}
-}
+```
