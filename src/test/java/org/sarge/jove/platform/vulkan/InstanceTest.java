@@ -1,18 +1,20 @@
 package org.sarge.jove.platform.vulkan;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sarge.jove.platform.vulkan.VulkanLibrary.INTEGRATION_TEST;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -23,28 +25,19 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class InstanceTest {
-	private Vulkan vulkan;
 	private VulkanLibrary api;
-	private PointerByReference ref;
 	private Instance instance;
 
 	@BeforeEach
 	void before() {
-		// Init Vulkan
-		vulkan = mock(Vulkan.class);
-
 		// Init API
 		api = mock(VulkanLibrary.class);
-		when(vulkan.api()).thenReturn(api);
-
-		// Init pointer factory
-		ref = new PointerByReference(new Pointer(42));
-		when(vulkan.pointer()).thenReturn(ref);
+		when(api.factory()).thenReturn(new MockReferenceFactory());
 
 		// Create instance
-		instance = new Instance.Builder(vulkan)
+		instance = new Instance.Builder()
+				.vulkan(api)
 				.name("test")
-				.version(VulkanLibrary.VERSION)
 				.extension("ext")
 				.layer(new ValidationLayer("layer"))
 				.build();
@@ -53,13 +46,14 @@ public class InstanceTest {
 	@Test
 	void constructor() {
 		assertNotNull(instance);
-		assertEquals(ref.getValue(), instance.handle());
-		assertEquals(vulkan, instance.vulkan());
+		assertEquals(api, instance.api());
+		assertEquals(api.factory().pointer().getValue(), instance.handle());
 	}
 
 	@Test
 	void create() {
 		// Check API invocation
+		final PointerByReference ref = api.factory().pointer();
 		final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
 		verify(api).vkCreateInstance(captor.capture(), isNull(), eq(ref));
 
@@ -97,6 +91,29 @@ public class InstanceTest {
 		assertThrows(ServiceException.class, () -> instance.function("cobblers"));
 	}
 
+	@Tag(INTEGRATION_TEST)
+	@Test
+	void build() {
+		// Create real API
+		api = VulkanLibrary.create();
+
+		// Create instance
+		instance = new Instance.Builder()
+				.vulkan(api)
+				.name("test")
+				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
+				.layer(ValidationLayer.STANDARD_VALIDATION)
+				.build();
+
+		// Check instance
+		assertNotNull(instance);
+		assertNotNull(instance.handle());
+		assertEquals(api, instance.api());
+
+		// Destroy instance
+		instance.destroy();
+	}
+
 	@Nested
 	class HandlerTests {
 		private MessageHandler handler;
@@ -129,7 +146,7 @@ public class InstanceTest {
 			assertEquals(instance.handle(), args[0]);
 			assertTrue(handler.create().dataEquals((VkDebugUtilsMessengerCreateInfoEXT) args[1]));
 			assertEquals(null, args[2]);
-			assertEquals(ref, args[3]);
+			assertEquals(api.factory().pointer(), args[3]);
 		}
 
 		@Test
@@ -140,9 +157,9 @@ public class InstanceTest {
 
 		@Test
 		void remove() {
-			instance.add(handler);
+			final Pointer handle = instance.add(handler);
 			instance.remove(handler);
-			verify(func).invoke(new Object[]{instance.handle(), ref.getValue(), null});
+			verify(func).invoke(new Object[]{instance.handle(), handle, null});
 		}
 
 		@Test
@@ -152,9 +169,9 @@ public class InstanceTest {
 
 		@Test
 		void destroy() {
-			instance.add(handler);
+			final Pointer handle = instance.add(handler);
 			instance.destroy();
-			verify(func).invoke(new Object[]{instance.handle(), ref.getValue(), null});
+			verify(func).invoke(new Object[]{instance.handle(), handle, null});
 		}
 	}
 }

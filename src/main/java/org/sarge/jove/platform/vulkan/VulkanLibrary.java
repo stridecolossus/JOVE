@@ -14,7 +14,7 @@ import com.sun.jna.Structure;
 /**
  * Vulkan API.
  */
-interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraphics, VulkanLibraryUtility {
+interface VulkanLibrary extends Library, VulkanLibrarySystem { // , VulkanLibraryGraphics, VulkanLibraryUtility {
 	/**
 	 * Vulkan API version.
 	 */
@@ -24,6 +24,21 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 	 * Successful result code.
 	 */
 	int SUCCESS = VkResult.VK_SUCCESS.value();
+
+	/**
+	 * Debug utility extension.
+	 */
+	String EXTENSION_DEBUG_UTILS = "VK_EXT_debug_utils";
+
+	/**
+	 * Swap-chain extension.
+	 */
+	String EXTENSION_SWAP_CHAIN = "VK_KHR_swapchain";
+
+	/**
+	 * Identifier for a Vulkan integration test.
+	 */
+	String INTEGRATION_TEST = "vulkan-integration-test";
 
 //    public static final int
 //        VK_MAX_PHYSICAL_DEVICE_NAME_SIZE = 256,
@@ -45,7 +60,7 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 	/**
 	 * @return Vulkan API
 	 */
-	public static VulkanLibrary create() {
+	static VulkanLibrary create() {
 		final Map<String, Object> options = new HashMap<>();
 		options.put(Library.OPTION_TYPE_MAPPER, VulkanStructure.MAPPER);
 		return Native.load(library(), VulkanLibrary.class, options);
@@ -55,11 +70,11 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 	 * @return Vulkan library name
 	 */
 	private static String library() {
-		switch(Platform.getOSType()) {
-		case Platform.WINDOWS:		return "vulkan-1";
-		case Platform.LINUX:		return "libvulkan";
-		default:					throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
-		}
+		return switch(Platform.getOSType()) {
+		case Platform.WINDOWS -> "vulkan-1";
+		case Platform.LINUX -> "libvulkan";
+		default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
+		};
 	}
 
 	/**
@@ -80,6 +95,14 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 	}
 
 	/**
+	 * @return Factory for pass-by-reference types used by this API
+	 * @see ReferenceFactory#DEFAULT
+	 */
+	default ReferenceFactory factory() {
+		return ReferenceFactory.DEFAULT;
+	}
+
+	/**
 	 * Checks the result of a Vulkan operation.
 	 * @param result Result code
 	 * @throws VulkanException if the given result is not {@link VkResult#VK_SUCCESS}
@@ -88,5 +111,19 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraph
 		if(result != SUCCESS) {
 			throw new VulkanException(result);
 		}
+	}
+
+	/**
+	 * @return Extensions function
+	 */
+	default VulkanFunction<VkExtensionProperties> extensions() {
+		return (count, array) -> vkEnumerateInstanceExtensionProperties(null, count, array);
+	}
+
+	/**
+	 * @return Validation layers function
+	 */
+	default VulkanFunction<VkLayerProperties> layers() {
+		return (count, array) -> vkEnumerateInstanceLayerProperties(count, array);
 	}
 }

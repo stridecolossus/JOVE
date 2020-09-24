@@ -104,7 +104,7 @@ public class PhysicalDevice {
 	 * @return Physical devices
 	 */
 	public static Stream<PhysicalDevice> devices(Instance instance) {
-		final Vulkan vulkan = instance.vulkan();
+		final Vulkan vulkan = instance.api();
 		final VulkanLibrary api = vulkan.api();
 		final VulkanFunction<Pointer[]> func = (count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
 		final Pointer[] handles = VulkanFunction.array(func, vulkan.integer(), Pointer[]::new);

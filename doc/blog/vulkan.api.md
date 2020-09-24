@@ -7,11 +7,23 @@ interface VulkanLibrary extends Library {
 	}
 
 	private static String library() {
-		switch(Platform.getOSType()) {
+		return switch(Platform.getOSType()) {
 		case Platform.WINDOWS:		return "vulkan-1";
 		case Platform.LINUX:		return "libvulkan";
 		default:					throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
 		}
+	}
+}
+```
+
+# Test API
+
+```java
+public class VulkanLibraryTest {
+	@Test
+	void create() {
+		final VulkanLibrary api = VulkanLibrary.create();
+		assertNotNull(api);
 	}
 }
 ```
