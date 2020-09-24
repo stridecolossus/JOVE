@@ -22,7 +22,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Instance {
-	private final Vulkan vulkan;
+	private final VulkanLibrary api;
 	private final Pointer handle;
 
 	private final Map<MessageHandler, Pointer> handlers = new HashMap<>();
@@ -30,19 +30,19 @@ public class Instance {
 
 	/**
 	 * Constructor.
-	 * @param vulkan		Vulkan
+	 * @param api			Vulkan API
 	 * @param handle		Instance handle
 	 */
-	private Instance(Vulkan vulkan, Pointer handle) {
-		this.vulkan = notNull(vulkan);
+	private Instance(VulkanLibrary api, Pointer handle) {
+		this.api = notNull(api);
 		this.handle = notNull(handle);
 	}
 
 	/**
-	 * @return Vulkan
+	 * @return Vulkan API
 	 */
-	Vulkan vulkan() {
-		return vulkan;
+	VulkanLibrary api() {
+		return api;
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class Instance {
 	 * @throws ServiceException if the function cannot be found
 	 */
 	public Function function(String name) {
-		final Pointer ptr = vulkan.api().vkGetInstanceProcAddr(handle, name);
+		final Pointer ptr = api.vkGetInstanceProcAddr(handle, name);
 		if(ptr == null) throw new ServiceException("Cannot find function pointer: " + name);
 		return Function.getFunction(ptr);
 	}
@@ -84,7 +84,7 @@ public class Instance {
 		 */
 		private Pointer create(MessageHandler handler) {
 			final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
-			final PointerByReference handle = vulkan.pointer();
+			final PointerByReference handle = api.factory().pointer();
 			final Object[] args = {Instance.this.handle, info, null, handle};
 			VulkanLibrary.check(create.invokeInt(args));
 			return handle.getValue();
@@ -102,10 +102,11 @@ public class Instance {
 	/**
 	 * Adds a diagnostics message handler to this instance.
 	 * @param handler Message handler
+	 * @return Handle
 	 * @throws IllegalArgumentException if the handler has already been added to this instance
 	 * @throws ServiceException if the handler cannot be created
 	 */
-	public synchronized void add(MessageHandler handler) {
+	public synchronized Pointer add(MessageHandler handler) {
 		// Check handler is valid
 		Check.notNull(handler);
 		if(handlers.containsKey(handler)) throw new IllegalArgumentException("Duplicate message handler: " + handler);
@@ -118,6 +119,8 @@ public class Instance {
 		// Create and register handler
 		final Pointer handle = factory.create(handler);
 		handlers.put(handler, handle);
+
+		return handle;
 	}
 
 	/**
@@ -143,26 +146,26 @@ public class Instance {
 		}
 
 		// Destroy instance
-		vulkan.api().vkDestroyInstance(handle, null);
+		api.vkDestroyInstance(handle, null);
 	}
 
 	/**
 	 * Builder for a Vulkan instance.
 	 */
 	public static class Builder {
-		private final Vulkan vulkan;
-
+		private VulkanLibrary api;
 		private String name;
 		private Version ver = VulkanLibrary.VERSION;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<ValidationLayer> layers = new HashSet<>();
 
 		/**
-		 * Constructor.
-		 * @param vulkan Vulkan
+		 * Sets the Vulkan API.
+		 * @param api Vulkan API
 		 */
-		public Builder(Vulkan vulkan) {
-			this.vulkan = notNull(vulkan);
+		public Builder vulkan(VulkanLibrary api) {
+			this.api = notNull(api);
+			return this;
 		}
 
 		/**
@@ -208,12 +211,15 @@ public class Instance {
 		/**
 		 * Constructs this instance.
 		 * @return New instance
-		 * @throws IllegalArgumentException if the {@link #name(String)} has not been set
+		 * @throws IllegalArgumentException if the Vulkan API or application name have not been populated
 		 * @throws VulkanException if the instance cannot be created
 		 */
 		public Instance build() {
-			// Init application descriptor
+			// Validate
+			Check.notNull(api);
 			Check.notEmpty(name);
+
+			// Init application descriptor
 			final VkApplicationInfo app = new VkApplicationInfo();
 			app.pEngineName = "JOVE";
 			app.pApplicationName = name;
@@ -233,12 +239,11 @@ public class Instance {
 			info.enabledLayerCount = layerNames.length;
 
 			// Create instance
-			final VulkanLibrary api = vulkan.api();
-			final PointerByReference handle = vulkan.pointer();
+			final PointerByReference handle = api.factory().pointer();
 			check(api.vkCreateInstance(info, null, handle));
 
 			// Create instance wrapper
-			return new Instance(vulkan, handle.getValue());
+			return new Instance(api, handle.getValue());
 		}
 	}
 }

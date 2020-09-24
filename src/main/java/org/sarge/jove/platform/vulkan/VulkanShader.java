@@ -35,7 +35,7 @@ public class VulkanShader extends LogicalDeviceHandle {
 		info.pCode = buffer;
 
 		// Allocate shader
-		final Vulkan vulkan = dev.vulkan();
+		final Vulkan vulkan = dev.api();
 		final VulkanLibraryShader lib = vulkan.api();
 		final PointerByReference shader = vulkan.factory().reference();
 		check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));

@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.sarge.jove.platform.vulkan.AbstractVulkanTest.INTEGRATION_TEST;
+import static org.sarge.jove.platform.vulkan.VulkanLibrary.INTEGRATION_TEST;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -35,5 +35,6 @@ public class VulkanLibraryTest {
 	void create() {
 		final VulkanLibrary api = VulkanLibrary.create();
 		assertNotNull(api);
+		assertNotNull(api.factory());
 	}
 }

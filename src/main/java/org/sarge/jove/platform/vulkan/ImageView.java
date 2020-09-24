@@ -96,7 +96,7 @@ public class ImageView extends LogicalDeviceHandle {
 		info.maxLod = 0;
 
 		// Create sampler
-		final Vulkan vulkan = super.vulkan();
+		final Vulkan vulkan = super.api();
 		final PointerByReference sampler = vulkan.factory().reference();
 		check(vulkan.api().vkCreateSampler(device().handle(), info, null, sampler));
 		return new VulkanSampler(sampler.getValue());
@@ -241,7 +241,7 @@ public class ImageView extends LogicalDeviceHandle {
 		 */
 		public ImageView build() {
 			// Allocate image view
-			final Vulkan vulkan = dev.vulkan();
+			final Vulkan vulkan = dev.api();
 			final VulkanLibrary lib = vulkan.api();
 			final PointerByReference view = vulkan.factory().reference();
 			check(lib.vkCreateImageView(dev.handle(), info, null, view));

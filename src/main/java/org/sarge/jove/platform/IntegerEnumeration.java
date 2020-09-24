@@ -141,7 +141,7 @@ public interface IntegerEnumeration {
 			 */
 			private Entry(Class<? extends IntegerEnumeration> clazz) {
 				this.clazz = notNull(clazz);
-				this.map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(IntegerEnumeration::value, Function.identity()));
+				this.map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
 			}
 
 			/**
