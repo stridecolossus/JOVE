@@ -7,63 +7,75 @@ import java.util.Set;
 
 import com.sun.jna.Native;
 import com.sun.jna.Structure;
-import com.sun.jna.ptr.IntByReference;
 
 /**
- * A <i>support</i> is an adapter for a {@link VulkanFunction} used to retrieve supported extensions and validation layers.
+ * A <i>support</i> is a partial implementation helper class used to retrieve supporting features for a Vulkan implementation or device.
  * <p>
- * This is a skeleton base-class helper, see the {@link Extensions} helper class for an example implementation.
+ * A concrete implementation should over-ride {@link #identity()} to generate the array identity element and {@link #map(Structure)} to convert a Vulkan structure to the output type.
  * <p>
+ * These abstract methods are also intended to also be over-ridden when unit-testing.
+ * <p>
+ * Usage:
+ * <pre>
+ *  // Create support helper
+ *  Support<SomeStructure, Result> support = new Support<>() {
+ *      public SomeStructure identity() {
+ *          return new SomeStructure();
+ *      }
+ *
+ *      public Result map(SomeStructure struct) {
+ *          return new Result(...);
+ *      }
+ *  };
+ *
+ *  // Get function
+ *  VulkanFunction<SomeStructure> func = (api, count, array) -> api.vkEnumerateSomeStructureOrOther(...);
+ *
+ *  // Enumerate supporting features
+ *  Set<Result> results = support.enumerate(func);
+ * </pre>
  * @param <T> Structure type
- * @param <R> Resultant type
+ * @param <R> Result type
  * @see VulkanFunction
  * @author Sarge
  */
 public abstract class Support<T extends Structure, R> {
 	/**
-	 * Enumerates a set of supported data.
-	 * @param func Underlying API function
+	 * Retrieves a set of supporting features.
+	 * @param vulkan		Vulkan
+	 * @param func			Enumeration function
 	 * @return Results
 	 */
-	public abstract Set<R> enumerate(VulkanFunction<T> func);
-
-	/**
-	 * Enumerates and maps a set of supported data.
-	 * @param func			Underlying API function
-	 * @param count			Counter
-	 * @param identity		Identity instance
-	 * @return Results
-	 */
-	protected Set<R> enumerate(VulkanFunction<T> func, IntByReference count, T identity) {
-		// Create function adapter
-		final T[] array = VulkanFunction.enumerate(func, count, identity);
-
-		// Enumerate results and convert
-		return Arrays
-				.stream(array)
-				.map(this::map)
-				.collect(toSet());
+	public Set<R> enumerate(Vulkan vulkan, VulkanFunction<T> func) {
+		final T[] array = VulkanFunction.enumerate(func, vulkan, identity());
+		return Arrays.stream(array).map(this::map).collect(toSet());
 	}
 
 	/**
-	 * Transforms a structure to the resultant type.
-	 * @param obj Structure
-	 * @return Transformed result
+	 * Factory for the identity structure.
+	 * @return New identity structure
 	 */
-	protected abstract R map(T obj);
+	protected abstract T identity();
 
 	/**
-	 * Implementation for supporting extensions.
+	 * Converts a retrieved structure to the resultant type.
+	 * @param struct Structure
+	 * @return Converted result
+	 */
+	protected abstract R map(T struct);
+
+	/**
+	 * Implementation for supported extensions.
 	 */
 	public static class Extensions extends Support<VkExtensionProperties, String> {
 		@Override
-		public Set<String> enumerate(VulkanFunction<VkExtensionProperties> func) {
-			return enumerate(func, new IntByReference(), new VkExtensionProperties());
+		protected VkExtensionProperties identity() {
+			return new VkExtensionProperties();
 		}
 
 		@Override
-		protected String map(VkExtensionProperties ext) {
-			return Native.toString(ext.extensionName);
+		protected String map(VkExtensionProperties struct) {
+			return Native.toString(struct.extensionName);
 		}
 	}
 }

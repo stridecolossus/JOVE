@@ -11,7 +11,7 @@ public class VulkanIntegrationTest {
 		System.out.println("Creating instance");
 		final Instance instance = new Instance.Builder(vulkan)
 				.name("demo")
-				.extension(Vulkan.EXTENSION_DEBUG_UTILS)
+				.extension(Vulkan.DEBUG_UTILS)
 				//.extension(Vulkan.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build();

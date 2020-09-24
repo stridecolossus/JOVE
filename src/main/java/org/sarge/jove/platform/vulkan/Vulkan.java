@@ -13,12 +13,22 @@ public class Vulkan {
 	/**
 	 * Debug utility extension.
 	 */
-	public static final String EXTENSION_DEBUG_UTILS = "VK_EXT_debug_utils";
+	public static final String DEBUG_UTILS = "VK_EXT_debug_utils";
 
 	/**
 	 * Swap-chain extension.
 	 */
-	public static final String EXTENSION_SWAP_CHAIN = "VK_KHR_swapchain";
+	public static final String SWAP_CHAIN = "VK_KHR_swapchain";
+
+	/**
+	 * API function for extensions supported by this Vulkan implementation.
+	 */
+	public static final VulkanFunction<VkExtensionProperties> EXTENSIONS = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
+
+	/**
+	 * API function for validation layers supported by this Vulkan implementation.
+	 */
+	public static final VulkanFunction<VkLayerProperties> LAYERS = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
 
 	private final VulkanLibrary api;
 
@@ -38,6 +48,7 @@ public class Vulkan {
 	}
 
 	/**
+	 * Factory for integer-by-reference values.
 	 * @return New integer-by-reference
 	 */
 	public IntByReference integer() {
@@ -45,23 +56,10 @@ public class Vulkan {
 	}
 
 	/**
+	 * Factory for pointer-by-reference values.
 	 * @return New pointer-by-reference
 	 */
 	public PointerByReference pointer() {
 		return new PointerByReference();
-	}
-
-	/**
-	 * @return Extensions function
-	 */
-	public VulkanFunction<VkExtensionProperties> extensions() {
-		return (count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
-	}
-
-	/**
-	 * @return Validation layers function
-	 */
-	public VulkanFunction<VkLayerProperties> layers() {
-		return (count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
 	}
 }

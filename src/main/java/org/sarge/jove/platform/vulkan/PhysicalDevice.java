@@ -105,9 +105,8 @@ public class PhysicalDevice {
 	 */
 	public static Stream<PhysicalDevice> devices(Instance instance) {
 		final Vulkan vulkan = instance.vulkan();
-		final VulkanLibrary api = vulkan.api();
-		final VulkanFunction<Pointer[]> func = (count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
-		final Pointer[] handles = VulkanFunction.array(func, vulkan.integer(), Pointer[]::new);
+		final VulkanFunction<Pointer[]> func = (api, count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
+		final Pointer[] handles = VulkanFunction.enumerate(func, vulkan, Pointer[]::new);
 		return Arrays.stream(handles).map(ptr -> create(ptr, vulkan));
 	}
 
@@ -118,11 +117,11 @@ public class PhysicalDevice {
 	 */
 	private static PhysicalDevice create(Pointer handle, Vulkan vulkan) {
 		// Enumerate queue families for this device (for some reason this API method is void)
-		final VulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
-			vulkan.api().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
+		final VulkanFunction<VkQueueFamilyProperties> func = (api, count, array) -> {
+			api.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 			return VulkanLibrary.SUCCESS;
 		};
-		final VkQueueFamilyProperties[] families = VulkanFunction.enumerate(func, vulkan.integer(), new VkQueueFamilyProperties());
+		final VkQueueFamilyProperties[] families = VulkanFunction.enumerate(func, vulkan, new VkQueueFamilyProperties());
 
 		// Create device
 		return new PhysicalDevice(handle, vulkan, families);
@@ -203,16 +202,18 @@ public class PhysicalDevice {
 	}
 
 	/**
-	 * @return Supported extensions function
+	 * @return Function for extensions supported by this device
+	 * @see Vulkan#extensions(VulkanFunction)
 	 */
 	public VulkanFunction<VkExtensionProperties> extensions() {
-		return (count, extensions) -> vulkan.api().vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
+		return (api, count, extensions) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
 	}
 
 	/**
-	 * @return Supported validation layers function
+	 * @return Function for validation layers supported by this device
+	 * @see Vulkan#layers(VulkanFunction)
 	 */
 	public VulkanFunction<VkLayerProperties> layers() {
-		return (count, layers) -> vulkan.api().vkEnumerateDeviceLayerProperties(handle, count, layers);
+		return (api, count, layers) -> api.vkEnumerateDeviceLayerProperties(handle, count, layers);
 	}
 }

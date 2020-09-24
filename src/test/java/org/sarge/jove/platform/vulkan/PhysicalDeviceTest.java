@@ -42,6 +42,10 @@ public class PhysicalDeviceTest {
 		assertEquals(vulkan, dev.vulkan());
 		assertNotNull(dev.families());
 		assertEquals(2, dev.families().size());
+	}
+
+	@Test
+	void support() {
 		assertNotNull(dev.extensions());
 		assertNotNull(dev.layers());
 	}

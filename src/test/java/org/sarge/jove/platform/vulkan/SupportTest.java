@@ -1,9 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
@@ -14,6 +13,9 @@ import org.sarge.jove.platform.vulkan.Support.Extensions;
 import com.sun.jna.ptr.IntByReference;
 
 public class SupportTest {
+	private static final String RESULT = "result";
+
+	private Vulkan vulkan;
 	private VulkanFunction<VkExtensionProperties> func;
 	private IntByReference count;
 	private VkExtensionProperties identity;
@@ -21,38 +23,47 @@ public class SupportTest {
 	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
+		// Create Vulkan
+		vulkan = mock(Vulkan.class);
+
+		// Init counter
 		count = new IntByReference(1);
-		identity = new VkExtensionProperties();
+		when(vulkan.integer()).thenReturn(count);
+
+		// Create enumeration function
 		func = mock(VulkanFunction.class);
+
+		// Create identity structure and array factory
+		identity = mock(VkExtensionProperties.class);
+		when(identity.toArray(1)).thenReturn(new VkExtensionProperties[]{identity});
 	}
 
 	@Test
 	void enumerate() {
-		// Create support adapter that enumerates extension names
-		final Support<VkExtensionProperties, String> support = new Support<>() {
+		final var support = new Support<VkExtensionProperties, String>() {
 			@Override
-			public Set<String> enumerate(VulkanFunction<VkExtensionProperties> func) {
-				throw new UnsupportedOperationException();
+			protected VkExtensionProperties identity() {
+				return identity;
 			}
 
 			@Override
-			protected String map(VkExtensionProperties obj) {
-				return "string";
+			protected String map(VkExtensionProperties struct) {
+				return RESULT;
 			}
 		};
-
-		// Enumerate extensions and check results
-		final Set<String> results = support.enumerate(func, count, identity);
-		assertEquals(Set.of("string"), results);
-		verify(func).enumerate(count, identity);
+		final Set<String> results = support.enumerate(vulkan, func);
+		assertEquals(Set.of(RESULT), results);
 	}
 
 	@Test
 	void extensions() {
-		final Extensions extensions = new Extensions();
-		final Set<String> results = extensions.enumerate(func, count, identity);
-		assertNotNull(results);
-		assertEquals(1, results.size());
-		verify(func).enumerate(count, identity);
+		final Extensions extensions = new Extensions() {
+			@Override
+			protected String map(VkExtensionProperties struct) {
+				return RESULT;
+			}
+		};
+		final Set<String> results = extensions.enumerate(vulkan, func);
+		assertEquals(Set.of(RESULT), results);
 	}
 }
