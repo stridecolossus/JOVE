@@ -42,12 +42,12 @@ import com.sun.jna.Structure;
 public abstract class Support<T extends Structure, R> {
 	/**
 	 * Retrieves a set of supporting features.
-	 * @param vulkan		Vulkan
+	 * @param lib			Vulkan API
 	 * @param func			Enumeration function
 	 * @return Results
 	 */
-	public Set<R> enumerate(Vulkan vulkan, VulkanFunction<T> func) {
-		final T[] array = VulkanFunction.enumerate(func, vulkan, identity());
+	public Set<R> enumerate(VulkanLibrary lib, VulkanFunction<T> func) {
+		final T[] array = VulkanFunction.enumerate(func, lib, identity());
 		return Arrays.stream(array).map(this::map).collect(toSet());
 	}
 

@@ -10,25 +10,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.Support.Extensions;
 
-import com.sun.jna.ptr.IntByReference;
-
 public class SupportTest {
 	private static final String RESULT = "result";
 
-	private Vulkan vulkan;
+	private VulkanLibrary lib;
 	private VulkanFunction<VkExtensionProperties> func;
-	private IntByReference count;
 	private VkExtensionProperties identity;
 
 	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		// Create Vulkan
-		vulkan = mock(Vulkan.class);
-
-		// Init counter
-		count = new IntByReference(1);
-		when(vulkan.integer()).thenReturn(count);
+		// Create API
+		lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(new MockReferenceFactory());
 
 		// Create enumeration function
 		func = mock(VulkanFunction.class);
@@ -51,7 +45,7 @@ public class SupportTest {
 				return RESULT;
 			}
 		};
-		final Set<String> results = support.enumerate(vulkan, func);
+		final Set<String> results = support.enumerate(lib, func);
 		assertEquals(Set.of(RESULT), results);
 	}
 
@@ -63,7 +57,7 @@ public class SupportTest {
 				return RESULT;
 			}
 		};
-		final Set<String> results = extensions.enumerate(vulkan, func);
+		final Set<String> results = extensions.enumerate(lib, func);
 		assertEquals(Set.of(RESULT), results);
 	}
 }

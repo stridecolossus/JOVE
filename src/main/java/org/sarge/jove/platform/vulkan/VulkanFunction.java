@@ -22,34 +22,33 @@ import com.sun.jna.ptr.IntByReference;
 public interface VulkanFunction<T> {
 	/**
 	 * Vulkan API method that retrieves an array of the given type.
-	 * @param api		Vulkan API
+	 * @param lib		Vulkan API
 	 * @param count 	Return-by-reference count of the number of array elements
 	 * @param array 	Array instance or <code>null</code> to retrieve size of the array
 	 * @return Vulkan result code
 	 */
-	int enumerate(VulkanLibrary api, IntByReference count, T array);
+	int enumerate(VulkanLibrary lib, IntByReference count, T array);
 
 	/**
 	 * Adapter for a function that enumerates an array.
 	 * @param <T> Array type
 	 * @param func			Underlying function
-	 * @param vulkan		Vulkan
+	 * @param lib			Vulkan API
 	 * @param factory		Array factory
 	 * @return Populated array (can be zero length)
 	 * @see #enumerate(VulkanLibrary, IntByReference, Object)
 	 */
-	static <T> T[] enumerate(VulkanFunction<T[]> func, Vulkan vulkan, IntFunction<T[]> factory) {
+	static <T> T[] enumerate(VulkanFunction<T[]> func, VulkanLibrary lib, IntFunction<T[]> factory) {
 		// Determine array length
-		final VulkanLibrary api = vulkan.api();
-		final IntByReference count = vulkan.integer();
-		check(func.enumerate(api, count, null));
+		final IntByReference count = lib.factory().integer();
+		check(func.enumerate(lib, count, null));
 
 		// Allocate array
 		final T[] array = factory.apply(count.getValue());
 
 		// Retrieve array
 		if(array.length > 0) {
-			check(func.enumerate(api, count, array));
+			check(func.enumerate(lib, count, array));
 		}
 
 		return array;
@@ -77,23 +76,22 @@ public interface VulkanFunction<T> {
 	 * <p>
 	 * @param <T> Structure type
 	 * @param func			Underlying function
-	 * @param vulkan		Vulkan
+	 * @param lib			Vulkan API
 	 * @param identity		Identity instance
 	 * @return Array of structures (can be zero length)
 	 * @throws VulkanException if the underlying API method fails
 	 * @see #enumerate(VulkanLibrary, IntByReference, Object)
 	 */
 	@SuppressWarnings("unchecked")
-	static <T extends Structure> T[] enumerate(VulkanFunction<T> func, Vulkan vulkan, T identity) {
+	static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, T identity) {
 		// Count number of values
-		final VulkanLibrary api = vulkan.api();
-		final IntByReference count = vulkan.integer();
-		check(func.enumerate(api, count, null));
+		final IntByReference count = lib.factory().integer();
+		check(func.enumerate(lib, count, null));
 
 		// Retrieve values
 		if(count.getValue() > 0) {
 			final T[] array = (T[]) identity.toArray(count.getValue());
-			check(func.enumerate(api, count, array[0]));
+			check(func.enumerate(lib, count, array[0]));
 			return array;
 		}
 		else {

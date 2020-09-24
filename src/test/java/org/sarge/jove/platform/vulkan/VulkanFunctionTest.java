@@ -14,33 +14,25 @@ import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
 public class VulkanFunctionTest {
-	private Vulkan vulkan;
-	private VulkanLibrary api;
+	private VulkanLibrary lib;
 	private IntByReference count;
 
 	@BeforeEach
 	public void before() {
-		// Create API
-		api = mock(VulkanLibrary.class);
-
-		// Create Vulkan
-		vulkan = mock(Vulkan.class);
-		when(vulkan.api()).thenReturn(api);
-
-		// Create counter
-		count = new IntByReference(1);
-		when(vulkan.integer()).thenReturn(count);
+		lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(new MockReferenceFactory());
+		count = lib.factory().integer();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	void enumerate() {
 		final VulkanFunction<String[]> func = mock(VulkanFunction.class);
-		final String[] array = VulkanFunction.enumerate(func, vulkan, String[]::new);
+		final String[] array = VulkanFunction.enumerate(func, lib, String[]::new);
 		assertNotNull(array);
 		assertEquals(1, array.length);
-		verify(func).enumerate(api, count, null);
-		verify(func).enumerate(api, count, array);
+		verify(func).enumerate(lib, count, null);
+		verify(func).enumerate(lib, count, array);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -53,11 +45,11 @@ public class VulkanFunctionTest {
 
 		// Create function adapter
 		final VulkanFunction<Structure> func = mock(VulkanFunction.class);
-		final Structure[] result = VulkanFunction.enumerate(func, vulkan, identity);
+		final Structure[] result = VulkanFunction.enumerate(func, lib, identity);
 
 		// Invoke and check array is populated
 		assertArrayEquals(array, result);
-		verify(func).enumerate(api, count, null);
-		verify(func).enumerate(api, count, identity);
+		verify(func).enumerate(lib, count, null);
+		verify(func).enumerate(lib, count, identity);
 	}
 }

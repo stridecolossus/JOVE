@@ -117,13 +117,13 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem { // , VulkanLibrar
 	 * @return Extensions function
 	 */
 	default VulkanFunction<VkExtensionProperties> extensions() {
-		return (count, array) -> vkEnumerateInstanceExtensionProperties(null, count, array);
+		return (api, count, array) -> vkEnumerateInstanceExtensionProperties(null, count, array);
 	}
 
 	/**
 	 * @return Validation layers function
 	 */
 	default VulkanFunction<VkLayerProperties> layers() {
-		return (count, array) -> vkEnumerateInstanceLayerProperties(count, array);
+		return (api, count, array) -> vkEnumerateInstanceLayerProperties(count, array);
 	}
 }
