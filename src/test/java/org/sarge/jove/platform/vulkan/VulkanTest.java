@@ -27,10 +27,4 @@ public class VulkanTest {
 		assertNotNull(vulkan.pointer());
 		assertNotNull(vulkan.integer());
 	}
-
-	@Test
-	void supported() {
-		assertNotNull(vulkan.extensions());
-		assertNotNull(vulkan.layers());
-	}
 }

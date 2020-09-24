@@ -5,7 +5,6 @@ import java.util.Set;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Native;
-import com.sun.jna.ptr.IntByReference;
 
 /**
  * Descriptor for a <i>validation layer</i>.
@@ -16,21 +15,6 @@ public record ValidationLayer(String name, int version) {
 	 * Standard validation layer.
 	 */
 	public static final ValidationLayer STANDARD_VALIDATION = new ValidationLayer("VK_LAYER_LUNARG_standard_validation");
-
-	/**
-	 * Helper used to retrieve supported validation layers.
-	 */
-	public static final Support<VkLayerProperties, ValidationLayer> SUPPORTED_LAYERS = new Support<>() {
-		@Override
-		public Set<ValidationLayer> enumerate(VulkanFunction<VkLayerProperties> func) {
-			return enumerate(func, new IntByReference(), new VkLayerProperties());
-		}
-
-		@Override
-		protected ValidationLayer map(VkLayerProperties layer) {
-			return new ValidationLayer(Native.toString(layer.layerName), layer.implementationVersion);
-		}
-	};
 
 	/**
 	 * Constructor.
@@ -66,5 +50,20 @@ public record ValidationLayer(String name, int version) {
 				.stream()
 				.filter(layer -> layer.name.equals(this.name))
 				.anyMatch(layer -> layer.version <= this.version);
+	}
+
+	/**
+	 * Support helper for retrieval of supporting validation layers.
+	 */
+	public static class ValidationLayerSupport extends Support<VkLayerProperties, ValidationLayer> {
+		@Override
+		protected VkLayerProperties identity() {
+			return new VkLayerProperties();
+		}
+
+		@Override
+		protected ValidationLayer map(VkLayerProperties struct) {
+			return new ValidationLayer(Native.toString(struct.layerName), struct.implementationVersion);
+		}
 	}
 }

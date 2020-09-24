@@ -1,12 +1,15 @@
 package org.sarge.jove.platform.vulkan;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.platform.vulkan.ValidationLayer.ValidationLayerSupport;
 
 import com.sun.jna.ptr.IntByReference;
 
@@ -49,13 +52,27 @@ public class ValidationLayerTest {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	void supported() {
-		final VulkanFunction<VkLayerProperties> func = mock(VulkanFunction.class);
+	void support() {
+		// Create Vulkan
+		final Vulkan vulkan = mock(Vulkan.class);
+
+		// Init array size
 		final IntByReference count = new IntByReference(1);
-		final VkLayerProperties layer = new VkLayerProperties();
-		layer.implementationVersion = 42;
-		layer.layerName = "layer".getBytes();
-		final var results = ValidationLayer.SUPPORTED_LAYERS.enumerate(func, count, layer);
-		assertEquals(Set.of(new ValidationLayer("layer", 42)), results);
+		when(vulkan.integer()).thenReturn(count);
+
+		// Create support function
+		final VulkanFunction<VkLayerProperties> func = mock(VulkanFunction.class);
+
+		// Create support helper
+		final ValidationLayerSupport support = new ValidationLayerSupport() {
+			@Override
+			protected ValidationLayer map(VkLayerProperties struct) {
+				return new ValidationLayer("layer", 1);
+			}
+		};
+
+		// Enumerate layers
+		final Set<ValidationLayer> layers = support.enumerate(vulkan, func);
+		assertNotNull(layers);
 	}
 }
