@@ -229,6 +229,15 @@ static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary
 }
 ```
 
+# Example
+
+```java
+VulkanFunction<VkExtensionProperties> func = (api, count, extensions) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
+VkExtensionProperties identity = new VkExtensionProperties();
+VkExtensionProperties[] array = VulkanFunction.enumerate(func, lib, identity);
+Set<String> extensions = Arrays.stream(array).map(e -> Native.toString(e.extensionName)).collect(toSet());
+```
+
 # Support for device
 
 ```java
