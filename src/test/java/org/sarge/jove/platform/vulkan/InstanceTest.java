@@ -25,18 +25,18 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class InstanceTest {
-	private VulkanLibrary api;
+	private VulkanLibrary lib;
 	private Instance instance;
 
 	@BeforeEach
 	void before() {
 		// Init API
-		api = mock(VulkanLibrary.class);
-		when(api.factory()).thenReturn(new MockReferenceFactory());
+		lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(new MockReferenceFactory());
 
 		// Create instance
 		instance = new Instance.Builder()
-				.vulkan(api)
+				.vulkan(lib)
 				.name("test")
 				.extension("ext")
 				.layer(new ValidationLayer("layer"))
@@ -46,16 +46,16 @@ public class InstanceTest {
 	@Test
 	void constructor() {
 		assertNotNull(instance);
-		assertEquals(api, instance.api());
-		assertEquals(api.factory().pointer().getValue(), instance.handle());
+		assertEquals(lib, instance.library());
+		assertEquals(lib.factory().pointer().getValue(), instance.handle());
 	}
 
 	@Test
 	void create() {
 		// Check API invocation
-		final PointerByReference ref = api.factory().pointer();
+		final PointerByReference ref = lib.factory().pointer();
 		final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
-		verify(api).vkCreateInstance(captor.capture(), isNull(), eq(ref));
+		verify(lib).vkCreateInstance(captor.capture(), isNull(), eq(ref));
 
 		// Check instance descriptor
 		final VkInstanceCreateInfo info = captor.getValue();
@@ -75,14 +75,14 @@ public class InstanceTest {
 	@Test
 	void destroy() {
 		instance.destroy();
-		verify(api).vkDestroyInstance(instance.handle(), null);
+		verify(lib).vkDestroyInstance(instance.handle(), null);
 	}
 
 	@Test
 	void function() {
 		final Pointer func = new Pointer(2);
 		final String name = "name";
-		when(api.vkGetInstanceProcAddr(instance.handle(), name)).thenReturn(func);
+		when(lib.vkGetInstanceProcAddr(instance.handle(), name)).thenReturn(func);
 		assertEquals(func, instance.function(name));
 	}
 
@@ -95,11 +95,11 @@ public class InstanceTest {
 	@Test
 	void build() {
 		// Create real API
-		api = VulkanLibrary.create();
+		lib = VulkanLibrary.create();
 
 		// Create instance
 		instance = new Instance.Builder()
-				.vulkan(api)
+				.vulkan(lib)
 				.name("test")
 				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
@@ -108,7 +108,7 @@ public class InstanceTest {
 		// Check instance
 		assertNotNull(instance);
 		assertNotNull(instance.handle());
-		assertEquals(api, instance.api());
+		assertEquals(lib, instance.library());
 
 		// Destroy instance
 		instance.destroy();
@@ -146,7 +146,7 @@ public class InstanceTest {
 			assertEquals(instance.handle(), args[0]);
 			assertTrue(handler.create().dataEquals((VkDebugUtilsMessengerCreateInfoEXT) args[1]));
 			assertEquals(null, args[2]);
-			assertEquals(api.factory().pointer(), args[3]);
+			assertEquals(lib.factory().pointer(), args[3]);
 		}
 
 		@Test

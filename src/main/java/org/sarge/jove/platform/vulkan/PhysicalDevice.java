@@ -40,7 +40,14 @@ public class PhysicalDevice {
 			this.count = props.queueCount;
 			this.index = index;
 			this.flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
-			this.hash = new HashCodeBuilder().append(index).append(parent()).hashCode();
+			this.hash = new HashCodeBuilder().append(index).append(device()).hashCode();
+		}
+
+		/**
+		 * @return Physical device of this queue family
+		 */
+		PhysicalDevice device() {
+			return PhysicalDevice.this;
 		}
 
 		/**
@@ -84,12 +91,8 @@ public class PhysicalDevice {
 		public boolean equals(Object obj) {
 			return
 					obj instanceof QueueFamily that &&
-					this.parent() == that.parent() &&
+					this.device() == that.device() &&
 					this.index() == that.index();
-		}
-
-		private PhysicalDevice parent() {
-			return PhysicalDevice.this;
 		}
 
 		@Override

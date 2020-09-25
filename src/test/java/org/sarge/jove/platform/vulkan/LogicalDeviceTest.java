@@ -3,13 +3,11 @@ package org.sarge.jove.platform.vulkan;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -17,37 +15,39 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.LogicalDevice.Queue;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
-
 public class LogicalDeviceTest {
 	private LogicalDevice device;
 	private PhysicalDevice parent;
 	private QueueFamily family;
-	private Vulkan vulkan;
-	private VulkanLibrary api;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Init Vulkan
-		final PointerByReference ref = new PointerByReference(new Pointer(42));
-		vulkan = mock(Vulkan.class);
-		when(vulkan.pointer()).thenReturn(ref);
-
 		// Init API
-		api = mock(VulkanLibrary.class);
-		when(vulkan.api()).thenReturn(api);
+		lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(new MockReferenceFactory());
+
+		// Create instance
+		final Instance instance = mock(Instance.class);
+		when(instance.library()).thenReturn(lib);
 
 		// Create parent device
 		parent = mock(PhysicalDevice.class);
-		when(parent.vulkan()).thenReturn(vulkan);
+		when(parent.instance()).thenReturn(instance);
 
 		// Create queue family
 		family = mock(QueueFamily.class);
+		when(family.count()).thenReturn(2);
+		when(family.device()).thenReturn(parent);
 		when(parent.families()).thenReturn(List.of(family));
 
 		// Create logical device
-		device = new LogicalDevice(new Pointer(1), parent, Map.of(family, List.of(new Pointer(2))));
+		device = new LogicalDevice.Builder()
+				.parent(parent)
+				.queues(family, new float[]{0.1f, 0.2f})
+				.extension("ext")
+				.layer(ValidationLayer.STANDARD_VALIDATION)
+				.build();
 	}
 
 	@Test
@@ -66,20 +66,31 @@ public class LogicalDeviceTest {
 		// Check queues for family
 		final var list = device.queues().get(family);
 		assertNotNull(list);
-		assertEquals(1, list.size());
-		assertNotNull(list.get(0));
+		assertEquals(2, list.size());
+
+		final Queue queue = list.get(0);
+		assertNotNull(queue);
+		assertEquals(family, queue.family());
+		assertNotNull(queue.handle());
+	}
+
+	@Test
+	void queueWaitIdle() {
+		final Queue queue = device.queues().get(family).get(0);
+		queue.waitIdle();
+		verify(lib).vkQueueWaitIdle(queue.handle());
 	}
 
 	@Test
 	void waitIdle() {
 		device.waitIdle();
-		verify(api).vkDeviceWaitIdle(device.handle());
+		verify(lib).vkDeviceWaitIdle(device.handle());
 	}
 
 	@Test
 	void destroy() {
 		device.destroy();
-		verify(vulkan.api()).vkDestroyDevice(device.handle(), null);
+		verify(lib).vkDestroyDevice(device.handle(), null);
 	}
 
 	@Nested
@@ -88,32 +99,7 @@ public class LogicalDeviceTest {
 
 		@BeforeEach
 		void before() {
-			builder = new LogicalDevice.Builder();
-			when(family.count()).thenReturn(2);
-		}
-
-		@Test
-		void build() {
-			// Build device
-			device = builder
-					.parent(parent)
-					.extension("ext")
-					.layer(new ValidationLayer("layer", 42))
-					.queue(family, new float[]{0.1f, 0.2f})
-					.build();
-
-			// Check device
-			assertNotNull(device);
-			assertEquals(parent, device.parent());
-
-			// Check queues
-			assertNotNull(device.queues());
-			assertEquals(1, device.queues().size());
-			assertTrue(device.queues().containsKey(family));
-			assertEquals(2, device.queues().get(family).size());
-
-			// TODO - capture info
-			// TODO - verify queue lookup API
+			builder = new LogicalDevice.Builder().parent(parent);
 		}
 
 		@Test
@@ -123,35 +109,17 @@ public class LogicalDeviceTest {
 
 		@Test
 		void invalidPriority() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(family, new float[]{999}));
+			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, new float[]{999}).build());
 		}
 
 		@Test
 		void invalidQueueCount() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(family, 3));
-		}
-	}
-
-	@Nested
-	class QueueTests {
-		private Queue queue;
-
-		@BeforeEach
-		void before() {
-			queue = device.queues().get(family).get(0);
+			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, 3).build());
 		}
 
 		@Test
-		void constructor() {
-			assertEquals(family, queue.family());
-			assertEquals(device, queue.device());
-			assertNotNull(queue.handle());
-		}
-
-		@Test
-		void waitIdle() {
-			queue.waitIdle();
-			verify(api).vkQueueWaitIdle(queue.handle());
+		void invalidQueueFamily() {
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(QueueFamily.class)).build());
 		}
 	}
 }

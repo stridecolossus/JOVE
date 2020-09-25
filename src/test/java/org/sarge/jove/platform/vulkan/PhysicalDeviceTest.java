@@ -87,6 +87,7 @@ public class PhysicalDeviceTest {
 			assertEquals(1, family.count());
 			assertEquals(Set.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT), family.flags());
 			assertEquals(0, family.index());
+			assertEquals(dev, family.device());
 		}
 
 		@Test
