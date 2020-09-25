@@ -22,7 +22,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Instance {
-	private final VulkanLibrary api;
+	private final VulkanLibrary lib;
 	private final Pointer handle;
 
 	private final Map<MessageHandler, Pointer> handlers = new HashMap<>();
@@ -30,19 +30,19 @@ public class Instance {
 
 	/**
 	 * Constructor.
-	 * @param api			Vulkan API
+	 * @param lib			Vulkan library
 	 * @param handle		Instance handle
 	 */
-	private Instance(VulkanLibrary api, Pointer handle) {
-		this.api = notNull(api);
+	private Instance(VulkanLibrary lib, Pointer handle) {
+		this.lib = notNull(lib);
 		this.handle = notNull(handle);
 	}
 
 	/**
-	 * @return Vulkan API
+	 * @return Vulkan library
 	 */
-	VulkanLibrary api() {
-		return api;
+	VulkanLibrary library() {
+		return lib;
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class Instance {
 	 * @throws ServiceException if the function cannot be found
 	 */
 	public Function function(String name) {
-		final Pointer ptr = api.vkGetInstanceProcAddr(handle, name);
+		final Pointer ptr = lib.vkGetInstanceProcAddr(handle, name);
 		if(ptr == null) throw new ServiceException("Cannot find function pointer: " + name);
 		return Function.getFunction(ptr);
 	}
@@ -84,7 +84,7 @@ public class Instance {
 		 */
 		private Pointer create(MessageHandler handler) {
 			final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
-			final PointerByReference handle = api.factory().pointer();
+			final PointerByReference handle = lib.factory().pointer();
 			final Object[] args = {Instance.this.handle, info, null, handle};
 			VulkanLibrary.check(create.invokeInt(args));
 			return handle.getValue();
@@ -146,7 +146,7 @@ public class Instance {
 		}
 
 		// Destroy instance
-		api.vkDestroyInstance(handle, null);
+		lib.vkDestroyInstance(handle, null);
 	}
 
 	/**

@@ -22,7 +22,7 @@ import com.sun.jna.ptr.IntByReference;
 public interface VulkanFunction<T> {
 	/**
 	 * Vulkan API method that retrieves an array of the given type.
-	 * @param lib		Vulkan API
+	 * @param lib		Vulkan library
 	 * @param count 	Return-by-reference count of the number of array elements
 	 * @param array 	Array instance or <code>null</code> to retrieve size of the array
 	 * @return Vulkan result code

@@ -1,31 +1,24 @@
-
 # Class outline
 
 ```java
 public class PhysicalDevice {
-	/**
-	 * Enumerates the physical devices for the given instance.
-	 * @param instance Vulkan instance
-	 * @return Physical devices
-	 */
-	public static PhysicalDevice devices(Instance instance) {
-		return null;
+	public static Stream<PhysicalDevice> devices(Instance instance) {
 	}
-
+	
 	private final Pointer handle;
-	private final Vulkan vulkan;
+	private final Instance instance;
 	private final List<QueueFamily> families;
 
 	/**
 	 * Constructor.
 	 * @param handle		Device handle
-	 * @param vulkan		Vulkan
+	 * @param instance		Parent instance
 	 * @param families		Queue families
 	 */
-	PhysicalDevice(Pointer handle, Vulkan vulkan, List<QueueFamily> families) {
+	PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
 		this.handle = notNull(handle);
-		this.vulkan = notNull(vulkan);
-		this.families = List.copyOf(families);
+		this.instance = notNull(instance);
+		this.families = List.copyOf(build(families));
 	}
 
 	/**
@@ -36,10 +29,10 @@ public class PhysicalDevice {
 	}
 
 	/**
-	 * @return Vulkan
+	 * @return Parent instance
 	 */
-	public Vulkan vulkan() {
-		return vulkan;
+	public Instance instance() {
+		return instance;
 	}
 
 	/**
@@ -48,90 +41,254 @@ public class PhysicalDevice {
 	public List<QueueFamily> families() {
 		return families;
 	}
+}
+```
+# Queue Family
+
+```java
+public class QueueFamily {
+	private final int count;
+	private final int index;
+	private final Set<VkQueueFlag> flags;
 
 	/**
-	 * @return Properties of this device
+	 * Constructor.
+	 * @param index		Family index
+	 * @param props 	Properties
+	 */
+	private QueueFamily(int index, VkQueueFamilyProperties props) {
+		this.count = props.queueCount;
+		this.index = index;
+		this.flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
+	}
+
+	/**
+	 * @return Number of queues in this family
+	 */
+	public int count() {
+		return count;
+	}
+
+	/**
+	 * @return Queue family index
+	 */
+	public int index() {
+		return index;
+	}
+
+	/**
+	 * @return Flags for this family
+	 */
+	public Set<VkQueueFlag> flags() {
+		return flags;
+	}
+}
+```
+
+# Accessors
+
+```java
+	/**
+	 * @return Device properties
 	 */
 	public VkPhysicalDeviceProperties properties() {
-		return null;
+		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+		instance.library().vkGetPhysicalDeviceProperties(handle, props);
+		return props;
 	}
 
 	/**
 	 * @return Memory properties of this device
 	 */
 	public VkPhysicalDeviceMemoryProperties memory() {
-		return null;
+		final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
+		instance.library().vkGetPhysicalDeviceMemoryProperties(handle, mem);
+		return mem;
 	}
 
 	/**
 	 * @return Features supported by this device
 	 */
 	public VkPhysicalDeviceFeatures features() {
-		return null;
+		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
+		instance.library().vkGetPhysicalDeviceFeatures(handle, features);
+		return features;
+	}
+}
+```
+
+# Enumerating the physical devices
+
+```java
+public static Stream<PhysicalDevice> devices(Instance instance) {
+	// Determine array length
+	final IntByReference count = lib.factory().integer();
+	check(api.vkEnumeratePhysicalDevices(instance.handle(), count, null));
+
+	// Allocate array
+	final Pointer[] array = new Pointer[count.getValue()];
+
+	// Retrieve array
+	if(array.length > 0) {
+		check(api.vkEnumeratePhysicalDevices(instance.handle(), count, array));
 	}
 
-	/**
-	 * @return Extensions supported by this device
-	 */
-	public Set<String> extensions() {
-		return null;
-	}
+	// Create devices
+	return Arrays.stream(array).map(ptr -> create(ptr, instance));
+}
+```
 
-	/**
-	 * @return Validation layers supported by this device
-	 */
-	public ValidationLayer layers() {
-		return null;
+# Retrieving the Queue Families
+
+```java
+private static PhysicalDevice create(Pointer handle, Instance instance) {
+	// Count number of families
+	final VulkanLibrary lib = instance.library();
+	final IntByReference count = lib.factory().integer();
+	lib.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, null);
+
+	// Retrieve families
+	final VkQueueFamilyProperties[] array;
+	if(count.getValue() > 0) {
+		array = (T[]) new VkQueueFamilyProperties().toArray(count.getValue());
+		check(lib.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array[0]));
+	}
+	else {
+		array = (T[]) Array.newInstance(VkQueueFamilyProperties.class, 0);
+	}
+	
+	// Create device
+	return new PhysicalDevice(handle, instance, families);
+}
+```
+
+# Constructor
+
+```java
+	private List<QueueFamily> build(VkQueueFamilyProperties[] families) {
+		return IntStream
+				.range(0, families.length)
+				.mapToObj(n -> new QueueFamily(n, families[n]))
+				.collect(toList());
 	}
 ```
 
-# Device functions
+# Vulkan Function
 
 ```java
+@FunctionalInterface
+public interface VulkanFunction<T> {
 	/**
-	 * @return Properties of this device
+	 * Vulkan API method that retrieves an array of the given type.
+	 * @param lib		Vulkan library
+	 * @param count 	Return-by-reference count of the number of array elements
+	 * @param array 	Array instance or <code>null</code> to retrieve size of the array
+	 * @return Vulkan result code
 	 */
-	public VkPhysicalDeviceProperties properties() {
-		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-		vulkan.api().vkGetPhysicalDeviceProperties(handle, props);
-		return props;
-	}
+	int enumerate(VulkanLibrary lib, IntByReference count, T array);
+}
 ```
 
-# Refactor extensions/layers
+# Enumerate Array
 
 ```java
-	/**
-	 * @return Extensions supported by this device
-	 */
-	public Set<String> extensions() {
-		final VulkanFunction<VkExtensionProperties> func = (count, ext) -> vulkan.api().vkEnumerateDeviceExtensionProperties(handle, null, count, ext);
-		return vulkan.extensions(func);
+static <T> T[] enumerate(VulkanFunction<T[]> func, VulkanLibrary lib, IntFunction<T[]> factory) {
+	// Determine array length
+	final IntByReference count = lib.factory().integer();
+	check(func.enumerate(lib, count, null));
+
+	// Allocate array
+	final T[] array = factory.apply(count.getValue());
+
+	// Retrieve array
+	if(array.length > 0) {
+		check(func.enumerate(lib, count, array));
 	}
+
+	return array;
+}
 ```
 
+# Enumerate Structure
+
 ```java
+static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, T identity) {
+	// Count number of values
+	final IntByReference count = lib.factory().integer();
+	check(func.enumerate(lib, count, null));
+
+	// Retrieve values
+	if(count.getValue() > 0) {
+		final T[] array = (T[]) identity.toArray(count.getValue());
+		check(func.enumerate(lib, count, array[0]));
+		return array;
+	}
+	else {
+		return (T[]) Array.newInstance(identity.getClass(), 0);
+	}
+}
+```
+
+# Support for device
+
+```java
+public VulkanFunction<VkExtensionProperties> extensions() {
+	return (api, count, extensions) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
+}
+
+public VulkanFunction<VkLayerProperties> layers() {
+	return (api, count, layers) -> api.vkEnumerateDeviceLayerProperties(handle, count, layers);
+}
+```
+
+# Support for instance
+
+```java
+VulkanFunction<VkExtensionProperties> EXTENSIONS = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
+VulkanFunction<VkLayerProperties> LAYERS = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
+```
+
+# Support Helper
+
+```java
+public abstract class Support<T extends Structure, R> {
 	/**
-	 * @return Extensions supported by this Vulkan implementation
+	 * Retrieves a set of supporting features.
+	 * @param lib			Vulkan library
+	 * @param func			Enumeration function
+	 * @return Results
 	 */
-	public Set<String> extensions() {
-		final VulkanFunction<VkExtensionProperties> func = (count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
-		return extensions(func);
+	public Set<R> enumerate(VulkanLibrary lib, VulkanFunction<T> func) {
+		final T[] array = VulkanFunction.enumerate(func, lib, identity());
+		return Arrays.stream(array).map(this::map).collect(toSet());
 	}
 
 	/**
-	 * Helper - Enumerates extensions using the given API function.
-	 * @return Extensions
+	 * Factory for the identity structure.
+	 * @return New identity structure
 	 */
-	Set<String> extensions(VulkanFunction<VkExtensionProperties> func) {
-		// Enumerate extensions
-		final var extensions = VulkanFunction.enumerate(func, factory.integer(), new VkExtensionProperties());
+	protected abstract T identity();
 
-		// Convert to string-set
-		return Arrays
-				.stream(extensions)
-				.map(e -> e.extensionName)
-				.map(Native::toString)
-				.collect(toSet());
+	/**
+	 * Converts a retrieved structure to the resultant type.
+	 * @param struct Structure
+	 * @return Converted result
+	 */
+	protected abstract R map(T struct);
+
+	/**
+	 * Implementation for supported extensions.
+	 */
+	public static class Extensions extends Support<VkExtensionProperties, String> {
+		@Override
+		protected VkExtensionProperties identity() {
+			return new VkExtensionProperties();
+		}
+
+		@Override
+		protected String map(VkExtensionProperties struct) {
+			return Native.toString(struct.extensionName);
+		}
 	}
+}
 ```

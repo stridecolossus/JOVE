@@ -42,7 +42,7 @@ import com.sun.jna.Structure;
 public abstract class Support<T extends Structure, R> {
 	/**
 	 * Retrieves a set of supporting features.
-	 * @param lib			Vulkan API
+	 * @param lib			Vulkan library
 	 * @param func			Enumeration function
 	 * @return Results
 	 */

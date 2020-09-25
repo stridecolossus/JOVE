@@ -14,7 +14,7 @@ import com.sun.jna.Structure;
 /**
  * Vulkan API.
  */
-interface VulkanLibrary extends Library, VulkanLibrarySystem { // , VulkanLibraryGraphics, VulkanLibraryUtility {
+interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraphics, VulkanLibraryUtility {
 	/**
 	 * Vulkan API version.
 	 */
@@ -56,6 +56,16 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem { // , VulkanLibrar
 //        VK_SUBPASS_EXTERNAL              = (~0);
 //    public static final float VK_LOD_CLAMP_NONE = 1000.0f;
 //    public static final long VK_WHOLE_SIZE = (~0L);
+
+	/**
+	 * Function to retrieve the available extensions for this Vulkan implementation.
+	 */
+	VulkanFunction<VkExtensionProperties> EXTENSIONS = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
+
+	/**
+	 * Function to retrieve the available validation layers for this Vulkan implementation.
+	 */
+	VulkanFunction<VkLayerProperties> LAYERS = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
 
 	/**
 	 * @return Vulkan API
@@ -111,19 +121,5 @@ interface VulkanLibrary extends Library, VulkanLibrarySystem { // , VulkanLibrar
 		if(result != SUCCESS) {
 			throw new VulkanException(result);
 		}
-	}
-
-	/**
-	 * @return Extensions function
-	 */
-	default VulkanFunction<VkExtensionProperties> extensions() {
-		return (api, count, array) -> vkEnumerateInstanceExtensionProperties(null, count, array);
-	}
-
-	/**
-	 * @return Validation layers function
-	 */
-	default VulkanFunction<VkLayerProperties> layers() {
-		return (api, count, array) -> vkEnumerateInstanceLayerProperties(count, array);
 	}
 }

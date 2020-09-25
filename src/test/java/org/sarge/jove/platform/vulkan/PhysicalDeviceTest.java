@@ -15,17 +15,21 @@ import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 
 public class PhysicalDeviceTest {
 	private PhysicalDevice dev;
-	private Vulkan vulkan;
+	private VulkanLibrary lib;
+	private Instance instance;
 
 	@BeforeEach
 	void before() {
 		// Create Vulkan
-		vulkan = mock(Vulkan.class);
-		when(vulkan.api()).thenReturn(mock(VulkanLibrary.class));
+		lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(new MockReferenceFactory());
+
+		// Create an instance
+		instance = mock(Instance.class);
+		when(instance.library()).thenReturn(lib);
 
 		// Create a queue family
 		final VkQueueFamilyProperties family = new VkQueueFamilyProperties();
@@ -33,15 +37,15 @@ public class PhysicalDeviceTest {
 		family.queueFlags = IntegerEnumeration.mask(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT);
 
 		// Create device
-		dev = new PhysicalDevice(new Pointer(42), vulkan, new VkQueueFamilyProperties[]{family, family});
+		dev = new PhysicalDevice(new Pointer(42), instance, new VkQueueFamilyProperties[]{family});
 	}
 
 	@Test
 	void constructor() {
 		assertNotNull(dev.handle());
-		assertEquals(vulkan, dev.vulkan());
+		assertEquals(instance, dev.instance());
 		assertNotNull(dev.families());
-		assertEquals(2, dev.families().size());
+		assertEquals(1, dev.families().size());
 	}
 
 	@Test
@@ -53,58 +57,50 @@ public class PhysicalDeviceTest {
 	@Test
 	void properties() {
 		final var props = dev.properties();
-		verify(vulkan.api()).vkGetPhysicalDeviceProperties(dev.handle(), props);
+		verify(lib).vkGetPhysicalDeviceProperties(dev.handle(), props);
 	}
 
 	@Test
 	void memory() {
 		final var mem = dev.memory();
-		verify(vulkan.api()).vkGetPhysicalDeviceMemoryProperties(dev.handle(), mem);
+		verify(lib).vkGetPhysicalDeviceMemoryProperties(dev.handle(), mem);
 	}
 
 	@Test
 	void features() {
 		final var features = dev.features();
-		verify(vulkan.api()).vkGetPhysicalDeviceFeatures(dev.handle(), features);
+		verify(lib).vkGetPhysicalDeviceFeatures(dev.handle(), features);
 	}
 
 	@Nested
 	class FamilyTests {
-		private QueueFamily one, two;
+		private QueueFamily family;
 
 		@BeforeEach
 		void before() {
-			one = dev.families().get(0);
-			two = dev.families().get(1);
+			family = dev.families().get(0);
 		}
 
 		@Test
-		void family() {
-			assertNotNull(one);
-			assertEquals(1, one.count());
-			assertEquals(Set.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT), one.flags());
-		}
-
-		@Test
-		void indices() {
-			assertEquals(0, one.index());
-			assertEquals(1, two.index());
+		void constructor() {
+			assertNotNull(family);
+			assertEquals(1, family.count());
+			assertEquals(Set.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT), family.flags());
+			assertEquals(0, family.index());
 		}
 
 		@Test
 		void equals() {
-			assertEquals(true, one.equals(one));
-			assertEquals(false, one.equals(null));
-			assertEquals(false, one.equals(two));
+			assertEquals(true, family.equals(family));
+			assertEquals(false, family.equals(null));
+			assertEquals(false, family.equals(mock(QueueFamily.class)));
 		}
 
 		@Test
 		void isPresentationSupported() {
 			final Surface surface = mock(Surface.class);
-			final IntByReference ref = new IntByReference(1);
-			when(vulkan.integer()).thenReturn(ref);
-			assertEquals(true, one.isPresentationSupported(surface));
-			verify(vulkan.api()).vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), 0, surface.handle(), ref);
+			assertEquals(true, family.isPresentationSupported(surface));
+			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), 0, surface.handle(), lib.factory().integer());
 		}
 	}
 }
