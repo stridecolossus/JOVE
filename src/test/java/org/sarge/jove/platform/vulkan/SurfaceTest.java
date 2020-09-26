@@ -1,44 +1,74 @@
 package org.sarge.jove.platform.vulkan;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 
-public class SurfaceTest extends AbstractVulkanTest {
+public class SurfaceTest {
 	private Surface surface;
-	private VulkanInstance instance;
+	private Pointer handle;
+	private PhysicalDevice dev;
+	private Instance instance;
+	private VulkanLibrary lib;
 
 	@BeforeEach
-	public void before() {
-		instance = mock(VulkanInstance.class);
-		surface = new Surface(mock(Pointer.class), instance, new VkSurfaceCapabilitiesKHR(), List.of(new VkSurfaceFormatKHR()), Set.of(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR));
+	void before() {
+		// Create API
+		lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(new MockReferenceFactory());
+
+		// Create instance
+		instance = mock(Instance.class);
+		when(instance.library()).thenReturn(lib);
+
+		// Create device
+		dev = mock(PhysicalDevice.class);
+		when(dev.instance()).thenReturn(instance);
+
+		// Create surface
+		handle = new Pointer(42);
+		surface = new Surface(handle, dev);
 	}
 
 	@Test
-	public void constructor() {
-		assertNotNull(surface.handle());
-		assertNotNull(surface.capabilities());
-		assertNotNull(surface.formats());
-		assertNotNull(surface.modes());
-	}
-
-	@Test
-	public void create() {
-		final VulkanInstance instance = mock(VulkanInstance.class);
-		final PhysicalDevice dev = mock(PhysicalDevice.class);
-		when(dev.vulkan()).thenReturn(vulkan);
-		final Pointer handle = mock(Pointer.class);
-		surface = Surface.create(handle, instance, dev);
-		assertNotNull(surface);
+	void constructor() {
 		assertEquals(handle, surface.handle());
+	}
+
+	@Test
+	void capabilities() {
+		final var caps = surface.capabilities();
+		assertNotNull(caps);
+		verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.handle(), surface.handle(), caps);
+	}
+
+	@Test
+	void formats() {
+		final var formats = surface.formats();
+		assertNotNull(formats);
+		verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(eq(dev.handle()), eq(surface.handle()), isA(IntByReference.class), isA(VkSurfaceFormatKHR.class));
+	}
+
+	@Test
+	void modes() {
+		final var modes = surface.modes();
+		assertNotNull(modes);
+		verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(eq(dev.handle()), eq(surface.handle()), isA(IntByReference.class), isA(VkPresentModeKHR[].class));
+	}
+
+	@Test
+	void destroy() {
+		surface.destroy();
+		verify(lib).vkDestroySurfaceKHR(instance.handle(), handle, null);
 	}
 }

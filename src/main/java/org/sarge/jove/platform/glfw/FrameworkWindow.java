@@ -3,10 +3,12 @@ package org.sarge.jove.platform.glfw;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.sarge.jove.control.Event;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Resource.PointerHandle;
+import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.KeyListener;
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MouseButtonListener;
@@ -14,6 +16,7 @@ import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MousePositionListener
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MouseScrollListener;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 /**
  * GLFW window.
@@ -121,6 +124,16 @@ class FrameworkWindow extends PointerHandle implements Window {
 			final Event event = new Event(Event.Descriptor.ZOOM, (int) x, (int) y);
 			handler.handle(event);
 		};
+	}
+
+	@Override
+	public Pointer surface(Pointer vulkan, Supplier<PointerByReference> ref) {
+		final PointerByReference handle = ref.get();
+		final int result = instance.glfwCreateWindowSurface(vulkan, super.handle(), null, handle);
+		if(result != 0) {
+			throw new ServiceException("Cannot create Vulkan surface: result=" + result);
+		}
+		return handle.getValue();
 	}
 
 	@Override

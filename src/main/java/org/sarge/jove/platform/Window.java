@@ -5,13 +5,17 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.lib.collection.StrictSet;
 import org.sarge.lib.util.AbstractEqualsObject;
 
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
+
 /**
- * A <i>window</i> abstract a platform-specific window.
+ * A <i>window</i> abstracts a platform-specific desktop window.
  */
 public interface Window {
 	/**
@@ -156,6 +160,14 @@ public interface Window {
 	 * @return Descriptor of this window
 	 */
 	Descriptor descriptor();
+
+	/**
+	 * Creates a Vulkan rendering surface for this window.
+	 * @param vulkan 		Vulkan instance handle
+	 * @param ref			Surface handle factory
+	 * @return Surface handle
+	 */
+	Pointer surface(Pointer vulkan, Supplier<PointerByReference> ref);
 
 	/**
 	 * Input device for this window.

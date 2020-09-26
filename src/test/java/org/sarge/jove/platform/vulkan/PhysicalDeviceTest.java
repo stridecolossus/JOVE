@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -99,9 +101,26 @@ public class PhysicalDeviceTest {
 
 		@Test
 		void isPresentationSupported() {
-			final Surface surface = mock(Surface.class);
+			final Pointer surface = new Pointer(42);
 			assertEquals(true, family.isPresentationSupported(surface));
-			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), 0, surface.handle(), lib.factory().integer());
+			final var ref = lib.factory().integer(); // TODO - fails with NPE unless we do it this way! why?
+			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), 0, surface, ref);
 		}
+
+		@Test
+		void filter() {
+			assertTrue(PhysicalDevice.filter(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT).test(family));
+			assertFalse(PhysicalDevice.filter(VkQueueFlag.VK_QUEUE_TRANSFER_BIT).test(family));
+		}
+
+//		@Test
+//		void find() {
+//			dev.find(PhysicalDevice.flag(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT), null);
+//		}
+//
+//		@Test
+//		void findThrows() {
+//			assertThrows(ServiceException.class, () -> dev.find(PhysicalDevice.flag(VkQueueFlag.VK_QUEUE_TRANSFER_BIT), "doh"));
+//		}
 	}
 }

@@ -119,7 +119,7 @@ interface VulkanLibrarySurface {
 	 * @return Result
 	 * @see VkPresentModeKHR
 	 */
-	int vkGetPhysicalDeviceSurfacePresentModesKHR(Pointer device, Pointer surface, IntByReference count, int[] modes); // PointerByReference modes);
+	int vkGetPhysicalDeviceSurfacePresentModesKHR(Pointer device, Pointer surface, IntByReference count, VkPresentModeKHR[] modes); // TODO - int[] modes);
 
 	/**
 	 * Destroys a surface.

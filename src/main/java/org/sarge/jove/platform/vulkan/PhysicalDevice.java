@@ -7,12 +7,15 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -75,10 +78,10 @@ public class PhysicalDevice {
 		 * @param surface Rendering surface
 		 * @return Whether this family supports presentation to the given surface
 		 */
-		public boolean isPresentationSupported(Surface surface) {
+		public boolean isPresentationSupported(Pointer surface) {
 			final VulkanLibrary lib = instance.library();
 			final IntByReference supported = lib.factory().integer();
-			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice.this.handle(), index(), surface.handle(), supported));
+			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice.this.handle(), index(), surface, supported));
 			return VulkanBoolean.of(supported.getValue()).isTrue();
 		}
 
@@ -99,6 +102,17 @@ public class PhysicalDevice {
 		public String toString() {
 			return ToStringBuilder.reflectionToString(this);
 		}
+	}
+
+	/**
+	 * Helper - Creates a predicate for a queue family matching the given flag.
+	 * @param flags Queue family flag(s)
+	 * @return Predicate
+	 * @see PhysicalDevice#find(Predicate, String)
+	 */
+	public static Predicate<QueueFamily> filter(VkQueueFlag... flags) {
+		Check.notNull(flags);
+		return family -> family.flags.containsAll(Arrays.asList(flags));
 	}
 
 	/**
@@ -174,6 +188,17 @@ public class PhysicalDevice {
 	 */
 	public List<QueueFamily> families() {
 		return families;
+	}
+
+	/**
+	 * Helper - Finds a matching queue family for this device.
+	 * @param test			Queue family predicate
+	 * @param message		Error message
+	 * @return Matching queue family
+	 * @throws ServiceException with the given message if a matching queue is not present
+	 */
+	public QueueFamily find(Predicate<QueueFamily> test, String message) throws ServiceException {
+		return families.stream().filter(test).findAny().orElseThrow(() -> new ServiceException(message));
 	}
 
 	/**
