@@ -11,6 +11,12 @@ import com.sun.jna.ptr.PointerByReference;
 public class MockReferenceFactory implements ReferenceFactory {
 	public final IntByReference integer = new IntByReference(1);
 	public final PointerByReference ptr = new PointerByReference(new Pointer(2));
+	public final Pointer[] pointers = new Pointer[] {new Pointer(3)};
+
+	@Override
+	public IntByReference integer() {
+		return integer;
+	}
 
 	@Override
 	public PointerByReference pointer() {
@@ -18,7 +24,7 @@ public class MockReferenceFactory implements ReferenceFactory {
 	}
 
 	@Override
-	public IntByReference integer() {
-		return integer;
+	public Pointer[] pointers(int num) {
+		return pointers;
 	}
 }

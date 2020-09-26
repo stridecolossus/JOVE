@@ -32,21 +32,18 @@ public class LogicalDevice {
 	/**
 	 * A <i>work queue</i> is used to submit work to this logical device.
 	 */
-	public static class Queue {
+	public class Queue {
 		private final Pointer queue;
 		private final QueueFamily family;
-		private final VulkanLibrary lib;
 
 		/**
 		 * Constructor.
 		 * @param handle 	Queue handle
 		 * @param family 	Queue family
-		 * @param lib		Vulkan library
 		 */
-		private Queue(Pointer handle, QueueFamily family, VulkanLibrary lib) {
+		private Queue(Pointer handle, QueueFamily family) {
 			this.queue = notNull(handle);
 			this.family = notNull(family);
-			this.lib = notNull(lib);
 		}
 
 		/**
@@ -64,6 +61,13 @@ public class LogicalDevice {
 		}
 
 		/**
+		 * @return Logical device
+		 */
+		public LogicalDevice device() {
+			return LogicalDevice.this;
+		}
+
+		/**
 		 * Waits for this queue to become idle.
 		 */
 		public void waitIdle() {
@@ -71,8 +75,16 @@ public class LogicalDevice {
 		}
 	}
 
+	/**
+	 * Transient wrapper for a queue descriptor.
+	 */
+	private record QueueWrapper(VkDeviceQueueCreateInfo info, QueueFamily family) {
+		// Record
+	}
+
 	private final Pointer handle;
 	private final PhysicalDevice parent;
+	private final VulkanLibrary lib;
 	private final Map<QueueFamily, List<Queue>> queues;
 
 	/**
@@ -81,10 +93,34 @@ public class LogicalDevice {
 	 * @param parent Parent physical device
 	 * @param queues Work queues
 	 */
-	private LogicalDevice(Pointer handle, PhysicalDevice parent, List<Queue> queues) {
+	private LogicalDevice(Pointer handle, PhysicalDevice parent, List<QueueWrapper> queues) {
 		this.handle = notNull(handle);
 		this.parent = notNull(parent);
-		this.queues = queues.stream().collect(groupingBy(Queue::family));
+		this.lib = parent.instance().library();
+		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
+	}
+
+	/**
+	 * Creates the work queues for the given wrapper.
+	 * @param wrapper Queue wrapper
+	 * @return Queues
+	 */
+	private Stream<Queue> create(QueueWrapper wrapper) {
+		return IntStream
+				.range(0, wrapper.info.queueCount)
+				.mapToObj(n -> create(n, wrapper.family));
+	}
+
+	/**
+	 * Creates a new work queue.
+	 * @param index		Queue index
+	 * @param family	Queue family
+	 * @return New queue
+	 */
+	private Queue create(int index, QueueFamily family) {
+		final PointerByReference queue = lib.factory().pointer();
+		lib.vkGetDeviceQueue(handle, family.index(), index, queue);
+		return new Queue(queue.getValue(), family);
 	}
 
 	/**
@@ -102,6 +138,13 @@ public class LogicalDevice {
 	}
 
 	/**
+	 * @return Vulkan library
+	 */
+	VulkanLibrary library() {
+		return parent.instance().library();
+	}
+
+	/**
 	 * @return Work queues for this device ordered by family
 	 */
 	public Map<QueueFamily, List<Queue>> queues() {
@@ -112,51 +155,20 @@ public class LogicalDevice {
 	 * Waits for this device to become idle.
 	 */
 	public void waitIdle() {
-		parent.instance().library().vkDeviceWaitIdle(handle);
+		lib.vkDeviceWaitIdle(handle);
 	}
 
 	/**
 	 * Destroys this device.
 	 */
 	public void destroy() {
-		final VulkanLibrary api = parent.instance().library();
-		check(api.vkDestroyDevice(handle, null));
+		check(lib.vkDestroyDevice(handle, null));
 	}
 
 	/**
 	 * Builder for a logical device.
 	 */
 	public static class Builder {
-		/**
-		 * Transient wrapper for a queue descriptor.
-		 */
-		private record QueueWrapper(VkDeviceQueueCreateInfo info, QueueFamily family) {
-			/**
-			 * Creates the work queues for this descriptor.
-			 * @param lib Vulkan library
-			 * @param dev Parent logical device handle
-			 * @return Work queues
-			 */
-			public Stream<Queue> create(VulkanLibrary lib, Pointer dev) {
-				return IntStream
-						.range(0, info.queueCount)
-						.mapToObj(n -> create(n, lib, dev));
-			}
-
-			/**
-			 * Creates a new work queue.
-			 * @param index		Queue index
-			 * @param lib		Vulkan library
-			 * @param dev		Parent logical device handle
-			 * @return New queue
-			 */
-			private Queue create(int index, VulkanLibrary lib, Pointer dev) {
-				final PointerByReference handle = lib.factory().pointer();
-				lib.vkGetDeviceQueue(dev, family.index(), index, handle);
-				return new Queue(handle.getValue(), family, lib);
-			}
-		}
-
 		private PhysicalDevice parent;
 		private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		private final Set<String> extensions = new HashSet<>();
@@ -284,14 +296,8 @@ public class LogicalDevice {
 			final PointerByReference logical = lib.factory().pointer();
 			check(lib.vkCreateDevice(parent.handle(), info, null, logical));
 
-			// Enumerate work queues
-			final var list = queues
-					.stream()
-					.flatMap(q -> q.create(lib, logical.getValue()))
-					.collect(toList());
-
 			// Create logical device
-			return new LogicalDevice(logical.getValue(), parent, list);
+			return new LogicalDevice(logical.getValue(), parent, queues);
 		}
 	}
 }
