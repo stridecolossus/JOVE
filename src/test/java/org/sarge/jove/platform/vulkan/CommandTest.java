@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -16,113 +16,122 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.Command.Buffer;
 import org.sarge.jove.platform.vulkan.Command.Pool;
 import org.sarge.jove.platform.vulkan.LogicalDevice.Queue;
+import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
-public class CommandTest extends AbstractVulkanTest {
+class CommandTest {
 	private Command cmd;
 	private Queue queue;
+	private LogicalDevice dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
-	public void before() {
+	void before() {
+		lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(new MockReferenceFactory());
+
 		cmd = mock(Command.class);
+
+		dev = mock(LogicalDevice.class);
+		when(dev.library()).thenReturn(lib);
+
+		final QueueFamily family = mock(QueueFamily.class);
+		when(family.index()).thenReturn(0);
+
 		queue = mock(Queue.class);
-		when(queue.device()).thenReturn(device);
+		when(queue.family()).thenReturn(family);
+		when(queue.device()).thenReturn(dev);
 	}
 
 	@Nested
-	class CommandBufferTests {
+	class BufferTests {
 		private Buffer buffer;
-		private Pointer handle;
+		private Pool pool;
 
 		@BeforeEach
-		public void before() {
-			final Pool pool = new Pool(mock(Pointer.class), queue);
-			handle = mock(Pointer.class);
-			buffer = new Buffer(handle, pool);
+		void before() {
+			pool = Pool.create(queue);
+			buffer = pool.allocate(1, true).iterator().next();
 		}
 
 		@Test
-		public void constructor() {
-			assertEquals(handle, buffer.handle());
-			assertEquals(queue, buffer.queue());
+		void constructor() {
+			assertNotNull(buffer.handle());
+			assertEquals(pool, buffer.pool());
 			assertEquals(false, buffer.isReady());
 		}
 
 		@Test
-		public void begin() {
+		void begin() {
 			buffer.begin();
-			verify(library).vkBeginCommandBuffer(eq(handle), any(VkCommandBufferBeginInfo.class));
+			verify(lib).vkBeginCommandBuffer(eq(buffer.handle()), any(VkCommandBufferBeginInfo.class));
 			assertEquals(false, buffer.isReady());
 		}
 
 		@Test
-		public void beginAlreadyRecording() {
+		void beginAlreadyRecording() {
 			buffer.begin();
 			assertThrows(IllegalStateException.class, () -> buffer.begin());
 		}
 
 		@Test
-		public void beginAlreadyRecorded() {
+		void beginAlreadyRecorded() {
 			buffer.begin();
 			buffer.end();
 			assertThrows(IllegalStateException.class, () -> buffer.begin());
 		}
 
 		@Test
-		public void end() {
+		void end() {
 			buffer.begin();
 			buffer.end();
-			verify(library).vkEndCommandBuffer(handle);
+			verify(lib).vkEndCommandBuffer(buffer.handle());
 			assertEquals(true, buffer.isReady());
 		}
 
 		@Test
-		public void endNotRecording() {
+		void endNotRecording() {
 			assertThrows(IllegalStateException.class, () -> buffer.end());
 		}
 
 		@Test
-		public void add() {
+		void add() {
 			buffer.begin();
 			buffer.add(cmd);
-			verify(cmd).execute(library, handle);
+			verify(cmd).execute(lib, buffer.handle());
 			assertEquals(false, buffer.isReady());
 		}
 
 		@Test
-		public void addNotRecording() {
+		void addNotRecording() {
 			assertThrows(IllegalStateException.class, () -> buffer.add(mock(Command.class)));
 		}
 
 		@Test
-		public void once() {
+		void once() {
 			buffer.once(cmd);
-			verify(library).vkBeginCommandBuffer(eq(handle), any(VkCommandBufferBeginInfo.class));
-			verify(cmd).execute(library, buffer.handle());
-			verify(library).vkEndCommandBuffer(handle);
+			verify(lib).vkBeginCommandBuffer(eq(buffer.handle()), any(VkCommandBufferBeginInfo.class));
+			verify(cmd).execute(lib, buffer.handle());
+			verify(lib).vkEndCommandBuffer(buffer.handle());
 		}
 
 		@Test
-		public void submit() {
-			buffer.submit();
-			verify(queue).submit(buffer);
-		}
-
-		@Test
-		public void reset() {
+		void reset() {
 			buffer.begin();
 			buffer.end();
 			buffer.reset();
 			assertEquals(false, buffer.isReady());
-			verify(library).vkResetCommandBuffer(handle, 0);
+			verify(lib).vkResetCommandBuffer(buffer.handle(), 0);
 		}
 
 		@Test
-		public void resetBeginNextRecording() {
+		void resetBeginNextRecording() {
 			buffer.begin();
 			buffer.end();
 			buffer.reset();
@@ -130,13 +139,13 @@ public class CommandTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		public void resetRecording() {
+		void resetRecording() {
 			buffer.begin();
 			assertThrows(IllegalStateException.class, () -> buffer.reset());
 		}
 
 		@Test
-		public void free() {
+		void free() {
 			buffer.free();
 		}
 	}
@@ -146,78 +155,73 @@ public class CommandTest extends AbstractVulkanTest {
 		private Pool pool;
 
 		@BeforeEach
-		public void before() {
-			pool = new Pool(new Pointer(42), queue);
+		void before() {
+			pool = Pool.create(queue);
 		}
 
 		@Test
-		public void constructor() {
+		void constructor() {
 			assertEquals(queue, pool.queue());
 			assertNotNull(pool.buffers());
 			assertEquals(0, pool.buffers().count());
 		}
 
 		@Test
-		public void allocate() {
-			// Allocate a buffer
-			final List<Buffer> buffers = pool.allocate(1, true);
-			assertNotNull(buffers);
-			assertEquals(1, buffers.size());
+		void descriptor() {
+			// Check allocator
+			final ArgumentCaptor<VkCommandPoolCreateInfo> captor = ArgumentCaptor.forClass(VkCommandPoolCreateInfo.class);
+			final PointerByReference handle = lib.factory().pointer();
+			verify(lib).vkCreateCommandPool(eq(dev.handle()), captor.capture(), isNull(), eq(handle));
 
-			// Check allocation
-			final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
-			info.level = VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			info.commandBufferCount = 1;
-			info.commandPool = pool.handle();
-			verify(library).vkAllocateCommandBuffers(eq(device.handle()), argThat(structure(info)), eq(factory.pointers(1)));
+			// Check descriptor
+			final VkCommandPoolCreateInfo info = captor.getValue();
+			assertEquals(0, info.queueFamilyIndex);
+			assertEquals(0, info.flags);
 		}
 
 		@Test
-		public void allocateOnce() {
+		void allocate() {
+			// Allocate a buffer
+			final List<Buffer> buffers = pool.allocate(1, false);
+			assertNotNull(buffers);
+			assertEquals(1, buffers.size());
+
+			// Check allocator
+			final ArgumentCaptor<VkCommandBufferAllocateInfo> captor = ArgumentCaptor.forClass(VkCommandBufferAllocateInfo.class);
+			verify(lib).vkAllocateCommandBuffers(eq(dev.handle()), captor.capture(), isA(Pointer[].class));
+
+			// Check descriptor
+			final VkCommandBufferAllocateInfo info = captor.getValue();
+			assertEquals(VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY, info.level);
+			assertEquals(1, info.commandBufferCount);
+			assertEquals(pool.handle(), info.commandPool);
+		}
+
+		@Test
+		void allocateOnce() {
 			final Buffer buffer = pool.allocate(cmd);
 			assertNotNull(buffer);
 		}
 
 		@Test
-		public void reset() {
+		void reset() {
 			pool.reset();
-			verify(library).vkResetCommandPool(device.handle(), pool.handle(), 0);
+			verify(lib).vkResetCommandPool(dev.handle(), pool.handle(), 0);
 		}
 
 		@Test
-		public void free() {
+		void free() {
 			final var buffers = pool.allocate(1, true);
 			final Command.Buffer b = buffers.iterator().next();
 			pool.free();
 			assertEquals(0, pool.buffers().count());
-			verify(library).vkFreeCommandBuffers(device.handle(), pool.handle(), 1, new Pointer[]{b.handle()});
+			verify(lib).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, new Pointer[]{b.handle()});
 		}
 
 		@Test
-		public void create() {
-			// Create work queue
-			final LogicalDevice.Queue queue = mock(LogicalDevice.Queue.class);
-			final QueueFamily family = mock(QueueFamily.class);
-			when(queue.family()).thenReturn(family);
-			when(queue.device()).thenReturn(device);
-
-			// Create pool
-			pool = Pool.create(queue, VkCommandPoolCreateFlag.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
-			pool.allocate(1, true);
-			assertNotNull(pool);
-			assertEquals(1, pool.buffers().count());
-
-			// Check initialisation
-			final VkCommandPoolCreateInfo info = new VkCommandPoolCreateInfo();
-			info.queueFamilyIndex = 0;
-			info.flags = VkCommandPoolCreateFlag.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT.value();
-			verify(library).vkCreateCommandPool(eq(device.handle()), argThat(structure(info)), isNull(), eq(factory.reference()));
-
-			// Destroy pool
-			final Pointer handle = pool.handle();
+		void destroy() {
 			pool.destroy();
-			assertEquals(0, pool.buffers().count());
-			verify(library).vkDestroyCommandPool(device.handle(), handle, null);
+			verify(lib).vkDestroyCommandPool(dev.handle(), pool.handle(), null);
 		}
 	}
 }

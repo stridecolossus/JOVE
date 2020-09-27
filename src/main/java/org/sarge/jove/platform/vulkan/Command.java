@@ -13,28 +13,27 @@ import java.util.stream.Stream;
 import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.LogicalDevice.Queue;
-import org.sarge.lib.util.AbstractEqualsObject;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>command</i> encapsulates an atomic piece of work performed on a {@link Command.Buffer}.
+ * A <i>command</i> encapsulates a piece of work performed on a {@link Command.Buffer}.
  * @author Sarge
  */
 @FunctionalInterface
 public interface Command {
 	/**
 	 * Executes this command.
-	 * @param lib		Vulkan API
+	 * @param lib		Vulkan library
 	 * @param buffer 	Command buffer handle
 	 */
 	void execute(VulkanLibrary lib, Pointer buffer);
 
 	/**
-	 * A <i>command buffer</i> is allocated by a {@link Pool} and used to execute commands.
+	 * A <i>command buffer</i> is allocated by a {@link Pool} and used record and execute commands.
 	 */
-	class Buffer extends AbstractEqualsObject {
+	class Buffer {
 		/**
 		 * Buffer state.
 		 */
@@ -45,7 +44,7 @@ public interface Command {
 		}
 
 		private final Pointer handle;
-		private final Command.Pool pool;
+		private final Pool pool;
 
 		private State state = State.UNDEFINED;
 
@@ -54,7 +53,7 @@ public interface Command {
 		 * @param handle 		Command buffer handle
 		 * @param pool			Parent pool
 		 */
-		Buffer(Pointer handle, Command.Pool pool) {
+		private Buffer(Pointer handle, Pool pool) {
 			this.handle = notNull(handle);
 			this.pool = notNull(pool);
 		}
@@ -67,10 +66,10 @@ public interface Command {
 		}
 
 		/**
-		 * @return Work queue for this command buffer
+		 * @return Parent command pool
 		 */
-		public Queue queue() {
-			return pool.queue();
+		public Pool pool() {
+			return pool;
 		}
 
 		/**
@@ -125,7 +124,7 @@ public interface Command {
 		}
 
 		/**
-		 * Records a one-off command buffer for a single command.
+		 * Records a one-time-submit command to this buffer.
 		 * @param cmd Command
 		 * @see VkCommandBufferUsageFlag#VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
 		 */
@@ -133,14 +132,6 @@ public interface Command {
 			begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 			add(cmd);
 			end();
-		}
-
-		/**
-		 * Submit this command buffer to its work queue.
-		 * @see Queue#submit(Buffer)
-		 */
-		public void submit() {
-			pool.queue().submit(this);
 		}
 
 		/**
@@ -165,9 +156,9 @@ public interface Command {
 	}
 
 	/**
-	 * A <i>command pool</i> allocates and maintains command buffers.
+	 * A <i>command pool</i> allocates and maintains command buffers that are used to perform work on a given {@link Queue}.
 	 */
-	class Pool extends LogicalDeviceHandle {
+	class Pool {
 		/**
 		 * Creates a command pool for the given queue.
 		 * @param queue		Work queue
@@ -181,28 +172,35 @@ public interface Command {
 
 			// Create pool
 			final LogicalDevice dev = queue.device();
-			final Vulkan vulkan = dev.api();
-			final VulkanLibrary lib = vulkan.api();
-			final PointerByReference pool = vulkan.factory().reference();
+			final VulkanLibrary lib = dev.library();
+			final PointerByReference pool = lib.factory().pointer();
 			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
 
-			// Create wrapper
+			// Create pool
 			return new Pool(pool.getValue(), queue);
 		}
 
-		private final VulkanLibrary lib;
+		private final Pointer handle;
 		private final Queue queue;
+		private final VulkanLibrary lib;
 		private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
 
 		/**
 		 * Constructor.
-		 * @param handle 			Command pool handle
-		 * @param dev				Device
+		 * @param handle 		Command pool handle
+		 * @param queue			Work queue
 		 */
-		protected Pool(Pointer handle, Queue queue) {
-			super(handle, queue.device(), lib -> lib::vkDestroyCommandPool);
+		private Pool(Pointer handle, Queue queue) {
+			this.handle = notNull(handle);
 			this.queue = notNull(queue);
-			this.lib = queue.device().api().api();
+			this.lib = queue.device().library();
+		}
+
+		/**
+		 * @return Pool handle
+		 */
+		Pointer handle() {
+			return handle;
 		}
 
 		/**
@@ -213,7 +211,7 @@ public interface Command {
 		}
 
 		/**
-		 * @return Command buffer handles
+		 * @return Command buffers
 		 */
 		public Stream<Buffer> buffers() {
 			return buffers.stream();
@@ -230,29 +228,51 @@ public interface Command {
 			final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
 			info.level = primary ? VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY : VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 			info.commandBufferCount = num;
-			info.commandPool = super.handle();
+			info.commandPool = handle;
 
 			// Allocate buffers
-			final LogicalDevice dev = super.device();
-			final Vulkan vulkan = dev.api();
-			final VulkanLibrary lib = vulkan.api();
-			final Pointer[] handles = vulkan.factory().pointers(num);
+			final LogicalDevice dev = queue.device();
+			final VulkanLibrary lib = dev.library();
+			final Pointer[] handles = lib.factory().pointers(num);
 			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
 
-			// Create buffer wrappers
-			final var list = Arrays.stream(handles).map(ptr -> new Buffer(ptr, this)).collect(toList());
+			// Create buffers
+			final var list = Arrays
+					.stream(handles)
+					.map(ptr -> new Buffer(ptr, this))
+					.collect(toList());
+
+			// Register buffers
 			buffers.addAll(list);
+
 			return list;
 		}
 
 		/**
-		 * Helper - Allocates a one-off command buffer to process the given command.
+		 * Allocates a number of primary command buffers from this pool.
+		 * @param num Number of buffers to allocate
+		 * @return Allocated buffers
+		 */
+		public List<Buffer> allocate(int num) {
+			return allocate(num, true);
+		}
+
+		/**
+		 * Allocates a primary command buffer from this pool.
+		 * @return New command buffer
+		 */
+		public Buffer allocate() {
+			return allocate(1).get(0);
+		}
+
+		/**
+		 * Helper - Allocates a one-time primary buffer to with the given command.
 		 * @param cmd Command
-		 * @return One-off command buffer
+		 * @return New command buffer
 		 * @see Buffer#once(Command)
 		 */
 		public Buffer allocate(Command cmd) {
-			final Buffer buffer = allocate(1, true).iterator().next();
+			final Buffer buffer = allocate();
 			buffer.once(cmd);
 			return buffer;
 		}
@@ -263,12 +283,11 @@ public interface Command {
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
 			final int mask = IntegerEnumeration.mask(Arrays.asList(flags));
-			check(lib.vkResetCommandPool(device().handle(), super.handle(), mask));
+			check(lib.vkResetCommandPool(queue.device().handle(), handle, mask));
 		}
 
 		/**
 		 * Frees <b>all</b> command buffers in this pool.
-		 * TODO - need to be able to free subset?
 		 */
 		public synchronized void free() {
 			final Pointer[] array = buffers.stream().map(Buffer::handle).toArray(Pointer[]::new);
@@ -280,12 +299,15 @@ public interface Command {
 		 * Frees command buffers.
 		 */
 		private void free(Pointer[] array) {
-			lib.vkFreeCommandBuffers(device().handle(), super.handle(), array.length, array);
+			lib.vkFreeCommandBuffers(queue.device().handle(), handle, array.length, array);
 		}
 
-		@Override
-		protected void cleanup() {
+		/**
+		 * Destroys this command pool.
+		 */
+		public synchronized void destroy() {
 			buffers.clear();
+			lib.vkDestroyCommandPool(queue.device().handle(), handle, null);
 		}
 	}
 }
