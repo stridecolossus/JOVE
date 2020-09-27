@@ -4,16 +4,19 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
 
 import com.sun.jna.Pointer;
@@ -108,19 +111,42 @@ public class PhysicalDeviceTest {
 		}
 
 		@Test
-		void filter() {
-			assertTrue(PhysicalDevice.filter(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT).test(family));
-			assertFalse(PhysicalDevice.filter(VkQueueFlag.VK_QUEUE_TRANSFER_BIT).test(family));
+		void presentationPredicate() {
+			final Pointer surface = new Pointer(42);
+			final var predicate = PhysicalDevice.predicatePresentationSupported(surface);
+			assertTrue(predicate.test(dev));
 		}
 
-//		@Test
-//		void find() {
-//			dev.find(PhysicalDevice.flag(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT), null);
-//		}
-//
-//		@Test
-//		void findThrows() {
-//			assertThrows(ServiceException.class, () -> dev.find(PhysicalDevice.flag(VkQueueFlag.VK_QUEUE_TRANSFER_BIT), "doh"));
-//		}
+		@Test
+		void flagsPredicate() {
+			assertTrue(PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT).test(family));
+			assertFalse(PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT).test(family));
+		}
+
+		@SuppressWarnings("unchecked")
+		@Test
+		void devicePredicate() {
+			// Create a device predicate from a family delegate predicate
+			final Predicate<QueueFamily> delegate = mock(Predicate.class);
+			final var predicate = PhysicalDevice.predicate(delegate);
+			assertNotNull(predicate);
+			assertEquals(false, predicate.test(dev));
+
+			// Check delegate
+			when(delegate.test(family)).thenReturn(true);
+			assertEquals(true, predicate.test(dev));
+		}
+
+		@Test
+		void find() {
+			final Predicate<QueueFamily> predicate = queue -> queue == family;
+			assertEquals(family, dev.find(predicate, null));
+		}
+
+		@SuppressWarnings("unchecked")
+		@Test
+		void findThrows() {
+			assertThrows(ServiceException.class, () -> dev.find(mock(Predicate.class), "doh"));
+		}
 	}
 }

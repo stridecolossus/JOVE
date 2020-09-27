@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import com.sun.jna.Pointer;
 
 /**
@@ -71,5 +73,10 @@ public class Surface {
 		final Instance instance = dev.instance();
 		final VulkanLibrarySurface lib = instance.library();
 		lib.vkDestroySurfaceKHR(instance.handle(), surface, null);
+	}
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this);
 	}
 }

@@ -4,11 +4,13 @@ import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.lib.util.Check;
 
@@ -149,6 +151,15 @@ public class Instance {
 		lib.vkDestroyInstance(handle, null);
 	}
 
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("handle", handle)
+				.append("library", lib)
+				.append("handlers", handlers.size())
+				.build();
+	}
+
 	/**
 	 * Builder for a Vulkan instance.
 	 */
@@ -189,7 +200,6 @@ public class Instance {
 		/**
 		 * Registers a required extension.
 		 * @param ext Extension name
-		 * @see Vulkan#extensions()
 		 */
 		public Builder extension(String ext) {
 			Check.notEmpty(ext);
@@ -198,9 +208,18 @@ public class Instance {
 		}
 
 		/**
+		 * Registers a set of extensions.
+		 * @param extensions Extension names
+		 * @return
+		 */
+		public Builder extensions(String[] extensions) {
+			Arrays.stream(extensions).forEach(this::extension);
+			return this;
+		}
+
+		/**
 		 * Registers a required validation layer.
 		 * @param layer Validation layer descriptor
-		 * @see Vulkan#layers()
 		 */
 		public Builder layer(ValidationLayer layer) {
 			Check.notNull(layer);

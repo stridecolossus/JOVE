@@ -109,17 +109,22 @@ public class LogicalDeviceTest {
 
 		@Test
 		void invalidPriority() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, new float[]{999}).build());
+			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, new float[]{999}));
 		}
 
 		@Test
 		void invalidQueueCount() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, 3).build());
+			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, 3));
 		}
 
 		@Test
 		void invalidQueueFamily() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(QueueFamily.class)).build());
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(QueueFamily.class)));
+		}
+
+		@Test
+		void invalidExtension() {
+			assertThrows(IllegalArgumentException.class, () -> builder.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS));
 		}
 	}
 }

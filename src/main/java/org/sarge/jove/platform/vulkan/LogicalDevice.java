@@ -184,9 +184,11 @@ public class LogicalDevice {
 		/**
 		 * Adds an extension required for this device.
 		 * @param ext Extension name
+		 * @throws IllegalArgumentException for {@link VulkanLibrary#EXTENSION_DEBUG_UTILS}
 		 */
 		public Builder extension(String ext) {
 			Check.notEmpty(ext);
+			if(VulkanLibrary.EXTENSION_DEBUG_UTILS.equals(ext)) throw new IllegalArgumentException("Invalid extensions for logical device: " + ext);
 			extensions.add(ext);
 			return this;
 		}

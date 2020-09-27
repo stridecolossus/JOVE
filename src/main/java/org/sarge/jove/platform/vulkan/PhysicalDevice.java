@@ -105,17 +105,6 @@ public class PhysicalDevice {
 	}
 
 	/**
-	 * Helper - Creates a predicate for a queue family matching the given flag.
-	 * @param flags Queue family flag(s)
-	 * @return Predicate
-	 * @see PhysicalDevice#find(Predicate, String)
-	 */
-	public static Predicate<QueueFamily> filter(VkQueueFlag... flags) {
-		Check.notNull(flags);
-		return family -> family.flags.containsAll(Arrays.asList(flags));
-	}
-
-	/**
 	 * Enumerates the physical devices for the given instance.
 	 * @param instance Vulkan instance
 	 * @return Physical devices
@@ -141,6 +130,34 @@ public class PhysicalDevice {
 
 		// Create device
 		return new PhysicalDevice(handle, instance, families);
+	}
+
+	/**
+	 * Helper - Creates a predicate for a queue family matching the given flag.
+	 * @param flags Queue family flag(s)
+	 * @return Predicate
+	 */
+	public static Predicate<QueueFamily> predicate(VkQueueFlag... flags) {
+		Check.notNull(flags);
+		return family -> family.flags.containsAll(Arrays.asList(flags));
+	}
+
+	/**
+	 * Helper - Creates a device predicate that matches against the given the queue family filter.
+	 * @param predicate Queue family predicate
+	 * @return Device predicate
+	 */
+	public static Predicate<PhysicalDevice> predicate(Predicate<QueueFamily> predicate) {
+		return dev -> dev.families.stream().anyMatch(predicate);
+	}
+
+	/**
+	 * Helper - Creates a device predicate for a device that supports presentation to the given surface.
+	 * @param surface Surface handle
+	 * @return Device predicate
+	 */
+	public static Predicate<PhysicalDevice> predicatePresentationSupported(Pointer surface) {
+		return predicate(family -> family.isPresentationSupported(surface));
 	}
 
 	private final Pointer handle;
@@ -240,5 +257,14 @@ public class PhysicalDevice {
 	 */
 	public VulkanFunction<VkLayerProperties> layers() {
 		return (api, count, layers) -> api.vkEnumerateDeviceLayerProperties(handle, count, layers);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("handle", handle)
+				.append("instance", instance)
+				.append("families", families.size())
+				.build();
 	}
 }

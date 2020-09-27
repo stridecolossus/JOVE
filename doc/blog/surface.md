@@ -83,25 +83,93 @@ public boolean isPresentationSupported(Pointer surface) {
 # Helpers
 
 ```java
-	/**
-	 * Helper - Creates a predicate for a queue family matching the given flag.
-	 * @param flag Queue family flag
-	 * @return Predicate
-	 * @see PhysicalDevice#find(Predicate, String)
-	 */
-	public static Predicate<QueueFamily> flag(VkQueueFlag flag) {
-		Check.notNull(flag);
-		return family -> family.flags.contains(flag);
-	}
+public static Predicate<QueueFamily> predicate(VkQueueFlag... flags) {
+	Check.notNull(flags);
+	return family -> family.flags.containsAll(Arrays.asList(flags));
+}
 
-	/**
-	 * Helper - Finds a matching queue family for this device.
-	 * @param test			Queue family predicate
-	 * @param message		Error message
-	 * @return Matching queue family
-	 * @throws ServiceException with the given message if a matching queue is not present
-	 */
-	public QueueFamily find(Predicate<QueueFamily> test, String message) throws ServiceException {
-		return families.stream().filter(test).findAny().orElseThrow(() -> new ServiceException(message));
-	}
+public static Predicate<PhysicalDevice> predicate(Predicate<QueueFamily> predicate) {
+	return dev -> dev.families.stream().anyMatch(predicate);
+}
+
+public static Predicate<PhysicalDevice> predicatePresentationSupported(Pointer surface) {
+	return predicate(family -> family.isPresentationSupported(surface));
+}
+
+...
+
+public QueueFamily find(Predicate<QueueFamily> test, String message) throws ServiceException {
+	return families.stream().filter(test).findAny().orElseThrow(() -> new ServiceException(message));
+}
+
+```
+
+# Demo
+
+```java
+// Open desktop
+final Desktop desktop = Desktop.create();
+if(!desktop.isVulkanSupported()) throw new ServiceException("Vulkan not supported");
+
+// Create window
+final Window window = new Window.Builder()
+		.title("demo")
+		.size(new Dimensions(1280, 760))
+		.property(Window.Property.DISABLE_OPENGL)
+		.build();
+
+// Init Vulkan
+final VulkanLibrary lib = VulkanLibrary.create();
+
+// Create instance
+final Instance instance = new Instance.Builder()
+		.vulkan(lib)
+		.name("test")
+		.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
+		.extensions(desktop.extensions())
+		.layer(ValidationLayer.STANDARD_VALIDATION)
+		.build();
+
+// Lookup surface
+final Pointer surfaceHandle = window.surface(instance.handle(), PointerByReference::new);
+
+// Create queue family predicates
+final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+final var transferPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+
+// Find GPU
+final PhysicalDevice gpu = PhysicalDevice
+		.devices(instance)
+		.filter(PhysicalDevice.predicate(graphicsPredicate))
+		.filter(PhysicalDevice.predicate(transferPredicate))
+		.filter(PhysicalDevice.predicatePresentationSupported(surfaceHandle))
+		.findAny()
+		.orElseThrow(() -> new ServiceException("No GPU available"));
+
+// Lookup required queues
+final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
+final QueueFamily transfer = gpu.find(transferPredicate, "Transfer family not available");
+
+// Create device
+final LogicalDevice dev = new LogicalDevice.Builder()
+		.parent(gpu)
+		.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
+		.layer(ValidationLayer.STANDARD_VALIDATION)
+		.queue(graphics)
+		.queue(transfer)
+		.build();
+
+// Create rendering surface
+final Surface surface = new Surface(surfaceHandle, gpu);
+
+//////////////
+
+// Destroy window
+surface.destroy();
+window.destroy();
+desktop.close();
+
+// Destroy device
+dev.destroy();
+instance.destroy();
 ```

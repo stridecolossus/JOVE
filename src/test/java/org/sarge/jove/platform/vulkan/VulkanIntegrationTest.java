@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.vulkan;
 
-import java.util.Arrays;
-
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.DesktopService;
@@ -27,35 +25,41 @@ public class VulkanIntegrationTest {
 				.property(Window.Descriptor.Property.DISABLE_OPENGL)
 				.build();
 		final Window window = desktop.window(descriptor);
+		// TODO - any point in separate Window class? does it help at all?
 
 		// Init Vulkan
 		final VulkanLibrary lib = VulkanLibrary.create();
 
 		// Create instance
-		final var builder = new Instance.Builder()
+		final Instance instance = new Instance.Builder()
 				.vulkan(lib)
 				.name("test")
 				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
-				.layer(ValidationLayer.STANDARD_VALIDATION);
-		Arrays.stream(desktop.extensions()).forEach(builder::extension); // TODO - helper?
-		final Instance instance = builder.build();
+				.extensions(desktop.extensions())
+				.layer(ValidationLayer.STANDARD_VALIDATION)
+				.build();
 
 		// Lookup surface
 		final Pointer surfaceHandle = window.surface(instance.handle(), PointerByReference::new);
 
+		// Create queue family predicates
+		final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var transferPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
-				.filter(dev -> dev.families().stream().anyMatch(q -> q.isPresentationSupported(surfaceHandle)))
+				.filter(PhysicalDevice.predicate(graphicsPredicate))
+				.filter(PhysicalDevice.predicate(transferPredicate))
+				.filter(PhysicalDevice.predicatePresentationSupported(surfaceHandle))
 				.findAny()
 				.orElseThrow(() -> new ServiceException("No GPU available"));
 
 		// Lookup required queues
-		final QueueFamily graphics = gpu.find(PhysicalDevice.filter(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT), "Graphics family not available");
-		final QueueFamily transfer = gpu.find(PhysicalDevice.filter(VkQueueFlag.VK_QUEUE_TRANSFER_BIT), "Transfer family not available");
+		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
+		final QueueFamily transfer = gpu.find(transferPredicate, "Transfer family not available");
 
 		// Create device
-		// TODO - check for EXTENSION_DEBUG_UTILS at device level
 		final LogicalDevice dev = new LogicalDevice.Builder()
 				.parent(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
