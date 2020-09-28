@@ -80,6 +80,32 @@ public static class Builder {
 }
 ```
 
+# Presentation
+
+```java
+public int next() {
+	final VulkanLibrarySwapChain lib = dev.library();
+	check(lib.vkAcquireNextImageKHR(dev.handle(), handle, Long.MAX_VALUE, null, null, index));
+	return index.getValue();
+}
+
+public void present(LogicalDevice.Queue queue) {
+	// Create presentation descriptor
+	final VkPresentInfoKHR info = new VkPresentInfoKHR();
+
+	// Add swap-chains
+	info.swapchainCount = 1;
+	info.pSwapchains = StructureHelper.pointers(List.of(handle));
+
+	// Set image indices
+	info.pImageIndices = StructureHelper.integers(new int[]{index.getValue()});
+
+	// Present frame
+	final VulkanLibrary lib = dev.library();
+	check(lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info}));
+}
+```
+
 # Image
 
 ```java

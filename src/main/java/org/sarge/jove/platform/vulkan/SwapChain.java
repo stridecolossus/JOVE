@@ -80,8 +80,6 @@ public class SwapChain {
 	 * @param fence			Optional fence
 	 */
 	public int next() { // PointerHandle semaphore, Fence fence) {
-//		final LogicalDevice dev = super.device();
-//		final VulkanLibrarySwapChain lib = dev.api().api();
 		final VulkanLibrarySwapChain lib = dev.library();
 		check(lib.vkAcquireNextImageKHR(dev.handle(), handle, Long.MAX_VALUE, null, null, index)); // toPointer(semaphore), toPointer(fence), index);
 		return index.getValue();
@@ -112,7 +110,6 @@ public class SwapChain {
 		info.pImageIndices = StructureHelper.integers(new int[]{index.getValue()});
 
 		// Present frame
-		// TODO - check
 		final VulkanLibrary lib = dev.library();
 		check(lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info}));
 	}

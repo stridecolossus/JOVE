@@ -70,7 +70,7 @@ public class Surface {
 	 */
 	public Set<VkPresentModeKHR> modes() {
 		// Count number of supported modes
-		// Note - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
+		// TODO - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
 		final VulkanLibrary lib = dev.library();
 		final Pointer handle = dev.parent().handle();
 		final IntByReference count = lib.factory().integer();
