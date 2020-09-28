@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
@@ -39,6 +40,13 @@ public class VulkanIntegrationTest {
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build();
 
+		// Attach message handler
+		final var handler = new MessageHandler.Builder()
+				.init()
+				.callback(MessageHandler.CONSOLE)
+				.build();
+		instance.add(handler);
+
 		// Lookup surface
 		final Pointer surfaceHandle = window.surface(instance.handle(), PointerByReference::new);
 
@@ -69,7 +77,22 @@ public class VulkanIntegrationTest {
 				.build();
 
 		// Create rendering surface
-		final Surface surface = new Surface(surfaceHandle, gpu);
+		final Surface surface = new Surface(surfaceHandle, dev);
+
+		// Specify required image format
+		final VkFormat format = new FormatBuilder()
+				.components(FormatBuilder.BGRA)
+				.bytes(1)
+				.signed(false)
+				.type(Vertex.Component.Type.NORM)
+				.build();
+
+		// Create swap-chain
+		final SwapChain chain = new SwapChain.Builder(surface)
+				.format(format)
+				.count(2)
+				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				.build();
 
 		//////////////
 
@@ -78,7 +101,8 @@ public class VulkanIntegrationTest {
 		window.destroy();
 		desktop.close();
 
-		// Destroy device
+		// Destroy Vulkan objects
+		chain.destroy();
 		dev.destroy();
 		instance.destroy();
 	}

@@ -17,9 +17,9 @@ import com.sun.jna.ptr.IntByReference;
 public class SurfaceTest {
 	private Surface surface;
 	private Pointer handle;
-	private PhysicalDevice dev;
-	private Instance instance;
 	private VulkanLibrary lib;
+	private Instance instance;
+	private LogicalDevice dev;
 
 	@BeforeEach
 	void before() {
@@ -31,9 +31,14 @@ public class SurfaceTest {
 		instance = mock(Instance.class);
 		when(instance.library()).thenReturn(lib);
 
-		// Create device
-		dev = mock(PhysicalDevice.class);
-		when(dev.instance()).thenReturn(instance);
+		// Create physical device
+		final PhysicalDevice parent = mock(PhysicalDevice.class);
+		when(parent.instance()).thenReturn(instance);
+
+		// Create logical device
+		dev = mock(LogicalDevice.class);
+		when(dev.parent()).thenReturn(parent);
+		when(dev.library()).thenReturn(lib);
 
 		// Create surface
 		handle = new Pointer(42);
@@ -43,27 +48,28 @@ public class SurfaceTest {
 	@Test
 	void constructor() {
 		assertEquals(handle, surface.handle());
+		assertEquals(dev, surface.device());
 	}
 
 	@Test
 	void capabilities() {
 		final var caps = surface.capabilities();
 		assertNotNull(caps);
-		verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.handle(), surface.handle(), caps);
+		verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.parent().handle(), surface.handle(), caps);
 	}
 
 	@Test
 	void formats() {
 		final var formats = surface.formats();
 		assertNotNull(formats);
-		verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(eq(dev.handle()), eq(surface.handle()), isA(IntByReference.class), isA(VkSurfaceFormatKHR.class));
+		verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(eq(dev.parent().handle()), eq(surface.handle()), isA(IntByReference.class), isA(VkSurfaceFormatKHR.class));
 	}
 
 	@Test
 	void modes() {
 		final var modes = surface.modes();
 		assertNotNull(modes);
-		verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(eq(dev.handle()), eq(surface.handle()), isA(IntByReference.class), isA(VkPresentModeKHR[].class));
+		verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(eq(dev.parent().handle()), eq(surface.handle()), isA(IntByReference.class), isA(VkPresentModeKHR[].class));
 	}
 
 	@Test

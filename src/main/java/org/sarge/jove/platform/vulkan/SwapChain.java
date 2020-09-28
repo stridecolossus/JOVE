@@ -3,15 +3,16 @@ package org.sarge.jove.platform.vulkan;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.range;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -21,11 +22,13 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>swap chain</i> presents rendered images to a {@link Surface}.
  * @author Sarge
  */
-public class SwapChain extends LogicalDeviceHandle {
+public class SwapChain {
+	private final Pointer handle;
+	private final LogicalDevice dev;
 	private final VkFormat format;
 	private final Dimensions extents;
-	private final List<ImageView> views;
-	private final IntByReference index;
+	private final List<View> views;
+	private final IntByReference index = new IntByReference();
 
 	/**
 	 * Constructor.
@@ -35,12 +38,19 @@ public class SwapChain extends LogicalDeviceHandle {
 	 * @param extent		Image extent
 	 * @param views			Image views
 	 */
-	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extents, List<ImageView> views) {
-		super(handle, dev, lib -> lib::vkDestroySwapchainKHR);
+	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extents, List<View> views) {
+		this.handle = notNull(handle);
+		this.dev = notNull(dev);
 		this.format = notNull(format);
 		this.extents = notNull(extents);
 		this.views = List.copyOf(views);
-		this.index = dev.api().factory().integer();
+	}
+
+	/**
+	 * @return Swap-chain handle
+	 */
+	Pointer handle() {
+		return handle;
 	}
 
 	/**
@@ -60,7 +70,7 @@ public class SwapChain extends LogicalDeviceHandle {
 	/**
 	 * @return Image views
 	 */
-	public List<ImageView> images() {
+	public List<View> images() {
 		return views;
 	}
 
@@ -69,59 +79,60 @@ public class SwapChain extends LogicalDeviceHandle {
 	 * @param semaphore		Optional semaphore
 	 * @param fence			Optional fence
 	 */
-	public int next(PointerHandle semaphore, Fence fence) {
-		final LogicalDevice dev = super.device();
-		final VulkanLibrarySwapChain lib = dev.api().api();
-		lib.vkAcquireNextImageKHR(dev.handle(), super.handle(), Long.MAX_VALUE, toPointer(semaphore), toPointer(fence), index);
+	public int next() { // PointerHandle semaphore, Fence fence) {
+//		final LogicalDevice dev = super.device();
+//		final VulkanLibrarySwapChain lib = dev.api().api();
+		final VulkanLibrarySwapChain lib = dev.library();
+		check(lib.vkAcquireNextImageKHR(dev.handle(), handle, Long.MAX_VALUE, null, null, index)); // toPointer(semaphore), toPointer(fence), index);
 		return index.getValue();
-	}
-
-	private static Pointer toPointer(PointerHandle handle) {
-		if(handle == null) {
-			return null;
-		}
-		else {
-			return handle.handle();
-		}
 	}
 
 	/**
 	 * Presents the next frame.
-	 * @param frame Frame
+	 * @param
 	 * @param queue Presentation queue
 	 */
-	public void present(FrameState frame, LogicalDevice.Queue queue) {
+	public void present(LogicalDevice.Queue queue) {
 		// Create presentation descriptor
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 
 		// Add semaphore
-		final PointerHandle semaphore = frame.finished();
-		if(semaphore != null) {
-			info.waitSemaphoreCount = 1;
-			info.pWaitSemaphores = StructureHelper.pointers(Arrays.asList(semaphore.handle()));
-		}
+//		final PointerHandle semaphore = frame.finished();
+//		if(semaphore != null) {
+//			info.waitSemaphoreCount = 1;
+//			info.pWaitSemaphores = StructureHelper.pointers(Arrays.asList(semaphore.handle()));
+//		}
 
 		// Add swap-chains
 		// TODO - multiple
 		info.swapchainCount = 1;
-		info.pSwapchains = StructureHelper.pointers(List.of(super.handle()));
+		info.pSwapchains = StructureHelper.pointers(List.of(handle));
 
 		// Set image indices
 		info.pImageIndices = StructureHelper.integers(new int[]{index.getValue()});
 
 		// Present frame
 		// TODO - check
-		final VulkanLibrary lib = device().api().api();
-		lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info});
+		final VulkanLibrary lib = dev.library();
+		check(lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info}));
+	}
+
+	/**
+	 * Destroys this swap-chain.
+	 */
+	public void destroy() {
+		final VulkanLibrary lib = dev.library();
+		lib.vkDestroySwapchainKHR(dev.handle(), handle, null);
 	}
 
 	/**
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
-		private final LogicalDevice dev;
-		private final Surface surface;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
+		private final Surface surface;
+		private final VkSurfaceCapabilitiesKHR caps;
+		private final Collection<VkSurfaceFormatKHR> formats;
 
 		/**
 		 * Constructor.
@@ -132,13 +143,12 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * <li>extent</li>
 		 * <li>transform</li>
 		 * </ul>
-		 * @param dev			Device
-		 * @param surface		Surface
 		 * @see Surface#capabilities()
 		 */
-		public Builder(LogicalDevice dev, Surface surface) {
-			this.dev = notNull(dev);
+		public Builder(Surface surface) {
 			this.surface = notNull(surface);
+			this.caps = surface.capabilities();
+			this.formats = surface.formats();
 			init();
 		}
 
@@ -146,22 +156,30 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * Initialises the swap-chain descriptor.
 		 */
 		private void init() {
-			final VkSurfaceCapabilitiesKHR caps = surface.capabilities();
-			// TODO - could invoke builder methods here => caps would HAVE to be valid
+			// Set surface
 			info.surface = surface.handle();
-			info.minImageCount = caps.minImageCount + 1;
-			info.imageFormat = VkFormat.VK_FORMAT_R8G8B8A8_UNORM;
-			info.imageColorSpace = VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+
+			// Init from surface capabilities
+			count(caps.minImageCount); // TODO - was plus one!?
+			transform(caps.currentTransform);
 			info.imageExtent = caps.currentExtent;
-			info.imageArrayLayers = 1;
-			info.imageUsage = VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-			info.imageSharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+
+			// Init default fields
+			space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
+			arrays(1);
+			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
+			usage(VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+			alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+			present(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR);
+			clipped(true);
+
+			// Init arbitrary format
+			final var surfaceFormat = formats.iterator().next();
+			format(surfaceFormat.format);
+
+			// TODO
 			info.queueFamilyIndexCount = 0;
 			info.pQueueFamilyIndices = null;
-			info.preTransform = caps.currentTransform;
-			info.compositeAlpha = VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-			info.presentMode = VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
-			info.clipped = VulkanBoolean.TRUE;
 			info.oldSwapchain = null;
 		}
 
@@ -173,8 +191,7 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * @see VkSurfaceCapabilitiesKHR#maxImageCount
 		 */
 		public Builder count(int num) {
-			final VkSurfaceCapabilitiesKHR caps = surface.capabilities();
-			info.minImageCount = range(num, caps.minImageCount, caps.maxImageCount);
+			info.minImageCount = Check.range(num, caps.minImageCount, caps.maxImageCount);
 			return this;
 		}
 
@@ -185,8 +202,8 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * @see VkSurfaceFormatKHR
 		 */
 		public Builder format(VkFormat format) {
-			if(!surface.formats().stream().anyMatch(f -> f.format == format)) throw new IllegalArgumentException("Unsupported image format: " + format);
-			info.imageFormat = format;
+			if(!formats.stream().map(f -> f.format).anyMatch(format::equals)) throw new IllegalArgumentException("Unsupported image format: " + format);
+			info.imageFormat = notNull(format);
 			return this;
 		}
 
@@ -196,9 +213,9 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * @throws IllegalArgumentException if the colour-space is not supported by the surface
 		 * @see VkSurfaceFormatKHR
 		 */
-		public Builder colour(VkColorSpaceKHR space) {
-			if(!surface.formats().stream().anyMatch(f -> f.colorSpace == space)) throw new IllegalArgumentException("Unsupported surface colour-space: " + space);
-			info.imageColorSpace = space;
+		public Builder space(VkColorSpaceKHR space) {
+			if(!formats.stream().map(f -> f.colorSpace).anyMatch(space::equals)) throw new IllegalArgumentException("Unsupported surface colour-space: " + space);
+			info.imageColorSpace = notNull(space);
 			return this;
 		}
 
@@ -208,7 +225,6 @@ public class SwapChain extends LogicalDeviceHandle {
 		 */
 		public Builder extent(Dimensions extent) {
 			// Check minimum extent
-			final VkSurfaceCapabilitiesKHR caps = surface.capabilities();
 			final Dimensions min = new Dimensions(caps.minImageExtent.width, caps.minImageExtent.height);
 			if(min.exceeds(extent)) throw new IllegalArgumentException("Extent is smaller than the supported minimum");
 
@@ -216,7 +232,7 @@ public class SwapChain extends LogicalDeviceHandle {
 			final Dimensions max = new Dimensions(caps.maxImageExtent.width, caps.maxImageExtent.height);
 			if(extent.exceeds(max)) throw new IllegalArgumentException("Extent is larger than the supported maximum");
 
-			// Set extent
+			// Init extents
 			final VkExtent2D result = new VkExtent2D();
 			result.width = extent.width();
 			result.height = extent.height();
@@ -232,7 +248,7 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * @see VkSurfaceCapabilitiesKHR#maxImageArrayLayers
 		 */
 		public Builder arrays(int layers) {
-			range(layers, 1, surface.capabilities().maxImageArrayLayers);
+			Check.range(layers, 1, caps.maxImageArrayLayers);
 			info.imageArrayLayers = layers;
 			return this;
 		}
@@ -243,9 +259,8 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * @throws IllegalArgumentException if the usage flag is not supported by the surface
 		 */
 		public Builder usage(VkImageUsageFlag usage) {
-			final int value = usage.value();
-			if((surface.capabilities().supportedUsageFlags & value) == 0) throw new IllegalArgumentException("Usage not supported: " + usage);
-			info.imageUsage = usage;
+			if(!IntegerEnumeration.contains(caps.supportedUsageFlags, usage)) throw new IllegalArgumentException("Usage not supported: " + usage);
+			info.imageUsage = notNull(usage);
 			return this;
 		}
 
@@ -258,19 +273,14 @@ public class SwapChain extends LogicalDeviceHandle {
 			return this;
 		}
 
-		//info.queueFamilyIndexCount = 0;
-		//info.pQueueFamilyIndices = null;
-		// TODO
-
 		/**
 		 * Sets the surface transform.
 		 * @param transform Surface transform
 		 * @throws IllegalArgumentException if the transform is not supported by the surface
 		 */
 		public Builder transform(VkSurfaceTransformFlagKHR transform) {
-			final int value = transform.value();
-			if((surface.capabilities().supportedTransforms & value) == 0) throw new IllegalArgumentException("Transform not supported: " + transform);
-			info.preTransform = transform;
+			if(!IntegerEnumeration.contains(caps.supportedTransforms, transform)) throw new IllegalArgumentException("Transform not supported: " + transform);
+			info.preTransform = notNull(transform);
 			return this;
 		}
 
@@ -280,9 +290,8 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * @throws IllegalArgumentException if the given alpha function is not supported
 		 */
 		public Builder alpha(VkCompositeAlphaFlagKHR alpha) {
-			final int value = alpha.value();
-			if((surface.capabilities().supportedCompositeAlpha & value) == 0) throw new IllegalArgumentException("Compositive alpha not supported: " + alpha);
-			info.compositeAlpha = alpha;
+			if(!IntegerEnumeration.contains(caps.supportedCompositeAlpha, alpha)) throw new IllegalArgumentException("Compositive alpha not supported: " + alpha);
+			info.compositeAlpha = notNull(alpha);
 			return this;
 		}
 
@@ -292,10 +301,9 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * @throws IllegalArgumentException if the given mode is not supported by the surface
 		 * @see Surface#modes()
 		 */
-		public Builder presentation(VkPresentModeKHR mode) {
-			final var modes = surface.modes();
-			if(!modes.contains(mode)) throw new IllegalArgumentException("Presentation mode not supported: " + mode);
-			info.presentMode = mode;
+		public Builder present(VkPresentModeKHR mode) {
+			if(!surface.modes().contains(mode)) throw new IllegalArgumentException("Presentation mode not supported: " + mode);
+			info.presentMode = notNull(mode);
 			return this;
 		}
 
@@ -304,31 +312,25 @@ public class SwapChain extends LogicalDeviceHandle {
 		 * @param clipped Whether clipped
 		 */
 		public Builder clipped(boolean clipped) {
-			//info.clipped = clipped;
+			info.clipped = VulkanBoolean.of(clipped);
 			return this;
 		}
-
-		// TODO - old swap chain
 
 		/**
 		 * Constructs this swap-chain.
 		 * @return New swap-chain
 		 */
 		public SwapChain build() {
-			// Check mandatory fields
-			if(info.imageExtent == null) throw new ServiceException("No extent specified for swap-chain");
-			// TODO - check format matches surface.formats
-
 			// Allocate swap-chain
-			final Vulkan vulkan = dev.api();
-			final VulkanLibrary lib = vulkan.api();
-			final ReferenceFactory factory = vulkan.factory();
-			final PointerByReference chain = factory.reference();
+			final LogicalDevice dev = surface.device();
+			final VulkanLibrary lib = dev.library();
+			final ReferenceFactory factory = lib.factory();
+			final PointerByReference chain = factory.pointer();
 			check(lib.vkCreateSwapchainKHR(dev.handle(), info, null, chain));
 
 			// Get swap-chain image views
-			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
-			final var handles = VulkanFunction.array(func, factory.integer(), factory::pointers);
+			final VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
+			final var handles = VulkanFunction.enumerate(func, lib, factory::pointers);
 			final var views = Arrays.stream(handles).map(this::view).collect(toList());
 
 			// Create swap-chain
@@ -337,12 +339,12 @@ public class SwapChain extends LogicalDeviceHandle {
 		}
 
 		/**
-		 * Creates the image and view for the given swap-chain image.
+		 * @return New swap-chain image-view
 		 */
-		private ImageView view(Pointer handle) {
-			final VkExtent3D extent = VulkanImage.extents(info.imageExtent.width, info.imageExtent.height);
-			final VulkanImage image = new VulkanImage(handle, dev, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT), info.imageFormat, extent);
-			return new ImageView.Builder(dev, image).build();
+		private View view(Pointer handle) {
+			final Image.Extents extents = new Image.Extents(info.imageExtent.width, info.imageExtent.height);
+			final Image image = new Image(handle, surface.device(), info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
+			return image.view();
 		}
 	}
 }

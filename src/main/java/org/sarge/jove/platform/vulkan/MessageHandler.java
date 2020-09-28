@@ -89,6 +89,7 @@ public class MessageHandler {
 
 				// Output
 				out.println(message);
+				out.flush();
 			}
 
 			/**

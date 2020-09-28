@@ -51,7 +51,7 @@ public class FrameBuffer extends LogicalDeviceHandle {
 		 * Adds an image view.
 		 * @param view Image view
 		 */
-		public Builder view(ImageView view) {
+		public Builder view(View view) {
 			views.add(view.handle());
 			return this;
 		}

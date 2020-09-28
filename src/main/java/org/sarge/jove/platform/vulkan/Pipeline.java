@@ -16,7 +16,6 @@ import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.vulkan.VulkanHelper.FormatBuilder;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
 import org.sarge.lib.util.Check;

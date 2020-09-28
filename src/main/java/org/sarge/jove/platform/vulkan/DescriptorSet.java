@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.material.Shader;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.Resource.PointerHandle;
-import org.sarge.jove.platform.vulkan.ImageView.VulkanSampler;
+import org.sarge.jove.platform.vulkan.View.VulkanSampler;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
 
