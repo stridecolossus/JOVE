@@ -7,8 +7,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkColorComponentFlag;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;

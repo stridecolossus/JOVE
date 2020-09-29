@@ -1,7 +1,7 @@
-package org.sarge.jove.platform;
+package org.sarge.jove.common;
 
 import static java.util.stream.Collectors.toMap;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.Collection;

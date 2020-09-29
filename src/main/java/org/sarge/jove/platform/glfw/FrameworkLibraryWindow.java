@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.glfw;
 
+import org.sarge.jove.common.Handle;
+
 import com.sun.jna.Pointer;
 
 /**
@@ -13,16 +15,16 @@ interface FrameworkLibraryWindow {
 	 * @param h				Height
 	 * @param title			Window title
 	 * @param monitor		Monitor for a full-screen window
-	 * @param share			Optional shared window
+	 * @param shared		Optional shared window
 	 * @return Window handle
 	 */
-	Pointer glfwCreateWindow(int w, int h, String title, Pointer monitor, Pointer share);
+	Pointer glfwCreateWindow(int w, int h, String title, Handle monitor, Handle shared);
 
 	/**
 	 * Destroys a window.
 	 * @param window Window handle
 	 */
-	void glfwDestroyWindow(Pointer window);
+	void glfwDestroyWindow(Handle window);
 
 	/**
 	 * Resets all window hints to their default values.

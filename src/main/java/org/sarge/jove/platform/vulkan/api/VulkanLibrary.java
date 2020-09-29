@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -17,6 +17,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Structure;
+import com.sun.jna.TypeMapper;
 
 /**
  * Vulkan API.
@@ -75,12 +76,27 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	VulkanFunction<VkLayerProperties> LAYERS = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
 
 	/**
+	 * Type mapper for custom JOVE types.
+	 */
+	TypeMapper MAPPER = mapper();
+
+	/**
+	 * @return Type mapper for custom JOVE types
+	 */
+	private static TypeMapper mapper() {
+		final DefaultTypeMapper mapper = new DefaultTypeMapper();
+		mapper.addTypeConverter(VulkanBoolean.class, VulkanBoolean.CONVERTER);
+		mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
+		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
+		return mapper;
+	}
+
+	/**
+	 * Instantiates the Vulkan API.
 	 * @return Vulkan API
 	 */
 	static VulkanLibrary create() {
-		final Map<String, Object> options = new HashMap<>();
-		options.put(Library.OPTION_TYPE_MAPPER, VulkanStructure.MAPPER);
-		return Native.load(library(), VulkanLibrary.class, options);
+		return Native.load(library(), VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
 	}
 
 	/**
@@ -96,16 +112,9 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 
 	/**
 	 * Base-class Vulkan JNA structure.
-	 * Note that this class must be defined as a member of the associated API in order for the type mappers to work correctly.
+	 * Note that this class must be defined as a member of the associated API in order for the type mapper to work correctly.
 	 */
 	abstract class VulkanStructure extends Structure {
-		private static final DefaultTypeMapper MAPPER = new DefaultTypeMapper();
-
-		static {
-			MAPPER.addTypeConverter(VulkanBoolean.class, VulkanBoolean.CONVERTER);
-			MAPPER.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
-		}
-
 		protected VulkanStructure() {
 			super(MAPPER);
 		}

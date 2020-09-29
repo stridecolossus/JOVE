@@ -2,6 +2,8 @@ package org.sarge.jove.platform;
 
 import java.util.List;
 
+import org.sarge.jove.common.Handle;
+
 import com.sun.jna.Pointer;
 
 /**
@@ -46,7 +48,7 @@ public interface DesktopService extends Service {
 	 * @param window		Window
 	 * @return Surface handle
 	 */
-	Pointer surface(Pointer vulkan, Pointer window);
+	Pointer surface(Handle vulkan, Handle window);
 	// TODO
 	// - surface class?
 	// - accepts actual Window object? => Window extends Handle (except Window is an interface!)

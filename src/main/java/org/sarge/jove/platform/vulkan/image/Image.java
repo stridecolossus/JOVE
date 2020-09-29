@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkExtent3D;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
@@ -66,7 +67,7 @@ public class Image {
 		}
 	}
 
-	private final Pointer handle;
+	private final Handle handle;
 	private final LogicalDevice dev;
 	private final VkFormat format;
 	private final Extents extents;
@@ -83,7 +84,7 @@ public class Image {
 	 * @param aspect		Image aspect(s)
 	 */
 	public Image(Pointer handle, LogicalDevice dev, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspect) {
-		this.handle = notNull(handle);
+		this.handle = new Handle(handle);
 		this.dev = notNull(dev);
 		this.format = notNull(format);
 		this.extents = notNull(extents);
@@ -93,7 +94,7 @@ public class Image {
 	/**
 	 * @return Image handle
 	 */
-	Pointer handle() {
+	Handle handle() {
 		return handle;
 	}
 

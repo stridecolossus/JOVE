@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
@@ -38,7 +39,7 @@ public class LogicalDevice {
 	 * A <i>work queue</i> is used to submit work to this logical device.
 	 */
 	public class Queue {
-		private final Pointer queue;
+		private final Handle queue;
 		private final QueueFamily family;
 
 		/**
@@ -47,14 +48,14 @@ public class LogicalDevice {
 		 * @param family 	Queue family
 		 */
 		private Queue(Pointer handle, QueueFamily family) {
-			this.queue = notNull(handle);
+			this.queue = new Handle(handle);
 			this.family = notNull(family);
 		}
 
 		/**
 		 * @return Queue handle
 		 */
-		public Pointer handle() {
+		public Handle handle() {
 			return queue;
 		}
 
@@ -87,7 +88,7 @@ public class LogicalDevice {
 		// Record
 	}
 
-	private final Pointer handle;
+	private final Handle handle;
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
 	private final Map<QueueFamily, List<Queue>> queues;
@@ -99,7 +100,7 @@ public class LogicalDevice {
 	 * @param queues Work queues
 	 */
 	private LogicalDevice(Pointer handle, PhysicalDevice parent, List<QueueWrapper> queues) {
-		this.handle = notNull(handle);
+		this.handle = new Handle(handle);
 		this.parent = notNull(parent);
 		this.lib = parent.instance().library();
 		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
@@ -131,7 +132,7 @@ public class LogicalDevice {
 	/**
 	 * @return Device handle
 	 */
-	public Pointer handle() {
+	public Handle handle() {
 		return handle;
 	}
 

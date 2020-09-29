@@ -3,8 +3,8 @@ package org.sarge.jove.platform.vulkan.util;
 import java.util.EnumMap;
 import java.util.Map;
 
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkColorComponentFlag;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
 

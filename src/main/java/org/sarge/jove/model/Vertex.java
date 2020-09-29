@@ -1,8 +1,7 @@
 package org.sarge.jove.model;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.nio.FloatBuffer;
 import java.util.Collection;
@@ -13,10 +12,10 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.Vertex.Component.Type;
 import org.sarge.jove.texture.Image;
 import org.sarge.jove.texture.TextureCoordinate;
-import org.sarge.lib.util.AbstractEqualsObject;
-import org.sarge.lib.util.AbstractObject;
+import org.sarge.jove.util.Check;
 
 /**
  * A <i>vertex</i> is comprised of a vertex position, normal and texture coordinates.
@@ -32,7 +31,7 @@ public interface Vertex extends Bufferable {
 	/**
 	 * A <i>vertex component</i> describes the structure of part of a vertex.
 	 */
-	class Component extends AbstractObject {
+	record Component(Type type, boolean signed, int size, int bytes) {
 		/**
 		 * Component data type.
 		 */
@@ -97,11 +96,6 @@ public interface Vertex extends Bufferable {
 			return components.stream().mapToInt(Component::size).sum();
 		}
 
-		private final Type type;
-		private final boolean signed;
-		private final int size;
-		private final int bytes;
-
 		/**
 		 * Constructor.
 		 * @param type		Data type
@@ -109,11 +103,10 @@ public interface Vertex extends Bufferable {
 		 * @param size 		Size of this component
 		 * @param bytes		Bytes per component
 		 */
-		public Component(Type type, boolean signed, int size, int bytes) {
-			this.type = notNull(type);
-			this.signed = signed;
-			this.size = oneOrMore(size);
-			this.bytes = oneOrMore(bytes);
+		public Component {
+			Check.notNull(type);
+			Check.oneOrMore(size);
+			Check.oneOrMore(bytes);
 		}
 
 		/**
@@ -125,31 +118,10 @@ public interface Vertex extends Bufferable {
 		}
 
 		/**
-		 * @return Data type
-		 */
-		public Type type() {
-			return type;
-		}
-
-		/**
-		 * @return Whether this component is signed
-		 */
-		public boolean isSigned() {
-			return signed;
-		}
-
-		/**
-		 * @return Size of this component
+		 * @return Component size
 		 */
 		public int size() {
 			return size;
-		}
-
-		/**
-		 * @return Bytes per component
-		 */
-		public int bytes() {
-			return bytes;
 		}
 	}
 
@@ -162,7 +134,7 @@ public interface Vertex extends Bufferable {
 	 * <li>{@link AbstractVertex#normal(Vector)} throws {@link UnsupportedOperationException} by default
 	 * </ul>
 	 */
-	abstract class AbstractVertex extends AbstractEqualsObject implements Vertex {
+	abstract class AbstractVertex implements Vertex {
 		protected final Point pos;
 
 		/**
@@ -192,6 +164,8 @@ public interface Vertex extends Bufferable {
 		public TextureCoordinate coordinates() {
 			return null;
 		}
+
+		// TODO - equals, tostring
 	}
 
 	/**

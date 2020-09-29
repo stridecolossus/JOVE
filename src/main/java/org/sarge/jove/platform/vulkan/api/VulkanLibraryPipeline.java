@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
@@ -22,7 +23,7 @@ interface VulkanLibraryPipeline {
 	 * @param pPipelineLayout	Returned pipeline layout handle
 	 * @return Result code
 	 */
-	int vkCreatePipelineLayout(Pointer device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
+	int vkCreatePipelineLayout(Handle device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pPipelineLayout);
 
 	/**
 	 * Destroys a pipeline layout.
@@ -30,7 +31,7 @@ interface VulkanLibraryPipeline {
 	 * @param pPipelineLayout	Pipeline layout
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyPipelineLayout(Pointer device, Pointer pipelineLayout, Pointer pAllocator);
+	void vkDestroyPipelineLayout(Handle device, Handle pipelineLayout, Handle pAllocator);
 
 	/**
 	 * Creates a graphics pipeline.
@@ -42,7 +43,7 @@ interface VulkanLibraryPipeline {
 	 * @param pPipelines		Returned pipeline handle(s)
 	 * @return Result code
 	 */
-	int vkCreateGraphicsPipelines(Pointer device, Pointer pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
+	int vkCreateGraphicsPipelines(Handle device, Handle pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, Pointer[] pPipelines);
 
 	/**
 	 * Destroys a pipeline.
@@ -50,7 +51,7 @@ interface VulkanLibraryPipeline {
 	 * @param pipeline			Pipeline
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyPipeline(Pointer device, Pointer pipeline, Pointer pAllocator);
+	void vkDestroyPipeline(Handle device, Handle pipeline, Handle pAllocator);
 
 	/**
 	 * Command to bind a pipeline.
@@ -58,7 +59,7 @@ interface VulkanLibraryPipeline {
 	 * @param pipelineBindPoint		Bind-point
 	 * @param pipeline				Pipeline to bind
 	 */
-	void vkCmdBindPipeline(Pointer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pointer pipeline);
+	void vkCmdBindPipeline(Handle commandBuffer, VkPipelineBindPoint pipelineBindPoint, Handle pipeline);
 
-	void vkCmdPipelineBarrier(Pointer commandBuffer, int srcStageMask, int dstStageMask, int dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
+	void vkCmdPipelineBarrier(Handle commandBuffer, int srcStageMask, int dstStageMask, int dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 }

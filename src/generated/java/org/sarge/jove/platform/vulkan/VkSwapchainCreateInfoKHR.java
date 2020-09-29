@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
@@ -38,7 +39,7 @@ public class VkSwapchainCreateInfoKHR extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	public Pointer pNext;
 	public int flags;
-	public Pointer surface;
+	public Handle surface;
 	public int minImageCount;
 	public VkFormat imageFormat;
 	public VkColorSpaceKHR imageColorSpace;

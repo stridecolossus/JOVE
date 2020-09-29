@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
@@ -30,7 +31,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class SwapChain {
-	private final Pointer handle;
+	private final Handle handle;
 	private final LogicalDevice dev;
 	private final VkFormat format;
 	private final Dimensions extents;
@@ -46,7 +47,7 @@ public class SwapChain {
 	 * @param views			Image views
 	 */
 	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extents, List<View> views) {
-		this.handle = notNull(handle);
+		this.handle = new Handle(handle);
 		this.dev = notNull(dev);
 		this.format = notNull(format);
 		this.extents = notNull(extents);
@@ -56,7 +57,7 @@ public class SwapChain {
 	/**
 	 * @return Swap-chain handle
 	 */
-	Pointer handle() {
+	Handle handle() {
 		return handle;
 	}
 
@@ -109,9 +110,8 @@ public class SwapChain {
 //		}
 
 		// Add swap-chains
-		// TODO - multiple
 		info.swapchainCount = 1;
-		info.pSwapchains = StructureHelper.pointers(List.of(handle));
+		info.pSwapchains = Handle.memory(new Handle[]{handle});
 
 		// Set image indices
 		info.pImageIndices = StructureHelper.integers(new int[]{index.getValue()});

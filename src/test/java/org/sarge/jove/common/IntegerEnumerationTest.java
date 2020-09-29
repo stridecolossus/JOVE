@@ -1,4 +1,4 @@
-package org.sarge.jove.platform;
+package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.IntegerEnumeration;
 
 import com.sun.jna.FromNativeContext;
 

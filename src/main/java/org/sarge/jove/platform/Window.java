@@ -1,17 +1,16 @@
 package org.sarge.jove.platform;
 
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notEmpty;
+import static org.sarge.jove.util.Check.notNull;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.lib.collection.StrictSet;
-import org.sarge.lib.util.AbstractEqualsObject;
+import org.sarge.jove.common.Handle;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -21,7 +20,7 @@ public interface Window {
 	/**
 	 * Creation descriptor for a window.
 	 */
-	final class Descriptor extends AbstractEqualsObject {
+	final class Descriptor {
 		/**
 		 * Window properties.
 		 */
@@ -108,7 +107,7 @@ public interface Window {
 			private String title;
 			private Dimensions size;
 			private Monitor monitor;
-			private final Set<Property> props = new StrictSet<>();
+			private final Set<Property> props = new HashSet<>();
 
 			/**
 			 * Sets the window title.
@@ -167,7 +166,7 @@ public interface Window {
 	 * @param ref			Surface handle factory
 	 * @return Surface handle
 	 */
-	Pointer surface(Pointer vulkan, Supplier<PointerByReference> ref);
+	Handle surface(Handle vulkan, Supplier<PointerByReference> ref);
 
 	/**
 	 * Input device for this window.

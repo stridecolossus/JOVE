@@ -5,9 +5,9 @@ import static org.sarge.jove.util.Check.notNull;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.platform.Device;
-import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.KeyListener;
@@ -22,7 +22,8 @@ import com.sun.jna.ptr.PointerByReference;
  * GLFW window.
  * @author Sarge
  */
-class FrameworkWindow extends PointerHandle implements Window {
+class FrameworkWindow implements Window {
+	private final Handle handle;
 	private final FrameworkLibrary instance;
 	private final Descriptor props;
 	private final Device<?> device;
@@ -34,10 +35,10 @@ class FrameworkWindow extends PointerHandle implements Window {
 	 * @param props			Window properties
 	 */
 	FrameworkWindow(Pointer window, FrameworkLibrary instance, Descriptor props) {
-		super(window);
+		this.handle = new Handle(window);
 		this.instance = notNull(instance);
 		this.props = notNull(props);
-		this.device = createDevice(window, instance);
+		this.device = null; // TODO - createDevice(window, instance);
 	}
 
 	@Override
@@ -127,17 +128,17 @@ class FrameworkWindow extends PointerHandle implements Window {
 	}
 
 	@Override
-	public Pointer surface(Pointer vulkan, Supplier<PointerByReference> ref) {
-		final PointerByReference handle = ref.get();
-		final int result = instance.glfwCreateWindowSurface(vulkan, super.handle(), null, handle);
+	public Handle surface(Handle vulkan, Supplier<PointerByReference> ref) {
+		final PointerByReference surface = ref.get();
+		final int result = instance.glfwCreateWindowSurface(vulkan, handle, null, surface);
 		if(result != 0) {
 			throw new ServiceException("Cannot create Vulkan surface: result=" + result);
 		}
-		return handle.getValue();
+		return new Handle(surface.getValue());
 	}
 
 	@Override
 	public void destroy() {
-		instance.glfwDestroyWindow(super.handle());
+		instance.glfwDestroyWindow(handle);
 	}
 }

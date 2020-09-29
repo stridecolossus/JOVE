@@ -7,8 +7,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.DesktopService;
-import org.sarge.jove.platform.IntegerEnumeration;
 import org.sarge.jove.platform.Monitor;
 import org.sarge.jove.platform.Monitor.DisplayMode;
 import org.sarge.jove.platform.Service;
@@ -139,9 +140,11 @@ public class FrameworkDesktopService implements DesktopService {
 	@Override
 	public FrameworkWindow window(Window.Descriptor descriptor) {
 		// Lookup monitor handle
-		final Pointer monitor;
+		final Handle monitor;
 		if(descriptor.monitor().isPresent()) {
-			monitor = (Pointer) descriptor.monitor().get().handle();
+			//monitor = (Pointer) descriptor.monitor().get().handle();
+			// TODO
+			monitor = null;
 		}
 		else {
 			monitor = null;
@@ -190,7 +193,7 @@ public class FrameworkDesktopService implements DesktopService {
 	}
 
 	@Override
-	public Pointer surface(Pointer vulkan, Pointer window) {
+	public Pointer surface(Handle vulkan, Handle window) {
 		final PointerByReference ref = new PointerByReference();
 		final int result = instance.glfwCreateWindowSurface(vulkan, window, null, ref);
 		if(result != VkResult.VK_SUCCESS.value()) {

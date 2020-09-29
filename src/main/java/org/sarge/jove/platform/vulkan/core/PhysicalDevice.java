@@ -13,7 +13,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
@@ -88,10 +89,10 @@ public class PhysicalDevice {
 		 * @param surface Rendering surface
 		 * @return Whether this family supports presentation to the given surface
 		 */
-		public boolean isPresentationSupported(Pointer surface) {
+		public boolean isPresentationSupported(Handle surface) {
 			final VulkanLibrary lib = instance.library();
 			final IntByReference supported = lib.factory().integer();
-			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice.this.handle(), index(), surface, supported));
+			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(handle, index(), surface, supported));
 			return VulkanBoolean.of(supported.getValue()).isTrue();
 		}
 
@@ -166,11 +167,11 @@ public class PhysicalDevice {
 	 * @param surface Surface handle
 	 * @return Device predicate
 	 */
-	public static Predicate<PhysicalDevice> predicatePresentationSupported(Pointer surface) {
+	public static Predicate<PhysicalDevice> predicatePresentationSupported(Handle surface) {
 		return predicate(family -> family.isPresentationSupported(surface));
 	}
 
-	private final Pointer handle;
+	private final Handle handle;
 	private final Instance instance;
 	private final List<QueueFamily> families;
 
@@ -181,7 +182,7 @@ public class PhysicalDevice {
 	 * @param families		Queue families
 	 */
 	PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
-		this.handle = notNull(handle);
+		this.handle = new Handle(handle);
 		this.instance = notNull(instance);
 		this.families = List.copyOf(build(families));
 	}
@@ -199,7 +200,7 @@ public class PhysicalDevice {
 	/**
 	 * @return Device handle
 	 */
-	public Pointer handle() {
+	public Handle handle() {
 		return handle;
 	}
 

@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
@@ -37,7 +38,7 @@ public interface Command {
 	 * @param lib		Vulkan library
 	 * @param buffer 	Command buffer handle
 	 */
-	void execute(VulkanLibrary lib, Pointer buffer);
+	void execute(VulkanLibrary lib, Handle buffer);
 
 	/**
 	 * A <i>command buffer</i> is allocated by a {@link Pool} and used record and execute commands.
@@ -52,7 +53,7 @@ public interface Command {
 			READY,
 		}
 
-		private final Pointer handle;
+		private final Handle handle;
 		private final Pool pool;
 
 		private State state = State.UNDEFINED;
@@ -63,14 +64,14 @@ public interface Command {
 		 * @param pool			Parent pool
 		 */
 		private Buffer(Pointer handle, Pool pool) {
-			this.handle = notNull(handle);
+			this.handle = new Handle(handle);
 			this.pool = notNull(pool);
 		}
 
 		/**
 		 * @return Command buffer handle
 		 */
-		Pointer handle() {
+		Handle handle() {
 			return handle;
 		}
 
@@ -159,7 +160,7 @@ public interface Command {
 		 * Releases this buffer back to the pool.
 		 */
 		public synchronized void free() {
-			pool.free(new Pointer[]{handle});
+			pool.free(new Handle[]{handle});
 			pool.buffers.remove(this);
 		}
 	}
@@ -189,7 +190,7 @@ public interface Command {
 			return new Pool(pool.getValue(), queue);
 		}
 
-		private final Pointer handle;
+		private final Handle handle;
 		private final Queue queue;
 		private final VulkanLibrary lib;
 		private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
@@ -200,7 +201,7 @@ public interface Command {
 		 * @param queue			Work queue
 		 */
 		private Pool(Pointer handle, Queue queue) {
-			this.handle = notNull(handle);
+			this.handle = new Handle(handle);
 			this.queue = notNull(queue);
 			this.lib = queue.device().library();
 		}
@@ -208,7 +209,7 @@ public interface Command {
 		/**
 		 * @return Pool handle
 		 */
-		Pointer handle() {
+		Handle handle() {
 			return handle;
 		}
 
@@ -299,7 +300,7 @@ public interface Command {
 		 * Frees <b>all</b> command buffers in this pool.
 		 */
 		public synchronized void free() {
-			final Pointer[] array = buffers.stream().map(Buffer::handle).toArray(Pointer[]::new);
+			final Handle[] array = buffers.stream().map(Buffer::handle).toArray(Handle[]::new);
 			free(array);
 			buffers.clear();
 		}
@@ -307,7 +308,7 @@ public interface Command {
 		/**
 		 * Frees command buffers.
 		 */
-		private void free(Pointer[] array) {
+		private void free(Handle[] array) {
 			lib.vkFreeCommandBuffers(queue.device().handle(), handle, array.length, array);
 		}
 

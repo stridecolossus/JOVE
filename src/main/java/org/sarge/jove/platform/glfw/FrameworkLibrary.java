@@ -1,10 +1,14 @@
 package org.sarge.jove.platform.glfw;
 
+import java.util.Map;
+
+import org.sarge.jove.common.Handle;
+
 import com.sun.jna.Callback;
+import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -19,7 +23,13 @@ interface FrameworkLibrary extends Library, FrameworkLibraryWindow, FrameworkLib
 	 */
 	static FrameworkLibrary create() {
 //		return Native.load("C:/GLFW/lib-mingw-w64/glfw3.dll", FrameworkLibrary.class);
-		return Native.load(library(), FrameworkLibrary.class);
+
+		// Init type mapper
+		final var mapper = new DefaultTypeMapper();
+		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
+
+		// Load GLFW
+		return Native.load(library(), FrameworkLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));
 	}
 
 	private static String library() {
@@ -84,5 +94,5 @@ interface FrameworkLibrary extends Library, FrameworkLibraryWindow, FrameworkLib
 	 * @param surface			Returned surface handle
 	 * @return Result
 	 */
-	int glfwCreateWindowSurface(Pointer instance, Pointer window, Pointer allocator, PointerByReference surface);
+	int glfwCreateWindowSurface(Handle instance, Handle window, Handle allocator, PointerByReference surface);
 }

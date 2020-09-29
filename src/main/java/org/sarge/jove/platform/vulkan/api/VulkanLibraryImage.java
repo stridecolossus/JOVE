@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkImageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
@@ -7,7 +8,6 @@ import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSamplerCreateInfo;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -22,7 +22,7 @@ interface VulkanLibraryImage {
 	 * @param pImage			Returned image
 	 * @return Result code
 	 */
-	int vkCreateImage(Pointer device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pImage);
+	int vkCreateImage(Handle device, VkImageCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pImage);
 
 	/**
 	 * Destroys an image.
@@ -30,7 +30,7 @@ interface VulkanLibraryImage {
 	 * @param image				Image
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyImage(Pointer device, Pointer image, Pointer pAllocator);
+	void vkDestroyImage(Handle device, Handle image, Handle pAllocator);
 
 	/**
 	 * Retrieves the memory requirements for the given image.
@@ -38,7 +38,7 @@ interface VulkanLibraryImage {
 	 * @param image					Image
 	 * @param pMemoryRequirements	Returned memory requirements
 	 */
-	void vkGetImageMemoryRequirements(Pointer device, Pointer image, VkMemoryRequirements pMemoryRequirements);
+	void vkGetImageMemoryRequirements(Handle device, Handle image, VkMemoryRequirements pMemoryRequirements);
 
 	/**
 	 * Binds image memory.
@@ -48,10 +48,10 @@ interface VulkanLibraryImage {
 	 * @param memoryOffset		Offset
 	 * @return Result code
 	 */
-	int vkBindImageMemory(Pointer device, Pointer image, Pointer memory, long memoryOffset);
+	int vkBindImageMemory(Handle device, Handle image, Handle memory, long memoryOffset);
 
-	void vkCmdCopyBufferToImage(Pointer commandBuffer, Pointer srcBuffer, Pointer dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy pRegions);
-	void vkCmdCopyImageToBuffer(Pointer commandBuffer, Pointer srcImage, VkImageLayout srcImageLayout, Pointer dstBuffer, int regionCount, VkBufferImageCopy pRegions);
+	void vkCmdCopyBufferToImage(Handle commandBuffer, Handle srcBuffer, Handle dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy pRegions);
+	void vkCmdCopyImageToBuffer(Handle commandBuffer, Handle srcImage, VkImageLayout srcImageLayout, Handle dstBuffer, int regionCount, VkBufferImageCopy pRegions);
 
 	/**
 	 * Creates an image view.
@@ -61,7 +61,7 @@ interface VulkanLibraryImage {
 	 * @param pView				Returned image view handle
 	 * @return Result code
 	 */
-	int vkCreateImageView(Pointer device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
+	int vkCreateImageView(Handle device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pView);
 
 	/**
 	 * Destroys an image view.
@@ -69,8 +69,8 @@ interface VulkanLibraryImage {
 	 * @param imageView			Image view
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyImageView(Pointer device, Pointer imageView, Pointer pAllocator);
+	void vkDestroyImageView(Handle device, Handle imageView, Handle pAllocator);
 
-	int vkCreateSampler(Pointer device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
-	void vkDestroySampler(Pointer device, Pointer sampler, Pointer pAllocator);
+	int vkCreateSampler(Handle device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pSampler);
+	void vkDestroySampler(Handle device, Handle sampler, Handle pAllocator);
 }

@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.lib.collection.StrictSet;
 
 /**
  * A <i>service</i> is a component of a platform.
@@ -88,7 +87,7 @@ public interface Service {
 		 * @param services Services in this group
 		 */
 		public Group(Set<Service> services) {
-			this.services = new StrictSet<>(services);
+			this.services = Set.copyOf(services);
 		}
 
 		/**

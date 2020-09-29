@@ -1,12 +1,13 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
@@ -22,7 +23,7 @@ import com.sun.jna.Pointer;
  * @author Sarge
  */
 public class Pipeline {
-	private final Pointer handle;
+	private final Handle handle;
 	private final LogicalDevice dev;
 
 	/**
@@ -31,7 +32,7 @@ public class Pipeline {
 	 * @param dev			Device
 	 */
 	Pipeline(Pointer handle, LogicalDevice dev) {
-		this.handle = notNull(handle);
+		this.handle = new Handle(handle);
 		this.dev = notNull(dev);
 	}
 

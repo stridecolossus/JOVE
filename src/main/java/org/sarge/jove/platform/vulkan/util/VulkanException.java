@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkResult;
 

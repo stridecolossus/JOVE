@@ -31,10 +31,10 @@ public class ViewportStageBuilder <R> extends AbstractBuilder<R> {
 		final ScreenCoordinate coords = rect.pos();
 		final Dimensions dim = rect.size();
 		final VkViewport viewport = new VkViewport();
-		viewport.x = coords.x;
-		viewport.y = coords.y;
-		viewport.width = dim.width;
-		viewport.height = dim.height;
+		viewport.x = coords.x();
+		viewport.y = coords.y();
+		viewport.width = dim.width();
+		viewport.height = dim.height();
 		viewport.minDepth = min;
 		viewport.maxDepth = max;
 		viewports.add(viewport);

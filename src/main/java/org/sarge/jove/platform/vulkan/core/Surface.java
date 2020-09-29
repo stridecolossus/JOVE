@@ -9,7 +9,8 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
@@ -17,7 +18,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrarySurface;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
 /**
@@ -25,7 +25,7 @@ import com.sun.jna.ptr.IntByReference;
  * @author Sarge
  */
 public class Surface {
-	private final Pointer surface;
+	private final Handle surface;
 	private final LogicalDevice dev;
 
 	/**
@@ -33,15 +33,15 @@ public class Surface {
 	 * @param surface		Surface handle
 	 * @param dev			Device
 	 */
-	public Surface(Pointer surface, LogicalDevice dev) {
-		this.dev = notNull(dev);
+	public Surface(Handle surface, LogicalDevice dev) {
 		this.surface = notNull(surface);
+		this.dev = notNull(dev);
 	}
 
 	/**
 	 * @return Surface handle
 	 */
-	public Pointer handle() {
+	public Handle handle() {
 		return surface;
 	}
 
@@ -78,7 +78,7 @@ public class Surface {
 		// Count number of supported modes
 		// TODO - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
 		final VulkanLibrary lib = dev.library();
-		final Pointer handle = dev.parent().handle();
+		final Handle handle = dev.parent().handle();
 		final IntByReference count = lib.factory().integer();
 		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(handle, surface, count, null));
 

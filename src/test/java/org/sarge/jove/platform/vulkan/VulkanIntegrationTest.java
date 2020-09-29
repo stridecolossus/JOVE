@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -13,13 +14,12 @@ import org.sarge.jove.platform.vulkan.core.Instance;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.MessageHandler;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
+import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.SwapChain;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class VulkanIntegrationTest {
@@ -58,7 +58,7 @@ public class VulkanIntegrationTest {
 		instance.add(handler);
 
 		// Lookup surface
-		final Pointer surfaceHandle = window.surface(instance.handle(), PointerByReference::new);
+		final Handle surfaceHandle = window.surface(instance.handle(), PointerByReference::new);
 
 		// Create queue family predicates
 		final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);

@@ -15,16 +15,12 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.Instance;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
 
@@ -113,7 +109,7 @@ public class PhysicalDeviceTest {
 
 		@Test
 		void isPresentationSupported() {
-			final Pointer surface = new Pointer(42);
+			final Handle surface = new Handle(new Pointer(42));
 			assertEquals(true, family.isPresentationSupported(surface));
 			final var ref = lib.factory().integer(); // TODO - fails with NPE unless we do it this way! why?
 			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), 0, surface, ref);
@@ -121,7 +117,7 @@ public class PhysicalDeviceTest {
 
 		@Test
 		void presentationPredicate() {
-			final Pointer surface = new Pointer(42);
+			final Handle surface = new Handle(new Pointer(42));
 			final var predicate = PhysicalDevice.predicatePresentationSupported(surface);
 			assertTrue(predicate.test(dev));
 		}

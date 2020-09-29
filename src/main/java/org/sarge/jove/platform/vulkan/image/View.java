@@ -6,7 +6,8 @@ import static org.sarge.jove.util.Check.notNull;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
@@ -24,7 +25,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class View {
-	private final Pointer handle;
+	private final Handle handle;
 	private final Image image;
 
 	/**
@@ -33,14 +34,14 @@ public class View {
 	 * @param image		Underlying image
 	 */
 	private View(Pointer handle, Image image) {
-		this.handle = notNull(handle);
+		this.handle = new Handle(handle);
 		this.image = notNull(image);
 	}
 
 	/**
 	 * @return Image view handle
 	 */
-	Pointer handle() {
+	Handle handle() {
 		return handle;
 	}
 

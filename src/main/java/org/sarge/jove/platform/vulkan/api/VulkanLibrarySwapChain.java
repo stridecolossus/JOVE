@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkSwapchainCreateInfoKHR;
 
 import com.sun.jna.Pointer;
@@ -18,7 +19,7 @@ interface VulkanLibrarySwapChain {
 	 * @param pSwapchain		Returned swap-chain handle
 	 * @return Result code
 	 */
-	int vkCreateSwapchainKHR(Pointer device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
+	int vkCreateSwapchainKHR(Handle device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, PointerByReference pSwapchain);
 
 	/**
 	 * Destroys a swap-chain.
@@ -26,7 +27,7 @@ interface VulkanLibrarySwapChain {
 	 * @param swapchain			Swap-chain
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroySwapchainKHR(Pointer device, Pointer swapchain, Pointer pAllocator);
+	void vkDestroySwapchainKHR(Handle device, Handle swapchain, Handle pAllocator);
 
 	/**
 	 * Retrieves swap-chain image handles.
@@ -36,7 +37,7 @@ interface VulkanLibrarySwapChain {
 	 * @param pSwapchainImages			Image handles
 	 * @return Result code
 	 */
-	int vkGetSwapchainImagesKHR(Pointer device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+	int vkGetSwapchainImagesKHR(Handle device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
 
 	/**
 	 * Acquires the next image in the swap-chain.
@@ -48,5 +49,5 @@ interface VulkanLibrarySwapChain {
 	 * @param pImageIndex			Returned image index
 	 * @return Result code
 	 */
-	int vkAcquireNextImageKHR(Pointer device, Pointer swapchain, long timeout, Pointer semaphore, Pointer fence, IntByReference pImageIndex);
+	int vkAcquireNextImageKHR(Handle device, Handle swapchain, long timeout, Handle semaphore, Handle fence, IntByReference pImageIndex);
 }

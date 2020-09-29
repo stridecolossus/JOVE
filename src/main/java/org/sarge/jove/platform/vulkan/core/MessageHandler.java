@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.TreeSet;
 
-import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackDataEXT;

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
@@ -22,6 +23,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Function;
+import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 import com.sun.jna.StringArray;
 import com.sun.jna.ptr.PointerByReference;
@@ -31,8 +33,8 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Instance {
+	private final Handle handle;
 	private final VulkanLibrary lib;
-	private final Pointer handle;
 
 	private final Map<MessageHandler, Pointer> handlers = new HashMap<>();
 	private HandlerFactory factory;
@@ -43,8 +45,15 @@ public class Instance {
 	 * @param handle		Instance handle
 	 */
 	private Instance(VulkanLibrary lib, Pointer handle) {
+		this.handle = new Handle(handle);
 		this.lib = notNull(lib);
-		this.handle = notNull(handle);
+	}
+
+	/**
+	 * @return Instance handle
+	 */
+	public Handle handle() {
+		return handle;
 	}
 
 	/**
@@ -52,13 +61,6 @@ public class Instance {
 	 */
 	VulkanLibrary library() {
 		return lib;
-	}
-
-	/**
-	 * @return Instance handle
-	 */
-	public Pointer handle() {
-		return handle;
 	}
 
 	/**
@@ -95,7 +97,7 @@ public class Instance {
 			final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
 			final PointerByReference handle = lib.factory().pointer();
 			final Object[] args = {Instance.this.handle, info, null, handle};
-			VulkanLibrary.check(create.invokeInt(args));
+			create.invoke(Integer.TYPE, args, options());
 			return handle.getValue();
 		}
 
@@ -104,7 +106,15 @@ public class Instance {
 		 * @param handle Handle
 		 */
 		private void destroy(Pointer handle) {
-			destroy.invoke(new Object[]{Instance.this.handle, handle, null});
+			final Object[] args = new Object[]{Instance.this.handle, handle, null};
+			destroy.invoke(Void.class, args, options());
+		}
+
+		/**
+		 * @return Type converter options
+		 */
+		private Map<String, ?> options() {
+			return Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
 		}
 	}
 

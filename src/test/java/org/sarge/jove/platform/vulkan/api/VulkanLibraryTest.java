@@ -7,8 +7,11 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.INTEGRATION_TEST;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 public class VulkanLibraryTest {
 	@Test
@@ -29,6 +32,13 @@ public class VulkanLibraryTest {
 	@Test
 	void checkThrowsUnknownErrorCode() {
 		assertThrows(ServiceException.class, () -> VulkanLibrary.check(-1));
+	}
+
+	@Test
+	void mapper() {
+		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(IntegerEnumeration.class));
+		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(VulkanBoolean.class));
+		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(Handle.class));
 	}
 
 	@Tag(INTEGRATION_TEST)
