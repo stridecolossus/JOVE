@@ -10,13 +10,9 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.Instance;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -24,7 +20,7 @@ import com.sun.jna.ptr.IntByReference;
 
 public class SurfaceTest {
 	private Surface surface;
-	private Pointer handle;
+	private Handle handle;
 	private VulkanLibrary lib;
 	private Instance instance;
 	private LogicalDevice dev;
@@ -49,7 +45,7 @@ public class SurfaceTest {
 		when(dev.library()).thenReturn(lib);
 
 		// Create surface
-		handle = new Pointer(42);
+		handle = new Handle(new Pointer(42));
 		surface = new Surface(handle, dev);
 	}
 

@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.common.ScreenCoordinate;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Structure;
@@ -20,17 +19,4 @@ public class VkOffset2D extends VulkanStructure {
 
 	public int x;
 	public int y;
-
-	public VkOffset2D() {
-	}
-
-	public VkOffset2D(ScreenCoordinate coords) {
-		this.x = coords.x;
-		this.y = coords.y;
-	}
-
-	public VkOffset2D(VkOffset2D offset) {
-		x = offset.x;
-		y = offset.y;
-	}
 }

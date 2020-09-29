@@ -3,14 +3,19 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkPipelineInputAssemblyStateCreateInfo;
+import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
+import org.sarge.jove.platform.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
+import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
+import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
@@ -64,7 +69,8 @@ public class Pipeline {
 //		private Layout layout;
 //		private RenderPass pass;
 		private final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
-		private final List<VkPipelineShaderStageCreateInfo> shaders = new ArrayList<>();
+		private final Map<VkShaderStageFlag, VkPipelineShaderStageCreateInfo> shaders = new HashMap<>();
+		// TODO - these should be cleared at build()?
 
 		/**
 		 * Constructor.
@@ -72,14 +78,18 @@ public class Pipeline {
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
-			this.pipeline.pVertexInputState = new VertexInputStageBuilder<>().buildLocal();
+			this.pipeline.pVertexInputState = new VkPipelineVertexInputStateCreateInfo();
+			this.pipeline.pInputAssemblyState = new VkPipelineInputAssemblyStateCreateInfo();
+			this.pipeline.pRasterizationState = new VkPipelineRasterizationStateCreateInfo();
+			this.pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo();
+			this.pipeline.pColorBlendState = ColourBlendStageBuilder.create();
 		}
 
 		/**
 		 * @return Builder for the vertex input stage
 		 */
-		public VertexInputStageBuilder<Builder> input() {
-			return new VertexInputStageBuilder<>() {
+		public VertexInputStageBuilder input() {
+			return new VertexInputStageBuilder() {
 				@Override
 				public Builder build() {
 					pipeline.pVertexInputState = buildLocal();
@@ -88,11 +98,14 @@ public class Pipeline {
 			};
 		}
 
+		// TODO - input assembly
+		// TODO - tesselation
+
 		/**
 		 * @return Builder for the viewport stage
 		 */
-		public ViewportStageBuilder<Builder> viewport() {
-			return new ViewportStageBuilder<>() {
+		public ViewportStageBuilder viewport() {
+			return new ViewportStageBuilder() {
 				@Override
 				public Builder build() {
 					pipeline.pViewportState = buildLocal();
@@ -101,17 +114,49 @@ public class Pipeline {
 			};
 		}
 
+		// TODO - rasterization, multisample, depth stencil
+
+		/**
+		 * @return Builder for the colour-blend stage
+		 */
+		public ColourBlendStageBuilder blend() {
+			return new ColourBlendStageBuilder() {
+				@Override
+				public Builder build() {
+					pipeline.pColorBlendState = buildLocal();
+					return Builder.this;
+				}
+			};
+		}
+
+		// TODO - dynamic
+
+		/**
+		 * @return Builder for a shader stage
+		 * @throws IllegalArgumentException for a duplicate stage
+		 */
+		public ShaderStageBuilder shader() {
+			return new ShaderStageBuilder() {
+				@Override
+				public Builder build() {
+					final var info = buildLocal();
+					if(shaders.containsKey(info.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + info.stage);
+					shaders.put(info.stage, info);
+					return Builder.this;
+				}
+			};
+		}
+
 		/**
 		 * Constructs this pipeline.
 		 * @return New pipeline
-		 * @throws IllegalArgumentException if the vertex shader stage has not been configured
-		 * @throws IllegalArgumentException if the viewport stage has not been configured
+		 * @throws IllegalArgumentException if any of the following stages are not configured: vertex shader, viewport
 		 */
 		public Pipeline build() {
-//			// Validate pipeline
-//			if(!contains(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalArgumentException("No vertex shader specified");
+			// Validate pipeline
+			if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalArgumentException("No vertex shader specified");
 			if(pipeline.pViewportState == null) throw new IllegalArgumentException("No viewport stage specified");
-//
+
 //			// Create default layout if required
 //			if(layout == null) {
 //				layout = new Layout.Builder(dev).build();
@@ -120,7 +165,7 @@ public class Pipeline {
 
 			// Init pipeline stages
 			pipeline.stageCount = shaders.size();
-			pipeline.pStages = StructureHelper.structures(shaders);
+			pipeline.pStages = StructureHelper.structures(shaders.values());
 
 			// Init layout
 //			pipeline.layout = layout.handle();

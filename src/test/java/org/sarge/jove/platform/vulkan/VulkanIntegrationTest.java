@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -105,9 +106,14 @@ public class VulkanIntegrationTest {
 				.build();
 
 		// Create pipeline
+		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
 				.input()
 					.binding(null) // TODO
+					.build()
+				.viewport()
+					.viewport(rect)
+					.scissor(rect)
 					.build()
 				.build();
 
@@ -119,6 +125,7 @@ public class VulkanIntegrationTest {
 		desktop.close();
 
 		// Destroy Vulkan objects
+		pipeline.destroy();
 		chain.destroy();
 		dev.destroy();
 		instance.destroy();

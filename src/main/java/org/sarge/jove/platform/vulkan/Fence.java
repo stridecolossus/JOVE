@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.function.IntSupplier;
 
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrarySynchronize;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.lib.util.AbstractEqualsObject;

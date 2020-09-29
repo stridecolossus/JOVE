@@ -5,63 +5,78 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.common.ScreenCoordinate;
+import org.sarge.jove.platform.vulkan.VkExtent2D;
+import org.sarge.jove.platform.vulkan.VkOffset2D;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
-import org.sarge.jove.util.AbstractBuilder;
 import org.sarge.jove.util.StructureHelper;
 
 /**
  * Builder for the viewport stage descriptor.
  */
-public class ViewportStageBuilder <R> extends AbstractBuilder<R> {
+public class ViewportStageBuilder extends AbstractPipelineStageBuilder {
 	private final Deque<VkViewport> viewports = new ArrayDeque<>();
 	private final List<VkRect2D> scissors = new ArrayList<>();
 
 	/**
 	 * Adds a viewport.
-	 * @param rect 		Viewport rectangle
-	 * @param min		Minimum depth
-	 * @param max		Maximum depth
+	 * @param viewport 		Viewport rectangle
+	 * @param min			Minimum depth
+	 * @param max			Maximum depth
 	 */
-	public ViewportStageBuilder<R> viewport(Rectangle rect, float min, float max) {
-		final ScreenCoordinate coords = rect.pos();
-		final Dimensions dim = rect.size();
+	public ViewportStageBuilder viewport(Rectangle rect, float min, float max) {
+		// Init viewport rectangle
 		final VkViewport viewport = new VkViewport();
-		viewport.x = coords.x();
-		viewport.y = coords.y();
-		viewport.width = dim.width();
-		viewport.height = dim.height();
+		viewport.x = rect.x();
+		viewport.y = rect.y();
+		viewport.width = rect.width();
+		viewport.height = rect.height();
+
+		// Init min/max depth
 		viewport.minDepth = min;
 		viewport.maxDepth = max;
+
+		// Add viewport
 		viewports.add(viewport);
+
 		return this;
 	}
 
 	/**
 	 * Adds a viewport with default min/max depth.
-	 * @param rect Viewport rectangle
+	 * @param viewport Viewport rectangle
 	 */
-	public ViewportStageBuilder<R> viewport(Rectangle rect) {
-		return viewport(rect, 0, 1);
+	public ViewportStageBuilder viewport(Rectangle viewport) {
+		return viewport(viewport, 0, 1);
 	}
 
 	/**
 	 * Adds a scissor rectangle.
-	 * @param rect Scissor rectangle
+	 * @param scissor Scissor rectangle
 	 */
-	public ViewportStageBuilder<R> scissor(Rectangle rect) {
-		scissors.add(new VkRect2D(rect));
+	public ViewportStageBuilder scissor(Rectangle scissor) {
+		// Copy offset
+		final VkOffset2D offset = new VkOffset2D();
+		offset.x = scissor.x();
+		offset.y = scissor.y();
+
+		// Copy extent
+		final VkExtent2D extent = new VkExtent2D();
+		extent.width = scissor.width();
+		extent.width = scissor.height();
+
+		// Create rectangle
+		final VkRect2D rect = new VkRect2D();
+		rect.offset = offset;
+		rect.extent = extent;
+
+		// Add scissor rectangle
+		scissors.add(rect);
+
 		return this;
 	}
-
-	// TODO
-	// - what does multiple viewports actually do?
-	// - have to have same number of scissors as viewports? or none?
-	// - add auto method for scissor = last viewport?
 
 	/**
 	 * Constructs this viewport stage.

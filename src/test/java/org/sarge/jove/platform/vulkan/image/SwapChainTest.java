@@ -18,15 +18,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
-import org.sarge.jove.platform.vulkan.image.SwapChain;
-import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -72,7 +71,7 @@ public class SwapChainTest {
 	void present() {
 		// Present to queue
 		final Queue queue = mock(Queue.class);
-		when(queue.handle()).thenReturn(new Pointer(42));
+		when(queue.handle()).thenReturn(new Handle(new Pointer(42)));
 		chain.present(queue);
 
 		// Check API
@@ -110,7 +109,7 @@ public class SwapChainTest {
 		void before() {
 			// Create surface
 			surface = mock(Surface.class);
-			when(surface.handle()).thenReturn(new Pointer(42));
+			when(surface.handle()).thenReturn(new Handle(new Pointer(42)));
 			when(surface.device()).thenReturn(dev);
 			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR));
 
@@ -176,7 +175,7 @@ public class SwapChainTest {
 			assertEquals(null, info.oldSwapchain);
 
 			// Check view allocation
-			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), eq(chain.handle()), isA(IntByReference.class), isA(Pointer[].class));
+			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), eq(new Pointer(42)), isA(IntByReference.class), isA(Pointer[].class));
 
 			// Check view
 			final View view = chain.images().get(0);

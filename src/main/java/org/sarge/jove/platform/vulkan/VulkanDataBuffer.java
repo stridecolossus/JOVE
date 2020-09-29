@@ -10,7 +10,6 @@ import java.util.Set;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.api.VulkanLibraryMemory;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.lib.collection.StrictSet;

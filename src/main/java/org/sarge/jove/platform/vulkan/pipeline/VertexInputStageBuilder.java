@@ -11,10 +11,13 @@ import org.sarge.jove.platform.vulkan.VkVertexInputAttributeDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputBindingDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.util.AbstractBuilder;
 import org.sarge.jove.util.StructureHelper;
 
-public class VertexInputStageBuilder<R> extends AbstractBuilder<R> {
+/**
+ * Builder for the vertex input pipeline stage descriptor.
+ * @author Sarge
+ */
+public class VertexInputStageBuilder extends AbstractPipelineStageBuilder {
 	private final List<VkVertexInputBindingDescription> bindings = new ArrayList<>();
 	private final List<VkVertexInputAttributeDescription> attributes = new ArrayList<>();
 
@@ -24,9 +27,11 @@ public class VertexInputStageBuilder<R> extends AbstractBuilder<R> {
 	 * @throws IllegalArgumentException for a duplicate binding index
 	 * @throws IllegalArgumentException for a duplicate attribute location index
 	 */
-	public VertexInputStageBuilder<R> binding(DataBuffer.Layout layout) {
+	public VertexInputStageBuilder binding(DataBuffer.Layout layout) {
 		// Add binding descriptor
-		if(bindings.stream().anyMatch(d -> d.binding == layout.binding())) throw new IllegalArgumentException("Duplicate binding index: " + layout.binding());
+		if(bindings.stream().anyMatch(d -> d.binding == layout.binding())) {
+			throw new IllegalArgumentException("Duplicate binding index: " + layout.binding());
+		}
 		final VkVertexInputBindingDescription binding = new VkVertexInputBindingDescription();
 		binding.binding = layout.binding();
 		binding.stride = layout.stride();
@@ -36,7 +41,9 @@ public class VertexInputStageBuilder<R> extends AbstractBuilder<R> {
 		// Add attribute descriptors
 		for(DataBuffer.Layout.Attribute attribute : layout.attributes()) {
 			// Check location
-			if(attributes.stream().anyMatch(attr -> attr.location == attribute.location())) throw new IllegalArgumentException("Duplicate attribute location: " + attribute.location());
+			if(attributes.stream().anyMatch(attr -> attr.location == attribute.location())) {
+				throw new IllegalArgumentException("Duplicate attribute location: " + attribute.location());
+			}
 
 			// Determine Vulkan format for this attribute
 			final Vertex.Component component = attribute.component();
@@ -58,6 +65,11 @@ public class VertexInputStageBuilder<R> extends AbstractBuilder<R> {
 		return this;
 	}
 
+	/**
+	 *
+	 * @param layout
+	 * @return
+	 */
 	private static VkVertexInputRate rate(DataBuffer.Layout layout) {
 		switch(layout.rate()) {
 		case VERTEX:		return VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX;

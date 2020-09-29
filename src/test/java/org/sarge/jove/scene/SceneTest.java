@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.common.ScreenCoordinate;
+import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.material.Material;
@@ -22,7 +22,7 @@ public class SceneTest {
 
 	@BeforeEach
 	public void before() {
-		final Rectangle rect = new Rectangle(new ScreenCoordinate(0, 0), new Dimensions(640, 480));
+		final Rectangle rect = new Rectangle(new Coordinate(0, 0), new Dimensions(640, 480));
 		viewport = new Viewport(rect, 1, 100, Projection.DEFAULT);
 		scene = new Scene(viewport);
 	}

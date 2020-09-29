@@ -1,23 +1,22 @@
 package org.sarge.jove.platform;
 
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.jove.util.Check.notEmpty;
+import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.jove.util.Check.oneOrMore;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * A <i>monitor</i> describes a physical monitor attached to this system.
  */
-public final class Monitor extends AbstractEqualsObject {
+public final class Monitor {
 	/**
 	 * Display mode.
 	 */
-	public static final class DisplayMode extends AbstractEqualsObject {
+	public static final class DisplayMode { // TODO - record
 		private final Dimensions size;
 		private final int[] bits;
 		private final int refresh;

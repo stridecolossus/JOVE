@@ -6,7 +6,7 @@ import org.sarge.jove.util.Check;
  * 2D rectangle.
  * @author Sarge
  */
-public record Rectangle(ScreenCoordinate pos, Dimensions size) {
+public record Rectangle(Coordinate pos, Dimensions size) {
 	/**
 	 * Constructor.
 	 * @param pos Position
@@ -18,6 +18,14 @@ public record Rectangle(ScreenCoordinate pos, Dimensions size) {
 	}
 
 	/**
+	 * Constructor for a rectangle at the {@link Coordinate#ORIGIN}.
+	 * @param dim Rectangle dimensions
+	 */
+	public Rectangle(Dimensions dim) {
+		this(Coordinate.ORIGIN, dim);
+	}
+
+	/**
 	 * Constructor.
 	 * @param x
 	 * @param y
@@ -25,6 +33,22 @@ public record Rectangle(ScreenCoordinate pos, Dimensions size) {
 	 * @param height
 	 */
 	public Rectangle(int x, int y, int width, int height) {
-		this(new ScreenCoordinate(x, y), new Dimensions(width, height));
+		this(new Coordinate(x, y), new Dimensions(width, height));
+	}
+
+	public int x() {
+		return pos.x();
+	}
+
+	public int y() {
+		return pos.y();
+	}
+
+	public int width() {
+		return size.width();
+	}
+
+	public int height() {
+		return size.height();
 	}
 }

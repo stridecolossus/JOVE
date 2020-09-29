@@ -14,10 +14,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
+import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -44,7 +48,7 @@ public class PipelineTest {
 	@Test
 	void destroy() {
 		pipeline.destroy();
-		verify(lib).vkDestroyPipeline(dev.handle(), new Pointer(42), null);
+		verify(lib).vkDestroyPipeline(dev.handle(), new Handle(new Pointer(42)), null);
 	}
 
 	@Nested
@@ -55,13 +59,14 @@ public class PipelineTest {
 		@BeforeEach
 		void before() {
 			builder = new Pipeline.Builder(dev);
-			rect = new Rectangle(0, 0, 3, 4); // TODO - helper ctor
+			rect = new Rectangle(new Dimensions(3, 4));
 		}
 
 		@Test
 		void builders() {
 			assertNotNull(builder.input());
 			assertNotNull(builder.viewport());
+			assertNotNull(builder.shader());
 		}
 
 		@Test
@@ -71,6 +76,10 @@ public class PipelineTest {
 					.viewport()
 						.viewport(rect)
 						.scissor(rect)
+						.build()
+					.shader()
+						.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+						.shader(mock(Shader.class))
 						.build()
 					.build();
 
@@ -85,18 +94,46 @@ public class PipelineTest {
 			// Check descriptor
 			final VkGraphicsPipelineCreateInfo info = captor.getValue()[0];
 			assertNotNull(info);
+			assertEquals(null, info.basePipelineHandle);
+			assertEquals(-1, info.basePipelineIndex);
+			assertEquals(0, info.flags);
+
+			// Check render pass
+			// TODO
+			assertEquals(0, info.subpass);
+
+			// Check mandatory stage descriptors
 			assertNotNull(info.pVertexInputState);
+			assertNotNull(info.pViewportState);
+
+			// Check shader stage descriptor
+			assertEquals(1, info.stageCount);
+			assertNotNull(info.pStages);
+		}
+
+		private void addShaderStage() {
+			builder
+				.shader()
+				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+				.shader(mock(Shader.class))
+				.build();
 		}
 
 		@Test
 		void buildRequiresVertexShaderStage() {
-			builder.viewport().viewport(rect).scissor(rect).build();
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
 		@Test
 		void buildRequiresViewportStage() {
+			addShaderStage();
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void duplicateShaderStage() {
+			addShaderStage();
+			assertThrows(IllegalArgumentException.class, () -> addShaderStage());
 		}
 	}
 }

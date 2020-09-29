@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.common.ScreenCoordinate;
+import org.sarge.jove.common.Coordinate;
 
 public class ViewportTest {
 	private Viewport viewport;
@@ -19,7 +19,7 @@ public class ViewportTest {
 
 	@BeforeEach
 	public void before() {
-		rect = new Rectangle(new ScreenCoordinate(0, 0), new Dimensions(640, 480));
+		rect = new Rectangle(new Coordinate(0, 0), new Dimensions(640, 480));
 		projection = mock(Projection.class);
 		when(projection.height(rect.size())).thenReturn(100f);
 		viewport = new Viewport(rect, 1, 2, projection);

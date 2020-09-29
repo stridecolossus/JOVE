@@ -17,13 +17,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
@@ -219,11 +218,10 @@ class CommandTest {
 
 		@Test
 		void free() {
-			final var buffers = pool.allocate(1, true);
-			final Command.Buffer b = buffers.iterator().next();
+			final var buffer = pool.allocate();
 			pool.free();
 			assertEquals(0, pool.buffers().count());
-			verify(lib).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, new Pointer[]{b.handle()});
+			verify(lib).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, new Handle[]{buffer.handle()});
 		}
 
 		@Test
