@@ -65,11 +65,11 @@
 	</properties>
 	
 	<dependencies>
-		<dependency>
-			<groupId>org.sarge.lib</groupId>
-			<artifactId>lib</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.sarge.lib</groupId> -->
+<!-- 			<artifactId>lib</artifactId> -->
+<!-- 			<version>1.0.0-SNAPSHOT</version> -->
+<!-- 		</dependency> -->
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>

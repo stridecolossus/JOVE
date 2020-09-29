@@ -1,39 +1,21 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.util.Check.zeroOrMore;
-
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Viewport or window dimensions.
  * @author Sarge
  */
-public final class Dimensions extends AbstractEqualsObject {
-	public final int width, height;
-
+public record Dimensions(int width, int height) {
 	/**
 	 * Constructor.
 	 * @param width 	Width
 	 * @param height	Height
 	 */
-	public Dimensions(int width, int height) {
-		this.width = zeroOrMore(width);
-		this.height = zeroOrMore(height);
-	}
-
-	/**
-	 * @return Width
-	 */
-	public int width() {
-		return width;
-	}
-
-	/**
-	 * @return Height
-	 */
-	public int height() {
-		return height;
+	public Dimensions {
+		Check.zeroOrMore(width);
+		Check.zeroOrMore(height);
 	}
 
 	/**

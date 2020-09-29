@@ -6,6 +6,8 @@ import java.util.Arrays;
 
 import org.sarge.jove.platform.Resource;
 import org.sarge.jove.platform.Resource.PointerHandle;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.lib.util.AbstractEqualsObject;
 import org.sarge.lib.util.AbstractObject;
 

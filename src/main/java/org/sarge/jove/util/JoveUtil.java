@@ -2,8 +2,6 @@ package org.sarge.jove.util;
 
 import java.util.function.Function;
 
-import org.sarge.lib.util.Converter;
-
 /**
  * JOVE utility methods.
  * @author Sarge

@@ -1,18 +1,15 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
-
 import java.util.Optional;
 
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.AbstractObject;
 
 /**
  * Bounding volume defined by a simple sphere.
  * @author Sarge
  */
-public class SphereVolume extends AbstractObject implements BoundingVolume {
+public record SphereVolume(Point centre, float radius) implements BoundingVolume {
 	/**
 	 * Creates a sphere volume from the given extents.
 	 * @param extents Extents
@@ -23,31 +20,14 @@ public class SphereVolume extends AbstractObject implements BoundingVolume {
 		return new SphereVolume(extents.centre(), radius);
 	}
 
-	private final Point centre;
-	private final float radius;
-
 	/**
 	 * Constructor.
 	 * @param centre Sphere centre
 	 * @param radius Radius
 	 */
-	public SphereVolume(Point centre, float radius) {
-		this.centre = notNull(centre);
-		this.radius = zeroOrMore(radius);
-	}
-
-	/**
-	 * @return Centre-point of this sphere
-	 */
-	public Point centre() {
-		return centre;
-	}
-
-	/**
-	 * @return Sphere radius
-	 */
-	public float radius() {
-		return radius;
+	public SphereVolume {
+		Check.notNull(centre);
+		Check.zeroOrMore(radius);
 	}
 
 	@Override

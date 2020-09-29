@@ -1,15 +1,13 @@
 package org.sarge.jove.common;
 
 import java.util.Collection;
-
-import org.sarge.lib.collection.StrictSet;
-import org.sarge.lib.util.AbstractObject;
+import java.util.HashSet;
 
 /**
  * A <i>frame</i> is a model for frame statistics.
  * @author Sarge
  */
-public class Frame extends AbstractObject {
+public class Frame {
 	/**
 	 * Listener for frame updates.
 	 */
@@ -28,7 +26,7 @@ public class Frame extends AbstractObject {
 	private int rate;
 	private int count;
 
-	private final Collection<Listener> listeners = new StrictSet<>();
+	private final Collection<Listener> listeners = new HashSet<>();
 
 	/**
 	 * Constructor.

@@ -1,46 +1,28 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import java.util.Arrays;
 
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Volume extents represented by min/max bounds.
  * @author Sarge
  */
-public final class Extents extends AbstractEqualsObject {
+public record Extents(Point min, Point max) {
 	/**
 	 * Empty extents.
 	 */
 	public static final Extents EMPTY = new Extents(Point.ORIGIN, Point.ORIGIN);
-
-	private final Point min, max;
 
 	/**
 	 * Constructor.
 	 * @param min Minimum extents
 	 * @param max Maximum extents
 	 */
-	public Extents(Point min, Point max) {
-		this.min = notNull(min);
-		this.max = notNull(max);
-	}
-
-	/**
-	 * @return Minimum extent
-	 */
-	public Point min() {
-		return min;
-	}
-
-	/**
-	 * @return Maximum extent
-	 */
-	public Point max() {
-		return max;
+	public Extents {
+		Check.notNull(min);
+		Check.notNull(max);
 	}
 
 	/**

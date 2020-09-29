@@ -1,16 +1,14 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Optional;
-
-import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Bounding volume defined by an axis-aligned box.
  * @author Sarge
  */
-public final class BoundingBox extends AbstractEqualsObject implements BoundingVolume {
+public final class BoundingBox implements BoundingVolume {
 	private final Point min, max;
 
 	/**

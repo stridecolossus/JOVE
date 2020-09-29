@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Frame.Listener;
-import org.sarge.lib.util.Util;
 
 public class FrameTest {
 	private Frame frame;
@@ -26,11 +25,11 @@ public class FrameTest {
 	}
 
 	@Test
-	public void update() {
+	public void update() throws InterruptedException {
 		final long end = System.currentTimeMillis() + 1000;
 		int count = 0;
 		while(true) {
-			Util.kip(100);
+			Thread.sleep(100);
 			frame.update();
 			assertTrue(frame.elapsed() > 0);
 			++count;

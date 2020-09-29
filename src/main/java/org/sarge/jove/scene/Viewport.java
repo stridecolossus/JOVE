@@ -30,8 +30,8 @@ public final class Viewport extends AbstractObject {
 		this.near = zeroOrMore(near);
 		this.far = zeroOrMore(far);
 		this.projection = notNull(projection);
-		this.height = projection.height(rect.dimensions());
-		this.width = height * rect.dimensions().ratio();
+		this.height = projection.height(rect.size());
+		this.width = height * rect.size().ratio();
 	}
 
 	/**
@@ -80,6 +80,6 @@ public final class Viewport extends AbstractObject {
 	 * @return Projection matrix for this viewport
 	 */
 	public Matrix matrix() {
-		return projection.matrix(near, far, rect.dimensions());
+		return projection.matrix(near, far, rect.size());
 	}
 }

@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
@@ -14,7 +14,10 @@ import java.util.function.Consumer;
 import org.sarge.jove.material.Shader;
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.Resource.PointerHandle;
-import org.sarge.jove.platform.vulkan.View.VulkanSampler;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.image.View.VulkanSampler;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
 

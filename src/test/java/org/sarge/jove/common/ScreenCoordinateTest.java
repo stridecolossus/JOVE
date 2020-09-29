@@ -15,8 +15,8 @@ public class ScreenCoordinateTest {
 
 	@Test
 	public void constructor() {
-		assertEquals(1, coords.x);
-		assertEquals(2, coords.y);
+		assertEquals(1, coords.x());
+		assertEquals(2, coords.y());
 	}
 
 	@Test

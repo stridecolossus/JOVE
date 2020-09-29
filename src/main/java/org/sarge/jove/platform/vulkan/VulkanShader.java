@@ -1,11 +1,13 @@
 package org.sarge.jove.platform.vulkan;
 
-import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import org.sarge.jove.platform.vulkan.api.VulkanLibraryShader;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.BufferFactory;
 
 import com.sun.jna.Pointer;

@@ -1,13 +1,12 @@
 package org.sarge.jove.platform;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.lib.util.AbstractEqualsObject;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.NativeMapped;

@@ -1,25 +1,20 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.util.Check.notNull;
-
-import org.sarge.lib.util.AbstractEqualsObject;
+import org.sarge.jove.util.Check;
 
 /**
  * 2D rectangle.
  * @author Sarge
  */
-public final class Rectangle extends AbstractEqualsObject {
-	private final ScreenCoordinate pos;
-	private final Dimensions dim;
-
+public record Rectangle(ScreenCoordinate pos, Dimensions size) {
 	/**
 	 * Constructor.
 	 * @param pos Position
 	 * @param dim Dimensions
 	 */
-	public Rectangle(ScreenCoordinate pos, Dimensions dim) {
-		this.pos = notNull(pos);
-		this.dim = notNull(dim);
+	public Rectangle {
+		Check.notNull(pos);
+		Check.notNull(size);
 	}
 
 	/**
@@ -31,24 +26,5 @@ public final class Rectangle extends AbstractEqualsObject {
 	 */
 	public Rectangle(int x, int y, int width, int height) {
 		this(new ScreenCoordinate(x, y), new Dimensions(width, height));
-	}
-
-	/**
-	 * @return Position
-	 */
-	public ScreenCoordinate position() {
-		return pos;
-	}
-
-	/**
-	 * @return Dimensions
-	 */
-	public Dimensions dimensions() {
-		return dim;
-	}
-
-	@Override
-	public String toString() {
-		return pos + "(" + dim + ")";
 	}
 }

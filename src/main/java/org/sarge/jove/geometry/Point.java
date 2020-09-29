@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
+import org.sarge.jove.util.Converter;
 import org.sarge.jove.util.JoveUtil;
-import org.sarge.lib.util.Converter;
 
 /**
  * Point in 3D space.

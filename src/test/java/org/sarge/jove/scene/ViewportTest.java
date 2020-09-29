@@ -21,7 +21,7 @@ public class ViewportTest {
 	public void before() {
 		rect = new Rectangle(new ScreenCoordinate(0, 0), new Dimensions(640, 480));
 		projection = mock(Projection.class);
-		when(projection.height(rect.dimensions())).thenReturn(100f);
+		when(projection.height(rect.size())).thenReturn(100f);
 		viewport = new Viewport(rect, 1, 2, projection);
 	}
 
@@ -38,6 +38,6 @@ public class ViewportTest {
 	@Test
 	public void matrix() {
 		viewport.matrix();
-		verify(projection).matrix(1, 2, rect.dimensions());
+		verify(projection).matrix(1, 2, rect.size());
 	}
 }

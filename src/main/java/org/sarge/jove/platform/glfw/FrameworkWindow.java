@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.glfw;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Map;
 import java.util.function.Supplier;

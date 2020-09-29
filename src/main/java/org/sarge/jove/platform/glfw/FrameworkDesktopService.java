@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.glfw;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +16,6 @@ import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkLibrary.ErrorCallback;
 import org.sarge.jove.platform.glfw.FrameworkLibraryMonitor.FrameworkDisplayMode;
 import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.lib.util.AbstractObject;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -28,7 +27,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @see <a href="https://www.glfw.org/docs/latest/index.html">GLFW documentation</a>
  * @see <a href="https://github.com/badlogic/jglfw/blob/master/jglfw/jni/glfw-3.0/include/GL/glfw3.h">C header</a>
  */
-public class FrameworkDesktopService extends AbstractObject implements DesktopService {
+public class FrameworkDesktopService implements DesktopService {
 	/**
 	 * Creates the GLFW desktop service.
 	 * @return New desktop service

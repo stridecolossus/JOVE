@@ -1,38 +1,19 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-
-import org.sarge.lib.util.AbstractEqualsObject;
+import org.sarge.jove.util.Check;
 
 /**
  * Projection ray.
  * @author Sarge
  */
-public final class Ray extends AbstractEqualsObject {
-	private final Point origin;
-	private final Vector dir;
-
+public record Ray(Point origin, Vector direction) {
 	/**
 	 * Constructor.
 	 * @param origin		Ray origin
-	 * @param dir			Direction vector
+	 * @param direction		Direction vector
 	 */
-	public Ray(Point origin, Vector dir) {
-		this.origin = notNull(origin);
-		this.dir = notNull(dir);
-	}
-
-	/**
-	 * @return Ray origin
-	 */
-	public Point origin() {
-		return origin;
-	}
-
-	/**
-	 * @return Ray direction
-	 */
-	public Vector direction() {
-		return dir;
+	public Ray {
+		Check.notNull(origin);
+		Check.notNull(direction);
 	}
 }

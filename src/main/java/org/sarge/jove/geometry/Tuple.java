@@ -6,8 +6,8 @@ import java.util.function.UnaryOperator;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.util.Converter;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Converter;
 
 /**
  * Base-class for geometry with an XYZ tuple.

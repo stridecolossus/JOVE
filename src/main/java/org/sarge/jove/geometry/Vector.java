@@ -1,9 +1,9 @@
 package org.sarge.jove.geometry;
 
+import org.sarge.jove.util.Converter;
 import org.sarge.jove.util.JoveUtil;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.jove.util.Randomiser;
-import org.sarge.lib.util.Converter;
 
 /**
  * A <i>vector</i> is a direction in 3D space.

@@ -1,10 +1,9 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.AbstractEqualsObject;
 
 /**
  * Counter-clockwise rotation about an arbitrary axis.
@@ -44,7 +43,7 @@ public interface Rotation {
 	/**
 	 * Mutable implementation.
 	 */
-	class MutableRotation extends AbstractEqualsObject implements Rotation, Transform {
+	class MutableRotation implements Rotation, Transform {
 		private final Vector axis;
 		private float angle;
 

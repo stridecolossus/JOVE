@@ -1,13 +1,13 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.jove.util.Check.oneOrMore;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>matrix</i> is a 2D square array used for geometry transformation and projection.

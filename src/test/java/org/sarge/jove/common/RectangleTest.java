@@ -15,8 +15,8 @@ public class RectangleTest {
 
 	@Test
 	public void constructor() {
-		assertEquals(new ScreenCoordinate(1, 2), rect.position());
-		assertEquals(new Dimensions(3, 4), rect.dimensions());
+		assertEquals(new ScreenCoordinate(1, 2), rect.pos());
+		assertEquals(new Dimensions(3, 4), rect.size());
 	}
 
 	@Test

@@ -1,14 +1,12 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-
-import org.sarge.lib.util.AbstractEqualsObject;
+import org.sarge.jove.util.Check;
 
 /**
  * Plane in 3D space.
  * @author Sarge
  */
-public final class Plane extends AbstractEqualsObject {
+public record Plane(Vector normal, float dist) {
 	/**
 	 * Sides of a plane.
 	 */
@@ -47,28 +45,17 @@ public final class Plane extends AbstractEqualsObject {
 		return new Plane(normal, -pt.dot(normal));
 	}
 
-	private final Vector normal;
-	private final float dist;
-
 	/**
 	 * Constructor.
 	 * @param normal		Plane normal
 	 * @param dist			Distance of the plane from the origin
 	 */
-	public Plane(Vector normal, float dist) {
-		this.normal = notNull(normal);
-		this.dist = dist;
+	public Plane {
+		Check.notNull(normal);
 	}
 
 	/**
-	 * @return Plane normal
-	 */
-	public Vector normal() {
-		return normal;
-	}
-
-	/**
-	 * @return Distance of this plane from the origin
+	 * @return Distance of the plane from the origin
 	 */
 	public float distance() {
 		return dist;

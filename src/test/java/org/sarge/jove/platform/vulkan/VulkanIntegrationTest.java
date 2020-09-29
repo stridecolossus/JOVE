@@ -7,7 +7,17 @@ import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
-import org.sarge.jove.platform.vulkan.PhysicalDevice.QueueFamily;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.ValidationLayer;
+import org.sarge.jove.platform.vulkan.core.Instance;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.MessageHandler;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
+import org.sarge.jove.platform.vulkan.core.Surface;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
+import org.sarge.jove.platform.vulkan.image.SwapChain;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
+import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -92,6 +102,13 @@ public class VulkanIntegrationTest {
 				.format(format)
 				.count(2)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				.build();
+
+		// Create pipeline
+		final Pipeline pipeline = new Pipeline.Builder(dev)
+				.input()
+					.binding(null) // TODO
+					.build()
 				.build();
 
 		//////////////

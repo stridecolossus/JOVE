@@ -73,7 +73,7 @@ public class LightTest {
 
 		@Test
 		public void positionInvalid() {
-			assertThrows(IllegalArgumentException.class, () -> ambient.position(Point.ORIGIN));
+			assertThrows(IllegalArgumentException.class, () -> ambient.pos(Point.ORIGIN));
 		}
 
 		@Test

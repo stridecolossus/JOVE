@@ -11,6 +11,9 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.FrameState.FrameTracker.DefaultFrameTracker;
+import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 import com.sun.jna.Pointer;
 

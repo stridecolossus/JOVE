@@ -1,14 +1,14 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.util.Check.isPercentile;
+import static org.sarge.jove.util.Check.isPercentile;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.sarge.jove.util.Converter;
 import org.sarge.jove.util.JoveUtil;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Converter;
 
 /**
  * RGBA colour.

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
-import static org.sarge.jove.platform.vulkan.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
@@ -9,6 +9,10 @@ import java.util.Set;
 
 import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.IntegerEnumeration;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.api.VulkanLibraryMemory;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.lib.collection.StrictSet;
 
 import com.sun.jna.Pointer;

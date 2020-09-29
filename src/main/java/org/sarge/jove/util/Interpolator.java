@@ -1,6 +1,6 @@
 package org.sarge.jove.util;
 
-import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.jove.util.Check.notEmpty;
 
 import java.util.ArrayList;
 import java.util.Collections;

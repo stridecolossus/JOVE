@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.DescriptorSet.Layout;
 import org.sarge.jove.platform.vulkan.DescriptorSet.Pool;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;

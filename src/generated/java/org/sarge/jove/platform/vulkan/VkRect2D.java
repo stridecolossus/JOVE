@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.platform.vulkan.VulkanLibrary.VulkanStructure;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
@@ -32,8 +32,8 @@ public class VkRect2D extends VulkanStructure {
 	 * @param rect Rectangle
 	 */
 	public VkRect2D(Rectangle rect) {
-		offset = new VkOffset2D(rect.position());
-		extent = new VkExtent2D(rect.dimensions());
+		offset = new VkOffset2D(rect.pos());
+		extent = new VkExtent2D(rect.size());
 	}
 
 	/**
