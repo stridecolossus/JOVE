@@ -12,20 +12,15 @@ import org.sarge.jove.util.StructureHelper;
  * Builder for the colour-blend pipeline stage.
  * @author Sarge
  */
-public class ColourBlendStageBuilder extends AbstractPipelineStageBuilder {
-	/**
-	 * Helper - Creates a new default colour-blend descriptor.
-	 * @return New descriptor
-	 */
-	static VkPipelineColorBlendStateCreateInfo create() {
-		return new ColourBlendStageBuilder().buildLocal();
-	}
-
+public class ColourBlendStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
 	private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
 	private VkPipelineColorBlendAttachmentState current;
 
-	public ColourBlendStageBuilder() {
-		attachment();
+	/**
+	 * Constructor.
+	 */
+	ColourBlendStageBuilder() {
+		attachment().enabled(false);
 	}
 
 	/**
@@ -53,7 +48,8 @@ public class ColourBlendStageBuilder extends AbstractPipelineStageBuilder {
 	 * Constructs the colour-blend stage descriptor.
 	 * @return New descriptor
 	 */
-	public VkPipelineColorBlendStateCreateInfo buildLocal() {
+	@Override
+	protected VkPipelineColorBlendStateCreateInfo result() {
 		// Create descriptor
 		final var info = new VkPipelineColorBlendStateCreateInfo();
 
@@ -65,6 +61,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineStageBuilder {
 		// TODO
 		// info.logicOp
 		// info.logicOpEnable
+		// blend constants array (zero)
 
 		return info;
 	}

@@ -1,18 +1,32 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
+import static org.sarge.jove.util.Check.notNull;
 
 /**
  * Base-class for a pipeline stage builder.
- * TODO
+ * @param <T> Return type
  * @author Sarge
  */
-abstract class AbstractPipelineStageBuilder {
+abstract class AbstractPipelineStageBuilder<T> {
+	private Pipeline.Builder parent;
+
+	/**
+	 * Sets the parent builder.
+	 * @param parent Parent builder
+	 */
+	protected void parent(Pipeline.Builder parent) {
+		this.parent = notNull(parent);
+	}
+
+	/**
+	 * @return Result of this builder
+	 */
+	protected abstract T result();
+
 	/**
 	 * Completes construction.
-	 * @throws UnsupportedOperationException by default
 	 */
-	public Builder build() {
-		throw new UnsupportedOperationException();
+	public Pipeline.Builder build() {
+		return parent;
 	}
 }

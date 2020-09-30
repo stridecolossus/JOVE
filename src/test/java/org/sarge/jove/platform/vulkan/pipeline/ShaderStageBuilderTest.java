@@ -25,13 +25,15 @@ public class ShaderStageBuilderTest {
 	}
 
 	@Test
-	void build() {
+	void create() {
+		// Create a shader stage
 		final var info = builder
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 				.name("name")
 				.shader(shader)
-				.buildLocal();
+				.result();
 
+		// Check descriptor
 		assertNotNull(info);
 		assertEquals("name", info.pName);
 		assertEquals(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT, info.stage);

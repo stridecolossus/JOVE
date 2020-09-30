@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
@@ -49,9 +50,9 @@ public class VkGraphicsPipelineCreateInfo extends VulkanStructure {
 	public VkPipelineDepthStencilStateCreateInfo pDepthStencilState;
 	public VkPipelineColorBlendStateCreateInfo pColorBlendState;
 	public VkPipelineDynamicStateCreateInfo pDynamicState;
-	public Pointer layout;
-	public Pointer renderPass;
+	public Handle layout;
+	public Handle renderPass;
 	public int subpass;
-	public Pointer basePipelineHandle;
+	public Handle basePipelineHandle;
 	public int basePipelineIndex;
 }

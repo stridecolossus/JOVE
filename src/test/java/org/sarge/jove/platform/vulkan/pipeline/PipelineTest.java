@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -19,29 +18,16 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.Shader;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
-public class PipelineTest {
+public class PipelineTest extends AbstractVulkanTest {
 	private Pipeline pipeline;
-	private LogicalDevice dev;
-	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Create API
-		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
-
-		// Create device
-		dev = mock(LogicalDevice.class);
-		when(dev.library()).thenReturn(lib);
-
-		// Create pipeline
 		pipeline = new Pipeline(new Pointer(42), dev);
 	}
 
@@ -65,8 +51,11 @@ public class PipelineTest {
 		@Test
 		void builders() {
 			assertNotNull(builder.input());
+			assertNotNull(builder.assembly());
 			assertNotNull(builder.viewport());
 			assertNotNull(builder.shader());
+			assertNotNull(builder.rasterizer());
+			assertNotNull(builder.blend());
 		}
 
 		@Test
@@ -104,7 +93,10 @@ public class PipelineTest {
 
 			// Check mandatory stage descriptors
 			assertNotNull(info.pVertexInputState);
+			assertNotNull(info.pInputAssemblyState);
 			assertNotNull(info.pViewportState);
+			assertNotNull(info.pRasterizationState);
+			assertNotNull(info.pColorBlendState);
 
 			// Check shader stage descriptor
 			assertEquals(1, info.stageCount);

@@ -11,7 +11,7 @@ import org.sarge.jove.util.Check;
 /**
  * Builder for a shader stage.
  */
-public class ShaderStageBuilder extends AbstractPipelineStageBuilder {
+class ShaderStageBuilder extends AbstractPipelineStageBuilder<VkPipelineShaderStageCreateInfo> {
 	private VkShaderStageFlag stage;
 	private Shader shader;
 	private String name = "main";
@@ -36,7 +36,7 @@ public class ShaderStageBuilder extends AbstractPipelineStageBuilder {
 
 	/**
 	 * Sets the shader entry-point.
-	 * @param name Entry-point name
+	 * @param name Entry-point name (default is <code>main</code>)
 	 */
 	public ShaderStageBuilder name(String name) {
 		this.name = notEmpty(name);
@@ -47,7 +47,8 @@ public class ShaderStageBuilder extends AbstractPipelineStageBuilder {
 	 * Constructs the descriptor for this shader stage.
 	 * @return New shader stage descriptor
 	 */
-	protected VkPipelineShaderStageCreateInfo buildLocal() {
+	@Override
+	protected VkPipelineShaderStageCreateInfo result() {
 		Check.notNull(stage);
 		Check.notNull(shader);
 

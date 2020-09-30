@@ -25,7 +25,7 @@ public class VkPipelineColorBlendStateCreateInfo extends VulkanStructure impleme
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
-	public VulkanBoolean logicOpEnable = VulkanBoolean.FALSE;
+	public VulkanBoolean logicOpEnable;
 	public VkLogicOp logicOp;
 	public int attachmentCount;
 	public Pointer pAttachments;

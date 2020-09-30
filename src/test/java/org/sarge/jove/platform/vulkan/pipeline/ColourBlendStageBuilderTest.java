@@ -15,12 +15,12 @@ public class ColourBlendStageBuilderTest {
 	}
 
 	@Test
-	void build() {
+	void create() {
 		// Build descriptor
 		final var info = builder
 				.attachment()
-				.enabled(false)
-				.buildLocal();
+				.enabled(true)
+				.result();
 
 		// Check descriptor
 		assertNotNull(info);

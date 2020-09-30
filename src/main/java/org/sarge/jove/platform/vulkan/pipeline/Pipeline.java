@@ -10,11 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkPipelineInputAssemblyStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Command;
@@ -65,12 +61,22 @@ public class Pipeline {
 	 * Builder for a pipeline.
 	 */
 	public static class Builder {
+		// Properties
 		private final LogicalDevice dev;
-//		private Layout layout;
+		private PipelineLayout.Builder layout;
 //		private RenderPass pass;
-		private final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
 		private final Map<VkShaderStageFlag, VkPipelineShaderStageCreateInfo> shaders = new HashMap<>();
-		// TODO - these should be cleared at build()?
+
+		// Fixed function builders
+		private final VertexInputStageBuilder input = new VertexInputStageBuilder();
+		private final InputAssemblyStageBuilder assembly = new InputAssemblyStageBuilder();
+		// TODO - tessellation
+		private final ViewportStageBuilder viewport = new ViewportStageBuilder();
+		private final RasterizerStageBuilder raster = new RasterizerStageBuilder();
+		// TODO - multi sample
+		// TODO - depth stencil
+		private final ColourBlendStageBuilder blend = new ColourBlendStageBuilder();
+		// TODO - dynamic
 
 		/**
 		 * Constructor.
@@ -78,58 +84,63 @@ public class Pipeline {
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
-			this.pipeline.pVertexInputState = new VkPipelineVertexInputStateCreateInfo();
-			this.pipeline.pInputAssemblyState = new VkPipelineInputAssemblyStateCreateInfo();
-			this.pipeline.pRasterizationState = new VkPipelineRasterizationStateCreateInfo();
-			this.pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo();
-			this.pipeline.pColorBlendState = ColourBlendStageBuilder.create();
+			this.layout = new PipelineLayout.Builder(dev);
+			init();
+		}
+
+		/**
+		 * Initialises the nested builders.
+		 */
+		private void init() {
+			layout.parent(this);
+			input.parent(this);
+			assembly.parent(this);
+			viewport.parent(this);
+			raster.parent(this);
+			blend.parent(this);
+		}
+
+		/**
+		 * @return Builder for the pipeline layout
+		 */
+		public PipelineLayout.Builder layout() {
+			return layout;
 		}
 
 		/**
 		 * @return Builder for the vertex input stage
 		 */
 		public VertexInputStageBuilder input() {
-			return new VertexInputStageBuilder() {
-				@Override
-				public Builder build() {
-					pipeline.pVertexInputState = buildLocal();
-					return Builder.this;
-				}
-			};
+			return input;
 		}
 
-		// TODO - input assembly
-		// TODO - tesselation
+		/**
+		 * @return Builder for the input assembly stage
+		 */
+		public InputAssemblyStageBuilder assembly() {
+			return assembly;
+		}
 
 		/**
 		 * @return Builder for the viewport stage
 		 */
 		public ViewportStageBuilder viewport() {
-			return new ViewportStageBuilder() {
-				@Override
-				public Builder build() {
-					pipeline.pViewportState = buildLocal();
-					return Builder.this;
-				}
-			};
+			return viewport;
 		}
 
-		// TODO - rasterization, multisample, depth stencil
+		/**
+		 * @return Builder for the rasterizer stage
+		 */
+		public RasterizerStageBuilder rasterizer() {
+			return raster;
+		}
 
 		/**
 		 * @return Builder for the colour-blend stage
 		 */
 		public ColourBlendStageBuilder blend() {
-			return new ColourBlendStageBuilder() {
-				@Override
-				public Builder build() {
-					pipeline.pColorBlendState = buildLocal();
-					return Builder.this;
-				}
-			};
+			return blend;
 		}
-
-		// TODO - dynamic
 
 		/**
 		 * @return Builder for a shader stage
@@ -139,7 +150,7 @@ public class Pipeline {
 			return new ShaderStageBuilder() {
 				@Override
 				public Builder build() {
-					final var info = buildLocal();
+					final VkPipelineShaderStageCreateInfo info = super.result();
 					if(shaders.containsKey(info.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + info.stage);
 					shaders.put(info.stage, info);
 					return Builder.this;
@@ -155,24 +166,28 @@ public class Pipeline {
 		public Pipeline build() {
 			// Validate pipeline
 			if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalArgumentException("No vertex shader specified");
-			if(pipeline.pViewportState == null) throw new IllegalArgumentException("No viewport stage specified");
+			if(viewport == null) throw new IllegalArgumentException("No viewport stage specified");
 
-//			// Create default layout if required
-//			if(layout == null) {
-//				layout = new Layout.Builder(dev).build();
-//				// TODO - tracking
-//			}
-
-			// Init pipeline stages
-			pipeline.stageCount = shaders.size();
-			pipeline.pStages = StructureHelper.structures(shaders.values());
+			// Create descriptor
+			final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
 
 			// Init layout
-//			pipeline.layout = layout.handle();
+			pipeline.layout = layout.result().handle();
 
 			// Init render pass
 //			pipeline.renderPass = pass.handle();
 			pipeline.subpass = 0;		// TODO
+
+			// Init shader pipeline stages
+			pipeline.stageCount = shaders.size();
+			pipeline.pStages = StructureHelper.structures(shaders.values());
+
+			// Init fixed function pipeline stages
+			pipeline.pVertexInputState = input.result();
+			pipeline.pInputAssemblyState = assembly.result();
+			pipeline.pViewportState = viewport.result();
+			pipeline.pRasterizationState = raster.result();
+			pipeline.pColorBlendState = blend.result();
 
 			// TODO
 			pipeline.basePipelineHandle = null;

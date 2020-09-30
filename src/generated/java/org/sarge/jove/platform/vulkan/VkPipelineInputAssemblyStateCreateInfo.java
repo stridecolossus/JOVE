@@ -22,6 +22,6 @@ public class VkPipelineInputAssemblyStateCreateInfo extends VulkanStructure impl
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
-	public VkPrimitiveTopology topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	public VulkanBoolean primitiveRestartEnable = VulkanBoolean.FALSE;
+	public VkPrimitiveTopology topology;
+	public VulkanBoolean primitiveRestartEnable;
 }

@@ -15,12 +15,12 @@ public class VertexInputStageBuilderTest {
 	}
 
 	@Test
-	void build() {
+	void create() {
 		// Build descriptor
 		final var descriptor = builder
 				// TODO
 				//.binding(layout)
-				.buildLocal();
+				.result();
 
 		// Check descriptor
 		assertNotNull(descriptor);
@@ -32,8 +32,8 @@ public class VertexInputStageBuilderTest {
 	}
 
 	@Test
-	void buildEmpty() {
-		final var descriptor = builder.buildLocal();
+	void createEmpty() {
+		final var descriptor = builder.result();
 		assertNotNull(descriptor);
 		assertEquals(0, descriptor.vertexBindingDescriptionCount);
 		assertEquals(0, descriptor.vertexAttributeDescriptionCount);
@@ -42,12 +42,12 @@ public class VertexInputStageBuilderTest {
 	}
 
 	@Test
-	void buildDuplicateBindingIndex() {
+	void createDuplicateBindingIndex() {
 		// TODO
 	}
 
 	@Test
-	void buildAttributeLocation() {
+	void createAttributeLocation() {
 		// TODO
 	}
 }

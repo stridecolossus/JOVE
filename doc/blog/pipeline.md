@@ -2,32 +2,46 @@
 
 ```java
 public static class Builder {
+	// Properties
 	private final LogicalDevice dev;
-	private final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
+	private PipelineLayout.Builder layout;
 	private final Map<VkShaderStageFlag, VkPipelineShaderStageCreateInfo> shaders = new HashMap<>();
+
+	// Fixed function builders
+	private final VertexInputStageBuilder input = new VertexInputStageBuilder();
+	...
 
 	public Builder(LogicalDevice dev) {
 		this.dev = notNull(dev);
-	}
-
-	public ShaderStageBuilder shader() {
-		return new ShaderStageBuilder() {
-			@Override
-			public Builder build() {
-				final var info = buildLocal();
-				if(shaders.containsKey(info.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + info.stage);
-				shaders.put(info.stage, info);
-				return Builder.this;
-			}
-		};
+		init();
 	}
 	
+	private void init() {
+		layout.parent(this);
+		input.parent(this);
+		...
+	}
+
+	public VertexInputStageBuilder input() {
+		return input;
+	}
+
 	...
 	
 	public Pipeline build() {
-		// Init pipeline stages
+		// Create descriptor
+		final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
+
+		// Init layout
+		pipeline.layout = layout.result().handle();
+
+		// Init shader pipeline stages
 		pipeline.stageCount = shaders.size();
 		pipeline.pStages = StructureHelper.structures(shaders.values());
+
+		// Init fixed function pipeline stages
+		pipeline.pVertexInputState = input.result();
+		...
 
 		// Allocate pipeline
 		final VulkanLibrary lib = dev.library();
@@ -43,14 +57,11 @@ public static class Builder {
 # Nested Builder
 
 ```java
-public class ShaderStageBuilder extends AbstractPipelineStageBuilder {
-	...
-	
-	protected VkPipelineShaderStageCreateInfo buildLocal() {
-		final var info = new VkPipelineShaderStageCreateInfo();
-		info.stage = stage;
-		info.module = shader.handle();
-		info.pName = name;
+public class VertexInputStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo> {
+	@Override
+	protected VkPipelineVertexInputStateCreateInfo result() {
+		final var info = new VkPipelineVertexInputStateCreateInfo();
+		...
 		return info;
 	}
 }

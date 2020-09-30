@@ -30,14 +30,14 @@ public class VkPipelineRasterizationStateCreateInfo extends VulkanStructure impl
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
-	public VulkanBoolean depthClampEnable = VulkanBoolean.FALSE;
-	public VulkanBoolean rasterizerDiscardEnable = VulkanBoolean.FALSE;
-	public VkPolygonMode polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL;
-	public VkCullModeFlag cullMode = VkCullModeFlag.VK_CULL_MODE_BACK_BIT;
-	public VkFrontFace frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	public VulkanBoolean depthBiasEnable = VulkanBoolean.FALSE;
+	public VulkanBoolean depthClampEnable;
+	public VulkanBoolean rasterizerDiscardEnable;
+	public VkPolygonMode polygonMode;
+	public VkCullModeFlag cullMode;
+	public VkFrontFace frontFace;
+	public VulkanBoolean depthBiasEnable;
 	public float depthBiasConstantFactor;
 	public float depthBiasClamp;
 	public float depthBiasSlopeFactor;
-	public float lineWidth = 1;
+	public float lineWidth;
 }

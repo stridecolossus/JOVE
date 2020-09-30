@@ -20,12 +20,12 @@ public class ViewportStageBuilderTest {
 	}
 
 	@Test
-	void build() {
+	void create() {
 		// Build descriptor
 		final var descriptor = builder
 				.viewport(rect)
 				.scissor(rect)
-				.buildLocal();
+				.result();
 
 		// Check descriptor
 		assertNotNull(descriptor);
@@ -37,13 +37,13 @@ public class ViewportStageBuilderTest {
 	}
 
 	@Test
-	void buildRequiresViewport() {
-		assertThrows(IllegalArgumentException.class, () -> builder.buildLocal());
+	void createRequiresViewport() {
+		assertThrows(IllegalArgumentException.class, () -> builder.result());
 	}
 
 	@Test
-	void buildRequiresScissor() {
+	void createRequiresScissor() {
 		builder.viewport(rect);
-		assertThrows(IllegalArgumentException.class, () -> builder.buildLocal());
+		assertThrows(IllegalArgumentException.class, () -> builder.result());
 	}
 }

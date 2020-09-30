@@ -108,12 +108,13 @@ public class VulkanIntegrationTest {
 		// Create pipeline
 		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
-				.input()
-					.binding(null) // TODO
-					.build()
 				.viewport()
 					.viewport(rect)
 					.scissor(rect)
+					.build()
+				.shader()
+					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+					.shader(null) // TODO
 					.build()
 				.build();
 

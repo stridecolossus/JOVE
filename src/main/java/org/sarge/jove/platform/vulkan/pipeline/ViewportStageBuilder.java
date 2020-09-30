@@ -1,8 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 
 import org.sarge.jove.common.Rectangle;
@@ -16,8 +14,8 @@ import org.sarge.jove.util.StructureHelper;
 /**
  * Builder for the viewport stage descriptor.
  */
-public class ViewportStageBuilder extends AbstractPipelineStageBuilder {
-	private final Deque<VkViewport> viewports = new ArrayDeque<>();
+public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
+	private final List<VkViewport> viewports = new ArrayList<>();
 	private final List<VkRect2D> scissors = new ArrayList<>();
 
 	/**
@@ -82,7 +80,8 @@ public class ViewportStageBuilder extends AbstractPipelineStageBuilder {
 	 * Constructs this viewport stage.
 	 * @return New viewport stage
 	 */
-	protected VkPipelineViewportStateCreateInfo buildLocal() {
+	@Override
+	protected VkPipelineViewportStateCreateInfo result() {
 		// Add viewports
 		final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 		if(viewports.isEmpty()) throw new IllegalArgumentException("No viewports specified");
