@@ -5,16 +5,15 @@ import static org.sarge.jove.util.Check.isPercentile;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.Converter;
 import org.sarge.jove.util.JoveUtil;
-import org.sarge.jove.util.MathsUtil;
 
 /**
  * RGBA colour.
  * @author Sarge
  */
-public final class Colour implements Bufferable {
+public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
 	/**
 	 * Size of a colour.
 	 */
@@ -64,8 +63,6 @@ public final class Colour implements Bufferable {
 		return (pixel & MASK) * INV_MASK;
 	}
 
-	public final float r, g, b, a;
-
 	/**
 	 * Constructor.
 	 * @param r
@@ -74,11 +71,11 @@ public final class Colour implements Bufferable {
 	 * @param a
 	 * @throws IllegalArgumentException if the arguments are not valid 0..1 RGBA components
 	 */
-	public Colour(float r, float g, float b, float a) {
-		this.r = isPercentile(r);
-		this.g = isPercentile(g);
-		this.b = isPercentile(b);
-		this.a = isPercentile(a);
+	public Colour {
+		Check.isPercentile(red);
+		Check.isPercentile(green);
+		Check.isPercentile(blue);
+		Check.isPercentile(alpha);
 	}
 
 	/**
@@ -88,20 +85,27 @@ public final class Colour implements Bufferable {
 	 */
 	public Colour(float[] array) {
 		if((array.length < 3) || (array.length > 4)) throw new IllegalArgumentException("Expected RGBA array components");
-		r = isPercentile(array[0]);
-		g = isPercentile(array[1]);
-		b = isPercentile(array[2]);
+		red = isPercentile(array[0]);
+		green = isPercentile(array[1]);
+		blue = isPercentile(array[2]);
 		if(array.length == 4) {
-			a = isPercentile(array[3]);
+			alpha = isPercentile(array[3]);
 		}
 		else {
-			a = 1;
+			alpha = 1;
 		}
 	}
 
 	@Override
 	public void buffer(FloatBuffer buffer) {
-		buffer.put(r).put(g).put(b).put(a);
+		buffer.put(red).put(green).put(blue).put(alpha);
+	}
+
+	/**
+	 * @return This colour as an RGBA array of floating-point values
+	 */
+	public float[] toArray() {
+		return new float[]{red, green, blue, alpha};
 	}
 
 	/**
@@ -109,10 +113,10 @@ public final class Colour implements Bufferable {
 	 * @return Pixel value
 	 */
 	public int toPixel() {
-		final int a = scale(this.a);
-		final int r = scale(this.r);
-		final int g = scale(this.g);
-		final int b = scale(this.b);
+		final int a = scale(this.alpha);
+		final int r = scale(this.red);
+		final int g = scale(this.green);
+		final int b = scale(this.blue);
 		return (a << 24) | (r << 16) | (g << 8) | b;
 	}
 
@@ -121,29 +125,7 @@ public final class Colour implements Bufferable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if(obj == this) return true;
-		if(obj == null) return false;
-		if(obj instanceof Colour) {
-			final Colour that = (Colour) obj;
-			if(!MathsUtil.equals(this.r, that.r)) return false;
-			if(!MathsUtil.equals(this.g, that.g)) return false;
-			if(!MathsUtil.equals(this.b, that.b)) return false;
-			if(!MathsUtil.equals(this.a, that.a)) return false;
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		return HashCodeBuilder.reflectionHashCode(this);
-	}
-
-	@Override
 	public String toString() {
-		return Arrays.toString(new float[]{r, g, b, a});
+		return Arrays.toString(toArray());
 	}
 }

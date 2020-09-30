@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.platform.vulkan.VkExtent2D;
-import org.sarge.jove.platform.vulkan.VkOffset2D;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
+import org.sarge.jove.platform.vulkan.util.ExtentHelper;
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.StructureHelper;
 
 /**
@@ -23,6 +23,7 @@ public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelin
 	 * @param viewport 		Viewport rectangle
 	 * @param min			Minimum depth
 	 * @param max			Maximum depth
+	 * @throws IllegalArgumentException if the min/max values are not in the range 0..1
 	 */
 	public ViewportStageBuilder viewport(Rectangle rect, float min, float max) {
 		// Init viewport rectangle
@@ -33,8 +34,8 @@ public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelin
 		viewport.height = rect.height();
 
 		// Init min/max depth
-		viewport.minDepth = min;
-		viewport.maxDepth = max;
+		viewport.minDepth = Check.isPercentile(min);
+		viewport.maxDepth = Check.isPercentile(max);
 
 		// Add viewport
 		viewports.add(viewport);
@@ -55,24 +56,7 @@ public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelin
 	 * @param scissor Scissor rectangle
 	 */
 	public ViewportStageBuilder scissor(Rectangle scissor) {
-		// Copy offset
-		final VkOffset2D offset = new VkOffset2D();
-		offset.x = scissor.x();
-		offset.y = scissor.y();
-
-		// Copy extent
-		final VkExtent2D extent = new VkExtent2D();
-		extent.width = scissor.width();
-		extent.width = scissor.height();
-
-		// Create rectangle
-		final VkRect2D rect = new VkRect2D();
-		rect.offset = offset;
-		rect.extent = extent;
-
-		// Add scissor rectangle
-		scissors.add(rect);
-
+		scissors.add(ExtentHelper.of(scissor));
 		return this;
 	}
 

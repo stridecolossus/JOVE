@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.sarge.jove.util.TestHelper.assertFloatArrayEquals;
 import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import java.nio.FloatBuffer;
@@ -21,16 +22,16 @@ public class ColourTest {
 
 	@Test
 	public void constructor() {
-		assertEquals(0.1f, col.r, 0.0001f);
-		assertEquals(0.2f, col.g, 0.0001f);
-		assertEquals(0.3f, col.b, 0.0001f);
-		assertEquals(1.0f, col.a, 0.0001f);
+		assertEquals(0.1f, col.red(), 0.0001f);
+		assertEquals(0.2f, col.green(), 0.0001f);
+		assertEquals(0.3f, col.blue(), 0.0001f);
+		assertEquals(1.0f, col.alpha(), 0.0001f);
 	}
 
 	@Test
 	public void arrayConstructor() {
-		assertEquals(col, new Colour(new float[]{col.r, col.g, col.b, 1f}));
-		assertEquals(col, new Colour(new float[]{col.r, col.g, col.b}));
+		assertEquals(col, new Colour(new float[]{col.red(), col.green(), col.blue(), 1f}));
+		assertEquals(col, new Colour(new float[]{col.red(), col.green(), col.blue()}));
 	}
 
 	@Test
@@ -43,10 +44,16 @@ public class ColourTest {
 		final FloatBuffer buffer = FloatBuffer.allocate(4);
 		col.buffer(buffer);
 		buffer.flip();
-		assertFloatEquals(col.r, buffer.get());
-		assertFloatEquals(col.g, buffer.get());
-		assertFloatEquals(col.b, buffer.get());
-		assertFloatEquals(col.a, buffer.get());
+		assertFloatEquals(col.red(), buffer.get());
+		assertFloatEquals(col.green(), buffer.get());
+		assertFloatEquals(col.blue(), buffer.get());
+		assertFloatEquals(col.alpha(), buffer.get());
+	}
+
+	@Test
+	void toArray() {
+		final float[] array = col.toArray();
+		assertFloatArrayEquals(new float[]{0.1f, 0.2f, 0.3f, 1}, array);
 	}
 
 	@Test

@@ -6,13 +6,13 @@ import static org.sarge.jove.util.Check.notNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.StructureHelper;
@@ -23,18 +23,14 @@ import com.sun.jna.Pointer;
  * A <i>pipeline</i> specifies the sequence of operations for graphics rendering.
  * @author Sarge
  */
-public class Pipeline {
-	private final Handle handle;
-	private final LogicalDevice dev;
-
+public class Pipeline extends AbstractVulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle		Pipeline handle
 	 * @param dev			Device
 	 */
 	Pipeline(Pointer handle, LogicalDevice dev) {
-		this.handle = new Handle(handle);
-		this.dev = notNull(dev);
+		super(handle, dev, dev.library()::vkDestroyPipeline);
 	}
 
 	/**
@@ -42,19 +38,7 @@ public class Pipeline {
 	 * @return New bind pipeline command
 	 */
 	public Command bind() {
-		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, handle);
-	}
-
-	/**
-	 * Destroys this pipeline.
-	 */
-	public void destroy() {
-		dev.library().vkDestroyPipeline(dev.handle(), handle, null);
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, handle());
 	}
 
 	/**
@@ -63,9 +47,9 @@ public class Pipeline {
 	public static class Builder {
 		// Properties
 		private final LogicalDevice dev;
-		private PipelineLayout.Builder layout;
-//		private RenderPass pass;
+		private final PipelineLayout.Builder layout;
 		private final Map<VkShaderStageFlag, VkPipelineShaderStageCreateInfo> shaders = new HashMap<>();
+		private RenderPass pass;
 
 		// Fixed function builders
 		private final VertexInputStageBuilder input = new VertexInputStageBuilder();
@@ -108,6 +92,15 @@ public class Pipeline {
 		}
 
 		/**
+		 * Sets the render pass for this pipeline.
+		 * @param pass Render pass
+		 */
+		public Builder pass(RenderPass pass) {
+			this.pass = notNull(pass);
+			return this;
+		}
+
+		/**
 		 * @return Builder for the vertex input stage
 		 */
 		public VertexInputStageBuilder input() {
@@ -126,6 +119,15 @@ public class Pipeline {
 		 */
 		public ViewportStageBuilder viewport() {
 			return viewport;
+		}
+
+		/**
+		 * Convenience method to initialise the viewport stage to a single viewport/scissor with the given rectangle.
+		 * @param rect Viewport/scissor rectangle
+		 */
+		public Builder viewport(Rectangle rect) {
+			viewport.viewport(rect).scissor(rect);
+			return this;
 		}
 
 		/**
@@ -167,6 +169,7 @@ public class Pipeline {
 			// Validate pipeline
 			if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalArgumentException("No vertex shader specified");
 			if(viewport == null) throw new IllegalArgumentException("No viewport stage specified");
+			if(pass == null) throw new IllegalArgumentException("No render pass specified");
 
 			// Create descriptor
 			final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
@@ -175,7 +178,7 @@ public class Pipeline {
 			pipeline.layout = layout.result().handle();
 
 			// Init render pass
-//			pipeline.renderPass = pass.handle();
+			pipeline.renderPass = pass.handle();
 			pipeline.subpass = 0;		// TODO
 
 			// Init shader pipeline stages
@@ -188,6 +191,7 @@ public class Pipeline {
 			pipeline.pViewportState = viewport.result();
 			pipeline.pRasterizationState = raster.result();
 			pipeline.pColorBlendState = blend.result();
+			// TODO - check number of blend attachments = framebuffers
 
 			// TODO
 			pipeline.basePipelineHandle = null;

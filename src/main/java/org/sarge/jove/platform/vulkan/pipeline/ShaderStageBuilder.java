@@ -11,7 +11,7 @@ import org.sarge.jove.util.Check;
 /**
  * Builder for a shader stage.
  */
-class ShaderStageBuilder extends AbstractPipelineStageBuilder<VkPipelineShaderStageCreateInfo> {
+public class ShaderStageBuilder extends AbstractPipelineStageBuilder<VkPipelineShaderStageCreateInfo> {
 	private VkShaderStageFlag stage;
 	private Shader shader;
 	private String name = "main";

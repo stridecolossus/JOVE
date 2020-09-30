@@ -147,6 +147,43 @@ public final class Handle {
 void vkDestroyInstance(Handle instance, Handle allocator);
 ```
 
+# Vulkan Object
+
+```java
+public abstract class AbstractVulkanObject {
+	@FunctionalInterface
+	public interface Destructor {
+		/**
+		 * Destroys this object.
+		 * @param dev				Logical device
+		 * @param handle			Handle
+		 * @param allocator		Allocator
+		 */
+		void destroy(Handle dev, Handle handle, Handle allocator);
+	}
+
+	private Handle handle;
+	private final LogicalDevice dev;
+	private final Destructor destructor;
+
+	...
+
+	public synchronized void destroy() {
+		if(isDestroyed()) throw new IllegalStateException("Object has already been destroyed: " + this);
+		destructor.destroy(dev.handle(), handle, null);
+		handle = null;
+	}
+}
+```
+
+# Using Vulkan Object
+
+```java
+	Pipeline(Pointer handle, LogicalDevice dev) {
+		super(handle, dev, dev.library()::vkDestroyPipeline);
+	}
+```
+
 # Refactor message handler
 
 ```java
@@ -184,5 +221,68 @@ public static Shader create(LogicalDevice dev, byte[] code) {
 
 	// Create shader
 	return new Shader(shader.getValue(), dev);
+}
+```
+
+# Render Pass
+
+```java
+public class RenderPass extends AbstractVulkanObject {
+	RenderPass(Pointer handle, LogicalDevice dev) {
+		super(handle, dev, dev.library()::vkDestroyRenderPass);
+	}
+
+	public static class Builder {
+		private final LogicalDevice dev;
+		private final List<VkAttachmentDescription> attachments = new ArrayList<>();
+		private final List<VkSubpassDescription> subpasses = new ArrayList<>();
+		private final List<VkSubpassDependency> dependencies = new ArrayList<>();
+
+		...
+
+		public RenderPass build() {
+			// Init render pass descriptor
+			final VkRenderPassCreateInfo info = new VkRenderPassCreateInfo();
+
+			// Add attachments
+			info.attachmentCount = attachments.size();
+			info.pAttachments = StructureHelper.structures(attachments);
+
+			// Add sub passes
+			info.subpassCount = subpasses.size();
+			info.pSubpasses = StructureHelper.structures(subpasses);
+
+			// Add dependencies
+			info.dependencyCount = dependencies.size();
+			info.pDependencies = StructureHelper.structures(dependencies);
+
+			// Allocate render pass
+			final VulkanLibrary lib = dev.library();
+			final PointerByReference pass = lib.factory().pointer();
+			check(lib.vkCreateRenderPass(dev.handle(), info, null, pass));
+
+			// Create render pass
+			return new RenderPass(pass.getValue(), dev);
+		}
+	}
+}
+```
+
+# Nested Builders
+
+```java
+public AttachmentBuilder attachment() {
+	return new AttachmentBuilder();
+}
+
+public class AttachmentBuilder {
+	...
+	
+	public Builder build() {
+		final VkAttachmentDescription info = new VkAttachmentDescription();
+		...
+		attachments.add(info);
+		return Builder.this;
+	}
 }
 ```

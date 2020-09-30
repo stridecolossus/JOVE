@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkClearDepthStencilValue;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
@@ -7,7 +8,6 @@ import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
 import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSubpassContents;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -22,7 +22,7 @@ interface VulkanLibraryRenderPass {
 	 * @param pRenderPass		Returned render pass handle
 	 * @return Result code
 	 */
-	int vkCreateRenderPass(Pointer device, VkRenderPassCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pRenderPass);
+	int vkCreateRenderPass(Handle device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pRenderPass);
 
 	/**
 	 * Destroys a render pass.
@@ -30,7 +30,7 @@ interface VulkanLibraryRenderPass {
 	 * @param renderPass		Render pass
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyRenderPass(Pointer device, Pointer renderPass, Pointer pAllocator);
+	void vkDestroyRenderPass(Handle device, Handle renderPass, Handle pAllocator);
 
 	/**
 	 * Command - Begins a render pass.
@@ -38,20 +38,20 @@ interface VulkanLibraryRenderPass {
 	 * @param pRenderPassBegin		Descriptor
 	 * @param contents				Sub-pass contents
 	 */
-	void vkCmdBeginRenderPass(Pointer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
+	void vkCmdBeginRenderPass(Handle commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
 
 	/**
 	 * Command - Ends a render pass.
 	 * @param commandBuffer Command buffer
 	 */
-	void vkCmdEndRenderPass(Pointer commandBuffer);
+	void vkCmdEndRenderPass(Handle commandBuffer);
 
 	/**
 	 * Command - Starts the next sub-pass.
 	 * @param commandBuffer			Command buffer
 	 * @param contents				Sub-pass contents
 	 */
-	void vkCmdNextSubpass(Pointer commandBuffer, VkSubpassContents contents);
+	void vkCmdNextSubpass(Handle commandBuffer, VkSubpassContents contents);
 
 	/**
 	 * Command - Draws vertices.
@@ -61,7 +61,7 @@ interface VulkanLibraryRenderPass {
 	 * @param firstVertex			First vertex index
 	 * @param firstInstance			First index index
 	 */
-	void vkCmdDraw(Pointer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
+	void vkCmdDraw(Handle commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
 
 	/**
 	 * Command - Draws indexed vertices.
@@ -72,7 +72,7 @@ interface VulkanLibraryRenderPass {
 	 * @param vertexCount			Vertex offset
 	 * @param firstInstance			First instance
 	 */
-	void vkCmdDrawIndexed(Pointer commandBuffer, int indexCount, int instanceCount, int firstIndex, int vertexOffset, int firstInstance);
+	void vkCmdDrawIndexed(Handle commandBuffer, int indexCount, int instanceCount, int firstIndex, int vertexOffset, int firstInstance);
 
-	void vkCmdClearDepthStencilImage(Pointer commandBuffer, Pointer image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
+	void vkCmdClearDepthStencilImage(Handle commandBuffer, Handle image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
 }

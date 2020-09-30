@@ -17,6 +17,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.Surface;
+import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.Check;
@@ -237,10 +238,7 @@ public class SwapChain {
 			if(extent.exceeds(max)) throw new IllegalArgumentException("Extent is larger than the supported maximum");
 
 			// Init extents
-			final VkExtent2D result = new VkExtent2D();
-			result.width = extent.width();
-			result.height = extent.height();
-			info.imageExtent = result;
+			info.imageExtent = ExtentHelper.of(extent);
 
 			return this;
 		}

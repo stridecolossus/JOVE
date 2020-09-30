@@ -19,6 +19,7 @@ import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.SwapChain;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
+import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 
 import com.sun.jna.ptr.PointerByReference;
@@ -105,13 +106,24 @@ public class VulkanIntegrationTest {
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 				.build();
 
+		// Create render pass
+		final RenderPass pass = new RenderPass.Builder(dev)
+				.attachment()
+					.format(format)
+					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
+					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
+					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+					.build()
+				.subpass()
+					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+					.build()
+				.build();
+
 		// Create pipeline
 		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
-				.viewport()
-					.viewport(rect)
-					.scissor(rect)
-					.build()
+				.pass(pass)
+				.viewport(rect)
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(null) // TODO

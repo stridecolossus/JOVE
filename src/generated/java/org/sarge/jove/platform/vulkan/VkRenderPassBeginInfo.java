@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -20,15 +20,11 @@ import com.sun.jna.Structure.FieldOrder;
 	"pClearValues"
 })
 public class VkRenderPassBeginInfo extends VulkanStructure {
-	public static class ByValue extends VkRenderPassBeginInfo implements Structure.ByValue { }
-	public static class ByReference extends VkRenderPassBeginInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	public Pointer pNext;
-	public Pointer renderPass;
-	public Pointer framebuffer;
+	public Handle renderPass;
+	public Handle framebuffer;
 	public VkRect2D renderArea;
 	public int clearValueCount;
-//	public VkClearValue pClearValues;
 	public Pointer pClearValues;
 }

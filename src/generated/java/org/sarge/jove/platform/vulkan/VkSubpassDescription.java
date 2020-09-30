@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,11 +22,8 @@ import com.sun.jna.Structure.FieldOrder;
 	"pPreserveAttachments"
 })
 public class VkSubpassDescription extends VulkanStructure {
-	public static class ByValue extends VkSubpassDescription implements Structure.ByValue { }
-	public static class ByReference extends VkSubpassDescription implements Structure.ByReference { }
-
 	public int flags;
-	public VkPipelineBindPoint pipelineBindPoint = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS;
+	public VkPipelineBindPoint pipelineBindPoint;
 	public int inputAttachmentCount;
 	public Pointer pInputAttachments;
 	public int colorAttachmentCount;

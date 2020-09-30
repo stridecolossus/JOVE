@@ -10,6 +10,7 @@ import java.util.List;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.util.StructureHelper;
@@ -22,7 +23,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  * TODO - opaque handle, i.e. no functionality?
  */
-public class FrameBuffer extends LogicalDeviceHandle {
+public class FrameBuffer extends AbstractVulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle Handle

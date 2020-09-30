@@ -1,6 +1,6 @@
 package org.sarge.jove.common;
 
-import static org.sarge.jove.util.Check.notNull;
+import org.sarge.jove.util.Check;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.Memory;
@@ -75,12 +75,13 @@ public final class Handle {
 	 * @param handle Pointer handle
 	 */
 	public Handle(Pointer handle) {
-		this.handle = notNull(handle);
+		Check.notNull(handle);
+		this.handle = new Pointer(Pointer.nativeValue(handle));
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Handle that) && this.handle.equals(that.handle);
+		return (obj instanceof Handle that) && (this.handle.equals(that.handle));
 	}
 
 	@Override
