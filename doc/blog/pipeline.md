@@ -159,12 +159,6 @@ public final class Handle {
 }
 ```
 
-# Refactor API
-
-```java
-void vkDestroyInstance(Handle instance, Handle allocator);
-```
-
 # Vulkan Object
 
 ```java
@@ -274,6 +268,22 @@ public static class Loader {
 		return Shader.create(dev, loader.apply(filename));
 	}
 }
+```
+
+# Shader Builder
+
+```java
+		public ShaderStageBuilder shader() {
+			return new ShaderStageBuilder() {
+				@Override
+				public Builder build() {
+					final VkPipelineShaderStageCreateInfo info = super.result();
+					if(shaders.containsKey(info.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + info.stage);
+					shaders.put(info.stage, info);
+					return Builder.this;
+				}
+			};
+		}
 ```
 
 # Render Pass
