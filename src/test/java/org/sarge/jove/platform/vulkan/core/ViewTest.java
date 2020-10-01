@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.image;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,36 +14,25 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.image.Image;
-import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+import org.sarge.jove.platform.vulkan.core.Image;
+import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.ptr.PointerByReference;
 
-public class ViewTest {
+public class ViewTest extends AbstractVulkanTest {
 	private View view;
 	private Image image;
-	private VulkanLibrary lib;
-	private LogicalDevice dev;
 
 	@BeforeEach
 	public void before() {
-		// Create API
-		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
-
-		// Create device
-		dev = mock(LogicalDevice.class);
-		when(dev.library()).thenReturn(lib);
-
 		// Create underlying image
 		image = mock(Image.class);
 		when(image.device()).thenReturn(dev);
@@ -101,7 +90,8 @@ public class ViewTest {
 
 	@Test
 	public void destroy() {
+		final Handle handle = view.handle();
 		view.destroy();
-		verify(lib).vkDestroyImageView(dev.handle(), view.handle(), null);
+		verify(lib).vkDestroyImageView(dev.handle(), handle, null);
 	}
 }

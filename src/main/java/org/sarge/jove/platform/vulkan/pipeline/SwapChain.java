@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.image;
+package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
@@ -15,8 +15,11 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.Surface;
+import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
@@ -31,9 +34,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>swap chain</i> presents rendered images to a {@link Surface}.
  * @author Sarge
  */
-public class SwapChain {
-	private final Handle handle;
-	private final LogicalDevice dev;
+public class SwapChain extends AbstractVulkanObject {
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> views;
@@ -48,18 +49,10 @@ public class SwapChain {
 	 * @param views			Image views
 	 */
 	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extents, List<View> views) {
-		this.handle = new Handle(handle);
-		this.dev = notNull(dev);
+		super(handle, dev, dev.library()::vkDestroySwapchainKHR);
 		this.format = notNull(format);
 		this.extents = notNull(extents);
 		this.views = List.copyOf(views);
-	}
-
-	/**
-	 * @return Swap-chain handle
-	 */
-	Handle handle() {
-		return handle;
 	}
 
 	/**
@@ -89,8 +82,7 @@ public class SwapChain {
 	 * @param fence			Optional fence
 	 */
 	public int next() { // PointerHandle semaphore, Fence fence) {
-		final VulkanLibrary lib = dev.library();
-		check(lib.vkAcquireNextImageKHR(dev.handle(), handle, Long.MAX_VALUE, null, null, index)); // toPointer(semaphore), toPointer(fence), index);
+		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, null, null, index)); // toPointer(semaphore), toPointer(fence), index);
 		return index.getValue();
 	}
 
@@ -112,22 +104,14 @@ public class SwapChain {
 
 		// Add swap-chains
 		info.swapchainCount = 1;
-		info.pSwapchains = Handle.memory(new Handle[]{handle});
+		info.pSwapchains = Handle.memory(new Handle[]{this.handle()});
 
 		// Set image indices
 		info.pImageIndices = StructureHelper.integers(new int[]{index.getValue()});
 
 		// Present frame
-		final VulkanLibrary lib = dev.library();
+		final VulkanLibrary lib = device().library();
 		check(lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info}));
-	}
-
-	/**
-	 * Destroys this swap-chain.
-	 */
-	public void destroy() {
-		final VulkanLibrary lib = dev.library();
-		lib.vkDestroySwapchainKHR(dev.handle(), handle, null);
 	}
 
 	/**

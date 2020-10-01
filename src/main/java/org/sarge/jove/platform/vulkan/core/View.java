@@ -1,12 +1,10 @@
-package org.sarge.jove.platform.vulkan.image;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Set;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
@@ -15,7 +13,6 @@ import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -24,8 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
  * An <i>image view</i> TODO
  * @author Sarge
  */
-public class View {
-	private final Handle handle;
+public class View extends AbstractVulkanObject {
 	private final Image image;
 
 	/**
@@ -34,15 +30,8 @@ public class View {
 	 * @param image		Underlying image
 	 */
 	private View(Pointer handle, Image image) {
-		this.handle = new Handle(handle);
+		super(handle, image.device(), image.device().library()::vkDestroyImageView);
 		this.image = notNull(image);
-	}
-
-	/**
-	 * @return Image view handle
-	 */
-	Handle handle() {
-		return handle;
 	}
 
 	/**
@@ -50,19 +39,6 @@ public class View {
 	 */
 	public Image image() {
 		return image;
-	}
-
-	/**
-	 * Destroys this view.
-	 */
-	public void destroy() {
-		final LogicalDevice dev = image.device();
-		dev.library().vkDestroyImageView(dev.handle(), handle, null);
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
 	}
 
 	/**

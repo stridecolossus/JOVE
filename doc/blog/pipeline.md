@@ -224,6 +224,40 @@ public static Shader create(LogicalDevice dev, byte[] code) {
 }
 ```
 
+# Shader Loader
+
+```java
+public static class Loader {
+	public static Loader create(Path dir, LogicalDevice dev) {
+		Check.notNull(dir);
+		final Function<String, byte[]> loader = filename -> load(dir, filename);
+		return new Loader(loader, dev);
+	}
+
+	private static byte[] load(Path dir, String filename) {
+		final Path path = dir.resolve(filename);
+		try(final var in = Files.newInputStream(path)) {
+			return in.readAllBytes();
+		}
+		catch(IOException e) {
+			throw new ServiceException("Error loading shader: " + path, e);
+		}
+	}
+
+	private final Function<String, byte[]> loader;
+	private final LogicalDevice dev;
+
+	public Loader(Function<String, byte[]> loader, LogicalDevice dev) {
+		this.loader = notNull(loader);
+		this.dev = notNull(dev);
+	}
+
+	public Shader load(String filename) {
+		return Shader.create(dev, loader.apply(filename));
+	}
+}
+```
+
 # Render Pass
 
 ```java
@@ -285,4 +319,67 @@ public class AttachmentBuilder {
 		return Builder.this;
 	}
 }
+```
+
+# Frame Buffer
+
+```java
+public static FrameBuffer create(View view, RenderPass pass) {
+	// Build descriptor
+	final Image image = view.image();
+	final Image.Extents extents = image.extents();
+	final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
+	info.renderPass = pass.handle();
+	info.attachmentCount = 1;
+	info.pAttachments = Handle.memory(new Handle[]{view.handle()});
+	info.width = extents.width();
+	info.height = extents.height();
+	info.layers = 1; // TODO
+
+	// Allocate frame buffer
+	final LogicalDevice dev = view.device();
+	final VulkanLibrary lib = dev.library();
+	final PointerByReference buffer = lib.factory().pointer();
+	check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
+
+	// Create frame buffer
+	return new FrameBuffer(buffer.getValue(), view);
+}
+```
+
+# Integration
+
+```java
+// Create render pass
+final RenderPass pass = new RenderPass.Builder(dev)
+		.attachment()
+			.format(format)
+			.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
+			.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
+			.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+			.build()
+		.subpass()
+			.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+			.build()
+		.build();
+
+// Load shaders
+final Shader.Loader loader = Shader.Loader.create("./src/test/resources/demo/triangle", dev);
+final Shader vert = loader.load("spv.triangle.vert");
+final Shader frag = loader.load("spv.triangle.frag");
+
+// Create pipeline
+final Rectangle rect = new Rectangle(chain.extents());
+final Pipeline pipeline = new Pipeline.Builder(dev)
+		.pass(pass)
+		.viewport(rect)
+		.shader()
+			.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+			.shader(vert)
+			.build()
+		.shader()
+			.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+			.shader(frag)
+			.build()
+		.build();
 ```

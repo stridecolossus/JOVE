@@ -1,17 +1,14 @@
-package org.sarge.jove.platform.vulkan.image;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Set;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkExtent3D;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Pointer;
@@ -20,7 +17,7 @@ import com.sun.jna.Pointer;
  * An <i>image</i> is a descriptor for a Vulkan image.
  * @author Sarge
  */
-public class Image {
+public class Image extends AbstractVulkanObject {
 	/**
 	 * Image extents.
 	 */
@@ -56,7 +53,7 @@ public class Image {
 		}
 
 		/**
-		 * @return New descriptor for this image extents
+		 * @return New Vulkan descriptor for this image extents
 		 */
 		public VkExtent3D create() {
 			final VkExtent3D extent = new VkExtent3D();
@@ -67,8 +64,6 @@ public class Image {
 		}
 	}
 
-	private final Handle handle;
-	private final LogicalDevice dev;
 	private final VkFormat format;
 	private final Extents extents;
 	private final Set<VkImageAspectFlag> aspect;
@@ -84,25 +79,10 @@ public class Image {
 	 * @param aspect		Image aspect(s)
 	 */
 	public Image(Pointer handle, LogicalDevice dev, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspect) {
-		this.handle = new Handle(handle);
-		this.dev = notNull(dev);
+		super(handle, dev, dev.library()::vkDestroyImage);
 		this.format = notNull(format);
 		this.extents = notNull(extents);
 		this.aspect = Set.copyOf(aspect);
-	}
-
-	/**
-	 * @return Image handle
-	 */
-	Handle handle() {
-		return handle;
-	}
-
-	/**
-	 * @return Logical device
-	 */
-	LogicalDevice device() {
-		return dev;
 	}
 
 	/**
@@ -138,20 +118,6 @@ public class Image {
 	 * @return New view of this image
 	 */
 	public View view() {
-		return new View.Builder()
-				.image(this)
-				.build();
-	}
-
-	/**
-	 * Destroys this image.
-	 */
-	public void destroy() {
-		dev.library().vkDestroyImage(dev.handle(), handle, null);
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		return new View.Builder().image(this).build();
 	}
 }

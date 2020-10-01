@@ -12,25 +12,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
-public class SurfaceTest {
+public class SurfaceTest extends AbstractVulkanTest {
 	private Surface surface;
 	private Handle handle;
-	private VulkanLibrary lib;
 	private Instance instance;
-	private LogicalDevice dev;
 
 	@BeforeEach
 	void before() {
-		// Create API
-		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
-
 		// Create instance
 		instance = mock(Instance.class);
 		when(instance.library()).thenReturn(lib);
@@ -38,11 +31,7 @@ public class SurfaceTest {
 		// Create physical device
 		final PhysicalDevice parent = mock(PhysicalDevice.class);
 		when(parent.instance()).thenReturn(instance);
-
-		// Create logical device
-		dev = mock(LogicalDevice.class);
 		when(dev.parent()).thenReturn(parent);
-		when(dev.library()).thenReturn(lib);
 
 		// Create surface
 		handle = new Handle(new Pointer(42));

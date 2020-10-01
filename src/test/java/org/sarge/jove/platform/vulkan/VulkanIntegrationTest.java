@@ -16,17 +16,18 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.MessageHandler;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
+import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.image.SwapChain;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
+import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 
 import com.sun.jna.ptr.PointerByReference;
 
 public class VulkanIntegrationTest {
 	@Test
-	void test() {
+	void test() throws Exception {
 		// Open desktop
 		final DesktopService desktop = FrameworkDesktopService.create();
 		if(!desktop.isVulkanSupported()) throw new ServiceException("Vulkan not supported");
@@ -119,6 +120,11 @@ public class VulkanIntegrationTest {
 					.build()
 				.build();
 
+		// Load shaders
+		final Shader.Loader loader = Shader.Loader.create("./src/test/resources/demo/triangle", dev);
+		final Shader vert = loader.load("spv.triangle.vert");
+		final Shader frag = loader.load("spv.triangle.frag");
+
 		// Create pipeline
 		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
@@ -126,7 +132,11 @@ public class VulkanIntegrationTest {
 				.viewport(rect)
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
-					.shader(null) // TODO
+					.shader(vert)
+					.build()
+				.shader()
+					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+					.shader(frag)
 					.build()
 				.build();
 
@@ -137,9 +147,12 @@ public class VulkanIntegrationTest {
 		window.destroy();
 		desktop.close();
 
-		// Destroy Vulkan objects
+		// Destroy pipeline
+		pass.destroy();
 		pipeline.destroy();
 		chain.destroy();
+
+		// Destroy device
 		dev.destroy();
 		instance.destroy();
 	}

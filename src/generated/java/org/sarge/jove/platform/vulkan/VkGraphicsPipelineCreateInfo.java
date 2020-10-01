@@ -4,7 +4,6 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -33,9 +32,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"basePipelineIndex"
 })
 public class VkGraphicsPipelineCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkGraphicsPipelineCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkGraphicsPipelineCreateInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;

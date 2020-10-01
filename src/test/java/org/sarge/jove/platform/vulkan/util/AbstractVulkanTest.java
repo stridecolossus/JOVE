@@ -30,7 +30,7 @@ public abstract class AbstractVulkanTest {
 
 		// Create logical device
 		dev = mock(LogicalDevice.class);
-		when(dev.handle()).thenReturn(new Handle(new Pointer(1)));
+		when(dev.handle()).thenReturn(new Handle(new Pointer(42)));
 		when(dev.library()).thenReturn(lib);
 	}
 }

@@ -22,38 +22,32 @@ import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
-class CommandTest {
+class CommandTest extends AbstractVulkanTest {
 	private Command cmd;
 	private Queue queue;
-	private LogicalDevice dev;
-	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
-
-		cmd = mock(Command.class);
-
-		dev = mock(LogicalDevice.class);
-		when(dev.library()).thenReturn(lib);
-
+		// Create queue family
 		final QueueFamily family = mock(QueueFamily.class);
 		when(family.index()).thenReturn(0);
 
+		// Create queue
 		queue = mock(Queue.class);
 		when(queue.family()).thenReturn(family);
 		when(queue.device()).thenReturn(dev);
+
+		// Create command
+		cmd = mock(Command.class);
 	}
 
 	@Nested
@@ -226,8 +220,9 @@ class CommandTest {
 
 		@Test
 		void destroy() {
+			final Handle handle = pool.handle();
 			pool.destroy();
-			verify(lib).vkDestroyCommandPool(dev.handle(), pool.handle(), null);
+			verify(lib).vkDestroyCommandPool(dev.handle(), handle, null);
 		}
 	}
 }

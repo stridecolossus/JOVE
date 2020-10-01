@@ -9,9 +9,12 @@ import java.util.Map;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
+import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
@@ -192,6 +195,10 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.pRasterizationState = raster.result();
 			pipeline.pColorBlendState = blend.result();
 			// TODO - check number of blend attachments = framebuffers
+
+			pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo();
+			pipeline.pMultisampleState.sampleShadingEnable = VulkanBoolean.FALSE;
+			pipeline.pMultisampleState.rasterizationSamples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
 
 			// TODO
 			pipeline.basePipelineHandle = null;

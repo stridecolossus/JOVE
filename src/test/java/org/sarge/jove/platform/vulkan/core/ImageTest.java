@@ -1,11 +1,9 @@
-package org.sarge.jove.platform.vulkan.image;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
@@ -13,35 +11,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.vulkan.VkExtent3D;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.image.Image;
-import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.image.Image.Extents;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+import org.sarge.jove.platform.vulkan.core.Image;
+import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.core.Image.Extents;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
-public class ImageTest {
+public class ImageTest extends AbstractVulkanTest {
 	private Image image;
-	private LogicalDevice dev;
-	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Create API
-		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
-
-		// Create device
-		dev = mock(LogicalDevice.class);
-		when(dev.library()).thenReturn(lib);
-
-		// Create image
 		image = new Image(new Pointer(42), dev, VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, new Extents(1, 2), Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
 	}
 
@@ -64,8 +49,9 @@ public class ImageTest {
 
 	@Test
 	void destroy() {
+		final Handle handle = image.handle();
 		image.destroy();
-		verify(lib).vkDestroyImage(dev.handle(), image.handle(), null);
+		verify(lib).vkDestroyImage(dev.handle(), handle, null);
 	}
 
 	@Nested

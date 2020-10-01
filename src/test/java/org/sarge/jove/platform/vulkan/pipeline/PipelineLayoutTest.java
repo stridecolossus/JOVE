@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -36,5 +37,13 @@ public class PipelineLayoutTest extends AbstractVulkanTest {
 
 		// Check descriptor
 		// TODO
+	}
+
+	@Test
+	void destroy() {
+		final PipelineLayout layout = builder.result();
+		final Handle handle = layout.handle();
+		layout.destroy();
+		verify(lib).vkDestroyPipelineLayout(dev.handle(), handle, null);
 	}
 }

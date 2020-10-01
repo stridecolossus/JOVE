@@ -7,7 +7,7 @@ import org.sarge.jove.platform.vulkan.VkOffset2D;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 
 /**
- * Helpers for transforming JOVE domain objects to the equivalent Vulkan structures.
+ * Helpers for transforming JOVE domain objects to the equivalent Vulkan extent structures.
  * @author Sarge
  */
 public final class ExtentHelper {

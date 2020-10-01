@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.image;
+package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,34 +21,23 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
+import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
-public class SwapChainTest {
+public class SwapChainTest extends AbstractVulkanTest {
 	private SwapChain chain;
 	private View view;
-	private LogicalDevice dev;
-	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Create API
-		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
-
-		// Create device
-		dev = mock(LogicalDevice.class);
-		when(dev.library()).thenReturn(lib);
-
-		// Create swap-chain
 		view = mock(View.class);
 		chain = new SwapChain(new Pointer(42), dev, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, new Dimensions(2, 3), List.of(view));
 	}
@@ -94,8 +83,9 @@ public class SwapChainTest {
 
 	@Test
 	void destroy() {
+		final Handle handle = chain.handle();
 		chain.destroy();
-		verify(lib).vkDestroySwapchainKHR(dev.handle(), chain.handle(), null);
+		verify(lib).vkDestroySwapchainKHR(dev.handle(), handle, null);
 	}
 
 	@Nested
@@ -175,7 +165,7 @@ public class SwapChainTest {
 			assertEquals(null, info.oldSwapchain);
 
 			// Check view allocation
-			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), eq(new Pointer(42)), isA(IntByReference.class), isA(Pointer[].class));
+			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), eq(factory.ptr.getValue()), isA(IntByReference.class), isA(Pointer[].class));
 
 			// Check view
 			final View view = chain.images().get(0);

@@ -1,19 +1,17 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.jove.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Stream;
 
-import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.platform.vulkan.core.View;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -21,92 +19,62 @@ import com.sun.jna.ptr.PointerByReference;
 /**
  * A <i>frame buffer</i> is the target for a {@link RenderPass}.
  * @author Sarge
- * TODO - opaque handle, i.e. no functionality?
  */
 public class FrameBuffer extends AbstractVulkanObject {
 	/**
-	 * Constructor.
-	 * @param handle Handle
+	 * Creates a frame buffer for the given view.
+	 * @param view Swapchain image view
+	 * @param pass Render pass
+	 * @return New frame buffer
 	 */
-	FrameBuffer(Pointer handle, LogicalDevice dev) {
-		super(handle, dev, lib -> lib::vkDestroyFramebuffer);
+	public static FrameBuffer create(View view, RenderPass pass) {
+		// Build descriptor
+		final Image image = view.image();
+		final Image.Extents extents = image.extents();
+		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
+		info.renderPass = pass.handle();
+		info.attachmentCount = 1;
+		info.pAttachments = Handle.memory(new Handle[]{view.handle()});
+		info.width = extents.width();
+		info.height = extents.height();
+		info.layers = 1; // TODO
+
+		// Allocate frame buffer
+		final LogicalDevice dev = view.device();
+		final VulkanLibrary lib = dev.library();
+		final PointerByReference buffer = lib.factory().pointer();
+		check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
+
+		// Create frame buffer
+		return new FrameBuffer(buffer.getValue(), view);
 	}
 
 	/**
-	 * Builder for a frame buffer.
+	 * Helper - Creates the frame buffers for the given swapchain.
+	 * @param swapchain		Swapchain
+	 * @param pass			Render pass
+	 * @return New framebuffers
 	 */
-	public static class Builder {
-		private final LogicalDevice dev;
-		private final RenderPass pass;
-		private final List<Pointer> views = new ArrayList<>();
-		private Dimensions extent;
-		private int layers = 1;
+	public static Stream<FrameBuffer> create(SwapChain swapchain, RenderPass pass) {
+		return swapchain.images().stream().map(view -> create(view, pass));
+	}
 
-		/**
-		 * Constructor.
-		 * @param dev		Device
-		 * @param pass		Render pass
-		 */
-		public Builder(LogicalDevice dev, RenderPass pass) {
-			this.dev = notNull(dev);
-			this.pass = notNull(pass);
-		}
+	private final View view;
 
-		/**
-		 * Adds an image view.
-		 * @param view Image view
-		 */
-		public Builder view(View view) {
-			views.add(view.handle());
-			return this;
-		}
+	/**
+	 * Constructor.
+	 * @param handle 	Handle
+	 * @param view		Swapchain image-view
+	 */
+	private FrameBuffer(Pointer handle, View view) {
+		super(handle, view.device(), view.device().library()::vkDestroyFramebuffer);
+		this.view = notNull(view);
+	}
 
-		/**
-		 * Sets the extent of the buffer.
-		 * @param extent Extent
-		 */
-		public Builder extent(Dimensions extent) {
-			this.extent = notNull(extent);
-			return this;
-		}
-
-		/**
-		 * Sets the number of image layers.
-		 * @param layers Number of layers
-		 */
-		public Builder layers(int layers) {
-			this.layers = oneOrMore(layers);
-			return this;
-		}
-
-		/**
-		 * Constructs this frame buffer.
-		 * @return New frame buffer
-		 * @throws IllegalArgumentException if the frame buffer is not complete
-		 */
-		public FrameBuffer build() {
-			// Validate
-			if(views.isEmpty()) throw new IllegalArgumentException("No images views attached");
-			if(pass == null) throw new IllegalArgumentException("No render pass specified");
-			if(extent == null) throw new IllegalArgumentException("No frame buffer extent specified");
-
-			// Build descriptor
-			final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
-			info.renderPass = pass.handle();
-			info.attachmentCount = views.size();
-			info.pAttachments = StructureHelper.pointers(views);
-			info.width = extent.width;
-			info.height = extent.height;
-			info.layers = layers;
-
-			// Allocate frame buffer
-			final Vulkan vulkan = dev.api();
-			final VulkanLibrary lib = vulkan.api();
-			final PointerByReference buffer = vulkan.factory().reference();
-			check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
-
-			// Create frame buffer
-			return new FrameBuffer(buffer.getValue(), dev);
-		}
+	/**
+	 * @return Swapchain image-view for this frame buffer
+	 */
+	public View view() {
+		return view;
 	}
 }

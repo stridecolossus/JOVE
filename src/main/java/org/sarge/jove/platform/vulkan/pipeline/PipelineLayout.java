@@ -3,9 +3,9 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 import com.sun.jna.Pointer;
@@ -14,29 +14,14 @@ import com.sun.jna.ptr.PointerByReference;
 /**
  * A <i>pipeline layout</i> specifies the descriptor sets and push constants used in a pipeline.
  */
-public class PipelineLayout {
-	private final Handle handle;
-	private final LogicalDevice dev;
-
+public class PipelineLayout extends AbstractVulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle		Pipeline handle
 	 * @param dev			Logical device
 	 */
 	private PipelineLayout(Pointer handle, LogicalDevice dev) {
-		this.handle = new Handle(handle);
-		this.dev = notNull(dev);
-	}
-
-	public Handle handle() {
-		return handle;
-	}
-
-	/**
-	 * Destroys this pipeline layout.
-	 */
-	public void destroy() {
-		dev.library().vkDestroyPipelineLayout(dev.handle(), handle, null);
+		super(handle, dev, dev.library()::vkDestroyPipelineLayout);
 	}
 
 	/**

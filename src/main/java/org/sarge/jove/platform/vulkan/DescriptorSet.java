@@ -16,7 +16,7 @@ import org.sarge.jove.model.DataBuffer;
 import org.sarge.jove.platform.Resource.PointerHandle;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.image.View.VulkanSampler;
+import org.sarge.jove.platform.vulkan.core.View.VulkanSampler;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.collection.StrictList;
