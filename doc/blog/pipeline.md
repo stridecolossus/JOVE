@@ -54,6 +54,24 @@ public static class Builder {
 }
 ```
 
+# Base-class
+
+```java
+abstract class AbstractPipelineStageBuilder<T> {
+	private Pipeline.Builder parent;
+
+	protected void parent(Pipeline.Builder parent) {
+		this.parent = notNull(parent);
+	}
+
+	protected abstract T result();
+
+	public Pipeline.Builder build() {
+		return parent;
+	}
+}
+```
+
 # Nested Builder
 
 ```java
