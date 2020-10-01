@@ -18,7 +18,7 @@ public class RasterizerStageBuilder extends AbstractPipelineStageBuilder<VkPipel
 	private boolean rasterizerDiscardEnable;
 	private VkPolygonMode polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL;
 	private VkCullModeFlag cullMode = VkCullModeFlag.VK_CULL_MODE_BACK_BIT;
-	private VkFrontFace frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	private VkFrontFace frontFace = VkFrontFace.VK_FRONT_FACE_CLOCKWISE;
 	private boolean depthBiasEnable;
 	private float depthBiasConstantFactor;
 	private float depthBiasClamp;
@@ -65,7 +65,7 @@ public class RasterizerStageBuilder extends AbstractPipelineStageBuilder<VkPipel
 
 	/**
 	 * Sets the vertex order for front-facing faces.
-	 * @param clockwise Whether the vertex order is clockwise or counter-clockwise (default is {@link VkFrontFace#VK_FRONT_FACE_COUNTER_CLOCKWISE})
+	 * @param clockwise Whether the vertex order is clockwise or counter-clockwise (default is {@link VkFrontFace#VK_FRONT_FACE_CLOCKWISE})
 	 */
 	public RasterizerStageBuilder frontFace(boolean clockwise) {
 		this.frontFace = clockwise ? VkFrontFace.VK_FRONT_FACE_CLOCKWISE : VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;

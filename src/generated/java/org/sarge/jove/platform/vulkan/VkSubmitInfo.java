@@ -3,8 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,9 +21,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pSignalSemaphores"
 })
 public class VkSubmitInfo extends VulkanStructure {
-	public static class ByValue extends VkSubmitInfo implements Structure.ByValue { }
-	public static class ByReference extends VkSubmitInfo implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	public Pointer pNext;
 	public int waitSemaphoreCount;

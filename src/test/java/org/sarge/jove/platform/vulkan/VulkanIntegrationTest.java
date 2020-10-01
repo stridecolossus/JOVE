@@ -1,6 +1,11 @@
 package org.sarge.jove.platform.vulkan;
 
+import static java.util.stream.Collectors.toList;
+
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Rectangle;
@@ -11,6 +16,7 @@ import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
+import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Instance;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.MessageHandler;
@@ -18,6 +24,8 @@ import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.core.Surface;
+import org.sarge.jove.platform.vulkan.core.Work;
+import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
@@ -77,16 +85,18 @@ public class VulkanIntegrationTest {
 				.orElseThrow(() -> new ServiceException("No GPU available"));
 
 		// Lookup required queues
-		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
+//		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
 		final QueueFamily transfer = gpu.find(transferPredicate, "Transfer family not available");
+		final QueueFamily present = gpu.find(family -> family.isPresentationSupported(surfaceHandle), "Presentation family not available");
 
 		// Create device
-		final LogicalDevice dev = new LogicalDevice.Builder()
+		final LogicalDevice dev = new LogicalDevice.Builder() // TODO - parent as ctor arg
 				.parent(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.queue(graphics)
+//				.queue(graphics)
 				.queue(transfer)
+				.queue(present)
 				.build();
 
 		// Create rendering surface
@@ -102,8 +112,8 @@ public class VulkanIntegrationTest {
 
 		// Create swap-chain
 		final SwapChain chain = new SwapChain.Builder(surface)
-				.format(format)
 				.count(2)
+				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 				.build();
 
@@ -140,6 +150,55 @@ public class VulkanIntegrationTest {
 					.build()
 				.build();
 
+		// Create frame buffers
+		final var buffers = chain
+				.views()
+				.stream()
+				.map(view -> FrameBuffer.create(view, pass))
+				.collect(toList());
+
+		// Create command pool
+		final Command.Pool pool = Command.Pool.create(dev.queue(present));
+		final List<Command.Buffer> commands = pool.allocate(buffers.size());
+
+		// Record render commands
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);		// TODO - builder
+		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
+		for(int n = 0; n < commands.size(); ++n) {
+			final Command.Buffer cb = commands.get(n);
+			cb
+				.begin() // VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
+					.add(pass.begin(buffers.get(n), rect, grey))
+					.add(pipeline.bind())
+					.add(draw)
+					.add(RenderPass.END_COMMAND)
+				.end();
+		}
+
+//		final Semaphore ready = Semaphore.create(dev);
+//		final Semaphore finished = Semaphore.create(dev);
+
+//		for(int n = 0; n < 100; ++n) {
+			final int index = chain.acquire(null, null);
+
+			new Work.Builder()
+					.add(commands.get(index))
+//					.wait(ready)
+//					.signal(finished)
+					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+					.build()
+					.submit();
+			dev.queue(present).waitIdle();
+
+//			Thread.sleep(50);
+
+			chain.present(dev.queue(present), null);
+
+
+//			dev.queue(present).waitIdle();
+//		}
+			Thread.sleep(1000);
+
 		//////////////
 
 		// Destroy window
@@ -147,8 +206,14 @@ public class VulkanIntegrationTest {
 		window.destroy();
 		desktop.close();
 
-		// Destroy pipeline
+		// Destroy render pass
+		buffers.forEach(FrameBuffer::destroy);
+		pool.destroy();
 		pass.destroy();
+
+		// Destroy pipeline
+		vert.destroy();
+		frag.destroy();
 		pipeline.destroy();
 		chain.destroy();
 

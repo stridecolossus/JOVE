@@ -321,32 +321,6 @@ public class AttachmentBuilder {
 }
 ```
 
-# Frame Buffer
-
-```java
-public static FrameBuffer create(View view, RenderPass pass) {
-	// Build descriptor
-	final Image image = view.image();
-	final Image.Extents extents = image.extents();
-	final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
-	info.renderPass = pass.handle();
-	info.attachmentCount = 1;
-	info.pAttachments = Handle.memory(new Handle[]{view.handle()});
-	info.width = extents.width();
-	info.height = extents.height();
-	info.layers = 1; // TODO
-
-	// Allocate frame buffer
-	final LogicalDevice dev = view.device();
-	final VulkanLibrary lib = dev.library();
-	final PointerByReference buffer = lib.factory().pointer();
-	check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
-
-	// Create frame buffer
-	return new FrameBuffer(buffer.getValue(), view);
-}
-```
-
 # Integration
 
 ```java

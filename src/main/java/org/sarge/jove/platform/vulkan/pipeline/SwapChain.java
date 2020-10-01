@@ -18,6 +18,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.ExtentHelper;
@@ -72,7 +73,7 @@ public class SwapChain extends AbstractVulkanObject {
 	/**
 	 * @return Image views
 	 */
-	public List<View> images() {
+	public List<View> views() {
 		return views;
 	}
 
@@ -81,8 +82,8 @@ public class SwapChain extends AbstractVulkanObject {
 	 * @param semaphore		Optional semaphore
 	 * @param fence			Optional fence
 	 */
-	public int next() { // PointerHandle semaphore, Fence fence) {
-		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, null, null, index)); // toPointer(semaphore), toPointer(fence), index);
+	public int acquire(Semaphore semaphore, Fence fence) {
+		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, null /*semaphore.handle()*/, null, index)); // toPointer(semaphore), toPointer(fence), index);
 		return index.getValue();
 	}
 
@@ -91,7 +92,7 @@ public class SwapChain extends AbstractVulkanObject {
 	 * @param
 	 * @param queue Presentation queue
 	 */
-	public void present(LogicalDevice.Queue queue) {
+	public void present(LogicalDevice.Queue queue, Semaphore semaphore) {
 		// Create presentation descriptor
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 
@@ -101,6 +102,9 @@ public class SwapChain extends AbstractVulkanObject {
 //			info.waitSemaphoreCount = 1;
 //			info.pWaitSemaphores = StructureHelper.pointers(Arrays.asList(semaphore.handle()));
 //		}
+
+//		info.waitSemaphoreCount = 1; // semaphores.size();
+//		info.pWaitSemaphores = Handle.memory(new Handle[]{semaphore.handle()});
 
 		// Add swap-chains
 		info.swapchainCount = 1;
@@ -156,7 +160,7 @@ public class SwapChain extends AbstractVulkanObject {
 			// Init default fields
 			space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 			arrays(1);
-			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
+			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE); // or concurrent?
 			usage(VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 			alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
 			present(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR);

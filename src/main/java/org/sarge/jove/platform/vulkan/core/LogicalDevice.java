@@ -158,6 +158,28 @@ public class LogicalDevice {
 	}
 
 	/**
+	 * Helper - Looks up the work queue(s) for the given family.
+	 * @param family Queue family
+	 * @return Queue(s)
+	 * @throws IllegalArgumentException if this device does not contain queues with the given family
+	 */
+	public List<Queue> queues(QueueFamily family) {
+		final var list = queues.get(family);
+		if(list == null) throw new IllegalArgumentException("");
+		return list;
+	}
+
+	/**
+	 * Helper - Looks up the <b>first</b> work queue for the given family.
+	 * @param family Queue family
+	 * @return Queue
+	 * @throws IllegalArgumentException if this device does not contain a queue with the given family
+	 */
+	public Queue queue(QueueFamily family) {
+		return queues(family).get(0);
+	}
+
+	/**
 	 * Waits for this device to become idle.
 	 */
 	public void waitIdle() {

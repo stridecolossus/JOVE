@@ -56,7 +56,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @return New framebuffers
 	 */
 	public static Stream<FrameBuffer> create(SwapChain swapchain, RenderPass pass) {
-		return swapchain.images().stream().map(view -> create(view, pass));
+		return swapchain.views().stream().map(view -> create(view, pass));
 	}
 
 	private final View view;

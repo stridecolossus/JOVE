@@ -14,9 +14,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.Instance;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
@@ -78,6 +75,20 @@ public class LogicalDeviceTest {
 		assertNotNull(queue);
 		assertEquals(family, queue.family());
 		assertNotNull(queue.handle());
+	}
+
+	@Test
+	void queuesFamily() {
+		final var queues = device.queues(family);
+		assertNotNull(queues);
+		assertEquals(2, queues.size());
+	}
+
+	@Test
+	void queue() {
+		final Queue queue = device.queue(family);
+		assertNotNull(queue);
+		assertEquals(family, queue.family());
 	}
 
 	@Test

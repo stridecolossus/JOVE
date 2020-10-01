@@ -23,7 +23,6 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
-import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -47,7 +46,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 		assertNotNull(chain.handle());
 		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, chain.format());
 		assertEquals(new Dimensions(2, 3), chain.extents());
-		assertEquals(List.of(view), chain.images());
+		assertEquals(List.of(view), chain.views());
 	}
 
 	@Test
@@ -137,8 +136,8 @@ public class SwapChainTest extends AbstractVulkanTest {
 			assertNotNull(chain);
 			assertNotNull(chain.handle());
 			assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, chain.format());
-			assertNotNull(chain.images());
-			assertEquals(1, chain.images().size());
+			assertNotNull(chain.views());
+			assertEquals(1, chain.views().size());
 
 			// Check allocation
 			final ArgumentCaptor<VkSwapchainCreateInfoKHR> captor = ArgumentCaptor.forClass(VkSwapchainCreateInfoKHR.class);
@@ -168,7 +167,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), eq(factory.ptr.getValue()), isA(IntByReference.class), isA(Pointer[].class));
 
 			// Check view
-			final View view = chain.images().get(0);
+			final View view = chain.views().get(0);
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertNotNull(view.image());
