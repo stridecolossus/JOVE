@@ -19,6 +19,9 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
+import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
+import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
+import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
@@ -183,7 +186,7 @@ public class LogicalDevice {
 	 */
 	public List<Queue> queues(QueueFamily family) {
 		final var list = queues.get(family);
-		if(list == null) throw new IllegalArgumentException("");
+		if(list == null) throw new IllegalArgumentException("Queue family not present: " + family);
 		return list;
 	}
 
@@ -195,6 +198,35 @@ public class LogicalDevice {
 	 */
 	public Queue queue(QueueFamily family) {
 		return queues(family).get(0);
+	}
+
+	/**
+	 * Allocates device memory.
+	 * @param reqs		Memory requirements
+	 * @param flags		Flags
+	 * @return Memory handle
+	 * @throws ServiceException if the memory cannot be allocated
+	 */
+	public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
+		// Find memory type
+		final int type = parent.findMemoryType(flags);
+
+		// Init memory descriptor
+		final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
+        info.allocationSize = reqs.size;
+        info.memoryTypeIndex = type;
+
+        // Allocate memory
+        final VulkanLibrary lib = library();
+        final PointerByReference mem = lib.factory().pointer();
+        check(lib.vkAllocateMemory(this.handle(), info, null, mem));
+
+        // TODO
+        // - number of allocations limited to maxMemoryAllocationCount
+        // - replace with custom allocator with offsets
+
+        // Get memory handle
+        return mem.getValue();
 	}
 
 	/**

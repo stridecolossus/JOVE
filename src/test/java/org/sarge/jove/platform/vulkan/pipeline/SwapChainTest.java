@@ -50,8 +50,8 @@ public class SwapChainTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void next() {
-		assertEquals(0, chain.next());
+	void acquire() {
+		assertEquals(0, chain.acquire(null, null));
 		verify(lib).vkAcquireNextImageKHR(eq(dev.handle()), eq(chain.handle()), eq(Long.MAX_VALUE), isNull(), isNull(), isA(IntByReference.class));
 	}
 
@@ -60,7 +60,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 		// Present to queue
 		final Queue queue = mock(Queue.class);
 		when(queue.handle()).thenReturn(new Handle(new Pointer(42)));
-		chain.present(queue);
+		chain.present(queue, null);
 
 		// Check API
 		final ArgumentCaptor<VkPresentInfoKHR[]> captor = ArgumentCaptor.forClass(VkPresentInfoKHR[].class);

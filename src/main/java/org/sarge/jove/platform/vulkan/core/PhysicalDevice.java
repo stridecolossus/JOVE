@@ -18,6 +18,7 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
+import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
@@ -175,6 +176,8 @@ public class PhysicalDevice {
 	private final Instance instance;
 	private final List<QueueFamily> families;
 
+	private VkPhysicalDeviceMemoryProperties mem;
+
 	/**
 	 * Constructor.
 	 * @param handle		Device handle
@@ -239,21 +242,40 @@ public class PhysicalDevice {
 	}
 
 	/**
-	 * @return Memory properties of this device
-	 */
-	public VkPhysicalDeviceMemoryProperties memory() {
-		final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
-		instance.library().vkGetPhysicalDeviceMemoryProperties(handle, mem);
-		return mem;
-	}
-
-	/**
 	 * @return Features supported by this device
 	 */
 	public VkPhysicalDeviceFeatures features() {
 		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		instance.library().vkGetPhysicalDeviceFeatures(handle, features);
 		return features;
+	}
+
+	/**
+	 * @return Memory properties of this device
+	 */
+	public VkPhysicalDeviceMemoryProperties memory() {
+		if(mem == null) {
+			mem = new VkPhysicalDeviceMemoryProperties();
+			instance.library().vkGetPhysicalDeviceMemoryProperties(handle, mem);
+		}
+		return mem;
+	}
+
+	/**
+	 * Finds a memory type for the given memory properties.
+	 * @param props Memory properties
+	 * @return Memory type index
+	 * @throws ServiceException if no suitable memory type is available
+	 */
+	public int findMemoryType(Set<VkMemoryPropertyFlag> props) {
+		final var mem = this.memory();
+		final int mask = IntegerEnumeration.mask(props);
+		for(int n = 0; n < mem.memoryTypeCount; ++n) {
+			if(mem.memoryTypes[n].propertyFlags == mask) {
+				return n;
+			}
+		}
+		throw new ServiceException("No memory type available for specified memory properties:" + props);
 	}
 
 	/**

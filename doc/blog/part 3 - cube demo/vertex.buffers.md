@@ -1,119 +1,184 @@
-# Tuple
+# Vertex Buffer
 
 ```java
-public class Tuple implements Bufferable {
-	public static final int SIZE = 3;
+public class VertexBuffer extends AbstractVulkanObject {
+	private final long len;
 
-	public final float x, y, z;
-
-	protected Tuple(float x, float y, float z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
+	/**
+	 * Constructor.
+	 * @param handle		Buffer handle
+	 * @param dev			Logical device
+	 * @param len			Length (bytes)
+	 */
+	private VertexBuffer(Pointer handle, LogicalDevice dev, long len) {
+		super(handle, dev, dev.library()::vkDestroyBuffer);
+		this.len = oneOrMore(len);
 	}
 
-	@Override
-	public void buffer(FloatBuffer buffer) {
-		buffer.put(x).put(y).put(z);
+	/**
+	 * Pushes the given byte-buffer to this vertex buffer.
+	 * @param bytes Byte-buffer
+	 */
+	public void push(ByteBuffer bytes) {
+	}
+
+	/**
+	 * @return Command to bind this buffer
+	 */
+	public Command bind() {
+		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, new Handle[]{this.handle()}, new long[]{0});
 	}
 }
 ```
 
-# Point
+# Builder
 
 ```java
-public final class Point extends Tuple {
-	/**
-	 * Origin point.
-	 */
-	public static final Point ORIGIN = new Point(0, 0, 0);
+public VertexBuffer build() {
+	// Validate
+	if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
+	if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
 
-	public Point(float x, float y, float z) {
-		super(x, y, z);
-	}
+	// Build buffer descriptor
+	final VkBufferCreateInfo info = new VkBufferCreateInfo();
+	info.usage = IntegerEnumeration.mask(usage);
+	info.sharingMode = mode;
+	info.size = len;
+	// TODO - queue families
+
+	// Allocate buffer
+	final VulkanLibrary lib = dev.library();
+	final PointerByReference handle = lib.factory().pointer();
+	check(lib.vkCreateBuffer(dev.handle(), info, null, handle));
+
+	// Query memory requirements
+	final VkMemoryRequirements reqs = new VkMemoryRequirements();
+	lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
+
+	// Allocate buffer memory
+	final Pointer mem = dev.allocate(reqs, props);
+
+	// Bind memory
+	check(lib.vkBindBufferMemory(logical, handle, mem, 0L));
+
+	// Create buffer
+	return new VertexBuffer(handle.getValue(), dev, len);
 }
 ```
 
-# Vertex
+# Memory Allocation - Physical Device
 
 ```java
-public interface Vertex {
-	Point position();
-	Vector normal();
-	TextureCoordinate coords();
-	Colour colour();
+private VkPhysicalDeviceMemoryProperties mem;
 
-	/**
-	 * Default implementation.
-	 */
-	record DefaultVertex(Point position, Vector normal, TextureCoordinate coords, Colour colour) implements Vertex {
+...
+
+/**
+ * @return Memory properties of this device
+ */
+public VkPhysicalDeviceMemoryProperties memory() {
+	if(mem == null) {
+		mem = new VkPhysicalDeviceMemoryProperties();
+		instance.library().vkGetPhysicalDeviceMemoryProperties(handle, mem);
 	}
+	return mem;
+}
 
-	class Builder {
-		...
-		public Vertex build() {
-			return new DefaultVertex(pos, normal, coords, col);
+/**
+ * Finds a memory type for the given memory properties.
+ * @param props Memory properties
+ * @return Memory type index
+ * @throws ServiceException if no suitable memory type is available
+ */
+public int findMemoryType(Set<VkMemoryPropertyFlag> props) {
+	final int mask = IntegerEnumeration.mask(props);
+	for(int n = 0; n < mem.memoryTypeCount; ++n) {
+		if(mem.memoryTypes[n].propertyFlags == mask) {
+			return n;
 		}
 	}
+	throw new ServiceException("No memory type available for specified memory properties:" + props);
 }
 ```
 
-# Component 
+# Memory Allocation - Logical Device
 
 ```java
-enum Component {
-	POSITION(Point.SIZE, Vertex::position),
-	NORMAL(Vector.SIZE, Vertex::normal),
-	TEXTURE_COORDINATE(TextureCoordinate.Coordinate2D.SIZE, Vertex::coords),
-	COLOUR(Colour.SIZE, Vertex::colour);
+/**
+ * Allocates device memory.
+ * @param reqs		Memory requirements
+ * @param flags		Flags
+ * @return Memory handle
+ * @throws ServiceException if the memory cannot be allocated
+ */
+public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
+	// Find memory type
+	final int type = parent.findMemoryType(flags);
 
-	...
+	// Init memory descriptor
+	final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
+   info.allocationSize = reqs.size;
+   info.memoryTypeIndex = type;
 
-	public void buffer(Vertex vertex, FloatBuffer fb) {
-		mapper.apply(vertex).buffer(fb);
-	}
-}
+   // Allocate memory
+   final VulkanLibrary lib = library();
+   final PointerByReference mem = lib.factory().pointer();
+   check(lib.vkAllocateMemory(this.handle(), info, null, mem));
 
-class Layout {
-	private final List<Component> layout;
-	private final int size;
-
-	...
-
-	/**
-	 * Helper - Creates a floating-point buffer sized to this layout and the number of vertices.
-	 * @param num Number of vertices
-	 * @return New buffer
-	 */
-	public FloatBuffer buffer(int num) {
-		return BufferFactory.floatBuffer(this.size * num);
-	}
-
-	/**
-	 * Buffers the components of a vertex to the given buffer according to this layout.
-	 * @param vertex		Vertex
-	 * @param buffer		Output buffer
-	 */
-	public void buffer(Vertex vertex, FloatBuffer buffer) {
-		layout.forEach(c -> c.buffer(vertex, buffer));
-	}
+   // Get memory handle
+   return mem.getValue();
 }
 ```
 
-# Example
+# Destroy
 
 ```java
-// Create triangle vertices
-final Vertex[] vertices = {
-		new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-		new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
-		new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
-};
+@Override
+public synchronized void destroy() {
+	final LogicalDevice dev = super.device();
+	dev.library().vkFreeMemory(dev.handle(), mem, null);
+	super.destroy();
+}
+```
 
-// Create vertex layout
-final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.COLOUR));
+# Load Buffer
 
-// Create and populate buffer
-final FloatBuffer fb = layout.buffer(vertices.length);
-Arrays.stream(vertices).forEach(v -> layout.buffer(v, fb));
+```java
+/**
+ * Loads the given source buffer to this vertex buffer.
+ * @param src Source buffer
+ * @throws IllegalStateException if the given buffer exceeds the size of this vertex buffer
+ */
+public void load(ByteBuffer src) {
+	// Check buffer
+	final int actual = src.remaining();
+	if(actual > len) throw new IllegalStateException(String.format("Buffer exceeds length of this data buffer: len=%d max=%d", actual, len));
+
+	// Map buffer memory
+	final LogicalDevice dev = this.device();
+	final VulkanLibrary lib = dev.library();
+	final PointerByReference data = lib.factory().pointer();
+	check(lib.vkMapMemory(dev.handle(), mem, 0, actual, 0, data));
+
+	// Copy to memory
+	final ByteBuffer bb = data.getValue().getByteBuffer(0, actual);
+	bb.put(src);
+
+	// Cleanup
+	lib.vkUnmapMemory(dev.handle(), mem);
+}
+```
+
+# Commands
+
+```java
+public Command bind() {
+	return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, new Handle[]{this.handle()}, new long[]{0});
+}
+
+public Command copy(VertexBuffer dest) {
+	final VkBufferCopy region = new VkBufferCopy();
+	region.size = len;
+	return (api, cb) -> api.vkCmdCopyBuffer(cb, this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
+}
 ```
