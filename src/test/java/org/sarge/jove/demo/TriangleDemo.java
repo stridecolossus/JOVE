@@ -1,19 +1,25 @@
-package org.sarge.jove.platform.vulkan;
+package org.sarge.jove.demo;
 
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
+import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
+import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
+import org.sarge.jove.platform.vulkan.VkColorSpaceKHR;
+import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkImageLayout;
+import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkQueueFlag;
+import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.Command;
@@ -33,9 +39,8 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 
 import com.sun.jna.ptr.PointerByReference;
 
-public class VulkanIntegrationTest {
-	@Test
-	void test() throws Exception {
+public class TriangleDemo {
+	public static void main(String[] args) throws Exception {
 		// Open desktop
 		final DesktopService desktop = FrameworkDesktopService.create();
 		if(!desktop.isVulkanSupported()) throw new ServiceException("Vulkan not supported");
@@ -107,7 +112,7 @@ public class VulkanIntegrationTest {
 				.components(FormatBuilder.BGRA)
 				.bytes(1)
 				.signed(false)
-				.type(Vertex.Component.Type.NORM)
+				.type(FormatBuilder.Type.NORMALIZED)
 				.build();
 
 		// Create swap-chain
