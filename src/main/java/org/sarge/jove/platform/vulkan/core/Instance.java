@@ -172,7 +172,6 @@ public class Instance {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("handle", handle)
-				.append("library", lib)
 				.append("handlers", handlers.size())
 				.build();
 	}

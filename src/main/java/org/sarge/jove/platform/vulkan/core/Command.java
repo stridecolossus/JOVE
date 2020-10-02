@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -97,7 +98,7 @@ public interface Command {
 		 */
 		public Buffer begin(VkCommandBufferUsageFlag... flags) {
 			// Check buffer can be recorded
-			if(state != State.UNDEFINED) throw new IllegalStateException("Buffer is not ready for recording");
+			if(state != State.UNDEFINED) throw new IllegalStateException("Buffer is not ready for recording: " + this);
 
 			// Start buffer
 			final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
@@ -116,7 +117,7 @@ public interface Command {
 		 * @throws IllegalStateException if this buffer is not recording
 		 */
 		public Buffer add(Command cmd) {
-			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording");
+			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
 			cmd.execute(library(), handle);
 			return this;
 		}
@@ -127,7 +128,7 @@ public interface Command {
 		 * @throws IllegalArgumentException if no commands have been recorded
 		 */
 		public void end() {
-			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording");
+			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
 			// TODO - count?
 			check(library().vkEndCommandBuffer(handle));
 			state = State.READY;
@@ -150,7 +151,7 @@ public interface Command {
 		 * @throws IllegalStateException if this buffer has not been recorded
 		 */
 		public void reset(VkCommandBufferResetFlag... flags) {
-			if(state != State.READY) throw new IllegalStateException("Buffer has not been recorded");
+			if(state != State.READY) throw new IllegalStateException("Buffer has not been recorded: " + this);
 			final int mask = IntegerEnumeration.mask(flags);
 			check(library().vkResetCommandBuffer(handle, mask));
 			state = State.UNDEFINED;
@@ -169,6 +170,11 @@ public interface Command {
 		 */
 		private VulkanLibrary library() {
 			return pool.queue.device().library();
+		}
+
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this);
 		}
 	}
 
@@ -318,6 +324,15 @@ public interface Command {
 		public synchronized void destroy() {
 			buffers.clear();
 			super.destroy();
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append("handle", handle())
+					.append("queue", queue)
+					.append("buffers", buffers.size())
+					.build();
 		}
 	}
 }

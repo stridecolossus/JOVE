@@ -186,6 +186,77 @@ class Pool extends AbstractVulkanObject {
 }
 ```
 
+# Render Commands
+
+```java
+public static final Command END_COMMAND = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
+
+...
+
+public Command begin(FrameBuffer buffer, Rectangle extent, Colour col) {
+	// Create descriptor
+	final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
+	info.renderPass = this.handle();
+	info.framebuffer = buffer.handle();
+	info.renderArea = ExtentHelper.of(extent);
+
+	// Create clear colour
+	final VkClearValue clear = new VkClearValue();
+	clear.color = new VkClearColorValue();
+	clear.color.float32 = col.toArray();
+
+	// Add clear values
+	info.clearValueCount = 1;
+	info.pClearValues = StructureHelper.structures(List.of(clear));
+
+	// Create command
+	return (lib, ptr) -> lib.vkCmdBeginRenderPass(ptr, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+}
+```
+
+# Bind Pipeline Command
+
+```java
+public Command bind() {
+	return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, handle());
+}
+```
+
+# Colour
+
+```java
+public record Colour(float red, float green, float blue, float alpha) {
+	/**
+	 * White colour.
+	 */
+	public static final Colour WHITE = new Colour(1, 1, 1, 1);
+
+	/**
+	 * Black colour.
+	 */
+	public static final Colour BLACK = new Colour(0, 0, 0, 1);
+
+	public Colour {
+		Check.isPercentile(red);
+		Check.isPercentile(green);
+		Check.isPercentile(blue);
+		Check.isPercentile(alpha);
+	}
+
+	/**
+	 * @return This colour as an RGBA array of floating-point values
+	 */
+	public float[] toArray() {
+		return new float[]{red, green, blue, alpha};
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.toString(toArray());
+	}
+}
+```
+
 # Frame Buffer
 
 ```java

@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
@@ -78,6 +79,23 @@ public class LogicalDevice {
 		 */
 		public void waitIdle() {
 			check(lib.vkQueueWaitIdle(queue));
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj instanceof Queue that) &&
+					queue.equals(that.queue) &&
+					family.equals(that.family);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append("queue", queue)
+					.append("family", family)
+					.append("dev", device())
+					.build();
 		}
 	}
 
@@ -191,6 +209,15 @@ public class LogicalDevice {
 	 */
 	public void destroy() {
 		check(lib.vkDestroyDevice(handle, null));
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("handle", handle)
+				.append("parent", parent)
+				.append("queues", queues.size())
+				.build();
 	}
 
 	/**
