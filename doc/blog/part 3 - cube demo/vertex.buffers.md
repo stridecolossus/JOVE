@@ -3,6 +3,7 @@
 ```java
 public class VertexBuffer extends AbstractVulkanObject {
 	private final long len;
+	private final Pointer mem;
 
 	/**
 	 * Constructor.
@@ -10,9 +11,10 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 * @param len			Length (bytes)
 	 */
-	private VertexBuffer(Pointer handle, LogicalDevice dev, long len) {
+	private VertexBuffer(Pointer handle, LogicalDevice dev, long len, Pointer mem) {
 		super(handle, dev, dev.library()::vkDestroyBuffer);
 		this.len = oneOrMore(len);
+		this.mem = notNull(mem);
 	}
 
 	/**
