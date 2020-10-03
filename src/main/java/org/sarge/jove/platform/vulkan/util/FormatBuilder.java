@@ -81,8 +81,8 @@ public class FormatBuilder {
 	 * Sets the number of components.
 	 * @param num Number of components 1..4
 	 */
-	public FormatBuilder components(int len) {
-		this.num = Check.range(len, 1, 4);
+	public FormatBuilder components(int num) {
+		this.num = Check.range(num, 1, 4);
 		return this;
 	}
 

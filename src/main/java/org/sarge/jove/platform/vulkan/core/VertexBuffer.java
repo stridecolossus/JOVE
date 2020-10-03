@@ -27,6 +27,21 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class VertexBuffer extends AbstractVulkanObject {
+	/**
+	 * Helper - Creates a staging buffer.
+	 * @param dev Logical device
+	 * @param len Buffer length (bytes)
+	 * @return New staging buffer
+	 */
+	public static VertexBuffer staging(LogicalDevice dev, int len) {
+		return new VertexBuffer.Builder(dev)
+				.length(len)
+				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+				.build();
+	}
+
 	private final long len;
 	private final Pointer mem;
 
@@ -78,7 +93,8 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 * @return Command to bind this buffer
 	 */
 	public Command bind() {
-		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, new Handle[]{this.handle()}, new long[]{0});
+		final Pointer handles = Handle.memory(new Handle[]{this.handle()});
+		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, handles, new long[]{0});
 	}
 
 	/**
@@ -165,6 +181,12 @@ public class VertexBuffer extends AbstractVulkanObject {
 			// Validate
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
 			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
+
+			// TODO
+			if(mode == VkSharingMode.VK_SHARING_MODE_CONCURRENT) throw new UnsupportedOperationException();
+			// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
+			// - queue families (unique, < vkGetPhysicalDeviceQueueFamilyProperties)
+			// - queueFamilyIndexCount
 
 			// Build buffer descriptor
 			final VkBufferCreateInfo info = new VkBufferCreateInfo();

@@ -2,7 +2,7 @@ package org.sarge.jove.demo;
 
 import static java.util.stream.Collectors.toList;
 
-import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,25 +16,11 @@ import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
-import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
-import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
-import org.sarge.jove.platform.vulkan.VkColorSpaceKHR;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
-import org.sarge.jove.platform.vulkan.VkQueueFlag;
-import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.Instance;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.MessageHandler;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
-import org.sarge.jove.platform.vulkan.core.Shader;
-import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.core.Work;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
@@ -44,22 +30,7 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import com.sun.jna.ptr.PointerByReference;
 
 public class RotatingCubeDemo {
-	public static void main(String[] args) {
-		final Vertex[] vertices = {
-				new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-				new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
-				new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
-		};
-
-		final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.COLOUR));
-
-		final FloatBuffer fb = layout.buffer(vertices.length);
-		Arrays.stream(vertices).forEach(v -> layout.buffer(v, fb));
-
-		System.out.println(fb);
-	}
-
-	public static void main2(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		// Open desktop
 		final DesktopService desktop = FrameworkDesktopService.create();
 		if(!desktop.isVulkanSupported()) throw new ServiceException("Vulkan not supported");
@@ -155,11 +126,44 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Load shaders
-		final Shader.Loader loader = Shader.Loader.create("./src/test/resources/demo/triangle", dev);
+		final Shader.Loader loader = Shader.Loader.create("./src/test/resources/demo/vertex.buffer", dev);
 		final Shader vert = loader.load("spv.triangle.vert");
 		final Shader frag = loader.load("spv.triangle.frag");
 
 		//////////////////
+
+		// Build triangle vertices
+		final Vertex[] vertices = {
+				new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
+				new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
+				new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
+		};
+
+		// Define vertex layout
+		final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.COLOUR));
+
+		// Buffer vertices
+		final ByteBuffer bb = layout.buffer(Arrays.asList(vertices));
+
+		// Create staging VBO
+		final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
+
+		// Load to staging
+		staging.load(bb);
+
+		// Create device VBO
+		final VertexBuffer dest = new VertexBuffer.Builder(dev)
+				.length(bb.capacity())
+				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.build();
+
+		// Copy
+		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
+		final Command copyCommand = staging.copy(dest);
+		final Command.Buffer copyBuffer = copyPool.allocate(copyCommand);
+		Work.submit(copyBuffer, true);
 
 		//////////////////
 
@@ -167,6 +171,9 @@ public class RotatingCubeDemo {
 		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
 				.pass(pass)
+				.input()
+					.binding(layout)
+					.build()
 				.viewport(rect)
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
@@ -186,7 +193,8 @@ public class RotatingCubeDemo {
 				.collect(toList());
 
 		// Create command pool
-		final Command.Pool pool = Command.Pool.create(dev.queue(present));
+		final LogicalDevice.Queue presentQueue = dev.queue(present);
+		final Command.Pool pool = Command.Pool.create(presentQueue);
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
@@ -198,6 +206,7 @@ public class RotatingCubeDemo {
 				.begin()
 					.add(pass.begin(buffers.get(n), rect, grey))
 					.add(pipeline.bind())
+					.add(dest.bind())
 					.add(draw)
 					.add(RenderPass.END_COMMAND)
 				.end();
@@ -216,16 +225,17 @@ public class RotatingCubeDemo {
 					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
 					.build()
 					.submit();
-			dev.queue(present).waitIdle();
+
+			presentQueue.waitIdle();
 
 //			Thread.sleep(50);
 
-			chain.present(dev.queue(present), null);
+			chain.present(presentQueue, null);
 
 
 //			dev.queue(present).waitIdle();
 //		}
-			Thread.sleep(1000);
+			Thread.sleep(2500);
 
 		//////////////
 

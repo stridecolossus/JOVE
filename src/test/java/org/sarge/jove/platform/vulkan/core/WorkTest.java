@@ -1,38 +1,52 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
+import com.sun.jna.Pointer;
+
 public class WorkTest extends AbstractVulkanTest {
 	private Work.Builder builder;
+	private Command.Pool pool;
 	private Command.Buffer buffer;
+	private Queue queue;
 
 	@BeforeEach
 	void before() {
-		builder = new Work.Builder();
-		buffer = create();
-	}
+		// Create queue
+		queue = mock(Queue.class);
+		when(queue.device()).thenReturn(dev);
+		when(queue.handle()).thenReturn(new Handle(new Pointer(42)));
 
-	private static Command.Buffer create() {
-		final Command.Pool pool = mock(Command.Pool.class);
-		final Command.Buffer buffer = mock(Command.Buffer.class);
-		final Queue queue = mock(Queue.class);
-		when(buffer.pool()).thenReturn(pool);
+		// Create pool
+		pool = mock(Command.Pool.class);
 		when(pool.queue()).thenReturn(queue);
-		return buffer;
+
+		// Create command buffer
+		buffer = mock(Command.Buffer.class);
+		when(buffer.pool()).thenReturn(pool);
+
+		// Create builder
+		builder = new Work.Builder();
 	}
 
 	@Test
 	void build() {
-		builder.add(buffer);
-		assertNotNull(builder.build());
+		assertNotNull(builder.add(buffer).build());
 	}
 
 	@Test
@@ -42,15 +56,38 @@ public class WorkTest extends AbstractVulkanTest {
 
 	@Test
 	void buildInvalidQueue() {
+		final Command.Buffer other = mock(Command.Buffer.class);
+		when(other.pool()).thenReturn(mock(Command.Pool.class));
 		builder.add(buffer);
-		final Command.Buffer other = create();
 		assertThrows(IllegalArgumentException.class, () -> builder.add(other));
 	}
 
 	@Test
 	void submit() {
-		when(buffer.pool().queue().device()).thenReturn(dev);
-		final Work work = builder.add(buffer).build();
-		work.submit();
+		// Submit work
+		builder.add(buffer).build().submit();
+
+		// Check API
+		final ArgumentCaptor<VkSubmitInfo[]> captor = ArgumentCaptor.forClass(VkSubmitInfo[].class);
+		verify(lib).vkQueueSubmit(eq(queue.handle()), eq(1), captor.capture(), isNull());
+
+		// Check descriptor array
+		final VkSubmitInfo[] array = captor.getValue();
+		assertNotNull(array);
+		assertEquals(1, array.length);
+
+		// Check submit descriptor
+		final VkSubmitInfo info = array[0];
+		assertNotNull(info);
+		assertEquals(1, info.commandBufferCount);
+		assertNotNull(info.pCommandBuffers);
+
+		// TODO - synchronization
+	}
+
+	@Test
+	void submitImmediate() {
+		Work.submit(buffer, true);
+		verify(queue).waitIdle();
 	}
 }

@@ -78,15 +78,27 @@ class Layout {
 	private final List<Component> layout;
 	private final int size;
 
+	public Layout(List<Component> layout) {
+		this.layout = List.copyOf(layout);
+		this.size = layout.stream().mapToInt(Component::size).sum();
+	}
+
 	...
 
 	/**
-	 * Helper - Creates a floating-point buffer sized to this layout and the number of vertices.
-	 * @param num Number of vertices
+	 * Helper - Creates and populates an interleaved buffer containing the given vertex data.
+	 * @param vertices Vertex data
 	 * @return New buffer
 	 */
-	public FloatBuffer buffer(int num) {
-		return BufferFactory.floatBuffer(this.size * num);
+	public ByteBuffer buffer(List<Vertex> vertices) {
+		// Create buffer
+		final ByteBuffer bb = BufferFactory.byteBuffer(size * Float.BYTES * vertices.size());
+
+		// Buffer vertices
+		final FloatBuffer fb = bb.asFloatBuffer();
+		vertices.forEach(v -> buffer(v, fb));
+
+		return bb;
 	}
 
 	/**
@@ -103,17 +115,16 @@ class Layout {
 # Example
 
 ```java
-// Create triangle vertices
+// Build triangle vertices
 final Vertex[] vertices = {
 		new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
 		new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
 		new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
 };
 
-// Create vertex layout
+// Define vertex layout
 final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.COLOUR));
 
-// Create and populate buffer
-final FloatBuffer fb = layout.buffer(vertices.length);
-Arrays.stream(vertices).forEach(v -> layout.buffer(v, fb));
+// Buffer vertices
+final ByteBuffer bb = layout.buffer(Arrays.asList(vertices));
 ```

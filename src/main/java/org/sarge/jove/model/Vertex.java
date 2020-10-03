@@ -2,6 +2,7 @@ package org.sarge.jove.model;
 
 import static org.sarge.jove.util.Check.notNull;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.HashSet;
 import java.util.List;
@@ -90,7 +91,7 @@ public interface Vertex {
 		}
 
 		/**
-		 * @return Size of this component (number of bytes)
+		 * @return Size of this component (number of floating-point values)
 		 */
 		public int size() {
 			return size;
@@ -128,24 +129,31 @@ public interface Vertex {
 		/**
 		 * @return Layout
 		 */
-		public List<Component> layout() {
+		public List<Component> components() {
 			return layout;
 		}
 
 		/**
-		 * @return Total size of this layout (bytes)
+		 * @return Total size of this layout (number of floating-point values)
 		 */
 		public int size() {
 			return size;
 		}
 
 		/**
-		 * Helper - Creates a floating-point buffer sized to this layout and the number of vertices.
-		 * @param num Number of vertices
+		 * Helper - Creates and populates an interleaved buffer containing the given vertex data.
+		 * @param vertices Vertex data
 		 * @return New buffer
 		 */
-		public FloatBuffer buffer(int num) {
-			return BufferFactory.floatBuffer(this.size * num);
+		public ByteBuffer buffer(List<Vertex> vertices) {
+			// Create buffer
+			final ByteBuffer bb = BufferFactory.byteBuffer(size * Float.BYTES * vertices.size());
+
+			// Buffer vertices
+			final FloatBuffer fb = bb.asFloatBuffer();
+			vertices.forEach(v -> buffer(v, fb));
+
+			return bb;
 		}
 
 		/**
@@ -156,15 +164,6 @@ public interface Vertex {
 		public void buffer(Vertex vertex, FloatBuffer buffer) {
 			layout.forEach(c -> c.buffer(vertex, buffer));
 		}
-
-//		/**
-//		 * Buffers the components of the vertex to the given buffer according to this layout.
-//		 * @param vertex		Vertex
-//		 * @param buffer		Output buffer
-//		 */
-//		public void buffer(Vertex vertex, FloatBuffer buffer) {
-//			layout.forEach(c -> c.buffer(vertex, buffer));
-//		}
 
 		@Override
 		public boolean equals(Object obj) {

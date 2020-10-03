@@ -3,7 +3,10 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,10 +14,17 @@ import static org.mockito.Mockito.when;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
+import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
+import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
+import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.util.BufferFactory;
@@ -45,7 +55,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		final Command cmd = buffer.bind();
 		assertNotNull(cmd);
 		cmd.execute(lib, handle);
-		verify(lib).vkCmdBindVertexBuffers(handle, 0, 1, new Handle[]{buffer.handle()}, new long[]{0});
+		verify(lib).vkCmdBindVertexBuffers(eq(handle), eq(0), eq(1), isA(Pointer.class), eq(new long[]{0}));
 	}
 
 	@Test
@@ -112,8 +122,65 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		verify(lib).vkDestroyBuffer(dev.handle(), handle, null);
 	}
 
-	@Test
-	void build() {
-		// TODO
+	@Nested
+	class BuilderTests {
+		private VertexBuffer.Builder builder;
+
+		@BeforeEach
+		void before() {
+			final Pointer mem = new Pointer(3);
+			when(dev.allocate(isA(VkMemoryRequirements.class), anySet())).thenReturn(mem);
+			builder = new VertexBuffer.Builder(dev);
+		}
+
+		@Test
+		void build() {
+			// Build buffer
+			buffer = builder
+					.length(4)
+					.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+					.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+					.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
+					.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+					.build();
+
+			// Check buffer
+			assertNotNull(buffer);
+			assertNotNull(buffer.handle());
+			assertEquals(dev, buffer.device());
+
+			// Check API
+			final ArgumentCaptor<VkBufferCreateInfo> captor = ArgumentCaptor.forClass(VkBufferCreateInfo.class);
+			verify(lib).vkCreateBuffer(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+
+			// Check descriptor
+			final VkBufferCreateInfo info = captor.getValue();
+			assertNotNull(info);
+			assertEquals(IntegerEnumeration.mask(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT), info.usage);
+			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.sharingMode);
+			assertEquals(4, info.size);
+
+			// Check internal memory allocation
+			verify(lib).vkGetBufferMemoryRequirements(eq(dev.handle()), eq(factory.ptr.getValue()), isA(VkMemoryRequirements.class));
+			verify(lib).vkBindBufferMemory(dev.handle(), factory.ptr.getValue(), mem, 0L);
+		}
+
+		@Test
+		void buildRequiresUsageFlags() {
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void buildEmptyBufferLength() {
+			builder.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void staging() {
+			buffer = VertexBuffer.staging(dev, 42);
+			assertNotNull(buffer);
+			assertEquals(42, buffer.length());
+		}
 	}
 }

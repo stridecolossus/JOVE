@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.List;
 
@@ -102,7 +103,7 @@ public class VertexTest {
 
 		@Test
 		void constructor() {
-			assertEquals(LAYOUT, layout.layout());
+			assertEquals(LAYOUT, layout.components());
 			assertEquals(3 + 3 + 2 + 4, layout.size());
 		}
 
@@ -117,17 +118,19 @@ public class VertexTest {
 		}
 
 		@Test
-		void bufferAllocate() {
-			final FloatBuffer buffer = layout.buffer(2);
-			assertNotNull(buffer);
-			assertEquals(2 * layout.size(), buffer.capacity());
+		void bufferVertex() {
+			final FloatBuffer buffer = BufferFactory.byteBuffer(layout.size() * Float.BYTES).asFloatBuffer();
+			layout.buffer(vertex, buffer);
+			assertEquals(layout.size(), buffer.capacity());
+			assertEquals(buffer.capacity(), buffer.position());
 		}
 
 		@Test
 		void buffer() {
-			final FloatBuffer buffer = layout.buffer(1);
-			layout.buffer(vertex, buffer);
-			assertEquals(buffer.capacity(), buffer.position());
+			final ByteBuffer buffer = layout.buffer(List.of(vertex, vertex));
+			assertNotNull(buffer);
+			assertEquals(2 * Float.BYTES * layout.size(), buffer.capacity());
+			assertEquals(0, buffer.position());
 		}
 
 		@Test
