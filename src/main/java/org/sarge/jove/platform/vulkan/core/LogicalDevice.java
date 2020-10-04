@@ -186,7 +186,7 @@ public class LogicalDevice {
 	 */
 	public List<Queue> queues(QueueFamily family) {
 		final var list = queues.get(family);
-		if(list == null) throw new IllegalArgumentException("");
+		if(list == null) throw new IllegalArgumentException("Queue family not present: " + family);
 		return list;
 	}
 
@@ -225,6 +225,7 @@ public class LogicalDevice {
         // - number of allocations limited to maxMemoryAllocationCount
         // - replace with custom allocator with offsets
 
+        // Get memory handle
         return mem.getValue();
 	}
 

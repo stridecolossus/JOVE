@@ -3,20 +3,30 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
+import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
+import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class LogicalDeviceTest {
 	private LogicalDevice device;
@@ -96,6 +106,32 @@ public class LogicalDeviceTest {
 		final Queue queue = device.queues().get(family).get(0);
 		queue.waitIdle();
 		verify(lib).vkQueueWaitIdle(queue.handle());
+	}
+
+	@Test
+	void allocate() {
+		// Specify memory requirements
+		final var reqs = new VkMemoryRequirements();
+		reqs.size = 1;
+
+		// Mock matching memory type
+		final Set<VkMemoryPropertyFlag> flags = Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		when(parent.findMemoryType(flags)).thenReturn(2);
+
+		// Allocate memory
+		final Pointer mem = device.allocate(reqs, flags);
+		final PointerByReference ref = lib.factory().pointer();
+		assertEquals(ref.getValue(), mem);
+
+		// Check API
+		final ArgumentCaptor<VkMemoryAllocateInfo> captor = ArgumentCaptor.forClass(VkMemoryAllocateInfo.class);
+		verify(lib).vkAllocateMemory(eq(device.handle()), captor.capture(), isNull(), eq(ref));
+
+		// Check allocation descriptor
+		final var info = captor.getValue();
+		assertNotNull(info);
+		assertEquals(1, info.allocationSize);
+		assertEquals(2, info.memoryTypeIndex);
 	}
 
 	@Test

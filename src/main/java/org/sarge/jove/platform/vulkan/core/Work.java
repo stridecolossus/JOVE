@@ -28,6 +28,22 @@ public interface Work {
 	void submit();
 
 	/**
+	 * Helper - Submits the given command.
+	 * @param buffer 		Command buffer to submit
+	 * @param wait			Whether to wait for the queue to become idle after submission
+	 */
+	static void submit(Command.Buffer buffer, boolean wait) {
+		// Submit work
+		final Work work = new Builder().add(buffer).build();
+		work.submit();
+
+		// Wait for work to complete
+		if(wait) {
+			buffer.pool().queue().waitIdle();
+		}
+	}
+
+	/**
 	 * Builder for work.
 	 */
 	public static class Builder {

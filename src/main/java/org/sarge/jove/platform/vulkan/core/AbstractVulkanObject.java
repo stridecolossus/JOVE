@@ -32,7 +32,7 @@ public abstract class AbstractVulkanObject {
 
 	/**
 	 * Constructor.
-	 * @param handle		Pipeline handle
+	 * @param handle		JNA pointer for this handle
 	 * @param dev			Parent logical device
 	 * @param destructor	Destructor API method
 	 */

@@ -5,9 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.platform.vulkan.util.FormatBuilder.Type;
 
 public class FormatBuilderTest {
 	private FormatBuilder builder;
@@ -20,7 +19,7 @@ public class FormatBuilderTest {
 	@Test
 	public void build() {
 		final VkFormat format = builder
-			.type(Vertex.Component.Type.INT)
+			.type(Type.INTEGER)
 			.components("RGBA")
 			.bytes(2)
 			.signed(false)

@@ -4,7 +4,6 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.util.StringJoiner;
 
-import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
@@ -43,10 +42,27 @@ public class FormatBuilder {
 	 */
 	public static final String BGRA = "BGRA";
 
+	/**
+	 * Component data-type.
+	 */
+	public enum Type {
+		INTEGER("INT"),
+		FLOAT("FLOAT"),
+		NORMALIZED("NORM"),
+		SCALED("SCALED"),
+		SRGB("SRGB");
+
+		private final String token;
+
+		private Type(String token) {
+			this.token = token;
+		}
+	}
+
 	private String components = RGBA;
 	private int num = 4;
 	private int bytes = 4;
-	private Vertex.Component.Type type = Vertex.Component.Type.FLOAT;
+	private Type type = Type.FLOAT;
 	private boolean signed = true;
 
 	/**
@@ -65,8 +81,8 @@ public class FormatBuilder {
 	 * Sets the number of components.
 	 * @param num Number of components 1..4
 	 */
-	public FormatBuilder components(int len) {
-		this.num = Check.range(len, 1, 4);
+	public FormatBuilder components(int num) {
+		this.num = Check.range(num, 1, 4);
 		return this;
 	}
 
@@ -94,9 +110,9 @@ public class FormatBuilder {
 
 	/**
 	 * Sets the data type.
-	 * @param type Data type (default is {@link Vertex.Component.Type#FLOAT})
+	 * @param type Data type (default is {@link Type#FLOAT})
 	 */
-	public FormatBuilder type(Vertex.Component.Type type) {
+	public FormatBuilder type(Type type) {
 		this.type = notNull(type);
 		return this;
 	}
@@ -121,7 +137,7 @@ public class FormatBuilder {
 		final String format = new StringJoiner("_")
 			.add("VK_FORMAT")
 			.add(layout.toString())
-			.add((signed ? "S" : "U") + type.name().toUpperCase())
+			.add((signed ? "S" : "U") + type.token)
 			.toString();
 
 		// Lookup format
