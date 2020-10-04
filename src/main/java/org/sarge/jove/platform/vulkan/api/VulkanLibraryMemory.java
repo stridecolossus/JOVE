@@ -34,7 +34,7 @@ interface VulkanLibraryMemory {
 	 * @param offset			Offset
 	 * @param size				Data length
 	 * @param flags				Flags
-	 * @param ppData			Returned memory pointer
+	 * @param ppData			Returned pointer to the memory buffer
 	 * @return Result code
 	 */
 	int vkMapMemory(Pointer device, Pointer memory, long offset, long size, int flags, PointerByReference ppData);

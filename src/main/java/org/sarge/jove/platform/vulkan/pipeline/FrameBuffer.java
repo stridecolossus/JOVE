@@ -29,8 +29,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 */
 	public static FrameBuffer create(View view, RenderPass pass) {
 		// Build descriptor
-		final Image image = view.image();
-		final Image.Extents extents = image.extents();
+		final Image.Extents extents = view.descriptor().extents();
 		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
 		info.attachmentCount = 1;

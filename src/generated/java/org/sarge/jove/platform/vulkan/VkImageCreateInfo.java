@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -28,9 +27,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"initialLayout"
 })
 public class VkImageCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkImageCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkImageCreateInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
@@ -39,7 +35,7 @@ public class VkImageCreateInfo extends VulkanStructure {
 	public VkExtent3D extent;
 	public int mipLevels;
 	public int arrayLayers;
-	public int samples;
+	public VkSampleCountFlag samples;
 	public VkImageTiling tiling;
 	public int usage;
 	public VkSharingMode sharingMode;

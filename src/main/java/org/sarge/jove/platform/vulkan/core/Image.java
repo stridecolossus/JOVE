@@ -1,17 +1,21 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.jove.util.Check.oneOrMore;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.vulkan.VkExtent3D;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 /**
  * An <i>image</i> is a descriptor for a Vulkan image.
@@ -64,9 +68,21 @@ public class Image extends AbstractVulkanObject {
 		}
 	}
 
-	private final VkFormat format;
-	private final Extents extents;
-	private final Set<VkImageAspectFlag> aspect;
+	/**
+	 * Descriptor for an image.
+	 */
+	public static record Descriptor(Handle handle, VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspect) {
+		public Descriptor {
+			Check.notNull(handle);
+			Check.notNull(type);
+			Check.notNull(format);
+			Check.notNull(extents);
+			Check.notNull(aspect);
+		}
+	}
+
+	private final Descriptor descriptor;
+	private final Pointer mem;
 
 	private VkImageLayout layout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -74,36 +90,22 @@ public class Image extends AbstractVulkanObject {
 	 * Constructor.
 	 * @param handle		Image handle
 	 * @param dev			Logical device
+	 * @param mem			Internal memory
 	 * @param format		Image format
 	 * @param extents		Image extents
 	 * @param aspect		Image aspect(s)
 	 */
-	public Image(Pointer handle, LogicalDevice dev, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspect) {
-		super(handle, dev, dev.library()::vkDestroyImage);
-		this.format = notNull(format);
-		this.extents = notNull(extents);
-		this.aspect = Set.copyOf(aspect);
+	public Image(Descriptor descriptor, Pointer mem, LogicalDevice dev) {
+		super(descriptor.handle, dev, dev.library()::vkDestroyImage);
+		this.descriptor = notNull(descriptor);
+		this.mem = notNull(mem);
 	}
 
 	/**
-	 * @return Image format
+	 * @return Image descriptor
 	 */
-	public VkFormat format() {
-		return format;
-	}
-
-	/**
-	 * @return Image extents
-	 */
-	public Extents extents() {
-		return extents;
-	}
-
-	/**
-	 * @return Image aspect(s)
-	 */
-	public Set<VkImageAspectFlag> aspect() {
-		return aspect;
+	public Descriptor descriptor() {
+		return descriptor;
 	}
 
 	/**
@@ -113,11 +115,170 @@ public class Image extends AbstractVulkanObject {
 		return layout;
 	}
 
+	@Override
+	public synchronized void destroy() {
+		final LogicalDevice dev = this.device();
+		dev.library().vkFreeMemory(dev.handle(), mem, null);
+		super.destroy();
+	}
+
 	/**
-	 * Creates a view for this image.
-	 * @return New view of this image
+	 * Builder for an image.
 	 */
-	public View view() {
-		return new View.Builder().image(this).build();
+	public static class Builder {
+		private final LogicalDevice dev;
+		private final VkImageCreateInfo info = new VkImageCreateInfo();
+		private final Set<VkImageUsageFlag> usage = new HashSet<>();
+		private final Set<VkMemoryPropertyFlag> props = new HashSet<>();
+		private final Set<VkImageAspectFlag> aspect = new HashSet<>();
+		private Extents extents;
+
+		/**
+		 * Constructor.
+		 */
+		public Builder(LogicalDevice dev) {
+			this.dev = notNull(dev);
+			init();
+		}
+
+		/**
+		 * Initialises the image descriptor.
+		 */
+		private void init() {
+			type(VkImageType.VK_IMAGE_TYPE_2D);
+			mipLevels(1);
+			arrayLayers(1);
+			samples(VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT);
+			tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL);
+			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
+			initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
+		}
+
+		/**
+		 * Sets the image type.
+		 * @param type Image type
+		 */
+		public Builder type(VkImageType type) {
+			info.imageType = notNull(type);
+			return this;
+		}
+
+		/**
+		 * Sets the image format.
+		 * @param format Image format
+		 */
+		public Builder format(VkFormat format) {
+			info.format = notNull(format);
+			return this;
+		}
+
+		/**
+		 * Sets the image extents.
+		 * @param extents Image extents
+		 */
+		public Builder extents(Extents extents) {
+			this.extents = notNull(extents);
+			return this;
+		}
+
+		/**
+		 * Sets the number of mip levels.
+		 * @param mipLevels Mip-levels (default is {@code 1})
+		 */
+		public Builder mipLevels(int mipLevels) {
+			info.mipLevels = oneOrMore(mipLevels);
+			return this;
+		}
+
+		/**
+		 * Sets the number of array layers.
+		 * @param arrayLayers Number of array layers (default is {@code 1})
+		 */
+		public  Builder arrayLayers(int arrayLayers) {
+			info.arrayLayers = oneOrMore(arrayLayers);
+			return this;
+		}
+
+		/**
+		 * Sets the number of samples.
+		 * @param samples Samples-per-texel (default is {@code 1})
+		 */
+		public Builder samples(VkSampleCountFlag samples) {
+			info.samples = notNull(samples);
+			return this;
+		}
+
+		/**
+		 * Sets the image tiling arrangement.
+		 * @param tiling Tiling arrangement (default is {@link VkImageTiling#VK_IMAGE_TILING_OPTIMAL})
+		 */
+		public Builder tiling(VkImageTiling tiling) {
+			info.tiling = notNull(tiling);
+			return this;
+		}
+
+		/**
+		 * Adds an usage flag.
+		 * @param usage Usage flag
+		 */
+		public Builder usage(VkImageUsageFlag usage) {
+			Check.notNull(usage);
+			this.usage.add(usage);
+			return this;
+		}
+
+		/**
+		 * Sets the sharing mode of the image.
+		 * @param mode Sharing mode (default is {@link VkSharingMode#VK_SHARING_MODE_EXCLUSIVE})
+		 */
+		public Builder mode(VkSharingMode mode) {
+			info.sharingMode = notNull(mode);
+			return this;
+		}
+		// TODO - queue families/count if concurrent
+
+		/**
+		 * Sets the initial image layout.
+		 * @param initialLayout Initial layout (default is undefined)
+		 */
+		public Builder initialLayout(VkImageLayout initialLayout) {
+			info.initialLayout = notNull(initialLayout);
+			// TODO - undefined or pre-init only
+			return this;
+		}
+
+		/**
+		 * Constructs this image.
+		 * @return New image
+		 */
+		public Image build() {
+			// Validate image
+			if(info.format == null) throw new IllegalArgumentException("Image format not specified");
+			if(extents == null) throw new IllegalArgumentException("Image extents not specified");
+
+			// Complete create descriptor
+			info.extent = this.extents.create();
+			info.usage = IntegerEnumeration.mask(usage);
+
+			// Allocate image
+			final VulkanLibrary lib = dev.library();
+			final PointerByReference ref = lib.factory().pointer();
+			check(lib.vkCreateImage(dev.handle(), info, null, ref));
+
+			// Create image descriptor
+			final Handle handle = new Handle(ref.getValue());
+			final Descriptor descriptor = new Descriptor(handle, info.imageType, info.format, extents, aspect);
+
+			// Retrieve image memory requirements
+			final var reqs = new VkMemoryRequirements();
+			lib.vkGetImageMemoryRequirements(dev.handle(), handle, reqs);
+
+			// Allocate image memory
+			final Pointer mem = dev.allocate(reqs, props);
+			check(lib.vkBindImageMemory(dev.handle(), handle, mem, 0));
+
+			// Create image
+			return new Image(descriptor, mem, dev);
+		}
 	}
 }

@@ -8,6 +8,7 @@ import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSamplerCreateInfo;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -48,7 +49,7 @@ interface VulkanLibraryImage {
 	 * @param memoryOffset		Offset
 	 * @return Result code
 	 */
-	int vkBindImageMemory(Handle device, Handle image, Handle memory, long memoryOffset);
+	int vkBindImageMemory(Handle device, Handle image, Pointer memory, long memoryOffset);
 
 	void vkCmdCopyBufferToImage(Handle commandBuffer, Handle srcBuffer, Handle dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy pRegions);
 	void vkCmdCopyImageToBuffer(Handle commandBuffer, Handle srcImage, VkImageLayout srcImageLayout, Handle dstBuffer, int regionCount, VkBufferImageCopy pRegions);

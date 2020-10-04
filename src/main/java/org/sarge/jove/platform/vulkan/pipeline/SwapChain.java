@@ -46,13 +46,13 @@ public class SwapChain extends AbstractVulkanObject {
 	 * @param handle 		Swap-chain handle
 	 * @param dev			Logical device
 	 * @param format		Image format
-	 * @param extent		Image extent
 	 * @param views			Image views
 	 */
-	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extents, List<View> views) {
+	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, List<View> views) {
 		super(handle, dev, dev.library()::vkDestroySwapchainKHR);
+		final Image.Extents dim = views.get(0).descriptor().extents();
 		this.format = notNull(format);
-		this.extents = notNull(extents);
+		this.extents = new Dimensions(dim.width(), dim.height());
 		this.views = List.copyOf(views);
 	}
 
@@ -153,8 +153,10 @@ public class SwapChain extends AbstractVulkanObject {
 			info.surface = surface.handle();
 
 			// Init from surface capabilities
-			count(caps.minImageCount); // TODO - was plus one!?
+			count(caps.minImageCount);
 			transform(caps.currentTransform);
+
+			// Init swapchain extents
 			info.imageExtent = caps.currentExtent;
 
 			// Init default fields
@@ -165,10 +167,6 @@ public class SwapChain extends AbstractVulkanObject {
 			alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
 			present(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR);
 			clipped(true);
-
-			// Init arbitrary format
-			final var surfaceFormat = formats.iterator().next();
-			format(surfaceFormat.format);
 
 			// TODO
 			info.queueFamilyIndexCount = 0;
@@ -309,8 +307,12 @@ public class SwapChain extends AbstractVulkanObject {
 		/**
 		 * Constructs this swap-chain.
 		 * @return New swap-chain
+		 * @throws IllegalArgumentException if the image format has not been specified
 		 */
 		public SwapChain build() {
+			// Validate
+			if(info.imageFormat == null) throw new IllegalArgumentException("Image format not specified");
+
 			// Allocate swap-chain
 			final LogicalDevice dev = surface.device();
 			final VulkanLibrary lib = dev.library();
@@ -318,23 +320,29 @@ public class SwapChain extends AbstractVulkanObject {
 			final PointerByReference chain = factory.pointer();
 			check(lib.vkCreateSwapchainKHR(dev.handle(), info, null, chain));
 
-			// Get swap-chain image views
+			// Get swap-chain images
 			final VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
 			final var handles = VulkanFunction.enumerate(func, lib, factory::pointers);
-			final var views = Arrays.stream(handles).map(this::view).collect(toList());
+
+			// Create image views
+			final Image.Extents extents = new Image.Extents(info.imageExtent.width, info.imageExtent.height);
+			final var views = Arrays
+					.stream(handles)
+					.map(Handle::new)
+					.map(image -> view(image, extents))
+					.collect(toList());
 
 			// Create swap-chain
-			final Dimensions extent = new Dimensions(info.imageExtent.width, info.imageExtent.height);
-			return new SwapChain(chain.getValue(), dev, info.imageFormat, extent, views);
+			return new SwapChain(chain.getValue(), dev, info.imageFormat, views);
 		}
 
 		/**
-		 * @return New swap-chain image-view
+		 * Creates an image-view from the given swapchain image.
+		 * @return New swapchain image-view
 		 */
-		private View view(Pointer handle) {
-			final Image.Extents extents = new Image.Extents(info.imageExtent.width, info.imageExtent.height);
-			final Image image = new Image(handle, surface.device(), info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
-			return image.view();
+		private View view(Handle handle, Image.Extents extents) {
+			final Image.Descriptor descriptor = new Image.Descriptor(handle, VkImageType.VK_IMAGE_TYPE_1D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
+			return new View.Builder(surface.device()).image(descriptor).build();
 		}
 	}
 }
