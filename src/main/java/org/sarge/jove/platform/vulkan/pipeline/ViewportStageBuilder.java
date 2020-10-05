@@ -14,7 +14,7 @@ import org.sarge.jove.util.StructureHelper;
 /**
  * Builder for the viewport stage descriptor.
  */
-public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
+public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
 	private final List<VkViewport> viewports = new ArrayList<>();
 	private final List<VkRect2D> scissors = new ArrayList<>();
 

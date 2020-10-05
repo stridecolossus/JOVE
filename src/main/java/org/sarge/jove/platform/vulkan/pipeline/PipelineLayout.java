@@ -27,7 +27,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 	/**
 	 * Builder for a pipeline layout.
 	 */
-	public static class Builder extends AbstractPipelineStageBuilder<PipelineLayout> {
+	public static class Builder extends AbstractPipelineBuilder<PipelineLayout> {
 		private final LogicalDevice dev;
 		//private final List<Pointer> sets = new StrictList<>();
 		// TODO - push constant layouts

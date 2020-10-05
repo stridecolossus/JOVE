@@ -18,7 +18,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * An <i>image</i> is a descriptor for a Vulkan image.
+ * An <i>image</i> represents
  * @author Sarge
  */
 public class Image extends AbstractVulkanObject {
@@ -71,29 +71,96 @@ public class Image extends AbstractVulkanObject {
 	/**
 	 * Descriptor for an image.
 	 */
-	public static record Descriptor(Handle handle, VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspect) {
+	public static record Descriptor(Handle handle, VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) {
+		/**
+		 * Constructor.
+		 */
 		public Descriptor {
 			Check.notNull(handle);
 			Check.notNull(type);
 			Check.notNull(format);
 			Check.notNull(extents);
-			Check.notNull(aspect);
+			Check.notNull(aspects);
+		}
+
+		/**
+		 * Builder for an image descriptor.
+		 */
+		public static class Builder {
+			private Handle handle;
+			private VkImageType type = VkImageType.VK_IMAGE_TYPE_2D;
+			private VkFormat format;
+			private Extents extents;
+			private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+
+			/**
+			 * Sets the image handle.
+			 * @param handle Image handle
+			 */
+			public Builder handle(Handle handle) {
+				this.handle = notNull(handle);
+				return this;
+			}
+
+			/**
+			 * Sets the image type.
+			 * @param type Image type (default is {@link VkImageType#VK_IMAGE_TYPE_2D})
+			 */
+			public Builder type(VkImageType type) {
+				this.type = notNull(type);
+				return this;
+			}
+
+			/**
+			 * Sets the image format.
+			 * @param format Image format
+			 */
+			public Builder format(VkFormat format) {
+				this.format = notNull(format);
+				return this;
+			}
+
+			/**
+			 * Sets the image extents.
+			 * @param extents Image extents
+			 */
+			public Builder extents(Extents extents) {
+				this.extents = notNull(extents);
+				return this;
+			}
+
+			/**
+			 * Adds an image aspect.
+			 * @param aspect Image aspect
+			 */
+			public Builder aspect(VkImageAspectFlag aspect) {
+				Check.notNull(aspect);
+				aspects.add(aspect);
+				return this;
+			}
+
+			/**
+			 * Constructs this descriptor.
+			 * @return New image descriptor
+			 * @throws IllegalArgumentException if the descriptor is incomplete
+			 */
+			public Descriptor build() {
+				Check.notNull(handle);
+				Check.notNull(format);
+				Check.notNull(extents);
+				return new Descriptor(handle, type, format, extents, aspects);
+			}
 		}
 	}
 
 	private final Descriptor descriptor;
 	private final Pointer mem;
 
-	private VkImageLayout layout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
-
 	/**
 	 * Constructor.
-	 * @param handle		Image handle
-	 * @param dev			Logical device
+	 * @param descriptor	Image descriptor
 	 * @param mem			Internal memory
-	 * @param format		Image format
-	 * @param extents		Image extents
-	 * @param aspect		Image aspect(s)
+	 * @param dev			Logical device
 	 */
 	public Image(Descriptor descriptor, Pointer mem, LogicalDevice dev) {
 		super(descriptor.handle, dev, dev.library()::vkDestroyImage);
@@ -106,13 +173,6 @@ public class Image extends AbstractVulkanObject {
 	 */
 	public Descriptor descriptor() {
 		return descriptor;
-	}
-
-	/**
-	 * @return Current layout of this image
-	 */
-	public VkImageLayout layout() {
-		return layout;
 	}
 
 	@Override
@@ -130,7 +190,7 @@ public class Image extends AbstractVulkanObject {
 		private final VkImageCreateInfo info = new VkImageCreateInfo();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
 		private final Set<VkMemoryPropertyFlag> props = new HashSet<>();
-		private final Set<VkImageAspectFlag> aspect = new HashSet<>();
+		private final Set<VkImageAspectFlag> aspects = new HashSet<>();
 		private Extents extents;
 
 		/**
@@ -248,6 +308,26 @@ public class Image extends AbstractVulkanObject {
 		}
 
 		/**
+		 * Adds a memory property.
+		 * @param prop Memory property
+		 */
+		public Builder property(VkMemoryPropertyFlag prop) {
+			Check.notNull(prop);
+			props.add(prop);
+			return this;
+		}
+
+		/**
+		 * Adds an image aspect.
+		 * @param aspect Image aspect
+		 */
+		public Builder aspect(VkImageAspectFlag aspect) {
+			Check.notNull(aspect);
+			aspects.add(aspect);
+			return this;
+		}
+
+		/**
 		 * Constructs this image.
 		 * @return New image
 		 */
@@ -267,7 +347,7 @@ public class Image extends AbstractVulkanObject {
 
 			// Create image descriptor
 			final Handle handle = new Handle(ref.getValue());
-			final Descriptor descriptor = new Descriptor(handle, info.imageType, info.format, extents, aspect);
+			final Descriptor descriptor = new Descriptor(handle, info.imageType, info.format, extents, aspects);
 
 			// Retrieve image memory requirements
 			final var reqs = new VkMemoryRequirements();

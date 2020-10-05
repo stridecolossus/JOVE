@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
@@ -34,6 +35,6 @@ public class VkImageMemoryBarrier extends VulkanStructure {
 	public VkImageLayout newLayout;
 	public int srcQueueFamilyIndex;
 	public int dstQueueFamilyIndex;
-	public Pointer image;
+	public Handle image;
 	public VkImageSubresourceRange subresourceRange;
 }

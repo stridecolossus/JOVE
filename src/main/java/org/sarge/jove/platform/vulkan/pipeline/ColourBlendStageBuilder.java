@@ -18,7 +18,7 @@ import org.sarge.jove.util.StructureHelper;
  * Builder for the colour-blend pipeline stage.
  * @author Sarge
  */
-public class ColourBlendStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
+public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineColorBlendStateCreateInfo> {
 	private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
 	private VkLogicOp logic;
 	private final float[] constants = new float[4];

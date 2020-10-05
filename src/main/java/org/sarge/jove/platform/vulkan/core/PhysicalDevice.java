@@ -28,6 +28,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.Check;
+import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -41,6 +42,11 @@ public class PhysicalDevice {
 	 * Queue family implementation.
 	 */
 	public class QueueFamily {
+		/**
+		 * Index for the <i>ignored</i> queue family.
+		 */
+		public static final int IGNORED = (~0);
+
 		private final int count;
 		private final int index;
 		private final Set<VkQueueFlag> flags;
@@ -267,14 +273,19 @@ public class PhysicalDevice {
 	 * @return Memory type index
 	 * @throws ServiceException if no suitable memory type is available
 	 */
-	public int findMemoryType(Set<VkMemoryPropertyFlag> props) {
+	public int findMemoryType(int filter, Set<VkMemoryPropertyFlag> props) {
+		// Retrieve memory properties
 		final var mem = this.memory();
+
+		// Find matching memory type index
 		final int mask = IntegerEnumeration.mask(props);
 		for(int n = 0; n < mem.memoryTypeCount; ++n) {
-			if(mem.memoryTypes[n].propertyFlags == mask) {
+			if(MathsUtil.isBit(filter, n) && MathsUtil.isMask(mem.memoryTypes[n].propertyFlags, mask)) {
 				return n;
 			}
 		}
+
+		// Otherwise memory not available for this device
 		throw new ServiceException("No memory type available for specified memory properties:" + props);
 	}
 

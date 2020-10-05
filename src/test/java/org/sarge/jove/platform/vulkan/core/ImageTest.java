@@ -3,20 +3,24 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.core.Image.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -24,32 +28,44 @@ import com.sun.jna.Pointer;
 
 public class ImageTest extends AbstractVulkanTest {
 	private Image image;
+	private Handle handle;
+	private Descriptor descriptor;
+	private Pointer mem;
 
 	@BeforeEach
 	void before() {
-		image = new Image(new Pointer(42), dev, VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, new Extents(1, 2), Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
+		// Create descriptor
+		handle = new Handle(new Pointer(1));
+		descriptor = new Image.Descriptor.Builder()
+				.handle(handle)
+				.format(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT)
+				.extents(new Image.Extents(3, 4))
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.build();
+
+		// Create image
+		mem = new Pointer(2);
+		image = new Image(descriptor, mem, dev);
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(image.handle());
+		assertEquals(handle, image.handle());
 		assertEquals(dev, image.device());
-		assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, image.format());
-		assertEquals(new Extents(1, 2), image.extents());
-		assertEquals(Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT), image.aspect());
-		assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, image.layout());
+		assertEquals(descriptor, image.descriptor());
 	}
 
 	@Test
-	void view() {
-		final View view = image.view();
-		assertNotNull(view);
-		assertEquals(image, view.image());
+	void descriptor() {
+		assertEquals(handle, descriptor.handle());
+		assertEquals(VkImageType.VK_IMAGE_TYPE_2D, descriptor.type());
+		assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, descriptor.format());
+		assertEquals(new Extents(3, 4), descriptor.extents());
+		assertEquals(Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT), descriptor.aspects());
 	}
 
 	@Test
 	void destroy() {
-		final Handle handle = image.handle();
 		image.destroy();
 		verify(lib).vkDestroyImage(dev.handle(), handle, null);
 	}
@@ -86,31 +102,88 @@ public class ImageTest extends AbstractVulkanTest {
 			assertTrue(result.equals(extents));
 		}
 	}
+
+	@Nested
+	class BuilderTests {
+		private Image.Builder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new Image.Builder(dev);
+		}
+
+		@Test
+		void build() {
+			// Init image memory
+			final Pointer mem = new Pointer(42);
+			when(dev.allocate(isA(VkMemoryRequirements.class), eq(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)))).thenReturn(mem);
+
+			// Build image
+			image = new Image.Builder(dev)
+				.type(VkImageType.VK_IMAGE_TYPE_3D)
+				.format(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT)
+				.extents(new Image.Extents(1, 2, 3))
+				.mipLevels(4)
+				.arrayLayers(5)
+				.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
+				.initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED)
+				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
+				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+				.samples(VkSampleCountFlag.VK_SAMPLE_COUNT_2_BIT)
+				.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
+				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT)
+				.build();
+
+			// Check image
+			assertNotNull(image);
+			assertNotNull(descriptor.handle());
+
+			// Check descriptor
+			descriptor = image.descriptor();
+			assertNotNull(descriptor);
+			assertNotNull(descriptor.handle());
+			assertEquals(VkImageType.VK_IMAGE_TYPE_3D, descriptor.type());
+			assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, descriptor.format());
+			assertEquals(new Extents(1, 2, 3), descriptor.extents());
+			assertEquals(Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT), descriptor.aspects());
+
+			// Check API
+			final ArgumentCaptor<VkImageCreateInfo> captor = ArgumentCaptor.forClass(VkImageCreateInfo.class);
+			verify(lib).vkCreateImage(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+
+			// Check create image descriptor
+			final VkImageCreateInfo info = captor.getValue();
+			assertNotNull(info);
+			assertEquals(VkImageType.VK_IMAGE_TYPE_3D, info.imageType);
+			assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, info.format);
+			assertNotNull(info.extent);
+			assertEquals(1, info.extent.width);
+			assertEquals(2, info.extent.height);
+			assertEquals(3, info.extent.depth);
+			assertEquals(4, info.mipLevels);
+			assertEquals(5, info.arrayLayers);
+			assertEquals(VkImageTiling.VK_IMAGE_TILING_OPTIMAL, info.tiling);
+			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, info.initialLayout);
+			assertEquals(IntegerEnumeration.mask(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT), info.usage);
+			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_2_BIT, info.samples);
+			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.sharingMode);
+
+			// Check memory allocation
+			verify(lib).vkGetImageMemoryRequirements(eq(dev.handle()), eq(descriptor.handle()), isA(VkMemoryRequirements.class));
+			verify(lib).vkBindImageMemory(dev.handle(), image.handle(), mem, 0);
+		}
+
+		@Test
+		void buildRequiresFormat() {
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void buildRequiresExtents() {
+			builder.format(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT);
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+	}
 }
-
-//	@Test
-//	public void builder() {
-//		final Image image = new Image.Builder(device)
-//			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
-//			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT)
-//			.type(VkImageType.VK_IMAGE_TYPE_3D)
-//			.format(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT)
-//			.extents(Image.extents(1, 2, 3))
-//			.mipLevels(4)
-//			.arrayLayers(5)
-//			.tiling(VkImageTiling.VK_IMAGE_TILING_LINEAR)
-//			.initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED)
-//			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
-//			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-//			.samples(VkSampleCountFlag.VK_SAMPLE_COUNT_2_BIT)
-//			.mode(VkSharingMode.VK_SHARING_MODE_CONCURRENT)
-//			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)
-//			.build();
-//
-//		assertNotNull(image);
-//		assertEquals(Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT), image.aspect());
-//		assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, image.format());
-//		assertTrue(Image.extents(1, 2, 3).dataEquals(image.extents()));
-//		assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, image.layout());
-//	}
-

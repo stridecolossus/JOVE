@@ -104,12 +104,14 @@ public class PhysicalDeviceTest {
 		doReturn(props).when(spy).memory();
 
 		// Check memory type matched
-		assertEquals(1, spy.findMemoryType(flags));
-	}
+		assertEquals(1, spy.findMemoryType(0b11, flags));
 
-	@Test
-	void findMemoryTypeNotFound() {
-		assertThrows(ServiceException.class, () -> dev.findMemoryType(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
+		// Check bit-wise filter
+		assertThrows(ServiceException.class, () -> dev.findMemoryType(0b01, flags));
+
+		// Check property matching
+		assertThrows(ServiceException.class, () -> dev.findMemoryType(0b11, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
+		assertThrows(ServiceException.class, () -> dev.findMemoryType(0b11, Set.of()));
 	}
 
 	@Nested

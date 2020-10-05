@@ -209,7 +209,7 @@ public class LogicalDevice {
 	 */
 	public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
 		// Find memory type
-		final int type = parent.findMemoryType(flags);
+		final int type = parent.findMemoryType(reqs.memoryTypeBits, flags);
 
 		// Init memory descriptor
 		final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();

@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
  * Builder for the input assembly pipeline stage.
  * @author Sarge
  */
-public class InputAssemblyStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo> {
+public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelineInputAssemblyStateCreateInfo> {
 	private VkPrimitiveTopology topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	private boolean restart;
 

@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
  * Builder for the rasterizer pipeline stage.
  * @author Sarge
  */
-public class RasterizerStageBuilder extends AbstractPipelineStageBuilder<VkPipelineRasterizationStateCreateInfo> {
+public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
 	private boolean depthClampEnable;
 	private boolean rasterizerDiscardEnable;
 	private VkPolygonMode polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL;

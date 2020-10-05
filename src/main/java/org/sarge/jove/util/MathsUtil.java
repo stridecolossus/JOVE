@@ -71,6 +71,28 @@ public final class MathsUtil {
 	}
 
 	/**
+	 * @param value		Value
+	 * @param mask		Bit-wise mask
+	 * @return Whether the given value matches the specified bit-wise mask
+	 * @throws IllegalArgumentException if the given mask is zero or negative
+	 */
+	public static boolean isMask(int value, int mask) {
+		Check.oneOrMore(mask);
+		return (value & mask) == mask;
+	}
+
+	/**
+	 * @param mask		Mask
+	 * @param bit		Bit index
+	 * @return Whether the specified bit is set in the given integer mask
+	 * @throws IllegalArgumentException if the given integer bit index is invalid
+	 */
+	public static boolean isBit(int mask, int bit) {
+		Check.range(bit, 0, Integer.SIZE - 1);
+		return isMask(mask, 1 << bit);
+	}
+
+	/**
 	 * @param num Number
 	 * @return Whether the given integer is a power-of-two
 	 */

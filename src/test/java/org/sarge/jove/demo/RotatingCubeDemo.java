@@ -2,20 +2,16 @@ package org.sarge.jove.demo;
 
 import static java.util.stream.Collectors.toList;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.imageio.ImageIO;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Vertex;
@@ -33,6 +29,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.util.DataSource;
 
 import com.sun.jna.ptr.PointerByReference;
 
@@ -41,9 +38,13 @@ public class RotatingCubeDemo {
 
 	public static Image texture(LogicalDevice dev) throws IOException {
 		// Load image
-		final File file = new File("./src/test/resources/thiswayup.jpg");
-		final BufferedImage bufferedImage = ImageIO.read(Files.newInputStream(file.toPath()));
+		final File file = new File("./src/test/resources"); // /thiswayup.jpg");
+		//final BufferedImage bufferedImage = ImageIO.read(Files.newInputStream(file.toPath()));
 
+		final ImageData.Loader loader = new ImageData.Loader(DataSource.file(file));
+		final ImageData image = loader.load("thiswayup.jpg");
+
+		/*
 		System.out.println("IMAGE");
 		System.out.println("type="+bufferedImage.getType()); // 5 = BufferedImage: TYPE_3BYTE_BGR
 		System.out.println("w="+bufferedImage.getWidth()+" h="+bufferedImage.getHeight()); // 128 x 128
@@ -61,25 +62,45 @@ public class RotatingCubeDemo {
 		System.out.println("space="+bufferedImage.getColorModel().getColorSpace());
 		System.out.println("num="+bufferedImage.getColorModel().getColorSpace().getNumComponents()); // 3
 		System.out.println("type="+bufferedImage.getColorModel().getColorSpace().getType()); // 5 = ColorSpace: TYPE_RGB
+		*/
+
+//		BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+//
+//		private BufferedImage ApplyTransparency(BufferedImage image, Image mask)
+//		{
+//		    BufferedImage dest = new BufferedImage(
+//		            image.getWidth(), image.getHeight(),
+//		            BufferedImage.TYPE_INT_ARGB);
+//		    Graphics2D g2 = dest.createGraphics();
+//		    g2.drawImage(image, 0, 0, null);
+//		    AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.DST_IN, 1.0F);
+//		    g2.setComposite(ac);
+//		    g2.drawImage(mask, 0, 0, null);
+//		    g2.dispose();
+//		    return dest;
+//		}
 
 		// Allocate staging buffer
-		final int size = bufferedImage.getWidth() * bufferedImage.getHeight() * (8 + 8 + 8);
-		final VertexBuffer staging = VertexBuffer.staging(dev, size);
+		final ByteBuffer bb = image.buffer();
+//		final int size = bufferedImage.getWidth() * bufferedImage.getHeight() * 3; // alpha?
+		final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
 
-		// Convert to NIO buffer
-		final DataBufferByte data = (DataBufferByte) bufferedImage.getRaster().getDataBuffer();
-		final ByteBuffer bb = ByteBuffer.wrap(data.getData());
-		// TODO - bb.asShortBuffer().put(ShortBuffer.wrap(data)); etc
+//		// Convert to NIO buffer
+//		final DataBufferByte data = (DataBufferByte) bufferedImage.getRaster().getDataBuffer();
+//		final ByteBuffer bb = ByteBuffer.wrap(data.getData());
+//		// TODO - bb.asShortBuffer().put(ShortBuffer.wrap(data)); etc
 
 		// Copy image to staging
 		staging.load(bb);
 
 		// Create Vulkan image
 		final Image texture = new Image.Builder(dev)
-				.extents(new Image.Extents(bufferedImage.getWidth(), bufferedImage.getHeight()))
-				.format(VkFormat.VK_FORMAT_R8G8B8_SRGB)
+				.extents(Image.Extents.of(image.size()))
+//				.format(VkFormat.VK_FORMAT_R8G8B8A8_SRGB)
+				.format(VkFormat.VK_FORMAT_R8G8B8A8_SRGB) // UNORM?
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
+				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
 		return null;

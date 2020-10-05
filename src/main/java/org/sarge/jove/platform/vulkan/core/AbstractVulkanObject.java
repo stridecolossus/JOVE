@@ -38,11 +38,14 @@ public abstract class AbstractVulkanObject {
 	 */
 	protected AbstractVulkanObject(Pointer handle, LogicalDevice dev, Destructor destructor) {
 		this(new Handle(handle), dev, destructor);
-//		this.handle = new Handle(handle);
-//		this.dev = notNull(dev);
-//		this.destructor = notNull(destructor);
 	}
 
+	/**
+	 * Constructor.
+	 * @param handle		Handle
+	 * @param dev			Parent logical device
+	 * @param destructor	Destructor API method
+	 */
 	protected AbstractVulkanObject(Handle handle, LogicalDevice dev, Destructor destructor) {
 		this.handle = notNull(handle);
 		this.dev = notNull(dev);

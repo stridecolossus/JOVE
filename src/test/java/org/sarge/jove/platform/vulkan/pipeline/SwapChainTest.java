@@ -22,6 +22,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
@@ -37,15 +38,23 @@ public class SwapChainTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
+		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+				.handle(new Handle(new Pointer(1)))
+				.extents(new Image.Extents(3, 4))
+				.format(VkFormat.VK_FORMAT_R8G8B8A8_UNORM)
+				.build();
+
 		view = mock(View.class);
-		chain = new SwapChain(new Pointer(42), dev, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, new Dimensions(2, 3), List.of(view));
+		when(view.descriptor()).thenReturn(descriptor);
+
+		chain = new SwapChain(new Pointer(2), dev, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, List.of(view));
 	}
 
 	@Test
 	void constructor() {
 		assertNotNull(chain.handle());
 		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, chain.format());
-		assertEquals(new Dimensions(2, 3), chain.extents());
+		assertEquals(new Dimensions(3, 4), chain.extents());
 		assertEquals(List.of(view), chain.views());
 	}
 
@@ -132,7 +141,9 @@ public class SwapChainTest extends AbstractVulkanTest {
 		@Test
 		void build() {
 			// Create chain
-			chain = builder.build();
+			chain = builder.format(VkFormat.VK_FORMAT_R8G8B8A8_UNORM).build();
+
+			// Check swapchain
 			assertNotNull(chain);
 			assertNotNull(chain.handle());
 			assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, chain.format());
@@ -170,7 +181,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 			final View view = chain.views().get(0);
 			assertNotNull(view);
 			assertNotNull(view.handle());
-			assertNotNull(view.image());
+			assertNotNull(view.descriptor());
 		}
 
 		@Test

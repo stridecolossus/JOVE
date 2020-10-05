@@ -342,7 +342,7 @@ public class SwapChain extends AbstractVulkanObject {
 		 * @return New swapchain image-view
 		 */
 		private View view(Handle handle, Image.Extents extents) {
-			final Image.Descriptor descriptor = new Image.Descriptor(handle, VkImageType.VK_IMAGE_TYPE_1D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
+			final Image.Descriptor descriptor = new Image.Descriptor(handle, VkImageType.VK_IMAGE_TYPE_2D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
 			return new View.Builder(surface.device()).image(descriptor).build();
 		}
 	}

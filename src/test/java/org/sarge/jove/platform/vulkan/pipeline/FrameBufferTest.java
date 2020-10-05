@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.View;
@@ -30,15 +31,18 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		pass = mock(RenderPass.class);
 		when(pass.handle()).thenReturn(new Handle(new Pointer(1)));
 
-		// Create swapchain image
-		final Image image = mock(Image.class);
-		when(image.extents()).thenReturn(new Image.Extents(3, 4));
-
 		// Create swapchain image-view
 		view = mock(View.class);
 		when(view.handle()).thenReturn(new Handle(new Pointer(2)));
-		when(view.image()).thenReturn(image);
 		when(view.device()).thenReturn(dev);
+
+		// Init image descriptor
+		final Image.Descriptor desc = new Image.Descriptor.Builder()
+				.extents(new Image.Extents(3, 4))
+				.format(VkFormat.VK_FORMAT_A1R5G5B5_UNORM_PACK16)
+				.handle(new Handle(new Pointer(2)))
+				.build();
+		when(view.descriptor()).thenReturn(desc);
 
 		// Create buffer
 		buffer = FrameBuffer.create(view, pass);

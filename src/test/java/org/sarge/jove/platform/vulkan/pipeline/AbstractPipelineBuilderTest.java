@@ -5,11 +5,11 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.Test;
 
-public class AbstractPipelineStageBuilderTest {
+public class AbstractPipelineBuilderTest {
 	@Test
 	void build() {
 		// Create builder
-		final AbstractPipelineStageBuilder<Object> builder = new AbstractPipelineStageBuilder<>() {
+		final AbstractPipelineBuilder<Object> builder = new AbstractPipelineBuilder<>() {
 			@Override
 			protected Object result() {
 				return null;

@@ -3,16 +3,12 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.Set;
-
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
-import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.util.ImageResourceRangeBuilder;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -30,7 +26,7 @@ public class View extends AbstractVulkanObject {
 	 * @param image		Image descriptor
 	 * @param dev		Logical device
 	 */
-	private View(Pointer handle, Image.Descriptor descriptor, LogicalDevice dev) {
+	View(Pointer handle, Image.Descriptor descriptor, LogicalDevice dev) {
 		super(handle, dev, dev.library()::vkDestroyImageView);
 		this.descriptor = notNull(descriptor);
 	}
@@ -62,6 +58,7 @@ public class View extends AbstractVulkanObject {
 		private Image.Descriptor descriptor;
 		private VkImageViewType type;
 		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
+		private final ImageResourceRangeBuilder<Builder> subresource = new ImageResourceRangeBuilder<>(this);
 
 		/**
 		 * Constructor.
@@ -98,30 +95,12 @@ public class View extends AbstractVulkanObject {
 			return this;
 		}
 
-// TODO - not sure how this is used
-//		/**
-//		 * Sets the sub-resource range of this view.
-//		 * @param range Sub-resource range
-//		 */
-//		public Builder range(VkImageSubresourceRange range) {
-//			info.subresourceRange = notNull(range);
-//			return this;
-//		}
-
 		/**
-		 * @return Default image sub-resource descriptor
+		 * @return Image sub-resource range builder
 		 */
-		private static VkImageSubresourceRange range(Set<VkImageAspectFlag> aspect) {
-			final VkImageSubresourceRange range = new VkImageSubresourceRange();
-			range.aspectMask = IntegerEnumeration.mask(aspect);
-			// TODO - following initialised from image descriptor?
-			range.baseMipLevel = 0;
-			range.levelCount = 1;
-			range.baseArrayLayer = 0;
-			range.layerCount = 1;
-			return range;
+		public ImageResourceRangeBuilder<Builder> subresource() {
+			return subresource;
 		}
-		// TODO - builder for this?
 
 		/**
 		 * Constructs this image view.
@@ -147,7 +126,7 @@ public class View extends AbstractVulkanObject {
 			info.format = descriptor.format();
 			info.image = descriptor.handle();
 			info.components = mapping;
-			info.subresourceRange = range(descriptor.aspect());
+			info.subresourceRange = subresource.result();
 
 			// Allocate image view
 			final VulkanLibrary lib = dev.library();

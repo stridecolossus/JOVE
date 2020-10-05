@@ -113,10 +113,11 @@ public class LogicalDeviceTest {
 		// Specify memory requirements
 		final var reqs = new VkMemoryRequirements();
 		reqs.size = 1;
+		reqs.memoryTypeBits = 0b10;
 
 		// Mock matching memory type
 		final Set<VkMemoryPropertyFlag> flags = Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		when(parent.findMemoryType(flags)).thenReturn(2);
+		when(parent.findMemoryType(reqs.memoryTypeBits, flags)).thenReturn(2);
 
 		// Allocate memory
 		final Pointer mem = device.allocate(reqs, flags);

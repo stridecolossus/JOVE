@@ -22,7 +22,7 @@ import org.sarge.jove.util.StructureHelper;
  * Builder for the vertex input pipeline stage descriptor.
  * @author Sarge
  */
-public class VertexInputStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo> {
+public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
 	private final Map<Integer, VkVertexInputBindingDescription> bindings = new HashMap<>();
 	private final List<VkVertexInputAttributeDescription> attributes = new ArrayList<>();
 

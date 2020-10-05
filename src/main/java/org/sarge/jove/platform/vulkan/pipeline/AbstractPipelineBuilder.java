@@ -3,11 +3,11 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.util.Check.notNull;
 
 /**
- * Base-class for a pipeline stage builder.
+ * Base-class for a nested builder.
  * @param <T> Return type
  * @author Sarge
  */
-abstract class AbstractPipelineStageBuilder<T> {
+abstract class AbstractPipelineBuilder<T> {
 	private Pipeline.Builder parent;
 
 	/**
@@ -25,6 +25,7 @@ abstract class AbstractPipelineStageBuilder<T> {
 
 	/**
 	 * Completes construction.
+	 * @return Parent builder
 	 */
 	public Pipeline.Builder build() {
 		return parent;
