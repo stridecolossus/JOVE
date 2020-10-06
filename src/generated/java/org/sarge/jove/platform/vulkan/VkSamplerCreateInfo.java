@@ -4,8 +4,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -33,9 +31,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"unnormalizedCoordinates"
 })
 public class VkSamplerCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkSamplerCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkSamplerCreateInfo implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;

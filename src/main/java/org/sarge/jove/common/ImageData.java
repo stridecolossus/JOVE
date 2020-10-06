@@ -7,15 +7,18 @@ import java.awt.image.DataBufferByte;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.DataSource;
 
 /**
- * Wrapper for image data.
+ * Wrapper for RGBA image data.
  * @author Sarge
  */
 public interface ImageData {
@@ -35,18 +38,17 @@ public interface ImageData {
 	 */
 	class DefaultImageData implements ImageData {
 		private final Dimensions size;
-		private final byte[] bytes;
+		private final ByteBuffer data;
 
 		/**
 		 * Constructor.
 		 * @param size		Dimensions
 		 * @param bytes		Image data
-		 * @throws IllegalArgumentException if the size of the array does not match the dimensions
 		 */
-		DefaultImageData(Dimensions size, byte[] bytes) {
-			if(size.width() * size.height() * 4 != bytes.length) throw new IllegalArgumentException("Array length does not match image dimensions");
+		DefaultImageData(Dimensions size, ByteBuffer data) {
+			if(size.width() * size.height() * 4 != data.capacity()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
 			this.size = notNull(size);
-			this.bytes = bytes;
+			this.data = notNull(data);
 		}
 
 		@Override
@@ -56,7 +58,7 @@ public interface ImageData {
 
 		@Override
 		public ByteBuffer buffer() {
-			return ByteBuffer.wrap(bytes);
+			return data.flip().asReadOnlyBuffer();
 		}
 
 		@Override
@@ -69,6 +71,25 @@ public interface ImageData {
 	 * Loader for images.
 	 */
 	public static class Loader {
+		/**
+		 * Image converters.
+		 */
+		private static final Map<Integer, Function<byte[], ByteBuffer>> CONVERTERS = Map.of(
+				BufferedImage.TYPE_3BYTE_BGR,
+				src -> {
+					new Swizzle(0, 2).apply(src, 3);
+					return alpha(src, 3, Byte.MAX_VALUE);
+				},
+
+				BufferedImage.TYPE_4BYTE_ABGR,
+				src -> {
+					new Swizzle(0, 3).apply(src, 4);		// A-R
+					new Swizzle(1, 2).apply(src, 4);		// B-G
+					return ByteBuffer.wrap(src);
+				}
+		);
+		// TODO - make this configurable
+
 		private final DataSource src;
 
 		/**
@@ -89,55 +110,11 @@ public interface ImageData {
 //			return 1 + (int) Math.floor(Math.log(max) / Math.log(2));
 //		}
 
-/*
-		// https://stackoverflow.com/questions/24639986/how-do-colormodels-and-writablerasters-work-in-java-bufferedimages
-
-		interface Transform {
-			//void apply(byte[] src, byte[] dest);
-//			int map(int index);
-			int transform(int index);
-		}
-
-		interface Mapper {
-			byte map(int index, byte[] bytes);
-
-			//Mapper DEFAULT
-		}
-
-		Transform abgr = index -> switch(index) {
-			case 0 -> 3;
-			case 3 -> 0;
-			default -> index;
-		};
-
-		Transform bgr = index -> switch(index) {
-			case 0 -> 2;
-			case 2 -> 0;
-			default -> index;
-		};
-
-		Mapper mapper = (index, bytes) -> switch(index) {
-			default -> bytes[index];
-			case 2 -> Byte.MAX_VALUE;
-		};
-
-
-		void copy(byte[] src, byte[] dest, int step, Transform trans, Mapper mapper) {
-			for(int n = 0; n < dest.length; n += 4) {
-				for(int c = 0; c < 4; ++c) {
-					final int index = trans.transform(c);
-					dest[n + c] = mapper.map(n * step + index, src);
-				}
-			}
-		}
-*/
-
 		/**
 		 * Loads an image.
 		 * @param name Image name
 		 * @return Image
-		 * @throws IOException
-		 * @throws ServiceException if the given image cannot be loaded
+		 * @throws IOException if the image cannot be loaded or the format is not supported by this loader
 		 */
 		public ImageData load(String name) throws IOException {
 			// Load raw image
@@ -146,79 +123,65 @@ public interface ImageData {
 				image = ImageIO.read(in);
 			}
 
-			// Allocate image data
-			final Dimensions dim = new Dimensions(image.getWidth(), image.getHeight());
-			final int len = dim.width() * dim.height();
-			final byte[] bytes = new byte[len * 4];
+			// Lookup image converter
+			final var converter = CONVERTERS.get(image.getType());
+			if(converter == null) throw new IOException("Unsupported image type: " + image);
 
+			// Convert image to buffer
+			// TODO - handle other types (int, etc)
 			final DataBufferByte buffer = (DataBufferByte) image.getRaster().getDataBuffer();
-			final byte[] src = buffer.getData();
-
-			switch(image.getType()) {
-			case BufferedImage.TYPE_4BYTE_ABGR:
-				for(int n = 0; n < bytes.length; n += 4) {
-					bytes[n] = src[n + 3];
-					bytes[n + 1] = src[n + 2];
-					bytes[n + 2] = src[n + 1];
-					bytes[n + 3] = src[n];
-				}
-				break;
-
-			case BufferedImage.TYPE_3BYTE_BGR:
-				int index = 0;
-				for(int n = 0; n < bytes.length; n += 4) {
-					bytes[n] = src[index + 2];
-					bytes[n + 1] = src[index + 1];
-					bytes[n + 2] = src[index];
-					bytes[n + 3] = Byte.MAX_VALUE;
-					index += 3;
-				}
-				break;
-
-			default:
-				throw new IOException("");
-			}
+			final ByteBuffer bb = converter.apply(buffer.getData());
 
 			// Create image wrapper
-			return new DefaultImageData(dim, bytes);
+			final Dimensions dim = new Dimensions(image.getWidth(), image.getHeight());
+			return new DefaultImageData(dim, bb);
+		}
+
+		/**
+		 * An <i>image swizzle</i> is used to swap components of an image byte array.
+		 * <p>
+		 * For example, to transform a BGR image to RGB:
+		 * <pre>
+		 *  byte[] bytes = ...
+		 *  Swizzle swizzle = new Swizzle(0, 2);		// Swap the R and G components
+		 *  swizzle.apply(bytes, 3);					// Apply to 3-component sized image
+		 * </pre>
+		 */
+		public record Swizzle(int src, int dest) {
+			/**
+			 * Applies this swizzle to the given byte-array.
+			 * @param bytes			Byte-array
+			 * @param step			Pixel step size
+			 * @throws ArrayIndexOutOfBoundsException if the swizzle indices or the step size are invalid for the given array
+			 */
+			public void apply(byte[] bytes, int step) {
+				for(int n = 0; n < bytes.length; n += step) {
+					ArrayUtils.swap(bytes, n + src, n + dest);
+				}
+			}
+		}
+
+		/**
+		 * Converts the given image byte-array to a buffer and injects the given alpha value.
+		 * @param bytes		Image byte array
+		 * @param step		Pixel step size
+		 * @param alpha		Alpha value
+		 * @return Image buffer
+		 */
+		public static ByteBuffer alpha(byte[] bytes, int step, byte alpha) {
+			// Allocate buffer sized to this array plus the alpha component
+			final int len = (bytes.length / step) * (step + 1);
+			final ByteBuffer bb = BufferFactory.byteBuffer(len);
+
+			// Copy byte array and inject alpha component
+			for(int n = 0; n < bytes.length; n += step) {
+				for(int c = 0; c < step; ++c) {
+					bb.put(bytes[n + c]);
+				}
+				bb.put(alpha);
+			}
+
+			return bb;
 		}
 	}
 }
-
-//		private static BufferedImage addAlphaChannel(BufferedImage image) {
-//
-//
-//
-//			final int type = switch(image.getType()) {
-//				case BufferedImage.TYPE_3BYTE_BGR -> BufferedImage.TYPE_4BYTE_ABGR;
-//				default -> throw new UnsupportedOperationException("");
-//			};
-//
-//			final BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), type);
-//
-//			final Graphics2D g = result.createGraphics();
-//			g.drawImage(image, 0, 0, null);
-//			//g.setComposite(alpha);
-//			g.dispose();
-//			//g.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer)
-//
-//			return result;
-//
-//		}
-//		BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-//
-//		private BufferedImage ApplyTransparency(BufferedImage image, Image mask)
-//		{
-//		    BufferedImage dest = new BufferedImage(
-//		            image.getWidth(), image.getHeight(),
-//		            BufferedImage.TYPE_INT_ARGB);
-//		    Graphics2D g2 = dest.createGraphics();
-//		    g2.drawImage(image, 0, 0, null);
-//		    AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.DST_IN, 1.0F);
-//		    g2.setComposite(ac);
-//		    g2.drawImage(mask, 0, 0, null);
-//		    g2.dispose();
-//		    return dest;
-//		}
-//	}
-//}

@@ -72,6 +72,21 @@ interface VulkanLibraryImage {
 	 */
 	void vkDestroyImageView(Handle device, Handle imageView, Handle pAllocator);
 
+	/**
+	 * Creates an image sampler.
+	 * @param device			Logical device
+	 * @param pCreateInfo		Sampler descriptor
+	 * @param pAllocator		Allocator
+	 * @param pSampler			Returned sampler handle
+	 * @return Result code
+	 */
 	int vkCreateSampler(Handle device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pSampler);
+
+	/**
+	 * Destroys a sampler.
+	 * @param device			Logical device
+	 * @param sampler			Sampler
+	 * @param pAllocator		Allocator
+	 */
 	void vkDestroySampler(Handle device, Handle sampler, Handle pAllocator);
 }
