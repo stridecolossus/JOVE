@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.VkBorderColor;
 import org.sarge.jove.platform.vulkan.VkFilter;
 import org.sarge.jove.platform.vulkan.VkSamplerAddressMode;
@@ -88,5 +89,13 @@ public class SamplerTest extends AbstractVulkanTest {
 	void buildInvalidLOD() {
 		builder.minLod(2).maxLod(1);
 		assertThrows(IllegalArgumentException.class, () -> builder.build());
+	}
+
+	@Test
+	void levels() {
+		assertEquals(1, Sampler.levels(new Dimensions(1, 1)));
+		assertEquals(2, Sampler.levels(new Dimensions(2, 2)));
+		assertEquals(2, Sampler.levels(new Dimensions(3, 3)));
+		assertEquals(3, Sampler.levels(new Dimensions(4, 4)));
 	}
 }

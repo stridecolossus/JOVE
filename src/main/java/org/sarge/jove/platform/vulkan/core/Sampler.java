@@ -5,6 +5,7 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
 
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.VkBorderColor;
 import org.sarge.jove.platform.vulkan.VkCompareOp;
 import org.sarge.jove.platform.vulkan.VkFilter;
@@ -22,6 +23,16 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Sampler extends AbstractVulkanObject {
+	/**
+	 * Helper - Determines the number of mipmap levels for the given image dimensions.
+	 * @param dim Image dimensions
+	 * @return Number of mipmap levels
+	 */
+	public static int levels(Dimensions dim) {
+		final float max = Math.max(dim.width(), dim.height());
+		return 1 + (int) Math.floor(Math.log(max) / Math.log(2));
+	}
+
 	/**
 	 * Constructor.
 	 * @param handle		Sampler handle

@@ -92,13 +92,19 @@ public VkPhysicalDeviceMemoryProperties memory() {
  * @return Memory type index
  * @throws ServiceException if no suitable memory type is available
  */
-public int findMemoryType(Set<VkMemoryPropertyFlag> props) {
+public int findMemoryType(int filter, Set<VkMemoryPropertyFlag> props) {
+	// Retrieve memory properties
+	final var mem = this.memory();
+
+	// Find matching memory type index
 	final int mask = IntegerEnumeration.mask(props);
 	for(int n = 0; n < mem.memoryTypeCount; ++n) {
-		if(mem.memoryTypes[n].propertyFlags == mask) {
+		if(MathsUtil.isBit(filter, n) && MathsUtil.isMask(mem.memoryTypes[n].propertyFlags, mask)) {
 			return n;
 		}
 	}
+
+	// Otherwise memory not available for this device
 	throw new ServiceException("No memory type available for specified memory properties:" + props);
 }
 ```
@@ -115,7 +121,7 @@ public int findMemoryType(Set<VkMemoryPropertyFlag> props) {
  */
 public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
 	// Find memory type
-	final int type = parent.findMemoryType(flags);
+	final int type = parent.findMemoryType(reqs.memoryTypeBits, flags);
 
 	// Init memory descriptor
 	final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
@@ -126,6 +132,10 @@ public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> fla
    final VulkanLibrary lib = library();
    final PointerByReference mem = lib.factory().pointer();
    check(lib.vkAllocateMemory(this.handle(), info, null, mem));
+
+   // TODO
+   // - number of allocations limited to maxMemoryAllocationCount
+   // - replace with custom allocator with offsets
 
    // Get memory handle
    return mem.getValue();

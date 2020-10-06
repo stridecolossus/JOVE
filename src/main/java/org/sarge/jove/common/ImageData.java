@@ -1,20 +1,24 @@
 package org.sarge.jove.common;
 
+import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.util.Check.notNull;
 
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.util.BufferFactory;
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.DataSource;
 
 /**
@@ -28,26 +32,36 @@ public interface ImageData {
 	Dimensions size();
 
 	/**
+	 * @return Component sizes
+	 */
+	List<Integer> components();
+
+	/**
 	 * @return Image data
 	 */
 	ByteBuffer buffer();
 
 	/**
 	 * Default implementation.
-	 * Note that the underlying array is mutable.
 	 */
 	class DefaultImageData implements ImageData {
 		private final Dimensions size;
+		private final List<Integer> components;
 		private final ByteBuffer data;
 
 		/**
 		 * Constructor.
-		 * @param size		Dimensions
-		 * @param bytes		Image data
+		 * @param size				Dimensions
+		 * @param components		Component sizes
+		 * @param bytes				Image data
 		 */
-		DefaultImageData(Dimensions size, ByteBuffer data) {
-			if(size.width() * size.height() * 4 != data.capacity()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
+		public DefaultImageData(Dimensions size, int[] components, ByteBuffer data) {
+			Check.notEmpty(components);
+			final int expected = size.width() * size.height() * components.length; // TODO - assumes 8 bits per component
+			if(expected != data.capacity()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
+
 			this.size = notNull(size);
+			this.components = Arrays.stream(components).boxed().collect(toList());
 			this.data = notNull(data);
 		}
 
@@ -57,40 +71,68 @@ public interface ImageData {
 		}
 
 		@Override
+		public List<Integer> components() {
+			return components;
+		}
+
+		@Override
 		public ByteBuffer buffer() {
 			return data.flip().asReadOnlyBuffer();
 		}
 
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this).append("size", size).build();
+			return new ToStringBuilder(this)
+					.append("size", size)
+					.append("components", components)
+					.build();
 		}
 	}
 
 	/**
-	 * Loader for images.
+	 * Image data transform.
+	 */
+	public interface Transform {
+		/**
+		 * Applies this transform to the given image data.
+		 * @param bytes		Image data
+		 * @param step		Pixel step size
+		 */
+		void transform(byte[] bytes, int step);
+	}
+
+	/**
+	 * An <i>image swizzle</i> is used to swap components of an image byte array.
+	 * <p>
+	 * For example, to transform a BGR image to RGB:
+	 * <pre>
+	 *  byte[] bytes = ...
+	 *  Swizzle swizzle = new Swizzle(0, 2);		// Swap the R and G components
+	 *  swizzle.transform(bytes, 3);				// Apply to 3-component sized image
+	 * </pre>
+	 */
+	public record Swizzle(int src, int dest) implements Transform {
+		@Override
+		public void transform(byte[] bytes, int step) {
+			for(int n = 0; n < bytes.length; n += step) {
+				ArrayUtils.swap(bytes, n + src, n + dest);
+			}
+		}
+	}
+
+	/**
+	 * Image loader implemented using {@link ImageIO} and {@link BufferedImage}.
 	 */
 	public static class Loader {
 		/**
-		 * Image converters.
+		 * Converter entry.
 		 */
-		private static final Map<Integer, Function<byte[], ByteBuffer>> CONVERTERS = Map.of(
-				BufferedImage.TYPE_3BYTE_BGR,
-				src -> {
-					new Swizzle(0, 2).apply(src, 3);
-					return alpha(src, 3, Byte.MAX_VALUE);
-				},
-
-				BufferedImage.TYPE_4BYTE_ABGR,
-				src -> {
-					new Swizzle(0, 3).apply(src, 4);		// A-R
-					new Swizzle(1, 2).apply(src, 4);		// B-G
-					return ByteBuffer.wrap(src);
-				}
-		);
-		// TODO - make this configurable
+		private static record Entry(Integer alpha, int[] components, Transform[] transforms) {
+			// Record
+		}
 
 		private final DataSource src;
+		private final Map<Integer, Entry> converters = new HashMap<>();
 
 		/**
 		 * Constructor.
@@ -98,17 +140,30 @@ public interface ImageData {
 		 */
 		public Loader(DataSource src) {
 			this.src = notNull(src);
+			init();
 		}
 
-//		/**
-//		 * Determines the number of mipmap levels for the given image dimensions.
-//		 * @param dim Image dimensions
-//		 * @return Number of mipmap levels
-//		 */
-//		public static int levels(Dimensions dim) {
-//			final float max = Math.max(dim.width(), dim.height());
-//			return 1 + (int) Math.floor(Math.log(max) / Math.log(2));
-//		}
+		/**
+		 * Registers built-in image converters.
+		 */
+		private void init() {
+			add(BufferedImage.TYPE_BYTE_INDEXED, 	1, null);
+			add(BufferedImage.TYPE_3BYTE_BGR, 		4, BufferedImage.TYPE_4BYTE_ABGR, new Swizzle(0, 2));
+			add(BufferedImage.TYPE_4BYTE_ABGR, 		4, null, new Swizzle(0, 3), new Swizzle(1, 2));
+		}
+
+		/**
+		 * Registers an image converter.
+		 * @param type				Buffered image type
+		 * @param components		Output component specification
+		 * @param alpha				Buffered image type to attach alpha channel or {@code null} if not required
+		 * @param transforms		Additional image data transforms
+		 */
+		public void add(int type, int components, Integer alpha, Transform... transforms) {
+			Check.oneOrMore(components);
+			Check.notNull(transforms);
+			converters.put(type, new Entry(alpha, new int[components], transforms));
+		}
 
 		/**
 		 * Loads an image.
@@ -124,64 +179,46 @@ public interface ImageData {
 			}
 
 			// Lookup image converter
-			final var converter = CONVERTERS.get(image.getType());
-			if(converter == null) throw new IOException("Unsupported image type: " + image);
+			final var entry = converters.get(image.getType());
+			if(entry == null) throw new IOException("Unsupported image type: " + image);
 
-			// Convert image to buffer
-			// TODO - handle other types (int, etc)
-			final DataBufferByte buffer = (DataBufferByte) image.getRaster().getDataBuffer();
-			final ByteBuffer bb = converter.apply(buffer.getData());
+			// Add alpha channel as required
+			final BufferedImage result = addAlpha(image, entry.alpha);
+
+			// Apply transforms
+			// TODO - handle other buffer types (int, etc)?
+			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
+			final byte[] bytes = buffer.getData();
+			for(Transform t : entry.transforms) {
+				t.transform(bytes, entry.components.length);
+			}
+
+			// Convert to buffer
+			final ByteBuffer bb = ByteBuffer.wrap(bytes);
 
 			// Create image wrapper
 			final Dimensions dim = new Dimensions(image.getWidth(), image.getHeight());
-			return new DefaultImageData(dim, bb);
+			return new DefaultImageData(dim, entry.components, bb);
 		}
 
 		/**
-		 * An <i>image swizzle</i> is used to swap components of an image byte array.
-		 * <p>
-		 * For example, to transform a BGR image to RGB:
-		 * <pre>
-		 *  byte[] bytes = ...
-		 *  Swizzle swizzle = new Swizzle(0, 2);		// Swap the R and G components
-		 *  swizzle.apply(bytes, 3);					// Apply to 3-component sized image
-		 * </pre>
+		 * Adds an alpha channel to a buffered image.
+		 * @param image		Original image
+		 * @param type		Buffered image type with alpha channel or {@code null} if not required
+		 * @return Image with alpha channel
 		 */
-		public record Swizzle(int src, int dest) {
-			/**
-			 * Applies this swizzle to the given byte-array.
-			 * @param bytes			Byte-array
-			 * @param step			Pixel step size
-			 * @throws ArrayIndexOutOfBoundsException if the swizzle indices or the step size are invalid for the given array
-			 */
-			public void apply(byte[] bytes, int step) {
-				for(int n = 0; n < bytes.length; n += step) {
-					ArrayUtils.swap(bytes, n + src, n + dest);
-				}
-			}
-		}
-
-		/**
-		 * Converts the given image byte-array to a buffer and injects the given alpha value.
-		 * @param bytes		Image byte array
-		 * @param step		Pixel step size
-		 * @param alpha		Alpha value
-		 * @return Image buffer
-		 */
-		public static ByteBuffer alpha(byte[] bytes, int step, byte alpha) {
-			// Allocate buffer sized to this array plus the alpha component
-			final int len = (bytes.length / step) * (step + 1);
-			final ByteBuffer bb = BufferFactory.byteBuffer(len);
-
-			// Copy byte array and inject alpha component
-			for(int n = 0; n < bytes.length; n += step) {
-				for(int c = 0; c < step; ++c) {
-					bb.put(bytes[n + c]);
-				}
-				bb.put(alpha);
+		private static BufferedImage addAlpha(BufferedImage image, Integer type) {
+			// Ignore if already has alpha
+			if(type == null) {
+				return image;
 			}
 
-			return bb;
+			// Otherwise add alpha channel
+			final BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), type);
+			final Graphics g = result.getGraphics();
+			g.drawImage(image, 0, 0, null);
+			g.dispose();
+			return result;
 		}
 	}
 }
