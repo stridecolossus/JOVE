@@ -22,6 +22,19 @@ public interface ImageData {
 # Image Loader
 
 ```java
+public static class Loader {
+	public Loader(DataSource src) {
+		this.src = notNull(src);
+		init();
+	}
+	
+	...
+}
+```
+
+# Loading
+
+```java
 public ImageData load(String name) throws IOException {
 	// Load raw image
 	final BufferedImage image;
@@ -90,6 +103,8 @@ public record Swizzle(int src, int dest) implements Transform {
 ```java
 private static record Entry(Integer alpha, int[] components, Transform[] transforms) {
 }
+
+private final Map<Integer, Entry> converters = new HashMap<>();
 
 private void init() {
 	add(BufferedImage.TYPE_BYTE_INDEXED, 	1, null);
