@@ -256,3 +256,37 @@ public class Sampler extends AbstractVulkanObject {
 	}
 }
 ```
+
+# Integration #2
+
+```java
+// Copy staging to texture
+new ImageCopyCommand.Builder()
+		.buffer(staging)
+		.image(texture)
+		.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+		.subresource()
+			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+			.build()
+		.build()
+		.submit(pool, true);
+
+// Release staging
+staging.destroy();
+
+// Transition texture ready for sampling
+new Barrier.Builder()
+		.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
+		.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+		.barrier(texture)
+			.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+			.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+			.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+			.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
+			.build()
+		.build()
+		.submit(pool, true);
+
+// Create sampler
+final Sampler sampler = new Sampler.Builder(dev).build();
+```
