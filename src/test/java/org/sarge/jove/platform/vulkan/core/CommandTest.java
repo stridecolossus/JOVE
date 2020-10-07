@@ -199,12 +199,6 @@ class CommandTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void allocateOnce() {
-			final Buffer buffer = pool.allocate(cmd);
-			assertNotNull(buffer);
-		}
-
-		@Test
 		void reset() {
 			pool.reset();
 			verify(lib).vkResetCommandPool(dev.handle(), pool.handle(), 0);

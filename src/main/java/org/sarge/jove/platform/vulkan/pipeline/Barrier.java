@@ -14,17 +14,17 @@ import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
-import org.sarge.jove.platform.vulkan.util.ImageResourceRangeBuilder;
+import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
+import org.sarge.jove.platform.vulkan.util.ImageSubResourceBuilder;
 import org.sarge.jove.util.Check;
 
 /**
  * A <i>pipeline barrier</i> is used to synchronize access to resources within a pipeline or to perform image layout transitions.
  * @author Sarge
  */
-public class Barrier implements Command {
+public class Barrier extends ImmediateCommand {
 	private final int src, dest;
 	private final VkImageMemoryBarrier[] images;
 
@@ -103,7 +103,7 @@ public class Barrier implements Command {
 			private final Set<VkAccessFlag> dest = new HashSet<>();
 			private VkImageLayout oldLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
 			private VkImageLayout newLayout;
-			private final ImageResourceRangeBuilder<ImageBarrierBuilder> subresource = new ImageResourceRangeBuilder<>(this);
+			private final ImageSubResourceBuilder<ImageBarrierBuilder> subresource = new ImageSubResourceBuilder<>(this);
 
 			/**
 			 * Constructor.
@@ -152,7 +152,7 @@ public class Barrier implements Command {
 			/**
 			 * @return Builder for the image sub-resource range
 			 */
-			public ImageResourceRangeBuilder<ImageBarrierBuilder> subresource() {
+			public ImageSubResourceBuilder<ImageBarrierBuilder> subresource() {
 				return subresource;
 			}
 			// TODO - check vs parent image
@@ -169,7 +169,7 @@ public class Barrier implements Command {
 				// Create descriptor
 				final VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
 				barrier.image = image.handle();
-				barrier.subresourceRange = subresource.result();
+				barrier.subresourceRange = subresource.range();
 				barrier.srcAccessMask = IntegerEnumeration.mask(src);
 				barrier.dstAccessMask = IntegerEnumeration.mask(dest);
 				barrier.oldLayout = oldLayout;

@@ -28,18 +28,55 @@ public interface Work {
 	void submit();
 
 	/**
-	 * Helper - Submits the given command.
-	 * @param buffer 		Command buffer to submit
-	 * @param wait			Whether to wait for the queue to become idle after submission
+	 * Adapter for a command that can be submitted immediately.
 	 */
-	static void submit(Command.Buffer buffer, boolean wait) {
-		// Submit work
-		final Work work = new Builder().add(buffer).build();
-		work.submit();
+	abstract class ImmediateCommand implements Command {
+		/**
+		 * Helper - Wraps the given command as an immediate command.
+		 * @param cmd Delegate command
+		 * @return Immediate command
+		 */
+		public static ImmediateCommand of(Command cmd) {
+			return new ImmediateCommand() {
+				@Override
+				public void execute(VulkanLibrary lib, Handle buffer) {
+					cmd.execute(lib, buffer);
+				}
+			};
+		}
 
-		// Wait for work to complete
-		if(wait) {
-			buffer.pool().queue().waitIdle();
+		/**
+		 * Submits this command to the given pool.
+		 * @param pool Command pool
+		 * @param wait Whether to wait for completion
+		 */
+		public void submit(Command.Pool pool, boolean wait) {
+			// Allocate one-off buffer
+			final Command.Buffer buffer = pool.allocate();
+			buffer.once(this);
+
+			try {
+				// Perform work
+				final Work work = new Builder().add(buffer).build();
+				work.submit();
+
+				// Wait for work to complete
+				if(wait) {
+					buffer.pool().queue().waitIdle();
+				}
+			}
+			finally {
+				// Release
+				buffer.free();
+			}
+		}
+
+		/**
+		 * Submits this command to the given pool.
+		 * @param pool Command pool
+		 */
+		public void submit(Command.Pool pool) {
+			submit(pool, false);
 		}
 	}
 

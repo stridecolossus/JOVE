@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
+import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -86,8 +87,20 @@ public class WorkTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void submitImmediate() {
-		Work.submit(buffer, true);
+	void immediate() {
+		// Prepare one-off buffer
+		when(pool.allocate()).thenReturn(buffer);
+		when(buffer.handle()).thenReturn(new Handle(new Pointer(2)));
+
+		// Execute immediately
+		final ImmediateCommand cmd = ImmediateCommand.of(mock(Command.class));
+		cmd.submit(pool, true);
+
+		// Check command is one-time submission
+		verify(buffer).once(cmd);
+		verify(buffer).free();
+
+		// Check wait for queue after execution
 		verify(queue).waitIdle();
 	}
 }

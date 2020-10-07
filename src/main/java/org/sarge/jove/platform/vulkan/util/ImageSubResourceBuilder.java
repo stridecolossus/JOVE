@@ -9,18 +9,27 @@ import java.util.Set;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkImageSubresourceLayers;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
 import org.sarge.jove.util.Check;
 
 /**
- * Nested builder for an image sub-resource range.
+ * Nested builder for an image sub-resource range <b>or</b> layers.
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>{@link #range()} creates a {@link VkImageSubresourceRange} descriptor (the {@code baseMipLevel) field is populated by {@link #mipLevel(int)}</li>
+ * <li>{@link #layers()} creates a {@link VkImageSubresourceLayers} descriptor</li>
+ * </ul>
+ * <p>
  * @param <T> Parent builder type
  * @author Sarge
+ * TODO - validate against the image
  */
-public class ImageResourceRangeBuilder<T> {
+public class ImageSubResourceBuilder<T> {
 	private final T parent;
 	private final Set<VkImageAspectFlag> aspects = new HashSet<>();
-	private int baseMipLevel;
+	private int mipLevel;
 	private int levelCount = 1;
 	private int baseArrayLayer;
 	private int layerCount = 1;
@@ -29,26 +38,33 @@ public class ImageResourceRangeBuilder<T> {
 	 * Constructor.
 	 * @param parent Parent builder
 	 */
-	public ImageResourceRangeBuilder(T parent) {
+	public ImageSubResourceBuilder(T parent) {
 		this.parent = notNull(parent);
+	}
+
+	/**
+	 * @return Number of specified image aspects
+	 */
+	public int aspectCount() {
+		return aspects.size();
 	}
 
 	/**
 	 * Adds an image aspect to this range.
 	 * @param aspect Image aspect
 	 */
-	public ImageResourceRangeBuilder<T> aspect(VkImageAspectFlag aspect) {
+	public ImageSubResourceBuilder<T> aspect(VkImageAspectFlag aspect) {
 		Check.notNull(aspect);
 		aspects.add(aspect);
 		return this;
 	}
 
 	/**
-	 * Sets the base mip level.
-	 * @param baseMipLevel Base mip level
+	 * Sets the mip level (or the {@code baseMipLevel} field for a {@link VkImageSubresourceRange}).
+	 * @param mipLevel Mip level
 	 */
-	public ImageResourceRangeBuilder<T> baseMipLevel(int baseMipLevel) {
-		this.baseMipLevel = zeroOrMore(baseMipLevel);
+	public ImageSubResourceBuilder<T> mipLevel(int mipLevel) {
+		this.mipLevel = zeroOrMore(mipLevel);
 		return this;
 	}
 
@@ -56,7 +72,7 @@ public class ImageResourceRangeBuilder<T> {
 	 * Sets the number of mip levels.
 	 * @param levelCount Number of mip levels
 	 */
-	public ImageResourceRangeBuilder<T> levelCount(int levelCount) {
+	public ImageSubResourceBuilder<T> levelCount(int levelCount) {
 		this.levelCount = oneOrMore(levelCount);
 		return this;
 	}
@@ -65,7 +81,7 @@ public class ImageResourceRangeBuilder<T> {
 	 * Sets the base array layer.
 	 * @param baseArrayLayer Base array layer
 	 */
-	public ImageResourceRangeBuilder<T> baseArrayLayer(int baseArrayLayer) {
+	public ImageSubResourceBuilder<T> baseArrayLayer(int baseArrayLayer) {
 		this.baseArrayLayer = zeroOrMore(baseArrayLayer);
 		return this;
 	}
@@ -74,7 +90,7 @@ public class ImageResourceRangeBuilder<T> {
 	 * Sets the number of array layers.
 	 * @param layerCount Number of array layers
 	 */
-	public ImageResourceRangeBuilder<T> layerCount(int layerCount) {
+	public ImageSubResourceBuilder<T> layerCount(int layerCount) {
 		this.layerCount = oneOrMore(layerCount);
 		return this;
 	}
@@ -82,10 +98,10 @@ public class ImageResourceRangeBuilder<T> {
 	/**
 	 * @return Image sub-resource range descriptor
 	 */
-	public VkImageSubresourceRange result() {
+	public VkImageSubresourceRange range() {
 		final VkImageSubresourceRange range = new VkImageSubresourceRange();
 		range.aspectMask = IntegerEnumeration.mask(aspects);
-		range.baseMipLevel = baseMipLevel;
+		range.baseMipLevel = mipLevel;
 		range.levelCount = levelCount;
 		range.baseArrayLayer = baseArrayLayer;
 		range.layerCount = layerCount;
@@ -93,7 +109,19 @@ public class ImageResourceRangeBuilder<T> {
 	}
 
 	/**
-	 * Constructs this image sub-resource range.
+	 * @return Image sub-resource layers descriptor
+	 */
+	public VkImageSubresourceLayers layers() {
+		final VkImageSubresourceLayers layers = new VkImageSubresourceLayers();
+		layers.aspectMask = IntegerEnumeration.mask(aspects);
+		layers.mipLevel = mipLevel;
+		layers.baseArrayLayer = baseArrayLayer;
+		layers.layerCount = layerCount;
+		return layers;
+	}
+
+	/**
+	 * Constructs this image sub-resource.
 	 * @return Parent builder
 	 */
 	public T build() {

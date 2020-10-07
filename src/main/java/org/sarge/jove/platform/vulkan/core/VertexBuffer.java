@@ -100,12 +100,12 @@ public class VertexBuffer extends AbstractVulkanObject {
 	/**
 	 * Creates a command to copy this buffer to the given buffer.
 	 * @param dest Destination buffer
-	 * @return Copy command
+	 * @return New copy command
 	 */
 	public Command copy(VertexBuffer dest) {
 		final VkBufferCopy region = new VkBufferCopy();
 		region.size = len;
-		return (api, cb) -> api.vkCmdCopyBuffer(cb, this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
+		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, VertexBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
 	}
 
 	@Override

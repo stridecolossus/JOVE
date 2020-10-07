@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.ImageResourceRangeBuilder;
+import org.sarge.jove.platform.vulkan.util.ImageSubResourceBuilder;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -58,7 +58,7 @@ public class View extends AbstractVulkanObject {
 		private Image.Descriptor descriptor;
 		private VkImageViewType type;
 		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
-		private final ImageResourceRangeBuilder<Builder> subresource = new ImageResourceRangeBuilder<>(this);
+		private final ImageSubResourceBuilder<Builder> subresource = new ImageSubResourceBuilder<>(this);
 
 		/**
 		 * Constructor.
@@ -98,7 +98,7 @@ public class View extends AbstractVulkanObject {
 		/**
 		 * @return Image sub-resource range builder
 		 */
-		public ImageResourceRangeBuilder<Builder> subresource() {
+		public ImageSubResourceBuilder<Builder> subresource() {
 			return subresource;
 		}
 
@@ -126,7 +126,7 @@ public class View extends AbstractVulkanObject {
 			info.format = descriptor.format();
 			info.image = descriptor.handle();
 			info.components = mapping;
-			info.subresourceRange = subresource.result();
+			info.subresourceRange = subresource.range();
 
 			// Allocate image view
 			final VulkanLibrary lib = dev.library();

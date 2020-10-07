@@ -87,7 +87,7 @@ final Image texture = new Image.Builder(dev)
 # Transition Barrier 
 
 ```java
-public class Barrier implements Command {
+public class Barrier implements ImmediateCommand {
 	private final int src, dest;
 	private final VkImageMemoryBarrier[] images;
 
@@ -102,6 +102,120 @@ public class Barrier implements Command {
 	
 	public class ImageBarrierBuilder {
 		...
+	}
+}
+```
+
+# Immediate Command
+
+```java
+/**
+ * Adapter for a command that can be submitted immediately.
+ */
+abstract class ImmediateCommand implements Command {
+	/**
+	 * Submits this command to the given pool.
+	 * @param pool Command pool
+	 * @param wait Whether to wait for completion
+	 */
+	public void submit(Command.Pool pool, boolean wait) {
+		// Allocate one-off buffer
+		final Command.Buffer buffer = pool.allocate();
+		buffer.once(this);
+
+		try {
+			// Perform work
+			final Work work = new Builder().add(buffer).build();
+			work.submit();
+
+			// Wait for work to complete
+			if(wait) {
+				buffer.pool().queue().waitIdle();
+			}
+		}
+		finally {
+			// Release
+			buffer.free();
+		}
+	}
+}
+```
+
+# Copy Command
+
+```java
+public class ImageCopyCommand extends ImmediateCommand {
+	private final Image image;
+	private final VertexBuffer buffer;
+	private final VkBufferImageCopy[] regions;
+	private final VkImageLayout layout;
+
+	...
+	
+	@Override
+	public void execute(VulkanLibrary lib, Handle handle) {
+		lib.vkCmdCopyBufferToImage(handle, buffer.handle(), image.handle(), layout, regions.length, regions);
+	}
+
+	/**
+	 * Inverts this command to copy <b>from</b> the image to the buffer.
+	 * @return Inverted copy command
+	 */
+	public Command invert() {
+		return (api, handle) -> api.vkCmdCopyImageToBuffer(handle, image.handle(), layout, buffer.handle(), regions.length, regions);
+	}
+
+	public static class Builder {
+		...
+	}
+}
+```
+
+# Image sub-resource builder (factor)
+
+```java
+public class ImageSubResourceBuilder<T> {
+	private final T parent;
+	private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+	private int mipLevel;
+	private int levelCount = 1;
+	private int baseArrayLayer;
+	private int layerCount = 1;
+
+	/**
+	 * Constructor.
+	 * @param parent Parent builder
+	 */
+	public ImageSubResourceBuilder(T parent) {
+		this.parent = notNull(parent);
+	}
+
+	...
+
+	/**
+	 * @return Image sub-resource range descriptor
+	 */
+	public VkImageSubresourceRange range() {
+		final VkImageSubresourceRange range = new VkImageSubresourceRange();
+		...
+		return range;
+	}
+
+	/**
+	 * @return Image sub-resource layers descriptor
+	 */
+	public VkImageSubresourceLayers layers() {
+		final VkImageSubresourceLayers layers = new VkImageSubresourceLayers();
+		...
+		return layers;
+	}
+
+	/**
+	 * Constructs this image sub-resource.
+	 * @return Parent builder
+	 */
+	public T build() {
+		return parent;
 	}
 }
 ```

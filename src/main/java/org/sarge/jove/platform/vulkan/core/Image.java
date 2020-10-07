@@ -162,7 +162,7 @@ public class Image extends AbstractVulkanObject {
 	 * @param mem			Internal memory
 	 * @param dev			Logical device
 	 */
-	private Image(Descriptor descriptor, Pointer mem, LogicalDevice dev) {
+	Image(Descriptor descriptor, Pointer mem, LogicalDevice dev) {
 		super(descriptor.handle, dev, dev.library()::vkDestroyImage);
 		this.descriptor = notNull(descriptor);
 		this.mem = notNull(mem);

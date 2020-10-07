@@ -278,17 +278,17 @@ public interface Command {
 			return allocate(1).get(0);
 		}
 
-		/**
-		 * Helper - Allocates a one-time primary buffer to with the given command.
-		 * @param cmd Command
-		 * @return New command buffer
-		 * @see Buffer#once(Command)
-		 */
-		public Buffer allocate(Command cmd) {
-			final Buffer buffer = allocate();
-			buffer.once(cmd);
-			return buffer;
-		}
+//		/**
+//		 * Helper - Allocates a one-time primary buffer to with the given command.
+//		 * @param cmd Command
+//		 * @return New command buffer
+//		 * @see Buffer#once(Command)
+//		 */
+//		public Buffer allocate(Command cmd) {
+//			final Buffer buffer = allocate();
+//			buffer.once(cmd);
+//			return buffer;
+//		}
 
 		/**
 		 * Resets this command pool.

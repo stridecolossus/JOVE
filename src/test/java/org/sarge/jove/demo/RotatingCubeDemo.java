@@ -24,6 +24,8 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
+import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
+import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
@@ -37,7 +39,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class RotatingCubeDemo {
 
 
-	public static Image texture(LogicalDevice dev) throws IOException {
+	public static Image texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
 		final File dir = new File("./src/test/resources"); // /thiswayup.jpg");
 		final ImageData.Loader loader = new ImageData.Loader(DataSource.file(dir));
@@ -50,24 +52,66 @@ public class RotatingCubeDemo {
 		staging.load(bb);
 
 		// Determine texture format for this image
-		// TODO - helper on image builder
+		// TODO - helper on image builder?
 		final VkFormat format = new FormatBuilder()
 				.components(image.components().size())
 				.bytes(1)
 				.signed(false)
 				.type(Type.NORMALIZED)
 				.build();
+				// VkFormat.VK_FORMAT_R8G8B8A8_SRGB|UNORM
 
 		// Create texture
 		final Image texture = new Image.Builder(dev)
 				.extents(Image.Extents.of(image.size()))
-//				.format(VkFormat.VK_FORMAT_R8_UNORM)
-//				.format(VkFormat.VK_FORMAT_R8G8B8A8_SRGB) // UNORM?
 				.format(format)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
+
+		// Transition texture ready for copying
+		new Barrier.Builder()
+				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
+				.barrier(texture)
+					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+					// TODO - subresource copied?
+					.build()
+				.build()
+				.submit(pool, true);
+
+		// Copy staging to texture
+		new ImageCopyCommand.Builder()
+				.buffer(staging)
+				.image(texture)
+				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+				.subresource()
+					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
+					.build()
+				.build()
+				.submit(pool, true);
+
+		// Release staging
+		staging.destroy();
+
+		// Transition texture ready for sampling
+		// TODO - source flag & access flag and old-layout could be initialised from previous barrier?
+		new Barrier.Builder()
+				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
+				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+				.barrier(texture)
+					.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+					.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
+					.build()
+				.build()
+				.submit(pool, true);
+
+		// Create sampler
+		final Sampler sampler = new Sampler.Builder(dev).build();
 
 		return null;
 	}
@@ -203,13 +247,17 @@ public class RotatingCubeDemo {
 
 		// Copy
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
-		final Command copyCommand = staging.copy(dest);
-		final Command.Buffer copyBuffer = copyPool.allocate(copyCommand);
-		Work.submit(copyBuffer, true);
+		ImmediateCommand.of(staging.copy(dest)).submit(copyPool, true);
+
+
+//		return ImmediateCommand.of((api, buffer) -> api.vkCmdCopyBuffer(buffer, VertexBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region}));
+
+		//staging.copy(dest).submit(copyPool, true);
 
 		//////////////////
 
-		texture(dev);
+		final Command.Pool graphicsPool = null; // TODO - Command.Pool.create(queue, flags)
+		texture(dev, graphicsPool);
 
 		//////////////////
 
