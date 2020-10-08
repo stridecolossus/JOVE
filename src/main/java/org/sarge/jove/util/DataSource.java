@@ -18,8 +18,9 @@ public interface DataSource extends Function<String, InputStream> {
 	 * Creates a data-source for the given file-system directory.
 	 * @param dir Directory
 	 * @return File-system data-source
+	 * @throws IllegalArgumentException if the directory does not exist
 	 */
-	static DataSource file(File dir) {
+	static DataSource of(File dir) {
 		if(!dir.exists()) throw new IllegalArgumentException("Data-source directory does not exist: " + dir);
 		final Path path = dir.toPath();
 		return filename -> {

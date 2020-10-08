@@ -1,11 +1,9 @@
 package org.sarge.jove.util;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -74,18 +72,18 @@ public class StructureHelperTest {
 		assertFloatEquals(2, mem.getInt(4));
 	}
 
-	@Test
-	public void fields() throws Exception {
-		final MockStructure struct = new MockStructure(1);
-		final Field field = MockStructure.class.getDeclaredField("value");
-		assertArrayEquals(new Field[]{field}, StructureHelper.fields(struct).toArray());
-	}
-
-	@Test
-	public void copy() {
-		final Compound src = new Compound();
-		final Compound dest = new Compound();
-		StructureHelper.copy(src, dest);
-		assertEquals(true, src.dataEquals(dest));
-	}
+//	@Test
+//	public void fields() throws Exception {
+//		final MockStructure struct = new MockStructure(1);
+//		final Field field = MockStructure.class.getDeclaredField("value");
+//		assertArrayEquals(new Field[]{field}, StructureHelper.fields(struct).toArray());
+//	}
+//
+//	@Test
+//	public void copy() {
+//		final Compound src = new Compound();
+//		final Compound dest = new Compound();
+//		StructureHelper.copy(src, dest);
+//		assertEquals(true, src.dataEquals(dest));
+//	}
 }

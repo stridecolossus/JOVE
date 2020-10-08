@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkCopyDescriptorSet;
 import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
@@ -14,16 +15,37 @@ import com.sun.jna.ptr.PointerByReference;
  * Descriptor sets API.
  */
 interface VulkanLibraryDescriptorSet {
-	int vkCreateDescriptorSetLayout(Pointer device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
-	void vkDestroyDescriptorSetLayout(Pointer device, Pointer descriptorSetLayout, Pointer pAllocator);
+	/**
+	 * Creates a descriptor-set pool.
+	 * @param device				Logical device
+	 * @param pCreateInfo			Descriptor
+	 * @param pAllocator			Allocator
+	 * @param pDescriptorPool		Returned pool
+	 * @return Result code
+	 */
+	int vkCreateDescriptorPool(Handle device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
 
-	int vkCreateDescriptorPool(Pointer device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
-	void vkDestroyDescriptorPool(Pointer device, Pointer descriptorPool, Pointer pAllocator);
-	int vkResetDescriptorPool(Pointer device, Pointer descriptorPool, int flags);
+	/**
+	 * Destroys a descriptor-set pool.
+	 * @param device				Logical device
+	 * @param descriptorPool		Pool
+	 * @param pAllocator			Allocator
+	 */
+	void vkDestroyDescriptorPool(Handle device, Handle descriptorPool, Handle pAllocator);
 
-	int vkAllocateDescriptorSets(Pointer device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
-	int vkFreeDescriptorSets(Pointer device, Pointer descriptorPool, int descriptorSetCount, Pointer[] pDescriptorSets);
+	// TODO
+	int vkResetDescriptorPool(Handle device, Handle descriptorPool, int flags);
 
-	void vkUpdateDescriptorSets(Pointer device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
-	void vkCmdBindDescriptorSets(Pointer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pointer layout, int firstSet, int descriptorSetCount, Pointer[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
+	int vkAllocateDescriptorSets(Handle device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
+
+	int vkFreeDescriptorSets(Handle device, Handle descriptorPool, int descriptorSetCount, Pointer[] pDescriptorSets);
+
+	////
+
+	int vkCreateDescriptorSetLayout(Handle device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pSetLayout);
+	void vkDestroyDescriptorSetLayout(Handle device, Handle descriptorSetLayout, Handle pAllocator);
+
+
+	void vkUpdateDescriptorSets(Handle device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
+	void vkCmdBindDescriptorSets(Handle commandBuffer, VkPipelineBindPoint pipelineBindPoint, Handle layout, int firstSet, int descriptorSetCount, Pointer[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
 }

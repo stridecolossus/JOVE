@@ -7,6 +7,7 @@ import static org.sarge.jove.util.Check.notNull;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -161,7 +162,7 @@ public interface Command {
 		 * Releases this buffer back to the pool.
 		 */
 		public synchronized void free() {
-			pool.free(new Handle[]{handle});
+			pool.free(Set.of(this));
 			pool.buffers.remove(this);
 		}
 
@@ -278,18 +279,6 @@ public interface Command {
 			return allocate(1).get(0);
 		}
 
-//		/**
-//		 * Helper - Allocates a one-time primary buffer to with the given command.
-//		 * @param cmd Command
-//		 * @return New command buffer
-//		 * @see Buffer#once(Command)
-//		 */
-//		public Buffer allocate(Command cmd) {
-//			final Buffer buffer = allocate();
-//			buffer.once(cmd);
-//			return buffer;
-//		}
-
 		/**
 		 * Resets this command pool.
 		 * @param flags Reset flags
@@ -304,17 +293,17 @@ public interface Command {
 		 * Frees <b>all</b> command buffers in this pool.
 		 */
 		public synchronized void free() {
-			final Handle[] array = buffers.stream().map(Buffer::handle).toArray(Handle[]::new);
-			free(array);
+			free(buffers);
 			buffers.clear();
 		}
 
 		/**
-		 * Frees command buffers.
+		 * Releases a set of command buffers back to this pool.
+		 * @param buffers Buffers to release
 		 */
-		private void free(Handle[] array) {
+		private void free(Collection<Buffer> buffers) {
 			final LogicalDevice dev = super.device();
-			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), array.length, array);
+			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers, Buffer::handle));
 		}
 
 		/**

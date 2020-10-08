@@ -109,7 +109,7 @@ public class SwapChain extends AbstractVulkanObject {
 
 		// Add swap-chains
 		info.swapchainCount = 1;
-		info.pSwapchains = Handle.memory(new Handle[]{this.handle()});
+		info.pSwapchains = toPointerArray(List.of(this));
 
 		// Set image indices
 		info.pImageIndices = StructureHelper.integers(new int[]{index.getValue()});

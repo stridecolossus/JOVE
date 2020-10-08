@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
@@ -93,8 +92,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 * @return Command to bind this buffer
 	 */
 	public Command bind() {
-		final Pointer handles = Handle.memory(new Handle[]{this.handle()});
-		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, handles, new long[]{0});
+		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, this.handle().toPointerArray(), new long[]{0});
 	}
 
 	/**

@@ -142,15 +142,15 @@ public interface Work {
 
 			// Populate command buffers
 			info.commandBufferCount = buffers.size();
-			info.pCommandBuffers = Handle.memory(buffers.toArray(Handle[]::new));
+			info.pCommandBuffers = Handle.toPointerArray(buffers);
 
 			// Populate wait semaphores
 			info.waitSemaphoreCount = wait.size();
-			info.pWaitSemaphores = Handle.memory(wait.toArray(Handle[]::new));
+			info.pWaitSemaphores = Handle.toPointerArray(wait);
 
 			// Populate signal semaphores
 			info.signalSemaphoreCount = signal.size();
-			info.pSignalSemaphores = Handle.memory(signal.toArray(Handle[]::new));
+			info.pSignalSemaphores = Handle.toPointerArray(signal);
 
 			// TODO
 			final int[] array = stages.stream().mapToInt(IntegerEnumeration::value).toArray();

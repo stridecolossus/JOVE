@@ -26,6 +26,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
@@ -42,7 +43,7 @@ public class RotatingCubeDemo {
 	public static Image texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
 		final File dir = new File("./src/test/resources"); // /thiswayup.jpg");
-		final ImageData.Loader loader = new ImageData.Loader(DataSource.file(dir));
+		final ImageData.Loader loader = new ImageData.Loader(DataSource.of(dir));
 //		final ImageData image = loader.load("heightmap.gif"); // "thiswayup.jpg");
 		final ImageData image = loader.load("thiswayup.jpg");
 
@@ -113,6 +114,45 @@ public class RotatingCubeDemo {
 		// Create sampler
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
+		///////////
+
+//		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
+//				.add(3, VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+//				.add(3, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+//				.max(3)
+//				.build();
+//
+//			System.out.println("Creating descriptor set layout");
+//			final DescriptorSet.Layout dsLayout = new DescriptorSet.Layout.Builder(dev)
+//				.binding(0)
+//					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+//					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+//				.binding(1)
+//					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+//					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+//				.build();
+
+		// Create descriptor layout
+		final DescriptorSet.Layout layout = new DescriptorSet.Layout.Builder(dev)
+				.binding()
+					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+					.build()
+				.build();
+
+		// Create pool
+		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
+				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
+				.max(3)
+				.build();
+
+		// Create sets
+		final var sets = setPool.allocate(List.of(layout, layout, layout));
+
+		System.out.println("layout="+layout);
+		System.out.println("pool="+setPool);
+		System.out.println("sets="+sets);
+
 		return null;
 	}
 
@@ -166,7 +206,7 @@ public class RotatingCubeDemo {
 				.orElseThrow(() -> new ServiceException("No GPU available"));
 
 		// Lookup required queues
-//		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
+		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
 		final QueueFamily transfer = gpu.find(transferPredicate, "Transfer family not available");
 		final QueueFamily present = gpu.find(family -> family.isPresentationSupported(surfaceHandle), "Presentation family not available");
 
@@ -175,7 +215,7 @@ public class RotatingCubeDemo {
 				.parent(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-//				.queue(graphics)
+				.queue(graphics)
 				.queue(transfer)
 				.queue(present)
 				.build();
@@ -249,21 +289,21 @@ public class RotatingCubeDemo {
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
 		ImmediateCommand.of(staging.copy(dest)).submit(copyPool, true);
 
-
-//		return ImmediateCommand.of((api, buffer) -> api.vkCmdCopyBuffer(buffer, VertexBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region}));
-
-		//staging.copy(dest).submit(copyPool, true);
-
 		//////////////////
 
-		final Command.Pool graphicsPool = null; // TODO - Command.Pool.create(queue, flags)
+		final Command.Pool graphicsPool = Command.Pool.create(dev.queue(graphics));
 		texture(dev, graphicsPool);
 
 		//////////////////
 
+		final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
+				//.add(layout)
+				.build();
+
 		// Create pipeline
 		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
+				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
 					.binding(layout)
@@ -301,6 +341,7 @@ public class RotatingCubeDemo {
 					.add(pass.begin(buffers.get(n), rect, grey))
 					.add(pipeline.bind())
 					.add(dest.bind())
+					// TODO - bind descriptor set
 					.add(draw)
 					.add(RenderPass.END_COMMAND)
 				.end();

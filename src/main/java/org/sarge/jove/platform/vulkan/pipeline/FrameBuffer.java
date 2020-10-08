@@ -3,9 +3,9 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
+import java.util.Set;
 import java.util.stream.Stream;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
@@ -33,7 +33,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
 		info.attachmentCount = 1;
-		info.pAttachments = Handle.memory(new Handle[]{view.handle()});
+		info.pAttachments = toPointerArray(Set.of(view));
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO

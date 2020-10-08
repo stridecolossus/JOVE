@@ -2,11 +2,8 @@ package org.sarge.jove.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -90,6 +87,22 @@ public final class StructureHelper {
 		return mem;
 	}
 
+//    private static class PointerArray extends Memory implements PostCallRead {
+//        private final Pointer[] original;
+//        public PointerArray(Pointer[] arg) {
+//            super(Native.POINTER_SIZE * (arg.length+1));
+//            this.original = arg;
+//            for (int i=0;i < arg.length;i++) {
+//                setPointer(i*Native.POINTER_SIZE, arg[i]);
+//            }
+//            setPointer(Native.POINTER_SIZE*arg.length, null);
+//        }
+//        @Override
+//        public void read() {
+//            read(0, original, 0, original.length);
+//        }
+//    }
+
 	/**
 	 * Allocates a contiguous memory block for a pointer-to-float array.
 	 * @param array Float array
@@ -112,47 +125,5 @@ public final class StructureHelper {
 		final Memory mem = new Memory(array.length * Integer.BYTES);
 		mem.write(0, array, 0, array.length);
 		return mem;
-	}
-
-	/**
-	 * Recursively clones a JNA structure using reflection.
-	 * @param src		Source
-	 * @param dest		Destination
-	 * @return Copied structure
-	 */
-	public static <T extends Structure> T copy(T src, T dest) {
-		final Consumer<Field> copy = field -> {
-			try {
-				final Object value = field.get(src);
-				if(value == null) {
-					// Ignore empty fields
-					return;
-				}
-				else
-				if(Structure.class.isAssignableFrom(field.getType())) {
-					// Recurse structure fields
-					final Structure struct = (Structure) field.getType().getDeclaredConstructor().newInstance();
-					copy((Structure) value, struct);
-					field.set(dest, struct);
-				}
-				else {
-					// Otherwise copy field
-					field.set(dest, value);
-				}
-			}
-			catch(Exception e) {
-				throw new RuntimeException(e);
-			}
-		};
-		fields(src).forEach(copy);
-		return dest;
-	}
-
-	/**
-	 * @param struct JNA structure
-	 * @return Structure fields
-	 */
-	public static Stream<Field> fields(Structure struct) {
-		return Arrays.stream(struct.getClass().getDeclaredFields()).filter(STRUCTURE_FIELD);
 	}
 }

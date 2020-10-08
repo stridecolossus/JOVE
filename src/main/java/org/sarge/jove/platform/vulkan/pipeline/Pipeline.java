@@ -3,12 +3,15 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
@@ -18,9 +21,11 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>pipeline</i> specifies the sequence of operations for graphics rendering.
@@ -50,8 +55,8 @@ public class Pipeline extends AbstractVulkanObject {
 	public static class Builder {
 		// Properties
 		private final LogicalDevice dev;
-		private final PipelineLayout.Builder layout;
 		private final Map<VkShaderStageFlag, VkPipelineShaderStageCreateInfo> shaders = new HashMap<>();
+		private Layout layout;
 		private RenderPass pass;
 
 		// Fixed function builders
@@ -71,7 +76,6 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
-			this.layout = new PipelineLayout.Builder(dev);
 			init();
 		}
 
@@ -79,7 +83,6 @@ public class Pipeline extends AbstractVulkanObject {
 		 * Initialises the nested builders.
 		 */
 		private void init() {
-			layout.parent(this);
 			input.parent(this);
 			assembly.parent(this);
 			viewport.parent(this);
@@ -88,10 +91,12 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
-		 * @return Builder for the pipeline layout
+		 * Sets the layout for this pipeline.
+		 * @param layout Pipeline layout (default is {@link Pipeline.Layout#DEFAULT})
 		 */
-		public PipelineLayout.Builder layout() {
-			return layout;
+		public Builder layout(Layout layout) {
+			this.layout = notNull(layout);
+			return this;
 		}
 
 		/**
@@ -166,29 +171,28 @@ public class Pipeline extends AbstractVulkanObject {
 		/**
 		 * Constructs this pipeline.
 		 * @return New pipeline
-		 * @throws IllegalArgumentException if any of the following stages are not configured: vertex shader, viewport
+		 * @throws IllegalArgumentException if any of the following stages are not configured: pipeline layout, vertex shader, viewport
 		 */
 		public Pipeline build() {
-			// Validate pipeline
-			if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalArgumentException("No vertex shader specified");
-			if(viewport == null) throw new IllegalArgumentException("No viewport stage specified");
-			if(pass == null) throw new IllegalArgumentException("No render pass specified");
-
 			// Create descriptor
 			final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
 
 			// Init layout
-			pipeline.layout = layout.result().handle();
+			if(layout == null) throw new IllegalArgumentException("No pipeline layout specified");
+			pipeline.layout = layout.handle();
 
 			// Init render pass
+			if(pass == null) throw new IllegalArgumentException("No render pass specified");
 			pipeline.renderPass = pass.handle();
 			pipeline.subpass = 0;		// TODO
 
 			// Init shader pipeline stages
+			if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalArgumentException("No vertex shader specified");
 			pipeline.stageCount = shaders.size();
 			pipeline.pStages = StructureHelper.structures(shaders.values());
 
 			// Init fixed function pipeline stages
+			if(viewport == null) throw new IllegalArgumentException("No viewport stage specified");
 			pipeline.pVertexInputState = input.result();
 			pipeline.pInputAssemblyState = assembly.result();
 			pipeline.pViewportState = viewport.result();
@@ -211,6 +215,73 @@ public class Pipeline extends AbstractVulkanObject {
 
 			// Create pipeline
 			return new Pipeline(pipelines[0], dev);
+		}
+	}
+
+	/**
+	 * A <i>pipeline layout</i> specifies the resources used by a pipeline.
+	 */
+	public static class Layout extends AbstractVulkanObject {
+		/**
+		 * Constructor.
+		 * @param handle		Pipeline handle
+		 * @param dev			Logical device
+		 */
+		private Layout(Pointer handle, LogicalDevice dev) {
+			super(handle, dev, dev.library()::vkDestroyPipelineLayout);
+		}
+
+		/**
+		 * Builder for a pipeline layout.
+		 */
+		public static class Builder {
+			private final LogicalDevice dev;
+			private final List<DescriptorSet.Layout> sets = new ArrayList<>();
+			// TODO - push constant layouts
+
+			/**
+			 * Constructor.
+			 * @param dev			Logical device
+			 * @param parent		Parent builder
+			 * @param consumer		Consumer
+			 */
+			public Builder(LogicalDevice dev) {
+				this.dev = notNull(dev);
+			}
+
+			/**
+			 * Adds a descriptor-set to this layout.
+			 * @param layout Descriptor-set layout
+			 */
+			public Builder add(DescriptorSet.Layout layout) {
+				Check.notNull(layout);
+				sets.add(layout);
+				return this;
+			}
+
+			/**
+			 * Constructs this pipeline layout.
+			 * @return New pipeline layout
+			 */
+			public Layout build() {
+				// Init pipeline layout descriptor
+				final VkPipelineLayoutCreateInfo info = new VkPipelineLayoutCreateInfo();
+
+				// Add descriptor set layouts
+				info.setLayoutCount = sets.size();
+				info.pSetLayouts = toPointerArray(sets);
+
+				// Add push constants
+				// TODO
+
+				// Allocate layout
+				final VulkanLibrary lib = dev.library();
+				final PointerByReference layout = lib.factory().pointer();
+				check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));
+
+				// Create layout
+				return new Layout(layout.getValue(), dev);
+			}
 		}
 	}
 }

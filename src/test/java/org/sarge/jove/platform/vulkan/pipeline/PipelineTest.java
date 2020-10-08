@@ -17,9 +17,11 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Shader;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Layout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -54,12 +56,14 @@ public class PipelineTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private Pipeline.Builder builder;
+		private Pipeline.Layout layout;
 		private Rectangle rect;
 		private RenderPass pass;
 
 		@BeforeEach
 		void before() {
 			builder = new Pipeline.Builder(dev);
+			layout = mock(Pipeline.Layout.class);
 			pass = mock(RenderPass.class);
 			rect = new Rectangle(new Dimensions(3, 4));
 		}
@@ -78,6 +82,7 @@ public class PipelineTest extends AbstractVulkanTest {
 		void build() {
 			// Build pipeline
 			pipeline = builder
+					.layout(layout)
 					.pass(pass)
 					.viewport(rect)
 					.shader()
@@ -117,36 +122,90 @@ public class PipelineTest extends AbstractVulkanTest {
 			assertNotNull(info.pStages);
 		}
 
-		private void addShaderStage() {
+		private void addVertexShaderStage() {
 			builder
 				.shader()
-				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-				.shader(mock(Shader.class))
+					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+					.shader(mock(Shader.class))
 				.build();
 		}
 
 		@Test
-		void buildRequiresRenderPass() {
-			addShaderStage();
+		void buildIncomplete() {
+			// Check empty builder
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+
+			// Add layout
+			builder.layout(layout);
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+
+			// Add render-pass
+			builder.pass(pass);
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+
+			// Add viewport stage
 			builder.viewport(rect);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
 
-		@Test
-		void buildRequiresVertexShaderStage() {
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@Test
-		void buildRequiresViewportStage() {
-			addShaderStage();
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			// Add vertex shader
+			addVertexShaderStage();
+			builder.build();
 		}
 
 		@Test
 		void duplicateShaderStage() {
-			addShaderStage();
-			assertThrows(IllegalArgumentException.class, () -> addShaderStage());
+			addVertexShaderStage();
+			assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage());
+		}
+	}
+
+	@Nested
+	class LayoutTests {
+		private Layout.Builder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new Layout.Builder(dev);
+		}
+
+		@Test
+		void build() {
+			// Create descriptor set layout
+			final DescriptorSet.Layout set = mock(DescriptorSet.Layout.class);
+
+			// Create layout
+			final Layout layout = builder
+					.add(set)
+					.build();
+
+			// Check layout
+			assertNotNull(layout);
+			assertNotNull(layout.handle());
+
+			// Check pipeline allocation
+			final ArgumentCaptor<VkPipelineLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineLayoutCreateInfo.class);
+			verify(lib).vkCreatePipelineLayout(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+
+			// Check descriptor
+			final VkPipelineLayoutCreateInfo info = captor.getValue();
+			assertNotNull(info);
+
+			// Check descriptor-set layouts
+			assertEquals(1, info.setLayoutCount);
+			assertNotNull(info.pSetLayouts);
+		}
+
+		@Test
+		void buildEmpty() {
+			assertNotNull(builder.build());
+		}
+
+		@Test
+		void destroy() {
+			final Layout layout = builder.build();
+			final Handle handle = layout.handle();
+			layout.destroy();
+			verify(lib).vkDestroyPipelineLayout(dev.handle(), handle, null);
 		}
 	}
 }

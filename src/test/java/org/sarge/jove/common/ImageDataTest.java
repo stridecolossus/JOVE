@@ -74,7 +74,7 @@ public class ImageDataTest {
 
 		@BeforeEach
 		void before() {
-			loader = new Loader(DataSource.file(new File("./src/test/resources")));
+			loader = new Loader(DataSource.of(new File("./src/test/resources")));
 		}
 
 		@Test

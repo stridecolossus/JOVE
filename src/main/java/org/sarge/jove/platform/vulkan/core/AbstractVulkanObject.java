@@ -2,8 +2,11 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.util.Check.notNull;
 
+import java.util.Collection;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.Pointer;
 
@@ -24,6 +27,15 @@ public abstract class AbstractVulkanObject {
 		 * @param allocator		Allocator
 		 */
 		void destroy(Handle dev, Handle handle, Handle allocator);
+	}
+
+	/**
+	 * Helper - Converts a set of objects to a pointer-array wrapper.
+	 * @param objects Objects
+	 * @return Pointer-array
+	 */
+	public static PointerArray toPointerArray(Collection<? extends AbstractVulkanObject> objects) {
+		return new PointerArray(Handle.toArray(objects, AbstractVulkanObject::handle));
 	}
 
 	private Handle handle;

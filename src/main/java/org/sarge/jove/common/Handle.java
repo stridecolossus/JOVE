@@ -1,10 +1,12 @@
 package org.sarge.jove.common;
 
+import java.util.Collection;
+import java.util.function.Function;
+
 import org.sarge.jove.util.Check;
+import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.FromNativeContext;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
@@ -45,27 +47,18 @@ public final class Handle {
 		}
 	};
 
+	public static <T> Pointer[] toArray(Collection<T> handles, Function<T, Handle> mapper) {
+		return handles.stream().map(mapper).map(handle -> handle.handle).toArray(Pointer[]::new);
+	}
+
 	/**
-	 * TODO
-	 * Builds a contiguous memory block from the given array of handles.
-	 * @param handles
-	 * @return
+	 * Helper - Creates a pointer-array from the given collection.
+	 * @param handles Handles
+	 * @return Pointer-array
 	 */
-	public static Memory memory(Handle[] handles) {
-		// Ignore empty arrays
-		if(handles.length == 0) {
-			return null;
-		}
-
-		// Build contiguous block of pointers
-		final Memory mem = new Memory(Native.POINTER_SIZE * handles.length);
-		for(int n = 0; n < handles.length; ++n) {
-			if(handles[n] != null) {
-				mem.setPointer(Native.POINTER_SIZE * n, handles[n].handle);
-			}
-		}
-
-		return mem;
+	public static PointerArray toPointerArray(Collection<Handle> handles) {
+		final var array = handles.stream().map(handle -> handle.handle).toArray(Pointer[]::new);
+		return new PointerArray(array);
 	}
 
 	private final Pointer handle;
@@ -79,9 +72,17 @@ public final class Handle {
 		this.handle = new Pointer(Pointer.nativeValue(handle));
 	}
 
+	/**
+	 * Helper - Creates a pointer-array from this handle.
+	 * @return New pointer-array
+	 */
+	public PointerArray toPointerArray() {
+		return new PointerArray(new Pointer[]{handle});
+	}
+
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Handle that) && (this.handle.equals(that.handle));
+		return (obj instanceof Handle that) && this.handle.equals(that.handle);
 	}
 
 	@Override
