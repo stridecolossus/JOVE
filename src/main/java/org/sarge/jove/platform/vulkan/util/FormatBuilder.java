@@ -50,7 +50,7 @@ public class FormatBuilder {
 		FLOAT("FLOAT"),
 		NORMALIZED("NORM"),
 		SCALED("SCALED"),
-		SRGB("SRGB");
+		SRGB("RGB"); // TODO
 
 		private final String token;
 
@@ -137,7 +137,7 @@ public class FormatBuilder {
 		final String format = new StringJoiner("_")
 			.add("VK_FORMAT")
 			.add(layout.toString())
-			.add((signed ? "S" : "U") + type.token)
+			.add((signed ? "S" : "U") + type.token) // TODO - SRGB
 			.toString();
 
 		// Lookup format

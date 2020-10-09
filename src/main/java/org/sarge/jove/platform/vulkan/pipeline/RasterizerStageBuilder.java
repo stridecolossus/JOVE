@@ -18,7 +18,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	private boolean rasterizerDiscardEnable;
 	private VkPolygonMode polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL;
 	private VkCullModeFlag cullMode = VkCullModeFlag.VK_CULL_MODE_BACK_BIT;
-	private VkFrontFace frontFace = VkFrontFace.VK_FRONT_FACE_CLOCKWISE;
+	private VkFrontFace frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	private boolean depthBiasEnable;
 	private float depthBiasConstantFactor;
 	private float depthBiasClamp;

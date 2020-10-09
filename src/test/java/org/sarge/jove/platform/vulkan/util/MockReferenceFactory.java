@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -13,7 +13,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class MockReferenceFactory implements ReferenceFactory {
 	public final IntByReference integer = new IntByReference(1);
 	public final PointerByReference ptr = new PointerByReference(new Pointer(2));
-	public final Pointer[] pointers = new Pointer[] {new Pointer(3)};
+	private Pointer[] pointers = new Pointer[]{new Pointer(3)};
 
 	@Override
 	public IntByReference integer() {
@@ -27,6 +27,18 @@ public class MockReferenceFactory implements ReferenceFactory {
 
 	@Override
 	public Pointer[] pointers(int num) {
+		assertEquals(pointers.length, num, () -> String.format("Pointer array length mismatch: requested=%d actual=%d", num, pointers.length));
+		return pointers;
+	}
+
+	// TODO
+	public Pointer[] array(int num) {
+		pointers = new Pointer[num];
+
+		for(int n = 0; n < num; ++n) {
+			pointers[n] = new Pointer(n);
+		}
+
 		return pointers;
 	}
 }

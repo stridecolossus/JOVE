@@ -19,7 +19,7 @@ public class RasterizerStageBuilderTest {
 	}
 
 	@Test
-	void create() {
+	void build() {
 		// Create a shader stage
 		final var info = builder
 				.depthClampEnable(true)
@@ -41,6 +41,23 @@ public class RasterizerStageBuilderTest {
 		assertEquals(2, info.lineWidth);
 
 		// Check depth bias
+		assertEquals(VulkanBoolean.FALSE, info.depthBiasEnable);
+		assertEquals(0, info.depthBiasConstantFactor);
+		assertEquals(0, info.depthBiasClamp);
+		assertEquals(0, info.depthBiasSlopeFactor);
+	}
+
+	@Test
+	void buildDefaults() {
+		final var info = builder.result();
+		assertNotNull(info);
+		assertEquals(0, info.flags);
+		assertEquals(VulkanBoolean.FALSE, info.depthClampEnable);
+		assertEquals(VulkanBoolean.FALSE, info.rasterizerDiscardEnable);
+		assertEquals(VkPolygonMode.VK_POLYGON_MODE_FILL, info.polygonMode);
+		assertEquals(VkCullModeFlag.VK_CULL_MODE_BACK_BIT, info.cullMode);
+		assertEquals(VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE, info.frontFace);
+		assertEquals(1, info.lineWidth);
 		assertEquals(VulkanBoolean.FALSE, info.depthBiasEnable);
 		assertEquals(0, info.depthBiasConstantFactor);
 		assertEquals(0, info.depthBiasClamp);

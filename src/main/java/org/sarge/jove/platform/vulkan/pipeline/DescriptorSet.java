@@ -35,8 +35,37 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>descriptor set</i>
- * TODO
+ * A <i>descriptor set</i> specifies resources used during rendering, such as samplers and uniform buffers.
+ * <p>
+ * Example for a fragment shader texture sampler:
+ * <pre>
+ * 	LogicalDevice dev = ...
+ *
+ *  // Define layout for a sampler at binding zero
+ *  Layout layout = new Layout.Builder(dev)
+ *  	.binding(0)
+ *  		.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+ *  		.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+ *  		.build()
+ *  	.build();
+ *
+ *  // Create descriptor pool for three swapchain images
+ *  Pool pool = new Pool.Builder(dev)
+ *  	.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
+ *  	.max(3)
+ *  	.build();
+ *
+ *  // Create descriptor sets
+ *  List<DescriptorSet> sets = pool.allocate(layout, 3);
+ *
+ *  Sampler sampler = ...
+ *  View view = ...
+ *
+ *  // Init sampler
+ *  for(DescriptorSet set : sets) {
+ *  	set.sampler(0, sampler, view);
+ *  }
+ * </pre>
  * @author Sarge
  */
 public class DescriptorSet {
@@ -67,41 +96,32 @@ public class DescriptorSet {
 		return layout;
 	}
 
+	// TODO - builder/configure helper for this
 	/**
-	 * Updates this descriptor set for the given sampler.
-	 * @param binding Binding index
-	 * @param sampler Sampler
+	 * Binds a sampler to this descriptor set.
+	 * @param binding 		Binding index
+	 * @param sampler 		Sampler
+	 * @param view			Image view
 	 */
 	public void sampler(int binding, Sampler sampler, View view) {
 		// TODO
 		final VkDescriptorSetLayoutBinding entry = layout.bindings.get(binding);
 		if(entry == null) throw new IllegalArgumentException("");
-		if(entry.descriptorType != VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER) throw new IllegalArgumentException("");
-
-		// Init update descriptor
-		final VkWriteDescriptorSet info = new VkWriteDescriptorSet();
-		info.dstSet = this.handle();
-		info.dstBinding = entry.binding;
-		info.descriptorType = entry.descriptorType;
-		info.descriptorCount = entry.descriptorCount;
-		info.dstArrayElement = 0; // TODO
-
-//		write.pBufferInfo = null;
-//		write.pImageInfo = null;
-//		write.pTexelBufferView = null;
+		if(entry.descriptorType != VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) throw new IllegalArgumentException("");
 
 		final VkDescriptorImageInfo image = new VkDescriptorImageInfo(); // TODO - by ref?
 		image.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		image.imageView = view.handle();
 		image.sampler = sampler.handle();
-//		info.pImageInfo = image; // TODO - array?
-		info.pImageInfo = StructureHelper.structures(List.of(image));
 
-//		final VkDescriptorImageInfo info = new VkDescriptorImageInfo();
-//		info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-//		info.imageView = sampler.view().handle();
-//		info.sampler = sampler.handle();
-//		update(binding, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, write -> write.pImageInfo = info);
+		// Init update descriptor
+		final VkWriteDescriptorSet info = new VkWriteDescriptorSet();
+		info.dstSet = this.handle();
+		info.dstBinding = entry.binding;
+		info.dstArrayElement = 0; // TODO
+		info.descriptorType = entry.descriptorType;
+		info.descriptorCount = entry.descriptorCount;
+		info.pImageInfo = StructureHelper.structures(List.of(image));
 
 		// Update descriptor set
 		final LogicalDevice dev = layout.device();
@@ -139,7 +159,7 @@ public class DescriptorSet {
 				VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
 				layout.handle(),
 				0,					// First set
-				1,					// Count
+				1,					// Count // TODO - count = handles.length???
 				handles,
 				0,					// Dynamic offset count
 				null				// Dynamic offsets

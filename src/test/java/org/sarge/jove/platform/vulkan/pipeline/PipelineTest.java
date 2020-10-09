@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -80,6 +81,8 @@ public class PipelineTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
+			final Pointer[] array = factory.array(1);
+
 			// Build pipeline
 			pipeline = builder
 					.layout(layout)
@@ -96,7 +99,7 @@ public class PipelineTest extends AbstractVulkanTest {
 
 			// Check allocation
 			final ArgumentCaptor<VkGraphicsPipelineCreateInfo[]> captor = ArgumentCaptor.forClass(VkGraphicsPipelineCreateInfo[].class);
-			verify(lib).vkCreateGraphicsPipelines(eq(dev.handle()), isNull(), eq(1), captor.capture(), isNull(), eq(factory.pointers));
+			verify(lib).vkCreateGraphicsPipelines(eq(dev.handle()), isNull(), eq(1), captor.capture(), isNull(), eq(array));
 			assertEquals(1, captor.getValue().length);
 
 			// Check descriptor
@@ -172,6 +175,7 @@ public class PipelineTest extends AbstractVulkanTest {
 		void build() {
 			// Create descriptor set layout
 			final DescriptorSet.Layout set = mock(DescriptorSet.Layout.class);
+			when(set.handle()).thenReturn(new Handle(new Pointer(42)));
 
 			// Create layout
 			final Layout layout = builder

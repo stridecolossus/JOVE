@@ -90,7 +90,7 @@ public class Sampler extends AbstractVulkanObject {
 		private VkSamplerMipmapMode mipmapMode = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		private float minLod;
 		private float maxLod;
-		private float mipLodBias = 1;
+		private float mipLodBias; // = 1;
 
 		// Wrapping settings
 		private final VkSamplerAddressMode[] addressMode = new VkSamplerAddressMode[3];

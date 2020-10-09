@@ -3,9 +3,9 @@ package org.sarge.jove.common;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.util.Check.notNull;
 
-import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -183,18 +183,30 @@ public interface ImageData {
 			if(entry == null) throw new IOException("Unsupported image type: " + image);
 
 			// Add alpha channel as required
-			final BufferedImage result = addAlpha(image, entry.alpha);
+//			final BufferedImage result = addAlpha(image, entry.alpha);
 
-			// Apply transforms
-			// TODO - handle other buffer types (int, etc)?
-			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
+//			// Apply transforms
+//			// TODO - handle other buffer types (int, etc)?
+//			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
+			final DataBufferByte buffer = (DataBufferByte) image.getRaster().getDataBuffer();
 			final byte[] bytes = buffer.getData();
-			for(Transform t : entry.transforms) {
-				t.transform(bytes, entry.components.length);
+//			for(Transform t : entry.transforms) {
+//				t.transform(bytes, entry.components.length);
+//			}
+//
+//			// Convert to buffer
+//			final ByteBuffer bb = ByteBuffer.wrap(bytes);
+
+
+			final int len = image.getWidth() * image.getHeight() * 4;
+			final ByteBuffer bb = ByteBuffer.allocate(len);
+			for(int n = 0; n < bytes.length; n += 3) {
+				bb.put(bytes[n]);
+				bb.put(bytes[n+1]);
+				bb.put(bytes[n+2]);
+				bb.put(Byte.MAX_VALUE);
 			}
 
-			// Convert to buffer
-			final ByteBuffer bb = ByteBuffer.wrap(bytes);
 
 			// Create image wrapper
 			final Dimensions dim = new Dimensions(image.getWidth(), image.getHeight());
@@ -214,11 +226,28 @@ public interface ImageData {
 			}
 
 			// Otherwise add alpha channel
-			final BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), type);
-			final Graphics g = result.getGraphics();
-			g.drawImage(image, 0, 0, null);
-			g.dispose();
+			final BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), type); // BufferedImage.TYPE_INT_ARGB);
+//			final Graphics g = result.getGraphics();
+//			g.drawImage(image, 0, 0, null);
+//			g.dispose();
+
+
+			try {
+				System.out.println("writers");
+				ImageIO.getImageWritersByFormatName("jpg").forEachRemaining(System.out::println);
+				boolean r = ImageIO.write(result, "jpg", new File("output.jpg"));
+				System.out.println("result="+r);
+			}
+			catch(IOException e) {
+				throw new RuntimeException(e);
+			}
+
 			return result;
 		}
+	}
+
+	public static void main(String[] args) throws IOException {
+		Loader loader = new Loader(DataSource.of(new File("./src/test/resources")));
+		loader.load("thiswayup.jpg");
 	}
 }

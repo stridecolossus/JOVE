@@ -33,6 +33,7 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder.Type;
+import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.util.DataSource;
 
 import com.sun.jna.ptr.PointerByReference;
@@ -40,7 +41,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class RotatingCubeDemo {
 
 
-	public static Image texture(LogicalDevice dev, Command.Pool pool) throws IOException {
+	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
 		final File dir = new File("./src/test/resources"); // /thiswayup.jpg");
 		final ImageData.Loader loader = new ImageData.Loader(DataSource.of(dir));
@@ -54,18 +55,23 @@ public class RotatingCubeDemo {
 
 		// Determine texture format for this image
 		// TODO - helper on image builder?
-		final VkFormat format = new FormatBuilder()
+		final VkFormat format2 = new FormatBuilder()
 				.components(image.components().size())
 				.bytes(1)
 				.signed(false)
 				.type(Type.NORMALIZED)
+//				.signed(true)
+//				.type(Type.SRGB)
 				.build();
 				// VkFormat.VK_FORMAT_R8G8B8A8_SRGB|UNORM
+		final VkFormat format = VkFormat.VK_FORMAT_R8G8B8A8_SRGB;
+
 
 		// Create texture
 		final Image texture = new Image.Builder(dev)
 				.extents(Image.Extents.of(image.size()))
 				.format(format)
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -78,7 +84,9 @@ public class RotatingCubeDemo {
 				.barrier(texture)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
-					// TODO - subresource copied?
+					.subresource()
+						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
+						.build()
 					.build()
 				.build()
 				.submit(pool, true);
@@ -107,53 +115,21 @@ public class RotatingCubeDemo {
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 					.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
 					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
+					.subresource()
+						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
+						.build()
 					.build()
 				.build()
 				.submit(pool, true);
 
-		// Create sampler
-		final Sampler sampler = new Sampler.Builder(dev).build();
-
-		///////////
-
-//		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
-//				.add(3, VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-//				.add(3, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-//				.max(3)
-//				.build();
-//
-//			System.out.println("Creating descriptor set layout");
-//			final DescriptorSet.Layout dsLayout = new DescriptorSet.Layout.Builder(dev)
-//				.binding(0)
-//					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-//					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
-//				.binding(1)
-//					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-//					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-//				.build();
-
-		// Create descriptor layout
-		final DescriptorSet.Layout layout = new DescriptorSet.Layout.Builder(dev)
-				.binding()
-					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+		final View view = new View.Builder(dev)
+				.image(texture)
+				.subresource()
+					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 					.build()
 				.build();
 
-		// Create pool
-		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
-				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
-				.max(3)
-				.build();
-
-		// Create sets
-		final var sets = setPool.allocate(List.of(layout, layout, layout));
-
-		System.out.println("layout="+layout);
-		System.out.println("pool="+setPool);
-		System.out.println("sets="+sets);
-
-		return null;
+		return view;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -215,7 +191,7 @@ public class RotatingCubeDemo {
 				.parent(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.queue(graphics)
+				//.queue(graphics) TODO!!!
 				.queue(transfer)
 				.queue(present)
 				.build();
@@ -249,24 +225,40 @@ public class RotatingCubeDemo {
 				.subpass()
 					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 					.build()
+//				.dependency()
+//					.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//					.destination(0)
+//					.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//					.destination(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+//					.build()
 				.build();
 
 		// Load shaders
-		final Shader.Loader loader = Shader.Loader.create("./src/test/resources/demo/vertex.buffer", dev);
-		final Shader vert = loader.load("spv.triangle.vert");
-		final Shader frag = loader.load("spv.triangle.frag");
+		final Shader.Loader loader = Shader.Loader.create("./src/test/resources/demo/texture.quad", dev);
+		final Shader vert = loader.load("spv.quad.vert");
+		final Shader frag = loader.load("spv.quad.frag");
 
 		//////////////////
 
 		// Build triangle vertices
 		final Vertex[] vertices = {
-				new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-				new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
-				new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
+				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_LEFT).build(),
+				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
+				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
+				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
+
+//				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
+//				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
+//				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
+//				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).colour(new Colour(1, 1, 1, 1)).build(),
+
+//				new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
+//				new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
+//				new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
 		};
 
 		// Define vertex layout
-		final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.COLOUR));
+		final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE));
 
 		// Buffer vertices
 		final ByteBuffer bb = layout.buffer(Arrays.asList(vertices));
@@ -289,15 +281,42 @@ public class RotatingCubeDemo {
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
 		ImmediateCommand.of(staging.copy(dest)).submit(copyPool, true);
 
+		staging.destroy();
+
 		//////////////////
 
 		final Command.Pool graphicsPool = Command.Pool.create(dev.queue(graphics));
-		texture(dev, graphicsPool);
+
+		final View texture = texture(dev, graphicsPool);
+
+		// Create descriptor layout
+		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
+				.binding()
+					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+					.build()
+				.build();
+
+		// Create pool
+		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
+				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
+				.max(3)
+				.build();
+
+		final List<DescriptorSet> descriptors = setPool.allocate(setLayout, 3);
+
+		// Create sampler
+		final Sampler sampler = new Sampler.Builder(dev).build();
+
+		for(DescriptorSet set : descriptors) {
+			set.sampler(0, sampler, texture);
+		}
 
 		//////////////////
 
+		// Create pipeline layout
 		final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
-				//.add(layout)
+				.add(setLayout)
 				.build();
 
 		// Create pipeline
@@ -332,7 +351,7 @@ public class RotatingCubeDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);		// TODO - builder
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, 4, 1, 0, 0);		// TODO - builder
 		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
@@ -341,7 +360,7 @@ public class RotatingCubeDemo {
 					.add(pass.begin(buffers.get(n), rect, grey))
 					.add(pipeline.bind())
 					.add(dest.bind())
-					// TODO - bind descriptor set
+					.add(descriptors.get(n).bind(pipelineLayout))
 					.add(draw)
 					.add(RenderPass.END_COMMAND)
 				.end();
@@ -350,7 +369,7 @@ public class RotatingCubeDemo {
 //		final Semaphore ready = Semaphore.create(dev);
 //		final Semaphore finished = Semaphore.create(dev);
 
-//		for(int n = 0; n < 100; ++n) {
+		for(int n = 0; n < 25; ++n) {
 			final int index = chain.acquire(null, null);
 
 			new Work.Builder()
@@ -362,15 +381,17 @@ public class RotatingCubeDemo {
 					.submit();
 
 			presentQueue.waitIdle();
-
-//			Thread.sleep(50);
+			Thread.sleep(50);
 
 			chain.present(presentQueue, null);
 
+			presentQueue.waitIdle();
+			Thread.sleep(50);
 
 //			dev.queue(present).waitIdle();
-//		}
-			Thread.sleep(2500);
+		}
+
+			//Thread.sleep(2500);
 
 		//////////////
 
@@ -379,14 +400,27 @@ public class RotatingCubeDemo {
 		window.destroy();
 		desktop.close();
 
+		final Image.DefaultImage img = (Image.DefaultImage) texture.image();
+		img.destroy();
+		texture.destroy();
+		sampler.destroy();
+
+		setPool.destroy();
+		setLayout.destroy();
+
+		pool.destroy();
+		copyPool.destroy();
+		graphicsPool.destroy();
+
+		vert.destroy();
+		frag.destroy();
+
 		// Destroy render pass
 		buffers.forEach(FrameBuffer::destroy);
-		pool.destroy();
 		pass.destroy();
 
 		// Destroy pipeline
-		vert.destroy();
-		frag.destroy();
+		pipelineLayout.destroy();
 		pipeline.destroy();
 		chain.destroy();
 

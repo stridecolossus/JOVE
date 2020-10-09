@@ -42,11 +42,11 @@ public class ImageCopyCommandTest {
 
 		// Create image
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-				.handle(new Handle(new Pointer(2)))
 				.extents(new Image.Extents(3, 4))
 				.format(VkFormat.VK_FORMAT_A1R5G5B5_UNORM_PACK16)
 				.build();
 		image = mock(Image.class);
+		when(image.handle()).thenReturn(new Handle(new Pointer(2)));
 		when(image.descriptor()).thenReturn(descriptor);
 
 		// Create data buffer

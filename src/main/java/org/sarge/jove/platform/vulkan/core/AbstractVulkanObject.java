@@ -35,7 +35,12 @@ public abstract class AbstractVulkanObject {
 	 * @return Pointer-array
 	 */
 	public static PointerArray toPointerArray(Collection<? extends AbstractVulkanObject> objects) {
-		return new PointerArray(Handle.toArray(objects, AbstractVulkanObject::handle));
+		if(objects.isEmpty()) {
+			return null;
+		}
+		else {
+			return new PointerArray(Handle.toArray(objects, AbstractVulkanObject::handle));
+		}
 	}
 
 	private Handle handle;

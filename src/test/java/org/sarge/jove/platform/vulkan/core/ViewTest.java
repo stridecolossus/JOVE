@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -25,35 +27,20 @@ import com.sun.jna.ptr.PointerByReference;
 
 public class ViewTest extends AbstractVulkanTest {
 	private View view;
-	private Image.Descriptor descriptor;
+	private Image image;
 
 	@BeforeEach
 	public void before() {
-		descriptor = new Image.Descriptor.Builder()
-				.handle(new Handle(new Pointer(2)))
-				.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)
-				.extents(new Image.Extents(3, 4))
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
-				.build();
-
-		view = new View(new Pointer(1), descriptor, dev);
+		image = mock(Image.class);
+		view = new View(new Pointer(1), image, dev);
 	}
 
 	@Test
 	public void constructor() {
 		assertEquals(new Handle(new Pointer(1)), view.handle());
 		assertEquals(dev, view.device());
-		assertEquals(descriptor, view.descriptor());
+		assertEquals(image, view.image());
 	}
-
-//	@Test
-//	public void sampler() {
-//		final Sampler.Descriptor descriptor = new Sampler.Descriptor.Builder().build();
-//		final Sampler sampler = view.sampler(descriptor);
-//		assertNotNull(sampler);
-//		// TODO
-//		//verify(library).vkCreateSampler(device, pCreateInfo, pAllocator, pSampler)
-//	}
 
 	@Test
 	public void destroy() {
@@ -73,9 +60,17 @@ public class ViewTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
+			// Init image
+			final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+					.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)
+					.extents(new Image.Extents(3, 4))
+					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+					.build();
+			when(image.descriptor()).thenReturn(descriptor);
+
 			// Build view
 			view = builder
-					.image(descriptor)
+					.image(image)
 					.subresource()
 						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 						.build()
@@ -84,7 +79,7 @@ public class ViewTest extends AbstractVulkanTest {
 			// Check view
 			assertNotNull(view);
 			assertNotNull(view.handle());
-			assertEquals(descriptor, view.descriptor());
+			assertEquals(image, view.image());
 
 			// Check API
 			final ArgumentCaptor<VkImageViewCreateInfo> captor = ArgumentCaptor.forClass(VkImageViewCreateInfo.class);
@@ -93,7 +88,7 @@ public class ViewTest extends AbstractVulkanTest {
 			// Check create descriptor
 			final VkImageViewCreateInfo info = captor.getValue();
 			assertNotNull(info);
-			assertEquals(descriptor.handle(), info.image);
+			assertEquals(image.handle(), info.image);
 			assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_2D, info.viewType);
 			assertEquals(0, info.flags);
 			assertEquals(VkFormat.VK_FORMAT_B8G8R8A8_UNORM, info.format);
@@ -115,7 +110,7 @@ public class ViewTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void buildRequiresDescriptor() {
+		void buildRequiresImage() {
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 	}

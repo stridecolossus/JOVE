@@ -38,15 +38,22 @@ public class SwapChainTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
+		// Specify image swapchain descriptor
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-				.handle(new Handle(new Pointer(1)))
 				.extents(new Image.Extents(3, 4))
 				.format(VkFormat.VK_FORMAT_R8G8B8A8_UNORM)
 				.build();
 
-		view = mock(View.class);
-		when(view.descriptor()).thenReturn(descriptor);
+		// Create swapchain image
+		final Image image = mock(Image.class);
+		when(image.handle()).thenReturn(new Handle(new Pointer(1)));
+		when(image.descriptor()).thenReturn(descriptor);
 
+		// Create view
+		view = mock(View.class);
+		when(view.image()).thenReturn(image);
+
+		// Create swapchain
 		chain = new SwapChain(new Pointer(2), dev, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, List.of(view));
 	}
 
@@ -181,7 +188,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 			final View view = chain.views().get(0);
 			assertNotNull(view);
 			assertNotNull(view.handle());
-			assertNotNull(view.descriptor());
+			assertNotNull(view.image());
 		}
 
 		@Test

@@ -57,6 +57,10 @@ public final class Handle {
 	 * @return Pointer-array
 	 */
 	public static PointerArray toPointerArray(Collection<Handle> handles) {
+		if(handles.isEmpty()) {
+			return null;
+		}
+
 		final var array = handles.stream().map(handle -> handle.handle).toArray(Pointer[]::new);
 		return new PointerArray(array);
 	}

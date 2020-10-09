@@ -14,28 +14,28 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * An <i>image view</i> TODO
+ * An <i>image view</i> is a reference to an {@link Image}.
  * @author Sarge
  */
 public class View extends AbstractVulkanObject {
-	private final Image.Descriptor descriptor;
+	private final Image image;
 
 	/**
 	 * Constructor.
 	 * @param handle 	Image view handle
-	 * @param image		Image descriptor
+	 * @param image		Image
 	 * @param dev		Logical device
 	 */
-	View(Pointer handle, Image.Descriptor descriptor, LogicalDevice dev) {
+	View(Pointer handle, Image image, LogicalDevice dev) {
 		super(handle, dev, dev.library()::vkDestroyImageView);
-		this.descriptor = notNull(descriptor);
+		this.image = notNull(image);
 	}
 
 	/**
-	 * @return Descriptor for the underlying image
+	 * @return Underlying image
 	 */
-	public Image.Descriptor descriptor() {
-		return descriptor;
+	public Image image() {
+		return image;
 	}
 
 	/**
@@ -55,7 +55,7 @@ public class View extends AbstractVulkanObject {
 		}
 
 		private final LogicalDevice dev;
-		private Image.Descriptor descriptor;
+		private Image image;
 		private VkImageViewType type;
 		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
 		private final ImageSubResourceBuilder<Builder> subresource = new ImageSubResourceBuilder<>(this);
@@ -72,8 +72,8 @@ public class View extends AbstractVulkanObject {
 		 * Sets the image descriptor for this view.
 		 * @param descriptor Image descriptor
 		 */
-		public Builder image(Image.Descriptor descriptor) {
-			this.descriptor = notNull(descriptor);
+		public Builder image(Image image) {
+			this.image = notNull(image);
 			return this;
 		}
 
@@ -109,11 +109,11 @@ public class View extends AbstractVulkanObject {
 		 */
 		public View build() {
 			// Validate
-			if(descriptor == null) throw new IllegalArgumentException("Image descriptor not specified");
+			if(image == null) throw new IllegalArgumentException("Image descriptor not specified");
 
 			// Init view type if not explicitly specified
 			if(type == null) {
-				type = switch(descriptor.type()) {
+				type = switch(image.descriptor().type()) {
 					case VK_IMAGE_TYPE_1D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_1D;
 					case VK_IMAGE_TYPE_2D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D;
 					case VK_IMAGE_TYPE_3D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_3D;
@@ -123,8 +123,8 @@ public class View extends AbstractVulkanObject {
 			// Build view descriptor
 			final VkImageViewCreateInfo info = new VkImageViewCreateInfo();
 			info.viewType = type;
-			info.format = descriptor.format();
-			info.image = descriptor.handle();
+			info.format = image.descriptor().format();
+			info.image = image.handle();
 			info.components = mapping;
 			info.subresourceRange = subresource.range();
 
@@ -134,7 +134,7 @@ public class View extends AbstractVulkanObject {
 			check(lib.vkCreateImageView(dev.handle(), info, null, view));
 
 			// Create image view
-			return new View(view.getValue(), descriptor, dev);
+			return new View(view.getValue(), image, dev);
 		}
 	}
 }

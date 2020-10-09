@@ -7,10 +7,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject.Destructor;
+import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.Pointer;
 
@@ -57,5 +60,17 @@ public class AbstractVulkanObjectTest {
 	void destroyAlreadyDestroyed() {
 		obj.destroy();
 		assertThrows(IllegalStateException.class, () -> obj.destroy());
+	}
+
+	@Test
+	void toPointerArray() {
+		final PointerArray array = AbstractVulkanObject.toPointerArray(List.of(obj, obj));
+		assertNotNull(array);
+		assertEquals(2 * 8, array.size());
+	}
+
+	@Test
+	void toPointerArrayEmpty() {
+		assertEquals(null, AbstractVulkanObject.toPointerArray(List.of()));
 	}
 }

@@ -20,6 +20,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.core.Image.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -27,7 +28,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class ImageTest extends AbstractVulkanTest {
-	private Image image;
+	private DefaultImage image;
 	private Handle handle;
 	private Descriptor descriptor;
 	private Pointer mem;
@@ -35,17 +36,16 @@ public class ImageTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create descriptor
-		handle = new Handle(new Pointer(1));
 		descriptor = new Image.Descriptor.Builder()
-				.handle(handle)
 				.format(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT)
 				.extents(new Image.Extents(3, 4))
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.build();
 
 		// Create image
+		handle = new Handle(new Pointer(1));
 		mem = new Pointer(2);
-		image = new Image(descriptor, mem, dev);
+		image = new DefaultImage(handle, descriptor, mem, dev);
 	}
 
 	@Test
@@ -55,19 +55,34 @@ public class ImageTest extends AbstractVulkanTest {
 		assertEquals(descriptor, image.descriptor());
 	}
 
-	@Test
-	void descriptor() {
-		assertEquals(handle, descriptor.handle());
-		assertEquals(VkImageType.VK_IMAGE_TYPE_2D, descriptor.type());
-		assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, descriptor.format());
-		assertEquals(new Extents(3, 4), descriptor.extents());
-		assertEquals(Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT), descriptor.aspects());
+	@Nested
+	class DescriptorTests {
+		@Test
+		void constructor() {
+			assertEquals(VkImageType.VK_IMAGE_TYPE_2D, descriptor.type());
+			assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, descriptor.format());
+			assertEquals(new Extents(3, 4), descriptor.extents());
+			assertEquals(Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT), descriptor.aspects());
+		}
+
+		@Test
+		void constructorRequiresFormat() {
+			final var builder = new Image.Descriptor.Builder().extents(new Extents(3, 4));
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void constructorRequiresExtents() {
+			final var builder = new Image.Descriptor.Builder().format(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT);
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
 	}
 
 	@Test
 	void destroy() {
 		image.destroy();
 		verify(lib).vkDestroyImage(dev.handle(), handle, null);
+		verify(lib).vkFreeMemory(dev.handle(), mem, null);
 	}
 
 	@Nested
@@ -119,7 +134,7 @@ public class ImageTest extends AbstractVulkanTest {
 			when(dev.allocate(isA(VkMemoryRequirements.class), eq(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)))).thenReturn(mem);
 
 			// Build image
-			image = new Image.Builder(dev)
+			final Image image = new Image.Builder(dev)
 				.type(VkImageType.VK_IMAGE_TYPE_3D)
 				.format(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT)
 				.extents(new Image.Extents(1, 2, 3))
@@ -138,12 +153,11 @@ public class ImageTest extends AbstractVulkanTest {
 
 			// Check image
 			assertNotNull(image);
-			assertNotNull(descriptor.handle());
+			assertNotNull(image.handle());
 
 			// Check descriptor
 			descriptor = image.descriptor();
 			assertNotNull(descriptor);
-			assertNotNull(descriptor.handle());
 			assertEquals(VkImageType.VK_IMAGE_TYPE_3D, descriptor.type());
 			assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, descriptor.format());
 			assertEquals(new Extents(1, 2, 3), descriptor.extents());
@@ -171,7 +185,7 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.sharingMode);
 
 			// Check memory allocation
-			verify(lib).vkGetImageMemoryRequirements(eq(dev.handle()), eq(descriptor.handle()), isA(VkMemoryRequirements.class));
+			verify(lib).vkGetImageMemoryRequirements(eq(dev.handle()), eq(image.handle()), isA(VkMemoryRequirements.class));
 			verify(lib).vkBindImageMemory(dev.handle(), image.handle(), mem, 0);
 		}
 

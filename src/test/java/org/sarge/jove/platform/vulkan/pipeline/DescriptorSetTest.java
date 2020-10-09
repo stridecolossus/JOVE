@@ -1,17 +1,17 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -55,9 +55,9 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			assertNotNull(bind);
 
 			// Check API
-			final Handle handle = new Handle(new Pointer(42));
+			final Handle handle = new Handle(new Pointer(3));
 			bind.execute(lib, handle);
-			verify(lib).vkCmdBindDescriptorSets(handle, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.handle(), 0, 1, new Pointer[]{new Pointer(42)}, 0, null);
+			verify(lib).vkCmdBindDescriptorSets(handle, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.handle(), 0, 1, new Pointer[]{new Pointer(2)}, 0, null);
 		}
 
 		@Test
@@ -223,6 +223,14 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void allocate() {
+			//factory.pointers = new Pointer[]{new Pointer(3), new Pointer(4)};
+			//final ReferenceFactory ref = mock(ReferenceFactory.class);
+			//when(lib.factory()).thenReturn(ref);
+
+			//final Pointer[] ptrs = {new Pointer(3), new Pointer(4)};
+			//when(ref.pointers(2)).thenReturn(ptrs);
+			final var array = factory.array(2);
+
 			// Allocate some sets
 			final var sets = pool.allocate(List.of(layout, layout));
 			assertNotNull(sets);
@@ -233,11 +241,15 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			assertNotNull(sets.get(1));
 			assertEquals(3, pool.maximum());
 			assertEquals(1, pool.available());
-			assertArrayEquals(sets.toArray(), pool.sets().toArray());
+
+//			System.out.println(sets);
+//			System.out.println(Arrays.toString(pool.sets().toArray()));
+
+			assertEquals(new HashSet<>(sets), pool.sets().collect(toSet()));
 
 			// Check API
 			final ArgumentCaptor<VkDescriptorSetAllocateInfo> captor = ArgumentCaptor.forClass(VkDescriptorSetAllocateInfo.class);
-			verify(lib).vkAllocateDescriptorSets(eq(dev.handle()), captor.capture(), isA(Pointer[].class));
+			verify(lib).vkAllocateDescriptorSets(eq(dev.handle()), captor.capture(), eq(array)); //isA(Pointer[].class));
 
 			// Check descriptor
 			final VkDescriptorSetAllocateInfo info = captor.getValue();
@@ -249,8 +261,13 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void allocateExceedsPoolSize() {
+			// Allocate available descriptors
 			final var layouts = Collections.nCopies(3, layout);
+			factory.array(3);
 			pool.allocate(layouts);
+
+			// Attempt to allocate another
+			factory.array(1);
 			assertThrows(IllegalArgumentException.class, () -> pool.allocate(List.of(layout)));
 		}
 

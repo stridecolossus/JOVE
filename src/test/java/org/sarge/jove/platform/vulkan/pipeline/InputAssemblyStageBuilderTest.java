@@ -17,7 +17,7 @@ public class InputAssemblyStageBuilderTest {
 	}
 
 	@Test
-	void create() {
+	void build() {
 		// Build descriptor
 		final var info = builder
 				.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
@@ -31,9 +31,9 @@ public class InputAssemblyStageBuilderTest {
 	}
 
 	@Test
-	void createDefault() {
+	void buildDefault() {
 		final var info = builder.result();
-		assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, info.topology);
+		assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, info.topology);
 		assertEquals(VulkanBoolean.FALSE, info.primitiveRestartEnable);
 	}
 }

@@ -209,11 +209,6 @@ public synchronized void free() {
 }
 ```
 
-# Update
-
-```java
-```
-
 # Integration
 
 ```java
@@ -233,4 +228,73 @@ final DescriptorSet.Pool pool = new DescriptorSet.Pool.Builder(dev)
 
 // Create sets
 final var sets = pool.allocate(layout, 3);
+
+// Create sampler
+final Sampler sampler = new Sampler.Builder(dev).build();
+
+for(DescriptorSet set : descriptors) {
+	set.sampler(0, sampler, texture);
+}
+```
+
+# Integration - pipeline
+
+```java
+final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
+		.add(setLayout)
+		.build();
+
+final Pipeline pipeline = new Pipeline.Builder(dev)
+		.layout(pipelineLayout)
+		.pass(pass)
+		.input()
+			.binding(layout)
+			.build()
+		...
+		.build();
+```
+
+# Integration - draw
+
+```java
+final Command draw = (api, handle) -> api.vkCmdDraw(handle, 4, 1, 0, 0);		// TODO - builder
+```
+
+# Integration - rendering
+
+```java
+.begin()
+	.add(pass.begin(buffers.get(n), rect, grey))
+	.add(pipeline.bind())
+	.add(dest.bind())
+	.add(descriptors.get(n).bind(pipelineLayout))
+	.add(draw)
+	.add(RenderPass.END_COMMAND)
+.end();
+```
+
+# Integration - coloured quad
+
+```java
+final Vertex[] vertices = {
+		new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
+		new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
+		new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
+		new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).colour(new Colour(1, 1, 1, 1)).build(),
+};
+```
+
+# Integration - texture coordinates
+
+```
+new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_LEFT).build(),
+new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
+new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
+new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
+```
+
+# Integration - vertex layout
+
+```
+final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE));
 ```

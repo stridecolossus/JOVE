@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
@@ -51,7 +52,7 @@ public class SwapChain extends AbstractVulkanObject {
 	 */
 	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, List<View> views) {
 		super(handle, dev, dev.library()::vkDestroySwapchainKHR);
-		final Image.Extents dim = views.get(0).descriptor().extents();
+		final Image.Extents dim = views.get(0).image().descriptor().extents();
 		this.format = notNull(format);
 		this.extents = new Dimensions(dim.width(), dim.height());
 		this.views = List.copyOf(views);
@@ -338,12 +339,46 @@ public class SwapChain extends AbstractVulkanObject {
 		}
 
 		/**
+		 * Image implementation for a swapchain image.
+		 */
+		private static class SwapChainImage implements Image {
+			private final Handle handle;
+			private final Image.Descriptor descriptor;
+
+			/**
+			 * Constructor.
+			 * @param handle			Swapchain image
+			 * @param descriptor		Descriptor
+			 */
+			private SwapChainImage(Handle handle, Descriptor descriptor) {
+				this.handle = notNull(handle);
+				this.descriptor = notNull(descriptor);
+			}
+
+			@Override
+			public Handle handle() {
+				return handle;
+			}
+
+			@Override
+			public Image.Descriptor descriptor() {
+				return descriptor;
+			}
+
+			@Override
+			public String toString() {
+				return ToStringBuilder.reflectionToString(this);
+			}
+		}
+
+		/**
 		 * Creates an image-view from the given swapchain image.
 		 * @return New swapchain image-view
 		 */
 		private View view(Handle handle, Image.Extents extents) {
-			final Image.Descriptor descriptor = new Image.Descriptor(handle, VkImageType.VK_IMAGE_TYPE_2D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
-			return new View.Builder(surface.device()).image(descriptor).build();
+			final Image.Descriptor descriptor = new Image.Descriptor(VkImageType.VK_IMAGE_TYPE_2D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
+			final Image image = new SwapChainImage(handle, descriptor);
+			return new View.Builder(surface.device()).image(image).build();
 		}
 	}
 }

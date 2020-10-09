@@ -18,14 +18,24 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * An <i>image</i> represents
+ * An <i>image</i> is a texture or data image stored on the hardware.
  * @author Sarge
  */
-public class Image extends AbstractVulkanObject {
+public interface Image {
+	/**
+	 * @return Image handle
+	 */
+	Handle handle();
+
+	/**
+	 * @return Descriptor for this image
+	 */
+	Descriptor descriptor();
+
 	/**
 	 * Image extents.
 	 */
-	public record Extents(int width, int height, int depth) {
+	record Extents(int width, int height, int depth) {
 		/**
 		 * Creates a 2D image extents from the given dimensions.
 		 * @param dim Image dimensions
@@ -71,12 +81,11 @@ public class Image extends AbstractVulkanObject {
 	/**
 	 * Descriptor for an image.
 	 */
-	public static record Descriptor(Handle handle, VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) {
+	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) {
 		/**
 		 * Constructor.
 		 */
 		public Descriptor {
-			Check.notNull(handle);
 			Check.notNull(type);
 			Check.notNull(format);
 			Check.notNull(extents);
@@ -87,20 +96,10 @@ public class Image extends AbstractVulkanObject {
 		 * Builder for an image descriptor.
 		 */
 		public static class Builder {
-			private Handle handle;
 			private VkImageType type = VkImageType.VK_IMAGE_TYPE_2D;
 			private VkFormat format;
 			private Extents extents;
 			private final Set<VkImageAspectFlag> aspects = new HashSet<>();
-
-			/**
-			 * Sets the image handle.
-			 * @param handle Image handle
-			 */
-			public Builder handle(Handle handle) {
-				this.handle = notNull(handle);
-				return this;
-			}
 
 			/**
 			 * Sets the image type.
@@ -142,50 +141,53 @@ public class Image extends AbstractVulkanObject {
 			/**
 			 * Constructs this descriptor.
 			 * @return New image descriptor
-			 * @throws IllegalArgumentException if the descriptor is incomplete
+			 * @throws IllegalArgumentException if the format or extents are not specified
 			 */
 			public Descriptor build() {
-				Check.notNull(handle);
 				Check.notNull(format);
 				Check.notNull(extents);
-				return new Descriptor(handle, type, format, extents, aspects);
+				return new Descriptor(type, format, extents, aspects);
 			}
 		}
 	}
 
-	private final Descriptor descriptor;
-	private final Pointer mem;
-
 	/**
-	 * Constructor.
-	 * @param descriptor	Image descriptor
-	 * @param mem			Internal memory
-	 * @param dev			Logical device
+	 * Default implementation.
 	 */
-	Image(Descriptor descriptor, Pointer mem, LogicalDevice dev) {
-		super(descriptor.handle, dev, dev.library()::vkDestroyImage);
-		this.descriptor = notNull(descriptor);
-		this.mem = notNull(mem);
-	}
+	class DefaultImage extends AbstractVulkanObject implements Image {
+		private final Descriptor descriptor;
+		private final Pointer mem;
 
-	/**
-	 * @return Image descriptor
-	 */
-	public Descriptor descriptor() {
-		return descriptor;
-	}
+		/**
+		 * Constructor.
+		 * @param handle		Handle
+		 * @param descriptor	Image descriptor
+		 * @param mem			Internal memory
+		 * @param dev			Logical device
+		 */
+		protected DefaultImage(Handle handle, Descriptor descriptor, Pointer mem, LogicalDevice dev) {
+			super(handle, dev, dev.library()::vkDestroyImage);
+			this.descriptor = notNull(descriptor);
+			this.mem = notNull(mem);
+		}
 
-	@Override
-	public synchronized void destroy() {
-		final LogicalDevice dev = this.device();
-		dev.library().vkFreeMemory(dev.handle(), mem, null);
-		super.destroy();
+		@Override
+		public Descriptor descriptor() {
+			return descriptor;
+		}
+
+		@Override
+		public synchronized void destroy() {
+			final LogicalDevice dev = this.device();
+			dev.library().vkFreeMemory(dev.handle(), mem, null);
+			super.destroy();
+		}
 	}
 
 	/**
 	 * Builder for an image.
 	 */
-	public static class Builder {
+	class Builder {
 		private final LogicalDevice dev;
 		private final VkImageCreateInfo info = new VkImageCreateInfo();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
@@ -335,6 +337,7 @@ public class Image extends AbstractVulkanObject {
 			// Validate image
 			if(info.format == null) throw new IllegalArgumentException("Image format not specified");
 			if(extents == null) throw new IllegalArgumentException("Image extents not specified");
+			// TODO - aspects not empty?
 
 			// Complete create descriptor
 			info.extent = this.extents.create();
@@ -347,7 +350,7 @@ public class Image extends AbstractVulkanObject {
 
 			// Create image descriptor
 			final Handle handle = new Handle(ref.getValue());
-			final Descriptor descriptor = new Descriptor(handle, info.imageType, info.format, extents, aspects);
+			final Descriptor descriptor = new Descriptor(info.imageType, info.format, extents, aspects);
 
 			// Retrieve image memory requirements
 			final var reqs = new VkMemoryRequirements();
@@ -358,7 +361,7 @@ public class Image extends AbstractVulkanObject {
 			check(lib.vkBindImageMemory(dev.handle(), handle, mem, 0));
 
 			// Create image
-			return new Image(descriptor, mem, dev);
+			return new DefaultImage(handle, descriptor, mem, dev);
 		}
 	}
 }

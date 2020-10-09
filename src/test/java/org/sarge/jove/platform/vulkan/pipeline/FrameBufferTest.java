@@ -37,12 +37,17 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		when(view.device()).thenReturn(dev);
 
 		// Init image descriptor
-		final Image.Descriptor desc = new Image.Descriptor.Builder()
+		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.extents(new Image.Extents(3, 4))
 				.format(VkFormat.VK_FORMAT_A1R5G5B5_UNORM_PACK16)
-				.handle(new Handle(new Pointer(2)))
 				.build();
-		when(view.descriptor()).thenReturn(desc);
+
+		// Create image
+		final Image image = mock(Image.class);
+		when(image.descriptor()).thenReturn(descriptor);
+
+		// Create swapchain image
+		when(view.image()).thenReturn(image);
 
 		// Create buffer
 		buffer = FrameBuffer.create(view, pass);
