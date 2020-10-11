@@ -298,3 +298,36 @@ new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BO
 ```
 final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE));
 ```
+
+# Vertex shader
+
+```C
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec2 inTexCoord;
+
+layout(location = 0) out vec2 outTexCoord;
+
+void main() {
+    gl_Position = vec4(inPosition, 1.0);
+    outTexCoord = inTexCoord;
+}
+```
+
+# Fragement Shader
+
+```C
+#version 450 core
+
+layout(binding = 0) uniform sampler2D texSampler;
+
+layout(location = 0) in vec2 texCoord;
+
+layout(location = 0) out vec4 outColor;
+
+void main(void) {
+    outColor = texture(texSampler, texCoord);
+}
+```
