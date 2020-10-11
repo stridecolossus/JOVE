@@ -119,6 +119,7 @@ public class RenderPass extends AbstractVulkanObject {
 //			.destination(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 //			.build()
 
+			/*
 			VkSubpassDependency dep = new VkSubpassDependency();
 
 			dep.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -128,7 +129,7 @@ public class RenderPass extends AbstractVulkanObject {
 			dep.dstSubpass = 0;
 			dep.dstStageMask = VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value();
 			dep.dstAccessMask = VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value();
-
+*/
 
 			// Init render pass descriptor
 			final VkRenderPassCreateInfo info = new VkRenderPassCreateInfo();
