@@ -316,7 +316,7 @@ void main() {
 }
 ```
 
-# Fragement Shader
+# Fragment Shader
 
 ```C
 #version 450 core
@@ -329,5 +329,53 @@ layout(location = 0) out vec4 outColor;
 
 void main(void) {
     outColor = texture(texSampler, texCoord);
+}
+```
+
+# Texture Coordinates
+
+```java
+public interface TextureCoordinate extends Bufferable {
+	class Coordinate1D implements TextureCoordinate {
+		public final float u;
+
+		public Coordinate1D(float u) {
+			this.u = u;
+		}
+
+		@Override
+		public final void buffer(FloatBuffer buffer) {
+			buffer.put(u);
+		}
+	}
+
+	class Coordinate2D extends Coordinate1D {
+		/**
+		 * Size of 2D coordinates.
+		 */
+		public static final int SIZE = 2;
+
+		/**
+		 * Quad coordinates.
+		 */
+		public static final Coordinate2D
+			TOP_LEFT		= new Coordinate2D(0, 0),
+			BOTTOM_LEFT 	= new Coordinate2D(0, 1),
+			TOP_RIGHT 		= new Coordinate2D(1, 0),
+			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
+
+		public final float v;
+
+		@Override
+		public final void buffer(FloatBuffer buffer) {
+			buffer.put(u).put(v);
+		}
+	}
+
+	class Coordinate3D extends Coordinate2D {
+		public final float w;
+		
+		...
+	}
 }
 ```
