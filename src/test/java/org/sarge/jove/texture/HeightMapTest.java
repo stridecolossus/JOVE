@@ -62,7 +62,7 @@ public class HeightMapTest {
 		@Test
 		public void image() {
 			final Image image = new Image(new Image.Format(1, Image.Type.BYTE), new Dimensions(3, 3), ByteBuffer.allocate(3 * 3));
-			final HeightMap map = HeightMap.of(image);
+			final HeightMap map = HeightMap.format(image);
 			assertNotNull(map);
 			assertEquals(3, map.size());
 		}
@@ -70,13 +70,13 @@ public class HeightMapTest {
 		@Test
 		public void imageNotSquare() {
 			final Image image = new Image(new Image.Format(1, Image.Type.BYTE), new Dimensions(3, 4), ByteBuffer.allocate(3 * 4));
-			assertThrows(IllegalArgumentException.class, () -> HeightMap.of(image));
+			assertThrows(IllegalArgumentException.class, () -> HeightMap.format(image));
 		}
 
 		@Test
 		public void imageInvalidFormat() {
 			final Image image = new Image(new Image.Format(2, Image.Type.BYTE), new Dimensions(3, 4), ByteBuffer.allocate(3 * 4 * 2));
-			assertThrows(IllegalArgumentException.class, () -> HeightMap.of(image));
+			assertThrows(IllegalArgumentException.class, () -> HeightMap.format(image));
 		}
 	}
 }

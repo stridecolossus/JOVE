@@ -4,6 +4,7 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.util.StringJoiner;
 
+import org.sarge.jove.common.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
@@ -50,13 +51,27 @@ public class FormatBuilder {
 		FLOAT("FLOAT"),
 		NORMALIZED("NORM"),
 		SCALED("SCALED"),
-		SRGB("RGB"); // TODO
+		RGB("RGB");
 
 		private final String token;
 
 		private Type(String token) {
 			this.token = token;
 		}
+	}
+
+	/**
+	 * Helper - Determines the format of the given image.
+	 * @param image Image
+	 * @return Image format
+	 */
+	public static VkFormat format(ImageData image) {
+		return new FormatBuilder()
+				.components(image.components().size())
+				.bytes(1)
+				.signed(false)
+				.type(Type.NORMALIZED)
+				.build();
 	}
 
 	private String components = RGBA;

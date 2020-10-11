@@ -3,26 +3,22 @@ package org.sarge.jove.common;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.util.Check.notNull;
 
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.DataSource;
 
 /**
- * Wrapper for RGBA image data.
+ * Wrapper for general image data.
  * @author Sarge
  */
 public interface ImageData {
@@ -77,7 +73,11 @@ public interface ImageData {
 
 		@Override
 		public ByteBuffer buffer() {
-			return data.flip().asReadOnlyBuffer();
+			if(!data.hasRemaining()) {
+				data.flip();
+			}
+
+			return data.asReadOnlyBuffer();
 		}
 
 		@Override
@@ -90,164 +90,115 @@ public interface ImageData {
 	}
 
 	/**
-	 * Image data transform.
+	 * Loader for an image.
 	 */
-	public interface Transform {
-		/**
-		 * Applies this transform to the given image data.
-		 * @param bytes		Image data
-		 * @param step		Pixel step size
-		 */
-		void transform(byte[] bytes, int step);
-	}
-
-	/**
-	 * An <i>image swizzle</i> is used to swap components of an image byte array.
-	 * <p>
-	 * For example, to transform a BGR image to RGB:
-	 * <pre>
-	 *  byte[] bytes = ...
-	 *  Swizzle swizzle = new Swizzle(0, 2);		// Swap the R and G components
-	 *  swizzle.transform(bytes, 3);				// Apply to 3-component sized image
-	 * </pre>
-	 */
-	public record Swizzle(int src, int dest) implements Transform {
-		@Override
-		public void transform(byte[] bytes, int step) {
-			for(int n = 0; n < bytes.length; n += step) {
-				ArrayUtils.swap(bytes, n + src, n + dest);
-			}
-		}
-	}
-
-	/**
-	 * Image loader implemented using {@link ImageIO} and {@link BufferedImage}.
-	 */
-	public static class Loader {
-		/**
-		 * Converter entry.
-		 */
-		private static record Entry(Integer alpha, int[] components, Transform[] transforms) {
-			// Record
-		}
-
-		private final DataSource src;
-		private final Map<Integer, Entry> converters = new HashMap<>();
+	class Loader implements org.sarge.jove.util.Loader<InputStream, ImageData> {
+		private boolean add = true;
 
 		/**
-		 * Constructor.
-		 * @param src Data source
+		 * Sets whether to enforce an alpha channel for RGB images.
+		 * @param add Whether to add an alpha channel (default is {@code true})
 		 */
-		public Loader(DataSource src) {
-			this.src = notNull(src);
-			init();
-		}
-
-		/**
-		 * Registers built-in image converters.
-		 */
-		private void init() {
-			add(BufferedImage.TYPE_BYTE_INDEXED, 	1, null);
-			add(BufferedImage.TYPE_3BYTE_BGR, 		4, BufferedImage.TYPE_4BYTE_ABGR, new Swizzle(0, 2));
-			add(BufferedImage.TYPE_4BYTE_ABGR, 		4, null, new Swizzle(0, 3), new Swizzle(1, 2));
-		}
-
-		/**
-		 * Registers an image converter.
-		 * @param type				Buffered image type
-		 * @param components		Output component specification
-		 * @param alpha				Buffered image type to attach alpha channel or {@code null} if not required
-		 * @param transforms		Additional image data transforms
-		 */
-		public void add(int type, int components, Integer alpha, Transform... transforms) {
-			Check.oneOrMore(components);
-			Check.notNull(transforms);
-			converters.put(type, new Entry(alpha, new int[components], transforms));
+		public void setEnforceAlpha(boolean add) {
+			this.add = add;
 		}
 
 		/**
 		 * Loads an image.
 		 * @param name Image name
 		 * @return Image
-		 * @throws IOException if the image cannot be loaded or the format is not supported by this loader
+		 * @throws RuntimeException if the image cannot be loaded or the format is not supported
 		 */
-		public ImageData load(String name) throws IOException {
-			// Load raw image
+		@Override
+		public ImageData load(InputStream in) {
+			// Load image
 			final BufferedImage image;
-			try(final InputStream in = src.apply(name)) {
-				image = ImageIO.read(in);
-			}
-
-			// Lookup image converter
-			final var entry = converters.get(image.getType());
-			if(entry == null) throw new IOException("Unsupported image type: " + image);
-
-			// Add alpha channel as required
-//			final BufferedImage result = addAlpha(image, entry.alpha);
-
-//			// Apply transforms
-//			// TODO - handle other buffer types (int, etc)?
-//			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
-			final DataBufferByte buffer = (DataBufferByte) image.getRaster().getDataBuffer();
-			final byte[] bytes = buffer.getData();
-//			for(Transform t : entry.transforms) {
-//				t.transform(bytes, entry.components.length);
-//			}
-//
-//			// Convert to buffer
-//			final ByteBuffer bb = ByteBuffer.wrap(bytes);
-
-
-			final int len = image.getWidth() * image.getHeight() * 4;
-			final ByteBuffer bb = ByteBuffer.allocate(len);
-			for(int n = 0; n < bytes.length; n += 3) {
-				bb.put(bytes[n]);
-				bb.put(bytes[n+1]);
-				bb.put(bytes[n+2]);
-				bb.put(Byte.MAX_VALUE);
-			}
-
-
-			// Create image wrapper
-			final Dimensions dim = new Dimensions(image.getWidth(), image.getHeight());
-			return new DefaultImageData(dim, entry.components, bb);
-		}
-
-		/**
-		 * Adds an alpha channel to a buffered image.
-		 * @param image		Original image
-		 * @param type		Buffered image type with alpha channel or {@code null} if not required
-		 * @return Image with alpha channel
-		 */
-		private static BufferedImage addAlpha(BufferedImage image, Integer type) {
-			// Ignore if already has alpha
-			if(type == null) {
-				return image;
-			}
-
-			// Otherwise add alpha channel
-			final BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), type); // BufferedImage.TYPE_INT_ARGB);
-//			final Graphics g = result.getGraphics();
-//			g.drawImage(image, 0, 0, null);
-//			g.dispose();
-
-
 			try {
-				System.out.println("writers");
-				ImageIO.getImageWritersByFormatName("jpg").forEachRemaining(System.out::println);
-				boolean r = ImageIO.write(result, "jpg", new File("output.jpg"));
-				System.out.println("result="+r);
+				image = ImageIO.read(in);
 			}
 			catch(IOException e) {
 				throw new RuntimeException(e);
 			}
+			if(image == null) {
+				throw new RuntimeException("Invalid image");
+			}
 
-			return result;
+			// Convert image
+			final BufferedImage result = switch(image.getType()) {
+				// Gray-scale
+				case BufferedImage.TYPE_BYTE_GRAY -> {
+					yield image;
+				}
+
+				// RGB
+				case BufferedImage.TYPE_3BYTE_BGR, BufferedImage.TYPE_BYTE_INDEXED -> {
+					if(add) {
+						yield swizzle(alpha(image));
+					}
+					else {
+						yield swizzle(image);
+					}
+				}
+
+				// RGBA
+				case BufferedImage.TYPE_4BYTE_ABGR -> swizzle(alpha(image));
+
+				// Unknown
+				default -> throw new RuntimeException("Unsupported image format: " + image);
+			};
+
+			// Create image wrapper
+			final Dimensions dim = new Dimensions(result.getWidth(), result.getHeight());
+			final int[] components = result.getColorModel().getComponentSize();
+			final DataBufferByte data = (DataBufferByte) result.getRaster().getDataBuffer();
+			return new DefaultImageData(dim, components, ByteBuffer.wrap(data.getData()));
 		}
-	}
 
-	public static void main(String[] args) throws IOException {
-		Loader loader = new Loader(DataSource.of(new File("./src/test/resources")));
-		loader.load("thiswayup.jpg");
+		/**
+		 * Converts the given image to an RGBA format.
+		 * @param image Image
+		 * @return RGBA image
+		 */
+		private static BufferedImage alpha(BufferedImage image) {
+			final BufferedImage alpha = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
+			final Graphics g = alpha.getGraphics();
+			try {
+				g.drawImage(image, 0, 0, null);
+			}
+			finally {
+				g.dispose();
+			}
+			return alpha;
+		}
+
+		/**
+		 * Converts ABGR to RGBA.
+		 * @param image Image
+		 * @return RGBA image
+		 */
+		private static BufferedImage swizzle(BufferedImage image) {
+			final DataBufferByte data = (DataBufferByte) image.getRaster().getDataBuffer();
+			final byte[] bytes = data.getData();
+			for(int n = 0; n < bytes.length; n += 4) {
+				swap(bytes, n, 0, 3);
+				swap(bytes, n, 1, 2);
+			}
+			return image;
+		}
+
+		/**
+		 * Swaps a BGRA pixel to RGBA.
+		 * @param bytes			Image data
+		 * @param index			Pixel index
+		 * @param src			Source component
+		 * @param dest			Destination component
+		 */
+		private static void swap(byte[] bytes, int index, int src, int dest) {
+			final int a = index + src;
+			final int b = index + dest;
+			final byte temp = bytes[a];
+			bytes[a] = bytes[b];
+			bytes[b] = temp;
+		}
 	}
 }

@@ -5,6 +5,8 @@ import static java.util.stream.Collectors.toList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,9 +34,8 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.platform.vulkan.util.FormatBuilder.Type;
 import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
-import org.sarge.jove.util.DataSource;
+import org.sarge.jove.util.Loader;
 
 import com.sun.jna.ptr.PointerByReference;
 
@@ -43,29 +44,17 @@ public class RotatingCubeDemo {
 
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
-		final File dir = new File("./src/test/resources"); // /thiswayup.jpg");
-		final ImageData.Loader loader = new ImageData.Loader(DataSource.of(dir));
+		final Path dir = Paths.get("./src/test/resources"); // /thiswayup.jpg");
+		final var src = Loader.DataSource.of(dir);
+		final var loader = Loader.of(src, new ImageData.Loader());
 //		final ImageData image = loader.load("heightmap.gif"); // "thiswayup.jpg");
-		final ImageData image = loader.load("thiswayup.jpg");
+		final ImageData image = loader.load("thiswayup.png");
+		final VkFormat format = FormatBuilder.format(image);
 
 		// Copy image to staging buffer
 		final ByteBuffer bb = image.buffer();
 		final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
 		staging.load(bb);
-
-		// Determine texture format for this image
-		// TODO - helper on image builder?
-		final VkFormat format2 = new FormatBuilder()
-				.components(image.components().size())
-				.bytes(1)
-				.signed(false)
-				.type(Type.NORMALIZED)
-//				.signed(true)
-//				.type(Type.SRGB)
-				.build();
-				// VkFormat.VK_FORMAT_R8G8B8A8_SRGB|UNORM
-		final VkFormat format = VkFormat.VK_FORMAT_R8G8B8A8_SRGB;
-
 
 		// Create texture
 		final Image texture = new Image.Builder(dev)
@@ -234,9 +223,11 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Load shaders
-		final Shader.Loader loader = Shader.Loader.create("./src/test/resources/demo/texture.quad", dev);
-		final Shader vert = loader.load("spv.quad.vert");
-		final Shader frag = loader.load("spv.quad.frag");
+		final Path dir = new File("./src/test/resources/demo/texture.quad").toPath(); // TODO - root + resolve
+		final var src = Loader.DataSource.of(dir);
+		final var shaderLoader = Loader.of(src, Shader.loader(dev));
+		final Shader vert = shaderLoader.load("spv.quad.vert");
+		final Shader frag = shaderLoader.load("spv.quad.frag");
 
 		//////////////////
 

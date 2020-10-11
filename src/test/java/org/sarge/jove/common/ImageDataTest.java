@@ -1,22 +1,25 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.sarge.jove.common.ImageData.DefaultImageData;
 import org.sarge.jove.common.ImageData.Loader;
-import org.sarge.jove.common.ImageData.Swizzle;
-import org.sarge.jove.util.DataSource;
 
 public class ImageDataTest {
 	private Dimensions size;
@@ -49,59 +52,44 @@ public class ImageDataTest {
 	}
 
 	@Nested
-	class ConverterTests {
-		private byte[] bytes;
-
-		@BeforeEach
-		void before() {
-			bytes = new byte[6];
-			for(int n = 0; n < bytes.length; ++n) {
-				bytes[n] = (byte) n;
-			}
-		}
-
-		@Test
-		void swizzle() {
-			final Swizzle swizzle = new Swizzle(0, 2);
-			swizzle.transform(bytes, 3);
-			assertArrayEquals(new byte[]{2, 1, 0, 5, 4, 3}, bytes);
-		}
-	}
-
-	@Nested
 	class LoaderTests {
 		private Loader loader;
 
 		@BeforeEach
 		void before() {
-			loader = new Loader(DataSource.of(new File("./src/test/resources")));
+			loader = new Loader();
 		}
 
-		@Test
-		void load() throws IOException {
+		@ParameterizedTest
+		@CsvSource({
+			"duke.jpg, 375, 375, 4",
+			"duke.png, 375, 375, 4",
+			"heightmap.jpg, 256, 256, 1",
+		})
+		void load(String filename, int w, int h, int components) throws IOException {
 			// Load image from file-system
-			final ImageData image = loader.load("statue.jpg");
+			final ImageData image;
+			final Path path = Paths.get("./src/test/resources", filename);
+			System.out.println(path);
+			try(final InputStream in = Files.newInputStream(path)) {
+				image = loader.load(in);
+			}
 
 			// Check image
 			assertNotNull(image);
-			assertEquals(new Dimensions(512, 512), image.size());
+			assertEquals(new Dimensions(w, h), image.size());
 			assertNotNull(image.components());
-			assertEquals(4, image.components().size());
+			assertEquals(components, image.components().size());
 
 			// Check buffer
 			assertNotNull(image.buffer());
 			assertTrue(image.buffer().isReadOnly());
-			assertEquals(512 * 512 * 4, image.buffer().capacity());
+			assertEquals(w * h * components, image.buffer().capacity());
 		}
 
 		@Test
 		void loadUnsupportedFormat() throws IOException {
-
+			assertThrows(RuntimeException.class, () -> loader.load(new ByteArrayInputStream(new byte[]{})));
 		}
-
-		// TODO
-		// - image with alpha
-		// - unknown image
-		// - unsupported format
 	}
 }

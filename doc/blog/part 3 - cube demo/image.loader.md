@@ -22,111 +22,118 @@ public interface ImageData {
 # Image Loader
 
 ```java
-public static class Loader {
-	public Loader(DataSource src) {
-		this.src = notNull(src);
-		init();
-	}
-	
-	...
-}
-```
-
-# Loading
-
-```java
-public ImageData load(String name) throws IOException {
-	// Load raw image
-	final BufferedImage image;
-	try(final InputStream in = src.apply(name)) {
-		image = ImageIO.read(in);
-	}
-
-	// Lookup image converter
-	final var entry = converters.get(image.getType());
-	if(entry == null) throw new IOException("Unsupported image type: " + image);
-
-	// Add alpha channel as required
-	final BufferedImage result = addAlpha(image, entry.alpha);
-
-	// Apply transforms
-	// TODO - handle other buffer types (int, etc)?
-	final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
-	final byte[] bytes = buffer.getData();
-	for(Transform t : entry.transforms) {
-		t.transform(bytes, entry.components.length);
-	}
-
-	// Convert to buffer
-	final ByteBuffer bb = ByteBuffer.wrap(bytes);
-
-	// Create image wrapper
-	final Dimensions dim = new Dimensions(image.getWidth(), image.getHeight());
-	return new DefaultImageData(dim, entry.components, bb);
-}
-```
-
-# Image Transforms
-
-```java
-public interface Transform {
-	/**
-	 * Applies this transform to the given image data.
-	 * @param bytes		Image data
-	 * @param step		Pixel step size
-	 */
-	void transform(byte[] bytes, int step);
-}
-
-/**
- * An <i>image swizzle</i> is used to swap components of an image byte array.
- * <p>
- * For example, to transform a BGR image to RGB:
- * <pre>
- *  byte[] bytes = ...
- *  Swizzle swizzle = new Swizzle(0, 2);		// Swap the R and G components
- *  swizzle.transform(bytes, 3);				// Apply to 3-component sized image
- * </pre>
- */
-public record Swizzle(int src, int dest) implements Transform {
-	@Override
-	public void transform(byte[] bytes, int step) {
-		for(int n = 0; n < bytes.length; n += step) {
-			ArrayUtils.swap(bytes, n + src, n + dest);
+class Loader {
+	public ImageData load(InputStream in) {
+		// Load image
+		final BufferedImage image;
+		try {
+			image = ImageIO.read(in);
 		}
+		catch(IOException e) {
+			throw new RuntimeException(e);
+		}
+		if(image == null) {
+			throw new RuntimeException("Invalid image");
+		}
+
+		// Convert image
+		final BufferedImage result = switch(image.getType()) {
+			// Gray-scale
+			case BufferedImage.TYPE_BYTE_GRAY -> {
+				yield image;
+			}
+
+			// RGB
+			case BufferedImage.TYPE_3BYTE_BGR, BufferedImage.TYPE_BYTE_INDEXED -> {
+				if(add) {
+					yield swizzle(alpha(image));
+				}
+				else {
+					yield swizzle(image);
+				}
+			}
+
+			// RGBA
+			case BufferedImage.TYPE_4BYTE_ABGR -> swizzle(alpha(image));
+
+			// Unknown
+			default -> throw new RuntimeException("Unsupported image format: " + image);
+		};
+
+		// Create image wrapper
+		final Dimensions dim = new Dimensions(result.getWidth(), result.getHeight());
+		final int[] components = result.getColorModel().getComponentSize();
+		final DataBufferByte data = (DataBufferByte) result.getRaster().getDataBuffer();
+		return new DefaultImageData(dim, components, ByteBuffer.wrap(data.getData()));
 	}
-}
-```
-
-# Supported Formats
-
-```java
-private static record Entry(Integer alpha, int[] components, Transform[] transforms) {
-}
-
-private final Map<Integer, Entry> converters = new HashMap<>();
-
-private void init() {
-	add(BufferedImage.TYPE_BYTE_INDEXED, 	1, null);
-	add(BufferedImage.TYPE_3BYTE_BGR, 		4, BufferedImage.TYPE_4BYTE_ABGR, new Swizzle(0, 2));
-	add(BufferedImage.TYPE_4BYTE_ABGR, 	4, null, new Swizzle(0, 3), new Swizzle(1, 2));
 }
 ```
 
 # Alpha Channel
 
 ```java
-private static BufferedImage addAlpha(BufferedImage image, Integer type) {
-	final BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), type);
-	final Graphics g = result.getGraphics();
-	g.drawImage(image, 0, 0, null);
-	g.dispose();
-	return result;
+private static BufferedImage alpha(BufferedImage image) {
+	final BufferedImage alpha = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
+	final Graphics g = alpha.getGraphics();
+	try {
+		g.drawImage(image, 0, 0, null);
+	}
+	finally {
+		g.dispose();
+	}
+	return alpha;
 }
 ```
 
-# Image Descriptor
+# Swizzle
 
 ```java
-public static record Descriptor(Handle handle, VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) { ... }
+private static BufferedImage swizzle(BufferedImage image) {
+	final DataBufferByte data = (DataBufferByte) image.getRaster().getDataBuffer();
+	final byte[] bytes = data.getData();
+	for(int n = 0; n < bytes.length; n += 4) {
+		swap(bytes, n, 0, 3);
+		swap(bytes, n, 1, 2);
+	}
+	return image;
+}
+
+private static void swap(byte[] bytes, int index, int src, int dest) {
+	final int a = index + src;
+	final int b = index + dest;
+	final byte temp = bytes[a];
+	bytes[a] = bytes[b];
+	bytes[b] = temp;
+}
+```
+
+# Test
+
+```java
+@ParameterizedTest
+@CsvSource({
+	"duke.jpg, 375, 375, 4",
+	"duke.png, 375, 375, 4",
+	"heightmap.jpg, 256, 256, 1",
+})
+void load(String filename, int w, int h, int components) throws IOException {
+	// Load image from file-system
+	final ImageData image;
+	final Path path = Paths.get("./src/test/resources", filename);
+	System.out.println(path);
+	try(final InputStream in = Files.newInputStream(path)) {
+		image = loader.load(in);
+	}
+
+	// Check image
+	assertNotNull(image);
+	assertEquals(new Dimensions(w, h), image.size());
+	assertNotNull(image.components());
+	assertEquals(components, image.components().size());
+
+	// Check buffer
+	assertNotNull(image.buffer());
+	assertTrue(image.buffer().isReadOnly());
+	assertEquals(w * h * components, image.buffer().capacity());
+}
 ```

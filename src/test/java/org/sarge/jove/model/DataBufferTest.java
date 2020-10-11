@@ -28,10 +28,10 @@ public class DataBufferTest {
 
 	@Test
 	public void layout() {
-		final DataBuffer.Layout layout = new DataBuffer.Layout(3, Rate.INSTANCE, List.of(attribute), 4);
+		final DataBuffer.Layout layout = new DataBuffer.Layout(3, Rate.INSTANCE, List.format(attribute), 4);
 		assertEquals(3, layout.binding());
 		assertEquals(Rate.INSTANCE, layout.rate());
-		assertEquals(List.of(attribute), layout.attributes());
+		assertEquals(List.format(attribute), layout.attributes());
 		assertEquals(4, layout.stride());
 	}
 

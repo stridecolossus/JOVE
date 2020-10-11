@@ -51,8 +51,8 @@ public class TextureCoordinateTest {
 
 	@Test
 	public void arrayInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.of(new float[]{}));
-		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.of(new float[]{1, 2, 3, 4}));
+		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.format(new float[]{}));
+		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.format(new float[]{1, 2, 3, 4}));
 	}
 
 	@Test

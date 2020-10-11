@@ -1,3 +1,9 @@
+# Image Descriptor
+
+```java
+public static record Descriptor(Handle handle, VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) { ... }
+```
+
 # Image Builder
 
 ```java

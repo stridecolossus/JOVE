@@ -2,33 +2,35 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.util.function.Function;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.util.Loader;
 
 public class ShaderTest extends AbstractVulkanTest {
+	private static final byte[] CODE = new byte[]{42};
+
 	private Shader shader;
 
 	@BeforeEach
 	void before() {
-		shader = Shader.create(dev, new byte[]{42});
+		shader = Shader.create(dev, CODE);
 	}
 
 	@Test
@@ -40,13 +42,13 @@ public class ShaderTest extends AbstractVulkanTest {
 	void create() {
 		// Check allocation
 		final var captor = ArgumentCaptor.forClass(VkShaderModuleCreateInfo.class);
-		verify(lib).vkCreateShaderModule(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+		verify(lib).vkCreateShaderModule(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
 
 		// Check descriptor
 		final var info = captor.getValue();
 		assertNotNull(info);
-		assertEquals(1, info.codeSize);
-		assertNotNull(info.pCode);
+		assertEquals(CODE.length, info.codeSize);
+		assertEquals(ByteBuffer.wrap(CODE), info.pCode);
 	}
 
 	@Test
@@ -58,42 +60,24 @@ public class ShaderTest extends AbstractVulkanTest {
 
 	@Nested
 	class LoaderTests {
-		private static final String FILENAME = "filename";
+		private Loader<InputStream, Shader> loader;
 
-		private Shader.Loader loader;
-		private Function<String, byte[]> mapper;
-
-		@SuppressWarnings("unchecked")
 		@BeforeEach
 		void before() {
-			mapper = mock(Function.class);
-			when(mapper.apply(FILENAME)).thenReturn(new byte[]{});
-			loader = new Shader.Loader(mapper, dev);
+			loader = Shader.loader(dev);
 		}
 
 		@Test
 		void load() {
-			shader = loader.load(FILENAME);
+			shader = loader.load(new ByteArrayInputStream(new byte[]{}));
 			assertNotNull(shader);
-			verify(mapper).apply(FILENAME);
+			verify(lib, atLeastOnce()).vkCreateShaderModule(eq(dev.handle()), isA(VkShaderModuleCreateInfo.class), isNull(), eq(factory.ptr));
 		}
 
+		@SuppressWarnings("resource")
 		@Test
-		void loadFailed() {
-			when(mapper.apply(FILENAME)).thenThrow(ServiceException.class);
-			assertThrows(ServiceException.class, () -> loader.load(FILENAME));
-		}
-
-		@Test
-		void create() {
-			loader = Shader.Loader.create("./src/test/resources", dev);
-			assertNotNull(loader);
-			assertNotNull(loader.load("triangle.vert.spv"));
-		}
-
-		@Test
-		void createInvalidDirectory() {
-			assertThrows(IllegalArgumentException.class, () -> Shader.Loader.create("cobblers", dev));
+		void loadFile() throws FileNotFoundException {
+			loader.load(new FileInputStream("./src/test/resources/thiswayup.jpg"));
 		}
 	}
 }
