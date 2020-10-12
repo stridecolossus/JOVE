@@ -429,3 +429,12 @@ void main() {
     outColor = vec4(fragColor, 1.0);
 }
 ```
+
+# Compile
+
+```
+cd JOVE/src/test/resources/demo/triangle
+glslc triangle.frag -o spv.triangle.frag
+glslc triangle.vert -o spv.triangle.vert
+```
+
