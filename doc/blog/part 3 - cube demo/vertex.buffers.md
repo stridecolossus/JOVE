@@ -112,13 +112,6 @@ public int findMemoryType(int filter, Set<VkMemoryPropertyFlag> props) {
 # Memory Allocation - Logical Device
 
 ```java
-/**
- * Allocates device memory.
- * @param reqs		Memory requirements
- * @param flags		Flags
- * @return Memory handle
- * @throws ServiceException if the memory cannot be allocated
- */
 public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
 	// Find memory type
 	final int type = parent.findMemoryType(reqs.memoryTypeBits, flags);
@@ -132,10 +125,6 @@ public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> fla
    final VulkanLibrary lib = library();
    final PointerByReference mem = lib.factory().pointer();
    check(lib.vkAllocateMemory(this.handle(), info, null, mem));
-
-   // TODO
-   // - number of allocations limited to maxMemoryAllocationCount
-   // - replace with custom allocator with offsets
 
    // Get memory handle
    return mem.getValue();
