@@ -8,11 +8,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -21,8 +21,6 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.Sampler;
-import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Pool;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -35,7 +33,9 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		layout = new Layout(new Pointer(1), dev, List.of(new VkDescriptorSetLayoutBinding()));
+		final VkDescriptorSetLayoutBinding binding = new VkDescriptorSetLayoutBinding();
+		binding.descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		layout = new Layout(new Pointer(1), dev, List.of(binding));
 		set = new DescriptorSet(new Handle(new Pointer(2)), layout);
 	}
 
@@ -59,54 +59,55 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			bind.execute(lib, handle);
 			verify(lib).vkCmdBindDescriptorSets(handle, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.handle(), 0, 1, new Pointer[]{new Pointer(2)}, 0, null);
 		}
+	}
+
+	@Nested
+	class UpdaterTests {
+		private DescriptorSet.Updater updater;
+		private Consumer<VkWriteDescriptorSet> consumer;
+		private DescriptorSet.Update update;
+
+		@BeforeEach
+		@SuppressWarnings("unchecked")
+		void before() {
+			updater = new DescriptorSet.Updater(List.of(set));
+			consumer = mock(Consumer.class);
+			update = new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, consumer);
+		}
 
 		@Test
-		void sampler() {
+		void update() {
+			// Apply update
+			updater.update(0, update).update(dev);
 
-			// TODO
-			// TODO
-			// TODO
-
-			layout = new Layout.Builder(dev)
-					.binding()
-						.binding(42)
-						.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER)
-						.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-						.build()
-					.build();
-
-			set = new DescriptorSet(new Handle(new Pointer(2)), layout);
-
-			final Sampler sampler = mock(Sampler.class);
-			when(sampler.handle()).thenReturn(new Handle(new Pointer(3)));
-
-			final View view = mock(View.class);
-			when(view.handle()).thenReturn(new Handle(new Pointer(4)));
-
-			set.sampler(42, sampler, view);
-
+			/*
 			// Check API
 			final ArgumentCaptor<VkWriteDescriptorSet[]> captor = ArgumentCaptor.forClass(VkWriteDescriptorSet[].class);
 			verify(lib).vkUpdateDescriptorSets(eq(dev.handle()), eq(1), captor.capture(), eq(0), isNull());
 			assertNotNull(captor.getValue());
 			assertEquals(1, captor.getValue().length);
 
-			// Check descriptor
-			final VkWriteDescriptorSet info = captor.getValue()[0];
-			assertNotNull(info);
-			assertEquals(42, info.dstBinding);
-			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, info.descriptorType);
-			assertEquals(1, info.descriptorCount);
-			assertEquals(0, info.dstArrayElement);
-
-			// Check sampler descriptor
-			// TODO
-			assertNotNull(info.pImageInfo);
+			// Check write descriptor
+			final VkWriteDescriptorSet write = captor.getValue()[0];
+			assertNotNull(write);
+			assertEquals(0, write.dstBinding);
+			assertEquals(set.handle(), write.dstSet);
+			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, write.descriptorType);
+			assertEquals(1, write.descriptorCount);
+			assertEquals(0, write.dstArrayElement);
+			verify(consumer).accept(write);
+			*/
 		}
 
 		@Test
-		void uniform() {
-			// TODO
+		void updateInvalidBindingIndex() {
+			assertThrows(IllegalArgumentException.class, () -> updater.update(999, update));
+		}
+
+		@Test
+		void updateInvalidDescriptorType() {
+			update = new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, consumer);
+			assertThrows(IllegalArgumentException.class, () -> updater.update(0, update));
 		}
 	}
 

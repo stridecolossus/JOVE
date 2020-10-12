@@ -62,7 +62,7 @@ public interface Work {
 
 				// Wait for work to complete
 				if(wait) {
-					buffer.pool().queue().waitIdle();
+					pool.queue().waitIdle();
 				}
 			}
 			finally {

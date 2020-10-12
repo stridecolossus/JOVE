@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
 import static org.sarge.jove.util.Check.zeroOrMore;
@@ -15,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -26,8 +28,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.Sampler;
-import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.util.Check;
 import org.sarge.jove.util.StructureHelper;
 
@@ -96,45 +96,53 @@ public class DescriptorSet {
 		return layout;
 	}
 
-	// TODO - builder/configure helper for this
-	/**
-	 * Binds a sampler to this descriptor set.
-	 * @param binding 		Binding index
-	 * @param sampler 		Sampler
-	 * @param view			Image view
-	 */
-	public void sampler(int binding, Sampler sampler, View view) {
-		// TODO
-		final VkDescriptorSetLayoutBinding entry = layout.bindings.get(binding);
-		if(entry == null) throw new IllegalArgumentException("");
-		if(entry.descriptorType != VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) throw new IllegalArgumentException("");
-
-		final VkDescriptorImageInfo image = new VkDescriptorImageInfo(); // TODO - by ref?
-		image.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		image.imageView = view.handle();
-		image.sampler = sampler.handle();
-
-		// Init update descriptor
-		final VkWriteDescriptorSet info = new VkWriteDescriptorSet();
-		info.dstSet = this.handle();
-		info.dstBinding = entry.binding;
-		info.dstArrayElement = 0; // TODO
-		info.descriptorType = entry.descriptorType;
-		info.descriptorCount = entry.descriptorCount;
-		info.pImageInfo = StructureHelper.structures(List.of(image));
-
-		// Update descriptor set
-		final LogicalDevice dev = layout.device();
-		dev.library().vkUpdateDescriptorSets(dev.handle(), 1, new VkWriteDescriptorSet[]{info}, 0, null);
-		// TODO - move this to a helper/builder for group of updates
-	}
-
-	// TODO - uniform buffers
-//	final VkDescriptorBufferInfo info = new VkDescriptorBufferInfo();
-//	info.buffer = ((PointerHandle) buffer).handle(); // TODO - nasty!
-//	info.offset = zeroOrMore(offset);
-//	info.range = oneOrMore(size);
-//	update(binding, VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, write -> write.pBufferInfo = info);
+//	// TODO - builder/configure helper for this
+//	// TODO - blog: add this and bind command
+//	/**
+//	 * Binds a sampler to this descriptor set.
+//	 * @param binding 		Binding index
+//	 * @param sampler 		Sampler
+//	 * @param view			Image view
+//	 */
+//	public void sampler(int binding, Sampler sampler, View view) {
+//		// TODO
+//		final VkDescriptorSetLayoutBinding entry = layout.bindings.get(binding);
+//		if(entry == null) throw new IllegalArgumentException("");
+//		if(entry.descriptorType != VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) throw new IllegalArgumentException("");
+//
+//		// array size = entry.descriptorCount
+//
+//		final VkDescriptorImageInfo image = new VkDescriptorImageInfo(); // TODO - by ref?
+//		image.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+//		image.imageView = view.handle();
+//		image.sampler = sampler.handle();
+//
+//		// Init update descriptor
+//		final VkWriteDescriptorSet info = new VkWriteDescriptorSet();
+//		info.dstBinding = entry.binding;
+//		info.descriptorType = entry.descriptorType;
+//
+//		info.dstSet = this.handle();
+//		info.dstArrayElement = 0; // TODO
+//
+//		info.descriptorCount = 1; // TODO - size of images array (was entry.descriptorCount)
+//		info.pImageInfo = StructureHelper.structures(List.of(image));
+//
+//		info.pBufferInfo = null;
+//		info.pTexelBufferView = null;
+//
+//		// Update descriptor set
+//		final LogicalDevice dev = layout.device();
+//		dev.library().vkUpdateDescriptorSets(dev.handle(), 1, new VkWriteDescriptorSet[]{info}, 0, null);
+//		// TODO - move this to a helper/builder for group of updates
+//	}
+//
+//	// TODO - uniform buffers
+////	final VkDescriptorBufferInfo info = new VkDescriptorBufferInfo();
+////	info.buffer = ((PointerHandle) buffer).handle(); // TODO - nasty!
+////	info.offset = zeroOrMore(offset);
+////	info.range = oneOrMore(size);
+////	update(binding, VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, write -> write.pBufferInfo = info);
 
 	/**
 	 * Helper - Creates a pipeline bind command for this descriptor set.
@@ -180,6 +188,101 @@ public class DescriptorSet {
 				.append("handle", handle)
 				.append("layout", layout)
 				.build();
+	}
+
+	/**
+	 * Wrapper for an update to a descriptor set.
+	 */
+	public final static class Update {
+		private final VkDescriptorType type;
+		private final Consumer<VkWriteDescriptorSet> consumer;
+
+		/**
+		 * Constructor.
+		 * @param type			Descriptor type
+		 * @param consumer		Consumer to populate the write descriptor
+		 */
+		Update(VkDescriptorType type, Consumer<VkWriteDescriptorSet> consumer) {
+			this.type = notNull(type);
+			this.consumer = notNull(consumer);
+		}
+
+		/**
+		 * @return Descriptor type for this update
+		 */
+		public VkDescriptorType type() {
+			return type;
+		}
+
+		/**
+		 * Applies to this update to the given write descriptor.
+		 */
+		void apply(VkWriteDescriptorSet write) {
+			consumer.accept(write);
+		}
+	}
+
+	/**
+	 * The <i>updater</i> is used to initialise a group of descriptor sets.
+	 */
+	public static class Updater {
+		private final Collection<DescriptorSet> sets;
+		private final List<VkWriteDescriptorSet> writes = new ArrayList<>();
+
+		/**
+		 * Constructor.
+		 * @param sets Descriptor sets to update
+		 */
+		public Updater(Collection<DescriptorSet> sets) {
+			this.sets = notEmpty(sets);
+		}
+
+		/**
+		 * Applies the given update.
+		 * @param binding	Binding index
+		 * @param update	Update
+		 * @throws IllegalArgumentException if the binding or update is invalid for the descriptors
+		 */
+		public Updater update(int binding, Update update) {
+			for(DescriptorSet set : sets) {
+				// Lookup layout binding
+				final VkDescriptorSetLayoutBinding entry = set.layout.bindings.get(binding);
+				if(entry == null) throw new IllegalArgumentException("Invalid binding: " + binding);
+
+				// Create update write descriptor
+				final VkWriteDescriptorSet write = new VkWriteDescriptorSet();
+				write.dstBinding = binding;
+				write.dstSet = set.handle();
+				write.descriptorType = entry.descriptorType;
+				write.descriptorCount = 1;
+				write.dstArrayElement = 0;
+
+				write.pBufferInfo = null;
+				write.pTexelBufferView = null;
+
+				// Init entry for this descriptor
+				if(update.type != entry.descriptorType) {
+					throw new IllegalArgumentException(String.format("Invalid update type for descriptor: binding=%s expected=%s actual=%s", binding, entry.descriptorType, update.type));
+				}
+				update.apply(write);
+
+				// Add update
+				writes.add(write);
+			}
+
+			return this;
+		}
+
+		/**
+		 * Applies this update.
+		 * @param dev Logical device
+		 * @throws IllegalArgumentException if no updates have been specified
+		 */
+		public void update(LogicalDevice dev) {
+			// TODO - Why can't we just pass an array here?  WHY WHY WHY?
+			if(writes.isEmpty()) throw new IllegalArgumentException("No updates specified");
+			dev.library().vkUpdateDescriptorSets(dev.handle(), writes.size(), StructureHelper.structures(writes), 0, null);
+		}
 	}
 
 	/**
@@ -442,8 +545,16 @@ public class DescriptorSet {
 			 * Starts a new layout binding.
 			 * @return New layout binding builder
 			 */
+			public LayoutBindingBuilder binding(int index) {
+				return new LayoutBindingBuilder().binding(index);
+			}
+
+			/**
+			 * Starts a new layout binding at the next available binding index.
+			 * @return New layout binding builder
+			 */
 			public LayoutBindingBuilder binding() {
-				return new LayoutBindingBuilder().binding(next());
+				return binding(next());
 			}
 
 			/**

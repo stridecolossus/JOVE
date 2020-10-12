@@ -30,8 +30,7 @@ public class VkWriteDescriptorSet extends VulkanStructure {
 	public int dstArrayElement;
 	public int descriptorCount;
 	public VkDescriptorType descriptorType;
-//	public VkDescriptorImageInfo pImageInfo;
 	public Pointer pImageInfo;
-	public VkDescriptorBufferInfo pBufferInfo;
-	public Pointer pTexelBufferView; // TODO
+	public VkDescriptorBufferInfo pBufferInfo; // TODO - correct?
+	public Pointer pTexelBufferView;
 }

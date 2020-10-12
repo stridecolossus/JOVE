@@ -32,6 +32,7 @@ import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
+import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
@@ -299,9 +300,10 @@ public class RotatingCubeDemo {
 		// Create sampler
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
-		for(DescriptorSet set : descriptors) {
-			set.sampler(0, sampler, texture);
-		}
+		// Apply sampler to the descriptor sets
+		new DescriptorSet.Updater(descriptors)
+				.update(0, sampler.update(texture))
+				.update(dev);
 
 		//////////////////
 

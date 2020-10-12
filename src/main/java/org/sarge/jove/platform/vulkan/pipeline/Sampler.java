@@ -1,19 +1,20 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.vulkan.VkBorderColor;
-import org.sarge.jove.platform.vulkan.VkCompareOp;
-import org.sarge.jove.platform.vulkan.VkFilter;
-import org.sarge.jove.platform.vulkan.VkSamplerAddressMode;
-import org.sarge.jove.platform.vulkan.VkSamplerCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSamplerMipmapMode;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -74,6 +75,23 @@ public class Sampler extends AbstractVulkanObject {
 				case BORDER -> VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 			};
 		}
+	}
+
+	/**
+	 * Creates a descriptor set update for this sampler.
+	 * @param view Texture image-view
+	 * @return New update for this sampler
+	 */
+	public DescriptorSet.Update update(View view) {
+		// Create update descriptor
+		final VkDescriptorImageInfo image = new VkDescriptorImageInfo();
+		image.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		image.imageView = view.handle();
+		image.sampler = this.handle();
+
+		// Create update wrapper
+		final Consumer<VkWriteDescriptorSet> consumer = write -> write.pImageInfo = StructureHelper.structures(List.of(image));
+		return new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, consumer);
 	}
 
 	/**
