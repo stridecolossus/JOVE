@@ -5,7 +5,6 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
@@ -90,8 +89,12 @@ public class Sampler extends AbstractVulkanObject {
 		image.sampler = this.handle();
 
 		// Create update wrapper
-		final Consumer<VkWriteDescriptorSet> consumer = write -> write.pImageInfo = StructureHelper.structures(List.of(image));
-		return new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, consumer);
+		return new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+			@Override
+			protected void apply(VkWriteDescriptorSet write) {
+				write.pImageInfo = StructureHelper.structures(List.of(image));
+			}
+		};
 	}
 
 	/**

@@ -22,7 +22,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pBufferInfo",
 	"pTexelBufferView"
 })
-public class VkWriteDescriptorSet extends VulkanStructure {
+public class VkWriteDescriptorSet extends VulkanStructure { // implements ByReference {
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	public Pointer pNext;
 	public Handle dstSet;
@@ -30,7 +30,7 @@ public class VkWriteDescriptorSet extends VulkanStructure {
 	public int dstArrayElement;
 	public int descriptorCount;
 	public VkDescriptorType descriptorType;
-	public Pointer pImageInfo;
-	public VkDescriptorBufferInfo pBufferInfo; // TODO - correct?
+	public Pointer /*VkDescriptorImageInfo*/ pImageInfo;
+	public Pointer /*VkDescriptorBufferInfo*/ pBufferInfo; // TODO - correct?
 	public Pointer pTexelBufferView;
 }

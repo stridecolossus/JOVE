@@ -16,6 +16,7 @@ import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.TypeMapper;
 
@@ -58,10 +59,6 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 //        VK_REMAINING_MIP_LEVELS          = (~0),
 //        VK_REMAINING_ARRAY_LAYERS        = (~0),
 //        VK_ATTACHMENT_UNUSED             = (~0),
-//        VK_TRUE                          = 1,
-//        VK_FALSE                         = 0,
-//        VK_QUEUE_FAMILY_IGNORED          = (~0),
-//        VK_SUBPASS_EXTERNAL              = (~0);
 //    public static final float VK_LOD_CLAMP_NONE = 1000.0f;
 //    public static final long VK_WHOLE_SIZE = (~0L);
 
@@ -117,6 +114,11 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	abstract class VulkanStructure extends Structure {
 		protected VulkanStructure() {
 			super(MAPPER);
+		}
+
+		@Override
+		public void useMemory(Pointer ptr) {
+			super.useMemory(ptr);
 		}
 	}
 

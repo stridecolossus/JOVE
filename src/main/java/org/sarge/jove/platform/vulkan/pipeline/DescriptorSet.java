@@ -16,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -96,54 +95,6 @@ public class DescriptorSet {
 		return layout;
 	}
 
-//	// TODO - builder/configure helper for this
-//	// TODO - blog: add this and bind command
-//	/**
-//	 * Binds a sampler to this descriptor set.
-//	 * @param binding 		Binding index
-//	 * @param sampler 		Sampler
-//	 * @param view			Image view
-//	 */
-//	public void sampler(int binding, Sampler sampler, View view) {
-//		// TODO
-//		final VkDescriptorSetLayoutBinding entry = layout.bindings.get(binding);
-//		if(entry == null) throw new IllegalArgumentException("");
-//		if(entry.descriptorType != VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) throw new IllegalArgumentException("");
-//
-//		// array size = entry.descriptorCount
-//
-//		final VkDescriptorImageInfo image = new VkDescriptorImageInfo(); // TODO - by ref?
-//		image.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-//		image.imageView = view.handle();
-//		image.sampler = sampler.handle();
-//
-//		// Init update descriptor
-//		final VkWriteDescriptorSet info = new VkWriteDescriptorSet();
-//		info.dstBinding = entry.binding;
-//		info.descriptorType = entry.descriptorType;
-//
-//		info.dstSet = this.handle();
-//		info.dstArrayElement = 0; // TODO
-//
-//		info.descriptorCount = 1; // TODO - size of images array (was entry.descriptorCount)
-//		info.pImageInfo = StructureHelper.structures(List.of(image));
-//
-//		info.pBufferInfo = null;
-//		info.pTexelBufferView = null;
-//
-//		// Update descriptor set
-//		final LogicalDevice dev = layout.device();
-//		dev.library().vkUpdateDescriptorSets(dev.handle(), 1, new VkWriteDescriptorSet[]{info}, 0, null);
-//		// TODO - move this to a helper/builder for group of updates
-//	}
-//
-//	// TODO - uniform buffers
-////	final VkDescriptorBufferInfo info = new VkDescriptorBufferInfo();
-////	info.buffer = ((PointerHandle) buffer).handle(); // TODO - nasty!
-////	info.offset = zeroOrMore(offset);
-////	info.range = oneOrMore(size);
-////	update(binding, VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, write -> write.pBufferInfo = info);
-
 	/**
 	 * Helper - Creates a pipeline bind command for this descriptor set.
 	 * @param layout Pipeline layout
@@ -191,97 +142,139 @@ public class DescriptorSet {
 	}
 
 	/**
-	 * Wrapper for an update to a descriptor set.
+	 * An <i>update</i> initialises a descriptor set.
 	 */
-	public final static class Update {
+	public static abstract class Update {
 		private final VkDescriptorType type;
-		private final Consumer<VkWriteDescriptorSet> consumer;
 
 		/**
 		 * Constructor.
-		 * @param type			Descriptor type
-		 * @param consumer		Consumer to populate the write descriptor
+		 * @param type Expected descriptor type
 		 */
-		Update(VkDescriptorType type, Consumer<VkWriteDescriptorSet> consumer) {
+		protected Update(VkDescriptorType type) {
 			this.type = notNull(type);
-			this.consumer = notNull(consumer);
 		}
 
 		/**
-		 * @return Descriptor type for this update
+		 * @return Expected descriptor type for this update
 		 */
 		public VkDescriptorType type() {
 			return type;
 		}
 
 		/**
-		 * Applies to this update to the given write descriptor.
+		 * Populates the given descriptor for this update.
+		 * @param write Update write descriptor
 		 */
-		void apply(VkWriteDescriptorSet write) {
-			consumer.accept(write);
-		}
-	}
-
-	/**
-	 * The <i>updater</i> is used to initialise a group of descriptor sets.
-	 */
-	public static class Updater {
-		private final Collection<DescriptorSet> sets;
-		private final List<VkWriteDescriptorSet> writes = new ArrayList<>();
+		protected abstract void apply(VkWriteDescriptorSet write);
 
 		/**
-		 * Constructor.
-		 * @param sets Descriptor sets to update
+		 * Builder for a descriptor set update.
+		 * <p>
+		 * Usage:
+		 * <pre>
+		 *  LogicalDevice dev = ...
+		 *  Update sampler = ...
+		 *  Update uniform = ...
+		 *
+		 *  new Builder()
+		 *  	// Update two resources
+		 *  	.descriptor(set)
+		 *  	.add(0, sampler)
+		 *  	.add(1, uniform)
+		 *  	// Update a group of descriptors
+		 *  	.descriptors(sets)
+		 *  	.add(2, ...)
+		 *  	// Apply updates
+		 *  	.update(dev);
+		 * </pre>
 		 */
-		public Updater(Collection<DescriptorSet> sets) {
-			this.sets = notEmpty(sets);
-		}
-
-		/**
-		 * Applies the given update.
-		 * @param binding	Binding index
-		 * @param update	Update
-		 * @throws IllegalArgumentException if the binding or update is invalid for the descriptors
-		 */
-		public Updater update(int binding, Update update) {
-			for(DescriptorSet set : sets) {
-				// Lookup layout binding
-				final VkDescriptorSetLayoutBinding entry = set.layout.bindings.get(binding);
-				if(entry == null) throw new IllegalArgumentException("Invalid binding: " + binding);
-
-				// Create update write descriptor
-				final VkWriteDescriptorSet write = new VkWriteDescriptorSet();
-				write.dstBinding = binding;
-				write.dstSet = set.handle();
-				write.descriptorType = entry.descriptorType;
-				write.descriptorCount = 1;
-				write.dstArrayElement = 0;
-
-				write.pBufferInfo = null;
-				write.pTexelBufferView = null;
-
-				// Init entry for this descriptor
-				if(update.type != entry.descriptorType) {
-					throw new IllegalArgumentException(String.format("Invalid update type for descriptor: binding=%s expected=%s actual=%s", binding, entry.descriptorType, update.type));
-				}
-				update.apply(write);
-
-				// Add update
-				writes.add(write);
+		public static class Builder {
+			/**
+			 * Transient update entry.
+			 */
+			private static record Entry(DescriptorSet set, VkDescriptorSetLayoutBinding binding, Update update) {
+				// Empty
 			}
 
-			return this;
-		}
+			private final List<Entry> updates = new ArrayList<>();
+			private Collection<DescriptorSet> sets;
 
-		/**
-		 * Applies this update.
-		 * @param dev Logical device
-		 * @throws IllegalArgumentException if no updates have been specified
-		 */
-		public void update(LogicalDevice dev) {
-			// TODO - Why can't we just pass an array here?  WHY WHY WHY?
-			if(writes.isEmpty()) throw new IllegalArgumentException("No updates specified");
-			dev.library().vkUpdateDescriptorSets(dev.handle(), writes.size(), StructureHelper.structures(writes), 0, null);
+			/**
+			 * Sets the descriptor set to be updated.
+			 * @param set Descriptor set to update
+			 */
+			public Builder descriptor(DescriptorSet set) {
+				return descriptors(List.of(set));
+			}
+
+			/**
+			 * Sets the descriptor sets to be updated.
+			 * @param set Descriptor sets to update
+			 */
+			public Builder descriptors(Collection<DescriptorSet> sets) {
+				this.sets = Set.copyOf(notEmpty(sets));
+				return this;
+			}
+
+			/**
+			 * Adds the given update for the currently specified descriptor sets.
+			 * @param binding		Binding index
+			 * @param update 		Update to apply
+			 * @throws IllegalStateException if no descriptor sets have been specified
+			 * @throws IllegalArgumentException if the binding index or type of update is invalid for any descriptor set
+			 */
+			public Builder add(int index, Update update) {
+				if(sets == null) throw new IllegalStateException("No descriptor sets specified for this update");
+
+				for(DescriptorSet set : sets) {
+					// Lookup binding descriptor for this set
+					final VkDescriptorSetLayoutBinding binding = set.layout().binding(index);
+					if(binding == null) {
+						throw new IllegalArgumentException(String.format("Invalid binding index for descriptor set: index=%d set=%s", binding, set));
+					}
+
+					// Check set matches the update type
+					if(binding.descriptorType != update.type()) {
+						throw new IllegalArgumentException(String.format("Invalid update for descriptor set: type=%s set=%s", update.type(), set));
+					}
+
+					// Add entry
+					updates.add(new Entry(set, binding, update));
+				}
+
+				return this;
+			}
+
+			/**
+			 * Applies this update.
+			 * @param dev Logical device
+			 * @throws IllegalStateException if no updates have been specified
+			 */
+			public void update(LogicalDevice dev) {
+				if(updates.isEmpty()) throw new IllegalStateException("No updates specified");
+
+				// Allocate contiguous memory block of write descriptors for the updates
+				final VkWriteDescriptorSet[] writes = (VkWriteDescriptorSet[]) new VkWriteDescriptorSet().toArray(updates.size());
+
+				// Populate write descriptors
+				for(int n = 0; n < writes.length; ++n) {
+					// Populate write descriptor for this entry
+					final Entry entry = updates.get(n);
+					final VkWriteDescriptorSet write = writes[n];
+					write.dstBinding = entry.binding.binding;
+					write.descriptorType = entry.binding.descriptorType;
+					write.dstSet = entry.set.handle();
+					write.descriptorCount = 1;
+					write.dstArrayElement = 0;
+
+					// Populate update descriptor
+					entry.update.apply(write);
+				}
+
+				// Apply updates
+				dev.library().vkUpdateDescriptorSets(dev.handle(), writes.length, writes, 0, null);
+			}
 		}
 	}
 
@@ -491,8 +484,7 @@ public class DescriptorSet {
 	}
 
 	/**
-	 * A <i>descriptor set layout</i>
-	 * TODO
+	 * A <i>descriptor set layout</i> specifies the structure of descriptors that can be bound to a pipeline.
 	 */
 	public static class Layout extends AbstractVulkanObject {
 		private final Map<Integer, VkDescriptorSetLayoutBinding> bindings;
@@ -507,6 +499,15 @@ public class DescriptorSet {
 			super(handle, dev, dev.library()::vkDestroyDescriptorSetLayout);
 			Check.notEmpty(bindings);
 			this.bindings = bindings.stream().collect(toMap(entry -> entry.binding, Function.identity()));
+		}
+
+		/**
+		 * Looks up a binding descriptor.
+		 * @param index Binding index
+		 * @return Binding
+		 */
+		protected VkDescriptorSetLayoutBinding binding(int index) {
+			return bindings.get(index);
 		}
 
 		@Override

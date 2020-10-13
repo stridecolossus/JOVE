@@ -301,9 +301,11 @@ public class RotatingCubeDemo {
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
 		// Apply sampler to the descriptor sets
-		new DescriptorSet.Updater(descriptors)
-				.update(0, sampler.update(texture))
-				.update(dev);
+		new DescriptorSet.Update.Builder()
+			.descriptors(descriptors)
+			.add(0, sampler.update(texture))
+			//.add(1, uniform)
+			.update(dev);
 
 		//////////////////
 

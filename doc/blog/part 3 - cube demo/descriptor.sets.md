@@ -209,6 +209,27 @@ public synchronized void free() {
 }
 ```
 
+# Initialise Sampler
+
+```java
+public void sampler(int binding, Sampler sampler, View view) {
+	final VkDescriptorImageInfo image = new VkDescriptorImageInfo();
+	image.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	image.imageView = view.handle();
+	image.sampler = sampler.handle();
+
+	final VkWriteDescriptorSet write = new VkWriteDescriptorSet();
+	write.dstBinding = binding;
+	write.descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	write.dstSet = this.handle();
+	write.descriptorCount = 1;
+	write.dstArrayElement = 0;	
+	write.pImageInfo = StructureHelper.structures(List.of(image));
+
+	dev.library().vkUpdateDescriptorSets(dev.handle(), 1, new VkWriteDescriptorSet[]{write}, 0, null);
+}
+```
+
 # Integration
 
 ```java

@@ -6,6 +6,7 @@ import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -45,7 +46,7 @@ interface VulkanLibraryDescriptorSet {
 	void vkDestroyDescriptorSetLayout(Handle device, Handle descriptorSetLayout, Handle pAllocator);
 
 
-	void vkUpdateDescriptorSets(Handle device, int descriptorWriteCount, /*VkWriteDescriptorSet[]*/ Pointer pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
+	void vkUpdateDescriptorSets(Handle device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
 
 	void vkCmdBindDescriptorSets(Handle commandBuffer, VkPipelineBindPoint pipelineBindPoint, Handle layout, int firstSet, int descriptorSetCount, Pointer[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
 }

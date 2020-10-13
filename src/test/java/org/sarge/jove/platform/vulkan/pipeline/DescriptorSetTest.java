@@ -8,11 +8,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -28,14 +28,22 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class DescriptorSetTest extends AbstractVulkanTest {
+	private static final int BINDING = 42;
+
 	private Layout layout;
 	private DescriptorSet set;
 
 	@BeforeEach
 	void before() {
+		// Define a descriptor set binding
 		final VkDescriptorSetLayoutBinding binding = new VkDescriptorSetLayoutBinding();
+		binding.binding = BINDING;
 		binding.descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+		// Create layout
 		layout = new Layout(new Pointer(1), dev, List.of(binding));
+
+		// Create descriptor set
 		set = new DescriptorSet(new Handle(new Pointer(2)), layout);
 	}
 
@@ -63,24 +71,21 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 	@Nested
 	class UpdaterTests {
-		private DescriptorSet.Updater updater;
-		private Consumer<VkWriteDescriptorSet> consumer;
+		private DescriptorSet.Update.Builder builder;
 		private DescriptorSet.Update update;
 
 		@BeforeEach
-		@SuppressWarnings("unchecked")
 		void before() {
-			updater = new DescriptorSet.Updater(List.of(set));
-			consumer = mock(Consumer.class);
-			update = new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, consumer);
+			builder = new DescriptorSet.Update.Builder();
+			update = mock(DescriptorSet.Update.class);
+			when(update.type()).thenReturn(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 		}
 
 		@Test
 		void update() {
 			// Apply update
-			updater.update(0, update).update(dev);
+			builder.descriptor(set).add(BINDING, update).update(dev);
 
-			/*
 			// Check API
 			final ArgumentCaptor<VkWriteDescriptorSet[]> captor = ArgumentCaptor.forClass(VkWriteDescriptorSet[].class);
 			verify(lib).vkUpdateDescriptorSets(eq(dev.handle()), eq(1), captor.capture(), eq(0), isNull());
@@ -90,24 +95,26 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			// Check write descriptor
 			final VkWriteDescriptorSet write = captor.getValue()[0];
 			assertNotNull(write);
-			assertEquals(0, write.dstBinding);
+			assertEquals(BINDING, write.dstBinding);
 			assertEquals(set.handle(), write.dstSet);
 			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, write.descriptorType);
 			assertEquals(1, write.descriptorCount);
 			assertEquals(0, write.dstArrayElement);
-			verify(consumer).accept(write);
-			*/
+
+			// Check update applied to write descriptor
+			verify(update).apply(write);
 		}
 
 		@Test
 		void updateInvalidBindingIndex() {
-			assertThrows(IllegalArgumentException.class, () -> updater.update(999, update));
+			assertThrows(IllegalStateException.class, () -> builder.add(999, update));
+			assertThrows(IllegalStateException.class, () -> builder.add(0, update));
 		}
 
 		@Test
 		void updateInvalidDescriptorType() {
-			update = new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, consumer);
-			assertThrows(IllegalArgumentException.class, () -> updater.update(0, update));
+			when(update.type()).thenReturn(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+			assertThrows(IllegalStateException.class, () -> builder.add(BINDING, update));
 		}
 	}
 
@@ -116,6 +123,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@Test
 		void constructor() {
 			assertEquals(new Handle(new Pointer(1)), layout.handle());
+			assertNotNull(layout.binding(BINDING));
 		}
 
 		@Test
@@ -294,7 +302,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void freeAll() {
-			pool.allocate(List.of(layout, layout));
+			pool.allocate(List.of(layout));
 			pool.free();
 			verify(lib).vkResetDescriptorPool(dev.handle(), pool.handle(), 0);
 			assertEquals(3, pool.maximum());

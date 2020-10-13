@@ -14,7 +14,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"imageView",
 	"imageLayout"
 })
-public class VkDescriptorImageInfo extends VulkanStructure { //implements ByReference {
+public class VkDescriptorImageInfo extends VulkanStructure { // implements ByReference {
 	public Handle sampler;
 	public Handle imageView;
 	public VkImageLayout imageLayout;
