@@ -367,7 +367,7 @@ public DescriptorSet.Update update() {
 
 # Create Uniform Buffer
 
-```
+```java
 final int uniformLength = 4 * 4 * Float.BYTES;		// TODO - one 4x4 matrix, from matrix? some sort of descriptor?
 
 final VertexBuffer uniform = new VertexBuffer.Builder(dev)
@@ -380,7 +380,7 @@ final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 
 # Upload
 
-```
+```java
 final ByteBuffer proj = BufferFactory.byteBuffer(uniformLength);
 // TODO - Projection.DEFAULT.matrix(1, 2, rect.size()).buffer(proj.asFloatBuffer());
 Matrix.IDENTITY.buffer(proj.asFloatBuffer());
