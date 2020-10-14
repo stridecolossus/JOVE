@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -68,18 +69,28 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 * @throws IllegalStateException if the given buffer exceeds the size of this vertex buffer
 	 */
 	public void load(ByteBuffer src) {
+		load(src, 0);
+	}
+
+	/**
+	 * Loads the given source buffer to this vertex buffer.
+	 * @param src 			Source buffer
+	 * @param offset		Offset into this buffer
+	 * @throws IllegalStateException if the given buffer size and offset exceeds the length of this vertex buffer
+	 */
+	public void load(ByteBuffer src, int offset) {
 		// Check buffer
-		final int actual = src.remaining();
-		if(actual > len) throw new IllegalStateException(String.format("Buffer exceeds length of this data buffer: len=%d max=%d", actual, len));
+		final int size = src.remaining();
+		if(offset + size > len) throw new IllegalStateException(String.format("Buffer exceeds size of this VBO: offset=%d size=%d this=%d", offset, size, this));
 
 		// Map buffer memory
 		final LogicalDevice dev = this.device();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference data = lib.factory().pointer();
-		check(lib.vkMapMemory(dev.handle(), mem, 0, actual, 0, data));
+		check(lib.vkMapMemory(dev.handle(), mem, offset, size, 0, data));
 
 		// Copy to memory
-		final ByteBuffer bb = data.getValue().getByteBuffer(0, actual);
+		final ByteBuffer bb = data.getValue().getByteBuffer(0, size);
 		bb.put(src);
 
 		// Cleanup
@@ -130,6 +141,14 @@ public class VertexBuffer extends AbstractVulkanObject {
 		final LogicalDevice dev = super.device();
 		dev.library().vkFreeMemory(dev.handle(), mem, null);
 		super.destroy();
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("handle", this.handle())
+				.append("len", len)
+				.build();
 	}
 
 	/**

@@ -213,14 +213,14 @@ public class RotatingCubeDemo {
 		// Create render pass
 		final RenderPass pass = new RenderPass.Builder(dev)
 				.attachment()
-					.format(format)
-					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-					.build()
+				.format(format)
+				.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
+				.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
+				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+				.build()
 				.subpass()
-					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-					.build()
+				.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+				.build()
 //				.dependency()
 //					.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 //					.destination(0)
@@ -260,7 +260,7 @@ public class RotatingCubeDemo {
 //				new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
 //				new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
 		};
-		*/
+		 */
 
 
 //		// Define vertex layout
@@ -299,13 +299,13 @@ public class RotatingCubeDemo {
 		// Create descriptor layout
 		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
 				.binding(0)
-					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-					.build()
+				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+				.build()
 				.binding(1)
-					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
-					.build()
+				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+				.build()
 				.build();
 
 		// Create pool
@@ -321,7 +321,7 @@ public class RotatingCubeDemo {
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
 		// Create uniform buffer for the projection matrix
-		final int uniformLength = 4 * 4 * Float.BYTES;		// TODO - one 4x4 matrix, from matrix? some sort of descriptor?
+		final int uniformLength = 3 * 4 * 4 * Float.BYTES;		// TODO - one 4x4 matrix, from matrix? some sort of descriptor?
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 				.length(uniformLength)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
@@ -331,6 +331,10 @@ public class RotatingCubeDemo {
 
 		// Load the projection matrix
 		final ByteBuffer projBuffer = BufferFactory.byteBuffer(uniformLength);
+		final var fb = projBuffer.asFloatBuffer();
+
+		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
+		proj.buffer(fb);
 
 /*
 		final Camera cam = new Camera();
@@ -352,20 +356,20 @@ public class RotatingCubeDemo {
 				.build();
 
 		final Matrix view = axes.multiply(trans);
+		view.buffer(fb);
 
-		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
-		final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
-		final Matrix rot = rotX.multiply(rotY);
+//		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
+//		final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
+//		final Matrix rot = rotX.multiply(rotY);
+//		rot.buffer(fb);
+		Matrix.IDENTITY.buffer(fb);
 
 //		System.out.println("camera\n"+cam.matrix()+"\n"+cam.direction());
 //		System.out.println("cm\n"+cm);
 
-		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
 //		System.out.println("projection\n"+p);
-		final Matrix m = proj.multiply(view).multiply(rot); // cam.matrix());
+//		final Matrix m = proj.multiply(view).multiply(rot); // cam.matrix());
 //		System.out.println("result\n"+m);
-
-		m.buffer(projBuffer.asFloatBuffer());
 
 		uniform.load(projBuffer);
 
@@ -448,7 +452,25 @@ public class RotatingCubeDemo {
 //		final Semaphore ready = Semaphore.create(dev);
 //		final Semaphore finished = Semaphore.create(dev);
 
-		for(int n = 0; n < 25; ++n) {
+		///////////////////
+
+//		final float angle = (System.currentTimeMillis() % 5000) / 5000f * MathsUtil.TWO_PI;
+
+
+		final int size = 4 * 4 * Float.BYTES;
+		final long period = 5000;
+		final ByteBuffer rotBuffer = BufferFactory.byteBuffer(size);
+		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
+
+		for(int n = 0; n < 1000; ++n) {
+
+			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
+			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
+			final Matrix rot = rotY.multiply(rotX);
+			rot.buffer(rotBuffer.asFloatBuffer());
+			uniform.load(rotBuffer, 2 * size);
+			rotBuffer.clear();
+
 			final int index = chain.acquire(null, null);
 
 			new Work.Builder()
@@ -460,17 +482,13 @@ public class RotatingCubeDemo {
 					.submit();
 
 			presentQueue.waitIdle();
-			Thread.sleep(50);
+//			Thread.sleep(50);
 
 			chain.present(presentQueue, null);
-
 			presentQueue.waitIdle();
-			Thread.sleep(50);
 
-//			dev.queue(present).waitIdle();
+			//Thread.sleep(50);
 		}
-
-			//Thread.sleep(2500);
 
 		//////////////
 

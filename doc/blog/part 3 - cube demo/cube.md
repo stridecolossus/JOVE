@@ -678,3 +678,101 @@ Matrix rot = rotX.multiply(rotY);
 
 Matrix matrix = proj.multiply(view).multiply(rot);
 ```
+
+# Split Matrices
+
+```java
+// Create UBO
+int uniformLength = 3 * 4 * 4 * Float.BYTES;
+VertexBuffer uniform = ...
+ByteBuffer bb = BufferFactory.byteBuffer(uniformLength);
+FloatBuffer fb = bb.asFloatBuffer();
+
+// Upload projection matrix
+Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
+proj.buffer(fb);
+
+// Upload view matrix
+...
+view.buffer(fb);
+
+// Apply rotation
+Matrix.IDENTITY.buffer(fb);
+
+// Update UBO
+uniform.load(bb);
+```
+
+# Updated Shader
+
+```C
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+layout(binding = 1) uniform ubo {
+    mat4 proj;
+    mat4 view;
+    mat4 model;
+};
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec2 inTexCoord;
+
+layout(location = 0) out vec2 outTexCoord;
+
+void main() {
+    gl_Position = proj * view * model * vec4(inPosition, 1.0);
+    outTexCoord = inTexCoord;
+}
+```
+
+# Partial UBO Update
+
+```java
+public void load(ByteBuffer src) {
+	load(src, 0);
+}
+
+public void load(ByteBuffer src, int offset) {
+	// Check buffer
+	final int size = src.remaining();
+	if(offset + size > len) ...
+
+	// Map buffer memory
+	final LogicalDevice dev = this.device();
+	final VulkanLibrary lib = dev.library();
+	final PointerByReference data = lib.factory().pointer();
+	check(lib.vkMapMemory(dev.handle(), mem, offset, size, 0, data));
+
+	// Copy to memory
+	final ByteBuffer bb = data.getValue().getByteBuffer(0, size);
+	bb.put(src);
+
+	// Cleanup
+	lib.vkUnmapMemory(dev.handle(), mem);
+}
+```
+
+# Animation
+
+```java
+// Init rotation animation
+final int size = 4 * 4 * Float.BYTES;
+final long period = 5000;
+final ByteBuffer rotBuffer = BufferFactory.byteBuffer(size);
+final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
+
+// Render loop
+for(int n = 0; n < 1000; ++n) {
+	// Update rotation matrix
+	final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
+	final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
+	final Matrix rot = rotY.multiply(rotX);
+	rot.buffer(rotBuffer.asFloatBuffer());
+	uniform.load(rotBuffer, 2 * size);
+	rotBuffer.clear();
+	
+	// Acquire next frame from the swapchain
+	...
+}
+```
