@@ -20,11 +20,6 @@ import org.sarge.jove.util.Check;
 
 /**
  * A <i>vertex</i> is comprised of a vertex position, normal, colour and texture coordinates.
- * <p>
- * Notes:
- * <ul>
- * <li>only the vertex position is mandatory</li>
- * </ul>
  * @author Sarge
  */
 public interface Vertex {
@@ -49,28 +44,23 @@ public interface Vertex {
 	Colour colour();
 
 	/**
+	 * Creates a simple vertex at the given position.
+	 * @param pos Vertex position
+	 * @return New vertex
+	 */
+	static Vertex of(Point pos) {
+		return new DefaultVertex(pos, null, null, null);
+	}
+
+	/**
 	 * Default implementation.
 	 */
 	record DefaultVertex(Point position, Vector normal, TextureCoordinate coords, Colour colour) implements Vertex {
-		/**
-		 * Constructor.
-		 */
-		public DefaultVertex {
-			Check.notNull(position);
-		}
-
-		/**
-		 * Convenience constructor for a vertex that is comprised only of a position.
-		 * @param pos Vertex position
-		 */
-		public DefaultVertex(Point pos) {
-			this(pos, null, null, null);
-		}
+		// Empty
 	}
 
 	/**
 	 * A <i>vertex component</i> refers to a property of a vertex.
-	 * TODO - assumes 2D texture coordinates
 	 */
 	enum Component {
 		POSITION(Point.SIZE, Vertex::position),
@@ -103,7 +93,7 @@ public interface Vertex {
 		 * @param vertex		Vertex
 		 * @param fb			Destination buffer
 		 */
-		public void buffer(Vertex vertex, FloatBuffer fb) {
+		private void buffer(Vertex vertex, FloatBuffer fb) {
 			mapper.apply(vertex).buffer(fb);
 		}
 	}
@@ -151,7 +141,21 @@ public interface Vertex {
 		}
 
 		/**
-		 * Helper - Creates and populates an interleaved buffer containing the given vertex data.
+		 * Tests whether the components of the given vertex matches this layout.
+		 * @param vertex Vertex
+		 * @return Whether vertex matches this layout
+		 */
+		public boolean matches(Vertex vertex) {
+			for(Component c : layout) {
+				if(c.mapper.apply(vertex) == null) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/**
+		 * Creates and populates an interleaved buffer containing the given vertex data.
 		 * @param vertices Vertex data
 		 * @return New buffer
 		 */
@@ -162,6 +166,7 @@ public interface Vertex {
 			// Buffer vertices
 			final FloatBuffer fb = bb.asFloatBuffer();
 			vertices.forEach(v -> buffer(v, fb));
+			fb.flip();
 
 			return bb;
 		}
@@ -171,7 +176,7 @@ public interface Vertex {
 		 * @param vertex		Vertex
 		 * @param buffer		Output buffer
 		 */
-		public void buffer(Vertex vertex, FloatBuffer buffer) {
+		private void buffer(Vertex vertex, FloatBuffer buffer) {
 			layout.forEach(c -> c.buffer(vertex, buffer));
 		}
 

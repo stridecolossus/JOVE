@@ -66,7 +66,7 @@ public class TextureCoordinateTest {
 
 	@Test
 	public void quad() {
-		final var expected = List.of(Coordinate2D.BOTTOM_RIGHT, Coordinate2D.TOP_RIGHT, Coordinate2D.BOTTOM_LEFT, Coordinate2D.TOP_LEFT);
+		final var expected = List.of(Coordinate2D.TOP_LEFT, Coordinate2D.BOTTOM_LEFT, Coordinate2D.TOP_RIGHT, Coordinate2D.BOTTOM_RIGHT);
 		assertEquals(expected, Coordinate2D.QUAD);
 	}
 }

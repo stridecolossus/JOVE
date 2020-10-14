@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.ModelOLD;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.jove.obj.ObjectModel.Face;
@@ -147,7 +147,7 @@ public class ObjectModelTest {
 			group.face(new Face(3, 0, 1));
 
 			// Create generic model
-			final Model<MutableVertex> model = group.build();
+			final ModelOLD<MutableVertex> model = group.build();
 			assertNotNull(model);
 			assertEquals(Set.of(Vertex.Component.POSITION, Vertex.Component.NORMAL), model.components());
 			assertEquals(false, model.isIndexed());

@@ -56,30 +56,20 @@ public enum Primitive {
 	 * @return Whether this primitive is a strip
 	 */
 	public boolean isStrip() {
-		switch(this) {
-		case TRIANGLE_STRIP:
-		case LINE_STRIP:
-		case TRIANGLE_FAN:
-			return true;
-
-		default:
-			return false;
-		}
+		return switch(this) {
+		case TRIANGLE_STRIP, TRIANGLE_FAN, LINE_STRIP -> true;
+		default -> false;
+		};
 	}
 
 	/**
 	 * @return Whether this primitive supports face normals
 	 */
 	public boolean hasNormals() {
-		switch(this) {
-		case TRIANGLE_LIST:
-		case TRIANGLE_STRIP:
-		case TRIANGLE_FAN:
-			return true;
-
-		default:
-			return false;
-		}
+		return switch(this) {
+		case TRIANGLE_LIST, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
+		default -> false;
+		};
 	}
 
 	/**

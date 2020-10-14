@@ -1,7 +1,5 @@
 package org.sarge.jove.model;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,6 +22,8 @@ import org.sarge.jove.model.Vertex.Layout;
 import org.sarge.jove.util.BufferFactory;
 
 public class VertexTest {
+	private static final Component[] LAYOUT = {Component.POSITION, Component.NORMAL, Component.TEXTURE_COORDINATE, Component.COLOUR};
+
 	private Vertex vertex;
 	private Vector normal;
 	private TextureCoordinate coords;
@@ -45,16 +45,11 @@ public class VertexTest {
 
 	@Test
 	void constructorPosition() {
-		vertex = new DefaultVertex(Point.ORIGIN);
+		vertex = Vertex.of(Point.ORIGIN);
 		assertEquals(Point.ORIGIN, vertex.position());
 		assertEquals(null, vertex.normal());
 		assertEquals(null, vertex.coords());
 		assertEquals(null, vertex.colour());
-	}
-
-	@Test
-	void constructorMissingPosition() {
-		assertThrows(IllegalArgumentException.class, () -> new DefaultVertex(null, normal, coords, Colour.WHITE));
 	}
 
 	@Nested
@@ -66,32 +61,7 @@ public class VertexTest {
 			assertEquals(TextureCoordinate.Coordinate2D.SIZE, Component.TEXTURE_COORDINATE.size());
 			assertEquals(Colour.SIZE, Component.COLOUR.size());
 		}
-
-		@Test
-		void buffer() {
-			// Build the expected result
-			final int size = 3 + 3 + 2 + 4;
-			final FloatBuffer expected = BufferFactory.floatBuffer(size);
-			Point.ORIGIN.buffer(expected);
-			normal.buffer(expected);
-			coords.buffer(expected);
-			Colour.WHITE.buffer(expected);
-
-			// Buffer the vertex
-			final FloatBuffer buffer = BufferFactory.floatBuffer(size);
-			Component.POSITION.buffer(vertex, buffer);
-			Component.NORMAL.buffer(vertex, buffer);
-			Component.TEXTURE_COORDINATE.buffer(vertex, buffer);
-			Component.COLOUR.buffer(vertex, buffer);
-
-			// Compare buffers
-			expected.flip();
-			buffer.flip();
-			assertTrue(buffer.equals(expected));
-		}
 	}
-
-	private static final Component[] LAYOUT = {Component.POSITION, Component.NORMAL, Component.TEXTURE_COORDINATE, Component.COLOUR};
 
 	@Nested
 	class LayoutTests {
@@ -119,19 +89,25 @@ public class VertexTest {
 		}
 
 		@Test
-		void bufferVertex() {
-			final FloatBuffer buffer = BufferFactory.byteBuffer(layout.size() * Float.BYTES).asFloatBuffer();
-			layout.buffer(vertex, buffer);
-			assertEquals(layout.size(), buffer.capacity());
-			assertEquals(buffer.capacity(), buffer.position());
+		void matches() {
+			assertEquals(true, layout.matches(vertex));
+			assertEquals(false, layout.matches(Vertex.of(Point.ORIGIN)));
 		}
 
 		@Test
 		void buffer() {
-			final ByteBuffer buffer = layout.buffer(List.of(vertex, vertex));
-			assertNotNull(buffer);
-			assertEquals(2 * Float.BYTES * layout.size(), buffer.capacity());
-			assertEquals(0, buffer.position());
+			// Build the expected buffer
+			final int size = 3 + 3 + 2 + 4;
+			final FloatBuffer expected = BufferFactory.floatBuffer(size);
+			Point.ORIGIN.buffer(expected);
+			normal.buffer(expected);
+			coords.buffer(expected);
+			Colour.WHITE.buffer(expected);
+
+			// Buffer the vertex
+			final ByteBuffer buffer = layout.buffer(List.of(vertex));
+			expected.flip();
+			assertEquals(expected, buffer.asFloatBuffer());
 		}
 
 		@Test
@@ -154,13 +130,14 @@ public class VertexTest {
 
 		@Test
 		void build() {
-			vertex = builder.position(Point.ORIGIN).build();
-			assertEquals(new DefaultVertex(Point.ORIGIN), vertex);
-		}
+			final Vertex result = builder
+					.position(Point.ORIGIN)
+					.normal(normal)
+					.coords(coords)
+					.colour(Colour.WHITE)
+					.build();
 
-		@Test
-		void buildMissingPosition() {
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertEquals(vertex, result);
 		}
 	}
 }

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.Colour;
@@ -18,8 +17,8 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.CubeBuilder;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
@@ -41,6 +40,7 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.Loader;
+import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.ptr.PointerByReference;
 
@@ -238,8 +238,9 @@ public class RotatingCubeDemo {
 
 		//////////////////
 
+		/*
 		// Build triangle vertices
-		final Vertex[] vertices = {
+		final Vertex[] vertices2 = {
 				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_LEFT).build(),
 				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
 				new Vertex.Builder().position(new Point(+0.5f, -0.5f, -0.5f)).coords(Coordinate2D.TOP_RIGHT).build(),
@@ -259,12 +260,15 @@ public class RotatingCubeDemo {
 //				new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
 //				new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
 		};
+		*/
 
-		// Define vertex layout
-		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
 
-		// Buffer vertices
-		final ByteBuffer bb = layout.buffer(Arrays.asList(vertices));
+//		// Define vertex layout
+//		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
+
+		// Buffer cube
+		final Model cube = CubeBuilder.create();
+		final ByteBuffer bb = cube.buffer();
 
 		// Create staging VBO
 		final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
@@ -326,7 +330,7 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Load the projection matrix
-		final ByteBuffer proj = BufferFactory.byteBuffer(uniformLength);
+		final ByteBuffer projBuffer = BufferFactory.byteBuffer(uniformLength);
 
 /*
 		final Camera cam = new Camera();
@@ -335,7 +339,7 @@ public class RotatingCubeDemo {
 		cam.move(new Point(0, 0, -1));
 		cam.look(Point.ORIGIN);
 */
-		final Matrix rot = new Matrix.Builder()
+		final Matrix axes = new Matrix.Builder()
 				.identity()
 				.row(0, Vector.X_AXIS)
 				.row(1, Vector.Y_AXIS.invert())
@@ -344,22 +348,26 @@ public class RotatingCubeDemo {
 
 		final Matrix trans = new Matrix.Builder()
 				.identity()
-				.column(3, new Point(0, 0, -1))
+				.column(3, new Point(0, 0, -3))
 				.build();
 
-		final Matrix cm = rot.multiply(trans);
+		final Matrix view = axes.multiply(trans);
+
+		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
+		final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
+		final Matrix rot = rotX.multiply(rotY);
 
 //		System.out.println("camera\n"+cam.matrix()+"\n"+cam.direction());
 //		System.out.println("cm\n"+cm);
 
-		final Matrix p = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
+		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
 //		System.out.println("projection\n"+p);
-		final Matrix m = p.multiply(cm); // cam.matrix());
+		final Matrix m = proj.multiply(view).multiply(rot); // cam.matrix());
 //		System.out.println("result\n"+m);
 
-		m.buffer(proj.asFloatBuffer());
+		m.buffer(projBuffer.asFloatBuffer());
 
-		uniform.load(proj);
+		uniform.load(projBuffer);
 
 		// Create uniform buffer per swapchain image
 //		final VertexBuffer[] uniforms = new VertexBuffer[3];
@@ -393,7 +401,10 @@ public class RotatingCubeDemo {
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
-					.binding(layout)
+					.binding(cube.layout())
+					.build()
+				.assembly()
+					.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 					.build()
 				.viewport(rect)
 				.shader()
@@ -410,7 +421,7 @@ public class RotatingCubeDemo {
 		final var buffers = chain
 				.views()
 				.stream()
-				.map(view -> FrameBuffer.create(view, pass))
+				.map(v -> FrameBuffer.create(v, pass))
 				.collect(toList());
 
 		// Create command pool
@@ -419,7 +430,7 @@ public class RotatingCubeDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, 4, 1, 0, 0);		// TODO - builder
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.size(), 1, 0, 0);		// TODO - builder
 		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);

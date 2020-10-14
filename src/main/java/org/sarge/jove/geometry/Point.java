@@ -54,6 +54,15 @@ public final class Point extends Tuple {
 	}
 
 	/**
+	 * Scales this point.
+	 * @param scale Scaling factor
+	 * @return Scaled point
+	 */
+	public Point scale(float scale) {
+		return new Point(x * scale, y * scale, z * scale);
+	}
+
+	/**
 	 * Calculates the distance (<b>squared</b>) to the given point.
 	 * @param point Destination point
 	 * @return Distance squared

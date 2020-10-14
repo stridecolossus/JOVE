@@ -1,349 +1,155 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.stream.IntStream;
 
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Vertex.Component;
-import org.sarge.lib.collection.StrictList;
-import org.sarge.lib.util.Check;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>model</i> is a renderable object comprised of mutable vertices.
+ * A <i>model</i> is comprised of a list of vertices that can be rendered according to a {@link Primitive} and {@link Vertex.Layout}.
  * @author Sarge
  */
-public class Model<V extends Vertex> {
+public class Model {
+	/**
+	 * Creates a model.
+	 * @param primitive		Drawing primitive
+	 * @param layout		Vertex layout
+	 * @param vertices		Vertices
+	 * @return New model
+	 * @throws IllegalArgumentException if any vertex does not match the given layout
+	 * @throws IllegalArgumentException if the number of vertices does not match the drawing primitive
+	 * @see Primitive#isValidVertexCount(int)
+	 */
+	public static Model of(Primitive primitive, Vertex.Layout layout, List<Vertex> vertices) {
+		final var builder = new Model.Builder().primitive(primitive).layout(layout);
+		vertices.forEach(builder::add);
+		return builder.build();
+	}
+
 	private final Primitive primitive;
-	private final List<Component> components;
-	private final List<V> vertices;
-	private final List<Integer> indices;
+	private final Vertex.Layout layout;
+	private final List<Vertex> vertices;
 
 	/**
 	 * Constructor.
-	 * @param primitive		Rendering primitive
+	 * @param primitive		Drawing primitive
+	 * @param layout		Vertex layout
 	 * @param vertices		Vertices
-	 * @param extents		Model extents
-	 * @throws IllegalArgumentException if the model is empty, the number of vertices is not valid for the rendering primitive, or there is no {@link Component#POSITION} component
+	 * @throws IllegalArgumentException if the number of vertices does not match the drawing primitive
+	 * @see Primitive#isValidVertexCount(int)
 	 */
-	public Model(Primitive primitive, List<Component> components, List<V> vertices, List<Integer> indices) {
+	private Model(Primitive primitive, Vertex.Layout layout, List<Vertex> vertices) {
+		if(!primitive.isValidVertexCount(vertices.size())) {
+			throw new IllegalArgumentException(String.format("Invalid number of vertices for primitive: size=%d primitive=%s", vertices.size(), primitive));
+		}
+
 		this.primitive = notNull(primitive);
-		this.components = new ArrayList<>(components);
-		this.vertices = List.copyOf(vertices);
-		this.indices = List.copyOf(indices);
-		verify();
+		this.layout = notNull(layout);
+		this.vertices = notNull(vertices);
 	}
 
 	/**
-	 * @throws IllegalArgumentException if this model is not valid
+	 * @return Drawing primitive
 	 */
-	private void verify() {
-		if(vertices.isEmpty()) throw new IllegalArgumentException("Empty model");
-		if(!components.contains(Component.POSITION)) throw new IllegalArgumentException("Model must have a vertex position component");
-		if(!isIndexed() && !primitive.isValidVertexCount(vertices.size())) throw new IllegalArgumentException("Invalid number of vertices for primitive: " + this);
-	}
-
-	/**
-	 * @return Rendering primitive
-	 */
-	public final Primitive primitive() {
+	public Primitive primitive() {
 		return primitive;
 	}
 
 	/**
-	 * @return Model components
+	 * @return Vertex layout
 	 */
-	public final List<Vertex.Component> components() {
-		return components;
+	public Vertex.Layout layout() {
+		return layout;
 	}
 
 	/**
-	 * @return Number of vertices
+	 * @return Number of vertices in this model
 	 */
-	public int length() {
+	public int size() {
 		return vertices.size();
 	}
 
 	/**
-	 * @return Model vertices
+	 * Converts this model to an interleaved floating-point buffer.
+	 * @return New buffered model
+	 * @see Vertex.Layout#buffer(List)
 	 */
-	public final List<V> vertices() {
-		return vertices;
-	}
-
-	/**
-	 * @return Whether this model is indexed
-	 */
-	public boolean isIndexed() {
-		return !indices.isEmpty();
-	}
-
-	/**
-	 * @return Model indices
-	 */
-	public IntStream indices() {
-		return indices.stream().mapToInt(Integer::intValue);
-	}
-
-	/**
-	 * @return Iterator over model triangles
-	 * @throws IllegalArgumentException if this model does not consist of triangles
-	 */
-	public TriangleIterator triangles() {
-		if(isIndexed()) {
-			final var iterator = indices.stream().map(vertices::get).iterator();
-			return new TriangleIterator(iterator);
-		}
-		else {
-			return new TriangleIterator(vertices.iterator());
-		}
-	}
-
-	/**
-	 * Triangle iterator implementation.
-	 */
-	public class TriangleIterator implements Iterator<Vertex[]> {
-		private static final int SIZE = 3;
-
-		private final Iterator<V> iterator;
-		private final Vertex[] triangle = new Vertex[SIZE];
-
-		private boolean more = true;
-
-		/**
-		 * Constructor.
-		 * @param iterator Vertex iterator
-		 * @throws IllegalArgumentException if this model does not consist of triangles
-		 */
-		private TriangleIterator(Iterator<V> iterator) {
-			if(primitive.size() != SIZE) throw new IllegalStateException("Not a triangle: " + primitive);
-			this.iterator = iterator;
-			init();
-		}
-
-		/**
-		 * Populates the next triangle.
-		 */
-		private void init() {
-			for(int n = 0; n < SIZE; ++n) {
-				triangle[n] = iterator.next();
-			}
-		}
-
-		@Override
-		public boolean hasNext() {
-			return more;
-		}
-
-		@Override
-		public Vertex[] next() {
-			// Clone next triangle
-			if(!more) throw new NoSuchElementException();
-			final Vertex[] next = triangle.clone();
-
-			if(iterator.hasNext()) {
-				// Populate next triangle
-				if(primitive.isStrip()) {
-					triangle[0] = triangle[1];
-					triangle[1] = triangle[2];
-					triangle[2] = iterator.next();
-				}
-				else {
-					init();
-				}
-			}
-			else {
-				// Note end of vertices
-				more = false;
-			}
-
-			return next;
-		}
-	}
-
-	/**
-	 * Generates normals for this model.
-	 * @return This model with generated normals
-	 * @throws IllegalStateException if this model already has normals or the rendering primitive does not support normals
-	 * @throws UnsupportedOperationException if the primitive is not a triangle/strip
-	 */
-	public Model<V> computeNormals() {
-		// Check model supports generated normals
-		if(components.contains(Vertex.Component.NORMAL)) throw new IllegalStateException("Model already has normals");
-		if(!primitive.hasNormals()) throw new IllegalStateException("Primitive does not support normals: " + primitive);
-		if(primitive.size() != 3) throw new UnsupportedOperationException("Only triangle/strip primitives support normal generation");
-
-		// Add normals component
-		components.add(Vertex.Component.NORMAL);
-
-		// Initialise normals
-		for(V vertex : vertices) {
-			vertex.normal(new Vector(0, 0, 0));
-		}
-
-		// Generate normals
-		final TriangleIterator triangles = triangles();
-		boolean even = true;
-		while(triangles.hasNext()) {
-			// Get next triangle
-			final Vertex[] triangle = triangles.next();
-
-			// Build triangle edges
-			final Vector ab = edge(triangle[0], triangle[1]);
-			final Vector bc = edge(triangle[1], triangle[2]);
-			final Vector ac = edge(triangle[0], triangle[2]);
-
-			// Accumulate normals
-			add(triangle[0], ab, ac, even);
-			add(triangle[1], bc, ab.invert(), even);
-			add(triangle[2], ac.invert(), bc.invert(), even);
-
-			// Flip alternate winding order for triangle strips
-			if(primitive == Primitive.TRIANGLE_STRIP) {
-				even = !even;
-			}
-		}
-
-		// Normalize
-		for(V vertex : vertices) {
-			final Vector normal = vertex.normal().normalize();
-			vertex.normal(normal);
-		}
-
-		return this;
-	}
-
-	/**
-	 * Builds a triangle edge.
-	 * @param start		Start point
-	 * @param end		End point
-	 * @return Edge
-	 */
-	private static Vector edge(Vertex start, Vertex end) {
-		return Vector.of(start.position(), end.position());
-	}
-
-	/**
-	 * Accumulates a vertex normal.
-	 * @param vertex	Vertex
-	 * @param u			Left-hand edge
-	 * @param v			Right-hand edge
-	 * @param invert	Whether to invert the normal
-	 * @see MutableNormalVertex
-	 */
-	private static void add(Vertex vertex, Vector u, Vector v, boolean even) {
-		final Vector normal = u.cross(v);
-		final Vector actual = even ? normal : normal.invert();
-		final Vector result = vertex.normal().add(actual);
-		vertex.normal(result);
+	public ByteBuffer buffer() {
+		return layout.buffer(vertices);
 	}
 
 	@Override
 	public String toString() {
-		return new ReflectionToStringBuilder(this)
-			.setExcludeFieldNames("vertices", "indices")
-			.append("vertices", vertices.size())
-			.append("indices", indices.size())
-			.toString();
+		return new ToStringBuilder(this)
+				.append("primitive", primitive)
+				.append("layout", layout)
+				.append("vertices", vertices.size())
+				.build();
 	}
 
 	/**
 	 * Builder for a model.
 	 */
-	public static class Builder<V extends Vertex> {
-		private Primitive primitive = Primitive.TRIANGLE_LIST;
-		private final List<Vertex.Component> components = new StrictList<>();
-		private final List<V> vertices = new ArrayList<>();
-		private final List<Integer> indices = new ArrayList<>();
-		private final Extents.Builder extents = new Extents.Builder();
+	public static class Builder {
+		private Primitive primitive = Primitive.TRIANGLE_STRIP;
+		private Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION);
+		private final List<Vertex> vertices = new ArrayList<>();
 
 		/**
-		 * Constructor.
+		 * @throws IllegalStateException if any vertices have already been added
 		 */
-		public Builder() {
-			component(Vertex.Component.POSITION);
-			verify();
+		private void check() {
+			if(!vertices.isEmpty()) throw new IllegalStateException("Cannot modify existing model");
 		}
 
 		/**
-		 * Sets the rendering primitive (default is {@link Primitive#TRIANGLE}).
-		 * @param primitive Rendering primitive
-		 * @throws IllegalStateException if this model configuration is not valid
+		 * Sets the drawing primitive for this model.
+		 * @param primitive Drawing primitive
+		 * @throws IllegalStateException if any vertices have already been added
 		 */
-		public Builder<V> primitive(Primitive primitive) {
+		public Builder primitive(Primitive primitive) {
+			check();
 			this.primitive = notNull(primitive);
-			verify();
 			return this;
 		}
 
 		/**
-		 * Adds a component to this model.
-		 * @param c Component
-		 * @throws IllegalStateException if this model configuration is not valid
-		 * @throws IllegalArgumentException for a duplicate component
+		 * Sets the layout for vertices in this model.
+		 * @param layout Vertex layout
+		 * @throws IllegalStateException if any vertices have already been added
 		 */
-		public Builder<V> component(Vertex.Component c) {
-			components.add(c);
-			verify();
+		public Builder layout(Vertex.Layout layout) {
+			check();
+			this.layout = notNull(layout);
 			return this;
-		}
-
-		/**
-		 * @throws IllegalStateException if this model is not valid
-		 */
-		private void verify() {
-			// Check model can be configured
-			if(!vertices.isEmpty()) {
-				throw new IllegalStateException("Cannot configure a partially constructed model");
-			}
-
-			// Check normals are supported
-			if(components.contains(Vertex.Component.NORMAL) && !primitive.hasNormals()) {
-				throw new IllegalStateException("Primitive does not support normals: " + primitive);
-			}
 		}
 
 		/**
 		 * Adds a vertex to this model.
-		 * @param vertex Vertex to add
+		 * @param v Vertex
+		 * @throws IllegalArgumentException if the vertex component do not match the model layout
+		 * @see Vertex.Layout#matches(Vertex)
 		 */
-		public Builder<V> add(V vertex) {
+		public Builder add(Vertex vertex) {
+			if(!layout.matches(vertex)) {
+				throw new IllegalArgumentException(String.format("Vertex does not match the model layout: vertex=%s layout=%s", vertex, layout));
+			}
+			// TODO - clone vertex?
 			vertices.add(vertex);
-			extents.add(vertex.position());
-			return this;
-		}
-
-		/**
-		 * Adds a vertex index to this model.
-		 * @param index Index
-		 * @throws IllegalArgumentException if the index is negative or exceeds the number of vertices
-		 */
-		public Builder<V> add(int index) {
-			Check.zeroOrMore(index);
-			if(index >= vertices.size()) throw new IllegalArgumentException("Invalid index for this model: " + index);
-			indices.add(index);
 			return this;
 		}
 
 		/**
 		 * Constructs this model.
 		 * @return New model
+		 * @throws IllegalArgumentException if the number of vertices does not match the drawing primitive
+		 * @see Primitive#isValidVertexCount(int)
 		 */
-		public Model<V> build() {
-			return new Model<>(primitive, components, vertices, indices);
-		}
-
-		/**
-		 * @return Model extents
-		 */
-		public Extents extents() {
-			return extents.build();
+		public Model build() {
+			return new Model(primitive, layout, vertices);
 		}
 	}
 }

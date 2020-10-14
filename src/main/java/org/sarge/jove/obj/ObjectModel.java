@@ -14,7 +14,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.TextureCoordinate;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.ModelOLD;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex.MutableVertex;
 import org.sarge.lib.util.Check;
@@ -214,11 +214,11 @@ public class ObjectModel {
 		/**
 		 * Constructs a generic model for this group.
 		 * @return Model
-		 * @see Model.Builder#build()
+		 * @see ModelOLD.Builder#build()
 		 */
-		public Model<MutableVertex> build() {
+		public ModelOLD<MutableVertex> build() {
 			// Create model
-			final Model.Builder<MutableVertex> builder = new Model.Builder<MutableVertex>().primitive(Primitive.TRIANGLE_LIST);
+			final ModelOLD.Builder<MutableVertex> builder = new ModelOLD.Builder<MutableVertex>().primitive(Primitive.TRIANGLE_LIST);
 			// TODO - flag for whether to generate extents? or just always do it?
 
 			// Determine model components

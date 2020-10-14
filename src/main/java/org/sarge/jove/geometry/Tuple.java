@@ -84,7 +84,7 @@ public class Tuple implements Bufferable {
 	 * @param t Tuple
 	 * @return Dot product
 	 */
-	public float dot(Tuple t) {
+	public final float dot(Tuple t) {
 		// TODO - |v| * |u| * cos(angle)
 		return x * t.x + y * t.y + z * t.z;
 	}
@@ -92,7 +92,7 @@ public class Tuple implements Bufferable {
 	/**
 	 * @return This tuple as an array
 	 */
-	public float[] toArray() {
+	public final float[] toArray() {
 		return new float[]{x, y, z};
 	}
 
@@ -102,7 +102,7 @@ public class Tuple implements Bufferable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(Object obj) {
 		if(obj == this) {
 			return true;
 		}
@@ -122,12 +122,12 @@ public class Tuple implements Bufferable {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return Arrays.toString(toArray());
 	}
 }

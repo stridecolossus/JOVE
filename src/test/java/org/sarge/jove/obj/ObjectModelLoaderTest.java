@@ -14,7 +14,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.ModelOLD;
 import org.sarge.jove.obj.ObjectModel.Face;
 import org.sarge.jove.obj.ObjectModel.Group;
 import org.sarge.jove.obj.ObjectModelLoader.FaceParser;
@@ -68,7 +68,7 @@ public class ObjectModelLoaderTest {
 		assertEquals(Optional.of(mat), group.material());
 
 		// Build generic model
-		final Model<?> model = group.build();
+		final ModelOLD<?> model = group.build();
 		assertEquals(false, model.isIndexed());
 		assertEquals(3 * 3, model.vertices().size());
 	}

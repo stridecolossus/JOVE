@@ -85,9 +85,9 @@ public interface TextureCoordinate extends Bufferable {
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
 
 		/**
-		 * List of quad coordinates (flipped in both directions to match Vulkan coordinate system).
+		 * Default texture coordinates for a quad (counter-clockwise winding order).
 		 */
-		public static final List<Coordinate2D> QUAD = List.of(BOTTOM_RIGHT, TOP_RIGHT, BOTTOM_LEFT, TOP_LEFT);
+		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
 
 		public final float v;
 
