@@ -18,6 +18,7 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -38,7 +39,6 @@ import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
-import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.Loader;
 
@@ -261,7 +261,7 @@ public class RotatingCubeDemo {
 		};
 
 		// Define vertex layout
-		final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE));
+		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
 
 		// Buffer vertices
 		final ByteBuffer bb = layout.buffer(Arrays.asList(vertices));

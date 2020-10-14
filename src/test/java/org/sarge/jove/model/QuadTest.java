@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Tuple.Swizzle;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.model.Vertex.MutableVertex;
-import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 
 public class QuadTest {
 	@Test

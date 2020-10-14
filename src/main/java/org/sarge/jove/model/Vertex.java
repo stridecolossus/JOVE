@@ -4,6 +4,7 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
@@ -12,8 +13,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.TextureCoordinate;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.Check;
 
@@ -124,6 +125,15 @@ public interface Vertex {
 			if(layout.size() != new HashSet<>(layout).size()) throw new IllegalArgumentException("Layout cannot contain duplicate components: " + layout);
 			this.layout = List.copyOf(layout);
 			this.size = layout.stream().mapToInt(Component::size).sum();
+		}
+
+		/**
+		 * Constructor.
+		 * @param layout Component layout
+		 * @throws IllegalArgumentException if the layout is empty or contains a duplicate component
+		 */
+		public Layout(Component... layout) {
+			this(Arrays.asList(layout));
 		}
 
 		/**

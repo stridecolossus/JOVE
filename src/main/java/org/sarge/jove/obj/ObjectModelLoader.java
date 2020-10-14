@@ -5,10 +5,10 @@ import java.io.Reader;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.TextureCoordinate;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.obj.ObjectMaterial.Library;
 import org.sarge.jove.obj.ObjectModel.Face;
-import org.sarge.jove.texture.TextureCoordinate;
 
 /**
  * Loader for an OBJ model.

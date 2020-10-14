@@ -103,15 +103,18 @@ public class Tuple implements Bufferable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == this) return true;
-		if(obj == null) return false;
+		if(obj == this) {
+			return true;
+		}
+
+		if(obj == null) {
+			return false;
+		}
+
 		final Class<? extends Tuple> clazz = this.getClass();
 		if(clazz == obj.getClass()) {
 			final Tuple that = (Tuple) obj;
-			if(!MathsUtil.equals(this.x, that.x)) return false;
-			if(!MathsUtil.equals(this.y, that.y)) return false;
-			if(!MathsUtil.equals(this.z, that.z)) return false;
-			return true;
+			return MathsUtil.isEqual(this.x, that.x) && MathsUtil.isEqual(this.y, that.y) && MathsUtil.isEqual(this.z, that.z);
 		}
 		else {
 			return false;

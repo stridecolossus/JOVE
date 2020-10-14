@@ -7,16 +7,27 @@ import org.junit.jupiter.api.Test;
 
 public class MathsUtilTest {
 	@Test
-	void equals() {
-		assertEquals(true, MathsUtil.equals(42, 42));
-		assertEquals(true, MathsUtil.equals(42, 42.0001f));
-		assertEquals(false, MathsUtil.equals(42, 999));
-		assertEquals(false, MathsUtil.equals(42, 42.01f));
+	void isEqual() {
+		assertEquals(true, MathsUtil.isEqual(42, 42));
+		assertEquals(true, MathsUtil.isEqual(42, 42.0001f));
+		assertEquals(false, MathsUtil.isEqual(42, 999));
+		assertEquals(false, MathsUtil.isEqual(42, 42.01f));
+	}
+
+	@Test
+	void isArrayEqual() {
+		assertEquals(true, MathsUtil.isEqual(new float[]{0.5f}, new float[]{0.5f}));
+		assertEquals(false, MathsUtil.isEqual(new float[]{0.5f}, new float[]{1}));
+		assertEquals(false, MathsUtil.isEqual(new float[]{0.5f}, new float[]{}));
 	}
 
 	@Test
 	void isZero() {
-		assertEquals(true, MathsUtil.equals(42, 42));
+		assertEquals(true, MathsUtil.isZero(0.00001f));
+		assertEquals(true, MathsUtil.isZero(0));
+		assertEquals(true, MathsUtil.isZero(-0));
+		assertEquals(false, MathsUtil.isZero(MathsUtil.ACCURACY));
+		assertEquals(false, MathsUtil.isZero(1));
 	}
 
 	@Test

@@ -136,19 +136,16 @@ public final class Quaternion implements Transform {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == this) return true;
-		if(obj == null) return false;
-		if(obj instanceof Quaternion) {
-			final Quaternion q = (Quaternion) obj;
-			if(!MathsUtil.equals(w, q.w)) return false;
-			if(!MathsUtil.equals(x, q.x)) return false;
-			if(!MathsUtil.equals(y, q.y)) return false;
-			if(!MathsUtil.equals(z, q.z)) return false;
+		if(obj == this) {
 			return true;
 		}
-		else {
-			return false;
-		}
+
+		return
+				(obj instanceof Quaternion that) &&
+				MathsUtil.isEqual(this.w, that.w) &&
+				MathsUtil.isEqual(this.x, that.z) &&
+				MathsUtil.isEqual(this.y, that.y) &&
+				MathsUtil.isEqual(this.z, that.z);
 	}
 
 	@Override

@@ -237,16 +237,7 @@ public final class Matrix implements Transform, Bufferable {
 		return
 				(obj instanceof Matrix that) &&
 				(this.order == that.order) &&
-				equals(this.matrix, that.matrix);
-	}
-
-	private boolean equals(float[] a, float[] b) {
-		for(int n = 0; n < matrix.length; ++n) {
-			if(!MathsUtil.equals(a[n], b[n])) {
-				return false;
-			}
-		}
-		return true;
+				MathsUtil.isEqual(this.matrix, that.matrix);
 	}
 
 	@Override

@@ -16,6 +16,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -35,7 +36,6 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.util.Loader;
 
 import com.sun.jna.ptr.PointerByReference;

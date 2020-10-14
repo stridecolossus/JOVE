@@ -41,10 +41,25 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	/**
 	 * Colour converter.
 	 */
-	public static final Converter<Colour> CONVERTER = JoveUtil.converter(SIZE, Colour::new);
+	public static final Converter<Colour> CONVERTER = JoveUtil.converter(SIZE, Colour::of);
 
 	private static final int MASK = 0xff;
 	private static final float INV_MASK = 1f / MASK;
+
+	/**
+	 * Creates a colour from the given floating-point array (either a 4-element RGBA array or 3-element RGB with alpha initialised to <b>one</b>)
+	 * @param array Colour array
+	 * @return New colour
+	 * @throws IllegalArgumentException if the array is {@code null}, is not an RGB or RGBA array, or if any component is not a valid 0..1 colour value
+	 */
+	public static Colour of(float[] array) {
+		if((array.length < 3) || (array.length > 4)) throw new IllegalArgumentException("Expected RGBA array components");
+		final float r = isPercentile(array[0]);
+		final float g = isPercentile(array[1]);
+		final float b = isPercentile(array[2]);
+		final float a = array.length == 3 ? 1 : isPercentile(array[3]);
+		return new Colour(r, g, b, a);
+	}
 
 	/**
 	 * Creates a colour from the given compacted pixel.
@@ -76,24 +91,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		Check.isPercentile(green);
 		Check.isPercentile(blue);
 		Check.isPercentile(alpha);
-	}
-
-	/**
-	 * Array constructor.
-	 * @param array RGBA
-	 * @throws IllegalArgumentException if the array does not contain valid RGBA components
-	 */
-	public Colour(float[] array) {
-		if((array.length < 3) || (array.length > 4)) throw new IllegalArgumentException("Expected RGBA array components");
-		red = isPercentile(array[0]);
-		green = isPercentile(array[1]);
-		blue = isPercentile(array[2]);
-		if(array.length == 4) {
-			alpha = isPercentile(array[3]);
-		}
-		else {
-			alpha = 1;
-		}
 	}
 
 	@Override

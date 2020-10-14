@@ -12,11 +12,11 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.TextureCoordinate;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex.MutableVertex;
-import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.lib.util.Check;
 
 /**

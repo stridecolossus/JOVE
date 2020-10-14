@@ -2,6 +2,7 @@ package org.sarge.jove.model;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -14,12 +15,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.TextureCoordinate;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex.Builder;
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.DefaultVertex;
 import org.sarge.jove.model.Vertex.Layout;
-import org.sarge.jove.texture.TextureCoordinate;
 import org.sarge.jove.util.BufferFactory;
 
 public class VertexTest {
@@ -90,7 +91,7 @@ public class VertexTest {
 		}
 	}
 
-	private static final List<Component> LAYOUT = List.of(Component.POSITION, Component.NORMAL, Component.TEXTURE_COORDINATE, Component.COLOUR);
+	private static final Component[] LAYOUT = {Component.POSITION, Component.NORMAL, Component.TEXTURE_COORDINATE, Component.COLOUR};
 
 	@Nested
 	class LayoutTests {
@@ -103,18 +104,18 @@ public class VertexTest {
 
 		@Test
 		void constructor() {
-			assertEquals(LAYOUT, layout.components());
+			assertArrayEquals(LAYOUT, layout.components().toArray());
 			assertEquals(3 + 3 + 2 + 4, layout.size());
 		}
 
 		@Test
 		void constructorEmptyComponents() {
-			assertThrows(IllegalArgumentException.class, () -> new Layout(List.of()));
+			assertThrows(IllegalArgumentException.class, () -> new Layout());
 		}
 
 		@Test
 		void constructorDuplicateComponent() {
-			assertThrows(IllegalArgumentException.class, () -> new Layout(List.of(Component.NORMAL, Component.NORMAL)));
+			assertThrows(IllegalArgumentException.class, () -> new Layout(Component.NORMAL, Component.NORMAL));
 		}
 
 		@Test
@@ -138,7 +139,7 @@ public class VertexTest {
 			assertEquals(true, layout.equals(layout));
 			assertEquals(true, layout.equals(new Layout(LAYOUT)));
 			assertEquals(false, layout.equals(null));
-			assertEquals(false, layout.equals(new Layout(List.of(Component.NORMAL))));
+			assertEquals(false, layout.equals(new Layout(Component.NORMAL)));
 		}
 	}
 

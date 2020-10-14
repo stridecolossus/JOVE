@@ -5,6 +5,9 @@ package org.sarge.jove.util;
  * @author Sarge
  */
 public final class MathsUtil {
+	/**
+	 * Accuracy for floating-point comparisons.
+	 */
 	public static final float ACCURACY = 0.0001f;
 
 	/**
@@ -46,12 +49,34 @@ public final class MathsUtil {
 	}
 
 	/**
+	 * Tests whether two floating-point values are approximately equal.
 	 * @param a
 	 * @param b
-	 * @return Whether the given floating-point values are approximately equal
+	 * @return Whether the given values are approximately equal
 	 */
-	public static boolean equals(float a, float b) {
+	public static boolean isEqual(float a, float b) {
 		return Math.abs(a - b) < ACCURACY;
+	}
+
+	/**
+	 * Tests whether two floating-point arrays are approximately equal.
+	 * @param a
+	 * @param b
+	 * @return Whether the given floating-point arrays are approximately equal
+	 * @throws NullPointerException if either array is {@code null}
+	 */
+	public static boolean isEqual(float[] a, float[] b) {
+		if(a.length != b.length) {
+			return false;
+		}
+
+		for(int n = 0; n < a.length; ++n) {
+			if(!isEqual(a[n], b[n])) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**

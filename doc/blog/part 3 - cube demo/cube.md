@@ -414,7 +414,7 @@ final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
 new DescriptorSet.Update.Builder()
 	.descriptors(descriptors)
 	.add(0, sampler.update(texture))
-	.add(1, uniform)
+	.add(1, uniform.update())
 	.update(dev);
 ```
 

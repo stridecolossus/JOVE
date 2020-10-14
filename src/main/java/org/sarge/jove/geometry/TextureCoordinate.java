@@ -1,4 +1,4 @@
-package org.sarge.jove.texture;
+package org.sarge.jove.geometry;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
@@ -56,21 +56,8 @@ public interface TextureCoordinate extends Bufferable {
 		}
 
 		@Override
-		public final boolean equals(Object obj) {
-			if(obj == this) return true;
-			if(obj == null) return false;
-			if(obj instanceof TextureCoordinate) {
-				final TextureCoordinate that = (TextureCoordinate) obj;
-				final float[] a = this.toArray();
-				final float[] b = that.toArray();
-				for(int n = 0; n < a.length; ++n) {
-					if(!MathsUtil.equals(a[n], b[n])) return false;
-				}
-				return true;
-			}
-			else {
-				return false;
-			}
+		public boolean equals(Object obj) {
+			return (obj instanceof Coordinate1D that) && MathsUtil.isEqual(this.u, that.u);
 		}
 
 		@Override
@@ -126,6 +113,14 @@ public interface TextureCoordinate extends Bufferable {
 		public float[] toArray() {
 			return new float[]{u, v};
 		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj instanceof Coordinate2D that) &&
+					MathsUtil.isEqual(this.u, that.u) &&
+					MathsUtil.isEqual(this.v, that.v);
+		}
 	}
 
 	/**
@@ -148,6 +143,15 @@ public interface TextureCoordinate extends Bufferable {
 		@Override
 		public float[] toArray() {
 			return new float[]{u, v, w};
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj instanceof Coordinate3D that) &&
+					MathsUtil.isEqual(this.u, that.u) &&
+					MathsUtil.isEqual(this.v, that.v) &&
+					MathsUtil.isEqual(this.w, that.w);
 		}
 	}
 }

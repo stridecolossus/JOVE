@@ -121,16 +121,13 @@ public record SphereVolume(Point centre, float radius) implements BoundingVolume
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == this) return true;
-		if(obj == null) return false;
-		if(obj instanceof SphereVolume) {
-			final SphereVolume that = (SphereVolume) obj;
-			if(!MathsUtil.equals(this.radius, that.radius)) return false;
-			if(!this.centre.equals(that.centre)) return false;
+		if(obj == this) {
 			return true;
 		}
-		else {
-			return false;
-		}
+
+		return
+				(obj instanceof SphereVolume that) &&
+				MathsUtil.isEqual(this.radius, that.radius) &&
+				this.centre.equals(that.centre);
 	}
 }

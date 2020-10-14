@@ -8,9 +8,10 @@ import static org.sarge.jove.util.TestHelper.assertFloatArrayEquals;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.texture.TextureCoordinate.Coordinate1D;
-import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
-import org.sarge.jove.texture.TextureCoordinate.Coordinate3D;
+import org.sarge.jove.geometry.TextureCoordinate;
+import org.sarge.jove.geometry.TextureCoordinate.Coordinate1D;
+import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
+import org.sarge.jove.geometry.TextureCoordinate.Coordinate3D;
 
 public class TextureCoordinateTest {
 	@Test
@@ -51,8 +52,8 @@ public class TextureCoordinateTest {
 
 	@Test
 	public void arrayInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.format(new float[]{}));
-		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.format(new float[]{1, 2, 3, 4}));
+		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.of(new float[]{}));
+		assertThrows(IllegalArgumentException.class, () -> TextureCoordinate.of(new float[]{1, 2, 3, 4}));
 	}
 
 	@Test

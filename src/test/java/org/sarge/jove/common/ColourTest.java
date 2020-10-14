@@ -29,9 +29,9 @@ public class ColourTest {
 	}
 
 	@Test
-	public void arrayConstructor() {
-		assertEquals(col, new Colour(new float[]{col.red(), col.green(), col.blue(), 1f}));
-		assertEquals(col, new Colour(new float[]{col.red(), col.green(), col.blue()}));
+	public void array() {
+		assertEquals(col, Colour.of(new float[]{col.red(), col.green(), col.blue(), 1f}));
+		assertEquals(col, Colour.of(new float[]{col.red(), col.green(), col.blue()}));
 	}
 
 	@Test

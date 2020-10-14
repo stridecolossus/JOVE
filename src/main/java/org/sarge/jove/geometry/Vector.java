@@ -115,7 +115,7 @@ public final class Vector extends Tuple {
 	 */
 	public Vector normalize() {
 		final float len = magnitude();
-		if(MathsUtil.equals(1, len)) {
+		if(MathsUtil.isEqual(1, len)) {
 			return this;
 		}
 		else {
