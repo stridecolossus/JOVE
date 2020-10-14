@@ -408,7 +408,7 @@ public class RotatingCubeDemo {
 					.binding(cube.layout())
 					.build()
 				.assembly()
-					.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+					.topology(cube.primitive())
 					.build()
 				.viewport(rect)
 				.shader()

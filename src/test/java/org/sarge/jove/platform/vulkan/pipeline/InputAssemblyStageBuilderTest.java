@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
@@ -20,7 +21,7 @@ public class InputAssemblyStageBuilderTest {
 	void build() {
 		// Build descriptor
 		final var info = builder
-				.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+				.topology(Primitive.LINE_LIST)
 				.restart(true)
 				.result();
 

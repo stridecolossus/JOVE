@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.util.Check.notNull;
 
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkPipelineInputAssemblyStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
@@ -21,6 +22,26 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
 	public InputAssemblyStageBuilder topology(VkPrimitiveTopology topology) {
 		this.topology = notNull(topology);
 		return this;
+	}
+
+	/**
+	 * Sets the primitive topology.
+	 * @param primitive JOVE primitive
+	 */
+	public InputAssemblyStageBuilder topology(Primitive primitive) {
+		return topology(map(primitive));
+	}
+
+	private static VkPrimitiveTopology map(Primitive primitive) {
+		return switch(primitive) {
+			case LINE_LIST -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+			case LINE_STRIP -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+			case POINT_LIST -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+			case TRIANGLE_FAN -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+			case TRIANGLE_LIST-> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			case TRIANGLE_STRIP -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+			default -> throw new UnsupportedOperationException("Unsupported drawing primitive: " + primitive);
+		};
 	}
 
 	/**

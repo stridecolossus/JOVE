@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.sarge.jove.util.TestHelper.assertFloatArrayEquals;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ public class ColourBlendStageBuilderTest {
 				.attachment()
 					.colour().sourceBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_CONSTANT_COLOR)
 					.alpha().operation(VkBlendOp.VK_BLEND_OP_BLUE_EXT)
+					.mask("RGBA")
 					.build()
 				.attachment()
 					.build()
@@ -55,5 +57,10 @@ public class ColourBlendStageBuilderTest {
 		assertFloatArrayEquals(new float[]{0, 0, 0, 0}, info.blendConstants);
 		assertEquals(1, info.attachmentCount);
 		assertNotNull(info.pAttachments);
+	}
+
+	@Test
+	void invalidColourWriteMask() {
+		assertThrows(IllegalArgumentException.class, () -> builder.attachment().mask("cobblers"));
 	}
 }

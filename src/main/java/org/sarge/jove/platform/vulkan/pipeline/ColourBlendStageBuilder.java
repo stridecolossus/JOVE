@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBlendFactor;
 import org.sarge.jove.platform.vulkan.VkBlendOp;
+import org.sarge.jove.platform.vulkan.VkColorComponentFlag;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
@@ -19,6 +21,21 @@ import org.sarge.jove.util.StructureHelper;
  * @author Sarge
  */
 public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineColorBlendStateCreateInfo> {
+	/**
+	 * Maps a colour component character.
+	 */
+	private static VkColorComponentFlag component(int ch) {
+		return switch(ch) {
+		case 'R' -> VkColorComponentFlag.VK_COLOR_COMPONENT_R_BIT;
+		case 'G' -> VkColorComponentFlag.VK_COLOR_COMPONENT_G_BIT;
+		case 'B' -> VkColorComponentFlag.VK_COLOR_COMPONENT_B_BIT;
+		case 'A' -> VkColorComponentFlag.VK_COLOR_COMPONENT_A_BIT;
+		default -> throw new IllegalArgumentException("Invalid colour component: " + String.valueOf((char) ch));
+		};
+	}
+
+	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponentFlag.values());
+
 	private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
 	private VkLogicOp logic;
 	private final float[] constants = new float[4];
@@ -144,6 +161,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		}
 
 		private boolean enabled;
+		private int mask = DEFAULT_COLOUR_MASK;
 		private final BlendOperationBuilder colour = new BlendOperationBuilder(VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA, VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
 		private final BlendOperationBuilder alpha = new BlendOperationBuilder(VkBlendFactor.VK_BLEND_FACTOR_ONE, VkBlendFactor.VK_BLEND_FACTOR_ZERO);
 
@@ -156,6 +174,21 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		 */
 		public AttachmentBuilder enabled(boolean enabled) {
 			this.enabled = enabled;
+			return this;
+		}
+
+		/**
+		 * Sets the colour write mask (default is {@code RGBA}).
+		 * @param mask Colour write mask
+		 * @throws IllegalArgumentException if the mask contains an invalid colour component character
+		 */
+		public AttachmentBuilder mask(String mask) {
+			this.mask = mask
+					.chars()
+					.mapToObj(ColourBlendStageBuilder::component)
+					.mapToInt(IntegerEnumeration::value)
+					.reduce(0, IntegerEnumeration.MASK);
+
 			return this;
 		}
 
@@ -191,6 +224,9 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 			info.srcAlphaBlendFactor = alpha.src;
 			info.dstAlphaBlendFactor = alpha.dest;
 			info.alphaBlendOp = alpha.op;
+
+			// Init colour write mask
+			info.colorWriteMask = mask;
 
 			// Add attachment
 			attachments.add(info);
