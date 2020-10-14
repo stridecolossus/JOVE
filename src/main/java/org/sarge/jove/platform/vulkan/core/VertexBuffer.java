@@ -6,17 +6,15 @@ import static org.sarge.jove.util.Check.oneOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.platform.vulkan.VkBufferCopy;
-import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
-import org.sarge.jove.platform.vulkan.VkSharingMode;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.util.Check;
+import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -86,6 +84,27 @@ public class VertexBuffer extends AbstractVulkanObject {
 
 		// Cleanup
 		lib.vkUnmapMemory(dev.handle(), mem);
+	}
+
+	// TODO - cyclic dependency to DS
+	/**
+	 * Creates a descriptor set update for a uniform buffer.
+	 * @return Uniform buffer update
+	 */
+	public DescriptorSet.Update update() {
+		// Create uniform buffer descriptor
+		final VkDescriptorBufferInfo uniform = new VkDescriptorBufferInfo();
+		uniform.buffer = this.handle();
+		uniform.offset = 0;
+		uniform.range = len;
+
+		// Create updater
+		return new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+			@Override
+			protected void apply(VkWriteDescriptorSet write) {
+				write.pBufferInfo = StructureHelper.structures(List.of(uniform));
+			}
+		};
 	}
 
 	/**

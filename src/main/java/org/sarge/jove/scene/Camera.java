@@ -1,6 +1,7 @@
 package org.sarge.jove.scene;
 
-import static org.sarge.lib.util.Check.notNull;
+
+import static org.sarge.jove.util.Check.notNull;
 
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
@@ -11,13 +12,12 @@ import org.sarge.jove.material.BufferPropertyBinder;
 import org.sarge.jove.material.Material;
 import org.sarge.jove.material.Material.Property;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.AbstractObject;
 
 /**
  * Model for a camera within a scene.
  * @author Sarge
  */
-public class Camera extends AbstractObject {
+public class Camera { // extends AbstractObject {
 	// Camera state
 	private Point pos = Point.ORIGIN;
 	private Vector dir = Vector.Z_AXIS;
@@ -101,8 +101,9 @@ public class Camera extends AbstractObject {
 	 * @param pt Camera point-of-interest
 	 */
 	public void look(Point pt) {
-		final Vector vec = Vector.of(pos, pt).normalize();
-		direction(vec);
+		dir = Vector.of(pos, pt).normalize();
+//		final Vector vec = Vector.of(pos, pt).normalize();
+		//direction(vec);
 	}
 
 	/**

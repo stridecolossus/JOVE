@@ -15,9 +15,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
@@ -37,14 +35,12 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.scene.Projection;
 import org.sarge.jove.texture.TextureCoordinate.Coordinate2D;
-import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.Loader;
 
 import com.sun.jna.ptr.PointerByReference;
 
-public class RotatingCubeDemo {
+public class TextureQuadDemo {
 
 
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
@@ -208,8 +204,6 @@ public class RotatingCubeDemo {
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 				.build();
 
-		final Rectangle rect = new Rectangle(chain.extents());
-
 		// Create render pass
 		final RenderPass pass = new RenderPass.Builder(dev)
 				.attachment()
@@ -230,11 +224,11 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Load shaders
-		final Path dir = new File("./src/test/resources/demo/cube.rotate").toPath(); // TODO - root + resolve
+		final Path dir = new File("./src/test/resources/demo/texture.quad").toPath(); // TODO - root + resolve
 		final var src = Loader.DataSource.of(dir);
 		final var shaderLoader = Loader.of(src, Shader.loader(dev));
-		final Shader vert = shaderLoader.load("spv.cube.vert");
-		final Shader frag = shaderLoader.load("spv.cube.frag");
+		final Shader vert = shaderLoader.load("spv.quad.vert");
+		final Shader frag = shaderLoader.load("spv.quad.frag");
 
 		//////////////////
 
@@ -242,13 +236,8 @@ public class RotatingCubeDemo {
 		final Vertex[] vertices = {
 				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_LEFT).build(),
 				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
-				new Vertex.Builder().position(new Point(+0.5f, -0.5f, -0.5f)).coords(Coordinate2D.TOP_RIGHT).build(),
-				new Vertex.Builder().position(new Point(+0.5f, +0.5f, -0.5f)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
-
-//				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0.75f)).coords(Coordinate2D.TOP_LEFT).build(),
-//				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0.75f)).coords(Coordinate2D.BOTTOM_LEFT).build(),
-//				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
-//				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
+				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
+				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
 
 //				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
 //				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
@@ -294,21 +283,16 @@ public class RotatingCubeDemo {
 
 		// Create descriptor layout
 		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
-				.binding(0)
+				.binding()
 					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-					.build()
-				.binding(1)
-					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.build()
 				.build();
 
 		// Create pool
 		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
 				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
-				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3)
-				.max(2 * 3)
+				.max(3)
 				.build();
 
 		final List<DescriptorSet> descriptors = setPool.allocate(setLayout, 3);
@@ -316,70 +300,12 @@ public class RotatingCubeDemo {
 		// Create sampler
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
-		// Create uniform buffer for the projection matrix
-		final int uniformLength = 4 * 4 * Float.BYTES;		// TODO - one 4x4 matrix, from matrix? some sort of descriptor?
-		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
-				.length(uniformLength)
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-				.build();
-
-		// Load the projection matrix
-		final ByteBuffer proj = BufferFactory.byteBuffer(uniformLength);
-
-/*
-		final Camera cam = new Camera();
-//		cam.direction(Vector.Z_AXIS.invert());
-		cam.up(Vector.Y_AXIS.invert());
-		cam.move(new Point(0, 0, -1));
-		cam.look(Point.ORIGIN);
-*/
-		final Matrix rot = new Matrix.Builder()
-				.identity()
-				.row(0, Vector.X_AXIS)
-				.row(1, Vector.Y_AXIS.invert())
-				.row(2, Vector.Z_AXIS)
-				.build();
-
-		final Matrix trans = new Matrix.Builder()
-				.identity()
-				.column(3, new Point(0, 0, -1))
-				.build();
-
-		final Matrix cm = rot.multiply(trans);
-
-//		System.out.println("camera\n"+cam.matrix()+"\n"+cam.direction());
-//		System.out.println("cm\n"+cm);
-
-		final Matrix p = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-//		System.out.println("projection\n"+p);
-		final Matrix m = p.multiply(cm); // cam.matrix());
-//		System.out.println("result\n"+m);
-
-		m.buffer(proj.asFloatBuffer());
-
-		uniform.load(proj);
-
-		// Create uniform buffer per swapchain image
-//		final VertexBuffer[] uniforms = new VertexBuffer[3];
-//		for(int n = 0; n < uniforms.length; ++n) {
-//			uniforms[n] = new VertexBuffer.Builder(dev)
-//					.length(projSize)
-//					.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-//					.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-//					.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-//					.build();
-//
-//			uniforms[n].load(
-//		}
-
 		// Apply sampler to the descriptor sets
 		new DescriptorSet.Update.Builder()
-				.descriptors(descriptors)
-				.add(0, sampler.update(texture))
-				.add(1, uniform.update())
-				.update(dev);
+			.descriptors(descriptors)
+			.add(0, sampler.update(texture))
+			//.add(1, uniform)
+			.update(dev);
 
 		//////////////////
 
@@ -389,6 +315,7 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Create pipeline
+		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
 				.layout(pipelineLayout)
 				.pass(pass)
@@ -472,8 +399,6 @@ public class RotatingCubeDemo {
 		img.destroy();
 		texture.destroy();
 		sampler.destroy();
-		//Arrays.stream(uniforms).forEach(VertexBuffer::destroy);
-		uniform.destroy();
 
 		setPool.destroy();
 		setLayout.destroy();

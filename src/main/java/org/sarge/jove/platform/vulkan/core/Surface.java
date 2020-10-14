@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
@@ -68,7 +69,7 @@ public class Surface {
 	public Collection<VkSurfaceFormatKHR> formats() {
 		final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.parent().handle(), surface, count, array);
 		final var formats = VulkanFunction.enumerate(func, dev.library(), new VkSurfaceFormatKHR());
-		return Arrays.asList(formats);
+		return Arrays.stream(formats).collect(toList());
 	}
 
 	/**

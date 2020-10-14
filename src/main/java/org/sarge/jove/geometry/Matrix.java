@@ -6,7 +6,6 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -108,24 +107,27 @@ public final class Matrix implements Transform, Bufferable {
 		return rot.build();
 	}
 
-	private final float[] matrix;
 	private final int order;
+	private final float[] matrix;
 
 	/**
 	 * Constructor.
-	 * @param matrix 2D matrix array
-	 * @throws IllegalArgumentException if the given array is empty or not <i>square</i>
+	 * @param order		Matrix order
+	 * @param matrix 	Column-major matrix elements
+	 * @throws IllegalArgumentException if the length of the given array does not match the specified matrix order
 	 */
-	public Matrix(float[] matrix) {
-		Check.oneOrMore(matrix.length);
-		this.order = order(matrix.length);
+	public Matrix(int order, float[] matrix) {
+		if(matrix.length != order * order) throw new IllegalArgumentException("Invalid matrix length");
+		this.order = oneOrMore(order);
 		this.matrix = Arrays.copyOf(matrix, matrix.length);
 	}
 
-	private static int order(int len) {
-		final int order = (int) MathsUtil.sqrt(len);
-		if(order * order != len) throw new IllegalArgumentException("Matrix is not square");
-		return order;
+	/**
+	 * Constructor for a matrix with the default order.
+	 * @param matrix Column-major matrix elements
+	 */
+	public Matrix(float[] matrix) {
+		this(DEFAULT_ORDER, matrix);
 	}
 
 	/**
@@ -153,8 +155,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 	 */
 	public float get(int row, int col) {
-		final int index = index(row, col);
-		return matrix[index];
+		return matrix[index(row, col)];
 	}
 
 	/**
@@ -173,31 +174,35 @@ public final class Matrix implements Transform, Bufferable {
 		final float[] trans = new float[matrix.length];
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				final int index = index(c, r);
+				final int index = index(c, r);			// Note row-column interchanged
 				trans[index] = get(r, c);
 			}
 		}
-		return new Matrix(trans);
+		return new Matrix(order, trans);
 	}
 
 	/**
 	 * Multiplies two matrices.
 	 * @param m Matrix
 	 * @return New matrix
+	 * @throws IllegalArgumentException if the given matrix is not of the same order as this matrix
 	 */
 	public Matrix multiply(Matrix m) {
 		if(m.order != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
-		final Builder result = new Builder(order);		// TODO - uses builder, needs optimisation to column-major
+
+		final float[] result = new float[matrix.length];
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
 					total += get(r, n) * m.get(n, c);
 				}
-				result.set(r, c, total);
+				final int index = index(r, c);
+				result[index] = total;
 			}
 		}
-		return result.build();
+
+		return new Matrix(order, result);
 	}
 
 	public Point multiply(Point pt) {
@@ -225,25 +230,28 @@ public final class Matrix implements Transform, Bufferable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == this) return true;
-		if(obj == null) return false;
-		if(obj instanceof Matrix) {
-			final Matrix that = (Matrix) obj;
-			if(matrix.length != that.matrix.length) return false;
-			for(int n = 0; n < matrix.length; ++n) {
-				if(!MathsUtil.equals(matrix[n], that.matrix[n])) return false;
-			}
+		if(obj == this) {
 			return true;
 		}
-		else {
-			return false;
+
+		return
+				(obj instanceof Matrix that) &&
+				(this.order == that.order) &&
+				equals(this.matrix, that.matrix);
+	}
+
+	private boolean equals(float[] a, float[] b) {
+		for(int n = 0; n < matrix.length; ++n) {
+			if(!MathsUtil.equals(a[n], b[n])) {
+				return false;
+			}
 		}
+		return true;
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		final int order = order();
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				if(c > 0) {
@@ -334,7 +342,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			return new Matrix(matrix);
+			return new Matrix(order, matrix);
 		}
 	}
 }

@@ -46,20 +46,20 @@ public interface Projection {
 			@Override
 			public Matrix matrix(float near, float far, Dimensions dim) {
 				final float f = 1 / height;
-				final float range = near - far;
 				return new Matrix.Builder()
-					.set(0, 0, f / dim.ratio())
-					.set(1, 1, -f)
-					.set(2, 2, far / range)
-					.set(2, 3, (near * far) / range)
-					.set(3, 2, -1)
-					.build();
+						.set(0, 0, f / dim.ratio())
+						.set(1, 1, -f)
+						.set(2, 2, far / (near - far))
+						.set(2, 3, (near * far) / (near - far))
+						.set(3, 2, -1)
+						.build();
 			}
 		};
 	}
 
 	// https://dovo329.github.io/DeriveOpenGLPerspectiveProjectionMatrix/
 	// https://stackoverflow.com/questions/51318119/what-is-the-role-of-gl-position-w-in-vulkan
+	// http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
 
 	/**
 	 * Orthographic or flat projection.
