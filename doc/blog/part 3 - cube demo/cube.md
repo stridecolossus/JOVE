@@ -666,3 +666,15 @@ public static Matrix rotation(Vector axis, float angle) {
 	return rot.build();
 }
 ```
+
+# Static Rotation
+
+```java
+Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
+Matrix rotY = Matrix.rotation(Vector.Y_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
+Matrix rot = rotX.multiply(rotY);
+
+...
+
+Matrix matrix = proj.multiply(view).multiply(rot);
+```
