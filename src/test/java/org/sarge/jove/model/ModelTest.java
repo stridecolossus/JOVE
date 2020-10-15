@@ -38,14 +38,14 @@ public class ModelTest {
 			assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
 			assertEquals(LAYOUT, model.layout());
 			assertEquals(3, model.size());
+			assertEquals(3 * Point.SIZE * Float.BYTES, model.length());
 		}
 
 		@Test
 		void buffer() {
-			final ByteBuffer buffer = model.buffer();
-			assertNotNull(buffer);
+			final ByteBuffer buffer = ByteBuffer.allocate((int) model.length());
+			model.buffer(buffer);
 			assertEquals(3 * Point.SIZE * Float.BYTES, buffer.capacity());
-			assertEquals(0, buffer.position());
 		}
 	}
 

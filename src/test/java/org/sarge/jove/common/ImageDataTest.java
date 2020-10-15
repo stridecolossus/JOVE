@@ -3,7 +3,6 @@ package org.sarge.jove.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -35,10 +34,7 @@ public class ImageDataTest {
 	void constructor() {
 		final int len = 3 * (3 * 4);
 		final ImageData image = new DefaultImageData(size, components, ByteBuffer.allocate(len));
-		assertEquals(size, image.size());
-		assertNotNull(image.buffer());
-		assertEquals(len, image.buffer().capacity());
-		assertEquals(true, image.buffer().isReadOnly());
+		assertEquals(len, image.length());
 	}
 
 	@Test
@@ -70,7 +66,6 @@ public class ImageDataTest {
 			// Load image from file-system
 			final ImageData image;
 			final Path path = Paths.get("./src/test/resources", filename);
-			System.out.println(path);
 			try(final InputStream in = Files.newInputStream(path)) {
 				image = loader.load(in);
 			}
@@ -80,11 +75,12 @@ public class ImageDataTest {
 			assertEquals(new Dimensions(w, h), image.size());
 			assertNotNull(image.components());
 			assertEquals(components, image.components().size());
+			assertEquals(w * h * image.components().size(), image.length());
 
 			// Check buffer
-			assertNotNull(image.buffer());
-			assertTrue(image.buffer().isReadOnly());
-			assertEquals(w * h * components, image.buffer().capacity());
+			final ByteBuffer buffer = ByteBuffer.allocate((int) image.length());
+			image.buffer(buffer);
+			assertEquals(image.length(), buffer.capacity());
 		}
 
 		@Test

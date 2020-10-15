@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
@@ -51,11 +51,11 @@ public class TextureQuadDemo {
 //		final ImageData image = loader.load("heightmap.gif"); // "thiswayup.jpg");
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
+		//System.out.println(format);
 
 		// Copy image to staging buffer
-		final ByteBuffer bb = image.buffer();
-		final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
-		staging.load(bb);
+		final VertexBuffer staging = VertexBuffer.staging(dev, image.length());
+		staging.load(image);
 
 		// Create texture
 		final Image texture = new Image.Builder(dev)
@@ -238,32 +238,37 @@ public class TextureQuadDemo {
 				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
 				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
 				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
-
-//				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-//				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
-//				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
-//				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).colour(new Colour(1, 1, 1, 1)).build(),
-
-//				new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-//				new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
-//				new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
 		};
 
 		// Define vertex layout
-		final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE));
+		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
 
-		// Buffer vertices
-		final ByteBuffer bb = layout.buffer(Arrays.asList(vertices));
+		// Create model
+		final Bufferable bufferable = new Bufferable() {
+			@Override
+			public long length() {
+				return vertices.length * layout.size() * Float.BYTES;
+			}
+
+			@Override
+			public void buffer(ByteBuffer buffer) {
+				for(Vertex v : vertices) {
+					for(Vertex.Component c : layout.components()) {
+						c.map(v).buffer(buffer);
+					}
+				}
+			}
+		};
 
 		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
+		final VertexBuffer staging = VertexBuffer.staging(dev, bufferable.length());
 
 		// Load to staging
-		staging.load(bb);
+		staging.load(bufferable);
 
 		// Create device VBO
 		final VertexBuffer dest = new VertexBuffer.Builder(dev)
-				.length(bb.capacity())
+				.length(bufferable.length())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -346,7 +351,7 @@ public class TextureQuadDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, 4, 1, 0, 0);		// TODO - builder
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, vertices.length, 1, 0, 0);		// TODO - builder
 		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);

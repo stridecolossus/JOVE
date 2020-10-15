@@ -2,8 +2,6 @@ package org.sarge.jove.model;
 
 import static org.sarge.jove.util.Check.notNull;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +13,6 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.TextureCoordinate;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.Check;
 
 /**
@@ -89,12 +86,12 @@ public interface Vertex {
 		}
 
 		/**
-		 * Extracts this component from a vertex and appends it to the given buffer.
-		 * @param vertex		Vertex
-		 * @param fb			Destination buffer
+		 * Maps the given vertex to this component.
+		 * @param vertex Vertex
+		 * @return Component or {@code null} if not present
 		 */
-		private void buffer(Vertex vertex, FloatBuffer fb) {
-			mapper.apply(vertex).buffer(fb);
+		public Bufferable map(Vertex vertex) {
+			return mapper.apply(vertex);
 		}
 	}
 
@@ -147,37 +144,11 @@ public interface Vertex {
 		 */
 		public boolean matches(Vertex vertex) {
 			for(Component c : layout) {
-				if(c.mapper.apply(vertex) == null) {
+				if(c.map(vertex) == null) {
 					return false;
 				}
 			}
 			return true;
-		}
-
-		/**
-		 * Creates and populates an interleaved buffer containing the given vertex data.
-		 * @param vertices Vertex data
-		 * @return New buffer
-		 */
-		public ByteBuffer buffer(List<Vertex> vertices) {
-			// Create buffer
-			final ByteBuffer bb = BufferFactory.byteBuffer(size * Float.BYTES * vertices.size());
-
-			// Buffer vertices
-			final FloatBuffer fb = bb.asFloatBuffer();
-			vertices.forEach(v -> buffer(v, fb));
-			fb.flip();
-
-			return bb;
-		}
-
-		/**
-		 * Buffers the components of a vertex to the given buffer according to this layout.
-		 * @param vertex		Vertex
-		 * @param buffer		Output buffer
-		 */
-		private void buffer(Vertex vertex, FloatBuffer buffer) {
-			layout.forEach(c -> c.buffer(vertex, buffer));
 		}
 
 		@Override

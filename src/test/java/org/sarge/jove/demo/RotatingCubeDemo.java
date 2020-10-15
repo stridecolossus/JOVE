@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -38,7 +37,6 @@ import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
-import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.Loader;
 import org.sarge.jove.util.MathsUtil;
 
@@ -49,17 +47,15 @@ public class RotatingCubeDemo {
 
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
-		final Path dir = Paths.get("./src/test/resources"); // /thiswayup.jpg");
+		final Path dir = Paths.get("./src/test/resources");
 		final var src = Loader.DataSource.of(dir);
 		final var loader = Loader.of(src, new ImageData.Loader());
-//		final ImageData image = loader.load("heightmap.gif"); // "thiswayup.jpg");
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
 
 		// Copy image to staging buffer
-		final ByteBuffer bb = image.buffer();
-		final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
-		staging.load(bb);
+		final VertexBuffer staging = VertexBuffer.staging(dev, image.length());
+		staging.load(image);
 
 		// Create texture
 		final Image texture = new Image.Builder(dev)
@@ -238,47 +234,18 @@ public class RotatingCubeDemo {
 
 		//////////////////
 
-		/*
-		// Build triangle vertices
-		final Vertex[] vertices2 = {
-				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_LEFT).build(),
-				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
-				new Vertex.Builder().position(new Point(+0.5f, -0.5f, -0.5f)).coords(Coordinate2D.TOP_RIGHT).build(),
-				new Vertex.Builder().position(new Point(+0.5f, +0.5f, -0.5f)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
-
-//				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0.75f)).coords(Coordinate2D.TOP_LEFT).build(),
-//				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0.75f)).coords(Coordinate2D.BOTTOM_LEFT).build(),
-//				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
-//				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
-
-//				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-//				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
-//				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
-//				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).colour(new Colour(1, 1, 1, 1)).build(),
-
-//				new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-//				new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
-//				new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
-		};
-		 */
-
-
-//		// Define vertex layout
-//		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
-
 		// Buffer cube
 		final Model cube = CubeBuilder.create();
-		final ByteBuffer bb = cube.buffer();
 
 		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
+		final VertexBuffer staging = VertexBuffer.staging(dev, cube.length());
 
 		// Load to staging
-		staging.load(bb);
+		staging.load(cube);
 
 		// Create device VBO
 		final VertexBuffer dest = new VertexBuffer.Builder(dev)
-				.length(bb.capacity())
+				.length(cube.size())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -287,7 +254,6 @@ public class RotatingCubeDemo {
 		// Copy
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
 		ImmediateCommand.of(staging.copy(dest)).submit(copyPool, true);
-
 		staging.destroy();
 
 		//////////////////
@@ -330,11 +296,8 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Load the projection matrix
-		final ByteBuffer projBuffer = BufferFactory.byteBuffer(uniformLength);
-		final var fb = projBuffer.asFloatBuffer();
-
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-		proj.buffer(fb);
+		uniform.load(proj, 0);
 
 /*
 		final Camera cam = new Camera();
@@ -343,7 +306,7 @@ public class RotatingCubeDemo {
 		cam.move(new Point(0, 0, -1));
 		cam.look(Point.ORIGIN);
 */
-		final Matrix axes = new Matrix.Builder()
+		final Matrix pos = new Matrix.Builder()
 				.identity()
 				.row(0, Vector.X_AXIS)
 				.row(1, Vector.Y_AXIS.invert())
@@ -355,23 +318,8 @@ public class RotatingCubeDemo {
 				.column(3, new Point(0, 0, -3))
 				.build();
 
-		final Matrix view = axes.multiply(trans);
-		view.buffer(fb);
-
-//		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
-//		final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, MathsUtil.DEGREES_TO_RADIANS * 30);
-//		final Matrix rot = rotX.multiply(rotY);
-//		rot.buffer(fb);
-		Matrix.IDENTITY.buffer(fb);
-
-//		System.out.println("camera\n"+cam.matrix()+"\n"+cam.direction());
-//		System.out.println("cm\n"+cm);
-
-//		System.out.println("projection\n"+p);
-//		final Matrix m = proj.multiply(view).multiply(rot); // cam.matrix());
-//		System.out.println("result\n"+m);
-
-		uniform.load(projBuffer);
+		final Matrix view = pos.multiply(trans);
+		uniform.load(view, view.length());
 
 		// Create uniform buffer per swapchain image
 //		final VertexBuffer[] uniforms = new VertexBuffer[3];
@@ -454,22 +402,15 @@ public class RotatingCubeDemo {
 
 		///////////////////
 
-//		final float angle = (System.currentTimeMillis() % 5000) / 5000f * MathsUtil.TWO_PI;
-
-
 		final int size = 4 * 4 * Float.BYTES;
 		final long period = 5000;
-		final ByteBuffer rotBuffer = BufferFactory.byteBuffer(size);
 		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
 
 		for(int n = 0; n < 1000; ++n) {
-
 			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
 			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
 			final Matrix rot = rotY.multiply(rotX);
-			rot.buffer(rotBuffer.asFloatBuffer());
-			uniform.load(rotBuffer, 2 * size);
-			rotBuffer.clear();
+			uniform.load(rot, 2 * size);
 
 			final int index = chain.acquire(null, null);
 

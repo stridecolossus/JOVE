@@ -7,12 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Bufferable;
 
 /**
  * A <i>model</i> is comprised of a list of vertices that can be rendered according to a {@link Primitive} and {@link Vertex.Layout}.
  * @author Sarge
  */
-public class Model {
+public class Model implements Bufferable {
 	/**
 	 * Creates a model.
 	 * @param primitive		Drawing primitive
@@ -72,13 +73,18 @@ public class Model {
 		return vertices.size();
 	}
 
-	/**
-	 * Converts this model to an interleaved floating-point buffer.
-	 * @return New buffered model
-	 * @see Vertex.Layout#buffer(List)
-	 */
-	public ByteBuffer buffer() {
-		return layout.buffer(vertices);
+	@Override
+	public long length() {
+		return vertices.size() * layout.size() * Float.BYTES;
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		for(Vertex v : vertices) {
+			for(Vertex.Component c : layout.components()) {
+				c.map(v).buffer(buffer);
+			}
+		}
 	}
 
 	@Override

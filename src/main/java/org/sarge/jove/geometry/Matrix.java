@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.jove.util.Check.oneOrMore;
 
-import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.common.Bufferable;
@@ -143,8 +143,15 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public void buffer(FloatBuffer buffer) {
-		buffer.put(matrix);
+	public long length() {
+		return order * order * Float.BYTES;
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		for(float f : matrix) {
+			buffer.putFloat(f);
+		}
 	}
 
 	/**

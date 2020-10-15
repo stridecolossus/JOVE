@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -31,7 +32,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 * @param len Buffer length (bytes)
 	 * @return New staging buffer
 	 */
-	public static VertexBuffer staging(LogicalDevice dev, int len) {
+	public static VertexBuffer staging(LogicalDevice dev, long len) {
 		return new VertexBuffer.Builder(dev)
 				.length(len)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
@@ -64,24 +65,27 @@ public class VertexBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Loads the given source buffer to this vertex buffer.
-	 * @param src Source buffer
-	 * @throws IllegalStateException if the given buffer exceeds the size of this vertex buffer
+	 * Loads the given bufferable object to this vertex buffer.
+	 * @param obj Bufferable object
+	 * @throws IllegalStateException if the size of given object exceeds the length of this vertex buffer
 	 */
-	public void load(ByteBuffer src) {
-		load(src, 0);
+	public void load(Bufferable obj) {
+		load(obj, 0);
 	}
 
 	/**
-	 * Loads the given source buffer to this vertex buffer.
-	 * @param src 			Source buffer
-	 * @param offset		Offset into this buffer
-	 * @throws IllegalStateException if the given buffer size and offset exceeds the length of this vertex buffer
+	 * Loads the given bufferable object to this vertex buffer at the specified offset.
+	 * @param obj 			Bufferable object
+	 * @param offset		Offset into this vertex buffer (bytes)
+	 * @throws IllegalStateException if the length of given bufferable object exceeds the length of this vertex buffer
 	 */
-	public void load(ByteBuffer src, int offset) {
+	public void load(Bufferable obj, long offset) {
 		// Check buffer
-		final int size = src.remaining();
-		if(offset + size > len) throw new IllegalStateException(String.format("Buffer exceeds size of this VBO: offset=%d size=%d this=%d", offset, size, this));
+		final long size = obj.length();
+		Check.zeroOrMore(offset);
+		if(offset + size > len) {
+			throw new IllegalStateException(String.format("Buffer exceeds size of this VBO: offset=%d size=%d this=%s", offset, size, this));
+		}
 
 		// Map buffer memory
 		final LogicalDevice dev = this.device();
@@ -89,12 +93,15 @@ public class VertexBuffer extends AbstractVulkanObject {
 		final PointerByReference data = lib.factory().pointer();
 		check(lib.vkMapMemory(dev.handle(), mem, offset, size, 0, data));
 
-		// Copy to memory
-		final ByteBuffer bb = data.getValue().getByteBuffer(0, size);
-		bb.put(src);
-
-		// Cleanup
-		lib.vkUnmapMemory(dev.handle(), mem);
+		try {
+			// Copy to memory
+			final ByteBuffer bb = data.getValue().getByteBuffer(0, size);
+			obj.buffer(bb);
+		}
+		finally {
+			// Cleanup
+			lib.vkUnmapMemory(dev.handle(), mem);
+		}
 	}
 
 	// TODO - cyclic dependency to DS
@@ -203,7 +210,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 		 * Sets the length of this buffer.
 		 * @param len Buffer length (bytes)
 		 */
-		public Builder length(int len) {
+		public Builder length(long len) {
 			this.len = oneOrMore(len);
 			return this;
 		}

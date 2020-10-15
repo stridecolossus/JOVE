@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
@@ -27,7 +28,6 @@ import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
-import org.sarge.jove.util.BufferFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -39,14 +39,14 @@ public class VertexBufferTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		mem = new Pointer(3);
-		buffer = new VertexBuffer(new Pointer(1), dev, 2, mem);
+		buffer = new VertexBuffer(new Pointer(1), dev, 3, mem);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(new Handle(new Pointer(1)), buffer.handle());
 		assertEquals(dev, buffer.device());
-		assertEquals(2, buffer.length());
+		assertEquals(3, buffer.length());
 	}
 
 	@Test
@@ -79,7 +79,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		final VkBufferCopy[] array = captor.getValue();
 		assertNotNull(array);
 		assertEquals(1, array.length);
-		assertEquals(2, array[0].size);
+		assertEquals(3, array[0].size);
 	}
 
 	@Test
@@ -88,30 +88,34 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		final ReferenceFactory factory = mock(ReferenceFactory.class);
 		when(lib.factory()).thenReturn(factory);
 
-		// Mock vertex buffer memory
+		// Init buffer memory
 		final PointerByReference ref = mock(PointerByReference.class);
-		final Pointer ptr = mock(Pointer.class);
-		final ByteBuffer bb = mock(ByteBuffer.class);
+		final Pointer data = mock(Pointer.class);
 		when(factory.pointer()).thenReturn(ref);
-		when(ref.getValue()).thenReturn(ptr);
-		when(ptr.getByteBuffer(0, 1)).thenReturn(bb);
+		when(ref.getValue()).thenReturn(data);
+
+		// Init internal buffer
+		final ByteBuffer bb = mock(ByteBuffer.class);
+		when(data.getByteBuffer(0, 1)).thenReturn(bb);
 
 		// Load buffer
-		final ByteBuffer src = BufferFactory.byteBuffer(1);
-		buffer.load(src);
+		final Bufferable obj = mock(Bufferable.class);
+		when(obj.length()).thenReturn(1L);
+		buffer.load(obj);
 
 		// Check memory is mapped
-		verify(lib).vkMapMemory(dev.handle(), mem, 0, 1, 0, ref);
+		verify(lib).vkMapMemory(dev.handle(), mem, 0, 1L, 0, ref);
 		verify(lib).vkUnmapMemory(dev.handle(), mem);
 
 		// Check buffer was copied to memory
-		verify(bb).put(src);
+		verify(obj).buffer(bb);
 	}
 
 	@Test
 	void loadBufferTooLarge() {
-		final ByteBuffer src = BufferFactory.byteBuffer(999);
-		assertThrows(IllegalStateException.class, () -> buffer.load(src));
+		//final ByteBuffer src = BufferFactory.byteBuffer(999);
+		final Bufferable obj = mock(Bufferable.class);
+		assertThrows(IllegalStateException.class, () -> buffer.load(obj, 4));
 	}
 
 	@Test

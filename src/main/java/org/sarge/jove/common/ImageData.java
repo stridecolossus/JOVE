@@ -21,7 +21,7 @@ import org.sarge.jove.util.Check;
  * Wrapper for general image data.
  * @author Sarge
  */
-public interface ImageData {
+public interface ImageData extends Bufferable {
 	/**
 	 * @return Image dimensions
 	 */
@@ -33,11 +33,6 @@ public interface ImageData {
 	List<Integer> components();
 
 	/**
-	 * @return Image data
-	 */
-	ByteBuffer buffer();
-
-	/**
 	 * Default implementation.
 	 */
 	class DefaultImageData implements ImageData {
@@ -47,7 +42,7 @@ public interface ImageData {
 
 		/**
 		 * Constructor.
-		 * @param size				Dimensions
+		 * @param size				Size of this image
 		 * @param components		Component sizes
 		 * @param bytes				Image data
 		 */
@@ -72,12 +67,14 @@ public interface ImageData {
 		}
 
 		@Override
-		public ByteBuffer buffer() {
-			if(!data.hasRemaining()) {
-				data.flip();
-			}
+		public void buffer(ByteBuffer buffer) {
+			buffer.put(data);
+			data.flip();
+		}
 
-			return data.asReadOnlyBuffer();
+		@Override
+		public long length() {
+			return data.capacity();
 		}
 
 		@Override

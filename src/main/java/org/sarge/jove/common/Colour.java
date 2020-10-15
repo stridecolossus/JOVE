@@ -2,7 +2,7 @@ package org.sarge.jove.common;
 
 import static org.sarge.jove.util.Check.isPercentile;
 
-import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.util.Check;
@@ -94,8 +94,13 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	@Override
-	public void buffer(FloatBuffer buffer) {
-		buffer.put(red).put(green).put(blue).put(alpha);
+	public long length() {
+		return SIZE * Float.BYTES;
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
 	}
 
 	/**

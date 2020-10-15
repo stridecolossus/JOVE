@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.function.UnaryOperator;
 
@@ -97,8 +97,13 @@ public class Tuple implements Bufferable {
 	}
 
 	@Override
-	public void buffer(FloatBuffer buffer) {
-		buffer.put(x).put(y).put(z);
+	public long length() {
+		return SIZE * Float.BYTES;
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		buffer.putFloat(x).putFloat(y).putFloat(z);
 	}
 
 	@Override

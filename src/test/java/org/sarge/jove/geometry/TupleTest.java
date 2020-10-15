@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
-import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,9 +21,11 @@ public class TupleTest {
 
 	@Test
 	public void constructor() {
-		assertFloatEquals(1, tuple.x);
-		assertFloatEquals(2, tuple.y);
-		assertFloatEquals(3, tuple.z);
+		assertEquals(1, tuple.x);
+		assertEquals(2, tuple.y);
+		assertEquals(3, tuple.z);
+		assertEquals(3, Tuple.SIZE);
+		assertEquals(3 * Float.BYTES, tuple.length());
 	}
 
 	@Test
@@ -60,12 +62,12 @@ public class TupleTest {
 
 	@Test
 	public void buffer() {
-		final FloatBuffer buffer = FloatBuffer.allocate(4);
+		final ByteBuffer buffer = ByteBuffer.allocate(3 * Float.BYTES);
 		tuple.buffer(buffer);
 		buffer.flip();
-		assertFloatEquals(tuple.x, buffer.get());
-		assertFloatEquals(tuple.y, buffer.get());
-		assertFloatEquals(tuple.z, buffer.get());
+		assertFloatEquals(tuple.x, buffer.getFloat());
+		assertFloatEquals(tuple.y, buffer.getFloat());
+		assertFloatEquals(tuple.z, buffer.getFloat());
 	}
 
 	@Test

@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -51,8 +51,13 @@ public interface TextureCoordinate extends Bufferable {
 		}
 
 		@Override
-		public final void buffer(FloatBuffer buffer) {
-			buffer.put(toArray());
+		public long length() {
+			return Float.BYTES;
+		}
+
+		@Override
+		public void buffer(ByteBuffer buffer) {
+			buffer.putFloat(u);
 		}
 
 		@Override
@@ -115,6 +120,16 @@ public interface TextureCoordinate extends Bufferable {
 		}
 
 		@Override
+		public long length() {
+			return 2 * Float.BYTES;
+		}
+
+		@Override
+		public void buffer(ByteBuffer buffer) {
+			buffer.putFloat(u).putFloat(v);
+		}
+
+		@Override
 		public boolean equals(Object obj) {
 			return
 					(obj instanceof Coordinate2D that) &&
@@ -143,6 +158,16 @@ public interface TextureCoordinate extends Bufferable {
 		@Override
 		public float[] toArray() {
 			return new float[]{u, v, w};
+		}
+
+		@Override
+		public long length() {
+			return 3 * Float.BYTES;
+		}
+
+		@Override
+		public void buffer(ByteBuffer buffer) {
+			buffer.putFloat(u).putFloat(v).putFloat(w);
 		}
 
 		@Override
