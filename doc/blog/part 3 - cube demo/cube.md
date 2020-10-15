@@ -50,8 +50,15 @@ public final class Matrix implements Bufferable {
 	}
 	
 	@Override
-	public void buffer(FloatBuffer buffer) {
-		buffer.put(matrix);
+	public long length() {
+		return order * order * Float.BYTES;
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		for(float f : matrix) {
+			buffer.putFloat(f);
+		}
 	}
 
 	/**
@@ -381,9 +388,8 @@ final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 # Upload
 
 ```java
-final ByteBuffer proj = BufferFactory.byteBuffer(uniformLength);
-// TODO - Projection.DEFAULT.matrix(1, 2, rect.size()).buffer(proj.asFloatBuffer());
-Matrix.IDENTITY.buffer(proj.asFloatBuffer());
+// final Matrix proj = Projection.DEFAULT.matrix(1, 2, rect.size());
+final Matrix proj = Matrix.IDENTITY;
 uniform.load(proj);
 ```
 
@@ -460,7 +466,7 @@ public final class Vector extends Tuple {
 # View Transform
 
 ```java
-final Matrix rot = new Matrix.Builder()
+final Matrix pos = new Matrix.Builder()
 		.identity()
 		.row(0, Vector.X_AXIS)
 		.row(1, Vector.Y_AXIS.invert())
@@ -472,15 +478,15 @@ final Matrix trans = new Matrix.Builder()
 		.column(3, new Point(0, 0, -1))
 		.build();
 
-final Matrix view = rot.multiply(trans);
+final Matrix view = pos.multiply(trans);
 ```
 
 # Perspective Transform
 
 ```java
-final Matrix projection = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-final Matrix matrix = projection.multiply(view);
-matrix.buffer(proj.asFloatBuffer());
+final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
+final Matrix matrix = proj.multiply(view);
+uniform.load(matrix);
 ```
 
 # Vertices
@@ -508,8 +514,25 @@ public class Model {
 
 	...
 
-	public ByteBuffer buffer() {
-		return layout.buffer(vertices);
+	/**
+	 * @return Number of vertices in this model
+	 */
+	public int size() {
+		return vertices.size();
+	}
+
+	@Override
+	public long length() {
+		return vertices.size() * layout.size() * Float.BYTES;
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		for(Vertex v : vertices) {
+			for(Vertex.Component c : layout.components()) {
+				c.map(v).buffer(buffer);
+			}
+		}
 	}
 
 	public static class Builder {
@@ -627,9 +650,18 @@ public class CubeBuilder {
 # Cube Model
 
 ```java
-Model cube = CubeBuilder.create();
-ByteBuffer bb = cube.buffer();
-Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.size(), 1, 0, 0);
+// Create cube
+final Model cube = CubeBuilder.create();
+
+// Create staging VBO
+final VertexBuffer staging = VertexBuffer.staging(dev, cube.length());
+
+// Load to staging
+staging.load(cube);
+
+...
+
+final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.size(), 1, 0, 0);
 ```
 
 # Primitive
@@ -715,24 +747,17 @@ Matrix matrix = proj.multiply(view).multiply(rot);
 
 ```java
 // Create UBO
-int uniformLength = 3 * 4 * 4 * Float.BYTES;
-VertexBuffer uniform = ...
-ByteBuffer bb = BufferFactory.byteBuffer(uniformLength);
-FloatBuffer fb = bb.asFloatBuffer();
+final int uniformLength = 3 * 4 * 4 * Float.BYTES;
+final VertexBuffer uniform = ...
 
 // Upload projection matrix
-Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-proj.buffer(fb);
+final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
+uniform.load(proj, 0);
 
 // Upload view matrix
 ...
-view.buffer(fb);
-
-// Apply rotation
-Matrix.IDENTITY.buffer(fb);
-
-// Update UBO
-uniform.load(bb);
+final Matrix view = pos.multiply(trans);
+uniform.load(view, view.length());
 ```
 
 # Updated Shader
@@ -758,40 +783,12 @@ void main() {
 }
 ```
 
-# Partial UBO Update
-
-```java
-public void load(ByteBuffer src) {
-	load(src, 0);
-}
-
-public void load(ByteBuffer src, int offset) {
-	// Check buffer
-	final int size = src.remaining();
-	if(offset + size > len) ...
-
-	// Map buffer memory
-	final LogicalDevice dev = this.device();
-	final VulkanLibrary lib = dev.library();
-	final PointerByReference data = lib.factory().pointer();
-	check(lib.vkMapMemory(dev.handle(), mem, offset, size, 0, data));
-
-	// Copy to memory
-	final ByteBuffer bb = data.getValue().getByteBuffer(0, size);
-	bb.put(src);
-
-	// Cleanup
-	lib.vkUnmapMemory(dev.handle(), mem);
-}
-```
-
 # Animation
 
 ```java
 // Init rotation animation
 final int size = 4 * 4 * Float.BYTES;
 final long period = 5000;
-final ByteBuffer rotBuffer = BufferFactory.byteBuffer(size);
 final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
 
 // Render loop
@@ -800,9 +797,7 @@ for(int n = 0; n < 1000; ++n) {
 	final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
 	final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
 	final Matrix rot = rotY.multiply(rotX);
-	rot.buffer(rotBuffer.asFloatBuffer());
-	uniform.load(rotBuffer, 2 * size);
-	rotBuffer.clear();
+	uniform.load(rot, 2 * size);
 	
 	// Acquire next frame from the swapchain
 	...
