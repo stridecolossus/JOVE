@@ -8,7 +8,7 @@ public enum Primitive {
 	/**
 	 * Triangles.
 	 */
-	TRIANGLE_LIST(3),
+	TRIANGLES(3),
 
 	/**
 	 * Strip of triangles.
@@ -23,12 +23,12 @@ public enum Primitive {
 	/**
 	 * Points.
 	 */
-	POINT_LIST(1),
+	POINTS(1),
 
 	/**
 	 * Lines.
 	 */
-	LINE_LIST(2),
+	LINES(2),
 
 	/**
 	 * Strip of lines.
@@ -67,7 +67,7 @@ public enum Primitive {
 	 */
 	public boolean hasNormals() {
 		return switch(this) {
-		case TRIANGLE_LIST, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
+		case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
 		default -> false;
 		};
 	}

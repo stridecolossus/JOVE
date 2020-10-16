@@ -18,7 +18,7 @@ public class CubeBuilderTest {
 	void build() {
 		final Model cube = builder.build();
 		assertNotNull(cube);
-		assertEquals(Primitive.TRIANGLE_LIST, cube.primitive());
+		assertEquals(Primitive.TRIANGLES, cube.primitive());
 		assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE), cube.layout());
 		assertEquals(2 * 3 * 6, cube.size());
 	}

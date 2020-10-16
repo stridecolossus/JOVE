@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.util.BufferFactory;
 import org.sarge.jove.util.Loader;
 
 import com.sun.jna.Pointer;
@@ -26,15 +25,10 @@ public class Shader extends AbstractVulkanObject {
 	 * @return New shader
 	 */
 	public static Shader create(LogicalDevice dev, byte[] code) {
-		// Buffer shader code
-		final ByteBuffer buffer = BufferFactory.byteBuffer(code.length);
-		buffer.put(code);
-		buffer.flip();
-
 		// Create descriptor
 		final VkShaderModuleCreateInfo info = new VkShaderModuleCreateInfo();
 		info.codeSize = code.length;
-		info.pCode = buffer;
+		info.pCode = ByteBuffer.wrap(code);
 
 		// Allocate shader
 		final VulkanLibrary lib = dev.library();

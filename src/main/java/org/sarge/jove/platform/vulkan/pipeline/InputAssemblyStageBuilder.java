@@ -34,11 +34,11 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
 
 	private static VkPrimitiveTopology map(Primitive primitive) {
 		return switch(primitive) {
-			case LINE_LIST -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+			case LINES -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 			case LINE_STRIP -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-			case POINT_LIST -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+			case POINTS -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 			case TRIANGLE_FAN -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
-			case TRIANGLE_LIST-> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			case TRIANGLES-> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 			case TRIANGLE_STRIP -> VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 			default -> throw new UnsupportedOperationException("Unsupported drawing primitive: " + primitive);
 		};

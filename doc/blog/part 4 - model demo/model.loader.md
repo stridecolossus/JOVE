@@ -192,3 +192,5 @@ private void init() {
 # Indexed Model
 
 
+
+To perform this de-duplication we will introduce an _index buffer_ that references the vertices in the model

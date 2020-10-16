@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -48,12 +48,12 @@ public class MatrixTest {
 
 	@Test
 	public void buffer() {
-		final FloatBuffer buffer = FloatBuffer.allocate(2 * 2);
+		final ByteBuffer buffer = ByteBuffer.allocate(2 * 2 * Float.BYTES);
 		matrix.buffer(buffer);
 		buffer.flip();
 		for(int r = 0; r < 2; ++r) {
 			for(int c = 0; c < 2; ++c) {
-				assertEquals(matrix.get(c, r), buffer.get());		// Note - row-column reversed
+				assertEquals(matrix.get(c, r), buffer.getFloat());		// Note - row-column reversed
 			}
 		}
 	}

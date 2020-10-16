@@ -8,7 +8,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 
 /**
- * Builder for a cube constructed as a {@link Primitive#TRIANGLE_LIST}.
+ * Builder for a cube constructed as a {@link Primitive#TRIANGLES}.
  * @author Sarge
  */
 public class CubeBuilder {
@@ -83,7 +83,7 @@ public class CubeBuilder {
 	 */
 	public Model build() {
 		// Init builder
-		final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLE_LIST).layout(LAYOUT);
+		final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
 
 		// Add two triangles for each cube face
 		for(int[] face : FACES) {

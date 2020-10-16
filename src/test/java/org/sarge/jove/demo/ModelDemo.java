@@ -3,6 +3,7 @@ package org.sarge.jove.demo;
 import static java.util.stream.Collectors.toList;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,8 +18,8 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.CubeBuilder;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Primitive;
+import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
@@ -43,7 +44,7 @@ import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.ptr.PointerByReference;
 
-public class RotatingCubeDemo {
+public class ModelDemo {
 
 
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
@@ -236,18 +237,18 @@ public class RotatingCubeDemo {
 		//////////////////
 
 		// Buffer cube
-		final Model cube = CubeBuilder.create();
-		final Bufferable cubeBuffer = cube.vertices();
+		//final Model cube = CubeBuilder.create();
+		final Bufferable cube = Bufferable.read(new FileInputStream("./src/test/resources/chalet.vbo"));
 
 		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, cubeBuffer.length());
+		final VertexBuffer staging = VertexBuffer.staging(dev, cube.length());
 
 		// Load to staging
-		staging.load(cubeBuffer);
+		staging.load(cube);
 
 		// Create device VBO
 		final VertexBuffer dest = new VertexBuffer.Builder(dev)
-				.length(cubeBuffer.length())
+				.length(cube.length())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -355,10 +356,12 @@ public class RotatingCubeDemo {
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
-					.binding(cube.layout())
+					//.binding(cube.layout())
+					.binding(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE))
 					.build()
 				.assembly()
-					.topology(cube.primitive())
+//					.topology(cube.primitive())
+					.topology(Primitive.TRIANGLES)
 					.build()
 				.viewport(rect)
 				.shader()
@@ -384,7 +387,7 @@ public class RotatingCubeDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.size(), 1, 0, 0);		// TODO - builder
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, /*cube.size(),*/ 1500000, 1, 0, 0);
 		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);

@@ -7,14 +7,14 @@ import org.junit.jupiter.api.Test;
 public class PrimitiveTest {
 	@Test
 	public void triangle() {
-		assertEquals(3, Primitive.TRIANGLE_LIST.size());
-		assertEquals(false, Primitive.TRIANGLE_LIST.isStrip());
-		assertEquals(true, Primitive.TRIANGLE_LIST.hasNormals());
-		assertEquals(true, Primitive.TRIANGLE_LIST.isValidVertexCount(0));
-		assertEquals(false, Primitive.TRIANGLE_LIST.isValidVertexCount(2));
-		assertEquals(true, Primitive.TRIANGLE_LIST.isValidVertexCount(3));
-		assertEquals(false, Primitive.TRIANGLE_LIST.isValidVertexCount(4));
-		assertEquals(true, Primitive.TRIANGLE_LIST.isValidVertexCount(6));
+		assertEquals(3, Primitive.TRIANGLES.size());
+		assertEquals(false, Primitive.TRIANGLES.isStrip());
+		assertEquals(true, Primitive.TRIANGLES.hasNormals());
+		assertEquals(true, Primitive.TRIANGLES.isValidVertexCount(0));
+		assertEquals(false, Primitive.TRIANGLES.isValidVertexCount(2));
+		assertEquals(true, Primitive.TRIANGLES.isValidVertexCount(3));
+		assertEquals(false, Primitive.TRIANGLES.isValidVertexCount(4));
+		assertEquals(true, Primitive.TRIANGLES.isValidVertexCount(6));
 	}
 
 	@Test
@@ -41,23 +41,23 @@ public class PrimitiveTest {
 
 	@Test
 	public void point() {
-		assertEquals(1, Primitive.POINT_LIST.size());
-		assertEquals(false, Primitive.POINT_LIST.isStrip());
-		assertEquals(false, Primitive.POINT_LIST.hasNormals());
-		assertEquals(true, Primitive.POINT_LIST.isValidVertexCount(0));
-		assertEquals(true, Primitive.POINT_LIST.isValidVertexCount(1));
-		assertEquals(true, Primitive.POINT_LIST.isValidVertexCount(2));
+		assertEquals(1, Primitive.POINTS.size());
+		assertEquals(false, Primitive.POINTS.isStrip());
+		assertEquals(false, Primitive.POINTS.hasNormals());
+		assertEquals(true, Primitive.POINTS.isValidVertexCount(0));
+		assertEquals(true, Primitive.POINTS.isValidVertexCount(1));
+		assertEquals(true, Primitive.POINTS.isValidVertexCount(2));
 	}
 
 	@Test
 	public void line() {
-		assertEquals(2, Primitive.LINE_LIST.size());
-		assertEquals(false, Primitive.LINE_LIST.isStrip());
-		assertEquals(false, Primitive.LINE_LIST.hasNormals());
-		assertEquals(true, Primitive.LINE_LIST.isValidVertexCount(0));
-		assertEquals(false, Primitive.LINE_LIST.isValidVertexCount(1));
-		assertEquals(true, Primitive.LINE_LIST.isValidVertexCount(0));
-		assertEquals(true, Primitive.LINE_LIST.isValidVertexCount(2));
+		assertEquals(2, Primitive.LINES.size());
+		assertEquals(false, Primitive.LINES.isStrip());
+		assertEquals(false, Primitive.LINES.hasNormals());
+		assertEquals(true, Primitive.LINES.isValidVertexCount(0));
+		assertEquals(false, Primitive.LINES.isValidVertexCount(1));
+		assertEquals(true, Primitive.LINES.isValidVertexCount(0));
+		assertEquals(true, Primitive.LINES.isValidVertexCount(2));
 	}
 
 	@Test

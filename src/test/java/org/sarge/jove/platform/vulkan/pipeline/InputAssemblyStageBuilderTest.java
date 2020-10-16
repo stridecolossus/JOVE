@@ -21,7 +21,7 @@ public class InputAssemblyStageBuilderTest {
 	void build() {
 		// Build descriptor
 		final var info = builder
-				.topology(Primitive.LINE_LIST)
+				.topology(Primitive.LINES)
 				.restart(true)
 				.result();
 
