@@ -94,11 +94,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	@Override
-	public long length() {
-		return SIZE * Float.BYTES;
-	}
-
-	@Override
 	public void buffer(ByteBuffer buffer) {
 		buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
 	}

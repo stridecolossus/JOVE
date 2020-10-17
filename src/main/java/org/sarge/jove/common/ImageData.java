@@ -21,7 +21,7 @@ import org.sarge.jove.util.Check;
  * Wrapper for general image data.
  * @author Sarge
  */
-public interface ImageData extends Bufferable {
+public interface ImageData {
 	/**
 	 * @return Image dimensions
 	 */
@@ -31,6 +31,11 @@ public interface ImageData extends Bufferable {
 	 * @return Component sizes
 	 */
 	List<Integer> components();
+
+	/**
+	 * @return Image data
+	 */
+	ByteBuffer data();
 
 	/**
 	 * Default implementation.
@@ -46,14 +51,14 @@ public interface ImageData extends Bufferable {
 		 * @param components		Component sizes
 		 * @param bytes				Image data
 		 */
-		public DefaultImageData(Dimensions size, int[] components, ByteBuffer data) {
+		public DefaultImageData(Dimensions size, List<Integer> components, ByteBuffer data) {
 			Check.notEmpty(components);
-			final int expected = size.width() * size.height() * components.length; // TODO - assumes 8 bits per component
+			final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
 			if(expected != data.capacity()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
 
 			this.size = notNull(size);
-			this.components = Arrays.stream(components).boxed().collect(toList());
-			this.data = notNull(data);
+			this.components = List.copyOf(components);
+			this.data = data.asReadOnlyBuffer();
 		}
 
 		@Override
@@ -67,14 +72,8 @@ public interface ImageData extends Bufferable {
 		}
 
 		@Override
-		public void buffer(ByteBuffer buffer) {
-			buffer.put(data);
-			data.flip();
-		}
-
-		@Override
-		public long length() {
-			return data.capacity();
+		public ByteBuffer data() {
+			return data.rewind();
 		}
 
 		@Override
@@ -144,11 +143,17 @@ public interface ImageData extends Bufferable {
 				default -> throw new RuntimeException("Unsupported image format: " + image);
 			};
 
+			// Buffer image data
+			final DataBufferByte data = (DataBufferByte) result.getRaster().getDataBuffer();
+			final ByteBuffer buffer = Bufferable.allocate(data.getData());
+
+			// Enumerate image components
+			final int[] components = result.getColorModel().getComponentSize();
+			final var list = Arrays.stream(components).boxed().collect(toList());
+
 			// Create image wrapper
 			final Dimensions dim = new Dimensions(result.getWidth(), result.getHeight());
-			final int[] components = result.getColorModel().getComponentSize();
-			final DataBufferByte data = (DataBufferByte) result.getRaster().getDataBuffer();
-			return new DefaultImageData(dim, components, ByteBuffer.wrap(data.getData()));
+			return new DefaultImageData(dim, list, buffer);
 		}
 
 		/**

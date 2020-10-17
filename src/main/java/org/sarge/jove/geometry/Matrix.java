@@ -143,11 +143,6 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public long length() {
-		return order * order * Float.BYTES;
-	}
-
-	@Override
 	public void buffer(ByteBuffer buffer) {
 		for(float f : matrix) {
 			buffer.putFloat(f);

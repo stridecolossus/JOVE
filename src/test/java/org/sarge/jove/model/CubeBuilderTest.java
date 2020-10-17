@@ -20,7 +20,7 @@ public class CubeBuilderTest {
 		assertNotNull(cube);
 		assertEquals(Primitive.TRIANGLES, cube.primitive());
 		assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE), cube.layout());
-		assertEquals(2 * 3 * 6, cube.size());
+		assertEquals((2 * 3) * 6, cube.count());
 	}
 
 	// TODO - clockwise test

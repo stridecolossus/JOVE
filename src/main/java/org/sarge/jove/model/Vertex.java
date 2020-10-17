@@ -2,6 +2,7 @@ package org.sarge.jove.model;
 
 import static org.sarge.jove.util.Check.notNull;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -86,11 +87,11 @@ public interface Vertex {
 		}
 
 		/**
-		 * Maps the given vertex to this component.
+		 * Extracts this component from the given vertex.
 		 * @param vertex Vertex
-		 * @return Component or {@code null} if not present
+		 * @return Vertex component
 		 */
-		public Bufferable map(Vertex vertex) {
+		protected Bufferable map(Vertex vertex) {
 			return mapper.apply(vertex);
 		}
 	}
@@ -149,6 +150,18 @@ public interface Vertex {
 				}
 			}
 			return true;
+		}
+
+		/**
+		 * Writes a vertex to the given buffer according to this layout.
+		 * @param vertex Vertex
+		 * @param buffer Output buffer
+		 * @throws NullPointerException if the vertex does not match this layout
+		 */
+		public void buffer(Vertex vertex, ByteBuffer buffer) {
+			for(final var c : layout) {
+				c.map(vertex).buffer(buffer);
+			}
 		}
 
 		@Override

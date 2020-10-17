@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.ByteBuffer;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -94,6 +96,24 @@ public class VertexTest {
 		void matches() {
 			assertEquals(true, layout.matches(vertex));
 			assertEquals(false, layout.matches(Vertex.of(Point.ORIGIN)));
+		}
+
+		@Test
+		void buffer() {
+			// Buffer vertex
+			final int len = layout.size() * Float.BYTES;
+			final ByteBuffer buffer = ByteBuffer.allocate(len);
+			layout.buffer(vertex, buffer);
+			assertEquals(len, buffer.limit());
+			assertEquals(len, buffer.position());
+
+			// Check buffer
+			final ByteBuffer expected = ByteBuffer.allocate(len);
+			vertex.position().buffer(expected);
+			vertex.normal().buffer(expected);
+			vertex.coords().buffer(expected);
+			vertex.colour().buffer(expected);
+			assertEquals(expected, buffer);
 		}
 
 		@Test

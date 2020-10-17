@@ -12,14 +12,7 @@ import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
-import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
-import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
-import org.sarge.jove.platform.vulkan.VkColorSpaceKHR;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
-import org.sarge.jove.platform.vulkan.VkQueueFlag;
-import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.Command;
@@ -145,8 +138,15 @@ public class TriangleDemo {
 		// Create pipeline
 		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
+				.layout(new Pipeline.Layout.Builder(dev).build()) // TODO
 				.pass(pass)
+				.assembly()
+					.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+					.build()
 				.viewport(rect)
+				.rasterizer()
+					.frontFace(true)
+					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)

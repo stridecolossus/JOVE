@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
@@ -55,8 +54,8 @@ public class RotatingCubeDemo {
 		final VkFormat format = FormatBuilder.format(image);
 
 		// Copy image to staging buffer
-		final VertexBuffer staging = VertexBuffer.staging(dev, image.length());
-		staging.load(image);
+		final VertexBuffer staging = VertexBuffer.staging(dev, image.data().limit());
+		staging.load(image.data());
 
 		// Create texture
 		final Image texture = new Image.Builder(dev)
@@ -237,17 +236,17 @@ public class RotatingCubeDemo {
 
 		// Buffer cube
 		final Model cube = CubeBuilder.create();
-		final Bufferable cubeBuffer = cube.vertices();
+		final var vertices = cube.vertices();
 
 		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, cubeBuffer.length());
+		final VertexBuffer staging = VertexBuffer.staging(dev, vertices.limit());
 
 		// Load to staging
-		staging.load(cubeBuffer);
+		staging.load(vertices);
 
 		// Create device VBO
 		final VertexBuffer dest = new VertexBuffer.Builder(dev)
-				.length(cubeBuffer.length())
+				.length(vertices.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -299,7 +298,7 @@ public class RotatingCubeDemo {
 
 		// Load the projection matrix
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-		uniform.load(proj, 0);
+		uniform.load(proj);
 
 /*
 		final Camera cam = new Camera();

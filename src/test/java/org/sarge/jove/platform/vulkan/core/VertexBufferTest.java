@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
@@ -96,26 +95,27 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 		// Init internal buffer
 		final ByteBuffer bb = mock(ByteBuffer.class);
-		when(data.getByteBuffer(0, 1)).thenReturn(bb);
+		when(data.getByteBuffer(0, 3)).thenReturn(bb);
 
 		// Load buffer
-		final Bufferable obj = mock(Bufferable.class);
-		when(obj.length()).thenReturn(1L);
+		final ByteBuffer obj = ByteBuffer.allocate(3);
 		buffer.load(obj);
 
 		// Check memory is mapped
-		verify(lib).vkMapMemory(dev.handle(), mem, 0, 1L, 0, ref);
+		verify(lib).vkMapMemory(dev.handle(), mem, 0, 3L, 0, ref);
 		verify(lib).vkUnmapMemory(dev.handle(), mem);
-
-		// Check buffer was copied to memory
-		verify(obj).buffer(bb);
 	}
 
 	@Test
 	void loadBufferTooLarge() {
-		//final ByteBuffer src = BufferFactory.byteBuffer(999);
-		final Bufferable obj = mock(Bufferable.class);
-		assertThrows(IllegalStateException.class, () -> buffer.load(obj, 4));
+		final ByteBuffer obj = ByteBuffer.allocate(999);
+		assertThrows(IllegalStateException.class, () -> buffer.load(obj));
+	}
+
+	@Test
+	void loadInvalidOffset() {
+		final ByteBuffer obj = ByteBuffer.allocate(1);
+		assertThrows(IllegalStateException.class, () -> buffer.load(obj, 3));
 	}
 
 	@Test

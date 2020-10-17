@@ -97,11 +97,6 @@ public class Tuple implements Bufferable {
 	}
 
 	@Override
-	public long length() {
-		return SIZE * Float.BYTES;
-	}
-
-	@Override
 	public void buffer(ByteBuffer buffer) {
 		buffer.putFloat(x).putFloat(y).putFloat(z);
 	}

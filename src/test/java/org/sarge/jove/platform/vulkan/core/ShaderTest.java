@@ -12,7 +12,6 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -48,7 +47,12 @@ public class ShaderTest extends AbstractVulkanTest {
 		final var info = captor.getValue();
 		assertNotNull(info);
 		assertEquals(CODE.length, info.codeSize);
-		assertEquals(ByteBuffer.wrap(CODE), info.pCode);
+
+		// Check code buffer
+		info.pCode.flip();
+		assertNotNull(info.pCode);
+		assertEquals(1, info.pCode.capacity());
+		assertEquals((byte) 42, info.pCode.get());
 	}
 
 	@Test

@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -22,19 +23,29 @@ import org.sarge.jove.common.ImageData.Loader;
 
 public class ImageDataTest {
 	private Dimensions size;
-	private int[] components;
+	private List<Integer> components;
 
 	@BeforeEach
 	void before() {
 		size = new Dimensions(3, 4);
-		components = new int[]{8, 8, 8};
+		components = List.of(8, 8, 8);
 	}
 
 	@Test
 	void constructor() {
+		// Create image
 		final int len = 3 * (3 * 4);
 		final ImageData image = new DefaultImageData(size, components, ByteBuffer.allocate(len));
-		assertEquals(len, image.length());
+		assertEquals(size, image.size());
+		assertEquals(components, image.components());
+
+		// Check data buffer
+		final var data = image.data();
+		assertNotNull(data);
+		assertEquals(len, data.capacity());
+		assertEquals(len, data.limit());
+		assertEquals(0, data.position());
+		assertEquals(true, data.isReadOnly());
 	}
 
 	@Test
@@ -44,7 +55,7 @@ public class ImageDataTest {
 
 	@Test
 	void constructorEmptyComponents() {
-		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, new int[]{}, ByteBuffer.allocate(42)));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, List.of(), ByteBuffer.allocate(42)));
 	}
 
 	@Nested
@@ -75,12 +86,7 @@ public class ImageDataTest {
 			assertEquals(new Dimensions(w, h), image.size());
 			assertNotNull(image.components());
 			assertEquals(components, image.components().size());
-			assertEquals(w * h * image.components().size(), image.length());
-
-			// Check buffer
-			final ByteBuffer buffer = ByteBuffer.allocate((int) image.length());
-			image.buffer(buffer);
-			assertEquals(image.length(), buffer.capacity());
+			assertEquals(w * h * image.components().size(), image.data().capacity());
 		}
 
 		@Test

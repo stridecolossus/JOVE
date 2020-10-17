@@ -401,7 +401,7 @@ public class ObjectModelLoader {
 	//////////////
 
 	@SuppressWarnings("resource")
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		final long start = System.currentTimeMillis();
 		final Bufferable b = Bufferable.read(new FileInputStream("./src/test/resources/chalet.vbo"));
 		System.out.println("duration="+(System.currentTimeMillis()-start));
@@ -409,7 +409,7 @@ public class ObjectModelLoader {
 	}
 
 	@SuppressWarnings({ "resource", "unused" })
-	public static void main2(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		final long start = System.currentTimeMillis();
 		final ObjectModelLoader loader = new ObjectModelLoader();
 
@@ -425,6 +425,7 @@ public class ObjectModelLoader {
 		System.out.println("duration="+(System.currentTimeMillis()-start));
 
 		Bufferable.write(model.vertices(), new FileOutputStream("./src/test/resources/chalet.vbo"));
+		Bufferable.write(model.index().get(), new FileOutputStream("./src/test/resources/chalet.index"));
 		//BufferFactory.write(model.vertices()., out);
 	}
 }

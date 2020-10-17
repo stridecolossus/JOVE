@@ -65,7 +65,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 
 	/**
 	 * Sets the vertex order for front-facing faces.
-	 * @param clockwise Whether the vertex order is clockwise or counter-clockwise (default is {@link VkFrontFace#VK_FRONT_FACE_CLOCKWISE})
+	 * @param clockwise Whether the vertex order is clockwise or counter-clockwise (default is {@link VkFrontFace#VK_FRONT_FACE_COUNTER_CLOCKWISE})
 	 */
 	public RasterizerStageBuilder frontFace(boolean clockwise) {
 		this.frontFace = clockwise ? VkFrontFace.VK_FRONT_FACE_CLOCKWISE : VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;

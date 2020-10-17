@@ -27,7 +27,6 @@ public class ColourTest {
 		assertEquals(0.3f, col.blue());
 		assertEquals(1.0f, col.alpha());
 		assertEquals(4, Colour.SIZE);
-		assertEquals(4 * Float.BYTES, col.length());
 	}
 
 	@Test

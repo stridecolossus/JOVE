@@ -5,11 +5,11 @@ import static java.util.stream.Collectors.toList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
@@ -54,8 +54,8 @@ public class TextureQuadDemo {
 		//System.out.println(format);
 
 		// Copy image to staging buffer
-		final VertexBuffer staging = VertexBuffer.staging(dev, image.length());
-		staging.load(image);
+		final VertexBuffer staging = VertexBuffer.staging(dev, image.data().limit());
+		staging.load(image.data());
 
 		// Create texture
 		final Image texture = new Image.Builder(dev)
@@ -244,31 +244,21 @@ public class TextureQuadDemo {
 		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
 
 		// Create model
-		final Bufferable bufferable = new Bufferable() {
-			@Override
-			public long length() {
-				return vertices.length * layout.size() * Float.BYTES;
-			}
-
-			@Override
-			public void buffer(ByteBuffer buffer) {
-				for(Vertex v : vertices) {
-					for(Vertex.Component c : layout.components()) {
-						c.map(v).buffer(buffer);
-					}
-				}
-			}
-		};
+		final ByteBuffer bb = ByteBuffer.allocate(vertices.length * layout.size() * Float.BYTES).order(ByteOrder.nativeOrder());
+		for(Vertex v : vertices) {
+			layout.buffer(v, bb);
+		}
+		bb.rewind();
 
 		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, bufferable.length());
+		final VertexBuffer staging = VertexBuffer.staging(dev, bb.limit());
 
 		// Load to staging
-		staging.load(bufferable);
+		staging.load(bb);
 
 		// Create device VBO
 		final VertexBuffer dest = new VertexBuffer.Builder(dev)
-				.length(bufferable.length())
+				.length(bb.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -309,7 +299,6 @@ public class TextureQuadDemo {
 		new DescriptorSet.Update.Builder()
 			.descriptors(descriptors)
 			.add(0, sampler.update(texture))
-			//.add(1, uniform)
 			.update(dev);
 
 		//////////////////
@@ -328,6 +317,9 @@ public class TextureQuadDemo {
 					.binding(layout)
 					.build()
 				.viewport(rect)
+				.rasterizer()
+					.cullMode(VkCullModeFlag.VK_CULL_MODE_NONE)
+					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)

@@ -52,7 +52,7 @@ public class ModelDemo {
 		final Path dir = Paths.get("./src/test/resources");
 		final var src = Loader.DataSource.of(dir);
 		final var loader = Loader.of(src, new ImageData.Loader());
-		final ImageData image = loader.load("thiswayup.png");
+		final ImageData image = loader.load("demo/model/chalet.jpg");
 		final VkFormat format = FormatBuilder.format(image);
 
 		// Copy image to staging buffer
@@ -238,7 +238,8 @@ public class ModelDemo {
 
 		// Buffer cube
 		//final Model cube = CubeBuilder.create();
-		final Bufferable cube = Bufferable.read(new FileInputStream("./src/test/resources/chalet.vbo"));
+		final Bufferable cube = Bufferable.read(new FileInputStream("./src/test/resources/demo/model/chalet.vbo"));
+		final Bufferable cubeIndex = Bufferable.read(new FileInputStream("./src/test/resources/demo/model/chalet.vbo"));
 
 		// Create staging VBO
 		final VertexBuffer staging = VertexBuffer.staging(dev, cube.length());
@@ -387,7 +388,7 @@ public class ModelDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, /*cube.size(),*/ 1500000, 1, 0, 0);
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, /*cube.size(),*/ 265645, 1, 0, 0);
 		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
@@ -411,7 +412,7 @@ public class ModelDemo {
 		final long period = 5000;
 		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
 
-		for(int n = 0; n < 1000; ++n) {
+		for(int n = 0; n < 50; ++n) {
 			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
 			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
 			final Matrix rot = rotY.multiply(rotX);
