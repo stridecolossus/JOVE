@@ -298,7 +298,7 @@ public class RotatingCubeDemo {
 
 		// Load the projection matrix
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-		uniform.load(proj);
+		uniform.load(proj, proj.length(), 0);
 
 /*
 		final Camera cam = new Camera();
@@ -320,7 +320,7 @@ public class RotatingCubeDemo {
 				.build();
 
 		final Matrix view = pos.multiply(trans);
-		uniform.load(view, view.length());
+		uniform.load(view, view.length(), 0);
 
 		// Create uniform buffer per swapchain image
 //		final VertexBuffer[] uniforms = new VertexBuffer[3];
@@ -383,7 +383,7 @@ public class RotatingCubeDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.size(), 1, 0, 0);		// TODO - builder
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 1, 0, 0);
 		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
@@ -403,7 +403,7 @@ public class RotatingCubeDemo {
 
 		///////////////////
 
-		final int size = 4 * 4 * Float.BYTES;
+//		final int size = 4 * 4 * Float.BYTES;
 		final long period = 5000;
 		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
 
@@ -411,7 +411,7 @@ public class RotatingCubeDemo {
 			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
 			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
 			final Matrix rot = rotY.multiply(rotX);
-			uniform.load(rot, 2 * size);
+			uniform.load(rot, rot.length(), 2 * rot.length());
 
 			final int index = chain.acquire(null, null);
 

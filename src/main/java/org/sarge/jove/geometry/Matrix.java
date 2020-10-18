@@ -33,9 +33,14 @@ public final class Matrix implements Transform, Bufferable {
 	public static final int DEFAULT_ORDER = 4;
 
 	/**
-	 * Identity for an order four matrix.
+	 * Default identity matrix.
 	 */
 	public static final Matrix IDENTITY = identity(DEFAULT_ORDER);
+
+	/**
+	 * Length of a default matrix.
+	 */
+	public static final long LENGTH = IDENTITY.length();
 
 	/**
 	 * Creates an identity matrix.
@@ -140,6 +145,13 @@ public final class Matrix implements Transform, Bufferable {
 	@Override
 	public Matrix matrix() {
 		return this;
+	}
+
+	/**
+	 * @return Length of this matrix (bytes)
+	 */
+	public long length() {
+		return order * order * Float.BYTES;
 	}
 
 	@Override

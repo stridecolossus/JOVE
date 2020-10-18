@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
@@ -98,12 +99,17 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		when(data.getByteBuffer(0, 3)).thenReturn(bb);
 
 		// Load buffer
-		final ByteBuffer obj = ByteBuffer.allocate(3);
-		buffer.load(obj);
+		buffer.load(ByteBuffer.allocate(3));
 
 		// Check memory is mapped
 		verify(lib).vkMapMemory(dev.handle(), mem, 0, 3L, 0, ref);
 		verify(lib).vkUnmapMemory(dev.handle(), mem);
+
+		// Load bufferable at offset
+		final Bufferable obj = mock(Bufferable.class);
+		when(data.getByteBuffer(0, 1)).thenReturn(bb);
+		buffer.load(obj, 1, 2);
+		verify(obj).buffer(bb);
 	}
 
 	@Test

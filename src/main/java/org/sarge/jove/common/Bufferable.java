@@ -20,6 +20,15 @@ public interface Bufferable {
 	ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
 
 	/**
+	 * Wraps the given byte-buffer as a bufferable.
+	 * @param bb Byte-buffer
+	 * @return Wrapped bufferable
+	 */
+	static Bufferable of(ByteBuffer bb) {
+		return dest -> dest.put(bb);
+	}
+
+	/**
 	 * Allocates a direct NIO buffer of the given length.
 	 * @param len Length
 	 * @return New direct buffer

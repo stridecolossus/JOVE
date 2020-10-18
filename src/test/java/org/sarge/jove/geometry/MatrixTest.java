@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.util.MathsUtil;
 
-public class MatrixTest {
+class MatrixTest {
 	private Matrix matrix;
 
 	@BeforeEach
@@ -20,34 +20,35 @@ public class MatrixTest {
 	}
 
 	@Test
-	public void constructor() {
+	void constructor() {
 		assertEquals(2, matrix.order());
 		assertEquals(1, matrix.get(0, 0));
 		assertEquals(2, matrix.get(1, 0));
 		assertEquals(3, matrix.get(0, 1));
 		assertEquals(4, matrix.get(1, 1));
+		assertEquals(2 * 2 * Float.BYTES, matrix.length());
 	}
 
 	@Test
-	public void constructorInvalidArrayDimensions() {
+	void constructorInvalidArrayDimensions() {
 		assertThrows(IllegalArgumentException.class, () -> new Matrix(2, new float[]{1, 2, 3}));
 		assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[]{}));
 	}
 
 	@Test
-	public void multiply() {
+	void multiply() {
 		final Matrix result = matrix.multiply(matrix);
 		final Matrix expected = new Matrix(2, new float[]{7, 10, 15, 22});
 		assertEquals(expected, result);
 	}
 
 	@Test
-	public void multiplyIdentity() {
+	void multiplyIdentity() {
 		assertEquals(matrix, matrix.multiply(Matrix.identity(2)));
 	}
 
 	@Test
-	public void buffer() {
+	void buffer() {
 		final ByteBuffer buffer = ByteBuffer.allocate(2 * 2 * Float.BYTES);
 		matrix.buffer(buffer);
 		buffer.flip();
@@ -61,8 +62,19 @@ public class MatrixTest {
 	@Nested
 	class IdentityTests {
 		@Test
-		public void constructor() {
+		void constructor() {
 			assertEquals(4, Matrix.IDENTITY.order());
+			assertEquals(4 * 4 * Float.BYTES, Matrix.IDENTITY.length());
+		}
+
+		@Test
+		void constants() {
+			assertEquals(4, Matrix.DEFAULT_ORDER);
+			assertEquals(Matrix.LENGTH, Matrix.IDENTITY.length());
+		}
+
+		@Test
+		void identity() {
 			for(int r = 0; r < 4; ++r) {
 				for(int c = 0; c < 4; ++c) {
 					if(r == c) {
@@ -76,18 +88,18 @@ public class MatrixTest {
 		}
 
 		@Test
-		public void transpose() {
+		void transpose() {
 			assertEquals(Matrix.IDENTITY, Matrix.IDENTITY.transpose());
 		}
 
 		@Test
-		public void multiply() {
+		void multiply() {
 			assertEquals(Matrix.IDENTITY, Matrix.IDENTITY.multiply(Matrix.IDENTITY));
 		}
 	}
 
 //	@Test
-//	public void multiplyPoint() {
+//	void multiplyPoint() {
 //		matrix = new Matrix.Builder()
 //			.identity()
 //			.set(0, 1, 2)
@@ -99,13 +111,13 @@ public class MatrixTest {
 //	}
 //
 //	@Test
-//	public void multiplyIdentityPoint() {
+//	void multiplyIdentityPoint() {
 //		final Point pos = new Point(1, 2, 3);
 //		assertEquals(pos, Matrix.IDENTITY.multiply(pos));
 //	}
 
 	@Test
-	public void equals() {
+	void equals() {
 		final Matrix matrix = new Matrix(2, new float[]{1, 2, 3, 4});
 		assertEquals(true, matrix.equals(matrix));
 		assertEquals(true, matrix.equals(new Matrix(2, new float[]{1, 2, 3, 4})));
@@ -117,19 +129,19 @@ public class MatrixTest {
 	@Nested
 	class TransformMethods {
 		@Test
-		public void translation() {
+		void translation() {
 			final Matrix expected = new Builder().identity().column(3, Vector.X_AXIS).build();
 			assertEquals(expected, Matrix.translation(Vector.X_AXIS));
 		}
 
 		@Test
-		public void scale() {
+		void scale() {
 			final Matrix expected = new Builder().identity().set(2, 2, 3).build();
 			assertEquals(expected, Matrix.scale(new Tuple(1, 1, 3)));
 		}
 
 		@Test
-		public void rotation() {
+		void rotation() {
 			final Matrix expected = new Builder()
 				.identity()
 				.set(1, 1, MathsUtil.cos(MathsUtil.HALF))
@@ -141,7 +153,7 @@ public class MatrixTest {
 		}
 
 		@Test
-		public void rotationInvalidAxis() {
+		void rotationInvalidAxis() {
 			assertThrows(UnsupportedOperationException.class, () -> Matrix.rotation(new Vector(1, 2, 3), MathsUtil.HALF));
 		}
 	}
@@ -149,31 +161,31 @@ public class MatrixTest {
 	@Nested
 	class BuilderTests {
 		@Test
-		public void invalidOrder() {
+		void invalidOrder() {
 			assertThrows(IllegalArgumentException.class, () -> new Builder(0));
 			assertThrows(IllegalArgumentException.class, () -> new Builder(-1));
 		}
 
 		@Test
-		public void identity() {
+		void identity() {
 			final Matrix result = new Builder().identity().build();
 			assertEquals(Matrix.IDENTITY, result);
 		}
 
 		@Test
-		public void set() {
+		void set() {
 			final Matrix result = new Builder(2).set(0, 1, 2).build();
 			assertEquals(new Matrix(2, new float[]{0, 0, 2, 0}), result);
 		}
 
 		@Test
-		public void row() {
+		void row() {
 			final Matrix result = new Builder(3).row(1, new Vector(1, 2, 3)).build();
 			assertEquals(new Matrix(3, new float[]{0, 1, 0, 0, 2, 0, 0, 3, 0}), result);
 		}
 
 		@Test
-		public void column() {
+		void column() {
 			final Matrix result = new Builder(3).column(1, new Vector(1, 2, 3)).build();
 			assertEquals(new Matrix(3, new float[]{0, 0, 0, 1, 2, 3, 0, 0, 0}), result);
 		}

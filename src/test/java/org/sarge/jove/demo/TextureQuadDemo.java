@@ -243,7 +243,7 @@ public class TextureQuadDemo {
 		// Define vertex layout
 		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
 
-		// Create model
+		// Create interleaved buffer
 		final ByteBuffer bb = ByteBuffer.allocate(vertices.length * layout.size() * Float.BYTES).order(ByteOrder.nativeOrder());
 		for(Vertex v : vertices) {
 			layout.buffer(v, bb);
