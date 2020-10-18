@@ -231,6 +231,13 @@ public interface Model {
 		private final List<Vertex> vertices = new ArrayList<>();
 
 		/**
+		 * @return Drawing primitive for this model
+		 */
+		public final Primitive primitive() {
+			return primitive;
+		}
+
+		/**
 		 * Sets the drawing primitive for this model.
 		 * @param primitive Drawing primitive
 		 */

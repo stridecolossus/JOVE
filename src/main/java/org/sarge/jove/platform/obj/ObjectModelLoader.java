@@ -19,10 +19,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Model.IndexedBuilder;
 import org.sarge.jove.model.Primitive;
@@ -42,7 +42,7 @@ public class ObjectModelLoader {
 		private final List<Coordinate2D> coords = new ArrayList<>();
 		private final List<Vector> normals = new ArrayList<>();
 		private final Model.Builder builder;
-		private Primitive primitive;
+		private boolean init;
 
 		/**
 		 * Constructor.
@@ -83,6 +83,7 @@ public class ObjectModelLoader {
 		 */
 		protected void add(Vertex vertex) {
 			builder.add(vertex);
+			builder.add(builder.indexOf(vertex));
 		}
 
 		/**
@@ -90,44 +91,48 @@ public class ObjectModelLoader {
 		 * @param size Face size
 		 */
 		void update(int size) {
-			// Initialise primitive
-			if(primitive == null) {
-				primitive = switch(size) {
-					case 1 -> Primitive.POINTS;
-					case 2 -> Primitive.LINES;
-					case 3 -> Primitive.TRIANGLES;
-					default -> throw new IllegalArgumentException("Unsupported primitive size: " + size);
-				};
-				builder.primitive(primitive);
-				return;
+			if(init) {
+				// Check face matches existing primitive
+				if(size != builder.primitive().size()) {
+					throw new IllegalArgumentException(String.format("Face size mismatch: expected=%d actual=%d", builder.primitive().size(), size));
+				}
 			}
-
-			// Otherwise check face matches existing primitive
-			if(size != primitive.size()) {
-				throw new IllegalArgumentException(String.format("Face size mismatch: expected=%d actual=%d", primitive.size(), size));
+			else {
+				// Initialise model
+				init(size);
+				init = true;
 			}
 		}
 
 		/**
-		 * Initialises the vertex layout for this model.
+		 * Initialises this model.
 		 */
-		protected void init() {
-			// Layout always has a vertex position
+		private void init(int size) {
+			// Init primitive
+			final Primitive primitive = switch(size) {
+				case 1 -> Primitive.POINTS;
+				case 2 -> Primitive.LINES;
+				case 3 -> Primitive.TRIANGLES;
+				default -> throw new IllegalArgumentException("Unsupported primitive size: " + size);
+			};
+			builder.primitive(primitive);
+
+			// Init layout
 			final var layout = new ArrayList<Vertex.Component>();
 			layout.add(Vertex.Component.POSITION);
-
-			// Add normals if populated
 			if(!normals.isEmpty()) {
 				layout.add(Vertex.Component.NORMAL);
 			}
-
-			// Add texture coordinates if populated
 			if(!coords.isEmpty()) {
 				layout.add(Vertex.Component.TEXTURE_COORDINATE);
 			}
-
-			// Init layout
 			builder.layout(new Vertex.Layout(layout));
+
+			///////
+			System.out.println("primitive="+primitive);
+			System.out.println("layout="+layout);
+			System.out.println("vertices="+vertices.size());
+			System.out.println("coords="+coords.size());
 		}
 	}
 
@@ -299,7 +304,7 @@ public class ObjectModelLoader {
 	}
 
 	/**
-	 * Sets a callback handler for unknown commands (default is {@link #IGNORE}).
+	 * Sets the callback handler for unknown commands (default is {@link #HANDLER_THROW}).
 	 * @param handler Unknown command handler
 	 */
 	public void setUnknownCommandHandler(Consumer<String> handler) {
@@ -319,15 +324,9 @@ public class ObjectModelLoader {
 	/**
 	 * Creates the underlying model builder.
 	 * <p>
-	 * The default implementation:
-	 * <ul>
-	 * <li>is an an {@link IndexedBuilder}</li>
-	 * <li>with a {@link Primitive#TRIANGLES} drawing primitive</li>
-	 * <li>and validation disabled</li>
-	 * </ul>
+	 * The default implementation is an {@link IndexedBuilder} with a {@link Primitive#TRIANGLES} drawing primitive.
 	 * <p>
 	 * Over-ride to modify the type or properties of the underlying builder.
-	 * <p>
 	 * @return New model builder
 	 */
 	protected Model.Builder builder() {
@@ -359,8 +358,10 @@ public class ObjectModelLoader {
 			}
 		}
 
-		// Init layout
-		model.init();
+		// Check model
+		if(!model.init) {
+			throw new IOException("Model is not initialised");
+		}
 
 		return model.builder;
 	}
@@ -400,32 +401,40 @@ public class ObjectModelLoader {
 
 	//////////////
 
-	@SuppressWarnings("resource")
-	public static void main2(String[] args) throws Exception {
-		final long start = System.currentTimeMillis();
-		final Bufferable b = Bufferable.read(new FileInputStream("./src/test/resources/chalet.vbo"));
-		System.out.println("duration="+(System.currentTimeMillis()-start));
-		System.out.println(b.length());
-	}
+//	@SuppressWarnings("resource")
+//	public static void main2(String[] args) throws Exception {
+//		final long start = System.currentTimeMillis();
+//		final Bufferable b = Bufferable.read(new FileInputStream("./src/test/resources/chalet.vbo"));
+//		System.out.println("duration="+(System.currentTimeMillis()-start));
+//		System.out.println(b.length());
+//	}
 
 	@SuppressWarnings({ "resource", "unused" })
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		final long start = System.currentTimeMillis();
 		final ObjectModelLoader loader = new ObjectModelLoader();
-
-		final Model.Builder builder = loader.load(new FileReader("./src/test/resources/chalet.obj"));
+		final Model.Builder builder = loader.load(new FileReader("./src/test/resources/demo/model/chalet.obj"));
 		final Model model = builder.build();
 		System.out.println("model="+model);
-		System.out.println("length="+model.vertices().length());
-		System.out.println("index="+model.index().get().length());
-
-		//final ByteBuffer bb = ByteBuffer.allocate((int) model.length());
-		//builder.build().buffer(bb);
-
+		System.out.println("count="+model.count());
+		System.out.println("length="+model.vertices().limit());
+		System.out.println("index="+model.index().get().limit());
 		System.out.println("duration="+(System.currentTimeMillis()-start));
 
-		Bufferable.write(model.vertices(), new FileOutputStream("./src/test/resources/chalet.vbo"));
-		Bufferable.write(model.index().get(), new FileOutputStream("./src/test/resources/chalet.index"));
-		//BufferFactory.write(model.vertices()., out);
+		/////
+
+		final ModelLoader writer = new ModelLoader();
+		writer.write(model, new FileOutputStream("./src/test/resources/demo/model/chalet.model"));
+	}
+
+	public static void main(String[] args) throws Exception {
+		long start = System.currentTimeMillis();
+			final ModelLoader loader = new ModelLoader();
+			final Model model = loader.load(new FileInputStream("./src/test/resources/demo/model/chalet.model"));
+		System.out.println("duration="+(System.currentTimeMillis()-start));
+		System.out.println("model="+model);
+		System.out.println("count="+model.count());
+		System.out.println("length="+model.vertices().limit());
+		System.out.println("index="+model.index().get().limit());
 	}
 }

@@ -1,21 +1,19 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.zeroOrMore;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Scanner;
 
-import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.util.Loader;
@@ -65,7 +63,7 @@ public class BufferedModel extends AbstractModel {
 	 */
 	public static class ModelLoader implements Loader<InputStream, Model> {
 		private static final int VERSION = 1;
-		private static final char SPACE = ' ';
+		private static final String DELIMITER = "-";
 
 		/**
 		 * Writes the given model to an output stream.
@@ -74,47 +72,36 @@ public class BufferedModel extends AbstractModel {
 		 * @throws IOException if the model cannot be written
 		 */
 		public void write(Model model, OutputStream out) throws IOException {
-			write(model, new PrintStream(out));
+			write(model, new DataOutputStream(out));
 		}
 
 		/**
 		 * Writes the given model.
 		 */
-		private static void write(Model model, PrintStream out) throws IOException {
+		private static void write(Model model, DataOutputStream out) throws IOException {
 			// Write file format version
-			out.println(VERSION);
+			out.writeInt(VERSION);
 
 			// Write model primitive
-			out.println(model.primitive());
+			out.writeUTF(model.primitive().name());
 
 			// Write vertex layout
-			for(Vertex.Component c : model.layout().components()) {
-				out.print(c);
-				out.print(SPACE);
-			}
-			out.println();
+			final String layout = model.layout().components().stream().map(Enum::name).collect(joining(DELIMITER));
+			out.writeUTF(layout);
 
-			// Output vertex buffer
-			final FloatBuffer vertices = model.vertices().asFloatBuffer();
-			out.println(vertices.limit());
-			for(int n = 0; n < vertices.limit(); ++n) {
-				out.print(vertices.get());
-				out.print(SPACE);
-			}
-			out.println();
+			// Write vertex count
+			out.writeInt(model.count());
 
-			// Output index buffer
-			if(model.index().isPresent()) {
-				final IntBuffer index = model.index().get().asIntBuffer();
-				out.println(index.limit());
-				for(int n = 0; n < index.limit(); ++n) {
-					out.print(index.get());
-					out.print(SPACE);
-				}
-				out.println();
+			// Write VBO
+			write(model.vertices(), out);
+
+			// Write index
+			final var index = model.index();
+			if(index.isPresent()) {
+				write(index.get(), out);
 			}
 			else {
-				out.println(0);
+				out.writeInt(0);
 			}
 
 			// Done
@@ -122,60 +109,82 @@ public class BufferedModel extends AbstractModel {
 		}
 
 		/**
+		 * Writes the given byte-buffer.
+		 */
+		private static void write(ByteBuffer bb, DataOutputStream out) throws IOException {
+			final byte[] bytes = new byte[bb.limit()];
+			bb.get(bytes);
+			out.writeInt(bytes.length);
+			out.write(bytes);
+		}
+
+		/**
 		 * Loads a buffered model from the given input stream.
 		 * @param in Input stream
 		 * @return New model
 		 * @throws UnsupportedOperationException if the file format version of the model is not supported by this loader
-		 * @throws RuntimeException if the model cannot be parsed
+		 * @throws RuntimeException if the model cannot be loaded
 		 */
 		@Override
 		public Model load(InputStream in) {
-			try(final Scanner scanner = new Scanner(in)) {
-				return load(scanner);
+			try {
+				return load(new DataInputStream(in));
+			}
+			catch(IOException e) {
+				throw new RuntimeException(e);
 			}
 		}
 
 		/**
-		 * Loads a model.
+		 * Loads a buffered model.
+		 * @param in Input stream
+		 * @return New model
+		 * @throws IOException if the model cannot be loaded
 		 */
-		private static Model load(Scanner in) {
+		private static Model load(DataInputStream in) throws IOException {
 			// Load and verify file format version
-			final int version = in.nextInt();
+			final int version = in.readInt();
 			if(version > VERSION) {
 				throw new UnsupportedOperationException(String.format("Unsupported version: version=%d supported=%d", version, VERSION));
 			}
 
 			// Load primitive
-			final Primitive primitive = Primitive.valueOf(in.next());
+			final Primitive primitive = Primitive.valueOf(in.readUTF());
 
 			// Load layout
-			in.nextLine();
-			final var components = Arrays.stream(in.nextLine().split(StringUtils.SPACE)).map(Vertex.Component::valueOf).collect(toList());
-			final var layout = new Vertex.Layout(components);
+			final var layout = Arrays.stream(in.readUTF().split(DELIMITER)).map(Vertex.Component::valueOf).collect(toList());
 
-			// Load vertices
-			final int vertexCount = in.nextInt();
-			final ByteBuffer vertices = Bufferable.allocate(vertexCount * Float.BYTES);
-			for(int n = 0; n < vertexCount; ++n) {
-				vertices.putFloat(in.nextFloat());
-			}
+			// Load vertex count
+			final int count = in.readInt();
 
-			// Load index
-			final int indexCount = in.nextInt();
-			final ByteBuffer index;
-			if(indexCount == 0) {
-				index = null;
-			}
-			else {
-				index = Bufferable.allocate(indexCount * Integer.BYTES);
-				for(int n = 0; n < indexCount; ++n) {
-					index.putInt(in.nextInt());
-				}
-			}
+			// Load buffers
+			final ByteBuffer vertices = loadBuffer(in);
+			final ByteBuffer index = loadBuffer(in);
 
 			// Create model
-			final int count = indexCount == 0 ? vertexCount : indexCount;
-			return new BufferedModel(primitive, layout, vertices, index, count);
+			return new BufferedModel(primitive, new Vertex.Layout(layout), vertices, index, count);
+		}
+
+		/**
+		 * Loads a buffer.
+		 * @param in Input stream
+		 * @return New buffer or {@code null} if empty
+		 * @throws IOException if the buffer cannot be loaded
+		 */
+		private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
+			// Read buffer size
+			final int len = in.readInt();
+			if(len == 0) {
+				return null;
+			}
+
+			// Load bytes
+			final byte[] bytes = new byte[len];
+			final int actual = in.read(bytes);
+			if(actual != len) throw new IOException(String.format("Error loading buffer: expected=%d actual=%d", len, actual));
+
+			// Convert to buffer
+			return Bufferable.allocate(bytes);
 		}
 	}
 }

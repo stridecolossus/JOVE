@@ -5,11 +5,11 @@ import static java.util.stream.Collectors.toList;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
@@ -18,6 +18,8 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.BufferedModel.ModelLoader;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
@@ -56,8 +58,8 @@ public class ModelDemo {
 		final VkFormat format = FormatBuilder.format(image);
 
 		// Copy image to staging buffer
-		final VertexBuffer staging = VertexBuffer.staging(dev, image.length());
-		staging.load(image);
+		final VertexBuffer staging = VertexBuffer.staging(dev, image.data().limit());
+		staging.load(image.data());
 
 		// Create texture
 		final Image texture = new Image.Builder(dev)
@@ -122,6 +124,30 @@ public class ModelDemo {
 				.build();
 
 		return view;
+	}
+
+	private static VertexBuffer loadBuffer(LogicalDevice dev, ByteBuffer bb, Command.Pool pool) {
+		// Create staging VBO
+		final VertexBuffer staging = VertexBuffer.staging(dev, bb.limit());
+
+		// Load to staging
+		staging.load(bb);
+
+		// Create device VBO
+		final VertexBuffer dest = new VertexBuffer.Builder(dev)
+				.length(bb.limit())
+				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.build();
+
+		// Copy
+		ImmediateCommand.of(staging.copy(dest)).submit(pool, true);
+
+		// Release staging buffer
+		staging.destroy();
+
+		return dest;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -236,29 +262,17 @@ public class ModelDemo {
 
 		//////////////////
 
-		// Buffer cube
-		//final Model cube = CubeBuilder.create();
-		final Bufferable cube = Bufferable.read(new FileInputStream("./src/test/resources/demo/model/chalet.vbo"));
-		final Bufferable cubeIndex = Bufferable.read(new FileInputStream("./src/test/resources/demo/model/chalet.vbo"));
+		// Load model
+		final ModelLoader loader = new ModelLoader();
+		@SuppressWarnings("resource")
+		final Model model = loader.load(new FileInputStream("./src/test/resources/demo/model/chalet.model"));
 
-		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, cube.length());
-
-		// Load to staging
-		staging.load(cube);
-
-		// Create device VBO
-		final VertexBuffer dest = new VertexBuffer.Builder(dev)
-				.length(cube.length())
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-				.build();
-
-		// Copy
+		// Load VBO
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
-		ImmediateCommand.of(staging.copy(dest)).submit(copyPool, true);
-		staging.destroy();
+		final VertexBuffer vbo = loadBuffer(dev, model.vertices(), copyPool);
+
+		// Load IBO
+		final VertexBuffer index = loadBuffer(dev, model.index().get(), copyPool);
 
 		//////////////////
 
@@ -291,9 +305,8 @@ public class ModelDemo {
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
 		// Create uniform buffer for the projection matrix
-		final int uniformLength = 3 * 4 * 4 * Float.BYTES;		// TODO - one 4x4 matrix, from matrix? some sort of descriptor?
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
-				.length(uniformLength)
+				.length(Matrix.LENGTH * 3)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -301,7 +314,7 @@ public class ModelDemo {
 
 		// Load the projection matrix
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-		uniform.load(proj, 0);
+		uniform.load(proj, proj.length(), 0);
 
 /*
 		final Camera cam = new Camera();
@@ -319,11 +332,13 @@ public class ModelDemo {
 
 		final Matrix trans = new Matrix.Builder()
 				.identity()
-				.column(3, new Point(0, 0, -3))
+				.column(3, new Point(0, 0, -2.5f))
 				.build();
 
 		final Matrix view = pos.multiply(trans);
-		uniform.load(view, view.length());
+		uniform.load(view, view.length(), view.length());
+
+		//uniform.load(Matrix.IDENTITY, Matrix.IDENTITY.length(), Matrix.LENGTH * 2);
 
 		// Create uniform buffer per swapchain image
 //		final VertexBuffer[] uniforms = new VertexBuffer[3];
@@ -337,6 +352,12 @@ public class ModelDemo {
 //
 //			uniforms[n].load(
 //		}
+
+		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * -90);
+		final Matrix rotY = Matrix.IDENTITY; // Matrix.rotation(Vector.Y_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
+		uniform.load(rotY.multiply(rotX), Matrix.LENGTH, Matrix.LENGTH * 2);
+
+
 
 		// Apply sampler to the descriptor sets
 		new DescriptorSet.Update.Builder()
@@ -388,7 +409,9 @@ public class ModelDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, /*cube.size(),*/ 265645, 1, 0, 0);
+//		final Command draw = (api, handle) -> api.vkCmdDraw(handle, /*model.count(), */ 265645, 1, 0, 0);
+		final Command draw = (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0);
+		// commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
@@ -396,7 +419,8 @@ public class ModelDemo {
 				.begin()
 					.add(pass.begin(buffers.get(n), rect, grey))
 					.add(pipeline.bind())
-					.add(dest.bind())
+					.add(vbo.bind())
+					.add(index.index())
 					.add(descriptors.get(n).bind(pipelineLayout))
 					.add(draw)
 					.add(RenderPass.END_COMMAND)
@@ -408,20 +432,25 @@ public class ModelDemo {
 
 		///////////////////
 
-		final int size = 4 * 4 * Float.BYTES;
-		final long period = 5000;
-		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
+//		final int size = 4 * 4 * Float.BYTES;
+//		final long period = 5000;
+//		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
+//		float angle = 0;
 
-		for(int n = 0; n < 50; ++n) {
-			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
-			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
-			final Matrix rot = rotY.multiply(rotX);
-			uniform.load(rot, 2 * size);
+		for(int n = 0; n < 250; ++n) {
+//			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
+//			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
+//			final Matrix rot = rotY.multiply(rotX);
+//			uniform.load(rot, 2 * size);
 
-			final int index = chain.acquire(null, null);
+//			final Matrix rot = Matrix.rotation(Vector.Y_AXIS, angle);
+//			uniform.load(rot, Matrix.LENGTH, Matrix.LENGTH * 2);
+//			angle += MathsUtil.DEGREES_TO_RADIANS;
+
+			final int idx = chain.acquire(null, null);
 
 			new Work.Builder()
-					.add(commands.get(index))
+					.add(commands.get(idx))
 //					.wait(ready)
 //					.signal(finished)
 					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
@@ -450,6 +479,8 @@ public class ModelDemo {
 		sampler.destroy();
 		//Arrays.stream(uniforms).forEach(VertexBuffer::destroy);
 		uniform.destroy();
+		vbo.destroy();
+		index.destroy();
 
 		setPool.destroy();
 		setLayout.destroy();
