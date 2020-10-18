@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model.Builder;
+import org.sarge.jove.model.Model.IndexedBuilder;
 
 public class ModelTest {
 	private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION);
@@ -68,11 +69,11 @@ public class ModelTest {
 
 	@Nested
 	class BuilderTests {
-		private Builder<?> builder;
+		private Builder builder;
 
 		@BeforeEach
 		void before() {
-			builder = new Builder<>();
+			builder = new Builder();
 		}
 
 		@Test
@@ -108,8 +109,62 @@ public class ModelTest {
 		}
 
 		@Test
-		void validateDisabled() {
-			builder.validate(false).add(mock(Vertex.class));
+		void indexNotSupported() {
+			builder.add(vertex);
+			assertThrows(UnsupportedOperationException.class, () -> builder.add(0));
+			assertThrows(UnsupportedOperationException.class, () -> builder.indexOf(vertex));
+		}
+	}
+
+	@Nested
+	class IndexedBuilderTests {
+		private Builder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new IndexedBuilder();
+		}
+
+		@Test
+		void buildIndexed() {
+			// Build indexed model
+			final Model model = builder
+					.primitive(Primitive.LINES)
+					.add(vertex)
+					.add(0)
+					.add(0)
+					.build();
+
+			// Check model
+			assertNotNull(model);
+			assertEquals(Primitive.LINES, model.primitive());
+			assertEquals(LAYOUT, model.layout());
+			assertEquals(2, model.count());
+
+			// Check index is present
+			assertNotNull(model.index());
+			assertEquals(true, model.index().isPresent());
+
+			// Check index
+			final ByteBuffer index = model.index().get();
+			assertEquals(2 * Integer.BYTES, index.limit());
+			assertEquals(0, index.position());
+			assertEquals(true, index.isDirect());
+			// TODO - assertEquals(true, index.isReadOnly());
+		}
+
+		@Test
+		void indexOf() {
+			builder.add(vertex);
+			assertEquals(0, builder.indexOf(vertex));
+			assertThrows(IllegalArgumentException.class, () -> builder.indexOf(mock(Vertex.class)));
+		}
+
+		@Test
+		void deduplication() {
+			builder.add(vertex).add(vertex);
+			assertEquals(1, builder.count());
+			assertEquals(0, builder.indexOf(vertex));
 		}
 	}
 }

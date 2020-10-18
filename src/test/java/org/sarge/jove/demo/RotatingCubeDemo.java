@@ -209,14 +209,14 @@ public class RotatingCubeDemo {
 		// Create render pass
 		final RenderPass pass = new RenderPass.Builder(dev)
 				.attachment()
-				.format(format)
-				.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-				.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-				.build()
+					.format(format)
+					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
+					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
+					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+					.build()
 				.subpass()
-				.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-				.build()
+					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+					.build()
 //				.dependency()
 //					.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 //					.destination(0)
@@ -288,7 +288,7 @@ public class RotatingCubeDemo {
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
 		// Create uniform buffer for the projection matrix
-		final int uniformLength = 3 * 4 * 4 * Float.BYTES;		// TODO - one 4x4 matrix, from matrix? some sort of descriptor?
+		final long uniformLength = 3 * Matrix.LENGTH; // 4 * 4 * Float.BYTES;		// TODO - one 4x4 matrix, from matrix? some sort of descriptor?
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 				.length(uniformLength)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
@@ -320,7 +320,7 @@ public class RotatingCubeDemo {
 				.build();
 
 		final Matrix view = pos.multiply(trans);
-		uniform.load(view, view.length(), 0);
+		uniform.load(view, view.length(), view.length());
 
 		// Create uniform buffer per swapchain image
 //		final VertexBuffer[] uniforms = new VertexBuffer[3];
@@ -403,7 +403,6 @@ public class RotatingCubeDemo {
 
 		///////////////////
 
-//		final int size = 4 * 4 * Float.BYTES;
 		final long period = 5000;
 		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
 

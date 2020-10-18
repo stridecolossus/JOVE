@@ -331,7 +331,7 @@ public class ObjectModelLoader {
 	 * @return New model builder
 	 */
 	protected Model.Builder builder() {
-		return new Model.IndexedBuilder().primitive(Primitive.TRIANGLES).validate(false);
+		return new Model.IndexedBuilder().primitive(Primitive.TRIANGLES);
 	}
 
 	/**
