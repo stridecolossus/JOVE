@@ -52,58 +52,25 @@ public class RenderPass extends AbstractVulkanObject {
 	 * @return Begin rendering command
 	 * @throws NullPointerException if any clear colour element is {@code null}
 	 */
-	public Command begin(FrameBuffer buffer, Rectangle extent, Colour col) {		// TODO - args should be properties: fb.extent, pass.clear[]
+	public Command begin(FrameBuffer buffer, Rectangle extent, Colour col) {
 		// Create descriptor
 		final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
 		info.renderPass = this.handle();
 		info.framebuffer = buffer.handle();
 		info.renderArea = ExtentHelper.of(extent);
 
-		// TODO...
-
-		/*
-		// Create clear colour
-		final VkClearValue clear = new VkClearValue();
-		clear.setType("color");
-		clear.color = new VkClearColorValue();									// TODO - by value?
-		clear.color.setType("float32");
-		clear.color.float32 = col.toArray();
-
-		final VkClearValue depth = new VkClearValue();
-		depth.setType("depthStencil");
-		depth.depthStencil = new VkClearDepthStencilValue();
-		depth.depthStencil.depth = 1;
-		depth.depthStencil.stencil = 0;
-
-		// Add clear values
-		info.clearValueCount = 2;
-		info.pClearValues = StructureHelper.structures(List.of(clear, depth));
-*/
-
 		final VkClearValue.ByReference[] array = (VkClearValue.ByReference[]) new VkClearValue.ByReference().toArray(2);
-//		final VkClearValue[] array = (VkClearValue[]) new VkClearValue().toArray(2);
 
 		array[0].setType("color");
-//		array[0].color = new VkClearColorValue();
-//		array[0].depthStencil = null;
 		array[0].color.setType("float32");
-		System.arraycopy(col.toArray(), 0, array[0].color.float32, 0, 4);
-		//array[0].color.float32 = col.toArray();
-//		array[0].write();
+		array[0].color.float32 = col.toArray();
 
 		array[1].setType("depthStencil");
-//		array[1].color = null;
-//		array[1].depthStencil = new VkClearDepthStencilValue();
 		array[1].depthStencil.depth = 1;
 		array[1].depthStencil.stencil = 0;
-//		array[1].write();
 
-//		info.clearValueCount = 1;
-//		info.pClearValues = array[0];
 		info.clearValueCount = 2;
 		info.pClearValues = array[0];
-
-		// ...TODO
 
 		// Create command
 		return (lib, ptr) -> lib.vkCmdBeginRenderPass(ptr, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);

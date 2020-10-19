@@ -16,7 +16,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 public class VulkanLibraryTest {
 	@Test
 	void version() {
-		assertEquals("1.0.2", VulkanLibrary.VERSION.toString());
+		assertEquals("1.1.0", VulkanLibrary.VERSION.toString());
 	}
 
 	@Test

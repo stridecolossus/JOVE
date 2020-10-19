@@ -165,9 +165,7 @@ public interface ImageData {
 			final BufferedImage alpha = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
 			final Graphics g = alpha.getGraphics();
 			try {
-				// TODO - fiddle here or in model builder?
-				g.drawImage(image, 0, image.getHeight(), image.getWidth(), -image.getHeight(), null);
-				//g.drawImage(image, 0, 0, null);
+				g.drawImage(image, 0, 0, null);
 			}
 			finally {
 				g.dispose();

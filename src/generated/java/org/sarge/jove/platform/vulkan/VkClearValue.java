@@ -11,14 +11,8 @@ import com.sun.jna.Union;
 	"color",
 	"depthStencil"
 })
-public class VkClearValue extends Union { // VulkanStructure { // implements ByReference {
-
+public class VkClearValue extends Union {
 	public static class ByReference extends VkClearValue implements Union.ByReference { }
-
-	public VkClearValue() {
-		super();
-	}
-
 	public VkClearColorValue color;
 	public VkClearDepthStencilValue depthStencil;
 }

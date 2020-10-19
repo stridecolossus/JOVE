@@ -37,11 +37,12 @@ public class ObjectModelLoader {
 	/**
 	 * The <i>object model</i> holds the transient OBJ data during parsing.
 	 */
-	public class ObjectModel {
+	public static class ObjectModel {
 		private final List<Point> vertices = new ArrayList<>();
 		private final List<Coordinate2D> coords = new ArrayList<>();
 		private final List<Vector> normals = new ArrayList<>();
 		private final Model.Builder builder;
+		private boolean flip = true;
 		private boolean init;
 
 		/**
@@ -50,6 +51,14 @@ public class ObjectModelLoader {
 		 */
 		protected ObjectModel(Model.Builder builder) {
 			this.builder = notNull(builder);
+		}
+
+		/**
+		 * Sets whether to vertically flip texture coordinates (default is {@code true}).
+		 * @param flip Whether to vertically flip coordinates
+		 */
+		public void flip(boolean flip) {
+			this.flip = flip;
 		}
 
 		/**
@@ -71,9 +80,15 @@ public class ObjectModelLoader {
 		/**
 		 * Adds a vertex texture coordinate.
 		 * @param coords Texture coordinate
+		 * @see #flip(boolean)
 		 */
 		protected void coord(Coordinate2D coords) {
-			this.coords.add(coords);
+			if(flip) {
+				this.coords.add(new Coordinate2D(coords.u, -coords.v));
+			}
+			else {
+				this.coords.add(coords);
+			}
 		}
 
 		/**
@@ -127,12 +142,6 @@ public class ObjectModelLoader {
 				layout.add(Vertex.Component.TEXTURE_COORDINATE);
 			}
 			builder.layout(new Vertex.Layout(layout));
-
-			///////
-			System.out.println("primitive="+primitive);
-			System.out.println("layout="+layout);
-			System.out.println("vertices="+vertices.size());
-			System.out.println("coords="+coords.size());
 		}
 	}
 

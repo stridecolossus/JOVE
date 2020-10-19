@@ -23,12 +23,12 @@ public interface TextureCoordinate extends Bufferable {
 	 * @throws IllegalArgumentException if the array length is not in the range 1..3
 	 */
 	static TextureCoordinate of(float[] array) {
-		switch(array.length) {
-		case 1:		return new Coordinate1D(array[0]);
-		case 2:		return new Coordinate2D(array[0], array[1]);
-		case 3:		return new Coordinate3D(array[0], array[1], array[2]);
-		default:	throw new IllegalArgumentException("Invalid array length for texture coordinate: " + Arrays.toString(array));
-		}
+		return switch(array.length) {
+			case 1 ->	new Coordinate1D(array[0]);
+			case 2 ->	new Coordinate2D(array[0], array[1]);
+			case 3 ->	new Coordinate3D(array[0], array[1], array[2]);
+			default ->	throw new IllegalArgumentException("Invalid array length for texture coordinate: " + Arrays.toString(array));
+		};
 	}
 
 	/**
@@ -85,7 +85,7 @@ public interface TextureCoordinate extends Bufferable {
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
 
 		/**
-		 * Default texture coordinates for a quad (counter-clockwise winding order).
+		 * Default texture coordinates for a quad with a counter-clockwise winding order.
 		 */
 		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
 

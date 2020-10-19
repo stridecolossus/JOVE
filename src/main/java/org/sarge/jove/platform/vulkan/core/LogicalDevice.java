@@ -240,7 +240,7 @@ public class LogicalDevice {
 	 * Destroys this device.
 	 */
 	public void destroy() {
-		check(lib.vkDestroyDevice(handle, null));
+		lib.vkDestroyDevice(handle, null);
 	}
 
 	@Override

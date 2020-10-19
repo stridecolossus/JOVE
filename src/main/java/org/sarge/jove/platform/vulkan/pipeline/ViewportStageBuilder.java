@@ -17,6 +17,7 @@ import org.sarge.jove.util.StructureHelper;
 public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
 	private final List<VkViewport> viewports = new ArrayList<>();
 	private final List<VkRect2D> scissors = new ArrayList<>();
+	private boolean flip;
 
 	/**
 	 * Adds a viewport.
@@ -28,10 +29,18 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	public ViewportStageBuilder viewport(Rectangle rect, float min, float max) {
 		// Init viewport rectangle
 		final VkViewport viewport = new VkViewport();
-		viewport.x = rect.x();
-		viewport.y = rect.y();
-		viewport.width = rect.width();
-		viewport.height = rect.height();
+		if(flip) {
+			viewport.x = rect.x();
+			viewport.y = rect.y() + rect.height();
+			viewport.width = rect.width();
+			viewport.height = -rect.height();
+		}
+		else {
+			viewport.x = rect.x();
+			viewport.y = rect.y();
+			viewport.width = rect.width();
+			viewport.height = rect.height();
+		}
 
 		// Init min/max depth
 		viewport.minDepth = Check.isPercentile(min);
@@ -40,6 +49,19 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		// Add viewport
 		viewports.add(viewport);
 
+		return this;
+	}
+
+	/**
+	 * Sets whether to flip viewport rectangles (default is {@code false}).
+	 * <p>
+	 * This method is used to over-ride the default behaviour for Vulkan where the Y axis is positive in the <b>down</b> direction.
+	 * @see <a href="https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/">article</a>
+	 * <p>
+	 * @param flip Whether to flip viewports
+	 */
+	public ViewportStageBuilder flip(boolean flip) {
+		this.flip = flip;
 		return this;
 	}
 

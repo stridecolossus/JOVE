@@ -27,7 +27,7 @@ interface VulkanLibraryLogicalDevice {
 	 * @param pAllocator			Allocator
 	 * @return Result
 	 */
-	int vkDestroyDevice(Handle device, Handle pAllocator);
+	void vkDestroyDevice(Handle device, Handle pAllocator);
 
 	/**
 	 * Waits for the given device to become idle.

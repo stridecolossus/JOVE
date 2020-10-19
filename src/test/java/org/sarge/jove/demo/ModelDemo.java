@@ -170,16 +170,6 @@ public class ModelDemo {
 						.build()
 					.build();
 
-//			// TODO - sub-builder
-//			final VkImageSubresourceRange range = new VkImageSubresourceRange();
-//				range.aspectMask = IntegerEnumeration.mask(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT); // , VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT);
-//				range.baseMipLevel = 0;
-//				range.levelCount = 1;
-//				range.baseArrayLayer = 0;
-//				range.layerCount = 1;
-
-//			final View view = View.create(depth);
-
 			/*
 			depth
 				.barrier()
@@ -315,8 +305,11 @@ public class ModelDemo {
 		//////////////////
 
 		// Load model
+//		final ObjectModelLoader objLoader = new ObjectModelLoader();
+//		final Model model = objLoader.load(new FileReader("./src/test/resources/demo/model/chalet.obj")).build();
+		/////
 		final ModelLoader loader = new ModelLoader();
-		@SuppressWarnings("resource")
+//		writer.write(model, new FileOutputStream("./src/test/resources/demo/model/chalet.model"));
 		final Model model = loader.load(new FileInputStream("./src/test/resources/demo/model/chalet.model"));
 
 		// Load VBO
@@ -371,13 +364,13 @@ public class ModelDemo {
 		final Matrix pos = new Matrix.Builder()
 				.identity()
 				.row(0, Vector.X_AXIS)
-				.row(1, Vector.Y_AXIS.invert())
+				.row(1, Vector.Y_AXIS)
 				.row(2, Vector.Z_AXIS)
 				.build();
 
 		final Matrix trans = new Matrix.Builder()
 				.identity()
-				.column(3, new Point(0, 0, -2f))
+				.column(3, new Point(0, 0.5f, -2f))
 				.build();
 
 		final Matrix view = pos.multiply(trans);
@@ -422,14 +415,16 @@ public class ModelDemo {
 				.assembly()
 					.topology(model.primitive())
 					.build()
-				.viewport(rect)
+				.viewport()
+					.flip(true)
+					.viewport(rect)
+					.scissor(rect)
+					.build()
 				.rasterizer()
 					.cullMode(VkCullModeFlag.VK_CULL_MODE_FRONT_BIT)
-//					.frontFace(true)
 					.build()
 				.depth()
 					.enable(true)
-					.write(true)
 					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
@@ -454,9 +449,7 @@ public class ModelDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-//		final Command draw = (api, handle) -> api.vkCmdDraw(handle, /*model.count(), */ 265645, 1, 0, 0);
 		final Command draw = (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0);
-		// commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
@@ -478,12 +471,14 @@ public class ModelDemo {
 		///////////////////
 
 		final MousePositionListener listener = (ptr, x, y) -> {
-			final float angle = MathsUtil.TWO_PI * (rect.width() - (float) x) / rect.width();
-			final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * -90);
-			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
+			final float dx = MathsUtil.TWO_PI * (rect.width() - (float) x) / rect.width();
+			final float dy = MathsUtil.TWO_PI * (rect.height() - (float) y) / rect.height();
+			final Matrix rotX = Matrix.rotation(Vector.X_AXIS, dy); // -MathsUtil.HALF_PI); // DEGREES_TO_RADIANS * 90);
+			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, dx);
 			uniform.load(rotY.multiply(rotX), Matrix.LENGTH, Matrix.LENGTH * 2);
 		};
 		window.setMouseMoveListener(listener);
+		listener.move(null, rect.width()/2, rect.height()/2);
 
 		final AtomicBoolean running = new AtomicBoolean(true);
 		final KeyListener keys = (ptr, key, code, action, mods) -> {

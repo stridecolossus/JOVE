@@ -145,6 +145,9 @@ public class Pipeline extends AbstractVulkanObject {
 			return raster;
 		}
 
+		/**
+		 * @return Builder for the depth-stencil stage
+		 */
 		public DepthStencilStageBuilder depth() {
 			return depth;
 		}
@@ -201,7 +204,7 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.pInputAssemblyState = assembly.result();
 			pipeline.pViewportState = viewport.result();
 			pipeline.pRasterizationState = raster.result();
-			pipeline.pDepthStencilState = depth.result(); // TODO - can be null
+			pipeline.pDepthStencilState = depth.result();
 			pipeline.pColorBlendState = blend.result();
 			// TODO - check number of blend attachments = framebuffers
 

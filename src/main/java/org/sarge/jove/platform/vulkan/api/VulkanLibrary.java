@@ -27,7 +27,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	/**
 	 * Vulkan API version.
 	 */
-	Version VERSION = new Version(1, 0, 2);
+	Version VERSION = new Version(1, 1, 0);
 
 	/**
 	 * Successful result code.

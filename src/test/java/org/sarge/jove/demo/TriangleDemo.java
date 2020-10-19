@@ -161,7 +161,7 @@ public class TriangleDemo {
 		final var buffers = chain
 				.views()
 				.stream()
-				.map(view -> FrameBuffer.create(view, pass))
+				.map(view -> FrameBuffer.create(List.of(view), pass))
 				.collect(toList());
 
 		// Create command pool

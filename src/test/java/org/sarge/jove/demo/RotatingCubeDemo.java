@@ -374,7 +374,7 @@ public class RotatingCubeDemo {
 		final var buffers = chain
 				.views()
 				.stream()
-				.map(v -> FrameBuffer.create(v, pass))
+				.map(v -> FrameBuffer.create(List.of(v), pass))
 				.collect(toList());
 
 		// Create command pool
