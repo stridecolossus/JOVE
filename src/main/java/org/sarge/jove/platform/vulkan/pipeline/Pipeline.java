@@ -14,7 +14,6 @@ import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
@@ -65,8 +64,8 @@ public class Pipeline extends AbstractVulkanObject {
 		// TODO - tessellation
 		private final ViewportStageBuilder viewport = new ViewportStageBuilder();
 		private final RasterizerStageBuilder raster = new RasterizerStageBuilder();
+		private final DepthStencilStageBuilder depth = new DepthStencilStageBuilder();
 		// TODO - multi sample
-		// TODO - depth stencil
 		private final ColourBlendStageBuilder blend = new ColourBlendStageBuilder();
 		// TODO - dynamic
 
@@ -87,6 +86,7 @@ public class Pipeline extends AbstractVulkanObject {
 			assembly.parent(this);
 			viewport.parent(this);
 			raster.parent(this);
+			depth.parent(this);
 			blend.parent(this);
 		}
 
@@ -145,6 +145,10 @@ public class Pipeline extends AbstractVulkanObject {
 			return raster;
 		}
 
+		public DepthStencilStageBuilder depth() {
+			return depth;
+		}
+
 		/**
 		 * @return Builder for the colour-blend stage
 		 */
@@ -197,12 +201,14 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.pInputAssemblyState = assembly.result();
 			pipeline.pViewportState = viewport.result();
 			pipeline.pRasterizationState = raster.result();
+			pipeline.pDepthStencilState = depth.result(); // TODO - can be null
 			pipeline.pColorBlendState = blend.result();
 			// TODO - check number of blend attachments = framebuffers
 
+			// TODO
 			pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo();
 			pipeline.pMultisampleState.sampleShadingEnable = VulkanBoolean.FALSE;
-			pipeline.pMultisampleState.rasterizationSamples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
+//			pipeline.pMultisampleState.rasterizationSamples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
 
 			// TODO
 			pipeline.basePipelineHandle = null;

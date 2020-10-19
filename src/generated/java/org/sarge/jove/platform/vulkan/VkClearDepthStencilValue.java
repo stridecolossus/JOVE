@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,9 +13,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"stencil"
 })
 public class VkClearDepthStencilValue extends VulkanStructure { // implements ByReference  {
-	public static class ByValue extends VkClearDepthStencilValue implements Structure.ByValue { }
-	public static class ByReference extends VkClearDepthStencilValue implements Structure.ByReference { }
-
 	public float depth;
 	public int stencil;
 }

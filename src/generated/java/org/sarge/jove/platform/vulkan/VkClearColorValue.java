@@ -1,9 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
-
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Union;
 
 /**
  * Vulkan structure.
@@ -14,9 +12,9 @@ import com.sun.jna.Structure.FieldOrder;
 	"int32",
 	"uint32"
 })
-public class VkClearColorValue extends VulkanStructure { //implements ByReference {
-	public static class ByValue extends VkClearColorValue implements Structure.ByValue { }
-	public static class ByReference extends VkClearColorValue implements Structure.ByReference { }
+public class VkClearColorValue extends Union { //implements ByReference {
+//	public static class ByValue extends VkClearColorValue implements Structure.ByValue { }
+//	public static class ByReference extends VkClearColorValue implements Structure.ByReference { }
 
 	public float[] float32 = new float[4];
 	public int[] int32 = new int[4];

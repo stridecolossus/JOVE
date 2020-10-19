@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
@@ -27,25 +27,26 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @param pass Render pass
 	 * @return New frame buffer
 	 */
-	public static FrameBuffer create(View view, RenderPass pass) {
+	public static FrameBuffer create(List<View> views, RenderPass pass) {
 		// Build descriptor
-		final Image.Extents extents = view.image().descriptor().extents();
+		final Image.Extents extents = views.get(0).image().descriptor().extents();
+//		final Image.Extents extents = view.image().descriptor().extents();
 		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
-		info.attachmentCount = 1;
-		info.pAttachments = toPointerArray(Set.of(view));
+		info.attachmentCount = 2; // TODO
+		info.pAttachments = toPointerArray(views);
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO
 
 		// Allocate frame buffer
-		final LogicalDevice dev = view.device();
+		final LogicalDevice dev = views.get(0).device(); // view.device();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference buffer = lib.factory().pointer();
 		check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
 
 		// Create frame buffer
-		return new FrameBuffer(buffer.getValue(), view);
+		return new FrameBuffer(buffer.getValue(), views.get(0)); // TODO
 	}
 
 	/**
@@ -55,7 +56,8 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @return New framebuffers
 	 */
 	public static Stream<FrameBuffer> create(SwapChain swapchain, RenderPass pass) {
-		return swapchain.views().stream().map(view -> create(view, pass));
+//		return swapchain.views().stream().map(view -> create(view, pass));
+		return null; // TODO
 	}
 
 	private final View view;

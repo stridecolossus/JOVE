@@ -7,10 +7,12 @@ import com.sun.jna.Pointer;
  * GLFW device API.
  * @author Sarge
  */
+public // TODO
 interface FrameworkLibraryDevice {
 	/**
 	 * Listener for key events.
 	 */
+	public // TODO
 	interface KeyListener extends Callback {
 		/**
 		 * Notifies a key event.
@@ -26,6 +28,7 @@ interface FrameworkLibraryDevice {
 	/**
 	 * Listener for mouse move events.
 	 */
+	public // TODO
 	interface MousePositionListener extends Callback {
 		/**
 		 * Notifies a mouse movement event.

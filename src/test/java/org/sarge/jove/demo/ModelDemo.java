@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -20,12 +21,13 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;
 import org.sarge.jove.platform.glfw.FrameworkDesktopService;
+import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.KeyListener;
+import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MousePositionListener;
+import org.sarge.jove.platform.glfw.FrameworkWindow;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
@@ -150,6 +152,48 @@ public class ModelDemo {
 		return dest;
 	}
 
+	private static View depth(LogicalDevice dev, Image.Extents extents) {
+		//public View depth(Dimensions dim) {
+			final Image depth = new Image.Builder(dev)
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
+				.extents(extents)
+				.format(VkFormat.VK_FORMAT_D32_SFLOAT)
+				.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
+				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.build();
+
+			final View view = new View.Builder(dev)
+					.image(depth)
+					.subresource()
+						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
+						.build()
+					.build();
+
+//			// TODO - sub-builder
+//			final VkImageSubresourceRange range = new VkImageSubresourceRange();
+//				range.aspectMask = IntegerEnumeration.mask(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT); // , VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT);
+//				range.baseMipLevel = 0;
+//				range.levelCount = 1;
+//				range.baseArrayLayer = 0;
+//				range.layerCount = 1;
+
+//			final View view = View.create(depth);
+
+			/*
+			depth
+				.barrier()
+				.layout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT)
+				.destination(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
+				.destination(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
+				.transition(pool);
+*/
+			return view;
+
+	}
+
 	public static void main(String[] args) throws Exception {
 		// Open desktop
 		final DesktopService desktop = FrameworkDesktopService.create();
@@ -161,7 +205,7 @@ public class ModelDemo {
 				.size(new Dimensions(1280, 760))
 				.property(Window.Descriptor.Property.DISABLE_OPENGL)
 				.build();
-		final Window window = desktop.window(descriptor);
+		final FrameworkWindow window = (FrameworkWindow) desktop.window(descriptor);
 		// TODO - any point in separate Window class? does it help at all?
 
 		// Init Vulkan
@@ -234,17 +278,25 @@ public class ModelDemo {
 
 		final Rectangle rect = new Rectangle(chain.extents());
 
+		final View depth = depth(dev, Image.Extents.of(chain.extents()));
+
 		// Create render pass
 		final RenderPass pass = new RenderPass.Builder(dev)
 				.attachment()
-				.format(format)
-				.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-				.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-				.build()
+					.format(format)
+					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
+					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
+					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+					.build()
+				.attachment()
+					.format(VkFormat.VK_FORMAT_D32_SFLOAT)		// TODO - lookup optimal/available
+					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
+					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+					.build()
 				.subpass()
-				.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-				.build()
+					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+					.depth(1)
+					.build()
 //				.dependency()
 //					.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 //					.destination(0)
@@ -283,13 +335,13 @@ public class ModelDemo {
 		// Create descriptor layout
 		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
 				.binding(0)
-				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-				.build()
+					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+					.build()
 				.binding(1)
-				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
-				.build()
+					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+					.build()
 				.build();
 
 		// Create pool
@@ -316,13 +368,6 @@ public class ModelDemo {
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
 		uniform.load(proj, proj.length(), 0);
 
-/*
-		final Camera cam = new Camera();
-//		cam.direction(Vector.Z_AXIS.invert());
-		cam.up(Vector.Y_AXIS.invert());
-		cam.move(new Point(0, 0, -1));
-		cam.look(Point.ORIGIN);
-*/
 		final Matrix pos = new Matrix.Builder()
 				.identity()
 				.row(0, Vector.X_AXIS)
@@ -332,13 +377,11 @@ public class ModelDemo {
 
 		final Matrix trans = new Matrix.Builder()
 				.identity()
-				.column(3, new Point(0, 0, -2.5f))
+				.column(3, new Point(0, 0, -2f))
 				.build();
 
 		final Matrix view = pos.multiply(trans);
 		uniform.load(view, view.length(), view.length());
-
-		//uniform.load(Matrix.IDENTITY, Matrix.IDENTITY.length(), Matrix.LENGTH * 2);
 
 		// Create uniform buffer per swapchain image
 //		final VertexBuffer[] uniforms = new VertexBuffer[3];
@@ -353,11 +396,7 @@ public class ModelDemo {
 //			uniforms[n].load(
 //		}
 
-		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * -90);
-		final Matrix rotY = Matrix.IDENTITY; // Matrix.rotation(Vector.Y_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
-		uniform.load(rotY.multiply(rotX), Matrix.LENGTH, Matrix.LENGTH * 2);
-
-
+		uniform.load(Matrix.IDENTITY, Matrix.LENGTH, Matrix.LENGTH * 2);
 
 		// Apply sampler to the descriptor sets
 		new DescriptorSet.Update.Builder()
@@ -378,14 +417,20 @@ public class ModelDemo {
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
-					//.binding(cube.layout())
-					.binding(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE))
+					.binding(model.layout())
 					.build()
 				.assembly()
-//					.topology(cube.primitive())
-					.topology(Primitive.TRIANGLES)
+					.topology(model.primitive())
 					.build()
 				.viewport(rect)
+				.rasterizer()
+					.cullMode(VkCullModeFlag.VK_CULL_MODE_FRONT_BIT)
+//					.frontFace(true)
+					.build()
+				.depth()
+					.enable(true)
+					.write(true)
+					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)
@@ -400,7 +445,7 @@ public class ModelDemo {
 		final var buffers = chain
 				.views()
 				.stream()
-				.map(v -> FrameBuffer.create(v, pass))
+				.map(v -> FrameBuffer.create(List.of(v, depth), pass))
 				.collect(toList());
 
 		// Create command pool
@@ -432,12 +477,29 @@ public class ModelDemo {
 
 		///////////////////
 
+		final MousePositionListener listener = (ptr, x, y) -> {
+			final float angle = MathsUtil.TWO_PI * (rect.width() - (float) x) / rect.width();
+			final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * -90);
+			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
+			uniform.load(rotY.multiply(rotX), Matrix.LENGTH, Matrix.LENGTH * 2);
+		};
+		window.setMouseMoveListener(listener);
+
+		final AtomicBoolean running = new AtomicBoolean(true);
+		final KeyListener keys = (ptr, key, code, action, mods) -> {
+			//System.out.println("key="+key+" code="+code+" action="+action+" mods="+mods);
+			if(key == 256) {
+				running.set(false);
+			}
+		};
+		window.setKeyListener(keys);
+
 //		final int size = 4 * 4 * Float.BYTES;
 //		final long period = 5000;
 //		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
 //		float angle = 0;
 
-		for(int n = 0; n < 250; ++n) {
+		while(running.get()) {
 //			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
 //			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
 //			final Matrix rot = rotY.multiply(rotX);
@@ -446,6 +508,8 @@ public class ModelDemo {
 //			final Matrix rot = Matrix.rotation(Vector.Y_AXIS, angle);
 //			uniform.load(rot, Matrix.LENGTH, Matrix.LENGTH * 2);
 //			angle += MathsUtil.DEGREES_TO_RADIANS;
+
+			window.poll();
 
 			final int idx = chain.acquire(null, null);
 
@@ -481,6 +545,7 @@ public class ModelDemo {
 		uniform.destroy();
 		vbo.destroy();
 		index.destroy();
+		depth.destroy();
 
 		setPool.destroy();
 		setLayout.destroy();
