@@ -4,7 +4,7 @@
 
 After cloning the code from the previous demo we first load the buffered model and transfer the vertex and index buffers to the hardware:
 
-```
+```java
 // Load model
 final ModelLoader loader = new ModelLoader();
 final Model model = loader.load(new FileInputStream(...));
@@ -19,7 +19,7 @@ final VertexBuffer index = loadBuffer(dev, model.index().get(), copyPool);
 
 Next we need to add a new command to `VertexBuffer` to bind an index buffer:
 
-```
+```java
 public Command bindIndexBuffer() {
 	return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
 }
@@ -31,13 +31,13 @@ However we do change the existing `bind` method to `bindVertexBuffer` to differe
 
 Finally we change the drawing command to use the index buffer:
 
-```
+```java
 final Command draw = (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0);
 ```
 
 The rendering sequence now looks like this:
 
-```
+```java
 .begin()
 	.add(pass.begin(buffers.get(n), rect, grey))
 	.add(pipeline.bind())
@@ -63,7 +63,7 @@ There are several issues here but the most pressing is the fact that we now need
 
 We first add a second attachment to the render pass for the depth buffer:
 
-```
+```java
 final RenderPass pass = new RenderPass.Builder(dev)
 	.attachment()
 		.format(format)
@@ -88,7 +88,7 @@ but we make a note to come back and add code to properly select a format appropr
 
 Next we add a new method to the sub-pass builder to register the depth-buffer attachment:
 
-```
+```java
 public SubpassBuilder depth(int index) {
 	info.pDepthStencilAttachment = reference(index, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	return this;
@@ -97,7 +97,7 @@ public SubpassBuilder depth(int index) {
 
 We factor out the code that is common to both types of attachment we have implemented so far and refactor accordingly:
 
-```
+```java
 private VkAttachmentReference.ByReference reference(int index, VkImageLayout layout) {
 	Check.zeroOrMore(index);
 	Check.notNull(layout);
@@ -118,7 +118,7 @@ Up until now we have not needed to specify the depth-stencil pipeline stage and 
 
 So we next implement another nested builder to construct the descriptor for this stage (which turns out to be fairly trivial):
 
-```
+```java
 public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipelineDepthStencilStateCreateInfo> {
 	private final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
 
@@ -174,7 +174,7 @@ And we integrate this into the parent pipeline builder.
 
 Finally we modify the specification of the pipeline to include a depth test:
 
-```
+```java
 final Pipeline pipeline = new Pipeline.Builder(dev)
 	...
 	.depth()
@@ -188,7 +188,7 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
 
 Unlike the swapchain images we need to create the depth buffer image ourselves:
 
-```
+```java
 final Image depthImage = new Image.Builder(dev)
 	.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
 	.extents(extents)
@@ -233,7 +233,7 @@ This involves the following:
 
 Firstly we implement a new domain class to represent a clear value:
 
-```
+```java
 public abstract class ClearValue {
 	private final VkImageAspectFlag aspect;
 	private final Object arg;
@@ -267,7 +267,7 @@ The `aspect` method allows us to check that we are applying the correct type of 
 
 We add factory methods to create a clear value for the two cases - colour attachments:
 
-```
+```java
 /**
  * Creates a clear value for a colour attachment.
  * @param col Colour
@@ -287,7 +287,7 @@ public static ClearValue of(Colour col) {
 
 and the depth attachment:
 
-```
+```java
 /**
  * Creates a clear value for a depth buffer attachment.
  * @param depth Depth value 0..1
@@ -313,7 +313,7 @@ Note the use of `setType` which is required to 'select' the relevant properties 
 
 Finally we add default constants for both cases and a static helper that determines the default clear value for a given attachment:
 
-```
+```java
 public static final ClearValue COLOUR = of(Colour.BLACK);
 public static final ClearValue DEPTH = depth(1);
 
@@ -340,7 +340,7 @@ public static ClearValue of(Set<VkImageAspectFlag> aspects) {
 
 The clear value for a given attachment is now a property of the image view:
 
-```
+```java
 public class View {
 	private ClearValue clear;
 	
@@ -364,7 +364,7 @@ public class View {
 
 This allows us to pre-populate the clear value for an attachment in the view builder (or initialise it to the appropriate default):
 
-```
+```java
 private ClearValue clear;
 
 public View build() {
@@ -385,7 +385,7 @@ public View build() {
 
 In particular we can now refactor the swapchain code to initialise the clear colour when we construct the views which is much more convenient and centralised:
 
-```
+```java
 final SwapChain chain = new SwapChain.Builder(surface)
 	.count(2)
 	.format(format)
@@ -400,7 +400,7 @@ For our demo we leave the depth buffer to use the default clear value.
 
 Finally we refactor the command factory for the render pass to use the above and remove the colour parameter we were using previously:
 
-```
+```java
 public Command begin(FrameBuffer buffer, Rectangle extent) {
 	// Create descriptor
 	final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
@@ -438,7 +438,7 @@ However we still need to solve the other problems.
 
 For the problem of the upside-down texture coordinates we *could* simply flip the texture image or fiddle the texture coordinates in the shader - but either of these is a bit of a bodge (and inverting the image would make loading slower).  The problem is with the way we are interpreting the coordinates in the OBJ model, therefore we add a new property to the transient OBJ model that flips the coordinates in the Y direction *once* during loading:
 
-```
+```java
 public static class ObjectModel {
 	private boolean flip = true;
 

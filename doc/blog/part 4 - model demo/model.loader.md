@@ -113,7 +113,7 @@ public interface Parser {
 
 The loader registers the most common command parsers in its constructor:
 
-```
+```java
 public ObjectModelLoader() {
 	init();
 }
@@ -136,7 +136,7 @@ There are two built-in command parser implementations detailed below.
 
 The `ObjectModel` is a transient working representation of the OBJ model (vertices, normals, texture coordinates) which is later transformed into a JOVE model:
 
-```
+```java
 /**
  * The <i>object model</i> holds the transient OBJ data during parsing.
  */
@@ -168,7 +168,7 @@ The `add` method is used to register a command parser and unsupported or unknown
 
 We also add a callback handler with implementations to either ignore unknown commands or throw an exception depending on the application:
 
-```
+```java
 /**
  * Handler to ignore unknown commands.
  */
@@ -258,7 +258,7 @@ We also add array constructors to the relevant domain classes.
 
 The `FACE` parser iterates over the vertices of a face and adds a `Vertex` instance to the builder:
 
-```
+```java
 for(String face : args) {
 	// Tokenize face
 	final String[] parts = face.trim().split("/");
@@ -297,7 +297,7 @@ Therefore the face parser *initialises* the model when we first encounter a face
 
 The `init` method of the transient model determines the vertex layout and primitive based on the number of vertices in the face:
 
-```
+```java
 private void init(int size) {
 	// Init primitive
 	final Primitive primitive = switch(size) {
@@ -325,7 +325,7 @@ The face parser invokes the `update` method for each face which:
 1. invokes `init` on the first face
 2. and checks that **all** faces have the same number of vertices (this seems a valid restriction to apply).
 
-```
+```java
 void update(int size) {
 	if(init) {
 		// Check face matches existing primitive
@@ -351,7 +351,7 @@ This will reduce the total amount of data in the vertex buffer (at the expense o
 
 We implement the following model builder sub-class that maintains a map of the vertex indices so we can omit duplicates:
 
-```
+```java
 public static class IndexedBuilder extends Builder {
 	private final List<Integer> index = new ArrayList<>();
 	private final Map<Vertex, Integer> map = new HashMap<>();
@@ -388,7 +388,7 @@ Note that the corresponding implementation in the base-class builder throws an e
 
 We can now add an optional index to the model class:
 
-```
+```java
 private final List<Integer> index;
 private ByteBuffer indexBuffer;
 
@@ -415,7 +415,7 @@ public Optional<ByteBuffer> index() {
 
 Finally we refactor the OBJ loader using the indexed builder and add an index for each vertex:
 
-```
+```java
 protected void add(Vertex vertex) {
 	builder.add(vertex);
 	builder.add(builder.indexOf(vertex));
@@ -442,7 +442,7 @@ We really only need to do the above *once* therefore we implement a persistence 
 
 We create the new `ModelLoader` class that will be responsible for reading and writing a buffered model:
 
-```
+```java
 public static class ModelLoader implements Loader<InputStream, Model> {
 	/**
 	 * Writes the given model to an output stream.
@@ -466,13 +466,13 @@ We employ a `DataOutputStream` that we can use to write Java primitives (and mor
 
 The model primitive is output as a UTF string:
 
-```
+```java
 out.writeUTF(model.primitive().name());
 ```
 
 The layout is a concatenated string representation of the vertex components:
 
-```
+```java
 private static final String DELIMITER = "-";
 
 ...
@@ -483,7 +483,7 @@ out.writeUTF(layout);
 
 Finally we write the vertex and index buffers:
 
-```
+```java
 // Write vertex count
 out.writeInt(model.count());
 
@@ -504,7 +504,7 @@ The handling of the optional index buffer is a bit ugly but things get messy whe
 
 The `write` helper outputs the length of a byte buffer and then writes it as an array:
 
-```
+```java
 private static void write(ByteBuffer bb, DataOutputStream out) throws IOException {
 	final byte[] bytes = new byte[bb.limit()];
 	bb.get(bytes);
@@ -520,7 +520,7 @@ so we create a new *buffered model* with the vertex and index buffers as members
 
 We convert the existing model class to an interface and add a skeleton implementation shared by both:
 
-```
+```java
 public class BufferedModel extends AbstractModel {
 	private final ByteBuffer vertices;
 	private final Optional<ByteBuffer> index;
@@ -559,7 +559,7 @@ public class BufferedModel extends AbstractModel {
 
 The method to read a persisted model uses a `DataInputStream` which is the reverse analogue of the `DataOutputStream` used above:
 
-```
+```java
 @Override
 public Model load(InputStream in) {
 	try {
@@ -576,7 +576,7 @@ private static Model load(DataInputStream in) throws IOException {
 
 We introduce a version number to our custom format to check for file compatibility:
 
-```
+```java
 private static final int VERSION = 1;
 
 ...
@@ -592,7 +592,7 @@ and add the corresponding line to output the version number in the `write` metho
 
 The model is loaded and created as follows:
 
-```
+```java
 // Load primitive
 final Primitive primitive = Primitive.valueOf(in.readUTF());
 
@@ -612,7 +612,7 @@ return new BufferedModel(primitive, new Vertex.Layout(layout), vertices, index, 
 
 The helper to load the buffers is slightly more complicated as we also need to handle the case of an empty index buffer:
 
-```
+```java
 private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
 	// Read buffer size
 	final int len = in.readInt();
