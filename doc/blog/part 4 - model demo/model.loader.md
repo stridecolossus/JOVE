@@ -15,15 +15,14 @@ The most common commands are:
 | f			| see below		| face or triangle		| f 1//3 4//6 7//9	|
 | s			| n/a			| smoothing group		| s					|
 
-The *face* command specifies a number vertices consisting of a vertex position and optionally a normal and texture coordinate (delimited by the slash character).
+The *face* command specifies the vertices of a polygon (usually a triangle) as a tuple of indices delimited by the slash character.
+Each vertex consists of a position index, optional normal index, and an optional texture coordinate index.
 
 | example 				| description 								|
 | f 1 2 3				| triangle with vertex positions only 		|
 | f 1/2 3/4 5/6			| triangle also with texture coordinates 	|
 | f 1/2/3 4/5/6 7/8/9	| also with normals 						|
 | f 1//2 3//4 5//6		| normals but no texture coordinates 		|
-
-In addition face indices can also be negative specifying a reverse index from the end of a list.
 
 Example:
 ```
@@ -37,6 +36,10 @@ f 1/1 2/2 3/3
 ```
 
 ## Model Loader
+
+We start with a loader for an OBJ model.
+
+### File Parser
 
 Since we are dealing with a text-based format the loader reads the *lines()* from an input reader and filters empty lines or comments:
 
@@ -67,7 +70,9 @@ private boolean isComment(String line) {
 
 and we add a setter that allows the user to specify the comment token(s).
 
-The `parse()` method first separates the command token from the arguments and then delegates to the `Parser` for that command:
+### Command Parsers
+
+The `parse()` method first separates the command token from the arguments and then delegates to a `Parser` for that command:
 
 ```java
 private void parse(String line, ObjectModel model) {
@@ -76,22 +81,13 @@ private void parse(String line, ObjectModel model) {
 
 	// Lookup command parser
 	final Parser parser = parsers.get(parts[0]);
-	if(parser == null) {
-		if(ignore) {
-			return;
-		}
-		else {
-			throw new IllegalArgumentException(String.format("Unsupported OBJ command: [%s]", parts[0]));
-		}
-	}
+	if(parser == null) ...
 
 	// Delegate
 	final String[] args = StringUtils.split(parts[1]);
 	parser.parse(args, model);
 }
 ```
-
-OBJ models are notoriously flakey so the `ignore` flag is another configurable property that determines whether to throw an error if an unknown command is encountered.
 
 The `Parser` is defined as follows:
 
@@ -114,7 +110,98 @@ public interface Parser {
 }
 ```
 
-where the `ObjectModel` is a transient working representation of the OBJ model.
+The loader registers the most common command parsers in its constructor:
+
+```
+public ObjectModelLoader() {
+	init();
+}
+
+private void init() {
+	add("v", Parser.of(Point.SIZE, Point::new, ObjectModel::vertex));
+	add("vt", Parser.of(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coord));
+	add("vn", Parser.of(Vector.SIZE, Vector::new, ObjectModel::normal));
+	add("f", Parser.FACE);
+	add("s", Parser.IGNORE);
+	add("g", Parser.IGNORE);
+}
+```
+
+The `add` method is public and can be used to register or over-ride a command parser.
+
+There are two built-in command parser implementations detailed below.
+
+### OBJ Transient Model
+
+The `ObjectModel` is a transient working representation of the OBJ model (vertices, normals, texture coordinates) which is later transformed into a JOVE model:
+
+```
+/**
+ * The <i>object model</i> holds the transient OBJ data during parsing.
+ */
+public static class ObjectModel {
+	private final List<Point> vertices = new ArrayList<>();
+	private final List<Coordinate2D> coords = new ArrayList<>();
+	private final List<Vector> normals = new ArrayList<>();
+	private final Model.Builder builder;
+
+	/**
+	 * Constructor.
+	 * @param Underlying model builder
+	 */
+	protected ObjectModel(Model.Builder builder) {
+		this.builder = notNull(builder);
+	}
+}
+```
+
+Also note that the transient model contains an instance of JOVE model builder which is created by `builder` and can also be over-ridden as required.
+
+The transient model itself is created by the protected `model` method which can be over-ridden to alter or extend the implementation.
+
+### Error Handling
+
+The OBJ format is quite vague and models are notoriously flakey so our loader needs to be robust but not overly stringent.
+
+The `add` method is used to register a command parser and unsupported or unknown commands can be skipped by the `IGNORE` parser.
+
+We also add a callback handler with implementations to either ignore unknown commands or throw an exception depending on the application:
+
+```
+/**
+ * Handler to ignore unknown commands.
+ */
+public static final Consumer<String> HANDLER_IGNORE = str -> {
+	// Empty block
+};
+
+/**
+ * Handler that throws an exception.
+ * @throws IllegalArgumentException for an unknown command
+ */
+public static final Consumer<String> HANDLER_THROW = str -> {
+	throw new IllegalArgumentException("Unsupported OBJ command: " + str);
+};
+
+private Consumer<String> handler = HANDLER_THROW;
+
+/**
+ * Sets the callback handler for unknown commands (default is {@link #HANDLER_THROW}).
+ * @param handler Unknown command handler
+ */
+public void setUnknownCommandHandler(Consumer<String> handler) {
+	this.handler = notNull(handler);
+}
+
+private void parse(String line, ObjectModel model) {
+	...
+	if(parser == null) {
+		handler.accept(line);
+		return;
+	}
+	...
+}
+```
 
 ## Vertex Components
 
@@ -162,32 +249,97 @@ For example, the parser for the vertex position command is defined thus:
 Parser.of(Point.SIZE, Point::new, ObjectModel::vertex);
 ```
 
-We also need to add array constructors to the relevant domain classes.
+We also add array constructors to the relevant domain classes.
 
 ## Faces
 
-The parser for the face command 
-TODO
-- optional bits
-- lookup()
-- add to model
+### Face Parser
 
-## Building the Model
+The `FACE` parser iterates over the vertices of a face and creates a `Vertex` instance:
 
-TODO
+```
+for(String face : args) {
+	// Tokenize face
+	final String[] parts = face.trim().split("/");
 
-We register the default built-in command parsers in the constructor of the loader and provide a method to register further parsers as required:
+	// Lookup vertex position
+	final Vertex.Builder vertex = new Vertex.Builder();
+	final Point pos = lookup(model.vertices, parts[0].trim());
+	vertex.position(pos);
 
-```java
-private void init() {
-	add("v", Parser.of(Point.SIZE, Point::new, ObjectModel::vertex));
-	add("vt", Parser.of(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coord));
-	add("vn", Parser.of(Vector.SIZE, Vector::new, ObjectModel::normal));
-	add("f", Parser.FACE);
-	add("s", Parser.IGNORE);
-	add("g", Parser.IGNORE);
+	// Lookup optional texture coordinate
+	if(parts.length > 1) {
+		final Coordinate2D coords = lookup(model.coords, parts[1].trim());
+		vertex.coords(coords);
+	}
+
+	// Lookup vertex normal
+	if(parts.length == 3) {
+		final Vector normal = lookup(model.normals, parts[2].trim());
+		vertex.normal(normal);
+	}
+
+	// Add vertex
+	model.add(vertex.build());
 }
 ```
+
+The `lookup` helper parses an index and retrieves the specified vertex component from the transient model.
+Note that face indices can also be negative specifying a reverse index from the end of a list.
+
+### Model Initialisation
+
+One of the issues we face (pun intended) when parsing an OBJ model is that we do not know the vertex layout or drawing primitive up-front.
+We could mandate that the developer is responsible for configuring the model before loading but this feels overly restrictive - 
+it would be much nicer if the loader determined this information for us.
+Therefore the face parser *initialises* the model when we first encounter a face definition.
+
+The `init` method of the transient model determines the vertex layout and primitive based on the number of vertices in the face:
+
+```
+private void init(int size) {
+	// Init primitive
+	final Primitive primitive = switch(size) {
+		case 1 -> Primitive.POINTS;
+		case 2 -> Primitive.LINES;
+		case 3 -> Primitive.TRIANGLES;
+		default -> throw new IllegalArgumentException("Unsupported primitive size: " + size);
+	};
+	builder.primitive(primitive);
+
+	// Init layout
+	final var layout = new ArrayList<Vertex.Component>();
+	layout.add(Vertex.Component.POSITION);
+	if(!normals.isEmpty()) {
+		layout.add(Vertex.Component.NORMAL);
+	}
+	if(!coords.isEmpty()) {
+		layout.add(Vertex.Component.TEXTURE_COORDINATE);
+	}
+	builder.layout(new Vertex.Layout(layout));
+}
+```
+
+The face parser invokes the `update` method for each face which:
+1. invokes `init` on the first face
+2. and checks that **all** faces have the same number of vertices (this seems a valid restriction to apply) 
+
+```
+void update(int size) {
+	if(init) {
+		// Check face matches existing primitive
+		if(size != builder.primitive().size()) {
+			throw new IllegalArgumentException(String.format("Face size mismatch: expected=%d actual=%d", builder.primitive().size(), size));
+		}
+	}
+	else {
+		// Initialise model
+		init(size);
+		init = true;
+	}
+}
+```
+
 
 # Indexed Model
 
