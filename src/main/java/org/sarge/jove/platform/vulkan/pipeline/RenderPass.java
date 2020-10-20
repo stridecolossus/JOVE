@@ -2,19 +2,19 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.ExtentHelper;
+import org.sarge.jove.util.Check;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
@@ -48,32 +48,32 @@ public class RenderPass extends AbstractVulkanObject {
 	 * Creates a command to begin rendering.
 	 * @param buffer		Frame buffer
 	 * @param extent		Extent
-	 * @param col			Clear colour
 	 * @return Begin rendering command
-	 * @throws NullPointerException if any clear colour element is {@code null}
 	 */
-	public Command begin(FrameBuffer buffer, Rectangle extent, Colour col) {
+	public Command begin(FrameBuffer buffer, Rectangle extent) {
 		// Create descriptor
 		final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
 		info.renderPass = this.handle();
 		info.framebuffer = buffer.handle();
 		info.renderArea = ExtentHelper.of(extent);
 
-		final VkClearValue.ByReference[] array = (VkClearValue.ByReference[]) new VkClearValue.ByReference().toArray(2);
+		// Init clear values
+		final int num = buffer.attachments().size();
+		if(num > 0) {
+			// Populate clear values
+			final VkClearValue.ByReference[] array = (VkClearValue.ByReference[]) new VkClearValue.ByReference().toArray(num);
+			for(int n = 0; n < num; ++n) {
+				final View view = buffer.attachments().get(n);
+				view.clear().populate(array[n]);
+			}
 
-		array[0].setType("color");
-		array[0].color.setType("float32");
-		array[0].color.float32 = col.toArray();
-
-		array[1].setType("depthStencil");
-		array[1].depthStencil.depth = 1;
-		array[1].depthStencil.stencil = 0;
-
-		info.clearValueCount = 2;
-		info.pClearValues = array[0];
+			// Init descriptor
+			info.clearValueCount = num;
+			info.pClearValues = array[0];
+		}
 
 		// Create command
-		return (lib, ptr) -> lib.vkCmdBeginRenderPass(ptr, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
 	}
 
 	/**
@@ -273,45 +273,47 @@ public class RenderPass extends AbstractVulkanObject {
 			}
 
 			/**
-			 * Adds a colour attachment reference.
+			 * Adds a colour attachment.
 			 * @param index			Attachment index
 			 * @param layout		Attachment layout
 			 */
 			public SubpassBuilder colour(int index, VkImageLayout layout) {
-				// Validate reference
-				// TODO - unused attachment VK_ATTACHMENT_UNUSED
-				// TODO - is there some cunning way we can avoid having to use index?
-				if(index >= attachments.size()) throw new IllegalArgumentException("Invalid attachment index: " + index);
-				if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) throw new IllegalArgumentException("Invalid layout for colour attachment: " + layout);
-
-				// Create reference
-				final var ref = new VkAttachmentReference();
-				ref.attachment = zeroOrMore(index);
-				ref.layout = notNull(layout);
-
-				// Add reference
+				// TODO - this is actually a by-reference but still seems to work (presumably OK when we convert to pointer?)
+				final VkAttachmentReference ref = reference(index, layout);
 				colour.add(ref);
-
 				return this;
 			}
 
 			/**
-			 *
-			 * @param index
-			 * @return
+			 * Adds a depth-buffer attachment.
+			 * @param index Attachment index
 			 */
 			public SubpassBuilder depth(int index) {
+				info.pDepthStencilAttachment = reference(index, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+				return this;
+			}
+
+			/**
+			 * Creates an attachment reference.
+			 * @param index			Attachment index
+			 * @param layout		Layout
+			 * @return New attachment reference
+			 * @throws IllegalArgumentException for an invalid index or {@link VkImageLayout#VK_IMAGE_LAYOUT_UNDEFINED}
+			 */
+			private VkAttachmentReference.ByReference reference(int index, VkImageLayout layout) {
+				Check.zeroOrMore(index);
+				Check.notNull(layout);
 				if(index >= attachments.size()) throw new IllegalArgumentException("Invalid attachment index: " + index);
+				if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) throw new IllegalArgumentException("Invalid attachment layout: " + layout);
 
 				// Create reference
 				final var ref = new VkAttachmentReference.ByReference();
-				ref.attachment = zeroOrMore(index);
-				ref.layout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-				info.pDepthStencilAttachment = ref; //StructureHelper.structures(List.of(ref));
-
-				return this;
+				ref.attachment = index;
+				ref.layout = layout;
+				return ref;
 			}
+			// TODO - unused attachment VK_ATTACHMENT_UNUSED
+			// TODO - is there some cunning way we can avoid having to use index?
 
 			/**
 			 * Constructs this sub-pass.

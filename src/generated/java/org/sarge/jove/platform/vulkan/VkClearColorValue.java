@@ -12,10 +12,7 @@ import com.sun.jna.Union;
 	"int32",
 	"uint32"
 })
-public class VkClearColorValue extends Union { //implements ByReference {
-//	public static class ByValue extends VkClearColorValue implements Structure.ByValue { }
-//	public static class ByReference extends VkClearColorValue implements Structure.ByReference { }
-
+public class VkClearColorValue extends Union {
 	public float[] float32 = new float[4];
 	public int[] int32 = new int[4];
 	public int[] uint32 = new int[4];

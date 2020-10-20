@@ -25,6 +25,7 @@ Each vertex consists of a position index, optional normal index, and an optional
 | f 1//2 3//4 5//6		| normals but no texture coordinates 		|
 
 Example:
+
 ```
 v 0.1 0.2 0.3
 v 0.4 0.5 0.6
@@ -155,7 +156,7 @@ public static class ObjectModel {
 }
 ```
 
-Also note that the transient model contains an instance of JOVE model builder which is created by `builder` and can also be over-ridden as required.
+Note that the transient model contains an instance of a JOVE model builder which is created by `builder` and can also be over-ridden as required.
 
 The transient model itself is created by the protected `model` method which can be over-ridden to alter or extend the implementation.
 
@@ -243,7 +244,7 @@ This parser performs the following:
 2. Constructs a vertex component from this array
 3. Add the result to the transient model
 
-For example, the parser for the vertex position command is defined thus:
+For example, the parser for the vertex position command is declared thus:
 
 ```java
 Parser.of(Point.SIZE, Point::new, ObjectModel::vertex);
@@ -255,7 +256,7 @@ We also add array constructors to the relevant domain classes.
 
 ### Face Parser
 
-The `FACE` parser iterates over the vertices of a face and creates a `Vertex` instance:
+The `FACE` parser iterates over the vertices of a face and adds a `Vertex` instance to the builder:
 
 ```
 for(String face : args) {
@@ -322,7 +323,7 @@ private void init(int size) {
 
 The face parser invokes the `update` method for each face which:
 1. invokes `init` on the first face
-2. and checks that **all** faces have the same number of vertices (this seems a valid restriction to apply) 
+2. and checks that **all** faces have the same number of vertices (this seems a valid restriction to apply).
 
 ```
 void update(int size) {
@@ -340,9 +341,303 @@ void update(int size) {
 }
 ```
 
+# Indexed Models
 
-# Indexed Model
+We know that the OBJ model that we will be using in our demo contains a large number of duplicate vertices which we have ignored until now.
+The obvious next step is remove the duplicates and introduce an *index buffer* to the model building process.
+This will reduce the total amount of data in the vertex buffer (at the expense of a second buffer for the index).
 
+## Vertex De-Duplication
 
+We implement the following model builder sub-class that maintains a map of the vertex indices so we can omit duplicates:
 
-To perform this de-duplication we will introduce an _index buffer_ that references the vertices in the model
+```
+public static class IndexedBuilder extends Builder {
+	private final List<Integer> index = new ArrayList<>();
+	private final Map<Vertex, Integer> map = new HashMap<>();
+
+	@Override
+	public Builder add(Vertex vertex) {
+		final Integer prev = map.get(vertex);
+		if(prev == null) {
+			map.put(vertex, count());
+			super.add(vertex);
+		}
+		return this;
+	}
+
+	@Override
+	public Builder add(int index) {
+		Check.zeroOrMore(index);
+		if(index >= count()) throw new IndexOutOfBoundsException(String.format("Invalid vertex index: index=%d vertices=%s", index, count()));
+		this.index.add(index);
+		return this;
+	}
+
+	@Override
+	public int indexOf(Vertex vertex) {
+		final Integer index = map.get(vertex);
+		if(index == null) throw new IllegalArgumentException("Vertex not present: " + vertex);
+		return index;
+	}
+}
+```
+
+The `indexOf` method is used to lookup the index of a given vertex (which we will use shortly).
+Note that the corresponding implementation in the base-class builder throws an exception.
+
+We can now add an optional index to the model class:
+
+```
+private final List<Integer> index;
+private ByteBuffer indexBuffer;
+
+...
+
+@Override
+public Optional<ByteBuffer> index() {
+	// Check whether indexed
+	if(index == null) {
+		return Optional.empty();
+	}
+
+	// Build IBO
+	if(indexBuffer == null) {
+		final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
+		indexBuffer = Bufferable.allocate(array.length * Integer.BYTES);
+		indexBuffer.asIntBuffer().put(array);
+	}
+
+	// Prepare index
+	return Optional.of(indexBuffer.rewind());
+}
+```
+
+Finally we refactor the OBJ loader using the indexed builder and add an index for each vertex:
+
+```
+protected void add(Vertex vertex) {
+	builder.add(vertex);
+	builder.add(builder.indexOf(vertex));
+}
+```
+
+This reduces the size of interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 11Mb for the index buffer).
+
+Result.
+
+## Model Persistence
+
+When we debug and test the new loader we find that it is now quite slow (despite the fact we are developing on a gaming machine with a decent processor and fast SSD).
+
+One obvious observation is that much of the loading process is repeated *every* time we execute the demo:
+1. Load and parse the OBJ file to the transient model.
+2. Build the de-duplicated model from the transient model.
+3. Generate the interleaved vertex data.
+4. Construct the vertex and index buffers.
+
+We really only need to do the above *once* therefore we implement a persistence mechanism for a model.
+
+### Writing a Model
+
+We create the new `ModelLoader` class that will be responsible for reading and writing a buffered model:
+
+```
+public static class ModelLoader implements Loader<InputStream, Model> {
+	/**
+	 * Writes the given model to an output stream.
+	 * @param model		Model
+	 * @param out		Output stream
+	 * @throws IOException if the model cannot be written
+	 */
+	public void write(Model model, OutputStream out) throws IOException {
+		write(model, new DataOutputStream(out));
+	}
+
+	/**
+	 * Writes the given model.
+	 */
+	private static void write(Model model, DataOutputStream out) throws IOException {
+	}
+}
+```
+
+We employ a `DataOutputStream` that we can use to write Java primitives (and more importantly byte arrays) for the various members of a model.
+
+The model primitive is output as a UTF string:
+
+```
+out.writeUTF(model.primitive().name());
+```
+
+The layout is a concatenated string representation of the vertex components:
+
+```
+private static final String DELIMITER = "-";
+
+...
+
+final String layout = model.layout().components().stream().map(Enum::name).collect(joining(DELIMITER));
+out.writeUTF(layout);
+```
+
+Finally we write the vertex and index buffers:
+
+```
+// Write vertex count
+out.writeInt(model.count());
+
+// Write VBO
+write(model.vertices(), out);
+
+// Write index
+final var index = model.index();
+if(index.isPresent()) {
+	write(index.get(), out);
+}
+else {
+	out.writeInt(0);
+}
+```
+
+The handling of the optional index buffer is a bit ugly but things get messy when we mix optional values, lambdas and IO exceptions so it will have to do.
+
+The `write` helper outputs the length of a byte buffer and then writes it as an array:
+
+```
+private static void write(ByteBuffer bb, DataOutputStream out) throws IOException {
+	final byte[] bytes = new byte[bb.limit()];
+	bb.get(bytes);
+	out.writeInt(bytes.length);
+	out.write(bytes);
+}
+```
+
+### Reading a Model
+
+We obviously do not want to recreate an instance of the existing model implementation when we load a persisted model
+so we create a new *buffered model* with the vertex and index buffers as members.
+
+We convert the existing model class to an interface and add a skeleton implementation shared by both:
+
+```
+public class BufferedModel extends AbstractModel {
+	private final ByteBuffer vertices;
+	private final Optional<ByteBuffer> index;
+	private final int count;
+
+	protected BufferedModel(Primitive primitive, Vertex.Layout layout, ByteBuffer vertices, ByteBuffer index, int count) {
+		super(primitive, layout);
+		this.vertices = notNull(vertices);
+		this.index = Optional.ofNullable(index);
+		this.count = zeroOrMore(count);
+		validate();
+	}
+
+	@Override
+	public int count() {
+		return count;
+	}
+
+	@Override
+	public ByteBuffer vertices() {
+		return vertices.rewind();
+	}
+
+	@Override
+	public Optional<ByteBuffer> index() {
+		return index.map(ByteBuffer::rewind);
+	}
+
+	/**
+	 * Loader for a buffered model.
+	 */
+	public static class ModelLoader implements Loader<InputStream, Model> {
+	}
+}
+```
+
+The method to read a persisted model uses a `DataInputStream` which is the reverse analogue of the `DataOutputStream` used above:
+
+```
+@Override
+public Model load(InputStream in) {
+	try {
+		return load(new DataInputStream(in));
+	}
+	catch(IOException e) {
+		throw new RuntimeException(e);
+	}
+}
+
+private static Model load(DataInputStream in) throws IOException {
+}
+```
+
+We introduce a version number to our custom format to check for file compatibility:
+
+```
+private static final int VERSION = 1;
+
+...
+
+// Load and verify file format version
+final int version = in.readInt();
+if(version > VERSION) {
+	throw new UnsupportedOperationException(String.format("Unsupported version: version=%d supported=%d", version, VERSION));
+}
+```
+
+and add the corresponding line to output the version number in the `write` method.
+
+The model is loaded and created as follows:
+
+```
+// Load primitive
+final Primitive primitive = Primitive.valueOf(in.readUTF());
+
+// Load layout
+final var layout = Arrays.stream(in.readUTF().split(DELIMITER)).map(Vertex.Component::valueOf).collect(toList());
+
+// Load vertex count
+final int count = in.readInt();
+
+// Load buffers
+final ByteBuffer vertices = loadBuffer(in);
+final ByteBuffer index = loadBuffer(in);
+
+// Create model
+return new BufferedModel(primitive, new Vertex.Layout(layout), vertices, index, count);
+```
+
+The helper to load the buffers is slightly more complicated as we also need to handle the case of an empty index buffer:
+
+```
+private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
+	// Read buffer size
+	final int len = in.readInt();
+	if(len == 0) {
+		return null;
+	}
+
+	// Load bytes
+	final byte[] bytes = new byte[len];
+	final int actual = in.read(bytes);
+	if(actual != len) throw new IOException(String.format("Error loading buffer: expected=%d actual=%d", len, actual));
+
+	// Convert to buffer
+	return Bufferable.allocate(bytes);
+}
+```
+
+### Conclusion
+
+There is still a lot of conversions of byte buffers to/from arrays but our model can now be loaded in a matter of milliseconds - Viola!
+
+We have ignored OBJ *groups* for the moment - the examples we are testing against all have a single smoothing group - but we may need to come back and refactor later.
+
+Initially we tried to protect the buffers using the `asReadOnlyBuffer` but this seemed to break our unit-tests (equality of buffers is complex)
+and caused issues when we came to integration into the demo so they are exposed as mutable for the moment.
+
+We can now move onto integrating the OBJ model into the demo and see what it looks like.
+

@@ -23,6 +23,7 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
@@ -56,6 +57,15 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		assertNotNull(cmd);
 		cmd.execute(lib, handle);
 		verify(lib).vkCmdBindVertexBuffers(eq(handle), eq(0), eq(1), isA(Pointer.class), eq(new long[]{0}));
+	}
+
+	@Test
+	void bindIndexBuffer() {
+		final Handle handle = new Handle(new Pointer(5));
+		final Command cmd = buffer.index();
+		assertNotNull(cmd);
+		cmd.execute(lib, handle);
+		verify(lib).vkCmdBindIndexBuffer(handle, buffer.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
 	}
 
 	@Test

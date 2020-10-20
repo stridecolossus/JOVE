@@ -147,9 +147,9 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 */
 	public Command index() {
 		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
-
-				//commandBuffer, buffer, offset, indexType);VertexBuffers(buffer, 0, 1, this.handle().toPointerArray(), new long[]{0});
+		// TODO - 16/32 depending on size
 	}
+	// TODO - rename to bindIndexBuffer() and bindVertexBuffer()
 
 	/**
 	 * Creates a command to copy this buffer to the given buffer.

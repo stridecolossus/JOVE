@@ -14,12 +14,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
+import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -30,20 +32,42 @@ public class ViewTest extends AbstractVulkanTest {
 	private Image image;
 
 	@BeforeEach
-	public void before() {
+	void before() {
+		// Create image
+		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+				.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)
+				.extents(new Image.Extents(3, 4))
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.build();
 		image = mock(Image.class);
+		when(image.descriptor()).thenReturn(descriptor);
+
+		// Create image view
 		view = new View(new Pointer(1), image, dev);
 	}
 
 	@Test
-	public void constructor() {
+	void constructor() {
 		assertEquals(new Handle(new Pointer(1)), view.handle());
 		assertEquals(dev, view.device());
 		assertEquals(image, view.image());
+		assertEquals(null, view.clear());
 	}
 
 	@Test
-	public void destroy() {
+	void clear() {
+		final ClearValue clear = ClearValue.of(Colour.WHITE);
+		view.clear(clear);
+		assertEquals(clear, view.clear());
+	}
+
+	@Test
+	void clearInvalidAspect() {
+		assertThrows(IllegalArgumentException.class, () -> view.clear(ClearValue.depth(1)));
+	}
+
+	@Test
+	void destroy() {
 		final Handle handle = view.handle();
 		view.destroy();
 		verify(lib).vkDestroyImageView(dev.handle(), handle, null);
@@ -60,14 +84,6 @@ public class ViewTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
-			// Init image
-			final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-					.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)
-					.extents(new Image.Extents(3, 4))
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
-					.build();
-			when(image.descriptor()).thenReturn(descriptor);
-
 			// Build view
 			view = builder
 					.image(image)
@@ -80,6 +96,7 @@ public class ViewTest extends AbstractVulkanTest {
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertEquals(image, view.image());
+			assertEquals(ClearValue.of(Colour.BLACK), view.clear());
 
 			// Check API
 			final ArgumentCaptor<VkImageViewCreateInfo> captor = ArgumentCaptor.forClass(VkImageViewCreateInfo.class);

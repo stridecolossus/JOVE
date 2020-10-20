@@ -1,10 +1,9 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.jove.util.Check.notEmpty;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -12,12 +11,13 @@ import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>frame buffer</i> is the target for a {@link RenderPass}.
+ * A <i>frame buffer</i> is the target for a {@link RenderPass} and is comprised of a number of image attachments.
  * @author Sarge
  */
 public class FrameBuffer extends AbstractVulkanObject {
@@ -28,54 +28,46 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @return New frame buffer
 	 */
 	public static FrameBuffer create(List<View> views, RenderPass pass) {
-		// Build descriptor
+		// Use extents of first attachment
+		Check.notEmpty(views);
 		final Image.Extents extents = views.get(0).image().descriptor().extents();
-//		final Image.Extents extents = view.image().descriptor().extents();
+
+		// Build descriptor
 		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
-		info.attachmentCount = 2; // TODO
+		info.attachmentCount = views.size();
 		info.pAttachments = toPointerArray(views);
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO
 
 		// Allocate frame buffer
-		final LogicalDevice dev = views.get(0).device(); // view.device();
+		final LogicalDevice dev = pass.device();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference buffer = lib.factory().pointer();
 		check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
 
 		// Create frame buffer
-		return new FrameBuffer(buffer.getValue(), views.get(0)); // TODO
+		return new FrameBuffer(buffer.getValue(), dev, views);
 	}
 
-	/**
-	 * Helper - Creates the frame buffers for the given swapchain.
-	 * @param swapchain		Swapchain
-	 * @param pass			Render pass
-	 * @return New framebuffers
-	 */
-	public static Stream<FrameBuffer> create(SwapChain swapchain, RenderPass pass) {
-//		return swapchain.views().stream().map(view -> create(view, pass));
-		return null; // TODO
-	}
-
-	private final View view;
+	private final List<View> attachments;
 
 	/**
 	 * Constructor.
-	 * @param handle 	Handle
-	 * @param view		Swapchain image-view
+	 * @param handle 			Handle
+	 * @param dev				Logical device
+	 * @param attachments		Image attachments
 	 */
-	private FrameBuffer(Pointer handle, View view) {
-		super(handle, view.device(), view.device().library()::vkDestroyFramebuffer);
-		this.view = notNull(view);
+	private FrameBuffer(Pointer handle, LogicalDevice dev, List<View> attachments) {
+		super(handle, dev, dev.library()::vkDestroyFramebuffer);
+		this.attachments = List.copyOf(notEmpty(attachments));
 	}
 
 	/**
-	 * @return Swapchain image-view for this frame buffer
+	 * @return Image attachments
 	 */
-	public View view() {
-		return view;
+	public List<View> attachments() {
+		return attachments;
 	}
 }

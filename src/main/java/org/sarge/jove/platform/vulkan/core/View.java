@@ -8,6 +8,7 @@ import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.util.ImageSubResourceBuilder;
 
 import com.sun.jna.Pointer;
@@ -19,6 +20,8 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class View extends AbstractVulkanObject {
 	private final Image image;
+
+	private ClearValue clear;
 
 	/**
 	 * Constructor.
@@ -36,6 +39,27 @@ public class View extends AbstractVulkanObject {
 	 */
 	public Image image() {
 		return image;
+	}
+
+	/**
+	 * Clear value for this attachment.
+	 * @return Clear value
+	 */
+	public ClearValue clear() {
+		return clear;
+	}
+
+	/**
+	 * Sets the clear value for this attachment.
+	 * @param aspect		Expected image aspect
+	 * @param clear			Clear value
+	 * @throws IllegalArgumentException if the clear value is incompatible with this view
+	 */
+	public void clear(ClearValue clear) {
+		if(!image.descriptor().aspects().contains(clear.aspect())) {
+			throw new IllegalArgumentException(String.format("Invalid clear value for this view: expected=%s view=%s", clear.aspect(), this));
+		}
+		this.clear = notNull(clear);
 	}
 
 	/**
@@ -59,6 +83,7 @@ public class View extends AbstractVulkanObject {
 		private VkImageViewType type;
 		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
 		private final ImageSubResourceBuilder<Builder> subresource = new ImageSubResourceBuilder<>(this);
+		private ClearValue clear;
 
 		/**
 		 * Constructor.
@@ -83,6 +108,15 @@ public class View extends AbstractVulkanObject {
 		 */
 		public Builder type(VkImageViewType type) {
 			this.type = notNull(type);
+			return this;
+		}
+
+		/**
+		 * Sets the clear value for this view.
+		 * @param clear Clear value
+		 */
+		public Builder clear(ClearValue clear) {
+			this.clear = notNull(clear);
 			return this;
 		}
 
@@ -130,11 +164,19 @@ public class View extends AbstractVulkanObject {
 
 			// Allocate image view
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference view = lib.factory().pointer();
-			check(lib.vkCreateImageView(dev.handle(), info, null, view));
+			final PointerByReference handle = lib.factory().pointer();
+			check(lib.vkCreateImageView(dev.handle(), info, null, handle));
 
 			// Create image view
-			return new View(view.getValue(), image, dev);
+			final View view = new View(handle.getValue(), image, dev);
+
+			// Init clear value
+			if(clear == null) {
+				clear = ClearValue.of(image.descriptor().aspects());
+			}
+			view.clear = clear;
+
+			return view;
 		}
 	}
 }

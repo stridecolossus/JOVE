@@ -12,7 +12,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"depth",
 	"stencil"
 })
-public class VkClearDepthStencilValue extends VulkanStructure { // implements ByReference  {
+public class VkClearDepthStencilValue extends VulkanStructure {
 	public float depth;
 	public int stencil;
 }

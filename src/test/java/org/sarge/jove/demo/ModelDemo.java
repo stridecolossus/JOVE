@@ -153,7 +153,7 @@ public class ModelDemo {
 	}
 
 	private static View depth(LogicalDevice dev, Image.Extents extents) {
-		//public View depth(Dimensions dim) {
+			// Create depth buffer image
 			final Image depth = new Image.Builder(dev)
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
 				.extents(extents)
@@ -163,6 +163,7 @@ public class ModelDemo {
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
+			// Create view
 			final View view = new View.Builder(dev)
 					.image(depth)
 					.subresource()
@@ -264,6 +265,7 @@ public class ModelDemo {
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
 
 		final Rectangle rect = new Rectangle(chain.extents());
@@ -449,13 +451,12 @@ public class ModelDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0);
-		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
+		final Command draw = (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0); // TODO - move to model
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin()
-					.add(pass.begin(buffers.get(n), rect, grey))
+					.add(pass.begin(buffers.get(n), rect))
 					.add(pipeline.bind())
 					.add(vbo.bind())
 					.add(index.index())

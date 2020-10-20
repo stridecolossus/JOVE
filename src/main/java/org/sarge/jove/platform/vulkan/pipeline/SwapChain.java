@@ -9,12 +9,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Fence;
@@ -128,6 +129,7 @@ public class SwapChain extends AbstractVulkanObject {
 		private final Surface surface;
 		private final VkSurfaceCapabilitiesKHR caps;
 		private final Collection<VkSurfaceFormatKHR> formats;
+		private ClearValue clear = ClearValue.COLOUR;
 
 		/**
 		 * Constructor.
@@ -307,6 +309,15 @@ public class SwapChain extends AbstractVulkanObject {
 		}
 
 		/**
+		 * Sets the clear colour for the swapchain images (default is {@link Colour#BLACK}).
+		 * @param clear Clear colour
+		 */
+		public Builder clear(Colour clear) {
+			this.clear = ClearValue.of(clear);
+			return this;
+		}
+
+		/**
 		 * Constructs this swap-chain.
 		 * @return New swap-chain
 		 * @throws IllegalArgumentException if the image format has not been specified
@@ -326,12 +337,21 @@ public class SwapChain extends AbstractVulkanObject {
 			final VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
 			final var handles = VulkanFunction.enumerate(func, lib, factory::pointers);
 
-			// Create image views
+			// Init image descriptor
 			final Image.Extents extents = new Image.Extents(info.imageExtent.width, info.imageExtent.height);
+			final Image.Descriptor descriptor = new Image.Descriptor(VkImageType.VK_IMAGE_TYPE_2D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
+
+			// Init view builder
+			final View.Builder builder = new View.Builder(surface.device());
+			builder.clear(clear);
+
+			// Create image views
 			final var views = Arrays
 					.stream(handles)
 					.map(Handle::new)
-					.map(image -> view(image, extents))
+					.map(image -> new SwapChainImage(image, descriptor))
+					.map(builder::image)
+					.map(View.Builder::build)
 					.collect(toList());
 
 			// Create swap-chain
@@ -364,21 +384,6 @@ public class SwapChain extends AbstractVulkanObject {
 			public Image.Descriptor descriptor() {
 				return descriptor;
 			}
-
-			@Override
-			public String toString() {
-				return ToStringBuilder.reflectionToString(this);
-			}
-		}
-
-		/**
-		 * Creates an image-view from the given swapchain image.
-		 * @return New swapchain image-view
-		 */
-		private View view(Handle handle, Image.Extents extents) {
-			final Image.Descriptor descriptor = new Image.Descriptor(VkImageType.VK_IMAGE_TYPE_2D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
-			final Image image = new SwapChainImage(handle, descriptor);
-			return new View.Builder(surface.device()).image(image).build();
 		}
 	}
 }
