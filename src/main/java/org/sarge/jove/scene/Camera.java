@@ -1,6 +1,5 @@
 package org.sarge.jove.scene;
 
-
 import static org.sarge.jove.util.Check.notNull;
 
 import org.sarge.jove.geometry.Matrix;
@@ -8,19 +7,16 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Quaternion;
 import org.sarge.jove.geometry.Rotation;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.material.BufferPropertyBinder;
-import org.sarge.jove.material.Material;
-import org.sarge.jove.material.Material.Property;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * Model for a camera within a scene.
+ * A <i>camera</i> represents a viewers position and orientation.
  * @author Sarge
  */
-public class Camera { // extends AbstractObject {
+public class Camera {
 	// Camera state
 	private Point pos = Point.ORIGIN;
-	private Vector dir = Vector.Z_AXIS;
+	private Vector dir = Vector.Z_AXIS.invert();
 
 	// Axes
 	private Vector up = Vector.Y_AXIS;
@@ -84,7 +80,7 @@ public class Camera { // extends AbstractObject {
 	 * @return Camera view direction
 	 */
 	public Vector direction() {
-		return dir.invert();
+		return dir;
 	}
 
 	/**
@@ -92,7 +88,7 @@ public class Camera { // extends AbstractObject {
 	 * @param dir View direction (assumes normalized)
 	 */
 	public void direction(Vector dir) {
-		this.dir = dir.invert();
+		this.dir = notNull(dir);
 		dirty();
 	}
 
@@ -101,9 +97,17 @@ public class Camera { // extends AbstractObject {
 	 * @param pt Camera point-of-interest
 	 */
 	public void look(Point pt) {
-		dir = Vector.of(pos, pt).normalize();
-//		final Vector vec = Vector.of(pos, pt).normalize();
-		//direction(vec);
+		dir = Vector.of(pt, pos).normalize();
+		dirty();
+	}
+
+	/**
+	 * Sets the up axis of this camera (default is {@link Vector#Y_AXIS}).
+	 * @param up Camera up axis (assumes normalized)
+	 */
+	public void up(Vector up) {
+		this.up = notNull(up);
+		dirty();
 	}
 
 	/**
@@ -114,23 +118,15 @@ public class Camera { // extends AbstractObject {
 	}
 
 	/**
-	 * Sets the up axis of this camera.
-	 * @param up Up axis
-	 */
-	public void up(Vector up) {
-		this.up = notNull(up);
-		dirty();
-	}
-
-	/**
 	 * @return Camera right axis
 	 */
 	public Vector right() {
+		matrix();
 		return right;
 	}
 
 	/**
-	 * Sets the camera orientation to the given yaw and pitch angles (radians 0..{@link MathsUtil#TWO_PI})
+	 * Sets the camera orientation to the given yaw and pitch angles (radians).
 	 * @param yaw		Yaw
 	 * @param pitch		Pitch
 	 */
@@ -149,6 +145,7 @@ public class Camera { // extends AbstractObject {
 	 * @see Quaternion#rotate(Vector)
 	 */
 	public void rotate(Rotation rot) {
+		// TODO
 		dir = Quaternion.of(rot).rotate(dir);
 		dirty();
 	}
@@ -172,59 +169,27 @@ public class Camera { // extends AbstractObject {
 	}
 
 	/**
-	 * Creates a material property for the view matrix of this camera.
-	 * @return View matrix property
-	 */
-	public Material.Property viewMatrixProperty() {
-		return property(BufferPropertyBinder.matrix(this::matrix));
-	}
-
-	/**
-	 * Creates a material property for the position of this camera.
-	 * @return Camera position property
-	 */
-	public Material.Property positionProperty() {
-		return property(BufferPropertyBinder.tuple(this::position));
-	}
-
-	/**
-	 * Creates a material property for the view direction of this camera.
-	 * @return Camera view direction property
-	 */
-	public Material.Property directionProperty() {
-		return property(BufferPropertyBinder.tuple(this::direction));
-	}
-
-	/**
-	 * Creates a per-frame material property binder.
-	 */
-	private static Material.Property property(BufferPropertyBinder binder) {
-		return new Material.Property(binder, Property.Policy.FRAME);
-	}
-
-	/**
 	 * Updates the camera axes and matrix.
 	 */
 	private void update() {
 		// Determine right axis
-		right = up.cross(dir).normalize();
+		right = dir.cross(up).normalize();
 
 		// Determine up axis
-		final Vector y = dir.cross(right).normalize();
+		final Vector y = right.cross(dir).normalize();
 
 		// Calculate translation component
-		final Vector trans = new Vector(-right.dot(pos), -y.dot(pos), -dir.dot(pos));
+		final Vector trans = new Vector(right.dot(pos), y.dot(pos), -dir.dot(pos));
 
 		// Build camera matrix
 		matrix = new Matrix.Builder()
 			.identity()
 			.row(0, right)
 			.row(1, y)
-			.row(2, dir)
+			.row(2, dir.invert())
 			.column(3, trans)
 			.build();
 	}
 
-	// https://github.com/fynnfluegge/oreon-engine/blob/master/oreonengine/oe-core/src/main/java/org/oreon/core/scenegraph/Camera.java
 	// http://www.songho.ca/opengl/gl_camera.html
 }

@@ -1,147 +1,132 @@
 package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Rotation;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.material.Material;
-import org.sarge.jove.material.Shader;
 import org.sarge.jove.util.MathsUtil;
 
-public class CameraTest {
+class CameraTest {
 	private Camera cam;
 
 	@BeforeEach
-	public void before() {
+	void before() {
 		cam = new Camera();
 	}
 
 	@Test
-	public void constructor() {
+	void constructor() {
 		assertEquals(Point.ORIGIN, cam.position());
 		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
 		assertEquals(Vector.Y_AXIS, cam.up());
 		assertEquals(Vector.X_AXIS, cam.right());
-		assertNotNull(cam.matrix());
+		assertEquals(Matrix.IDENTITY, cam.matrix());
 	}
 
 	@Test
-	public void movePosition() {
+	void move() {
 		final Point pos = new Point(1, 2, 3);
 		cam.move(pos);
 		assertEquals(pos, cam.position());
-		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
+		check();
 	}
 
 	@Test
-	public void moveVector() {
+	void moveVector() {
 		final Vector vec = new Vector(1, 2, 3);
 		cam.move(vec);
 		cam.move(vec);
 		assertEquals(new Point(vec.scale(2)), cam.position());
-		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
+		check();
 	}
 
 	@Test
-	public void moveDistance() {
+	void moveDistance() {
 		cam.move(3);
-		assertEquals(new Point(0, 0, -3), cam.position());
-		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
+		assertEquals(new Point(0, 0, 3), cam.position());
+		check();
 	}
 
 	@Test
-	public void strafe() {
+	void strafe() {
 		cam.strafe(3);
 		assertEquals(new Point(3, 0, 0), cam.position());
+		check();
 	}
 
 	@Test
-	public void direction() {
+	void direction() {
 		cam.direction(Vector.X_AXIS);
 		assertEquals(Vector.X_AXIS, cam.direction());
-		assertEquals(Point.ORIGIN, cam.position());
+		assertEquals(Vector.Z_AXIS, cam.right());
+		check();
 	}
 
 	@Test
-	public void look() {
-		cam.look(new Point(0, 1, 0));
-		assertEquals(Vector.Y_AXIS, cam.direction());
-		assertEquals(Point.ORIGIN, cam.position());
+	void look() {
+		cam.move(new Point(0, 0, -1));
+		cam.look(Point.ORIGIN);
+		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
+		check();
 	}
 
 	@Test
-	public void up() {
+	void orientation() {
+		final float angle = MathsUtil.toRadians(45);
+		cam.orientation(angle, angle);
+		final float cos = (float) Math.cos(angle);
+		final float x = cos * cos;
+		final float y = (float) Math.sin(angle);
+		final float z = (float) Math.sin(angle) * cos;
+		assertEquals(new Vector(x, y, -z).normalize(), cam.direction());
+		check();
+	}
+
+	@Test
+	void orientationIdentity() {
+		cam.orientation(MathsUtil.HALF_PI, 0);
+		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
+		check();
+	}
+
+//	@Test
+//	void rotate() {
+//		cam.rotate(Rotation.of(cam.right(), -MathsUtil.HALF_PI));
+//		assertEquals(new Vector(0, -1, 0), cam.direction());
+//		check();
+//	}
+
+	@Test
+	void up() {
 		cam.up(Vector.X_AXIS);
-		cam.matrix();
 		assertEquals(Vector.X_AXIS, cam.up());
-		assertEquals(new Vector(0, -1, 0), cam.right());
 	}
 
-	@Test
-	public void orientation() {
-		cam.orientation(-MathsUtil.HALF_PI, MathsUtil.HALF_PI);
-		assertEquals(new Vector(0, -1, 0), cam.direction());
-	}
+	private void check() {
+		// Update matrix (and camera orientation)
+		final Matrix actual = cam.matrix();
+		final Vector x = cam.direction().cross(Vector.Y_AXIS).normalize();
 
-	@Test
-	public void rotate() {
-		cam.rotate(Rotation.of(cam.right(), -MathsUtil.HALF_PI));
-		assertEquals(new Vector(0, -1, 0), cam.direction());
-	}
+		// Build orientation matrix
+		final Matrix rot = new Matrix.Builder()
+				.identity()
+				.row(0, x)
+				.row(1, x.cross(cam.direction()).normalize())
+				.row(2, cam.direction().invert())
+				.build();
 
-	@Test
-	public void matrix() {
-		cam.move(new Point(0, 0, -5));
-		cam.direction(Vector.X_AXIS);
-		final Matrix expected = new Matrix.Builder()
-			.identity()
-			.set(0, 0, 0)
-			.set(0, 2, 1)
-			.set(2, 0, -1)
-			.set(2, 2, 0)
-			.set(0, 3, 5)
-			.build();
-		assertEquals(expected, cam.matrix());
-	}
+		// Build translation matrix
+		final Matrix trans = new Matrix.Builder()
+				.identity()
+				.set(0, 3, cam.position().x)
+				.set(1, 3, cam.position().y)
+				.set(2, 3, cam.position().z)
+				.build();
 
-	@Nested
-	class PropertyTests {
-		@Test
-		public void viewMatrixProperty() {
-			final Material.Property prop = cam.viewMatrixProperty();
-			assertNotNull(prop);
-			assertEquals(4 * 4, prop.binder().size());
-			check(prop, cam.matrix());
-		}
-
-		@Test
-		public void positionProperty() {
-			final Material.Property prop = cam.positionProperty();
-			assertNotNull(prop);
-			assertEquals(3, prop.binder().size());
-			check(prop, cam.position());
-		}
-
-		@Test
-		public void directionProperty() {
-			final Material.Property prop = cam.directionProperty();
-			assertNotNull(prop);
-			assertEquals(3, prop.binder().size());
-			check(prop, cam.direction());
-		}
-	}
-
-	private static void check(Material.Property prop, Bufferable bufferable) {
-		final Shader.Parameter param = mock(Shader.Parameter.class);
-		prop.binder().apply(param);
-		// TODO
+		// Check resultant matrix
+		assertEquals(rot.multiply(trans), actual);
 	}
 }

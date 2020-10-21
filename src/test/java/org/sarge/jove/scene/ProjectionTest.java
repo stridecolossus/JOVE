@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.util.MathsUtil;
 
 public class ProjectionTest {
 	private Dimensions dim;
@@ -25,8 +26,16 @@ public class ProjectionTest {
 			.set(2, 3, -0.10001f)
 			.set(3, 2, -1)
 			.build();
-		assertFloatEquals(1, Projection.DEFAULT.height(dim));
-		assertEquals(expected, Projection.DEFAULT.matrix(0.1f, 1000f, dim));
+
+		final Projection proj = Projection.perspective(MathsUtil.HALF_PI);
+		assertFloatEquals(1, proj.height(dim));
+		assertEquals(expected, proj.matrix(0.1f, 1000f, dim));
+	}
+
+	@Test
+	public void defaultPerspective() {
+		final float expected = MathsUtil.tan(MathsUtil.toRadians(60) * MathsUtil.HALF);
+		assertEquals(expected, Projection.DEFAULT.height(dim));
 	}
 
 	@Test

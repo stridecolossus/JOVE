@@ -26,9 +26,9 @@ public interface Projection {
 	Matrix matrix(float near, float far, Dimensions dim);
 
 	/**
-	 * Perspective projection with a 90 degree FOV.
+	 * Perspective projection with a 60 degree FOV.
 	 */
-	Projection DEFAULT = perspective(MathsUtil.HALF_PI);
+	Projection DEFAULT = perspective(MathsUtil.toRadians(60));
 
 	/**
 	 * Creates a perspective projection.

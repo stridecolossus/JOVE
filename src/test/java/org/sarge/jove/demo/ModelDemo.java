@@ -43,6 +43,7 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.scene.Camera;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.Loader;
 import org.sarge.jove.util.MathsUtil;
@@ -361,23 +362,24 @@ public class ModelDemo {
 				.build();
 
 		// Load the projection matrix
+		//final Matrix proj = Projection.perspective(MathsUtil.toRadians(60)).matrix(0.1f, 100, rect.size());
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
 		uniform.load(proj, proj.length(), 0);
 
-		final Matrix pos = new Matrix.Builder()
-				.identity()
-				.row(0, Vector.X_AXIS)
-				.row(1, Vector.Y_AXIS)
-				.row(2, Vector.Z_AXIS)
-				.build();
-
-		final Matrix trans = new Matrix.Builder()
-				.identity()
-				.column(3, new Point(0, 0.5f, -2f))
-				.build();
-
-		final Matrix view = pos.multiply(trans);
-		uniform.load(view, view.length(), view.length());
+//		final Matrix pos = new Matrix.Builder()
+//				.identity()
+//				.row(0, Vector.X_AXIS)
+//				.row(1, Vector.Y_AXIS)
+//				.row(2, Vector.Z_AXIS)
+//				.build();
+//
+//		final Matrix trans = new Matrix.Builder()
+//				.identity()
+//				.column(3, new Point(0, 0.5f, -2f))
+//				.build();
+//
+//		final Matrix view = pos.multiply(trans);
+//		uniform.load(view, view.length(), view.length());
 
 		// Create uniform buffer per swapchain image
 //		final VertexBuffer[] uniforms = new VertexBuffer[3];
@@ -392,7 +394,7 @@ public class ModelDemo {
 //			uniforms[n].load(
 //		}
 
-		uniform.load(Matrix.IDENTITY, Matrix.LENGTH, Matrix.LENGTH * 2);
+		uniform.load(Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI), Matrix.LENGTH, Matrix.LENGTH * 2);
 
 		// Apply sampler to the descriptor sets
 		new DescriptorSet.Update.Builder()
@@ -471,21 +473,61 @@ public class ModelDemo {
 
 		///////////////////
 
+		final Camera cam = new Camera();
+		cam.move(new Point(0, 0.5f, -2));
+		System.out.println(cam.direction());
+
 		final MousePositionListener listener = (ptr, x, y) -> {
-			final float dx = MathsUtil.TWO_PI * (rect.width() - (float) x) / rect.width();
-			final float dy = MathsUtil.TWO_PI * (rect.height() - (float) y) / rect.height();
-			final Matrix rotX = Matrix.rotation(Vector.X_AXIS, dy); // -MathsUtil.HALF_PI); // DEGREES_TO_RADIANS * 90);
-			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, dx);
-			uniform.load(rotY.multiply(rotX), Matrix.LENGTH, Matrix.LENGTH * 2);
+			final float dx = (float) x / rect.width() * MathsUtil.PI;
+			//final float angle = dx * MathsUtil.HALF_PI;
+			//System.out.println(x+" "+dx+" "+angle);
+			cam.orientation(dx, 0);
+
+//			final float dy = MathsUtil.TWO_PI * (rect.height() - (float) y) / rect.height();
+//			final Matrix rotX = Matrix.rotation(Vector.X_AXIS, dy); // -MathsUtil.HALF_PI); // DEGREES_TO_RADIANS * 90);
+//			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, dx);
+//			uniform.load(rotY.multiply(rotX), Matrix.LENGTH, Matrix.LENGTH * 2);
 		};
 		window.setMouseMoveListener(listener);
-		listener.move(null, rect.width()/2, rect.height()/2);
+//		listener.move(null, rect.width()/2, rect.height()/2);
 
 		final AtomicBoolean running = new AtomicBoolean(true);
 		final KeyListener keys = (ptr, key, code, action, mods) -> {
-			//System.out.println("key="+key+" code="+code+" action="+action+" mods="+mods);
-			if(key == 256) {
-				running.set(false);
+//			System.out.println("key="+key+" code="+code+" action="+action+" mods="+mods);
+
+//			key=87 code=17 action=1 mods=0
+//					key=87 code=17 action=0 mods=0
+//					key=65 code=30 action=1 mods=0
+//					key=65 code=30 action=0 mods=0
+//					key=83 code=31 action=1 mods=0
+//					key=83 code=31 action=0 mods=0
+//					key=68 code=32 action=1 mods=0
+//					key=68 code=32 action=0 mods=0
+
+			switch(key) {
+				case 87:
+					// forward
+					cam.move(1);
+					break;
+
+				case 83:
+					// back
+					cam.move(-1);
+					break;
+
+				case 65:
+					// left
+					cam.strafe(1);
+					break;
+
+				case 68:
+					// right
+					cam.strafe(-1);
+					break;
+
+				case 256:
+					running.set(false);
+					break;
 			}
 		};
 		window.setKeyListener(keys);
@@ -506,6 +548,8 @@ public class ModelDemo {
 //			angle += MathsUtil.DEGREES_TO_RADIANS;
 
 			window.poll();
+
+			uniform.load(cam.matrix(), Matrix.LENGTH, Matrix.LENGTH);
 
 			final int idx = chain.acquire(null, null);
 
