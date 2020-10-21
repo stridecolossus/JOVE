@@ -23,11 +23,11 @@ import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.platform.desktop.FrameworkDesktopService;
+import org.sarge.jove.platform.desktop.Window;
+import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 import org.sarge.jove.platform.Window;
-import org.sarge.jove.platform.glfw.FrameworkDesktopService;
-import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.KeyListener;
-import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MousePositionListener;
-import org.sarge.jove.platform.glfw.FrameworkWindow;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
@@ -198,7 +198,7 @@ public class ModelDemo {
 				.size(new Dimensions(1280, 760))
 				.property(Window.Descriptor.Property.DISABLE_OPENGL)
 				.build();
-		final FrameworkWindow window = (FrameworkWindow) desktop.window(descriptor);
+		final Window window = (Window) desktop.window(descriptor);
 		// TODO - any point in separate Window class? does it help at all?
 
 		// Init Vulkan

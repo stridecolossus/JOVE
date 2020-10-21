@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.glfw;
+package org.sarge.jove.platform.desktop;
 
 import org.sarge.jove.common.NativeObject.Handle;
 
@@ -8,7 +8,7 @@ import com.sun.jna.Pointer;
  * GLFW window API.
  * @author Sarge
  */
-interface FrameworkLibraryWindow {
+interface DesktopLibraryWindow {
 	/**
 	 * Creates a window.
 	 * @param w				Width

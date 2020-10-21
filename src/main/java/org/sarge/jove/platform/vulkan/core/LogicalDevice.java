@@ -15,8 +15,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
@@ -38,11 +37,11 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>logical device</i> is an instance of a {@link PhysicalDevice} that can be used to perform work.
  * @author Sarge
  */
-public class LogicalDevice {
+public class LogicalDevice implements NativeObject {
 	/**
 	 * A <i>work queue</i> is used to submit work to this logical device.
 	 */
-	public class Queue {
+	public class Queue implements NativeObject {
 		private final Handle queue;
 		private final QueueFamily family;
 
@@ -59,6 +58,7 @@ public class LogicalDevice {
 		/**
 		 * @return Queue handle
 		 */
+		@Override
 		public Handle handle() {
 			return queue;
 		}
@@ -153,6 +153,7 @@ public class LogicalDevice {
 	/**
 	 * @return Device handle
 	 */
+	@Override
 	public Handle handle() {
 		return handle;
 	}

@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.glfw;
+package org.sarge.jove.platform.desktop;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
@@ -8,7 +8,7 @@ import com.sun.jna.Pointer;
  * @author Sarge
  */
 public // TODO
-interface FrameworkLibraryDevice {
+interface DesktopLibraryDevice {
 	/**
 	 * Listener for key events.
 	 */
@@ -49,7 +49,7 @@ interface FrameworkLibraryDevice {
 		 * @param button	Button index 0..n
 		 * @param action	Button action
 		 * @param mods		Modifiers
-		 * @see FrameworkLibraryDevice#operation(int)
+		 * @see DesktopLibraryDevice#operation(int)
 		 */
 		void button(Pointer window, int button, int action, int mods);
 	}

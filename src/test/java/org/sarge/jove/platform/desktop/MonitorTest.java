@@ -1,4 +1,4 @@
-package org.sarge.jove.platform;
+package org.sarge.jove.platform.desktop;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,7 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.Monitor.DisplayMode;
+import org.sarge.jove.platform.desktop.Monitor;
+import org.sarge.jove.platform.desktop.Monitor.DisplayMode;
 
 public class MonitorTest {
 	private Monitor monitor;

@@ -1,4 +1,4 @@
-package org.sarge.jove.platform;
+package org.sarge.jove.platform.desktop;
 
 import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;

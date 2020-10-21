@@ -1,14 +1,13 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkResult;
 
 /**
  * A <i>Vulkan exception</i> wraps an error code returned from the Vulkan platform.
  * @author Sarge
  */
-public class VulkanException extends ServiceException {
+public class VulkanException extends RuntimeException {
 	public final int result;
 
 	/**

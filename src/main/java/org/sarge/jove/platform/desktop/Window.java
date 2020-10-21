@@ -1,15 +1,16 @@
-package org.sarge.jove.platform.glfw;
+package org.sarge.jove.platform.desktop;
 
+import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.function.Supplier;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.Device;
-import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.Window;
-import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.KeyListener;
-import org.sarge.jove.platform.glfw.FrameworkLibraryDevice.MousePositionListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -18,10 +19,147 @@ import com.sun.jna.ptr.PointerByReference;
  * GLFW window.
  * @author Sarge
  */
-public // TODO
-class FrameworkWindow implements Window {
+public class Window {
+	/**
+	 * Creation descriptor for a window.
+	 */
+	public static final class Descriptor {
+		/**
+		 * Window properties.
+		 */
+		public enum Property {
+			/**
+			 * Window can be resized.
+			 */
+			RESIZABLE,
+
+			/**
+			 * Window has standard decorations (border, close icon, etc).
+			 */
+			DECORATED,
+
+			/**
+			 * Full-screen windows are iconified on focus loss.
+			 */
+			AUTO_ICONIFY,
+
+			/**
+			 * Window is initially maximised (ignores dimensions).
+			 */
+			MAXIMISED,
+
+			/**
+			 * Disables creation of an OpenGL context for this window.
+			 */
+			DISABLE_OPENGL,
+
+			/**
+			 * Whether this window should be full-screen.
+			 */
+			FULL_SCREEN,
+		}
+
+		private final String title;
+		private final Dimensions size;
+		private final Optional<Monitor> monitor;
+		private final Set<Property> props;
+
+		/**
+		 * Constructor.
+		 * @param title			Window title
+		 * @param size			Size
+		 * @param monitor		Monitor
+		 * @param props			Properties
+		 */
+		public Descriptor(String title, Dimensions size, Monitor monitor, Set<Property> props) {
+			this.title = notEmpty(title);
+			this.size = notNull(size);
+			this.monitor = Optional.ofNullable(monitor);
+			this.props = Set.copyOf(props);
+		}
+
+		/**
+		 * @return Window title
+		 */
+		public String title() {
+			return title;
+		}
+
+		/**
+		 * @return Size of this window
+		 */
+		public Dimensions size() {
+			return size;
+		}
+
+		/**
+		 * @return Monitor for this window
+		 */
+		public Optional<Monitor> monitor() {
+			return monitor;
+		}
+
+		public Set<Property> properties() {
+			return props;
+		}
+
+		/**
+		 * Builder for a window descriptor.
+		 */
+		public static class Builder {
+			private String title;
+			private Dimensions size;
+			private Monitor monitor;
+			private final Set<Property> props = new HashSet<>();
+
+			/**
+			 * Sets the window title.
+			 * @param title Title
+			 */
+			public Builder title(String title) {
+				this.title = title;
+				return this;
+			}
+
+			/**
+			 * Sets the size of the window.
+			 * @param size Window size
+			 */
+			public Builder size(Dimensions size) {
+				this.size = size;
+				return this;
+			}
+
+			/**
+			 * Sets the monitor for the window.
+			 * @param monitor Monitor
+			 */
+			public Builder monitor(Monitor monitor) {
+				this.monitor = monitor;
+				return this;
+			}
+
+			/**
+			 * Adds a window property.
+			 * @param p Property
+			 */
+			public Builder property(Property p) {
+				props.add(p);
+				return this;
+			}
+
+			/**
+			 * Constructs this descriptor.
+			 * @param New descriptor
+			 */
+			public Descriptor build() {
+				return new Descriptor(title, size, monitor, props);
+			}
+		}
+	}
+
 	private final Handle handle;
-	private final FrameworkLibrary instance;
+	private final DesktopLibrary instance;
 	private final Descriptor props;
 //	private final Device<?> device;
 	private final Pointer ptr;
@@ -32,7 +170,7 @@ class FrameworkWindow implements Window {
 	 * @param instance		GLFW API
 	 * @param props			Window properties
 	 */
-	FrameworkWindow(Pointer window, FrameworkLibrary instance, Descriptor props) {
+	Window(Pointer window, DesktopLibrary instance, Descriptor props) {
 		this.handle = new Handle(window);
 		this.instance = notNull(instance);
 		this.props = notNull(props);
@@ -48,18 +186,15 @@ class FrameworkWindow implements Window {
 		instance.glfwSetKeyCallback(ptr, listener);
 	}
 
-	@Override
 	public Descriptor descriptor() {
 		return props;
 	}
 
-	@Override
-	public Device<?> device() {
-		return null;
-//		return device;
-	}
+//	public Device<?> device() {
+//		return null;
+////		return device;
+//	}
 
-	@Override
 	public void poll() {
 		instance.glfwPollEvents();
 	}
@@ -135,17 +270,15 @@ class FrameworkWindow implements Window {
 //		};
 //	}
 
-	@Override
-	public Handle surface(Handle vulkan, Supplier<PointerByReference> ref) {
-		final PointerByReference surface = ref.get();
-		final int result = instance.glfwCreateWindowSurface(vulkan, handle, null, surface);
+	public Handle surface(Handle vulkan) {
+		final PointerByReference ref = new PointerByReference();
+		final int result = instance.glfwCreateWindowSurface(vulkan, handle, null, ref);
 		if(result != 0) {
-			throw new ServiceException("Cannot create Vulkan surface: result=" + result);
+			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
-		return new Handle(surface.getValue());
+		return new Handle(ref.getValue());
 	}
 
-	@Override
 	public void destroy() {
 		instance.glfwDestroyWindow(handle);
 	}

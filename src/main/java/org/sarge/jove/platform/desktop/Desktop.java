@@ -1,23 +1,21 @@
-package org.sarge.jove.platform.glfw;
+package org.sarge.jove.platform.desktop;
 
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.DesktopService;
-import org.sarge.jove.platform.Monitor;
-import org.sarge.jove.platform.Monitor.DisplayMode;
-import org.sarge.jove.platform.Service;
-import org.sarge.jove.platform.Window;
-import org.sarge.jove.platform.glfw.FrameworkLibrary.ErrorCallback;
-import org.sarge.jove.platform.glfw.FrameworkLibraryMonitor.FrameworkDisplayMode;
-import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.FrameworkDisplayMode;
+import org.sarge.jove.platform.desktop.Monitor.DisplayMode;
 
+import com.sun.jna.DefaultTypeMapper;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -28,35 +26,47 @@ import com.sun.jna.ptr.PointerByReference;
  * @see <a href="https://www.glfw.org/docs/latest/index.html">GLFW documentation</a>
  * @see <a href="https://github.com/badlogic/jglfw/blob/master/jglfw/jni/glfw-3.0/include/GL/glfw3.h">C header</a>
  */
-public class FrameworkDesktopService implements DesktopService {
+public class Desktop {
 	/**
 	 * Creates the GLFW desktop service.
 	 * @return New desktop service
 	 * @throws ServiceException if GLFW cannot be initialised
 	 */
-	public static FrameworkDesktopService create() {
-		final FrameworkLibrary lib = FrameworkLibrary.create();
+	public static Desktop create() {
+		// Determine library name
+		final String name = switch(Platform.getOSType()) {
+			case Platform.WINDOWS -> "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO
+			case Platform.LINUX -> "libglfw";
+			default -> throw new UnsupportedOperationException("Unsupported platform for GLFW: " + Platform.getOSType());
+		};
+
+		// Init type mapper
+		final var mapper = new DefaultTypeMapper();
+		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
+
+		// Load native library
+		final DesktopLibrary lib = Native.load(name, DesktopLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));
+
+		// Init GLFW
 		final int result = lib.glfwInit();
-		if(result != 1) throw new Service.ServiceException("Cannot initialise GLFW: code=" + result);
-		return new FrameworkDesktopService(lib);
+		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
+
+		// Create desktop
+		return new Desktop(lib);
 	}
 
-	private final FrameworkLibrary instance;
+	private final DesktopLibrary instance;
 
 	/**
 	 * Constructor.
 	 * @param instance GLFW instance
 	 */
-	FrameworkDesktopService(FrameworkLibrary instance) {
+	Desktop(DesktopLibrary instance) {
 		this.instance = notNull(instance);
 	}
 
-	@Override
-	public String name() {
-		return "GLFW";
-	}
-
-	@Override
+	// TODO
+	/*
 	public void handler(ErrorHandler handler) {
 		final ErrorCallback callback = (error, description) -> {
 			final String message = String.format("GLFW error: code=%d [%s]", error, description);
@@ -64,13 +74,12 @@ public class FrameworkDesktopService implements DesktopService {
 		};
 		instance.glfwSetErrorCallback(callback);
 	}
+	*/
 
-	@Override
 	public String version() {
 		return instance.glfwGetVersionString();
 	}
 
-	@Override
 	public boolean isVulkanSupported() {
 		return instance.glfwVulkanSupported();
 	}
@@ -89,14 +98,12 @@ public class FrameworkDesktopService implements DesktopService {
 		return instance.glfwGetKeyName(key, scancode);
 	}
 
-	@Override
 	public String[] extensions() {
 		final IntByReference size = new IntByReference();
 		final PointerByReference extensions = instance.glfwGetRequiredInstanceExtensions(size);
 		return extensions.getPointer().getStringArray(0, size.getValue());
 	}
 
-	@Override
 	public List<Monitor> monitors() {
 		final IntByReference count = new IntByReference();
 		final Pointer[] monitors = instance.glfwGetMonitors(count).getPointerArray(0, count.getValue());
@@ -116,14 +123,13 @@ public class FrameworkDesktopService implements DesktopService {
 		final IntByReference count = new IntByReference();
 		final FrameworkDisplayMode result = instance.glfwGetVideoModes(handle, count);
 		final FrameworkDisplayMode[] array = (FrameworkDisplayMode[]) result.toArray(count.getValue());
-		final List<Monitor.DisplayMode> modes = Arrays.stream(array).map(FrameworkDesktopService::toDisplayMode).collect(toList());
+		final List<Monitor.DisplayMode> modes = Arrays.stream(array).map(Desktop::toDisplayMode).collect(toList());
 
 		// Create monitor
 		final String name = instance.glfwGetMonitorName(handle);
 		return new Monitor(handle, name, new Dimensions(w.getValue(), h.getValue()), modes);
 	}
 
-	@Override
 	public DisplayMode mode(Monitor monitor) {
 		final FrameworkDisplayMode mode = instance.glfwGetVideoMode((Pointer) monitor.handle());
 		return toDisplayMode(mode);
@@ -137,8 +143,7 @@ public class FrameworkDesktopService implements DesktopService {
 		return new Monitor.DisplayMode(new Dimensions(mode.width, mode.height), depth, mode.refresh);
 	}
 
-	@Override
-	public FrameworkWindow window(Window.Descriptor descriptor) {
+	public Window window(Window.Descriptor descriptor) {
 		// Lookup monitor handle
 		final Handle monitor;
 		if(descriptor.monitor().isPresent()) {
@@ -165,7 +170,7 @@ public class FrameworkDesktopService implements DesktopService {
 
 		// Create window
 		final Pointer window = instance.glfwCreateWindow(descriptor.size().width(), descriptor.size().height(), descriptor.title(), monitor, null);
-		return new FrameworkWindow(window, instance, descriptor);
+		return new Window(window, instance, descriptor);
 	}
 
 	/**
@@ -192,17 +197,15 @@ public class FrameworkDesktopService implements DesktopService {
 		}
 	}
 
-	@Override
-	public Pointer surface(Handle vulkan, Handle window) {
-		final PointerByReference ref = new PointerByReference();
-		final int result = instance.glfwCreateWindowSurface(vulkan, window, null, ref);
-		if(result != VkResult.VK_SUCCESS.value()) {
-			throw new ServiceException("Error creating Vulkan surface: result=" + IntegerEnumeration.map(VkResult.class, result));
-		}
-		return ref.getValue();
-	}
+//	public Pointer surface(Handle vulkan, Handle window) {
+//		final PointerByReference ref = new PointerByReference();
+//		final int result = instance.glfwCreateWindowSurface(vulkan, window, null, ref);
+//		if(result != VkResult.VK_SUCCESS.value()) {
+//			throw new RuntimeException("Error creating Vulkan surface: result=" + IntegerEnumeration.map(VkResult.class, result));
+//		}
+//		return ref.getValue();
+//	}
 
-	@Override
 	public void close() {
 		instance.glfwTerminate();
 	}

@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
@@ -71,7 +70,7 @@ public class Instance {
 	 */
 	public Function function(String name) {
 		final Pointer ptr = lib.vkGetInstanceProcAddr(handle, name);
-		if(ptr == null) throw new ServiceException("Cannot find function pointer: " + name);
+		if(ptr == null) throw new RuntimeException("Cannot find function pointer: " + name);
 		return Function.getFunction(ptr);
 	}
 

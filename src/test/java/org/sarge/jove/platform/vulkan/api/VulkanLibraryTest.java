@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
@@ -26,12 +25,12 @@ public class VulkanLibraryTest {
 
 	@Test
 	void checkThrows() {
-		assertThrows(ServiceException.class, () -> VulkanLibrary.check(VkResult.VK_ERROR_DEVICE_LOST.value()));
+		assertThrows(RuntimeException.class, () -> VulkanLibrary.check(VkResult.VK_ERROR_DEVICE_LOST.value()));
 	}
 
 	@Test
 	void checkThrowsUnknownErrorCode() {
-		assertThrows(ServiceException.class, () -> VulkanLibrary.check(-1));
+		assertThrows(RuntimeException.class, () -> VulkanLibrary.check(-1));
 	}
 
 	@Test

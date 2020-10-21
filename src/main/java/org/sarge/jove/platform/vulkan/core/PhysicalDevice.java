@@ -14,8 +14,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.Service.ServiceException;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
@@ -37,7 +36,7 @@ import com.sun.jna.ptr.IntByReference;
  * A <i>physical device</i> represents a Vulkan system component such as a GPU.
  * @author Sarge
  */
-public class PhysicalDevice {
+public class PhysicalDevice implements NativeObject {
 	/**
 	 * Queue family implementation.
 	 */
@@ -209,6 +208,7 @@ public class PhysicalDevice {
 	/**
 	 * @return Device handle
 	 */
+	@Override
 	public Handle handle() {
 		return handle;
 	}
@@ -234,8 +234,8 @@ public class PhysicalDevice {
 	 * @return Matching queue family
 	 * @throws ServiceException with the given message if a matching queue is not present
 	 */
-	public QueueFamily find(Predicate<QueueFamily> test, String message) throws ServiceException {
-		return families.stream().filter(test).findAny().orElseThrow(() -> new ServiceException(message));
+	public QueueFamily find(Predicate<QueueFamily> test, String message) {
+		return families.stream().filter(test).findAny().orElseThrow(() -> new RuntimeException(message));
 	}
 
 	/**
@@ -286,7 +286,7 @@ public class PhysicalDevice {
 		}
 
 		// Otherwise memory not available for this device
-		throw new ServiceException("No memory type available for specified memory properties:" + props);
+		throw new RuntimeException("No memory type available for specified memory properties:" + props);
 	}
 
 	/**

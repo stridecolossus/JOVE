@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryType;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
@@ -107,11 +106,11 @@ public class PhysicalDeviceTest {
 		assertEquals(1, spy.findMemoryType(0b11, flags));
 
 		// Check bit-wise filter
-		assertThrows(ServiceException.class, () -> dev.findMemoryType(0b01, flags));
+		assertThrows(RuntimeException.class, () -> dev.findMemoryType(0b01, flags));
 
 		// Check property matching
-		assertThrows(ServiceException.class, () -> dev.findMemoryType(0b11, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
-		assertThrows(ServiceException.class, () -> dev.findMemoryType(0b11, Set.of()));
+		assertThrows(RuntimeException.class, () -> dev.findMemoryType(0b11, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
+		assertThrows(RuntimeException.class, () -> dev.findMemoryType(0b11, Set.of()));
 	}
 
 	@Nested
@@ -183,7 +182,7 @@ public class PhysicalDeviceTest {
 		@SuppressWarnings("unchecked")
 		@Test
 		void findThrows() {
-			assertThrows(ServiceException.class, () -> dev.find(mock(Predicate.class), "doh"));
+			assertThrows(RuntimeException.class, () -> dev.find(mock(Predicate.class), "doh"));
 		}
 	}
 }

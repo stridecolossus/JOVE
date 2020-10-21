@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
@@ -94,7 +93,7 @@ public class InstanceTest {
 
 	@Test
 	void functionUnknown() {
-		assertThrows(ServiceException.class, () -> instance.function("cobblers"));
+		assertThrows(RuntimeException.class, () -> instance.function("cobblers"));
 	}
 
 	@Tag(INTEGRATION_TEST)

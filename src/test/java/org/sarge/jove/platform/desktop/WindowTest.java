@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.glfw;
+package org.sarge.jove.platform.desktop;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -9,22 +9,21 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.Window;
 
 import com.sun.jna.Pointer;
 
-public class FrameworkWindowTest {
-	private FrameworkWindow window;
-	private FrameworkLibrary instance;
+public class WindowTest {
+	private Window window;
+	private DesktopLibrary instance;
 	private Window.Descriptor props;
 	private Pointer handle;
 
 	@BeforeEach
 	public void before() {
 		handle = new Pointer(42);
-		instance = mock(FrameworkLibrary.class);
+		instance = mock(DesktopLibrary.class);
 		props = new Window.Descriptor.Builder().title("title").size(new Dimensions(640, 480)).property(Window.Descriptor.Property.DECORATED).build();
-		window = new FrameworkWindow(handle, instance, props);
+		window = new Window(handle, instance, props);
 	}
 
 	@Test

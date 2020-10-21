@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.glfw;
+package org.sarge.jove.platform.desktop;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
@@ -9,7 +9,7 @@ import com.sun.jna.ptr.IntByReference;
  * GLFW monitor API.
  * @author Sarge
  */
-interface FrameworkLibraryMonitor {
+interface DesktopLibraryMonitor {
 	/**
 	 * GLFW display mode.
 	 */
