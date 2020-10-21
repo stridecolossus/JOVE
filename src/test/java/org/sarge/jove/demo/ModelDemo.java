@@ -36,6 +36,7 @@ import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
+import org.sarge.jove.platform.vulkan.pipeline.DrawCommand;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
@@ -451,7 +452,6 @@ public class ModelDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0); // TODO - move to model
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb
@@ -461,7 +461,7 @@ public class ModelDemo {
 					.add(vbo.bind())
 					.add(index.index())
 					.add(descriptors.get(n).bind(pipelineLayout))
-					.add(draw)
+					.add(DrawCommand.of(model))
 					.add(RenderPass.END_COMMAND)
 				.end();
 		}

@@ -4,8 +4,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -56,23 +54,21 @@ public class ObjectModelLoaderTest {
 			""";
 
 			// Load OBJ model
-			final Model.Builder builder = loader.load(new StringReader(data));
-			assertNotNull(builder);
-
-			// Check generated model
-			final Model model = builder.build();
+			final Model model = loader.load(new StringReader(data));
+			assertNotNull(model);
 			assertEquals(Primitive.TRIANGLES, model.primitive());
 			assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.TEXTURE_COORDINATE), model.layout());
-			assertEquals(3, model.size());
+			assertEquals(3, model.count());
 
 			// Check vertex buffer
 			assertNotNull(model.vertices());
-			assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertices().length());
+			assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertices().limit());
+			// TODO - check texture flip
 
 			// Check index buffer
 			assertNotNull(model.index());
 			assertEquals(true, model.index().isPresent());
-			assertEquals(3 * Integer.BYTES, model.index().get().length());
+			assertEquals(3 * Integer.BYTES, model.index().get().limit());
 		}
 
 		@Test
@@ -114,6 +110,7 @@ public class ObjectModelLoaderTest {
 			@Test
 			void arrayInvalidLength() {
 				assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}, model));
+				assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1", "2", "3", "4"}, model));
 			}
 		}
 
@@ -123,40 +120,48 @@ public class ObjectModelLoaderTest {
 
 			@BeforeEach
 			void before() {
-				final ObjectModel actual = loader.new ObjectModel(new IndexedBuilder());
-				actual.vertex(Point.ORIGIN);
-				actual.normal(Vector.X_AXIS);
-				actual.coord(Coordinate2D.BOTTOM_LEFT);
-				model = spy(actual);
+				model = new ObjectModel(new IndexedBuilder());
+				model.vertex(Point.ORIGIN);
 			}
 
 			@Test
 			void parsePosition() {
 				Parser.FACE.parse(new String[]{"1", "1", "1"}, model);
-				verify(model, times(3)).add(Vertex.of(Point.ORIGIN));
-				verify(model).update(3);
+				final Model result = model.build();
+				assertEquals(3, result.count());
+				assertEquals(new Vertex.Layout(Vertex.Component.POSITION), result.layout());
+				assertEquals(Primitive.TRIANGLES, result.primitive());
 			}
 
 			@Test
 			void parsePositionTexture() {
-				final Vertex expected  = new Vertex.Builder().position(Point.ORIGIN).coords(Coordinate2D.BOTTOM_LEFT).build();
+				model.coord(Coordinate2D.BOTTOM_LEFT);
 				Parser.FACE.parse(new String[]{"1/1", "1/1", "1/1"}, model);
-				verify(model, times(3)).add(expected);
-				verify(model).update(3);
+				final Model result = model.build();
+				assertEquals(3, result.count());
+				assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE), result.layout());
+				assertEquals(Primitive.TRIANGLES, result.primitive());
 			}
 
 			@Test
 			void parsePositionTextureNormal() {
-				final Vertex expected  = new Vertex.Builder().position(Point.ORIGIN).coords(Coordinate2D.BOTTOM_LEFT).normal(Vector.X_AXIS).build();
+				model.normal(Vector.X_AXIS);
+				model.coord(Coordinate2D.BOTTOM_LEFT);
 				Parser.FACE.parse(new String[]{"1/1/1", "1/1/1", "1/1/1"}, model);
-				verify(model, times(3)).add(expected);
-				verify(model).update(3);
+				final Model result = model.build();
+				assertEquals(3, result.count());
+				assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.TEXTURE_COORDINATE), result.layout());
+				assertEquals(Primitive.TRIANGLES, result.primitive());
+			}
+
+			@Test
+			void parseInvalidFace() {
+				assertThrows(IllegalArgumentException.class, () -> Parser.FACE.parse(new String[]{"1/2/3/4"}, model));
 			}
 
 			@Test
 			void parseNegativeIndex() {
 				Parser.FACE.parse(new String[]{"-1", "-1", "-1"}, model);
-				verify(model, times(3)).add(Vertex.of(Point.ORIGIN));
 			}
 
 			@Test
@@ -169,6 +174,20 @@ public class ObjectModelLoaderTest {
 			void parseFaceSizeMismatch() {
 				Parser.FACE.parse(new String[]{"1"}, model);
 				assertThrows(IllegalArgumentException.class, () -> Parser.FACE.parse(new String[]{"1 2"}, model));
+			}
+
+			@Test
+			void parsePrimitive() {
+				Parser.FACE.parse(new String[]{"1", "1"}, model);
+				final Model result = model.build();
+				assertEquals(2, result.count());
+				assertEquals(new Vertex.Layout(Vertex.Component.POSITION), result.layout());
+				assertEquals(Primitive.LINES, result.primitive());
+			}
+
+			@Test
+			void parseUnsupportedPrimitive() {
+				assertThrows(UnsupportedOperationException.class, () -> Parser.FACE.parse(new String[]{"1", "2", "3", "4"}, model));
 			}
 		}
 	}

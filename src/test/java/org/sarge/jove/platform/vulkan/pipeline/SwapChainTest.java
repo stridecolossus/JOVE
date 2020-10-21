@@ -17,10 +17,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
@@ -148,7 +150,10 @@ public class SwapChainTest extends AbstractVulkanTest {
 		@Test
 		void build() {
 			// Create chain
-			chain = builder.format(VkFormat.VK_FORMAT_R8G8B8A8_UNORM).build();
+			chain = builder
+					.format(VkFormat.VK_FORMAT_R8G8B8A8_UNORM)
+					.clear(Colour.WHITE)
+					.build();
 
 			// Check swapchain
 			assertNotNull(chain);
@@ -189,6 +194,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertNotNull(view.image());
+			assertEquals(ClearValue.of(Colour.WHITE), view.clear());
 		}
 
 		@Test

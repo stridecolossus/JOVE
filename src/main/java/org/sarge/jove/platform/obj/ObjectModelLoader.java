@@ -2,9 +2,6 @@ package org.sarge.jove.platform.obj;
 
 import static org.sarge.jove.util.Check.notNull;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.Reader;
@@ -22,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Model.IndexedBuilder;
 import org.sarge.jove.model.Primitive;
@@ -128,7 +124,7 @@ public class ObjectModelLoader {
 				case 1 -> Primitive.POINTS;
 				case 2 -> Primitive.LINES;
 				case 3 -> Primitive.TRIANGLES;
-				default -> throw new IllegalArgumentException("Unsupported primitive size: " + size);
+				default -> throw new UnsupportedOperationException("Unsupported primitive size: " + size);
 			};
 			builder.primitive(primitive);
 
@@ -142,6 +138,14 @@ public class ObjectModelLoader {
 				layout.add(Vertex.Component.TEXTURE_COORDINATE);
 			}
 			builder.layout(new Vertex.Layout(layout));
+		}
+
+		/**
+		 * Constructs the final model.
+		 * @return New model
+		 */
+		Model build() {
+			return builder.build();
 		}
 	}
 
@@ -205,6 +209,7 @@ public class ObjectModelLoader {
 				for(String face : args) {
 					// Tokenize face
 					final String[] parts = face.trim().split("/");
+					if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
 
 					// Lookup vertex position
 					final Vertex.Builder vertex = new Vertex.Builder();
@@ -349,7 +354,7 @@ public class ObjectModelLoader {
 	 * @throws IOException if the model cannot be loaded
 	 * @see #model()
 	 */
-	public Model.Builder load(Reader r) throws IOException {
+	public Model load(Reader r) throws IOException {
 		// Create transient model
 		final ObjectModel model = model();
 
@@ -367,12 +372,8 @@ public class ObjectModelLoader {
 			}
 		}
 
-		// Check model
-		if(!model.init) {
-			throw new IOException("Model is not initialised");
-		}
-
-		return model.builder;
+		// Construct model
+		return model.build();
 	}
 
 	/**
@@ -406,44 +407,5 @@ public class ObjectModelLoader {
 			final String[] args = StringUtils.split(parts[1]);
 			parser.parse(args, model);
 		}
-	}
-
-	//////////////
-
-//	@SuppressWarnings("resource")
-//	public static void main2(String[] args) throws Exception {
-//		final long start = System.currentTimeMillis();
-//		final Bufferable b = Bufferable.read(new FileInputStream("./src/test/resources/chalet.vbo"));
-//		System.out.println("duration="+(System.currentTimeMillis()-start));
-//		System.out.println(b.length());
-//	}
-
-	@SuppressWarnings({ "resource", "unused" })
-	public static void main2(String[] args) throws Exception {
-		final long start = System.currentTimeMillis();
-		final ObjectModelLoader loader = new ObjectModelLoader();
-		final Model.Builder builder = loader.load(new FileReader("./src/test/resources/demo/model/chalet.obj"));
-		final Model model = builder.build();
-		System.out.println("model="+model);
-		System.out.println("count="+model.count());
-		System.out.println("length="+model.vertices().limit());
-		System.out.println("index="+model.index().get().limit());
-		System.out.println("duration="+(System.currentTimeMillis()-start));
-
-		/////
-
-		final ModelLoader writer = new ModelLoader();
-		writer.write(model, new FileOutputStream("./src/test/resources/demo/model/chalet.model"));
-	}
-
-	public static void main(String[] args) throws Exception {
-		long start = System.currentTimeMillis();
-			final ModelLoader loader = new ModelLoader();
-			final Model model = loader.load(new FileInputStream("./src/test/resources/demo/model/chalet.model"));
-		System.out.println("duration="+(System.currentTimeMillis()-start));
-		System.out.println("model="+model);
-		System.out.println("count="+model.count());
-		System.out.println("length="+model.vertices().limit());
-		System.out.println("index="+model.index().get().limit());
 	}
 }

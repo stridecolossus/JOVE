@@ -202,6 +202,7 @@ public class RotatingCubeDemo {
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
 
 		final Rectangle rect = new Rectangle(chain.extents());
@@ -384,12 +385,11 @@ public class RotatingCubeDemo {
 
 		// Record render commands
 		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 1, 0, 0);
-		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin()
-					.add(pass.begin(buffers.get(n), rect, grey))
+					.add(pass.begin(buffers.get(n), rect))
 					.add(pipeline.bind())
 					.add(dest.bind())
 					.add(descriptors.get(n).bind(pipelineLayout))

@@ -422,7 +422,7 @@ protected void add(Vertex vertex) {
 }
 ```
 
-This reduces the size of interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 11Mb for the index buffer).
+This reduces the size of interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
 
 Result.
 

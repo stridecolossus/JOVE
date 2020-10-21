@@ -3,10 +3,14 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -23,7 +27,9 @@ import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
 import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSubpassContents;
+import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 
@@ -54,10 +60,15 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 		@Test
 		void begin() {
-			// Create command
+			// Create a frame buffer with a single colour attachment
 			final FrameBuffer buffer = mock(FrameBuffer.class);
+			final View view = mock(View.class);
+			when(view.clear()).thenReturn(ClearValue.COLOUR);
+			when(buffer.attachments()).thenReturn(List.of(view));
+
+			// Create command
 			final Rectangle extent = new Rectangle(1, 2, 3, 4);
-			final Command cmd = pass.begin(buffer, extent, Colour.BLACK);
+			final Command cmd = pass.begin(buffer, extent);
 			assertNotNull(cmd);
 
 			// Invoke command
@@ -76,6 +87,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertEquals(1, info.clearValueCount);
 			assertNotNull(info.pClearValues);
 			assertTrue(ExtentHelper.of(extent).dataEquals(info.renderArea));
+			assertArrayEquals(Colour.BLACK.toArray(), info.pClearValues.color.float32);
 		}
 
 		@Test

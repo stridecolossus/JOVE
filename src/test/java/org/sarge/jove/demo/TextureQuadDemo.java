@@ -202,6 +202,7 @@ public class TextureQuadDemo {
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
 
 		// Create render pass
@@ -334,7 +335,7 @@ public class TextureQuadDemo {
 		final var buffers = chain
 				.views()
 				.stream()
-				.map(view -> FrameBuffer.create(view, pass))
+				.map(view -> FrameBuffer.create(List.of(view), pass))
 				.collect(toList());
 
 		// Create command pool
@@ -344,12 +345,11 @@ public class TextureQuadDemo {
 
 		// Record render commands
 		final Command draw = (api, handle) -> api.vkCmdDraw(handle, vertices.length, 1, 0, 0);		// TODO - builder
-		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin()
-					.add(pass.begin(buffers.get(n), rect, grey))
+					.add(pass.begin(buffers.get(n), rect))
 					.add(pipeline.bind())
 					.add(dest.bind())
 					.add(descriptors.get(n).bind(pipelineLayout))

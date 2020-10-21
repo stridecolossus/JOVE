@@ -8,6 +8,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,11 +32,11 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		// Create render pass
 		pass = mock(RenderPass.class);
 		when(pass.handle()).thenReturn(new Handle(new Pointer(1)));
+		when(pass.device()).thenReturn(dev);
 
 		// Create swapchain image-view
 		view = mock(View.class);
 		when(view.handle()).thenReturn(new Handle(new Pointer(2)));
-		when(view.device()).thenReturn(dev);
 
 		// Init image descriptor
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
@@ -50,7 +52,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		when(view.image()).thenReturn(image);
 
 		// Create buffer
-		buffer = FrameBuffer.create(view, pass);
+		buffer = FrameBuffer.create(List.of(view), pass);
 	}
 
 	@Test
@@ -58,7 +60,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		assertNotNull(buffer);
 		assertNotNull(buffer.handle());
 		assertEquals(dev, buffer.device());
-		assertEquals(view, buffer.view());
+		assertEquals(List.of(view), buffer.attachments());
 	}
 
 	@Test

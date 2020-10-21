@@ -115,6 +115,7 @@ public class TriangleDemo {
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
 
 		// Create render pass
@@ -170,12 +171,11 @@ public class TriangleDemo {
 
 		// Record render commands
 		final Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);		// TODO - builder
-		final Colour grey = new Colour(0.3f, 0.3f, 0.3f, 1);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin() // VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
-					.add(pass.begin(buffers.get(n), rect, grey))
+					.add(pass.begin(buffers.get(n), rect))
 					.add(pipeline.bind())
 					.add(draw)
 					.add(RenderPass.END_COMMAND)

@@ -87,6 +87,7 @@ public class ViewTest extends AbstractVulkanTest {
 			// Build view
 			view = builder
 					.image(image)
+					.clear(ClearValue.of(Colour.WHITE))
 					.subresource()
 						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 						.build()
@@ -96,7 +97,7 @@ public class ViewTest extends AbstractVulkanTest {
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertEquals(image, view.image());
-			assertEquals(ClearValue.of(Colour.BLACK), view.clear());
+			assertEquals(ClearValue.of(Colour.WHITE), view.clear());
 
 			// Check API
 			final ArgumentCaptor<VkImageViewCreateInfo> captor = ArgumentCaptor.forClass(VkImageViewCreateInfo.class);
