@@ -17,7 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.Loader;

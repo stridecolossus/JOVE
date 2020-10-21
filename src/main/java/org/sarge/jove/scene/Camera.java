@@ -26,6 +26,9 @@ public class Camera {
 	private transient Matrix matrix;
 	private transient boolean dirty;
 
+	// https://learnopengl.com/Getting-started/Camera
+	// http://www.songho.ca/opengl/gl_camera.html
+
 	/**
 	 * Constructor.
 	 */
@@ -190,6 +193,4 @@ public class Camera {
 			.column(3, trans)
 			.build();
 	}
-
-	// http://www.songho.ca/opengl/gl_camera.html
 }

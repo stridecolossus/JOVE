@@ -2,11 +2,8 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.Collection;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.util.PointerArray;
+import org.sarge.jove.common.NativeObject.TransientNativeObject;
 
 import com.sun.jna.Pointer;
 
@@ -14,7 +11,7 @@ import com.sun.jna.Pointer;
  * Convenience base-class for a Vulkan object derived from the logical device.
  * @author Sarge
  */
-public abstract class AbstractVulkanObject {
+public abstract class AbstractVulkanObject implements TransientNativeObject {
 	/**
 	 * Destructor method.
 	 */
@@ -27,20 +24,6 @@ public abstract class AbstractVulkanObject {
 		 * @param allocator		Allocator
 		 */
 		void destroy(Handle dev, Handle handle, Handle allocator);
-	}
-
-	/**
-	 * Helper - Converts a set of objects to a pointer-array wrapper.
-	 * @param objects Objects
-	 * @return Pointer-array
-	 */
-	public static PointerArray toPointerArray(Collection<? extends AbstractVulkanObject> objects) {
-		if(objects.isEmpty()) {
-			return null;
-		}
-		else {
-			return new PointerArray(Handle.toArray(objects, AbstractVulkanObject::handle));
-		}
 	}
 
 	private Handle handle;
@@ -69,9 +52,7 @@ public abstract class AbstractVulkanObject {
 		this.destructor = notNull(destructor);
 	}
 
-	/**
-	 * @return Handle
-	 */
+	@Override
 	public Handle handle() {
 		return handle;
 	}
@@ -94,6 +75,7 @@ public abstract class AbstractVulkanObject {
 	 * Destroys this object.
 	 * @throws IllegalStateException if this object has already been destroyed
 	 */
+	@Override
 	public synchronized void destroy() {
 		if(isDestroyed()) throw new IllegalStateException("Object has already been destroyed: " + this);
 		destructor.destroy(dev.handle(), handle, null);

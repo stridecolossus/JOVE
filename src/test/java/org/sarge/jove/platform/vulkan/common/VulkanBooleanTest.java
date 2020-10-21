@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 public class VulkanBooleanTest {
 	@Test

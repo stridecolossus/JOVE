@@ -18,7 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout;
@@ -284,7 +284,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		void free() {
 			final var sets = pool.allocate(List.of(layout));
 			pool.free(sets);
-			verify(lib).vkFreeDescriptorSets(dev.handle(), pool.handle(), 1, Handle.toArray(sets, DescriptorSet::handle));
+			verify(lib).vkFreeDescriptorSets(dev.handle(), pool.handle(), 1, Handle.toArray(sets));
 			assertEquals(3, pool.maximum());
 			assertEquals(3, pool.available());
 			assertEquals(0, pool.sets().count());

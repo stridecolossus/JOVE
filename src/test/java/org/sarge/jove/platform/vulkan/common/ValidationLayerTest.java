@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer.ValidationLayerSupport;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;

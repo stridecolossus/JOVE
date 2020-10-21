@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Command;

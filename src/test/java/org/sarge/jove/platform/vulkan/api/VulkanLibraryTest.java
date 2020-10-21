@@ -7,8 +7,8 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.INTEGRATION_TEST;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;

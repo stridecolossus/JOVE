@@ -8,9 +8,9 @@ import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.common.Coordinate;
 
 public class ViewportTest {
 	private Viewport viewport;

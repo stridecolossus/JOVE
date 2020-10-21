@@ -4,7 +4,7 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkOffset3D;

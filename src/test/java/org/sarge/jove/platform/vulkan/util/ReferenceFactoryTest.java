@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;

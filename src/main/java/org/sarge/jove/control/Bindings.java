@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.control.Event.Handler;
 import org.sarge.lib.util.AbstractObject;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>bindings</i> maps controller events to action handlers.

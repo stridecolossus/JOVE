@@ -12,8 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
@@ -45,7 +46,7 @@ public interface Command {
 	/**
 	 * A <i>command buffer</i> is allocated by a {@link Pool} and used record and execute commands.
 	 */
-	class Buffer {
+	class Buffer implements NativeObject {
 		/**
 		 * Buffer state.
 		 */
@@ -73,9 +74,11 @@ public interface Command {
 		/**
 		 * @return Command buffer handle
 		 */
-		Handle handle() {
+		@Override
+		public Handle handle() {
 			return handle;
 		}
+		// TODO - was package-private
 
 		/**
 		 * @return Parent command pool
@@ -303,7 +306,7 @@ public interface Command {
 		 */
 		private void free(Collection<Buffer> buffers) {
 			final LogicalDevice dev = super.device();
-			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers, Buffer::handle));
+			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers));
 		}
 
 		/**

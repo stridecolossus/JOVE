@@ -2,7 +2,7 @@ package org.sarge.jove.platform;
 
 import java.util.List;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 
 import com.sun.jna.Pointer;
 

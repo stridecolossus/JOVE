@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
 import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;

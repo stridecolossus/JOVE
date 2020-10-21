@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.IntegerEnumeration;
 
 import com.sun.jna.FromNativeContext;
 

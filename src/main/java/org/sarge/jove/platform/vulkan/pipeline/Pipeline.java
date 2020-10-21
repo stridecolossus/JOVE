@@ -278,7 +278,7 @@ public class Pipeline extends AbstractVulkanObject {
 
 				// Add descriptor set layouts
 				info.setLayoutCount = sets.size();
-				info.pSetLayouts = toPointerArray(sets);
+				info.pSetLayouts = Handle.toPointerArray(sets);
 
 				// Add push constants
 				// TODO

@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -84,9 +84,9 @@ public interface Work {
 	 * Builder for work.
 	 */
 	public static class Builder {
-		private final List<Handle> buffers = new ArrayList<>();
-		private final Set<Handle> wait = new HashSet<>();
-		private final Set<Handle> signal = new HashSet<>();
+		private final List<Command.Buffer> buffers = new ArrayList<>();
+		private final Set<Semaphore> wait = new HashSet<>();
+		private final Set<Semaphore> signal = new HashSet<>();
 		private final Set<VkPipelineStageFlag> stages = new HashSet<>();
 		private Queue queue;
 
@@ -107,20 +107,20 @@ public interface Work {
 			}
 
 			// Add buffer to this work
-			buffers.add(buffer.handle());
+			buffers.add(buffer);
 
 			return this;
 		}
 
 		public Builder wait(Semaphore semaphore) {
 			Check.notNull(semaphore);
-			wait.add(semaphore.handle());
+			wait.add(semaphore);
 			return this;
 		}
 
 		public Builder signal(Semaphore semaphore) {
 			Check.notNull(semaphore);
-			signal.add(semaphore.handle());
+			signal.add(semaphore);
 			return this;
 		}
 

@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Service.ServiceException;

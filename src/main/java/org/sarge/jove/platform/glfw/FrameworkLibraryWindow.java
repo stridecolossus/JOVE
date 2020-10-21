@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.glfw;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 
 import com.sun.jna.Pointer;
 

@@ -13,8 +13,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.lib.util.AbstractEqualsObject;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.Util;
 
 /**
  * Source code generator for a JNA structure.

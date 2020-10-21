@@ -24,8 +24,6 @@ import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.Instance;
-import org.sarge.jove.platform.vulkan.core.MessageHandler;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
 
 import com.sun.jna.Function;

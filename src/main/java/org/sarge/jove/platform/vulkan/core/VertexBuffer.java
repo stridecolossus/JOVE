@@ -16,6 +16,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.util.Check;
+import org.sarge.jove.util.PointerArray;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
@@ -139,7 +140,8 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 * @return Command to bind this buffer
 	 */
 	public Command bind() {
-		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, this.handle().toPointerArray(), new long[]{0});
+		final PointerArray array = Handle.toPointerArray(List.of(this));
+		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
 	}
 
 	/**

@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -111,7 +110,7 @@ public class SwapChain extends AbstractVulkanObject {
 
 		// Add swap-chains
 		info.swapchainCount = 1;
-		info.pSwapchains = toPointerArray(List.of(this));
+		info.pSwapchains = Handle.toPointerArray(List.of(this));
 
 		// Set image indices
 		info.pImageIndices = StructureHelper.integers(new int[]{index.getValue()});

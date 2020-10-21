@@ -4,7 +4,6 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.glfw.FrameworkLibrary;
 
 public class FrameworkLibraryTest {
 	@Tag("GLFW")

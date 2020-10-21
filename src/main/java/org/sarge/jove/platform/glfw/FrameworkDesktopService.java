@@ -7,8 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.DesktopService;
 import org.sarge.jove.platform.Monitor;
 import org.sarge.jove.platform.Monitor.DisplayMode;

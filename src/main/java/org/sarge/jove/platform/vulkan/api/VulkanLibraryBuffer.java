@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
 import org.sarge.jove.platform.vulkan.VkIndexType;

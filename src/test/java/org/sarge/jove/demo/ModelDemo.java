@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.ImageData;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
@@ -362,24 +362,8 @@ public class ModelDemo {
 				.build();
 
 		// Load the projection matrix
-		//final Matrix proj = Projection.perspective(MathsUtil.toRadians(60)).matrix(0.1f, 100, rect.size());
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
 		uniform.load(proj, proj.length(), 0);
-
-//		final Matrix pos = new Matrix.Builder()
-//				.identity()
-//				.row(0, Vector.X_AXIS)
-//				.row(1, Vector.Y_AXIS)
-//				.row(2, Vector.Z_AXIS)
-//				.build();
-//
-//		final Matrix trans = new Matrix.Builder()
-//				.identity()
-//				.column(3, new Point(0, 0.5f, -2f))
-//				.build();
-//
-//		final Matrix view = pos.multiply(trans);
-//		uniform.load(view, view.length(), view.length());
 
 		// Create uniform buffer per swapchain image
 //		final VertexBuffer[] uniforms = new VertexBuffer[3];
@@ -394,6 +378,7 @@ public class ModelDemo {
 //			uniforms[n].load(
 //		}
 
+		// Rotate model
 		uniform.load(Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI), Matrix.LENGTH, Matrix.LENGTH * 2);
 
 		// Apply sampler to the descriptor sets
@@ -475,35 +460,16 @@ public class ModelDemo {
 
 		final Camera cam = new Camera();
 		cam.move(new Point(0, 0.5f, -2));
-		System.out.println(cam.direction());
 
 		final MousePositionListener listener = (ptr, x, y) -> {
 			final float dx = (float) x / rect.width() * MathsUtil.PI;
-			//final float angle = dx * MathsUtil.HALF_PI;
-			//System.out.println(x+" "+dx+" "+angle);
 			cam.orientation(dx, 0);
-
-//			final float dy = MathsUtil.TWO_PI * (rect.height() - (float) y) / rect.height();
-//			final Matrix rotX = Matrix.rotation(Vector.X_AXIS, dy); // -MathsUtil.HALF_PI); // DEGREES_TO_RADIANS * 90);
-//			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, dx);
-//			uniform.load(rotY.multiply(rotX), Matrix.LENGTH, Matrix.LENGTH * 2);
 		};
 		window.setMouseMoveListener(listener);
-//		listener.move(null, rect.width()/2, rect.height()/2);
 
 		final AtomicBoolean running = new AtomicBoolean(true);
 		final KeyListener keys = (ptr, key, code, action, mods) -> {
 //			System.out.println("key="+key+" code="+code+" action="+action+" mods="+mods);
-
-//			key=87 code=17 action=1 mods=0
-//					key=87 code=17 action=0 mods=0
-//					key=65 code=30 action=1 mods=0
-//					key=65 code=30 action=0 mods=0
-//					key=83 code=31 action=1 mods=0
-//					key=83 code=31 action=0 mods=0
-//					key=68 code=32 action=1 mods=0
-//					key=68 code=32 action=0 mods=0
-
 			switch(key) {
 				case 87:
 					// forward
@@ -532,21 +498,7 @@ public class ModelDemo {
 		};
 		window.setKeyListener(keys);
 
-//		final int size = 4 * 4 * Float.BYTES;
-//		final long period = 5000;
-//		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
-//		float angle = 0;
-
 		while(running.get()) {
-//			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
-//			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
-//			final Matrix rot = rotY.multiply(rotX);
-//			uniform.load(rot, 2 * size);
-
-//			final Matrix rot = Matrix.rotation(Vector.Y_AXIS, angle);
-//			uniform.load(rot, Matrix.LENGTH, Matrix.LENGTH * 2);
-//			angle += MathsUtil.DEGREES_TO_RADIANS;
-
 			window.poll();
 
 			uniform.load(cam.matrix(), Matrix.LENGTH, Matrix.LENGTH);

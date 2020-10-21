@@ -7,8 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Event.Category;
-import org.sarge.jove.control.Event.Descriptor;
-import org.sarge.jove.control.Event.Operation;
 
 public class EventTest {
 	@Nested

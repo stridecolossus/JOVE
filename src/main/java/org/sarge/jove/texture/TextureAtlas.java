@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.lib.xml.Element;
 import org.sarge.lib.xml.Element.ElementException;
 import org.sarge.lib.xml.ElementLoader;
 

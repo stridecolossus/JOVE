@@ -20,8 +20,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
@@ -67,7 +67,7 @@ import com.sun.jna.ptr.PointerByReference;
  * </pre>
  * @author Sarge
  */
-public class DescriptorSet {
+public class DescriptorSet implements NativeObject {
 	private final Handle handle;
 	private final Layout layout;
 
@@ -81,9 +81,7 @@ public class DescriptorSet {
 		this.layout = notNull(layout);
 	}
 
-	/**
-	 * @return Descriptor set handle
-	 */
+	@Override
 	public Handle handle() {
 		return handle;
 	}
@@ -111,7 +109,7 @@ public class DescriptorSet {
 	 * @return New bind command
 	 */
 	public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
-		final Pointer[] handles = Handle.toArray(sets, DescriptorSet::handle);
+		final Pointer[] handles = Handle.toArray(sets);
 
 		return (api, cmd) -> api.vkCmdBindDescriptorSets(
 				cmd,
@@ -332,7 +330,7 @@ public class DescriptorSet {
 			final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
 			info.descriptorPool = this.handle();
 			info.descriptorSetCount = layouts.size();
-			info.pSetLayouts = toPointerArray(layouts);
+			info.pSetLayouts = Handle.toPointerArray(layouts);
 
 			// Allocate descriptors sets
 			final LogicalDevice dev = this.device();
@@ -377,7 +375,7 @@ public class DescriptorSet {
 
 			// Release sets
 			final LogicalDevice dev = this.device();
-			check(dev.library().vkFreeDescriptorSets(dev.handle(), this.handle(), sets.size(), Handle.toArray(sets, DescriptorSet::handle)));
+			check(dev.library().vkFreeDescriptorSets(dev.handle(), this.handle(), sets.size(), Handle.toArray(sets)));
 		}
 
 		/**

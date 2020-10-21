@@ -4,7 +4,7 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.util.function.Supplier;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.Device;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.Window;

@@ -7,8 +7,6 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sarge.lib.util.Check;
-
 /**
  * The <i>key name</i> is used to lookup up the name of a <i>standard</i> keyboard key.
  * @author Sarge

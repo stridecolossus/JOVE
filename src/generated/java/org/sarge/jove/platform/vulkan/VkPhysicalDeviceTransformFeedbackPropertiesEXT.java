@@ -4,7 +4,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 

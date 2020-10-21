@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.Monitor;
 import org.sarge.jove.platform.Service.ErrorHandler;
 import org.sarge.jove.platform.Window;

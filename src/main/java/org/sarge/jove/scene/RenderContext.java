@@ -6,7 +6,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Frame;
 import org.sarge.jove.material.IntegerPropertyBinder;
 import org.sarge.jove.material.Material;
-import org.sarge.jove.material.Material.Property;
 
 /**
  * The <i>render context</i>

@@ -10,8 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.Support;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.platform.vulkan.util.Support.Extensions;
 
 public class SupportTest {

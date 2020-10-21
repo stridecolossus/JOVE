@@ -2,7 +2,7 @@ package org.sarge.jove.platform.glfw;
 
 import java.util.Map;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 
 import com.sun.jna.Callback;
 import com.sun.jna.DefaultTypeMapper;

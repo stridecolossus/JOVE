@@ -13,8 +13,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;

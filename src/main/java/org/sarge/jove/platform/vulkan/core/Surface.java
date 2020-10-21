@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;

@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
-import org.sarge.jove.platform.vulkan.core.MessageHandler;
 import org.sarge.jove.platform.vulkan.core.MessageHandler.MessageCallback;
 
 import com.sun.jna.Pointer;

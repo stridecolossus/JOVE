@@ -12,7 +12,6 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.material.BufferPropertyBinder;
 import org.sarge.jove.material.Material;
-import org.sarge.jove.material.Material.Property;
 
 /**
  * A <i>scene</i> comprises a scene-graph and viewport.

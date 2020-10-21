@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.Service.ServiceException;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;

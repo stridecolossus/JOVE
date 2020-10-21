@@ -5,16 +5,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
-import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
-public class HandleTest {
+public class NativeObjectTest {
 	private Handle handle;
 	private Pointer ptr;
 
@@ -43,13 +43,15 @@ public class HandleTest {
 
 	@Test
 	void toArray() {
-		final Pointer[] ptrs = Handle.toArray(List.of(handle, handle), Function.identity());
+		final NativeObject obj = () -> handle;
+		final Pointer[] ptrs = Handle.toArray(List.of(obj, obj));
 		assertArrayEquals(new Pointer[]{ptr, ptr}, ptrs);
 	}
 
 	@Test
 	void toPointerArray() {
-		final PointerArray array = Handle.toPointerArray(List.of(handle, handle));
+		final NativeObject obj = () -> handle;
+		final PointerArray array = Handle.toPointerArray(List.of(obj, obj));
 		assertNotNull(array);
 		assertEquals(2 * Native.POINTER_SIZE, array.size());
 		assertEquals(ptr, array.getPointer(0));

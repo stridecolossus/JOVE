@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject.Handle;
 
 import com.sun.jna.ptr.PointerByReference;
 

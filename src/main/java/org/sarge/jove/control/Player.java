@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import org.sarge.lib.util.AbstractObject;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>player</i> is a model for animations, audio, etc. that can be played and paused.
