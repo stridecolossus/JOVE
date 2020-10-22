@@ -8,11 +8,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.NativeObject.Handle;
 
 /**
  * A <i>monitor</i> describes a physical monitor attached to this system.
  */
-public final class Monitor {
+public final class Monitor implements NativeObject {
 	/**
 	 * Display mode.
 	 */
@@ -57,7 +59,7 @@ public final class Monitor {
 		}
 	}
 
-	private final Object handle;
+	private final Handle handle;
 	private final String name;
 	private final Dimensions size;
 	private final List<DisplayMode> modes;
@@ -69,7 +71,7 @@ public final class Monitor {
 	 * @param size		Physical dimensions
 	 * @param modes		Display modes supported by this monitor
 	 */
-	public Monitor(Object handle, String name, Dimensions size, List<DisplayMode> modes) {
+	public Monitor(Handle handle, String name, Dimensions size, List<DisplayMode> modes) {
 		this.handle = notNull(handle);
 		this.name = notEmpty(name);
 		this.size = notNull(size);
@@ -79,7 +81,7 @@ public final class Monitor {
 	/**
 	 * @return Monitor handle
 	 */
-	public Object handle() {
+	public Handle handle() {
 		return handle;
 	}
 

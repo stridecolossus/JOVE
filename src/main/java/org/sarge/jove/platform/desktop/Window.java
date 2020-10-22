@@ -1,14 +1,9 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 
@@ -16,178 +11,70 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * GLFW window.
+ * Native window implemented using GLFW.
  * @author Sarge
  */
-public class Window {
+public class Window implements TransientNativeObject {
 	/**
-	 * Creation descriptor for a window.
+	 * Creates a GLFW window.
+	 * @param lib				GLFW library
+	 * @param descriptor		Window descriptor
+	 * @param monitor			Optional monitor
+	 * @return New window
+	 * @throws RuntimeException if the window cannot be created
 	 */
-	public static final class Descriptor {
-		/**
-		 * Window properties.
-		 */
-		public enum Property {
-			/**
-			 * Window can be resized.
-			 */
-			RESIZABLE,
+	static Window create(DesktopLibrary lib, WindowDescriptor descriptor, Monitor monitor) {
+		// Apply window hints
+		lib.glfwDefaultWindowHints();
+		descriptor.properties().forEach(p -> p.apply(lib));
 
-			/**
-			 * Window has standard decorations (border, close icon, etc).
-			 */
-			DECORATED,
-
-			/**
-			 * Full-screen windows are iconified on focus loss.
-			 */
-			AUTO_ICONIFY,
-
-			/**
-			 * Window is initially maximised (ignores dimensions).
-			 */
-			MAXIMISED,
-
-			/**
-			 * Disables creation of an OpenGL context for this window.
-			 */
-			DISABLE_OPENGL,
-
-			/**
-			 * Whether this window should be full-screen.
-			 */
-			FULL_SCREEN,
+		// Create window
+		final Dimensions size = descriptor.size();
+		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null/*monitor.handle()*/, null);
+		if(window == null) {
+			throw new RuntimeException(String.format("Window cannot be created: descriptor=%s monitor=%s", descriptor, monitor));
 		}
 
-		private final String title;
-		private final Dimensions size;
-		private final Optional<Monitor> monitor;
-		private final Set<Property> props;
-
-		/**
-		 * Constructor.
-		 * @param title			Window title
-		 * @param size			Size
-		 * @param monitor		Monitor
-		 * @param props			Properties
-		 */
-		public Descriptor(String title, Dimensions size, Monitor monitor, Set<Property> props) {
-			this.title = notEmpty(title);
-			this.size = notNull(size);
-			this.monitor = Optional.ofNullable(monitor);
-			this.props = Set.copyOf(props);
-		}
-
-		/**
-		 * @return Window title
-		 */
-		public String title() {
-			return title;
-		}
-
-		/**
-		 * @return Size of this window
-		 */
-		public Dimensions size() {
-			return size;
-		}
-
-		/**
-		 * @return Monitor for this window
-		 */
-		public Optional<Monitor> monitor() {
-			return monitor;
-		}
-
-		public Set<Property> properties() {
-			return props;
-		}
-
-		/**
-		 * Builder for a window descriptor.
-		 */
-		public static class Builder {
-			private String title;
-			private Dimensions size;
-			private Monitor monitor;
-			private final Set<Property> props = new HashSet<>();
-
-			/**
-			 * Sets the window title.
-			 * @param title Title
-			 */
-			public Builder title(String title) {
-				this.title = title;
-				return this;
-			}
-
-			/**
-			 * Sets the size of the window.
-			 * @param size Window size
-			 */
-			public Builder size(Dimensions size) {
-				this.size = size;
-				return this;
-			}
-
-			/**
-			 * Sets the monitor for the window.
-			 * @param monitor Monitor
-			 */
-			public Builder monitor(Monitor monitor) {
-				this.monitor = monitor;
-				return this;
-			}
-
-			/**
-			 * Adds a window property.
-			 * @param p Property
-			 */
-			public Builder property(Property p) {
-				props.add(p);
-				return this;
-			}
-
-			/**
-			 * Constructs this descriptor.
-			 * @param New descriptor
-			 */
-			public Descriptor build() {
-				return new Descriptor(title, size, monitor, props);
-			}
-		}
+		// Create window wrapper
+		return new Window(window, lib, descriptor);
 	}
 
 	private final Handle handle;
 	private final DesktopLibrary instance;
-	private final Descriptor props;
+	private final WindowDescriptor props;
 //	private final Device<?> device;
-	private final Pointer ptr;
 
 	/**
 	 * Constructor.
 	 * @param window		Window handle
-	 * @param instance		GLFW API
+	 * @param lib			GLFW API
 	 * @param props			Window properties
 	 */
-	Window(Pointer window, DesktopLibrary instance, Descriptor props) {
+	Window(Pointer window, DesktopLibrary lib, WindowDescriptor props) {
 		this.handle = new Handle(window);
-		this.instance = notNull(instance);
+		this.instance = notNull(lib);
 		this.props = notNull(props);
 //		this.device = null; // TODO - createDevice(window, instance);
-		this.ptr = notNull(window); // TODO
+	}
+
+	@Override
+	public Handle handle() {
+		return handle;
+	}
+
+	/**
+	 * @return Descriptor for this window
+	 */
+	public WindowDescriptor descriptor() {
+		return props;
 	}
 
 	// TODO
 	public void setMouseMoveListener(MousePositionListener listener) {
-		instance.glfwSetCursorPosCallback(ptr, listener);
+		//instance.glfwSetCursorPosCallback(ptr, listener);
 	}
 	public void setKeyListener(KeyListener listener) {
-		instance.glfwSetKeyCallback(ptr, listener);
-	}
-
-	public Descriptor descriptor() {
-		return props;
+		//instance.glfwSetKeyCallback(ptr, listener);
 	}
 
 //	public Device<?> device() {
@@ -195,6 +82,7 @@ public class Window {
 ////		return device;
 //	}
 
+	// TODO - to device
 	public void poll() {
 		instance.glfwPollEvents();
 	}
@@ -270,6 +158,11 @@ public class Window {
 //		};
 //	}
 
+	/**
+	 * Creates a Vulkan rendering surface for this window.
+	 * @param vulkan Vulkan instance handle
+	 * @return Vulkan surface
+	 */
 	public Handle surface(Handle vulkan) {
 		final PointerByReference ref = new PointerByReference();
 		final int result = instance.glfwCreateWindowSurface(vulkan, handle, null, ref);
@@ -279,6 +172,7 @@ public class Window {
 		return new Handle(ref.getValue());
 	}
 
+	@Override
 	public void destroy() {
 		instance.glfwDestroyWindow(handle);
 	}

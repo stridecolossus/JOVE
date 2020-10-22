@@ -22,12 +22,12 @@ public class BindingsTest {
 
 	private Bindings bindings;
 	private Event.Handler handler;
-	private Event.Descriptor descriptor;
+	private Event.WindowDescriptor descriptor;
 
 	@BeforeEach
 	public void before() {
 		bindings = new Bindings();
-		descriptor = new Event.Descriptor(Event.Category.BUTTON, 1, Event.Operation.PRESS);
+		descriptor = new Event.WindowDescriptor(Event.Category.BUTTON, 1, Event.Operation.PRESS);
 		handler = mock(Event.Handler.class);
 		when(handler.toString()).thenReturn(ACTION);
 	}
@@ -114,7 +114,7 @@ public class BindingsTest {
 	@Test
 	public void removeNotBound() {
 		final var action = addAction();
-		assertThrows(IllegalArgumentException.class, () -> action.remove(Event.Descriptor.MOVE));
+		assertThrows(IllegalArgumentException.class, () -> action.remove(Event.WindowDescriptor.MOVE));
 	}
 
 	@Test
@@ -122,7 +122,7 @@ public class BindingsTest {
 		// Add an action with a couple of bindings
 		final var action = addAction();
 		action.bind(descriptor);
-		action.bind(new Event.Descriptor(Event.Category.BUTTON, 2, Event.Operation.RELEASE));
+		action.bind(new Event.WindowDescriptor(Event.Category.BUTTON, 2, Event.Operation.RELEASE));
 
 		// Add another action and binding
 		final Event.Handler other = mock(Event.Handler.class);
@@ -147,7 +147,7 @@ public class BindingsTest {
 	public void read() throws IOException {
 		final var action = addAction();
 		bindings.read(new StringReader("action BUTTON-PRESS-1"));
-		assertArrayEquals(new Event.Descriptor[]{descriptor}, action.events().toArray());
+		assertArrayEquals(new Event.WindowDescriptor[]{descriptor}, action.events().toArray());
 	}
 
 	@Test

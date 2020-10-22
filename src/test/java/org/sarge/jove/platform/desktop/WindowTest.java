@@ -1,54 +1,40 @@
 package org.sarge.jove.platform.desktop;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.Handle;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class WindowTest {
 	private Window window;
 	private DesktopLibrary instance;
-	private Window.Descriptor props;
-	private Pointer handle;
+	private WindowDescriptor props;
 
 	@BeforeEach
 	public void before() {
-		handle = new Pointer(42);
 		instance = mock(DesktopLibrary.class);
-		props = new Window.Descriptor.Builder().title("title").size(new Dimensions(640, 480)).property(Window.Descriptor.Property.DECORATED).build();
-		window = new Window(handle, instance, props);
+		props = new WindowDescriptor.Builder().title("title").size(new Dimensions(640, 480)).property(WindowDescriptor.Property.DECORATED).build();
+		window = new Window(new Pointer(1), instance, props);
 	}
 
 	@Test
 	public void constructor() {
+		assertNotNull(window.handle());
 		assertEquals(props, window.descriptor());
 	}
-
-//	@Test
-//	public void device() {
-//		final Device<?> device = window.device();
-//		assertNotNull(device);
-//		assertEquals(EnumSet.allOf(Event.Category.class), device.categories());
-//	}
-//
-//	@Test
-//	public void deviceBindings() {
-//		final Event.Handler handler = mock(Event.Handler.class);
-//		for(Event.Category cat : Event.Category.values()) {
-//			window.device().bind(cat, handler);
-//		}
-//		verify(instance).glfwSetKeyCallback(eq(handle), any(KeyListener.class));
-//		verify(instance).glfwSetCursorPosCallback(eq(handle), any(MousePositionListener.class));
-//		verify(instance).glfwSetMouseButtonCallback(eq(handle), any(MouseButtonListener.class));
-//		verify(instance).glfwSetScrollCallback(eq(handle), any(MouseScrollListener.class));
-//	}
 
 	@Test
 	public void poll() {
@@ -57,10 +43,25 @@ public class WindowTest {
 	}
 
 	@Test
+	public void surface() {
+		// Init API
+		final Handle vulkan = new Handle(new Pointer(42));
+		final Pointer ptr = new Pointer(2);
+		final Answer<Integer> answer = inv -> {
+			final PointerByReference ref = inv.getArgument(3);
+			ref.setValue(ptr);
+			return 0;
+		};
+		doAnswer(answer).when(instance).glfwCreateWindowSurface(eq(vulkan), eq(window.handle()), isNull(), isA(PointerByReference.class));
+
+		// Create surface
+		final Handle surface = window.surface(vulkan);
+		assertEquals(new Handle(ptr), surface);
+	}
+
+	@Test
 	public void destroy() {
-		final ArgumentCaptor<Handle> captor = ArgumentCaptor.forClass(Handle.class);
 		window.destroy();
-		verify(instance).glfwDestroyWindow(captor.capture());
-		assertEquals(new Handle(handle), captor.getValue());
+		verify(instance).glfwDestroyWindow(window.handle());
 	}
 }

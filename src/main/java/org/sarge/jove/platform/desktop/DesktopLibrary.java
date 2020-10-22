@@ -1,11 +1,9 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.common.NativeObject.Handle;
-
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * GLFW API.
@@ -53,18 +51,8 @@ interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryDe
 
 	/**
 	 * Enumerates the required vulkan extensions for this platform.
-	 * @param count Size of results
-	 * @return
+	 * @param count Number of results
+	 * @return Vulkan extensions (pointer to array of strings)
 	 */
-	PointerByReference glfwGetRequiredInstanceExtensions(IntByReference size);
-
-	/**
-	 * Creates a Vulkan surface for the given window.
-	 * @param instance			Vulkan instance
-	 * @param window			Window handle
-	 * @param allocator			Allocator
-	 * @param surface			Returned surface handle
-	 * @return Result
-	 */
-	int glfwCreateWindowSurface(Handle instance, Handle window, Handle allocator, PointerByReference surface);
+	Pointer glfwGetRequiredInstanceExtensions(IntByReference count);
 }

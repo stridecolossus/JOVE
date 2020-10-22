@@ -128,10 +128,10 @@ public class RotatingCubeDemo {
 		if(!desktop.isVulkanSupported()) throw new ServiceException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new Window.Descriptor.Builder()
+		final var descriptor = new WindowDescriptor.Descriptor.Builder()
 				.title("demo")
 				.size(new Dimensions(1280, 760))
-				.property(Window.Descriptor.Property.DISABLE_OPENGL)
+				.property(Window.WindowDescriptor.Property.DISABLE_OPENGL)
 				.build();
 		final Window window = desktop.window(descriptor);
 		// TODO - any point in separate Window class? does it help at all?

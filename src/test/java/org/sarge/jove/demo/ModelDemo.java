@@ -21,13 +21,11 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.platform.DesktopService;
-import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.desktop.FrameworkDesktopService;
-import org.sarge.jove.platform.desktop.Window;
+import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
-import org.sarge.jove.platform.Window;
+import org.sarge.jove.platform.desktop.Window;
+import org.sarge.jove.platform.desktop.WindowDescriptor;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
@@ -47,8 +45,6 @@ import org.sarge.jove.scene.Camera;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.Loader;
 import org.sarge.jove.util.MathsUtil;
-
-import com.sun.jna.ptr.PointerByReference;
 
 public class ModelDemo {
 
@@ -189,17 +185,16 @@ public class ModelDemo {
 
 	public static void main(String[] args) throws Exception {
 		// Open desktop
-		final DesktopService desktop = FrameworkDesktopService.create();
-		if(!desktop.isVulkanSupported()) throw new ServiceException("Vulkan not supported");
+		final Desktop desktop = Desktop.create();
+		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new Window.Descriptor.Builder()
+		final var descriptor = new WindowDescriptor.Builder()
 				.title("demo")
 				.size(new Dimensions(1280, 760))
-				.property(Window.Descriptor.Property.DISABLE_OPENGL)
+				.property(WindowDescriptor.Property.DISABLE_OPENGL)
 				.build();
-		final Window window = (Window) desktop.window(descriptor);
-		// TODO - any point in separate Window class? does it help at all?
+		final Window window = desktop.window(descriptor);
 
 		// Init Vulkan
 		final VulkanLibrary lib = VulkanLibrary.create();
@@ -221,7 +216,7 @@ public class ModelDemo {
 		instance.add(handler);
 
 		// Lookup surface
-		final Handle surfaceHandle = window.surface(instance.handle(), PointerByReference::new);
+		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
 		final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
@@ -234,7 +229,7 @@ public class ModelDemo {
 				.filter(PhysicalDevice.predicate(transferPredicate))
 				.filter(PhysicalDevice.predicatePresentationSupported(surfaceHandle))
 				.findAny()
-				.orElseThrow(() -> new ServiceException("No GPU available"));
+				.orElseThrow(() -> new RuntimeException("No GPU available"));
 
 		// Lookup required queues
 		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
@@ -527,7 +522,7 @@ public class ModelDemo {
 		// Destroy window
 		surface.destroy();
 		window.destroy();
-		desktop.close();
+		desktop.destroy();
 
 		final Image.DefaultImage img = (Image.DefaultImage) texture.image();
 		img.destroy();

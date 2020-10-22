@@ -3,6 +3,7 @@ package org.sarge.jove.platform.desktop;
 import org.sarge.jove.common.NativeObject.Handle;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 /**
  * GLFW window API.
@@ -37,6 +38,16 @@ interface DesktopLibraryWindow {
 	 * @param value		Value
 	 */
 	void glfwWindowHint(int hint, int value);
+
+	/**
+	 * Creates a Vulkan surface for the given window.
+	 * @param instance			Vulkan instance
+	 * @param window			Window handle
+	 * @param allocator			Allocator
+	 * @param surface			Returned surface handle
+	 * @return Result
+	 */
+	int glfwCreateWindowSurface(Handle instance, Handle window, Handle allocator, PointerByReference surface);
 
 	// glfwWindowShouldClose(window)
 	// glfwSetWindowCloseCallback(window, window_close_callback);

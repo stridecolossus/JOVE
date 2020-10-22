@@ -67,7 +67,7 @@ public class Bindings extends AbstractObject {
 	 */
 	public class Action extends AbstractObject {
 		private final Event.Handler handler;
-		private final List<Event.Descriptor> events = new ArrayList<>();
+		private final List<Event.WindowDescriptor> events = new ArrayList<>();
 
 		/**
 		 * Constructor.
@@ -87,7 +87,7 @@ public class Bindings extends AbstractObject {
 		/**
 		 * @return Events bound to this action
 		 */
-		public Stream<Event.Descriptor> events() {
+		public Stream<Event.WindowDescriptor> events() {
 			return events.stream();
 		}
 
@@ -96,7 +96,7 @@ public class Bindings extends AbstractObject {
 		 * @param descriptor Event descriptor
 		 * @throws IllegalArgumentException if the event is already bound to another action
 		 */
-		public void bind(Event.Descriptor descriptor) {
+		public void bind(Event.WindowDescriptor descriptor) {
 			Check.notNull(descriptor);
 			if(bindings.containsKey(descriptor)) throw new IllegalArgumentException("Event already bound to this action: " + descriptor);
 			events.add(descriptor);
@@ -109,7 +109,7 @@ public class Bindings extends AbstractObject {
 		 * @return Action that the given event was previously bound to
 		 * @throws IllegalArgumentException if there is no binding for the given event
 		 */
-		public Action remove(Event.Descriptor descriptor) {
+		public Action remove(Event.WindowDescriptor descriptor) {
 			if(!bindings.containsKey(descriptor)) throw new IllegalArgumentException("Event not bound: " + descriptor);
 			events.remove(descriptor);
 			return bindings.remove(descriptor);
@@ -125,7 +125,7 @@ public class Bindings extends AbstractObject {
 	}
 
 	private final List<Action> actions = new ArrayList<>();
-	private final Map<Event.Descriptor, Action> bindings = new HashMap<>();
+	private final Map<Event.WindowDescriptor, Action> bindings = new HashMap<>();
 
 	/**
 	 * @return Actions
@@ -168,7 +168,7 @@ public class Bindings extends AbstractObject {
 	 * @param descriptor Event descriptor
 	 * @return Action
 	 */
-	public Optional<Action> find(Event.Descriptor descriptor) {
+	public Optional<Action> find(Event.WindowDescriptor descriptor) {
 		return Optional.ofNullable(bindings.get(descriptor));
 	}
 
@@ -190,11 +190,11 @@ public class Bindings extends AbstractObject {
 	 * <li>Binding entries are case-sensitive</li>
 	 * </ul>
 	 * @param out Output writer
-	 * @see Event.Descriptor#toString()
+	 * @see Event.WindowDescriptor#toString()
 	 */
 	public void write(PrintWriter out) {
 		for(Action action : actions) {
-			for(Event.Descriptor e : action.events) {
+			for(Event.WindowDescriptor e : action.events) {
 				out.print(action.handler);
 				out.print(DELIMITER);
 				out.print(e);
@@ -209,7 +209,7 @@ public class Bindings extends AbstractObject {
 	 * @throws IOException if the bindings cannot be loaded
 	 * @throws IllegalArgumentException if a binding is not valid or an action cannot be found in this set of bindings
 	 * @see #write(PrintWriter)
-	 * @see Event.Descriptor#parse(String)
+	 * @see Event.WindowDescriptor#parse(String)
 	 */
 	public void read(Reader r) throws IOException {
 		// Binding loader
@@ -229,7 +229,7 @@ public class Bindings extends AbstractObject {
 				if(action == null) throw new IllegalArgumentException("Unknown action handler: " + tokens[0]);
 
 				// Parse event
-				final Event.Descriptor descriptor = Event.Descriptor.parse(tokens[1]);
+				final Event.WindowDescriptor descriptor = Event.Descriptor.parse(tokens[1]);
 
 				// Bind event to action
 				action.bind(descriptor);
