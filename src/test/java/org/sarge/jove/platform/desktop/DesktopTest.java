@@ -47,8 +47,9 @@ public class DesktopTest {
 	}
 
 	@Test
-	public void monitors() {
-		// TODO
+	void poll() {
+		desktop.poll();
+		verify(lib).glfwPollEvents();
 	}
 
 	@Test
@@ -79,6 +80,11 @@ public class DesktopTest {
 		assertNotNull(callback);
 		callback.error(42, "doh");
 		verify(handler).accept("GLFW error: [42] doh");
+	}
+
+	@Test
+	public void monitors() {
+		// TODO
 	}
 
 	@Test

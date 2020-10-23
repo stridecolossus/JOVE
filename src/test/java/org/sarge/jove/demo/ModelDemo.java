@@ -16,14 +16,15 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.control.Action;
+import org.sarge.jove.control.InputEvent;
+import org.sarge.jove.control.InputEvent.Type.Button;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.desktop.Desktop;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.desktop.WindowDescriptor;
 import org.sarge.jove.platform.vulkan.*;
@@ -453,48 +454,35 @@ public class ModelDemo {
 
 		///////////////////
 
+		final Action.Bindings bindings = new Action.Bindings();
+		window.mouse().enable(InputEvent.Type.Position.class, bindings);
+		window.keyboard().enable(Button.class, bindings);
+
+		final AtomicBoolean running = new AtomicBoolean(true);
+		bindings.bind(new Button(256, "escape", 0, 0), ignored -> running.set(false));
+
 		final Camera cam = new Camera();
 		cam.move(new Point(0, 0.5f, -2));
 
-		final MousePositionListener listener = (ptr, x, y) -> {
-			final float dx = (float) x / rect.width() * MathsUtil.PI;
+		bindings.bind(new Button(87, "W", 0, 0), ignored -> cam.move(+1));
+		bindings.bind(new Button(83, "S", 0, 0), ignored -> cam.move(-1));
+		bindings.bind(new Button(65, "A", 0, 0), ignored -> cam.strafe(+1));
+		bindings.bind(new Button(68, "D", 0, 0), ignored -> cam.strafe(-1));
+
+//		final MousePositionListener listener = (ptr, x, y) -> {
+//			final float dx = (float) x / rect.width() * MathsUtil.PI;
+//			cam.orientation(dx, 0);
+//		};
+//		window.setMouseMoveListener(listener);
+
+		final Action controller = pos -> {
+			final float dx = pos.x() / rect.width() * MathsUtil.PI;
 			cam.orientation(dx, 0);
 		};
-		window.setMouseMoveListener(listener);
-
-		final AtomicBoolean running = new AtomicBoolean(true);
-		final KeyListener keys = (ptr, key, code, action, mods) -> {
-//			System.out.println("key="+key+" code="+code+" action="+action+" mods="+mods);
-			switch(key) {
-				case 87:
-					// forward
-					cam.move(1);
-					break;
-
-				case 83:
-					// back
-					cam.move(-1);
-					break;
-
-				case 65:
-					// left
-					cam.strafe(1);
-					break;
-
-				case 68:
-					// right
-					cam.strafe(-1);
-					break;
-
-				case 256:
-					running.set(false);
-					break;
-			}
-		};
-		window.setKeyListener(keys);
+		bindings.bind(InputEvent.Type.POSITION, controller);
 
 		while(running.get()) {
-			window.poll();
+			desktop.poll();
 
 			uniform.load(cam.matrix(), Matrix.LENGTH, Matrix.LENGTH);
 

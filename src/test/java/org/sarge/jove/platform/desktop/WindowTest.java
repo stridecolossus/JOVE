@@ -20,26 +20,22 @@ import com.sun.jna.ptr.PointerByReference;
 
 public class WindowTest {
 	private Window window;
-	private DesktopLibrary instance;
+	private DesktopLibrary lib;
 	private WindowDescriptor props;
 
 	@BeforeEach
 	public void before() {
-		instance = mock(DesktopLibrary.class);
+		lib = mock(DesktopLibrary.class);
 		props = new WindowDescriptor.Builder().title("title").size(new Dimensions(640, 480)).property(WindowDescriptor.Property.DECORATED).build();
-		window = new Window(new Pointer(1), instance, props);
+		window = new Window(new Pointer(1), lib, props);
 	}
 
 	@Test
 	public void constructor() {
 		assertNotNull(window.handle());
 		assertEquals(props, window.descriptor());
-	}
-
-	@Test
-	public void poll() {
-		window.poll();
-		verify(instance).glfwPollEvents();
+		assertNotNull(window.keyboard());
+		assertNotNull(window.mouse());
 	}
 
 	@Test
@@ -52,7 +48,7 @@ public class WindowTest {
 			ref.setValue(ptr);
 			return 0;
 		};
-		doAnswer(answer).when(instance).glfwCreateWindowSurface(eq(vulkan), eq(window.handle()), isNull(), isA(PointerByReference.class));
+		doAnswer(answer).when(lib).glfwCreateWindowSurface(eq(vulkan), eq(window.handle()), isNull(), isA(PointerByReference.class));
 
 		// Create surface
 		final Handle surface = window.surface(vulkan);
@@ -62,6 +58,6 @@ public class WindowTest {
 	@Test
 	public void destroy() {
 		window.destroy();
-		verify(instance).glfwDestroyWindow(window.handle());
+		verify(lib).glfwDestroyWindow(window.handle());
 	}
 }

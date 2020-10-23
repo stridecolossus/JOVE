@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
+import org.sarge.jove.common.NativeObject.Handle;
+
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 
@@ -41,7 +43,7 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Key listener
 	 */
-	void glfwSetKeyCallback(Pointer window, KeyListener listener);
+	void glfwSetKeyCallback(Handle window, KeyListener listener);
 
 	/**
 	 * Listener for mouse move events.
@@ -61,7 +63,7 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse movement listener
 	 */
-	void glfwSetCursorPosCallback(Pointer window, MousePositionListener listener);
+	void glfwSetCursorPosCallback(Handle window, MousePositionListener listener);
 
 	/**
 	 * Listener for mouse button events.
@@ -82,7 +84,7 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse button listener
 	 */
-	void glfwSetMouseButtonCallback(Pointer window, MouseButtonListener listener);
+	void glfwSetMouseButtonCallback(Handle window, MouseButtonListener listener);
 
 	/**
 	 * Listener for mouse scroll events.
@@ -102,5 +104,5 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse scroll listener
 	 */
-	void glfwSetScrollCallback(Pointer window, MouseScrollListener listener);
+	void glfwSetScrollCallback(Handle window, MouseScrollListener listener);
 }

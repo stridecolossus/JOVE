@@ -82,19 +82,11 @@ public class Desktop {
 		return lib.glfwVulkanSupported();
 	}
 
-	// TODO...
 	/**
-	 * Looks up the localised name of the given key.
-	 * @param key
-	 * @param scancode
-	 * @return Key name
-	 *
-	 * TODO - this only works for the printable keys, e.g. not ESCAPE
-	 * TODO - promote to DesktopService
-	 *
+	 * Processes pending input events.
 	 */
-	public String keyname(int key, int scancode) {
-		return lib.glfwGetKeyName(key, scancode);
+	public void poll() {
+		lib.glfwPollEvents();
 	}
 
 	/**
