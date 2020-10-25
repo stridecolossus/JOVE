@@ -24,7 +24,7 @@ public class VkPipelineVertexInputStateCreateInfo extends VulkanStructure implem
 	public Pointer pNext;
 	public int flags;
 	public int vertexBindingDescriptionCount;
-	public Pointer pVertexBindingDescriptions;
+	public VkVertexInputBindingDescription pVertexBindingDescriptions;
 	public int vertexAttributeDescriptionCount;
-	public Pointer pVertexAttributeDescriptions;
+	public VkVertexInputAttributeDescription pVertexAttributeDescriptions;
 }

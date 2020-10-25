@@ -1,7 +1,6 @@
 package org.sarge.jove.common;
 
 import static java.util.stream.Collectors.toMap;
-import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,7 +56,7 @@ public interface IntegerEnumeration {
 		public Object fromNative(Object nativeValue, FromNativeContext context) {
 			final Class<?> type = context.getTargetType();
 			if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new IllegalStateException("Invalid native enumeration class: " + type.getSimpleName());
-			final Cache.Entry entry = Cache.CACHE.get((Class<? extends IntegerEnumeration>) type);
+			final var entry = Cache.CACHE.get((Class<? extends IntegerEnumeration>) type);
 			return entry.get((int) nativeValue);
 		}
 	};
@@ -70,8 +69,7 @@ public interface IntegerEnumeration {
 	 * @throws IllegalArgumentException if the enumeration does not contain the given value
 	 */
 	static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
-		final Cache.Entry entry = Cache.CACHE.get(clazz);
-		return entry.get(value);
+		return Cache.CACHE.get(clazz).get(value);
 	}
 
 	/**
@@ -91,7 +89,7 @@ public interface IntegerEnumeration {
 	 * @return Constants
 	 */
 	static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
-		final Cache.Entry entry = Cache.CACHE.get(clazz);
+		final var entry = Cache.CACHE.get(clazz);
 		final Set<E> set = new HashSet<>();
 		final int max = Integer.highestOneBit(mask);
 		for(int n = 0; n < max; ++n) {
@@ -126,33 +124,39 @@ public interface IntegerEnumeration {
 	 * Internal enumeration cache.
 	 */
 	final class Cache {
+		/**
+		 * Singleton instance.
+		 */
 		private static final Cache CACHE = new Cache();
 
 		/**
 		 * Cache entry.
 		 */
 		private class Entry {
-			private final Class<? extends IntegerEnumeration> clazz;
-			private final Map<Integer, IntegerEnumeration> map;
+			private final Map<Integer, ? extends IntegerEnumeration> map;
 
 			/**
 			 * Constructor.
 			 * @param clazz Enumeration class
 			 */
 			private Entry(Class<? extends IntegerEnumeration> clazz) {
-				this.clazz = notNull(clazz);
 				this.map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
 			}
 
 			/**
-			 * Looks up an integer enumeration constant by value.
-			 * @param value Value
+			 * Looks up the enumeration constant for the given value.
+			 * @param <E> Enumeration
+			 * @param value Constant value
 			 * @return Enumeration constant
+			 * @throws IllegalArgumentException for an unknown value
 			 */
 			@SuppressWarnings("unchecked")
 			private <E extends IntegerEnumeration> E get(int value) {
 				final E result = (E) map.get(value);
-				if(result == null) throw new IllegalArgumentException(String.format("Unknown enumeration value: enum=%s value=%d", clazz.getSimpleName(), value));
+				if(result == null) {
+					final Class<?> clazz = map.values().iterator().next().getClass();
+					throw new IllegalArgumentException(String.format("Unknown enumeration value: enum=%s value=%d", clazz.getSimpleName(), value));
+				}
 				return result;
 			}
 		}
@@ -163,7 +167,7 @@ public interface IntegerEnumeration {
 		}
 
 		/**
-		 * Looks up or creates a cache entry for the given enumeration class.
+		 * Looks up a cache entry for the given enumeration.
 		 * @param clazz Enumeration class
 		 * @return Cache entry
 		 */

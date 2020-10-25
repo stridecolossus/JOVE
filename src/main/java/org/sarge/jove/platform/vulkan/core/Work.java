@@ -14,7 +14,8 @@ import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.StructureHelper;
+
+import com.sun.jna.Memory;
 
 /**
  * The <i>work</i> class defines a task to be submitted to a {@link Queue}.
@@ -152,9 +153,13 @@ public interface Work {
 			info.signalSemaphoreCount = signal.size();
 			info.pSignalSemaphores = Handle.toPointerArray(signal);
 
-			// TODO
-			final int[] array = stages.stream().mapToInt(IntegerEnumeration::value).toArray();
-			info.pWaitDstStageMask = StructureHelper.integers(array);
+			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
+			if(!stages.isEmpty()) {
+				final int[] array = stages.stream().mapToInt(IntegerEnumeration::value).toArray();
+				final Memory mem = new Memory(array.length * Integer.BYTES);
+				mem.write(0, array, 0, array.length);
+				info.pWaitDstStageMask = mem;
+			}
 
 			// Create work
 			return () -> {

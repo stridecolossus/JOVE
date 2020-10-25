@@ -6,9 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.control.InputEvent.Type.Axis;
-import org.sarge.jove.control.InputEvent.Type.Button;
 
-public class InputEventTest {
+public class InputEventTestOLD {
 	@Test
 	void position() {
 		// Check position description
@@ -32,8 +31,8 @@ public class InputEventTest {
 	@Test
 	void button() {
 		// Check button description
-		final Button button = new Button(1, "name", 2, 3);
-		assertEquals("Button-1-name", button.toString());
+		final Button button = new Button(1, 2, 3);
+		assertEquals("Button-1", button.toString());
 		// TODO - assertEquals(button, Type.parse("Button-1-name"));
 
 		// Create button event
@@ -47,15 +46,15 @@ public class InputEventTest {
 		assertEquals(true, event.equals(event));
 		assertEquals(true, event.equals(button.event()));
 		assertEquals(false, event.equals(null));
-		assertEquals(false, event.equals(new Button(4, "name", 5, 6).event()));
+		assertEquals(false, event.equals(new Button(4, 5, 6).event()));
 	}
 
 	@Test
 	void axis() {
 		// Check axis description
-		final Axis axis = new Axis(1, "name");
-		assertEquals("Axis-1-name", axis.toString());
-		assertEquals(axis, Type.parse("Axis-1-name"));
+		final Axis axis = new Axis(1);
+		assertEquals("Axis-1", axis.toString());
+		assertEquals(axis, Type.parse("Axis-1"));
 
 		// Create axis event
 		final InputEvent event = axis.create(2);

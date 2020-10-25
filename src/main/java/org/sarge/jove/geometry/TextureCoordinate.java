@@ -3,6 +3,7 @@ package org.sarge.jove.geometry;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
@@ -53,6 +54,11 @@ public interface TextureCoordinate extends Bufferable {
 		@Override
 		public void buffer(ByteBuffer buffer) {
 			buffer.putFloat(u);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(u);
 		}
 
 		@Override
@@ -120,6 +126,11 @@ public interface TextureCoordinate extends Bufferable {
 		}
 
 		@Override
+		public int hashCode() {
+			return Objects.hash(u, v);
+		}
+
+		@Override
 		public boolean equals(Object obj) {
 			return
 					(obj instanceof Coordinate2D that) &&
@@ -153,6 +164,11 @@ public interface TextureCoordinate extends Bufferable {
 		@Override
 		public void buffer(ByteBuffer buffer) {
 			buffer.putFloat(u).putFloat(v).putFloat(w);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(u, v, w);
 		}
 
 		@Override

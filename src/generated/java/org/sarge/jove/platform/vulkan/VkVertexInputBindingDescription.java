@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,10 +14,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"stride",
 	"inputRate"
 })
-public class VkVertexInputBindingDescription extends VulkanStructure {
-	public static class ByValue extends VkVertexInputBindingDescription implements Structure.ByValue { }
-	public static class ByReference extends VkVertexInputBindingDescription implements Structure.ByReference { }
-
+public class VkVertexInputBindingDescription extends VulkanStructure implements ByReference {
 	public int binding;
 	public int stride;
 	public VkVertexInputRate inputRate;

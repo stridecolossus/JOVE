@@ -1,13 +1,8 @@
 package org.sarge.jove.util;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Collection;
-import java.util.function.Predicate;
 
 import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 
 /**
@@ -15,16 +10,6 @@ import com.sun.jna.Structure;
  * @author Sarge
  */
 public final class StructureHelper {
-	/**
-	 * PRedicate for structure fields.
-	 */
-	private static final Predicate<Field> STRUCTURE_FIELD = field -> {
-		final int mods = field.getModifiers();
-		if(!Modifier.isPublic(mods)) return false;
-		if(Modifier.isStatic(mods)) return false;
-		return true;
-	};
-
 	private StructureHelper() {
 	}
 
@@ -62,68 +47,6 @@ public final class StructureHelper {
 			}
 		}
 
-		return mem;
-	}
-
-	/**
-	 * Allocates a contiguous memory block for a pointer-to-pointers array.
-	 * @param pointers Pointers
-	 * @return Pointer
-	 */
-	public static Memory pointers(Collection<Pointer> pointers) {
-		final int size = pointers.size();
-		if(size == 0) {
-			return null;
-		}
-
-		final Pointer[] array = pointers.toArray(Pointer[]::new);
-		final Memory mem = new Memory(Native.POINTER_SIZE * size);
-		for(int n = 0; n < size; ++n) {
-			final Pointer ptr = array[n];
-			if(ptr != null) {
-				mem.setPointer(Native.POINTER_SIZE * n, array[n]);
-			}
-		}
-		return mem;
-	}
-
-//    private static class PointerArray extends Memory implements PostCallRead {
-//        private final Pointer[] original;
-//        public PointerArray(Pointer[] arg) {
-//            super(Native.POINTER_SIZE * (arg.length+1));
-//            this.original = arg;
-//            for (int i=0;i < arg.length;i++) {
-//                setPointer(i*Native.POINTER_SIZE, arg[i]);
-//            }
-//            setPointer(Native.POINTER_SIZE*arg.length, null);
-//        }
-//        @Override
-//        public void read() {
-//            read(0, original, 0, original.length);
-//        }
-//    }
-
-	/**
-	 * Allocates a contiguous memory block for a pointer-to-float array.
-	 * @param array Float array
-	 * @return Pointer
-	 */
-	public static Memory floats(float[] array) {
-		if(array.length == 0) return null;
-		final Memory mem = new Memory(array.length * Float.BYTES);
-		mem.write(0, array, 0, array.length);
-		return mem;
-	}
-
-	/**
-	 * Allocates a contiguous memory block for a pointer-to-integer array.
-	 * @param array Integer array
-	 * @return Pointer
-	 */
-	public static Memory integers(int[] array) {
-		if(array.length == 0) return null;
-		final Memory mem = new Memory(array.length * Integer.BYTES);
-		mem.write(0, array, 0, array.length);
 		return mem;
 	}
 }

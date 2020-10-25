@@ -1,6 +1,10 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
@@ -16,7 +20,6 @@ import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.TypeMapper;
 
@@ -116,9 +119,44 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 			super(MAPPER);
 		}
 
-		@Override
-		public void useMemory(Pointer ptr) {
-			super.useMemory(ptr);
+		/**
+		 * Helper - Allocates an array of the given Vulkan structure as a contiguous memory block.
+		 * @param <T> Structure type
+		 * @param ctor Constructor
+		 * @param size Array size
+		 * @return New array
+		 */
+		@SuppressWarnings("unchecked")
+		public static <T extends VulkanStructure> T[] array(Supplier<T> ctor, int size) {
+			final T identity = ctor.get();
+			return (T[]) identity.toArray(size);
+		}
+
+		/**
+		 * Helper - Allocates and populates an array of the given Vulkan structure as a contiguous memory block.
+		 * @param <R> Structure type
+		 * @param <T> Source data type
+		 * @param ctor			Constructor
+		 * @param data			Data
+		 * @param populate		Population function
+		 * @return New array
+		 */
+		public static <R extends VulkanStructure, T> R[] array(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
+			// Check for empty data
+			if(data.isEmpty()) {
+				return null;
+			}
+
+			// Allocate array
+			final R[] array = array(ctor, data.size());
+
+			// Populate array
+			final Iterator<T> itr = data.iterator();
+			for(int n = 0; n < array.length; ++n) {
+				populate.accept(itr.next(), array[n]);
+			}
+
+			return array;
 		}
 	}
 

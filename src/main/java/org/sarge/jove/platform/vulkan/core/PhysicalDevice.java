@@ -266,6 +266,7 @@ public class PhysicalDevice implements NativeObject {
 		}
 		return mem;
 	}
+	// TODO - mutable return value
 
 	/**
 	 * Finds a memory type for the given memory properties.

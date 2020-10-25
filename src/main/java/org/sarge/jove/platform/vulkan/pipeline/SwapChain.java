@@ -27,8 +27,8 @@ import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.StructureHelper;
 
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -113,7 +113,10 @@ public class SwapChain extends AbstractVulkanObject {
 		info.pSwapchains = Handle.toPointerArray(List.of(this));
 
 		// Set image indices
-		info.pImageIndices = StructureHelper.integers(new int[]{index.getValue()});
+		final int[] array = new int[]{index.getValue()};
+		final Memory mem = new Memory(array.length * Integer.BYTES);
+		mem.write(0, array, 0, array.length);
+		info.pImageIndices = mem;
 
 		// Present frame
 		final VulkanLibrary lib = device().library();

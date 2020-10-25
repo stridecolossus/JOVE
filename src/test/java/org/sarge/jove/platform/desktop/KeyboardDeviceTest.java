@@ -14,8 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.control.Button;
 import org.sarge.jove.control.InputEvent;
-import org.sarge.jove.control.InputEvent.Type.Button;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 import com.sun.jna.Pointer;
@@ -61,11 +61,10 @@ public class KeyboardDeviceTest {
 
 		// Generate an event
 		final KeyListener listener = captor.getValue();
-		when(lib.glfwGetKeyName(1, 2)).thenReturn("name");
 		listener.key(null, 1, 2, 3, 4);
 
 		// Check event delegated to handler
-		final Button button = new Button(1, "name", 3, 4);
+		final Button button = new Button(1, 3, 4);
 		verify(handler).handle(button.event());
 	}
 

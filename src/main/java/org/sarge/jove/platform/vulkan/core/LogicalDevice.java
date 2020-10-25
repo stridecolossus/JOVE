@@ -206,7 +206,7 @@ public class LogicalDevice implements NativeObject {
 	 * @param reqs		Memory requirements
 	 * @param flags		Flags
 	 * @return Memory handle
-	 * @throws ServiceException if the memory cannot be allocated
+	 * @throws RuntimeException if the memory cannot be allocated
 	 */
 	public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
 		// Find memory type

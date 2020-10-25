@@ -8,10 +8,9 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.platform.DesktopService;
-import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.desktop.FrameworkDesktopService;
-import org.sarge.jove.platform.Window;
+import org.sarge.jove.platform.desktop.Desktop;
+import org.sarge.jove.platform.desktop.Window;
+import org.sarge.jove.platform.desktop.WindowDescriptor;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
@@ -32,22 +31,19 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.Loader;
 import org.sarge.jove.util.Loader.DataSource;
 
-import com.sun.jna.ptr.PointerByReference;
-
 public class TriangleDemo {
 	public static void main(String[] args) throws Exception {
 		// Open desktop
-		final DesktopService desktop = FrameworkDesktopService.create();
-		if(!desktop.isVulkanSupported()) throw new ServiceException("Vulkan not supported");
+		final Desktop desktop = Desktop.create();
+		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new WindowDescriptor.Descriptor.Builder()
+		final var descriptor = new WindowDescriptor.Builder()
 				.title("demo")
 				.size(new Dimensions(1280, 760))
-				.property(Window.WindowDescriptor.Property.DISABLE_OPENGL)
+				.property(WindowDescriptor.Property.DISABLE_OPENGL)
 				.build();
 		final Window window = desktop.window(descriptor);
-		// TODO - any point in separate Window class? does it help at all?
 
 		// Init Vulkan
 		final VulkanLibrary lib = VulkanLibrary.create();
@@ -69,7 +65,7 @@ public class TriangleDemo {
 		instance.add(handler);
 
 		// Lookup surface
-		final Handle surfaceHandle = window.surface(instance.handle(), PointerByReference::new);
+		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
 		final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
@@ -82,7 +78,7 @@ public class TriangleDemo {
 				.filter(PhysicalDevice.predicate(transferPredicate))
 				.filter(PhysicalDevice.predicatePresentationSupported(surfaceHandle))
 				.findAny()
-				.orElseThrow(() -> new ServiceException("No GPU available"));
+				.orElseThrow(() -> new RuntimeException("No GPU available"));
 
 		// Lookup required queues
 //		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
@@ -211,7 +207,7 @@ public class TriangleDemo {
 		// Destroy window
 		surface.destroy();
 		window.destroy();
-		desktop.close();
+		desktop.destroy();
 
 		// Destroy render pass
 		buffers.forEach(FrameBuffer::destroy);

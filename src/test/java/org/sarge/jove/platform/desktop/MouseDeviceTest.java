@@ -13,10 +13,10 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.control.Button;
 import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.control.InputEvent.Type.Axis;
-import org.sarge.jove.control.InputEvent.Type.Button;
 import org.sarge.jove.control.InputEvent.Type.Position;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
@@ -90,7 +90,7 @@ public class MouseDeviceTest {
 
 	@Test
 	void button() {
-		final Button button = new Button(1, "1", 2, 3);
+		final Button button = new Button(1, 2, 3);
 		final MouseButtonListener listener = device.button(handler);
 		listener.button(null, 1, 2, 3);
 		verify(handler).handle(button.event());
@@ -98,7 +98,7 @@ public class MouseDeviceTest {
 
 	@Test
 	void wheel() {
-		final Axis axis = new Axis(0, "Wheel");
+		final Axis axis = new Axis(0);
 		final MouseScrollListener listener = device.wheel(handler);
 		listener.scroll(null, 1, 2);
 		verify(handler).handle(axis.create(2));

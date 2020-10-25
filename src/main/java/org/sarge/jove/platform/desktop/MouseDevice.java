@@ -8,11 +8,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Device;
 import org.sarge.jove.control.InputEvent.Handler;
 import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.control.InputEvent.Type.Axis;
-import org.sarge.jove.control.InputEvent.Type.Button;
 import org.sarge.jove.control.InputEvent.Type.Position;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
@@ -28,7 +28,7 @@ import com.sun.jna.Callback;
  * @author Sarge
  */
 class MouseDevice implements Device {
-	private static final Axis WHEEL = new Axis(0, "Wheel");
+	private static final Axis WHEEL = new Axis(0);
 
 	/**
 	 * Mouse callback entry.
@@ -122,7 +122,7 @@ class MouseDevice implements Device {
 	protected MouseButtonListener button(Handler handler) {
 		return (ptr, id, action, mods) -> {
 			// TODO - action/mods
-			final Button button = new Button(id, String.valueOf(id), action, mods);
+			final Button button = new Button(id, action, mods);
 			handler.handle(button.event());
 		};
 	}
