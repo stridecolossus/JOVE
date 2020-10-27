@@ -52,7 +52,7 @@ public class TriangleDemo {
 		final Instance instance = new Instance.Builder()
 				.vulkan(lib)
 				.name("test")
-				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
+				//.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
 				.extensions(desktop.extensions())
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build();
@@ -62,7 +62,7 @@ public class TriangleDemo {
 				.init()
 				.callback(MessageHandler.CONSOLE)
 				.build();
-		instance.add(handler);
+		instance.handlers().add(handler);
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());

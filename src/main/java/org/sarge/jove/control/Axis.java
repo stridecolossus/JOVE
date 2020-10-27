@@ -73,7 +73,7 @@ public final class Axis extends AbstractInputEventType {
 	/**
 	 * Axis event.
 	 */
-	public final class Event implements InputEvent {
+	public final class Event implements InputEvent<Axis> {
 		private final float value;
 
 		/**

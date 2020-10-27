@@ -142,8 +142,8 @@ public class MessageHandler {
 	 * Constructor.
 	 * @param callback			Callback handler
 	 * @param data				Optional user data
-	 * @param severities		Support message severity
-	 * @param types				Supported message types
+	 * @param severities		Message severities
+	 * @param types				Message types
 	 */
 	public MessageHandler(MessageCallback callback, Pointer data, Set<VkDebugUtilsMessageSeverityFlagEXT> severities, Set<VkDebugUtilsMessageTypeFlagEXT> types) {
 		this.callback = notNull(callback);

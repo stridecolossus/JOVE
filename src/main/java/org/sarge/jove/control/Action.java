@@ -17,6 +17,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.control.InputEvent.AbstractInputEventType;
+import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.util.Check;
 
 /**
@@ -24,17 +26,21 @@ import org.sarge.jove.util.Check;
  * @author Sarge
  */
 @FunctionalInterface
-public interface Action {
-	/**
-	 * Performs this action.
-	 * @param event Input event
-	 */
-	void execute(InputEvent event);
+public interface Action<T extends Type> {
+//	/**
+//	 * Performs this action.
+//	 * @param event Input event
+//	 */
+//	void execute(Button.Event button);
+//	void execute(Position pos);
+//	void execute(Axis.Event axis);
+
+	void execute(InputEvent<T> event);
 
 	/**
 	 * An <i>action bindings</i> maps input events to actions.
 	 */
-	class Bindings implements InputEvent.Handler {
+	class Bindings { // implements InputEvent.Handler<? super Type> {
 		private static final String DELIMITER = StringUtils.SPACE;
 
 		private final Map<Action, Set<InputEvent.Type>> actions = new HashMap<>();
@@ -102,6 +108,9 @@ public interface Action {
 			bindings.put(type, action);
 		}
 
+//		public <T extends Type> void bind(T type, InputEvent.Handler<T> handler) {
+//		}
+
 		/**
 		 * Removes the binding for the given type of event.
 		 * @param type Event type
@@ -132,10 +141,36 @@ public interface Action {
 			bindings.clear();
 		}
 
-		@Override
-		public void handle(InputEvent event) {
-			binding(event.type()).ifPresent(action -> action.execute(event));
+//		@Override
+//		public void handle(Object handle) {
+//		}
+//
+//		@Override
+//		public void handle(InputEvent event) {
+//			binding(event.type()).ifPresent(action -> action.execute(event));
+//		}
+
+
+
+		public EventHandler handler() {
+			return new EventHandler() {
+				@Override
+				public void handle(Position event) {
+					final var action = binding(event.type());
+					action.get().execute(event);
+				}
+
+				@Override
+				public void handle(Button.Event event) {
+				}
+
+				@Override
+				public void handle(Axis.Event event) {
+				}
+			};
 		}
+
+
 
 		/**
 		 * Writes this set of bindings to the given output stream.
@@ -189,7 +224,7 @@ public interface Action {
 			// Bind events to this action
 			Arrays.stream(tokens)
 					.skip(1)
-					.map(InputEvent.Type::parse)
+					.map(AbstractInputEventType::parse)
 					.forEach(e -> bind(e, action));
 		}
 

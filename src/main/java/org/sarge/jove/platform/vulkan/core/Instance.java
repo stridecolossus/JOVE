@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
@@ -31,12 +31,11 @@ import com.sun.jna.ptr.PointerByReference;
  * An <i>instance</i> is the root object for a Vulkan application.
  * @author Sarge
  */
-public class Instance {
+public class Instance implements TransientNativeObject {
 	private final Handle handle;
 	private final VulkanLibrary lib;
 
-	private final Map<MessageHandler, Pointer> handlers = new HashMap<>();
-	private HandlerFactory factory;
+	private HandlerManager manager;
 
 	/**
 	 * Constructor.
@@ -48,9 +47,7 @@ public class Instance {
 		this.lib = notNull(lib);
 	}
 
-	/**
-	 * @return Instance handle
-	 */
+	@Override
 	public Handle handle() {
 		return handle;
 	}
@@ -75,39 +72,88 @@ public class Instance {
 	}
 
 	/**
-	 * The <i>handler factory</i> is a lazily instantiated local helper class used to manage message handlers attached to this instance.
+	 * The <i>handler manager</i> is a lazily instantiated local helper class used to manage message handlers attached to this instance.
 	 * @see <a href="https://www.lunarg.com/wp-content/uploads/2018/05/Vulkan-Debug-Utils_05_18_v1.pdf">Vulkan-Debug-Utils_05_18_v1.pdf</a>
 	 */
-	private class HandlerFactory {
+	public class HandlerManager {
+		private final Map<MessageHandler, Pointer> handlers = new HashMap<>();
 		private final Function create;
 		private final Function destroy;
 
-		private HandlerFactory() {
+		private HandlerManager() {
 			this.create = function("vkCreateDebugUtilsMessengerEXT");
 			this.destroy = function("vkDestroyDebugUtilsMessengerEXT");
 		}
 
 		/**
-		 * Creates a message handler.
-		 * @param handler Message handler descriptor
-		 * @return Handle
+		 * Adds a message handler to this instance.
+		 * @param handler Message handler
+		 * @throws IllegalArgumentException if the handler is already attached
 		 */
-		private Pointer create(MessageHandler handler) {
+		public void add(MessageHandler handler) {
+			// Check handler is valid
+			Check.notNull(handler);
+			if(handlers.containsKey(handler)) throw new IllegalArgumentException("Duplicate message handler: " + handler);
+
+			// Create handler
 			final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
 			final PointerByReference handle = lib.factory().pointer();
 			final Object[] args = {Instance.this.handle, info, null, handle};
-			create.invoke(Integer.TYPE, args, options());
-			return handle.getValue();
+			final Object result = create.invoke(Integer.TYPE, args, options());
+			check((int) result);
+
+			// Register handler
+			handlers.put(handler, handle.getValue());
 		}
 
 		/**
-		 * Destroys a message handler.
-		 * @param handle Handle
+		 * Removes a message handler.
+		 * @param handler Handler to remove
+		 * @throws IllegalArgumentException if the handler is not attached
+		 */
+		public void remove(MessageHandler handler) {
+			if(!handlers.containsKey(handler)) throw new IllegalArgumentException("Handler not present: " + handler);
+			final Pointer handle = handlers.remove(handler);
+			destroy(handle);
+		}
+
+		/**
+		 * Helper - Destroys a message handler.
 		 */
 		private void destroy(Pointer handle) {
 			final Object[] args = new Object[]{Instance.this.handle, handle, null};
 			destroy.invoke(Void.class, args, options());
 		}
+
+		/**
+		 * Destroys all message handlers.
+		 */
+		private void destroy() {
+			handlers.values().forEach(this::destroy);
+			handlers.clear();
+		}
+
+//		/**
+//		 * Creates a message handler.
+//		 * @param handler Message handler descriptor
+//		 * @return Handle
+//		 */
+//		private Pointer create(MessageHandler handler) {
+//			final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
+//			final PointerByReference handle = lib.factory().pointer();
+//			final Object[] args = {Instance.this.handle, info, null, handle};
+//			create.invoke(Integer.TYPE, args, options());
+//			return handle.getValue();
+//		}
+
+//		/**
+//		 * Destroys a message handler.
+//		 * @param handle Handle
+//		 */
+//		private void destroy(Pointer handle) {
+//			final Object[] args = new Object[]{Instance.this.handle, handle, null};
+//			destroy.invoke(Void.class, args, options());
+//		}
 
 		/**
 		 * @return Type converter options
@@ -118,50 +164,65 @@ public class Instance {
 	}
 
 	/**
-	 * Adds a diagnostics message handler to this instance.
-	 * @param handler Message handler
-	 * @return Handle
-	 * @throws IllegalArgumentException if the handler has already been added to this instance
-	 * @throws ServiceException if the handler cannot be created
+	 * @return Message handler manager for this instance
 	 */
-	public synchronized Pointer add(MessageHandler handler) {
-		// Check handler is valid
-		Check.notNull(handler);
-		if(handlers.containsKey(handler)) throw new IllegalArgumentException("Duplicate message handler: " + handler);
-
-		// Init factory
-		if(factory == null) {
-			factory = new HandlerFactory();
+	public synchronized HandlerManager handlers() {
+		if(manager == null) {
+			manager = new HandlerManager();
 		}
 
-		// Create and register handler
-		final Pointer handle = factory.create(handler);
-		handlers.put(handler, handle);
-
-		return handle;
+		return manager;
 	}
 
-	/**
-	 * Removes (and destroys) a diagnostics message handler from this instance.
-	 * @param handler Message handler to remove
-	 * @throws IllegalArgumentException if the handler is not present or has already been removed
-	 * @throws ServiceException if the handler cannot be destroyed
-	 */
-	public synchronized void remove(MessageHandler handler) {
-		if(!handlers.containsKey(handler)) throw new IllegalArgumentException("Handler not present: " + handler);
-		final Pointer handle = handlers.remove(handler);
-		factory.destroy(handle);
-	}
+//	/**
+//	 * Adds a diagnostics message handler to this instance.
+//	 * @param handler Message handler
+//	 * @return Handle
+//	 * @throws IllegalArgumentException if the handler has already been added to this instance
+//	 * @throws ServiceException if the handler cannot be created
+//	 */
+//	public synchronized Pointer add(MessageHandler handler) {
+//		// Check handler is valid
+//		Check.notNull(handler);
+//		if(handlers.containsKey(handler)) throw new IllegalArgumentException("Duplicate message handler: " + handler);
+//
+//		// Init factory
+//		if(factory == null) {
+//			factory = new HandlerFactory();
+//		}
+//
+//		// Create and register handler
+//		final Pointer handle = factory.create(handler);
+//		handlers.put(handler, handle);
+//
+//		return handle;
+//	}
+//
+//	/**
+//	 * Removes (and destroys) a diagnostics message handler from this instance.
+//	 * @param handler Message handler to remove
+//	 * @throws IllegalArgumentException if the handler is not present or has already been removed
+//	 * @throws ServiceException if the handler cannot be destroyed
+//	 */
+//	public synchronized void remove(MessageHandler handler) {
+//		if(!handlers.containsKey(handler)) throw new IllegalArgumentException("Handler not present: " + handler);
+//		final Pointer handle = handlers.remove(handler);
+//		factory.destroy(handle);
+//	}
 
 	/**
 	 * Destroys this instance and any active message handlers.
 	 */
+	@Override
 	public synchronized void destroy() {
 		// Destroy active handlers
-		if(!handlers.isEmpty()) {
-			handlers.values().forEach(factory::destroy);
-			handlers.clear();
+		if(manager != null) {
+			manager.destroy();
 		}
+//		if(!handlers.isEmpty()) {
+//			handlers.values().forEach(factory::destroy);
+//			handlers.clear();
+//		}
 
 		// Destroy instance
 		lib.vkDestroyInstance(handle, null);
@@ -169,28 +230,25 @@ public class Instance {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this)
-				.append("handle", handle)
-				.append("handlers", handlers.size())
-				.build();
+		return new ToStringBuilder(this).append("handle", handle).build();
 	}
 
 	/**
 	 * Builder for a Vulkan instance.
 	 */
 	public static class Builder {
-		private VulkanLibrary api;
+		private VulkanLibrary lib;
 		private String name;
-		private Version ver = VulkanLibrary.VERSION;
+		private Version ver = new Version(1, 0, 0);
 		private final Set<String> extensions = new HashSet<>();
-		private final Set<ValidationLayer> layers = new HashSet<>();
+		private final Set<String> layers = new HashSet<>();
 
 		/**
 		 * Sets the Vulkan API.
 		 * @param api Vulkan API
 		 */
 		public Builder vulkan(VulkanLibrary api) {
-			this.api = notNull(api);
+			this.lib = notNull(api);
 			return this;
 		}
 
@@ -204,8 +262,8 @@ public class Instance {
 		}
 
 		/**
-		 * Sets the required minimum Vulkan version.
-		 * @param ver Minimum version, default is {@link VulkanLibrary#VERSION}
+		 * Sets the application version.
+		 * @param ver Application version
 		 */
 		public Builder version(Version ver) {
 			this.ver = notNull(ver);
@@ -238,7 +296,7 @@ public class Instance {
 		 */
 		public Builder layer(ValidationLayer layer) {
 			Check.notNull(layer);
-			layers.add(layer);
+			layers.add(layer.name());
 			return this;
 		}
 
@@ -250,14 +308,16 @@ public class Instance {
 		 */
 		public Instance build() {
 			// Validate
-			Check.notNull(api);
+			Check.notNull(lib);
 			Check.notEmpty(name);
 
 			// Init application descriptor
 			final VkApplicationInfo app = new VkApplicationInfo();
-			app.pEngineName = "JOVE";
 			app.pApplicationName = name;
-			app.apiVersion = ver.toInteger();
+			app.applicationVersion = ver.toInteger();
+			app.pEngineName = "JOVE";
+			app.engineVersion = new Version(1, 0, 0).toInteger();
+			app.apiVersion = VulkanLibrary.VERSION.toInteger();
 
 			// Init instance descriptor
 			final VkInstanceCreateInfo info = new VkInstanceCreateInfo();
@@ -268,16 +328,15 @@ public class Instance {
 			info.enabledExtensionCount = extensions.size();
 
 			// Populate required layers
-			final String[] layerNames = layers.stream().map(ValidationLayer::name).toArray(String[]::new);
-			info.ppEnabledLayerNames = new StringArray(layerNames);
-			info.enabledLayerCount = layerNames.length;
+			info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
+			info.enabledLayerCount = layers.size();
 
 			// Create instance
-			final PointerByReference handle = api.factory().pointer();
-			check(api.vkCreateInstance(info, null, handle));
+			final PointerByReference handle = lib.factory().pointer();
+			check(lib.vkCreateInstance(info, null, handle));
 
 			// Create instance wrapper
-			return new Instance(api, handle.getValue());
+			return new Instance(lib, handle.getValue());
 		}
 	}
 }

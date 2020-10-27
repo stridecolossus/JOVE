@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.Operation;
 import org.sarge.jove.control.Device;
 import org.sarge.jove.control.InputEvent.Handler;
 import org.sarge.jove.control.InputEvent.Type;
@@ -37,13 +38,13 @@ class KeyboardDevice implements Device {
 	}
 
 	@Override
-	public void enable(Class<? extends Type> type, Handler handler) {
+	public void enable(Class<? extends Type> type, Handler<?> handler) {
 //		Check.notNull(handler);
 
 		// Create callback adapter
 		final KeyListener listener = (ptr, key, scancode, action, mods) -> {
-//			final Button button = new Button(key, action, mods);
-//			handler.handle(button.event());
+			final Button button = new Button("???"); // key, action, mods);
+			handler.handle(button.event(Operation.PRESS));
 			System.out.println("key="+key+" action="+action+" mods="+mods);
 			if(key == 256) System.exit(0);
 		};
@@ -52,10 +53,10 @@ class KeyboardDevice implements Device {
 		apply(type, listener);
 	}
 
-	@Override
-	public void disable(Class<? extends Type> type) {
-		apply(type, null);
-	}
+//	@Override
+//	public void disable(Class<? extends Type> type) {
+//		apply(type, null);
+//	}
 
 	private void apply(Class<? extends Type> type, KeyListener listener) {
 		if(type != Button.class) throw new IllegalArgumentException("Invalid event type for keyboard: " + type);

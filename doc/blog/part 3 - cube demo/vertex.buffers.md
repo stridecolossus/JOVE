@@ -329,9 +329,11 @@ To determine the appropriate memory type this method delegates to another new he
 ```java
 /**
  * Finds a memory type for the given memory properties.
- * @param props Memory properties
+ * @param filter		Memory types filter mask
+ * @param props 		Memory properties
  * @return Memory type index
- * @throws ServiceException if no suitable memory type is available
+ * @throws RuntimeException if no suitable memory type is available
+ * @see VkMemoryRequirements
  */
 public int findMemoryType(int filter, Set<VkMemoryPropertyFlag> props) {
 	// Retrieve memory properties
@@ -349,6 +351,13 @@ public int findMemoryType(int filter, Set<VkMemoryPropertyFlag> props) {
 	throw new RuntimeException("No memory type available for specified memory properties:" + props);
 }
 ```
+
+The process of selecting the appropriate memory type is:
+1. Walk the available memory types array for the physical device.
+2. Filter by index against the given `filter` bit-mask.
+3. Filter by the required memory types (specified in the builder for the vertex buffer).
+
+The _filter_ is a bit-mask of the available memory types corresponding to the `memoryTypeBits` field of the `VkMemoryRequirements` structure returned by Vulkan.
 
 We re-factor the memory properties accessor so that the data is cached locally:
 
@@ -444,18 +453,23 @@ We bring all this together in the demo to copy the triangle vertex data to the h
 
 ```java
 // Create staging VBO
-final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
+final VertexBuffer staging = new VertexBuffer.Builder(dev)
+	.length(len)
+	.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+	.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+	.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+	.build();
 
 // Load to staging
 staging.load(bb);
 
 // Create device VBO
 final VertexBuffer dest = new VertexBuffer.Builder(dev)
-		.length(bb.capacity())
-		.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-		.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-		.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		.build();
+	.length(bb.capacity())
+	.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+	.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+	.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+	.build();
 
 // Copy
 final Queue queue = dev.queue(transfer);
@@ -466,8 +480,6 @@ new Work.Builder().add(copyBuffer).build().submit();
 queue.waitIdle();
 copyBuffer.free();
 ```
-
-We also add a convenience factory method to create a staging vertex buffer.
 
 The code for the copy operation is a bit messy and long-winded - we will come back and simplify this later.
 
@@ -730,8 +742,8 @@ The above should work but doesn't achieve anything since we are not actually usi
 
 We need to make the following changes to the vertex shader:
 - Remove the hard-coded vertices.
-- Add two `layout` directives to specify the incoming vertex data (the locations corresponds to the vertex layout).
-- Change `gl_Position` to be the position of each vertex.
+- Add two `layout` directives to specify the incoming vertex data (matching the locations specified in the vertex attributes).
+- Set `gl_Position` to the position of each vertex.
 - Set the output `fragColour` to the colour of each vertex.
 
 The resultant vertex shader is:

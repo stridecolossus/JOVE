@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.util.Check;
 
 /**
@@ -15,7 +16,7 @@ import org.sarge.jove.util.Check;
  * @author Sarge
  * @see Device
  */
-public interface InputEvent {
+public interface InputEvent<T extends Type> {
 	/**
 	 * @return Type of this event
 	 */
@@ -38,17 +39,17 @@ public interface InputEvent {
 		Type parse(String[] tokens);
 	}
 
-	interface Handler {
-		void handle(InputEvent event);
-	}
+//	interface Handler<T extends Type> {
+//		void handle(InputEvent<T> event);
+//	}
 
 	/**
 	 * Partial implementation.
 	 * <p>
 	 * The constructor accepts an arbitrary number of arguments that are used to construct the name of this event type and its hash value.
-	 * Generally these will be the class members that uniquely identify an instance of the event.
+	 * Generally these will be the class members that uniquely identify an event type.
 	 * <p>
-	 * The name is delimited by the slash-character, for example the name of a sub-class with the arguments <code>"Axis", 42</code> would be <code>Axis-42</code>.
+	 * The name is delimited by the dash character, for example the name of a sub-class with the arguments <code>"Axis", 42</code> would be <code>Axis-42</code>.
 	 * <p>
 	 * The {@link #parse(String)} static factory method is used to parse an event type from a given string.
 	 * The <b>first</b> argument in the constructor is used to lookup the sub-class {@link #parse(String[])} implementation for a given event type (<code>Axis</code> in the above example).

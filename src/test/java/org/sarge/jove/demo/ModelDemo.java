@@ -18,7 +18,7 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.control.Action;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent;
+import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -455,19 +455,19 @@ public class ModelDemo {
 		///////////////////
 
 		final Action.Bindings bindings = new Action.Bindings();
-		window.mouse().enable(InputEvent.Type.Position.class, bindings);
+		//window.mouse().enable(Position.class, bindings);
 		window.keyboard().enable(Button.class, bindings);
 
 		final AtomicBoolean running = new AtomicBoolean(true);
-		bindings.bind(new Button(256, 0, 0), ignored -> running.set(false));
+		bindings.bind(new Button("Escape"), ignored -> running.set(false));
 
 		final Camera cam = new Camera();
 		cam.move(new Point(0, 0.5f, -2));
 
-		bindings.bind(new Button(87, 0, 0), ignored -> cam.move(+1));		// W
-		bindings.bind(new Button(83, 0, 0), ignored -> cam.move(-1));		// S
-		bindings.bind(new Button(65, 0, 0), ignored -> cam.strafe(+1));		// A
-		bindings.bind(new Button(68, 0, 0), ignored -> cam.strafe(-1));		// D
+//		bindings.bind(new Button(87, 0, 0), ignored -> cam.move(+1));		// W
+//		bindings.bind(new Button(83, 0, 0), ignored -> cam.move(-1));		// S
+//		bindings.bind(new Button(65, 0, 0), ignored -> cam.strafe(+1));		// A
+//		bindings.bind(new Button(68, 0, 0), ignored -> cam.strafe(-1));		// D
 
 //		final MousePositionListener listener = (ptr, x, y) -> {
 //			final float dx = (float) x / rect.width() * MathsUtil.PI;
@@ -475,11 +475,12 @@ public class ModelDemo {
 //		};
 //		window.setMouseMoveListener(listener);
 
-		final Action controller = event -> {
-			final float dx = event.x() / rect.width() * MathsUtil.PI;
+		final Action controller = e -> {
+			final Position pos = (Position) e;
+			final float dx = pos.x() / rect.width() * MathsUtil.PI;
 			cam.orientation(dx, 0);
 		};
-		bindings.bind(InputEvent.Type.POSITION, controller);
+		bindings.bind(Position.TYPE, controller);
 
 		while(running.get()) {
 			desktop.poll();

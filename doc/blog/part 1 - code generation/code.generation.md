@@ -1,9 +1,5 @@
 # Overview
 
-## Introduction
-
-## Background
-
 For some time we had been developing a personal project for an OpenGL based library and a suite of example applications.
 This library was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).
 
@@ -45,8 +41,8 @@ Straight JNI we immediately discounted - no one in their right mind would choose
 It had also (thankfully) been many years since we wrote any C/C++ code and we certainly didn't intend starting now.
 
 We next looked at SWIG which is the code-generation technology used by LWJGL but we were not encouraged:
-- The tool seemed to require a descriptors to specify the Java bindings for each component.
-- The generated code was frankly ugly: a morass of enumerations, offsets, etc. to presumably handle the marshalling of data to/from the native layer.
+- The tool seemed to require a descriptor to specify the Java bindings for each component.
+- The generated code was frankly ugly: a morass of enumerations, offsets, accessors, etc. to presumably handle the marshalling of data to/from the native layer.
 - There was the issue of documentation mentioned above.
 - It was not clear whether SWIG was part of LWJGL or a separate third-party tool but there seemed little documentation or tutorials available online.
 
@@ -111,8 +107,9 @@ This seemed perfect for our requirements but unfortunately the results didn't wo
 
 So we next looked for a more general header parser that we could use to code generate the bindings ourselves.
 We expected (probably naively) that there would be some library or tool out there that we could use to parse a C/C++ header to enumerate the structures, enumerations and API methods.
-After some research we drew a blank - the only option seemed to be an obscure Eclipse component called CDT that is used for code assist.
-It wasn't an actual library as such (for example there is no maven or project page), we had to include a JAR file directly in our project.
+
+After some research we largely drew a blank - the only option seemed to be an obscure Eclipse component called CDT that is used for code assist.
+It wasn't an actual library as such (there is no maven or project page), we had to include a JAR file directly in our project.
 
 CDT builds an AST (Abstract Source Tree?) from a C/C++ source file which is basically a node-tree representing the various elements of the code.
 The idea was we would walk the tree and spit out the information we required.
@@ -120,12 +117,12 @@ The idea was we would walk the tree and spit out the information we required.
 It did the job but the exercise was very painful:
 - CDT isn't a public library so the documentation was virtually non-existent.
 - As it turned out most of the information we wanted was mapped to a single node type which largely made CDT pointless for our project.
-- Extracting the relevant information was extremely difficult - we didn't understand most of the terminology so it was just blind searching across mystery fields and nodes.
+- Extracting the relevant information was extremely difficult - we didn't understand most of the terminology so it was just blind searching across mysteriously named fields and types.
 - The library provided a visitor to walk the tree but required the developer to set public booleans to select the relevant data as well - WTF!
 - Perhaps we were missing the point but we seemed to have to keep casting different types of node to find even the most basic information.
 
-In retrospect we spent far too much time messing around with this 'library' and it certainly doesn't adhere to our goal of only using well documented third-party tools.
-If and when we need to re-generate the API we will drop CDT and replace it with a home-brewed header parser (unless we find one in the meantime).
+In retrospect we spent far too much time messing around with CDT and it certainly doesn't adhere to our goal of only using well documented third-party tools.
+If and when we need to re-generate the API we will replace it with a home-brewed parser (unless we find one in the meantime).
 For that reason we will largely gloss over the details of how we used CDT.
 
 ## Enumerations
@@ -134,7 +131,7 @@ We started with enumerations since these are the simplest of the components we n
 
 ### Template
 
-To generate the Java enumerations we used _Apache Velocity_, an old but active template library ideal for what we were doing.
+To generate the Java enumerations we used [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for what we were doing.
 In particular it provides support for collections of data which would be using for enumeration constants and structure fields.
 
 Generally the code generation process is:
@@ -156,20 +153,20 @@ import org.sarge.jove.common.IntegerEnumeration;
  */
 public enum $name implements IntegerEnumeration {
 #foreach($entry in $values.entrySet())
- 	${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
- 	
+     ${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
+     
 #end
 
-	private final int value;
-	
-	private $name(int value) {
-		this.value = value;
-	}
+    private final int value;
+    
+    private $name(int value) {
+        this.value = value;
+    }
 
-	@Override
-	public int value() {
-		return value;
-	}
+    @Override
+    public int value() {
+        return value;
+    }
 }
 ```
 
@@ -181,7 +178,7 @@ Notes:
 The line that actually generates a enumeration constant might be slightly confusing at first glance:
 
 ```java
- 	${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
+     ${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
 ```
 
 The purpose of the `if..else..end` directive is to add commas between each constant or a semi-colon after the last constant.
@@ -192,34 +189,34 @@ We extract the enumeration name and a map of the constants from the relevant AST
 
 ```java
 private void enumeration(IASTEnumerationSpecifier enumeration) {
-	// Extract enumeration name
-	final String name = StringUtils.removeEnd(enumeration.getName().toString(), "Bits");
-	System.out.println("Generating enumeration " + name);
+    // Extract enumeration name
+    final String name = StringUtils.removeEnd(enumeration.getName().toString(), "Bits");
+    System.out.println("Generating enumeration " + name);
 
-	// Get enumeration values
-	final var values = Arrays.stream(enumeration.getEnumerators())
-		.map(CPPASTEnumerator.class::cast)
-		.filter(this::isValidConstant)
-		.collect(toMap(e -> e.getName().toString(), e -> e.getIntegralValue().numericalValue(), Long::sum, LinkedHashMap::new));
+    // Get enumeration values
+    final var values = Arrays.stream(enumeration.getEnumerators())
+        .map(CPPASTEnumerator.class::cast)
+        .filter(this::isValidConstant)
+        .collect(toMap(e -> e.getName().toString(), e -> e.getIntegralValue().numericalValue(), Long::sum, LinkedHashMap::new));
 ```
 
 We strip the `Bits` suffix from those enumerations that are essentially bit-masks so that we have consistent names when they are referenced by structures or API methods.
 
-The `isValidConstant()` helper omits superfluous synthetic constants used by Vulkan that such as range bounds, the maximum value, etc.
+The `isValidConstant()` helper omits the superfluous synthetic constants used by Vulkan such as range bounds, the maximum value, etc.
 
 We construct a map of this data and invoke the template generator:
 
 ```java
-	// Build argument map
-	final Map<String, Object> map = new HashMap<>(values);
-	map.put("package", pack);
-	map.put("name", name);
+    // Build argument map
+    final Map<String, Object> map = new HashMap<>(values);
+    map.put("package", pack);
+    map.put("name", name);
 
-	// Generate source file
-	final String code = generator.generate(name, map);
+    // Generate source file
+    final String code = generator.generate(name, map);
 
-	// Write source file
-	write(name, code);
+    // Write source file
+    write(name, code);
 }
 ```
 
@@ -229,39 +226,39 @@ The generator itself is a simple wrapper for the Velocity engine:
 
 ```java
 public class TemplateProcessor {
-	private final VelocityEngine engine = new VelocityEngine();
+    private final VelocityEngine engine = new VelocityEngine();
 
-	/**
-	 * Constructor.
-	 * @param prefix Template path prefix
-	 */
-	public TemplateProcessor(String prefix) {
-		final Properties props = new Properties();
-		props.setProperty("resource.loader", "file");
-		props.setProperty("file.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
-		props.setProperty("file.resource.loader.path", prefix);
-		props.setProperty("file.resource.loader.cache", "false");
-		engine.init(props);
-	}
+    /**
+     * Constructor.
+     * @param prefix Template path prefix
+     */
+    public TemplateProcessor(String prefix) {
+        final Properties props = new Properties();
+        props.setProperty("resource.loader", "file");
+        props.setProperty("file.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
+        props.setProperty("file.resource.loader.path", prefix);
+        props.setProperty("file.resource.loader.cache", "false");
+        engine.init(props);
+    }
 
-	/**
-	 * Populates a template.
-	 * @param name		Template name
-	 * @param data		Data
-	 * @return Results
-	 */
-	public String generate(String name, Map<String, Object> data) {
-		// Load template
-		final Template template = engine.getTemplate(name);
+    /**
+     * Populates a template.
+     * @param name        Template name
+     * @param data        Data
+     * @return Results
+     */
+    public String generate(String name, Map<String, Object> data) {
+        // Load template
+        final Template template = engine.getTemplate(name);
 
-		// Init context
-		final VelocityContext ctx = new VelocityContext(new HashMap<>(data));
+        // Init context
+        final VelocityContext ctx = new VelocityContext(new HashMap<>(data));
 
-		// Generate source
-		final StringWriter out = new StringWriter();
-		template.merge(ctx, out);
-		return out.toString();
-	}
+        // Generate source
+        final StringWriter out = new StringWriter();
+        template.merge(ctx, out);
+        return out.toString();
+    }
 }
 ```
 
@@ -291,27 +288,27 @@ becomes:
 
 ```java
 public enum VkImageUsageFlag implements IntegerEnumeration {
- 	VK_IMAGE_USAGE_TRANSFER_SRC_BIT(1), 	
- 	VK_IMAGE_USAGE_TRANSFER_DST_BIT(2), 	
- 	VK_IMAGE_USAGE_SAMPLED_BIT(4), 	
- 	VK_IMAGE_USAGE_STORAGE_BIT(8), 	
- 	VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT(16), 	
- 	VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT(32), 	
- 	VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT(64), 	
- 	VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT(128), 	
- 	VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV(256), 	
- 	VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT(512);
+     VK_IMAGE_USAGE_TRANSFER_SRC_BIT(1),     
+     VK_IMAGE_USAGE_TRANSFER_DST_BIT(2),     
+     VK_IMAGE_USAGE_SAMPLED_BIT(4),     
+     VK_IMAGE_USAGE_STORAGE_BIT(8),     
+     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT(16),     
+     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT(32),     
+     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT(64),     
+     VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT(128),     
+     VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV(256),     
+     VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT(512);
 
-	private final int value;
-	
-	private VkImageUsageFlag(int value) {
-		this.value = value;
-	}
+    private final int value;
+    
+    private VkImageUsageFlag(int value) {
+        this.value = value;
+    }
 
-	@Override
-	public int value() {
-		return value;
-	}
+    @Override
+    public int value() {
+        return value;
+    }
 }
 ```
 
@@ -327,56 +324,56 @@ We implemented a type mapper that looked up the JNA/Java type for a given native
 # Maps C/C++ types to Java/JNA
 
 # Primitives
-int8_t 				-> byte
-uint8_t 				-> byte
-int32_t 				-> int
-uint32_t 				-> int
-int64_t 				-> long
-uint64_t 				-> long
-size_t 				-> long
+int8_t              -> byte
+uint8_t             -> byte
+int32_t             -> int
+uint32_t            -> int
+int64_t             -> long
+uint64_t            -> long
+size_t              -> long
 
 # Strings
-char* 					-> String
-char[]					-> byte
+char*               -> String
+char[]              -> byte
 
 # Pointers
-void* 					-> com.sun.jna.Pointer
-char**					-> com.sun.jna.Pointer
+void*               -> com.sun.jna.Pointer
+char**              -> com.sun.jna.Pointer
 
 # Over-rides
-VkBool32				-> org.sarge.jove.platform.vulkan.VulkanBoolean
+VkBool32            -> org.sarge.jove.platform.vulkan.VulkanBoolean
 
 # Macros
-VkInstance				-> org.sarge.jove.Handle
-VkPhysicalDevice		-> org.sarge.jove.Handle
-VkDevice					-> org.sarge.jove.Handle
-VkCommandBuffer			-> org.sarge.jove.Handle
-VkSemaphore				-> org.sarge.jove.Handle
-VkCommandBuffer			-> org.sarge.jove.Handle
-VkFence					-> org.sarge.jove.Handle
-VkDeviceMemory			-> org.sarge.jove.Handle
-VkBuffer					-> org.sarge.jove.Handle
-VkImage					-> org.sarge.jove.Handle
-VkEvent					-> org.sarge.jove.Handle
-VkQueryPool				-> org.sarge.jove.Handle
-VkBufferView				-> org.sarge.jove.Handle
-VkImageView				-> org.sarge.jove.Handle
-VkShaderModule			-> org.sarge.jove.Handle
-VkPipelineCache			-> org.sarge.jove.Handle
-VkPipelineLayout		-> org.sarge.jove.Handle
-VkRenderPass				-> org.sarge.jove.Handle
-VkPipeline				-> org.sarge.jove.Handle
-VkDescriptorSetLayout	-> org.sarge.jove.Handle
-VkSampler					-> org.sarge.jove.Handle
-VkDescriptorPool		-> org.sarge.jove.Handle
-VkDescriptorSet			-> org.sarge.jove.Handle
-VkFramebuffer			-> org.sarge.jove.Handle
-VkCommandPool			-> org.sarge.jove.Handle
+VkInstance                -> org.sarge.jove.Handle
+VkPhysicalDevice          -> org.sarge.jove.Handle
+VkDevice                  -> org.sarge.jove.Handle
+VkCommandBuffer           -> org.sarge.jove.Handle
+VkSemaphore               -> org.sarge.jove.Handle
+VkCommandBuffer           -> org.sarge.jove.Handle
+VkFence                   -> org.sarge.jove.Handle
+VkDeviceMemory            -> org.sarge.jove.Handle
+VkBuffer                  -> org.sarge.jove.Handle
+VkImage                   -> org.sarge.jove.Handle
+VkEvent                   -> org.sarge.jove.Handle
+VkQueryPool               -> org.sarge.jove.Handle
+VkBufferView              -> org.sarge.jove.Handle
+VkImageView               -> org.sarge.jove.Handle
+VkShaderModule            -> org.sarge.jove.Handle
+VkPipelineCache           -> org.sarge.jove.Handle
+VkPipelineLayout          -> org.sarge.jove.Handle
+VkRenderPass              -> org.sarge.jove.Handle
+VkPipeline                -> org.sarge.jove.Handle
+VkDescriptorSetLayout     -> org.sarge.jove.Handle
+VkSampler                 -> org.sarge.jove.Handle
+VkDescriptorPool          -> org.sarge.jove.Handle
+VkDescriptorSet           -> org.sarge.jove.Handle
+VkFramebuffer             -> org.sarge.jove.Handle
+VkCommandPool             -> org.sarge.jove.Handle
 ```
 
 Pointer types were programatically replaced by the corresponding JNA by-reference type, e.g. `const VkClearValue*` is mapped as `VkClearValue.ByReference`.
 
-All other types were simply copied as-is (which also handled the case for enumerations).
+All other types were simply copied as-is (which also neatly handled the case for enumerations).
 
 ### Template
 
@@ -399,7 +396,7 @@ import com.sun.jna.Structure.FieldOrder;
  */
 @FieldOrder({
 #foreach($field in $fields)
-	"$field.name"#if($foreach.hasNext),
+    "$field.name"#if($foreach.hasNext),
 #end
 #end
 
@@ -407,12 +404,12 @@ import com.sun.jna.Structure.FieldOrder;
 public class $name extends VulkanStructure {
 #foreach($field in $fields)
 #if($field.name == "sType")
-	public $field.type $field.name = VkStructureType.VK_STRUCTURE_TYPE_${sType};
+    public $field.type $field.name = VkStructureType.VK_STRUCTURE_TYPE_${sType};
 #else
 #if($field.length == 0)
-	public $field.type $field.name;
+    public $field.type $field.name;
 #else
-	public ${field.type}[] $field.name = new ${field.type}[${field.length}];
+    public ${field.type}[] $field.name = new ${field.type}[${field.length}];
 #end
 #end
 #end
@@ -489,10 +486,10 @@ The interface itself is trivial (already seen in the Velocity template above):
 
 ```java
 public interface IntegerEnumeration {
-	/**
-	 * @return Enum literal
-	 */
-	int value();
+    /**
+     * @return Enum literal
+     */
+    int value();
 }
 ```
 
@@ -515,8 +512,8 @@ And additional helpers to transform to/from a bit-field mask:
 ```java
 /**
  * Converts an integer mask to a set of enumeration constants.
- * @param clazz		Enumeration class
- * @param mask		Mask
+ * @param clazz        Enumeration class
+ * @param mask        Mask
  * @return Constants
  */
 static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
@@ -533,36 +530,38 @@ static <E extends IntegerEnumeration> int mask(Collection<E> values) {
 
 These helpers are implemented using an internal cache that holds the native-to-constant mappings for all enumerations as they are used.
 
+Code: [IntegerEnumeration](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/IntegerEnumeration.java).
+
 ### Type Converter
 
 For the second problem we employed the JNA _type converter_ mechanism that maps a Java type to/from a native type:
 
 ```java
 TypeConverter CONVERTER = new TypeConverter() {
-	@Override
-	public Class<?> nativeType() {
-		return Integer.class;
-	}
+    @Override
+    public Class<?> nativeType() {
+        return Integer.class;
+    }
 
-	@Override
-	public Object toNative(Object value, ToNativeContext context) {
-		if(value == null) {
-			return 0;
-		}
-		else {
-			final IntegerEnumeration e = (IntegerEnumeration) value;
-			return e.value();
-		}
-	}
+    @Override
+    public Object toNative(Object value, ToNativeContext context) {
+        if(value == null) {
+            return 0;
+        }
+        else {
+            final IntegerEnumeration e = (IntegerEnumeration) value;
+            return e.value();
+        }
+    }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public Object fromNative(Object nativeValue, FromNativeContext context) {
-		final Class<?> type = context.getTargetType();
-		if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new IllegalStateException(...);
-		final var entry = Cache.CACHE.get((Class<? extends IntegerEnumeration>) type);
-		return entry.get((int) nativeValue);
-	}
+    @SuppressWarnings("unchecked")
+    @Override
+    public Object fromNative(Object nativeValue, FromNativeContext context) {
+        final Class<?> type = context.getTargetType();
+        if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new IllegalStateException(...);
+        final var entry = Cache.CACHE.get((Class<? extends IntegerEnumeration>) type);
+        return entry.get((int) nativeValue);
+    }
 }
 ```
 
@@ -570,11 +569,11 @@ The only fly in the ointment is that we need to apply this converter to **every*
 
 ```java
 public interface VulkanLibrary {
-	abstract class VulkanStructure extends Structure {
-		protected VulkanStructure() {
-			super(MAPPER);
-		}
-	}
+    abstract class VulkanStructure extends Structure {
+        protected VulkanStructure() {
+            super(MAPPER);
+        }
+    }
 }
 ```
 
@@ -584,14 +583,14 @@ The mapper is created as a member of the root Vulkan API interface:
 TypeMapper MAPPER = mapper();
 
 private static TypeMapper mapper() {
-	final DefaultTypeMapper mapper = new DefaultTypeMapper();
-	mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
-	...
-	return mapper;
+    final DefaultTypeMapper mapper = new DefaultTypeMapper();
+    mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
+    ...
+    return mapper;
 }
 
 static VulkanLibrary create() {
-	return Native.load(library(), VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
+    return Native.load(library(), VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
 }
 ```
 
@@ -615,31 +614,31 @@ We crafted the simple `VulkanBoolean` class that maps a boolean to/from a native
 
 ```java
 static final TypeConverter CONVERTER = new TypeConverter() {
-	@Override
-	public Class<?> nativeType() {
-		return Integer.class;
-	}
+    @Override
+    public Class<?> nativeType() {
+        return Integer.class;
+    }
 
-	@Override
-	public Object toNative(Object value, ToNativeContext context) {
-		if(value == null) {
-			return VulkanBoolean.FALSE.toInteger();
-		}
-		else {
-			final VulkanBoolean bool = (VulkanBoolean) value;
-			return bool.toInteger();
-		}
-	}
+    @Override
+    public Object toNative(Object value, ToNativeContext context) {
+        if(value == null) {
+            return VulkanBoolean.FALSE.toInteger();
+        }
+        else {
+            final VulkanBoolean bool = (VulkanBoolean) value;
+            return bool.toInteger();
+        }
+    }
 
-	@Override
-	public Object fromNative(Object nativeValue, FromNativeContext context) {
-		if(nativeValue == null) {
-			return VulkanBoolean.FALSE;
-		}
-		else {
-			return VulkanBoolean.of((int) nativeValue);
-		}
-	}
+    @Override
+    public Object fromNative(Object nativeValue, FromNativeContext context) {
+        if(nativeValue == null) {
+            return VulkanBoolean.FALSE;
+        }
+        else {
+            return VulkanBoolean.of((int) nativeValue);
+        }
+    }
 };
 ```
 

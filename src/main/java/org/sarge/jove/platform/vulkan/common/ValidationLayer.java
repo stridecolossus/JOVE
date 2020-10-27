@@ -16,7 +16,7 @@ public record ValidationLayer(String name, int version) {
 	/**
 	 * Standard validation layer.
 	 */
-	public static final ValidationLayer STANDARD_VALIDATION = new ValidationLayer("VK_LAYER_LUNARG_standard_validation");
+	public static final ValidationLayer STANDARD_VALIDATION = new ValidationLayer("VK_LAYER_LUNARG_standard_validation"); // TODO - VK_LAYER_KHRONOS_validation v1.1.1114.0
 
 	/**
 	 * Constructor.

@@ -15,14 +15,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkExtensionProperties;
-import org.sarge.jove.platform.vulkan.VkLayerProperties;
-import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
-import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
-import org.sarge.jove.platform.vulkan.VkQueueFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
@@ -270,9 +263,12 @@ public class PhysicalDevice implements NativeObject {
 
 	/**
 	 * Finds a memory type for the given memory properties.
-	 * @param props Memory properties
+	 * The <i>filter</i> is returned by Vulkan in {@link VkMemoryRequirements#memoryTypeBits}.
+	 * @param filter		Memory types filter mask
+	 * @param props 		Memory properties
 	 * @return Memory type index
-	 * @throws ServiceException if no suitable memory type is available
+	 * @throws RuntimeException if no suitable memory type is available
+	 * @see VkMemoryRequirements
 	 */
 	public int findMemoryType(int filter, Set<VkMemoryPropertyFlag> props) {
 		// Retrieve memory properties
