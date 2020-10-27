@@ -21,12 +21,12 @@ import com.sun.jna.ptr.PointerByReference;
 public class WindowTest {
 	private Window window;
 	private DesktopLibrary lib;
-	private WindowDescriptor props;
+	private Window.Descriptor props;
 
 	@BeforeEach
 	public void before() {
 		lib = mock(DesktopLibrary.class);
-		props = new WindowDescriptor.Builder().title("title").size(new Dimensions(640, 480)).property(WindowDescriptor.Property.DECORATED).build();
+		props = new Window.Descriptor.Builder().title("title").size(new Dimensions(640, 480)).property(Window.Property.DECORATED).build();
 		window = new Window(new Pointer(1), lib, props);
 	}
 
@@ -60,4 +60,6 @@ public class WindowTest {
 		window.destroy();
 		verify(lib).glfwDestroyWindow(window.handle());
 	}
+
+	// TODO - descriptor tests
 }

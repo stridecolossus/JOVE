@@ -89,9 +89,9 @@ public class DesktopTest {
 
 	@Test
 	public void window() {
-		final WindowDescriptor props = new WindowDescriptor.Builder().title("title").size(new Dimensions(1, 2)).build();
+		final Window.Descriptor descriptor = new Window.Descriptor.Builder().title("title").size(new Dimensions(1, 2)).build();
 		when(lib.glfwCreateWindow(1, 2, "title", null, null)).thenReturn(new Pointer(42));
-		final Window window = desktop.window(props);
+		final Window window = desktop.window(descriptor);
 		assertNotNull(window);
 	}
 

@@ -323,7 +323,7 @@ public class LogicalDevice implements TransientNativeObject {
 
 			// Add queue descriptors
 			info.queueCreateInfoCount = queues.size();
-			info.pQueueCreateInfos = VulkanStructure.array(VkDeviceQueueCreateInfo::new, queues, RequiredQueue::populate)[0];
+			info.pQueueCreateInfos = VulkanStructure.array(VkDeviceQueueCreateInfo::new, queues, RequiredQueue::populate);
 
 			// Allocate device
 			final VulkanLibrary lib = parent.instance().library();
