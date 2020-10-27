@@ -62,10 +62,10 @@ public class Desktop {
 
 	/**
 	 * Constructor.
-	 * @param instance GLFW instance
+	 * @param lib GLFW library
 	 */
-	Desktop(DesktopLibrary instance) {
-		this.lib = notNull(instance);
+	Desktop(DesktopLibrary lib) {
+		this.lib = notNull(lib);
 	}
 
 	/**

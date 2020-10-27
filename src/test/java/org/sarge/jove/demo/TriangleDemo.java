@@ -14,15 +14,7 @@ import org.sarge.jove.platform.desktop.WindowDescriptor;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.Instance;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.MessageHandler;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
-import org.sarge.jove.platform.vulkan.core.Shader;
-import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.core.Work;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
@@ -52,7 +44,7 @@ public class TriangleDemo {
 		final Instance instance = new Instance.Builder()
 				.vulkan(lib)
 				.name("test")
-				//.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
+				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
 				.extensions(desktop.extensions())
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build();
@@ -68,22 +60,23 @@ public class TriangleDemo {
 		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		final var transferPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
 				.filter(PhysicalDevice.predicate(graphicsPredicate))
 				.filter(PhysicalDevice.predicate(transferPredicate))
-				.filter(PhysicalDevice.predicatePresentationSupported(surfaceHandle))
+				.filter(PhysicalDevice.predicate(presentationPredicate))
 				.findAny()
 				.orElseThrow(() -> new RuntimeException("No GPU available"));
 
 		// Lookup required queues
 //		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
-		final QueueFamily transfer = gpu.find(transferPredicate, "Transfer family not available");
-		final QueueFamily present = gpu.find(family -> family.isPresentationSupported(surfaceHandle), "Presentation family not available");
+		final Queue.Family transfer = gpu.family(transferPredicate);
+		final Queue.Family present = gpu.family(presentationPredicate);
 
 		// Create device
 		final LogicalDevice dev = new LogicalDevice.Builder() // TODO - parent as ctor arg

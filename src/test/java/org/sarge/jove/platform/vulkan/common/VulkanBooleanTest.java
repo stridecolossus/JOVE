@@ -6,12 +6,6 @@ import org.junit.jupiter.api.Test;
 
 public class VulkanBooleanTest {
 	@Test
-	public void isTrue() {
-		assertEquals(true, VulkanBoolean.TRUE.isTrue());
-		assertEquals(false, VulkanBoolean.FALSE.isTrue());
-	}
-
-	@Test
 	public void toInteger() {
 		assertEquals(1, VulkanBoolean.TRUE.toInteger());
 		assertEquals(0, VulkanBoolean.FALSE.toInteger());

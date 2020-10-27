@@ -20,6 +20,7 @@ import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
@@ -94,7 +95,7 @@ public class SwapChain extends AbstractVulkanObject {
 	 * @param
 	 * @param queue Presentation queue
 	 */
-	public void present(LogicalDevice.Queue queue, Semaphore semaphore) {
+	public void present(Queue queue, Semaphore semaphore) {
 		// Create presentation descriptor
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 

@@ -21,8 +21,6 @@ import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -31,7 +29,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class LogicalDeviceTest {
 	private LogicalDevice device;
 	private PhysicalDevice parent;
-	private QueueFamily family;
+	private Queue.Family family;
 	private VulkanLibrary lib;
 
 	@BeforeEach
@@ -49,7 +47,7 @@ public class LogicalDeviceTest {
 		when(parent.instance()).thenReturn(instance);
 
 		// Create queue family
-		family = mock(QueueFamily.class);
+		family = mock(Queue.Family.class);
 		when(family.count()).thenReturn(2);
 		when(family.device()).thenReturn(parent);
 		when(parent.families()).thenReturn(List.of(family));
@@ -173,7 +171,7 @@ public class LogicalDeviceTest {
 
 		@Test
 		void invalidQueueFamily() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(QueueFamily.class)));
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(Queue.Family.class)));
 		}
 
 		@Test

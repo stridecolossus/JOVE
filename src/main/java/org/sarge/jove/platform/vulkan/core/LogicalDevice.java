@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
@@ -23,10 +22,9 @@ import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
@@ -38,81 +36,10 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class LogicalDevice implements NativeObject {
-	/**
-	 * A <i>work queue</i> is used to submit work to this logical device.
-	 */
-	public class Queue implements NativeObject {
-		private final Handle queue;
-		private final QueueFamily family;
-
-		/**
-		 * Constructor.
-		 * @param handle 	Queue handle
-		 * @param family 	Queue family
-		 */
-		private Queue(Pointer handle, QueueFamily family) {
-			this.queue = new Handle(handle);
-			this.family = notNull(family);
-		}
-
-		/**
-		 * @return Queue handle
-		 */
-		@Override
-		public Handle handle() {
-			return queue;
-		}
-
-		/**
-		 * @return Queue family
-		 */
-		public QueueFamily family() {
-			return family;
-		}
-
-		/**
-		 * @return Logical device
-		 */
-		public LogicalDevice device() {
-			return LogicalDevice.this;
-		}
-
-		/**
-		 * Waits for this queue to become idle.
-		 */
-		public void waitIdle() {
-			check(lib.vkQueueWaitIdle(queue));
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj instanceof Queue that) &&
-					queue.equals(that.queue) &&
-					family.equals(that.family);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("queue", queue)
-					.append("family", family)
-					.append("dev", device())
-					.build();
-		}
-	}
-
-	/**
-	 * Transient wrapper for a queue descriptor.
-	 */
-	private record QueueWrapper(VkDeviceQueueCreateInfo info, QueueFamily family) {
-		// Record
-	}
-
 	private final Handle handle;
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
-	private final Map<QueueFamily, List<Queue>> queues;
+	private final Map<Queue.Family, List<Queue>> queues;
 
 	/**
 	 * Constructor.
@@ -120,7 +47,7 @@ public class LogicalDevice implements NativeObject {
 	 * @param parent Parent physical device
 	 * @param queues Work queues
 	 */
-	private LogicalDevice(Pointer handle, PhysicalDevice parent, List<QueueWrapper> queues) {
+	private LogicalDevice(Pointer handle, PhysicalDevice parent, List<RequiredQueue> queues) {
 		this.handle = new Handle(handle);
 		this.parent = notNull(parent);
 		this.lib = parent.instance().library();
@@ -128,14 +55,13 @@ public class LogicalDevice implements NativeObject {
 	}
 
 	/**
-	 * Creates the work queues for the given wrapper.
-	 * @param wrapper Queue wrapper
-	 * @return Queues
+	 * Creates a set of work queues..
+	 * @param info Descriptor for the queues
+	 * @return New queues
 	 */
-	private Stream<Queue> create(QueueWrapper wrapper) {
-		return IntStream
-				.range(0, wrapper.info.queueCount)
-				.mapToObj(n -> create(n, wrapper.family));
+	private Stream<Queue> create(RequiredQueue queue) {
+//		final Queue.Family family = parent.families().get(info.queueFamilyIndex);
+		return IntStream.range(0, queue.priorities.length).mapToObj(n -> create(n, queue.family));
 	}
 
 	/**
@@ -144,10 +70,10 @@ public class LogicalDevice implements NativeObject {
 	 * @param family	Queue family
 	 * @return New queue
 	 */
-	private Queue create(int index, QueueFamily family) {
+	private Queue create(int index, Queue.Family family) {
 		final PointerByReference queue = lib.factory().pointer();
 		lib.vkGetDeviceQueue(handle, family.index(), index, queue);
-		return new Queue(queue.getValue(), family);
+		return new Queue(queue.getValue(), this, family);
 	}
 
 	/**
@@ -175,7 +101,7 @@ public class LogicalDevice implements NativeObject {
 	/**
 	 * @return Work queues for this device ordered by family
 	 */
-	public Map<QueueFamily, List<Queue>> queues() {
+	public Map<Queue.Family, List<Queue>> queues() {
 		return queues;
 	}
 
@@ -185,7 +111,7 @@ public class LogicalDevice implements NativeObject {
 	 * @return Queue(s)
 	 * @throws IllegalArgumentException if this device does not contain queues with the given family
 	 */
-	public List<Queue> queues(QueueFamily family) {
+	public List<Queue> queues(Queue.Family family) {
 		final var list = queues.get(family);
 		if(list == null) throw new IllegalArgumentException("Queue family not present: " + family);
 		return list;
@@ -197,7 +123,7 @@ public class LogicalDevice implements NativeObject {
 	 * @return Queue
 	 * @throws IllegalArgumentException if this device does not contain a queue with the given family
 	 */
-	public Queue queue(QueueFamily family) {
+	public Queue queue(Queue.Family family) {
 		return queues(family).get(0);
 	}
 
@@ -254,6 +180,45 @@ public class LogicalDevice implements NativeObject {
 	}
 
 	/**
+	 * A <i>required queue</i> is a transient descriptor for a queue required by this device.
+	 */
+	private record RequiredQueue(Queue.Family family, float[] priorities) {
+		/**
+		 * Constructor.
+		 * @param family			Queue family
+		 * @param priorities		Priorities
+		 */
+		public RequiredQueue {
+			Check.notNull(family);
+			Check.notEmpty(priorities);
+
+			if(priorities.length > family.count()) {
+				throw new IllegalArgumentException(String.format("Requested number of queues exceeds family pool size: num=%d family=%s", priorities.length, family));
+			}
+
+			for(float f : priorities) {
+				if((f < 0) || (f > 1)) {
+					throw new IllegalArgumentException("Invalid queue priority: " + Arrays.toString(priorities));
+				}
+			}
+		}
+
+		/**
+		 * Populates a descriptor for a queue required by this device.
+		 */
+		private void populate(VkDeviceQueueCreateInfo info) {
+			// Allocate contiguous memory block for the priorities array
+			final Memory mem = new Memory(priorities.length * Float.BYTES);
+			mem.write(0, priorities, 0, priorities.length);
+
+			// Populate queue descriptor
+			info.queueCount = priorities.length;
+			info.queueFamilyIndex = family.index();
+			info.pQueuePriorities = mem;
+		}
+	}
+
+	/**
 	 * Builder for a logical device.
 	 */
 	public static class Builder {
@@ -261,7 +226,7 @@ public class LogicalDevice implements NativeObject {
 		private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
-		private final List<QueueWrapper> queues = new ArrayList<>();
+		private final List<RequiredQueue> queues = new ArrayList<>();
 
 		/**
 		 * Sets the parent of this device.
@@ -306,7 +271,7 @@ public class LogicalDevice implements NativeObject {
 		 * Adds a <b>single</b> queue of the given family to this device.
 		 * @param family Queue family
 		 */
-		public Builder queue(QueueFamily family) {
+		public Builder queue(Queue.Family family) {
 			return queues(family, 1);
 		}
 
@@ -316,7 +281,7 @@ public class LogicalDevice implements NativeObject {
 		 * @param num		Number of queues
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
-		public Builder queues(QueueFamily family, int num) {
+		public Builder queues(Queue.Family family, int num) {
 			final float[] priorities = new float[num];
 			Arrays.fill(priorities, 1);
 			return queues(family, priorities);
@@ -326,30 +291,15 @@ public class LogicalDevice implements NativeObject {
 		 * Adds multiple queues of the given family with the specified work priorities to this device.
 		 * @param family		Queue family
 		 * @param priorities	Queue priorities
+		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 * @throws IllegalArgumentException if the priorities array is empty or any value is not a valid 0..1 percentile
 		 */
-		public Builder queues(QueueFamily family, float[] priorities) {
-			// Validate priorities
-			Check.notEmpty(priorities);
-			if(priorities.length > family.count()) throw new IllegalArgumentException(String.format("Requested number of queues exceeds family pool size: num=%d family=%s", priorities.length, family));
-			for(float f : priorities) {
-				if((f < 0) || (f > 1)) throw new IllegalArgumentException("Invalid queue priority: " + Arrays.toString(priorities));
+		public Builder queues(Queue.Family family, float[] priorities) {
+			if(!parent.families().contains(family)) {
+				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}
-
-			// Allocate contiguous memory block for the priorities
-			final Memory mem = new Memory(priorities.length * Float.BYTES);
-			mem.write(0, priorities, 0, priorities.length);
-
-			// Init descriptor
-			final VkDeviceQueueCreateInfo info = new VkDeviceQueueCreateInfo();
-			info.queueCount = priorities.length;
-			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = mem;
-
-			// Add queue
-			queues.add(new QueueWrapper(info, family));
-
+			queues.add(new RequiredQueue(family, priorities));
 			return this;
 		}
 
@@ -377,9 +327,8 @@ public class LogicalDevice implements NativeObject {
 			info.enabledLayerCount = layers.size();
 
 			// Add queue descriptors
-			if(!queues.stream().map(QueueWrapper::family).map(QueueFamily::device).allMatch(parent::equals)) throw new IllegalArgumentException("Invalid queue family for the parent device");
 			info.queueCreateInfoCount = queues.size();
-			info.pQueueCreateInfos = StructureHelper.structures(queues.stream().map(QueueWrapper::info).collect(toList()));
+			info.pQueueCreateInfos = VulkanStructure.array(VkDeviceQueueCreateInfo::new, queues, RequiredQueue::populate)[0];
 
 			// Allocate device
 			final VulkanLibrary lib = parent.instance().library();

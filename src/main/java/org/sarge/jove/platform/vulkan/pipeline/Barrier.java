@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
+import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.util.ImageSubResourceBuilder;
 import org.sarge.jove.util.Check;
@@ -176,8 +176,8 @@ public class Barrier extends ImmediateCommand {
 				barrier.newLayout = newLayout;
 
 				// TODO
-				barrier.srcQueueFamilyIndex = QueueFamily.IGNORED;
-				barrier.dstQueueFamilyIndex = QueueFamily.IGNORED;
+				barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
+				barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;
 
 				// Add barrier
 				images.add(barrier);

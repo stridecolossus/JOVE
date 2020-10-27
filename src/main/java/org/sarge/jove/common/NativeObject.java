@@ -105,6 +105,11 @@ public interface NativeObject {
 		}
 
 		@Override
+		public int hashCode() {
+			return handle.hashCode();
+		}
+
+		@Override
 		public boolean equals(Object obj) {
 			return (obj instanceof Handle that) && this.handle.equals(that.handle);
 		}

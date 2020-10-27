@@ -22,7 +22,6 @@ import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Function;
-import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 import com.sun.jna.StringArray;
 import com.sun.jna.ptr.PointerByReference;
@@ -32,7 +31,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Instance implements TransientNativeObject {
-	private final Handle handle;
+	private final Pointer handle;
 	private final VulkanLibrary lib;
 
 	private HandlerManager manager;
@@ -43,13 +42,13 @@ public class Instance implements TransientNativeObject {
 	 * @param handle		Instance handle
 	 */
 	private Instance(VulkanLibrary lib, Pointer handle) {
-		this.handle = new Handle(handle);
+		this.handle = notNull(handle);
 		this.lib = notNull(lib);
 	}
 
 	@Override
 	public Handle handle() {
-		return handle;
+		return new Handle(handle);
 	}
 
 	/**
@@ -63,7 +62,7 @@ public class Instance implements TransientNativeObject {
 	 * Looks up a Vulkan function by name.
 	 * @param name Function name
 	 * @return Vulkan function
-	 * @throws ServiceException if the function cannot be found
+	 * @throws RuntimeException if the function cannot be found
 	 */
 	public Function function(String name) {
 		final Pointer ptr = lib.vkGetInstanceProcAddr(handle, name);
@@ -99,8 +98,7 @@ public class Instance implements TransientNativeObject {
 			final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
 			final PointerByReference handle = lib.factory().pointer();
 			final Object[] args = {Instance.this.handle, info, null, handle};
-			final Object result = create.invoke(Integer.TYPE, args, options());
-			check((int) result);
+			check(create.invokeInt(args));
 
 			// Register handler
 			handlers.put(handler, handle.getValue());
@@ -122,7 +120,7 @@ public class Instance implements TransientNativeObject {
 		 */
 		private void destroy(Pointer handle) {
 			final Object[] args = new Object[]{Instance.this.handle, handle, null};
-			destroy.invoke(Void.class, args, options());
+			destroy.invoke(args);
 		}
 
 		/**
@@ -131,35 +129,6 @@ public class Instance implements TransientNativeObject {
 		private void destroy() {
 			handlers.values().forEach(this::destroy);
 			handlers.clear();
-		}
-
-//		/**
-//		 * Creates a message handler.
-//		 * @param handler Message handler descriptor
-//		 * @return Handle
-//		 */
-//		private Pointer create(MessageHandler handler) {
-//			final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
-//			final PointerByReference handle = lib.factory().pointer();
-//			final Object[] args = {Instance.this.handle, info, null, handle};
-//			create.invoke(Integer.TYPE, args, options());
-//			return handle.getValue();
-//		}
-
-//		/**
-//		 * Destroys a message handler.
-//		 * @param handle Handle
-//		 */
-//		private void destroy(Pointer handle) {
-//			final Object[] args = new Object[]{Instance.this.handle, handle, null};
-//			destroy.invoke(Void.class, args, options());
-//		}
-
-		/**
-		 * @return Type converter options
-		 */
-		private Map<String, ?> options() {
-			return Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
 		}
 	}
 
@@ -174,42 +143,6 @@ public class Instance implements TransientNativeObject {
 		return manager;
 	}
 
-//	/**
-//	 * Adds a diagnostics message handler to this instance.
-//	 * @param handler Message handler
-//	 * @return Handle
-//	 * @throws IllegalArgumentException if the handler has already been added to this instance
-//	 * @throws ServiceException if the handler cannot be created
-//	 */
-//	public synchronized Pointer add(MessageHandler handler) {
-//		// Check handler is valid
-//		Check.notNull(handler);
-//		if(handlers.containsKey(handler)) throw new IllegalArgumentException("Duplicate message handler: " + handler);
-//
-//		// Init factory
-//		if(factory == null) {
-//			factory = new HandlerFactory();
-//		}
-//
-//		// Create and register handler
-//		final Pointer handle = factory.create(handler);
-//		handlers.put(handler, handle);
-//
-//		return handle;
-//	}
-//
-//	/**
-//	 * Removes (and destroys) a diagnostics message handler from this instance.
-//	 * @param handler Message handler to remove
-//	 * @throws IllegalArgumentException if the handler is not present or has already been removed
-//	 * @throws ServiceException if the handler cannot be destroyed
-//	 */
-//	public synchronized void remove(MessageHandler handler) {
-//		if(!handlers.containsKey(handler)) throw new IllegalArgumentException("Handler not present: " + handler);
-//		final Pointer handle = handlers.remove(handler);
-//		factory.destroy(handle);
-//	}
-
 	/**
 	 * Destroys this instance and any active message handlers.
 	 */
@@ -219,10 +152,6 @@ public class Instance implements TransientNativeObject {
 		if(manager != null) {
 			manager.destroy();
 		}
-//		if(!handlers.isEmpty()) {
-//			handlers.values().forEach(factory::destroy);
-//			handlers.clear();
-//		}
 
 		// Destroy instance
 		lib.vkDestroyInstance(handle, null);

@@ -379,7 +379,7 @@ public class RotatingCubeDemo {
 				.collect(toList());
 
 		// Create command pool
-		final LogicalDevice.Queue presentQueue = dev.queue(present);
+		final Queue presentQueue = dev.queue(present);
 		final Command.Pool pool = Command.Pool.create(presentQueue);
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 

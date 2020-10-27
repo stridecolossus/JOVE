@@ -7,7 +7,8 @@ This involves:
 2. Specifying any extensions we require for our application
 3. Populating a JNA structure descriptor for the instance
 4. Creating the instance given this descriptor
-5. Attaching a diagnostics handler for logging and error reporting
+
+We will also enable the diagnostics extension to support logging and error reporting.
 
 So let's get cracking.
 
@@ -21,6 +22,7 @@ interface VulkanLibrary extends Library {
     static VulkanLibrary create() {
         return Native.load(library(), VulkanLibrary.class);
     }
+}
 ```
 
 We add a private helper that determines the name of the native library for our platform:
@@ -214,27 +216,6 @@ public interface VulkanLibrary {
 
 The `VulkanException` is a custom exception class that maps a Vulkan return code to the corresponding `VkResult` to build an informative error message.
 
-## Integration
-
-Finally we implement unit-tests to exercise the builder and start work on our first demo application:
-
-```java
-public class TriangleDemo {
-    public static void main(String[] args) throws Exception {
-        // Init Vulkan
-        final VulkanLibrary lib = VulkanLibrary.create();
-        
-        // Create instance
-        final Instance instance = new Instance.Builder()
-                .vulkan(lib)
-                .name("test")
-                .build();
-                
-        // Cleanup
-        instance.destroy();
-    }
-}
-```
 
 
 # Extensions and Validation Layers
@@ -278,7 +259,7 @@ info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new)
 info.enabledExtensionCount = extensions.size();
 
 // Populate required layers
-info.ppEnabledLayerNames = new StringArray(layerNames.toArray(String[]::new));
+info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
 info.enabledLayerCount = layers.size();
 ```
 
@@ -299,27 +280,270 @@ We discuss the purpose of the standard validation layer below.
 
 ## Required Extensions
 
-Generally we will need to enable the platform-specific extensions for the target platform so that we can actually perform rendering.
+Generally we will need to enable platform-specific extensions for the target platform so that we can actually perform rendering.
 
-For this we integrate the GLFW library that we have already implemented for desktop support:
+For this we will integrate the GLFW library that provides the following functionality relating to Vulkan:
+- Test whether the current hardware supports Vulkan.
+- Retrieve the platform-specific extensions required for Vulkan rendering.
+- Create a Vulkan rendering surface for a given window.
+
+We _could_ use the platform-specific extensions available in the Vulkan API but this approach is considerably simpler (since GLFW does the work for us) and we are planning to use it for window  and input device management anyway.
+
+We create a new package called _desktop_ and create a new JNA library:
 
 ```java
-final Desktop desktop = Desktop.create();
-if(!desktop.isVulkanSupported()) throw new RuntimeException(...);
+interface DesktopLibrary extends Library {
+    /**
+     * Initialises GLFW.
+     * @return Success code
+     */
+    int glfwInit();
 
-...
+    /**
+     * Terminates GLFW.
+     */
+    void glfwTerminate();
 
-final Instance instance = new Instance.Builder()
-    .vulkan(lib)
-    .name("test")
-    .extensions(desktop.extensions())
-    .layer(ValidationLayer.STANDARD_VALIDATION)
-    .build();
+    /**
+     * @return Whether vulkan is supported on this platform
+     */
+    boolean glfwVulkanSupported();
+
+    /**
+     * Enumerates the required vulkan extensions for this platform.
+     * @param count Number of results
+     * @return Vulkan extensions (pointer to array of strings)
+     */
+    Pointer glfwGetRequiredInstanceExtensions(IntByReference count);
+}
+```
+
+Next we create the _desktop_ service:
+
+```java
+public class Desktop {
+    public static Desktop create() {
+    }
+
+    private final DesktopLibrary lib;
+
+    Desktop(DesktopLibrary lib) {
+        this.lib = notNull(lib);
+    }
+
+    public boolean isVulkanSupported() {
+        return lib.glfwVulkanSupported();
+    }
+
+    public String[] extensions() {
+        final IntByReference size = new IntByReference();
+        final Pointer ptr = lib.glfwGetRequiredInstanceExtensions(size);
+        return ptr.getStringArray(0, size.getValue());
+    }
+}
+```
+
+The service is created and initialised in a similar fashion to the Vulkan API:
+
+```java
+public static Desktop create() {
+    // Determine library name
+    final String name = switch(Platform.getOSType()) {
+        case Platform.WINDOWS -> "glfw3";
+        case Platform.LINUX -> "libglfw";
+        default -> throw new UnsupportedOperationException("Unsupported platform for GLFW: " + Platform.getOSType());
+    };
+
+    // Load native library
+    final DesktopLibrary lib = Native.load(name, DesktopLibrary.class);
+
+    // Init GLFW
+    final int result = lib.glfwInit();
+    if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
+
+    // Create desktop
+    return new Desktop(lib);
+}
+```
+
+Usually there will be two required extensions for the Vulkan rendering surface:
+- the general surface: `VK_KHR_surface` 
+- and one for the specific platform, e.g. `VK_KHR_win32_surface` for Windows.
+
+
+# Integration and Testing
+
+## Unit-Tests
+
+The unit-test for the instance class mainly exercises the builder since our domain object has little functionality at the moment:
+
+```java
+public class InstanceTest {
+    private VulkanLibrary lib;
+    private Instance instance;
+
+    @BeforeEach
+    void before() {
+        // Init API
+        lib = mock(VulkanLibrary.class);
+
+        // Create instance
+        instance = new Instance.Builder()
+                .vulkan(lib)
+                .name("test")
+                .extension("ext")
+                .layer(new ValidationLayer("layer"))
+                .build();
+    }
+
+    @Test
+    void constructor() {
+        assertNotNull(instance);
+        assertEquals(lib, instance.library());
+        assertNotNull(instance.handle());
+    }
+
+    @Test
+    void create() {
+        // Check API invocation
+        final PointerByReference ref = ... // TODO
+        final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
+        verify(lib).vkCreateInstance(captor.capture(), isNull(), eq(ref));
+
+        // Check instance descriptor
+        final VkInstanceCreateInfo info = captor.getValue();
+        assertEquals(1, info.enabledExtensionCount);
+        assertEquals(1, info.enabledLayerCount);
+        assertNotNull(info.ppEnabledExtensionNames);
+        assertNotNull(info.ppEnabledLayerNames);
+
+        // Check application descriptor
+        final VkApplicationInfo app = info.pApplicationInfo;
+        assertNotNull(app);
+        assertEquals("test", app.pApplicationName);
+        assertNotNull(app.applicationVersion);
+        assertEquals("JOVE", app.pEngineName);
+        assertNotNull(app.engineVersion);
+        assertEquals(VulkanLibrary.VERSION.toInteger(), app.apiVersion);
+    }
+
+    @Test
+    void destroy() {
+        instance.destroy();
+        verify(lib).vkDestroyInstance(instance.handle(), null);
+    }
+}
+```
+
+The reason for presenting this unit-test is to highlight the `PointerByReference` in the `create()` test which we discuss in the following section.
+
+## Reference Factory
+
+The Vulkan API (and many other native libraries) make extensive use of by-reference types to return data (with the return value generally being some sort of error code).
+The `vkCreateInstance()` API method returns the handle of the newly instance created instance via a JNA `PointerByReference` from which the actual handle is extracted.
+
+Mercifully this approach is generally uncommon in Java but it poses an awkward problem for unit-testing - if the code allocates the by-reference internally we have no way of mocking it beforehand, the returned pointer will be initialised to zero, and subsequent code that depends on that value will fail.
+
+We _could_ mock the reference using a Mockito _answer_ but that means tedious and convoluted code that we have to implement for _every_ unit-test that exercises a by-reference value.
+
+Therefore we factor out the most common cases into a _reference factory_ helper that is responsible for creating by-reference types in the API that we can then more easily mock.
+The factory is defined as follows with a concrete implementation used for production code:
+
+```java
+public interface ReferenceFactory {
+    /**
+     * @return New integer-by-reference
+     */
+    IntByReference integer();
+
+    /**
+     * @return New pointer-by-reference
+     */
+    PointerByReference pointer();
+
+    /**
+     * Default implementation.
+     */
+    ReferenceFactory DEFAULT = new ReferenceFactory() {
+        @Override
+        public IntByReference integer() {
+            return new IntByReference();
+        }
+
+        @Override
+        public PointerByReference pointer() {
+            return new PointerByReference();
+        }
+    };
+}
+```
+
+The factory is a property of the Vulkan API:
+
+```java
+public interface VulkanLibrary {
+    /**
+     * @return Factory for pass-by-reference types used by this API
+     * @see ReferenceFactory#DEFAULT
+     */
+    default ReferenceFactory factory() {
+        return ReferenceFactory.DEFAULT;
+    }
+}
+```
+
+Notes:
+- We provide the a convenience `MockReferenceFactory` implementation that also initialises by-reference types to reduce the amount of boiler-plate required.
+- The use of the default method in the Vulkan API is a little dodgy but it allows us to easily use this mock implementation.
+
+This allows us to mock the creation of any by-reference values as required, for example:
+
+```java
+// Init API
+lib = mock(VulkanLibrary.class);
+when(lib.factory()).thenReturn(new MockReferenceFactory());
+
+// Create instance
+verify(lib).vkCreateInstance(...);
+
+// Check handle
+final PointerByReference handle = lib.factory().pointer();
+assertEquals(handle.getValue(), instance.handle());
+```
+
+In general from now on we will not cover testing unless there is a specific point-of-interest and it can be assumed that tests are developed in-parallel with the main code.
+
+## Integration
+
+Finally we start work on our first demo application:
+
+```java
+public class TriangleDemo {
+    public static void main(String[] args) throws Exception {
+        // Init GLFW
+        final Desktop desktop = Desktop.create();
+        if(!desktop.isVulkanSupported()) throw new RuntimeException(...);
+        
+        // Init Vulkan
+        final VulkanLibrary lib = VulkanLibrary.create();
+        
+        // Create instance
+        final Instance instance = new Instance.Builder()
+                .vulkan(lib)
+                .name("test")
+                .extensions(desktop.extensions())
+                .layer(ValidationLayer.STANDARD_VALIDATION)
+                .build();
+                
+        // Cleanup
+        instance.destroy();
+        desktop.destroy();
+    }
+}
 ```
 
 We add a convenience method to the builder to add the array of extensions returned by GLFW.
 
-Usually there will be two required extensions for the Vulkan rendering surface: `VK_KHR_surface` and one for the specific platform, e.g. `VK_KHR_win32_surface` for Windows.
 
 
 # Diagnostics Handler
@@ -392,10 +616,6 @@ We will add a new lazily-instantiated local class to the instance that encapsula
 public class Instance {
     private HandlerManager manager;
 
-    public HandlerManager handlers() {
-        return manager;
-    }
-
     public synchronized HandlerManager handlers() {
         if(manager == null) {
             manager = new HandlerManager();
@@ -453,25 +673,16 @@ We then invoke the create function with an argument array containing the descrip
 public void add(MessageHandler handler) {
     // Check handler is valid
     Check.notNull(handler);
-    if(handlers.containsKey(handler)) throw new IllegalArgumentException("Duplicate message handler: " + handler);
+    if(handlers.containsKey(handler)) throw new IllegalArgumentException(...);
 
     // Create handler
     final VkDebugUtilsMessengerCreateInfoEXT info = handler.create();
-    final PointerByReference handle = new PointerByReference();
+    final PointerByReference handle = lib.factory().pointer();
     final Object[] args = {Instance.this.handle, info, null, handle};
-    final Object result = create.invoke(Integer.TYPE, args, options());
-    check((int) result);
+    check(create.invokeInt(args));
 
     // Register handler
     handlers.put(handler, handle.getValue());
-}
-```
-
-We use this invocation method so we can pass the type mapper as an option:
-
-```java
-private Map<String, ?> options() {
-    return Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
 }
 ```
 
@@ -488,7 +699,7 @@ public void remove(MessageHandler handler) {
 
 private void destroy(Pointer handle) {
     final Object[] args = new Object[]{Instance.this.handle, handle, null};
-    destroy.invoke(Void.class, args, options());
+    destroy.invoke(args);
 }
 
 private void destroy() {
@@ -541,10 +752,12 @@ final Instance instance = new Instance.Builder()
 The extension is defined in the Vulkan API:
 
 ```java
-/**
- * Debug utility extension.
- */
-String EXTENSION_DEBUG_UTILS = "VK_EXT_debug_utils";
+public interface VulkanLibrary {
+    /**
+     * Debug utility extension.
+     */
+    String EXTENSION_DEBUG_UTILS = "VK_EXT_debug_utils";
+}
 ```
 
 Finally we create and attach the handler:

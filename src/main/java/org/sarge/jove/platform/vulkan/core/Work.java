@@ -12,7 +12,6 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Memory;

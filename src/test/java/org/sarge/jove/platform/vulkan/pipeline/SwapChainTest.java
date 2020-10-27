@@ -25,7 +25,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
+import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;

@@ -22,7 +22,7 @@ import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
+import org.sarge.jove.platform.vulkan.core.Queue;
 
 import com.sun.jna.Pointer;
 
@@ -116,8 +116,8 @@ public class BarrierTest {
 			assertEquals(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT.value(), info.dstAccessMask);
 			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, info.oldLayout);
 			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, info.newLayout);
-			assertEquals(QueueFamily.IGNORED, info.srcQueueFamilyIndex);
-			assertEquals(QueueFamily.IGNORED, info.dstQueueFamilyIndex);
+			assertEquals(Queue.Family.IGNORED, info.srcQueueFamilyIndex);
+			assertEquals(Queue.Family.IGNORED, info.dstQueueFamilyIndex);
 			assertNotNull(info.subresourceRange);
 		}
 	}

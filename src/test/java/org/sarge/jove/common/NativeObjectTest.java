@@ -25,6 +25,11 @@ public class NativeObjectTest {
 	}
 
 	@Test
+	void constructor() {
+		assertEquals(ptr.hashCode(), handle.hashCode());
+	}
+
+	@Test
 	void nativeType() {
 		assertEquals(Pointer.class, Handle.CONVERTER.nativeType());
 	}

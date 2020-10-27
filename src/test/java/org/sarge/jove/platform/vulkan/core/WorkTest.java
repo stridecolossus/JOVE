@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 

@@ -24,8 +24,6 @@ import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Queue;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -38,7 +36,7 @@ class CommandTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create queue family
-		final QueueFamily family = mock(QueueFamily.class);
+		final Queue.Family family = mock(Queue.Family.class);
 		when(family.index()).thenReturn(0);
 
 		// Create queue

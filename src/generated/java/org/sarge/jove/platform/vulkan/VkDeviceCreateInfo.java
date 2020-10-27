@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,14 +22,11 @@ import com.sun.jna.Structure.FieldOrder;
 	"pEnabledFeatures"
 })
 public class VkDeviceCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkDeviceCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkDeviceCreateInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int queueCreateInfoCount;
-	public Pointer pQueueCreateInfos;
+	public VkDeviceQueueCreateInfo pQueueCreateInfos;
 	public int enabledLayerCount;
 	public Pointer ppEnabledLayerNames;
 	public int enabledExtensionCount;

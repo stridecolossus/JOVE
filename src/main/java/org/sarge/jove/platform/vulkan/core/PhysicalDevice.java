@@ -1,119 +1,31 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>physical device</i> represents a Vulkan system component such as a GPU.
  * @author Sarge
  */
 public class PhysicalDevice implements NativeObject {
-	/**
-	 * Queue family implementation.
-	 */
-	public class QueueFamily {
-		/**
-		 * Index for the <i>ignored</i> queue family.
-		 */
-		public static final int IGNORED = (~0);
-
-		private final int count;
-		private final int index;
-		private final Set<VkQueueFlag> flags;
-		private final transient int hash;
-
-		/**
-		 * Constructor.
-		 * @param index		Family index
-		 * @param props 	Properties
-		 */
-		private QueueFamily(int index, VkQueueFamilyProperties props) {
-			this.count = props.queueCount;
-			this.index = index;
-			this.flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
-			this.hash = new HashCodeBuilder().append(index).append(device()).hashCode();
-		}
-
-		/**
-		 * @return Physical device of this queue family
-		 */
-		PhysicalDevice device() {
-			return PhysicalDevice.this;
-		}
-
-		/**
-		 * @return Number of queues in this family
-		 */
-		public int count() {
-			return count;
-		}
-
-		/**
-		 * @return Queue family index
-		 */
-		public int index() {
-			return index;
-		}
-
-		/**
-		 * @return Flags for this family
-		 */
-		public Set<VkQueueFlag> flags() {
-			return flags;
-		}
-
-		/**
-		 * @param surface Rendering surface
-		 * @return Whether this family supports presentation to the given surface
-		 */
-		public boolean isPresentationSupported(Handle surface) {
-			final VulkanLibrary lib = instance.library();
-			final IntByReference supported = lib.factory().integer();
-			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(handle, index(), surface, supported));
-			return VulkanBoolean.of(supported.getValue()).isTrue();
-		}
-
-		@Override
-		public int hashCode() {
-			return hash;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					obj instanceof QueueFamily that &&
-					this.device() == that.device() &&
-					this.index() == that.index();
-		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
-		}
-	}
-
 	/**
 	 * Enumerates the physical devices for the given instance.
 	 * @param instance Vulkan instance
@@ -142,37 +54,37 @@ public class PhysicalDevice implements NativeObject {
 		return new PhysicalDevice(handle, instance, families);
 	}
 
-	/**
-	 * Helper - Creates a predicate for a queue family matching the given flag.
-	 * @param flags Queue family flag(s)
-	 * @return Predicate
-	 */
-	public static Predicate<QueueFamily> predicate(VkQueueFlag... flags) {
-		Check.notNull(flags);
-		return family -> family.flags.containsAll(Arrays.asList(flags));
-	}
-
+//	/**
+//	 * Helper - Creates a predicate for a queue family matching the given flag.
+//	 * @param flags Queue family flag(s)
+//	 * @return Predicate
+//	 */
+//	public static Predicate<Queue.Family> predicate(VkQueueFlag... flags) {
+//		Check.notNull(flags);
+//		return family -> family.flags().containsAll(Arrays.asList(flags));
+//	}
+//
 	/**
 	 * Helper - Creates a device predicate that matches against the given the queue family filter.
 	 * @param predicate Queue family predicate
 	 * @return Device predicate
 	 */
-	public static Predicate<PhysicalDevice> predicate(Predicate<QueueFamily> predicate) {
+	public static Predicate<PhysicalDevice> predicate(Predicate<Queue.Family> predicate) {
 		return dev -> dev.families.stream().anyMatch(predicate);
 	}
-
-	/**
-	 * Helper - Creates a device predicate for a device that supports presentation to the given surface.
-	 * @param surface Surface handle
-	 * @return Device predicate
-	 */
-	public static Predicate<PhysicalDevice> predicatePresentationSupported(Handle surface) {
-		return predicate(family -> family.isPresentationSupported(surface));
-	}
+//
+//	/**
+//	 * Helper - Creates a device predicate for a device that supports presentation to the given surface.
+//	 * @param surface Surface handle
+//	 * @return Device predicate
+//	 */
+//	public static Predicate<PhysicalDevice> predicatePresentationSupported(Handle surface) {
+//		return predicate(family -> family.isPresentationSupported(surface));
+//	}
 
 	private final Handle handle;
 	private final Instance instance;
-	private final List<QueueFamily> families;
+	private final List<Queue.Family> families;
 
 	private VkPhysicalDeviceMemoryProperties mem;
 
@@ -185,17 +97,18 @@ public class PhysicalDevice implements NativeObject {
 	PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
 		this.handle = new Handle(handle);
 		this.instance = notNull(instance);
-		this.families = List.copyOf(build(families));
+		this.families = IntStream.range(0, families.length).mapToObj(n -> family(n, families[n])).collect(toList());
 	}
 
 	/**
-	 * @return List of queue families from the given structure array
+	 * Creates a queue family.
+	 * @param index Family index
+	 * @param props Properties
+	 * @return New queue family
 	 */
-	private List<QueueFamily> build(VkQueueFamilyProperties[] families) {
-		return IntStream
-				.range(0, families.length)
-				.mapToObj(n -> new QueueFamily(n, families[n]))
-				.collect(toList());
+	private Queue.Family family(int index, VkQueueFamilyProperties props) {
+		final var flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
+		return new Queue.Family(this, index, props.queueCount, flags);
 	}
 
 	/**
@@ -216,19 +129,18 @@ public class PhysicalDevice implements NativeObject {
 	/**
 	 * @return Queue families for this device
 	 */
-	public List<QueueFamily> families() {
+	public List<Queue.Family> families() {
 		return families;
 	}
 
 	/**
 	 * Helper - Finds a matching queue family for this device.
-	 * @param test			Queue family predicate
-	 * @param message		Error message
+	 * @param test Queue family predicate
 	 * @return Matching queue family
-	 * @throws ServiceException with the given message if a matching queue is not present
+	 * @throws NoSuchElementException if a matching queue is not present
 	 */
-	public QueueFamily find(Predicate<QueueFamily> test, String message) {
-		return families.stream().filter(test).findAny().orElseThrow(() -> new RuntimeException(message));
+	public Queue.Family family(Predicate<Queue.Family> test) {
+		return families.stream().filter(test).findAny().orElseThrow();
 	}
 
 	/**

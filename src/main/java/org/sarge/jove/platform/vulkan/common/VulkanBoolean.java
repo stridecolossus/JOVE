@@ -92,13 +92,6 @@ public final class VulkanBoolean {
 	}
 
 	/**
-	 * @return Whether this boolean is <code>true</code>
-	 */
-	public boolean isTrue() {
-		return value;
-	}
-
-	/**
 	 * @return Vulkan integer representation (1 for <code>true</code>, 0 for <code>false</code>)
 	 */
 	public int toInteger() {
