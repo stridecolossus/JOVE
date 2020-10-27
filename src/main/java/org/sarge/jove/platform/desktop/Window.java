@@ -2,6 +2,9 @@ package org.sarge.jove.platform.desktop;
 
 import static org.sarge.jove.util.Check.notNull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.control.Device;
@@ -15,6 +18,106 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class Window implements TransientNativeObject {
 	/**
+	 * Window properties.
+	 */
+	public enum Property {
+		/**
+		 * Window can be resized.
+		 */
+		RESIZABLE(0x00020003),
+
+		/**
+		 * Window has standard decorations (border, close icon, etc).
+		 */
+		DECORATED(0x00020005),
+
+		/**
+		 * Full-screen windows are iconified on focus loss.
+		 */
+		AUTO_ICONIFY(0x00020006),
+
+		/**
+		 * Window is initially maximised (ignores dimensions).
+		 */
+		MAXIMISED(0x00020008),
+
+		/**
+		 * Disables creation of an OpenGL context for this window.
+		 */
+		DISABLE_OPENGL(0x00022001),
+
+		/**
+		 * Whether this window should be full-screen.
+		 */
+		FULL_SCREEN(0);		// TODO
+
+		private final int hint;
+
+		private Property(int hint) {
+			this.hint = hint;
+		}
+
+		/**
+		 * Applies this property.
+		 * @param lib Desktop library
+		 */
+		void apply(DesktopLibrary lib) {
+			final int value = this == DISABLE_OPENGL ? 0 : 1; // TODO
+			lib.glfwWindowHint(hint, value);
+		}
+		// TODO - probably need different implementations for hints, disable OpenGL, full-screen, etc
+	}
+
+	/**
+	 *
+	 */
+	public record Descriptor(String title, Dimensions size, Set<Property> properties) {
+		/**
+		 * Builder for a window descriptor.
+		 */
+		public static class Builder {
+			private String title;
+			private Dimensions size;
+			private final Set<Property> props = new HashSet<>();
+
+			/**
+			 * Sets the window title.
+			 * @param title Title
+			 */
+			public Builder title(String title) {
+				this.title = title;
+				return this;
+			}
+
+			/**
+			 * Sets the size of the window.
+			 * @param size Window size
+			 */
+			public Builder size(Dimensions size) {
+				this.size = size;
+				return this;
+			}
+
+			/**
+			 * Adds a window property.
+			 * @param p Property
+			 */
+			public Builder property(Property p) {
+				props.add(p);
+				return this;
+			}
+
+			/**
+			 * Constructs this descriptor.
+			 * @param New descriptor
+			 */
+			public Descriptor build() {
+				return new Descriptor(title, size, props);
+			}
+		}
+	}
+
+	/**
 	 * Creates a GLFW window.
 	 * @param lib				GLFW library
 	 * @param descriptor		Window descriptor
@@ -22,14 +125,17 @@ public class Window implements TransientNativeObject {
 	 * @return New window
 	 * @throws RuntimeException if the window cannot be created
 	 */
-	static Window create(DesktopLibrary lib, WindowDescriptor descriptor, Monitor monitor) {
+	static Window create(DesktopLibrary lib, Descriptor descriptor, Monitor monitor) {
+		// TODO
+		if(monitor != null) throw new UnsupportedOperationException();
+
 		// Apply window hints
 		lib.glfwDefaultWindowHints();
 		descriptor.properties().forEach(p -> p.apply(lib));
 
 		// Create window
 		final Dimensions size = descriptor.size();
-		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null/*monitor.handle()*/, null);
+		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);	// TODO - monitor
 		if(window == null) {
 			throw new RuntimeException(String.format("Window cannot be created: descriptor=%s monitor=%s", descriptor, monitor));
 		}
@@ -40,18 +146,18 @@ public class Window implements TransientNativeObject {
 
 	private final Handle handle;
 	private final DesktopLibrary lib;
-	private final WindowDescriptor props;
+	private final Descriptor descriptor;
 
 	/**
 	 * Constructor.
-	 * @param window		Window handle
-	 * @param lib			GLFW API
-	 * @param props			Window properties
+	 * @param window			Window handle
+	 * @param lib				GLFW API
+	 * @param descriptor		Window descriptor
 	 */
-	Window(Pointer window, DesktopLibrary lib, WindowDescriptor props) {
+	Window(Pointer window, DesktopLibrary lib, Descriptor descriptor) {
 		this.handle = new Handle(window);
 		this.lib = notNull(lib);
-		this.props = notNull(props);
+		this.descriptor = notNull(descriptor);
 	}
 
 	@Override
@@ -62,8 +168,8 @@ public class Window implements TransientNativeObject {
 	/**
 	 * @return Descriptor for this window
 	 */
-	public WindowDescriptor descriptor() {
-		return props;
+	public Descriptor descriptor() {
+		return descriptor;
 	}
 
 	/**

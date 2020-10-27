@@ -53,8 +53,7 @@ public class LogicalDeviceTest {
 		when(parent.families()).thenReturn(List.of(family));
 
 		// Create logical device
-		device = new LogicalDevice.Builder()
-				.parent(parent)
+		device = new LogicalDevice.Builder(parent)
 				.queues(family, new float[]{0.1f, 0.2f})
 				.extension("ext")
 				.layer(ValidationLayer.STANDARD_VALIDATION)
@@ -151,17 +150,12 @@ public class LogicalDeviceTest {
 
 		@BeforeEach
 		void before() {
-			builder = new LogicalDevice.Builder().parent(parent);
-		}
-
-		@Test
-		void missingParent() {
-			assertThrows(IllegalArgumentException.class, () -> new LogicalDevice.Builder().build());
+			builder = new LogicalDevice.Builder(parent);
 		}
 
 		@Test
 		void invalidPriority() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, new float[]{999}));
+			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, new float[]{2}));
 		}
 
 		@Test

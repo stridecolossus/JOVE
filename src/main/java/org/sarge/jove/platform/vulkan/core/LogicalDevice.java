@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
@@ -35,7 +35,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>logical device</i> is an instance of a {@link PhysicalDevice} that can be used to perform work.
  * @author Sarge
  */
-public class LogicalDevice implements NativeObject {
+public class LogicalDevice implements TransientNativeObject {
 	private final Handle handle;
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
@@ -60,7 +60,6 @@ public class LogicalDevice implements NativeObject {
 	 * @return New queues
 	 */
 	private Stream<Queue> create(RequiredQueue queue) {
-//		final Queue.Family family = parent.families().get(info.queueFamilyIndex);
 		return IntStream.range(0, queue.priorities.length).mapToObj(n -> create(n, queue.family));
 	}
 
@@ -163,9 +162,7 @@ public class LogicalDevice implements NativeObject {
 		lib.vkDeviceWaitIdle(handle);
 	}
 
-	/**
-	 * Destroys this device.
-	 */
+ 	@Override
 	public void destroy() {
 		lib.vkDestroyDevice(handle, null);
 	}
@@ -222,19 +219,18 @@ public class LogicalDevice implements NativeObject {
 	 * Builder for a logical device.
 	 */
 	public static class Builder {
-		private PhysicalDevice parent;
+		private final PhysicalDevice parent;
 		private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private final List<RequiredQueue> queues = new ArrayList<>();
 
 		/**
-		 * Sets the parent of this device.
+		 * Constructor.
 		 * @param parent Parent physical device
 		 */
-		public Builder parent(PhysicalDevice parent) {
+		public Builder(PhysicalDevice parent) {
 			this.parent = notNull(parent);
-			return this;
 		}
 
 		/**
@@ -312,7 +308,6 @@ public class LogicalDevice implements NativeObject {
 		 */
 		public LogicalDevice build() {
 			// Create descriptor
-			if(parent == null) throw new IllegalArgumentException("Parent physical device not specified");
 			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
 
 			// Add required features

@@ -10,7 +10,6 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
-import org.sarge.jove.platform.desktop.WindowDescriptor;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
@@ -30,10 +29,10 @@ public class TriangleDemo {
 		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new WindowDescriptor.Builder()
+		final var descriptor = new Window.Descriptor.Builder()
 				.title("demo")
 				.size(new Dimensions(1280, 760))
-				.property(WindowDescriptor.Property.DISABLE_OPENGL)
+				.property(Window.Property.DISABLE_OPENGL)
 				.build();
 		final Window window = desktop.window(descriptor);
 
@@ -64,6 +63,13 @@ public class TriangleDemo {
 		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
 		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
+//		PhysicalDevice
+//				.devices(instance)
+//				.map(PhysicalDevice::properties)
+//				.map(props -> props.deviceName)
+//				.map(String::new)
+//				.forEach(System.out::println);
+
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
@@ -79,8 +85,7 @@ public class TriangleDemo {
 		final Queue.Family present = gpu.family(presentationPredicate);
 
 		// Create device
-		final LogicalDevice dev = new LogicalDevice.Builder() // TODO - parent as ctor arg
-				.parent(gpu)
+		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 //				.queue(graphics)

@@ -160,7 +160,7 @@ public class Desktop {
 	 * @param descriptor Window descriptor
 	 * @return New window
 	 */
-	public Window window(WindowDescriptor descriptor) {
+	public Window window(Window.Descriptor descriptor) {
 //		// Lookup monitor handle
 //		final Handle monitor;
 //		if(descriptor.monitor().isPresent()) {

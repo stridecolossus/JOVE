@@ -1,31 +1,22 @@
 # Overview
 
-Now we have a Vulkan instance we can use it to enumerate the physical devices available on the local hardware and then find one that satisfies the requirements of the application.
+Now we have a Vulkan instance we can use it to enumerate the _physical devices_ available on the local hardware and select one that satisfies the requirements of the application.
 
-A physical device represents a hardware component that supports Vulkan, such as the GPU in your PC.  Each device also specifies a number of queue families that define the capabilities of work that can be performed by that device (such as rendering, data transfer, etc).
+This will partially be dependant on having a Vulkan rendering surface so we will also extend GLFW to create a window and surface.
 
-For this we will need:
-
-domain objects for the physical device and its associated queue families
-some sort of factory to enumerate the devices for a given instance
-accessors to retrieve the properties of a specific device
-
-This will be the first time we will be retrieving arrays of data from Vulkan, specifically:
-the array of physical devices handles for the instance
-an array of structures specifying the capabilities of the queue families for each device
-
-As we will see there is a common pattern here (and throughout the Vulkan API) that we will attempt to abstract.
+Finally we will create a _logical device_ from the selected physical device and specify the _work queues_ we will require for future chapters.
 
 
 # Let's get Physical
 
-The first step is an outline domain class for the physical device itself:
+## The Physical Device
+
+A _physical device_ represents a hardware component that supports Vulkan, i.e. the GPU.
+
+The first step is an outline domain class for the physical device:
 
 ```java
 public class PhysicalDevice {
-	public static Stream<PhysicalDevice> devices(Instance instance) {
-	}
-	
 	private final Pointer handle;
 	private final Instance instance;
 	private final List<QueueFamily> families;
@@ -39,76 +30,103 @@ public class PhysicalDevice {
 	PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
 		this.handle = notNull(handle);
 		this.instance = notNull(instance);
-		this.families = List.copyOf(build(families));
+		this.families = ...
 	}
 
-	/**
-	 * @return Device handle
-	 */
 	public Pointer handle() {
 		return handle;
 	}
 
-	/**
-	 * @return Parent instance
-	 */
 	public Instance instance() {
 		return instance;
 	}
 
-	/**
-	 * @return Queue families for this device
-	 */
 	public List<QueueFamily> families() {
 		return families;
 	}
 }
 ```
 
-And a local class for the queue families:
+The device specifies a number of _queue families_ that define the capabilities of work that can be performed by that device (such as rendering, data transfer, etc).
 
-public class QueueFamily {
-	private final int count;
-	private final int index;
-	private final Set<VkQueueFlag> flags;
+We create a new domain object for a _queue_ and the family:
 
+```java
+public class Queue {
 	/**
-	 * Constructor.
-	 * @param index		Family index
-	 * @param props 	Properties
+	 * A <i>queue family</i> defines the properties of a group of queues.
 	 */
-	private QueueFamily(int index, VkQueueFamilyProperties props) {
-		this.count = props.queueCount;
-		this.index = index;
-		this.flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
-	}
+	public static class Family {
+		private final PhysicalDevice dev;
+		private final int count;
+		private final int index;
+		private final Set<VkQueueFlag> flags;
 
-	/**
-	 * @return Number of queues in this family
-	 */
-	public int count() {
-		return count;
-	}
-
-	/**
-	 * @return Queue family index
-	 */
-	public int index() {
-		return index;
-	}
-
-	/**
-	 * @return Flags for this family
-	 */
-	public Set<VkQueueFlag> flags() {
-		return flags;
+		/**
+		 * Constructor.
+		 * @param dev		Physical device
+		 * @param index		Family index
+		 * @param count		Number of queues
+		 * @param flags		Queue flags
+		 */
+		Family(PhysicalDevice dev, int index, int count, Set<VkQueueFlag> flags) {
+			this.dev = notNull(dev);
+			this.index = zeroOrMore(index);
+			this.count = oneOrMore(count);
+			this.flags = Set.copyOf(flags);
+		}
 	}
 }
-Enumerating the Physical Devices
-To enumerate the physical devices we allocate an integer-by-reference from the factory and invoke vkEnumeratePhysicalDevices API method twice:
+```
 
-determine the number of results (the array parameter is null) and allocate the array
-populate the array (with the same count variable)
+The queue class itself will be fleshed out when we implement the logical device.
+
+The queue families can now be created in the constructor from a set of descriptors:
+
+```java
+PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
+	this.handle = notNull(handle);
+	this.instance = notNull(instance);
+	this.families = IntStream.range(0, families.length).mapToObj(n -> family(n, families[n])).collect(toList());
+}
+
+private Queue.Family family(int index, VkQueueFamilyProperties props) {
+	final var flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
+	return new Queue.Family(this, index, props.queueCount, flags);
+}
+```
+
+Finally we add on-demand accessors for the various properties of the device:
+
+```java
+public VkPhysicalDeviceProperties properties() {
+	final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+	instance.library().vkGetPhysicalDeviceProperties(handle, props);
+	return props;
+}
+
+public VkPhysicalDeviceMemoryProperties memory() {
+	final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
+	instance.library().vkGetPhysicalDeviceMemoryProperties(handle, mem);
+	return mem;
+}
+
+public VkPhysicalDeviceFeatures features() {
+	final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
+	instance.library().vkGetPhysicalDeviceFeatures(handle, features);
+	return features;
+}
+```
+
+## Enumerating the Physical Devices
+
+To enumerate the available physical devices we invoke the `vkEnumeratePhysicalDevices()` API method _twice_:
+1. Once to retrieve the number of devices via an integer-by-reference value (the array parameter is set to null).
+2. And then again to retrieve the array of device handles given this value.
+
+We wrap this code in a static factory:
+
+```java
 public static Stream<PhysicalDevice> devices(Instance instance) {
 	// Determine array length
 	final IntByReference count = lib.factory().integer();
@@ -125,8 +143,11 @@ public static Stream<PhysicalDevice> devices(Instance instance) {
 	// Create devices
 	return Arrays.stream(array).map(ptr -> create(ptr, instance));
 }
-Next we implement the private create() factory method to enumerate the queue families for each device using the same approach of invoking the API method twice:
+```
 
+This code delegates to a helper that retrieves the queue family descriptors and creates the domain object:
+
+```java
 private static PhysicalDevice create(Pointer handle, Instance instance) {
 	// Count number of families
 	final VulkanLibrary lib = instance.library();
@@ -146,128 +167,544 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
 	// Create device
 	return new PhysicalDevice(handle, instance, families);
 }
-Notes:
+```
 
-in this case we use the toArray() method on an instance of VkQueueFamilyProperties to allocate the array (this is how JNA works for structure arrays).
+Note that again we invoke the same API method twice to retrieve the queue families.  However in this case we use `toArray()` on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method (i.e. our array is equivalent to a native pointer-to-structure).  This is the standard approach for an array of JNA structures, we will abstract this common pattern in the next chapter.
 
-we pass the first element of the array to the API method (i.e. our array is equivalent to a native pointer-to-structure)
+We can now add some temporary code to the demo to output the physical devices:
 
-the vkGetPhysicalDeviceQueueFamilyProperties method does not return a result code for some reason (the only exception we have come across)
-Finally we add a local helper method to the device constructor to transform the JNA structure to a QueueFamily domain object and to allocate the family index:
+```
+PhysicalDevice
+	.devices(instance)
+	.map(PhysicalDevice::properties)
+	.map(props -> props.deviceName)
+	.map(String::new)
+	.forEach(System.out::println);
+```
 
-private List<QueueFamily> build(VkQueueFamilyProperties[] families) {
-	return IntStream
-		.range(0, families.length)
-		.mapToObj(n -> new QueueFamily(n, families[n]))
-		.collect(toList());
-}
-Device Properties
-The physical device is used to lookup various properties that will be used later in development:
+On a normal PC there will generally just be the one device (the GPU).
 
+## Selecting a Device
+
+The final step for dealing with the physical device(s) is to select one that supports the requirements of an application.
+
+There are several properties that we can select on:
+1. The properties of a queue family provided by the device.
+2. Whether a queue family supports rendering to a Vulkan surface.
+3. The supported features of the device.
+
+### Queue Families
+
+The properties of a queue family are defined by the `VkQueueFlag` enumeration and specify whether the queue supports graphics rendering, data transfer, etc.
+
+We add the following helper factory to the queue family class to create a predicate for a set of flags:
+
+```java
 /**
- * @return Device properties
+ * Helper - Creates a queue family predicate for the given flags.
+ * @param flags Queue flags
+ * @return Queue flags predicate
  */
-public VkPhysicalDeviceProperties properties() {
-	final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-	instance.library().vkGetPhysicalDeviceProperties(handle, props);
-	return props;
+public static Predicate<Family> predicate(VkQueueFlag... flags) {
+	return family -> family.flags().containsAll(Arrays.asList(flags));
 }
+```
 
+### Presentation Support
+
+Later we will create a Vulkan surface for our application window which can then be tested against a queue family:
+
+```java
 /**
- * @return Memory properties of this device
+ * @param surface Rendering surface
+ * @return Whether this family supports presentation to the given surface
  */
-public VkPhysicalDeviceMemoryProperties memory() {
-	final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
-	instance.library().vkGetPhysicalDeviceMemoryProperties(handle, mem);
-	return mem;
+public boolean isPresentationSupported(Pointer surface) {
+	final VulkanLibrary lib = dev.instance().library();
+	final IntByReference supported = lib.factory().integer();
+	check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
+	return VulkanBoolean.of(supported.getValue()) == VulkanBoolean.TRUE;
 }
+```
 
+We add another convenience helper for presentation testing:
+
+```java
 /**
- * @return Features supported by this device
+ * Helper - Create a predicate for a queue family that supports presentation.
+ * @param surface Vulkan surface
+ * @return Presentation predicate
+ * @see #isPresentationSupported(org.sarge.jove.common.NativeObject.Handle)
  */
-public VkPhysicalDeviceFeatures features() {
-	final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
-	instance.library().vkGetPhysicalDeviceFeatures(handle, features);
-	return features;
+public static Predicate<Family> predicate(Pointer surface) {
+	return family -> family.isPresentationSupported(surface);
 }
-These properties could be retrieved up-front when we create the physical device but since they are probably only ever going to be used once then making the methods on-demand feels more logical.  The exception is the memory properties which we may well wrap into some sort of helper later on.
-Two-step Invocation
-The physical device also exposes the available extensions and validation layers similar to those globally available prior to instantiating the Vulkan instance.  An application could use these to make decisions on which extensions to request depending on which are available, or fail with an error, or just assume they are available (not recommended).  This decision is out-of-scope for our library but we do need to provide some means of querying the available extensions and layers which we glossed over earlier.
+```
 
-Looking at the API and the various structures we can see that roughly the same logic is used in all cases.  This approach of invoking the same method twice is common when retrieving arrays from native libraries and is used throughout Vulkan - we refer to this pattern as two-step invocation.
+### Supported Device Features
 
-The obvious starting point is to abstract the commonality when invoking an API method which we address by introducing a functional interface:
+Finally we could select based on the _device features_ required by our application against the available features retrieved using the `features()` accessor implemented above.
+We will not be using any of these features for some time so we ignore this option until it is needed.
 
-@FunctionalInterface
-public interface VulkanFunction<T> {
+
+# The Rendering Surface
+
+Before we can progress with selection of the physical device we need to create a window and a Vulkan rendering surface.
+
+## Application Window
+
+The obvious starting point is the window class that encapsulates a GLFW window handle:
+
+```java
+public class Window {
+	private final Handle handle;
+	private final DesktopLibrary lib;
+	private final Descriptor descriptor;
+
 	/**
-	 * Vulkan API method that retrieves an array of the given type.
-	 * @param lib		Vulkan library
-	 * @param count 	Return-by-reference count of the number of array elements
-	 * @param array 	Array instance or <code>null</code> to retrieve size of the array
-	 * @return Vulkan result code
+	 * Constructor.
+	 * @param window			Window handle
+	 * @param lib				GLFW API
+	 * @param descriptor		Window descriptor
 	 */
-	int enumerate(VulkanLibrary lib, IntByReference count, T array);
-}
-The interface is generic and can be used to refer (for example) to the API method for the extensions supported by a physical device:
-
-VulkanFunction<VkExtensionProperties> func = (api, count, extensions) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
-where handle is the physical device handle.
-
-We can then add a generic helper method to this interface that performs the two-step invocation given this function:
-
-static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, T identity) {
-	// Count number of values
-	final IntByReference count = lib.factory().integer();
-	check(func.enumerate(lib, count, null));
-
-	// Retrieve values
-	if(count.getValue() > 0) {
-		final T[] array = (T[]) identity.toArray(count.getValue());
-		check(func.enumerate(lib, count, array[0]));
-		return array;
+	private Window(Pointer window, DesktopLibrary lib, Descriptor descriptor) {
+		this.handle = new Handle(window);
+		this.lib = notNull(lib);
+		this.descriptor = notNull(descriptor);
 	}
-	else {
-		return (T[]) Array.newInstance(identity.getClass(), 0);
+
+	public void destroy() {
+		lib.glfwDestroyWindow(handle);
 	}
 }
-Which can then be used to enumerate and transform the available extensions:
+```
 
-VulkanFunction<VkExtensionProperties> func = (api, count, extensions) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
-VkExtensionProperties identity = new VkExtensionProperties();
-VkExtensionProperties[] array = VulkanFunction.enumerate(func, lib, identity);
-Set<String> extensions = Arrays.stream(array).map(e -> Native.toString(e.extensionName)).collect(toSet());
-There are several benefits to this (somewhat complicated) abstraction:
+The _window descriptor_ wraps up the details of the window in a simple class with a convenience builder:
 
-we refer to the API method once (less chance of messing it up)
-we have a helper function that avoids code-duplication
-we centralise the allocation of the count value and the checks on the API return code
-Implementation notes:
+```java
+public record Descriptor(String title, Dimensions size, Set<Property> properties) {
+    public static class Builder {
+			private String title;
+			private Dimensions size;
+			private final Set<Property> props = new HashSet<>();
+			
+			...
+			
+			public Builder property(Property p) {
+				props.add(p);
+				return this;
+			}
 
-VulkanFunction provides two enumerate() methods (arbitrary array and JNA structure array) are there are subtle differences in implementation.
+			public Descriptor build() {
+				return new Descriptor(title, size, props);
+			}
+    }
+}
+```
 
-we have to bodge the function for vkGetPhysicalDeviceQueueFamilyProperties to explicitly return SUCCESS
-Now we can refactor the create() method in the physical device and implement the available extensions and validation layers in this class and the Vulkan API:
+The properties is an enumeration that maps to the various GLFW window hints:
 
-We add the following to the physical device:
+```java
+public enum Property {
+	RESIZABLE(0x00020003),
+	DECORATED(0x00020005),
+	AUTO_ICONIFY(0x00020006),
+	MAXIMISED(0x00020008),
+	DISABLE_OPENGL(0x00022001),
 
-public VulkanFunction<VkExtensionProperties> extensions() {
-	return (api, count, extensions) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
+	private final int hint;
+
+	private Property(int hint) {
+		this.hint = hint;
+	}
+
+	/**
+	 * Applies this property.
+	 * @param lib Desktop library
+	 */
+	void apply(DesktopLibrary lib) {
+		final int value = this == DISABLE_OPENGL ? 0 : 1; // TODO
+		lib.glfwWindowHint(hint, value);
+	}
+}
+```
+
+This is just the bare-bones we need for the forseeable future but we are likely to need to refactor the descriptor and properties to support other functionality, e.g. full-screen windows.
+
+Finally we add a factory method to create a window:
+
+```java
+/**
+ * Creates a GLFW window.
+ * @param lib				GLFW library
+ * @param descriptor		Window descriptor
+ * @return New window
+ * @throws RuntimeException if the window cannot be created
+ */
+public static Window create(DesktopLibrary lib, Descriptor descriptor) {
+	// Apply window hints
+	lib.glfwDefaultWindowHints();
+	descriptor.properties().forEach(p -> p.apply(lib));
+
+	// Create window
+	final Dimensions size = descriptor.size();
+	final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);	// TODO - monitors
+	if(window == null) {
+		throw new RuntimeException(...);
+	}
+
+	// Create window wrapper
+	return new Window(window, lib, descriptor);
+}
+```
+
+## Vulkan Surface
+
+To create a Vulkan surface for a given window we add the following to the new class:
+
+```java
+/**
+ * Creates a Vulkan rendering surface for this window.
+ * @param vulkan Vulkan instance handle
+ * @return Vulkan surface
+ */
+public Pointer surface(Pointer vulkan) {
+	final PointerByReference ref = new PointerByReference();
+	final int result = lib.glfwCreateWindowSurface(vulkan, handle, null, ref);
+	if(result != 0) {
+		throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
+	}
+	return ref.getValue();
+}
+```
+
+We can now create a window and surface in the demo:
+
+```java
+// Create instance
+final Instance instance = ...
+
+// Create window
+final var descriptor = new Window.Descriptor.Builder()
+	.title("demo")
+	.size(new Dimensions(1280, 760))
+	.property(Window.Property.DISABLE_OPENGL)
+	.build();
+final Window window = Window.create(descriptor);
+
+// Create rendering surface
+final Pointer surface = window.surface(instance);
+```
+
+## Presentation Support Redux
+
+With a handle to the surface we can now return to selecting the physical device.
+
+First we define predicates for our device requirements:
+
+```java
+// Create queue family predicates
+final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+final var presentationPredicate = Queue.Family.predicate(surface);
+```
+
+We can then walk the available devices and find one that matches these requirements:
+
+```java
+final PhysicalDevice gpu = PhysicalDevice
+	.devices(instance)
+	.filter(PhysicalDevice.predicate(graphicsPredicate))
+	.filter(PhysicalDevice.predicate(presentationPredicate))
+	.findAny()
+	.orElseThrow(() -> new RuntimeException("No GPU available"));
+```
+
+Finally we add the following convenience helper to the physical device to select a queue family:
+
+```java
+public Queue.Family family(Predicate<Queue.Family> test) {
+	return families.stream().filter(test).findAny().orElseThrow();
+}
+```
+
+And extract the relevant families from the selected device:
+
+```java
+final Queue.Family transferFamily = gpu.family(transferPredicate);
+final Queue.Family presentationFamily = gpu.family(presentationPredicate);
+```
+
+Note that these could actually be the same object depending on how the GPU implements its queues.
+
+
+# Logical, Captain
+
+The _logical device_ is an instance of the physical device we have selected from those available on the hardware.
+
+We will create the logical device domain class and complete the queue class we defined at the very start of this chapter.
+
+## The Logical Device
+
+Again we start with an outline for the logical device:
+
+```java
+public class LogicalDevice {
+	private final Pointer handle;
+	private final PhysicalDevice parent;
+	private final VulkanLibrary lib;
+	private final Map<Queue.Family, List<Queue>> queues;
+
+	/**
+	 * Constructor.
+	 * @param handle Device handle
+	 * @param parent Parent physical device
+	 * @param queues Work queues
+	 */
+	private LogicalDevice(Pointer handle, PhysicalDevice parent, List<RequiredQueue> queues) {
+		this.handle = notNull(handle);
+		this.parent = notNull(parent);
+		this.lib = parent.instance().library();
+		this.queues = ... // TODO
+	}
+
+	public void destroy() {
+		lib.vkDestroyDevice(handle, null);
+	}
+}
+```
+
+Note that the constructor is hidden and the queues are specified by the `RequiredQueue` which is explained shortly.
+
+The logical device is highly configurable so we create a builder:
+
+```java
+public static class Builder {
+	private PhysicalDevice parent;
+	private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
+	private final Set<String> extensions = new HashSet<>();
+	private final Set<String> layers = new HashSet<>();
+	private final List<RequiredQueue> queues = new ArrayList<>();
+
+	...
+
+	public LogicalDevice build() {
+		// Create descriptor
+		final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
+		info.pEnabledFeatures = features;
+
+		// Add required extensions
+		info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
+		info.enabledExtensionCount = extensions.size();
+
+		// Add validation layers
+		info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
+		info.enabledLayerCount = layers.size();
+
+		// Add queue descriptors
+		// TODO
+
+		// Allocate device
+		final VulkanLibrary lib = parent.instance().library();
+		final PointerByReference logical = lib.factory().pointer();
+		check(lib.vkCreateDevice(parent.handle(), info, null, logical));
+
+		// Create logical device
+		return new LogicalDevice(logical.getValue(), parent, queues);
+	}
+}
+```
+
+When creating the logical device we can also specify device-specific features, extensions and validation layers which are all covered by the new builder.
+
+## Required Queues
+
+The local `RequiredQueue` class is a transient descriptor for a work queue that is required by the application:
+
+```
+private record RequiredQueue(Queue.Family family, float[] priorities) {
+	/**
+	 * Populates a descriptor for a queue required by this device.
+	 */
+	private void populate(VkDeviceQueueCreateInfo info) {
+	}
+}
+```
+
+Notes:
+- The _family_ is a queue family selected from the parent physical device.
+- The _priorities_ is an array of percentile values that specifies the number of queues required and the priority of each (expressed as a 0..1 floating-point).
+- The constructor (not shown) validates the queue specification.
+
+The builder provides several over-loaded methods to specify one or more required work queues:
+
+```java
+public Builder queue(Queue.Family family) {
+	return queues(family, 1);
 }
 
-public VulkanFunction<VkLayerProperties> layers() {
-	return (api, count, layers) -> api.vkEnumerateDeviceLayerProperties(handle, count, layers);
+public Builder queues(Queue.Family family, int num) {
+	final float[] priorities = new float[num];
+	Arrays.fill(priorities, 1);
+	return queues(family, priorities);
 }
-and similarly for the globally available extensions and layers in the Vulkan API itself:
 
-VulkanFunction<VkExtensionProperties> EXTENSIONS = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
-VulkanFunction<VkLayerProperties> LAYERS = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
-Finally we create the Support adapter class which is used to take either of these and transform the results appropriately (we also add a helper to the ValidationLayer class).
+public Builder queues(Queue.Family family, float[] priorities) {
+	if(!parent.families().contains(family)) 	throw new IllegalArgumentException(...);
+	queues.add(new RequiredQueue(family, priorities));
+	return this;
+}
+```
 
-Summary
-In this post we enumerated the physical devices and their associated queue families for a given Vulkan instance.
+The resultant list of required queues has two purposes - Firstly in the builder to populate the relevant descriptors:
 
-We introduced the VulkanFunction to simplify API methods that use the two-step invocation approach.
+```java
+// Add queue descriptors
+info.queueCreateInfoCount = queues.size();
+info.pQueueCreateInfos = VulkanStructure.array(VkDeviceQueueCreateInfo::new, queues, RequiredQueue::populate)[0];
+```
 
-We also implemented the available extensions and validation layers both at the global and device level.
+The `populate()` method of the transient class generates the descriptor for each queue:
+
+```java
+private void populate(VkDeviceQueueCreateInfo info) {
+	// Allocate contiguous memory block for the priorities array
+	final Memory mem = new Memory(priorities.length * Float.BYTES);
+	mem.write(0, priorities, 0, priorities.length);
+	
+	// Populate queue descriptor
+	info.queueCount = priorities.length;
+	info.queueFamilyIndex = family.index();
+	info.pQueuePriorities = mem;
+}
+```
+
+Notes:
+- JNA requires a contiguous memory block for the array (which is actually a native pointer-to-array type).
+- The `VulkanStructure::array` construct is detailed in the next chapter.
+
+## Work Queues
+
+When the logical device domain object is instantiated the same list is passed as a constructor argument and transformed as follows:
+
+1. Create a map of queues indexed by family:
+
+```java
+private LogicalDevice(Pointer handle, PhysicalDevice parent, List<RequiredQueue> queues) {
+	...
+	this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
+}
+```
+
+2. Each transient record can generate one-or-more queue instances:
+
+```java
+private Stream<Queue> create(RequiredQueue queue) {
+	return IntStream.range(0, queue.priorities.length).mapToObj(n -> create(n, queue.family));
+}
+```
+
+3. The handle for each queue instance is retrieved from Vulkan:
+
+```java
+private Queue create(int index, Queue.Family family) {
+	final PointerByReference queue = lib.factory().pointer();
+	lib.vkGetDeviceQueue(handle, family.index(), index, queue);
+	return new Queue(queue.getValue(), this, family);
+}
+```
+
+Finally we provide several over-loaded accessors to lookup a work queue from the device:
+
+```java
+/**
+ * @return Work queues for this device ordered by family
+ */
+public Map<Queue.Family, List<Queue>> queues() {
+	return queues;
+}
+
+/**
+ * Helper - Looks up the work queue(s) for the given family.
+ * @param family Queue family
+ * @return Queue(s)
+ * @throws IllegalArgumentException if this device does not contain queues with the given family
+ */
+public List<Queue> queues(Queue.Family family) {
+	final var list = queues.get(family);
+	if(list == null) throw new IllegalArgumentException("Queue family not present: " + family);
+	return list;
+}
+
+/**
+ * Helper - Looks up the <b>first</b> work queue for the given family.
+ * @param family Queue family
+ * @return Queue
+ * @throws IllegalArgumentException if this device does not contain a queue with the given family
+ */
+public Queue queue(Queue.Family family) {
+	return queues(family).get(0);
+}
+```
+
+## Unit-Testing
+
+The builder for the logical device is quite complex so the unit-test has a large number of failure cases (a selection are shown here):
+
+```java
+@Nested
+class BuilderTests {
+	private LogicalDevice.Builder builder;
+
+	@BeforeEach
+	void before() {
+		builder = new LogicalDevice.Builder().parent(parent);
+	}
+
+	@Test
+	void invalidPriority() {
+		assertThrows(IllegalArgumentException.class, () -> builder.queues(family, new float[]{2}).build());
+	}
+
+	@Test
+	void invalidQueueCount() {
+		assertThrows(IllegalArgumentException.class, () -> builder.queues(family, 3).build());
+	}
+
+	@Test
+	void invalidQueueFamily() {
+		assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(QueueFamily.class)).build());
+	}
+	
+	...
+}
+```
+
+## Integration
+
+We can finally create the logical device in the demo and lookup the work queues:
+
+```java
+// Create device
+final LogicalDevice dev = new LogicalDevice.Builder(gpu)
+	.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
+	.layer(ValidationLayer.STANDARD_VALIDATION)
+	.queue(graphicsFamily)
+	.queue(presentationFamily)
+	.build();
+	
+// Lookup work queues
+final Queue graphicsQueue = dev.queue(graphicsFamily);	
+final Queue presentationQueue = dev.queue(presentationFamily);	
+```
+
+
+# Summary
+
+In this lengthy chapter we:
+
+- Created a GLFW window and Vulkan surface
+
+- Enumerated the physical devices available on the local hardware and selected one appropriate to our application
+
+- Created a logical device and the work queues we will need in subsequent chapters
 

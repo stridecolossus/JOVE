@@ -54,16 +54,6 @@ public class PhysicalDevice implements NativeObject {
 		return new PhysicalDevice(handle, instance, families);
 	}
 
-//	/**
-//	 * Helper - Creates a predicate for a queue family matching the given flag.
-//	 * @param flags Queue family flag(s)
-//	 * @return Predicate
-//	 */
-//	public static Predicate<Queue.Family> predicate(VkQueueFlag... flags) {
-//		Check.notNull(flags);
-//		return family -> family.flags().containsAll(Arrays.asList(flags));
-//	}
-//
 	/**
 	 * Helper - Creates a device predicate that matches against the given the queue family filter.
 	 * @param predicate Queue family predicate
@@ -72,15 +62,6 @@ public class PhysicalDevice implements NativeObject {
 	public static Predicate<PhysicalDevice> predicate(Predicate<Queue.Family> predicate) {
 		return dev -> dev.families.stream().anyMatch(predicate);
 	}
-//
-//	/**
-//	 * Helper - Creates a device predicate for a device that supports presentation to the given surface.
-//	 * @param surface Surface handle
-//	 * @return Device predicate
-//	 */
-//	public static Predicate<PhysicalDevice> predicatePresentationSupported(Handle surface) {
-//		return predicate(family -> family.isPresentationSupported(surface));
-//	}
 
 	private final Handle handle;
 	private final Instance instance;
