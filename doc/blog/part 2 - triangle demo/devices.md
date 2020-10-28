@@ -105,12 +105,6 @@ public VkPhysicalDeviceProperties properties() {
 	return props;
 }
 
-public VkPhysicalDeviceMemoryProperties memory() {
-	final VkPhysicalDeviceMemoryProperties mem = new VkPhysicalDeviceMemoryProperties();
-	instance.library().vkGetPhysicalDeviceMemoryProperties(handle, mem);
-	return mem;
-}
-
 public VkPhysicalDeviceFeatures features() {
 	final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 	instance.library().vkGetPhysicalDeviceFeatures(handle, features);

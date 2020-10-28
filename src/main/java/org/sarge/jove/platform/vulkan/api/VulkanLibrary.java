@@ -96,18 +96,13 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	 * @return Vulkan API
 	 */
 	static VulkanLibrary create() {
-		return Native.load(library(), VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
-	}
-
-	/**
-	 * @return Vulkan library name
-	 */
-	private static String library() {
-		return switch(Platform.getOSType()) {
-		case Platform.WINDOWS -> "vulkan-1";
-		case Platform.LINUX -> "libvulkan";
-		default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
+		final String name = switch(Platform.getOSType()) {
+			case Platform.WINDOWS -> "vulkan-1";
+			case Platform.LINUX -> "libvulkan";
+			default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
 		};
+
+		return Native.load(name, VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
 	}
 
 	/**

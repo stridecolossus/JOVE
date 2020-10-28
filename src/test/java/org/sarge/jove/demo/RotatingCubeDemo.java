@@ -18,15 +18,12 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.CubeBuilder;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.platform.DesktopService;
-import org.sarge.jove.platform.Service.ServiceException;
-import org.sarge.jove.platform.desktop.FrameworkDesktopService;
-import org.sarge.jove.platform.Window;
+import org.sarge.jove.platform.desktop.Desktop;
+import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
@@ -39,8 +36,6 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.Loader;
 import org.sarge.jove.util.MathsUtil;
-
-import com.sun.jna.ptr.PointerByReference;
 
 public class RotatingCubeDemo {
 
@@ -74,9 +69,6 @@ public class RotatingCubeDemo {
 				.barrier(texture)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-						.build()
 					.build()
 				.build()
 				.submit(pool, true);
@@ -86,9 +78,6 @@ public class RotatingCubeDemo {
 				.buffer(staging)
 				.image(texture)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-				.subresource()
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-					.build()
 				.build()
 				.submit(pool, true);
 
@@ -105,33 +94,23 @@ public class RotatingCubeDemo {
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 					.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
 					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-						.build()
 					.build()
 				.build()
 				.submit(pool, true);
 
-		final View view = new View.Builder(dev)
-				.image(texture)
-				.subresource()
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
-					.build()
-				.build();
-
-		return view;
+		return View.of(dev, texture);
 	}
 
 	public static void main(String[] args) throws Exception {
 		// Open desktop
-		final DesktopService desktop = FrameworkDesktopService.create();
-		if(!desktop.isVulkanSupported()) throw new ServiceException("Vulkan not supported");
+		final Desktop desktop = Desktop.create();
+		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new WindowDescriptor.Descriptor.Builder()
+		final var descriptor = new Window.Descriptor.Builder()
 				.title("demo")
 				.size(new Dimensions(1280, 760))
-				.property(Window.WindowDescriptor.Property.DISABLE_OPENGL)
+				.property(Window.Property.DISABLE_OPENGL)
 				.build();
 		final Window window = desktop.window(descriptor);
 		// TODO - any point in separate Window class? does it help at all?
@@ -153,32 +132,32 @@ public class RotatingCubeDemo {
 				.init()
 				.callback(MessageHandler.CONSOLE)
 				.build();
-		instance.add(handler);
+		instance.handlers().add(handler);
 
 		// Lookup surface
-		final Handle surfaceHandle = window.surface(instance.handle(), PointerByReference::new);
+		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		final var transferPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
 				.filter(PhysicalDevice.predicate(graphicsPredicate))
 				.filter(PhysicalDevice.predicate(transferPredicate))
-				.filter(PhysicalDevice.predicatePresentationSupported(surfaceHandle))
+				.filter(PhysicalDevice.predicate(presentationPredicate))
 				.findAny()
-				.orElseThrow(() -> new ServiceException("No GPU available"));
+				.orElseThrow(() -> new RuntimeException("No GPU available"));
 
 		// Lookup required queues
-		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
-		final QueueFamily transfer = gpu.find(transferPredicate, "Transfer family not available");
-		final QueueFamily present = gpu.find(family -> family.isPresentationSupported(surfaceHandle), "Presentation family not available");
+		final Queue.Family graphics = gpu.family(graphicsPredicate);
+		final Queue.Family transfer = gpu.family(transferPredicate);
+		final Queue.Family present = gpu.family(presentationPredicate);
 
 		// Create device
-		final LogicalDevice dev = new LogicalDevice.Builder() // TODO - parent as ctor arg
-				.parent(gpu)
+		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				//.queue(graphics) TODO!!!
@@ -436,7 +415,7 @@ public class RotatingCubeDemo {
 		// Destroy window
 		surface.destroy();
 		window.destroy();
-		desktop.close();
+		desktop.destroy();
 
 		final Image.DefaultImage img = (Image.DefaultImage) texture.image();
 		img.destroy();

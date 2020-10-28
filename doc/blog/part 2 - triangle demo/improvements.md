@@ -1,8 +1,8 @@
 # Overview
 
-In this interlude chapter we collate a number of improvements to the code we have crafted thus far.
+In this interlude we collate a number of improvements to the code we have crafted thus far.
 
-These are all framework changes that we have identified a need for during development rather than improvements to any specific Vulkan component.
+These are all framework improvements that we have identified during development rather than changes to any specific Vulkan component.
 
 
 # Handles

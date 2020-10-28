@@ -13,34 +13,25 @@ We will also enable the diagnostics extension to support logging and error repor
 So let's get cracking.
 
 
-# The Vulkan API
+# Creating the Vulkan Instance
+
+## Instance API
 
 We start with an empty interface for the Vulkan API that is instantiated using JNA via a static factory method:
 
 ```java
 interface VulkanLibrary extends Library {
     static VulkanLibrary create() {
-        return Native.load(library(), VulkanLibrary.class);
+        final String name = switch(Platform.getOSType()) {
+            case Platform.WINDOWS -> "vulkan-1";
+            case Platform.LINUX -> "libvulkan";
+            default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
+        }
+
+        return Native.load(name, VulkanLibrary.class);
     }
 }
 ```
-
-We add a private helper that determines the name of the native library for our platform:
-
-```java
-private static String library() {
-    return switch(Platform.getOSType()) {
-        case Platform.WINDOWS -> "vulkan-1";
-        case Platform.LINUX -> "libvulkan";
-        default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
-    }
-}
-```
-
-
-# Creating the Vulkan Instance
-
-## Instance API
 
 Next we extend the API by adding the methods to create and destroy an instance:
 
@@ -263,7 +254,7 @@ info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
 info.enabledLayerCount = layers.size();
 ```
 
-Note the use of `StringArray` which is a JNA helper that maps a Java array-of-strings to a native `const char* const*` type.
+Note the use of `StringArray` which is a JNA helper that maps a Java array-of-strings to a native pointer-to-pointers (more specifically a `const char* const*` type).
 
 Finally we introduce a simple class for validation layers:
 
