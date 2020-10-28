@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,9 +13,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"heapIndex"
 })
 public class VkMemoryType extends VulkanStructure {
-	public static class ByValue extends VkMemoryType implements Structure.ByValue { }
-	public static class ByReference extends VkMemoryType implements Structure.ByReference { }
-
 	public int propertyFlags;
 	public int heapIndex;
 }

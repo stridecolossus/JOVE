@@ -17,9 +17,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
-import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
-import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
@@ -40,6 +37,7 @@ public class LogicalDevice implements TransientNativeObject {
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
 	private final Map<Queue.Family, List<Queue>> queues;
+	private final MemoryAllocator allocator;
 
 	/**
 	 * Constructor.
@@ -52,6 +50,7 @@ public class LogicalDevice implements TransientNativeObject {
 		this.parent = notNull(parent);
 		this.lib = parent.instance().library();
 		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
+		this.allocator = MemoryAllocator.create(this);
 	}
 
 	/**
@@ -105,6 +104,13 @@ public class LogicalDevice implements TransientNativeObject {
 	}
 
 	/**
+	 * @return Memory allocator for this device
+	 */
+	public MemoryAllocator allocator() {
+		return allocator;
+	}
+
+	/**
 	 * Helper - Looks up the work queue(s) for the given family.
 	 * @param family Queue family
 	 * @return Queue(s)
@@ -124,35 +130,6 @@ public class LogicalDevice implements TransientNativeObject {
 	 */
 	public Queue queue(Queue.Family family) {
 		return queues(family).get(0);
-	}
-
-	/**
-	 * Allocates device memory.
-	 * @param reqs		Memory requirements
-	 * @param flags		Flags
-	 * @return Memory handle
-	 * @throws RuntimeException if the memory cannot be allocated
-	 */
-	public Pointer allocate(VkMemoryRequirements reqs, Set<VkMemoryPropertyFlag> flags) {
-		// Find memory type
-		final int type = parent.findMemoryType(reqs.memoryTypeBits, flags);
-
-		// Init memory descriptor
-		final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
-        info.allocationSize = reqs.size;
-        info.memoryTypeIndex = type;
-
-        // Allocate memory
-        final VulkanLibrary lib = library();
-        final PointerByReference mem = lib.factory().pointer();
-        check(lib.vkAllocateMemory(this.handle(), info, null, mem));
-
-        // TODO
-        // - number of allocations limited to maxMemoryAllocationCount
-        // - replace with custom allocator with offsets
-
-        // Get memory handle
-        return mem.getValue();
 	}
 
 	/**

@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -148,8 +148,13 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
+			// Init VBO memory allocation
 			final Pointer mem = new Pointer(3);
-			when(dev.allocate(isA(VkMemoryRequirements.class), anySet())).thenReturn(mem);
+			final MemoryAllocator allocator = mock(MemoryAllocator.class);
+			when(dev.allocator()).thenReturn(allocator);
+			when(allocator.allocate(any())).thenReturn(mem); // TODO - check args
+
+			// Create builder
 			builder = new VertexBuffer.Builder(dev);
 		}
 

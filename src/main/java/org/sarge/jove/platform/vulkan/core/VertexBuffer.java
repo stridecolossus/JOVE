@@ -185,9 +185,8 @@ public class VertexBuffer extends AbstractVulkanObject {
 	public static class Builder {
 		private final LogicalDevice dev;
 		private final Set<VkBufferUsageFlag> usage = new HashSet<>();
-		private final Set<VkMemoryPropertyFlag> props = new HashSet<>();
+		private final MemoryAllocator.Allocation.Builder allocation = new MemoryAllocator.Allocation.Builder();
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
-		private long len;
 
 		/**
 		 * Constructor.
@@ -212,8 +211,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 		 * @param prop Memory property
 		 */
 		public Builder property(VkMemoryPropertyFlag prop) {
-			Check.notNull(props);
-			this.props.add(prop);
+			this.allocation.property(prop);
 			return this;
 		}
 
@@ -232,7 +230,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 		 * @param len Buffer length (bytes)
 		 */
 		public Builder length(long len) {
-			this.len = oneOrMore(len);
+			this.allocation.size(len);
 			return this;
 		}
 
@@ -242,9 +240,12 @@ public class VertexBuffer extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the buffer length is zero or no usage flags are specified
 		 */
 		public VertexBuffer build() {
+			// Build memory allocation descriptor
+			final MemoryAllocator.Allocation allocation = this.allocation.build();
+
 			// Validate
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
-			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
+			if(allocation.size() == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
 
 			// TODO
 			if(mode == VkSharingMode.VK_SHARING_MODE_CONCURRENT) throw new UnsupportedOperationException();
@@ -256,7 +257,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 			final VkBufferCreateInfo info = new VkBufferCreateInfo();
 			info.usage = IntegerEnumeration.mask(usage);
 			info.sharingMode = mode;
-			info.size = len;
+			info.size = allocation.size();
 			// TODO - queue families
 
 			// Allocate buffer
@@ -269,13 +270,13 @@ public class VertexBuffer extends AbstractVulkanObject {
 			lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate buffer memory
-			final Pointer mem = dev.allocate(reqs, props);
+			final Pointer mem = dev.allocator().allocate(allocation);
 
 			// Bind memory
 			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem, 0L));
 
 			// Create buffer
-			return new VertexBuffer(handle.getValue(), dev, len, mem);
+			return new VertexBuffer(handle.getValue(), dev, allocation.size(), mem);
 		}
 	}
 }

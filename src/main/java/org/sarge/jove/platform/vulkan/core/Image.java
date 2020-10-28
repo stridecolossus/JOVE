@@ -186,8 +186,8 @@ public interface Image extends NativeObject {
 		private final LogicalDevice dev;
 		private final VkImageCreateInfo info = new VkImageCreateInfo();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
-		private final Set<VkMemoryPropertyFlag> props = new HashSet<>();
 		private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+		private final MemoryAllocator.Allocation.Builder allocation = new MemoryAllocator.Allocation.Builder();
 		private Extents extents;
 
 		/**
@@ -309,8 +309,7 @@ public interface Image extends NativeObject {
 		 * @param prop Memory property
 		 */
 		public Builder property(VkMemoryPropertyFlag prop) {
-			Check.notNull(prop);
-			props.add(prop);
+			allocation.property(prop);
 			return this;
 		}
 
@@ -352,7 +351,8 @@ public interface Image extends NativeObject {
 			lib.vkGetImageMemoryRequirements(dev.handle(), handle, reqs);
 
 			// Allocate image memory
-			final Pointer mem = dev.allocate(reqs, props);
+			final MemoryAllocator.Allocation alloc = allocation.init(reqs).build();
+			final Pointer mem = dev.allocator().allocate(alloc);
 			check(lib.vkBindImageMemory(dev.handle(), handle, mem, 0));
 
 			// Create image

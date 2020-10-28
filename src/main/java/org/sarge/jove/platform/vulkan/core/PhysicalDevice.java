@@ -6,7 +6,6 @@ import static org.sarge.jove.util.Check.notNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -14,10 +13,14 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkExtensionProperties;
+import org.sarge.jove.platform.vulkan.VkLayerProperties;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
+import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
+import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
 
@@ -66,8 +69,6 @@ public class PhysicalDevice implements NativeObject {
 	private final Handle handle;
 	private final Instance instance;
 	private final List<Queue.Family> families;
-
-	private VkPhysicalDeviceMemoryProperties mem;
 
 	/**
 	 * Constructor.
@@ -140,43 +141,6 @@ public class PhysicalDevice implements NativeObject {
 		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		instance.library().vkGetPhysicalDeviceFeatures(handle, features);
 		return features;
-	}
-
-	/**
-	 * @return Memory properties of this device
-	 */
-	public VkPhysicalDeviceMemoryProperties memory() {
-		if(mem == null) {
-			mem = new VkPhysicalDeviceMemoryProperties();
-			instance.library().vkGetPhysicalDeviceMemoryProperties(handle, mem);
-		}
-		return mem;
-	}
-	// TODO - mutable return value
-
-	/**
-	 * Finds a memory type for the given memory properties.
-	 * The <i>filter</i> is returned by Vulkan in {@link VkMemoryRequirements#memoryTypeBits}.
-	 * @param filter		Memory types filter mask
-	 * @param props 		Memory properties
-	 * @return Memory type index
-	 * @throws RuntimeException if no suitable memory type is available
-	 * @see VkMemoryRequirements
-	 */
-	public int findMemoryType(int filter, Set<VkMemoryPropertyFlag> props) {
-		// Retrieve memory properties
-		final var mem = this.memory();
-
-		// Find matching memory type index
-		final int mask = IntegerEnumeration.mask(props);
-		for(int n = 0; n < mem.memoryTypeCount; ++n) {
-			if(MathsUtil.isBit(filter, n) && MathsUtil.isMask(mem.memoryTypes[n].propertyFlags, mask)) {
-				return n;
-			}
-		}
-
-		// Otherwise memory not available for this device
-		throw new RuntimeException("No memory type available for specified memory properties:" + props);
 	}
 
 	/**
