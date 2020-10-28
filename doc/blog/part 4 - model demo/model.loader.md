@@ -36,6 +36,18 @@ vt 1 0
 f 1/1 2/2 3/3
 ```
 
+## Scope
+
+For this chapter is to create an OBJ model the requires the minimal functionality outlined above.
+
+Therefore we have the following constraints on the scope:
+
+- Face primitives are assumed to be triangles.
+
+- The examples we using to test against all have a single smoothing group - at some point we will need to extend the scope to generate multiple a model-per-group.
+
+- The OBJ format supports material descriptors that specify texture properties (amongst others) - for the moment we will hard-code the associated texture image name.
+
 ## Model Loader
 
 We start with a loader for an OBJ model.
@@ -413,16 +425,9 @@ public Optional<ByteBuffer> index() {
 }
 ```
 
-Finally we refactor the OBJ loader using the indexed builder and add an index for each vertex:
+Finally we refactor the OBJ loader to use the new indexed builder and we also we add the `setAutoIndex()` option to the indexed builder to automatically add an index for each vertex.
 
-```java
-protected void add(Vertex vertex) {
-	builder.add(vertex);
-	builder.add(builder.indexOf(vertex));
-}
-```
-
-This reduces the size of interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
+All this work reduces the size of interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
 
 Result.
 
@@ -633,8 +638,6 @@ private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
 ### Conclusion
 
 There is still a lot of conversions of byte buffers to/from arrays but our model can now be loaded in a matter of milliseconds - Viola!
-
-We have ignored OBJ *groups* for the moment - the examples we are testing against all have a single smoothing group - but we may need to come back and refactor later.
 
 Initially we tried to protect the buffers using the `asReadOnlyBuffer` but this seemed to break our unit-tests (equality of buffers is complex)
 and caused issues when we came to integration into the demo so they are exposed as mutable for the moment.

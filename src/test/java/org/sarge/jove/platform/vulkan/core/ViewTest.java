@@ -19,6 +19,7 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
@@ -67,6 +68,20 @@ public class ViewTest extends AbstractVulkanTest {
 	}
 
 	@Test
+	void of() {
+		final View result = View.of(dev, image);
+		assertEquals(dev, result.device());
+		assertEquals(image, result.image());
+	}
+
+	@Test
+	void type() {
+		assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_1D, View.type(VkImageType.VK_IMAGE_TYPE_1D));
+		assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_2D, View.type(VkImageType.VK_IMAGE_TYPE_2D));
+		assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_3D, View.type(VkImageType.VK_IMAGE_TYPE_3D));
+	}
+
+	@Test
 	void destroy() {
 		final Handle handle = view.handle();
 		view.destroy();
@@ -88,9 +103,6 @@ public class ViewTest extends AbstractVulkanTest {
 			view = builder
 					.image(image)
 					.clear(ClearValue.of(Colour.WHITE))
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
-						.build()
 					.build();
 
 			// Check view

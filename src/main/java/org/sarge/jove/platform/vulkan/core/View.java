@@ -5,6 +5,7 @@ import static org.sarge.jove.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
+import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -19,6 +20,29 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class View extends AbstractVulkanObject {
+	/**
+	 * Convenience factory that creates a simple view of the given image.
+	 * @param dev		Logical device
+	 * @param image		Image
+	 * @return New view of the given image
+	 */
+	public static View of(LogicalDevice dev, Image image) {
+		return new Builder(dev).image(image).build();
+	}
+
+	/**
+	 * Helper - Maps an image type to the corresponding view type.
+	 * @param type Image type
+	 * @return View type
+	 */
+	public static VkImageViewType type(VkImageType type) {
+		return switch(type) {
+			case VK_IMAGE_TYPE_1D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_1D;
+			case VK_IMAGE_TYPE_2D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D;
+			case VK_IMAGE_TYPE_3D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_3D;
+		};
+	}
+
 	private final Image image;
 
 	private ClearValue clear;
@@ -147,12 +171,11 @@ public class View extends AbstractVulkanObject {
 
 			// Init view type if not explicitly specified
 			if(type == null) {
-				type = switch(image.descriptor().type()) {
-					case VK_IMAGE_TYPE_1D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_1D;
-					case VK_IMAGE_TYPE_2D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D;
-					case VK_IMAGE_TYPE_3D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_3D;
-				};
+				type = View.type(image.descriptor().type());
 			}
+
+			// TODO
+			image.descriptor().aspects().forEach(subresource::aspect); // TODO
 
 			// Build view descriptor
 			final VkImageViewCreateInfo info = new VkImageViewCreateInfo();

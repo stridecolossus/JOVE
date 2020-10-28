@@ -94,7 +94,6 @@ public class ObjectModelLoader {
 		 */
 		protected void add(Vertex vertex) {
 			builder.add(vertex);
-			builder.add(builder.indexOf(vertex));
 		}
 
 		/**
@@ -338,13 +337,20 @@ public class ObjectModelLoader {
 	/**
 	 * Creates the underlying model builder.
 	 * <p>
-	 * The default implementation is an {@link IndexedBuilder} with a {@link Primitive#TRIANGLES} drawing primitive.
+	 * The default implementation creates an {@link IndexedBuilder} with the following configuration:
+	 * <ul>
+	 * <li>a {@link Primitive#TRIANGLES} drawing primitive</li>
+	 * <li>vertex indices automatically added (see {@link IndexedBuilder#setAutoIndex(boolean)})</li>
+	 * </ul>
 	 * <p>
 	 * Over-ride to modify the type or properties of the underlying builder.
+	 * <p>
 	 * @return New model builder
 	 */
 	protected Model.Builder builder() {
-		return new Model.IndexedBuilder().primitive(Primitive.TRIANGLES);
+		return new Model.IndexedBuilder()
+				.setAutoIndex(true)
+				.primitive(Primitive.TRIANGLES);
 	}
 
 	/**

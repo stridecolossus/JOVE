@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toSet;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -58,7 +59,7 @@ public abstract class Support<T extends Structure, R> {
 	 * Factory for the identity structure.
 	 * @return New identity structure
 	 */
-	protected abstract T identity();
+	protected abstract Supplier<T> identity();
 
 	/**
 	 * Converts a retrieved structure to the resultant type.
@@ -72,8 +73,8 @@ public abstract class Support<T extends Structure, R> {
 	 */
 	public static class Extensions extends Support<VkExtensionProperties, String> {
 		@Override
-		protected VkExtensionProperties identity() {
-			return new VkExtensionProperties();
+		protected Supplier<VkExtensionProperties> identity() {
+			return VkExtensionProperties::new;
 		}
 
 		@Override

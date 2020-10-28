@@ -111,6 +111,7 @@ public class Barrier extends ImmediateCommand {
 			 */
 			ImageBarrierBuilder(Image image) {
 				this.image = notNull(image);
+				image.descriptor().aspects().forEach(subresource::aspect); // TODO
 			}
 
 			/**

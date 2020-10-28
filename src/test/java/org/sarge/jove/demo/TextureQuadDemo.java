@@ -20,12 +20,10 @@ import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
-import org.sarge.jove.platform.desktop.WindowDescriptor;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
@@ -71,9 +69,6 @@ public class TextureQuadDemo {
 				.barrier(texture)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-						.build()
 					.build()
 				.build()
 				.submit(pool, true);
@@ -83,9 +78,6 @@ public class TextureQuadDemo {
 				.buffer(staging)
 				.image(texture)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-				.subresource()
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-					.build()
 				.build()
 				.submit(pool, true);
 
@@ -102,19 +94,11 @@ public class TextureQuadDemo {
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 					.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
 					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-						.build()
 					.build()
 				.build()
 				.submit(pool, true);
 
-		final View view = new View.Builder(dev)
-				.image(texture)
-				.subresource()
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
-					.build()
-				.build();
+		final View view = View.of(dev, texture);
 
 		return view;
 	}
@@ -125,10 +109,10 @@ public class TextureQuadDemo {
 		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new WindowDescriptor.Builder()
+		final var descriptor = new Window.Descriptor.Builder()
 				.title("demo")
 				.size(new Dimensions(1280, 760))
-				.property(WindowDescriptor.Property.DISABLE_OPENGL)
+				.property(Window.Property.DISABLE_OPENGL)
 				.build();
 		final Window window = desktop.window(descriptor);
 		// TODO - any point in separate Window class? does it help at all?
@@ -150,37 +134,37 @@ public class TextureQuadDemo {
 				.init()
 				.callback(MessageHandler.CONSOLE)
 				.build();
-		instance.add(handler);
+		instance.handlers().add(handler);
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		final var transferPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
 				.filter(PhysicalDevice.predicate(graphicsPredicate))
 				.filter(PhysicalDevice.predicate(transferPredicate))
-				.filter(PhysicalDevice.predicatePresentationSupported(surfaceHandle))
+				.filter(PhysicalDevice.predicate(presentationPredicate))
 				.findAny()
 				.orElseThrow(() -> new RuntimeException("No GPU available"));
 
 		// Lookup required queues
-		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
-		final QueueFamily transfer = gpu.find(transferPredicate, "Transfer family not available");
-		final QueueFamily present = gpu.find(family -> family.isPresentationSupported(surfaceHandle), "Presentation family not available");
+		final Queue.Family graphicsFamily = gpu.family(graphicsPredicate);
+		final Queue.Family transferFamily = gpu.family(transferPredicate);
+		final Queue.Family presentFamily = gpu.family(presentationPredicate);
 
 		// Create device
-		final LogicalDevice dev = new LogicalDevice.Builder() // TODO - parent as ctor arg
-				.parent(gpu)
+		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				//.queue(graphics) TODO!!!
-				.queue(transfer)
-				.queue(present)
+				.queue(transferFamily)
+				.queue(presentFamily)
 				.build();
 
 		// Create rendering surface
@@ -263,14 +247,14 @@ public class TextureQuadDemo {
 				.build();
 
 		// Copy
-		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
+		final Command.Pool copyPool = Command.Pool.create(dev.queue(transferFamily));
 		ImmediateCommand.of(staging.copy(dest)).submit(copyPool, true);
 
 		staging.destroy();
 
 		//////////////////
 
-		final Command.Pool graphicsPool = Command.Pool.create(dev.queue(graphics));
+		final Command.Pool graphicsPool = Command.Pool.create(dev.queue(graphicsFamily));
 
 		final View texture = texture(dev, graphicsPool);
 
@@ -336,7 +320,7 @@ public class TextureQuadDemo {
 				.collect(toList());
 
 		// Create command pool
-		final Queue presentQueue = dev.queue(present);
+		final Queue presentQueue = dev.queue(presentFamily);
 		final Command.Pool pool = Command.Pool.create(presentQueue);
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 

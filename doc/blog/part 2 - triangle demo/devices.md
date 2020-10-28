@@ -19,13 +19,13 @@ The first step is an outline domain class for the physical device:
 public class PhysicalDevice {
 	private final Pointer handle;
 	private final Instance instance;
-	private final List<QueueFamily> families;
+	private final List<Queue.Family> families;
 
 	/**
 	 * Constructor.
 	 * @param handle		Device handle
 	 * @param instance		Parent instance
-	 * @param families		Queue families
+	 * @param families		Queue family descriptors
 	 */
 	PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
 		this.handle = notNull(handle);
@@ -41,7 +41,7 @@ public class PhysicalDevice {
 		return instance;
 	}
 
-	public List<QueueFamily> families() {
+	public List<Queue.Family> families() {
 		return families;
 	}
 }
@@ -396,6 +396,8 @@ final Window window = Window.create(descriptor);
 final Pointer surface = window.surface(instance);
 ```
 
+The `DISABLE_OPENGL` property specifies that the new window should **not** create an OpenGL context (which GLFW does by default) which will otherwise cause our Vulkan implementation to fail.
+
 ## Presentation Support Redux
 
 With a handle to the surface we can now return to selecting the physical device.
@@ -514,7 +516,8 @@ public static class Builder {
 }
 ```
 
-When creating the logical device we can also specify device-specific features, extensions and validation layers which are all covered by the new builder.
+Note that we can also specify extensions and validation layers at the device level as well as for the instance.
+This distinction is ignored by more up-to-date Vulkan implementation but we retain both for backwards compatibility.
 
 ## Required Queues
 

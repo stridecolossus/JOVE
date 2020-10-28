@@ -77,24 +77,9 @@ public class ModelTest {
 		}
 
 		@Test
-		void build() {
-			// Build model
-			final Model model = builder
-					.primitive(Primitive.LINES)
-					.layout(Vertex.Component.POSITION)
-					.add(vertex)
-					.add(vertex)
-					.build();
-
-			// Check model
-			assertNotNull(model);
-			assertEquals(Primitive.LINES, model.primitive());
-			assertEquals(LAYOUT, model.layout());
-			assertEquals(2, model.count());
-
-			// Check index is empty
-			assertNotNull(model.index());
-			assertEquals(false, model.index().isPresent());
+		void constructor() {
+			assertEquals(0, builder.count());
+			assertEquals(null, builder.index());
 		}
 
 		@Test
@@ -114,11 +99,32 @@ public class ModelTest {
 			assertThrows(UnsupportedOperationException.class, () -> builder.add(0));
 			assertThrows(UnsupportedOperationException.class, () -> builder.indexOf(vertex));
 		}
+
+		@Test
+		void build() {
+			// Build model
+			final Model model = builder
+					.primitive(Primitive.LINES)
+					.layout(Vertex.Component.POSITION)
+					.add(vertex)
+					.add(vertex)
+					.build();
+
+			// Check model
+			assertNotNull(model);
+			assertEquals(Primitive.LINES, model.primitive());
+			assertEquals(LAYOUT, model.layout());
+			assertEquals(2, model.count());
+
+			// Check index is empty
+			assertNotNull(model.index());
+			assertEquals(false, model.index().isPresent());
+		}
 	}
 
 	@Nested
 	class IndexedBuilderTests {
-		private Builder builder;
+		private IndexedBuilder builder;
 
 		@BeforeEach
 		void before() {
@@ -126,7 +132,63 @@ public class ModelTest {
 		}
 
 		@Test
-		void buildIndexed() {
+		void constructor() {
+			assertEquals(0, builder.count());
+			assertNotNull(builder.index());
+			assertEquals(List.of(), builder.index());
+		}
+
+		@Test
+		void add() {
+			builder.add(vertex);
+			assertEquals(1, builder.count());
+			assertEquals(List.of(), builder.index());
+		}
+
+		@Test
+		void index() {
+			builder.add(vertex);
+			builder.add(0);
+			assertEquals(0, builder.indexOf(vertex));
+			assertEquals(List.of(0), builder.index());
+		}
+
+		@Test
+		void indexOf() {
+			builder.add(vertex);
+			assertEquals(0, builder.indexOf(vertex));
+		}
+
+		@Test
+		void indexOfUnknown() {
+			assertThrows(IllegalArgumentException.class, () -> builder.indexOf(mock(Vertex.class)));
+		}
+
+		@Test
+		void setAutoIndexed() {
+			// Add a vertex
+			builder.setAutoIndex(true);
+			builder.add(vertex);
+			assertEquals(0, builder.indexOf(vertex));
+			assertEquals(1, builder.count());
+			assertEquals(List.of(0), builder.index());
+
+			// Add same vertex and check has same index
+			builder.add(vertex);
+			assertEquals(1, builder.count());
+			assertEquals(List.of(0, 0), builder.index());
+		}
+
+		@Test
+		void duplication() {
+			builder.add(vertex);
+			builder.add(vertex);
+			assertEquals(1, builder.count());
+			assertEquals(0, builder.indexOf(vertex));
+		}
+
+		@Test
+		void build() {
 			// Build indexed model
 			final Model model = builder
 					.primitive(Primitive.LINES)
@@ -151,20 +213,6 @@ public class ModelTest {
 			assertEquals(0, index.position());
 			assertEquals(true, index.isDirect());
 			// TODO - assertEquals(true, index.isReadOnly());
-		}
-
-		@Test
-		void indexOf() {
-			builder.add(vertex);
-			assertEquals(0, builder.indexOf(vertex));
-			assertThrows(IllegalArgumentException.class, () -> builder.indexOf(mock(Vertex.class)));
-		}
-
-		@Test
-		void deduplication() {
-			builder.add(vertex).add(vertex);
-			assertEquals(1, builder.count());
-			assertEquals(0, builder.indexOf(vertex));
 		}
 	}
 }

@@ -39,14 +39,14 @@ public class VulkanFunctionTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	void enumerateStructure() {
-		// Create a structure array
+		// Create identity instance
 		final Structure identity = mock(Structure.class);
 		final Structure[] array = new Structure[]{identity};
 		when(identity.toArray(1)).thenReturn(array);
 
 		// Create function adapter
 		final VulkanFunction<Structure> func = mock(VulkanFunction.class);
-		final Structure[] result = VulkanFunction.enumerate(func, lib, identity);
+		final Structure[] result = VulkanFunction.enumerate(func, lib, () -> identity);
 
 		// Invoke and check array is populated
 		assertArrayEquals(array, result);

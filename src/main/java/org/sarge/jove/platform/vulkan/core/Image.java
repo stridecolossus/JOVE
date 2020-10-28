@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.util.Check;
@@ -21,12 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
  * An <i>image</i> is a texture or data image stored on the hardware.
  * @author Sarge
  */
-public interface Image {
-	/**
-	 * @return Image handle
-	 */
-	Handle handle();
-
+public interface Image extends NativeObject {
 	/**
 	 * @return Descriptor for this image
 	 */

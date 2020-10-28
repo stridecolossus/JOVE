@@ -52,8 +52,8 @@ public class Queue implements NativeObject {
 		}
 
 		private final PhysicalDevice dev;
-		private final int count;
 		private final int index;
+		private final int count;
 		private final Set<VkQueueFlag> flags;
 
 		/**
@@ -106,12 +106,12 @@ public class Queue implements NativeObject {
 			final VulkanLibrary lib = dev.instance().library();
 			final IntByReference supported = lib.factory().integer();
 			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
-			return VulkanBoolean.of(supported.getValue()) == VulkanBoolean.TRUE;
+			return supported.getValue() == VulkanBoolean.TRUE.toInteger();
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(dev, index);
+			return Objects.hash(dev, index());
 		}
 
 		@Override

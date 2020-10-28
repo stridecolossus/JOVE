@@ -63,13 +63,6 @@ public class TriangleDemo {
 		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
 		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
-//		PhysicalDevice
-//				.devices(instance)
-//				.map(PhysicalDevice::properties)
-//				.map(props -> props.deviceName)
-//				.map(String::new)
-//				.forEach(System.out::println);
-
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)

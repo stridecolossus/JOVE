@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.util.Support;
@@ -59,8 +60,8 @@ public record ValidationLayer(String name, int version) {
 	 */
 	public static class ValidationLayerSupport extends Support<VkLayerProperties, ValidationLayer> {
 		@Override
-		protected VkLayerProperties identity() {
-			return new VkLayerProperties();
+		protected Supplier<VkLayerProperties> identity() {
+			return VkLayerProperties::new;
 		}
 
 		@Override

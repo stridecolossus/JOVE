@@ -44,6 +44,7 @@ public class ImageCopyCommandTest {
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.extents(new Image.Extents(3, 4))
 				.format(VkFormat.VK_FORMAT_A1R5G5B5_UNORM_PACK16)
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.build();
 		image = mock(Image.class);
 		when(image.handle()).thenReturn(new Handle(new Pointer(2)));
@@ -92,9 +93,6 @@ public class ImageCopyCommandTest {
 					.image(image)
 					.buffer(buffer)
 					.layout(LAYOUT)
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-						.build()
 					.build();
 
 			// Copy

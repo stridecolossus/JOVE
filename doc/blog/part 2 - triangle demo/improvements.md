@@ -249,14 +249,14 @@ public VulkanFunction<VkExtensionProperties> extensions() {
 We next add a helper that implements the two-stage invocation process for a method that returns a structure array:
 
 ```java
-static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, T identity) {
+static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, Supplier<T> identity) {
 	// Count number of values
 	final IntByReference count = lib.factory().integer();
 	check(func.enumerate(lib, count, null));
 
 	// Retrieve values
 	if(count.getValue() > 0) {
-		final T[] array = (T[]) identity.toArray(count.getValue());
+		final T[] array = (T[]) identity.get().toArray(count.getValue());
 		check(func.enumerate(lib, count, array[0]));
 		return array;
 	}
@@ -266,13 +266,13 @@ static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary
 }
 ```
 
-The _identity_ is an instance of the structure used to allocate the resultant array using the JNA `toArray()` approach.
+The _identity_ supplied an instance of the structure used to allocate the resultant array using the JNA `toArray()` approach.
 
 This can then be used as follows:
 
 ```java
 final VulkanFunction<VkExtensionProperties> func = ...
-final VkExtensionProperties[] extensions = VulkanFunction.enumerate(func, lib, new VkExtensionProperties());
+final VkExtensionProperties[] extensions = VulkanFunction.enumerate(func, lib, VkExtensionProperties::new);
 ```
 
 The interface also provides a more general implementation for an arbitrary array:

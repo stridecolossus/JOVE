@@ -68,7 +68,7 @@ public class Surface {
 	 */
 	public Collection<VkSurfaceFormatKHR> formats() {
 		final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.parent().handle(), surface, count, array);
-		final var formats = VulkanFunction.enumerate(func, dev.library(), new VkSurfaceFormatKHR());
+		final var formats = VulkanFunction.enumerate(func, dev.library(), VkSurfaceFormatKHR::new);
 		return Arrays.stream(formats).collect(toList());
 	}
 

@@ -48,7 +48,7 @@ public class PhysicalDevice implements NativeObject {
 			api.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 			return VulkanLibrary.SUCCESS;
 		};
-		final VkQueueFamilyProperties[] families = VulkanFunction.enumerate(func, instance.library(), new VkQueueFamilyProperties());
+		final VkQueueFamilyProperties[] families = VulkanFunction.enumerate(func, instance.library(), VkQueueFamilyProperties::new);
 
 		// Create device
 		return new PhysicalDevice(handle, instance, families);
@@ -73,7 +73,7 @@ public class PhysicalDevice implements NativeObject {
 	 * Constructor.
 	 * @param handle		Device handle
 	 * @param instance		Parent instance
-	 * @param families		Queue families
+	 * @param families		Queue family descriptors
 	 */
 	PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
 		this.handle = new Handle(handle);

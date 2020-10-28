@@ -10,6 +10,10 @@ import com.sun.jna.ptr.PointerByReference;
  * Vulkan memory API.
  */
 interface VulkanLibraryMemory {
+
+	// http://kylehalladay.com/blog/tutorial/2017/12/13/Custom-Allocators-Vulkan.html
+	// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+
 	/**
 	 * Allocates memory.
 	 * @param device			Logical device

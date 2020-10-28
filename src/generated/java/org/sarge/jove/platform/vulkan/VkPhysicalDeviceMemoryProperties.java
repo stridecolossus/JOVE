@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"memoryHeaps"
 })
 public class VkPhysicalDeviceMemoryProperties extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceMemoryProperties implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceMemoryProperties implements Structure.ByReference { }
-	
 	public int memoryTypeCount;
 	public VkMemoryType[] memoryTypes = new VkMemoryType[32];
 	public int memoryHeapCount;

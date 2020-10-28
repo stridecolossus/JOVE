@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,8 +39,8 @@ public class SupportTest {
 	void enumerate() {
 		final var support = new Support<VkExtensionProperties, String>() {
 			@Override
-			protected VkExtensionProperties identity() {
-				return identity;
+			protected Supplier<VkExtensionProperties> identity() {
+				return () -> identity;
 			}
 
 			@Override

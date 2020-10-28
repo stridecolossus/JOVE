@@ -4,6 +4,7 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 
 import java.lang.reflect.Array;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 
@@ -61,8 +62,8 @@ public interface VulkanFunction<T> {
 	 * <p>
 	 * Usage:
 	 * <pre>
-	 *  VulkanFunction<Structure> func = (api, count, array) -> api.someFunction(count, array, ...);
-	 *  Structure[] array = VulkanFunction.enumerate(func, vulkan, new Structure());
+	 *  VulkanFunction<SomeStructure> func = (api, count, array) -> api.someFunction(count, array, ...);
+	 *  SomeStructure[] array = VulkanFunction.enumerate(func, vulkan, SomeStructure::new);
 	 * </pre>
 	 * The adapter is equivalent to the following:
 	 * <pre>
@@ -70,7 +71,7 @@ public interface VulkanFunction<T> {
 	 *  api.someFunction(count, null, ...);
 	 *
 	 *  // Allocate JNA array
-	 *  Structure[] array = new Structure().toArray(count.getValue());
+	 *  SomeStructure[] array = (SomeStructure[]) new SomeStructure().toArray(count.getValue());
 	 *
 	 *  // Populate array
 	 *  api.someFunction(count, array[0], ...);
@@ -79,20 +80,20 @@ public interface VulkanFunction<T> {
 	 * @param <T> Structure type
 	 * @param func			Underlying function
 	 * @param lib			Vulkan API
-	 * @param identity		Identity instance
+	 * @param identity		Identity function
 	 * @return Array of structures (can be zero length)
 	 * @throws VulkanException if the underlying API method fails
 	 * @see #enumerate(VulkanLibrary, IntByReference, Object)
 	 */
 	@SuppressWarnings("unchecked")
-	static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, T identity) {
+	static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, Supplier<T> identity) {
 		// Count number of values
 		final IntByReference count = lib.factory().integer();
 		check(func.enumerate(lib, count, null));
 
 		// Retrieve values
 		if(count.getValue() > 0) {
-			final T[] array = (T[]) identity.toArray(count.getValue());
+			final T[] array = (T[]) identity.get().toArray(count.getValue());
 			check(func.enumerate(lib, count, array[0]));
 			return array;
 		}

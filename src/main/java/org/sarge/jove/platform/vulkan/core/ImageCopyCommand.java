@@ -125,9 +125,11 @@ public class ImageCopyCommand extends ImmediateCommand {
 			if(layout == null) throw new IllegalArgumentException("Image layout not specified");
 
 			// Init sub-resource layers
+			// TODO...
+			image.descriptor().aspects().forEach(subresource::aspect); // TODO
 			if(subresource.aspectCount() != 1) throw new IllegalArgumentException("Expected exactly one image aspect");
 			region.imageSubresource = subresource.layers();
-			// TODO - init aspect from image?
+			// ...TODO
 
 			// Complete descriptor
 			region.imageExtent = image.descriptor().extents().create();

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Set;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkAccessFlag;
+import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
@@ -52,11 +54,14 @@ public class BarrierTest {
 	class BuilderTests {
 		private Barrier.Builder builder;
 		private Image image;
+		private Image.Descriptor descriptor;
 
 		@BeforeEach
 		void before() {
 			builder = new Barrier.Builder();
+			descriptor = new Image.Descriptor.Builder().format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM).extents(new Image.Extents(3, 4)).build();
 			image = mock(Image.class);
+			when(image.descriptor()).thenReturn(descriptor);
 		}
 
 		@Test

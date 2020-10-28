@@ -350,6 +350,17 @@ public interface Model {
 		private final List<Integer> index = new ArrayList<>();
 		private final Map<Vertex, Integer> map = new HashMap<>();
 
+		private boolean auto;
+
+		/**
+		 * Sets whether to automatically add an index for each vertex (default is {@code false}).
+		 * @param auto Whether to automatically add indices
+		 */
+		public IndexedBuilder setAutoIndex(boolean auto) {
+			this.auto = auto;
+			return this;
+		}
+
 		@Override
 		protected List<Integer> index() {
 			return index;
@@ -357,11 +368,26 @@ public interface Model {
 
 		@Override
 		public Builder add(Vertex vertex) {
+			// Lookup existing vertex index
 			final Integer prev = map.get(vertex);
+
 			if(prev == null) {
+				// Add new vertex
 				map.put(vertex, count());
 				super.add(vertex);
+
+				// Add index for new vertex
+				if(auto) {
+					add(map.size() - 1);
+				}
 			}
+			else {
+				// Add index for existing vertex
+				if(auto) {
+					add(prev);
+				}
+			}
+
 			return this;
 		}
 
