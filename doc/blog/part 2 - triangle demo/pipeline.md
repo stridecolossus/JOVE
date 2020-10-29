@@ -8,12 +8,13 @@ Configuring the pipeline requires a large amount of information for even the sim
 
 In this chapter we will implement the mandatory fixed-function pipeline stages and the _vertex shader_ stage required for the triangle demo:
 
+---
 
 # Building a Pipeline
 
 ## Pipeline Class
 
-The pipeline domain itself is trivial:
+The pipeline domain class itself is trivial:
 
 ```java
 public class Pipeline extends AbstractVulkanObject {
@@ -48,10 +49,10 @@ We will gloss over construction of the layout until a future chapter.
 
 ## Pipeline Builder
 
-Configuration of the pipeline is probably the largest and most complex aspect of creating a Vulkan application (in terms of the amount of code required).
+Configuration of the pipeline is probably the largest and most complex aspect of creating a Vulkan application (in terms of the amount of supporting functionality that is required).
 
 Our goals for configuration of the pipeline are:
-1. Apply sensible default information for the optional pipeline stages to reduce the amount of boiler-plate for a given application.
+1. Apply sensible defaults for the optional pipeline stages to reduce the amount of boiler-plate for a given application.
 2. Implement a fluid interface for pipeline construction.
 
 Obviously we start with a builder:
@@ -181,7 +182,7 @@ abstract class AbstractPipelineBuilder<T> {
 }
 ```
 
-For example here is the re-factored viewport stage builder (which will be completing below):
+For example here is the re-factored viewport stage builder (which we will complete below):
 
 ```java
 public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
@@ -205,7 +206,7 @@ The resultant classes are relatively self-contained and are therefore more manag
 
 We can now finish the pipeline builder:
 
-```
+```java
 public Pipeline build() {
     // Create descriptor
     final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
@@ -255,6 +256,7 @@ check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelin
 return new Pipeline(pipelines[0], dev);
 ```
 
+---
 
 # Viewport Pipeline Stage
 
@@ -269,7 +271,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
     /**
      * Transient viewport descriptor.
      */
-    private record Viewport(Rectangle rect, float min, float max, boolean flip) {
+    private record Viewport(Rectangle rect, float min, float max) {
     }
 
     private final List<Viewport> viewports = new ArrayList<>();
@@ -329,7 +331,7 @@ protected VkPipelineViewportStateCreateInfo result() {
 
 `ExtentHelper` is a utility class used to populate a Vulkan rectangle from the equivalent JOVE domain object (which avoids having to put the Vulkan code in the domain classes and/or manually editing the code-generated Vulkan structures).
 
-
+---
 
 # Shader Pipeline Stage
 
@@ -382,7 +384,7 @@ public static Shader loader(LogicalDevice dev, InputStream in) throws IOExceptio
 }
 ```
 
-This is a fairly crude approach that will replace with a more elegant and flexible solution in subsequent chapters.
+This is a fairly crude approach that we will replace with a more elegant and flexible solution in subsequent chapters.
 
 ## Builder
 
@@ -482,6 +484,7 @@ public ShaderStageBuilder shader() {
 }
 ```
 
+---
 
 # Integration
 
@@ -515,7 +518,7 @@ void main() {
 }
 ```
 
-which is simply passed through to the next stage:
+which is simply passed through to the next stage by the fragment shader:
 
 ```C
 #version 450
@@ -574,6 +577,7 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
 
 Phew!
 
+---
 
 # Summary
 
