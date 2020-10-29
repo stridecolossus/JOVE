@@ -10,7 +10,14 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
+import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
+import org.sarge.jove.platform.vulkan.VkColorSpaceKHR;
+import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkImageLayout;
+import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkQueueFlag;
+import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -124,14 +131,13 @@ public class TriangleDemo {
 		final Shader frag = loader.load("spv.triangle.frag");
 
 		// Create pipeline
-		final Rectangle rect = new Rectangle(chain.extents());
+		final Rectangle extent = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
 				.layout(new Pipeline.Layout.Builder(dev).build()) // TODO
 				.pass(pass)
-				.assembly()
-					.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+				.viewport()
+					.viewport(extent)
 					.build()
-				.viewport(rect)
 				.rasterizer()
 					.frontFace(true)
 					.build()
@@ -162,7 +168,7 @@ public class TriangleDemo {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin() // VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
-					.add(pass.begin(buffers.get(n), rect))
+					.add(pass.begin(buffers.get(n), extent))
 					.add(pipeline.bind())
 					.add(draw)
 					.add(RenderPass.END_COMMAND)

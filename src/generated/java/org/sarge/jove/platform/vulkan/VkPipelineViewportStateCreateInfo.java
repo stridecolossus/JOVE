@@ -24,7 +24,7 @@ public class VkPipelineViewportStateCreateInfo extends VulkanStructure implement
 	public Pointer pNext;
 	public int flags;
 	public int viewportCount;
-	public Pointer pViewports;
+	public VkViewport pViewports;
 	public int scissorCount;
-	public Pointer pScissors;
+	public VkRect2D.ByReference pScissors;
 }

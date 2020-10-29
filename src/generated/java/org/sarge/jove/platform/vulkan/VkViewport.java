@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,10 +17,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"minDepth",
 	"maxDepth"
 })
-public class VkViewport extends VulkanStructure {
-	public static class ByValue extends VkViewport implements Structure.ByValue { }
-	public static class ByReference extends VkViewport implements Structure.ByReference { }
-	
+public class VkViewport extends VulkanStructure implements ByReference {
 	public float x;
 	public float y;
 	public float width;

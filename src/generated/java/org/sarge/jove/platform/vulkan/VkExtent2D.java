@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Structure;
@@ -20,17 +19,4 @@ public class VkExtent2D extends VulkanStructure {
 
 	public int width;
 	public int height;
-
-	public VkExtent2D() {
-	}
-
-	public VkExtent2D(Dimensions dim) {
-		width = dim.width;
-		height = dim.height;
-	}
-
-	public VkExtent2D(VkExtent2D extent) {
-		width = extent.width;
-		height = extent.height;
-	}
 }

@@ -3,25 +3,64 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.core.Shader;
-import org.sarge.jove.util.Check;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 
 /**
  * Builder for a shader stage.
  */
 public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShaderStageCreateInfo> {
-	private VkShaderStageFlag stage;
-	private Shader shader;
-	private String name = "main";
+	/**
+	 * Entry for a shader stage.
+	 */
+	private static class Entry {
+		private VkShaderStageFlag stage;
+		private Shader shader;
+		private String name = "main";
+
+		/**
+		 * Validates this shader stage.
+		 */
+		private void validate() {
+			if(stage == null) throw new IllegalArgumentException("Shader stage not specified");
+			if(shader == null) throw new IllegalArgumentException("No shader specified: " + stage);
+		}
+
+		/**
+		 * Populates the shader stage descriptor.
+		 * @param info Shader stage descriptor
+		 */
+		private void populate(VkPipelineShaderStageCreateInfo info) {
+			info.stage = stage;
+			info.module = shader.handle();
+			info.pName = name;
+		}
+	}
+
+	private final Map<VkShaderStageFlag, Entry> shaders = new HashMap<>();
+
+	private Entry entry;
+
+	/**
+	 * Starts a new shader stage.
+	 */
+	void init() {
+		if(entry != null) throw new IllegalStateException("Previous shader stage has not been completed");
+		entry = new Entry();
+	}
 
 	/**
 	 * Sets the shader stage.
 	 * @param stage Shader stage
 	 */
 	public ShaderStageBuilder stage(VkShaderStageFlag stage) {
-		this.stage = notNull(stage);
+		entry.stage = notNull(stage);
 		return this;
 	}
 
@@ -30,7 +69,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	 * @param shader Shader module
 	 */
 	public ShaderStageBuilder shader(Shader shader) {
-		this.shader = notNull(shader);
+		entry.shader = notNull(shader);
 		return this;
 	}
 
@@ -39,24 +78,38 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	 * @param name Entry-point name (default is <code>main</code>)
 	 */
 	public ShaderStageBuilder name(String name) {
-		this.name = notEmpty(name);
+		entry.name = notEmpty(name);
 		return this;
 	}
 
 	/**
-	 * Constructs the descriptor for this shader stage.
-	 * @return New shader stage descriptor
+	 * @return Number of shader stages
+	 */
+	int size() {
+		return shaders.size();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * @throws IllegalArgumentException for a duplicate shader stage
+	 */
+	@Override
+	public Builder build() {
+		entry.validate();
+		if(shaders.containsKey(entry.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + entry.stage);
+		shaders.put(entry.stage, entry);
+		entry = null;
+		return super.build();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * @throws IllegalStateException if no vertex shader has been configured
 	 */
 	@Override
 	protected VkPipelineShaderStageCreateInfo result() {
-		Check.notNull(stage);
-		Check.notNull(shader);
-
-		final var info = new VkPipelineShaderStageCreateInfo();
-		info.stage = stage;
-		info.module = shader.handle();
-		info.pName = name;
-
-		return info;
+		assert entry == null;
+		if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalStateException("No vertex shader specified");
+		return VulkanStructure.array(VkPipelineShaderStageCreateInfo::new, shaders.values(), Entry::populate);
 	}
 }

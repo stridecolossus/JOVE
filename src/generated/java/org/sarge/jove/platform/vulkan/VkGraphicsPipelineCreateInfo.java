@@ -36,7 +36,7 @@ public class VkGraphicsPipelineCreateInfo extends VulkanStructure {
 	public Pointer pNext;
 	public int flags;
 	public int stageCount;
-	public Pointer pStages;
+	public VkPipelineShaderStageCreateInfo pStages;
 	public VkPipelineVertexInputStateCreateInfo pVertexInputState;
 	public VkPipelineInputAssemblyStateCreateInfo pInputAssemblyState;
 	public VkPipelineTessellationStateCreateInfo pTessellationState;

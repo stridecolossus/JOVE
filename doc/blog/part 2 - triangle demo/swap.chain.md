@@ -423,7 +423,7 @@ In this example the image format is: `VK_FORMAT_B8G8R8A8_UNORM`
 
 A render pass consists of a number of _sub-passes_ (at least one) that operate on the results of the previous passes to implement (for example) post processing effects.
 
-The render pass domain object is nothing more than a handle for now though we will be adding more functionality later:
+For now the render pass domain object is nothing more than a handle though we will be adding more functionality later:
 
 ```java
 public class RenderPass extends AbstractVulkanObject {
@@ -484,14 +484,14 @@ The nested builder for an attachment is relatively straight-forward:
 
 ```java
 public class AttachmentBuilder {
-    private VkFormat format = VkFormat.VK_FORMAT_UNDEFINED;
+    private VkFormat format;
     private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT;
     private VkAttachmentLoadOp loadOp = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     private VkAttachmentStoreOp storeOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE;
     private VkAttachmentLoadOp stencilLoadOp = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     private VkAttachmentStoreOp stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE;
     private VkImageLayout initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;;
-    private VkImageLayout finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;;
+    private VkImageLayout finalLayout;
 
     ...
 
@@ -588,7 +588,7 @@ public class SubPassBuilder {
 }
 ```
 
-The attachment references are a simple transient local class:
+The attachment reference is a simple transient local class:
 
 ```java
 private class Reference {
@@ -604,8 +604,8 @@ private class Reference {
     private Reference(int index, VkImageLayout layout) {
         this.index = zeroOrMore(index);
         this.layout = notNull(layout);
-        if(index >= attachments.size()) throw new IllegalArgumentException("Invalid attachment index: " + index);
-        if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) throw new IllegalArgumentException("Invalid attachment layout: " + layout);
+        if(index >= attachments.size()) throw new IllegalArgumentException(...);
+        if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) throw new IllegalArgumentException(...);
     }
 
     /**

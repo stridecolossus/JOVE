@@ -21,7 +21,7 @@ public class Shader extends AbstractVulkanObject {
 	/**
 	 * Creates a shader module.
 	 * @param dev		Parent device
-	 * @param code		Shader code
+	 * @param code		Shader SPIV code
 	 * @return New shader
 	 */
 	public static Shader create(LogicalDevice dev, byte[] code) {

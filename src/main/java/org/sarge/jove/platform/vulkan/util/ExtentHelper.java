@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.util;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkExtent2D;
-import org.sarge.jove.platform.vulkan.VkOffset2D;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 
 /**
@@ -16,33 +15,24 @@ public final class ExtentHelper {
 	}
 
 	/**
-	 * Creates a Vulkan extent from the given dimensions.
-	 * @param dim Dimensions
-	 * @return New Vulkan extent
+	 * Populates a Vulkan extent from the given dimensions.
+	 * @param dim 		Dimensions
+	 * @param extent	Extent
 	 */
-	public static VkExtent2D of(Dimensions dim){
-		final VkExtent2D extent = new VkExtent2D();
+	public static void extent(Dimensions dim, VkExtent2D extent) {
 		extent.width = dim.width();
 		extent.height = dim.height();
-		return extent;
 	}
 
 	/**
-	 * Creates a Vulkan rectangle from the given rectangle.
-	 * @param rect Rectangle
-	 * @return New Vulkan rectangle
+	 * Populates a Vulkan rectangle.
+	 * @param rect		Rectangle
+	 * @param out		Output Vulkan rectangle
 	 */
-	public static VkRect2D of(Rectangle rect) {
-		// Create offset
-		final VkOffset2D offset = new VkOffset2D();
-		offset.x = rect.x();
-		offset.y = rect.y();
-
-		// Create rectangle
-		final VkRect2D result = new VkRect2D();
-		result.offset = offset;
-		result.extent = of(rect.size());
-
-		return result;
+	public static void rectangle(Rectangle rect, VkRect2D out) {
+		out.offset.x = rect.x();
+		out.offset.y = rect.y();
+		out.extent.width = rect.width();
+		out.extent.height = rect.height();
 	}
 }

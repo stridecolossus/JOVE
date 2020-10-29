@@ -58,7 +58,7 @@ public class RenderPass extends AbstractVulkanObject {
 		final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
 		info.renderPass = this.handle();
 		info.framebuffer = buffer.handle();
-		info.renderArea = ExtentHelper.of(extent);
+		ExtentHelper.rectangle(extent, info.renderArea);
 
 		// Map attachments to clear values
 		final Collection<ClearValue> values = buffer.attachments().stream().map(View::clear).collect(toList());

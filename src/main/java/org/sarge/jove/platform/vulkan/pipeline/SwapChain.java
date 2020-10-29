@@ -24,7 +24,6 @@ import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.Check;
@@ -170,6 +169,7 @@ public class SwapChain extends AbstractVulkanObject {
 		 * Initialises the swap-chain descriptor.
 		 */
 		private void init() {
+			extent(caps.currentExtent.width, caps.currentExtent.height);
 			count(caps.minImageCount);
 			transform(caps.currentTransform);
 			space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
@@ -230,10 +230,17 @@ public class SwapChain extends AbstractVulkanObject {
 			final Dimensions max = new Dimensions(caps.maxImageExtent.width, caps.maxImageExtent.height);
 			if(extent.exceeds(max)) throw new IllegalArgumentException("Extent is larger than the supported maximum");
 
-			// Init extents
-			info.imageExtent = ExtentHelper.of(extent);
-
+			// Populate extents
+			extent(extent.width(), extent.height());
 			return this;
+		}
+
+		/**
+		 * Helper - Populates the swapchain extents.
+		 */
+		private void extent(int w, int h) {
+			info.imageExtent.width = w;
+			info.imageExtent.height = h;
 		}
 
 		/**
@@ -331,7 +338,7 @@ public class SwapChain extends AbstractVulkanObject {
 
 			// Complete descriptor
 			info.surface = surface.handle();
-			info.imageExtent = caps.currentExtent;
+
 			// TODO
 			info.queueFamilyIndexCount = 0;
 			info.pQueueFamilyIndices = null;

@@ -1,401 +1,501 @@
-# Pipeline Builder
+# Overview
+
+The _graphics pipeline_ specifies the various _stages_ executed by the hardware to render a graphics fragment.
+
+Pipeline stages are either a configurable _fixed function_ or a programmable stage implemented by a _shader_ module.
+
+Configuring the pipeline requires a large amount of information for even the simplest case (though much of this is often default information or empty structures).
+
+In this chapter we will implement the mandatory fixed-function pipeline stages and the _vertex shader_ stage required for the triangle demo:
+
+
+# Building a Pipeline
+
+## Pipeline Class
+
+The pipeline domain itself is trivial:
+
+```java
+public class Pipeline extends AbstractVulkanObject {
+    /**
+     * Constructor.
+     * @param handle        Pipeline handle
+     * @param dev           Device
+     */
+    Pipeline(Pointer handle, LogicalDevice dev) {
+        super(handle, dev, dev.library()::vkDestroyPipeline);
+    }
+
+    /**
+     * Creates a command to bind this pipeline.
+     * @return New bind pipeline command
+     */
+    public Command bind() {
+        return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, handle());
+    }
+
+    /**
+     * A <i>pipeline layout</i> specifies the resources used by a pipeline.
+     */
+    public static class Layout extends AbstractVulkanObject {
+    }
+}
+```
+
+The _pipeline layout_ specifies the resources (texture samplers, uniform buffers, etc) used by the pipeline.
+Although none of these are needed for the triangle demo we are still required to specify a layout for the pipeline.
+We will gloss over construction of the layout until a future chapter.
+
+## Pipeline Builder
+
+Configuration of the pipeline is probably the largest and most complex aspect of creating a Vulkan application (in terms of the amount of code required).
+
+Our goals for configuration of the pipeline are:
+1. Apply sensible default information for the optional pipeline stages to reduce the amount of boiler-plate for a given application.
+2. Implement a fluid interface for pipeline construction.
+
+Obviously we start with a builder:
 
 ```java
 public static class Builder {
-	// Properties
-	private final LogicalDevice dev;
-	private PipelineLayout.Builder layout;
-	private final Map<VkShaderStageFlag, VkPipelineShaderStageCreateInfo> shaders = new HashMap<>();
+    private final LogicalDevice dev;
+    private Layout layout;
+    private RenderPass pass;
 
-	// Fixed function builders
-	private final VertexInputStageBuilder input = new VertexInputStageBuilder();
-	...
+    public Builder(LogicalDevice dev) {
+        this.dev = notNull(dev);
+        init();
+    }
 
-	public Builder(LogicalDevice dev) {
-		this.dev = notNull(dev);
-		init();
-	}
-	
-	private void init() {
-		layout.parent(this);
-		input.parent(this);
-		...
-	}
+    public Builder layout(Layout layout) {
+        this.layout = notNull(layout);
+        return this;
+    }
 
-	public VertexInputStageBuilder input() {
-		return input;
-	}
-
-	...
-	
-	public Pipeline build() {
-		// Create descriptor
-		final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
-
-		// Init layout
-		pipeline.layout = layout.result().handle();
-
-		// Init shader pipeline stages
-		pipeline.stageCount = shaders.size();
-		pipeline.pStages = StructureHelper.structures(shaders.values());
-
-		// Init fixed function pipeline stages
-		pipeline.pVertexInputState = input.result();
-		...
-
-		// Allocate pipeline
-		final VulkanLibrary lib = dev.library();
-		final Pointer[] pipelines = lib.factory().pointers(1);
-		check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
-
-		// Create pipeline
-		return new Pipeline(pipelines[0], dev);
-	}
+    public Builder pass(RenderPass pass) {
+        this.pass = notNull(pass);
+        return this;
+    }
+    
+    public Pipeline build() {
+    }
 }
 ```
 
-# Base-class
+We create outline nested builders for the mandatory fixed function stages:
 
 ```java
-abstract class AbstractPipelineStageBuilder<T> {
-	private Pipeline.Builder parent;
+private final VertexInputStageBuilder input = new VertexInputStageBuilder();
+private final InputAssemblyStageBuilder assembly = new InputAssemblyStageBuilder();
+// TODO - tessellation
+private final ViewportStageBuilder viewport = new ViewportStageBuilder();
+private final RasterizerStageBuilder raster = new RasterizerStageBuilder();
+// TODO - depth/stencil
+// TODO - multi sample
+private final ColourBlendStageBuilder blend = new ColourBlendStageBuilder();
+// TODO - dynamic
 
-	protected void parent(Pipeline.Builder parent) {
-		this.parent = notNull(parent);
-	}
-
-	protected abstract T result();
-
-	public Pipeline.Builder build() {
-		return parent;
-	}
+/**
+ * @return Builder for the vertex input stage
+ */
+public VertexInputStageBuilder input() {
+    return input;
 }
+
+// etc...
 ```
 
-# Nested Builder
+And another that builds the **array** of shader stages:
 
 ```java
-public class VertexInputStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo> {
-	@Override
-	protected VkPipelineVertexInputStateCreateInfo result() {
-		final var info = new VkPipelineVertexInputStateCreateInfo();
-		...
-		return info;
-	}
-}
+private final ShaderStageBuilder shader = new ShaderStageBuilder();
 ```
 
-# Test
+We next implement a unit-test for the parent builder shown here to illustrate the fluid configuration approach:
 
 ```java
 class BuilderTest {
-	private Pipeline.Builder builder;
-	private Rectangle rect;
+    private Pipeline.Builder builder;
+    private Rectangle rect;
 
-	@BeforeEach
-	void before() {
-		builder = new Pipeline.Builder(dev);
-		rect = new Rectangle(new Dimensions(3, 4));
-	}
+    @BeforeEach
+    void before() {
+        builder = new Pipeline.Builder(dev);
+        rect = new Rectangle(new Dimensions(3, 4));
+    }
 
-	@Test
-	void build() {
-		pipeline = builder
-				.viewport()
-					.viewport(rect)
-					.scissor(rect)
-					.build()
-				.shader()
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
-					.shader(mock(Shader.class))
-					.build()
-				.build();
+    @Test
+    void build() {
+        pipeline = builder
+            .viewport()
+                .viewport(rect)
+                .scissor(rect)
+                .build()
+            .shader()
+                .stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+                .shader(mock(Shader.class))
+                .build()
+            .build();
 
-		...
-	}
+        ...
+    }
 }
 ```
 
-# Handle class
+For the triangle demo the only mandatory information is the viewport pipeline stage and the vertex shader.
 
-```java
-public final class Handle {
-	/**
-	 * Native type converter for a handle.
-	 */
-	public static final TypeConverter CONVERTER = new TypeConverter() {
-		@Override
-		public Class<?> nativeType() {
-			return Pointer.class;
-		}
+## Nested Builders
 
-		@Override
-		public Object toNative(Object value, ToNativeContext context) {
-			if(value == null) {
-				return null;
-			}
-			else {
-				final Handle handle = (Handle) value;
-				return handle.handle;
-			}
-		}
+If the number and complexity of the nested builders was relatively small we would implement them as local classes of the pipeline (as we did for the render pass in the previous chapter).
+This is clearly not viable for the pipeline - the parent class would become unwieldy, error-prone and difficult to maintain or test.
 
-		@Override
-		public Object fromNative(Object value, FromNativeContext context) {
-			if(value == null) {
-				return null;
-			}
-			else {
-				return new Handle((Pointer) value);
-			}
-		}
-	};
+Therefore we need to factor out the nested builders into their own source files whilst maintaining the fluid interface.
+After some research we failed to find a decent strategy or pattern for this approach (though we did find some absolutely horrible solutions using reflection and other shenanigans).
 
-	private final Pointer handle;
+Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its build() method) and a protected result() method that constructs the resultant object.  We wrap this up in an abstract base-class:
 
-	public Handle(Pointer handle) {
-		this.handle = notNull(handle);
-	}
+```
+abstract class AbstractPipelineBuilder<T> {
+    private Pipeline.Builder parent;
+
+    /**
+     * Sets the parent builder.
+     * @param parent Parent builder
+     */
+    protected void parent(Pipeline.Builder parent) {
+        this.parent = notNull(parent);
+    }
+
+    /**
+     * @return Result of this builder
+     */
+    protected abstract T result();
+
+    /**
+     * Completes construction.
+     * @return Parent builder
+     */
+    public Pipeline.Builder build() {
+        return parent;
+    }
 }
 ```
 
-# Vulkan Object
+For example here is the re-factored viewport stage builder (which will be completing below):
 
 ```java
-public abstract class AbstractVulkanObject {
-	@FunctionalInterface
-	public interface Destructor {
-		/**
-		 * Destroys this object.
-		 * @param dev				Logical device
-		 * @param handle			Handle
-		 * @param allocator		Allocator
-		 */
-		void destroy(Handle dev, Handle handle, Handle allocator);
-	}
+public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
+    ...
 
-	private Handle handle;
-	private final LogicalDevice dev;
-	private final Destructor destructor;
-
-	...
-
-	public synchronized void destroy() {
-		if(isDestroyed()) throw new IllegalStateException("Object has already been destroyed: " + this);
-		destructor.destroy(dev.handle(), handle, null);
-		handle = null;
-	}
+    @Override
+    protected VkPipelineViewportStateCreateInfo result() {
+        final var info = new VkPipelineViewportStateCreateInfo();
+        ...
+        return info;
+    }
 }
 ```
 
-# Using Vulkan Object
+Finally the pipeline builder initialises the parent() of each nested builder in its constructor.
 
-```java
-	Pipeline(Pointer handle, LogicalDevice dev) {
-		super(handle, dev, dev.library()::vkDestroyPipeline);
-	}
+This is a slightly shonky implementation but it is relatively simple and achieves our goal of a fluid nested builder. 
+The resultant classes are relatively self-contained and are therefore more manageable and testable (and the nastier details are at least package-private).
+
+## Conclusion
+
+We can now finish the pipeline builder:
+
+```
+public Pipeline build() {
+    // Create descriptor
+    final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
+
+    // Init layout
+    if(layout == null) throw new IllegalArgumentException("No pipeline layout specified");
+    pipeline.layout = layout.handle();
+
+    // Init render pass
+    if(pass == null) throw new IllegalArgumentException("No render pass specified");
+    pipeline.renderPass = pass.handle();
+    pipeline.subpass = 0;       // TODO
+    
+    ...
+}
 ```
 
-# Refactor message handler
+The configuration for the fixed-function stages is populated by retrieving the result() of each nested builder:
 
 ```java
-private void destroy(Pointer handle) {
-	final Object[] args = new Object[]{Instance.this.handle, handle, null};
-	destroy.invoke(Void.class, args, options());
+// Init fixed function pipeline stages
+if(viewport == null) throw new IllegalArgumentException("No viewport stage specified");
+pipeline.pVertexInputState = input.result();
+pipeline.pInputAssemblyState = assembly.result();
+pipeline.pViewportState = viewport.result();
+pipeline.pRasterizationState = raster.result();
+pipeline.pColorBlendState = blend.result();
+```
+
+Next we populate the shader stages:
+
+```java
+// Init shader pipeline stages
+pipeline.stageCount = shaders.size();
+pipeline.pStages = shaders.result();
+```
+
+Finally we invoke the API to instantiate the pipeline:
+
+```java
+// Allocate pipeline
+final VulkanLibrary lib = dev.library();
+final Pointer[] pipelines = lib.factory().pointers(1);
+check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
+
+// Create pipeline
+return new Pipeline(pipelines[0], dev);
+```
+
+
+# Viewport Pipeline Stage
+
+Rather than clog this chapter up by covering the design and development of every nested builder we introduce them as they are used.
+
+The only fixed-function stage builder that we **must** configure for any application is the viewport which specifies:
+- The viewport rectangle(s) that define the regions of the framebuffer that will be rendered to.
+- The scissor rectangles that define the drawing regions for the rasterizer.
+
+```java
+public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
+    /**
+     * Transient viewport descriptor.
+     */
+    private record Viewport(Rectangle rect, float min, float max, boolean flip) {
+    }
+
+    private final List<Viewport> viewports = new ArrayList<>();
+    private final List<Rectangle> scissors = new ArrayList<>();
+    
+    private boolean copy = true;
+
+    public ViewportStageBuilder setCopyScissor(boolean copy) {
+        this.copy = copy;
+        return this;
+    }
+
+    public ViewportStageBuilder viewport(Rectangle rect, float min, float max) {
+        // Add viewport
+        viewports.add(new Viewport(rect, min, max, flip));
+
+        // Add scissor
+        if(copy) {
+            scissor(rect);
+        }
+
+        return this;
+    }
+
+    public ViewportStageBuilder viewport(Rectangle viewport) {
+        return viewport(viewport, 0, 1);
+    }
+
+    public ViewportStageBuilder scissor(Rectangle rect) {
+        scissors.add(rect);
+        return this;
+    }
+}
+```
+
+The `setCopyScissor` setting is used to automatically create a scissor rectangle for each viewport (the most common case).
+
+The build method creates the viewport and scissor rectangle arrays:
+
+```java
+@Override
+protected VkPipelineViewportStateCreateInfo result() {
+    // Add viewports
+    final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
+    if(viewports.isEmpty()) throw new IllegalArgumentException("No viewports specified");
+    info.viewportCount = viewports.size();
+    info.pViewports = VulkanStructure.array(VkViewport::new, viewports, Viewport::populate);
+
+    // Add scissors
+    if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
+    info.scissorCount = scissors.size();
+    info.pScissors = VulkanStructure.array(VkRect2D.ByReference::new, scissors, ExtentHelper::rectangle);
+
+    return info;
+}
+```
+
+`ExtentHelper` is a utility class used to populate a Vulkan rectangle from the equivalent JOVE domain object (which avoids having to put the Vulkan code in the domain classes and/or manually editing the code-generated Vulkan structures).
+
+
+
+# Shader Pipeline Stage
+
+The final element of the pipeline that we **must** configure is the vertex shader.
+
+## Shaders
+
+First we create a new domain object for a shader module:
+
+```java
+public class Shader extends AbstractVulkanObject {
+    /**
+     * Creates a shader module.
+     * @param dev       Parent device
+     * @param code      Shader SPIV code
+     * @return New shader
+     */
+    public static Shader create(LogicalDevice dev, byte[] code) {
+        // Create descriptor
+        final VkShaderModuleCreateInfo info = new VkShaderModuleCreateInfo();
+        info.codeSize = code.length;
+        info.pCode = Bufferable.allocate(code);
+
+        // Allocate shader
+        final VulkanLibrary lib = dev.library();
+        final PointerByReference shader = lib.factory().pointer();
+        check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));
+
+        // Create shader
+        return new Shader(shader.getValue(), dev);
+    }
+
+    /**
+     * Constructor.
+     * @param handle        Shader module handle
+     * @param dev           Device
+     */
+    private Shader(Pointer handle, LogicalDevice dev) {
+        super(handle, dev, dev.library()::vkDestroyShaderModule);
+    }
+}
+```
+
+A shader is loaded from an input stream using a static factory method:
+
+```java
+public static Shader loader(LogicalDevice dev, InputStream in) throws IOException {
+    final byte[] code = in.readAllBytes();
+    return create(dev, code);
+}
+```
+
+This is a fairly crude approach that will replace with a more elegant and flexible solution in subsequent chapters.
+
+## Builder
+
+The shader stage pipeline builder creates an **array** of `VkPipelineShaderStageCreateInfo` descriptors:
+
+```java
+public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShaderStageCreateInfo> {
+    /**
+     * Entry for a shader stage.
+     */
+    private static class Entry {
+        private VkShaderStageFlag stage;
+        private Shader shader;
+        private String name = "main";
+
+        /**
+         * Validates this shader stage.
+         */
+        private void validate() {
+            if(stage == null) throw new IllegalArgumentException("Shader stage not specified");
+            if(shader == null) throw new IllegalArgumentException("No shader specified: " + stage);
+        }
+
+        /**
+         * Populates the shader stage descriptor.
+         * @param info Shader stage descriptor
+         */
+        private void populate(VkPipelineShaderStageCreateInfo info) {
+            info.stage = stage;
+            info.module = shader.handle();
+            info.pName = name;
+        }
+    }
+
+    private final Map<VkShaderStageFlag, Entry> shaders = new HashMap<>();
+    
+    ...
+
+    /**
+     * {@inheritDoc}
+     * @throws IllegalStateException if no vertex shader has been configured
+     */
+    @Override
+    protected VkPipelineShaderStageCreateInfo result() {
+        if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalStateException("No vertex shader specified");
+        return VulkanStructure.array(VkPipelineShaderStageCreateInfo::new, shaders.values(), Entry::populate);
+    }
+}
+```
+
+An `Entry` is a transient record specifying a shader stage.
+
+The builder has a reference to the _current_ entry which is populated in the various setter methods:
+
+```java
+private Entry entry;
+
+/**
+ * Starts a new shader stage.
+ */
+void init() {
+    if(entry != null) throw new IllegalStateException("Previous shader stage has not been completed");
+    entry = new Entry();
 }
 
 /**
- * @return Type converter options
+ * Sets the shader stage.
+ * @param stage Shader stage
  */
-private Map<String, ?> options() {
-	return Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
+public ShaderStageBuilder stage(VkShaderStageFlag stage) {
+    entry.stage = notNull(stage);
+    return this;
 }
+
+...
 ```
 
-# Shader
+We over-ride the public build method to validate the current entry and check for duplicates:
 
 ```java
-public static Shader create(LogicalDevice dev, byte[] code) {
-	// Buffer shader code
-	final ByteBuffer buffer = BufferFactory.byteBuffer(code.length);
-	buffer.put(code);
-	buffer.flip();
-
-	// Create descriptor
-	final VkShaderModuleCreateInfo info = new VkShaderModuleCreateInfo();
-	info.codeSize = code.length;
-	info.pCode = buffer;
-
-	// Allocate shader
-	final VulkanLibrary lib = dev.library();
-	final PointerByReference shader = lib.factory().pointer();
-	check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));
-
-	// Create shader
-	return new Shader(shader.getValue(), dev);
+@Override
+public Builder build() {
+    entry.validate();
+    if(shaders.containsKey(entry.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + entry.stage);
+    shaders.put(entry.stage, entry);
+    entry = null;
+    return super.build();
 }
 ```
 
-# Shader Loader
+Finally we modify the pipeline builder to initialise a new shader stage:
 
 ```java
-public static class Loader {
-	public static Loader create(Path dir, LogicalDevice dev) {
-		Check.notNull(dir);
-		final Function<String, byte[]> loader = filename -> load(dir, filename);
-		return new Loader(loader, dev);
-	}
-
-	private static byte[] load(Path dir, String filename) {
-		final Path path = dir.resolve(filename);
-		try(final var in = Files.newInputStream(path)) {
-			return in.readAllBytes();
-		}
-		catch(IOException e) {
-			throw new ServiceException("Error loading shader: " + path, e);
-		}
-	}
-
-	private final Function<String, byte[]> loader;
-	private final LogicalDevice dev;
-
-	public Loader(Function<String, byte[]> loader, LogicalDevice dev) {
-		this.loader = notNull(loader);
-		this.dev = notNull(dev);
-	}
-
-	public Shader load(String filename) {
-		return Shader.create(dev, loader.apply(filename));
-	}
+public ShaderStageBuilder shader() {
+    shaders.init();
+    return shaders;
 }
 ```
 
-# Shader Builder
-
-```java
-		public ShaderStageBuilder shader() {
-			return new ShaderStageBuilder() {
-				@Override
-				public Builder build() {
-					final VkPipelineShaderStageCreateInfo info = super.result();
-					if(shaders.containsKey(info.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + info.stage);
-					shaders.put(info.stage, info);
-					return Builder.this;
-				}
-			};
-		}
-```
-
-# Render Pass
-
-```java
-public class RenderPass extends AbstractVulkanObject {
-	RenderPass(Pointer handle, LogicalDevice dev) {
-		super(handle, dev, dev.library()::vkDestroyRenderPass);
-	}
-
-	public static class Builder {
-		private final LogicalDevice dev;
-		private final List<VkAttachmentDescription> attachments = new ArrayList<>();
-		private final List<VkSubpassDescription> subpasses = new ArrayList<>();
-		private final List<VkSubpassDependency> dependencies = new ArrayList<>();
-
-		...
-
-		public RenderPass build() {
-			// Init render pass descriptor
-			final VkRenderPassCreateInfo info = new VkRenderPassCreateInfo();
-
-			// Add attachments
-			info.attachmentCount = attachments.size();
-			info.pAttachments = StructureHelper.structures(attachments);
-
-			// Add sub passes
-			info.subpassCount = subpasses.size();
-			info.pSubpasses = StructureHelper.structures(subpasses);
-
-			// Add dependencies
-			info.dependencyCount = dependencies.size();
-			info.pDependencies = StructureHelper.structures(dependencies);
-
-			// Allocate render pass
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference pass = lib.factory().pointer();
-			check(lib.vkCreateRenderPass(dev.handle(), info, null, pass));
-
-			// Create render pass
-			return new RenderPass(pass.getValue(), dev);
-		}
-	}
-}
-```
-
-# Nested Builders
-
-```java
-public AttachmentBuilder attachment() {
-	return new AttachmentBuilder();
-}
-
-public class AttachmentBuilder {
-	...
-	
-	public Builder build() {
-		final VkAttachmentDescription info = new VkAttachmentDescription();
-		...
-		attachments.add(info);
-		return Builder.this;
-	}
-}
-```
 
 # Integration
 
-```java
-// Create render pass
-final RenderPass pass = new RenderPass.Builder(dev)
-		.attachment()
-			.format(format)
-			.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-			.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-			.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-			.build()
-		.subpass()
-			.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-			.build()
-		.build();
+We can now load the shaders and configure the rendering pipeline for the triangle demo.
 
-// Load shaders
-final Shader.Loader loader = Shader.Loader.create("./src/test/resources/demo/triangle", dev);
-final Shader vert = loader.load("spv.triangle.vert");
-final Shader frag = loader.load("spv.triangle.frag");
+## Shaders
 
-// Create pipeline
-final Rectangle rect = new Rectangle(chain.extents());
-final Pipeline pipeline = new Pipeline.Builder(dev)
-		.pass(pass)
-		.viewport(rect)
-		.assembly()
-			.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-			.build()
-		.shader()
-			.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
-			.shader(vert)
-			.build()
-		.shader()
-			.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-			.shader(frag)
-			.build()
-		.build();
-```
-
-# Vertex Shader
+The vertex shader hard-codes the triangle vertices and passes the colour for each vertex through to the fragment shader:
 
 ```C
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec4 fragColour;
 
 vec2 positions[3] = vec2[](
     vec2(0.0, -0.5),
@@ -403,7 +503,7 @@ vec2 positions[3] = vec2[](
     vec2(-0.5, 0.5)
 );
 
-vec3 colors[3] = vec3[](
+vec3 colours[3] = vec3[](
     vec3(1.0, 0.0, 0.0),
     vec3(0.0, 1.0, 0.0),
     vec3(0.0, 0.0, 1.0)
@@ -411,30 +511,71 @@ vec3 colors[3] = vec3[](
 
 void main() {
     gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
-    fragColor = colors[gl_VertexIndex];
+    fragColour = vec4(colours[gl_VertexIndex], 1.0);
 }
 ```
 
-# Fragment Shader
+which is simply passed through to the next stage:
 
 ```C
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(location = 0) in vec3 fragColor;
+layout(location = 0) in vec4 fragColour;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 outColour;
 
 void main() {
-    outColor = vec4(fragColor, 1.0);
+    outColour = fragColour;
 }
 ```
 
-# Compile
+We will also need to compile the shaders to SPIV using the GLSLC utility application provided as part of the JDK:
 
 ```
-cd JOVE/src/test/resources/demo/triangle
+cd /JOVE/src/test/resources/demo/triangle
 glslc triangle.frag -o spv.triangle.frag
 glslc triangle.vert -o spv.triangle.vert
 ```
+
+## Demo
+
+We can now load the shader modules:
+
+```java
+// Load shaders
+final Shader vert = loader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.vert"));
+final Shader frag = loader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.frag"));
+```
+
+And finally configure the pipeline:
+
+```java
+final Rectangle extent = new Rectangle(chain.extents());
+
+// Create pipeline layout
+final Pipeline.Layout layout = new Pipeline.Layout.Builder().build();
+
+// Create pipeline
+final Pipeline pipeline = new Pipeline.Builder(dev)
+    .layout(layout)
+    .pass(pass)
+    .viewport(extent)
+    .shader()
+        .stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+        .shader(vert)
+        .build()
+    .shader()
+        .stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+        .shader(frag)
+        .build()
+    .build();
+```
+
+Phew!
+
+
+# Summary
+
+In this chapter we implemented a number of builders to configure the graphics pipeline and implemented shader modules.
 

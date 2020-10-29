@@ -4,24 +4,19 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -54,9 +49,10 @@ public class Pipeline extends AbstractVulkanObject {
 	public static class Builder {
 		// Properties
 		private final LogicalDevice dev;
-		private final Map<VkShaderStageFlag, VkPipelineShaderStageCreateInfo> shaders = new HashMap<>();
+//		private final Map<VkShaderStageFlag, ShaderStageBuilder> shaders = new HashMap<>();
 		private Layout layout;
 		private RenderPass pass;
+		private final ShaderStageBuilder shaders = new ShaderStageBuilder();
 
 		// Fixed function builders
 		private final VertexInputStageBuilder input = new VertexInputStageBuilder();
@@ -88,6 +84,7 @@ public class Pipeline extends AbstractVulkanObject {
 			raster.parent(this);
 			depth.parent(this);
 			blend.parent(this);
+			shaders.parent(this);
 		}
 
 		/**
@@ -161,18 +158,10 @@ public class Pipeline extends AbstractVulkanObject {
 
 		/**
 		 * @return Builder for a shader stage
-		 * @throws IllegalArgumentException for a duplicate stage
 		 */
 		public ShaderStageBuilder shader() {
-			return new ShaderStageBuilder() {
-				@Override
-				public Builder build() {
-					final VkPipelineShaderStageCreateInfo info = super.result();
-					if(shaders.containsKey(info.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + info.stage);
-					shaders.put(info.stage, info);
-					return Builder.this;
-				}
-			};
+			shaders.init();
+			return shaders;
 		}
 
 		/**
@@ -194,9 +183,8 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.subpass = 0;		// TODO
 
 			// Init shader pipeline stages
-			if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalArgumentException("No vertex shader specified");
 			pipeline.stageCount = shaders.size();
-			pipeline.pStages = StructureHelper.structures(shaders.values());
+			pipeline.pStages = shaders.result();
 
 			// Init fixed function pipeline stages
 			if(viewport == null) throw new IllegalArgumentException("No viewport stage specified");

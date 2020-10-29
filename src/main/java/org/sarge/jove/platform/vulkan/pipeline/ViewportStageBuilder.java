@@ -7,48 +7,56 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.StructureHelper;
 
 /**
  * Builder for the viewport stage descriptor.
  */
 public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
-	private final List<VkViewport> viewports = new ArrayList<>();
-	private final List<VkRect2D> scissors = new ArrayList<>();
+	/**
+	 * Transient viewport descriptor.
+	 */
+	private record Viewport(Rectangle rect, float min, float max, boolean flip) {
+		public Viewport {
+			Check.notNull(rect);
+			Check.isPercentile(min);
+			Check.isPercentile(max);
+		}
+
+		private void populate(VkViewport viewport) {
+			if(flip) {
+				viewport.x = rect.x();
+				viewport.y = rect.y() + rect.height();
+				viewport.width = rect.width();
+				viewport.height = -rect.height();
+			}
+			else {
+				viewport.x = rect.x();
+				viewport.y = rect.y();
+				viewport.width = rect.width();
+				viewport.height = rect.height();
+			}
+
+			// Init min/max depth
+			viewport.minDepth = Check.isPercentile(min);
+			viewport.maxDepth = Check.isPercentile(max);
+		}
+	}
+
+	private final List<Viewport> viewports = new ArrayList<>();
+	private final List<Rectangle> scissors = new ArrayList<>();
+
+	private boolean copy = true;
 	private boolean flip;
 
 	/**
-	 * Adds a viewport.
-	 * @param viewport 		Viewport rectangle
-	 * @param min			Minimum depth
-	 * @param max			Maximum depth
-	 * @throws IllegalArgumentException if the min/max values are not in the range 0..1
+	 * Sets whether to create a scissor rectangle for each viewport (default is {@code true}).
+	 * @param copy Whether to copy a scissor rectangle for viewports
 	 */
-	public ViewportStageBuilder viewport(Rectangle rect, float min, float max) {
-		// Init viewport rectangle
-		final VkViewport viewport = new VkViewport();
-		if(flip) {
-			viewport.x = rect.x();
-			viewport.y = rect.y() + rect.height();
-			viewport.width = rect.width();
-			viewport.height = -rect.height();
-		}
-		else {
-			viewport.x = rect.x();
-			viewport.y = rect.y();
-			viewport.width = rect.width();
-			viewport.height = rect.height();
-		}
-
-		// Init min/max depth
-		viewport.minDepth = Check.isPercentile(min);
-		viewport.maxDepth = Check.isPercentile(max);
-
-		// Add viewport
-		viewports.add(viewport);
-
+	public ViewportStageBuilder setCopyScissor(boolean copy) {
+		this.copy = copy;
 		return this;
 	}
 
@@ -66,6 +74,26 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	}
 
 	/**
+	 * Adds a viewport.
+	 * @param viewport 		Viewport rectangle
+	 * @param min			Minimum depth
+	 * @param max			Maximum depth
+	 * @throws IllegalArgumentException if the min/max values are not in the range 0..1
+	 * @see #setCopyScissor(boolean)
+	 */
+	public ViewportStageBuilder viewport(Rectangle rect, float min, float max) {
+		// Add viewport
+		viewports.add(new Viewport(rect, min, max, flip));
+
+		// Add scissor
+		if(copy) {
+			scissor(rect);
+		}
+
+		return this;
+	}
+
+	/**
 	 * Adds a viewport with default min/max depth.
 	 * @param viewport Viewport rectangle
 	 */
@@ -75,29 +103,25 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 
 	/**
 	 * Adds a scissor rectangle.
-	 * @param scissor Scissor rectangle
+	 * @param rect Scissor rectangle
 	 */
-	public ViewportStageBuilder scissor(Rectangle scissor) {
-		scissors.add(ExtentHelper.of(scissor));
+	public ViewportStageBuilder scissor(Rectangle rect) {
+		scissors.add(rect);
 		return this;
 	}
 
-	/**
-	 * Constructs this viewport stage.
-	 * @return New viewport stage
-	 */
 	@Override
 	protected VkPipelineViewportStateCreateInfo result() {
 		// Add viewports
 		final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 		if(viewports.isEmpty()) throw new IllegalArgumentException("No viewports specified");
-		info.pViewports = StructureHelper.structures(viewports);
 		info.viewportCount = viewports.size();
+		info.pViewports = VulkanStructure.array(VkViewport::new, viewports, Viewport::populate);
 
 		// Add scissors
 		if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
-		info.pScissors = StructureHelper.structures(scissors);
 		info.scissorCount = scissors.size();
+		info.pScissors = VulkanStructure.array(VkRect2D.ByReference::new, scissors, ExtentHelper::rectangle);
 
 		return info;
 	}

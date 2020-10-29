@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -25,7 +24,6 @@ import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 
 import com.sun.jna.Pointer;
 
@@ -78,9 +76,16 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertNotNull(info);
 			assertEquals(pass.handle(), info.renderPass);
 			assertEquals(buffer.handle(), info.framebuffer);
+
+			// Check extents
+			assertEquals(extent.x(), info.renderArea.offset.x);
+			assertEquals(extent.y(), info.renderArea.offset.y);
+			assertEquals(extent.width(), info.renderArea.extent.width);
+			assertEquals(extent.height(), info.renderArea.extent.height);
+
+			// Check clear values
 			assertEquals(1, info.clearValueCount);
 			assertNotNull(info.pClearValues);
-			assertTrue(ExtentHelper.of(extent).dataEquals(info.renderArea));
 			assertArrayEquals(Colour.BLACK.toArray(), info.pClearValues.color.float32);
 		}
 

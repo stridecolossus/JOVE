@@ -1,7 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(location = 0) out vec3 fragColour;
+layout(location = 0) out vec4 fragColour;
 
 vec2 positions[3] = vec2[](
     vec2(0.0, -0.5),
