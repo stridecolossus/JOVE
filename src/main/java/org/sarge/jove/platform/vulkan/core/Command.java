@@ -176,7 +176,11 @@ public interface Command {
 
 		@Override
 		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
+			return new ToStringBuilder(this)
+					.append("handle", handle)
+					.append("state", state)
+					.append("pool", pool)
+					.build();
 		}
 	}
 
@@ -191,7 +195,7 @@ public interface Command {
 		 */
 		public static Pool create(Queue queue, VkCommandPoolCreateFlag... flags) {
 			// Init pool descriptor
-			final VkCommandPoolCreateInfo info = new VkCommandPoolCreateInfo();
+			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
 			info.flags = IntegerEnumeration.mask(Arrays.asList(flags));
 
@@ -243,7 +247,7 @@ public interface Command {
 			final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
 			info.level = primary ? VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY : VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 			info.commandBufferCount = num;
-			info.commandPool = super.handle();
+			info.commandPool = this.handle();
 
 			// Allocate buffers
 			final LogicalDevice dev = queue.device();
@@ -307,9 +311,6 @@ public interface Command {
 			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers));
 		}
 
-		/**
-		 * Destroys this command pool.
-		 */
 		@Override
 		public synchronized void destroy() {
 			buffers.clear();
