@@ -507,7 +507,7 @@ static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
 }
 ```
 
-And additional helpers to transform to/from a bit-field mask:
+We also add additional helpers to transform to/from a bit-field mask:
 
 ```java
 /**

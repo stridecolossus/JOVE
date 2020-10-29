@@ -11,7 +11,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
@@ -25,8 +25,8 @@ import com.sun.jna.ptr.IntByReference;
  * A <i>surface</i> is used to render to a window.
  * @author Sarge
  */
-public class Surface {
-	private final Handle surface;
+public class Surface implements TransientNativeObject {
+	private final Handle handle;
 	private final LogicalDevice dev;
 
 	/**
@@ -34,23 +34,14 @@ public class Surface {
 	 * @param surface		Surface handle
 	 * @param dev			Device
 	 */
-	public Surface(Handle surface, LogicalDevice dev) {
-		this.surface = notNull(surface);
+	public Surface(Handle handle, LogicalDevice dev) {
+		this.handle = notNull(handle);
 		this.dev = notNull(dev);
 	}
 
-	/**
-	 * @return Surface handle
-	 */
+	@Override
 	public Handle handle() {
-		return surface;
-	}
-
-	/**
-	 * @return Logical device
-	 */
-	public LogicalDevice device() {
-		return dev;
+		return handle;
 	}
 
 	/**
@@ -58,8 +49,8 @@ public class Surface {
 	 */
 	public VkSurfaceCapabilitiesKHR capabilities() {
 		final VulkanLibrary lib = dev.library();
-		final VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR.ByReference();
-		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.parent().handle(), surface, caps));
+		final VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR();
+		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.parent().handle(), handle, caps));
 		return caps;
 	}
 
@@ -67,7 +58,7 @@ public class Surface {
 	 * @return Formats supported by this surface
 	 */
 	public Collection<VkSurfaceFormatKHR> formats() {
-		final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.parent().handle(), surface, count, array);
+		final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.parent().handle(), handle, count, array);
 		final var formats = VulkanFunction.enumerate(func, dev.library(), VkSurfaceFormatKHR::new);
 		return Arrays.stream(formats).collect(toList());
 	}
@@ -81,11 +72,11 @@ public class Surface {
 		final VulkanLibrary lib = dev.library();
 		final Handle handle = dev.parent().handle();
 		final IntByReference count = lib.factory().integer();
-		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(handle, surface, count, null));
+		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(handle, this.handle, count, null));
 
 		// Retrieve modes
 		final int[] array = new int[count.getValue()];
-		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(handle, surface, count, array));
+		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(handle, this.handle, count, array));
 
 		// Convert to enumeration
 		return Arrays
@@ -94,17 +85,15 @@ public class Surface {
 				.collect(toSet());
 	}
 
-	/**
-	 * Destroys this surface.
-	 */
+	@Override
 	public synchronized void destroy() {
 		final Instance instance = dev.parent().instance();
 		final VulkanLibrarySurface lib = instance.library();
-		lib.vkDestroySurfaceKHR(instance.handle(), surface, null);
+		lib.vkDestroySurfaceKHR(instance.handle(), handle, null);
 	}
 
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		return new ToStringBuilder(this).append(handle).build();
 	}
 }

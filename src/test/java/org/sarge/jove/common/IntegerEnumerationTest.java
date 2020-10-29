@@ -44,6 +44,11 @@ public class IntegerEnumerationTest {
 	}
 
 	@Test
+	public void mapDefaultValue() {
+		assertEquals(MockEnum.A, IntegerEnumeration.map(MockEnum.class, 0));
+	}
+
+	@Test
 	public void contains() {
 		assertEquals(false, IntegerEnumeration.contains(0, MockEnum.A));
 		assertEquals(true, IntegerEnumeration.contains(0b001, MockEnum.A));

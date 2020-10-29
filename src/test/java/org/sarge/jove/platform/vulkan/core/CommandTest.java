@@ -48,6 +48,16 @@ class CommandTest extends AbstractVulkanTest {
 		cmd = mock(Command.class);
 	}
 
+	@Test
+	void once() {
+		final Pool pool = Pool.create(queue);
+		final Buffer buffer = Command.once(pool, cmd);
+		assertEquals(true, buffer.isReady());
+		verify(lib).vkBeginCommandBuffer(eq(buffer.handle()), any(VkCommandBufferBeginInfo.class));
+		verify(cmd).execute(lib, buffer.handle());
+		verify(lib).vkEndCommandBuffer(buffer.handle());
+	}
+
 	@Nested
 	class BufferTests {
 		private Buffer buffer;
@@ -110,14 +120,6 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void addNotRecording() {
 			assertThrows(IllegalStateException.class, () -> buffer.add(mock(Command.class)));
-		}
-
-		@Test
-		void once() {
-			buffer.once(cmd);
-			verify(lib).vkBeginCommandBuffer(eq(buffer.handle()), any(VkCommandBufferBeginInfo.class));
-			verify(cmd).execute(lib, buffer.handle());
-			verify(lib).vkEndCommandBuffer(buffer.handle());
 		}
 
 		@Test
@@ -205,10 +207,10 @@ class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		void free() {
-			final var buffer = pool.allocate();
+			pool.allocate();
 			pool.free();
 			assertEquals(0, pool.buffers().count());
-			// TODO - verify(lib).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, new Handle[]{buffer.handle()});
+			verify(lib).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, factory.pointers);
 		}
 
 		@Test

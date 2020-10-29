@@ -24,14 +24,14 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkRenderPassCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkRenderPassCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkRenderPassCreateInfo implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int attachmentCount;
-	public Pointer pAttachments;
+	public VkAttachmentDescription pAttachments;
 	public int subpassCount;
-	public Pointer pSubpasses;
+	public VkSubpassDescription pSubpasses;
 	public int dependencyCount;
 	public Pointer pDependencies;
 }

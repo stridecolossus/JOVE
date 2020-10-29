@@ -84,6 +84,7 @@ public class SwapChain extends AbstractVulkanObject {
 	 * Acquires the next image in this swap-chain.
 	 * @param semaphore		Optional semaphore
 	 * @param fence			Optional fence
+	 * @return Image index
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) {
 		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, null /*semaphore.handle()*/, null, index)); // toPointer(semaphore), toPointer(fence), index);
@@ -123,19 +124,30 @@ public class SwapChain extends AbstractVulkanObject {
 		final VulkanLibrary lib = device().library();
 		check(lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info}));
 	}
+	// TODO - synchronise
+	// TODO - cache descriptor?
 
 	/**
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
-		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
+		// Dependencies
 		private final Surface surface;
+		private final LogicalDevice dev;
+
+		// Properties
+		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
+		private ClearValue clear = ClearValue.COLOUR;
+
+		// Surface constraints
 		private final VkSurfaceCapabilitiesKHR caps;
 		private final Collection<VkSurfaceFormatKHR> formats;
-		private ClearValue clear = ClearValue.COLOUR;
+		private final Set<VkPresentModeKHR> modes;
 
 		/**
 		 * Constructor.
+		 * @param dev			Logical device
+		 * @param surface		Rendering surface
 		 * <p>
 		 * The following swap-chain descriptor fields are initialised from the surface capabilities:
 		 * <ul>
@@ -145,10 +157,12 @@ public class SwapChain extends AbstractVulkanObject {
 		 * </ul>
 		 * @see Surface#capabilities()
 		 */
-		public Builder(Surface surface) {
+		public Builder(LogicalDevice dev, Surface surface) {
+			this.dev = notNull(dev);
 			this.surface = notNull(surface);
 			this.caps = surface.capabilities();
 			this.formats = surface.formats();
+			this.modes = surface.modes();
 			init();
 		}
 
@@ -156,17 +170,8 @@ public class SwapChain extends AbstractVulkanObject {
 		 * Initialises the swap-chain descriptor.
 		 */
 		private void init() {
-			// Set surface
-			info.surface = surface.handle();
-
-			// Init from surface capabilities
 			count(caps.minImageCount);
 			transform(caps.currentTransform);
-
-			// Init swapchain extents
-			info.imageExtent = caps.currentExtent;
-
-			// Init default fields
 			space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 			arrays(1);
 			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE); // or concurrent?
@@ -174,11 +179,6 @@ public class SwapChain extends AbstractVulkanObject {
 			alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
 			present(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR);
 			clipped(true);
-
-			// TODO
-			info.queueFamilyIndexCount = 0;
-			info.pQueueFamilyIndices = null;
-			info.oldSwapchain = null;
 		}
 
 		/**
@@ -297,7 +297,7 @@ public class SwapChain extends AbstractVulkanObject {
 		 * @see Surface#modes()
 		 */
 		public Builder present(VkPresentModeKHR mode) {
-			if(!surface.modes().contains(mode)) throw new IllegalArgumentException("Presentation mode not supported: " + mode);
+			if(!modes.contains(mode)) throw new IllegalArgumentException("Presentation mode not supported: " + mode);
 			info.presentMode = notNull(mode);
 			return this;
 		}
@@ -329,8 +329,15 @@ public class SwapChain extends AbstractVulkanObject {
 			// Validate
 			if(info.imageFormat == null) throw new IllegalArgumentException("Image format not specified");
 
+			// Complete descriptor
+			info.surface = surface.handle();
+			info.imageExtent = caps.currentExtent;
+			// TODO
+			info.queueFamilyIndexCount = 0;
+			info.pQueueFamilyIndices = null;
+			info.oldSwapchain = null;
+
 			// Allocate swap-chain
-			final LogicalDevice dev = surface.device();
 			final VulkanLibrary lib = dev.library();
 			final ReferenceFactory factory = lib.factory();
 			final PointerByReference chain = factory.pointer();
@@ -345,7 +352,7 @@ public class SwapChain extends AbstractVulkanObject {
 			final Image.Descriptor descriptor = new Image.Descriptor(VkImageType.VK_IMAGE_TYPE_2D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
 
 			// Init view builder
-			final View.Builder builder = new View.Builder(surface.device());
+			final View.Builder builder = new View.Builder(dev);
 			builder.clear(clear);
 
 			// Create image views

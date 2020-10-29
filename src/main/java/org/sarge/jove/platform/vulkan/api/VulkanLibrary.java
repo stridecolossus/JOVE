@@ -122,7 +122,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		 * @return New array
 		 */
 		@SuppressWarnings("unchecked")
-		public static <T extends VulkanStructure> T[] array(Supplier<T> ctor, int size) {
+		public static <T extends Structure> T[] array(Supplier<T> ctor, int size) {
 			final T identity = ctor.get();
 			return (T[]) identity.toArray(size);
 		}
@@ -136,7 +136,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		 * @param populate		Population function
 		 * @return <b>First</b> element of the new array
 		 */
-		public static <R extends VulkanStructure, T> R array(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
+		public static <R extends Structure, T> R array(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
 			// Check for empty data
 			if(data.isEmpty()) {
 				return null;

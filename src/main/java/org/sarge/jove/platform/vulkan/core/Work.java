@@ -52,8 +52,7 @@ public interface Work {
 		 */
 		public void submit(Command.Pool pool, boolean wait) {
 			// Allocate one-off buffer
-			final Command.Buffer buffer = pool.allocate();
-			buffer.once(this);
+			final Command.Buffer buffer = Command.once(pool, this);
 
 			try {
 				// Perform work

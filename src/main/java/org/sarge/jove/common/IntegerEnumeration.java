@@ -134,13 +134,16 @@ public interface IntegerEnumeration {
 		 */
 		private class Entry {
 			private final Map<Integer, ? extends IntegerEnumeration> map;
+			private final Object def;
 
 			/**
 			 * Constructor.
 			 * @param clazz Enumeration class
 			 */
 			private Entry(Class<? extends IntegerEnumeration> clazz) {
-				this.map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
+				final IntegerEnumeration[] array = clazz.getEnumConstants();
+				this.map = Arrays.stream(array).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
+				this.def = array[0];
 			}
 
 			/**
@@ -154,8 +157,15 @@ public interface IntegerEnumeration {
 			private <E extends IntegerEnumeration> E get(int value) {
 				final E result = (E) map.get(value);
 				if(result == null) {
-					final Class<?> clazz = map.values().iterator().next().getClass();
-					throw new IllegalArgumentException(String.format("Unknown enumeration value: enum=%s value=%d", clazz.getSimpleName(), value));
+					if(value == 0) {
+						// Assume default value
+						return (E) def;
+					}
+					else {
+						// Otherwise native value is invalid for this enumeration
+						final Class<?> clazz = map.values().iterator().next().getClass();
+						throw new IllegalArgumentException(String.format("Unknown enumeration value: enum=%s value=%d", clazz.getSimpleName(), value));
+					}
 				}
 				return result;
 			}

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -30,7 +31,7 @@ public class WorkTest extends AbstractVulkanTest {
 		// Create queue
 		queue = mock(Queue.class);
 		when(queue.device()).thenReturn(dev);
-		when(queue.handle()).thenReturn(new Handle(new Pointer(42)));
+		when(queue.handle()).thenReturn(new Handle(new Pointer(1)));
 
 		// Create pool
 		pool = mock(Command.Pool.class);
@@ -39,6 +40,7 @@ public class WorkTest extends AbstractVulkanTest {
 		// Create command buffer
 		buffer = mock(Command.Buffer.class);
 		when(buffer.pool()).thenReturn(pool);
+		when(buffer.handle()).thenReturn(new Handle(new Pointer(2)));
 
 		// Create builder
 		builder = new Work.Builder();
@@ -87,19 +89,18 @@ public class WorkTest extends AbstractVulkanTest {
 
 	@Test
 	void immediate() {
-		// Prepare one-off buffer
+		// Create command
+		final ImmediateCommand immediate = ImmediateCommand.of(mock(Command.class));
+
+		// Mock buffer
 		when(pool.allocate()).thenReturn(buffer);
-		when(buffer.handle()).thenReturn(new Handle(new Pointer(2)));
+		when(buffer.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)).thenReturn(buffer);
+		when(buffer.add(immediate)).thenReturn(buffer);
+		when(buffer.end()).thenReturn(buffer);
 
-		// Execute immediately
-		final ImmediateCommand cmd = ImmediateCommand.of(mock(Command.class));
-		cmd.submit(pool, true);
-
-		// Check command is one-time submission
-		verify(buffer).once(cmd);
-		verify(buffer).free();
-
-		// Check wait for queue after execution
+		// Submit command and check is executed and released
+		immediate.submit(pool, true);
 		verify(queue).waitIdle();
+		verify(buffer).free();
 	}
 }

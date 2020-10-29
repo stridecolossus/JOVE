@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.List;
 
@@ -19,14 +20,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
-import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
-import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSubpassContents;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.View;
@@ -118,9 +112,14 @@ public class RenderPassTest extends AbstractVulkanTest {
 					.initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED)
 					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
 					.build()
+				.attachment()
+					.format(VkFormat.VK_FORMAT_D32_SFLOAT)
+					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
+					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+					.build()
 				.subpass()
-					.bind(VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS)
 					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+					.depth(1)
 					.build()
 				.build();
 
@@ -135,13 +134,93 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 			// Check descriptor
 			final var info = captor.getValue();
-			assertEquals(1, info.attachmentCount);
-			assertNotNull(info.pAttachments);
-			assertEquals(1, info.subpassCount);
-			assertNotNull(info.pSubpasses);
-			assertEquals(0, info.dependencyCount);
-//			assertNotNull(info.pDependencies);
 			assertEquals(0, info.flags);
+			assertEquals(2, info.attachmentCount);
+			assertEquals(1, info.subpassCount);
+			assertEquals(0, info.dependencyCount); // TODO
+
+			// Check attachment descriptor
+			assertNotNull(info.pAttachments);
+			assertEquals(0, info.pAttachments.flags);
+			assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, info.pAttachments.format);
+			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT, info.pAttachments.samples);
+			assertEquals(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR, info.pAttachments.loadOp);
+			assertEquals(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE, info.pAttachments.storeOp);
+			assertEquals(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE, info.pAttachments.stencilLoadOp);
+			assertEquals(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE, info.pAttachments.stencilStoreOp);
+			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, info.pAttachments.initialLayout);
+			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, info.pAttachments.finalLayout);
+
+			// Check sub-pass descriptor
+			assertNotNull(info.pSubpasses);
+			assertEquals(0, info.pSubpasses.flags);
+			assertEquals(VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, info.pSubpasses.pipelineBindPoint);
+			assertEquals(1, info.pSubpasses.colorAttachmentCount);
+
+			// Check colour attachment descriptor
+			assertNotNull(info.pSubpasses.pColorAttachments);
+			assertEquals(0, info.pSubpasses.pColorAttachments.attachment);
+			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, info.pSubpasses.pColorAttachments.layout);
+
+			// Check depth attachment descriptor
+			assertNotNull(info.pSubpasses.pDepthStencilAttachment);
+			assertEquals(1, info.pSubpasses.pDepthStencilAttachment.attachment);
+			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, info.pSubpasses.pDepthStencilAttachment.layout);
+
+			// Check dependencies
+			// TODO
+			// assertNotNull(info.pDependencies);
+		}
+
+		private void add() {
+			builder
+				.attachment()
+				.format(VkFormat.VK_FORMAT_D32_SFLOAT)
+				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+				.build();
+		}
+
+		@Test
+		void buildEmptyAttachments() {
+			assertThrows(IllegalArgumentException.class, "At least one attachment must be specified", () -> builder.build());
+		}
+
+		@Test
+		void buildEmptySubPass() {
+			add();
+			assertThrows(IllegalArgumentException.class, "At least one sub-pass must be specified", () -> builder.build());
+		}
+
+		@Test
+		void attachmentRequiresFormat() {
+			assertThrows(IllegalArgumentException.class, "No format specified", () -> builder.attachment().build());
+		}
+
+		@Test
+		void attachmentRequiresFinalLayout() {
+			assertThrows(IllegalArgumentException.class, "No final layout specified", () -> builder.attachment().format(VkFormat.VK_FORMAT_D32_SFLOAT).build());
+		}
+
+		@Test
+		void attachmentInvalidFinalLayout() {
+			final var attachment = builder.attachment().format(VkFormat.VK_FORMAT_D32_SFLOAT);
+			assertThrows(IllegalArgumentException.class, "Invalid final layout", () -> attachment.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PREINITIALIZED));
+		}
+
+		@Test
+		void subpassEmpty() {
+			assertThrows(IllegalArgumentException.class, "No attachments specified", () -> builder.subpass().build());
+		}
+
+		@Test
+		void subpassInvalidIndex() {
+			assertThrows(IllegalArgumentException.class, "Invalid attachment index", () -> builder.subpass().depth(0).build());
+		}
+
+		@Test
+		void subpassInvalidLayout() {
+			add();
+			assertThrows(IllegalArgumentException.class, "Invalid attachment layout", () -> builder.subpass().colour(0, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED).build());
 		}
 	}
 }

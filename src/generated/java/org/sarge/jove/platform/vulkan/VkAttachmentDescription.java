@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -19,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"initialLayout",
 	"finalLayout"
 })
-public class VkAttachmentDescription extends VulkanStructure {
+public class VkAttachmentDescription extends VulkanStructure implements ByReference {
 	public int flags;
 	public VkFormat format;
 	public VkSampleCountFlag samples;

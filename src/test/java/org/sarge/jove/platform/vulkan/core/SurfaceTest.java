@@ -41,7 +41,6 @@ public class SurfaceTest extends AbstractVulkanTest {
 	@Test
 	void constructor() {
 		assertEquals(handle, surface.handle());
-		assertEquals(dev, surface.device());
 	}
 
 	@Test

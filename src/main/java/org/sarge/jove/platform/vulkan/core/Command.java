@@ -42,7 +42,21 @@ public interface Command {
 	void execute(VulkanLibrary lib, Handle buffer);
 
 	/**
-	 * A <i>command buffer</i> is allocated by a {@link Pool} and used record and execute commands.
+	 * Helper - Creates a one-time command buffer for the given command.
+	 * @param pool		Command pool
+	 * @param cmd 		Command
+	 * @see VkCommandBufferUsageFlag#VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+	 */
+	static Buffer once(Pool pool, Command cmd) {
+		return pool
+				.allocate()
+				.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+				.add(cmd)
+				.end();
+	}
+
+	/**
+	 * A <i>command buffer</i> is allocated by a {@link Pool} and used to record commands.
 	 */
 	class Buffer implements NativeObject {
 		/**
@@ -69,14 +83,10 @@ public interface Command {
 			this.pool = notNull(pool);
 		}
 
-		/**
-		 * @return Command buffer handle
-		 */
 		@Override
 		public Handle handle() {
 			return handle;
 		}
-		// TODO - was package-private
 
 		/**
 		 * @return Parent command pool
@@ -129,22 +139,12 @@ public interface Command {
 		 * @throws IllegalStateException if this buffer is not recording
 		 * @throws IllegalArgumentException if no commands have been recorded
 		 */
-		public void end() {
+		public Buffer end() {
 			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
 			// TODO - count?
 			check(library().vkEndCommandBuffer(handle));
 			state = State.READY;
-		}
-
-		/**
-		 * Records a one-time-submit command to this buffer.
-		 * @param cmd Command
-		 * @see VkCommandBufferUsageFlag#VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
-		 */
-		public void once(Command cmd) {
-			begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-			add(cmd);
-			end();
+			return this;
 		}
 
 		/**

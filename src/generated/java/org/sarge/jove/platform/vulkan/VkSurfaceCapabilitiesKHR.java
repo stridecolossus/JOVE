@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -21,10 +21,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"supportedCompositeAlpha",
 	"supportedUsageFlags"
 })
-public class VkSurfaceCapabilitiesKHR extends VulkanStructure {
-	public static class ByValue extends VkSurfaceCapabilitiesKHR implements Structure.ByValue { }
-	public static class ByReference extends VkSurfaceCapabilitiesKHR implements Structure.ByReference { }
-
+public class VkSurfaceCapabilitiesKHR extends VulkanStructure implements ByReference {
 	public int minImageCount;
 	public int maxImageCount;
 	public VkExtent2D currentExtent;

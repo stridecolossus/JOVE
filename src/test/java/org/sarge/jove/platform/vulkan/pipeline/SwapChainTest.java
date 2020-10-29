@@ -117,7 +117,6 @@ public class SwapChainTest extends AbstractVulkanTest {
 			// Create surface
 			surface = mock(Surface.class);
 			when(surface.handle()).thenReturn(new Handle(new Pointer(42)));
-			when(surface.device()).thenReturn(dev);
 			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR));
 
 			// Init supported formats
@@ -144,7 +143,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 			caps.currentExtent = extent;
 
 			// Create builder
-			builder = new SwapChain.Builder(surface);
+			builder = new SwapChain.Builder(dev, surface);
 		}
 
 		@Test
