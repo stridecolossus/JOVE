@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -49,8 +49,9 @@ public class ShaderTest extends AbstractVulkanTest {
 		assertEquals(CODE.length, info.codeSize);
 
 		// Check code buffer
-		info.pCode.flip();
 		assertNotNull(info.pCode);
+		assertEquals(0, info.pCode.position());
+		assertEquals(1, info.pCode.limit());
 		assertEquals(1, info.pCode.capacity());
 		assertEquals((byte) 42, info.pCode.get());
 	}
@@ -72,7 +73,7 @@ public class ShaderTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void load() {
+		void load() throws IOException {
 			shader = loader.load(new ByteArrayInputStream(new byte[]{}));
 			assertNotNull(shader);
 			verify(lib, atLeastOnce()).vkCreateShaderModule(eq(dev.handle()), isA(VkShaderModuleCreateInfo.class), isNull(), eq(factory.ptr));
@@ -80,7 +81,7 @@ public class ShaderTest extends AbstractVulkanTest {
 
 		@SuppressWarnings("resource")
 		@Test
-		void loadFile() throws FileNotFoundException {
+		void loadFile() throws Exception {
 			loader.load(new FileInputStream("./src/test/resources/thiswayup.jpg"));
 		}
 	}

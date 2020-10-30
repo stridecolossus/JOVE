@@ -45,20 +45,11 @@ public class DataSourceTest {
 
 	@SuppressWarnings({"resource", "unchecked"})
 	@Test
-	void loader() {
+	void loader() throws IOException {
 		final Loader<InputStream, Object> delegate = mock(Loader.class);
 		final var loader = DataSource.loader(src, delegate);
 		assertNotNull(loader);
 		loader.load("duke.jpg");
 		verify(delegate).load(isA(InputStream.class));
 	}
-
-//	@SuppressWarnings({"resource", "unchecked"})
-//	@Test
-//	void loaderException() {
-//		final Loader<InputStream, Object> delegate = mock(Loader.class);
-//		final var loader = DataSource.loader(src, delegate);
-//		when(delegate.load(isA(InputStream.class))).thenThrow(IOException.class);
-//		assertThrows(RuntimeException.class, "xxx", () -> loader.load("duke.jpg"));
-//	}
 }

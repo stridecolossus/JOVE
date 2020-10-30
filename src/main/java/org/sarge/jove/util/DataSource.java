@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.sarge.jove.util.Loader.LoaderAdapter;
+
 /**
  * A <i>data source</i> opens an input-stream for a given resource by name.
  */
@@ -37,6 +39,28 @@ public interface DataSource {
 	 */
 	static DataSource of(String dir) {
 		return of(Paths.get(dir));
+	}
+
+	// TODO - doc
+
+	/**
+	 * Creates an adapter for a loader with the given data-source.
+	 * @param <R> Resource type
+	 * @param <T> Intermediate type
+	 * @param src			Data-source
+	 * @param loader		Delegate loader
+	 * @return Data-source loader
+	 */
+	static <T, R> Loader<String, R> loader(DataSource src, LoaderAdapter<T, R> loader) {
+		return name -> {
+			try(final InputStream in = src.open(name)) {
+				final T obj = loader.open(in);
+				return loader.load(obj);
+			}
+			catch(IOException e) {
+				throw new RuntimeException("Error loading resource: " + name, e);
+			}
+		};
 	}
 
 	/**

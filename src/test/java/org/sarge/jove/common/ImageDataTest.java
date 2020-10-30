@@ -4,14 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.io.ByteArrayInputStream;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+
+import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -67,6 +68,7 @@ public class ImageDataTest {
 			loader = new Loader();
 		}
 
+		@SuppressWarnings("resource")
 		@ParameterizedTest
 		@CsvSource({
 			"duke.jpg, 375, 375, 4",
@@ -75,13 +77,11 @@ public class ImageDataTest {
 		})
 		void load(String filename, int w, int h, int components) throws IOException {
 			// Load image from file-system
-			final ImageData image;
 			final Path path = Paths.get("./src/test/resources", filename);
-			try(final InputStream in = Files.newInputStream(path)) {
-				image = loader.load(in);
-			}
+			final BufferedImage buffered = ImageIO.read(Files.newInputStream(path));
 
-			// Check image
+			// Load image wrapper
+			final ImageData image = loader.load(buffered);
 			assertNotNull(image);
 			assertEquals(new Dimensions(w, h), image.size());
 			assertNotNull(image.components());
@@ -91,7 +91,8 @@ public class ImageDataTest {
 
 		@Test
 		void loadUnsupportedFormat() throws IOException {
-			assertThrows(RuntimeException.class, () -> loader.load(new ByteArrayInputStream(new byte[]{})));
+			final BufferedImage wrong = new BufferedImage(1, 2, BufferedImage.TYPE_USHORT_555_RGB);
+			assertThrows(RuntimeException.class, () -> loader.load(wrong));
 		}
 	}
 }

@@ -3,6 +3,8 @@ package org.sarge.jove.platform.obj;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -24,12 +26,13 @@ import org.sarge.jove.model.Model.IndexedBuilder;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.util.Check;
+import org.sarge.jove.util.Loader.LoaderAdapter;
 
 /**
  * Loader for an OBJ model.
  * @author Sarge
  */
-public class ObjectModelLoader {
+public class ObjectModelLoader extends LoaderAdapter<Reader, Model> {
 	/**
 	 * The <i>object model</i> holds the transient OBJ data during parsing.
 	 */
@@ -353,6 +356,11 @@ public class ObjectModelLoader {
 				.primitive(Primitive.TRIANGLES);
 	}
 
+	@Override
+	protected Reader open(InputStream in) {
+		return new InputStreamReader(in);
+	}
+
 	/**
 	 * Loads an OBJ model.
 	 * @param r Reader
@@ -360,6 +368,7 @@ public class ObjectModelLoader {
 	 * @throws IOException if the model cannot be loaded
 	 * @see #model()
 	 */
+	@Override
 	public Model load(Reader r) throws IOException {
 		// Create transient model
 		final ObjectModel model = model();

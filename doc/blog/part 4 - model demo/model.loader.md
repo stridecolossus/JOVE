@@ -19,6 +19,7 @@ The *face* command specifies the vertices of a polygon (usually a triangle) as a
 Each vertex consists of a position index, optional normal index, and an optional texture coordinate index.
 
 | example 				| description 								|
+| -------               | -----------                               |
 | f 1 2 3				| triangle with vertex positions only 		|
 | f 1/2 3/4 5/6			| triangle also with texture coordinates 	|
 | f 1/2/3 4/5/6 7/8/9	| also with normals 						|
@@ -353,6 +354,8 @@ void update(int size) {
 }
 ```
 
+---
+
 # Indexed Models
 
 We know that the OBJ model that we will be using in our demo contains a large number of duplicate vertices which we have ignored until now.
@@ -637,10 +640,132 @@ private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
 
 ### Conclusion
 
-There is still a lot of conversions of byte buffers to/from arrays but our model can now be loaded in a matter of milliseconds - Viola!
+There is still a lot of conversions of byte buffers to/from arrays but our model can now be loaded in a matter of milliseconds - Nice!
 
 Initially we tried to protect the buffers using the `asReadOnlyBuffer` but this seemed to break our unit-tests (equality of buffers is complex)
-and caused issues when we came to integration into the demo so they are exposed as mutable for the moment.
+and caused issues when we came to integration so they are exposed as mutable for the moment.
 
 We can now move onto integrating the OBJ model into the demo and see what it looks like.
+
+---
+
+# Loader Support
+
+During the creation of the OBJ and buffered model loaders we took a detour to refactor the various loaders we had implemented so far (including images and shaders).
+
+First we created a _loader_ abstraction:
+
+```java
+/**
+ * A <i>loader</i> defines a mechanism for loading a resource.
+ * @param <T> Input type
+ * @param <R> Resource type
+ * @author Sarge
+ */
+@FunctionalInterface
+public interface Loader<T, R> {
+    /**
+     * Loads a resource.
+     * @param in Input data
+     * @return Loaded resource
+     * @throws IOException if the resource cannot be loaded
+     */
+    R load(T in) throws IOException;
+}
+```
+
+And defined a base-class adapter that is required to implement the open() method to map an arbitrary resource from an input stream:
+
+```java
+/**
+ * Adapter for a loader with an intermediate data type mapped from an {@link InputStream}.
+ * @param <T> Intermediate type
+ * @param <R> Resource type
+ */
+abstract class LoaderAdapter<T, R> implements Loader<T, R> {
+    /**
+     * Maps the given input-stream to an instance of the intermediate type.
+     * @param in Input-stream
+     * @return Intermediate object
+     * @throws IOException if the stream cannot be opened
+     */
+    protected abstract T open(InputStream in) throws IOException;
+}
+```
+
+Next we added a _data source_ that maps a filename to an input-stream:
+
+```java
+public interface DataSource {
+    /**
+     * Opens the resource with the given name.
+     * @param name Resource name
+     * @return Input-stream
+     * @throws IOException if the resource cannot be opened
+     */
+    InputStream open(String name) throws IOException;
+}
+```
+
+and provided an implementation for the a file-system directory:
+
+```java
+/**
+ * Creates a file-system data-source at the given directory.
+ * @param dir Directory
+ * @return Data-source
+ * @throws IllegalArgumentException if the directory does not exist
+ */
+static DataSource of(Path dir) {
+    if(!Files.exists(dir)) throw new IllegalArgumentException("Data-source directory does not exist: " + dir);
+    return name -> Files.newInputStream(dir.resolve(name));
+}
+
+/**
+ * Creates a file-system data-source at the given directory.
+ * @param dir Directory
+ * @return Data-source
+ * @throws IllegalArgumentException if the directory does not exist
+ */
+static DataSource of(String dir) {
+    return of(Paths.get(dir));
+}
+```
+
+The final piece of the jigsaw is the following factory method that allows us to compose these two types:
+
+```java
+/**
+ * Creates an adapter for a loader with the given data-source.
+ * @param <R> Resource type
+ * @param <T> Intermediate type
+ * @param src           Data-source
+ * @param loader        Delegate loader
+ * @return Data-source loader
+ */
+static <T, R> Loader<String, R> loader(DataSource src, LoaderAdapter<T, R> loader) {
+    return name -> {
+        try(final InputStream in = src.open(name)) {
+            final T obj = loader.open(in);
+            return loader.load(obj);
+        }
+        catch(IOException e) {
+            throw new RuntimeException("Error loading resource: " + name, e);
+        }
+    };
+}
+```
+
+We can then define a centralised data-source and combine it with loaders to lookup resources by name:
+
+```java
+final DataSource src = DataSource.of("./src/test/resources");
+
+...
+
+final var loader = DataSource.loader(src, new ObjectModelLoader());
+final Model model = loader.load("example.obj");
+```
+
+This has the benefit of separating the mapping of filenames to resources (handled by the data-sources) from the actual loaders, with the bonus that the checked I/O exceptions can be caught in a single location.
 

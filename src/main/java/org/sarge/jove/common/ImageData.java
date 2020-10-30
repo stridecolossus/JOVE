@@ -112,7 +112,7 @@ public interface ImageData {
 		 * @throws RuntimeException if the image cannot be loaded or the format is not supported
 		 */
 		@Override
-		protected ImageData create(BufferedImage image) {
+		public ImageData load(BufferedImage image) {
 			// Convert image
 			final BufferedImage result = switch(image.getType()) {
 				// Gray-scale

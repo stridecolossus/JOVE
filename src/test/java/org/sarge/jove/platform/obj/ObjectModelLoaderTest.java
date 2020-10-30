@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -32,10 +33,12 @@ public class ObjectModelLoaderTest {
 
 	@Nested
 	class LoaderTests {
-		@Test
-		void load() throws IOException {
+		private String data;
+
+		@BeforeEach
+		void before() {
 			// Create an OBJ file
-			final String data = """
+			data = """
 					# comment
 
 					v 1 2 3
@@ -52,7 +55,10 @@ public class ObjectModelLoaderTest {
 
 					f 1/1/1 2/2/2 3/3/3
 			""";
+		}
 
+		@Test
+		void load() throws IOException {
 			// Load OBJ model
 			final Model model = loader.load(new StringReader(data));
 			assertNotNull(model);
@@ -73,13 +79,13 @@ public class ObjectModelLoaderTest {
 
 		@Test
 		void loadUnknownCommand() {
-			assertThrows(IOException.class, () -> loader.load(new StringReader("cobblers")));
+			assertThrows(IOException.class, "Unsupported OBJ command", () -> loader.load(new StringReader("cobblers")));
 		}
 
 		@Test
 		void loadIgnoreUnknownCommand() throws IOException {
 			loader.setUnknownCommandHandler(ObjectModelLoader.HANDLER_IGNORE);
-			loader.load(new StringReader("cobblers"));
+			loader.load(new StringReader("cobblers\n" + data));
 		}
 	}
 

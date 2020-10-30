@@ -83,9 +83,14 @@ public interface Model {
 		 * Validates this model against the primitive.
 		 */
 		protected void validate() {
+			if(count() == 0) {
+				throw new IllegalArgumentException("Empty model");
+			}
+
 			if(!primitive.isValidVertexCount(count())) {
 				throw new IllegalArgumentException(String.format("Invalid number of vertices for primitive: count=%d primitive=%s", count(), primitive));
 			}
+
 			if(layout.components().contains(Vertex.Component.NORMAL) && !primitive.hasNormals()) {
 				throw new IllegalArgumentException("Drawing primitive does not support normals: " + primitive);
 			}
@@ -350,10 +355,10 @@ public interface Model {
 		private final List<Integer> index = new ArrayList<>();
 		private final Map<Vertex, Integer> map = new HashMap<>();
 
-		private boolean auto;
+		private boolean auto = true;
 
 		/**
-		 * Sets whether to automatically add an index for each vertex (default is {@code false}).
+		 * Sets whether to automatically add an index for each vertex (default is {@code true}).
 		 * @param auto Whether to automatically add indices
 		 */
 		public IndexedBuilder setAutoIndex(boolean auto) {

@@ -130,7 +130,7 @@ public class BufferedModel extends AbstractModel {
 		 * @throws IOException if the model cannot be loaded
 		 */
 		@Override
-		public Model create(DataInputStream in) throws IOException {
+		public Model load(DataInputStream in) throws IOException {
 			// Load and verify file format version
 			final int version = in.readInt();
 			if(version > VERSION) {
