@@ -217,11 +217,11 @@ void load(String filename, int w, int h, int components) throws IOException {
 
 ## Texture Images
 
-Up until now we have not needed to create an image explicitly (the swapchain images were created for us).  However texture images will need to be managed by the application, i.e. an instance of `TransientNativeObject` with an explicit `destroy` method.  Therefore we refactor the existing image class to an interface and create separate implementations for the two cases.
+Up until now we have not needed to create an image explicitly (the swapchain images were created for us).  However texture images will need to be managed by the application, i.e. a native object with an explicit destroy() method.  Therefore we refactor the existing image class to an interface and create separate implementations for the two cases.
 
 The image class now looks like this:
 
-```
+```java
 public interface Image extends NativeObject {
     /**
      * @return Descriptor for this image
@@ -347,7 +347,7 @@ public Image build() {
 
 We can now use these new components to load a texture image in the demo:
 
-```
+```java
 // Load image
 final ImageData image = ImageData.load(new FileInputStream("./src/test/resources/thiswayup.jpg"));
 
@@ -553,7 +553,7 @@ Before we progress any further we will modify the demo to include texture coordi
 
 First we change the vertex data to render a coloured quad with white in the bottom-right corner:
 
-```
+```java
 final Vertex[] vertices = {
     new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
     new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
@@ -568,7 +568,7 @@ Notes:
 
 - We change the number of vertices in the drawing command.
 
-- The default drawing primitive is a _triangle strip_ which has alternating winding orders.  The quad consists of two triangles i) counter-clockwise with vertices 012 and ii) clockwise 123.
+- The default drawing primitive is a _triangle strip_ which has alternating winding orders.  The quad consists of two triangles 1. counter-clockwise with vertices 012 and 2. clockwise 123.
 
 This should result in something like the following:
 
@@ -586,8 +586,8 @@ public interface TextureCoordinate extends Bufferable {
         }
 
         @Override
-        public final void buffer(FloatBuffer buffer) {
-            buffer.put(u);
+        public final void buffer(ByteBuffer buffer) {
+            buffer.putFloat(u);
         }
     }
 
@@ -609,8 +609,8 @@ public interface TextureCoordinate extends Bufferable {
         public final float v;
 
         @Override
-        public final void buffer(FloatBuffer buffer) {
-            buffer.put(u).put(v);
+        public final void buffer(ByteBuffer buffer) {
+            buffer.putFloat(u).putFloat(v);
         }
     }
 
@@ -623,7 +623,7 @@ public interface TextureCoordinate extends Bufferable {
 
 We can now replace the colour data in the quad with texture coordinates:
 
-```
+```java
 new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_LEFT).build(),
 new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
 new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
@@ -632,7 +632,7 @@ new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BO
 
 and modify the vertex layout accordingly:
 
-```
+```java
 Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
 ```
 
@@ -734,15 +734,6 @@ public class DescriptorSet implements NativeObject {
     ...
 
     /**
-     * Updates this descriptor set for the given sampler.
-     * @param binding Binding index
-     * @param sampler Sampler
-     * @param view    Image view
-     */
-    public void sampler(int binding, Sampler sampler, View view) {
-    }
-
-    /**
      * Creates a pipeline bind command for this descriptor set.
      * @param layout Pipeline layout
      * @return New bind command
@@ -764,7 +755,7 @@ public class DescriptorSet implements NativeObject {
 }
 ```
 
-The only noteworthy method is a factory to create a bind method for a group of descriptor sets:
+The only noteworthy methods are the over-loaded factory methods to create a bind command:
 
 ```java
 public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
@@ -816,7 +807,16 @@ public static record Binding(int binding, VkDescriptorType type, int count, Set<
 }
 ```
 
-We implement a convenience builder for the binding and add a method to populate a `VkDescriptorSetLayoutBinding` descriptor which will be used later.
+We implement a convenience builder for the binding and add a populate method for the binding descriptor used below:
+
+```java
+private void populate(VkDescriptorSetLayoutBinding info) {
+    info.binding = binding;
+    info.descriptorType = type;
+    info.descriptorCount = count;
+    info.stageFlags = IntegerEnumeration.mask(stages);
+}
+```
 
 A layout is created by a static factory method:
 
@@ -859,9 +859,9 @@ public static class Pool extends AbstractVulkanObject {
 }
 ```
 
-The pool has a _max_ member that we assume is an overall limit on the number of sets that is can allocate.
+The pool has a _max_ member that we assume is an overall limit on the number of sets that it can allocate.
 
-We add the following to allocate a number of sets from the pool:
+We add the following method to allocate a number of sets from the pool:
 
 ```java
 public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
@@ -1061,11 +1061,11 @@ final DescriptorSet.Layout.Binding binding = new DescriptorSet.Layout.Binding.Bu
 final DescriptorSet.Layout layout = DescriptorSet.Layout.create(dev, List.of(binding));
 ```
 
-Which is also added to the pipeline layout:
+Which is added to the pipeline layout:
 
 ```java
 final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
-    .add(setLayout)
+    .add(layout)
     .build();
 ```
 
@@ -1081,10 +1081,10 @@ final DescriptorSet.Pool pool = new DescriptorSet.Pool.Builder(dev)
 We allocate a descriptor set for each swapchain image:
 
 ```java
-final var descriptors = setPool.allocate(setLayout, 2);
+final var descriptors = setPool.allocate(layout, 2);
 ```
 
-Which are initialised to the texture sampler:
+And initialise each with the texture sampler:
 
 ```java
 final Sampler sampler = new Sampler.Builder(dev).build();
@@ -1098,7 +1098,7 @@ Finally we bind the descriptor set in the rendering sequence (before the draw co
 
 The only other change we need to make is to actually sample the texture in the fragment shader which involves:
 1. Adding a layout declaration for a `uniform sampler2D` with the binding index we specified in the descriptor set.
-2. Invoke the built-in `texture` function to sample the texture with the coordinate passed from the vertex shader.
+2. Invoking the built-in `texture` function to sample the texture with the coordinate passed from the vertex shader.
 
 The fragment shader should look like this:
 
@@ -1122,7 +1122,7 @@ PICTURE
 
 There are a lot of steps in this chapter and therefore plenty that can go wrong.  Vulkan will generally throw a hissy fit if we attempt any invalid operations, e.g. forgetting to provide the target layout when performing an image transition.  However it is quite easy to specify a 'correct' pipeline and still end up with a black rectangle!  With so much going on behind the scenes this can be very difficult to diagnose - here are some possible failure cases:
 
-- Verify that the image contains RGBA data once it is loaded and that it matches the expected Vulkan format (`VK_FORMAT_R8G8B8A8_UNORM` in this case).
+- Verify that the image contains RGBA data once it is loaded and that it matches the expected Vulkan format which is `VK_FORMAT_R8G8B8A8_UNORM` in this example.
 
 - Ensure the texture alpha channel has a non-zero value.
 
@@ -1130,7 +1130,7 @@ There are a lot of steps in this chapter and therefore plenty that can go wrong.
 
 - Also check that the drawing primitive is a triangle strip.
 
-- Walk through the process of loading and transitioning the image and ensure that the previous/next layouts are correct and that image has the VK_IMAGE_ASPECT_COLOR_BIT aspect.
+- Walk through the process of loading and transitioning the image and ensure that the previous/next layouts are correct and that image has the `VK_IMAGE_ASPECT_COLOR_BIT` aspect.
 
 - Check that the image data is being copied to the vertex buffer and not the other way round (yes we really did this!)
 

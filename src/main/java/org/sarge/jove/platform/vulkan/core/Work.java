@@ -54,19 +54,18 @@ public interface Work {
 			// Allocate one-off buffer
 			final Command.Buffer buffer = Command.once(pool, this);
 
+			// Perform work
 			try {
-				// Perform work
 				final Work work = new Builder().add(buffer).build();
 				work.submit();
-
-				// Wait for work to complete
-				if(wait) {
-					pool.queue().waitIdle();
-				}
 			}
 			finally {
-				// Release
 				buffer.free();
+			}
+
+			// Wait for work to complete
+			if(wait) {
+				pool.queue().waitIdle();
 			}
 		}
 
