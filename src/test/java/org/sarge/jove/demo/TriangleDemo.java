@@ -167,8 +167,8 @@ public class TriangleDemo {
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb
-				.begin() // VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
-					.add(pass.begin(buffers.get(n), extent))
+				.begin()
+					.add(pass.begin(buffers.get(n)))
 					.add(pipeline.bind())
 					.add(draw)
 					.add(RenderPass.END_COMMAND)

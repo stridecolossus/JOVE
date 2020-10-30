@@ -705,7 +705,7 @@ public class FrameBuffer extends AbstractVulkanObject {
         check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
 
         // Create frame buffer
-        return new FrameBuffer(buffer.getValue(), dev, views);
+        return new FrameBuffer(buffer.getValue(), dev, extents, views);
     }
 
     private final List<View> attachments;
@@ -714,10 +714,12 @@ public class FrameBuffer extends AbstractVulkanObject {
      * Constructor.
      * @param handle            Handle
      * @param dev               Logical device
+     * @param extents           Image extents
      * @param attachments       Image attachments
      */
     private FrameBuffer(Pointer handle, LogicalDevice dev, List<View> attachments) {
         super(handle, dev, dev.library()::vkDestroyFramebuffer);
+        this.extents = notNull(extents);
         this.attachments = List.copyOf(notEmpty(attachments));
     }
 

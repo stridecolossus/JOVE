@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
@@ -18,7 +17,6 @@ import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -49,16 +47,15 @@ public class RenderPass extends AbstractVulkanObject {
 
 	/**
 	 * Creates a command to begin rendering.
-	 * @param buffer		Frame buffer
-	 * @param extent		Extent
+	 * @param buffer Frame buffer
 	 * @return Begin rendering command
 	 */
-	public Command begin(FrameBuffer buffer, Rectangle extent) {
+	public Command begin(FrameBuffer buffer) {
 		// Create descriptor
 		final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
 		info.renderPass = this.handle();
 		info.framebuffer = buffer.handle();
-		ExtentHelper.rectangle(extent, info.renderArea);
+		info.renderArea = buffer.extents().toRect2D();
 
 		// Map attachments to clear values
 		final Collection<ClearValue> values = buffer.attachments().stream().map(View::clear).collect(toList());

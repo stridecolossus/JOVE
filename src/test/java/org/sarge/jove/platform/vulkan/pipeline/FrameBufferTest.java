@@ -60,6 +60,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		assertNotNull(buffer);
 		assertNotNull(buffer.handle());
 		assertEquals(dev, buffer.device());
+		assertEquals(view.image().descriptor().extents(), buffer.extents());
 		assertEquals(List.of(view), buffer.attachments());
 	}
 

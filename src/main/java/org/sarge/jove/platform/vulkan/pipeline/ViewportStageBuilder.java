@@ -8,7 +8,6 @@ import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.ExtentHelper;
 import org.sarge.jove.util.Check;
 
 /**
@@ -121,8 +120,16 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		// Add scissors
 		if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
 		info.scissorCount = scissors.size();
-		info.pScissors = VulkanStructure.array(VkRect2D.ByReference::new, scissors, ExtentHelper::rectangle);
+		info.pScissors = VulkanStructure.array(VkRect2D.ByReference::new, scissors, this::rectangle);
 
 		return info;
+	}
+
+	// TODO - helper?
+	private void rectangle(Rectangle rect, VkRect2D out) {
+		out.offset.x = rect.x();
+		out.offset.y = rect.y();
+		out.extent.width = rect.width();
+		out.extent.height = rect.height();
 	}
 }

@@ -106,8 +106,18 @@ public class ImageTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void create() {
-			final var result = extents.create();
+		void toRect2D() {
+			final var result = extents.toRect2D();
+			assertNotNull(result);
+			assertEquals(0, result.offset.x);
+			assertEquals(0, result.offset.y);
+			assertEquals(2, result.extent.width);
+			assertEquals(3, result.extent.height);
+		}
+
+		@Test
+		void toExtent3D() {
+			final var result = extents.toExtent3D();
 			assertNotNull(result);
 			assertEquals(1, result.depth);
 			assertEquals(2, result.width);

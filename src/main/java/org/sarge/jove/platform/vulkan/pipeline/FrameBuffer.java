@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notEmpty;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.List;
 
@@ -48,20 +49,30 @@ public class FrameBuffer extends AbstractVulkanObject {
 		check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
 
 		// Create frame buffer
-		return new FrameBuffer(buffer.getValue(), dev, views);
+		return new FrameBuffer(buffer.getValue(), dev, extents, views);
 	}
 
 	private final List<View> attachments;
+	private final Image.Extents extents;
 
 	/**
 	 * Constructor.
 	 * @param handle 			Handle
 	 * @param dev				Logical device
+	 * @param extents			Image extents
 	 * @param attachments		Image attachments
 	 */
-	private FrameBuffer(Pointer handle, LogicalDevice dev, List<View> attachments) {
+	private FrameBuffer(Pointer handle, LogicalDevice dev, Image.Extents extents, List<View> attachments) {
 		super(handle, dev, dev.library()::vkDestroyFramebuffer);
+		this.extents = notNull(extents);
 		this.attachments = List.copyOf(notEmpty(attachments));
+	}
+
+	/**
+	 * @return Extents of the frame-buffer attachments
+	 */
+	public Image.Extents extents() {
+		return extents;
 	}
 
 	/**

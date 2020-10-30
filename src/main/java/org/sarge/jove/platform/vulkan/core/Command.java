@@ -106,7 +106,6 @@ public interface Command {
 		 * Starts command buffer recording.
 		 * @param flags Flags
 		 * @throws IllegalStateException if this buffer is not ready for recording
-		 * @throws ServiceException if recording cannot be started
 		 */
 		public Buffer begin(VkCommandBufferUsageFlag... flags) {
 			// Check buffer can be recorded

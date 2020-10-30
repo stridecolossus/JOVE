@@ -2,7 +2,7 @@
 
 We are finally on the last lap for the goal of this phase of development - rendering a simple triangle.
 
-The final component we need to complete the demo is command sequence for drawing the triangle and a simple render loop that acquires and presents a frame.
+The final components we need to complete the demo is the command sequence for drawing the triangle and a simple render loop that acquires and presents a frame.
 
 ---
 
@@ -25,10 +25,10 @@ Command draw = ...
 
 buffer
     .begin()
-    .add(begin)
-    .add(bind)
+    .add(pass.begin())
+    .add(pipeline.bind())
     .add(draw)
-    .add(end);
+    .add(pass.end());
     .end();
 ```
 
@@ -64,7 +64,7 @@ public interface Command {
 }
 ```
 
-The command interface abstracts invocation of a Vulkan API command in a similar fashion to the destructor interface.
+The command interface abstracts invocation of a Vulkan API command in a similar fashion to the destructor interface we implemented for native handles.
 
 ## Command Pool
 
@@ -222,7 +222,6 @@ The begin() method is used to start recording:
  * Starts command buffer recording.
  * @param flags Flags
  * @throws IllegalStateException if this buffer is not ready for recording
- * @throws ServiceException if recording cannot be started
  */
 public Buffer begin(VkCommandBufferUsageFlag... flags) {
     // Check buffer can be recorded
@@ -288,16 +287,15 @@ We add the following factory method to the render pass class to start rendering:
 ```java
 /**
  * Creates a command to begin rendering.
- * @param buffer        Frame buffer
- * @param extent        Extent
+ * @param buffer Frame buffer
  * @return Begin rendering command
  */
-public Command begin(FrameBuffer buffer, Rectangle extent) {
+public Command begin(FrameBuffer buffer) {
     // Create descriptor
     final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
     info.renderPass = this.handle();
     info.framebuffer = buffer.handle();
-    ExtentHelper.rectangle(extent, info.renderArea);
+    info.renderArea = buffer.extents().toRect2D();
 
     // Init clear values
     // TODO - hard-coded!
@@ -315,12 +313,11 @@ public Command begin(FrameBuffer buffer, Rectangle extent) {
 }
 ```
 
-This command also initialises the clear values for the frame buffer attachments - we have obviously hard-coded a grey colour for the single colour attachment.
-In a future chapter we will replace this temporary code with a proper implementation for both colour and depth attachments.
+This command also initialises the clear values for the frame buffer attachments - we have obviously hard-coded a grey colour for the single colour attachment.  In a future chapter we will replace this temporary code with a proper implementation for both colour and depth attachments.
 
-    Note that the `VkClearValue` and `VkClearColorValue` objects are actually **unions** and not structures - the `setType()` JNA method is used to 'select' the union member.  This is the only instance in the whole Vulkan API (as far as we can tell) where unions are used!
+Note that the `VkClearValue` and `VkClearColorValue` objects are actually **unions** and not structures - the `setType()` JNA method is used to 'select' the union member.  This is the only instance in the whole Vulkan API (as far as we can tell) where unions are used!
 
-    As it turns out a structure _will_ just about work, we only have one attachment for this demo and presumably the native library ignores the 'extra' fields of the structure.  However this caused us a lot of headaches when we came to adding a second attachment for the depth buffer and suddenly had memory errors when configuring the pipeline.
+As it turns out a structure _will_ just about work, we only have one attachment for this demo and presumably the native library ignores the 'extra' fields of the structure.  However this caused us a lot of headaches when we came to adding a second attachment for the depth buffer and suddenly had memory errors when configuring the pipeline.
 
 We introduce a simple RGBA colour domain object for the clear colour:
 
@@ -357,7 +354,7 @@ public record Colour(float red, float green, float blue, float alpha) {
 }
 ```
 
-Finally we add the following constant for ending a render pass:
+Finally we add the following constant to end the render pass:
 
 ```java
 /**
@@ -482,9 +479,10 @@ Next we record the rendering sequence for each frame-buffer:
 
 ```java
 for(int n = 0; n < buffers.size(); ++n) {
-    final Command.Buffer buffer = commands.get(n);
-    buffer.begin()
-        .add(pass.begin(buffers.get(n), rect))
+    final Command.Buffer cmd = commands.get(n);
+    final FrameBuffer fb = buffers.get(n);
+    cmd.begin()
+        .add(pass.begin(fb))
         .add(pipeline.bind())
         .add(draw)
         .add(RenderPass.END_COMMAND)
@@ -528,7 +526,7 @@ There are a few gotchas that could result in looking at a blank screen:
 
 - Ensure that a diagnostics handler has been attached to the Vulkan instance to check for obvious mistakes.
 
-- Although not covered in the demo the rasterizer pipeline stage specifies culling of back-facing polygons by default.  The triangle vertices are counter-clockwise (which _should_ be the default winding order) but changing the culling mode (or disabling culling altogether) is worth checking.
+- Although not covered in this demo the rasterizer pipeline stage specifies culling of back-facing polygons by default.  The triangle vertices are counter-clockwise (which _should_ be the default winding order) but changing the culling mode (or disabling culling altogether) is worth checking.
 
 - Double-check that the format of the swapchain images is as expected.
 

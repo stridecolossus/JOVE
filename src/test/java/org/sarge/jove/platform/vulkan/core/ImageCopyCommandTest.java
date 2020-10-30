@@ -119,7 +119,7 @@ public class ImageCopyCommandTest {
 
 			// Check image extents
 			assertNotNull(info.imageExtent);
-			assertTrue(info.imageExtent.dataEquals(image.descriptor().extents().create()));
+			assertTrue(info.imageExtent.dataEquals(image.descriptor().extents().toExtent3D()));
 
 			// Check sub-resource
 			assertNotNull(info.imageSubresource);

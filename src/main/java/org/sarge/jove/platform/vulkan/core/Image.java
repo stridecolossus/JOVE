@@ -62,9 +62,21 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * @return New Vulkan descriptor for this image extents
+		 * Converts to a {@link VkRect2D}.
+		 * @return Rectangle
 		 */
-		public VkExtent3D create() {
+		public VkRect2D toRect2D() {
+			final VkRect2D rect = new VkRect2D();
+			rect.extent.width = width;
+			rect.extent.height = height;
+			return rect;
+		}
+
+		/**
+		 * Converts to a {@link VkExtent3D}.
+		 * @return Extents
+		 */
+		public VkExtent3D toExtent3D() {
 			final VkExtent3D extent = new VkExtent3D();
 			extent.width = width;
 			extent.height = height;
@@ -334,7 +346,7 @@ public interface Image extends NativeObject {
 			// TODO - aspects not empty?
 
 			// Complete create descriptor
-			info.extent = this.extents.create();
+			info.extent = this.extents.toExtent3D();
 			info.usage = IntegerEnumeration.mask(usage);
 
 			// Allocate image

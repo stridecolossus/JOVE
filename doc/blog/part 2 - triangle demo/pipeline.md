@@ -323,13 +323,11 @@ protected VkPipelineViewportStateCreateInfo result() {
     // Add scissors
     if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
     info.scissorCount = scissors.size();
-    info.pScissors = VulkanStructure.array(VkRect2D.ByReference::new, scissors, ExtentHelper::rectangle);
+    info.pScissors = VulkanStructure.array(VkRect2D.ByReference::new, scissors, this::rectangle);
 
     return info;
 }
 ```
-
-`ExtentHelper` is a utility class used to populate a Vulkan rectangle from the equivalent JOVE domain object (which avoids having to put the Vulkan code in the domain classes and/or manually editing the code-generated Vulkan structures).
 
 ---
 

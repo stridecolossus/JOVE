@@ -132,7 +132,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 			// ...TODO
 
 			// Complete descriptor
-			region.imageExtent = image.descriptor().extents().create();
+			region.imageExtent = image.descriptor().extents().toExtent3D();
 			region.imageOffset = new VkOffset3D();
 
 			// TODO

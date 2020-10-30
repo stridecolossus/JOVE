@@ -18,10 +18,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -56,11 +56,11 @@ public class RenderPassTest extends AbstractVulkanTest {
 			final FrameBuffer buffer = mock(FrameBuffer.class);
 			final View view = mock(View.class);
 			when(view.clear()).thenReturn(ClearValue.COLOUR);
+			when(buffer.extents()).thenReturn(new Image.Extents(3, 4));
 			when(buffer.attachments()).thenReturn(List.of(view));
 
 			// Create command
-			final Rectangle extent = new Rectangle(1, 2, 3, 4);
-			final Command cmd = pass.begin(buffer, extent);
+			final Command cmd = pass.begin(buffer);
 			assertNotNull(cmd);
 
 			// Invoke command
@@ -78,10 +78,10 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertEquals(buffer.handle(), info.framebuffer);
 
 			// Check extents
-			assertEquals(extent.x(), info.renderArea.offset.x);
-			assertEquals(extent.y(), info.renderArea.offset.y);
-			assertEquals(extent.width(), info.renderArea.extent.width);
-			assertEquals(extent.height(), info.renderArea.extent.height);
+			assertEquals(0, info.renderArea.offset.x);
+			assertEquals(0, info.renderArea.offset.y);
+			assertEquals(3, info.renderArea.extent.width);
+			assertEquals(4, info.renderArea.extent.height);
 
 			// Check clear values
 			assertEquals(1, info.clearValueCount);
