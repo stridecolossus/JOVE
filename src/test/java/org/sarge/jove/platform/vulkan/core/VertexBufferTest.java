@@ -145,14 +145,20 @@ public class VertexBufferTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private VertexBuffer.Builder builder;
+		private MemoryAllocator.Allocation allocation;
 
 		@BeforeEach
 		void before() {
 			// Init VBO memory allocation
+			// Init image memory
 			final Pointer mem = new Pointer(3);
 			final MemoryAllocator allocator = mock(MemoryAllocator.class);
+			allocation = mock(MemoryAllocator.Allocation.class);
 			when(dev.allocator()).thenReturn(allocator);
-			when(allocator.allocate(any())).thenReturn(mem); // TODO - check args
+			when(allocator.allocation()).thenReturn(allocation);
+			when(allocation.allocate()).thenReturn(mem);
+			when(allocation.init(any())).thenReturn(allocation);
+			when(allocation.size()).thenReturn(4L);
 
 			// Create builder
 			builder = new VertexBuffer.Builder(dev);
@@ -198,14 +204,15 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		@Test
 		void buildEmptyBufferLength() {
 			builder.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+			when(allocation.size()).thenReturn(0L);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
 		@Test
 		void staging() {
-			buffer = VertexBuffer.staging(dev, 42);
+			buffer = VertexBuffer.staging(dev, 4);
 			assertNotNull(buffer);
-			assertEquals(42, buffer.length());
+			assertEquals(4, buffer.length());
 		}
 	}
 }

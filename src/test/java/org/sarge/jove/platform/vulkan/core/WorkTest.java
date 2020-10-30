@@ -41,6 +41,7 @@ public class WorkTest extends AbstractVulkanTest {
 		buffer = mock(Command.Buffer.class);
 		when(buffer.pool()).thenReturn(pool);
 		when(buffer.handle()).thenReturn(new Handle(new Pointer(2)));
+		when(buffer.isReady()).thenReturn(true);
 
 		// Create builder
 		builder = new Work.Builder();
@@ -57,9 +58,16 @@ public class WorkTest extends AbstractVulkanTest {
 	}
 
 	@Test
+	void buildBufferNotReady() {
+		when(buffer.isReady()).thenReturn(false);
+		assertThrows(IllegalStateException.class, () -> builder.add(buffer));
+	}
+
+	@Test
 	void buildInvalidQueue() {
 		final Command.Buffer other = mock(Command.Buffer.class);
 		when(other.pool()).thenReturn(mock(Command.Pool.class));
+		when(other.isReady()).thenReturn(true);
 		builder.add(buffer);
 		assertThrows(IllegalArgumentException.class, () -> builder.add(other));
 	}

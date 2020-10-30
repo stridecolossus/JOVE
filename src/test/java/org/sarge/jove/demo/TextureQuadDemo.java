@@ -291,14 +291,13 @@ public class TextureQuadDemo {
 				.build();
 
 		// Create pipeline
-		final Rectangle rect = new Rectangle(chain.extents());
 		final Pipeline pipeline = new Pipeline.Builder(dev)
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
 					.binding(layout)
 					.build()
-				.viewport(rect)
+				.viewport(new Rectangle(chain.extents()))
 				.rasterizer()
 					.cullMode(VkCullModeFlag.VK_CULL_MODE_NONE)
 					.build()
@@ -330,7 +329,7 @@ public class TextureQuadDemo {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin()
-					.add(pass.begin(buffers.get(n), rect))
+					.add(pass.begin(buffers.get(n)))
 					.add(pipeline.bind())
 					.add(dest.bind())
 					.add(descriptors.get(n).bind(pipelineLayout))

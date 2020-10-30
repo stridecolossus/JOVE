@@ -21,7 +21,22 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * The <i>memory allocator</i> is used to allocate host and device memory for buffers, images, etc.
- * TODO - doc
+ * <p>
+ * Usage:
+ * <pre>
+ *  // Create allocator
+ *  MemoryAllocator allocator = MemoryAllocator.create(dev);
+ *
+ *  // Retrieve memory requirements from Vulkan
+ *  VkMemoryRequirements reqs = ...
+ *
+ *  // Allocate memory
+ *  Pointer mem = allocator
+ *  	.allocation()
+ *  	.init(reqs)
+ *  	.size(size)
+ *  	.allocate();
+ * </pre>
  * @author Sarge
  */
 public class MemoryAllocator {
@@ -39,68 +54,6 @@ public class MemoryAllocator {
 		return new MemoryAllocator(dev, props);
 	}
 
-	/**
-	 * An <i>allocation</i> specifies memory requirements.
-	 */
-	public record Allocation(long size, int filter, Set<VkMemoryPropertyFlag> flags) {
-		/**
-		 * Builder for an allocation.
-		 */
-		public static class Builder {
-			private final Set<VkMemoryPropertyFlag> flags = new HashSet<>();
-			private long size;
-			private int filter = Integer.MAX_VALUE;
-
-			/**
-			 * Sets the required size of the memory.
-			 * @param size Required memory size (bytes)
-			 */
-			public Builder size(long size) {
-				this.size = oneOrMore(size);
-				return this;
-			}
-
-			/**
-			 * Sets the memory type filter bit-mask.
-			 * @param filter Memory type filter mask
-			 */
-			public Builder filter(int filter) {
-				this.filter = filter;
-				return this;
-			}
-
-			/**
-			 * Convenience setter to initialise this allocation to the given memory requirements descriptor.
-			 * @param reqs Memory requirements
-			 */
-			public Builder init(VkMemoryRequirements reqs) {
-				size(reqs.size);
-				filter(reqs.memoryTypeBits);
-				// TODO - alignment
-				return this;
-			}
-
-			/**
-			 * Adds a memory property.
-			 * @param flag Memory property
-			 */
-			public Builder property(VkMemoryPropertyFlag flag) {
-				flags.add(notNull(flag));
-				return this;
-			}
-
-			/**
-			 * Constructs this allocation.
-			 * @return New memory allocation descriptor
-			 * @throws IllegalArgumentException if the size has not been specified
-			 */
-			public Allocation build() {
-				if(size == 0) throw new IllegalArgumentException("Memory size has not been specified");
-				return new Allocation(size, filter, flags);
-			}
-		}
-	}
-
 	private final LogicalDevice dev;
 	private final VkPhysicalDeviceMemoryProperties props;
 
@@ -115,35 +68,10 @@ public class MemoryAllocator {
 	}
 
 	/**
-	 * Allocates device memory.
-	 * @param allocation Allocation descriptor
-	 * @return Memory handle
-	 * @throws RuntimeException if the memory cannot be allocated
+	 * @return New memory allocation
 	 */
-	Pointer allocate(Allocation allocation) {
-		// Find memory type
-		final int mask = IntegerEnumeration.mask(allocation.flags);
-		final int type = findMemoryType(allocation.filter, mask);
-
-        // TODO
-        // - limit number of allocations to maxMemoryAllocationCount
-        // - block allocation + offsets
-        // - pools = heap types
-		// http://kylehalladay.com/blog/tutorial/2017/12/13/Custom-Allocators-Vulkan.html
-		// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-
-		// Init memory descriptor
-		final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
-        info.allocationSize = allocation.size;
-        info.memoryTypeIndex = type;
-
-        // Allocate memory
-        final VulkanLibrary lib = dev.library();
-        final PointerByReference mem = lib.factory().pointer();
-        check(lib.vkAllocateMemory(dev.handle(), info, null, mem));
-
-        // Get memory handle
-        return mem.getValue();
+	public Allocation allocation() {
+		return new Allocation();
 	}
 
 	/**
@@ -173,5 +101,112 @@ public class MemoryAllocator {
 		return new ToStringBuilder(this)
 				.append("dev", dev)
 				.build();
+	}
+
+	/**
+	 * An <i>allocation</i> specifies memory requirements.
+	 */
+	public class Allocation {
+		private long size;
+		private int filter = Integer.MAX_VALUE;
+		private final Set<VkMemoryPropertyFlag> flags = new HashSet<>();
+
+		/**
+		 * @return Allocation size (bytes)
+		 */
+		public long size() {
+			return size;
+		}
+
+		/**
+		 * Sets the required size of the memory.
+		 * @param size Required memory size (bytes)
+		 */
+		public Allocation size(long size) {
+			this.size = oneOrMore(size);
+			return this;
+		}
+
+		/**
+		 * Sets the memory type filter bit-mask.
+		 * @param filter Memory type filter mask
+		 */
+		public Allocation filter(int filter) {
+			this.filter = filter;
+			return this;
+		}
+
+		/**
+		 * Convenience method to initialise this allocation to the given memory requirements descriptor.
+		 * @param reqs Memory requirements
+		 */
+		public Allocation init(VkMemoryRequirements reqs) {
+			size(reqs.size);
+			filter(reqs.memoryTypeBits);
+			// TODO - alignment
+			return this;
+		}
+
+		/**
+		 * Adds a memory property.
+		 * @param flag Memory property
+		 */
+		public Allocation property(VkMemoryPropertyFlag flag) {
+			flags.add(notNull(flag));
+			return this;
+		}
+
+		/**
+		 * Allocates device memory.
+		 * @return Memory handle
+		 * @throws IllegalArgumentException if the memory size has not been specified
+		 * @throws RuntimeException if the memory cannot be allocated
+		 */
+		public Pointer allocate() {
+			// Validate
+			if(size == 0) throw new IllegalArgumentException("Memory size not specified");
+
+			// Find memory type
+			final int mask = IntegerEnumeration.mask(flags);
+			final int type = findMemoryType(filter, mask);
+
+	        // TODO
+	        // - limit number of allocations to maxMemoryAllocationCount
+	        // - block allocation + offsets
+	        // - pools = heap types
+			// http://kylehalladay.com/blog/tutorial/2017/12/13/Custom-Allocators-Vulkan.html
+			// https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+
+			// Init memory descriptor
+			final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
+	        info.allocationSize = size;
+	        info.memoryTypeIndex = type;
+
+	        // Allocate memory
+	        final VulkanLibrary lib = dev.library();
+	        final PointerByReference mem = lib.factory().pointer();
+	        check(lib.vkAllocateMemory(dev.handle(), info, null, mem));
+
+	        // Get memory handle
+	        return mem.getValue();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj instanceof Allocation that) &&
+					(this.size == that.size) &&
+					(this.filter == that.filter) &&
+					this.flags.equals(that.flags);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append("size", size)
+					.append("filter", filter)
+					.append("flags", flags)
+					.build();
+		}
 	}
 }

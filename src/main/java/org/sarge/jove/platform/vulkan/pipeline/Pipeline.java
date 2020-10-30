@@ -187,7 +187,6 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.pStages = shaders.result();
 
 			// Init fixed function pipeline stages
-			if(viewport == null) throw new IllegalArgumentException("No viewport stage specified");
 			pipeline.pVertexInputState = input.result();
 			pipeline.pInputAssemblyState = assembly.result();
 			pipeline.pViewportState = viewport.result();

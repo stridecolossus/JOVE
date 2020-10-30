@@ -14,7 +14,6 @@ import static org.mockito.Mockito.when;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -25,13 +24,14 @@ import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkMemoryType;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
+import org.sarge.jove.platform.vulkan.core.MemoryAllocator.Allocation;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
 public class MemoryAllocatorTest extends AbstractVulkanTest {
 	private MemoryAllocator allocator;
-	private MemoryAllocator.Allocation.Builder allocation;
+	private MemoryAllocator.Allocation allocation;
 
 	@BeforeEach
 	void before() {
@@ -59,7 +59,7 @@ public class MemoryAllocatorTest extends AbstractVulkanTest {
 		allocator = MemoryAllocator.create(dev);
 
 		// Init allocation request
-		allocation = new MemoryAllocator.Allocation.Builder()
+		allocation = allocator.allocation()
 				.filter(1)
 				.size(2)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -71,9 +71,15 @@ public class MemoryAllocatorTest extends AbstractVulkanTest {
 	}
 
 	@Test
+	void allocation() {
+		assertNotNull(allocation);
+		assertEquals(2, allocation.size());
+	}
+
+	@Test
 	void allocate() {
 		// Allocate memory
-		final Pointer mem = allocator.allocate(allocation.build());
+		final Pointer mem = allocation.allocate();
 		assertEquals(factory.ptr.getValue(), mem);
 
 		// Check API
@@ -88,44 +94,43 @@ public class MemoryAllocatorTest extends AbstractVulkanTest {
 	}
 
 	@Test
+	void init() {
+		// Create memory requirements
+		final VkMemoryRequirements reqs = new VkMemoryRequirements();
+		reqs.size = 3;
+		reqs.memoryTypeBits = 4;
+
+		// Init memory requirements
+		allocation.init(reqs);
+		assertEquals(3, allocation.size());
+
+		// Check allocation
+		final Allocation expected = allocator.allocation()
+				.size(3)
+				.filter(4)
+				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		assertEquals(expected, allocation);
+	}
+
+	@Test
 	void allocateOutOfMemory() {
 		// TODO
 	}
 
 	@Test
+	void allocateEmptyAllocation() {
+		assertThrows(IllegalArgumentException.class, () -> allocator.allocation().allocate());
+	}
+
+	@Test
 	void allocateMemoryTypeNotAvailable() {
 		allocation.filter(0);
-		assertThrows(RuntimeException.class, () -> allocator.allocate(allocation.build()));
+		assertThrows(RuntimeException.class, () -> allocation.allocate());
 	}
 
 	@Test
 	void allocateMemoryPropertyNotAvailable() {
 		allocation.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT);
-		assertThrows(RuntimeException.class, () -> allocator.allocate(allocation.build()));
-	}
-
-	@Nested
-	class AllocationTests {
-		@Test
-		void build() {
-			final MemoryAllocator.Allocation expected = new MemoryAllocator.Allocation(2, 1, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
-			assertEquals(expected, allocation.build());
-		}
-
-		@Test
-		void init() {
-			final VkMemoryRequirements reqs = new VkMemoryRequirements();
-			reqs.size = 3;
-			reqs.memoryTypeBits = 4;
-
-			final MemoryAllocator.Allocation result = allocation.init(reqs).build();
-			assertEquals(3, result.size());
-			assertEquals(4, result.filter());
-		}
-
-		@Test
-		void emptyAllocation() {
-			assertThrows(IllegalArgumentException.class, () -> new MemoryAllocator.Allocation.Builder().build());
-		}
+		assertThrows(RuntimeException.class, () -> allocation.allocate());
 	}
 }

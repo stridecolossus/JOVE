@@ -135,9 +135,15 @@ public class ImageTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private Image.Builder builder;
+		private MemoryAllocator allocator;
 
 		@BeforeEach
 		void before() {
+			// Init memory allocator
+			allocator = mock(MemoryAllocator.class);
+			when(dev.allocator()).thenReturn(allocator);
+
+			// Create builder
 			builder = new Image.Builder(dev);
 		}
 
@@ -145,9 +151,10 @@ public class ImageTest extends AbstractVulkanTest {
 		void build() {
 			// Init image memory
 			final Pointer mem = new Pointer(1);
-			final MemoryAllocator allocator = mock(MemoryAllocator.class);
-			when(dev.allocator()).thenReturn(allocator);
-			when(allocator.allocate(any())).thenReturn(mem);
+			final MemoryAllocator.Allocation allocation = mock(MemoryAllocator.Allocation.class);
+			when(allocator.allocation()).thenReturn(allocation);
+			when(allocation.allocate()).thenReturn(mem);
+			when(allocation.init(any())).thenReturn(allocation);
 
 			// Init memory requirements for the image
 			final Answer<Void> answer = inv -> {

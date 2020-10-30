@@ -228,7 +228,6 @@ The configuration for the fixed-function stages is populated by retrieving the r
 
 ```java
 // Init fixed function pipeline stages
-if(viewport == null) throw new IllegalArgumentException("No viewport stage specified");
 pipeline.pVertexInputState = input.result();
 pipeline.pInputAssemblyState = assembly.result();
 pipeline.pViewportState = viewport.result();

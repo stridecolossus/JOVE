@@ -92,9 +92,13 @@ public interface Work {
 		/**
 		 * Adds a command buffer to be submitted.
 		 * @param buffer Command buffer
+		 * @throws IllegalStateException if the command buffer has not been recorded
 		 * @throws IllegalArgumentException if all added command buffers do not share the same queue
 		 */
 		public Builder add(Command.Buffer buffer) {
+			// Check buffer has been recorded
+			if(!buffer.isReady()) throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
+
 			// Determine queue for this work
 			if(buffers.isEmpty()) {
 				queue = buffer.pool().queue();
@@ -110,6 +114,8 @@ public interface Work {
 
 			return this;
 		}
+
+		// TODO...
 
 		public Builder wait(Semaphore semaphore) {
 			Check.notNull(semaphore);
@@ -128,6 +134,8 @@ public interface Work {
 			stages.add(stage);
 			return this;
 		}
+
+		// ...TODO
 
 		/**
 		 * Constructs this work.

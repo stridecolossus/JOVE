@@ -185,7 +185,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 	public static class Builder {
 		private final LogicalDevice dev;
 		private final Set<VkBufferUsageFlag> usage = new HashSet<>();
-		private final MemoryAllocator.Allocation.Builder allocation = new MemoryAllocator.Allocation.Builder();
+		private final MemoryAllocator.Allocation allocation;
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
 
 		/**
@@ -194,6 +194,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
+			this.allocation = dev.allocator().allocation();
 		}
 
 		/**
@@ -240,9 +241,6 @@ public class VertexBuffer extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the buffer length is zero or no usage flags are specified
 		 */
 		public VertexBuffer build() {
-			// Build memory allocation descriptor
-			final MemoryAllocator.Allocation allocation = this.allocation.build();
-
 			// Validate
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
 			if(allocation.size() == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
@@ -269,8 +267,11 @@ public class VertexBuffer extends AbstractVulkanObject {
 			final VkMemoryRequirements reqs = new VkMemoryRequirements();
 			lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
+			// Build memory allocation descriptor
+			//final MemoryAllocator.Allocation allocation = this.allocation.build();
+
 			// Allocate buffer memory
-			final Pointer mem = dev.allocator().allocate(allocation);
+			final Pointer mem = allocation.init(reqs).allocate();
 
 			// Bind memory
 			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem, 0L));
