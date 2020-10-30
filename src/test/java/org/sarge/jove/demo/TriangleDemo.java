@@ -26,8 +26,8 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.Loader;
-import org.sarge.jove.util.Loader.DataSource;
 
 public class TriangleDemo {
 	public static void main(String[] args) throws Exception {

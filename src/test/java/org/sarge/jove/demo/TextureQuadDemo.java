@@ -33,7 +33,7 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.util.Loader;
+import org.sarge.jove.util.DataSource;
 
 public class TextureQuadDemo {
 
@@ -41,8 +41,8 @@ public class TextureQuadDemo {
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources"); // /thiswayup.jpg");
-		final var src = Loader.DataSource.of(dir);
-		final var loader = Loader.of(src, new ImageData.Loader());
+		final var src = DataSource.of(dir);
+		final var loader = DataSource.loader(src, new ImageData.Loader());
 //		final ImageData image = loader.load("heightmap.gif"); // "thiswayup.jpg");
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
@@ -207,8 +207,8 @@ public class TextureQuadDemo {
 
 		// Load shaders
 		final Path dir = new File("./src/test/resources/demo/texture.quad").toPath(); // TODO - root + resolve
-		final var src = Loader.DataSource.of(dir);
-		final var shaderLoader = Loader.of(src, Shader.loader(dev));
+		final var src = DataSource.of(dir);
+		final var shaderLoader = DataSource.loader(src, Shader.loader(dev));
 		final Shader vert = shaderLoader.load("spv.quad.vert");
 		final Shader frag = shaderLoader.load("spv.quad.frag");
 
@@ -259,12 +259,12 @@ public class TextureQuadDemo {
 		final View texture = texture(dev, graphicsPool);
 
 		// Create descriptor layout
-		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
-				.binding()
-					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-					.build()
+		final DescriptorSet.Layout.Binding binding = new DescriptorSet.Layout.Binding.Builder()
+				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
+
+		final DescriptorSet.Layout setLayout = DescriptorSet.Layout.create(dev, List.of(binding));
 
 		// Create pool
 		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
@@ -272,7 +272,7 @@ public class TextureQuadDemo {
 				.max(3)
 				.build();
 
-		final List<DescriptorSet> descriptors = setPool.allocate(setLayout, 3);
+		final List<DescriptorSet> descriptors = setPool.allocate(setLayout, chain.views().size());
 
 		// Create sampler
 		final Sampler sampler = new Sampler.Builder(dev).build();

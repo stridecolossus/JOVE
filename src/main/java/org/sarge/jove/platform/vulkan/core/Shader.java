@@ -3,12 +3,11 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.util.Loader;
+import org.sarge.jove.util.Loader.InputStreamLoader;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -44,7 +43,7 @@ public class Shader extends AbstractVulkanObject {
 	 * @param dev Logical device
 	 * @return Shader loader
 	 */
-	public static Loader<InputStream, Shader> loader(LogicalDevice dev) {
+	public static InputStreamLoader<Shader> loader(LogicalDevice dev) {
 		return in -> {
 			try {
 				final byte[] code = in.readAllBytes();

@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -12,7 +13,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"type",
 	"descriptorCount"
 })
-public class VkDescriptorPoolSize extends VulkanStructure {
+public class VkDescriptorPoolSize extends VulkanStructure implements ByReference {
 	public VkDescriptorType type;
 	public int descriptorCount;
 }

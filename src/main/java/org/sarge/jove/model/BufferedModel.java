@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.model.Model.AbstractModel;
-import org.sarge.jove.util.Loader;
+import org.sarge.jove.util.Loader.LoaderAdapter;
 
 /**
  * Loader for a buffered model.
@@ -61,7 +61,7 @@ public class BufferedModel extends AbstractModel {
 	/**
 	 * Loader for a buffered model.
 	 */
-	public static class ModelLoader implements Loader<InputStream, Model> {
+	public static class ModelLoader extends LoaderAdapter<DataInputStream, Model> {
 		private static final int VERSION = 1;
 		private static final String DELIMITER = "-";
 
@@ -118,21 +118,9 @@ public class BufferedModel extends AbstractModel {
 			out.write(bytes);
 		}
 
-		/**
-		 * Loads a buffered model from the given input stream.
-		 * @param in Input stream
-		 * @return New model
-		 * @throws UnsupportedOperationException if the file format version of the model is not supported by this loader
-		 * @throws RuntimeException if the model cannot be loaded
-		 */
 		@Override
-		public Model load(InputStream in) {
-			try {
-				return load(new DataInputStream(in));
-			}
-			catch(IOException e) {
-				throw new RuntimeException(e);
-			}
+		protected DataInputStream open(InputStream in) throws IOException {
+			return new DataInputStream(in);
 		}
 
 		/**
@@ -141,7 +129,8 @@ public class BufferedModel extends AbstractModel {
 		 * @return New model
 		 * @throws IOException if the model cannot be loaded
 		 */
-		private static Model load(DataInputStream in) throws IOException {
+		@Override
+		public Model create(DataInputStream in) throws IOException {
 			// Load and verify file format version
 			final int version = in.readInt();
 			if(version > VERSION) {

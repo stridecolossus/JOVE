@@ -16,6 +16,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.Check;
+import org.sarge.jove.util.Loader.LoaderAdapter;
 
 /**
  * Wrapper for general image data.
@@ -88,7 +89,7 @@ public interface ImageData {
 	/**
 	 * Loader for an image.
 	 */
-	class Loader implements org.sarge.jove.util.Loader<InputStream, ImageData> {
+	class Loader extends LoaderAdapter<BufferedImage, ImageData> {
 		private boolean add = true;
 
 		/**
@@ -99,26 +100,19 @@ public interface ImageData {
 			this.add = add;
 		}
 
+		@Override
+		protected BufferedImage open(InputStream in) throws IOException {
+			final BufferedImage image = ImageIO.read(in);
+			if(image == null) throw new IOException("Invalid image");
+			return image;
+		}
+
 		/**
 		 * Loads an image.
-		 * @param name Image name
-		 * @return Image
 		 * @throws RuntimeException if the image cannot be loaded or the format is not supported
 		 */
 		@Override
-		public ImageData load(InputStream in) {
-			// Load image
-			final BufferedImage image;
-			try {
-				image = ImageIO.read(in);
-			}
-			catch(IOException e) {
-				throw new RuntimeException(e);
-			}
-			if(image == null) {
-				throw new RuntimeException("Invalid image");
-			}
-
+		protected ImageData create(BufferedImage image) {
 			// Convert image
 			final BufferedImage result = switch(image.getType()) {
 				// Gray-scale

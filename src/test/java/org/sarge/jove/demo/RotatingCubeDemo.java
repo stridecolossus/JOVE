@@ -34,6 +34,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
+import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.Loader;
 import org.sarge.jove.util.MathsUtil;
 
@@ -43,7 +44,7 @@ public class RotatingCubeDemo {
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources");
-		final var src = Loader.DataSource.of(dir);
+		final var src = DataSource.of(dir);
 		final var loader = Loader.of(src, new ImageData.Loader());
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
@@ -207,7 +208,7 @@ public class RotatingCubeDemo {
 
 		// Load shaders
 		final Path dir = new File("./src/test/resources/demo/cube.rotate").toPath(); // TODO - root + resolve
-		final var src = Loader.DataSource.of(dir);
+		final var src = DataSource.of(dir);
 		final var shaderLoader = Loader.of(src, Shader.loader(dev));
 		final Shader vert = shaderLoader.load("spv.cube.vert");
 		final Shader frag = shaderLoader.load("spv.cube.frag");

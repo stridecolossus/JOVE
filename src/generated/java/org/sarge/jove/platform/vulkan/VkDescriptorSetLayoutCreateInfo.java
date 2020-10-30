@@ -21,5 +21,5 @@ public class VkDescriptorSetLayoutCreateInfo extends VulkanStructure {
 	public Pointer pNext;
 	public int flags;
 	public int bindingCount;
-	public Pointer pBindings;
+	public VkDescriptorSetLayoutBinding pBindings;
 }

@@ -1,43 +1,33 @@
 package org.sarge.jove.util;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.Loader.DataSource;
+import org.sarge.jove.util.Loader.LoaderAdapter;
 
 public class LoaderTest {
 	@Test
-	void directory() throws IOException {
-		// Create data-source
-		final DataSource src = DataSource.of("./src/test/resources");
-		assertNotNull(src);
+	void adapter() {
+		// Create a loader that reads a byte-array and outputs a string
+		final var loader = new LoaderAdapter<byte[], String>() {
+			@Override
+			protected byte[] open(InputStream in) throws IOException {
+				return in.readAllBytes();
+			}
 
-		// Open resource
-		try(final InputStream in = src.apply("thiswayup.jpg")) {
-			assertNotNull(in);
-		}
-	}
+			@Override
+			protected String create(byte[] chars) throws IOException {
+				return new String(chars);
+			}
+		};
 
-	@Test
-	void unknownDirectory() {
-		assertThrows(IllegalArgumentException.class, () -> DataSource.of("cobblers"));
-	}
-
-	@SuppressWarnings({"unchecked", "resource"})
-	@Test
-	void compose() {
-		final DataSource src = mock(DataSource.class);
-		final Loader<InputStream, Object> loader = mock(Loader.class);
-		final var adapter = Loader.of(src, loader);
-		final String name = "name";
-		adapter.load(name);
-		verify(src).apply(name);
-		verify(loader).load(null);
+		// Load resource
+		final String str = "whatever";
+		final String result = loader.load(new ByteArrayInputStream(str.getBytes()));
+		assertEquals(str, result);
 	}
 }
