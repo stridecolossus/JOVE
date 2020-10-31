@@ -1,8 +1,5 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.Converter;
-import org.sarge.jove.util.JoveUtil;
-
 /**
  * Point in 3D space.
  * @author Sarge
@@ -12,11 +9,6 @@ public final class Point extends Tuple {
 	 * Origin point.
 	 */
 	public static final Point ORIGIN = new Point(0, 0, 0);
-
-	/**
-	 * Point converter.
-	 */
-	public static final Converter<Point> CONVERTER = JoveUtil.converter(3, Point::new);
 
 	/**
 	 * Constructor.

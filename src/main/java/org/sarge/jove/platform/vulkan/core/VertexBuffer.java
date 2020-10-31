@@ -119,7 +119,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 * Creates a uniform buffer resource for this vertex buffer.
 	 * @return Uniform buffer resource
 	 */
-	public Resource<VkDescriptorBufferInfo> uniform() {
+	public Resource<VkDescriptorBufferInfo> resource() {
 		return new Resource<>() {
 			@Override
 			public VkDescriptorType type() {

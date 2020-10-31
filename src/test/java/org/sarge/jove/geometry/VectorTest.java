@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,23 +29,10 @@ public class VectorTest {
 	}
 
 	@Test
-	public void converter() {
-		final Vector result = Vector.CONVERTER.apply("3,4,5");
-		assertEquals(vec, result);
-	}
-
-	@Test
 	public void of() {
 		final Point start = new Point(1, 2, 3);
 		final Point end = new Point(4, 5, 6);
 		assertEquals(new Vector(3, 3, 3), Vector.of(start, end));
-	}
-
-	@Test
-	public void random() {
-		vec = Vector.random();
-		assertNotNull(vec);
-		assertEquals(1f, vec.magnitude(), 0.0001f);
 	}
 
 	@Test

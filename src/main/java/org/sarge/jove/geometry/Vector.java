@@ -1,9 +1,6 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.Converter;
-import org.sarge.jove.util.JoveUtil;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.jove.util.Randomiser;
 
 /**
  * A <i>vector</i> is a direction in 3D space.
@@ -26,11 +23,6 @@ public final class Vector extends Tuple {
 	public static final Vector Z_AXIS = new Vector(0, 0, 1);
 
 	/**
-	 * Vector converter.
-	 */
-	public static final Converter<Vector> CONVERTER = JoveUtil.converter(3, Vector::new);
-
-	/**
 	 * Creates a vector between the given points.
 	 * @param start		Starting point
 	 * @param end		End point
@@ -38,18 +30,6 @@ public final class Vector extends Tuple {
 	 */
 	public static Vector of(Point start, Point end) {
 		return new Vector(end.x - start.x, end.y - start.y, end.z - start.z);
-	}
-
-	/**
-	 * Creates a randomised vector.
-	 * @return Randomised vector (normalized)
-	 */
-	public static Vector random() {
-		final float[] array = new float[SIZE];
-		for(int n = 0; n < SIZE; ++n) {
-			array[n] = Randomiser.RANDOM.nextFloat();
-		}
-		return new Vector(array).normalize();
 	}
 
 	/**

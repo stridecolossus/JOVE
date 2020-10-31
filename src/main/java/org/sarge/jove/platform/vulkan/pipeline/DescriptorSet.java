@@ -383,7 +383,8 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * A <i>descriptor set layout</i> specifies the structure of descriptors that can be bound to a pipeline.
+	 * A <i>descriptor set layout</i> specifies the resource bindings for a descriptor set.
+	 * @see Resource
 	 */
 	public static class Layout extends AbstractVulkanObject {
 		/**

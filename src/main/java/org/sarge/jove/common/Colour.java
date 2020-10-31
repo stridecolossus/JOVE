@@ -6,8 +6,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.Converter;
-import org.sarge.jove.util.JoveUtil;
 
 /**
  * RGBA colour.
@@ -37,11 +35,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * Black colour.
 	 */
 	public static final Colour BLACK = new Colour(0, 0, 0, 1);
-
-	/**
-	 * Colour converter.
-	 */
-	public static final Converter<Colour> CONVERTER = JoveUtil.converter(SIZE, Colour::of);
 
 	private static final int MASK = 0xff;
 	private static final float INV_MASK = 1f / MASK;

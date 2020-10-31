@@ -720,11 +720,17 @@ This is relatively simple domain object used to configure the various sampling p
 
 # Descriptor Sets
 
-The final piece of functionality we need to implement is the _descriptor set_ that specifies the resources used by the pipeline during rendering.  Descriptor sets are allocated by a _descriptor set pool_ (similar to how commands work) and have a _descriptor set layout_ that specifies the type of resources that can be bound to a given pipeline (sampler, uniform buffer, etc).
+The final piece of functionality we need to implement are _descriptor sets_.
+
+- A descriptor set is comprised of the _resources_ used by the pipeline during rendering (samplers, uniform buffers, etc).
+
+- Sets are allocated from a _descriptor set pool_ (similar to commands).
+
+- A _descriptor set layout_ specifies the resource bindings for a descriptor set.
 
 ## Domain Class
 
-The first-cut implementation is as follows:
+The first-cut class outline is as follows:
 
 ```java
 public class DescriptorSet implements NativeObject {
@@ -755,7 +761,7 @@ public class DescriptorSet implements NativeObject {
 }
 ```
 
-The only noteworthy methods are the over-loaded factory methods to create a bind command:
+The bind method has two over-loaded variants:
 
 ```java
 public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
@@ -780,7 +786,7 @@ public Command bind(Pipeline.Layout layout) {
 
 ## Descriptor Set Layout
 
-We first tackle the layout:
+We tackle the layout first:
 
 ```java
 public static class Layout extends AbstractVulkanObject {
@@ -800,7 +806,7 @@ public static class Layout extends AbstractVulkanObject {
 }
 ```
 
-A layout is comprised of a number of bindings defined as follows:
+A layout is comprised of a number of resource bindings defined as follows:
 
 ```java
 public static record Binding(int binding, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
@@ -988,9 +994,9 @@ Finally we invoke the API to allocate the pool and create the domain object:
 
 ## Updating Descriptor Sets
 
-The resources in a descriptor set needs to be initialised before they are bound to the pipeline.
+The _resources_ in a descriptor set needs to be initialised before they are bound to the pipeline.
 
-We add the following temporary code to the descriptor set class to set a sampler resource:
+We add the following temporary code to the descriptor set class to apply the texture sampler:
 
 ```java
 // TODO - temporary
@@ -1012,7 +1018,7 @@ public void sampler(int binding, Sampler sampler, View view) {
 }
 ```
 
-This will be replaced with a more flexible implementation in the next chapter when we introduce other types of resource.
+This will be replaced with a more flexible implementation in the next chapter when we introduce other resources.
 
 ## Pipeline Layout
 

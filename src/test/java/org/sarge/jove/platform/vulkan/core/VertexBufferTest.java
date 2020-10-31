@@ -144,7 +144,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			res = buffer.uniform();
+			res = buffer.resource();
 			info = new VkDescriptorBufferInfo();
 		}
 

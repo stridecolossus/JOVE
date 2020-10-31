@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -245,16 +247,24 @@ public class RotatingCubeDemo {
 		final View texture = texture(dev, graphicsPool);
 
 		// Create descriptor layout
-		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
+		final DescriptorSet.Layout.Binding samplerBinding = new DescriptorSet.Layout.Binding.Builder()
 				.binding(0)
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-				.build()
+				.build();
+		final DescriptorSet.Layout.Binding uniformBinding = new DescriptorSet.Layout.Binding.Builder()
 				.binding(1)
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
-				.build()
 				.build();
+		final DescriptorSet.Layout setLayout = DescriptorSet.Layout.create(dev, List.of(samplerBinding, uniformBinding));
+
+//		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
+//				.binding(0)
+//				.build()
+//				.binding(1)
+//				.build()
+//				.build();
 
 		// Create pool
 		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
@@ -276,6 +286,28 @@ public class RotatingCubeDemo {
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 				.build();
+
+		final var samplerResource = sampler.resource(texture);
+		final var uniformResource = uniform.resource();
+		Function<DescriptorSet, Stream<DescriptorSet.Update<?>>> mapper = set -> Stream.of(
+				set.update(samplerBinding, samplerResource),
+				set.update(uniformBinding, uniformResource)
+		);
+
+		final var updates = descriptors
+				.stream()
+				.flatMap(mapper)
+				.collect(toList());
+
+		DescriptorSet.update(dev, updates);
+
+//		for(DescriptorSet set : descriptors) {
+//			final var samplerUpdate = set.update(samplerBinding, samplerResource);
+//			final var uniformUpdate = set.update(uniformBinding, uniformResource);
+//			DescriptorSet.update(dev, List.of(samplerUpdate, uniformUpdate));
+//		}
+
+		//////////////
 
 		// Load the projection matrix
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
@@ -316,12 +348,12 @@ public class RotatingCubeDemo {
 //			uniforms[n].load(
 //		}
 
-		// Apply sampler to the descriptor sets
-		new DescriptorSet.Resource.Builder()
-				.descriptors(descriptors)
-				.add(0, sampler.update(texture))
-				.add(1, uniform.update())
-				.update(dev);
+//		// Apply sampler to the descriptor sets
+//		new DescriptorSet.Resource.Builder()
+//				.descriptors(descriptors)
+//				.add(0, sampler.update(texture))
+//				.add(1, uniform.update())
+//				.update(dev);
 
 		//////////////////
 

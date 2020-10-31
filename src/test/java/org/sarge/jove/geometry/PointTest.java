@@ -33,12 +33,6 @@ public class PointTest {
 	}
 
 	@Test
-	void converter() {
-		final Point result = Point.CONVERTER.apply("1,2,3");
-		assertEquals(pos, result);
-	}
-
-	@Test
 	void scale() {
 		assertEquals(new Point(2, 4, 6), pos.scale(2));
 	}
