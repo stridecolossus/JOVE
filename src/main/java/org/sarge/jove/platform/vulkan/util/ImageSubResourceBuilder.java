@@ -96,28 +96,26 @@ public class ImageSubResourceBuilder<T> {
 	}
 
 	/**
-	 * @return Image sub-resource range descriptor
+	 * Populates an image sub-resource range descriptor
+	 * @param range Range descriptor
 	 */
-	public VkImageSubresourceRange range() {
-		final VkImageSubresourceRange range = new VkImageSubresourceRange();
+	public void populate(VkImageSubresourceRange range) {
 		range.aspectMask = IntegerEnumeration.mask(aspects);
 		range.baseMipLevel = mipLevel;
 		range.levelCount = levelCount;
 		range.baseArrayLayer = baseArrayLayer;
 		range.layerCount = layerCount;
-		return range;
 	}
 
 	/**
-	 * @return Image sub-resource layers descriptor
+	 * Populates an image sub-resources layers descriptor
+	 * @return Layers descriptor
 	 */
-	public VkImageSubresourceLayers layers() {
-		final VkImageSubresourceLayers layers = new VkImageSubresourceLayers();
+	public void populate(VkImageSubresourceLayers layers) {
 		layers.aspectMask = IntegerEnumeration.mask(aspects);
 		layers.mipLevel = mipLevel;
 		layers.baseArrayLayer = baseArrayLayer;
 		layers.layerCount = layerCount;
-		return layers;
 	}
 
 	/**

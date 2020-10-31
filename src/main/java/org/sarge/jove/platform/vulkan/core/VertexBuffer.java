@@ -8,16 +8,16 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
+import org.sarge.jove.platform.vulkan.util.Resource;
 import org.sarge.jove.util.Check;
 import org.sarge.jove.util.PointerArray;
-import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -115,23 +115,31 @@ public class VertexBuffer extends AbstractVulkanObject {
 		}
 	}
 
-	// TODO - cyclic dependency to DS
 	/**
-	 * Creates a descriptor set update for a uniform buffer.
-	 * @return Uniform buffer update
+	 * Creates a uniform buffer resource for this vertex buffer.
+	 * @return Uniform buffer resource
 	 */
-	public DescriptorSet.Update update() {
-		// Create uniform buffer descriptor
-		final VkDescriptorBufferInfo uniform = new VkDescriptorBufferInfo();
-		uniform.buffer = this.handle();
-		uniform.offset = 0;
-		uniform.range = len;
-
-		// Create updater
-		return new DescriptorSet.Update(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+	public Resource<VkDescriptorBufferInfo> uniform() {
+		return new Resource<>() {
 			@Override
-			protected void apply(VkWriteDescriptorSet write) {
-				write.pBufferInfo = StructureHelper.structures(List.of(uniform));
+			public VkDescriptorType type() {
+				return VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			}
+
+			@Override
+			public Supplier<VkDescriptorBufferInfo> identity() {
+				return VkDescriptorBufferInfo::new;
+			}
+
+			public void populate(VkDescriptorBufferInfo info) {
+				info.buffer = VertexBuffer.this.handle();
+				info.offset = 0;
+				info.range = len;
+			}
+
+			@Override
+			public void apply(VkDescriptorBufferInfo descriptor, VkWriteDescriptorSet write) {
+				write.pBufferInfo = descriptor;
 			}
 		};
 	}
@@ -139,7 +147,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Command to bind this buffer
 	 */
-	public Command bind() {
+	public Command bindVertexBuffer() {
 		final PointerArray array = Handle.toPointerArray(List.of(this));
 		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
 	}
@@ -147,11 +155,11 @@ public class VertexBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Command to bind this index buffer
 	 */
-	public Command index() {
+	public Command bindIndexBuffer() {
 		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
 		// TODO - 16/32 depending on size
+		// TODO - check data is integer => sub-class?
 	}
-	// TODO - rename to bindIndexBuffer() and bindVertexBuffer()
 
 	/**
 	 * Creates a command to copy this buffer to the given buffer.

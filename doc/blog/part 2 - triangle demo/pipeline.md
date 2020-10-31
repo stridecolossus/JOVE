@@ -455,8 +455,6 @@ public ShaderStageBuilder stage(VkShaderStageFlag stage) {
     entry.stage = notNull(stage);
     return this;
 }
-
-...
 ```
 
 We over-ride the public build method to validate the current entry and check for duplicates:

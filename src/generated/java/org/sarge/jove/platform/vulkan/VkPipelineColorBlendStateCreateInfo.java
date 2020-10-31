@@ -28,6 +28,6 @@ public class VkPipelineColorBlendStateCreateInfo extends VulkanStructure impleme
 	public VulkanBoolean logicOpEnable;
 	public VkLogicOp logicOp;
 	public int attachmentCount;
-	public Pointer pAttachments;
+	public VkPipelineColorBlendAttachmentState pAttachments;
 	public float[] blendConstants = new float[4];
 }

@@ -183,7 +183,7 @@ public class View extends AbstractVulkanObject {
 			info.format = image.descriptor().format();
 			info.image = image.handle();
 			info.components = mapping;
-			info.subresourceRange = subresource.range();
+			subresource.populate(info.subresourceRange);
 
 			// Allocate image view
 			final VulkanLibrary lib = dev.library();

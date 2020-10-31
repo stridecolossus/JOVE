@@ -20,15 +20,10 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.vulkan.VkBufferCopy;
-import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkIndexType;
-import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
-import org.sarge.jove.platform.vulkan.VkSharingMode;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.Resource;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -53,7 +48,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 	@Test
 	void bind() {
 		final Handle handle = new Handle(new Pointer(4));
-		final Command cmd = buffer.bind();
+		final Command cmd = buffer.bindVertexBuffer();
 		assertNotNull(cmd);
 		cmd.execute(lib, handle);
 		verify(lib).vkCmdBindVertexBuffers(eq(handle), eq(0), eq(1), isA(Pointer.class), eq(new long[]{0}));
@@ -62,7 +57,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 	@Test
 	void bindIndexBuffer() {
 		final Handle handle = new Handle(new Pointer(5));
-		final Command cmd = buffer.index();
+		final Command cmd = buffer.bindIndexBuffer();
 		assertNotNull(cmd);
 		cmd.execute(lib, handle);
 		verify(lib).vkCmdBindIndexBuffer(handle, buffer.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
@@ -140,6 +135,46 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		buffer.destroy();
 		verify(lib).vkFreeMemory(dev.handle(), mem, null);
 		verify(lib).vkDestroyBuffer(dev.handle(), handle, null);
+	}
+
+	@Nested
+	class UniformBufferResourceTests {
+		private Resource<VkDescriptorBufferInfo> res;
+		private VkDescriptorBufferInfo info;
+
+		@BeforeEach
+		void before() {
+			res = buffer.uniform();
+			info = new VkDescriptorBufferInfo();
+		}
+
+		@Test
+		void constructor() {
+			assertNotNull(res);
+			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, res.type());
+		}
+
+		@Test
+		void identity() {
+			assertNotNull(res.identity());
+			assertNotNull(res.identity().get());
+			assertEquals(VkDescriptorBufferInfo.class, res.identity().get().getClass());
+		}
+
+		@Test
+		void populate() {
+			res.populate(info);
+			assertEquals(buffer.handle(), info.buffer);
+			assertEquals(buffer.length(), info.range);
+			assertEquals(0, info.offset);
+		}
+
+		@Test
+		void apply() {
+			final var write = new VkWriteDescriptorSet();
+			res.apply(info, write);
+			assertEquals(info, write.pBufferInfo);
+		}
 	}
 
 	@Nested

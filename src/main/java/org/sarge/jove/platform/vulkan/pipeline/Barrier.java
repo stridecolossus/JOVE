@@ -14,6 +14,7 @@ import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
@@ -34,10 +35,10 @@ public class Barrier extends ImmediateCommand {
 	 * @param dest			Destination pipeline stages
 	 * @param images		Image memory barriers
 	 */
-	public Barrier(Set<VkPipelineStageFlag> src, Set<VkPipelineStageFlag> dest, List<VkImageMemoryBarrier> images) {
+	private Barrier(Set<VkPipelineStageFlag> src, Set<VkPipelineStageFlag> dest, VkImageMemoryBarrier[] images) {
 		this.src = IntegerEnumeration.mask(src);
 		this.dest = IntegerEnumeration.mask(dest);
-		this.images = images.toArray(VkImageMemoryBarrier[]::new);
+		this.images = notNull(images);
 	}
 
 	@Override
@@ -52,7 +53,7 @@ public class Barrier extends ImmediateCommand {
 	public static class Builder {
 		private final Set<VkPipelineStageFlag> srcStages = new HashSet<>();
 		private final Set<VkPipelineStageFlag> destStages = new HashSet<>();
-		private final List<VkImageMemoryBarrier> images = new ArrayList<>();
+		private final List<ImageBarrierBuilder> images = new ArrayList<>();
 		// TODO
 		// - buffer memory barriers
 		// - memory barriers
@@ -91,6 +92,7 @@ public class Barrier extends ImmediateCommand {
 		 */
 		public Barrier build() {
 			if(images.isEmpty()) throw new IllegalArgumentException("Barrier is empty");
+			final var images = VulkanStructure.populateArray(VkImageMemoryBarrier::new, this.images, ImageBarrierBuilder::populate);
 			return new Barrier(srcStages, destStages, images);
 		}
 
@@ -159,6 +161,25 @@ public class Barrier extends ImmediateCommand {
 			// TODO - check vs parent image
 
 			/**
+			 * Populates an image barrier descriptor.
+			 */
+			private void populate(VkImageMemoryBarrier barrier) {
+				// Populate image barrier descriptor
+				barrier.image = image.handle();
+				barrier.srcAccessMask = IntegerEnumeration.mask(src);
+				barrier.dstAccessMask = IntegerEnumeration.mask(dest);
+				barrier.oldLayout = oldLayout;
+				barrier.newLayout = newLayout;
+
+				// Populate sub-resource range descriptor
+				subresource.populate(barrier.subresourceRange);
+
+				// TODO
+				barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
+				barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;
+			}
+
+			/**
 			 * Constructs this image memory barrier.
 			 * @return New image memory barrier
 			 */
@@ -167,21 +188,8 @@ public class Barrier extends ImmediateCommand {
 				if(newLayout == null) throw new IllegalArgumentException("New layout not specified");
 				if(newLayout == oldLayout) throw new IllegalArgumentException("Previous and next layouts cannot be the same");
 
-				// Create descriptor
-				final VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
-				barrier.image = image.handle();
-				barrier.subresourceRange = subresource.range();
-				barrier.srcAccessMask = IntegerEnumeration.mask(src);
-				barrier.dstAccessMask = IntegerEnumeration.mask(dest);
-				barrier.oldLayout = oldLayout;
-				barrier.newLayout = newLayout;
-
-				// TODO
-				barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
-				barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;
-
 				// Add barrier
-				images.add(barrier);
+				images.add(this);
 
 				return Builder.this;
 			}

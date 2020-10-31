@@ -9,9 +9,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Set;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,14 +37,6 @@ public class BarrierTest {
 		barrier = null;
 		lib = mock(VulkanLibrary.class);
 		handle = new Handle(new Pointer(1));
-	}
-
-	@Test
-	void execute() {
-		final VkImageMemoryBarrier image = new VkImageMemoryBarrier();
-		barrier = new Barrier(Set.of(STAGE), Set.of(STAGE), List.of(image));
-		barrier.execute(lib, handle);
-		verify(lib).vkCmdPipelineBarrier(handle, STAGE.value(), STAGE.value(), 0, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{image});
 	}
 
 	@Nested

@@ -62,7 +62,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 		// Init clear values
 		info.clearValueCount = values.size();
-		info.pClearValues = VulkanStructure.array(VkClearValue::new, values, ClearValue::populate);
+		info.pClearValues = VulkanStructure.populate(VkClearValue::new, values, ClearValue::populate);
 
 		// Create command
 		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
@@ -129,12 +129,12 @@ public class RenderPass extends AbstractVulkanObject {
 			// Add attachments
 			if(attachments.isEmpty()) throw new IllegalArgumentException("At least one attachment must be specified");
 			info.attachmentCount = attachments.size();
-			info.pAttachments = VulkanStructure.array(VkAttachmentDescription::new, attachments, AttachmentBuilder::populate);
+			info.pAttachments = VulkanStructure.populate(VkAttachmentDescription::new, attachments, AttachmentBuilder::populate);
 
 			// Add sub-passes
 			if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
 			info.subpassCount = subpasses.size();
-			info.pSubpasses = VulkanStructure.array(VkSubpassDescription::new, subpasses, SubPassBuilder::populate);
+			info.pSubpasses = VulkanStructure.populate(VkSubpassDescription::new, subpasses, SubPassBuilder::populate);
 
 			// Add dependencies
 			// TODO
@@ -326,7 +326,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 				// Populate colour attachments
 				desc.colorAttachmentCount = colour.size();
-				desc.pColorAttachments = VulkanStructure.array(VkAttachmentReference::new, colour, Reference::populate);
+				desc.pColorAttachments = VulkanStructure.populate(VkAttachmentReference::new, colour, Reference::populate);
 
 				// Populate depth attachment
 				if(depth != null) {

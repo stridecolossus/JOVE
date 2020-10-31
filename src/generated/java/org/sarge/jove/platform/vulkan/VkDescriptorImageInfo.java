@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,7 +15,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"imageView",
 	"imageLayout"
 })
-public class VkDescriptorImageInfo extends VulkanStructure { // implements ByReference {
+public class VkDescriptorImageInfo extends VulkanStructure implements ByReference {
 	public Handle sampler;
 	public Handle imageView;
 	public VkImageLayout imageLayout;

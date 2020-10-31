@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -47,8 +48,7 @@ public class BufferedModelTest {
 					.primitive(Primitive.LINES)
 					.layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE)
 					.add(vertex)
-					.add(0)
-					.add(0)
+					.add(vertex)
 					.build();
 
 			// Create loader
@@ -62,7 +62,7 @@ public class BufferedModelTest {
 			loader.write(model, out);
 
 			// Read back and check is same
-			final Model result = loader.load(new ByteArrayInputStream(out.toByteArray()));
+			final Model result = loader.load(new DataInputStream(new ByteArrayInputStream(out.toByteArray())));
 			assertEquals(model, result);
 		}
 	}

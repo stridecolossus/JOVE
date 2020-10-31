@@ -379,7 +379,7 @@ public class ModelDemo {
 		uniform.load(Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI), Matrix.LENGTH, Matrix.LENGTH * 2);
 
 		// Apply sampler to the descriptor sets
-		new DescriptorSet.Update.Builder()
+		new DescriptorSet.Resource.Builder()
 				.descriptors(descriptors)
 				.add(0, sampler.update(texture))
 				.add(1, uniform.update())
@@ -442,8 +442,8 @@ public class ModelDemo {
 				.begin()
 					.add(pass.begin(buffers.get(n), rect))
 					.add(pipeline.bind())
-					.add(vbo.bind())
-					.add(index.index())
+					.add(vbo.bindVertexBuffer())
+					.add(index.bindIndexBuffer())
 					.add(descriptors.get(n).bind(pipelineLayout))
 					.add(DrawCommand.of(model))
 					.add(RenderPass.END_COMMAND)

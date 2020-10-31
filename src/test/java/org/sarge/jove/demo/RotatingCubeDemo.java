@@ -317,7 +317,7 @@ public class RotatingCubeDemo {
 //		}
 
 		// Apply sampler to the descriptor sets
-		new DescriptorSet.Update.Builder()
+		new DescriptorSet.Resource.Builder()
 				.descriptors(descriptors)
 				.add(0, sampler.update(texture))
 				.add(1, uniform.update())
@@ -371,7 +371,7 @@ public class RotatingCubeDemo {
 				.begin()
 					.add(pass.begin(buffers.get(n), rect))
 					.add(pipeline.bind())
-					.add(dest.bind())
+					.add(dest.bindVertexBuffer())
 					.add(descriptors.get(n).bind(pipelineLayout))
 					.add(draw)
 					.add(RenderPass.END_COMMAND)

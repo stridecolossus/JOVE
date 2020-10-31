@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -33,8 +34,10 @@ import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout.Binding;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Pool;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.util.Resource;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 
 public class DescriptorSetTest extends AbstractVulkanTest {
 	private static final int BINDING = 42;
@@ -295,51 +298,51 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	}
 
 	@Nested
-	class UpdaterTests {
-		private DescriptorSet.Update.Builder builder;
-		private DescriptorSet.Update update;
+	class UpdateTests {
+		private Resource<Structure> res;
+		private Structure info;
 
+		@SuppressWarnings("unchecked")
 		@BeforeEach
 		void before() {
-			builder = new DescriptorSet.Update.Builder();
-			update = mock(DescriptorSet.Update.class);
-			when(update.type()).thenReturn(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+			// Init update descriptor
+			info = mock(Structure.class);
+			when(info.toArray(1)).thenReturn(new Structure[]{info});
+
+			// Create resource
+			res = mock(Resource.class);
+			when(res.type()).thenReturn(binding.type());
+			when(res.identity()).thenReturn(() -> info);
 		}
 
 		@Test
 		void update() {
-			// Apply update
-			builder.descriptor(set).add(BINDING, update).update(dev);
+			final var update = set.update(binding, res);
+			assertNotNull(update);
+		}
 
-			// Check API
-			final ArgumentCaptor<VkWriteDescriptorSet[]> captor = ArgumentCaptor.forClass(VkWriteDescriptorSet[].class);
-			verify(lib).vkUpdateDescriptorSets(eq(dev.handle()), eq(1), captor.capture(), eq(0), isNull());
-			assertNotNull(captor.getValue());
-			assertEquals(1, captor.getValue().length);
+		@Test
+		void populate() {
+			// Populate write descriptor
+			final var update = set.update(binding, res);
+			final var write = new VkWriteDescriptorSet();
+			update.populate(write);
 
-			// Check write descriptor
-			final VkWriteDescriptorSet write = captor.getValue()[0];
-			assertNotNull(write);
-			assertEquals(BINDING, write.dstBinding);
+			// Check descriptor
+			assertEquals(binding.binding(), write.dstBinding);
+			assertEquals(binding.type(), write.descriptorType);
 			assertEquals(set.handle(), write.dstSet);
-			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, write.descriptorType);
-			assertEquals(1, write.descriptorCount);
 			assertEquals(0, write.dstArrayElement);
 
-			// Check update applied to write descriptor
-			verify(update).apply(write);
+			verify(res).populate(info);
+			verify(res).apply(info, write);
 		}
 
 		@Test
-		void updateInvalidBindingIndex() {
-			assertThrows(IllegalStateException.class, () -> builder.add(999, update));
-			assertThrows(IllegalStateException.class, () -> builder.add(0, update));
-		}
-
-		@Test
-		void updateInvalidDescriptorType() {
-			when(update.type()).thenReturn(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-			assertThrows(IllegalStateException.class, () -> builder.add(BINDING, update));
+		void apply() {
+			final var update = set.update(binding, res);
+			DescriptorSet.update(dev, List.of(update, update));
+			verify(lib).vkUpdateDescriptorSets(eq(dev.handle()), eq(2), isA(VkWriteDescriptorSet[].class), eq(0), isNull());
 		}
 	}
 }

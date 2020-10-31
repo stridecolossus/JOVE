@@ -97,15 +97,6 @@ public class ImageCopyCommand extends ImmediateCommand {
 			return this;
 		}
 
-//		/**
-//		 * Sets the image extent.
-//		 * @param extent Image extent
-//		 */
-//		public Builder offset(VkOffset3D offset) {
-//			region.imageOffset = notNull(offset);
-//			return this;
-//		}
-
 		/**
 		 * @return Builder for the image sub-resource layers
 		 */
@@ -128,7 +119,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 			// TODO...
 			image.descriptor().aspects().forEach(subresource::aspect); // TODO
 			if(subresource.aspectCount() != 1) throw new IllegalArgumentException("Expected exactly one image aspect");
-			region.imageSubresource = subresource.layers();
+			subresource.populate(region.imageSubresource);
 			// ...TODO
 
 			// Complete descriptor

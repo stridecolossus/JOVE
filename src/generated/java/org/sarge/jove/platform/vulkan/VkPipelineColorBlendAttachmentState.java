@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -19,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"alphaBlendOp",
 	"colorWriteMask"
 })
-public class VkPipelineColorBlendAttachmentState extends VulkanStructure {
+public class VkPipelineColorBlendAttachmentState extends VulkanStructure implements ByReference {
 	public VulkanBoolean blendEnable;
 	public VkBlendFactor srcColorBlendFactor;
 	public VkBlendFactor dstColorBlendFactor;

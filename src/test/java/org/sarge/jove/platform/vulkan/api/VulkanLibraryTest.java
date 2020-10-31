@@ -71,7 +71,7 @@ public class VulkanLibraryTest {
 
 		@Test
 		void populate() {
-			final var first = VulkanStructure.array(MockStructure::new, List.of(1, 2), (n, struct) -> struct.field = n);
+			final var first = VulkanStructure.populate(MockStructure::new, List.of(1, 2), (n, struct) -> struct.field = n);
 			assertNotNull(first);
 			assertEquals(1, first.field);
 			// TODO - how to test all elements?

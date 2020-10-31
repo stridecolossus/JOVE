@@ -115,12 +115,12 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 		if(viewports.isEmpty()) throw new IllegalArgumentException("No viewports specified");
 		info.viewportCount = viewports.size();
-		info.pViewports = VulkanStructure.array(VkViewport::new, viewports, Viewport::populate);
+		info.pViewports = VulkanStructure.populate(VkViewport::new, viewports, Viewport::populate);
 
 		// Add scissors
 		if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
 		info.scissorCount = scissors.size();
-		info.pScissors = VulkanStructure.array(VkRect2D.ByReference::new, scissors, this::rectangle);
+		info.pScissors = VulkanStructure.populate(VkRect2D.ByReference::new, scissors, this::rectangle);
 
 		return info;
 	}

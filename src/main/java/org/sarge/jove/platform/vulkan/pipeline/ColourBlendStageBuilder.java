@@ -13,8 +13,8 @@ import org.sarge.jove.platform.vulkan.VkColorComponentFlag;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
-import org.sarge.jove.util.StructureHelper;
 
 /**
  * Builder for the colour-blend pipeline stage.
@@ -36,7 +36,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponentFlag.values());
 
-	private final List<VkPipelineColorBlendAttachmentState> attachments = new ArrayList<>();
+	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 	private VkLogicOp logic;
 	private final float[] constants = new float[4];
 
@@ -91,7 +91,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 		// Add attachment descriptors
 		info.attachmentCount = attachments.size();
-		info.pAttachments = StructureHelper.structures(attachments);
+		info.pAttachments = VulkanStructure.populate(VkPipelineColorBlendAttachmentState::new, attachments, AttachmentBuilder::populate);
 
 		// Init global colour blending settings
 		if(logic == null) {
@@ -166,6 +166,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		private final BlendOperationBuilder alpha = new BlendOperationBuilder(VkBlendFactor.VK_BLEND_FACTOR_ONE, VkBlendFactor.VK_BLEND_FACTOR_ZERO);
 
 		private AttachmentBuilder() {
+			attachments.add(this);
 		}
 
 		/**
@@ -207,12 +208,10 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		}
 
 		/**
-		 * Constructs this colour-blend attachment.
-		 * @return Colour-blend builder
+		 * Populates the attachment descriptor.
 		 */
-		public ColourBlendStageBuilder build() {
-			// Construct attachment descriptor
-			final var info = new VkPipelineColorBlendAttachmentState();
+		private void populate(VkPipelineColorBlendAttachmentState info) {
+			// Init descriptor
 			info.blendEnable = VulkanBoolean.of(enabled);
 
 			// Init colour blending operation
@@ -227,11 +226,13 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 			// Init colour write mask
 			info.colorWriteMask = mask;
+		}
 
-			// Add attachment
-			attachments.add(info);
-
-			// Return to parent builder
+		/**
+		 * Constructs this colour-blend attachment.
+		 * @return Colour-blend builder
+		 */
+		public ColourBlendStageBuilder build() {
 			return ColourBlendStageBuilder.this;
 		}
 	}

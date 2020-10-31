@@ -134,9 +134,9 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		 * @param ctor			Constructor
 		 * @param data			Data
 		 * @param populate		Population function
-		 * @return <b>First</b> element of the new array
+		 * @return New array or {@code null} is the source data is empty
 		 */
-		public static <R extends Structure, T> R array(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
+		public static <R extends Structure, T> R[] populateArray(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
 			// Check for empty data
 			if(data.isEmpty()) {
 				return null;
@@ -151,7 +151,26 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 				populate.accept(itr.next(), array[n]);
 			}
 
-			return array[0];
+			return array;
+		}
+
+		/**
+		 * Helper - Allocates and populates an array of the given Vulkan structure as a contiguous memory block and returns the <b>first</b> element.
+		 * @param <R> Structure type
+		 * @param <T> Source data type
+		 * @param ctor			Constructor
+		 * @param data			Data
+		 * @param populate		Population function
+		 * @return <b>First</b> element of the new array or {@code null} if the source data is empty
+		 */
+		public static <R extends Structure, T> R populate(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
+			final R[] array = populateArray(ctor, data, populate);
+			if(array == null) {
+				return null;
+			}
+			else {
+				return array[0];
+			}
 		}
 	}
 
