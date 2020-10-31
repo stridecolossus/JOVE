@@ -37,7 +37,6 @@ import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
-import org.sarge.jove.util.Loader;
 import org.sarge.jove.util.MathsUtil;
 
 public class RotatingCubeDemo {
@@ -47,7 +46,7 @@ public class RotatingCubeDemo {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources");
 		final var src = DataSource.of(dir);
-		final var loader = Loader.of(src, new ImageData.Loader());
+		final var loader = DataSource.loader(src, new ImageData.Loader());
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
 
@@ -180,7 +179,7 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Create swap-chain
-		final SwapChain chain = new SwapChain.Builder(surface)
+		final SwapChain chain = new SwapChain.Builder(dev, surface)
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
@@ -211,7 +210,7 @@ public class RotatingCubeDemo {
 		// Load shaders
 		final Path dir = new File("./src/test/resources/demo/cube.rotate").toPath(); // TODO - root + resolve
 		final var src = DataSource.of(dir);
-		final var shaderLoader = Loader.of(src, Shader.loader(dev));
+		final var shaderLoader = DataSource.loader(src, Shader.loader(dev));
 		final Shader vert = shaderLoader.load("spv.cube.vert");
 		final Shader frag = shaderLoader.load("spv.cube.frag");
 
@@ -401,7 +400,7 @@ public class RotatingCubeDemo {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin()
-					.add(pass.begin(buffers.get(n), rect))
+					.add(pass.begin(buffers.get(n)))
 					.add(pipeline.bind())
 					.add(dest.bindVertexBuffer())
 					.add(descriptors.get(n).bind(pipelineLayout))

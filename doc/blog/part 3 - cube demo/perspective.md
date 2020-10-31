@@ -27,7 +27,7 @@ We could of course easily use a third-party maths library but the point of this 
 We determine the following requirements for our matrix class:
 - immutable - this is our general approach for all domain objects where logical.
 - column-major - following the Vulkan standard.
-- arbitrary matrix order (the 'size' of the matrix).
+- arbitrary matrix _order_ (the size of the matrix).
 - limited to square matrices, i.e. same width and height - basically this makes things much simpler.
 
 With the above in mind the first-cut matrix class is as follows:
@@ -123,7 +123,7 @@ public static class Builder {
 }
 ```
 
-An matrix is initialised to the identity as follows:
+A matrix is initialised to the identity as follows:
 
 ```java
 public Builder identity() {
@@ -365,13 +365,13 @@ Note that we use an _arbitrary_ entry from the collection of updates to retrieve
 
 Finally we invoke the apply() method in the resource to set the resultant array or object to the relevant field in the descriptor:
 
-```
+```java
 instance.apply(array, write);
 ```
 
 We add the following factory method to the descriptor set to create an update:
 
-```
+```java
 public <T extends Structure> Update<T> update(Layout.Binding binding, Collection<Resource<T>> updates) {
     return new Update<>(binding, updates);
 }
@@ -379,7 +379,7 @@ public <T extends Structure> Update<T> update(Layout.Binding binding, Collection
 
 And a static method that constructs an array of writes for each update and invokes the API:
 
-```
+```java
 public static void update(LogicalDevice dev, Collection<Update<?>> updates) {
     final var array = VulkanStructure.populateArray(VkWriteDescriptorSet::new, updates, Update::populate);
     dev.library().vkUpdateDescriptorSets(dev.handle(), array.length, array, 0, null);
@@ -789,7 +789,7 @@ private void add(int[] face, int[] triangle, Model.Builder builder) {
 }
 ```
 
-The texture coordinates are a simple array constructed from the pre-defined quad coordinates defined by the `Coordinate2D` class.
+The texture coordinates are a simple array constructed from the pre-defined quad in the `Coordinate2D` class.
 
 ```java
 private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2D[]::new);
@@ -799,7 +799,7 @@ We could have implemented a more cunning approach using a triangle-strip wrapped
 
 ## Input Assembly Pipeline Stage
 
-Since the cube uses triangles (as opposed to the previous default of a _strip_ of triangle) we need to implement the _input assembly pipeline stage_ builder, which is very simple:
+Since the cube uses triangles (as opposed to the previous default of a _strip_ of triangles) we need to implement the _input assembly pipeline stage_ builder, which is very simple:
 
 ```java
 public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelineInputAssemblyStateCreateInfo> {
@@ -928,7 +928,7 @@ PICTURE
 
 To animate the rotation we modify the render loop to generate the rotation matrix on every frame:
 
-```
+```java
 final long period = 5000;
 
 for(int n = 0; n < 1000; ++n) {
