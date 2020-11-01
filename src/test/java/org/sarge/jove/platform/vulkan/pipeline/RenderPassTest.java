@@ -126,6 +126,12 @@ public class RenderPassTest extends AbstractVulkanTest {
 					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 					.depth(1)
 					.build()
+				.dependency()
+					.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.destination().index(0)
+					.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.destination().access(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+					.build()
 				.build();
 
 			// Check render pass
@@ -142,7 +148,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertEquals(0, info.flags);
 			assertEquals(2, info.attachmentCount);
 			assertEquals(1, info.subpassCount);
-			assertEquals(0, info.dependencyCount); // TODO
+			assertEquals(1, info.dependencyCount);
 
 			// Check attachment descriptor
 			assertNotNull(info.pAttachments);
@@ -173,8 +179,18 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, info.pSubpasses.pDepthStencilAttachment.layout);
 
 			// Check dependencies
-			// TODO
-			// assertNotNull(info.pDependencies);
+			assertNotNull(info.pDependencies);
+			assertEquals(0, info.pDependencies.dependencyFlags);
+
+			// Check source dependency
+			assertEquals(RenderPass.VK_SUBPASS_EXTERNAL, info.pDependencies.srcSubpass);
+			assertEquals(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value(), info.pDependencies.srcStageMask);
+			assertEquals(0, info.pDependencies.srcAccessMask);
+
+			// Check destination dependency
+			assertEquals(0, info.pDependencies.dstSubpass);
+			assertEquals(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value(), info.pDependencies.dstStageMask);
+			assertEquals(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value(), info.pDependencies.dstAccessMask);
 		}
 
 		private void add() {
@@ -226,6 +242,12 @@ public class RenderPassTest extends AbstractVulkanTest {
 		void subpassInvalidLayout() {
 			add();
 			assertThrows(IllegalArgumentException.class, "Invalid attachment layout", () -> builder.subpass().colour(0, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED).build());
+		}
+
+		@Test
+		void dependencyInvalidSubpass() {
+			add();
+			assertThrows(IllegalArgumentException.class, "Invalid sub-pass", () -> builder.dependency().source().index(0));
 		}
 	}
 }

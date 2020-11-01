@@ -85,7 +85,6 @@ public class RotatingCubeDemo {
 		staging.destroy();
 
 		// Transition texture ready for sampling
-		// TODO - source flag & access flag and old-layout could be initialised from previous barrier?
 		new Barrier.Builder()
 				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
 				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
@@ -113,7 +112,6 @@ public class RotatingCubeDemo {
 				.property(Window.Property.DISABLE_OPENGL)
 				.build();
 		final Window window = desktop.window(descriptor);
-		// TODO - any point in separate Window class? does it help at all?
 
 		// Init Vulkan
 		final VulkanLibrary lib = VulkanLibrary.create();
@@ -244,27 +242,20 @@ public class RotatingCubeDemo {
 		final View texture = texture(dev, graphicsPool);
 
 		// Create descriptor layout
-		final DescriptorSet.Layout.Binding samplerBinding = new DescriptorSet.Layout.Binding.Builder()
+		final var samplerBinding = new DescriptorSet.Layout.Binding.Builder()
 				.binding(0)
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
-		final DescriptorSet.Layout.Binding uniformBinding = new DescriptorSet.Layout.Binding.Builder()
+		final var uniformBinding = new DescriptorSet.Layout.Binding.Builder()
 				.binding(1)
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 				.build();
-		final DescriptorSet.Layout setLayout = DescriptorSet.Layout.create(dev, List.of(samplerBinding, uniformBinding));
-
-//		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
-//				.binding(0)
-//				.build()
-//				.binding(1)
-//				.build()
-//				.build();
+		final var setLayout = DescriptorSet.Layout.create(dev, List.of(samplerBinding, uniformBinding));
 
 		// Create pool
-		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
+		final var setPool = new DescriptorSet.Pool.Builder(dev)
 				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
 				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3)
 				.max(2 * 3)

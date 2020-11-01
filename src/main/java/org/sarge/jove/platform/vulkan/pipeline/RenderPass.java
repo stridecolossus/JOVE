@@ -7,8 +7,11 @@ import static org.sarge.jove.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
@@ -75,7 +78,7 @@ public class RenderPass extends AbstractVulkanObject {
 		private final LogicalDevice dev;
 		private final List<AttachmentBuilder> attachments = new ArrayList<>();
 		private final List<SubPassBuilder> subpasses = new ArrayList<>();
-		// TODO - dependencies
+		private final List<DependencyBuilder> dependencies = new ArrayList<>();
 
 		/**
 		 * Constructor.
@@ -100,29 +103,17 @@ public class RenderPass extends AbstractVulkanObject {
 		}
 
 		/**
+		 * @return New dependency builder
+		 */
+		public DependencyBuilder dependency() {
+			return new DependencyBuilder();
+		}
+
+		/**
 		 * Constructs this render pass.
 		 * @return New render pass
 		 */
 		public RenderPass build() {
-//			.dependency()
-//			.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-//			.destination(0)
-//			.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-//			.destination(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-//			.build()
-
-			/*
-			VkSubpassDependency dep = new VkSubpassDependency();
-
-			dep.srcSubpass = VK_SUBPASS_EXTERNAL;
-			dep.srcStageMask = VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value();
-			dep.srcAccessMask = 0;
-
-			dep.dstSubpass = 0;
-			dep.dstStageMask = VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value();
-			dep.dstAccessMask = VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value();
-*/
-
 			// Create render pass descriptor
 			final VkRenderPassCreateInfo info = new VkRenderPassCreateInfo();
 
@@ -137,7 +128,8 @@ public class RenderPass extends AbstractVulkanObject {
 			info.pSubpasses = VulkanStructure.populate(VkSubpassDescription::new, subpasses, SubPassBuilder::populate);
 
 			// Add dependencies
-			// TODO
+			info.dependencyCount = dependencies.size();
+			info.pDependencies = VulkanStructure.populate(VkSubpassDependency::new, dependencies, DependencyBuilder::populate);
 
 			// Allocate render pass
 			final VulkanLibrary lib = dev.library();
@@ -342,6 +334,105 @@ public class RenderPass extends AbstractVulkanObject {
 			public Builder build() {
 				if((depth == null) && colour.isEmpty()) throw new IllegalArgumentException("No attachments specified in sub-pass");
 				subpasses.add(this);
+				return Builder.this;
+			}
+		}
+
+		/**
+		 * Builder for a render pass dependency.
+		 */
+		public class DependencyBuilder {
+			/**
+			 * Source or destination sub-pass dependency.
+			 */
+			public class Dependency {
+				private int index = VK_SUBPASS_EXTERNAL;
+				private final Set<VkPipelineStageFlag> stages = new HashSet<>();
+				private final Set<VkAccessFlag> access = new HashSet<>();
+
+				/**
+				 * Sets the sub-pass index.
+				 * @param index Sub-pass index
+				 * @throws IllegalArgumentException for an invalid index
+				 */
+				public DependencyBuilder index(int index) {
+					if(index >= subpasses.size()) throw new IllegalArgumentException("Invalid sub-pass index: " + index);
+					this.index = zeroOrMore(index);
+					return DependencyBuilder.this;
+				}
+
+				/**
+				 * Adds a pipeline stage.
+				 * @param stage Pipeline stage
+				 */
+				public DependencyBuilder stage(VkPipelineStageFlag stage) {
+					stages.add(notNull(stage));
+					return DependencyBuilder.this;
+				}
+
+				/**
+				 * Adds an access flag.
+				 * @param access Access flag
+				 */
+				public DependencyBuilder access(VkAccessFlag access) {
+					this.access.add(notNull(access));
+					return DependencyBuilder.this;
+				}
+
+				/**
+				 * @return Pipeline stages mask
+				 */
+				private int stages() {
+					return IntegerEnumeration.mask(stages);
+				}
+
+				/**
+				 * @return Access flags mask
+				 */
+				private int access() {
+					return IntegerEnumeration.mask(access);
+				}
+			}
+
+			private final Dependency src = new Dependency();
+			private final Dependency dest = new Dependency();
+
+			/**
+			 * @return Source dependency
+			 */
+			public Dependency source() {
+				return src;
+			}
+
+			/**
+			 * @return Destination dependency
+			 */
+			public Dependency destination() {
+				return dest;
+			}
+
+			/**
+			 * Populates the dependency descriptor.
+			 */
+			private void populate(VkSubpassDependency dep) {
+				// Populate source
+				dep.srcSubpass = src.index;
+				dep.srcStageMask = src.stages();
+				dep.srcAccessMask = src.access();
+
+				// Populate destination
+				dep.dstSubpass = dest.index;
+				dep.dstStageMask = dest.stages();
+				dep.dstAccessMask = dest.access();
+			}
+			// TODO - dependency flags
+
+			/**
+			 * Constructs this dependency.
+			 */
+			public Builder build() {
+				// TODO - src = dest = external invalid?
+				dependencies.add(this);
 				return Builder.this;
 			}
 		}

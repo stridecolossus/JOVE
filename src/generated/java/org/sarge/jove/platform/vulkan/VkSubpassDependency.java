@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -18,10 +18,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"dstAccessMask",
 	"dependencyFlags"
 })
-public class VkSubpassDependency extends VulkanStructure {
-	public static class ByValue extends VkSubpassDependency implements Structure.ByValue { }
-	public static class ByReference extends VkSubpassDependency implements Structure.ByReference { }
-
+public class VkSubpassDependency extends VulkanStructure implements ByReference {
 	public int srcSubpass;
 	public int dstSubpass;
 	public int srcStageMask;

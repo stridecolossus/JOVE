@@ -41,8 +41,6 @@ public interface DataSource {
 		return of(Paths.get(dir));
 	}
 
-	// TODO - doc
-
 	/**
 	 * Creates an adapter for a loader with the given data-source.
 	 * @param <R> Resource type

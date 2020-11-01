@@ -207,8 +207,8 @@ public class TextureQuadDemo {
 
 		// Load shaders
 		final Path dir = new File("./src/test/resources/demo/texture.quad").toPath(); // TODO - root + resolve
-		final var src = DataSource.of(dir);
-		final var shaderLoader = DataSource.loader(src, Shader.loader(dev));
+//		final var shaderLoader = DataSource.loader(new CompileShaderDataSource(DataSource.of(dir)), Shader.loader(dev));
+		final var shaderLoader = DataSource.loader(DataSource.of(dir), Shader.loader(dev));
 		final Shader vert = shaderLoader.load("spv.quad.vert");
 		final Shader frag = shaderLoader.load("spv.quad.frag");
 
