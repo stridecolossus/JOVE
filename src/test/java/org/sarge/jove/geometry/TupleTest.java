@@ -25,6 +25,7 @@ public class TupleTest {
 		assertEquals(2, tuple.y);
 		assertEquals(3, tuple.z);
 		assertEquals(3, Tuple.SIZE);
+		assertEquals(3 * Float.BYTES, tuple.length());
 	}
 
 	@Test

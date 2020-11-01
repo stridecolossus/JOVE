@@ -338,11 +338,25 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			verify(res).apply(info, write);
 		}
 
+		private void verifyUpdate() {
+			verify(lib).vkUpdateDescriptorSets(eq(dev.handle()), eq(1), isA(VkWriteDescriptorSet[].class), eq(0), isNull());
+		}
+
 		@Test
 		void apply() {
-			final var update = set.update(binding, res);
-			DescriptorSet.update(dev, List.of(update, update));
-			verify(lib).vkUpdateDescriptorSets(eq(dev.handle()), eq(2), isA(VkWriteDescriptorSet[].class), eq(0), isNull());
+			set.update(binding, res).apply();
+			verifyUpdate();
+		}
+
+		@Test
+		void build() {
+			new DescriptorSet.UpdateBuilder().add(set, binding, res).apply(dev);
+			verifyUpdate();
+		}
+
+		@Test
+		void buildEmptyUpdates() {
+			assertThrows(IllegalArgumentException.class, () -> new DescriptorSet.UpdateBuilder().apply(dev));
 		}
 	}
 }

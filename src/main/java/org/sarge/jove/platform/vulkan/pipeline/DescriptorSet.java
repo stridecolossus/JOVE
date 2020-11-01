@@ -26,6 +26,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout.Binding;
 import org.sarge.jove.platform.vulkan.util.Resource;
 import org.sarge.jove.util.Check;
 
@@ -58,11 +59,15 @@ import com.sun.jna.ptr.PointerByReference;
  *  // Create descriptor sets
  *  List<DescriptorSet> sets = pool.allocate(layout, 3);
  *
- *  // Update descriptor set
- *  new DescriptorSet.Update.Builder()
- *		.descriptors(descriptors)
- *		.add(0, sampler.update(texture))
- *  	.build();
+ *  // Update descriptor set with a resource
+ *  Resource res = ...
+ *  set.update(binding, res).apply();
+ *
+ *  // Update a group of sets
+ *  new UpdateBuilder()
+ *  	.add(set, binding, res)
+ *  	...
+ *  	.apply(dev);
  * </pre>
  * @author Sarge
  */
@@ -95,33 +100,23 @@ public class DescriptorSet implements NativeObject {
 	/**
 	 * Creates an update comprising multiple resources for this descriptor set.
 	 * @param <T> Resource type
-	 * @param binding Binding
-	 * @param updates Resources to update
+	 * @param binding 		Binding
+	 * @param res 			Resources to update
 	 * @return New update
 	 */
-	public <T extends Structure> Update<T> update(Layout.Binding binding, Collection<Resource<T>> updates) {
-		return new Update<>(binding, updates);
+	public <T extends Structure> Update<T> update(Layout.Binding binding, Collection<Resource<T>> res) {
+		return new Update<>(binding, res);
 	}
 
 	/**
 	 * Creates an update for this descriptor set.
 	 * @param <T> Resource type
-	 * @param binding Binding
-	 * @param update Resource to update
+	 * @param binding 		Binding
+	 * @param res 			Resource to update
 	 * @return New update
 	 */
-	public <T extends Structure> Update<T> update(Layout.Binding binding, Resource<T> update) {
-		return update(binding, Set.of(update));
-	}
-
-	/**
-	 * Applies a set of descriptor set updates.
-	 * @param dev			Logical device
-	 * @param updates		Descriptor set updates
-	 */
-	public static void update(LogicalDevice dev, Collection<Update<?>> updates) {
-		final var array = VulkanStructure.populateArray(VkWriteDescriptorSet::new, updates, Update::populate);
-		dev.library().vkUpdateDescriptorSets(dev.handle(), array.length, array, 0, null);
+	public <T extends Structure> Update<T> update(Layout.Binding binding, Resource<T> res) {
+		return update(binding, Set.of(res));
 	}
 
 	/**
@@ -534,28 +529,38 @@ public class DescriptorSet implements NativeObject {
 	 */
 	public class Update<T extends Structure> {
 		private final Layout.Binding binding;
-		private final Collection<Resource<T>> updates;
+		private final Collection<Resource<T>> res;
 
 		/**
 		 * Constructor.
-		 * @param binding		Binding
-		 * @param updates		Resources to updates
-		 * @throws IllegalArgumentException if the updates are empty, the binding is invalid for the given descriptor set, or the descriptor type does not match the resource
+		 * @param binding			Binding
+		 * @param resources			Resources to updates
+		 * @throws IllegalArgumentException if the resources are empty, the binding is invalid for the given descriptor set, or the descriptor type does not match the resource
 		 */
-		private Update(Layout.Binding binding, Collection<Resource<T>> updates) {
+		private Update(Layout.Binding binding, Collection<Resource<T>> resources) {
 			// Validate
-			if(updates.isEmpty()) throw new IllegalArgumentException("Empty updates");
+			if(resources.isEmpty()) throw new IllegalArgumentException("Empty updates");
 			if(!layout.bindings.containsValue(binding)) throw new IllegalArgumentException("Invalid binding for descriptor set");
 
 			// Validate updates
-			for(Resource<?> res : updates) {
+			for(Resource<?> res : resources) {
 				if(res.type() != binding.type) {
 					throw new IllegalArgumentException(String.format("Invalid descriptor type: expected=%s actual=%s", binding.type, res.type()));
 				}
 			}
 
 			this.binding = notNull(binding);
-			this.updates = Set.copyOf(updates);
+			this.res = Set.copyOf(resources);
+		}
+
+		/**
+		 * Applies this update.
+		 */
+		public void apply() {
+			final var set = DescriptorSet.this;
+			new UpdateBuilder()
+					.add(set, binding, res)
+					.apply(set.layout().device());
 		}
 
 		/**
@@ -570,18 +575,84 @@ public class DescriptorSet implements NativeObject {
 			write.dstArrayElement = 0;
 
 			// Add resource array
-			final Resource<T> instance = updates.iterator().next();
-			final T array = VulkanStructure.populate(instance.identity(), updates, Resource::populate);
+			final Resource<T> instance = res.iterator().next();
+			final T array = VulkanStructure.populate(instance.identity(), res, Resource::populate);
 			instance.apply(array, write);
-			write.descriptorCount = updates.size();
+			write.descriptorCount = res.size();
 		}
 
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
 					.append("binding", binding)
-					.append("updates", updates.size())
+					.append("updates", res.size())
 					.build();
+		}
+	}
+
+	/**
+	 * An <i>update builder</i> aggregates and applies a group of updates as a single API invocation.
+	 */
+	public static class UpdateBuilder {
+		private final List<Update<?>> updates = new ArrayList<>();
+
+		/**
+		 * Adds a group of updates to the given descriptor sets.
+		 * @param <T> Resource type
+		 * @param sets			Descriptor sets to update
+		 * @param binding		Binding
+		 * @param res			Resources
+		 */
+		public <T extends Structure> UpdateBuilder add(Collection<DescriptorSet> sets, Binding binding, Collection<Resource<T>> res) {
+			for(DescriptorSet set : sets) {
+				final Update<?> update = set.update(binding, res);
+				updates.add(update);
+			}
+			return this;
+		}
+
+		/**
+		 * Adds an update to the given descriptor sets.
+		 * @param <T> Resource type
+		 * @param sets			Descriptor sets to update
+		 * @param binding		Binding
+		 * @param res			Resource
+		 */
+		public <T extends Structure> UpdateBuilder add(Collection<DescriptorSet> sets, Binding binding, Resource<T> res) {
+			return add(sets, binding, List.of(res));
+		}
+
+		/**
+		 * Adds a group of updates to the given descriptor set.
+		 * @param <T> Resource type
+		 * @param set			Descriptor set to update
+		 * @param binding		Binding
+		 * @param res			Resources
+		 */
+		public <T extends Structure> UpdateBuilder add(DescriptorSet set, Binding binding, Collection<Resource<T>> res) {
+			return add(List.of(set), binding, res);
+		}
+
+		/**
+		 * Adds an update to the given descriptor set.
+		 * @param <T> Resource type
+		 * @param set			Descriptor set to update
+		 * @param binding		Binding
+		 * @param res			Resource
+		 */
+		public <T extends Structure> UpdateBuilder add(DescriptorSet set, Binding binding, Resource<T> res) {
+			return add(set, binding, List.of(res));
+		}
+
+		/**
+		 * Applies a set of descriptor set updates.
+		 * @param dev Logical device
+		 * @throws IllegalArgumentException if no updates have been added
+		 */
+		public void apply(LogicalDevice dev) {
+			if(updates.isEmpty()) throw new IllegalArgumentException("Empty updates");
+			final var array = VulkanStructure.populateArray(VkWriteDescriptorSet::new, updates, Update::populate);
+			dev.library().vkUpdateDescriptorSets(dev.handle(), array.length, array, 0, null);
 		}
 	}
 }

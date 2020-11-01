@@ -15,6 +15,11 @@ public interface Bufferable {
 	void buffer(ByteBuffer buffer);
 
 	/**
+	 * @return Length of this object (bytes)
+	 */
+	long length();
+
+	/**
 	 * Native byte order for NIO buffers.
 	 */
 	ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
@@ -25,7 +30,17 @@ public interface Bufferable {
 	 * @return Wrapped bufferable
 	 */
 	static Bufferable of(ByteBuffer bb) {
-		return dest -> dest.put(bb);
+		return new Bufferable() {
+			@Override
+			public long length() {
+				return bb.remaining();
+			}
+
+			@Override
+			public void buffer(ByteBuffer dest) {
+				dest.put(bb);
+			}
+		};
 	}
 
 	/**

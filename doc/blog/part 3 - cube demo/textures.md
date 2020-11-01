@@ -1059,12 +1059,12 @@ We now have all the components we need to apply the texture to our demo.
 First we create a descriptor set layout for a sampler that will be used in the fragment shader:
 
 ```java
-final DescriptorSet.Layout.Binding binding = new DescriptorSet.Layout.Binding.Builder()
+final var binding = new DescriptorSet.Layout.Binding.Builder()
     .type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
     .stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
     .build();
 
-final DescriptorSet.Layout layout = DescriptorSet.Layout.create(dev, List.of(binding));
+final var layout = DescriptorSet.Layout.create(dev, List.of(binding));
 ```
 
 Which is added to the pipeline layout:
@@ -1078,7 +1078,7 @@ final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
 Next we create a descriptor set pool:
 
 ```java
-final DescriptorSet.Pool pool = new DescriptorSet.Pool.Builder(dev)
+final var pool = new DescriptorSet.Pool.Builder(dev)
     .add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
     .max(2)
     .build();
@@ -1087,7 +1087,7 @@ final DescriptorSet.Pool pool = new DescriptorSet.Pool.Builder(dev)
 We allocate a descriptor set for each swapchain image:
 
 ```java
-final var descriptors = setPool.allocate(layout, 2);
+final var descriptors = pool.allocate(layout, 2);
 ```
 
 And initialise each with the texture sampler:

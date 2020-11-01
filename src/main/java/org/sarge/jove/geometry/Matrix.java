@@ -38,11 +38,6 @@ public final class Matrix implements Transform, Bufferable {
 	public static final Matrix IDENTITY = identity(DEFAULT_ORDER);
 
 	/**
-	 * Length of a default matrix.
-	 */
-	public static final long LENGTH = IDENTITY.length();
-
-	/**
 	 * Creates an identity matrix.
 	 * @param order Matrix order
 	 * @return Identity matrix
@@ -128,14 +123,6 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	/**
-	 * Constructor for a matrix with the default order.
-	 * @param matrix Column-major matrix elements
-	 */
-	public Matrix(float[] matrix) {
-		this(DEFAULT_ORDER, matrix);
-	}
-
-	/**
 	 * @return Order (or size) of this matrix
 	 */
 	public int order() {
@@ -147,18 +134,16 @@ public final class Matrix implements Transform, Bufferable {
 		return this;
 	}
 
-	/**
-	 * @return Length of this matrix (bytes)
-	 */
-	public long length() {
-		return order * order * Float.BYTES;
-	}
-
 	@Override
 	public void buffer(ByteBuffer buffer) {
 		for(float f : matrix) {
 			buffer.putFloat(f);
 		}
+	}
+
+	@Override
+	public long length() {
+		return order * order * Float.BYTES;
 	}
 
 	/**

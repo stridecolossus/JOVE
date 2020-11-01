@@ -57,6 +57,11 @@ public interface TextureCoordinate extends Bufferable {
 		}
 
 		@Override
+		public long length() {
+			return 1 * Float.BYTES;
+		}
+
+		@Override
 		public int hashCode() {
 			return Objects.hash(u);
 		}
@@ -126,6 +131,11 @@ public interface TextureCoordinate extends Bufferable {
 		}
 
 		@Override
+		public long length() {
+			return 2 * Float.BYTES;
+		}
+
+		@Override
 		public int hashCode() {
 			return Objects.hash(u, v);
 		}
@@ -164,6 +174,11 @@ public interface TextureCoordinate extends Bufferable {
 		@Override
 		public void buffer(ByteBuffer buffer) {
 			buffer.putFloat(u).putFloat(v).putFloat(w);
+		}
+
+		@Override
+		public long length() {
+			return 3 * Float.BYTES;
 		}
 
 		@Override

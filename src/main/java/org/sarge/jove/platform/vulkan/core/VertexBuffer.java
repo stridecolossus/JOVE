@@ -66,26 +66,34 @@ public class VertexBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Loads the given buffer to this vertex buffer.
-	 * @param buffer Data buffer
-	 * @throws IllegalStateException if the size of the given buffer exceeds the length of this vertex buffer
+	 * Loads the given buffer to this buffer.
+	 * @param bb Source buffer
 	 */
-	public void load(ByteBuffer buffer) {
-		load(buffer, 0);
+	public void load(ByteBuffer bb) {
+		load(Bufferable.of(bb));
 	}
 
 	/**
-	 * Loads the given bufferable object to this vertex buffer at the specified offset.
+	 * Loads the given bufferable object to this buffer.
+	 * @param buffer Data buffer
+	 * @throws IllegalStateException if the size of the given buffer exceeds the length of this vertex buffer
+	 */
+	public void load(Bufferable obj) {
+		load(obj, obj.length(), 0);
+	}
+
+	/**
+	 * Loads the given bufferable object to this buffer at the specified offset.
 	 * @param buffer 		Data buffer
 	 * @param offset		Offset into this vertex buffer (bytes)
 	 * @throws IllegalStateException if the size of the given buffer exceeds the length of this vertex buffer
 	 */
-	public void load(ByteBuffer buffer, long offset) {
-		load(Bufferable.of(buffer), buffer.remaining(), offset);
+	public void load(Bufferable obj, long offset) {
+		load(obj, obj.length(), offset);
 	}
 
 	/**
-	 * Loads the given bufferable object to this vertex buffer at the specified offset.
+	 * Loads the given bufferable object to this buffer at the specified offset.
 	 * @param buffer 		Bufferable object
 	 * @param len			Length of the object (bytes)
 	 * @param offset		Offset into this vertex buffer (bytes)

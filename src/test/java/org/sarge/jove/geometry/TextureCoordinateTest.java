@@ -17,6 +17,7 @@ public class TextureCoordinateTest {
 	void one() {
 		final TextureCoordinate one = new Coordinate1D(4);
 		assertNotNull(one);
+		assertEquals(1 * Float.BYTES, one.length());
 		assertFloatArrayEquals(new float[]{4}, one.toArray());
 		assertEquals(true, one.equals(one));
 		assertEquals(false, one.equals(null));
@@ -29,6 +30,8 @@ public class TextureCoordinateTest {
 	void two() {
 		final TextureCoordinate two = new Coordinate2D(4, 5);
 		assertNotNull(two);
+		assertEquals(2, Coordinate2D.SIZE);
+		assertEquals(2 * Float.BYTES, two.length());
 		assertFloatArrayEquals(new float[]{4, 5}, two.toArray());
 		assertEquals(true, two.equals(two));
 		assertEquals(false, two.equals(null));
@@ -41,6 +44,7 @@ public class TextureCoordinateTest {
 	void three() {
 		final TextureCoordinate three = new Coordinate3D(4,5, 6);
 		assertNotNull(three);
+		assertEquals(3 * Float.BYTES, three.length());
 		assertFloatArrayEquals(new float[]{4, 5, 6}, three.toArray());
 		assertEquals(true, three.equals(three));
 		assertEquals(false, three.equals(null));

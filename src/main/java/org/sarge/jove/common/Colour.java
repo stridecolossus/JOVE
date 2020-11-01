@@ -91,6 +91,11 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
 	}
 
+	@Override
+	public long length() {
+		return SIZE * Float.BYTES;
+	}
+
 	/**
 	 * @return This colour as an RGBA array of floating-point values
 	 */

@@ -104,7 +104,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		when(data.getByteBuffer(0, 3)).thenReturn(bb);
 
 		// Load buffer
-		buffer.load(ByteBuffer.allocate(3));
+		buffer.load(Bufferable.of(ByteBuffer.allocate(3)));
 
 		// Check memory is mapped
 		verify(lib).vkMapMemory(dev.handle(), mem, 0, 3L, 0, ref);
@@ -119,14 +119,14 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void loadBufferTooLarge() {
-		final ByteBuffer obj = ByteBuffer.allocate(999);
-		assertThrows(IllegalStateException.class, () -> buffer.load(obj));
+		final ByteBuffer bb = ByteBuffer.allocate(999);
+		assertThrows(IllegalStateException.class, () -> buffer.load(Bufferable.of(bb)));
 	}
 
 	@Test
 	void loadInvalidOffset() {
-		final ByteBuffer obj = ByteBuffer.allocate(1);
-		assertThrows(IllegalStateException.class, () -> buffer.load(obj, 3));
+		final ByteBuffer bb = ByteBuffer.allocate(1);
+		assertThrows(IllegalStateException.class, () -> buffer.load(Bufferable.of(bb), 3));
 	}
 
 	@Test

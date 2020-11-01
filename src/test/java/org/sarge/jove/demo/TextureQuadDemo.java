@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.List;
 
 import org.sarge.jove.common.Colour;
@@ -28,7 +27,6 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Update;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
@@ -279,18 +277,9 @@ public class TextureQuadDemo {
 		// Create sampler
 		final Sampler sampler = new Sampler.Builder(dev).build();
 		final var res = sampler.resource(texture);
-		final Collection<Update<?>> updates = descriptors.stream().map(set -> set.update(binding, res)).collect(toList());
-		DescriptorSet.update(dev, updates);
-//		for(DescriptorSet set : descriptors) {
-//			final var write = set.update(binding, res);
-//			DescriptorSet.update(dev, Set.of(write));
-//			//DescriptorSet.Update.apply(dev, List.of(write));
-//		}
-//		// Apply sampler to the descriptor sets
-//		new DescriptorSet.Update.Builder()
-//			.descriptors(descriptors)
-//			.add(0, sampler.update(texture))
-//			.update(dev);
+		for(DescriptorSet set : descriptors) {
+			set.update(binding, res).apply();
+		}
 
 		//////////////////
 

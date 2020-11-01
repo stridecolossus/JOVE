@@ -102,6 +102,11 @@ public class Tuple implements Bufferable {
 	}
 
 	@Override
+	public long length() {
+		return SIZE * Float.BYTES;
+	}
+
+	@Override
 	public final boolean equals(Object obj) {
 		if(obj == this) {
 			return true;

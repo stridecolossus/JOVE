@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -278,7 +276,7 @@ public class RotatingCubeDemo {
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
 		// Create uniform buffer for the projection matrix
-		final long uniformLength = 3 * Matrix.LENGTH; // 4 * 4 * Float.BYTES;		// TODO - one 4x4 matrix, from matrix? some sort of descriptor?
+		final long uniformLength = 3 * Matrix.IDENTITY.length();
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 				.length(uniformLength)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
@@ -286,25 +284,11 @@ public class RotatingCubeDemo {
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 				.build();
 
-		final var samplerResource = sampler.resource(texture);
-		final var uniformResource = uniform.resource();
-		Function<DescriptorSet, Stream<DescriptorSet.Update<?>>> mapper = set -> Stream.of(
-				set.update(samplerBinding, samplerResource),
-				set.update(uniformBinding, uniformResource)
-		);
-
-		final var updates = descriptors
-				.stream()
-				.flatMap(mapper)
-				.collect(toList());
-
-		DescriptorSet.update(dev, updates);
-
-//		for(DescriptorSet set : descriptors) {
-//			final var samplerUpdate = set.update(samplerBinding, samplerResource);
-//			final var uniformUpdate = set.update(uniformBinding, uniformResource);
-//			DescriptorSet.update(dev, List.of(samplerUpdate, uniformUpdate));
-//		}
+		// Init descriptor sets
+		new DescriptorSet.UpdateBuilder()
+				.add(descriptors, samplerBinding, sampler.resource(texture))
+				.add(descriptors, uniformBinding, uniform.resource())
+				.apply(dev);
 
 		//////////////
 

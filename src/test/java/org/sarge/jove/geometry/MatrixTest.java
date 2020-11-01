@@ -32,7 +32,6 @@ class MatrixTest {
 	@Test
 	void constructorInvalidArrayDimensions() {
 		assertThrows(IllegalArgumentException.class, () -> new Matrix(2, new float[]{1, 2, 3}));
-		assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[]{}));
 	}
 
 	@Test
@@ -63,14 +62,9 @@ class MatrixTest {
 	class IdentityTests {
 		@Test
 		void constructor() {
+			assertEquals(4, Matrix.DEFAULT_ORDER);
 			assertEquals(4, Matrix.IDENTITY.order());
 			assertEquals(4 * 4 * Float.BYTES, Matrix.IDENTITY.length());
-		}
-
-		@Test
-		void constants() {
-			assertEquals(4, Matrix.DEFAULT_ORDER);
-			assertEquals(Matrix.LENGTH, Matrix.IDENTITY.length());
 		}
 
 		@Test

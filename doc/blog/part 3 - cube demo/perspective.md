@@ -1,6 +1,6 @@
 # Overview
 
-We now have almost all the Vulkan functionality required to implement the proverbial rotating textured cube.  The next step is to introduce perspective projection so that objects that are more distant in the scene appear correctly foreshortened.
+We now have almost all the Vulkan functionality required to implement the proverbial rotating textured cube.  The next step is to introduce perspective projection so that fragments that are more distant in the scene appear correctly foreshortened.
 
 For this we will need:
 
@@ -16,7 +16,7 @@ For this we will need:
 
 ---
 
-# Get Some Perspective
+# Perspective Projection
 
 ## Enter The Matrix
 
@@ -25,7 +25,7 @@ Matrices are central to 3D graphics programming - we will create a new matrix do
 We could of course easily use a third-party maths library but the point of this project is to learn the basics so we craft our own implementation from scratch.  Note that we will not attempt an explanation of matrix mathematics here as there many excellent tutorials that we have used to implement our own solution (TODO links to references).  
 
 We determine the following requirements for our matrix class:
-- immutable - this is our general approach for all domain objects where logical.
+- immutable - this is our default approach for all domain objects where appropriate and feasible.
 - column-major - following the Vulkan standard.
 - arbitrary matrix _order_ (the size of the matrix).
 - limited to square matrices, i.e. same width and height - basically this makes things much simpler.
@@ -134,12 +134,9 @@ public Builder identity() {
 }
 ```
 
-With the following the implementation of the matrix is complete for now:
-
-- Implementation of the multiply() operation to compose matrices (not shown here).
-
+We add the following to complete implementation of the matrix for the moment:
+- A multiply() operation to compose matrices (not shown here).
 - Convenience helpers and constants for 4-order matrices (which is the most commonly requirement).
-
 - Helpers to populate a row or column with a given tuple.
 
 ## Perspective Projection
@@ -205,11 +202,11 @@ Again we are not going into the details of how the matrix is calculated but this
 
 # Uniform Buffer Objects
 
-To pass a matrix to the shader we will next implement a _uniform buffer object_ which is a descriptor set resource (like the sampler in the previous chapter).  Note that a uniform buffer (or UBO) is basically just a vertex buffer with a more specialised purpose.
+To pass a matrix to the shader we will next implement a _uniform buffer object_ which is a descriptor set resource (as the sampler was in the previous chapter).  Note that a uniform buffer (or UBO) is basically just a vertex buffer that has a more specialised purpose.
 
 The process of updating the resources in a descriptor set was a quick-and-dirty implementation in the previous chapter.  We will re-factor this code to support multiple updates in one step and add support for uniform buffers.
 
-Descriptor sets are a particularly complex and difficult aspect of Vulkan (at least for this author).  We will present the solution we implemented and discuss some of the design issues and complexities after.
+Descriptor sets are a particularly complex and difficult aspect of Vulkan (at least they were for this author).  We will present the solution we implemented and discuss some of the design issues and complexities after.
 
 ## Resources
 
@@ -242,7 +239,7 @@ public interface Resource<T extends Structure> {
 }
 ```
 
-We strip the temporary code we implemented in the previous chapter and add the following method in the sampler class using the new resource abstraction:
+We refactor the temporary code in the last chapter and move it to the sampler class:
 
 ```java
 /**
@@ -277,7 +274,7 @@ public Resource<VkDescriptorImageInfo> resource(View view) {
 }
 ```
 
-To support uniform buffers we add a similar resource factory in the vertex buffer class:
+To support uniform buffers we add a similar implementation in the vertex buffer class:
 
 ```java
 /**
@@ -314,21 +311,21 @@ The apply() method in both implementations sets the relevant pointer array field
 
 ## Descriptor Set Updates
 
-We next add a new local class to the descriptor set that specifies a set of resource updates to be applied:
+We next add a new local class to the descriptor set that specifies a set of resource _updates_ to be applied:
 
 ```java
 public class Update<T extends Structure> {
     private final Layout.Binding binding;
-    private final Collection<Resource<T>> updates;
+    private final Collection<Resource<T>> res;
 
     /**
      * Constructor.
      * @param binding       Binding
      * @param updates       Resources to updates
      */
-    private Update(Layout.Binding binding, Collection<Resource<T>> updates) {
+    private Update(Layout.Binding binding, Collection<Resource<T>> res) {
         this.binding = notNull(binding);
-        this.updates = Set.copyOf(updates);
+        this.res = Set.copyOf(res);
     }
 
     /**
@@ -361,7 +358,7 @@ final Resource<T> instance = updates.iterator().next();
 final T array = VulkanStructure.populate(instance.identity(), updates, Resource::populate);
 ```
 
-Note that we use an _arbitrary_ entry from the collection of updates to retrieve an identity instance for the array.
+Note that we use an _arbitrary_ entry from the collection of updates to retrieve the identity instance for the array.
 
 Finally we invoke the apply() method in the resource to set the resultant array or object to the relevant field in the descriptor:
 
@@ -369,7 +366,7 @@ Finally we invoke the apply() method in the resource to set the resultant array 
 instance.apply(array, write);
 ```
 
-We add the following factory method to the descriptor set to create an update:
+We add the following factory method to the descriptor set to create an update for a given set of resources:
 
 ```java
 public <T extends Structure> Update<T> update(Layout.Binding binding, Collection<Resource<T>> updates) {
@@ -377,14 +374,42 @@ public <T extends Structure> Update<T> update(Layout.Binding binding, Collection
 }
 ```
 
-And a static method that constructs an array of writes for each update and invokes the API:
+## Applying Updates
+
+To apply an update or a group of update we add another relatively simple builder:
+
+```
+public static class UpdateBuilder {
+    private final List<Update<?>> updates = new ArrayList<>();
+
+    /**
+     * Adds a group of updates to the given descriptor sets.
+     * @param <T> Resource type
+     * @param sets          Descriptor sets to update
+     * @param binding       Binding
+     * @param res           Resources
+     */
+    public <T extends Structure> UpdateBuilder add(Collection<DescriptorSet> sets, Binding binding, Collection<Resource<T>> res) {
+        for(DescriptorSet set : sets) {
+            final Update<?> update = set.update(binding, res);
+            updates.add(update);
+        }
+        return this;
+    }
+}
+```
+
+The apply() method converts the updates to an array and invokes the API to apply the changes:
 
 ```java
-public static void update(LogicalDevice dev, Collection<Update<?>> updates) {
+public void apply(LogicalDevice dev) {
+    if(updates.isEmpty()) throw new IllegalArgumentException("Empty updates");
     final var array = VulkanStructure.populateArray(VkWriteDescriptorSet::new, updates, Update::populate);
     dev.library().vkUpdateDescriptorSets(dev.handle(), array.length, array, 0, null);
 }
 ```
+
+We also add a convenience apply() method implemented using the new builder to apply an update directly.
 
 ## Conclusion
 
@@ -394,11 +419,11 @@ The above may well seem overly complicated - and it's possible that we have over
 
 - However only **one** type can be specified in any given update.
 
-- Different fields in the descriptor are populated depending on the descriptor type (specified in the binding), e.g. `pImageInfo` for a sampler, hence the apply() method in the new `Resource` interface.
+- Different fields in the descriptor are populated depending on the descriptor type (specified in the binding), e.g. `pImageInfo` for a sampler, hence the apply() method in the new `Resource` interface, i.e. the write descriptor is a sort of union type.
 
-- Multiple resources can be applied to a descriptor set in one update.
+- Multiple resources can be applied to a descriptor set in one update, e.g. we could apply a sampler and a uniform buffer in one call.
 
-- Multiple updates (possibly to different descriptor sets) can be applied in one API call (to reduce the number of calls when sets are volatile).
+- The API supports multiple updates to multiple descriptor sets in one invocation with the intention of reducing the number of calls when descriptors are volatile.
 
 We have attempted to bear all the above in mind while trying to decouple the logic for the different types of resource (we only have two now but there will be more).
 
@@ -459,12 +484,6 @@ public void load(Bufferable obj, long len, long offset) {
 Next we add a second binding to the descriptor set layout for the uniform buffer:
 
 ```java
-Binding samplerBinding = new Binding.Builder()
-    .binding(0)
-    .type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-    .stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-    .build();
-
 Binding uniformBinding = new Binding.Builder()
     .binding(1)
     .type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
@@ -487,25 +506,13 @@ Pool pool = new Pool.Builder(dev)
 Finally we use the new functionality to apply the updates:
 
 ```java
-final var samplerResource = sampler.resource(texture);
-final var uniformResource = uniform.resource();
-
-Function<DescriptorSet, Stream<DescriptorSet.Update<?>>> mapper = set -> Stream.of(
-        set.update(samplerBinding, samplerResource),
-        set.update(uniformBinding, uniformResource)
-);
-
-final var updates = descriptors
-        .stream()
-        .flatMap(mapper)
-        .collect(toList());
-
-DescriptorSet.update(dev, updates);
+new DescriptorSet.UpdateBuilder()
+    .add(descriptors, samplerBinding, sampler.resource(texture))
+    .add(descriptors, uniformBinding, uniform.resource())
+    .apply(dev);
 ```
 
-TODO - this sucks.
-
-Note that we are using the same uniform buffer for each descriptor set - this is fine for the moment since we are not changing the matrix between frames.  Later we will need to create a separate uniform buffer for each frame.
+Note that we are using the same uniform buffer for each descriptor set - this is fine for the moment since we are not changing the matrix between frames.  In future chapters we will create a separate uniform buffer for each frame.
 
 ## Applying the Matrix
 
@@ -564,10 +571,10 @@ The _rot_ matrix is the camera orientation and _trans_ is the camera (or eye) po
 
 Notes:
 - The Y (or up) direction is inverted for Vulkan.
-- Matrix multiplication is non-commutative, i.e. the order of operations is important.
-- Later on we will wrap this code into a camera class.
+- The Z axis points _out_ from the screen towards the viewer.
+- Later on we will wrap the view transform into a camera class.
 
-We also introduce the _vector_ domain class at this point:
+We introduce the _vector_ domain class at this point:
 
 ```java
 public final class Vector extends Tuple {
@@ -593,7 +600,7 @@ final Matrix matrix = proj.multiply(view);
 uniform.load(matrix);
 ```
 
-Finally we modify the vertex data to move one edge of the quad into the screen.
+Finally we modify the vertex data to move one edge of the quad into the screen by modifying the Z coordinate of the bottom two vertices:
 
 ```java
 new Point(-0.5f, -0.5f, 0))
@@ -610,7 +617,7 @@ PICTURE
 
 # Cube Model
 
-We are now going to replace the hard-coded quad vertices with a cube model which involves the following:
+We are now going to replace the hard-coded quad with a cube model which will require:
 
 1. A new domain class for a general model that encapsulates vertex data and conversion to an NIO buffer.
 
@@ -620,7 +627,7 @@ We are now going to replace the hard-coded quad vertices with a cube model which
 
 ## The Model
 
-The model class is initially fairly straight-forward (we will be adding more functionality as we go):
+Initially the model class is quite straight-forward (we will be adding more functionality as we go):
 
 ```java
 public class Model {
@@ -663,7 +670,7 @@ public ByteBuffer vertices() {
 }
 ```
 
-The new primitive enumeration essentially replicates `VkPrimitiveTopology` but provides some additional helper functionality (without modifying the code-generated class).
+The new primitive enumeration replicates `VkPrimitiveTopology` but provides some additional helper functionality (without having to modify the code-generated class).
 In particular we add the following method to test whether the number of vertices in a given model is valid for the primitive:
 
 ```java
@@ -745,7 +752,7 @@ private static final Point[] VERTICES = {
 };
 ```
 
-Each face is comprised of indices into the vertices array:
+Each face is comprised of a quad of indices into the vertices array:
 
 ```java
 private static final int[][] FACES = {
@@ -758,14 +765,14 @@ private static final int[][] FACES = {
 };
 ```
 
-The the two triangles are specified by indices into each face (exactly the same as we did for the quad in the previous chapter):
+The two triangles are specified by indices into each face (exactly the same as we did for the quad in the previous chapter):
 
 ```
 private static final int[] LEFT =  {0, 1, 2};
 private static final int[] RIGHT = {2, 1, 3};
 ```
 
-The method to add a triangle generates the three vertices for each triangle and adds them to the model:
+The method to add a triangle generates three vertices for each triangle and adds them to the model:
 
 ```java
 private void add(int[] face, int[] triangle, Model.Builder builder) {
@@ -869,7 +876,7 @@ When we run the code it should look roughly the same as the quad demo since we w
 
 ## Rotation
 
-Next we will apply a rotation to the cube implemented by a factory method on the matrix class that generates a rotation matrix about a given axis:
+Next we will apply a rotation to the cube by implemented the following factory method on the matrix class to generate a rotation matrix about a given axis:
 
 ```java
 public static Matrix rotation(Vector axis, float angle) {
@@ -903,7 +910,7 @@ public static Matrix rotation(Vector axis, float angle) {
 }
 ```
 
-The following code rotates the cube about the X-Y axis:
+We add the following temporary matrix to implement a static rotation about the X-Y axis:
 
 ```java
 Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.toRadians(30));
@@ -911,14 +918,14 @@ Matrix rotY = Matrix.rotation(Vector.Y_AXIS, MathsUtil.toRadians(30));
 Matrix rot = rotX.multiply(rotY);
 ```
 
-We modify the view transform to compose all three matrices:
+And modify the view transform to compose all three matrices:
 
 ```java
 Matrix matrix = proj.multiply(view).multiply(rot);
 uniform.load(matrix);
 ```
 
-Note that the order is important since matrix multiplication is non-commutative.
+Note that the order of the multiplications is important since matrix multiplication is non-commutative.
 
 The above should give us this:
 
@@ -926,7 +933,7 @@ PICTURE
 
 ## Animation
 
-To animate the rotation we modify the render loop to generate the rotation matrix on every frame:
+To animate the rotation we modify the render loop to generate a rotation matrix on every frame:
 
 ```java
 final long period = 5000;
