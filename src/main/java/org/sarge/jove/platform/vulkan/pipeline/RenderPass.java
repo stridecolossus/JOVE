@@ -39,6 +39,9 @@ public class RenderPass extends AbstractVulkanObject {
 	 */
 	public static final int VK_SUBPASS_EXTERNAL = (~0);
 
+	// TODO - number of attachments & check frame buffer
+	// TODO - separate attachment descriptor?
+
 	/**
 	 * Constructor.
 	 * @param handle		Render pass handle

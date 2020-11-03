@@ -3,7 +3,6 @@ package org.sarge.jove.demo;
 import static java.util.stream.Collectors.toList;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -16,9 +15,6 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.control.Action;
-import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -26,12 +22,10 @@ import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
-import org.sarge.jove.platform.desktop.WindowDescriptor;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.QueueFamily;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
@@ -45,7 +39,6 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Camera;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
-import org.sarge.jove.util.Loader;
 import org.sarge.jove.util.MathsUtil;
 
 public class ModelDemo {
@@ -55,7 +48,7 @@ public class ModelDemo {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources");
 		final var src = DataSource.of(dir);
-		final var loader = Loader.of(src, new ImageData.Loader());
+		final var loader = DataSource.loader(src, new ImageData.Loader());
 		final ImageData image = loader.load("demo/model/chalet.jpg");
 		final VkFormat format = FormatBuilder.format(image);
 
@@ -80,9 +73,6 @@ public class ModelDemo {
 				.barrier(texture)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-						.build()
 					.build()
 				.build()
 				.submit(pool, true);
@@ -92,9 +82,6 @@ public class ModelDemo {
 				.buffer(staging)
 				.image(texture)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-				.subresource()
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-					.build()
 				.build()
 				.submit(pool, true);
 
@@ -111,21 +98,11 @@ public class ModelDemo {
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 					.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
 					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)		// TODO - init from image?
-						.build()
 					.build()
 				.build()
 				.submit(pool, true);
 
-		final View view = new View.Builder(dev)
-				.image(texture)
-				.subresource()
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
-					.build()
-				.build();
-
-		return view;
+		return View.of(dev, texture);
 	}
 
 	private static VertexBuffer loadBuffer(LogicalDevice dev, ByteBuffer bb, Command.Pool pool) {
@@ -171,16 +148,6 @@ public class ModelDemo {
 						.build()
 					.build();
 
-			/*
-			depth
-				.barrier()
-				.layout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
-				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT)
-				.destination(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
-				.destination(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
-				.transition(pool);
-*/
 			return view;
 
 	}
@@ -191,10 +158,10 @@ public class ModelDemo {
 		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new WindowDescriptor.Builder()
+		final var descriptor = new Window.Descriptor.Builder()
 				.title("demo")
 				.size(new Dimensions(1280, 760))
-				.property(WindowDescriptor.Property.DISABLE_OPENGL)
+				.property(Window.Property.DISABLE_OPENGL)
 				.build();
 		final Window window = desktop.window(descriptor);
 
@@ -215,32 +182,32 @@ public class ModelDemo {
 				.init()
 				.callback(MessageHandler.CONSOLE)
 				.build();
-		instance.add(handler);
+		instance.handlers().add(handler);
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphicsPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		final var transferPredicate = PhysicalDevice.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
 				.filter(PhysicalDevice.predicate(graphicsPredicate))
 				.filter(PhysicalDevice.predicate(transferPredicate))
-				.filter(PhysicalDevice.predicatePresentationSupported(surfaceHandle))
+				.filter(PhysicalDevice.predicate(presentationPredicate))
 				.findAny()
 				.orElseThrow(() -> new RuntimeException("No GPU available"));
 
 		// Lookup required queues
-		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
-		final QueueFamily transfer = gpu.find(transferPredicate, "Transfer family not available");
-		final QueueFamily present = gpu.find(family -> family.isPresentationSupported(surfaceHandle), "Presentation family not available");
+		final Queue.Family graphics = gpu.family(graphicsPredicate);
+		final Queue.Family transfer = gpu.family(transferPredicate);
+		final Queue.Family present = gpu.family(presentationPredicate);
 
 		// Create device
-		final LogicalDevice dev = new LogicalDevice.Builder() // TODO - parent as ctor arg
-				.parent(gpu)
+		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				//.queue(graphics) TODO!!!
@@ -260,14 +227,12 @@ public class ModelDemo {
 				.build();
 
 		// Create swap-chain
-		final SwapChain chain = new SwapChain.Builder(surface)
+		final SwapChain chain = new SwapChain.Builder(dev, surface)
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
-
-		final Rectangle rect = new Rectangle(chain.extents());
 
 		final View depth = depth(dev, Image.Extents.of(chain.extents()));
 
@@ -297,11 +262,11 @@ public class ModelDemo {
 				.build();
 
 		// Load shaders
-		final Path dir = new File("./src/test/resources/demo/cube.rotate").toPath(); // TODO - root + resolve
+		final Path dir = new File("./src/test/resources/demo/model").toPath();
 		final var src = DataSource.of(dir);
-		final var shaderLoader = Loader.of(src, Shader.loader(dev));
-		final Shader vert = shaderLoader.load("spv.cube.vert");
-		final Shader frag = shaderLoader.load("spv.cube.frag");
+		final var shaderLoader = DataSource.loader(src, Shader.loader(dev));
+		final Shader vert = shaderLoader.load("spv.chalet.vert");
+		final Shader frag = shaderLoader.load("spv.chalet.frag");
 
 		//////////////////
 
@@ -309,9 +274,8 @@ public class ModelDemo {
 //		final ObjectModelLoader objLoader = new ObjectModelLoader();
 //		final Model model = objLoader.load(new FileReader("./src/test/resources/demo/model/chalet.obj")).build();
 		/////
-		final ModelLoader loader = new ModelLoader();
-//		writer.write(model, new FileOutputStream("./src/test/resources/demo/model/chalet.model"));
-		final Model model = loader.load(new FileInputStream("./src/test/resources/demo/model/chalet.model"));
+		final var loader = DataSource.loader(src, new ModelLoader());
+		final Model model = loader.load("chalet.model");
 
 		// Load VBO
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
@@ -327,69 +291,57 @@ public class ModelDemo {
 		final View texture = texture(dev, graphicsPool);
 
 		// Create descriptor layout
-		final DescriptorSet.Layout setLayout = new DescriptorSet.Layout.Builder(dev)
+		final var samplerBinding = new DescriptorSet.Layout.Binding.Builder()
 				.binding(0)
-					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-					.build()
-				.binding(1)
-					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
-					.build()
+				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
+
+		final var uniformBinding = new DescriptorSet.Layout.Binding.Builder()
+				.binding(1)
+				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+				.build();
+
+		final var layout = DescriptorSet.Layout.create(dev, List.of(samplerBinding, uniformBinding));
 
 		// Create pool
 		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
-				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
-				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3)
-				.max(2 * 3)
+				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
+				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2)
+				.max(2 * 2)
 				.build();
 
-		final List<DescriptorSet> descriptors = setPool.allocate(setLayout, 3);
+		final List<DescriptorSet> descriptors = setPool.allocate(layout, 2);
 
 		// Create sampler
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
 		// Create uniform buffer for the projection matrix
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
-				.length(Matrix.LENGTH * 3)
+				.length(Matrix.IDENTITY.length())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 				.build();
 
-		// Load the projection matrix
-		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-		uniform.load(proj, proj.length(), 0);
-
-		// Create uniform buffer per swapchain image
-//		final VertexBuffer[] uniforms = new VertexBuffer[3];
-//		for(int n = 0; n < uniforms.length; ++n) {
-//			uniforms[n] = new VertexBuffer.Builder(dev)
-//					.length(projSize)
-//					.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-//					.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-//					.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-//					.build();
-//
-//			uniforms[n].load(
-//		}
+		// Create projection matrix
+		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, chain.extents());
 
 		// Rotate model
-		uniform.load(Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI), Matrix.LENGTH, Matrix.LENGTH * 2);
+		final Matrix rot = Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
 
-		// Apply sampler to the descriptor sets
-		new DescriptorSet.Resource.Builder()
-				.descriptors(descriptors)
-				.add(0, sampler.update(texture))
-				.add(1, uniform.update())
-				.update(dev);
+		// Init descriptor sets
+		new DescriptorSet.UpdateBuilder()
+				.add(descriptors, samplerBinding, sampler.resource(texture))
+				.add(descriptors, uniformBinding, uniform.resource())
+				.apply(dev);
 
 		//////////////////
 
 		// Create pipeline layout
 		final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
-				.add(setLayout)
+				.add(layout)
 				.build();
 
 		// Create pipeline
@@ -404,8 +356,7 @@ public class ModelDemo {
 					.build()
 				.viewport()
 					.flip(true)
-					.viewport(rect)
-					.scissor(rect)
+					.viewport(new Rectangle(chain.extents()))
 					.build()
 				.rasterizer()
 					.cullMode(VkCullModeFlag.VK_CULL_MODE_FRONT_BIT)
@@ -440,7 +391,7 @@ public class ModelDemo {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin()
-					.add(pass.begin(buffers.get(n), rect))
+					.add(pass.begin(buffers.get(n)))
 					.add(pipeline.bind())
 					.add(vbo.bindVertexBuffer())
 					.add(index.bindIndexBuffer())
@@ -455,13 +406,15 @@ public class ModelDemo {
 
 		///////////////////
 
+		final AtomicBoolean running = new AtomicBoolean(true);
+
+		/*
 		final Action.Bindings bindings = new Action.Bindings();
 		//window.mouse().enable(Position.class, bindings);
-		window.keyboard().enable(Button.class, bindings);
+//		window.keyboard().enable(Button.class, bindings);
 
-		final AtomicBoolean running = new AtomicBoolean(true);
 		bindings.bind(new Button("Escape"), ignored -> running.set(false));
-
+*/
 		final Camera cam = new Camera();
 		cam.move(new Point(0, 0.5f, -2));
 
@@ -476,17 +429,20 @@ public class ModelDemo {
 //		};
 //		window.setMouseMoveListener(listener);
 
+		/*
 		final Action controller = e -> {
 			final Position pos = (Position) e;
 			final float dx = pos.x() / rect.width() * MathsUtil.PI;
 			cam.orientation(dx, 0);
 		};
 		bindings.bind(Position.TYPE, controller);
+		*/
 
 		while(running.get()) {
 			desktop.poll();
 
-			uniform.load(cam.matrix(), Matrix.LENGTH, Matrix.LENGTH);
+			final Matrix matrix = proj.multiply(cam.matrix()).multiply(rot);
+			uniform.load(matrix);
 
 			final int idx = chain.acquire(null, null);
 
@@ -525,7 +481,7 @@ public class ModelDemo {
 		depth.destroy();
 
 		setPool.destroy();
-		setLayout.destroy();
+		layout.destroy();
 
 		pool.destroy();
 		copyPool.destroy();

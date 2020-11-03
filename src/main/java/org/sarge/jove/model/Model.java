@@ -125,6 +125,8 @@ public interface Model {
 			return new ToStringBuilder(this)
 					.append("primitive", primitive())
 					.append("layout", layout())
+					.append("count", count())
+					.append("indexed", index().isPresent())
 					.build();
 		}
 	}

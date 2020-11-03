@@ -1,5 +1,7 @@
 package org.sarge.jove.particle;
 
+import java.util.function.Supplier;
+
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -31,24 +33,26 @@ public interface PositionFactory {
 
 	/**
 	 * Creates a position factory that generates points on a sphere.
-	 * @param radius Sphere radius
+	 * @param radius 		Sphere radius
+	 * @param random 		Random vector factory
 	 * @return Spherical position factory
 	 */
-	static PositionFactory sphere(float radius) {
-		return () -> new Point(Vector.random().scale(radius));
+	static PositionFactory sphere(float radius, Supplier<Vector> random) {
+		return () -> new Point(random.get().scale(radius));
 	}
 
 	/**
 	 * Creates a position factory that generates points within the given extents.
-	 * @param extents Extents
+	 * @param extents 		Extents
+	 * @param random		Random vector factory
 	 * @return Position factory
 	 */
-	static PositionFactory extents(Extents extents) {
+	static PositionFactory extents(Extents extents, Supplier<Vector> random) {
 		final Point min = extents.min();
 		final Vector range = Vector.of(extents.min(), extents.max());
 		return () -> {
-			final Vector r = Vector.random();
-			final Vector vec = new Vector(r.x * range.x, r.y * range.y, r.z * range.z);
+			final Vector v = random.get();
+			final Vector vec = new Vector(v.x * range.x, v.y * range.y, v.z * range.z);
 			return min.add(vec);
 		};
 	}

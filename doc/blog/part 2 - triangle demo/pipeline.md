@@ -531,7 +531,7 @@ void main() {
 We will also need to compile the shaders to SPIV using the GLSLC utility application provided as part of the JDK:
 
 ```
-cd /JOVE/src/test/resources/demo/triangle
+cd JOVE/src/test/resources/demo/triangle
 glslc triangle.frag -o spv.triangle.frag
 glslc triangle.vert -o spv.triangle.vert
 ```

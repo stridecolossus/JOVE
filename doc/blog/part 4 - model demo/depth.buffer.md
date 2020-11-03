@@ -25,31 +25,46 @@ public Command bindIndexBuffer() {
 }
 ```
 
-> We should probably change this class to something like `DataBuffer` since it is used for several cases (not just for vertex buffers) but we are to used to the name now.
+And we rename the existing bind() method to bindVertexBuffer() to differentiate the commands.
 
-However we do change the existing `bind` method to `bindVertexBuffer` to differentiate the commands more obviously.
+We also get around to renaming the class to `VulkanBuffer` since it is not really just for vertex data.
 
-Finally we change the drawing command to use the index buffer:
+Finally we encapsulate the drawing command:
 
 ```java
-final Command draw = (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0);
+public interface DrawCommand extends Command {
+    /**
+     * Creates a drawing command.
+     * @param model Model to draw
+     * @return Drawing command
+     */
+    static DrawCommand of(Model model) {
+        if(model.index().isPresent()) {
+            return (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0);
+        }
+        else {
+            return (api, handle) -> api.vkCmdDraw(handle, model.count(), 1, 0, 0);
+        }
+    }
+    // TODO - instancing, offset, etc
+}
 ```
 
 The rendering sequence now looks like this:
 
 ```java
 .begin()
-	.add(pass.begin(buffers.get(n), rect, grey))
+	.add(pass.begin(buffer))
 	.add(pipeline.bind())
 	.add(vbo.bindVertexBuffer())
 	.add(index.bindIndexBuffer())
-	.add(descriptors.get(n).bind(pipelineLayout))
-	.add(draw)
+	.add(descriptor.bind(pipelineLayout))
+	.add(DrawCommand.of(model))
 	.add(RenderPass.END_COMMAND)
 .end();
 ```
 
-We strip the code that applied the rotation and see what happens - what we get is a bit of mess:
+We strip the code that applied the rotation and see what happens - and what we get is a mess:
 
 - the model is rendered but it looks sort of *inside out*
 - the grass is obviously on the roof and vice-versa
@@ -65,12 +80,7 @@ We first add a second attachment to the render pass for the depth buffer:
 
 ```java
 final RenderPass pass = new RenderPass.Builder(dev)
-	.attachment()
-		.format(format)
-		.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-		.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-		.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-		.build()
+   ...
 	.attachment()
 		.format(VkFormat.VK_FORMAT_D32_SFLOAT)
 		.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
@@ -83,10 +93,9 @@ final RenderPass pass = new RenderPass.Builder(dev)
 	.build();
 ```
 
-The depth buffer attachment format is hard-coded to one that is commonly available on most Vulkan implementations,
-but we make a note to come back and add code to properly select a format appropriate to the hardware.
+The format of the depth buffer attachment is hard-coded to one that is commonly available on most Vulkan implementations, but we make a note to come back and add code to properly select a format appropriate to the hardware.
 
-Next we add a new method to the sub-pass builder to register the depth-buffer attachment:
+Next we add a new method to the sub-pass builder to register a depth-buffer attachment:
 
 ```java
 public SubpassBuilder depth(int index) {
@@ -98,14 +107,14 @@ public SubpassBuilder depth(int index) {
 We factor out the code that is common to both types of attachment we have implemented so far and refactor accordingly:
 
 ```java
-private VkAttachmentReference.ByReference reference(int index, VkImageLayout layout) {
+private VkAttachmentReference reference(int index, VkImageLayout layout) {
 	Check.zeroOrMore(index);
 	Check.notNull(layout);
-	if(index >= attachments.size()) throw new IllegalArgumentException("Invalid attachment index: " + index);
-	if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) throw new IllegalArgumentException("Invalid attachment layout: " + layout);
+	if(index >= attachments.size()) throw new IllegalArgumentException(...);
+	if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) throw new IllegalArgumentException(...);
 
 	// Create reference
-	final var ref = new VkAttachmentReference.ByReference();
+	final var ref = new VkAttachmentReference();
 	ref.attachment = index;
 	ref.layout = layout;
 	return ref;
@@ -114,9 +123,9 @@ private VkAttachmentReference.ByReference reference(int index, VkImageLayout lay
 
 ### Depth-Stencil Pipeline Stage
 
-Up until now we have not needed to specify the depth-stencil pipeline stage and the relevant field in the create descriptor was set to `null`.
+Up until now we have not needed to specify the optional depth-stencil pipeline stage and the relevant field in the create descriptor was set to `null`.
 
-So we next implement another nested builder to construct the descriptor for this stage (which turns out to be fairly trivial):
+We implement a new nested builder to configure this stage (which turns out to be fairly trivial):
 
 ```java
 public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipelineDepthStencilStateCreateInfo> {
@@ -170,9 +179,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 }
 ```
 
-And we integrate this into the parent pipeline builder.
-
-Finally we modify the specification of the pipeline to include a depth test:
+Finally we modify the specification of the pipeline to include the depth test:
 
 ```java
 final Pipeline pipeline = new Pipeline.Builder(dev)
@@ -215,7 +222,7 @@ Notes:
 - We do not need to transition the depth buffer image as this is handled by Vulkan during the render pass.
 
 The depth buffer view is then added to each frame buffer object we create.
-The same depth buffer can safely be used in each frame because only a single sub-pass will be running at any one time in our render loop.
+The same depth buffer can safely be used in each frame because only a single sub-pass will be running at any one time in our bodged render loop.
 
 ## Clearing the Attachments
 
@@ -262,8 +269,8 @@ public abstract class ClearValue {
 }
 ```
 
-This is a skeleton implementation where the `populate` method fills the relevant field(s) in the `VkClearValue` array when we create the render command.
-The `aspect` method allows us to check that we are applying the correct type of clear value for a given attachment.
+This is a skeleton implementation where the populate() method fills the relevant field(s) in the `VkClearValue` array when we create the render command.
+The aspect() method allows us to check that we are applying the correct type of clear value for a given attachment.
 
 We add factory methods to create a clear value for the two cases - colour attachments:
 
@@ -307,9 +314,9 @@ public static ClearValue depth(float depth) {
 }
 ```
 
-Note the use of `setType` which is required to 'select' the relevant properties because these fields are actually *unions* (rather than structures).
+Introducing this new functionality should have been easy but we had a lot of head-scratching when we first tested this code with JNA throwing the infamous "Invalid memory access" error.  Eventually we realised that we are actually dealing with **unions** and not structures here!  Presumably our original code only worked because we were dealing with a single attachment and Vulkan simply ignored the 'extra' data of the structures.  
 
-> The realisation that these values are unions rather than structures followed a *lot* of head-scratching with JNA simply throwing the infamous "Illegal memory access" error because were sending the 'full' union. Presumably it worked previously because the native library simply ignored the extra data but failed miserably when we introduced the second attachment.
+We manually modified the relevant Vulkan types to unions and used the JNA setType() method to 'select' the relevant property.  As far as we can tell this is the only instance in the whole Vulkan API that uses a union!
 
 Finally we add default constants for both cases and a static helper that determines the default clear value for a given attachment:
 
@@ -362,7 +369,7 @@ public class View {
 }
 ```
 
-This allows us to pre-populate the clear value for an attachment in the view builder (or initialise it to the appropriate default):
+This allows us to set the clear value for an attachment in the view builder (or initialise it to an appropriate default):
 
 ```java
 private ClearValue clear;
@@ -398,35 +405,27 @@ For our demo we leave the depth buffer to use the default clear value.
 
 ### Populating the Clear Values
 
-Finally we refactor the command factory for the render pass to use the above and remove the colour parameter we were using previously:
+Finally we refactor the command factory for the render pass to use the above and remove the temporary code we used to clear the colour attachment:
 
 ```java
 public Command begin(FrameBuffer buffer, Rectangle extent) {
-	// Create descriptor
-	final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
-	...
+    // Create descriptor
+    final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
+    info.renderPass = this.handle();
+    info.framebuffer = buffer.handle();
+    info.renderArea = buffer.extents().toRect2D();
 
-	// Init clear values
-	final int num = buffer.attachments().size();
-	if(num > 0) {
-		// Populate clear values
-		final VkClearValue.ByReference[] array = (VkClearValue.ByReference[]) new VkClearValue.ByReference().toArray(num);
-		for(int n = 0; n < num; ++n) {
-			final View view = buffer.attachments().get(n);
-			view.clear().populate(array[n]);
-		}
+    // Map attachments to clear values
+    final Collection<ClearValue> values = buffer.attachments().stream().map(View::clear).collect(toList());
 
-		// Init descriptor
-		info.clearValueCount = num;
-		info.pClearValues = array[0];
-	}
+    // Init clear values
+    info.clearValueCount = values.size();
+    info.pClearValues = VulkanStructure.populate(VkClearValue::new, values, ClearValue::populate);
 
-	// Create command
-	return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+    // Create command
+    return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
 }
 ```
-
-> We also encountered a lot of JNA problems here before we finally realised we needed to use by-reference for the clear values array. Again previously we had mapped the `pClearValues` property as a JNA pointer which worked for one attachment but failed when we added the depth buffer.
 
 ## Integration #2
 
@@ -436,7 +435,9 @@ However we still need to solve the other problems.
 
 ### Inverting Texture Coordinates
 
-For the problem of the upside-down texture coordinates we *could* simply flip the texture image or fiddle the texture coordinates in the shader - but either of these is a bit of a bodge (and inverting the image would make loading slower).  The problem is with the way we are interpreting the coordinates in the OBJ model, therefore we add a new property to the transient OBJ model that flips the coordinates in the Y direction *once* during loading:
+For the problem of the upside-down texture coordinates we *could* simply flip the texture image or fiddle the texture coordinates in the shader - but neither of these solves the actual root problem (and inverting the image would make loading slower).  
+
+Therefore we add a new property to the transient OBJ model that flips the coordinates in the Y direction *once* during loading:
 
 ```java
 public static class ObjectModel {
@@ -463,9 +464,46 @@ public static class ObjectModel {
 }
 ```
 
-### Conclusion
+### Rasterizer Pipeline Stage
 
-The inside-out problem is due to the fact that the triangles in the OBJ model are opposite to the default winding order, we swap the face culling property in the rasterizer builder (alternatively we could flip the winding order, either works).
+The inside-out problem is due to the fact that the triangles in the OBJ model are opposite to the default winding order.
+
+We take a small detour to fully implement the builder for the rasterizer pipeline stage (which again is pretty simple):
+
+```java
+public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
+    private boolean depthClampEnable;
+    private boolean rasterizerDiscardEnable;
+    private VkPolygonMode polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL;
+    private VkCullModeFlag cullMode = VkCullModeFlag.VK_CULL_MODE_BACK_BIT;
+    private VkFrontFace frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    private boolean depthBiasEnable;
+    private float depthBiasConstantFactor;
+    private float depthBiasClamp;
+    private float depthBiasSlopeFactor;
+    private float lineWidth = 1;
+
+    @Override
+    protected VkPipelineRasterizationStateCreateInfo result() {
+        final var info = new VkPipelineRasterizationStateCreateInfo();
+        ...
+        return info;
+    }
+}
+```
+
+And we swap the face-culling property (alternatively we could swap the winding order, either works):
+
+```java
+final Pipeline pipeline = new Pipeline.Builder(dev)
+    ...
+    .rasterizer()
+        .cullMode(VkCullModeFlag.VK_CULL_MODE_FRONT_BIT)
+        .build()
+    ...
+```
+
+### Conclusion
 
 We are also viewing the model from above so we add a temporary rotation so we see it from the side and finally we get the following:
 

@@ -38,6 +38,7 @@ public interface Bufferable {
 
 			@Override
 			public void buffer(ByteBuffer dest) {
+				if(bb.remaining() == 0) throw new IllegalStateException("Empty source buffer"); // TODO
 				dest.put(bb);
 			}
 		};

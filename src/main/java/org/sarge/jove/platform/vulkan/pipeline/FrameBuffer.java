@@ -32,6 +32,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		// Use extents of first attachment
 		Check.notEmpty(views);
 		final Image.Extents extents = views.get(0).image().descriptor().extents();
+		// TODO - check num views = num attachments in pass
 
 		// Build descriptor
 		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();

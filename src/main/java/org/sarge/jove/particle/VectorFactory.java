@@ -1,5 +1,7 @@
 package org.sarge.jove.particle;
 
+import java.util.Random;
+
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
@@ -23,10 +25,16 @@ public interface VectorFactory {
 	VectorFactory POSITION = pos -> new Vector(pos);
 
 	/**
-	 * Randomised vector factory.
-	 * @see Vector#random()
+	 * Creates a randomised vector factory.
 	 */
-	VectorFactory RANDOM = ignored -> Vector.random();
+	static VectorFactory random(Random random) {
+		return ignored -> {
+			final float x = random.nextFloat();
+			final float y = random.nextFloat();
+			final float z = random.nextFloat();
+			return new Vector(x, y, z).normalize();
+		};
+	}
 
 	/**
 	 * Creates a factory with a fixed initial vector.
