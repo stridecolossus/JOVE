@@ -6,36 +6,30 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PositionTest {
-	private Position pos;
+	private Position.Event event;
 
 	@BeforeEach
 	void before() {
-		pos = new Position(1, 2);
+		event = new Position.Event(1, 2);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(1, pos.x());
-		assertEquals(2, pos.y());
-		assertEquals(Position.TYPE, pos.type());
+		assertEquals(1, event.x());
+		assertEquals(2, event.y());
+		assertEquals(Position.TYPE, event.type());
 	}
 
 	@Test
 	void equals() {
-		assertEquals(true, pos.equals(pos));
-		assertEquals(true, pos.equals(new Position(1, 2)));
-		assertEquals(false, pos.equals(null));
-		assertEquals(false, pos.equals(new Position(3, 4)));
-	}
-
-	@Test
-	void type() {
-		assertEquals("Position", Position.TYPE.name());
-		assertEquals(Position.TYPE.name().hashCode(), Position.TYPE.hashCode());
+		assertEquals(true, event.equals(event));
+		assertEquals(true, event.equals(new Position.Event(1, 2)));
+		assertEquals(false, event.equals(null));
+		assertEquals(false, event.equals(new Position.Event(3, 4)));
 	}
 
 	@Test
 	void parse() {
-		assertEquals(Position.TYPE, Position.TYPE.parse(null));
+		assertEquals(Position.TYPE, Position.parse("Position"));
 	}
 }

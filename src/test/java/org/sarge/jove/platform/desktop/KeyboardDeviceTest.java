@@ -9,13 +9,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.Operation;
 import org.sarge.jove.control.InputEvent;
+import org.sarge.jove.control.Position;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 import com.sun.jna.Pointer;
@@ -24,8 +27,9 @@ public class KeyboardDeviceTest {
 	private KeyboardDevice device;
 	private Window window;
 	private DesktopLibrary lib;
-	private InputEvent.Handler handler;
+	private Consumer<InputEvent<?>> handler;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		// Create API
@@ -40,7 +44,7 @@ public class KeyboardDeviceTest {
 		device = new KeyboardDevice(window);
 
 		// Create handler
-		handler = mock(InputEvent.Handler.class);
+		handler = mock(Consumer.class);
 	}
 
 	@Test
@@ -59,23 +63,33 @@ public class KeyboardDeviceTest {
 		verify(lib).glfwSetKeyCallback(eq(window.handle()), captor.capture());
 		assertNotNull(captor.getValue());
 
+		// Create ENTER button
+		final int code = 256;
+		final Button button = device.key(code);
+
 		// Generate an event
 		final KeyListener listener = captor.getValue();
-		listener.key(null, 1, 2, 3, 4);
+		listener.key(null, code, 2, 3, 4);
 
 		// Check event delegated to handler
-		final Button button = new Button(1, 3, 4);
-		verify(handler).handle(button.event());
+		verify(handler).accept(button.event(Operation.PRESS));
 	}
 
 	@Test
 	void enableInvalidEventType() {
-		assertThrows(IllegalArgumentException.class, () -> device.enable(InputEvent.Type.Position.class, handler));
+		assertThrows(IllegalArgumentException.class, () -> device.enable(Position.PositionType.class, handler));
 	}
 
+//	@Test
+//	void disable() {
+//		device.disable(Button.class);
+//		verify(lib).glfwSetKeyCallback(window.handle(), null);
+//	}
+
 	@Test
-	void disable() {
-		device.disable(Button.class);
-		verify(lib).glfwSetKeyCallback(window.handle(), null);
+	void key() {
+		final Button enter = device.key(256);
+		assertNotNull(enter);
+		assertEquals(enter, device.key("ESCAPE"));
 	}
 }

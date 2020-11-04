@@ -1,44 +1,40 @@
 package org.sarge.jove.control;
 
 import static org.sarge.jove.util.Check.notEmpty;
-import static org.sarge.jove.util.Check.zeroOrMore;
+
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.InputEvent.AbstractInputEventType;
-import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * An <i>axis</i> describes an input event for a controller axis or the mouse wheel.
  * @author Sarge
  */
-public final class Axis extends AbstractInputEventType {
-	private final String prefix;
-	private final int id;
+public final class Axis implements InputEvent.Type {
+	/**
+	 * Parses an axis from the given string representation.
+	 * @param str Axis string
+	 * @return New axis
+	 */
+	static Axis parse(String str) {
+		return new Axis(str);
+	}
+
+	private final String name;
 
 	/**
 	 * Constructor.
 	 * @param prefix	Name prefix
 	 * @param id 		Axis identifier
 	 */
-	public Axis(String prefix, int id) {
-		super(prefix, id);
-		this.prefix = notEmpty(prefix);
-		this.id = zeroOrMore(id);
+	public Axis(String name) {
+		this.name = notEmpty(name);
 	}
 
-	/**
-	 * @return Name prefix
-	 */
-	public String prefix() {
-		return prefix;
-	}
-
-	/**
-	 * @return Axis identifier
-	 */
-	public int id() {
-		return id;
+	@Override
+	public String name() {
+		return name;
 	}
 
 	/**
@@ -51,10 +47,8 @@ public final class Axis extends AbstractInputEventType {
 	}
 
 	@Override
-	public Type parse(String[] tokens) {
-		final String prefix = tokens[0];
-		final int id = Integer.parseInt(tokens[1]);
-		return new Axis(prefix, id);
+	public int hashCode() {
+		return Objects.hash(Axis.class, name);
 	}
 
 	@Override
@@ -63,11 +57,13 @@ public final class Axis extends AbstractInputEventType {
 			return true;
 		}
 		else {
-			return
-					(obj instanceof Axis that) &&
-					(this.id == that.id) &&
-					this.prefix.equals(that.prefix);
+			return (obj instanceof Axis that) && this.name.equals(that.name);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("name", name).build();
 	}
 
 	/**

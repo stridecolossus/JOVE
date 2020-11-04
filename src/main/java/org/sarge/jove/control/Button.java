@@ -5,16 +5,16 @@ import static org.sarge.jove.util.Check.notEmpty;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.InputEvent.AbstractInputEventType;
 import org.sarge.jove.control.InputEvent.Type;
 
 /**
  * A <i>button</i> describes a keyboard or controller button.
  */
-public final class Button extends AbstractInputEventType {
+public final class Button implements Type {
 	/**
 	 * Button operations.
 	 */
@@ -24,26 +24,29 @@ public final class Button extends AbstractInputEventType {
 		REPEAT
 	}
 
-	private final String id;
+	/**
+	 * Button parser.
+	 * @param str String representation
+	 * @return New button
+	 */
+	static Button parse(String str) {
+		return new Button(str);
+	}
+
+	private final String name;
 	private final Map<Operation, Event> events = Arrays.stream(Operation.values()).map(Event::new).collect(toMap(Event::operation, Function.identity()));
 
 	/**
 	 * Constructor.
-	 * @param id Button identifier
+	 * @param name Button name
 	 */
-	public Button(String id) {
-		super(id);
-		this.id = notEmpty(id);
+	public Button(String name) {
+		this.name = notEmpty(name);
 	}
 
-	// TODO - modifiers
-	// TODO - cache?
-
-	/**
-	 * @return Button identifier
-	 */
-	public String id() {
-		return id;
+	@Override
+	public String name() {
+		return name;
 	}
 
 	/**
@@ -56,8 +59,8 @@ public final class Button extends AbstractInputEventType {
 	}
 
 	@Override
-	public Type parse(String[] tokens) {
-		return new Button(tokens[0]);
+	public int hashCode() {
+		return Objects.hash(Button.class, name);
 	}
 
 	@Override
@@ -66,14 +69,19 @@ public final class Button extends AbstractInputEventType {
 			return true;
 		}
 		else {
-			return (obj instanceof Button that) && this.id.equals(that.id);
+			return (obj instanceof Button that) && this.name.equals(that.name);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return name;
 	}
 
 	/**
 	 * Button event.
 	 */
-	public final class Event implements InputEvent {
+	public final class Event implements InputEvent<Button> {
 		private final Operation op;
 
 		/**
@@ -92,7 +100,7 @@ public final class Button extends AbstractInputEventType {
 		}
 
 		@Override
-		public Type type() {
+		public Button type() {
 			return Button.this;
 		}
 
@@ -107,7 +115,7 @@ public final class Button extends AbstractInputEventType {
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
-					.append("button", Button.this)
+					.append("name", type())
 					.append("op", op)
 					.build();
 		}

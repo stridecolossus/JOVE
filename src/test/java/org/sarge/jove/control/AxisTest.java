@@ -14,32 +14,30 @@ public class AxisTest {
 
 	@BeforeEach
 	void before() {
-		axis = new Axis("Axis", 42);
+		axis = new Axis("Axis");
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("Axis", axis.prefix());
-		assertEquals(42, axis.id());
-		assertEquals("Axis-42", axis.name());
+		assertEquals("Axis", axis.name());
 	}
 
 	@Test
 	void parse() {
-		assertEquals(axis, axis.parse(new String[]{"Axis", "42"}));
+		assertEquals(axis, Axis.parse("Axis"));
 	}
 
 	@Test
 	void hash() {
-		assertEquals(Objects.hash("Axis", 42), axis.hashCode());
+		assertEquals(Objects.hash(Axis.class, "Axis"), axis.hashCode());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, axis.equals(axis));
-		assertEquals(true, axis.equals(new Axis("Axis", 42)));
+		assertEquals(true, axis.equals(new Axis("Axis")));
 		assertEquals(false, axis.equals(null));
-		assertEquals(false, axis.equals(new Axis("Axis", 999)));
+		assertEquals(false, axis.equals(new Axis("Other")));
 	}
 
 	@Nested

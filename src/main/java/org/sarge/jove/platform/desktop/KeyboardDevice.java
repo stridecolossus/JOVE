@@ -2,21 +2,26 @@ package org.sarge.jove.platform.desktop;
 
 import static org.sarge.jove.util.Check.notNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Button.Operation;
 import org.sarge.jove.control.Device;
-import org.sarge.jove.control.InputEvent.Handler;
+import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 /**
  * A <i>keyboard device</i> generates {@link Button} events.
+ * @see KeyTable
  * @author Sarge
  */
-class KeyboardDevice implements Device {
+public class KeyboardDevice implements Device {
+	private final KeyTable table = new KeyTable();
+	private final Map<Integer, Button> buttons = new HashMap<>();
 	private final Window window;
 
 	/**
@@ -38,40 +43,41 @@ class KeyboardDevice implements Device {
 	}
 
 	@Override
-	public void enable(Class<? extends Type> type, Handler<?> handler) {
-//		Check.notNull(handler);
-
+	public void enable(Class<? extends Type> type, Consumer<InputEvent<?>> handler) {
 		// Create callback adapter
 		final KeyListener listener = (ptr, key, scancode, action, mods) -> {
-			final Button button = new Button("???"); // key, action, mods);
-			handler.handle(button.event(Operation.PRESS));
-			System.out.println("key="+key+" action="+action+" mods="+mods);
-			if(key == 256) System.exit(0);
+			// TODO - action/mods
+			final Button button = key(key);
+			handler.accept(button.event(Operation.PRESS));
 		};
 
 		// Register callback
 		apply(type, listener);
 	}
 
-//	@Override
-//	public void disable(Class<? extends Type> type) {
-//		apply(type, null);
-//	}
-
 	private void apply(Class<? extends Type> type, KeyListener listener) {
 		if(type != Button.class) throw new IllegalArgumentException("Invalid event type for keyboard: " + type);
 		window.library().glfwSetKeyCallback(window.handle(), listener);
 	}
 
-	///////////////
-	public static void main(String[] args) throws InterruptedException {
-		Desktop desktop = Desktop.create();
-		WindowDescriptor descriptor = new WindowDescriptor.Builder().title("test").size(new Dimensions(640, 480)).build();
-		Window window = desktop.window(descriptor);
-		window.keyboard().enable(Button.class, null);
-		while(true) {
-			Thread.sleep(50);
-			desktop.poll();
-		}
+	/**
+	 * Looks up the key for the given key-code.
+	 * @param code Key-code
+	 * @return Key
+	 * @throws IllegalArgumentException if the key is unknown
+	 */
+	public Button key(int code) {
+		return buttons.computeIfAbsent(code, ignored -> new Button(table.name(code)));
+	}
+
+	/**
+	 * Looks up a key by name.
+	 * @param name Key name
+	 * @return Key
+	 * @throws IllegalArgumentException if the key is unknown
+	 */
+	public Button key(String name) {
+		final int code = table.code(name);
+		return buttons.computeIfAbsent(code, ignored -> new Button(name));
 	}
 }

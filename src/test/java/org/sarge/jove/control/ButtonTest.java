@@ -19,7 +19,6 @@ public class ButtonTest {
 
 	@Test
 	void constructor() {
-		assertEquals(NAME, button.id());
 		assertEquals(NAME, button.name());
 	}
 
@@ -30,7 +29,7 @@ public class ButtonTest {
 
 	@Test
 	void parse() {
-		assertEquals(button, button.parse(new String[]{NAME}));
+		assertEquals(button, Button.parse(NAME));
 	}
 
 	@Test

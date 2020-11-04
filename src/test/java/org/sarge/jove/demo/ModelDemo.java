@@ -15,12 +15,15 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.control.Action;
+import org.sarge.jove.control.Button;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.desktop.Desktop;
+import org.sarge.jove.platform.desktop.KeyboardDevice;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -408,20 +411,24 @@ public class ModelDemo {
 
 		final AtomicBoolean running = new AtomicBoolean(true);
 
-		/*
 		final Action.Bindings bindings = new Action.Bindings();
-		//window.mouse().enable(Position.class, bindings);
-//		window.keyboard().enable(Button.class, bindings);
+		final KeyboardDevice keyboard = (KeyboardDevice) window.keyboard(); // TODO
+		window.keyboard().enable(Button.class, bindings);
 
-		bindings.bind(new Button("Escape"), ignored -> running.set(false));
+//		final Device mouse = window.mouse();
+//		mouse.enable(Position.class, event -> System.out.println(event));
+
+		/*
+		//window.mouse().enable(Position.class, bindings);
 */
 		final Camera cam = new Camera();
 		cam.move(new Point(0, 0.5f, -2));
 
-//		bindings.bind(new Button(87, 0, 0), ignored -> cam.move(+1));		// W
-//		bindings.bind(new Button(83, 0, 0), ignored -> cam.move(-1));		// S
-//		bindings.bind(new Button(65, 0, 0), ignored -> cam.strafe(+1));		// A
-//		bindings.bind(new Button(68, 0, 0), ignored -> cam.strafe(-1));		// D
+		bindings.bind(keyboard.key("W"), () -> cam.move(+1));
+		bindings.bind(keyboard.key("A"), () -> cam.strafe(-1));
+		bindings.bind(keyboard.key("S"), () -> cam.move(-1));
+		bindings.bind(keyboard.key("D"), () -> cam.strafe(+1));
+		bindings.bind(keyboard.key("ESCAPE"), () -> running.set(false));
 
 //		final MousePositionListener listener = (ptr, x, y) -> {
 //			final float dx = (float) x / rect.width() * MathsUtil.PI;

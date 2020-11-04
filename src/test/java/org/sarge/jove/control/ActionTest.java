@@ -9,33 +9,41 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Action.Bindings;
+import org.sarge.jove.control.Button.Operation;
 
 public class ActionTest {
-	private static final InputEvent.Type TYPE = InputEvent.Type.POSITION;
-
+	private Button button;
+	private InputEvent<Button> event;
 	private Action action;
 	private Bindings bindings;
 
 	@BeforeEach
 	void before() {
-		bindings = new Bindings();
+		// Create an event
+		button = new Button("name");
+		event = button.event(Operation.PRESS);
+
+		// Create an action
 		action = mock(Action.class);
 		when(action.toString()).thenReturn("action");
+
+		// Create bindings
+		bindings = new Bindings();
 	}
 
 	@Test
 	void constructor() {
 		assertNotNull(bindings.actions());
 		assertEquals(0, bindings.actions().count());
-		assertEquals(Optional.empty(), bindings.binding(TYPE));
+		assertEquals(Optional.empty(), bindings.binding(button));
 	}
 
 	@Test
@@ -53,30 +61,30 @@ public class ActionTest {
 
 	@Test
 	void bind() {
-		bindings.bind(TYPE, action);
-		assertArrayEquals(new InputEvent.Type[]{TYPE}, bindings.bindings(action).toArray());
-		assertEquals(Optional.of(action), bindings.binding(TYPE));
+		bindings.bind(button, action);
+		assertArrayEquals(new InputEvent.Type[]{button}, bindings.bindings(action).toArray());
+		assertEquals(Optional.of(action), bindings.binding(button));
 	}
 
 	@Test
 	void bindAlreadyBound() {
-		bindings.bind(TYPE, action);
-		assertThrows(IllegalArgumentException.class, () -> bindings.bind(TYPE, action));
+		bindings.bind(button, action);
+		assertThrows(IllegalStateException.class, () -> bindings.bind(button, action));
 	}
 
 	@Test
 	void removeBinding() {
-		bindings.bind(TYPE, action);
-		bindings.remove(TYPE);
+		bindings.bind(button, action);
+		bindings.remove(button);
 		assertEquals(0, bindings.bindings(action).count());
-		assertEquals(Optional.empty(), bindings.binding(TYPE));
+		assertEquals(Optional.empty(), bindings.binding(button));
 	}
 
 	@Test
 	void removeActionBindings() {
-		bindings.bind(TYPE, action);
+		bindings.bind(button, action);
 		bindings.remove(action);
-		assertEquals(Optional.empty(), bindings.binding(TYPE));
+		assertEquals(Optional.empty(), bindings.binding(button));
 	}
 
 	@Test
@@ -86,45 +94,51 @@ public class ActionTest {
 
 	@Test
 	void clear() {
-		bindings.bind(TYPE, action);
+		bindings.bind(button, action);
 		bindings.clear();
 		assertEquals(0, bindings.actions().count());
 	}
 
 	@Test
-	void handle() {
-		final InputEvent event = InputEvent.Type.POSITION.create(1, 2);
-		bindings.bind(TYPE, action);
-		bindings.handle(event);
-		verify(action).execute(event);
+	void accept() {
+		bindings.bind(button, action);
+		bindings.accept(event);
+		verify(action).accept(event);
 	}
 
 	@Test
-	void handleIgnored() {
-		final InputEvent event = InputEvent.Type.POSITION.create(1, 2);
-		bindings.handle(event);
+	void acceptRunnable() {
+		final Runnable runnable = mock(Runnable.class);
+		bindings.bind(button, runnable);
+		bindings.accept(event);
+		verify(runnable).run();
+	}
+
+	@Test
+	void acceptIgnored() {
+		bindings.accept(event);
 		verifyZeroInteractions(action);
 	}
 
 	@Test
 	void write() {
-		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		bindings.bind(TYPE, action);
+		final StringWriter out = new StringWriter();
+		bindings.bind(button, action);
 		bindings.write(out);
-		assertEquals("action Position", new String(out.toByteArray()).trim());
+		assertEquals("action org.sarge.jove.control.Button-name", out.toString().trim());
 	}
 
 	@Test
 	void load() throws IOException {
 		// Write bindings
-		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		bindings.bind(TYPE, action);
+		final StringWriter out = new StringWriter();
+		bindings.bind(button, action);
 		bindings.write(out);
 
 		// Read back
 		final Bindings result = new Bindings();
 		result.add(action);
-		result.load(new ByteArrayInputStream(out.toByteArray()));
-		assertEquals(bindings, result);
+		result.load(new StringReader(out.toString()));
+		assertEquals(Optional.of(action), result.binding(button));
 	}
 }
