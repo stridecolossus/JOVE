@@ -7,23 +7,23 @@ Each line starts with a *command token* followed by a number of space-delimited 
 
 The most common commands are:
 
-| command     | arguments     | purpose                 | example             |
-| -------   | ---------        | -------                | -------            |
-| v           | x y x              | vertex position        | v 0.1 0.2 0.3     |
-| vn        | x y z            | normal                | vn 0.4 0.5 0.6    |
-| vt        | u v            | texture coordinate    | vt 0.7 0.8        |
-| f            | see below        | face or triangle        | f 1//3 4//6 7//9    |
-| s            | n/a            | smoothing group        | s                    |
+| command       | arguments     | purpose               | example           |
+| -------       | ---------     | -------               | -------           |
+| v             | x y x         | vertex position       | v 0.1 0.2 0.3     |
+| vn            | x y z         | normal                | vn 0.4 0.5 0.6    |
+| vt            | u v           | texture coordinate    | vt 0.7 0.8        |
+| f             | see below     | face or triangle      | f 1//3 4//6 7//9  |
+| s             | n/a           | smoothing group       | s                 |
 
 The *face* command specifies the vertices of a polygon (usually a triangle) as a tuple of indices delimited by the slash character.
 Each vertex consists of a position index, optional normal index, and an optional texture coordinate index.
 
-| example                 | description                                 |
-| -------               | -----------                               |
-| f 1 2 3                | triangle with vertex positions only         |
-| f 1/2 3/4 5/6            | triangle also with texture coordinates     |
-| f 1/2/3 4/5/6 7/8/9    | also with normals                         |
-| f 1//2 3//4 5//6        | normals but no texture coordinates         |
+| example                   | description                               |
+| -------                   | -----------                               |
+| f 1 2 3                   | triangle with vertex positions only       |
+| f 1/2 3/4 5/6             | triangle also with texture coordinates    |
+| f 1/2/3 4/5/6 7/8/9       | also with normals                         |
+| f 1//2 3//4 5//6          | normals but no texture coordinates        |
 
 Example:
 

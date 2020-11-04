@@ -23,7 +23,6 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.desktop.Desktop;
-import org.sarge.jove.platform.desktop.KeyboardDevice;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -412,7 +411,6 @@ public class ModelDemo {
 		final AtomicBoolean running = new AtomicBoolean(true);
 
 		final Action.Bindings bindings = new Action.Bindings();
-		final KeyboardDevice keyboard = (KeyboardDevice) window.keyboard(); // TODO
 		window.keyboard().enable(Button.class, bindings);
 
 //		final Device mouse = window.mouse();
@@ -424,11 +422,24 @@ public class ModelDemo {
 		final Camera cam = new Camera();
 		cam.move(new Point(0, 0.5f, -2));
 
-		bindings.bind(keyboard.key("W"), () -> cam.move(+1));
-		bindings.bind(keyboard.key("A"), () -> cam.strafe(-1));
-		bindings.bind(keyboard.key("S"), () -> cam.move(-1));
-		bindings.bind(keyboard.key("D"), () -> cam.strafe(+1));
-		bindings.bind(keyboard.key("ESCAPE"), () -> running.set(false));
+		class MoveAction implements Runnable {
+			private final int step;
+
+			MoveAction(int step) {
+				this.step = step;
+			}
+
+			@Override
+			public void run() {
+				cam.move(step);
+			}
+		}
+
+		bindings.bind(new Button("W"), new MoveAction(+1));
+		bindings.bind(new Button("A"), new MoveAction(-1));
+		bindings.bind(new Button("S"), () -> cam.move(-1));
+		bindings.bind(new Button("D"), () -> cam.strafe(+1));
+		bindings.bind(new Button("ESCAPE"), () -> running.set(false));
 
 //		final MousePositionListener listener = (ptr, x, y) -> {
 //			final float dx = (float) x / rect.width() * MathsUtil.PI;

@@ -6,18 +6,29 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
+import org.sarge.jove.control.Button;
 
 /**
- * The <i>key table</i> maps key codes to key names for a <i>standard</i> keyboard.
+ * The <i>key table</i> maps key codes to key names or button events for a <i>standard</i> keyboard.
  * @author Sarge
  */
 public class KeyTable {
+	/**
+	 * Singleton instance.
+	 */
+	public static final KeyTable INSTANCE = new KeyTable();
+
 	private final BidiMap<Integer, String> table = new DualHashBidiMap<>(load());
+	private final Map<Integer, Button> buttons = new HashMap<>();
+
+	private KeyTable() {
+	}
 
 	/**
 	 * @param key Key code
@@ -64,6 +75,27 @@ public class KeyTable {
 	 */
 	public Map<Integer, String> map() {
 		return Map.copyOf(table);
+	}
+
+	/**
+	 * Looks up the keyboard button for the given key-code.
+	 * @param code Key-code
+	 * @return Keyboard button
+	 * @throws IllegalArgumentException if the key is unknown
+	 */
+	public Button key(int code) {
+		return buttons.computeIfAbsent(code, ignored -> new Button(name(code)));
+	}
+
+	/**
+	 * Looks up a keyboard key by name.
+	 * @param name Key name
+	 * @return Keyboard button
+	 * @throws IllegalArgumentException if the key is unknown
+	 */
+	public Button key(String name) {
+		final int code = code(name);
+		return buttons.computeIfAbsent(code, ignored -> new Button(name));
 	}
 
 	/**

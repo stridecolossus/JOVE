@@ -25,8 +25,7 @@ public final class Axis implements InputEvent.Type {
 
 	/**
 	 * Constructor.
-	 * @param prefix	Name prefix
-	 * @param id 		Axis identifier
+	 * @param name Axis name
 	 */
 	public Axis(String name) {
 		this.name = notEmpty(name);

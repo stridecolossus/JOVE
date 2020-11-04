@@ -65,7 +65,7 @@ public class KeyboardDeviceTest {
 
 		// Create ENTER button
 		final int code = 256;
-		final Button button = device.key(code);
+		final Button button = KeyTable.INSTANCE.key(code);
 
 		// Generate an event
 		final KeyListener listener = captor.getValue();
@@ -77,19 +77,6 @@ public class KeyboardDeviceTest {
 
 	@Test
 	void enableInvalidEventType() {
-		assertThrows(IllegalArgumentException.class, () -> device.enable(Position.PositionType.class, handler));
-	}
-
-//	@Test
-//	void disable() {
-//		device.disable(Button.class);
-//		verify(lib).glfwSetKeyCallback(window.handle(), null);
-//	}
-
-	@Test
-	void key() {
-		final Button enter = device.key(256);
-		assertNotNull(enter);
-		assertEquals(enter, device.key("ESCAPE"));
+		assertThrows(IllegalArgumentException.class, () -> device.enable(Position.class, handler));
 	}
 }

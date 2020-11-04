@@ -2,8 +2,6 @@ package org.sarge.jove.platform.desktop;
 
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -19,9 +17,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
  * @see KeyTable
  * @author Sarge
  */
-public class KeyboardDevice implements Device {
-	private final KeyTable table = new KeyTable();
-	private final Map<Integer, Button> buttons = new HashMap<>();
+class KeyboardDevice implements Device {
 	private final Window window;
 
 	/**
@@ -47,7 +43,7 @@ public class KeyboardDevice implements Device {
 		// Create callback adapter
 		final KeyListener listener = (ptr, key, scancode, action, mods) -> {
 			// TODO - action/mods
-			final Button button = key(key);
+			final Button button = KeyTable.INSTANCE.key(key);
 			handler.accept(button.event(Operation.PRESS));
 		};
 
@@ -58,26 +54,5 @@ public class KeyboardDevice implements Device {
 	private void apply(Class<? extends Type> type, KeyListener listener) {
 		if(type != Button.class) throw new IllegalArgumentException("Invalid event type for keyboard: " + type);
 		window.library().glfwSetKeyCallback(window.handle(), listener);
-	}
-
-	/**
-	 * Looks up the key for the given key-code.
-	 * @param code Key-code
-	 * @return Key
-	 * @throws IllegalArgumentException if the key is unknown
-	 */
-	public Button key(int code) {
-		return buttons.computeIfAbsent(code, ignored -> new Button(table.name(code)));
-	}
-
-	/**
-	 * Looks up a key by name.
-	 * @param name Key name
-	 * @return Key
-	 * @throws IllegalArgumentException if the key is unknown
-	 */
-	public Button key(String name) {
-		final int code = table.code(name);
-		return buttons.computeIfAbsent(code, ignored -> new Button(name));
 	}
 }

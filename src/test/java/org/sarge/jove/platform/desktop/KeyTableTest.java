@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.control.Button;
 
 public class KeyTableTest {
 	private static final int CODE = 'A';
@@ -15,7 +16,7 @@ public class KeyTableTest {
 
 	@BeforeEach
 	void before() {
-		table = new KeyTable();
+		table = KeyTable.INSTANCE;
 	}
 
 	@Test
@@ -68,5 +69,19 @@ public class KeyTableTest {
 		final var map = table.map();
 		assertNotNull(map);
 		assertEquals(NAME, map.get(CODE));
+	}
+
+	@Test
+	void keyByCode() {
+		final Button button = table.key(CODE);
+		assertNotNull(button);
+		assertEquals(NAME, button.name());
+	}
+
+	@Test
+	void keyByName() {
+		final Button button = table.key(NAME);
+		assertNotNull(button);
+		assertEquals(NAME, button.name());
 	}
 }

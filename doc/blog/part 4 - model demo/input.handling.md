@@ -117,22 +117,19 @@ public interface InputEvent<T extends Type> {
 }
 ```
 
-### Axis
+As it turns out the simplest type of event is an axis device such as the mouse wheel, we will implement an end-to-end solution for event handling using the mouse wheel as a test case.
 
-As it turns out the simplest type of event is for an axis device such as the mouse wheel:
+The axis class is quite simple:
 
 ```java
-public class Axis implements InputEvent.Type {
-    private final int id;
+public final class Axis implements InputEvent.Type {
     private final String name;
 
     /**
      * Constructor.
-     * @param id        Axis identifier
-     * @param name      Axis name
+     * @param name Axis name
      */
-    public Axis(int id, String name) {
-        this.id = zeroOrMore(id);
+    public Axis(String name) {
         this.name = notEmpty(name);
     }
 
@@ -140,61 +137,89 @@ public class Axis implements InputEvent.Type {
     public String name() {
         return name;
     }
-}
-```
-
-We implement a local class for an instance of this type of event:
-
-```java
-/**
- * Axis event.
- */
-public final class Event implements InputEvent<Axis> {
-    private final float value;
 
     /**
-     * Constructor.
+     * Creates an axis input event.
      * @param value Axis value
+     * @return New axis event
      */
-    private Event(float value) {
-        this.value = value;
+    public Event create(float value) {
+        return new Event(value);
     }
 
     /**
-     * @return Axis value
+     * Axis event.
      */
-    public float value() {
-        return value;
-    }
+    public final class Event implements InputEvent<Axis> {
+        private final float value;
 
-    @Override
-    public Type type() {
-        return Axis.this;
+        /**
+         * Constructor.
+         * @param value Axis value
+         */
+        private Event(float value) {
+            this.value = value;
+        }
+
+        /**
+         * @return Axis value
+         */
+        public float value() {
+            return value;
+        }
+
+        @Override
+        public Type type() {
+            return Axis.this;
+        }
     }
 }
 ```
-
-and a factory to create an instance:
-
-```java
-/**
- * Creates an axis input event.
- * @param value Axis value
- * @return New axis event
- */
-public Event create(float value) {
-    return new Event(value);
-}
-```
-
-### Position
-
-TODO
-
-### Buttons
-
-TODO
-
-### Keyboard
 
 ## Devices
+
+TODO
+temp mouse wheel device
+will have other 2
+unit test example using consumer handler
+
+## ???
+
+buttons
+keyboard device
+position and mouse move
+mouse buttons
+
+## Key Table
+
+requirements for key table
+mapping file to GLFW macros
+button cache
+intregration into keyboard device
+
+## Action Bindings
+
+To make all this work worthwhile the final step is to implement 
+
+## Conclusion
+
+This design is
+
+- reusability
+
+- maintainability & test
+
+- cohesion
+
+## Integration
+
+---
+
+# Camera Controller
+
+
+
+
+
+
+
