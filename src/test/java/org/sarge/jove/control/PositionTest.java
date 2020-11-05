@@ -29,7 +29,9 @@ public class PositionTest {
 	}
 
 	@Test
-	void parse() {
-		assertEquals(Position.TYPE, Position.parse("Position"));
+	void parse() throws Exception {
+		final var parser = new InputEvent.Type.Parser();
+		final var result = parser.parse("org.sarge.jove.control.Position-Position");
+		assertEquals(Position.TYPE, result);
 	}
 }

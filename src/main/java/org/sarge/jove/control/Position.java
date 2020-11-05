@@ -7,27 +7,32 @@ import org.sarge.jove.control.InputEvent.Type;
  * @author Sarge
  */
 public final class Position implements Type {
+	private static final String NAME = "Position";
+
 	/**
 	 * Singleton instance.
 	 */
-	public static final Type TYPE = new Position();
-
-	/**
-	 * Parser.
-	 * @param str String representation (ignored)
-	 * @return Position type
-	 */
-	static Type parse(String str) {
-		if(!TYPE.name().equals(str)) throw new IllegalArgumentException();
-		return TYPE;
-	}
+	public static final Position TYPE = new Position(NAME);
 
 	private Position() {
 	}
 
+	/**
+	 * Constructor.
+	 * @param name Name (ignored)
+	 */
+	private Position(String name) {
+		assert this.name().equals(name);
+	}
+
 	@Override
 	public String name() {
-		return "Position";
+		return NAME;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Position;
 	}
 
 	/**

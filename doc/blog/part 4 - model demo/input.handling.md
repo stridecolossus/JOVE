@@ -1,13 +1,14 @@
+# Overview
+
+In this chapter we take a break from Vulkan and add support for a camera and input event processing based on the event handling functionality provided by GLFW.
+
+There are several ways we could have gone about implementing event handling, we also discuss the rationale for the approach we have taken and illustrate some of the challenges we faced.
+
+---
+
 # Input Events
 
-## Introduction
-
-In this chapter we take a break from Vulkan and add support for input event processing into JOVE, building on the event handling functionality in GLFW.
-
-There are several ways we could have gone about implementing event handling, this is just one of them (and probably not the best).
-We discuss the rationale for the design we have chosen and illustrate some of challenges we faced.
-
-## Design
+## Requirements
 
 There are a number of differing types of events provided by GLFW that we will support:
 
@@ -29,15 +30,13 @@ A _controller_ is defined here as a joystick, gamepad or console controller.
 
 Whilst we could simply use the GLFW functionality directly in our applications there are compelling reasons to introduce a layer of abstraction:
 
-- The GLFW API exposes several underlying details (such as window handle pointers) that we would prefer to hide if possible.
-
-- There is some data we would like to encapsulate such as mapping button modifiers and looking up keyboard key-names.
+- The GLFW API exposes some underlying details (such as window handle pointers) that we would prefer to hide if possible.
 
 - Some events are implemented by GLFW as callback handlers e.g. `MousePositionListener` and others as query functions, e.g. `glfwGetJoystickAxes()`.
 
-- Several of the event types map to the same general forms.  For example the mouse, controller and hat button events have the same essential structure and data.
+- Several of the event types map to the same general forms - for example the mouse, controller and hat button events are essentially equivalent.
 
-- Using GLFW callbacks (for example) mixes application logic and event handling which reduces code re-usability and makes testing more complex.
+- Traditional event callbacks mix application logic and the event handling framework reducing code re-usability and testability.
 
 Based on these observations we enumerate the following requirements for our design:
 
@@ -45,58 +44,67 @@ Based on these observations we enumerate the following requirements for our desi
 
 - Encapsulate the underlying GLFW code that generates input events.
 
-- Implement a _centralised_ mechanism to handle _all_ types of input event.
+- Separate the framework from the application logic that handles events.
 
-This is probably best illustrated by some pseudo-code of what we are trying to achieve from the perspective of a developer using the library:
+- Provide a centralised mechanism for handling events, i.e. rather than having to define multiple handlers for each input case.
 
-```java
-// Create keyboard device
-Device keyboard = new KeyboardDevice();
-Consumer<Button.Event> button = ...
-keyboard.enable(button);
+TODO - orientation, touch-screen devices
 
-// Create mouse device
-Device mouse = new MouseDevice();
-Consumer<Position> pos = ...
-Consumer<Axis.Event> axis = ...
-mouse.enable(pos);
-mouse.enable(axis);
-```
-
-If we can achieve these requirements we can then implement a handler that binds events to _actions_ along these lines:
-
-```java
-// Create a camera
-Camera camera = ...
-
-// Create bindings
-Bindings bindings = new Bindings();
-bindings.bind(new Button("W"), camera.move(+1));
-bindings.bind(new Button("A"), camera.move(-1));
-bindings.bind(new Button("S"), camera.strafe(-1));
-bindings.bind(new Button("D"), camera.strafe(+1));
-bindings.bind(pos, camera::orientate);
-bindings.bind(new Axis("MouseWheel"), new ZoomCameraAction(cam));
-
-// Enable bindings
-keyboard.enable(bindings);
-mouse.enable(bindings);
-```
-
-This separates input event handling from the application logic allowing actions to be more easily re-used across applications and considerably simplifies testing.
-
-## Event Types
+## Design
 
 After a bit of analysis we determine that the various types of event can be generalised to the following:
 
-type        | arguments             | examples
-----        | ---------             | -------
-position    | x, y                  | mouse move
-button      | id, press/release     | key, mouse button, controller button
-axis        | id, value             | joystick, mouse wheel
-boolean     | boolean               | window enter/leave
+type        | arguments             | range                         | examples
+----        | ---------             | -----                         | --------
+position    | x, y                  | n/a                           | mouse move
+button      | id, press/release     | number of buttons or keys     | key, mouse button, controller button
+axis        | id, value             | number of axes                | joystick, mouse wheel
+boolean     | boolean               | n/a                           | window enter/leave
 
-As a starting point we define an input event and its associated type as follows:
+The _range_ is the possible number of events of a given type.
+
+Out initial design consists of:
+
+- An _input event type_ with implementations for each of the above.
+
+- A _device_ abstraction with implementations for each source of input events, i.e. the keyboard, mouse, etc.
+
+- Event _handlers_ implemented using simple functional interfaces, i.e. `Consumer`.
+
+- A more specialised handler that allows the application developer to bind _actions_ to events.
+
+This is probably best illustrated by some pseudo-code:
+
+```java
+// Create mouse handler
+Device mouse = new MouseDevice();
+Consumer<Position> pos = event -> camera.orientate(event.x, event.y);
+mouse.enable(pos);
+
+// Create keyboard bindings
+Bindings bindings = new Bindings();
+Device keyboard = new KeyboardDevice();
+keyboard.enable(bindings);
+
+// Define some actions
+Action stop = () -> running = false;
+Action move = new MoveAction(camera);
+
+// Bind some events
+bindings.bind(new Button("Escape"), stop);
+bindings.bind(new Button("Up"), move(+1));
+bindings.bind(new Button("Down"), move(-1));
+```
+
+This design satisfies our requirements and successfully abstracts over the GLFW framework meaning we have a suite of components that can be more easily maintained and tested.
+
+## Input Events
+
+As it turns out the simplest type of event is probably an axis device such as the mouse wheel - we will implement an end-to-end solution for event handling using the mouse wheel as a test case.
+
+### Event Type
+
+As a starting point we define a general _input event_ and its associated _type_ as follows:
 
 ```java
 public interface InputEvent<T extends Type> {
@@ -117,9 +125,7 @@ public interface InputEvent<T extends Type> {
 }
 ```
 
-As it turns out the simplest type of event is an axis device such as the mouse wheel, we will implement an end-to-end solution for event handling using the mouse wheel as a test case.
-
-The axis class is quite simple:
+The implementation for an axis is quite simple:
 
 ```java
 public final class Axis implements InputEvent.Type {
@@ -176,12 +182,92 @@ public final class Axis implements InputEvent.Type {
 }
 ```
 
-## Devices
+### Device
 
-TODO
-temp mouse wheel device
-will have other 2
-unit test example using consumer handler
+To generate events we define a _device_ class:
+
+```java
+public interface Device {
+    /**
+     * @return Device name
+     */
+    String name();
+
+    /**
+     * @return Event types generated by this device
+     */
+    Set<Class<? extends Type>> types();
+
+    /**
+     * Enables events of the given type from this device.
+     * @param type          Event type
+     * @param handler       Event handler
+     */
+    void enable(Class<? extends Type> type, Consumer<InputEvent<?>> handler);
+}
+```
+
+The implementation for the mouse wheel registers a GLFW event listener which generates an axis event:
+
+```java
+class MouseDevice implements Device {
+    private static final Axis WHEEL = new Axis("Wheel");
+
+    ...
+    
+    @Override
+    public String name() {
+        return "Mouse";
+    }
+
+    @Override
+    public Set<Class<? extends Type>> types() {
+        return Set.of(Axis.class);
+    }
+    
+    @Override
+    public void enable(Class<? extends Type> type, Consumer<InputEvent<?>> handler) {
+        if(type != Axis.class) throw new IllegalArgumentException(...);
+        final MouseScrollListener listener = (ptr, x, y) -> handler.handle(WHEEL.create((float) y));
+        window.library().glfwSetScrollCallback(window.handle(), listener);
+    }    
+}
+```
+
+Eventually this device will be extended to support mouse button and movement events.
+
+### Unit-Test
+
+
+
+## Action Bindings
+
+
+
+
+
+
+
+
+Finally we add the following factory methods to the desktop window class:
+
+```java
+/**
+ * @return New keyboard device
+ */
+public Device keyboard() {
+    return new KeyboardDevice(this);
+}
+
+/**
+ * @return New mouse device
+ */
+public Device mouse() {
+    return new MouseDevice(this);
+}
+```
+
+
 
 ## ???
 
@@ -210,8 +296,6 @@ This design is
 - maintainability & test
 
 - cohesion
-
-## Integration
 
 ---
 

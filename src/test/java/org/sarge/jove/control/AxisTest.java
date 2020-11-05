@@ -24,7 +24,9 @@ public class AxisTest {
 
 	@Test
 	void parse() {
-		assertEquals(axis, Axis.parse("Axis"));
+		final var parser = new InputEvent.Type.Parser();
+		final var result = parser.parse("org.sarge.jove.control.Axis-Axis");
+		assertEquals(axis, result);
 	}
 
 	@Test

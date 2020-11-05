@@ -12,15 +12,6 @@ import org.sarge.jove.util.MathsUtil;
  * @author Sarge
  */
 public final class Axis implements InputEvent.Type {
-	/**
-	 * Parses an axis from the given string representation.
-	 * @param str Axis string
-	 * @return New axis
-	 */
-	static Axis parse(String str) {
-		return new Axis(str);
-	}
-
 	private final String name;
 
 	/**

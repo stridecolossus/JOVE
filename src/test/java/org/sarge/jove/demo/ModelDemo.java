@@ -411,7 +411,7 @@ public class ModelDemo {
 		final AtomicBoolean running = new AtomicBoolean(true);
 
 		final Action.Bindings bindings = new Action.Bindings();
-		window.keyboard().enable(Button.class, bindings);
+		window.keyboard().enable(bindings);
 
 //		final Device mouse = window.mouse();
 //		mouse.enable(Position.class, event -> System.out.println(event));

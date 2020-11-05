@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.TransientNativeObject;
-import org.sarge.jove.control.Device;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -182,14 +181,14 @@ public class Window implements TransientNativeObject {
 	/**
 	 * @return New keyboard device
 	 */
-	public Device keyboard() {
+	public KeyboardDevice keyboard() {
 		return new KeyboardDevice(this);
 	}
 
 	/**
 	 * @return New mouse device
 	 */
-	public Device mouse() {
+	public MouseDevice mouse() {
 		return new MouseDevice(this);
 	}
 

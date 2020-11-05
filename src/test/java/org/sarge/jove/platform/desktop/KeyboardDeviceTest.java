@@ -8,7 +8,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +17,8 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Button.Operation;
 import org.sarge.jove.control.InputEvent;
-import org.sarge.jove.control.Position;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.platform.desktop.KeyboardDevice.KeyTable;
 
 import com.sun.jna.Pointer;
 
@@ -50,13 +49,22 @@ public class KeyboardDeviceTest {
 	@Test
 	void constructor() {
 		assertEquals("Keyboard", device.name());
-		assertEquals(Set.of(Button.class), device.types());
+		assertNotNull(device.sources());
+		assertEquals(1, device.sources().size());
+	}
+
+	@Test
+	void source() {
+		final InputEvent.Source<?> src = device.sources().iterator().next();
+		assertNotNull(src);
+		assertEquals(Button.class, src.type());
+		assertThrows(UnsupportedOperationException.class, () -> src.events());
 	}
 
 	@Test
 	void enable() {
 		// Enable button events
-		device.enable(Button.class, handler);
+		device.enable(handler);
 
 		// Check API
 		final ArgumentCaptor<KeyListener> captor = ArgumentCaptor.forClass(KeyListener.class);
@@ -76,7 +84,17 @@ public class KeyboardDeviceTest {
 	}
 
 	@Test
-	void enableInvalidEventType() {
-		assertThrows(IllegalArgumentException.class, () -> device.enable(Position.class, handler));
+	void key() {
+		final Button key = KeyTable.INSTANCE.key(256);
+		assertNotNull(key);
+		assertEquals("ESCAPE", key.name());
+		assertEquals(key, KeyTable.INSTANCE.key("ESCAPE"));
+		assertEquals(new Button("ESCAPE"), KeyTable.INSTANCE.key("ESCAPE"));
+	}
+
+	@Test
+	void keyUnknown() {
+		assertThrows(IllegalArgumentException.class, () -> KeyTable.INSTANCE.key(0));
+		assertThrows(IllegalArgumentException.class, () -> KeyTable.INSTANCE.key("cobblers"));
 	}
 }

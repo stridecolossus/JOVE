@@ -1,15 +1,24 @@
 package org.sarge.jove.platform.desktop;
 
+import static java.util.stream.Collectors.toMap;
 import static org.sarge.jove.util.Check.notNull;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.Operation;
-import org.sarge.jove.control.Device;
 import org.sarge.jove.control.InputEvent;
-import org.sarge.jove.control.InputEvent.Type;
+import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 /**
@@ -17,7 +26,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
  * @see KeyTable
  * @author Sarge
  */
-class KeyboardDevice implements Device {
+public class KeyboardDevice implements InputEvent.Device {
 	private final Window window;
 
 	/**
@@ -34,25 +43,122 @@ class KeyboardDevice implements Device {
 	}
 
 	@Override
-	public Set<Class<? extends Type>> types() {
-		return Set.of(Button.class);
+	public Set<Source<?>> sources() {
+		return Set.of(keyboard());
 	}
 
-	@Override
-	public void enable(Class<? extends Type> type, Consumer<InputEvent<?>> handler) {
-		// Create callback adapter
-		final KeyListener listener = (ptr, key, scancode, action, mods) -> {
-			// TODO - action/mods
-			final Button button = KeyTable.INSTANCE.key(key);
-			handler.accept(button.event(Operation.PRESS));
+	/**
+	 * Helper - Enables this keyboard for the given event handler.
+	 * @param handler Event handler
+	 */
+	public void enable(Consumer<InputEvent<?>> handler) {
+		final var keyboard = keyboard();
+		keyboard.enable(handler);
+	}
+
+	/**
+	 * @return New keyboard event source
+	 */
+	private Source<Button> keyboard() {
+		return new Source<>() {
+			@Override
+			public Class<Button> type() {
+				return Button.class;
+			}
+
+			@Override
+			public List<Button> events() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void enable(Consumer<InputEvent<?>> handler) {
+				// Create callback adapter
+				final KeyListener listener = (ptr, key, scancode, action, mods) -> {
+					// TODO - action/mods
+					final Button button = KeyTable.INSTANCE.key(key);
+					handler.accept(button.event(Button.Operation.PRESS));
+				};
+
+				// Register callback
+				apply(listener);
+			}
+
+			@Override
+			public void disable() {
+				apply(null);
+			}
+
+			/**
+			 * Sets the GLFW keyboard listener.
+			 * @param listener Keyboard listener
+			 */
+			private void apply(KeyListener listener) {
+				window.library().glfwSetKeyCallback(window.handle(), listener);
+			}
 		};
-
-		// Register callback
-		apply(type, listener);
 	}
 
-	private void apply(Class<? extends Type> type, KeyListener listener) {
-		if(type != Button.class) throw new IllegalArgumentException("Invalid event type for keyboard: " + type);
-		window.library().glfwSetKeyCallback(window.handle(), listener);
+	/**
+	 * The <i>key table</i> maps between GLFW key codes and names.
+	 */
+	public static class KeyTable {
+		/**
+		 * Singleton instance.
+		 */
+		public static final KeyTable INSTANCE = new KeyTable();
+
+		private final Map<Integer, Button> buttons = new HashMap<>();
+		private final BidiMap<Integer, String> table = new DualHashBidiMap<>(load());
+
+		private KeyTable() {
+		}
+
+		/**
+		 * Looks up a key by code.
+		 * @param code Key code
+		 * @return Keyboard button
+		 * @throws IllegalArgumentException for an unknown key
+		 */
+		public Button key(int code) {
+			return buttons.computeIfAbsent(code, key -> new Button(map(key)));
+		}
+
+		/**
+		 * Looks up a key by name.
+		 * @param name Key name
+		 * @return Keyboard button
+		 * @throws IllegalArgumentException for an unknown key
+		 */
+		public Button key(String name) {
+			final Integer code = table.getKey(name);
+			if(code == null) throw new IllegalArgumentException("Unknown key: " + name);
+			return key(code);
+		}
+
+		/**
+		 * Helper - Maps a key code to name.
+		 */
+		private String map(int code) {
+			final String name = table.get(code);
+			if(name == null) throw new IllegalArgumentException("Unknown key code: " + code);
+			return name;
+		}
+
+		/**
+		 * Loads the standard key table.
+		 */
+		private static Map<Integer, String> load() {
+			try(final InputStream in = KeyTable.class.getResourceAsStream("/key.table.txt")) {
+				if(in == null) throw new RuntimeException("Cannot find key names resource");
+				return new BufferedReader(new InputStreamReader(in))
+						.lines()
+						.map(StringUtils::split)
+						.collect(toMap(tokens -> Integer.parseInt(tokens[1].trim()), tokens -> tokens[0].trim()));
+			}
+			catch(IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 }

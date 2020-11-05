@@ -29,7 +29,9 @@ public class ButtonTest {
 
 	@Test
 	void parse() {
-		assertEquals(button, Button.parse(NAME));
+		final var parser = new InputEvent.Type.Parser();
+		final var result = parser.parse("org.sarge.jove.control.Button-key");
+		assertEquals(button, result);
 	}
 
 	@Test

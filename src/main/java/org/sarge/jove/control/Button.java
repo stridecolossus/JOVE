@@ -24,15 +24,6 @@ public final class Button implements Type {
 		REPEAT
 	}
 
-	/**
-	 * Button parser.
-	 * @param str String representation
-	 * @return New button
-	 */
-	static Button parse(String str) {
-		return new Button(str);
-	}
-
 	private final String name;
 	private final Map<Operation, Event> events = Arrays.stream(Operation.values()).map(Event::new).collect(toMap(Event::operation, Function.identity()));
 
