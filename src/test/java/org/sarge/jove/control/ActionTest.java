@@ -6,139 +6,126 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Action.Bindings;
-import org.sarge.jove.control.Button.Operation;
 
 public class ActionTest {
-	private Button button;
-	private InputEvent<Button> event;
-	private Action action;
-	private Bindings bindings;
+	private Bindings<Axis> bindings;
+	private Axis axis;
+	private Action<Axis> action;
+	private Axis.Event event;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		// Create an event
-		button = new Button("name");
-		event = button.event(Operation.PRESS);
-
-		// Create an action
+		bindings = new Bindings<>();
+		axis = new Axis("Axis");
 		action = mock(Action.class);
-		when(action.toString()).thenReturn("action");
-
-		// Create bindings
-		bindings = new Bindings();
+		event = axis.create(42);
 	}
 
 	@Test
 	void constructor() {
 		assertNotNull(bindings.actions());
 		assertEquals(0, bindings.actions().count());
-		assertEquals(Optional.empty(), bindings.binding(button));
 	}
 
 	@Test
 	void add() {
 		bindings.add(action);
 		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+	}
+
+	@Test
+	void addDuplicate() {
+		bindings.add(action);
+		assertThrows(IllegalArgumentException.class, () -> bindings.add(action));
+	}
+
+	@Test
+	void bindings() {
+		bindings.add(action);
 		assertNotNull(bindings.bindings(action));
 		assertEquals(0, bindings.bindings(action).count());
 	}
 
 	@Test
-	void bindingsActionNotPresent() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.bindings(action));
+	void bindingNotPresent() {
+		assertEquals(Optional.empty(), bindings.binding(axis));
 	}
 
 	@Test
 	void bind() {
-		bindings.bind(button, action);
-		assertArrayEquals(new InputEvent.Type[]{button}, bindings.bindings(action).toArray());
-		assertEquals(Optional.of(action), bindings.binding(button));
+		bindings.bind(axis, action);
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Axis[]{axis}, bindings.bindings(action).toArray());
+		assertEquals(Optional.of(action), bindings.binding(axis));
 	}
 
 	@Test
 	void bindAlreadyBound() {
-		bindings.bind(button, action);
-		assertThrows(IllegalStateException.class, () -> bindings.bind(button, action));
+		bindings.bind(axis, action);
+		assertThrows(IllegalStateException.class, () -> bindings.bind(axis, action));
 	}
 
 	@Test
-	void removeBinding() {
-		bindings.bind(button, action);
-		bindings.remove(button);
+	void remove() {
+		bindings.bind(axis, action);
+		bindings.remove(axis);
 		assertEquals(0, bindings.bindings(action).count());
-		assertEquals(Optional.empty(), bindings.binding(button));
+		assertEquals(Optional.empty(), bindings.binding(axis));
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
-	void removeActionBindings() {
-		bindings.bind(button, action);
+	void removeAction() {
+		bindings.bind(axis, action);
 		bindings.remove(action);
-		assertEquals(Optional.empty(), bindings.binding(button));
+		assertEquals(0, bindings.bindings(action).count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
-	void removeActionBindingsNotPresent() {
+	void removeActionNotBound() {
 		assertThrows(IllegalArgumentException.class, () -> bindings.remove(action));
 	}
 
 	@Test
 	void clear() {
-		bindings.bind(button, action);
+		bindings.bind(axis, action);
 		bindings.clear();
-		assertEquals(0, bindings.actions().count());
+		assertEquals(0, bindings.bindings(action).count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
 	void accept() {
-		bindings.bind(button, action);
+		bindings.bind(axis, action);
 		bindings.accept(event);
 		verify(action).accept(event);
 	}
 
 	@Test
-	void acceptRunnable() {
+	void runnable() {
+		// Bind an anonymous event
 		final Runnable runnable = mock(Runnable.class);
-		bindings.bind(button, runnable);
-		bindings.accept(event);
+		bindings.bind(axis, runnable);
+
+		// Check action wrapper is bound
+		final Optional<Action<Axis>> wrapper = bindings.binding(axis);
+		assertNotNull(wrapper);
+		assertEquals(true, wrapper.isPresent());
+
+		// Invoke action wrapper
+		wrapper.get().accept(event);
 		verify(runnable).run();
 	}
 
-	@Test
-	void acceptIgnored() {
-		bindings.accept(event);
-		verifyZeroInteractions(action);
-	}
-
-	@Test
-	void write() {
-		final StringWriter out = new StringWriter();
-		bindings.bind(button, action);
-		bindings.write(out);
-		assertEquals("action org.sarge.jove.control.Button-name", out.toString().trim());
-	}
-
-	@Test
-	void load() throws IOException {
-		// Write bindings
-		final StringWriter out = new StringWriter();
-		bindings.bind(button, action);
-		bindings.write(out);
-
-		// Read back
-		final Bindings result = new Bindings();
-		result.add(action);
-		result.load(new StringReader(out.toString()));
-		assertEquals(Optional.of(action), result.binding(button));
-	}
+	// TODO - save/load
 }

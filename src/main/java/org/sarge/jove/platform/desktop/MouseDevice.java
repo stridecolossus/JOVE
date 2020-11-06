@@ -11,7 +11,6 @@ import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.Operation;
 import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.control.InputEvent.Device;
 import org.sarge.jove.control.InputEvent.Source;
@@ -31,17 +30,12 @@ public class MouseDevice implements Device {
 	 */
 	private class Pointer implements Source<Position> {
 		@Override
-		public Class<Position> type() {
-			return Position.class;
-		}
-
-		@Override
 		public List<Position> events() {
 			return List.of(Position.TYPE);
 		}
 
 		@Override
-		public void enable(Consumer<InputEvent<?>> handler) {
+		public void enable(Consumer<InputEvent<Position>> handler) {
 			final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event((float) x, (float) y));
 			apply(listener);
 		}
@@ -64,16 +58,11 @@ public class MouseDevice implements Device {
 		 * @return Number of mouse buttons
 		 */
 		private int count() {
-			// TODO - uses AWT
+			// TODO - uses AWT but not supported by GLFW
 			return MouseInfo.getNumberOfButtons();
 		}
 
-		private final Button[] buttons = IntStream.range(0, count()).mapToObj(n -> "Button-" + n).map(Button::new).toArray(Button[]::new);
-
-		@Override
-		public Class<Button> type() {
-			return Button.class;
-		}
+		private final Button[] buttons = IntStream.rangeClosed(1, count()).mapToObj(n -> "Button-" + n).map(Button::new).toArray(Button[]::new);
 
 		@Override
 		public List<Button> events() {
@@ -81,10 +70,10 @@ public class MouseDevice implements Device {
 		}
 
 		@Override
-		public void enable(Consumer<InputEvent<?>> handler) {
+		public void enable(Consumer<InputEvent<Button>> handler) {
 			final MouseButtonListener listener = (ptr, button, action, mods) -> {
 				// TODO - action/mods
-				handler.accept(buttons[button].event(Operation.PRESS));
+				handler.accept(buttons[button]);
 			};
 			apply(listener);
 		}
@@ -106,17 +95,12 @@ public class MouseDevice implements Device {
 		private final Axis wheel = new Axis("Wheel");
 
 		@Override
-		public Class<Axis> type() {
-			return Axis.class;
-		}
-
-		@Override
 		public List<Axis> events() {
 			return List.of(wheel);
 		}
 
 		@Override
-		public void enable(Consumer<InputEvent<?>> handler) {
+		public void enable(Consumer<InputEvent<Axis>> handler) {
 			final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
 			apply(listener);
 		}
@@ -149,21 +133,21 @@ public class MouseDevice implements Device {
 	/**
 	 * @return Mouse pointer
 	 */
-	public Source<?> pointer() {
+	public Source<Position> pointer() {
 		return new Pointer();
 	}
 
 	/**
 	 * @return Mouse buttons
 	 */
-	public Source<?> buttons() {
+	public Source<Button> buttons() {
 		return new MouseButtons();
 	}
 
 	/**
 	 * @return Mouse wheel
 	 */
-	public Source<?> wheel() {
+	public Source<Axis> wheel() {
 		return new Wheel();
 	}
 

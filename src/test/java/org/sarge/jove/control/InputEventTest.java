@@ -2,39 +2,17 @@ package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
-
-import java.util.Set;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.InputEvent.Device;
-import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.control.InputEvent.Type.Parser;
 
 public class InputEventTest {
 	private static final String CLASSNAME = "org.sarge.jove.control.InputEventTest$MockEventType";
 	private static final String NAME = "name";
-
-	@Test
-	void enable() {
-		// Create a device
-		final Device dev = mock(Device.class);
-		final Source<?> src = mock(Source.class);
-		when(dev.sources()).thenReturn(Set.of(src));
-
-		// Enable all sources
-		@SuppressWarnings("unchecked")
-		final Consumer<InputEvent<?>> handler = mock(Consumer.class);
-		Device.enable(dev, handler);
-		verify(src).enable(handler);
-	}
 
 	@Nested
 	class ParserTests {

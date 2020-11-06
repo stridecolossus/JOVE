@@ -11,7 +11,7 @@ import org.sarge.jove.util.MathsUtil;
  * An <i>axis</i> describes an input event for a controller axis or the mouse wheel.
  * @author Sarge
  */
-public final class Axis implements InputEvent.Type {
+public class Axis implements InputEvent.Type {
 	private final String name;
 
 	/**
@@ -78,7 +78,7 @@ public final class Axis implements InputEvent.Type {
 		}
 
 		@Override
-		public Type type() {
+		public Axis type() {
 			return Axis.this;
 		}
 

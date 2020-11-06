@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,7 +50,7 @@ public class KeyboardDevice implements InputEvent.Device {
 	 * Helper - Enables this keyboard for the given event handler.
 	 * @param handler Event handler
 	 */
-	public void enable(Consumer<InputEvent<?>> handler) {
+	public void enable(Consumer<InputEvent<Button>> handler) {
 		final var keyboard = keyboard();
 		keyboard.enable(handler);
 	}
@@ -62,22 +61,17 @@ public class KeyboardDevice implements InputEvent.Device {
 	private Source<Button> keyboard() {
 		return new Source<>() {
 			@Override
-			public Class<Button> type() {
-				return Button.class;
-			}
-
-			@Override
 			public List<Button> events() {
-				throw new UnsupportedOperationException();
+				return List.of();
 			}
 
 			@Override
-			public void enable(Consumer<InputEvent<?>> handler) {
+			public void enable(Consumer<InputEvent<Button>> handler) {
 				// Create callback adapter
 				final KeyListener listener = (ptr, key, scancode, action, mods) -> {
-					// TODO - action/mods
-					final Button button = KeyTable.INSTANCE.key(key);
-					handler.accept(button.event(Button.Operation.PRESS));
+					final String name = KeyTable.INSTANCE.map(key);
+					final Button button = new Button(name, action, mods);
+					handler.accept(button);
 				};
 
 				// Register callback
@@ -108,38 +102,15 @@ public class KeyboardDevice implements InputEvent.Device {
 		 */
 		public static final KeyTable INSTANCE = new KeyTable();
 
-		private final Map<Integer, Button> buttons = new HashMap<>();
 		private final BidiMap<Integer, String> table = new DualHashBidiMap<>(load());
 
 		private KeyTable() {
 		}
 
 		/**
-		 * Looks up a key by code.
-		 * @param code Key code
-		 * @return Keyboard button
-		 * @throws IllegalArgumentException for an unknown key
-		 */
-		public Button key(int code) {
-			return buttons.computeIfAbsent(code, key -> new Button(map(key)));
-		}
-
-		/**
-		 * Looks up a key by name.
-		 * @param name Key name
-		 * @return Keyboard button
-		 * @throws IllegalArgumentException for an unknown key
-		 */
-		public Button key(String name) {
-			final Integer code = table.getKey(name);
-			if(code == null) throw new IllegalArgumentException("Unknown key: " + name);
-			return key(code);
-		}
-
-		/**
 		 * Helper - Maps a key code to name.
 		 */
-		private String map(int code) {
+		public String map(int code) {
 			final String name = table.get(code);
 			if(name == null) throw new IllegalArgumentException("Unknown key code: " + code);
 			return name;

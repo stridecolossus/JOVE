@@ -1,57 +1,120 @@
 package org.sarge.jove.control;
 
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.joining;
 import static org.sarge.jove.util.Check.notEmpty;
+import static org.sarge.jove.util.Check.zeroOrMore;
 
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.Set;
+import java.util.StringJoiner;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.control.InputEvent.Type;
 
 /**
  * A <i>button</i> describes a keyboard or controller button.
  */
-public final class Button implements Type {
+public final class Button implements Type, InputEvent<Button> {
 	/**
 	 * Button operations.
 	 */
 	public enum Operation {
-		PRESS,
 		RELEASE,
-		REPEAT
+		PRESS,
+		REPEAT;
+
+		private static final Operation[] OPERATIONS = Operation.values();
 	}
 
-	private final String name;
-	private final Map<Operation, Event> events = Arrays.stream(Operation.values()).map(Event::new).collect(toMap(Event::operation, Function.identity()));
+	/**
+	 * Button modifiers.
+	 */
+	public enum Modifier implements IntegerEnumeration {
+		SHIFT(0x0001),
+		CONTROL(0x002),
+		ALT(0x0004),
+		SUPER(0x0008),
+		CAPS_LOCK(0x0010),
+		NUM_LOCK(0x0020);
+
+		private final int value;
+
+		private Modifier(int value) {
+			this.value = value;
+		}
+
+		@Override
+		public int value() {
+			return value;
+		}
+	}
+
+	// TODO - parse/of
+
+	private final String id;
+	private final Operation op;
+	private final int mods;
 
 	/**
 	 * Constructor.
-	 * @param name Button name
+	 * @param id		Button identifier
+	 * @param op		Operation 0..2
+	 * @param mods		Modifiers bit-mask
 	 */
-	public Button(String name) {
-		this.name = notEmpty(name);
+	public Button(String id, int op, int mods) {
+		this.id = notEmpty(id);
+		this.op = Operation.OPERATIONS[op];
+		this.mods = zeroOrMore(mods);
+	}
+
+	/**
+	 * Convenience constructor for a button with the {@link Operation#PRESS} operation and no modifiers.
+	 * @param id Button identifier
+	 */
+	public Button(String id) {
+		this(id, 1, 0);
+	}
+
+	/**
+	 * @return Button identifier
+	 */
+	public String id() {
+		return id;
 	}
 
 	@Override
 	public String name() {
-		return name;
+		final StringJoiner str = new StringJoiner(DELIMITER);
+		str.add(id);
+		if(mods > 0) {
+			str.add(modifiers().stream().map(Enum::name).collect(joining(DELIMITER)));
+		}
+		str.add(op.name());
+		return str.toString();
 	}
 
 	/**
-	 * Creates the button event for the given operation.
-	 * @param op Button operation
-	 * @return Button event
+	 * @return Button operation
 	 */
-	public Event event(Operation op) {
-		return events.get(op);
+	public Operation operation() {
+		return op;
+	}
+
+	/**
+	 * @return Button modifiers
+	 */
+	public Set<Modifier> modifiers() {
+		return IntegerEnumeration.enumerate(Modifier.class, mods);
+	}
+
+	@Override
+	public Button type() {
+		return this;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(Button.class, name);
+		return Objects.hash(id, op, mods);
 	}
 
 	@Override
@@ -60,55 +123,15 @@ public final class Button implements Type {
 			return true;
 		}
 		else {
-			return (obj instanceof Button that) && this.name.equals(that.name);
+			return
+					(obj instanceof Button that) &&
+					(this.op == that.op) &&
+					(this.mods == that.mods);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return name;
-	}
-
-	/**
-	 * Button event.
-	 */
-	public final class Event implements InputEvent<Button> {
-		private final Operation op;
-
-		/**
-		 * Constructor.
-		 * @param op Button operation
-		 */
-		private Event(Operation op) {
-			this.op = op;
-		}
-
-		/**
-		 * @return Button operation
-		 */
-		public Operation operation() {
-			return op;
-		}
-
-		@Override
-		public Button type() {
-			return Button.this;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj instanceof Event that) &&
-					(this.op == that.op) &&
-					this.type().equals(that.type());
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("name", type())
-					.append("op", op)
-					.build();
-		}
+		return name();
 	}
 }

@@ -410,8 +410,23 @@ public class ModelDemo {
 
 		final AtomicBoolean running = new AtomicBoolean(true);
 
-		final Action.Bindings bindings = new Action.Bindings();
+
+		// TODO
+		// bindings per input event type?
+		// hmmm but what about throttle? i.e. joystick throttle -> speed and W/S for inc/dec speed?
+		// these would have to be separate tho related actions since throttle -> absolute speed whereas W/S is +/- increment
+		// and if we DID want actions shared across binding sets then can be done
+
+
+
+		final Action.Bindings<Button> bindings = new Action.Bindings<>();
 		window.keyboard().enable(bindings);
+		//window.mouse().wheel().enable(bindings.axis());
+
+		window.mouse().buttons().enable(bindings);
+//		bindings.bind(new Axis("Wheel"), event -> System.out.println("axis="+event));
+//		bindings.bind(mouse.wheel(), event -> System.out.println("axis="+event));
+
 
 //		final Device mouse = window.mouse();
 //		mouse.enable(Position.class, event -> System.out.println(event));
@@ -434,6 +449,8 @@ public class ModelDemo {
 				cam.move(step);
 			}
 		}
+
+		bindings.bind(new Button("Button-1"), new MoveAction(+1));
 
 		bindings.bind(new Button("W"), new MoveAction(+1));
 		bindings.bind(new Button("A"), new MoveAction(-1));

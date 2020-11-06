@@ -40,7 +40,7 @@ public final class Position implements Type {
 	 */
 	public record Event(float x, float y) implements InputEvent<Position> {
 		@Override
-		public Type type() {
+		public Position type() {
 			return TYPE;
 		}
 	}
