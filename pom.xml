@@ -58,24 +58,20 @@
 	</build>
 	
 	<properties>
-		<!--
-		<lwjgl.version>3.2.1</lwjgl.version>
-		<lwjgl.natives>natives-windows</lwjgl.natives>
-		-->
 	</properties>
 	
 	<dependencies>
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.sarge.lib</groupId> -->
-<!-- 			<artifactId>lib</artifactId> -->
-<!-- 			<version>1.0.0-SNAPSHOT</version> -->
-<!-- 		</dependency> -->
-
 		<dependency>
 			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.7</version>
+			<artifactId>commons-collections4</artifactId>
+			<version>4.4</version>
 		</dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.11</version>
+        </dependency>
 
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>
@@ -83,66 +79,35 @@
 			<version>5.3.0</version>
 		</dependency>
 
+<!--
 		<dependency>
 		    <groupId>org.apache.velocity</groupId>
 		    <artifactId>velocity</artifactId>
 		    <version>1.7</version>
+		    <exclusions>
+		    	<exclusion>
+		    		<groupId>commons-lang</groupId>
+		    		<artifactId>commons-lang</artifactId>
+		    	</exclusion>
+		    	<exclusion>
+		    		<groupId>commons-collections</groupId>
+		    		<artifactId>commons-collections</artifactId>
+		    	</exclusion>
+		    </exclusions>
 		</dependency>
 		
 		<dependency>
 		     <groupId>org.apache.velocity</groupId>
 		     <artifactId>velocity-tools</artifactId>
 		     <version>2.0</version>
+		     <exclusions>
+		     	<exclusion>
+		     		<groupId>commons-collections</groupId>
+		     		<artifactId>commons-collections</artifactId>
+		     	</exclusion>
+		     </exclusions>
 		</dependency>
-
-<!-- 
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<version>1.18.6</version>
-			<scope>provided</scope>
-		</dependency>
--->
-		<!--
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl</artifactId>
-			<version>${lwjgl.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl-glfw</artifactId>
-			<version>${lwjgl.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl-openal</artifactId>
-			<version>${lwjgl.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl-vulkan</artifactId>
-			<version>${lwjgl.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl</artifactId>
-			<version>${lwjgl.version}</version>
-			<classifier>${lwjgl.natives}</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl-glfw</artifactId>
-			<version>${lwjgl.version}</version>
-			<classifier>${lwjgl.natives}</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.lwjgl</groupId>
-			<artifactId>lwjgl-openal</artifactId>
-			<version>${lwjgl.version}</version>
-			<classifier>${lwjgl.natives}</classifier>
-		</dependency>
-		-->
+ -->
 		
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -150,6 +115,7 @@
 			<version>5.0.1</version>
 			<scope>test</scope>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>

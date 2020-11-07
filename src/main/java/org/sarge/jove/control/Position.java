@@ -1,42 +1,57 @@
 package org.sarge.jove.control;
 
+import static org.sarge.jove.util.Check.notEmpty;
+
+import org.sarge.jove.control.InputEvent.Type;
+
 /**
  * A <i>position event</i> describes a mouse or joystick positional movement.
  * @author Sarge
  */
-public record Position(float x, float y) implements InputEvent {
+public final class Position implements Type {
 	/**
-	 * Singleton instance.
+	 * Parses a position from its string representation.
+	 * @param name String representation
+	 * @return New position
 	 */
-	public static final Type TYPE = new Type() {
-		@Override
-		public String name() {
-			return "Position";
-		}
+	public static Position parse(String name) {
+		return new Position(name);
+	}
 
-		@Override
-		public Type parse(String[] tokens) {
-			return this;
-		}
+	private final String name;
 
-		@Override
-		public int hashCode() {
-			return name().hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return obj == this;
-		}
-
-		@Override
-		public String toString() {
-			return name();
-		}
-	};
+	/**
+	 * Constructor.
+	 * @param name Position name
+	 */
+	public Position(String name) {
+		this.name = notEmpty(name);
+	}
 
 	@Override
-	public Type type() {
-		return TYPE;
+	public String name() {
+		return name;
+	}
+
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return (obj instanceof Position that) && this.name.equals(that.name);
+	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
+
+	/**
+	 * Position event instance.
+	 */
+	public record Event(Position type, float x, float y) implements InputEvent {
+		// Empty
 	}
 }

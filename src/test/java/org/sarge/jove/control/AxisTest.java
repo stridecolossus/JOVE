@@ -8,38 +8,45 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.control.InputEvent.Type.Parser;
 
 public class AxisTest {
+	private static final String NAME = "Axis";
 	private Axis axis;
 
 	@BeforeEach
 	void before() {
-		axis = new Axis("Axis", 42);
+		axis = new Axis(NAME);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("Axis", axis.prefix());
-		assertEquals(42, axis.id());
-		assertEquals("Axis-42", axis.name());
+		assertEquals(NAME, axis.name());
 	}
 
 	@Test
 	void parse() {
-		assertEquals(axis, axis.parse(new String[]{"Axis", "42"}));
+		assertEquals(axis, Axis.parse(NAME));
+	}
+
+	@Test
+	void parser() {
+		final Parser parser = new Parser();
+		final var result = parser.parse(Axis.class.getName() + " " + NAME);
+		assertEquals(axis, result);
 	}
 
 	@Test
 	void hash() {
-		assertEquals(Objects.hash("Axis", 42), axis.hashCode());
+		assertEquals(Objects.hash(Axis.class, NAME), axis.hashCode());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, axis.equals(axis));
-		assertEquals(true, axis.equals(new Axis("Axis", 42)));
+		assertEquals(true, axis.equals(new Axis(NAME)));
 		assertEquals(false, axis.equals(null));
-		assertEquals(false, axis.equals(new Axis("Axis", 999)));
+		assertEquals(false, axis.equals(new Axis("Other")));
 	}
 
 	@Nested

@@ -3,6 +3,8 @@ package org.sarge.jove.particle;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.Random;
+
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
@@ -24,12 +26,13 @@ public class PositionFactoryTest {
 
 	@Test
 	public void extents() {
-		assertEquals(Point.ORIGIN, PositionFactory.extents(Extents.EMPTY).position());
+		final var factory = PositionFactory.extents(Extents.EMPTY, new Random());
+		assertEquals(Point.ORIGIN, factory.position());
 	}
 
 	@Test
 	public void spherical() {
-		final Point pos = PositionFactory.sphere(3).position();
+		final Point pos = PositionFactory.sphere(3, new Random()).position();
 		assertNotNull(pos);
 		assertEquals(3 * 3, new Vector(pos).magnitude(), 0.0001f);
 	}

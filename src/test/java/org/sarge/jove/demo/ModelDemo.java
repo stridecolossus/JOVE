@@ -9,12 +9,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.control.Action;
+import org.sarge.jove.control.Axis;
+import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -407,21 +413,72 @@ public class ModelDemo {
 		///////////////////
 
 		final AtomicBoolean running = new AtomicBoolean(true);
+		final AtomicInteger r = new AtomicInteger(5);
+
+		final Action.Bindings<Button> bindings = new Action.Bindings<>();
+		window.keyboard().enable(bindings);
+		//window.mouse().wheel().enable(bindings.axis());
+
+		window.mouse().buttons().enable(bindings);
+//		bindings.bind(new Axis("Wheel"), event -> System.out.println("axis="+event));
+//		bindings.bind(mouse.wheel(), event -> System.out.println("axis="+event));
+
+
+//		final Device mouse = window.mouse();
+//		mouse.enable(Position.class, event -> System.out.println(event));
 
 		/*
-		final Action.Bindings bindings = new Action.Bindings();
 		//window.mouse().enable(Position.class, bindings);
-//		window.keyboard().enable(Button.class, bindings);
-
-		bindings.bind(new Button("Escape"), ignored -> running.set(false));
 */
 		final Camera cam = new Camera();
 		cam.move(new Point(0, 0.5f, -2));
 
-//		bindings.bind(new Button(87, 0, 0), ignored -> cam.move(+1));		// W
-//		bindings.bind(new Button(83, 0, 0), ignored -> cam.move(-1));		// S
-//		bindings.bind(new Button(65, 0, 0), ignored -> cam.strafe(+1));		// A
-//		bindings.bind(new Button(68, 0, 0), ignored -> cam.strafe(-1));		// D
+		// http://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
+
+		final Consumer<Position.Event> controller = event -> {
+			final float dx = event.x() / chain.extents().width() * MathsUtil.TWO_PI;
+			final float dy = event.y() / chain.extents().height() * MathsUtil.PI;
+
+			final Point pos = new Point(MathsUtil.sin(dx) * r.get(), MathsUtil.cos(dy), MathsUtil.cos(dx) * r.get());
+System.out.println(event + " -> " + pos);
+
+			cam.move(pos);
+			cam.look(Point.ORIGIN);
+		};
+
+		window.mouse().pointer().enable(controller);
+
+		final Matrix mat = Matrix.translation(new Vector(0, 0.5f, 0));
+
+		final Consumer<Axis.Event> zoom = event -> {
+			r.set(r.get() + (int) event.value());
+		};
+		window.mouse().wheel().enable(zoom);
+
+//		Consumer<InputEvent<Position>> cip = event -> System.out.println(event);
+//		Consumer<Position.Event> cpe = event -> System.out.println(event);
+//		final boolean equals = cip == cpe;
+
+//		class MoveAction implements Runnable {
+//			private final int step;
+//
+//			MoveAction(int step) {
+//				this.step = step;
+//			}
+//
+//			@Override
+//			public void run() {
+//				cam.move(step);
+//			}
+//		}
+//
+//		bindings.bind(Button.of("Button-1"), new MoveAction(+1));
+//
+//		bindings.bind(Button.of("W"), new MoveAction(+1));
+//		bindings.bind(Button.of("A"), strafe.apply(+1));
+//		bindings.bind(Button.of("S"), () -> cam.move(-1));
+//		bindings.bind(Button.of("D"), strafe.apply(-1));
+		bindings.bind(Button.of("ESCAPE"), () -> running.set(false));
 
 //		final MousePositionListener listener = (ptr, x, y) -> {
 //			final float dx = (float) x / rect.width() * MathsUtil.PI;
@@ -441,7 +498,7 @@ public class ModelDemo {
 		while(running.get()) {
 			desktop.poll();
 
-			final Matrix matrix = proj.multiply(cam.matrix()).multiply(rot);
+			final Matrix matrix = proj.multiply(cam.matrix()).multiply(rot).multiply(mat);
 			uniform.load(matrix);
 
 			final int idx = chain.acquire(null, null);

@@ -2,13 +2,13 @@ package org.sarge.jove.platform.desktop;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Set;
+import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +17,7 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.platform.desktop.KeyboardDevice.KeyTable;
 
 import com.sun.jna.Pointer;
 
@@ -24,8 +25,9 @@ public class KeyboardDeviceTest {
 	private KeyboardDevice device;
 	private Window window;
 	private DesktopLibrary lib;
-	private InputEvent.Handler handler;
+	private Consumer<Button> handler;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		// Create API
@@ -40,42 +42,43 @@ public class KeyboardDeviceTest {
 		device = new KeyboardDevice(window);
 
 		// Create handler
-		handler = mock(InputEvent.Handler.class);
+		handler = mock(Consumer.class);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals("Keyboard", device.name());
-		assertEquals(Set.of(Button.class), device.types());
+		assertNotNull(device.sources());
+		assertEquals(1, device.sources().size());
+	}
+
+	@Test
+	void source() {
+		final InputEvent.Source<?> src = device.sources().iterator().next();
+		assertNotNull(src);
+		assertEquals(List.of(), src.types());
 	}
 
 	@Test
 	void enable() {
 		// Enable button events
-		device.enable(Button.class, handler);
+		device.enable(handler);
 
 		// Check API
 		final ArgumentCaptor<KeyListener> captor = ArgumentCaptor.forClass(KeyListener.class);
 		verify(lib).glfwSetKeyCallback(eq(window.handle()), captor.capture());
 		assertNotNull(captor.getValue());
 
+		// Create button
+		final int code = 256;
+		final String name = KeyTable.INSTANCE.map(code);
+		final Button button = new Button(name, 1, 2);
+
 		// Generate an event
 		final KeyListener listener = captor.getValue();
-		listener.key(null, 1, 2, 3, 4);
+		listener.key(null, code, 0, 1, 2);
 
 		// Check event delegated to handler
-		final Button button = new Button(1, 3, 4);
-		verify(handler).handle(button.event());
-	}
-
-	@Test
-	void enableInvalidEventType() {
-		assertThrows(IllegalArgumentException.class, () -> device.enable(InputEvent.Type.Position.class, handler));
-	}
-
-	@Test
-	void disable() {
-		device.disable(Button.class);
-		verify(lib).glfwSetKeyCallback(window.handle(), null);
+		verify(handler).accept(button);
 	}
 }

@@ -15,7 +15,7 @@ There are a couple of issues with this approach:
 
 - There are several API methods that require us to pass an array of pointers which currently requires fiddly transformations.
 
-To solve the mutability issue and alleviate the second problem we introduce the following interface to identify a native object with a pointer handle:
+To solve the mutability issue and alleviate the second problem we introduce the following interface to define a native object that has a pointer handle:
 
 ```java
 /**

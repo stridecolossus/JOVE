@@ -1,6 +1,6 @@
 package org.sarge.jove.particle;
 
-import java.util.function.Supplier;
+import java.util.Random;
 
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
@@ -37,8 +37,8 @@ public interface PositionFactory {
 	 * @param random 		Random vector factory
 	 * @return Spherical position factory
 	 */
-	static PositionFactory sphere(float radius, Supplier<Vector> random) {
-		return () -> new Point(random.get().scale(radius));
+	static PositionFactory sphere(float radius, Random random) {
+		return () -> new Point(random.nextFloat(), random.nextFloat(), random.nextFloat()).scale(radius);
 	}
 
 	/**
@@ -47,13 +47,19 @@ public interface PositionFactory {
 	 * @param random		Random vector factory
 	 * @return Position factory
 	 */
-	static PositionFactory extents(Extents extents, Supplier<Vector> random) {
-		final Point min = extents.min();
-		final Vector range = Vector.of(extents.min(), extents.max());
+	static PositionFactory extents(Extents extents, Random random) {
 		return () -> {
-			final Vector v = random.get();
-			final Vector vec = new Vector(v.x * range.x, v.y * range.y, v.z * range.z);
-			return min.add(vec);
+			final Point min = extents.min();
+			final Vector range = Vector.of(min, extents.max());
+			return new Point(
+					random(min.x, range.x, random),
+					random(min.y, range.y, random),
+					random(min.z, range.z, random)
+			);
 		};
+	}
+
+	private static float random(float min, float max, Random random) {
+		return min + random.nextFloat() * (max - min);
 	}
 }

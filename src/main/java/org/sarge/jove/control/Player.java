@@ -1,17 +1,17 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-import org.sarge.lib.util.AbstractObject;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * A <i>player</i> is a model for animations, audio, etc. that can be played and paused.
  * @author Sarge
  */
-public class Player extends AbstractObject {
+public class Player {
 	/**
 	 * Player states.
 	 */
@@ -148,7 +148,16 @@ public class Player extends AbstractObject {
 	 * @param listener State-change listener
 	 */
 	public void add(Listener listener) {
-		Check.notNull(listener);
-		listeners.add(listener);
+		listeners.add(notNull(listener));
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("state", state)
+				.append("repeat", repeating)
+				.append("playable", playable)
+				.append("listeners", listeners.size())
+				.build();
 	}
 }

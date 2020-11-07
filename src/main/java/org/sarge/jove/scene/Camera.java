@@ -27,7 +27,6 @@ public class Camera {
 	private transient boolean dirty;
 
 	// https://learnopengl.com/Getting-started/Camera
-	// http://www.songho.ca/opengl/gl_camera.html
 
 	/**
 	 * Constructor.

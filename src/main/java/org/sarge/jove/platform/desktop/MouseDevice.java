@@ -2,85 +2,36 @@ package org.sarge.jove.platform.desktop;
 
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.Map;
+import java.awt.MouseInfo;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Device;
-import org.sarge.jove.control.InputEvent.Handler;
-import org.sarge.jove.control.InputEvent.Type;
-import org.sarge.jove.control.InputEvent.Type.Axis;
-import org.sarge.jove.control.InputEvent.Type.Position;
+import org.sarge.jove.control.InputEvent.Device;
+import org.sarge.jove.control.InputEvent.Source;
+import org.sarge.jove.control.Position;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
 
-import com.sun.jna.Callback;
-
 /**
  * A <i>mouse device</i> generates events for a mouse controller.
- * <p>
- * Mouse buttons generate {@link Button}, moving the mouse generates {@link Position} and the mouse wheel maps to an {@link Axis}.
- * <p>
+ * TODO - doc
  * @author Sarge
  */
-class MouseDevice implements Device {
-	private static final Axis WHEEL = new Axis(0);
-
-	/**
-	 * Mouse callback entry.
-	 * @param <T> Mouse callback type
-	 */
-	private class Entry<T extends Callback> {
-		private final Function<Handler, T> mapper;
-		private final BiConsumer<Handle, T> setter;
-
-		/**
-		 * Constructor.
-		 * @param mapper Maps the event handler adapter to the callback
-		 * @param setter Applies the callback
-		 */
-		private Entry(Function<Handler, T> mapper, BiConsumer<Handle, T> setter) {
-			this.mapper = notNull(mapper);
-			this.setter = notNull(setter);
-		}
-
-		/**
-		 * Applies this callback entry.
-		 * @param handler Event handler
-		 */
-		private void apply(Handler handler) {
-			final T callback = mapper.apply(handler);
-			setter.accept(window.handle(), callback);
-		}
-	}
-
+public class MouseDevice implements Device {
 	private final Window window;
-	private final Map<Class<? extends Type>, Entry<?>> map;
-
-	/**
-	 * Builds the callback entries indexed by event type.
-	 */
-	private Map<Class<? extends Type>, Entry<?>> build() {
-		final var lib = window.library();
-		return Map.of(
-			Button.class, 		new Entry<>(this::button, 	lib::glfwSetMouseButtonCallback),
-			Position.class,		new Entry<>(this::position, lib::glfwSetCursorPosCallback),
-			Axis.class,			new Entry<>(this::wheel, 	lib::glfwSetScrollCallback)
-		);
-	}
-	// TODO - can we make this static rather than per-window?
 
 	/**
 	 * Constructor.
-	 * @param window Window
+	 * @param window Parent window
 	 */
 	MouseDevice(Window window) {
 		this.window = notNull(window);
-		this.map = build();
 	}
 
 	@Override
@@ -88,60 +39,106 @@ class MouseDevice implements Device {
 		return "Mouse";
 	}
 
-	@Override
-	public Set<Class<? extends Type>> types() {
-		return map.keySet();
-	}
-
-	@Override
-	public void enable(Class<? extends Type> type, Handler handler) {
-		final Entry<?> entry = entry(type);
-		entry.apply(handler);
-	}
-
-	@Override
-	public void disable(Class<? extends Type> type) {
-		final Entry<?> entry = entry(type);
-		entry.setter.accept(window.handle(), null);
-	}
-
-	private Entry<?> entry(Class<? extends Type> type) {
-		final Entry<?> entry = map.get(type);
-		if(entry == null) throw new IllegalArgumentException("Invalid event type for mouse: " + type);
-		return entry;
-	}
-
-	// TODO
-	// - make these static/constants?
-
 	/**
-	 *
-	 * @param handler
-	 * @return
+	 * @return Mouse pointer
 	 */
-	protected MouseButtonListener button(Handler handler) {
-		return (ptr, id, action, mods) -> {
-			// TODO - action/mods
-			final Button button = new Button(id, action, mods);
-			handler.handle(button.event());
+	public Source<Position.Event> pointer() {
+		return new Source<>() {
+			private final Position pos = new Position("Pointer");
+
+			@Override
+			public List<Position> types() {
+				return List.of(pos);
+			}
+
+			@Override
+			public void enable(Consumer<Position.Event> handler) {
+				final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event(pos, (float) x, (float) y));
+				apply(listener);
+			}
+
+			@Override
+			public void disable() {
+				apply(null);
+			}
+
+			private void apply(MousePositionListener listener) {
+				window.library().glfwSetCursorPosCallback(window.handle(), listener);
+			}
 		};
 	}
 
 	/**
-	 *
-	 * @param handler
-	 * @return
+	 * @return Mouse buttons
 	 */
-	protected MousePositionListener position(Handler handler) {
-		return (ptr, x, y) -> handler.handle(Position.POSITION.create((float) x, (float) y));
+	public Source<Button> buttons() {
+		return new Source<>() {
+			/**
+			 * @return Number of mouse buttons
+			 */
+			private int count() {
+				// TODO - uses AWT but not supported by GLFW
+				return MouseInfo.getNumberOfButtons();
+			}
+
+			private final Button[] buttons = IntStream.rangeClosed(1, count()).mapToObj(n -> "Button-" + n).map(Button::of).toArray(Button[]::new);
+
+			@Override
+			public List<Button> types() {
+				return Arrays.asList(buttons);
+			}
+
+			@Override
+			public void enable(Consumer<Button> handler) {
+				final MouseButtonListener listener = (ptr, button, action, mods) -> {
+					// TODO - action/mods
+					handler.accept(buttons[button]);
+				};
+				apply(listener);
+			}
+
+			@Override
+			public void disable() {
+				apply(null);
+			}
+
+			private void apply(MouseButtonListener listener) {
+				window.library().glfwSetMouseButtonCallback(window.handle(), listener);
+			}
+		};
 	}
 
 	/**
-	 *
-	 * @param handler
-	 * @return
+	 * @return Mouse wheel
 	 */
-	protected MouseScrollListener wheel(Handler handler) {
-		return (ptr, x, y) -> handler.handle(WHEEL.create((float) y));
+	public Source<Axis.Event> wheel() {
+		return new Source<>() {
+			private final Axis wheel = new Axis("Wheel");
+
+			@Override
+			public List<Axis> types() {
+				return List.of(wheel);
+			}
+
+			@Override
+			public void enable(Consumer<Axis.Event> handler) {
+				final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
+				apply(listener);
+			}
+
+			@Override
+			public void disable() {
+				apply(null);
+			}
+
+			private void apply(MouseScrollListener listener) {
+				window.library().glfwSetScrollCallback(window.handle(), listener);
+			}
+		};
+	}
+
+	@Override
+	public Set<Source<?>> sources() {
+		return Set.of(pointer(), buttons(), wheel());
 	}
 }

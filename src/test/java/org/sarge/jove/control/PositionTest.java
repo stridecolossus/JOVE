@@ -3,39 +3,59 @@ package org.sarge.jove.control;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.control.InputEvent.Type.Parser;
 
 public class PositionTest {
+	private static final String NAME = "pos";
+
 	private Position pos;
 
 	@BeforeEach
 	void before() {
-		pos = new Position(1, 2);
+		pos = new Position(NAME);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(1, pos.x());
-		assertEquals(2, pos.y());
-		assertEquals(Position.TYPE, pos.type());
+		assertEquals(NAME, pos.name());
+	}
+
+	@Test
+	void parse() throws Exception {
+		assertEquals(pos, Position.parse(NAME));
+	}
+
+	@Test
+	void parser() throws Exception {
+		final Parser parser = new Parser();
+		final var result = parser.parse(Position.class.getName() + " " + NAME);
+		assertEquals(pos, result);
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, pos.equals(pos));
-		assertEquals(true, pos.equals(new Position(1, 2)));
+		assertEquals(true, pos.equals(new Position(NAME)));
 		assertEquals(false, pos.equals(null));
-		assertEquals(false, pos.equals(new Position(3, 4)));
+		assertEquals(false, pos.equals(new Position("other")));
 	}
 
-	@Test
-	void type() {
-		assertEquals("Position", Position.TYPE.name());
-		assertEquals(Position.TYPE.name().hashCode(), Position.TYPE.hashCode());
-	}
+	@Nested
+	class EventTests {
+		private Position.Event event;
 
-	@Test
-	void parse() {
-		assertEquals(Position.TYPE, Position.TYPE.parse(null));
+		@BeforeEach
+		void before() {
+			event = new Position.Event(pos, 1, 2);
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(pos, event.type());
+			assertEquals(1, event.x());
+			assertEquals(2, event.y());
+		}
 	}
 }

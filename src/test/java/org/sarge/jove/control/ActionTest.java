@@ -6,12 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,112 +14,118 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Action.Bindings;
 
 public class ActionTest {
-	private static final InputEvent.Type TYPE = InputEvent.Type.POSITION;
+	private Bindings<Axis.Event> bindings;
+	private Axis axis;
+	private Action<Axis.Event> action;
+	private Axis.Event event;
 
-	private Action action;
-	private Bindings bindings;
-
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		bindings = new Bindings();
+		bindings = new Bindings<>();
+		axis = new Axis("Axis");
 		action = mock(Action.class);
-		when(action.toString()).thenReturn("action");
+		event = axis.create(42);
 	}
 
 	@Test
 	void constructor() {
 		assertNotNull(bindings.actions());
 		assertEquals(0, bindings.actions().count());
-		assertEquals(Optional.empty(), bindings.binding(TYPE));
 	}
 
 	@Test
 	void add() {
 		bindings.add(action);
 		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+	}
+
+	@Test
+	void addDuplicate() {
+		bindings.add(action);
+		assertThrows(IllegalArgumentException.class, () -> bindings.add(action));
+	}
+
+	@Test
+	void bindings() {
+		bindings.add(action);
 		assertNotNull(bindings.bindings(action));
 		assertEquals(0, bindings.bindings(action).count());
 	}
 
 	@Test
-	void bindingsActionNotPresent() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.bindings(action));
+	void bindingNotPresent() {
+		assertEquals(Optional.empty(), bindings.binding(axis));
 	}
 
 	@Test
 	void bind() {
-		bindings.bind(TYPE, action);
-		assertArrayEquals(new InputEvent.Type[]{TYPE}, bindings.bindings(action).toArray());
-		assertEquals(Optional.of(action), bindings.binding(TYPE));
+		bindings.bind(axis, action);
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Axis[]{axis}, bindings.bindings(action).toArray());
+		assertEquals(Optional.of(action), bindings.binding(axis));
 	}
 
 	@Test
 	void bindAlreadyBound() {
-		bindings.bind(TYPE, action);
-		assertThrows(IllegalArgumentException.class, () -> bindings.bind(TYPE, action));
+		bindings.bind(axis, action);
+		assertThrows(IllegalStateException.class, () -> bindings.bind(axis, action));
 	}
 
 	@Test
-	void removeBinding() {
-		bindings.bind(TYPE, action);
-		bindings.remove(TYPE);
+	void remove() {
+		bindings.bind(axis, action);
+		bindings.remove(axis);
 		assertEquals(0, bindings.bindings(action).count());
-		assertEquals(Optional.empty(), bindings.binding(TYPE));
+		assertEquals(Optional.empty(), bindings.binding(axis));
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
-	void removeActionBindings() {
-		bindings.bind(TYPE, action);
+	void removeAction() {
+		bindings.bind(axis, action);
 		bindings.remove(action);
-		assertEquals(Optional.empty(), bindings.binding(TYPE));
+		assertEquals(0, bindings.bindings(action).count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
-	void removeActionBindingsNotPresent() {
+	void removeActionNotBound() {
 		assertThrows(IllegalArgumentException.class, () -> bindings.remove(action));
 	}
 
 	@Test
 	void clear() {
-		bindings.bind(TYPE, action);
+		bindings.bind(axis, action);
 		bindings.clear();
-		assertEquals(0, bindings.actions().count());
+		assertEquals(0, bindings.bindings(action).count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
-	void handle() {
-		final InputEvent event = InputEvent.Type.POSITION.create(1, 2);
-		bindings.bind(TYPE, action);
-		bindings.handle(event);
-		verify(action).execute(event);
+	void accept() {
+		bindings.bind(axis, action);
+		bindings.accept(event);
+		verify(action).accept(event);
 	}
 
 	@Test
-	void handleIgnored() {
-		final InputEvent event = InputEvent.Type.POSITION.create(1, 2);
-		bindings.handle(event);
-		verifyZeroInteractions(action);
+	void runnable() {
+		// Bind an anonymous event
+		final Runnable runnable = mock(Runnable.class);
+		bindings.bind(axis, runnable);
+
+		// Check action wrapper is bound
+		final Optional<Action<Axis.Event>> wrapper = bindings.binding(axis);
+		assertNotNull(wrapper);
+		assertEquals(true, wrapper.isPresent());
+
+		// Invoke action wrapper
+		wrapper.get().accept(event);
+		verify(runnable).run();
 	}
 
-	@Test
-	void write() {
-		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		bindings.bind(TYPE, action);
-		bindings.write(out);
-		assertEquals("action Position", new String(out.toByteArray()).trim());
-	}
-
-	@Test
-	void load() throws IOException {
-		// Write bindings
-		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		bindings.bind(TYPE, action);
-		bindings.write(out);
-
-		// Read back
-		final Bindings result = new Bindings();
-		result.add(action);
-		result.load(new ByteArrayInputStream(out.toByteArray()));
-		assertEquals(bindings, result);
-	}
+	// TODO - save/load
 }

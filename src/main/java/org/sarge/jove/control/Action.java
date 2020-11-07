@@ -2,10 +2,10 @@ package org.sarge.jove.control;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,11 +13,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.InputEvent.AbstractInputEventType;
 import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.util.Check;
 
@@ -26,32 +26,23 @@ import org.sarge.jove.util.Check;
  * @author Sarge
  */
 @FunctionalInterface
-public interface Action<T extends Type> {
-//	/**
-//	 * Performs this action.
-//	 * @param event Input event
-//	 */
-//	void execute(Button.Event button);
-//	void execute(Position pos);
-//	void execute(Axis.Event axis);
-
-	void execute(InputEvent<T> event);
-
+public interface Action<T extends InputEvent> extends Consumer<T> {
 	/**
 	 * An <i>action bindings</i> maps input events to actions.
 	 */
-	class Bindings { // implements InputEvent.Handler<? super Type> {
+	class Bindings<T extends InputEvent> implements Consumer<T> {
 		private static final String DELIMITER = StringUtils.SPACE;
+		private static final InputEvent.Type.Parser PARSER = new InputEvent.Type.Parser();
 
-		private final Map<Action, Set<InputEvent.Type>> actions = new HashMap<>();
-		private final Map<InputEvent.Type, Action> bindings = new HashMap<>();
+		private final Map<Action<T>, Set<InputEvent.Type>> actions = new HashMap<>();
+		private final Map<InputEvent.Type, Action<T>> bindings = new HashMap<>();
 
 		/**
 		 * Adds an action to this set of bindings.
 		 * @param action Action
 		 * @throws IllegalArgumentException for a duplicate action
 		 */
-		public void add(Action action) {
+		public void add(Action<T> action) {
 			Check.notNull(action);
 			if(actions.containsKey(action)) throw new IllegalArgumentException("Duplicate action: " + action);
 			actions.put(action, new HashSet<>());
@@ -60,7 +51,7 @@ public interface Action<T extends Type> {
 		/**
 		 * @return Actions in this set of bindings
 		 */
-		public Stream<Action> actions() {
+		public Stream<Action<T>> actions() {
 			return actions.keySet().stream();
 		}
 
@@ -69,7 +60,7 @@ public interface Action<T extends Type> {
 		 * @param action Action
 		 * @return Bindings
 		 */
-		private Set<InputEvent.Type> get(Action action) {
+		private Set<InputEvent.Type> get(Action<?> action) {
 			final var bindings = actions.get(action);
 			if(bindings == null) throw new IllegalArgumentException("Action not present: " + action);
 			return bindings;
@@ -81,7 +72,7 @@ public interface Action<T extends Type> {
 		 * @return Input events bound to the given action
 		 * @throws IllegalArgumentException if the action is not present in this set of bindings
 		 */
-		public Stream<InputEvent.Type> bindings(Action action) {
+		public Stream<InputEvent.Type> bindings(Action<?> action) {
 			return get(action).stream();
 		}
 
@@ -90,7 +81,7 @@ public interface Action<T extends Type> {
 		 * @param type Input type
 		 * @return Action
 		 */
-		public Optional<Action> binding(InputEvent.Type type) {
+		public Optional<Action<T>> binding(InputEvent.Type type) {
 			return Optional.ofNullable(bindings.get(type));
 		}
 
@@ -100,23 +91,29 @@ public interface Action<T extends Type> {
 		 * @param action		Action
 		 * @throws IllegalStateException if the event is already bound
 		 */
-		public void bind(InputEvent.Type type, Action action) {
+		public void bind(InputEvent.Type type, Action<T> action) {
 			Check.notNull(type);
-			if(bindings.containsKey(type)) throw new IllegalArgumentException("Event is already bound: " + type);
-
+			if(bindings.containsKey(type)) throw new IllegalStateException("Event is already bound: " + type);
 			actions.computeIfAbsent(action, ignored -> new HashSet<>()).add(type);
 			bindings.put(type, action);
 		}
 
-//		public <T extends Type> void bind(T type, InputEvent.Handler<T> handler) {
-//		}
+		/**
+		 * Binds an input event to the given anonymous action handler.
+		 * @param type			Input event
+		 * @param action		Action
+		 * @throws IllegalStateException if the event is already bound
+		 */
+		public void bind(InputEvent.Type type, Runnable handler) {
+			bind(type, ignored -> handler.run());
+		}
 
 		/**
 		 * Removes the binding for the given type of event.
 		 * @param type Event type
 		 */
 		public void remove(InputEvent.Type type) {
-			final Action action = bindings.remove(type);
+			final Action<T> action = bindings.remove(type);
 			if(action != null) {
 				actions.get(action).remove(type);
 			}
@@ -127,69 +124,68 @@ public interface Action<T extends Type> {
 		 * @param action Action
 		 * @throws IllegalArgumentException if the action is not present
 		 */
-		public void remove(Action action) {
+		public void remove(Action<?> action) {
 			final var set = get(action);
 			set.forEach(bindings::remove);
-			actions.remove(action);
+			set.clear();
 		}
 
 		/**
 		 * Removes <b>all</b> bindings.
 		 */
 		public void clear() {
-			actions.clear();
+			actions.values().forEach(Set::clear);
 			bindings.clear();
 		}
 
-//		@Override
-//		public void handle(Object handle) {
-//		}
-//
-//		@Override
-//		public void handle(InputEvent event) {
-//			binding(event.type()).ifPresent(action -> action.execute(event));
-//		}
-
-
-
-		public EventHandler handler() {
-			return new EventHandler() {
-				@Override
-				public void handle(Position event) {
-					final var action = binding(event.type());
-					action.get().execute(event);
-				}
-
-				@Override
-				public void handle(Button.Event event) {
-				}
-
-				@Override
-				public void handle(Axis.Event event) {
-				}
-			};
+		@Override
+		public void accept(T event) {
+			final Action<T> action = bindings.get(event.type());
+			if(action != null) {
+				action.accept(event);
+			}
 		}
 
-
+		// TODO
+		// - loader class
+		// - pre-build map of names -> actions
+		// - parser (static?)
 
 		/**
 		 * Writes this set of bindings to the given output stream.
 		 * <p>
-		 * The bindings for each action are written as separate lines as follows: <code>action event event...</code>
+		 * The bindings for each action are written as separate lines as follows:
 		 * <br>
-		 * where <i>action</i> is the {@link Action#toString()} representation of the action and each <i>event</i> is generated by the {@link InputEvent.Type#describe()} method.
+		 * <code>action event event...</code>
+		 * <p>
+		 * where:
+		 * <ul>
+		 * <li><i>action</i> is the {@link Action#toString()} representation of the action</li>
+		 * <li>each <i>event</i> is generated by {@link InputEvent.Type#write(InputEvent.Type)}</li>
+		 * </ul>
 		 * <p>
 		 * @param out Output stream
 		 */
-		public void write(OutputStream out) {
+		public void write(Writer out) {
 			try(final var writer = new PrintWriter(out)) {
-				for(Action action : actions.keySet()) {
-					final StringJoiner str = new StringJoiner(DELIMITER);
+				for(Action<?> action : actions.keySet()) {
+					final StringJoiner str = new StringJoiner(StringUtils.SPACE);
 					str.add(action.toString());
-					actions.get(action).stream().map(Object::toString).forEach(str::add);
+					actions.get(action).stream().map(Bindings::write).forEach(str::add);
 					writer.println(str);
 				}
 			}
+		}
+
+		/**
+		 * @return String representation of the given event type
+		 */
+		private static String write(Type type) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append(type.getClass().getName());
+			sb.append(DELIMITER);
+			sb.append(type.name());
+			return sb.toString();
 		}
 
 		/**
@@ -199,12 +195,9 @@ public interface Action<T extends Type> {
 		 * @throws IllegalArgumentException if a binding cannot be parsed
 		 * @see #write(OutputStream)
 		 */
-		public void load(InputStream in) throws IOException {
-			try(final var reader = new BufferedReader(new InputStreamReader(in))) {
-				reader
-						.lines()
-						.map(str -> str.split(DELIMITER))
-						.forEach(this::load);
+		public void load(Reader r) throws IOException {
+			try(final var in = new BufferedReader(r)) {
+				in.lines().forEach(this::load);
 			}
 		}
 
@@ -212,9 +205,12 @@ public interface Action<T extends Type> {
 		 * Loads bindings for an action.
 		 * @throws IllegalArgumentException if a binding cannot be parsed
 		 */
-		private void load(String[] tokens) {
+		private void load(String line) {
+			// Tokenize
+			final String[] tokens = StringUtils.split(line);
+
 			// Lookup action
-			final Action action = actions
+			final Action<T> action = actions
 					.keySet()
 					.stream()
 					.filter(e -> e.toString().equals(tokens[0]))
@@ -224,7 +220,7 @@ public interface Action<T extends Type> {
 			// Bind events to this action
 			Arrays.stream(tokens)
 					.skip(1)
-					.map(AbstractInputEventType::parse)
+					.map(PARSER::parse)
 					.forEach(e -> bind(e, action));
 		}
 
