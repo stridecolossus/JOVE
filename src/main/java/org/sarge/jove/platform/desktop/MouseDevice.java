@@ -11,7 +11,6 @@ import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.control.InputEvent.Device;
 import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.control.Position;
@@ -43,17 +42,17 @@ public class MouseDevice implements Device {
 	/**
 	 * @return Mouse pointer
 	 */
-	public Source<Position> pointer() {
+	public Source<Position.Event> pointer() {
 		return new Source<>() {
 			private final Position pos = new Position("Pointer");
 
 			@Override
-			public List<Position> events() {
+			public List<Position> types() {
 				return List.of(pos);
 			}
 
 			@Override
-			public void enable(Consumer<InputEvent<Position>> handler) {
+			public void enable(Consumer<Position.Event> handler) {
 				final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event(pos, (float) x, (float) y));
 				apply(listener);
 			}
@@ -85,12 +84,12 @@ public class MouseDevice implements Device {
 			private final Button[] buttons = IntStream.rangeClosed(1, count()).mapToObj(n -> "Button-" + n).map(Button::of).toArray(Button[]::new);
 
 			@Override
-			public List<Button> events() {
+			public List<Button> types() {
 				return Arrays.asList(buttons);
 			}
 
 			@Override
-			public void enable(Consumer<InputEvent<Button>> handler) {
+			public void enable(Consumer<Button> handler) {
 				final MouseButtonListener listener = (ptr, button, action, mods) -> {
 					// TODO - action/mods
 					handler.accept(buttons[button]);
@@ -112,17 +111,17 @@ public class MouseDevice implements Device {
 	/**
 	 * @return Mouse wheel
 	 */
-	public Source<Axis> wheel() {
+	public Source<Axis.Event> wheel() {
 		return new Source<>() {
 			private final Axis wheel = new Axis("Wheel");
 
 			@Override
-			public List<Axis> events() {
+			public List<Axis> types() {
 				return List.of(wheel);
 			}
 
 			@Override
-			public void enable(Consumer<InputEvent<Axis>> handler) {
+			public void enable(Consumer<Axis.Event> handler) {
 				final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
 				apply(listener);
 			}

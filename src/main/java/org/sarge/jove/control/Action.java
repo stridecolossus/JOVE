@@ -26,11 +26,11 @@ import org.sarge.jove.util.Check;
  * @author Sarge
  */
 @FunctionalInterface
-public interface Action<T extends Type> extends Consumer<InputEvent<T>> {
+public interface Action<T extends InputEvent> extends Consumer<T> {
 	/**
 	 * An <i>action bindings</i> maps input events to actions.
 	 */
-	class Bindings<T extends Type> implements Consumer<InputEvent<T>> {
+	class Bindings<T extends InputEvent> implements Consumer<T> {
 		private static final String DELIMITER = StringUtils.SPACE;
 		private static final InputEvent.Type.Parser PARSER = new InputEvent.Type.Parser();
 
@@ -139,7 +139,7 @@ public interface Action<T extends Type> extends Consumer<InputEvent<T>> {
 		}
 
 		@Override
-		public void accept(InputEvent<T> event) {
+		public void accept(T event) {
 			final Action<T> action = bindings.get(event.type());
 			if(action != null) {
 				action.accept(event);

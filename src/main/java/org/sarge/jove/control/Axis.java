@@ -68,7 +68,7 @@ public class Axis implements InputEvent.Type {
 	/**
 	 * Axis event.
 	 */
-	public final class Event implements InputEvent<Axis> {
+	public final class Event implements InputEvent {
 		private final float value;
 
 		/**

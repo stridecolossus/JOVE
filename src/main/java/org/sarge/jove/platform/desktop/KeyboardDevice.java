@@ -50,7 +50,7 @@ public class KeyboardDevice implements InputEvent.Device {
 	 * Helper - Enables this keyboard for the given event handler.
 	 * @param handler Event handler
 	 */
-	public void enable(Consumer<InputEvent<Button>> handler) {
+	public void enable(Consumer<Button> handler) {
 		final var keyboard = keyboard();
 		keyboard.enable(handler);
 	}
@@ -61,12 +61,12 @@ public class KeyboardDevice implements InputEvent.Device {
 	private Source<Button> keyboard() {
 		return new Source<>() {
 			@Override
-			public List<Button> events() {
+			public List<Button> types() {
 				return List.of();
 			}
 
 			@Override
-			public void enable(Consumer<InputEvent<Button>> handler) {
+			public void enable(Consumer<Button> handler) {
 				// Create callback adapter
 				final KeyListener listener = (ptr, key, scancode, action, mods) -> {
 					final String name = KeyTable.INSTANCE.map(key);

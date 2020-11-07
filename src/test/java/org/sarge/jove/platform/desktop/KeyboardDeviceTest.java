@@ -56,7 +56,7 @@ public class KeyboardDeviceTest {
 	void source() {
 		final InputEvent.Source<?> src = device.sources().iterator().next();
 		assertNotNull(src);
-		assertEquals(List.of(), src.events());
+		assertEquals(List.of(), src.types());
 	}
 
 	@Test

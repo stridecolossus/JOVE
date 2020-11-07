@@ -56,8 +56,8 @@ public class MouseDeviceTest {
 		// Retrieve mouse pointer source
 		final Source<Position> pointer = device.pointer();
 		assertNotNull(pointer);
-		assertNotNull(pointer.events());
-		assertEquals(1, pointer.events().size());
+		assertNotNull(pointer.types());
+		assertEquals(1, pointer.types().size());
 
 		// Enable mouse pointer
 		final Consumer<InputEvent<Position>> handler = mock(Consumer.class);
@@ -69,7 +69,7 @@ public class MouseDeviceTest {
 		final MousePositionListener listener = captor.getValue();
 		assertNotNull(listener);
 		listener.move(null, 1, 2);
-		verify(handler).accept(new Position.Event(pointer.events().get(0), 1, 2));
+		verify(handler).accept(new Position.Event(pointer.types().get(0), 1, 2));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -78,7 +78,7 @@ public class MouseDeviceTest {
 		// Retrieve mouse buttons source
 		final Source<Button> buttons = device.buttons();
 		assertNotNull(buttons);
-		assertNotNull(buttons.events());
+		assertNotNull(buttons.types());
 
 		// Enable mouse buttons
 		final Consumer<InputEvent<Button>> handler = mock(Consumer.class);
@@ -87,7 +87,7 @@ public class MouseDeviceTest {
 		verify(lib).glfwSetMouseButtonCallback(eq(window.handle()), captor.capture());
 
 		// Lookup axis
-		final Button button = buttons.events().get(0);
+		final Button button = buttons.types().get(0);
 		assertNotNull(button);
 		assertEquals("Button-1-PRESS", button.name());
 
@@ -104,11 +104,11 @@ public class MouseDeviceTest {
 		// Retrieve mouse wheel source
 		final Source<Axis> wheel = device.wheel();
 		assertNotNull(wheel);
-		assertNotNull(wheel.events());
-		assertEquals(1, wheel.events().size());
+		assertNotNull(wheel.types());
+		assertEquals(1, wheel.types().size());
 
 		// Lookup axis
-		final Axis axis = wheel.events().get(0);
+		final Axis axis = wheel.types().get(0);
 		assertNotNull(axis);
 		assertEquals("Wheel", axis.name());
 

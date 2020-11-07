@@ -16,7 +16,7 @@ import org.sarge.jove.control.InputEvent.Type;
 /**
  * A <i>button</i> describes a keyboard or controller button.
  */
-public final class Button implements Type, InputEvent<Button> {
+public final class Button implements Type, InputEvent {
 	/**
 	 * Button operations.
 	 */

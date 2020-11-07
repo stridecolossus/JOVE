@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -17,6 +18,7 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.control.Action;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -410,15 +412,6 @@ public class ModelDemo {
 
 		final AtomicBoolean running = new AtomicBoolean(true);
 
-
-		// TODO
-		// bindings per input event type?
-		// hmmm but what about throttle? i.e. joystick throttle -> speed and W/S for inc/dec speed?
-		// these would have to be separate tho related actions since throttle -> absolute speed whereas W/S is +/- increment
-		// and if we DID want actions shared across binding sets then can be done
-
-
-
 		final Action.Bindings<Button> bindings = new Action.Bindings<>();
 		window.keyboard().enable(bindings);
 		//window.mouse().wheel().enable(bindings.axis());
@@ -437,25 +430,43 @@ public class ModelDemo {
 		final Camera cam = new Camera();
 		cam.move(new Point(0, 0.5f, -2));
 
-		class MoveAction implements Runnable {
-			private final int step;
+		final Consumer<Position.Event> controller = event -> {
+			//System.out.println(event);
 
-			MoveAction(int step) {
-				this.step = step;
-			}
+			final float dx = event.x() / chain.extents().width() * MathsUtil.TWO_PI;
 
-			@Override
-			public void run() {
-				cam.move(step);
-			}
-		}
+			final Point pos = new Point(MathsUtil.sin(dx) * 2, 0.5f, MathsUtil.cos(dx) * 2);
+			//System.out.println(e + " -> " + pos);
 
-		bindings.bind(Button.of("Button-1"), new MoveAction(+1));
+			cam.move(pos);
+			cam.look(Point.ORIGIN);
+		};
 
-		bindings.bind(Button.of("W"), new MoveAction(+1));
-		bindings.bind(Button.of("A"), new MoveAction(-1));
-		bindings.bind(Button.of("S"), () -> cam.move(-1));
-		bindings.bind(Button.of("D"), () -> cam.strafe(+1));
+		window.mouse().pointer().enable(controller);
+
+//		Consumer<InputEvent<Position>> cip = event -> System.out.println(event);
+//		Consumer<Position.Event> cpe = event -> System.out.println(event);
+//		final boolean equals = cip == cpe;
+
+//		class MoveAction implements Runnable {
+//			private final int step;
+//
+//			MoveAction(int step) {
+//				this.step = step;
+//			}
+//
+//			@Override
+//			public void run() {
+//				cam.move(step);
+//			}
+//		}
+//
+//		bindings.bind(Button.of("Button-1"), new MoveAction(+1));
+//
+//		bindings.bind(Button.of("W"), new MoveAction(+1));
+//		bindings.bind(Button.of("A"), strafe.apply(+1));
+//		bindings.bind(Button.of("S"), () -> cam.move(-1));
+//		bindings.bind(Button.of("D"), strafe.apply(-1));
 		bindings.bind(Button.of("ESCAPE"), () -> running.set(false));
 
 //		final MousePositionListener listener = (ptr, x, y) -> {

@@ -51,7 +51,7 @@ public final class Position implements Type {
 	/**
 	 * Position event instance.
 	 */
-	public record Event(Position type, float x, float y) implements InputEvent<Position> {
+	public record Event(Position type, float x, float y) implements InputEvent {
 		// Empty
 	}
 }
