@@ -2,8 +2,10 @@ package org.sarge.jove.control;
 
 import static java.util.stream.Collectors.joining;
 import static org.sarge.jove.util.Check.notEmpty;
+import static org.sarge.jove.util.Check.range;
 import static org.sarge.jove.util.Check.zeroOrMore;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -49,30 +51,60 @@ public final class Button implements Type, InputEvent<Button> {
 		}
 	}
 
-	// TODO - parse/of
+	/**
+	 * Parses a button from its string representation.
+	 * @param name Button name
+	 * @return New button
+	 * @see #name()
+	 * @throws IllegalArgumentException if the button cannot be parsed
+	 */
+	public static Button parse(String name) {
+		// Tokenize name
+		final String[] tokens = name.split(DELIMITER);
+
+		// Start builder
+		final Builder builder = new Builder();
+		builder.id(tokens[0]);
+
+		// Add operation
+		if(tokens.length > 1) {
+			final Operation op = Operation.valueOf(tokens[1]);
+			builder.operation(op);
+		}
+
+		// Add modifiers
+		for(int n = 2; n < tokens.length; ++n) {
+			final Modifier mod = Modifier.valueOf(tokens[n]);
+			builder.modifier(mod);
+		}
+
+		// Create button
+		return builder.build();
+	}
+
+	/**
+	 * Creates a button with the given identifier.
+	 * @param id Button identifier
+	 * @return New button
+	 */
+	public static Button of(String id) {
+		return new Button(id, 1, 0);
+	}
 
 	private final String id;
-	private final Operation op;
+	private final int action;
 	private final int mods;
 
 	/**
 	 * Constructor.
 	 * @param id		Button identifier
-	 * @param op		Operation 0..2
+	 * @param op		Action 0..2
 	 * @param mods		Modifiers bit-mask
 	 */
-	public Button(String id, int op, int mods) {
+	public Button(String id, int action, int mods) {
 		this.id = notEmpty(id);
-		this.op = Operation.OPERATIONS[op];
+		this.action = range(action, 0, 2);
 		this.mods = zeroOrMore(mods);
-	}
-
-	/**
-	 * Convenience constructor for a button with the {@link Operation#PRESS} operation and no modifiers.
-	 * @param id Button identifier
-	 */
-	public Button(String id) {
-		this(id, 1, 0);
 	}
 
 	/**
@@ -86,10 +118,10 @@ public final class Button implements Type, InputEvent<Button> {
 	public String name() {
 		final StringJoiner str = new StringJoiner(DELIMITER);
 		str.add(id);
+		str.add(operation().name());
 		if(mods > 0) {
 			str.add(modifiers().stream().map(Enum::name).collect(joining(DELIMITER)));
 		}
-		str.add(op.name());
 		return str.toString();
 	}
 
@@ -97,7 +129,7 @@ public final class Button implements Type, InputEvent<Button> {
 	 * @return Button operation
 	 */
 	public Operation operation() {
-		return op;
+		return Operation.OPERATIONS[action];
 	}
 
 	/**
@@ -114,7 +146,7 @@ public final class Button implements Type, InputEvent<Button> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, op, mods);
+		return Objects.hash(id, action, mods);
 	}
 
 	@Override
@@ -125,7 +157,7 @@ public final class Button implements Type, InputEvent<Button> {
 		else {
 			return
 					(obj instanceof Button that) &&
-					(this.op == that.op) &&
+					(this.action == that.action) &&
 					(this.mods == that.mods);
 		}
 	}
@@ -133,5 +165,50 @@ public final class Button implements Type, InputEvent<Button> {
 	@Override
 	public String toString() {
 		return name();
+	}
+
+	/**
+	 * Builder for a button.
+	 */
+	public static class Builder {
+		private String id;
+		private int action;
+		private final Set<Modifier> mods = new HashSet<>();
+
+		/**
+		 * Sets the button identifier.
+		 * @param id Button identifier
+		 */
+		public Builder id(String id) {
+			this.id = notEmpty(id);
+			return this;
+		}
+
+		/**
+		 * Sets the button operation.
+		 * @param op Button operation
+		 */
+		public Builder operation(Operation op) {
+			this.action = op.ordinal();
+			return this;
+		}
+
+		/**
+		 * Adds a button modifier.
+		 * @param mod Button modifier
+		 */
+		public Builder modifier(Modifier mod) {
+			this.mods.add(mod);
+			return this;
+		}
+
+		/**
+		 * Constructs this button.
+		 * @return New button
+		 */
+		public Button build() {
+			final int mask = IntegerEnumeration.mask(mods);
+			return new Button(id, action, mask);
+		}
 	}
 }

@@ -339,9 +339,121 @@ This design is
 
 # Camera Controller
 
+The second task for this chapter is to wrap up the view transform matrix into a camera class.
 
+The camera has two properties that are essentially equivalent to the two matrices we crafted by hand in the previous chapter:
+- the _eye_ position
+- the view direction
 
+```java
+public class Camera {
+    private Point pos = Point.ORIGIN;
+    private Vector dir = Vector.Z_AXIS.invert();
+    private Vector up = Vector.Y_AXIS;
 
+    ...
 
+    public Matrix matrix() {
+    }
+}
+```
 
+Notes:
+- We also introduce the _up_ direction.
+- The camera view direction is _into_ the screen (the negative-Z direction).
+
+The matrix is re-calculated whenever one of the camera properties is modified:
+
+```java
+public Matrix matrix() {
+    if(dirty) {
+        update();
+        dirty = false;
+    }
+    return matrix;
+}
+```
+
+The process of calculating the view transform matrix is:
+1. Determine the _right_ and _up_ axes of the camera.
+2. Create a rotation matrix comprised of the three camera axes.
+3. Multiply by the translation matrix.
+
+Following the tutorial our implementation uses a slight trick to inject the translation component into the final matrix without needing an intermediate multiplication:
+
+```java
+private void update() {
+    // Determine right axis
+    right = dir.cross(up).normalize();
+
+    // Determine up axis
+    final Vector y = right.cross(dir).normalize();
+
+    // Calculate translation component
+    final Vector trans = new Vector(right.dot(pos), y.dot(pos), -dir.dot(pos));
+
+    // Build camera matrix
+    matrix = new Matrix.Builder()
+        .identity()
+        .row(0, right)
+        .row(1, y)
+        .row(2, dir.invert())
+        .column(3, trans)
+        .build();
+}
+```
+
+This is almost certainly a pointless 'optimisation' that we might actually remove at some point.
+
+We add the _dot product_ operator to the tuple class:
+
+```java
+public final float dot(Tuple t) {
+    return x * t.x + y * t.y + z * t.z;
+}
+```
+
+and the _cross product_ to the vector class:
+
+```java
+public Vector cross(Vector vec) {
+    final float x = this.y * vec.z - this.z * vec.y;
+    final float y = this.z * vec.x - this.x * vec.z;
+    final float z = this.x * vec.y - this.y * vec.x;
+    return new Vector(x, y, z);
+}
+```
+
+Finally we also implement various mutators to the camera class to move the eye position and change the view direction.
+
+In particular we add the following method to point the camera at a given position:
+
+```java
+public void look(Point pt) {
+    dir = Vector.of(pt, pos).normalize();
+    dirty();
+}
+```
+
+TODO - invalid position -> zero length
+
+And another method to set the view direction given a yaw-pitch orientation:
+
+```java
+/**
+ * Sets the camera orientation to the given yaw and pitch angles (radians).
+ * @param yaw       Yaw
+ * @param pitch     Pitch
+ */
+public void orientation(float yaw, float pitch) {
+    final float cos = MathsUtil.cos(pitch);
+    final float x = MathsUtil.cos(yaw) * cos;
+    final float y = MathsUtil.sin(pitch);
+    final float z = MathsUtil.sin(-yaw) * cos;
+    dir = new Vector(x, y, z).normalize();
+    dirty();
+}
+```
+
+TODO - fails at poles
 

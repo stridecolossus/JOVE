@@ -25,96 +25,6 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
  * @author Sarge
  */
 public class MouseDevice implements Device {
-	/**
-	 * Mouse pointer.
-	 */
-	private class Pointer implements Source<Position> {
-		@Override
-		public List<Position> events() {
-			return List.of(Position.TYPE);
-		}
-
-		@Override
-		public void enable(Consumer<InputEvent<Position>> handler) {
-			final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event((float) x, (float) y));
-			apply(listener);
-		}
-
-		@Override
-		public void disable() {
-			apply(null);
-		}
-
-		private void apply(MousePositionListener listener) {
-			window.library().glfwSetCursorPosCallback(window.handle(), listener);
-		}
-	}
-
-	/**
-	 * Mouse buttons.
-	 */
-	private class MouseButtons implements Source<Button> {
-		/**
-		 * @return Number of mouse buttons
-		 */
-		private int count() {
-			// TODO - uses AWT but not supported by GLFW
-			return MouseInfo.getNumberOfButtons();
-		}
-
-		private final Button[] buttons = IntStream.rangeClosed(1, count()).mapToObj(n -> "Button-" + n).map(Button::new).toArray(Button[]::new);
-
-		@Override
-		public List<Button> events() {
-			return Arrays.asList(buttons);
-		}
-
-		@Override
-		public void enable(Consumer<InputEvent<Button>> handler) {
-			final MouseButtonListener listener = (ptr, button, action, mods) -> {
-				// TODO - action/mods
-				handler.accept(buttons[button]);
-			};
-			apply(listener);
-		}
-
-		@Override
-		public void disable() {
-			apply(null);
-		}
-
-		private void apply(MouseButtonListener listener) {
-			window.library().glfwSetMouseButtonCallback(window.handle(), listener);
-		}
-	}
-
-	/**
-	 * Mouse wheel.
-	 */
-	private class Wheel implements Source<Axis> {
-		private final Axis wheel = new Axis("Wheel");
-
-		@Override
-		public List<Axis> events() {
-			return List.of(wheel);
-		}
-
-		@Override
-		public void enable(Consumer<InputEvent<Axis>> handler) {
-			final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
-			apply(listener);
-		}
-
-		@Override
-		public void disable() {
-			apply(null);
-		}
-
-		private void apply(MouseScrollListener listener) {
-			window.library().glfwSetScrollCallback(window.handle(), listener);
-		}
-	}
-
 	private final Window window;
 
 	/**
@@ -134,21 +44,98 @@ public class MouseDevice implements Device {
 	 * @return Mouse pointer
 	 */
 	public Source<Position> pointer() {
-		return new Pointer();
+		return new Source<>() {
+			private final Position pos = new Position("Pointer");
+
+			@Override
+			public List<Position> events() {
+				return List.of(pos);
+			}
+
+			@Override
+			public void enable(Consumer<InputEvent<Position>> handler) {
+				final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event(pos, (float) x, (float) y));
+				apply(listener);
+			}
+
+			@Override
+			public void disable() {
+				apply(null);
+			}
+
+			private void apply(MousePositionListener listener) {
+				window.library().glfwSetCursorPosCallback(window.handle(), listener);
+			}
+		};
 	}
 
 	/**
 	 * @return Mouse buttons
 	 */
 	public Source<Button> buttons() {
-		return new MouseButtons();
+		return new Source<>() {
+			/**
+			 * @return Number of mouse buttons
+			 */
+			private int count() {
+				// TODO - uses AWT but not supported by GLFW
+				return MouseInfo.getNumberOfButtons();
+			}
+
+			private final Button[] buttons = IntStream.rangeClosed(1, count()).mapToObj(n -> "Button-" + n).map(Button::of).toArray(Button[]::new);
+
+			@Override
+			public List<Button> events() {
+				return Arrays.asList(buttons);
+			}
+
+			@Override
+			public void enable(Consumer<InputEvent<Button>> handler) {
+				final MouseButtonListener listener = (ptr, button, action, mods) -> {
+					// TODO - action/mods
+					handler.accept(buttons[button]);
+				};
+				apply(listener);
+			}
+
+			@Override
+			public void disable() {
+				apply(null);
+			}
+
+			private void apply(MouseButtonListener listener) {
+				window.library().glfwSetMouseButtonCallback(window.handle(), listener);
+			}
+		};
 	}
 
 	/**
 	 * @return Mouse wheel
 	 */
 	public Source<Axis> wheel() {
-		return new Wheel();
+		return new Source<>() {
+			private final Axis wheel = new Axis("Wheel");
+
+			@Override
+			public List<Axis> events() {
+				return List.of(wheel);
+			}
+
+			@Override
+			public void enable(Consumer<InputEvent<Axis>> handler) {
+				final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
+				apply(listener);
+			}
+
+			@Override
+			public void disable() {
+				apply(null);
+			}
+
+			private void apply(MouseScrollListener listener) {
+				window.library().glfwSetScrollCallback(window.handle(), listener);
+			}
+		};
 	}
 
 	@Override

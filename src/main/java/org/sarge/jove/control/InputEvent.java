@@ -1,6 +1,6 @@
 package org.sarge.jove.control;
 
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,25 +34,11 @@ public interface InputEvent<T extends Type> {
 		String name();
 
 		/**
-		 * Generates the string representation of the given event-type.
-		 * @param type Event-type
-		 * @return String representation
-		 * @see Parser
-		 */
-		static String write(Type type) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append(type.getClass().getName());
-			sb.append(DELIMITER);
-			sb.append(type.name());
-			return sb.toString();
-		}
-
-		/**
 		 * The <i>event type parser</i> instantiates an event-type from its string representation.
 		 * TODO
 		 */
 		class Parser {
-			private final Map<String, Constructor<? extends Type>> registry = new HashMap<>();
+			private final Map<String, Method> registry = new HashMap<>();
 
 			/**
 			 * Parses an event-type from its string representation.
@@ -62,15 +48,16 @@ public interface InputEvent<T extends Type> {
 			 */
 			public Type parse(String str) {
 				// Find classname delimiter
-				final int idx = str.indexOf(DELIMITER);
+				final int idx = str.indexOf(' ');
 				if((idx < 1) || (idx == str.length())) throw new IllegalArgumentException(String.format("Invalid event-type representation: [%s]", str));
 
 				// Lookup constructor
-				final Constructor<? extends Type> ctor = registry.computeIfAbsent(str.substring(0, idx), Parser::register);
+				final Method parse = registry.computeIfAbsent(str.substring(0, idx), Parser::register);
 
 				// Create event type
 				try {
-					return ctor.newInstance(str.substring(idx + 1));
+					final String rep = str.substring(idx + 1);
+					return (Type) parse.invoke(null, new Object[]{rep});
 				}
 				catch(Exception e) {
 					throw new RuntimeException(String.format("Error instantiating event-type: [%s]", str), e);
@@ -78,35 +65,33 @@ public interface InputEvent<T extends Type> {
 			}
 
 			/**
-			 * Looks up the constructor for the given event-type.
+			 * Looks up the parse method for the given event-type.
 			 * @param name Event-type class name
-			 * @return constructor
-			 * @throws IllegalArgumentException if the event type is unknown or the constructor cannot be found
+			 * @return Parse method
+			 * @throws IllegalArgumentException if the event type is unknown or the parse method cannot be found
 			 */
-			@SuppressWarnings("unchecked")
-			private static Constructor<? extends Type> register(String name) {
+			private static Method register(String name) {
 				try {
 					// Lookup class
 					final Class<?> clazz = Class.forName(name);
 					if(!Type.class.isAssignableFrom(clazz)) throw new IllegalArgumentException("Not an event class: " + name);
 
-					// Lookup constructor
-					final Constructor<?> ctor = clazz.getDeclaredConstructor(String.class);
-					ctor.setAccessible(true);
-
-					return (Constructor<? extends Type>) ctor;
+					// Lookup parse method
+					final Method method = clazz.getDeclaredMethod("parse", String.class);
+					if(!Type.class.isAssignableFrom(method.getReturnType())) throw new IllegalArgumentException("Invalid return type for parse method: " + name);
+					return method;
 				}
 				catch(ClassNotFoundException e) {
 					throw new IllegalArgumentException("Unknown event type: " + name, e);
 				}
 				catch(NoSuchMethodException e) {
-					throw new IllegalArgumentException("Cannot find event constructor: " + name, e);
+					throw new IllegalArgumentException("Cannot find parse method: " + name, e);
 				}
 				catch(IllegalArgumentException e) {
 					throw e;
 				}
 				catch(Exception e) {
-					throw new RuntimeException("Error looking up constructor: " + name, e);
+					throw new RuntimeException("Error looking up parse method: " + name, e);
 				}
 			}
 		}

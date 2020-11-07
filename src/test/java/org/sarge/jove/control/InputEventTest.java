@@ -24,13 +24,8 @@ public class InputEventTest {
 		}
 
 		@Test
-		void write() {
-			assertEquals(CLASSNAME + Type.DELIMITER + NAME, Type.write(new MockEventType(NAME)));
-		}
-
-		@Test
 		void parse() {
-			final Type type = parser.parse(CLASSNAME + Type.DELIMITER + NAME);
+			final Type type = parser.parse(CLASSNAME + " " + NAME);
 			assertNotNull(type);
 			assertEquals(MockEventType.class, type.getClass());
 		}
@@ -42,23 +37,24 @@ public class InputEventTest {
 
 		@Test
 		void parseUnknownType() {
-			assertThrows(IllegalArgumentException.class, "Unknown event type", () -> parser.parse("cobblers-whatever"));
+			assertThrows(IllegalArgumentException.class, "Unknown event type", () -> parser.parse("cobblers whatever"));
 		}
 
 		@Test
 		void parseInvalidType() {
-			assertThrows(IllegalArgumentException.class, "Not an event class", () -> parser.parse("java.lang.String-whatever"));
+			assertThrows(IllegalArgumentException.class, "Not an event class", () -> parser.parse("java.lang.String whatever"));
 		}
 
 		@Test
 		void parseMissingParseMethod() {
-			assertThrows(IllegalArgumentException.class, "Cannot find event constructor", () -> parser.parse("org.sarge.jove.control.InputEventTest$InvalidEventType-whatever"));
+			assertThrows(IllegalArgumentException.class, "Cannot find parse method", () -> parser.parse("org.sarge.jove.control.InputEventTest$InvalidEventType whatever"));
 		}
 	}
 
 	static class MockEventType implements Type {
-		private MockEventType(String name) {
+		static MockEventType parse(String name) {
 			assertEquals(NAME, name);
+			return new MockEventType();
 		}
 
 		@Override

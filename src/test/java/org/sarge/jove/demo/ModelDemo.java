@@ -450,13 +450,13 @@ public class ModelDemo {
 			}
 		}
 
-		bindings.bind(new Button("Button-1"), new MoveAction(+1));
+		bindings.bind(Button.of("Button-1"), new MoveAction(+1));
 
-		bindings.bind(new Button("W"), new MoveAction(+1));
-		bindings.bind(new Button("A"), new MoveAction(-1));
-		bindings.bind(new Button("S"), () -> cam.move(-1));
-		bindings.bind(new Button("D"), () -> cam.strafe(+1));
-		bindings.bind(new Button("ESCAPE"), () -> running.set(false));
+		bindings.bind(Button.of("W"), new MoveAction(+1));
+		bindings.bind(Button.of("A"), new MoveAction(-1));
+		bindings.bind(Button.of("S"), () -> cam.move(-1));
+		bindings.bind(Button.of("D"), () -> cam.strafe(+1));
+		bindings.bind(Button.of("ESCAPE"), () -> running.set(false));
 
 //		final MousePositionListener listener = (ptr, x, y) -> {
 //			final float dx = (float) x / rect.width() * MathsUtil.PI;

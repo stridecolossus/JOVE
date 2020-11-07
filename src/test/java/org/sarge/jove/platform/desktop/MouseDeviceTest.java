@@ -15,7 +15,6 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.Operation;
 import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.control.Position;
@@ -29,9 +28,7 @@ public class MouseDeviceTest {
 	private MouseDevice device;
 	private Window window;
 	private DesktopLibrary lib;
-	private Consumer<InputEvent<?>> handler;
 
-	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		// Create API
@@ -44,9 +41,6 @@ public class MouseDeviceTest {
 
 		// Create device
 		device = new MouseDevice(window);
-
-		// Create handler
-		handler = mock(Consumer.class);
 	}
 
 	@Test
@@ -56,16 +50,17 @@ public class MouseDeviceTest {
 		assertEquals(3, device.sources().size());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	void pointer() {
 		// Retrieve mouse pointer source
-		final Source<?> pointer = device.pointer();
+		final Source<Position> pointer = device.pointer();
 		assertNotNull(pointer);
-		assertEquals(Position.class, pointer.type());
 		assertNotNull(pointer.events());
 		assertEquals(1, pointer.events().size());
 
 		// Enable mouse pointer
+		final Consumer<InputEvent<Position>> handler = mock(Consumer.class);
 		final ArgumentCaptor<MousePositionListener> captor = ArgumentCaptor.forClass(MousePositionListener.class);
 		pointer.enable(handler);
 		verify(lib).glfwSetCursorPosCallback(eq(window.handle()), captor.capture());
@@ -74,49 +69,51 @@ public class MouseDeviceTest {
 		final MousePositionListener listener = captor.getValue();
 		assertNotNull(listener);
 		listener.move(null, 1, 2);
-		verify(handler).accept(new Position.Event(1, 2));
+		verify(handler).accept(new Position.Event(pointer.events().get(0), 1, 2));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	void buttons() {
 		// Retrieve mouse buttons source
-		final Source<?> buttons = device.buttons();
+		final Source<Button> buttons = device.buttons();
 		assertNotNull(buttons);
-		assertEquals(Button.class, buttons.type());
 		assertNotNull(buttons.events());
 
 		// Enable mouse buttons
+		final Consumer<InputEvent<Button>> handler = mock(Consumer.class);
 		final ArgumentCaptor<MouseButtonListener> captor = ArgumentCaptor.forClass(MouseButtonListener.class);
 		buttons.enable(handler);
 		verify(lib).glfwSetMouseButtonCallback(eq(window.handle()), captor.capture());
 
 		// Lookup axis
-		final Button button = (Button) buttons.events().get(0);
+		final Button button = buttons.events().get(0);
 		assertNotNull(button);
-		assertEquals("Button-0", button.name());
+		assertEquals("Button-1-PRESS", button.name());
 
 		// Generate an event
 		final MouseButtonListener listener = captor.getValue();
 		assertNotNull(listener);
 		listener.button(null, 0, 0, 0);
-		verify(handler).accept(button.event(Operation.PRESS));
+		verify(handler).accept(button);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	void wheel() {
 		// Retrieve mouse wheel source
-		final Source<?> wheel = device.wheel();
+		final Source<Axis> wheel = device.wheel();
 		assertNotNull(wheel);
-		assertEquals(Axis.class, wheel.type());
 		assertNotNull(wheel.events());
 		assertEquals(1, wheel.events().size());
 
 		// Lookup axis
-		final Axis axis = (Axis) wheel.events().get(0);
+		final Axis axis = wheel.events().get(0);
 		assertNotNull(axis);
 		assertEquals("Wheel", axis.name());
 
 		// Enable mouse wheel
+		final Consumer<InputEvent<Axis>> handler = mock(Consumer.class);
 		final ArgumentCaptor<MouseScrollListener> captor = ArgumentCaptor.forClass(MouseScrollListener.class);
 		wheel.enable(handler);
 		verify(lib).glfwSetScrollCallback(eq(window.handle()), captor.capture());

@@ -2,12 +2,12 @@ package org.sarge.jove.platform.desktop;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.Operation;
 import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 import org.sarge.jove.platform.desktop.KeyboardDevice.KeyTable;
@@ -26,7 +25,7 @@ public class KeyboardDeviceTest {
 	private KeyboardDevice device;
 	private Window window;
 	private DesktopLibrary lib;
-	private Consumer<InputEvent<?>> handler;
+	private Consumer<InputEvent<Button>> handler;
 
 	@SuppressWarnings("unchecked")
 	@BeforeEach
@@ -57,8 +56,7 @@ public class KeyboardDeviceTest {
 	void source() {
 		final InputEvent.Source<?> src = device.sources().iterator().next();
 		assertNotNull(src);
-		assertEquals(Button.class, src.type());
-		assertThrows(UnsupportedOperationException.class, () -> src.events());
+		assertEquals(List.of(), src.events());
 	}
 
 	@Test
@@ -71,30 +69,16 @@ public class KeyboardDeviceTest {
 		verify(lib).glfwSetKeyCallback(eq(window.handle()), captor.capture());
 		assertNotNull(captor.getValue());
 
-		// Create ENTER button
+		// Create button
 		final int code = 256;
-		final Button button = KeyTable.INSTANCE.key(code);
+		final String name = KeyTable.INSTANCE.map(code);
+		final Button button = new Button(name, 1, 2);
 
 		// Generate an event
 		final KeyListener listener = captor.getValue();
-		listener.key(null, code, 2, 3, 4);
+		listener.key(null, code, 0, 1, 2);
 
 		// Check event delegated to handler
-		verify(handler).accept(button.event(Operation.PRESS));
-	}
-
-	@Test
-	void key() {
-		final Button key = KeyTable.INSTANCE.key(256);
-		assertNotNull(key);
-		assertEquals("ESCAPE", key.name());
-		assertEquals(key, KeyTable.INSTANCE.key("ESCAPE"));
-		assertEquals(new Button("ESCAPE"), KeyTable.INSTANCE.key("ESCAPE"));
-	}
-
-	@Test
-	void keyUnknown() {
-		assertThrows(IllegalArgumentException.class, () -> KeyTable.INSTANCE.key(0));
-		assertThrows(IllegalArgumentException.class, () -> KeyTable.INSTANCE.key("cobblers"));
+		verify(handler).accept(button);
 	}
 }
