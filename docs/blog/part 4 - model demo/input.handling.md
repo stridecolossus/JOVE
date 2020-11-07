@@ -405,6 +405,8 @@ private void update() {
 
 This is almost certainly a pointless 'optimisation' that we might actually remove at some point.
 
+TODO - or implement matrix * homogenous vector?
+
 We add the _dot product_ operator to the tuple class:
 
 ```java
