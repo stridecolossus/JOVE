@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Action.Bindings;
 
 public class ActionTest {
-	private Bindings<Axis> bindings;
+	private Bindings<Axis.Event> bindings;
 	private Axis axis;
-	private Action<Axis> action;
+	private Action<Axis.Event> action;
 	private Axis.Event event;
 
 	@SuppressWarnings("unchecked")
@@ -118,7 +118,7 @@ public class ActionTest {
 		bindings.bind(axis, runnable);
 
 		// Check action wrapper is bound
-		final Optional<Action<Axis>> wrapper = bindings.binding(axis);
+		final Optional<Action<Axis.Event>> wrapper = bindings.binding(axis);
 		assertNotNull(wrapper);
 		assertEquals(true, wrapper.isPresent());
 

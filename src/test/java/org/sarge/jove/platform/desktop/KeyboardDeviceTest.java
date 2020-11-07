@@ -25,7 +25,7 @@ public class KeyboardDeviceTest {
 	private KeyboardDevice device;
 	private Window window;
 	private DesktopLibrary lib;
-	private Consumer<InputEvent<Button>> handler;
+	private Consumer<Button> handler;
 
 	@SuppressWarnings("unchecked")
 	@BeforeEach

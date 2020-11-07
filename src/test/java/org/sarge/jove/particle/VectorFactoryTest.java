@@ -3,6 +3,8 @@ package org.sarge.jove.particle;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.Random;
+
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -22,7 +24,9 @@ public class VectorFactoryTest {
 
 	@Test
 	public void random() {
-		assertNotNull(VectorFactory.RANDOM.vector(null));
+		final var factory = VectorFactory.random(new Random());
+		assertNotNull(factory);
+		assertNotNull(factory.vector(null));
 	}
 
 	@Test
