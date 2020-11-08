@@ -1,4 +1,4 @@
-theme: jekyll-theme-minimal
+# theme: jekyll-theme-minimal
 title: JOVE
 description: A Java implementation of the Vulkan API
 logo: /assets/image/logo.jpg
