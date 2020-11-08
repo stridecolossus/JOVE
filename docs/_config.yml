@@ -1,8 +1,8 @@
 # theme: jekyll-theme-minimal
 title: JOVE
 description: A Java implementation of the Vulkan API
-logo: /assets/image/logo.jpg
+# logo: /assets/image/logo.jpg
 show_downloads: false
 google_analytics:
-markdown: GFM
+markdown: kramdown
 highlighter: rouge
