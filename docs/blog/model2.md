@@ -1,6 +1,4 @@
-layout: page
-title: "Models and the Depth Buffer"
-permalink: /blog/part4/models/
+CHANGED 
 
 # Overview
 
