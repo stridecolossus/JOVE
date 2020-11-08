@@ -4,3 +4,4 @@ description: A Java implementation of the Vulkan API
 logo: /assets/image/logo.jpg
 show_downloads: false
 google_analytics:
+markdown: GFM
