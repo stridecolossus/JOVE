@@ -1,6 +1,10 @@
+---
+title: The Vulkan Instance
+---
+
 # Overview
 
-The first step in the development of our library is to create a Vulkan _instance_ which is the starting point for everything that follows.
+The first step in the development of our library is to create a Vulkan _instance_, the starting point for everything that follows.
 
 This involves:
 1. Instantiating the Vulkan API using JNA
@@ -8,16 +12,17 @@ This involves:
 3. Populating a JNA structure descriptor for the instance
 4. Creating the instance given this descriptor
 
-We will also enable the diagnostics extension to support logging and error reporting.
+We will also enable a diagnostics extension to support logging and error reporting.
 
 So let's get cracking.
 
+---
 
 # Creating the Vulkan Instance
 
 ## Instance API
 
-We start with an empty interface for the Vulkan API that is instantiated using JNA via a static factory method:
+We start with an empty interface for the Vulkan API instantiated by JNA using a static factory method:
 
 ```java
 interface VulkanLibrary extends Library {
@@ -33,7 +38,7 @@ interface VulkanLibrary extends Library {
 }
 ```
 
-Next we extend the API by adding the methods to create and destroy an instance:
+Next we extend the API by defining the methods to create and destroy an instance:
 
 ```java
 interface VulkanLibraryInstance {
@@ -55,14 +60,23 @@ interface VulkanLibraryInstance {
 }
 ```
 
-As noted in the chapter on [code generation](https://stridecolossus.blogspot.com/2020/10/part-1-generation-game.html) we have intentionally decided not to code-generate the API.
+This interface maps to the following methods defined in the `vulkan_core.h` header:
 
-There will eventually be a large number of API methods (over a hundred) so we group logically related methods into a single interface which can then be aggregated:
+```C
+typedef VkResult (VKAPI_PTR *PFN_vkCreateInstance)(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
+
+typedef void (VKAPI_PTR *PFN_vkDestroyInstance)(VkInstance instance, const VkAllocationCallbacks* pAllocator);
+
+```
+
+Eventually there will be a large number of API methods (over a hundred) so we group logically related methods into their own interface and aggregate into the overall library:
 
 ```java
-interface VulkanLibrary extends Library, VulkanLibraryInstance {
+interface VulkanLibrary extends Library, VulkanLibraryInstance, ... {
 }
 ```
+
+As noted in the chapter on [code generation](/JOVE/blog/part-1-generation/code-generation) we have intentionally decided not to code-generate the API.
 
 ## Vulkan Instance
 
@@ -128,7 +142,7 @@ public static class Builder {
 }
 ```
 
-The application version number is a simple POJO:
+The `Version` number is a simple POJO:
 
 ```java
 public record Version(int major, int minor, int patch) implements Comparable<Version> {
@@ -146,7 +160,7 @@ public record Version(int major, int minor, int patch) implements Comparable<Ver
 }
 ```
 
-The build method uses the code-generated structures for the first time:
+In the `build()` method we use the code-generated structures for the first time to populate the application and engine details:
 
 ```java
 // Init application descriptor
@@ -156,10 +170,6 @@ app.applicationVersion = ver.toInteger();
 app.pEngineName = "JOVE";
 app.engineVersion = new Version(1, 0, 0).toInteger();
 app.apiVersion = VulkanLibrary.VERSION.toInteger();
-
-// Init instance descriptor
-final VkInstanceCreateInfo info = new VkInstanceCreateInfo();
-info.pApplicationInfo = app;
 ```
 
 The `apiVersion` field is the **maximum** version of the Vulkan API that the application can use - we add a new constant to the API for the version supported by the SDK:
@@ -168,6 +178,14 @@ The `apiVersion` field is the **maximum** version of the Vulkan API that the app
 public interface VulkanLibrary {
     Version VERSION = new Version(1, 1, 0);
 }
+```
+
+Next we populate the descriptor for the instance (just the application details for the moment):
+
+```java
+// Init instance descriptor
+final VkInstanceCreateInfo info = new VkInstanceCreateInfo();
+info.pApplicationInfo = app;
 ```
 
 Finally we invoke the API method to create the instance given the descriptor:
@@ -183,7 +201,7 @@ return new Instance(api, handle.getValue());
 
 Note that the handle to the newly created instance is returned in the `PointerByReference` object which maps to a native `VkInstance*` return-by-reference type.
 
-The `check()` method wraps the API call and validates the result code:
+The `check()` method wraps an API call and validates the result code:
 
 ```java
 public interface VulkanLibrary {
@@ -207,11 +225,7 @@ public interface VulkanLibrary {
 
 The `VulkanException` is a custom exception class that maps a Vulkan return code to the corresponding `VkResult` to build an informative error message.
 
-
-
-# Extensions and Validation Layers
-
-## Extending the Builder
+## Extensions and Validation Layers
 
 There are two other pieces of information that we supply when creating the instance: extensions and validation layers.
 
@@ -254,7 +268,7 @@ info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
 info.enabledLayerCount = layers.size();
 ```
 
-Note the use of `StringArray` which is a JNA helper that maps a Java array-of-strings to a native pointer-to-pointers (more specifically a `const char* const*` type).
+Note the use of the JNA `StringArray` helper class that maps a Java array-of-strings to a native pointer-to-pointers (more specifically a `const char* const*` type).
 
 Finally we introduce a simple class for validation layers:
 
@@ -269,18 +283,24 @@ public record ValidationLayer(String name, int version) {
 
 We discuss the purpose of the standard validation layer below.
 
-## Required Extensions
+---
+
+# Required Extensions
 
 Generally we will need to enable platform-specific extensions for the target platform so that we can actually perform rendering.
+
+Usually there will be two extensions for a Vulkan rendering surface:
+- the general surface: `VK_KHR_surface` 
+- and the platform specific implementation, e.g. `VK_KHR_win32_surface` for Windows.
 
 For this we will integrate the GLFW library that provides the following functionality relating to Vulkan:
 - Test whether the current hardware supports Vulkan.
 - Retrieve the platform-specific extensions required for Vulkan rendering.
 - Create a Vulkan rendering surface for a given window.
 
-We _could_ use the platform-specific extensions available in the Vulkan API but this approach is considerably simpler (since GLFW does the work for us) and we are planning to use it for window  and input device management anyway.
+We _could_ use the platform-specific extensions available in the Vulkan API but this approach is considerably simpler (since GLFW does the work for us) and we are planning to use this library for window and input device management anyway.
 
-We create a new package called _desktop_ and create a new JNA library:
+We create a new package called _desktop_ and define a new JNA library:
 
 ```java
 interface DesktopLibrary extends Library {
@@ -357,10 +377,7 @@ public static Desktop create() {
 }
 ```
 
-Usually there will be two required extensions for the Vulkan rendering surface:
-- the general surface: `VK_KHR_surface` 
-- and one for the specific platform, e.g. `VK_KHR_win32_surface` for Windows.
-
+---
 
 # Integration and Testing
 
@@ -431,14 +448,14 @@ The reason for presenting this unit-test is to highlight the `PointerByReference
 ## Reference Factory
 
 The Vulkan API (and many other native libraries) make extensive use of by-reference types to return data (with the return value generally being some sort of error code).
-The `vkCreateInstance()` API method returns the handle of the newly instance created instance via a JNA `PointerByReference` from which the actual handle is extracted.
+For example the `vkCreateInstance()` API method returns the handle of the newly instance created instance via a JNA `PointerByReference` from which the actual handle is extracted.
 
-Mercifully this approach is generally uncommon in Java but it poses an awkward problem for unit-testing - if the code allocates the by-reference internally we have no way of mocking it beforehand, the returned pointer will be initialised to zero, and subsequent code that depends on that value will fail.
+Mercifully this approach is generally uncommon in Java but it poses an awkward problem for unit-testing - if the code allocates the by-reference internally we have no way of mocking it beforehand, the returned pointer will be initialised to zero (probably), and subsequent code that depends on that value will fail.
 
 We _could_ mock the reference using a Mockito _answer_ but that means tedious and convoluted code that we have to implement for _every_ unit-test that exercises a by-reference value.
 
-Therefore we factor out the most common cases into a _reference factory_ helper that is responsible for creating by-reference types in the API that we can then more easily mock.
-The factory is defined as follows with a concrete implementation used for production code:
+Therefore we factor out the most common cases into a _reference factory_ helper that is responsible for creating any by-reference types in the API that we can then more easily mock.
+The factory is defined as follows with a concrete implementation for production code:
 
 ```java
 public interface ReferenceFactory {
@@ -484,8 +501,8 @@ public interface VulkanLibrary {
 ```
 
 Notes:
-- We provide the a convenience `MockReferenceFactory` implementation that also initialises by-reference types to reduce the amount of boiler-plate required.
-- The use of the default method in the Vulkan API is a little dodgy but it allows us to easily use this mock implementation.
+- We provide a convenience `MockReferenceFactory` implementation to reduce the amount of boiler-plate required.
+- The use of the default method in the Vulkan API is a little dodgy but it allows us to easily use the mock implementation.
 
 This allows us to mock the creation of any by-reference values as required, for example:
 
@@ -506,7 +523,7 @@ In general from now on we will not cover testing unless there is a specific poin
 
 ## Integration
 
-Finally we start work on our first demo application:
+Finally we can start work on our first demo application:
 
 ```java
 public class TriangleDemo {
@@ -533,21 +550,21 @@ public class TriangleDemo {
 }
 ```
 
-We add a convenience method to the builder to add the array of extensions returned by GLFW.
+We also add a convenience method to the builder to add the array of extensions returned by GLFW.
 
-
+---
 
 # Diagnostics Handler
 
 ## Overview
 
-Vulkan implements the `STANDARD_VALIDATION` validation layer described above that provides a very comprehensive error and diagnostics reporting mechanism, offering useful logging as well as alerting common problems such as orphaned object handles, invalid parameters, performance warnings, etc.  This functionality is not mandatory but it is _highly_ recommended during development so we will address how it used now before we go any further.
+Vulkan implements the `STANDARD_VALIDATION` validation layer that provides a very comprehensive error and diagnostics reporting mechanism, offering useful logging as well as alerting common problems such as orphaned object handles, invalid parameters, performance warnings, etc.  This functionality is not mandatory but it is _highly_ recommended so we will address it now before we go any further.
 
-However there is one complication - for some reason the reporting mechanism is not a core part of the API but is implemented as an extension.
+However there is one complication - for some reason the reporting mechanism is not a core part of the API but is itself an extension.
 
 ## Message Handler
 
-We start with a new domain class that will represent our reporting requirements and a JNA callback that is invoked by Vulkan to report errors and messages:
+We start with a new domain class that will represent our reporting requirements and a JNA callback that will be invoked by Vulkan to report errors and messages:
 
 ```java
 public class MessageHandler {
@@ -557,14 +574,29 @@ public class MessageHandler {
     public interface MessageCallback extends Callback {
         /**
          * Invoked on receipt of a debug message.
-         * @param severity            Severity
-         * @param type                Message type(s)
-         * @param pCallbackData        Message
-         * @param pUserData            User data
+         * @param severity          Severity
+         * @param type              Message type(s)
+         * @param pCallbackData     Message
+         * @param pUserData         User data
          * @return Whether to terminate or continue
          */
         boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData);
     }
+}
+```
+
+Notes:
+
+- We have to define the callback ourselves, as an extension it is not defined in the API and we are just expected to know the signature.
+- The _pUserData_ field is a an arbitrary object associated with the handler, redundant for an OO implementation but we include it for completeness.
+- The _severity_ field specifies the severity level(s) of the messages of interest (warning, error, etc).
+- The _type_ field is a bit-mask of the message categories (validation, performance, etc). 
+
+The handler object itself defines the messages that a particular application is interested in:
+
+```java
+public class MessageHandler {
+    ...
 
     private final MessageCallback callback;
     private final Pointer data;
@@ -573,10 +605,10 @@ public class MessageHandler {
 
     /**
      * Constructor.
-     * @param callback            Callback handler
-     * @param data                Optional user data
+     * @param callback          Callback handler
+     * @param data              Optional user data
      * @param severities        Message severities
-     * @param types                Message types
+     * @param types             Message types
      */
     public MessageHandler(MessageCallback callback, Pointer data, Set<VkDebugUtilsMessageSeverityFlagEXT> severities, Set<VkDebugUtilsMessageTypeFlagEXT> types) {
         this.callback = notNull(callback);
@@ -587,21 +619,11 @@ public class MessageHandler {
 }
 ```
 
-Notes:
-
-- We have to define the callback ourselves - as an extension it is not defined in the API and we are just expected to know the signature.
-
-- The _data_ field is a an arbitrary object associated with the handler returned in the callback (redundant for an OO implementation but we include it for completeness).
-
-- The _severities_ field specifies the severity level(s) of the messages of interest (warning, error, etc)
-
-- The _types_ field enumerates the message categories (validation, performance, etc). 
-
-- We also add a convenience builder to specify a handler.
+We also add a convenience builder to configure a handler.
 
 ## Handler Manager
 
-We will add a new lazily-instantiated local class to the instance that encapsulates the management of message handlers:
+To manage diagnostics handlers we add a lazily-instantiated local class to the instance:
 
 ```java
 public class Instance {
@@ -617,7 +639,7 @@ public class Instance {
 }
 ```
 
-The manager looks up the functions to create and destroy a handler from the extension:
+As already noted the diagnostics functionality is an extension and not part of the public Vulkan API, therefore we need to lookup the API methods to create and destroy a handler:
 
 ```java
 public class HandlerManager {
@@ -631,7 +653,7 @@ public class HandlerManager {
 }
 ```
 
-We add the following helper to the instance class to lookup a JNA function by name:
+which uses the following helper on the instance class to lookup a JNA function by name:
 
 ```java
 public Function function(String name) {
@@ -643,22 +665,7 @@ public Function function(String name) {
 
 ## Attaching a Handler
 
-To attach a message handler we first add the following method to the handler to create the Vulkan descriptor:
-
-```java
-protected VkDebugUtilsMessengerCreateInfoEXT create() {
-    final VkDebugUtilsMessengerCreateInfoEXT info = new VkDebugUtilsMessengerCreateInfoEXT();
-    info.messageSeverity = IntegerEnumeration.mask(severities);
-    info.messageType = IntegerEnumeration.mask(types);
-    info.pfnUserCallback = callback;
-    info.pUserData = data;
-    return info;
-}
-```
-
-Note the use of the `mask` method to transform the enumeration collections to a bit-field mask.
-
-We then invoke the create function with an argument array containing the descriptor and the handle of the parent instance:
+To instantiate and attach a message handler we invoke the the create method with an array of the relevant arguments (again we have to determine the method signature from the documentation rather than the API itself):
 
 ```java
 public void add(MessageHandler handler) {
@@ -677,9 +684,24 @@ public void add(MessageHandler handler) {
 }
 ```
 
+The `create()` method on the message handler class populates the Vulkan descriptor:
+
+```java
+protected VkDebugUtilsMessengerCreateInfoEXT create() {
+    final VkDebugUtilsMessengerCreateInfoEXT info = new VkDebugUtilsMessengerCreateInfoEXT();
+    info.messageSeverity = IntegerEnumeration.mask(severities);
+    info.messageType = IntegerEnumeration.mask(types);
+    info.pfnUserCallback = callback;
+    info.pUserData = data;
+    return info;
+}
+```
+
+Note the use of the `mask` method to transform the enumeration collections to bit-field masks.
+
 ## Cleanup
 
-We add the following methods to the handler manager to cleanup handlers:
+We add the following methods to the manager to release handlers:
 
 ```java
 public void remove(MessageHandler handler) {
@@ -699,7 +721,7 @@ private void destroy() {
 }
 ```
 
-And the destructor of the instance is modified as follows:
+And the destructor of the instance is modified accordingly:
 
 ```java
 @Override
@@ -716,15 +738,15 @@ public synchronized void destroy() {
 
 ## Message Convenience
 
-With the framework in place we add some additional helper functionality to the message handler:
+With the framework in place we add the following helper functionality to the message handler class:
 
-- We add the convenience `init()` method to initialises the builder to a common configuration (errors and warnings only).
+- A convenience `init()` method that initialises a handler to a common configuration.
 
-- Next we add the `AbstractMessageCallback` class which is a skeleton implementation that handles the mapping of the severity and type fields.
+- The `AbstractMessageCallback` which is a skeleton implementation for a message callback that handles the mapping of the severity and type fields.
 
-- We add a concrete implementation of this skeleton class created by the `writer()` factory method that formats and outputs a message to a writer.
+- A concrete implementation created by the `writer()` factory method to formats and output a message to a writer.
 
-- Finally we add the `CONSOLE` implementation that dumps the message to the console (which now becomes the default callback in the builder).
+- And finally the `CONSOLE` implementation that dumps a message to the console (which we use as the default callback in the builder).
 
 ## Integration
 
@@ -734,7 +756,7 @@ To attach a diagnostics handler we must first enable the extension:
 final Instance instance = new Instance.Builder()
     .vulkan(lib)
     .name("test")
-    .extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
+    .extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)         // <-- here
     .extensions(desktop.extensions())
     .layer(ValidationLayer.STANDARD_VALIDATION)
     .build();
@@ -751,7 +773,7 @@ public interface VulkanLibrary {
 }
 ```
 
-Finally we create and attach the handler:
+Finally we create and attach a handler in the demo:
 
 ```java
 final var handler = new MessageHandler.Builder()
@@ -764,6 +786,7 @@ instance.handlers().add(handler);
 
 From now on when we screw things up we should receive error messages on the console.
 
+---
 
 # Summary
 
