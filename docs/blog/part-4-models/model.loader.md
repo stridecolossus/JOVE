@@ -1,3 +1,7 @@
+---
+title: Models and the Depth Buffer
+---
+
 # Overview
 
 In this chapter we will load and render an OBJ model which will also require us to implement a depth buffer.
