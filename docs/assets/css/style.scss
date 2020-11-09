@@ -1,6 +1,6 @@
 ---
 ---
-
+@import "{{ site.theme }}";
 .left {
   height: 100%;
   width: 160px;
@@ -11,4 +11,3 @@
   overflow-x: hidden;
   padding-top: 20px;
 }
-
