@@ -3,4 +3,4 @@ title: JOVE
 description: A Java implementation of the Vulkan API
 show_downloads: false
 google_analytics:
-base_url: /JOVE
+baseurl: /JOVE
