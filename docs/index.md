@@ -1,13 +1,8 @@
----
-title: TITLE TEST 999
-layout: default
----
-
-# Title
+# Title XXX
 
 ## Sub-Title
 
-INDEX PAGE TEST 3
+INDEX PAGE TEST 4
 
 [link](/JOVE/blog/part-3-cube/textures)
 
