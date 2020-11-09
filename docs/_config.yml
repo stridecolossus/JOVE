@@ -1,9 +1,6 @@
-# theme: jekyll-theme-minimal
 theme: minima
 title: JOVE
 description: A Java implementation of the Vulkan API
 logo: /JOVE/assets/image/logo.jpg
 show_downloads: false
 google_analytics:
-#markdown: kramdown
-#highlighter: rouge
