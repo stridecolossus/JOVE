@@ -1,7 +1,8 @@
 <header>
-HEADER
-  <h1>{{ page.title | default: site.title | default: site.github.repository_name }}</h1>
-  <p>{{ page.description | default: site.description | default: site.github.project_tagline }}</p>
-HEADER END
+  <img>
+  <p>{{ site.description | default: site.github.project_tagline }}</p>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="blog/part-4-models/model.loader">models</a></li>
+  </ul>
 </header>
-      
