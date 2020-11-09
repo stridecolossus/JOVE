@@ -7,7 +7,7 @@ layout: default
 
 ## Sub-Title
 
-INDEX PAGE TEST
+INDEX PAGE TEST 2
 
 [link](https://stridecolossus.github.io/JOVE/blog/part-3-cube/textures)
 
