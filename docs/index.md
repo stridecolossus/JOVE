@@ -1,3 +1,9 @@
-INDEX
+# Title
 
-[link](https://stridecolossus.github.io/JOVE/blog/part4/models)
+## Sub-Title
+
+INDEX PAGE TEST
+
+[link](https://stridecolossus.github.io/JOVE/blog/part-3-cube/textures)
+
+[relative](/JOVE/blog/part-3-cube/textures)
