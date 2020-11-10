@@ -1,4 +1,8 @@
-# Overview
+---
+title: Vertex Buffers
+---
+
+## Overview
 
 In this chapter we will replace the hard-coded triangle data in the vertex shader with a _vertex buffer_.
 
@@ -24,9 +28,9 @@ We will need:
 
 ---
 
-# Vertex Data
+## Vertex Data
 
-## Defining a Vertex
+### Defining a Vertex
 
 A _vertex_ can consist of some or all of the following components:
 
@@ -114,9 +118,9 @@ Notes:
 - Generally we should model optional properties properly using a Java `Optional` but we have intentionally broken that rule here for the sake of simplicity.
 - For the moment we will gloss over the vector and texture coordinate classes as they are not needed until later in development.
 
-## Buffering Vertices
+### Buffering Vertices
 
-To buffer an entire vertex we add the following enumeration to the vertex class:
+To buffer an entire vertex we add the following enumeration that extracts a component from a vertex:
 
 ```java
 enum Component {
@@ -138,7 +142,7 @@ enum Component {
 }
 ```
 
-This is used in the new _vertex layout_ object that specifies the order of the vertex components in the interleaved buffer:
+This is used in the new _vertex layout_ object that specifies the _order_ of the vertex components in the interleaved buffer:
 
 ```java
 class Layout {
@@ -159,11 +163,14 @@ public void buffer(Vertex vertex, ByteBuffer buffer) {
 ```
 
 Notes:
-- The purpose of the map() method in the enumeration is to allow us to specify arbitrary vertex layouts.
-- The _size_ attribute is the total number of floating-point values in a vertex which is used later when we allocate the interleaved buffer.
+
+- The enumeration allows us to specify arbitrary vertex layouts using the same underlying object.
+
+- The _size_ attribute is the total number of floating-point values in a vertex (used later when we allocate the interleaved buffer).
+
 - This implementation assumes that the output data buffer will be interleaved (the most common approach) but other strategies should be simple to implement using these entities.
 
-## Integration #1
+### Integration #1
 
 We can now start the demo application for this phase (based on the triangle demo) and add the vertex data and an interleaved buffer:
 
@@ -191,9 +198,9 @@ bb.rewind();
 
 ---
 
-# Vertex Buffers
+## Vertex Buffers
 
-## Vertex Buffer Creation
+### Vertex Buffer Creation
 
 Next we implement the vertex buffer domain class that will be used for both the staging and device-local buffers:
 
@@ -226,7 +233,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 
 The _mem_ class member is a pointer to the internal memory of the buffer (whether host or device local).
 
-As normal this is created via a builder:
+As normal a vertex buffer is created via a builder:
 
 ```java
 public static class Builder {
@@ -278,9 +285,9 @@ public static class Builder {
 }
 ```
 
-The memory allocator is detailed in the next section.
+### Memory Allocation
 
-After the buffer has been created we query Vulkan for its memory requirements:
+In the `build()` method, after the buffer has been created we query Vulkan for its memory requirements:
 
 ```java
 // Query memory requirements
@@ -288,7 +295,7 @@ final VkMemoryRequirements reqs = new VkMemoryRequirements();
 lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 ```
 
-These requirements are passed to the memory allocator which allocates a memory block of the appropriate type:
+These requirements are passed to the memory allocator (covered in the following section) which allocates a memory block of the appropriate type:
 
 ```java
 // Allocate buffer memory
@@ -313,14 +320,14 @@ public synchronized void destroy() {
 }
 ```
 
-## Populating a Buffer
+### Populating a Buffer
 
 Populating a vertex buffer consists of the following steps:
 1. Map the internal memory to an NIO buffer.
 2. Copy the source data to this buffer.
 3. Release the memory mapping.
 
-We add a couple of overloaded methods to the vertex buffer class to load the interleaved data:
+We add the following method to the vertex buffer class to load the interleaved data:
 
 ```java
 /**
@@ -332,7 +339,7 @@ public void load(ByteBuffer obj, long len, long offset) {
     // Check buffer
     Check.zeroOrMore(offset);
     if(offset + len > this.len) {
-        throw new IllegalStateException(String.format("Buffer exceeds size of this VBO: length=%d offset=%d this=%s", len, offset, this));
+        throw new IllegalStateException(...);
     }
 
     // Map buffer memory
@@ -351,13 +358,9 @@ public void load(ByteBuffer obj, long len, long offset) {
         lib.vkUnmapMemory(dev.handle(), mem);
     }
 }
-
-public void load(ByteBuffer buffer) {
-    load(Bufferable.of(buffer), buffer.remaining(), 0);
-}
 ```
 
-## Integration #2
+### Integration #2
 
 Finally we add a factory method that creates a command to copy between vertex buffers, this will be used to move the vertex data from the staging buffer to the hardware.
 
@@ -398,6 +401,9 @@ final Command.Buffer copyBuffer = Command.once(copyPool, staging.copy(dest));
 new Work.Builder().add(copyBuffer).build().submit();
 queue.waitIdle();
 copyBuffer.free();
+
+// Release staging
+staging.destroy();
 ```
 
 The copy operation uses a _one-time command_ that is allocated by a new helper in the command class:
@@ -416,11 +422,11 @@ The copy code is still a bit messy and long-winded - we will come back and simpl
 
 ---
 
-# Memory Allocation
+## Memory Allocator
 
-## Allocator
+### Allocator
 
-The process of allocating memory for the vertex buffer will be largely replicated for images when we address textures in the next chapter - so we encapsulate memory allocation into the following helper class:
+The process of allocating the memory for the buffer will be largely replicated when we address textures in the next chapter - so we encapsulate memory allocation into the following helper:
 
 ```java
 public class MemoryAllocator {
@@ -514,7 +520,7 @@ public Allocation init(VkMemoryRequirements reqs) {
 }
 ```
 
-## Allocation
+### Memory Allocation
 
 The memory block is allocated as follows:
 
@@ -570,7 +576,7 @@ private int findMemoryType(int filter, int mask) {
 }
 ```
 
-## Future Enhancements
+### Future Enhancements
 
 This works fine for our simple demos at this stage of development but we will need several enhancements for a production-ready allocator:
 
@@ -584,19 +590,21 @@ This works fine for our simple demos at this stage of development but we will ne
 
 ---
 
-# Vertex Input Configuration
+## Vertex Input Configuration
 
-## Vertex Input Pipeline Stage
+### Vertex Input Pipeline Stage
 
 We next need to configure the structure of the vertex data in the pipeline.
 
 This consists of two pieces of information:
+
 1. A _binding_ description that specifies the data to be passed to the shader (essentially corresponding to a vertex layout).
+
 2. A number of _attribute_ descriptors that define the format of each component of a vertex (i.e. each component of the layout).
 
 We add two new nested builders to the `VertexInputStageBuilder` to construct these new objects.
 
-## Vertex Input Bindings
+### Vertex Input Bindings
 
 The builder for a binding is relatively simple:
 
@@ -640,7 +648,7 @@ public class BindingBuilder {
 
 The _stride_ is the number of bytes per vertex which normally is the size() attribute of the vertex layout.
 
-Again we add a populate() method that fills an instance of the Vulkan descriptor from this data:
+Again we add a `populate()` method that fills an instance of the Vulkan descriptor from this data:
 
 ```java
 void populate(VkVertexInputBindingDescription desc) {
@@ -667,7 +675,7 @@ public VertexInputStageBuilder build() {
 
 Note that we add the builder itself to the parent rather than creating any intermediate POJO for the binding data.
 
-## Vertex Attributes
+### Vertex Attributes
 
 The builder for a vertex attribute follows the same pattern:
 
@@ -706,9 +714,7 @@ public class AttributeBuilder {
 }
 ```
 
-The build() method checks the associated binding exists and also checks for duplicate attribute locations.
-
-## Revised Stage Builder
+### Revised Stage Builder
 
 Next we integrate these child builders into the vertex input stage builder:
 
@@ -722,11 +728,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
     @Override
     protected VkPipelineVertexInputStateCreateInfo result() {
         // Validate bindings
-        for(final var b : bindings.values()) {
-            if(b.locations.isEmpty()) {
-                throw new IllegalArgumentException(String.format("No attributes specified for binding: ", b.binding));
-            }
-        }
+        ...
 
         // Create descriptor
         final var info = new VkPipelineVertexInputStateCreateInfo();
@@ -734,11 +736,11 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
         // Add binding descriptions
         if(!bindings.isEmpty()) {
             info.vertexBindingDescriptionCount = bindings.size();
-            info.pVertexBindingDescriptions = VulkanStructure.array(VkVertexInputBindingDescription::new, bindings.values(), BindingBuilder::populate)[0];
+            info.pVertexBindingDescriptions = VulkanStructure.populate(VkVertexInputBindingDescription::new, bindings.values(), BindingBuilder::populate);
 
             // Add attributes
             info.vertexAttributeDescriptionCount = attributes.size();
-            info.pVertexAttributeDescriptions = VulkanStructure.array(VkVertexInputAttributeDescription::new, attributes, AttributeBuilder::populate)[0];
+            info.pVertexAttributeDescriptions = VulkanStructure.populate(VkVertexInputAttributeDescription::new, attributes, AttributeBuilder::populate);
         }
 
         return info;
@@ -746,55 +748,71 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 }
 ```
 
-Finally we add a convenience method to the builder that creates a binding and associated attributes for a given vertex layout:
+We also take the opportunity to implement a convenience method to create the binding and attributes for a given vertex layout.
+
+First we select the next available binding index:
 
 ```java
 public VertexInputStageBuilder binding(Vertex.Layout layout) {
     // Allocate next binding
     final int index = bindings.size();
 
-    // Add binding
-    new BindingBuilder()
-            .binding(index)
-            .stride(layout.size() * Float.BYTES)
-            .build();
-
-    // Add attribute for each component
-    int offset = 0;
-    int loc = 0;
-    for(Vertex.Component c : layout.components()) {
-        // Determine component format
-        final VkFormat format = new FormatBuilder()
-                .components(c.size())
-                .type(FormatBuilder.Type.FLOAT)
-                .bytes(Float.BYTES)
-                .build();
-
-        // Add attribute for component
-        new AttributeBuilder()
-                .binding(index)
-                .location(loc)
-                .format(format)
-                .offset(offset)
-                .build();
-
-        // Increment offset to the start of the next attribute
-        ++loc;
-        offset += c.size() * Float.BYTES;
-    }
-    assert offset == layout.size() * Float.BYTES;
+    ...
 
     return this;
 }
 ```
 
----
+Then we use the nested builder to create the binding:
 
-# Integration #3
+```java
+    // Add binding
+    new BindingBuilder()
+        .binding(index)
+        .stride(layout.size() * Float.BYTES)
+        .build();
+```
 
-## Vertex Input Stage
+Next we iterate over the components of the layout:
 
-Using the above helper we can configure the vertex input stage of the pipeline to match the vertex layout of the triangle:
+```java
+    // Add attribute for each component
+    int offset = 0;
+    int loc = 0;
+    for(Vertex.Component c : layout.components()) {
+    }
+```
+
+And create an attribute for each component:
+
+```java
+    // Determine component format
+    final VkFormat format = new FormatBuilder()
+        .components(c.size())
+        .type(FormatBuilder.Type.FLOAT)
+        .bytes(Float.BYTES)
+        .build();
+
+    // Add attribute for component
+    new AttributeBuilder()
+        .binding(index)
+        .location(loc)
+        .format(format)
+        .offset(offset)
+        .build();
+```
+
+The byte _offset_ within the vertex is incremented at the end of the loop:
+
+```java
+        // Increment offset to the start of the next attribute
+        ++loc;
+        offset += c.size() * Float.BYTES;
+    }
+    assert offset == layout.size() * Float.BYTES;
+```
+
+Using this helper we can configure the vertex input stage of the pipeline to match the vertex layout of the triangle:
 
 ```java
 final Pipeline pipeline = new Pipeline.Builder(dev)
@@ -804,7 +822,7 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
     ...
 ```
 
-This is equivalent to:
+Which is equivalent to:
 
 ```java
 final Pipeline pipeline = new Pipeline.Builder(dev)
@@ -827,7 +845,9 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
     ...
 ```
 
-Finally we add a new command to bind the vertex buffer in the rendering sequence (before the draw command):
+### Integration #3
+
+The last change we need to make is a new command to bind the vertex buffer in the rendering sequence (before the draw command):
 
 ```
 public Command bind() {
@@ -836,19 +856,21 @@ public Command bind() {
 }
 ```
 
-## Vertex Shader
-
 The above should work but doesn't achieve anything since we are not yet using the vertex buffer in the shader.
 
 We need to make the following changes to the vertex shader code:
+
 - Remove the hard-coded vertex data.
+
 - Add two `layout` directives to specify the incoming data from the vertex buffer (matching the locations specified in the vertex attributes).
+
 - Set `gl_Position` to the position of each vertex.
-- Set the output `fragColour` to the colour of each vertex.
+
+- Pass through the colour of each vertex.
 
 The resultant vertex shader is:
 
-```C
+```glsl
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -865,11 +887,13 @@ void main() {
 
 (The fragment shader is unchanged).
 
-If all goes well we should see the same triangle.  A good test is to change one of the vertex positions and/or colours to make sure we are using the new functionality and shader.
+If all goes well we should see the same triangle.
+
+A good test is to change one of the vertex positions and/or colours to make sure we are actually using the new functionality and shader.
 
 ---
 
-# Summary
+## Summary
 
 In this chapter we:
 

@@ -1,6 +1,5 @@
 ---
 title: A Java implementation of the Vulkan API
-layout: default
 ---
 
 ## Introduction
