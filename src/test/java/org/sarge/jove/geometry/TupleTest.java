@@ -9,7 +9,6 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Tuple.Swizzle;
 
 public class TupleTest {
 	private Tuple tuple;
@@ -42,13 +41,6 @@ public class TupleTest {
 	@Test
 	public void dot() {
 		assertFloatEquals(1 * 1 + 2 * 2 + 3 * 3, tuple.dot(tuple));
-	}
-
-	@Test
-	public void swizzle() {
-		assertEquals(new Tuple(2, 1, 3), Swizzle.XY.apply(tuple));
-		assertEquals(new Tuple(3, 2, 1), Swizzle.XZ.apply(tuple));
-		assertEquals(new Tuple(1, 3, 2), Swizzle.YZ.apply(tuple));
 	}
 
 	@Test

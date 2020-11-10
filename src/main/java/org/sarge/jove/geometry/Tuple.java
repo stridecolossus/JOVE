@@ -2,11 +2,9 @@ package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.function.UnaryOperator;
+import java.util.Objects;
 
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.util.Converter;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -18,32 +16,6 @@ public class Tuple implements Bufferable {
 	 * Size of a tuple.
 	 */
 	public static final int SIZE = 3;
-
-	/**
-	 * A <i>swizzle</i> is used to swap tuple values.
-	 */
-	public enum Swizzle implements UnaryOperator<Tuple> {
-		NONE,
-		XY,
-		XZ,
-		YZ;
-
-		/**
-		 * Swizzle string converter.
-		 */
-		public static final Converter<Swizzle> CONVERTER = Converter.enumeration(Swizzle.class);
-
-		@Override
-		public Tuple apply(Tuple t) {
-			switch(this) {
-			case NONE:		return t;
-			case XY: 		return new Tuple(t.y, t.x, t.z);
-			case XZ: 		return new Tuple(t.z, t.y, t.x);
-			case YZ: 		return new Tuple(t.x, t.z, t.y);
-			default: 		throw new RuntimeException();
-			}
-		}
-	}
 
 	public final float x, y, z;
 
@@ -128,7 +100,7 @@ public class Tuple implements Bufferable {
 
 	@Override
 	public final int hashCode() {
-		return HashCodeBuilder.reflectionHashCode(this);
+		return Objects.hash(x, y, z);
 	}
 
 	@Override

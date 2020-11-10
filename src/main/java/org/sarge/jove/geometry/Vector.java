@@ -54,7 +54,7 @@ public final class Vector extends Tuple {
 	 * Copy constructor.
 	 * @param tuple Tuple
 	 */
-	public Vector(Tuple tuple) {		// TODO - protected?
+	public Vector(Tuple tuple) {
 		super(tuple);
 	}
 

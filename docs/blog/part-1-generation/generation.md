@@ -178,7 +178,7 @@ public enum $name implements IntegerEnumeration {
 
 Notes:
 - The tokens prefixed by the dollar character are the injected arguments.
-- The various tokens prefixed by the hash character are Velocity directives whose purpose should be fairly self-explanatory.
+- The various tokens prefixed by the hash character are Velocity directives whose purpose should be fairly self-evident.
 - We discuss the purpose of the `IntegerEnumeration` below.
 
 The line that actually generates a enumeration constant might be slightly confusing at first glance:
@@ -481,7 +481,7 @@ When we first started using the code generated enumerations we realised there we
 
 For a library with a handful of enumerations this would be a minor issue that we could work around but we needed something more practical for the large number of Vulkan enumerations!
 
-Although it is not common practice a Java enumeration **can** implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).  We leverage this technique to define a base-interface for the generated enumerations such that we can implement common helpers to handle the mapping issue.
+Although it is not common practice a Java enumeration **can** implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).  We leverage this technique to define a sort of base interface for the generated enumerations such that we can implement common helpers to handle the mapping issue.
 
 The interface itself is trivial (already seen in the Velocity template above):
 
@@ -569,45 +569,53 @@ TypeConverter CONVERTER = new TypeConverter() {
 The only fly in the ointment is that we need to apply this converter to **every** JNA structure in its constructor, hence we introduce a base-class for all Vulkan structures:
 
 ```java
-public interface VulkanLibrary {
-    abstract class VulkanStructure extends Structure {
-        protected VulkanStructure() {
-            super(MAPPER);
-        }
+abstract class VulkanStructure extends Structure {
+    protected VulkanStructure() {
+        super(MAPPER);
     }
 }
 ```
 
-The mapper is created as a member of the root Vulkan API interface:
+The mapper is also created as a member of the Vulkan API:
 
 ```java
-TypeMapper MAPPER = mapper();
+public interface VulkanLibrary {
+    TypeMapper MAPPER = mapper();
+    
+    private static TypeMapper mapper() {
+        final DefaultTypeMapper mapper = new DefaultTypeMapper();
+        mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
+        ...
+        return mapper;
+    }
+    
+    static VulkanLibrary create() {
+        return Native.load(library(), VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
+    }
 
-private static TypeMapper mapper() {
-    final DefaultTypeMapper mapper = new DefaultTypeMapper();
-    mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
-    ...
-    return mapper;
-}
-
-static VulkanLibrary create() {
-    return Native.load(library(), VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
+    abstract class VulkanStructure extends Structure {
+        ...
+    }
 }
 ```
 
 Notes:
+
 - The new structure base-class **must** be defined as a member of the API for the mapper to work correctly.
-- We use the the same mapper when instantiating the library so that the enumeration converter also works for API methods.
+
+- We use the the same mapper when instantiating the library so that the converter also applies to all API methods.
 
 ### Vulkan Booleans
 
 During development of the Java implementation of the Vulkan API we came across a curious problem that stumped us for some time when we first tackled code using boolean values, as described in [this](https://stackoverflow.com/questions/55225896/jna-maps-java-boolean-to-1-integer) stack-overflow question.
 
-In summary: a Vulkan boolean is represented as zero (for false) or one (for true) - so far so logical.  However by default JNA maps a Java boolean to zero for false but -1 for true!  WTF!
+In summary: a Vulkan boolean is represented as zero (for false) or one (for true) - so far so logical.  However by default JNA maps a Java boolean to zero for false but -1 for true!
+
+WTF!
 
 There are a lot of boolean values used across Vulkan so we needed some global solution to over-ride the default JNA mapping.
 
-We crafted the simple `VulkanBoolean` class that maps a boolean to/from a native integer represented as zero or one and implemented another JNA type converter:
+We crafted the simple [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class to map a Java boolean to/from a native integer and implemented another JNA type converter:
 
 ```java
 static final TypeConverter CONVERTER = new TypeConverter() {

@@ -112,14 +112,30 @@ public final class Matrix implements Transform, Bufferable {
 
 	/**
 	 * Constructor.
-	 * @param order		Matrix order
-	 * @param matrix 	Column-major matrix elements
-	 * @throws IllegalArgumentException if the length of the given array does not match the specified matrix order
+	 * @param matrix Column-major matrix elements
+	 * @throws IllegalArgumentException if the matrix is not square or the array length does not match the matrix order
 	 */
-	public Matrix(int order, float[] matrix) {
+	public Matrix(float[] matrix) {
+		this((int) MathsUtil.sqrt(matrix.length), Arrays.copyOf(matrix, matrix.length));
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param order			Matrix order
+	 * @param matrix		Matrix
+	 */
+	private Matrix(int order, float[] matrix) {
 		if(matrix.length != order * order) throw new IllegalArgumentException("Invalid matrix length");
 		this.order = oneOrMore(order);
-		this.matrix = Arrays.copyOf(matrix, matrix.length);
+		this.matrix = matrix;
+	}
+
+	/**
+	 * Internal constructor.
+	 * @param order Matrix order
+	 */
+	private Matrix(int order) {
+		this(order, new float[order * order]);
 	}
 
 	/**
@@ -232,11 +248,12 @@ public final class Matrix implements Transform, Bufferable {
 		if(obj == this) {
 			return true;
 		}
-
-		return
+		else {
+			return
 				(obj instanceof Matrix that) &&
 				(this.order == that.order) &&
 				MathsUtil.isEqual(this.matrix, that.matrix);
+		}
 	}
 
 	@Override
@@ -258,16 +275,14 @@ public final class Matrix implements Transform, Bufferable {
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private final float[] matrix;
-		private final int order;
+		private Matrix matrix;
 
 		/**
 		 * Constructor for a matrix of the given order.
 		 * @param order Matrix order
 		 */
 		public Builder(int order) {
-			this.order = oneOrMore(order);
-			this.matrix = new float[order * order];
+			this.matrix = new Matrix(order);
 		}
 
 		/**
@@ -282,7 +297,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * Invoking this method on a builder that has already been mutated is undefined, i.e. this method should be invoked <b>first</b> if required.
 		 */
 		public Builder identity() {
-			for(int n = 0; n < order; ++n) {
+			for(int n = 0; n < matrix.order; ++n) {
 				set(n, n, 1);
 			}
 			return this;
@@ -296,8 +311,8 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			final int index = row + order * col;
-			matrix[index] = value;
+			final int index = matrix.index(row, col);
+			matrix.matrix[index] = value;
 			return this;
 		}
 
@@ -332,7 +347,9 @@ public final class Matrix implements Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			return new Matrix(order, matrix);
+			final Matrix result = matrix;
+			matrix = null;
+			return result;
 		}
 	}
 }

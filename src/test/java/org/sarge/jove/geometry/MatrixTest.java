@@ -16,7 +16,7 @@ class MatrixTest {
 
 	@BeforeEach
 	void before() {
-		matrix = new Matrix(2, new float[]{1, 2, 3, 4});
+		matrix = new Matrix(new float[]{1, 2, 3, 4});
 	}
 
 	@Test
@@ -31,13 +31,13 @@ class MatrixTest {
 
 	@Test
 	void constructorInvalidArrayDimensions() {
-		assertThrows(IllegalArgumentException.class, () -> new Matrix(2, new float[]{1, 2, 3}));
+		assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[]{1, 2, 3}));
 	}
 
 	@Test
 	void multiply() {
 		final Matrix result = matrix.multiply(matrix);
-		final Matrix expected = new Matrix(2, new float[]{7, 10, 15, 22});
+		final Matrix expected = new Matrix(new float[]{7, 10, 15, 22});
 		assertEquals(expected, result);
 	}
 
@@ -112,12 +112,12 @@ class MatrixTest {
 
 	@Test
 	void equals() {
-		final Matrix matrix = new Matrix(2, new float[]{1, 2, 3, 4});
+		final Matrix matrix = new Matrix(new float[]{1, 2, 3, 4});
 		assertEquals(true, matrix.equals(matrix));
-		assertEquals(true, matrix.equals(new Matrix(2, new float[]{1, 2, 3, 4})));
+		assertEquals(true, matrix.equals(new Matrix(new float[]{1, 2, 3, 4})));
 		assertEquals(false, matrix.equals(null));
 		assertEquals(false, matrix.equals(Matrix.IDENTITY));
-		assertEquals(false, matrix.equals(new Matrix(2, new float[]{4, 3, 2, 1})));
+		assertEquals(false, matrix.equals(new Matrix(new float[]{4, 3, 2, 1})));
 	}
 
 	@Nested
@@ -169,19 +169,19 @@ class MatrixTest {
 		@Test
 		void set() {
 			final Matrix result = new Builder(2).set(0, 1, 2).build();
-			assertEquals(new Matrix(2, new float[]{0, 0, 2, 0}), result);
+			assertEquals(new Matrix(new float[]{0, 0, 2, 0}), result);
 		}
 
 		@Test
 		void row() {
 			final Matrix result = new Builder(3).row(1, new Vector(1, 2, 3)).build();
-			assertEquals(new Matrix(3, new float[]{0, 1, 0, 0, 2, 0, 0, 3, 0}), result);
+			assertEquals(new Matrix(new float[]{0, 1, 0, 0, 2, 0, 0, 3, 0}), result);
 		}
 
 		@Test
 		void column() {
 			final Matrix result = new Builder(3).column(1, new Vector(1, 2, 3)).build();
-			assertEquals(new Matrix(3, new float[]{0, 0, 0, 1, 2, 3, 0, 0, 0}), result);
+			assertEquals(new Matrix(new float[]{0, 0, 0, 1, 2, 3, 0, 0, 0}), result);
 		}
 	}
 }

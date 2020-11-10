@@ -32,7 +32,6 @@ public interface IntegerEnumeration {
 
 	/**
 	 * Converts an integer enumeration to/from a native <code>int</code> value.
-	 * @see <a href="http://technofovea.com/blog/archives/815">enumeration type converter example</a>
 	 */
 	TypeConverter CONVERTER = new TypeConverter() {
 		@Override

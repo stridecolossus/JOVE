@@ -1,7 +1,5 @@
 package org.sarge.jove.common;
 
-import static org.sarge.jove.util.Check.isPercentile;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -43,15 +41,15 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * Creates a colour from the given floating-point array (either a 4-element RGBA array or 3-element RGB with alpha initialised to <b>one</b>)
 	 * @param array Colour array
 	 * @return New colour
-	 * @throws IllegalArgumentException if the array is {@code null}, is not an RGB or RGBA array, or if any component is not a valid 0..1 colour value
+	 * @throws IllegalArgumentException if the array is not an RGB or RGBA array or any component is not a percentile value
 	 */
 	public static Colour of(float[] array) {
-		if((array.length < 3) || (array.length > 4)) throw new IllegalArgumentException("Expected RGBA array components");
-		final float r = isPercentile(array[0]);
-		final float g = isPercentile(array[1]);
-		final float b = isPercentile(array[2]);
-		final float a = array.length == 3 ? 1 : isPercentile(array[3]);
-		return new Colour(r, g, b, a);
+		final float alpha = switch(array.length) {
+			case 3 -> 1;
+			case 4 -> array[3];
+			default -> throw new IllegalArgumentException("Expected RGBA array components");
+		};
+		return new Colour(array[0], array[1], array[2], alpha);
 	}
 
 	/**
@@ -77,7 +75,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * @param g
 	 * @param b
 	 * @param a
-	 * @throws IllegalArgumentException if the arguments are not valid 0..1 RGBA components
+	 * @throws IllegalArgumentException if any argument is not a percentile value
 	 */
 	public Colour {
 		Check.isPercentile(red);
@@ -108,14 +106,14 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * @return Pixel value
 	 */
 	public int toPixel() {
-		final int a = scale(this.alpha);
-		final int r = scale(this.red);
-		final int g = scale(this.green);
-		final int b = scale(this.blue);
+		final int a = mask(this.alpha);
+		final int r = mask(this.red);
+		final int g = mask(this.green);
+		final int b = mask(this.blue);
 		return (a << 24) | (r << 16) | (g << 8) | b;
 	}
 
-	private static int scale(float f) {
+	private static int mask(float f) {
 		return (int) (f * MASK);
 	}
 
