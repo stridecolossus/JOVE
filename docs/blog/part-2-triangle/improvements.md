@@ -118,9 +118,9 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
     public interface Destructor {
         /**
          * Destroys this object.
-         * @param dev            Logical device
+         * @param dev           Logical device
          * @param handle        Handle
-         * @param allocator        Allocator
+         * @param allocator     Allocator
          */
         void destroy(Handle dev, Handle handle, Handle allocator);
     }
@@ -132,7 +132,7 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
     /**
      * Constructor.
      * @param handle        Handle
-     * @param dev            Parent logical device
+     * @param dev           Parent logical device
      * @param destructor    Destructor API method
      */
     protected AbstractVulkanObject(Pointer handle, LogicalDevice dev, Destructor destructor) {
