@@ -520,7 +520,9 @@ We could have implemented a proper acquire-render-present loop utilising the swa
 
 If all goes well when we run the demo we should see the following:
 
+
 ![Triangle](triangle.png)
+
 
 Viola!
 
