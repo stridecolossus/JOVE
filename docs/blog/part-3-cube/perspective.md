@@ -1,4 +1,8 @@
-# Overview
+---
+title: Perspective Projection
+---
+
+## Overview
 
 We now have almost all the Vulkan functionality required to implement the proverbial rotating textured cube.  The next step is to introduce perspective projection so that fragments that are more distant in the scene appear correctly foreshortened.
 
@@ -16,9 +20,9 @@ For this we will need:
 
 ---
 
-# Perspective Projection
+## Perspective Projection
 
-## Enter The Matrix
+### Enter The Matrix
 
 Matrices are central to 3D graphics programming - we will create a new matrix domain class to support perspective projection and the rotation animation.
 
@@ -139,7 +143,7 @@ We add the following to complete implementation of the matrix for the moment:
 - Convenience helpers and constants for 4-order matrices (which is the most commonly requirement).
 - Helpers to populate a row or column with a given tuple.
 
-## Perspective Projection
+### Perspective Projection
 
 With the matrix builder in place we can now implement the perspective projection:
 
@@ -200,7 +204,7 @@ Again we are not going into the details of how the matrix is calculated but this
 
 ---
 
-# Uniform Buffer Objects
+## Uniform Buffer Objects
 
 To pass a matrix to the shader we will next implement a _uniform buffer object_ which is a descriptor set resource (as the sampler was in the previous chapter).  Note that a uniform buffer (or UBO) is basically just a vertex buffer that has a more specialised purpose.
 
@@ -208,7 +212,7 @@ The process of updating the resources in a descriptor set was a quick-and-dirty 
 
 Descriptor sets are a particularly complex and difficult aspect of Vulkan (at least they were for this author).  We will present the solution we implemented and discuss some of the design issues and complexities after.
 
-## Resources
+### Resources
 
 We first create an abstraction for descriptor set _resources_ defined as follows:
 
@@ -309,7 +313,7 @@ public Resource<VkDescriptorBufferInfo> uniform() {
 
 The apply() method in both implementations sets the relevant pointer array field in the `VkWriteDescriptorSet` descriptor.
 
-## Descriptor Set Updates
+### Descriptor Set Updates
 
 We next add a new local class to the descriptor set that specifies a set of resource _updates_ to be applied:
 
@@ -374,7 +378,7 @@ public <T extends Structure> Update<T> update(Layout.Binding binding, Collection
 }
 ```
 
-## Applying Updates
+### Applying Updates
 
 To apply an update or a group of update we add another relatively simple builder:
 
@@ -411,7 +415,7 @@ public void apply(LogicalDevice dev) {
 
 We also add a convenience apply() method implemented using the new builder to apply an update directly.
 
-## Conclusion
+### Conclusion
 
 The above may well seem overly complicated - and it's possible that we have over-engineered our solution - but as we have already observed descriptor sets are complex beasts:
 
@@ -429,9 +433,9 @@ We have attempted to bear all the above in mind while trying to decouple the log
 
 ---
 
-# Integration #1
+## Integration #1
 
-## Creating the Uniform Buffer
+### Creating the Uniform Buffer
 
 As an intermediate step we will apply an identity matrix to the demo to test the uniform buffer before we start messing around with the perspective projection.
 
@@ -479,7 +483,7 @@ public void load(Bufferable obj, long len, long offset) {
 }
 ```
 
-## Adding the Uniform Buffer
+### Adding the Uniform Buffer
 
 Next we add a second binding to the descriptor set layout for the uniform buffer:
 
@@ -514,7 +518,7 @@ new DescriptorSet.UpdateBuilder()
 
 Note that we are using the same uniform buffer for each descriptor set - this is fine for the moment since we are not changing the matrix between frames.  In future chapters we will create a separate uniform buffer for each frame.
 
-## Applying the Matrix
+### Applying the Matrix
 
 Finally we modify the vertex shader to use the matrix which involves:
 1. Adding a new layout declaration for the uniform buffer which contains a 4-order matrix:
@@ -545,7 +549,7 @@ If all goes well we should still see the flat textured quad since the identity m
 
 ---
 
-# View Transformation
+## View Transformation
 
 We can now use the matrix class and the perspective projection to apply a view transformation to the demo.
 
@@ -611,11 +615,11 @@ new Point(+0.5f, +0.5f, -0.5f))
 
 If the transformation code is correct we should now see the quad in 3D with the right-hand edge sloping away from the viewer like an open door:
 
-PICTURE
+![Perspective Quad](perspective.png)
 
 ---
 
-# Cube Model
+## Cube Model
 
 We are now going to replace the hard-coded quad with a cube model which will require:
 
@@ -625,7 +629,7 @@ We are now going to replace the hard-coded quad with a cube model which will req
 
 3. And a more specialised implementation to construct the cube.
 
-## The Model
+### The Model
 
 Initially the model class is quite straight-forward (we will be adding more functionality as we go):
 
@@ -698,7 +702,7 @@ public Builder add(Vertex vertex) {
 }
 ```
 
-## Cube Builder
+### Cube Builder
 
 We can now build on the new model class to construct a cube:
 
@@ -804,7 +808,7 @@ private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2
 
 We could have implemented a more cunning approach using a triangle-strip wrapped around the cube which would perhaps result in more efficient storage and rendering performance, but for such a trivial model it's hardly worth the trouble.
 
-## Input Assembly Pipeline Stage
+### Input Assembly Pipeline Stage
 
 Since the cube uses triangles (as opposed to the previous default of a _strip_ of triangles) we need to implement the _input assembly pipeline stage_ builder, which is very simple:
 
@@ -840,9 +844,9 @@ Pipeline pipeline = new Pipeline.Builder(dev)
 
 ---
 
-# Integration #2
+## Integration #2
 
-## Rendering the Cube
+### Rendering the Cube
 
 We can now create a cube model:
 
@@ -874,7 +878,7 @@ Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 1, 0, 0);
 
 When we run the code it should look roughly the same as the quad demo since we will be looking at the front face of the cube.
 
-## Rotation
+### Rotation
 
 Next we will apply a rotation to the cube by implemented the following factory method on the matrix class to generate a rotation matrix about a given axis:
 
@@ -929,9 +933,9 @@ Note that the order of the multiplications is important since matrix multiplicat
 
 The above should give us this:
 
-PICTURE
+![Rotated Cube](cube.png)
 
-## Animation
+### Animation
 
 To animate the rotation we modify the render loop to generate a rotation matrix on every frame:
 
@@ -958,7 +962,7 @@ Huzzah!
 
 ---
 
-# Summary
+## Summary
 
 In this chapter we implemented perspective projection to render a 3D rotating cube.
 
@@ -974,7 +978,7 @@ To support this demo we also implemented:
 
 ---
 
-# References
+## References
 
 [^projection]: [OpenGL matrices tutorial](http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/)
 
