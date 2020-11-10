@@ -1,4 +1,8 @@
-# Overview
+---
+title: Textures and Descriptor Sets
+---
+
+## Overview
 
 In this chapter we will load and apply a _texture_ to our demo.
 
@@ -24,9 +28,9 @@ Finally we will then create a _texture sampler_ to apply this image to the geome
 
 ---
 
-# Textures
+## Textures
 
-## Image Loader
+### Image Loader
 
 In the short-term we will use the built-in AWT support for images - we are likely to want to replace this with a more flexible (and frankly better) implementation at some point in the future, e.g. to support a wider choice of image formats or to use the Android platform (where the AWT package is unavailable).
 
@@ -147,7 +151,7 @@ static ByteBuffer allocate(int len) {
 
 Transforming the image to a format suitable for Vulkan turned out to be much harder than anticipated using the built-in Java libraries - in particular adding an alpha component either requires fiddly array manipulation or re-drawing the image, neither of which are very palatable.
 
-In the end we opted for the simpler (if slower and uglier) approach of simply re-drawing the image:
+In the end we opted for the simpler (if slower and uglier) approach of simply re-drawing the image into a buffered image with an alpha channel:
 
 ```java
 private static BufferedImage alpha(BufferedImage image) {
@@ -185,14 +189,15 @@ private static void swap(byte[] bytes, int index, int src, int dest) {
 }
 ```
 
-This loader is somewhat crude and brute-force, but it does the business for the images we are interested in for the forseeable future.  We add the following parameterized unit-test to check the texture images we will be using in the next few chapters:
+This loader is somewhat crude and brute-force, but it does the business for the images we are interested in for the forseeable future.  We add the following unit-test to check the texture images we will be using in the next few chapters:
 
 ```java
 @ParameterizedTest
 @CsvSource({
     "duke.jpg, 375, 375, 4",
-    "duke.png, 375, 375, 4",
+    "duke-translucent.png, 375, 375, 4",
     "heightmap.jpg, 256, 256, 1",
+    ...
 })
 void load(String filename, int w, int h, int components) throws IOException {
     // Load image from file-system
@@ -215,9 +220,9 @@ void load(String filename, int w, int h, int components) throws IOException {
 }
 ```
 
-## Texture Images
+### Texture Images
 
-Up until now we have not needed to create an image explicitly (the swapchain images were created for us).  However texture images will need to be managed by the application, i.e. a native object with an explicit destroy() method.  Therefore we refactor the existing image class to an interface and create separate implementations for the two cases.
+Up until now we have not needed to create an image explicitly (the swapchain images were created for us).  However texture images will need to be managed by the application, i.e. a native object with an explicit `destroy()` method.  Therefore we refactor the existing image class to an interface and create separate implementations for the two cases.
 
 The image class now looks like this:
 
@@ -343,7 +348,7 @@ public Image build() {
 }
 ```
 
-## Integration #1
+### Integration #1
 
 We can now use these new components to load a texture image in the demo:
 
@@ -377,9 +382,13 @@ Notes:
 
 - The image we are using is a `TYPE_3BYTE_BGR` buffered image which requires an alpha channel to be added and results in the `VK_FORMAT_R8G8B8A8_UNORM` Vulkan format.
 
+---
+
 ## Barrier Transitions
 
-Next we implement a new domain class and builder for a pipeline barrier:
+### Barrier Class
+
+Next we implement a new domain class and builder for the pipeline barriers:
 
 ```java
 public class Barrier implements ImmediateCommand {
@@ -477,7 +486,7 @@ abstract class ImmediateCommand implements Command {
 }
 ```
 
-## Image Copying
+### Image Copying
 
 After preparing the texture the next step is to copy the image from the staging buffer:
 
@@ -509,11 +518,11 @@ public class ImageCopyCommand extends ImmediateCommand {
 }
 ```
 
-The invert() method converts this command to copy from the texture to the buffer, we won't be using this for some time but it's trivial to implement while we're at it.
+The `invert()` method converts this command to copy from the texture to the buffer, we won't be using this for some time but it's trivial to implement while we're at it.
 
 A slight irritation that only came to light during development of the copy command is that there are two slightly different Vulkan descriptors for image sub-resources.  We bodge the sub-resource builder to support both rather than creating two separate builders or some overly complex class-hierarchy.
 
-## Integration #2
+### Integration #2
 
 We can now copy the image to the texture on the hardware, transition it to a layout suitable for sampling and delete the intermediate staging buffer:
 
@@ -545,9 +554,9 @@ new Barrier.Builder()
 
 ---
 
-# Texture Sampling
+## Texture Sampling
 
-## Texture Coordinates
+### Texture Coordinates
 
 Before we progress any further we will modify the demo to include texture coordinates and render a quad rather than a triangle.
 
@@ -568,11 +577,13 @@ Notes:
 
 - We change the number of vertices in the drawing command.
 
-- The default drawing primitive is a _triangle strip_ which has alternating winding orders.  The quad consists of two triangles 1. counter-clockwise with vertices 012 and 2. clockwise 123.
+- The default drawing primitive is a _triangle strip_ which has alternating winding orders.  The quad consists of two triangles
+    1. counter-clockwise with vertices 012 and 
+    2. clockwise 123.
 
 This should result in something like the following:
 
-PICTURE
+[Textured Quad](quad.png)
 
 Next we implement the texture coordinate domain class that we glossed over earlier:
 
@@ -636,11 +647,11 @@ and modify the vertex layout accordingly:
 Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
 ```
 
-## Shader Modifications
+### Shader Modifications
 
 We modify the vertex shader by replacing the colour with a texture coordinate which is passed through to the fragment shader:
 
-```C
+```glsl
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -657,7 +668,7 @@ void main() {
 
 Finally we modify the fragment shader to fake a colour based on the texture coordinates:
 
-```C
+```glsl
 #version 450 core
 
 layout(location = 0) in vec2 texCoord;
@@ -671,11 +682,11 @@ void main(void) {
 
 This should render the quad with black in the top-left corner (corresponding to the origin texture coordinate) and yellow in the bottom-right (full red and green):
 
-PICTURE
+[Textured Quad](faked-quad.png)
 
 We can now be fairly confident that the texture coordinates are being handled correctly before we apply the texture.
 
-## Texture Sampler
+### Texture Sampler
 
 With the image uploaded to the hardware we next implement the _texture sampler_ class:
 
@@ -718,7 +729,7 @@ This is relatively simple domain object used to configure the various sampling p
 
 ---
 
-# Descriptor Sets
+## Descriptor Sets
 
 The final piece of functionality we need to implement are _descriptor sets_.
 
@@ -728,7 +739,7 @@ The final piece of functionality we need to implement are _descriptor sets_.
 
 - A _descriptor set layout_ specifies the resource bindings for a descriptor set.
 
-## Domain Class
+### Domain Class
 
 The first-cut class outline is as follows:
 
@@ -784,7 +795,7 @@ public Command bind(Pipeline.Layout layout) {
 }
 ```
 
-## Descriptor Set Layout
+### Descriptor Set Layout
 
 We tackle the layout first:
 
@@ -843,7 +854,7 @@ public static Layout create(LogicalDevice dev, List<Binding> bindings) {
 }
 ```
 
-## Descriptor Set Pool
+### Descriptor Set Pool
 
 Next we implement the descriptor set pool:
 
@@ -992,7 +1003,7 @@ Finally we invoke the API to allocate the pool and create the domain object:
 }
 ```
 
-## Updating Descriptor Sets
+### Updating Descriptor Sets
 
 The _resources_ in a descriptor set needs to be initialised before they are bound to the pipeline.
 
@@ -1020,7 +1031,7 @@ public void sampler(int binding, Sampler sampler, View view) {
 
 This will be replaced with a more flexible implementation in the next chapter when we introduce other resources.
 
-## Pipeline Layout
+### Pipeline Layout
 
 In the previous demo we created a bare-bones pipeline layout implementation which we now need to flesh out to support descriptor sets.
 
@@ -1052,7 +1063,7 @@ info.pSetLayouts = Handle.toPointerArray(sets);
 
 ---
 
-# Integration #3
+## Integration #3
 
 We now have all the components we need to apply the texture to our demo.
 
@@ -1103,12 +1114,14 @@ for(DescriptorSet set : descriptors) {
 Finally we bind the descriptor set in the rendering sequence (before the draw command).
 
 The only other change we need to make is to actually sample the texture in the fragment shader which involves:
+
 1. Adding a layout declaration for a `uniform sampler2D` with the binding index we specified in the descriptor set.
+
 2. Invoking the built-in `texture` function to sample the texture with the coordinate passed from the vertex shader.
 
 The fragment shader should look like this:
 
-```C
+```glsl
 #version 450 core
 
 layout(binding = 0) uniform sampler2D texSampler;
@@ -1124,7 +1137,7 @@ void main(void) {
 
 If all goes well we should finally see the textured quad:
 
-PICTURE
+[Textured Quad](textured-quad.png)
 
 There are a lot of steps in this chapter and therefore plenty that can go wrong.  Vulkan will generally throw a hissy fit if we attempt any invalid operations, e.g. forgetting to provide the target layout when performing an image transition.  However it is quite easy to specify a 'correct' pipeline and still end up with a black rectangle!  With so much going on behind the scenes this can be very difficult to diagnose - here are some possible failure cases:
 
@@ -1144,7 +1157,7 @@ There are a lot of steps in this chapter and therefore plenty that can go wrong.
 
 ---
 
-# Summary
+## Summary
 
 In this chapter we:
 
