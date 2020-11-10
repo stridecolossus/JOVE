@@ -1,8 +1,8 @@
 # Overview
 
-The _graphics pipeline_ specifies the various _stages_ executed by the hardware to render a graphics fragment.
+The _graphics pipeline_ specifies the various _stages_ executed by the hardware to render a fragment.
 
-Pipeline stages are either a configurable _fixed function_ or a programmable stage implemented by a _shader_ module.
+A pipeline stage is either a configurable _fixed function_ or a programmable stage implemented by a _shader_ module.
 
 Configuring the pipeline requires a large amount of information for even the simplest case (though much of this is often default information or empty structures).
 
@@ -52,7 +52,9 @@ We will gloss over construction of the layout until a future chapter.
 Configuration of the pipeline is probably the largest and most complex aspect of creating a Vulkan application (in terms of the amount of supporting functionality that is required).
 
 Our goals for configuration of the pipeline are:
+
 1. Apply sensible defaults for the optional pipeline stages to reduce the amount of boiler-plate for a given application.
+
 2. Implement a fluid interface for pipeline construction.
 
 Obviously we start with a builder:
@@ -147,15 +149,15 @@ For the triangle demo the only mandatory information is the viewport pipeline st
 
 ## Nested Builders
 
-If the number and complexity of the nested builders was relatively small we would implement them as local classes of the pipeline (as we did for the render pass in the previous chapter).
+If the number and complexity of the nested builders was relatively small we would implement them as _local classes_ of the pipeline (as we did for the render pass in the previous chapter).
 This is clearly not viable for the pipeline - the parent class would become unwieldy, error-prone and difficult to maintain or test.
 
 Therefore we need to factor out the nested builders into their own source files whilst maintaining the fluid interface.
-After some research we failed to find a decent strategy or pattern for this approach (though we did find some absolutely horrible solutions using reflection and other shenanigans).
+After some research we failed to find a decent strategy or pattern for this approach (though we did find some absolutely hideous solutions using reflection and other shenanigans).
 
-Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its build() method) and a protected result() method that constructs the resultant object.  We wrap this up in an abstract base-class:
+Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its `build()` method) and a protected `result()` method that constructs the resultant object.  We wrap this up in an abstract base-class:
 
-```
+```java
 abstract class AbstractPipelineBuilder<T> {
     private Pipeline.Builder parent;
 
@@ -182,7 +184,7 @@ abstract class AbstractPipelineBuilder<T> {
 }
 ```
 
-For example here is the re-factored viewport stage builder (which we will complete below):
+For example here is the viewport stage builder (which we will complete below):
 
 ```java
 public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
@@ -197,7 +199,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 }
 ```
 
-Finally the pipeline builder initialises the parent() of each nested builder in its constructor.
+Finally the pipeline builder initialises the `parent()` of each nested builder in its constructor.
 
 This is a slightly shonky implementation but it is relatively simple and achieves our goal of a fluid nested builder. 
 The resultant classes are relatively self-contained and are therefore more manageable and testable (and the nastier details are at least package-private).
@@ -255,9 +257,7 @@ check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelin
 return new Pipeline(pipelines[0], dev);
 ```
 
----
-
-# Viewport Pipeline Stage
+## Viewport Pipeline Stage
 
 Rather than clog this chapter up by covering the design and development of every nested builder we introduce them as they are used.
 
@@ -381,8 +381,6 @@ public static Shader loader(LogicalDevice dev, InputStream in) throws IOExceptio
 }
 ```
 
-This is a fairly crude approach that we will replace with a more elegant and flexible solution in subsequent chapters.
-
 ## Builder
 
 The shader stage pipeline builder creates an **array** of `VkPipelineShaderStageCreateInfo` descriptors:
@@ -487,9 +485,9 @@ We can now load the shaders and configure the rendering pipeline for the triangl
 
 ## Shaders
 
-The vertex shader hard-codes the triangle vertices and passes the colour for each vertex through to the fragment shader:
+The vertex shader hard-codes the triangle vertices and passes a colour for each vertex through to the fragment shader:
 
-```C
+```glsl
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -515,7 +513,7 @@ void main() {
 
 which is simply passed through to the next stage by the fragment shader:
 
-```C
+```glsl
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -528,7 +526,7 @@ void main() {
 }
 ```
 
-We will also need to compile the shaders to SPIV using the GLSLC utility application provided as part of the JDK:
+We will also need to compile the shaders to SPIV using the `GLSLC` utility application provided as part of the JDK:
 
 ```
 cd JOVE/src/test/resources/demo/triangle

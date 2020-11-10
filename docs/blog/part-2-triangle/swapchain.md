@@ -19,8 +19,12 @@ We will also implement the _render pass_ that specifies how the attachments are 
 ## Rendering Surface
 
 Before we can actually start on the swapchain we will need:
+
 1. A rendering surface with accessors for capabilities and image formats supported by the graphics hardware.
+
 2. New domain classes for the swapchain images and views.
+
+> Note that some of the code in this chapter uses some helpers and base-classes that are outlined later in [this chapter](/JOVE/blog/part-2-triangle/improvements).
 
 We start with a new domain class for the _rendering surface_ that wraps the handle we previously retrieved from GLFW:
 
