@@ -1,5 +1,5 @@
 ---
-title: Interlude: Some Improvements
+title: Interlude - Some Improvements
 ---
 
 # Overview
