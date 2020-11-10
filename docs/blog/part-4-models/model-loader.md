@@ -1310,6 +1310,6 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
 
 We are also viewing the model from above so we add a temporary rotation so we see it from the side and finally we get the following:
 
-![image](chalet.png)
+![Chalet Model](chalet.png)
 
 Ta-da!

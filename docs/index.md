@@ -46,7 +46,7 @@ what is Vulkan
     - [Devices](blog/part-2-triangle/devices)
     - [Swapchain and Render Pass](blog/part-2-triangle/swapchain)
     - [Pipelines](blog/part-2-triangle/pipeline)
-    - [Commands and Rendering](blog/part-2-triangle/commands)
+    - [Rendering Commands](blog/part-2-triangle/commands)
     - [Improvements](blog/part-2-triangle/improvements)
 
 

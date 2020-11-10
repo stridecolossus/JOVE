@@ -1,3 +1,7 @@
+---
+title: The Graphics Pipeline
+---
+
 # Overview
 
 The _graphics pipeline_ specifies the various _stages_ executed by the hardware to render a fragment.

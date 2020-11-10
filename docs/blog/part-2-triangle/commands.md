@@ -1,8 +1,12 @@
+---
+title: Rendering Commands
+---
+
 # Overview
 
-We are finally on the last lap for the goal of this phase of development - rendering a simple triangle.
+We are on the last lap for the goal of this phase of development - rendering a simple triangle.
 
-The final components we need to complete the demo is the command sequence for drawing the triangle and a simple render loop that acquires and presents a frame.
+The final components we need to complete the demo are the command sequence for drawing the triangle and a simple render loop that acquires and presents a frame.
 
 ---
 
@@ -64,7 +68,7 @@ public interface Command {
 }
 ```
 
-The command interface abstracts invocation of a Vulkan API command in a similar fashion to the destructor interface we implemented for native handles.
+The command interface abstracts the signature of a `VkCmdXXX` command whose arguments are always comprised of the API and a handle to the command buffer.
 
 ## Command Pool
 
@@ -215,7 +219,7 @@ class Buffer implements NativeObject {
 
 The _state_ is used to track whether the buffer has been recorded.
 
-The begin() method is used to start recording:
+The `begin()` method is used to start recording:
 
 ```java
 /**
@@ -254,7 +258,7 @@ public Buffer add(Command cmd) {
 }
 ```
 
-Finally the end() method finishes recording:
+Finally the `end()` method finishes recording:
 
 ```java
 /**
@@ -313,11 +317,9 @@ public Command begin(FrameBuffer buffer) {
 }
 ```
 
-This command also initialises the clear values for the frame buffer attachments - we have obviously hard-coded a grey colour for the single colour attachment.  In a future chapter we will replace this temporary code with a proper implementation for both colour and depth attachments.
+This command also initialises the clear values for the frame buffer attachments - we have hard-coded a grey colour for the single colour attachment.  In a future chapter we will replace this temporary code with a proper implementation for both colour and depth attachments.
 
-Note that the `VkClearValue` and `VkClearColorValue` objects are actually **unions** and not structures - the `setType()` JNA method is used to 'select' the union member.  This is the only instance in the whole Vulkan API (as far as we can tell) where unions are used!
-
-As it turns out a structure _will_ just about work, we only have one attachment for this demo and presumably the native library ignores the 'extra' fields of the structure.  However this caused us a lot of headaches when we came to adding a second attachment for the depth buffer and suddenly had memory errors when configuring the pipeline.
+> We explain the purpose of the various `setType()` calls when we address depth buffers in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
 
 We introduce a simple RGBA colour domain object for the clear colour:
 
@@ -354,7 +356,7 @@ public record Colour(float red, float green, float blue, float alpha) {
 }
 ```
 
-Finally we add the following constant to end the render pass:
+Finally we add the following command to end a render pass:
 
 ```java
 /**
@@ -385,9 +387,9 @@ For the moment we hard-code the drawing command in the demo:
 Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
 ```
 
-This command specified three vertices, a single instance, both starting at index zero.
+This command specified three vertices in a single instance, both starting at index zero.
 
-Later we will factor this out to a factory when we address vertex buffers.
+Later we will factor this out to a factory when we address vertex buffers and models.
 
 ---
 
@@ -518,11 +520,11 @@ We could have implemented a proper acquire-render-present loop utilising the swa
 
 If all goes well when we run the demo we should see the following:
 
-PICTURE
+![Triangle](triangle.png)
 
 Viola!
 
-There are a few gotchas that could result in looking at a blank screen:
+There are a few gotchas that could result in staring at a blank screen:
 
 - Ensure that a diagnostics handler has been attached to the Vulkan instance to check for obvious mistakes.
 
