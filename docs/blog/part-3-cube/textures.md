@@ -583,7 +583,7 @@ Notes:
 
 This should result in something like the following:
 
-[Textured Quad](quad.png)
+![Textured Quad](quad.png)
 
 Next we implement the texture coordinate domain class that we glossed over earlier:
 
@@ -682,7 +682,7 @@ void main(void) {
 
 This should render the quad with black in the top-left corner (corresponding to the origin texture coordinate) and yellow in the bottom-right (full red and green):
 
-[Textured Quad](faked-quad.png)
+![Textured Quad](faked-quad.png)
 
 We can now be fairly confident that the texture coordinates are being handled correctly before we apply the texture.
 
@@ -1137,7 +1137,7 @@ void main(void) {
 
 If all goes well we should finally see the textured quad:
 
-[Textured Quad](textured-quad.png)
+![Textured Quad](textured-quad.png)
 
 There are a lot of steps in this chapter and therefore plenty that can go wrong.  Vulkan will generally throw a hissy fit if we attempt any invalid operations, e.g. forgetting to provide the target layout when performing an image transition.  However it is quite easy to specify a 'correct' pipeline and still end up with a black rectangle!  With so much going on behind the scenes this can be very difficult to diagnose - here are some possible failure cases:
 
