@@ -1007,7 +1007,7 @@ We need to make this more general so we can support an arbitrary number of colou
 
 This involves the following:
 1. factoring out the code that actually populates a clear value.
-2. make the clear value a property of the attachment view (rather than being hard-coded in the render command).
+2. make the clear value a property of the attachment view.
 3. re-factor the render command accordingly.
 
 #### Clear Values
@@ -1088,9 +1088,7 @@ public static ClearValue depth(float depth) {
 }
 ```
 
-    > Introducing this new functionality should have been easy but we had a lot of head-scratching when we first tested this code with JNA throwing the infamous "Invalid memory access" error.  Eventually we realised that we are actually dealing with **unions** and not structures here!  Presumably our original code only worked because we were dealing with a single attachment and Vulkan simply ignored the 'extra' data of the structures.  
-
-    We manually modified the relevant Vulkan types to unions and used the JNA setType() method to 'select' the relevant property.  As far as we can tell this is the **only** instance in the whole Vulkan API that uses a union!
+> Introducing this new functionality should have been easy but we had a lot of head-scratching when we first tested this code with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that we are actually dealing with **unions** and not structures here!  Presumably our original code only worked because we were dealing with a single attachment and Vulkan simply ignored the 'extra' data of the structures.  We manually modified the relevant Vulkan types to unions and used the JNA `setType()` method to 'select' the relevant property.  As far as we can tell this is the **only** instance in the whole Vulkan API that uses a union!
 
 Finally we add default values for both cases and a static helper that can be used to determine the default clear value for a given attachment:
 
