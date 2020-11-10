@@ -22,7 +22,7 @@ So let's get cracking.
 
 ## Instance API
 
-We start with an empty interface for the Vulkan API instantiated by JNA using a static factory method:
+We start with an empty interface for the Vulkan API instantiated by JNA via a static factory method:
 
 ```java
 interface VulkanLibrary extends Library {
@@ -62,11 +62,10 @@ interface VulkanLibraryInstance {
 
 This interface maps to the following methods defined in the `vulkan_core.h` header:
 
-```C
+```java
 typedef VkResult (VKAPI_PTR *PFN_vkCreateInstance)(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
 
 typedef void (VKAPI_PTR *PFN_vkDestroyInstance)(VkInstance instance, const VkAllocationCallbacks* pAllocator);
-
 ```
 
 Eventually there will be a large number of API methods (over a hundred) so we group logically related methods into their own interface and aggregate into the overall library:
@@ -742,9 +741,9 @@ With the framework in place we add the following helper functionality to the mes
 
 - A convenience `init()` method that initialises a handler to a common configuration.
 
-- The `AbstractMessageCallback` which is a skeleton implementation for a message callback that handles the mapping of the severity and type fields.
+- The `AbstractMessageCallback` which is a skeleton callback implementation that handles the mapping of the severity and type fields.
 
-- A concrete implementation created by the `writer()` factory method to formats and output a message to a writer.
+- A concrete implementation created by the `writer()` factory method to format and output a message to a writer.
 
 - And finally the `CONSOLE` implementation that dumps a message to the console (which we use as the default callback in the builder).
 
