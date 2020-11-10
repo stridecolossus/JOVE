@@ -2,15 +2,15 @@
 title: Models and the Depth Buffer
 ---
 
-# Overview
+## Overview
 
 In this chapter we will load and render an OBJ model which will also require us to implement a depth buffer.
 
 ---
 
-# OBJ Model Loader
+## OBJ Model Loader
 
-## File Format
+### File Format
 
 An OBJ model is a text-based data format consisting of a series of *commands* to define a static model.
 Each line starts with a *command token* followed by a number of space-delimited arguments.
@@ -55,9 +55,9 @@ We will implement the minimal functionality outlined above therefore we apply th
 
 - The OBJ format supports material descriptors that specify texture properties (amongst others) - for the moment we will hard-code the associated texture image.
 
-## Model Loader
+### Model Loader
 
-### File Parser
+#### File Parser
 
 We start with a loader for an OBJ model.
 
@@ -101,7 +101,7 @@ private boolean isComment(String line) {
 
 and we add a setter that allows the user to specify the comment token(s).
 
-### Command Parsers
+#### Command Parsers
 
 The `parse()` method first separates the command token from the arguments and then delegates to a `Parser` for that command:
 
@@ -162,7 +162,7 @@ The `add` method is public and can be used to register or over-ride a command pa
 
 There are two built-in command parser implementations detailed below.
 
-### OBJ Transient Model
+#### Transient Model
 
 The `ObjectModel` is a transient working representation of the OBJ model (vertices, normals, texture coordinates) which is later transformed into a JOVE model:
 
@@ -190,7 +190,7 @@ Note that the transient model contains an instance of a JOVE model builder which
 
 The transient model itself is created by the protected `model` method which can be over-ridden to alter or extend the implementation.
 
-### Error Handling
+#### Error Handling
 
 The OBJ format is quite vague and models are notoriously flakey so our loader needs to be robust but not overly stringent.
 
@@ -234,7 +234,7 @@ private void parse(String line, ObjectModel model) {
 }
 ```
 
-## Vertex Components
+### Vertex Components
 
 Command parsers for the vertex components (position, normal, texture coordinate) are created via a factory method:
 
@@ -282,9 +282,9 @@ Parser.of(Point.SIZE, Point::new, ObjectModel::vertex);
 
 We add array constructors to the relevant domain classes.
 
-## Faces
+### Faces
 
-### Face Parser
+#### Face Parser
 
 The `FACE` parser iterates over the vertices of a face and adds a `Vertex` instance to the builder:
 
@@ -318,7 +318,7 @@ for(String face : args) {
 The `lookup` helper parses an index and retrieves the specified vertex component from the transient model.
 Note that face indices can also be negative specifying a reverse index from the end of a list.
 
-### Model Initialisation
+#### Model Initialisation
 
 One of the issues we face (pun intended) when parsing an OBJ model is that we do not know the vertex layout or drawing primitive up-front.
 We could mandate that the developer is responsible for configuring the model before loading but this feels overly restrictive - 
@@ -371,13 +371,13 @@ private void init(int size) {
 
 ---
 
-# Indexed Models
+## Indexed Models
 
 We know that the OBJ model that we will be using in our demo contains a large number of duplicate vertices which we have ignored until now.
 The obvious next step is remove the duplicates and introduce an *index buffer* to the model building process.
 This will reduce the total amount of data in the vertex buffer (at the expense of a second buffer for the index).
 
-## Vertex De-Duplication
+### Vertex De-Duplication
 
 We implement the following model builder sub-class that maintains a map of the vertex indices so we can test for duplicates:
 
@@ -487,7 +487,7 @@ All this work reduces the size of interleaved model from 30Mb to roughly 11Mb (5
 
 Result.
 
-## Model Persistence
+### Model Persistence
 
 When we debug and test the new loader we find that it is now quite slow (despite the fact we are developing on a gaming machine with a decent processor and fast SSD).
 
@@ -499,7 +499,7 @@ One obvious observation is that much of the loading process is repeated *every* 
 
 We really only need to do the above *once* therefore we implement a persistence mechanism for a model.
 
-### Writing a Model
+#### Writing a Model
 
 We create the new `ModelLoader` class that will be responsible for reading and writing a buffered model:
 
@@ -567,7 +567,7 @@ private static void write(ByteBuffer bb, DataOutputStream out) throws IOExceptio
 }
 ```
 
-### Reading a Model
+#### Reading a Model
 
 We obviously do not want to recreate an instance of the existing model implementation when we load a persisted model so we create a new *buffered model* with the vertex and index buffers as members.  We convert the existing model class to an interface and add a skeleton implementation shared by both:
 
@@ -668,7 +668,7 @@ private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
 }
 ```
 
-### Conclusion
+#### Conclusion
 
 There is still a lot of conversions of byte buffers to/from arrays but our model can now be loaded in a matter of milliseconds - Nice!
 
@@ -679,7 +679,7 @@ We can now move onto integrating the OBJ model into the demo and see what it loo
 
 ---
 
-# Loader Support
+## Loader Support
 
 During the creation of the OBJ and buffered model loaders we took a detour to refactor the various loaders we had implemented so far (including images and shaders).
 
@@ -801,9 +801,9 @@ This has the benefit of separating the mapping of filenames to resources (handle
 
 ---
 
-# Depth Buffers
+## Depth Buffers
 
-## Integration #1
+### Integration #1
 
 After cloning the code from the previous demo we first load the buffered model and transfer the vertex and index buffers to the hardware:
 
@@ -875,9 +875,9 @@ We strip the code that applied the rotation and see what happens - and what we g
 
 There are several issues here but the most pressing is the fact that we now need a *depth buffer* so that fragments are not rendered arbitrarily overlapping each other.
 
-## Adding a Depth Buffer
+### Adding a Depth Buffer
 
-### Depth Buffer Attachment
+#### Depth Buffer Attachment
 
 We first add a second attachment to the render pass for the depth buffer:
 
@@ -924,7 +924,7 @@ private VkAttachmentReference reference(int index, VkImageLayout layout) {
 }
 ```
 
-### Depth-Stencil Pipeline Stage
+#### Depth-Stencil Pipeline Stage
 
 Up until now we have not needed to specify the optional depth-stencil pipeline stage and the relevant field in the create descriptor was set to `null`.
 
@@ -994,7 +994,7 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
     .build();
 ```
 
-### Creating the Depth Buffer
+#### Creating the Depth Buffer
 
 Unlike the swapchain images we need to create the depth buffer image ourselves:
 
@@ -1027,7 +1027,7 @@ Notes:
 The depth buffer view is then added to each frame buffer object we create.
 The same depth buffer can safely be used in each frame because only a single sub-pass will be running at any one time in our bodged render loop.
 
-## Clearing the Attachments
+### Clearing the Attachments
 
 The final step for the depth buffer is to specify how it is cleared before each render pass.
 
@@ -1039,7 +1039,7 @@ This involves the following:
 2. make the clear value a property of the attachment view (rather than being hard-coded in the render command).
 3. re-factor the render command accordingly.
 
-### Clear Value
+#### Clear Values
 
 Firstly we implement a new domain class to represent a clear value:
 
@@ -1146,7 +1146,7 @@ public static ClearValue of(Set<VkImageAspectFlag> aspects) {
 }
 ```
 
-### Attachment Clear Value
+#### Attachment Clear Value
 
 The clear value for a given attachment is now a property of the image view:
 
@@ -1206,7 +1206,7 @@ final SwapChain chain = new SwapChain.Builder(surface)
 
 For our demo we leave the depth buffer to use the default clear value.
 
-### Populating the Clear Values
+#### Populating the Clear Values
 
 Finally we refactor the command factory for the render pass to use the above and remove the temporary code we used to clear the colour attachment:
 
@@ -1230,13 +1230,13 @@ public Command begin(FrameBuffer buffer, Rectangle extent) {
 }
 ```
 
-## Integration #2
+### Integration #2
 
 When we run our demo after this painful refactoring exercise things look somewhat better, the geometry is no longer overlapping thanks to the depth buffer.
 
 However we still need to solve the other problems.
 
-### Inverting Texture Coordinates
+#### Inverting Texture Coordinates
 
 For the problem of the upside-down texture coordinates we *could* simply flip the texture image or fiddle the texture coordinates in the shader - but neither of these solves the actual root problem (and inverting the image would make loading slower).  
 
@@ -1267,7 +1267,7 @@ public static class ObjectModel {
 }
 ```
 
-### Rasterizer Pipeline Stage
+#### Rasterizer Pipeline Stage
 
 The inside-out problem is due to the fact that the triangles in the OBJ model are opposite to the default winding order.
 
@@ -1306,10 +1306,16 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
     ...
 ```
 
-### Conclusion
+#### Conclusion
 
 We are also viewing the model from above so we add a temporary rotation so we see it from the side and finally we get the following:
 
 ![Chalet Model](chalet.png)
 
 Ta-da!
+
+---
+
+## Summary
+
+In this chapter we implemented a simple OBJ model loader and a depth buffer attachment to correctly render the model.

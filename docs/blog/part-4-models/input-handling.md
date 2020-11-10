@@ -1,4 +1,8 @@
-# Overview
+---
+title: Input Handling
+---
+
+## Overview
 
 In this chapter we take a break from Vulkan and add support for a camera and input event processing based on the event handling functionality provided by GLFW.
 
@@ -6,9 +10,9 @@ There are several ways we could have gone about implementing event handling, we 
 
 ---
 
-# Input Events
+## Input Events
 
-## Requirements
+### Requirements
 
 There are a number of differing types of events provided by GLFW that we will support:
 
@@ -50,7 +54,7 @@ Based on these observations we enumerate the following requirements for our desi
 
 TODO - orientation, touch-screen devices
 
-## Design
+### Design
 
 After a bit of analysis we determine that the various types of event can be generalised to the following:
 
@@ -98,11 +102,11 @@ bindings.bind(new Button("Down"), move(-1));
 
 This design satisfies our requirements and successfully abstracts over the GLFW framework meaning we have a suite of components that can be more easily maintained and tested.
 
-## Input Events
+### Input Events
 
 As it turns out the simplest type of event is probably an axis device such as the mouse wheel - we will implement an end-to-end solution for event handling using the mouse wheel as a test case.
 
-### Event Type
+#### Event Type
 
 As a starting point we define a general _input event_ and its associated _type_ as follows:
 
@@ -182,7 +186,7 @@ public final class Axis implements InputEvent.Type {
 }
 ```
 
-### Devices
+#### Devices
 
 We define a _device_ that is comprised of a set of event sources (or generators):
 
@@ -274,11 +278,11 @@ private class Wheel implements Source<Axis> {
 
 Eventually the mouse device will be extended to support mouse button and movement events.
 
-### Unit-Test
+#### Unit-Test
 
 
 
-## Action Bindings
+### Action Bindings
 
 
 
@@ -307,25 +311,25 @@ public Device mouse() {
 
 
 
-## ???
+### ???
 
 buttons
 keyboard device
 position and mouse move
 mouse buttons
 
-## Key Table
+### Key Table
 
 requirements for key table
 mapping file to GLFW macros
 button cache
 intregration into keyboard device
 
-## Action Bindings
+### Action Bindings
 
 To make all this work worthwhile the final step is to implement 
 
-## Conclusion
+### Conclusion
 
 This design is
 
@@ -337,7 +341,7 @@ This design is
 
 ---
 
-# Camera Controller
+## Camera Controller
 
 The second task for this chapter is to wrap up the view transform matrix into a camera class.
 
