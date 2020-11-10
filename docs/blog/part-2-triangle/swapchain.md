@@ -1,3 +1,7 @@
+---
+title: The Swapchain and Render Pass
+---
+
 # Overview
 
 In this chapter we will implement the various components required for rendering to the Vulkan surface.
@@ -8,16 +12,15 @@ A _frame buffer_ is comprised of a number of _attachments_ that are used during 
 
 We will also implement the _render pass_ that specifies how the attachments are managed during the rendering process.
 
+---
 
 # The Swapchain
 
-## Overview
-
-Before we can actually start on the swapchain we will need new domain objects for the following:
-1. A rendering surface with accessors for the supported capabilities and image formats.
-2. New domain classes for the swapchain images and views.
-
 ## Rendering Surface
+
+Before we can actually start on the swapchain we will need:
+1. A rendering surface with accessors for capabilities and image formats supported by the graphics hardware.
+2. New domain classes for the swapchain images and views.
 
 We start with a new domain class for the _rendering surface_ that wraps the handle we previously retrieved from GLFW:
 
@@ -193,8 +196,6 @@ public static class Builder {
     }
 }
 ```
-
-Note that this builder directly populates an instance of the descriptor rather than replicating the fields or introducing an intermediate POJO.
 
 The capabilities and presentation formats supported by the surface are used to validate the setters in the builder, for example:
 
@@ -416,6 +417,7 @@ final SwapChain chain = new SwapChain.Builder(surface)
 
 In this example the image format is: `VK_FORMAT_B8G8R8A8_UNORM`
 
+---
 
 # The Render Pass
 
@@ -515,7 +517,7 @@ public class AttachmentBuilder {
 }
 ```
 
-The populate() method fills the descriptor for an attachment that is allocated by the parent builder (shown below).
+The idea is that the parent builder will allocate the descriptor that is initialised by the `populate()` method.
 
 ## Sub-Passes
 
@@ -671,6 +673,7 @@ final RenderPass pass = new RenderPass.Builder(dev)
 
 The colour attachment is cleared before rendering and transitioned to a layout ready for presentation to the surface.
 
+---
 
 # Frame Buffers
 
@@ -744,4 +747,10 @@ final var buffers = chain
 ```
 
 This class is little more than a handle and a list of views - we will probably wrap this as a member of the swapchain class at some point since it seems unlikely we will need to add any specific functionality and the class is already coupled to the swapchain views.
+
+---
+
+# Summary
+
+In this chapter we implemented the swapchain, render pass and frame-buffer domain objects.
 
