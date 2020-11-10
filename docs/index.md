@@ -38,25 +38,25 @@ what is Vulkan
 ## Contents
 
 - Part 1 - Code Generation
-    - [Code Generation](JOVE/blog/part-1-generation/generation)
+    - [Code Generation](blog/part-1-generation/generation)
 
 
 - Part 2 - Rendering a Triangle
-    - [Vulkan Instance](JOVE/blog/part-2-triangle/instance)
-    - [Devices](JOVE/blog/part-2-triangle/devices)
-    - [Swapchain and Render Pass](JOVE/blog/part-2-triangle/swapchain)
-    - [Pipelines](JOVE/blog/part-2-triangle/pipeline)
-    - [Commands and Rendering](JOVE/blog/part-2-triangle/commands)
-    - [Improvements](JOVE/blog/part-2-triangle/improvements)
+    - [Vulkan Instance](blog/part-2-triangle/instance)
+    - [Devices](blog/part-2-triangle/devices)
+    - [Swapchain and Render Pass](blog/part-2-triangle/swapchain)
+    - [Pipelines](blog/part-2-triangle/pipeline)
+    - [Commands and Rendering](blog/part-2-triangle/commands)
+    - [Improvements](blog/part-2-triangle/improvements)
 
 
 - Part 3 - Textured Cube
-    - [Vertex Buffers](JOVE/blog/part-3-cube/vertex-buffers)
-    - [Textures and Descriptor Sets](JOVE/blog/part-3-cube/textures)
-    - [Perspective Projection](JOVE/blog/part-3-cube/perspective)
+    - [Vertex Buffers](blog/part-3-cube/vertex-buffers)
+    - [Textures and Descriptor Sets](blog/part-3-cube/textures)
+    - [Perspective Projection](blog/part-3-cube/perspective)
    
    
 - Part 4 - Models
-    - [Models and the Depth Buffer](JOVE/blog/part-4-models/model-loader)
-    - [Input Handling](JOVE/blog/part-4-models/input-handling)
+    - [Models and the Depth Buffer](blog/part-4-models/model-loader)
+    - [Input Handling](blog/part-4-models/input-handling)
     
