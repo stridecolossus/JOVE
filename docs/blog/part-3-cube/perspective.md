@@ -26,9 +26,9 @@ For this we will need:
 
 Matrices are central to 3D graphics programming - we will create a new matrix domain class to support perspective projection and the rotation animation.
 
-We could of course easily use a third-party maths library but the point of this project is to learn the basics so we craft our own implementation from scratch.  Note that we will not attempt an explanation of matrix mathematics here as there many excellent tutorials that we have used to implement our own solution (TODO links to references).  
+> We could of course easily use a third-party maths library but the point of this project is to learn the basics so we craft our own implementation from scratch.  Note that we will not attempt an explanation of matrix mathematics here as there many excellent tutorials that we have used to implement our own solution (TODO links to references).  
 
-We determine the following requirements for our matrix class:
+We enumerate the following requirements for our matrix class:
 - immutable - this is our default approach for all domain objects where appropriate and feasible.
 - column-major - following the Vulkan standard.
 - arbitrary matrix _order_ (the size of the matrix).
@@ -92,7 +92,7 @@ public final class Matrix implements Bufferable {
 
 The matrix is represented as a one-dimensional array in column-major order.  We could have implemented a 2D array but Java multi-dimensional arrays are objects in their own right which seems overkill for such a small amount of data.  Alternatively each element could be a separate class member but that would make the code verbose and error-prone (the supposed benefits are questionable for a JVM based implementation).
 
-The matrix is `Bufferable` so we can upload it to an NIO buffer, unfortunately direct buffers do not support all the array operations so we have to implement a loop:
+The matrix is `Bufferable` so we can copy it to an NIO buffer:
 
 ```java
 @Override
@@ -102,6 +102,8 @@ public void buffer(ByteBuffer buffer) {
     }
 }
 ```
+
+Ideally we would implement this by converting the buffer using `toFloatBuffer()` and using a bulk-copy operation but the above is simpler.
 
 We provide an array constructor but in general it will be considerably easier to create a matrix using a builder:
 
@@ -113,6 +115,13 @@ public static class Builder {
     public Builder(int order) {
         this.order = oneOrMore(order);
         this.matrix = new float[order * order];
+    }
+
+    public Builder identity() {
+        for(int n = 0; n < order; ++n) {
+            set(n, n, 1);
+        }
+        return this;
     }
     
     public Builder set(int row, int col, float value) {
@@ -127,20 +136,9 @@ public static class Builder {
 }
 ```
 
-A matrix is initialised to the identity as follows:
-
-```java
-public Builder identity() {
-    for(int n = 0; n < order; ++n) {
-        set(n, n, 1);
-    }
-    return this;
-}
-```
-
-We add the following to complete implementation of the matrix for the moment:
-- A multiply() operation to compose matrices (not shown here).
-- Convenience helpers and constants for 4-order matrices (which is the most commonly requirement).
+We add the following (not shown) to complete implementation of the matrix for the moment:
+- A `multiply()` operation to compose matrices.
+- Convenience helpers and constants for 4-order matrices (which is the most common use-case).
 - Helpers to populate a row or column with a given tuple.
 
 ### Perspective Projection
@@ -311,7 +309,7 @@ public Resource<VkDescriptorBufferInfo> uniform() {
 }
 ```
 
-The apply() method in both implementations sets the relevant pointer array field in the `VkWriteDescriptorSet` descriptor.
+The `apply()` method in both implementations sets the relevant pointer array field in the `VkWriteDescriptorSet` descriptor.
 
 ### Descriptor Set Updates
 
@@ -341,7 +339,7 @@ public class Update<T extends Structure> {
 }
 ```
 
-The populate() method is used to fill a write descriptor for an update.
+The `populate()` method is used to fill a write descriptor for an update.
 
 We first initialise the write descriptor based on the binding:
 
@@ -382,7 +380,7 @@ public <T extends Structure> Update<T> update(Layout.Binding binding, Collection
 
 To apply an update or a group of update we add another relatively simple builder:
 
-```
+```java
 public static class UpdateBuilder {
     private final List<Update<?>> updates = new ArrayList<>();
 
@@ -403,7 +401,7 @@ public static class UpdateBuilder {
 }
 ```
 
-The apply() method converts the updates to an array and invokes the API to apply the changes:
+The `apply()` method converts the updates to an array and invokes the API to apply the changes:
 
 ```java
 public void apply(LogicalDevice dev) {
@@ -413,7 +411,7 @@ public void apply(LogicalDevice dev) {
 }
 ```
 
-We also add a convenience apply() method implemented using the new builder to apply an update directly.
+We also add a convenience `apply()` method implemented using the new builder to apply an update directly.
 
 ### Conclusion
 
@@ -423,7 +421,7 @@ The above may well seem overly complicated - and it's possible that we have over
 
 - However only **one** type can be specified in any given update.
 
-- Different fields in the descriptor are populated depending on the descriptor type (specified in the binding), e.g. `pImageInfo` for a sampler, hence the apply() method in the new `Resource` interface, i.e. the write descriptor is a sort of union type.
+- Different fields in the descriptor are populated depending on the descriptor type (specified in the binding), e.g. `pImageInfo` for a sampler, hence the `apply()` method in the new `Resource` interface, i.e. the write descriptor is a sort of union type.
 
 - Multiple resources can be applied to a descriptor set in one update, e.g. we could apply a sampler and a uniform buffer in one call.
 
@@ -454,7 +452,7 @@ uniform.load(Matrix.IDENTITY);
 
 Note that this buffer is only visible to the host - eventually the matrix data in the uniform buffer will be updated every frame (i.e. for the rotation) so a staging buffer would just add extra complexity and overhead.
 
-We also take the opportunity to slightly refactor the load() method of the vertex buffer to accept either a byte-buffer or a bufferable object:
+We also take the opportunity to implement overloaded variants of the `load()` method to accept either a byte-buffer or a bufferable object:
 
 ```java
 public void load(ByteBuffer buffer) {
@@ -488,6 +486,8 @@ public void load(Bufferable obj, long len, long offset) {
 Next we add a second binding to the descriptor set layout for the uniform buffer:
 
 ```java
+Binding samplerBinding = ...
+
 Binding uniformBinding = new Binding.Builder()
     .binding(1)
     .type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
@@ -521,12 +521,12 @@ Note that we are using the same uniform buffer for each descriptor set - this is
 ### Applying the Matrix
 
 Finally we modify the vertex shader to use the matrix which involves:
-1. Adding a new layout declaration for the uniform buffer which contains a 4-order matrix:
+1. Adding a new `layout` declaration for the uniform buffer which contains a 4-order matrix:
 2. Multiplying the vertex position by the matrix.
 
 The vertex shader should now be as follows:
 
-```C
+```glsl
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -547,9 +547,7 @@ void main() {
 
 If all goes well we should still see the flat textured quad since the identity matrix essentially does nothing.
 
----
-
-## View Transformation
+### View Transformation
 
 We can now use the matrix class and the perspective projection to apply a view transformation to the demo.
 
@@ -604,7 +602,7 @@ final Matrix matrix = proj.multiply(view);
 uniform.load(matrix);
 ```
 
-Finally we modify the vertex data to move one edge of the quad into the screen by modifying the Z coordinate of the bottom two vertices:
+Finally we modify the vertex data to move one edge of the quad into the screen by modifying the Z coordinate of the right-hand vertices:
 
 ```java
 new Point(-0.5f, -0.5f, 0))
@@ -623,7 +621,7 @@ If the transformation code is correct we should now see the quad in 3D with the 
 
 We are now going to replace the hard-coded quad with a cube model which will require:
 
-1. A new domain class for a general model that encapsulates vertex data and conversion to an NIO buffer.
+1. A new domain class for a general model that encapsulates vertex data.
 
 2. A builder to construct the model.
 
@@ -692,7 +690,7 @@ public boolean isValidVertexCount(int count) {
 }
 ```
 
-Next we add a builder to the model, for the moment this has almost no functionality other than a test in the add() method to validate a vertex against the layout:
+Next we add a builder to the model, for the moment this has almost no functionality other than a test in the `add()` method to validate a vertex against the layout:
 
 ```java
 public Builder add(Vertex vertex) {
@@ -718,7 +716,7 @@ public class CubeBuilder {
 }
 ```
 
-The build() method create two _triangles_ for each face of the cube:
+The build method create two _triangles_ for each face of the cube:
 
 ```java
 private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
@@ -769,7 +767,7 @@ private static final int[][] FACES = {
 };
 ```
 
-The two triangles are specified by indices into each face (exactly the same as we did for the quad in the previous chapter):
+The two triangles are specified by indices into each face with alternate winding orders (exactly the same as we did for the quad in the previous chapter):
 
 ```
 private static final int[] LEFT =  {0, 1, 2};
@@ -779,6 +777,8 @@ private static final int[] RIGHT = {2, 1, 3};
 The method to add a triangle generates three vertices for each triangle and adds them to the model:
 
 ```java
+private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2D[]::new);
+
 private void add(int[] face, int[] triangle, Model.Builder builder) {
     for(int n = 0; n < 3; ++n) {
         // Lookup vertex position for this triangle
@@ -800,13 +800,7 @@ private void add(int[] face, int[] triangle, Model.Builder builder) {
 }
 ```
 
-The texture coordinates are a simple array constructed from the pre-defined quad in the `Coordinate2D` class.
-
-```java
-private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2D[]::new);
-```
-
-We could have implemented a more cunning approach using a triangle-strip wrapped around the cube which would perhaps result in more efficient storage and rendering performance, but for such a trivial model it's hardly worth the trouble.
+To construct a cube we could have implemented a more cunning approach using a triangle-strip wrapped around the cube (for example) which would perhaps result in slightly more efficient storage and rendering performance, but for such a trivial model it's hardly worth the trouble.
 
 ### Input Assembly Pipeline Stage
 
@@ -937,7 +931,7 @@ The above should give us this:
 
 ### Animation
 
-To animate the rotation we modify the render loop to generate a rotation matrix on every frame:
+To animate the cube we remove the static rotation and add the following to the render loop to update the matrix on every frame:
 
 ```java
 final long period = 5000;
@@ -954,7 +948,7 @@ for(int n = 0; n < 1000; ++n) {
 }
 ```
 
-(after removing the static rotation we applied above).
+The code to calculate the _angle_ interpolates a 5 second period onto the unit circle.
 
 Hopefully when we run the demo we can now finally see the goal for this chapter: the proverbial rotating textured cube.
 

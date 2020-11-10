@@ -577,9 +577,9 @@ Notes:
 
 - We change the number of vertices in the drawing command.
 
-- The default drawing primitive is a _triangle strip_ which has alternating winding orders.  The quad consists of two triangles
-    1. counter-clockwise with vertices 012 and 
-    2. clockwise 123.
+- The default drawing primitive is a _triangle strip_ which has alternating winding orders.  The quad consists of two triangles:
+    1. counter-clockwise with vertices 012
+    2. and clockwise 123.
 
 This should result in something like the following:
 
