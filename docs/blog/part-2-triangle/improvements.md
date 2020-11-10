@@ -2,7 +2,7 @@
 title: Interlude - Some Improvements
 ---
 
-# Overview
+## Overview
 
 In this short interlude we collate a number of improvements to the code we have crafted thus far.
 
@@ -10,7 +10,7 @@ These are all framework improvements that we identified during development rathe
 
 ---
 
-# Handles
+## Handles
 
 Up until now most of our Vulkan domain classes have a handle represented by a JNA pointer.
 
@@ -97,7 +97,7 @@ We refactor all the existing GLFW and Vulkan domain objects accordingly and add 
 
 ---
 
-# Abstract Vulkan Object
+## Abstract Vulkan Object
 
 With the logical device in place we will be implementing a number of new domain components that share the same requirements:
 
@@ -181,7 +181,7 @@ public class Shader extends AbstractVulkanObject {
 
 ---
 
-# Testing Support
+## Testing Support
 
 Any unit-test that is dependant on the logical device (which is the majority of them) generally require the same test setup which we factor out to a test base-class:
 
@@ -212,9 +212,7 @@ Note that we give the setup method a relatively unique name (and make it private
 
 ---
 
-# Two-Stage Invocation
-
-## Summary
+## Two-Stage Invocation
 
 In the [devices chapter](/JOVE/blog/part-2-triangle/devices) we first came across API methods that are invoked **twice** to retrieve an array from Vulkan.
 
@@ -225,8 +223,6 @@ For example, when we lookup the queue families for a physical device we invoke t
 2. And again to populate the array (passing back the size and an empty allocated array).
 
 This is a common pattern across the Vulkan API which we refer to as _two-stage invocation_.
-
-## Vulkan Function
 
 We define the following interface to abstract a Vulkan API method that utilises the two-stage invocation approach:
 
@@ -305,11 +301,9 @@ static <T> T[] enumerate(VulkanFunction<T[]> func, VulkanLibrary lib, IntFunctio
 
 ---
 
-# Structure Arrays
+## Structure Arrays
 
 We are often required to allocate and populate JNA structure arrays to be passed to Vulkan, e.g. when creating the pipeline.
-
-## Array Allocation
 
 The following simple helper makes allocating a structure array slightly less tedious:
 
@@ -335,8 +329,6 @@ A structure array can then be allocated as follows:
 ```java
 final var array = VulkanStructure.toArray(VkClearValue::new, num);
 ```
-
-## Array Population
 
 To populate a structure array we would generally have to:
 1. Handle the case where the source data is empty.
