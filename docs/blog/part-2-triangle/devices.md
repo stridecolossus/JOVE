@@ -2,7 +2,7 @@
 title: Vulkan Devices
 ---
 
-# Overview
+## Overview
 
 Now we have a Vulkan instance we can use it to enumerate the _physical devices_ available on the local hardware and select one that satisfies the requirements of the application.
 
@@ -12,9 +12,9 @@ Finally we will create a _logical device_ from the selected physical device and 
 
 ---
 
-# Let's get Physical
+## Let's get Physical
 
-## The Physical Device
+### The Physical Device
 
 A _physical device_ represents a hardware component that supports Vulkan, i.e. the GPU.
 
@@ -101,7 +101,7 @@ private Queue.Family family(int index, VkQueueFamilyProperties props) {
 }
 ```
 
-## Enumerating the Physical Devices
+### Enumerating the Physical Devices
 
 To enumerate the available physical devices we invoke the `vkEnumeratePhysicalDevices()` API method _twice_:
 
@@ -169,7 +169,7 @@ PhysicalDevice
 
 On a normal PC there will generally just be the one device (the GPU).
 
-## Selecting a Device
+### Selecting a Device
 
 The final step for dealing with the physical device(s) is to select one that supports the requirements of an application.
 
@@ -178,7 +178,7 @@ There are several properties that we can select on:
 2. Whether a queue family supports rendering to a Vulkan surface.
 3. The supported features of the device.
 
-### Queue Families
+#### Queue Families
 
 The properties of a queue family are defined by the `VkQueueFlag` enumeration and specify whether the queue supports graphics rendering, data transfer, etc.
 
@@ -195,7 +195,7 @@ public static Predicate<Family> predicate(VkQueueFlag... flags) {
 }
 ```
 
-### Presentation Support
+#### Presentation Support
 
 Later we will create a Vulkan surface for our application window which can then be tested against a queue family:
 
@@ -226,7 +226,7 @@ public static Predicate<Family> predicate(Pointer surface) {
 }
 ```
 
-### Supported Device Features
+#### Supported Device Features
 
 Finally we could select based on the _device features_ required by our application:
 
@@ -248,11 +248,11 @@ We will not be using any of these properties or features for some time so we ign
 
 ---
 
-# The Rendering Surface
+## The Rendering Surface
 
 Before we can progress with selection of the physical device we need to create a window and a Vulkan rendering surface.
 
-## Application Window
+### Application Window
 
 The obvious starting point is a window class that encapsulates a GLFW window handle:
 
@@ -359,7 +359,7 @@ public static Window create(DesktopLibrary lib, Descriptor descriptor) {
 }
 ```
 
-## Vulkan Surface
+### Vulkan Surface
 
 To create a Vulkan surface for a given window we add the following to the new class:
 
@@ -399,7 +399,7 @@ final Pointer surface = window.surface(instance);
 
 The `DISABLE_OPENGL` property specifies that the new window should **not** create an OpenGL context (which GLFW does by default) which will otherwise cause our Vulkan implementation to fail.
 
-## Presentation Support Redux
+### Presentation Support Redux
 
 With a handle to the surface we can now return to selecting the physical device.
 
@@ -441,13 +441,13 @@ Note that these could actually be the same object depending on how the GPU imple
 
 ---
 
-# That is Logical Captain
+## Logical Captain
 
 The _logical device_ is an instance of the physical device we have selected from those available on the hardware.
 
 We will create the logical device domain class and complete the queue class we defined at the very start of this chapter.
 
-## The Logical Device
+### The Logical Device
 
 Again we start with an outline for the logical device:
 
@@ -594,7 +594,7 @@ private void populate(VkDeviceQueueCreateInfo info) {
 }
 ```
 
-## Work Queues
+### Work Queues
 
 When the logical device domain object is instantiated the list of `RequiredQueue` is also passed as a constructor argument:
 
@@ -656,7 +656,7 @@ public Queue queue(Queue.Family family) {
 }
 ```
 
-## Unit-Testing
+### Unit-Testing
 
 The builder for the logical device is quite complex so the unit-test has a large number of failure cases (a selection are shown here):
 
@@ -689,7 +689,7 @@ class BuilderTests {
 }
 ```
 
-## Integration
+### Integration
 
 We can now create a logical device in the demo and lookup the specified work queues:
 
@@ -709,7 +709,7 @@ final Queue presentationQueue = dev.queue(presentationFamily);
 
 ---
 
-# Summary
+## Summary
 
 In this chapter we:
 

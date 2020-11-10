@@ -2,7 +2,7 @@
 title: The Graphics Pipeline
 ---
 
-# Overview
+## Overview
 
 The _graphics pipeline_ specifies the various _stages_ executed by the hardware to render a fragment.
 
@@ -14,9 +14,9 @@ In this chapter we will implement the mandatory fixed-function pipeline stages a
 
 ---
 
-# Building a Pipeline
+## Building a Pipeline
 
-## Pipeline Class
+### Pipeline Class
 
 The pipeline domain class itself is trivial:
 
@@ -51,7 +51,7 @@ The _pipeline layout_ specifies the resources (texture samplers, uniform buffers
 Although none of these are needed for the triangle demo we are still required to specify a layout for the pipeline.
 We will gloss over construction of the layout until a future chapter.
 
-## Pipeline Builder
+### Pipeline Builder
 
 Configuration of the pipeline is probably the largest and most complex aspect of creating a Vulkan application (in terms of the amount of supporting functionality that is required).
 
@@ -151,7 +151,7 @@ class BuilderTest {
 
 For the triangle demo the only mandatory information is the viewport pipeline stage and the vertex shader.
 
-## Nested Builders
+### Nested Builders
 
 If the number and complexity of the nested builders was relatively small we would implement them as _local classes_ of the pipeline (as we did for the render pass in the previous chapter).
 This is clearly not viable for the pipeline - the parent class would become unwieldy, error-prone and difficult to maintain or test.
@@ -208,7 +208,7 @@ Finally the pipeline builder initialises the `parent()` of each nested builder i
 This is a slightly shonky implementation but it is relatively simple and achieves our goal of a fluid nested builder. 
 The resultant classes are relatively self-contained and are therefore more manageable and testable (and the nastier details are at least package-private).
 
-## Conclusion
+### Conclusion
 
 We can now finish the pipeline builder:
 
@@ -261,7 +261,7 @@ check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelin
 return new Pipeline(pipelines[0], dev);
 ```
 
-## Viewport Pipeline Stage
+### Viewport Pipeline Stage
 
 Rather than clog this chapter up by covering the design and development of every nested builder we introduce them as they are used.
 
@@ -334,11 +334,11 @@ protected VkPipelineViewportStateCreateInfo result() {
 
 ---
 
-# Shader Pipeline Stage
+## Shader Pipeline Stage
 
 The final element of the pipeline that we **must** configure is the vertex shader.
 
-## Shaders
+### Shaders
 
 First we create a new domain object for a shader module:
 
@@ -385,7 +385,7 @@ public static Shader loader(LogicalDevice dev, InputStream in) throws IOExceptio
 }
 ```
 
-## Builder
+### Builder
 
 The shader stage pipeline builder creates an **array** of `VkPipelineShaderStageCreateInfo` descriptors:
 
@@ -483,11 +483,11 @@ public ShaderStageBuilder shader() {
 
 ---
 
-# Integration
+## Integration
 
 We can now load the shaders and configure the rendering pipeline for the triangle demo.
 
-## Shaders
+### Shaders
 
 The vertex shader hard-codes the triangle vertices and passes a colour for each vertex through to the fragment shader:
 
@@ -538,7 +538,7 @@ glslc triangle.frag -o spv.triangle.frag
 glslc triangle.vert -o spv.triangle.vert
 ```
 
-## Demo
+### Demo
 
 We can now load the shader modules:
 
@@ -576,7 +576,7 @@ Phew!
 
 ---
 
-# Summary
+## Summary
 
 In this chapter we implemented a number of builders to configure the graphics pipeline and implemented shader modules.
 

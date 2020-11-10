@@ -2,7 +2,7 @@
 title: The Vulkan Instance
 ---
 
-# Overview
+## Overview
 
 The first step in the development of our library is to create a Vulkan _instance_, the starting point for everything that follows.
 
@@ -18,9 +18,9 @@ So let's get cracking.
 
 ---
 
-# Creating the Vulkan Instance
+## Creating the Vulkan Instance
 
-## Instance API
+### Instance API
 
 We start with an empty interface for the Vulkan API instantiated by JNA via a static factory method:
 
@@ -77,7 +77,7 @@ interface VulkanLibrary extends Library, VulkanLibraryInstance, ... {
 
 As noted in the chapter on [code generation](/JOVE/blog/part-1-generation/code-generation) we have intentionally decided not to code-generate the API.
 
-## Vulkan Instance
+### Vulkan Instance
 
 With that in place we can now create our first domain class:
 
@@ -224,7 +224,7 @@ public interface VulkanLibrary {
 
 The `VulkanException` is a custom exception class that maps a Vulkan return code to the corresponding `VkResult` to build an informative error message.
 
-## Extensions and Validation Layers
+### Extensions and Validation Layers
 
 There are two other pieces of information that we supply when creating the instance: extensions and validation layers.
 
@@ -284,7 +284,7 @@ We discuss the purpose of the standard validation layer below.
 
 ---
 
-# Required Extensions
+## Required Extensions
 
 Generally we will need to enable platform-specific extensions for the target platform so that we can actually perform rendering.
 
@@ -378,9 +378,9 @@ public static Desktop create() {
 
 ---
 
-# Integration and Testing
+## Integration and Testing
 
-## Unit-Tests
+### Unit-Tests
 
 The unit-test for the instance class mainly exercises the builder since our domain object has little functionality at the moment:
 
@@ -444,7 +444,7 @@ public class InstanceTest {
 
 The reason for presenting this unit-test is to highlight the `PointerByReference` in the `create()` test which we discuss in the following section.
 
-## Reference Factory
+### Reference Factory
 
 The Vulkan API (and many other native libraries) make extensive use of by-reference types to return data (with the return value generally being some sort of error code).
 For example the `vkCreateInstance()` API method returns the handle of the newly instance created instance via a JNA `PointerByReference` from which the actual handle is extracted.
@@ -520,7 +520,7 @@ assertEquals(handle.getValue(), instance.handle());
 
 In general from now on we will not cover testing unless there is a specific point-of-interest and it can be assumed that tests are developed in-parallel with the main code.
 
-## Integration
+### Integration
 
 Finally we can start work on our first demo application:
 
@@ -553,15 +553,15 @@ We also add a convenience method to the builder to add the array of extensions r
 
 ---
 
-# Diagnostics Handler
+## Diagnostics Handler
 
-## Overview
+### Overview
 
 Vulkan implements the `STANDARD_VALIDATION` validation layer that provides a very comprehensive error and diagnostics reporting mechanism, offering useful logging as well as alerting common problems such as orphaned object handles, invalid parameters, performance warnings, etc.  This functionality is not mandatory but it is _highly_ recommended so we will address it now before we go any further.
 
 However there is one complication - for some reason the reporting mechanism is not a core part of the API but is itself an extension.
 
-## Message Handler
+### Message Handler
 
 We start with a new domain class that will represent our reporting requirements and a JNA callback that will be invoked by Vulkan to report errors and messages:
 
@@ -620,7 +620,7 @@ public class MessageHandler {
 
 We also add a convenience builder to configure a handler.
 
-## Handler Manager
+### Handler Manager
 
 To manage diagnostics handlers we add a lazily-instantiated local class to the instance:
 
@@ -662,7 +662,7 @@ public Function function(String name) {
 }
 ```
 
-## Attaching a Handler
+### Attaching a Handler
 
 To instantiate and attach a message handler we invoke the the create method with an array of the relevant arguments (again we have to determine the method signature from the documentation rather than the API itself):
 
@@ -698,7 +698,7 @@ protected VkDebugUtilsMessengerCreateInfoEXT create() {
 
 Note the use of the `mask` method to transform the enumeration collections to bit-field masks.
 
-## Cleanup
+### Cleanup
 
 We add the following methods to the manager to release handlers:
 
@@ -735,7 +735,7 @@ public synchronized void destroy() {
 }
 ```
 
-## Message Convenience
+### Message Convenience
 
 With the framework in place we add the following helper functionality to the message handler class:
 
@@ -747,7 +747,7 @@ With the framework in place we add the following helper functionality to the mes
 
 - And finally the `CONSOLE` implementation that dumps a message to the console (which we use as the default callback in the builder).
 
-## Integration
+### Integration
 
 To attach a diagnostics handler we must first enable the extension:
 
@@ -787,7 +787,7 @@ From now on when we screw things up we should receive error messages on the cons
 
 ---
 
-# Summary
+## Summary
 
 In this first chapter we instantiated the Vulkan API, created the instance object with the required extensions and layers, and attached a diagnostics handler.
 

@@ -2,7 +2,7 @@
 title: The Swapchain and Render Pass
 ---
 
-# Overview
+## Overview
 
 In this chapter we will implement the various components required for rendering to the Vulkan surface.
 
@@ -14,9 +14,9 @@ We will also implement the _render pass_ that specifies how the attachments are 
 
 ---
 
-# The Swapchain
+## The Swapchain
 
-## Rendering Surface
+### Rendering Surface
 
 Before we can actually start on the swapchain we will need:
 
@@ -98,7 +98,7 @@ public Set<VkPresentModeKHR> modes() {
 
 While this object does not contain much functionality it abstracts over the various API methods that use a combination the logical device, physical device and instance.
 
-## Images and Views
+### Images and Views
 
 A Vulkan _image_ is essentially a descriptor for an image _object_ managed by Vulkan (i.e. we are not actually dealing with image _data_ here).
 
@@ -135,7 +135,7 @@ public class View {
 
 Note that both of these new domain objects are managed by Vulkan and therefore do not need to be explicitly destroyed by the application.
 
-## The Swap Chain
+### The Swap Chain
 
 Now we can finally create the swapchain itself:
 
@@ -285,9 +285,9 @@ interface VulkanLibraryImage {
 }
 ```
 
-## Presentation
+### Presentation
 
-We can now turn to presentation of the swapchain images.
+We now turn to presentation of the swapchain images.
 
 We first add an image index:
 
@@ -336,7 +336,7 @@ Notes:
 - We create the descriptor for presentation on every invocation of the presentation method - we may want to cache these later.
 - We will address synchronisation in a future chapter.
 
-## Format Builder
+### Format Builder
 
 When testing the new swapchain we realised that finding an image format in the `VkFormat` enumeration can be quite tricky - there are an awful lot of them.
 However the names are logical and consistent so we implement a helper that allows us to programatically define an image format:
@@ -398,7 +398,7 @@ public VkFormat build() {
 }
 ```
 
-## Integration
+### Integration
 
 We now have all the elements we need to add the swapchain to our demo application:
 
@@ -423,9 +423,9 @@ In this example the image format is: `VK_FORMAT_B8G8R8A8_UNORM`
 
 ---
 
-# The Render Pass
+## The Render Pass
 
-## Parent Builder
+### Parent Builder
 
 A render pass consists of a number of _sub-passes_ (at least one) that operate on the results of the previous passes to implement (for example) post processing effects.
 
@@ -484,7 +484,7 @@ Notes:
 - The 'parent' builder maintains a list of the nested builders.
 - We omit dependencies for the moment as they are not needed for this stage of development.
 
-## Attachments
+### Attachments
 
 The nested builder for an attachment is relatively straight-forward:
 
@@ -523,7 +523,7 @@ public class AttachmentBuilder {
 
 The idea is that the parent builder will allocate the descriptor that is initialised by the `populate()` method.
 
-## Sub-Passes
+### Sub-Passes
 
 A sub-pass specifies the attachments that are used in that stage of rendering:
 
@@ -627,7 +627,7 @@ private class Reference {
 
 We essentially follow the underlying Vulkan structures in this design but in future we may decide to introduce an actual attachment domain object and remove the need for indexes to refer to the attachments in the sub-passes and dependencies.
 
-## Creating the Render Pass
+### Creating the Render Pass
 
 Finally the build method for the render pass aggregates the descriptors from the nested builders, invokes the API and creates the domain object:
 
@@ -656,7 +656,7 @@ public RenderPass build() {
 }
 ```
 
-## Integration
+### Integration
 
 We can now add the render pass to our triangle demo which consists of a single colour attachment:
 
@@ -679,7 +679,7 @@ The colour attachment is cleared before rendering and transitioned to a layout r
 
 ---
 
-# Frame Buffers
+## Frame Buffers
 
 The last component we require for rendering is the _frame buffer_ which contains the attachments to be rendered:
 
@@ -754,7 +754,7 @@ This class is little more than a handle and a list of views - we will probably w
 
 ---
 
-# Summary
+## Summary
 
 In this chapter we implemented the swapchain, render pass and frame-buffer domain objects.
 

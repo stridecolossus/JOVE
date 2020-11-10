@@ -2,7 +2,7 @@
 title: Rendering Commands
 ---
 
-# Overview
+## Overview
 
 We are on the last lap for the goal of this phase of development - rendering a simple triangle.
 
@@ -10,9 +10,9 @@ The final components we need to complete the demo are the command sequence for d
 
 ---
 
-# Commands
+## Commands
 
-## Introduction
+### Introduction
 
 Vulkan implements work to performed on a queue by recording a sequence of _commands_ to a _command buffer_, which is allocated and managed by a _command pool_.
 
@@ -36,7 +36,7 @@ buffer
     .end();
 ```
 
-## Command Interface
+### Command Interface
 
 We start with an outline class for commands, buffers and pools:
 
@@ -70,7 +70,7 @@ public interface Command {
 
 The command interface abstracts the signature of a `VkCmdXXX` command whose arguments are always comprised of the API and a handle to the command buffer.
 
-## Command Pool
+### Command Pool
 
 We start with the command pool which is created using a static factory:
 
@@ -183,7 +183,7 @@ private void free(Collection<Buffer> buffers) {
 }
 ```
 
-## Command Buffer
+### Command Buffer
 
 A command buffer is used to **record** a sequence of commands, i.e. the commands are not executed immediately but are submitted to a work queue for execution by the hardware.
 
@@ -280,11 +280,11 @@ Notes:
 
 ---
 
-# Command Implementation
+## Command Implementation
 
 We can now implement the specific commands required for the triangle demo (see the pseudo-code above):
 
-## Rendering
+### Rendering
 
 We add the following factory method to the render pass class to start rendering:
 
@@ -365,7 +365,7 @@ Finally we add the following command to end a render pass:
 public static final Command END_COMMAND = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 ```
 
-## Bind Pipeline
+### Bind Pipeline
 
 To bind the pipeline in the render sequence we add the following factory to the pipeline class:
 
@@ -379,7 +379,7 @@ public Command bind() {
 }
 ```
 
-## Drawing
+### Drawing
 
 For the moment we hard-code the drawing command in the demo:
 
@@ -391,9 +391,7 @@ This command specified three vertices in a single instance, both starting at ind
 
 Later we will factor this out to a factory when we address vertex buffers and models.
 
----
-
-# Submitting Work
+### Submitting Work
 
 Submitting a command buffer to a work queue involves populating a descriptor of the work to be performed comprising the command buffers to execute and various synchronisation declarations.
 
@@ -464,9 +462,9 @@ public Work build() {
 
 ---
 
-# Integration
+## Integration
 
-## Command Sequence
+### Rendering Sequence
 
 We can now integrate all of the above to create and record the rendering sequence.
 
@@ -494,7 +492,7 @@ for(int n = 0; n < buffers.size(); ++n) {
 
 We have several parallel lists here sized by the swapchain buffering strategy (the swapchain image/views, the frame buffers and the commands) which we will eventually want to compose into an actual object but the above is fine for the moment.
 
-## Render Loop
+### Render Loop
 
 Our first render 'loop' will be a bit of a bodge - to render the triangle we emulate a single frame:
 
@@ -516,7 +514,7 @@ Thread.sleep(1000);
 
 We could have implemented a proper acquire-render-present loop utilising the swap-chain images but the above is sufficient to test the demo - we will be re-implementing this properly in future chapters (and adding input handling so we can terminate the thread).
 
-## All that for a triangle?
+### All that for a triangle?
 
 If all goes well when we run the demo we should see the following:
 
@@ -540,7 +538,7 @@ There are a few gotchas that could result in staring at a blank screen:
 
 ---
 
-# Summary
+## Summary
 
 In this final chapter for this phase of development we implemented commands and a crude render loop to display a triangle.
 
