@@ -1,4 +1,8 @@
-# Overview
+---
+title: Code Generating the Vulkan API
+---
+
+## Overview
 
 For some time we had been developing a personal project for an OpenGL based library and a suite of example applications.
 This library was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).
@@ -28,10 +32,11 @@ Note this is not intended to be negative review of LWJGL - we have used it with 
 
 Sometime later we were encouraged by a friend to make a second attempt - our first design decision was that unless LWJGL had materially changed we would look for an alternative.
 
+---
 
-# Technology
+## Technology
 
-## Alternatives
+### Alternatives
 
 Having made the decision not to use LWJGL for the native library bindings we needed an alternative technology.
 
@@ -54,7 +59,7 @@ Finally we came across JNA - having never had to deal with a native library dire
 
 We had a possible winner.
 
-## Taking JNA out for a spin
+### Taking JNA out for a spin
 
 To see whether JNA would suit our purposes we first tried it against a simpler native library.
 We had already planned to use GLFW for desktop related functionality such as managing windows, displays, input devices, etc. and it also integrates nicely with Vulkan as we will see later on.
@@ -77,10 +82,11 @@ Hand-crafting even a fraction of the API could be done but it would be very tedi
 
 We needed a code generator.
 
+---
 
-# Generation Game
+## Generation Game
 
-## Overview
+### Overview
 
 Having decided that JNA was the way to go for the native bindings we still needed some mechanism to actually generate the API.
 
@@ -97,7 +103,7 @@ i.e. we want to avoid diminishing returns on the time and effort to cover every 
 
 - Any tools and libraries we use should follow our general goal of being well-documented and supported.
 
-## Tools
+### Tools
 
 We first tried a tool called _JNAeator_ that generates JNA bindings for a given header file.
 This seemed perfect for our requirements but unfortunately the results didn't work out as we has hoped:
@@ -125,11 +131,11 @@ In retrospect we spent far too much time messing around with CDT and it certainl
 If and when we need to re-generate the API we will replace it with a home-brewed parser (unless we find one in the meantime).
 For that reason we will largely gloss over the details of how we used CDT.
 
-## Enumerations
+### Enumerations
 
 We started with enumerations since these are the simplest of the components we need to generate.
 
-### Template
+#### Template
 
 To generate the Java enumerations we used [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for what we were doing.
 In particular it provides support for collections of data which would be using for enumeration constants and structure fields.
@@ -178,12 +184,12 @@ Notes:
 The line that actually generates a enumeration constant might be slightly confusing at first glance:
 
 ```java
-     ${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
+${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
 ```
 
 The purpose of the `if..else..end` directive is to add commas between each constant or a semi-colon after the last constant.
 
-### Generation
+#### Generation
 
 We extract the enumeration name and a map of the constants from the relevant AST nodes:
 
@@ -262,11 +268,11 @@ public class TemplateProcessor {
 }
 ```
 
-### Example
+#### Example
 
 Using the generator the following Vulkan enumeration:
 
-```C
+```c
 typedef enum VkImageUsageFlagBits {
     VK_IMAGE_USAGE_TRANSFER_SRC_BIT = 0x00000001,
     VK_IMAGE_USAGE_TRANSFER_DST_BIT = 0x00000002,
@@ -312,9 +318,9 @@ public enum VkImageUsageFlag implements IntegerEnumeration {
 }
 ```
 
-## Structures
+### Structures
 
-### Type Mappings
+#### Type Mappings
 
 Generation of the structures is more complex as we have to deal with the mapping of Vulkan/native types to the equivalent JNA/Java types.
 
@@ -371,11 +377,11 @@ VkFramebuffer             -> org.sarge.jove.Handle
 VkCommandPool             -> org.sarge.jove.Handle
 ```
 
-Pointer types were programatically replaced by the corresponding JNA by-reference type, e.g. `const VkClearValue*` is mapped as `VkClearValue.ByReference`.
+Pointer types were programatically replaced by the corresponding JNA by-reference type, e.g. `const VkClearValue*` is mapped as `VkClearValue`.
 
 All other types were simply copied as-is (which also neatly handled the case for enumerations).
 
-### Template
+#### Template
 
 The template for a Vulkan structure looks like this:
 
@@ -422,9 +428,9 @@ Notes:
 - We also instantiate array types which is required by JNA in order to size the memory of the structure.
 - The purpose of the logic for the special case `sType` field is outlined below.
 
-### Structure Type
+#### Structure Type
 
-All Vulkan structures have a `sType` field which identifies its type to the native layer.
+All Vulkan structures have a _sType_ field which identifies its type to the native layer.
 
 Since the values in the `VkStructureType` are highly logical and regular we could generate the enumeration constant from the name of the structure:
 
@@ -439,7 +445,7 @@ This saves us the effort of having to manually populate this field when we use t
 
 (We should probably have made this field final).
 
-## API
+### API
 
 In the end we decided not to generate the API methods for a variety of reasons:
 
@@ -449,7 +455,7 @@ In the end we decided not to generate the API methods for a variety of reasons:
 
 - Finally we also intend to document each method as we introduce it to JOVE, partially for future reference but to also better understand the method.
 
-## Conclusion
+### Conclusion
 
 The code generator ran in a few milliseconds so we could iteratively modify the code until we achieved an acceptable level of results.
 
@@ -459,16 +465,13 @@ The generator produced 390 structures and 142 enumerations (for version 1.1.101.
 
 At the time of writing the API consists of 91 methods so the decision to implement them manually has not been particularly onerous.
 
+---
 
-# Improvements
-
-## Overview
+## Improvements
 
 There were a couple of improvements to the base-classes of the enumerations and structures that are discussed here.
 
-## Integer Enumerations
-
-### The Problem
+### Integer Enumerations
 
 When we first started using the code generated enumerations we realised there were a couple of flaws in our thinking:
 
@@ -477,8 +480,6 @@ When we first started using the code generated enumerations we realised there we
 2. A native enumeration is implemented as an integer value and was being mapped to `int` in the code generated structures and API methods - this is error prone and not self-documenting.
 
 For a library with a handful of enumerations this would be a minor issue that we could work around but we needed something more practical for the large number of Vulkan enumerations!
-
-### Enumeration Mapping
 
 Although it is not common practice a Java enumeration **can** implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).  We leverage this technique to define a base-interface for the generated enumerations such that we can implement common helpers to handle the mapping issue.
 
@@ -598,17 +599,13 @@ Notes:
 - The new structure base-class **must** be defined as a member of the API for the mapper to work correctly.
 - We use the the same mapper when instantiating the library so that the enumeration converter also works for API methods.
 
-## Vulkan Booleans
-
-### WTF
+### Vulkan Booleans
 
 During development of the Java implementation of the Vulkan API we came across a curious problem that stumped us for some time when we first tackled code using boolean values, as described in [this](https://stackoverflow.com/questions/55225896/jna-maps-java-boolean-to-1-integer) stack-overflow question.
 
 In summary: a Vulkan boolean is represented as zero (for false) or one (for true) - so far so logical.  However by default JNA maps a Java boolean to zero for false but -1 for true!  WTF!
 
 There are a lot of boolean values used across Vulkan so we needed some global solution to over-ride the default JNA mapping.
-
-### Boolean Type Mapper
 
 We crafted the simple `VulkanBoolean` class that maps a boolean to/from a native integer represented as zero or one and implemented another JNA type converter:
 
@@ -646,5 +643,5 @@ We register this converter with the global type mapper in the root Vulkan API cl
 
 This solves the mapping problem in API methods and JNA structures that contain booleans and also has the side-benefit of being more type-safe and self-documenting.
 
-As it turns out the JNA W32APITypeMapper helper class probably already solves this issue but by this point we had already code-generated the structures.
+As it turns out the JNA `W32APITypeMapper` helper class probably already solves this issue but by this point we had already code-generated the structures.
 
