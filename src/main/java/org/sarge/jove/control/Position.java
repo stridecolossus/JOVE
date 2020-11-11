@@ -54,4 +54,12 @@ public final class Position implements Type {
 	public record Event(Position type, float x, float y) implements InputEvent {
 		// Empty
 	}
+
+//	public interface Handler extends Action<Event> {
+//		void handle(float x, float y);
+//
+//		static Action<Event> of(Handler handler) {
+//			return event -> handler.handle(event.x, event.y);
+//		}
+//	}
 }

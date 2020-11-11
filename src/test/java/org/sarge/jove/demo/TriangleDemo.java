@@ -137,9 +137,6 @@ public class TriangleDemo {
 				.viewport()
 					.viewport(extent)
 					.build()
-				.rasterizer()
-					.frontFace(true)
-					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)
@@ -158,7 +155,8 @@ public class TriangleDemo {
 				.collect(toList());
 
 		// Create command pool
-		final Command.Pool pool = Command.Pool.create(dev.queue(present));
+		final Queue queue = dev.queue(present);
+		final Command.Pool pool = Command.Pool.create(queue);
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
@@ -174,16 +172,11 @@ public class TriangleDemo {
 				.end();
 		}
 
-//		final Semaphore ready = Semaphore.create(dev);
-//		final Semaphore finished = Semaphore.create(dev);
-
 //		for(int n = 0; n < 100; ++n) {
 			final int index = chain.acquire(null, null);
 
-			new Work.Builder()
+			new Work.Builder(queue)
 					.add(commands.get(index))
-//					.wait(ready)
-//					.signal(finished)
 					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
 					.build()
 					.submit();

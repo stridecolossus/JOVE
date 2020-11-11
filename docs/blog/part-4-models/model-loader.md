@@ -266,36 +266,58 @@ And we implement array constructors in the relevant domain classes.
 The face parser iterates over a face polygon and generates `Vertex` instances:
 
 ```java
-for(String face : args) {
-    // Tokenize face
-    final String[] parts = face.trim().split("/");
-
-    // Lookup vertex position
-    final Vertex.Builder vertex = new Vertex.Builder();
-    final Point pos = lookup(model.vertices, parts[0].trim());
-    vertex.position(pos);
-
-    // Lookup optional texture coordinate
-    if(parts.length > 1) {
-        final Coordinate2D coords = lookup(model.coords, parts[1].trim());
-        vertex.coords(coords);
+Parser FACE = new Parser() {
+    @Override
+    public void parse(String[] args, ObjectModel model) {
+        for(String face : args) {
+            // Tokenize face
+            final String[] parts = face.trim().split("/");
+        
+            // Lookup vertex position
+            final Vertex.Builder vertex = new Vertex.Builder();
+            final Point pos = lookup(model.vertices, parts[0]);
+            vertex.position(pos);
+        
+            // Lookup optional texture coordinate
+            if(parts.length > 1) {
+                final Coordinate2D coords = lookup(model.coords, parts[1]);
+                vertex.coords(coords);
+            }
+        
+            // Lookup vertex normal
+            if(parts.length == 3) {
+                final Vector normal = lookup(model.normals, parts[2]);
+                vertex.normal(normal);
+            }
+        
+            // Add vertex
+            model.add(vertex.build());
+        }
     }
-
-    // Lookup vertex normal
-    if(parts.length == 3) {
-        final Vector normal = lookup(model.normals, parts[2].trim());
-        vertex.normal(normal);
-    }
-
-    // Add vertex
-    model.add(vertex.build());
 }
 ```
 
-The `lookup()` helper parses an index and retrieves the specified vertex component from the transient model.
+The `lookup()` helper parses an index and retrieves the specified vertex component from the transient model:
+
+```java
+private <T> T lookup(List<T> list, String str) {
+    final int index = Integer.parseInt(str.trim());
+    if(index > 0) {
+        return list.get(index - 1);
+    }
+    else
+    if(index < 0) {
+        return list.get(list.size() + index);
+    }
+    else {
+        throw new IndexOutOfBoundsException("Invalid zero index");
+    }
+}
+```
+
 Note that face indices can also be negative specifying a reverse index from the end of a list.
 
-We also register the default face parser:
+Finally we also register the default face parser:
 
 ```
 private void init() {
@@ -471,6 +493,8 @@ public Optional<ByteBuffer> index() {
 
 Finally we refactor the OBJ loader to use the new indexed builder and we also we add the `setAutoIndex()` option to the indexed builder to automatically add an index for each vertex.
 
+> Initially we tried to protect the buffers using `asReadOnlyBuffer()` but this seemed to break our unit-tests (equality of buffers is complex) and caused issues when we came to integration so they are exposed as mutable for the moment.
+
 All this work reduces the size of interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
 
 Result.
@@ -644,11 +668,14 @@ We also introduce a `VERSION` for our custom file format (and modify the write m
 
 #### Conclusion
 
-There is still a lot of conversions of byte buffers to/from arrays but our model can now be loaded in a matter of milliseconds - Nice!
+We output the model once and then modify the demo to read the buffered model thereafter:
 
-Initially we tried to protect the buffers using `asReadOnlyBuffer()` but this seemed to break our unit-tests (equality of buffers is complex) and caused issues when we came to integration so they are exposed as mutable for the moment.
+```java
+var loader = DataSource.loader(src, new ModelLoader());
+Model model = loader.load("chalet.model");
+```
 
-We can now move onto integrating the OBJ model into the demo and see what it looks like.
+There is still a lot of conversions of byte buffers to/from arrays but our model is now loaded in a matter of milliseconds - Nice!
 
 ---
 
@@ -663,7 +690,6 @@ First we created a _loader_ abstraction:
  * A <i>loader</i> defines a mechanism for loading a resource.
  * @param <T> Input type
  * @param <R> Resource type
- * @author Sarge
  */
 @FunctionalInterface
 public interface Loader<T, R> {

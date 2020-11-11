@@ -245,7 +245,7 @@ public class ObjectModelLoader extends LoaderAdapter<Reader, Model> {
 			 * @throws NumberFormatException if the index string cannot be parsed
 			 */
 			private <T> T lookup(List<T> list, String str) {
-				final int index = Integer.parseInt(str);
+				final int index = Integer.parseInt(str.trim());
 				if(index > 0) {
 					return list.get(index - 1);
 				}

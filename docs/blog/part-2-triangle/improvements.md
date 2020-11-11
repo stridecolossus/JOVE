@@ -25,7 +25,6 @@ To solve the mutability issue and alleviate the second problem we introduce the 
 ```java
 /**
  * A <i>native object</i> is a resource managed by a native library and referenced by a JNA pointer.
- * @author Sarge
  */
 public interface NativeObject {
     /**
@@ -216,11 +215,11 @@ Note that we give the setup method a relatively unique name (and make it private
 
 In the [devices chapter](/JOVE/blog/part-2-triangle/devices) we first came across API methods that are invoked **twice** to retrieve an array from Vulkan.
 
-For example, when we lookup the queue families for a physical device we invoke the `vkGetPhysicalDeviceQueueFamilyProperties` API method:
+For example when we query the extensions supported by the physical device we invoke the `vkEnumerateDeviceExtensionProperties` API method:
 
-1. Once to determine the size of the array returned as an integer-by-reference (the array itself is null).
+1. Once to determine the size of the array which is returned as an integer-by-reference (the array itself is `null`).
 
-2. And again to populate the array (passing back the size and an empty allocated array).
+2. And again to populate the array (passing back the size and an empty array).
 
 This is a common pattern across the Vulkan API which we refer to as _two-stage invocation_.
 
@@ -239,7 +238,7 @@ public interface VulkanFunction<T> {
 }
 ```
 
-For example we can now implement the following function to retrieve the available extensions for a given physical device:
+We can now define the API call as follows:
 
 ```java
 /**
@@ -335,6 +334,7 @@ To populate a structure array we would generally have to:
 2. Allocate the array.
 3. Iterate through the array using a for..next loop.
 4. Copy the data from the source collection to each element of the array.
+5. Use the **first** element of the array for a pointer-to-structure value.
 
 Whilst this is not difficult it can be tedious, error-prone and makes testing slightly messier.
 

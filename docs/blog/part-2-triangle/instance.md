@@ -500,10 +500,12 @@ public interface VulkanLibrary {
 ```
 
 Notes:
-- We provide a convenience `MockReferenceFactory` implementation to reduce the amount of boiler-plate required.
-- The use of the default method in the Vulkan API is a little dodgy but it allows us to easily use the mock implementation.
 
-This allows us to mock the creation of any by-reference values as required, for example:
+- We provide a convenience `MockReferenceFactory` implementation to support testing.
+
+- The use of a default method in the Vulkan API is a little dodgy but it means the production implementation is returned by default.
+
+The factory allows us to mock the creation of any by-reference values as required, for example:
 
 ```java
 // Init API

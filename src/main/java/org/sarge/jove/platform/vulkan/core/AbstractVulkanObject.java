@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.util.Check.notNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject.TransientNativeObject;
 
 import com.sun.jna.Pointer;
@@ -26,9 +25,11 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
 		void destroy(Handle dev, Handle handle, Handle allocator);
 	}
 
-	private Handle handle;
+	private final Handle handle;
 	private final LogicalDevice dev;
 	private final Destructor destructor;
+
+	private boolean destroyed;
 
 	/**
 	 * Constructor.
@@ -68,7 +69,7 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
 	 * @return Whether this object has been destroyed
 	 */
 	public boolean isDestroyed() {
-		return handle == null;
+		return destroyed;
 	}
 
 	/**
@@ -77,13 +78,8 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
 	 */
 	@Override
 	public synchronized void destroy() {
-		if(isDestroyed()) throw new IllegalStateException("Object has already been destroyed: " + this);
+		if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
 		destructor.destroy(dev.handle(), handle, null);
-		handle = null;
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		destroyed = true;
 	}
 }

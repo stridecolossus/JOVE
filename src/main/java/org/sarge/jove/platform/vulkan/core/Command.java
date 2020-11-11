@@ -61,17 +61,18 @@ public interface Command {
 	class Buffer implements NativeObject {
 		/**
 		 * Buffer state.
+		 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#commandbuffers-lifecycle">lifecycle</a>
 		 */
 		private enum State {
-			UNDEFINED,
+			INITIAL,
 			RECORDING,
-			READY,
+			EXECUTABLE,
 		}
 
 		private final Handle handle;
 		private final Pool pool;
 
-		private State state = State.UNDEFINED;
+		private State state = State.INITIAL;
 
 		/**
 		 * Constructor.
@@ -99,7 +100,7 @@ public interface Command {
 		 * @return Whether this command buffer is ready for submission (i.e. has been recorded)
 		 */
 		public boolean isReady() {
-			return state == State.READY;
+			return state == State.EXECUTABLE;
 		}
 
 		/**
@@ -109,7 +110,7 @@ public interface Command {
 		 */
 		public Buffer begin(VkCommandBufferUsageFlag... flags) {
 			// Check buffer can be recorded
-			if(state != State.UNDEFINED) throw new IllegalStateException("Buffer is not ready for recording: " + this);
+			if(state != State.INITIAL) throw new IllegalStateException("Buffer is not ready for recording: " + this);
 
 			// Start buffer
 			final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
@@ -142,7 +143,7 @@ public interface Command {
 			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
 			// TODO - count?
 			check(library().vkEndCommandBuffer(handle));
-			state = State.READY;
+			state = State.EXECUTABLE;
 			return this;
 		}
 
@@ -152,10 +153,10 @@ public interface Command {
 		 * @throws IllegalStateException if this buffer has not been recorded
 		 */
 		public void reset(VkCommandBufferResetFlag... flags) {
-			if(state != State.READY) throw new IllegalStateException("Buffer has not been recorded: " + this);
+			if(state != State.EXECUTABLE) throw new IllegalStateException("Buffer has not been recorded: " + this);
 			final int mask = IntegerEnumeration.mask(flags);
 			check(library().vkResetCommandBuffer(handle, mask));
-			state = State.UNDEFINED;
+			state = State.INITIAL;
 		}
 
 		/**
@@ -196,7 +197,7 @@ public interface Command {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
-			info.flags = IntegerEnumeration.mask(Arrays.asList(flags));
+			info.flags = IntegerEnumeration.mask(flags);
 
 			// Create pool
 			final LogicalDevice dev = queue.device();

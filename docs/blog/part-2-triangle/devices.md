@@ -167,6 +167,16 @@ PhysicalDevice
     .forEach(System.out::println);
 ```
 
+The device properties are retrieved by an on-demand accessor:
+
+```java
+public VkPhysicalDeviceProperties properties() {
+    final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+    instance.library().vkGetPhysicalDeviceProperties(handle, props);
+    return props;
+}
+```
+
 On a normal PC there will generally just be the one device (the GPU).
 
 ### Selecting a Device
@@ -231,12 +241,6 @@ public static Predicate<Family> predicate(Pointer surface) {
 Finally we could select based on the _device features_ required by our application:
 
 ```java
-public VkPhysicalDeviceProperties properties() {
-    final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-    instance.library().vkGetPhysicalDeviceProperties(handle, props);
-    return props;
-}
-
 public VkPhysicalDeviceFeatures features() {
     final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
     instance.library().vkGetPhysicalDeviceFeatures(handle, features);
@@ -244,7 +248,7 @@ public VkPhysicalDeviceFeatures features() {
 }
 ```
 
-We will not be using any of these properties or features for some time so we ignore this option until it is needed.
+We will not be using any device features for some time so we ignore this option until it is needed.
 
 ---
 

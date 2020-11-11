@@ -164,9 +164,9 @@ public interface Projection {
     Matrix matrix(float near, float far, Dimensions dim);
 
     /**
-     * Perspective projection with a 90 degree FOV.
+     * Perspective projection with a 60 degree FOV.
      */
-    Projection DEFAULT = perspective(MathsUtil.HALF_PI);
+    Projection DEFAULT = perspective(MathsUtil.toRadians(60));
 
     /**
      * Creates a perspective projection.
@@ -716,7 +716,7 @@ public class CubeBuilder {
 }
 ```
 
-The build method create two _triangles_ for each face of the cube:
+The build method creates two _triangles_ for each face of the cube:
 
 ```java
 private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
@@ -767,9 +767,9 @@ private static final int[][] FACES = {
 };
 ```
 
-The two triangles are specified by indices into each face with alternate winding orders (exactly the same as we did for the quad in the previous chapter):
+The two triangles for each face are specified by indices with alternate winding orders (exactly the same as we did for the quad in the previous chapter):
 
-```
+```java
 private static final int[] LEFT =  {0, 1, 2};
 private static final int[] RIGHT = {2, 1, 3};
 ```

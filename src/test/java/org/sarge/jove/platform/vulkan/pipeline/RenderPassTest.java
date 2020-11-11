@@ -97,6 +97,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 		}
 	}
 
+	// TODO - split this up
+
 	@Nested
 	class BuilderTests {
 		private RenderPass.Builder builder;
@@ -201,6 +203,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 				.build();
 		}
 
+		// TODO - split this up
+
 		@Test
 		void buildEmptyAttachments() {
 			assertThrows(IllegalArgumentException.class, "At least one attachment must be specified", () -> builder.build());
@@ -211,6 +215,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 			add();
 			assertThrows(IllegalArgumentException.class, "At least one sub-pass must be specified", () -> builder.build());
 		}
+
+		// TODO - split this up
 
 		@Test
 		void attachmentRequiresFormat() {
@@ -228,6 +234,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, "Invalid final layout", () -> attachment.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PREINITIALIZED));
 		}
 
+		// TODO - split this up
+
 		@Test
 		void subpassEmpty() {
 			assertThrows(IllegalArgumentException.class, "No attachments specified", () -> builder.subpass().build());
@@ -243,6 +251,14 @@ public class RenderPassTest extends AbstractVulkanTest {
 			add();
 			assertThrows(IllegalArgumentException.class, "Invalid attachment layout", () -> builder.subpass().colour(0, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED).build());
 		}
+
+		@Test
+		void subpassDuplicateDepthAttachment() {
+			add();
+			assertThrows(IllegalArgumentException.class, "Depth buffer already configured", () -> builder.subpass().depth(0).depth(0));
+		}
+
+		// TODO - split this up
 
 		@Test
 		void dependencyInvalidSubpass() {

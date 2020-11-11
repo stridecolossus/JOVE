@@ -4,7 +4,7 @@ title: The Graphics Pipeline
 
 ## Overview
 
-The _graphics pipeline_ specifies the various _stages_ executed by the hardware to render a fragment.
+The _graphics pipeline_ configures the various _stages_ executed by the hardware to render a fragment.
 
 A pipeline stage is either a configurable _fixed function_ or a programmable stage implemented by a _shader_ module.
 
@@ -379,7 +379,7 @@ public class Shader extends AbstractVulkanObject {
 A shader is loaded from an input stream using a static factory method:
 
 ```java
-public static Shader loader(LogicalDevice dev, InputStream in) throws IOException {
+public static Shader load(LogicalDevice dev, InputStream in) throws IOException {
     final byte[] code = in.readAllBytes();
     return create(dev, code);
 }
@@ -395,27 +395,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
      * Entry for a shader stage.
      */
     private static class Entry {
-        private VkShaderStageFlag stage;
-        private Shader shader;
-        private String name = "main";
-
-        /**
-         * Validates this shader stage.
-         */
-        private void validate() {
-            if(stage == null) throw new IllegalArgumentException("Shader stage not specified");
-            if(shader == null) throw new IllegalArgumentException("No shader specified: " + stage);
-        }
-
-        /**
-         * Populates the shader stage descriptor.
-         * @param info Shader stage descriptor
-         */
-        private void populate(VkPipelineShaderStageCreateInfo info) {
-            info.stage = stage;
-            info.module = shader.handle();
-            info.pName = name;
-        }
+        ...
     }
 
     private final Map<VkShaderStageFlag, Entry> shaders = new HashMap<>();
@@ -434,7 +414,26 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 }
 ```
 
-An `Entry` is a transient record specifying a shader stage.
+An `Entry` is a transient record that specifies a configured shader stage:
+
+```java
+private static class Entry {
+    private VkShaderStageFlag stage;
+    private Shader shader;
+    private String name = "main";
+
+    private void validate() {
+        if(stage == null) throw new IllegalArgumentException("Shader stage not specified");
+        if(shader == null) throw new IllegalArgumentException("No shader specified: " + stage);
+    }
+
+    private void populate(VkPipelineShaderStageCreateInfo info) {
+        info.stage = stage;
+        info.module = shader.handle();
+        info.pName = name;
+    }
+}
+```
 
 The builder has a reference to the _current_ entry which is populated in the various setter methods:
 
@@ -499,8 +498,8 @@ layout(location = 0) out vec4 fragColour;
 
 vec2 positions[3] = vec2[](
     vec2(0.0, -0.5),
-    vec2(0.5, 0.5),
-    vec2(-0.5, 0.5)
+    vec2(-0.5, 0.5),
+    vec2(0.5, 0.5)
 );
 
 vec3 colours[3] = vec3[](
@@ -544,15 +543,13 @@ We can now load the shader modules:
 
 ```java
 // Load shaders
-final Shader vert = loader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.vert"));
-final Shader frag = loader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.frag"));
+final Shader vert = Shader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.vert"));
+final Shader frag = Shader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.frag"));
 ```
 
 And finally configure the pipeline:
 
 ```java
-final Rectangle extent = new Rectangle(chain.extents());
-
 // Create pipeline layout
 final Pipeline.Layout layout = new Pipeline.Layout.Builder().build();
 
@@ -560,7 +557,9 @@ final Pipeline.Layout layout = new Pipeline.Layout.Builder().build();
 final Pipeline pipeline = new Pipeline.Builder(dev)
     .layout(layout)
     .pass(pass)
-    .viewport(extent)
+    .viewport()
+        .viewport(new Rectangle(chain.extents()))
+        .build()
     .shader()
         .stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
         .shader(vert)

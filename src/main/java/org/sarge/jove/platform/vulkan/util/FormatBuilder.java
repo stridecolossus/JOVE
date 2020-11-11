@@ -156,6 +156,7 @@ public class FormatBuilder {
 			.toString();
 
 		// Lookup format
-		return VkFormat.valueOf(format.toString());
+		return VkFormat.valueOf(format);
 	}
 }
+

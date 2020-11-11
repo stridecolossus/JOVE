@@ -478,7 +478,7 @@ System.out.println(event + " -> " + pos);
 //		bindings.bind(Button.of("A"), strafe.apply(+1));
 //		bindings.bind(Button.of("S"), () -> cam.move(-1));
 //		bindings.bind(Button.of("D"), strafe.apply(-1));
-		bindings.bind(Button.of("ESCAPE"), () -> running.set(false));
+		bindings.bind(Button.of("ESCAPE"), Action.of(() -> running.set(false)));
 
 //		final MousePositionListener listener = (ptr, x, y) -> {
 //			final float dx = (float) x / rect.width() * MathsUtil.PI;
@@ -503,7 +503,7 @@ System.out.println(event + " -> " + pos);
 
 			final int idx = chain.acquire(null, null);
 
-			new Work.Builder()
+			new Work.Builder(presentQueue)
 					.add(commands.get(idx))
 //					.wait(ready)
 //					.signal(finished)

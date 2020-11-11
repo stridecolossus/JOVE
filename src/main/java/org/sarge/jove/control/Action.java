@@ -27,6 +27,14 @@ import org.sarge.jove.util.Check;
  */
 @FunctionalInterface
 public interface Action<T extends InputEvent> extends Consumer<T> {
+
+
+	static <T extends InputEvent> Action<T> of(Runnable code) {
+		return ignored -> code.run();
+	}
+
+
+
 	/**
 	 * An <i>action bindings</i> maps input events to actions.
 	 */

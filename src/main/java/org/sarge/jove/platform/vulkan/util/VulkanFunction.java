@@ -12,7 +12,7 @@ import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
 /**
- * A <i>vulkan function</i> abstracts an API method used to retrieve a Vulkan array via the <i>two invocations</i> approach.
+ * A <i>vulkan function</i> abstracts an API method used to retrieve a Vulkan array via the <i>two-stage invocation</i> approach.
  * <p>
  * The API method is invoked <b>twice</b>:
  * <ol>
@@ -24,7 +24,7 @@ import com.sun.jna.ptr.IntByReference;
 @FunctionalInterface
 public interface VulkanFunction<T> {
 	/**
-	 * Vulkan API method that retrieves an array of the given type.
+	 * Vulkan API method that retrieves an array of the given type using the <i>two-stage invocation</i> approach.
 	 * @param lib		Vulkan library
 	 * @param count 	Return-by-reference count of the number of array elements
 	 * @param array 	Array instance or <code>null</code> to retrieve size of the array
@@ -33,7 +33,7 @@ public interface VulkanFunction<T> {
 	int enumerate(VulkanLibrary lib, IntByReference count, T array);
 
 	/**
-	 * Adapter for a function that enumerates an array.
+	 * Adapter for a function that retrieves an arbitrarily typed array using the <i>two-stage invocation</i> approach.
 	 * @param <T> Array type
 	 * @param func			Underlying function
 	 * @param lib			Vulkan API
@@ -58,7 +58,7 @@ public interface VulkanFunction<T> {
 	}
 
 	/**
-	 * Adapter for a function that enumerates an array of JNA structures.
+	 * Adapter for a function that retrieves an array of JNA structures using the <i>two-stage invocation</i> approach.
 	 * <p>
 	 * Usage:
 	 * <pre>

@@ -178,16 +178,18 @@ We can now start the demo application for this phase (based on the triangle demo
 // Build triangle vertices
 final Vertex[] vertices = {
     new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-    new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 1,  0, 1)).build(),
-    new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
+    new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
+    new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 0,  1, 1)).build(),
 };
 
 // Define vertex layout
-final Vertex.Layout layout = new Vertex.Layout(List.of(Vertex.Component.POSITION, Vertex.Component.COLOUR));
+final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COLOUR);
 
 // Create interleaved buffer
 // TODO - helper
-final ByteBuffer bb = ByteBuffer.allocate(vertices.length * layout.size() * Float.BYTES).order(ByteOrder.nativeOrder());
+final ByteBuffer bb = ByteBuffer
+    .allocate(vertices.length * layout.size() * Float.BYTES)
+    .order(ByteOrder.nativeOrder());
 
 // Buffer vertices
 for(Vertex v : vertices) {
@@ -377,7 +379,7 @@ We bring all this together in the demo to copy the triangle vertex data to the h
 ```java
 // Create staging VBO
 final VertexBuffer staging = new VertexBuffer.Builder(dev)
-    .length(len)
+    .length(bb.capacity())
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -395,7 +397,7 @@ final VertexBuffer dest = new VertexBuffer.Builder(dev)
     .build();
 
 // Copy
-final Queue queue = dev.queue(transfer);
+final Queue queue = dev.queue(transferFamily);
 final Command.Pool copyPool = Command.Pool.create(queue);
 final Command.Buffer copyBuffer = Command.once(copyPool, staging.copy(dest));
 new Work.Builder().add(copyBuffer).build().submit();
@@ -849,7 +851,7 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
 
 The last change we need to make is a new command to bind the vertex buffer in the rendering sequence (before the draw command):
 
-```
+```java
 public Command bind() {
     final PointerArray array = Handle.toPointerArray(List.of(this));
     return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});

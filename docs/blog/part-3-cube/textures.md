@@ -67,9 +67,14 @@ public interface ImageData {
 ```
 
 Notes:
+
 - We may need more information down the line but this is sufficient for this stage of development.
-- ImageData is not a very good name for this class but we are running out of synonyms.
+
+- Images as treated as static data, i.e. we are not planning to implement any image processing and assume all image data is pre-processed externally.
+
 - We assume all images are represented as bytes.
+
+- ImageData is not a very good name for this class but we are running out of synonyms.
 
 The process of loading an image is:
 1. Load the AWT buffered image using `ImageIO`.
@@ -415,47 +420,7 @@ public class Barrier implements ImmediateCommand {
 }
 ```
 
-A barrier is used to synchronise access to images, buffers and memory objects. 
-For the moment we only need the image barrier part of this object which is implemented as a nested local class:
-
-```java
-public class ImageBarrierBuilder {
-    private final Image image;
-    private final Set<VkAccessFlag> src = new HashSet<>();
-    private final Set<VkAccessFlag> dest = new HashSet<>();
-    private VkImageLayout oldLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
-    private VkImageLayout newLayout;
-    private final ImageSubResourceBuilder<ImageBarrierBuilder> subresource = new ImageSubResourceBuilder<>(this);
-
-    ...
-
-    public Builder build() {
-        // Validate
-        if(newLayout == null) throw new IllegalArgumentException("New layout not specified");
-        if(newLayout == oldLayout) throw new IllegalArgumentException("Previous and next layouts cannot be the same");
-
-        // Create descriptor
-        final VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
-        barrier.image = image.handle();
-        barrier.subresourceRange = subresource.range();
-        barrier.srcAccessMask = IntegerEnumeration.mask(src);
-        barrier.dstAccessMask = IntegerEnumeration.mask(dest);
-        barrier.oldLayout = oldLayout;
-        barrier.newLayout = newLayout;
-
-        // TODO
-        barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
-        barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;
-
-        // Add barrier
-        images.add(barrier);
-
-        return Builder.this;
-    }
-}
-```
-
-For our demo we will be executing the barrier command immediately and waiting for it to complete.  For convenience we introduce the `ImmediateCommand` adapter to run one-time commands (building on the work class we introduced previously):
+For our demo we will be executing this command immediately and waiting for it to complete.  For convenience we introduce the `ImmediateCommand` adapter to run one-time commands (building on the work class we introduced previously):
 
 ```java
 abstract class ImmediateCommand implements Command {
@@ -470,21 +435,104 @@ abstract class ImmediateCommand implements Command {
 
         try {
             // Perform work
-            final Work work = new Builder().add(buffer).build();
+            final Work work = new Builder(pool.queue()).add(buffer).build();
             work.submit();
-
-            // Wait for work to complete
-            if(wait) {
-                buffer.pool().queue().waitIdle();
-            }
         }
         finally {
             // Release
             buffer.free();
         }
+
+        // Wait for work to complete
+        if(wait) {
+            pool.queue().waitIdle();
+        }
     }
 }
 ```
+
+A barrier is used to synchronise access to images, buffers and memory objects.   For the moment we only need the image barrier part of this object which is implemented as a nested local class:
+
+```java
+public class ImageBarrierBuilder {
+    private final Image image;
+    private final Set<VkAccessFlag> src = new HashSet<>();
+    private final Set<VkAccessFlag> dest = new HashSet<>();
+    private VkImageLayout oldLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+    private VkImageLayout newLayout;
+    private final ImageSubResourceBuilder<ImageBarrierBuilder> subresource = new ImageSubResourceBuilder<>(this);
+
+    ...
+
+    private void populate(VkImageMemoryBarrier barrier) {
+        // Populate image barrier descriptor
+        barrier.image = image.handle();
+        barrier.srcAccessMask = IntegerEnumeration.mask(src);
+        barrier.dstAccessMask = IntegerEnumeration.mask(dest);
+        barrier.oldLayout = oldLayout;
+        barrier.newLayout = newLayout;
+
+        // Populate sub-resource range descriptor
+        subresource.populate(barrier.subresourceRange);
+
+        // TODO
+        barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
+        barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;
+    }
+
+    public Builder build() {
+        // Validate
+        if(newLayout == null) throw new IllegalArgumentException("New layout not specified");
+        if(newLayout == oldLayout) throw new IllegalArgumentException("Previous and next layouts cannot be the same");
+
+        // Add barrier
+        images.add(this);
+
+        return Builder.this;
+    }
+}
+```
+
+### Image sub-resources
+
+The barrier also contains a configurable _image sub-resource range_ which we implement as another nested builder:
+
+```java
+public class ImageSubResourceBuilder<T> {
+    private final T parent;
+    private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+    private int mipLevel;
+    private int levelCount = 1;
+    private int baseArrayLayer;
+    private int layerCount = 1;
+
+    /**
+     * Constructor.
+     * @param parent Parent builder
+     */
+    public ImageSubResourceBuilder(T parent) {
+        this.parent = notNull(parent);
+    }
+    
+    ...
+    
+    public void populate(VkImageSubresourceRange range) {
+        range.aspectMask = IntegerEnumeration.mask(aspects);
+        range.baseMipLevel = mipLevel;
+        range.levelCount = levelCount;
+        range.baseArrayLayer = baseArrayLayer;
+        range.layerCount = layerCount;
+    }
+
+    public T build() {
+        return parent;
+    }
+}
+```
+
+Image sub-resources are used in several areas so this nested builder has a generic _parent_ returned in its `build()` method (similar to the approach we took when constructing the pipeline).
+
+A slight irritation that only came to light during development of the copy command (below) is that there are two slightly different Vulkan descriptors for image sub-resources.  We bodge the sub-resource builder to support both (i.e. overloaded `populate()` methods) rather than creating two separate builders or some overly complex class-hierarchy.
 
 ### Image Copying
 
@@ -519,8 +567,6 @@ public class ImageCopyCommand extends ImmediateCommand {
 ```
 
 The `invert()` method converts this command to copy from the texture to the buffer, we won't be using this for some time but it's trivial to implement while we're at it.
-
-A slight irritation that only came to light during development of the copy command is that there are two slightly different Vulkan descriptors for image sub-resources.  We bodge the sub-resource builder to support both rather than creating two separate builders or some overly complex class-hierarchy.
 
 ### Integration #2
 
@@ -571,17 +617,26 @@ final Vertex[] vertices = {
 };
 ```
 
-Notes:
+The default drawing primitive is a _triangle strip_ which assumes vertices adhere to the following pattern:
 
-- The Y direction in Vulkan is down.
+```
+0---2---4-- etc
+|   |   |
+1---3---5
+```
 
-- We change the number of vertices in the drawing command.
+The first triangle is comprised of the first three vertices with each subsequent triangle incrementing the 'index' by one, giving us 012, 123, 234, etc.
 
-- The default drawing primitive is a _triangle strip_ which has alternating winding orders.  The quad consists of two triangles:
-    1. counter-clockwise with vertices 012
-    2. and clockwise 123.
+A triangle strip has an _alternating_ winding order (the default order is counter-clockwise) which results in the following:
 
-This should result in something like the following:
+triangle | vertices | order
+-------- | -------- | -----
+1        | 012      | counter-clockwise
+2        | 123      | clockwise
+3        | 234      | counter-clockwise
+etc
+
+After changing the number of vertices to 4 in the drawing command we should see something like the following:
 
 ![Textured Quad](quad.png)
 
@@ -937,6 +992,8 @@ public synchronized void destroy() {
     sets.clear();
 }
 ```
+
+Note that descriptor sets are managed by the pool and are automatically released when the pool is destroyed.
 
 To construct a pool we provide a builder:
 

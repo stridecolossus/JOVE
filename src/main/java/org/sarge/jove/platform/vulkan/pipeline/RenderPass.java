@@ -303,11 +303,13 @@ public class RenderPass extends AbstractVulkanObject {
 			}
 
 			/**
-			 * Adds a depth-buffer attachment.
+			 * Adds the depth-buffer attachment.
 			 * @param index Attachment index
+			 * @throws IllegalArgumentException if the depth buffer has already been configured
 			 */
 			public SubPassBuilder depth(int index) {
-				this.depth = new Reference(index, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+				if(depth != null) throw new IllegalArgumentException("Depth buffer already configured");
+				depth = new Reference(index, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 				return this;
 			}
 

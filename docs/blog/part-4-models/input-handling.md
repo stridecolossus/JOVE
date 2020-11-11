@@ -4,7 +4,7 @@ title: Input Handling
 
 ## Overview
 
-In this chapter we take a break from Vulkan and add support for a camera and input event processing based on the event handling functionality provided by GLFW.
+In this chapter we will be taking a break from Vulkan to add support for a camera and input event processing based on the event handling functionality provided by GLFW.
 
 There are several ways we could have gone about implementing event handling, we also discuss the rationale for the approach we have taken and illustrate some of the challenges we faced.
 

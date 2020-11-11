@@ -400,7 +400,7 @@ public class RotatingCubeDemo {
 
 			final int index = chain.acquire(null, null);
 
-			new Work.Builder()
+			new Work.Builder(presentQueue)
 					.add(commands.get(index))
 //					.wait(ready)
 //					.signal(finished)

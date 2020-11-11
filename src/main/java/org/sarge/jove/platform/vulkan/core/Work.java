@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -46,9 +47,10 @@ public interface Work {
 		}
 
 		/**
-		 * Submits this command to the given pool.
+		 * Submits this one-time command to the given pool.
 		 * @param pool Command pool
 		 * @param wait Whether to wait for completion
+		 * @see Command#once(Command.Pool, Command)
 		 */
 		public void submit(Command.Pool pool, boolean wait) {
 			// Allocate one-off buffer
@@ -56,7 +58,7 @@ public interface Work {
 
 			// Perform work
 			try {
-				final Work work = new Builder().add(buffer).build();
+				final Work work = new Builder(pool.queue()).add(buffer).build();
 				work.submit();
 			}
 			finally {
@@ -70,8 +72,9 @@ public interface Work {
 		}
 
 		/**
-		 * Submits this command to the given pool.
+		 * Submits this one-time command to the given pool.
 		 * @param pool Command pool
+		 * @see Command#once(Command.Pool, Command)
 		 */
 		public void submit(Command.Pool pool) {
 			submit(pool, false);
@@ -82,30 +85,33 @@ public interface Work {
 	 * Builder for work.
 	 */
 	public static class Builder {
+		private final Queue queue;
 		private final List<Command.Buffer> buffers = new ArrayList<>();
 		private final Set<Semaphore> wait = new HashSet<>();
 		private final Set<Semaphore> signal = new HashSet<>();
 		private final Set<VkPipelineStageFlag> stages = new HashSet<>();
-		private Queue queue;
+
+		/**
+		 * Constructor.
+		 * @param queue Submission queue
+		 */
+		public Builder(Queue queue) {
+			this.queue = notNull(queue);
+		}
 
 		/**
 		 * Adds a command buffer to be submitted.
 		 * @param buffer Command buffer
 		 * @throws IllegalStateException if the command buffer has not been recorded
-		 * @throws IllegalArgumentException if all added command buffers do not share the same queue
+		 * @throws IllegalArgumentException if any buffer does not match the queue family
 		 */
 		public Builder add(Command.Buffer buffer) {
 			// Check buffer has been recorded
 			if(!buffer.isReady()) throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
 
-			// Determine queue for this work
-			if(buffers.isEmpty()) {
-				queue = buffer.pool().queue();
-			}
-			else {
-				if(queue != buffer.pool().queue()) {
-					throw new IllegalArgumentException(String.format("Invalid queue for command buffer: queue=%s buffer=%s", queue, buffer));
-				}
+			// Validate queue
+			if(queue.family() != buffer.pool().queue().family()) {
+				throw new IllegalArgumentException(String.format("Invalid queue for command buffer: queue=%s buffer=%s", queue, buffer));
 			}
 
 			// Add buffer to this work
@@ -169,6 +175,7 @@ public interface Work {
 			// Create work
 			return () -> {
 				final VulkanLibrary lib = queue.device().library();
+				// TODO - multiple batches
 				check(lib.vkQueueSubmit(queue.handle(), 1, new VkSubmitInfo[]{info}, null)); // TODO - fence
 			};
 		}

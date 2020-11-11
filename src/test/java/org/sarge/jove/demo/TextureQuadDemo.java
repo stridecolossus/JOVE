@@ -296,9 +296,6 @@ public class TextureQuadDemo {
 					.binding(layout)
 					.build()
 				.viewport(new Rectangle(chain.extents()))
-				.rasterizer()
-					.cullMode(VkCullModeFlag.VK_CULL_MODE_NONE)
-					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)
@@ -342,7 +339,7 @@ public class TextureQuadDemo {
 		for(int n = 0; n < 25; ++n) {
 			final int index = chain.acquire(null, null);
 
-			new Work.Builder()
+			new Work.Builder(presentQueue)
 					.add(commands.get(index))
 //					.wait(ready)
 //					.signal(finished)

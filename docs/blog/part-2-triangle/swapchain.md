@@ -177,21 +177,12 @@ The swapchain is highly configurable so again we will create a builder to specif
 
 ```java
 public static class Builder {
-    // Dependencies
     private final Surface surface;
     private final LogicalDevice dev;
-
-    // Properties
     private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
-    private ClearValue clear = ClearValue.COLOUR;
-
-    // Surface constraints
     private final VkSurfaceCapabilitiesKHR caps;
     private final Collection<VkSurfaceFormatKHR> formats;
 
-    /**
-     * Constructor.
-     */
     public Builder(Surface surface, LogicalDevice dev) {
         this.surface = notNull(surface);
         this.dev = notNull(dev);
@@ -394,7 +385,7 @@ public VkFormat build() {
         .toString();
 
     // Lookup format
-    return VkFormat.valueOf(format.toString());
+    return VkFormat.valueOf(format);
 }
 ```
 
@@ -521,7 +512,7 @@ public class AttachmentBuilder {
 }
 ```
 
-The idea is that the parent builder will allocate the descriptor that is initialised by the `populate()` method.
+The parent builder will allocate the attachment and sub-pass descriptors that are initialised by the `populate()` method.
 
 ### Sub-Passes
 
@@ -560,7 +551,7 @@ public class SubPassBuilder {
     }
 
     /**
-     * Adds a depth-buffer attachment.
+     * Adds the depth-buffer attachment.
      * @param index Attachment index
      */
     public SubPassBuilder depth(int index) {

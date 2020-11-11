@@ -43,7 +43,6 @@ We start with an outline class for commands, buffers and pools:
 ```java
 /**
  * A <i>command</i> encapsulates a piece of work performed on a {@link Command.Buffer}.
- * @author Sarge
  */
 @FunctionalInterface
 public interface Command {
@@ -85,7 +84,7 @@ class Pool extends AbstractVulkanObject {
         // Init pool descriptor
         final VkCommandPoolCreateInfo info = new VkCommandPoolCreateInfo();
         info.queueFamilyIndex = queue.family().index();
-        info.flags = IntegerEnumeration.mask(Arrays.asList(flags));
+        info.flags = IntegerEnumeration.mask(flags);
 
         // Create pool
         final LogicalDevice dev = queue.device();
@@ -394,10 +393,9 @@ Later we will factor this out to a factory when we address vertex buffers and mo
 ### Submitting Work
 
 Submitting a command buffer to a work queue involves populating a descriptor of the work to be performed comprising the command buffers to execute and various synchronisation declarations.
-
 We will ignore synchronisation until a future chapter as it is not needed for the triangle demo.
 
-We define a work class with the obligatory builder:
+We define a _work_ class with the obligatory builder:
 
 ```java
 @FunctionalInterface
@@ -408,8 +406,8 @@ public interface Work {
     void submit();
 
     public static class Builder {
+        private final Queue queue;
         private final List<Command.Buffer> buffers = new ArrayList<>();
-        private Queue queue;
     }
 }
 ```
@@ -418,14 +416,9 @@ A command buffer is added to the work submission using the following method:
 
 ```java
 public Builder add(Command.Buffer buffer) {
-    // Determine queue for this work
-    if(buffers.isEmpty()) {
-        queue = buffer.pool().queue();
-    }
-    else {
-        if(queue != buffer.pool().queue()) {
-            throw new IllegalArgumentException(...);
-        }
+    // Validate queue
+    if(queue.family() != buffer.pool().queue().family()) {
+        throw new IllegalArgumentException(...);
     }
 
     // Add buffer to this work
@@ -435,7 +428,7 @@ public Builder add(Command.Buffer buffer) {
 }
 ```
 
-The submission descriptor allows multiple command buffers but the API only submits to **one** queue - we assume that trying to submit buffers from different pools (and hence different queues) is invalid and add some code to check for this.  If this assumption turns out to be incorrect we can refactor accordingly.
+Note that each submission must be allocated from the same queue family.
 
 Finally we populate the submission descriptor and invoke the relevant API method:
 
