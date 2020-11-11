@@ -634,7 +634,7 @@ triangle | vertices | order
 1        | 012      | counter-clockwise
 2        | 123      | clockwise
 3        | 234      | counter-clockwise
-etc
+etc      |          |
 
 After changing the number of vertices to 4 in the drawing command we should see something like the following:
 

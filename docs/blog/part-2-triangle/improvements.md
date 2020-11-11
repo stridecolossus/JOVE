@@ -124,9 +124,11 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
         void destroy(Handle dev, Handle handle, Handle allocator);
     }
 
-    private Handle handle;
+    private final Handle handle;
     private final LogicalDevice dev;
     private final Destructor destructor;
+    
+    private boolean destroyed;
 
     /**
      * Constructor.
@@ -156,14 +158,14 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
      * @return Whether this object has been destroyed
      */
     public boolean isDestroyed() {
-        return handle == null;
+        return destroyed;
     }
 
     @Override
     public synchronized void destroy() {
-        if(isDestroyed()) throw new IllegalStateException("Object has already been destroyed: " + this);
+        if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
         destructor.destroy(dev.handle(), handle, null);
-        handle = null;
+        destroyed = true;
     }
 }
 ```
