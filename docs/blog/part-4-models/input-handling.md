@@ -71,7 +71,7 @@ boolean     | boolean               | n/a                           | window ent
 
 The _range_ is the possible number of events of a given type.
 
-Our initial design will consists of the following components:
+Our initial design will consist of the following components:
 
 - an _event type_ for each of the above.
 
@@ -471,7 +471,7 @@ NAME-PRESS-SHIFT-CONTROL
 
 #### Mouse
 
-The mouse pointer is a _position_ event:
+The mouse pointer generates position events:
 
 ```java
 public Source<Position.Event> pointer() {
@@ -501,7 +501,7 @@ public Source<Position.Event> pointer() {
 }
 ```
 
-Finally we implement the mouse buttons:
+Finally we implement the mouse buttons source:
 
 ```java
 public Source<Button> buttons() {
@@ -579,7 +579,7 @@ public class KeyboardDevice implements InputEvent.Device {
 }
 ```
 
-However GLFW returns key **codes** that are defined as macros in the header (mapped to a US keyboard layout).  We _could_ simply replicate this as an enumeration but that would require painful manual formatting - instead we opt to load the keys from a text file which requires minimal translation and a simple loader class:
+However GLFW returns key **codes** that are defined as macros in the header (mapped to a US keyboard layout).  We _could_ simply replicate this as an enumeration but that would require tedious manual text monkeying - instead we opt to load the keys from a text file which requires trivial formatting and a simple loader class:
 
 ```java
 /**
@@ -708,7 +708,7 @@ An event is bound as follows:
  */
 public void bind(Type type, Handler action) {
     Check.notNull(type);
-    if(bindings.containsKey(type)) throw new IllegalStateException("Event is already bound: " + type);
+    if(bindings.containsKey(type)) throw new IllegalStateException(...);
     actions.computeIfAbsent(action, ignored -> new HashSet<>()).add(type);
     bindings.put(type, action);
 }
@@ -724,7 +724,7 @@ Bindings can be queried by the following accessors:
  */
 private Set<Type> get(Handler action) {
     final var bindings = actions.get(action);
-    if(bindings == null) throw new IllegalArgumentException("Action not present: " + action);
+    if(bindings == null) throw new IllegalArgumentException(...);
     return bindings;
 }
 
@@ -907,31 +907,20 @@ TODO - fails at poles?
 
 ### Camera Controllers
 
+The camera class is a relatively simple model, to implement richer functionality we implement a _camera controller_ action that handles the relevant input events.
+
+An _orbital_ (or arcball camera) is implemented by the following controller:
+
 orbital
 mouselook
 
 ### Global Flip
 
-Up until this point we have just dealt with the fact that the Y direction in Vulkan is **down** which is inverted compared to OpenGL and just about every other 3D framework.
+Up until this point we have just had to deal with the fact that the Y direction in Vulkan is **down** which is inverted compared to OpenGL and just about every other 3D framework.
 
-However we came across a solution [^invert] that globally flips the Vulkan viewport by specifying a 'negative' viewport rectangle.
+However we came across a global solution[^invert] that handily flips the Vulkan viewport by specifying a 'negative' viewport rectangle.
 
-We add a _flip_ setting to the pipeline stage builder for the viewport:
-
-```java
-public class ViewportStageBuilder {
-    private boolean flip;
-
-    ...
-
-    public ViewportStageBuilder flip(boolean flip) {
-        this.flip = flip;
-        return this;
-    }
-}
-```
-
-and apply the inverse viewport when we populate the pipeline descriptor:
+We add a _flip_ setting to the `ViewportStageBuilder` which is applied when we populate the viewport descriptor:
 
 ```java
 private void populate(VkViewport viewport) {
@@ -982,4 +971,4 @@ common
 
 ## References
 
-[^invert] [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
+[^invert]: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)

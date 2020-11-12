@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -18,7 +17,6 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.control.Bindings;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent.Handler;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -42,6 +40,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Camera;
+import org.sarge.jove.scene.Camera.OrbitalController;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.MathsUtil;
@@ -409,6 +408,8 @@ public class ModelDemo {
 		cam.move(new Point(0, 0.5f, -2));
 
 		// http://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
+
+		/*
 		final AtomicInteger r = new AtomicInteger(3);
 		final Handler controller = event -> {
 			final float dx = event.x() / chain.extents().width() * MathsUtil.TWO_PI;
@@ -420,16 +421,21 @@ public class ModelDemo {
 		final Handler zoom = event -> {
 			r.set(r.get() + (int) event.y());
 		};
+		*/
 
 		final AtomicBoolean running = new AtomicBoolean(true);
 
 		final Bindings bindings = new Bindings();
 		window.keyboard().enable(bindings);
 
+		final OrbitalController controller = cam.orbital(chain.extents());
+		controller.radius(3);
+
 		final MouseDevice mouse = window.mouse();
 		mouse.buttons().enable(bindings);
-		mouse.pointer().enable(controller);
-		mouse.wheel().enable(zoom);
+		mouse.pointer().enable(pos -> controller.update(pos.x(), pos.y()));
+		mouse.wheel().enable(zoom -> controller.zoom(zoom.y()));
+		//mouse.wheel().enable(zoom);
 //		mouse.wheel().enable(System.out::println);
 
 //		bindings.bind(Button.of("Button-1"), new MoveAction(+1));
@@ -446,7 +452,7 @@ public class ModelDemo {
 		while(running.get()) {
 			desktop.poll();
 
-			final Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix); // .multiply(rot).multiply(mat);
+			final Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix);
 			uniform.load(matrix);
 
 			final int idx = chain.acquire(null, null);
