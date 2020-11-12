@@ -8,7 +8,7 @@ In this chapter we will be taking a break from Vulkan to add support for input e
 
 There are several ways we could have gone about implementing event handling and we did try several different approaches.
 
-We discuss the rationale for our design as it is covered and illustrate some of the challenges we faced.
+We discuss the rationale for the design we eventually ended up with and illustrate some of the challenges we faced.
 
 ---
 
@@ -18,17 +18,17 @@ We discuss the rationale for our design as it is covered and illustrate some of 
 
 There are a number of differing types of events provided by GLFW that we will support:
 
-type                    | arguments                 | device
-----                    | ---------                 | ------
-keyboard                | key, press/release        | keyboard
-mouse position          | x, y                      | mouse
-mouse button            | button, press/release     | mouse
-mouse wheel             | value                     | mouse
-window enter/leave      | boolean                   | window
-window focus            | boolean                   | window
-controller button       | button, press/release     | controller
-controller axis         | axis, value               | controller
-controller hat          | hat, press/release        | controller
+type                    | arguments                     | device
+----                    | ---------                     | ------
+keyboard                | key, action, modifiers        | keyboard
+mouse position          | x, y                          | mouse
+mouse button            | button, actions, modifiers    | mouse
+mouse wheel             | value                         | mouse
+window enter/leave      | boolean                       | window
+window focus            | boolean                       | window
+controller button       | button, press/release         | controller
+controller axis         | axis, value                   | controller
+controller hat          | hat, press/release            | controller
 
 (There are a few others but that should be enough for starters!)
 
@@ -65,7 +65,7 @@ After a bit of analysis we determine that the various events can be generalised 
 type        | arguments             | range                         | examples
 ----        | ---------             | -----                         | --------
 position    | x, y                  | n/a                           | mouse move, joystick, controller touch pad
-button      | id, press/release     | number of buttons or keys     | key, mouse button, controller button
+button      | id, action, modifiers | number of buttons or keys     | key, mouse button, controller button
 axis        | id, value             | number of axes                | mouse wheel, joystick throttle
 boolean     | boolean               | n/a                           | window enter/leave
 
@@ -180,7 +180,7 @@ Notes:
 
 - As usual we have omitted equality, hash and to-string methods.
 
-- All events are required to implement the X and Y coordinate even if they do not require them - this probably seems a pointless and not very object-orientated design, we did try other approaches using generic types, double-dispatching, etc. but the end result was always ugly (from both the perspective of the code and the client), at least this one is simple.
+- All events are required to implement the X and Y coordinate even if they do not require them - this probably seems a bit pointless and not a very object-orientated design.  We did try other approaches using generics, double-dispatch, etc. but the end result was always ugly (from both the perspective of the code and the client), at least this one is simple.
 
 - For the axis event type we return the same value for both coordinates.
 
@@ -224,9 +224,9 @@ interface Source<T extends InputEvent> {
 }
 ```
 
-The purpose of the event sources is to provide a mechanism such that an application could programatically query the types of events that are supported by a device.
+The purpose of the event sources is to provide a mechanism for an application to programatically query the types of events that are supported by a device.
 
-For the mouse wheel we create a _mouse device_ with a source for the wheel axis:
+For the purposes of this section we create a _mouse device_ with an event source for the wheel axis:
 
 ```java
 public class MouseDevice implements Device {
@@ -256,9 +256,13 @@ public class MouseDevice implements Device {
 }
 ```
 
-Note that for convenience we provide the explicit `wheel()` accessor as well as returning the wheel in the `sources()` method.
+Notes:
 
-The mouse wheel implementation is comprised of a single axis which is bound to a GLFW `MouseScrollListener` when enabled:
+- For convenience we provide the explicit `wheel()` accessor as well as returning the wheel in the `sources()` method.
+
+- We will cover the mouse buttons and pointer sources later.
+
+The mouse wheel source is comprised of a single axis which is bound to a GLFW `MouseScrollListener` when enabled:
 
 ```java
 public Source<Axis.Event> wheel() {
@@ -328,7 +332,7 @@ This satisfies our first three requirements (for the mouse wheel anyway) but doe
 
 ---
 
-## More Events
+## Other Events
 
 In this section we implement the remaining events and devices.
 
@@ -363,7 +367,7 @@ public final class Position implements Type {
 
 #### Buttons
 
-A _button event_ is slightly more complex in that it also has an _action_ and keyboard _modifiers_:
+A _button event_ is slightly more complex in that it also has an _action_ and a keyboard _modifiers_ mask:
 
 ```java
 public final class Button implements Type, InputEvent {
@@ -451,7 +455,17 @@ public String name() {
 }
 ```
 
-For example the `new Button("NAME", 1, 0x0001 | 0x0002)` has the name `NAME-PRESS-SHIFT-CONTROL`.
+For example:
+
+```java
+new Button("NAME", 1, 0x0001 | 0x0002)
+```
+
+has the name
+
+```
+NAME-PRESS-SHIFT-CONTROL
+```
 
 ### Devices
 
@@ -528,7 +542,11 @@ public Source<Button> buttons() {
 }
 ```
 
-Note that `types()` returns the pre-defined mouse buttons sized to the number available as determined by the `count()` method.
+Notes:
+
+- The `types()` accessor returns a pre-defined list of mouse buttons.
+
+- Surprisingly GLFW does not provide a method to query the number of available mouse buttons, for the moment we implement `count()` using an AWT helper.
 
 #### Keyboard
 
@@ -770,7 +788,7 @@ Hopefully the purpose of the event handling framework combined with the bindings
 
 - The event handling framework satisfies the requirements of encapsulating the underlying workings of GLFW and reducing the various events to a smaller, more generic subset.
 
-- The bindings class follows the separation of concerns principle by separating the event handling logic from the application actions (or at least helps).
+- The bindings class follows the separation of concerns principle by splitting the event handling logic from the application actions (or at least helps).
 
 - This functionality could be used (for example) to implement keyboard/controller bindings in a game without having to craft or refactor event handlers.
 
@@ -780,52 +798,26 @@ In the next section we will illustrate how the bindings can be used to control t
 
 ---
 
-## Camera Controller
+## Camera
 
-The second task for this chapter is to wrap up the view transform matrix into a camera class.
+The second task for this chapter is to wrap the view transformation matrix into a camera class.
 
-The camera has two properties that are essentially equivalent to the two matrices we crafted by hand in the previous chapter:
-- the _eye_ position
-- the view direction
+### Camera
+
+The camera is a model class representing the orientation and position of the viewer (accessors omitted):
 
 ```java
 public class Camera {
     private Point pos = Point.ORIGIN;
     private Vector dir = Vector.Z_AXIS.invert();
     private Vector up = Vector.Y_AXIS;
-
-    ...
-
-    public Matrix matrix() {
-    }
 }
 ```
 
-Notes:
-- We also introduce the _up_ direction.
-- The camera view direction is _into_ the screen (the negative-Z direction).
-
-The matrix is re-calculated whenever one of the camera properties is modified:
+The camera (or view transformation) matrix is calculated as follows:
 
 ```java
 public Matrix matrix() {
-    if(dirty) {
-        update();
-        dirty = false;
-    }
-    return matrix;
-}
-```
-
-The process of calculating the view transform matrix is:
-1. Determine the _right_ and _up_ axes of the camera.
-2. Create a rotation matrix comprised of the three camera axes.
-3. Multiply by the translation matrix.
-
-Following the tutorial our implementation uses a slight trick to inject the translation component into the final matrix without needing an intermediate multiplication:
-
-```java
-private void update() {
     // Determine right axis
     right = dir.cross(up).normalize();
 
@@ -833,56 +825,67 @@ private void update() {
     final Vector y = right.cross(dir).normalize();
 
     // Calculate translation component
-    final Vector trans = new Vector(right.dot(pos), y.dot(pos), -dir.dot(pos));
+    final Matrix trans = Matrix.translation(new Vector(pos).invert());
 
-    // Build camera matrix
-    matrix = new Matrix.Builder()
+    // Build rotation matrix
+    final Matrix rot = new Matrix.Builder()
         .identity()
         .row(0, right)
         .row(1, y)
-        .row(2, dir.invert())
-        .column(3, trans)
+        .row(2, dir)
         .build();
+
+    // Create camera matrix
+    matrix = rot.multiply(trans);
 }
 ```
 
-This is almost certainly a pointless 'optimisation' that we might actually remove at some point.
-
-TODO - or implement matrix * homogenous vector?
-
-We add the _dot product_ operator to the tuple class:
+The translation matrix is built using a new helper:
 
 ```java
-public final float dot(Tuple t) {
-    return x * t.x + y * t.y + z * t.z;
+public static Matrix translation(Vector vec) {
+    return new Builder().identity().column(3, vec).build();
 }
 ```
 
-and the _cross product_ to the vector class:
+Notes:
+
+- The translation component is inverted since we translate the scene in the opposite direction to the camera.
+
+- Under the hood the camera only updates the matrix when any of its properties have been modified.
+
+The camera class implements various convenience mutators to move the eye position:
 
 ```java
-public Vector cross(Vector vec) {
-    final float x = this.y * vec.z - this.z * vec.y;
-    final float y = this.z * vec.x - this.x * vec.z;
-    final float z = this.x * vec.y - this.y * vec.x;
-    return new Vector(x, y, z);
-}
-```
-
-Finally we also implement various mutators to the camera class to move the eye position and change the view direction.
-
-In particular we add the following method to point the camera at a given position:
-
-```java
-public void look(Point pt) {
-    dir = Vector.of(pt, pos).normalize();
+public void move(Point pos) {
+    this.pos = notNull(pos);
     dirty();
 }
+
+/**
+ * Moves the camera by the given vector.
+ * @param vec Movement vector
+ */
+public void move(Vector vec) {
+    pos = pos.add(vec);
+    dirty();
+}
+
+/**
+ * Moves the camera by the given distance in the current view direction.
+ * @param dist Distance to move
+ * @see #direction()
+ */
+public void move(float dist) {
+    move(dir.scale(-dist));
+}
+
+public void strafe(float dist) {
+    move(right.scale(dist));
+}
 ```
 
-TODO - invalid position -> zero length
-
-And another method to set the view direction given a yaw-pitch orientation:
+Finally we add the following method to point the camera in a direction specified by yaw-pitch angles:
 
 ```java
 /**
@@ -895,10 +898,88 @@ public void orientation(float yaw, float pitch) {
     final float x = MathsUtil.cos(yaw) * cos;
     final float y = MathsUtil.sin(pitch);
     final float z = MathsUtil.sin(-yaw) * cos;
-    dir = new Vector(x, y, z).normalize();
-    dirty();
+    final Vector dir = new Vector(x, y, z).normalize();
+    direction(dir);
 }
 ```
 
-TODO - fails at poles
+TODO - fails at poles?
 
+### Camera Controllers
+
+orbital
+mouselook
+
+### Global Flip
+
+Up until this point we have just dealt with the fact that the Y direction in Vulkan is **down** which is inverted compared to OpenGL and just about every other 3D framework.
+
+However we came across a solution [^invert] that globally flips the Vulkan viewport by specifying a 'negative' viewport rectangle.
+
+We add a _flip_ setting to the pipeline stage builder for the viewport:
+
+```java
+public class ViewportStageBuilder {
+    private boolean flip;
+
+    ...
+
+    public ViewportStageBuilder flip(boolean flip) {
+        this.flip = flip;
+        return this;
+    }
+}
+```
+
+and apply the inverse viewport when we populate the pipeline descriptor:
+
+```java
+private void populate(VkViewport viewport) {
+    if(flip) {
+        viewport.x = rect.x();
+        viewport.y = rect.y() + rect.height();
+        viewport.width = rect.width();
+        viewport.height = -rect.height();
+    }
+    else {
+        viewport.x = rect.x();
+        viewport.y = rect.y();
+        viewport.width = rect.width();
+        viewport.height = rect.height();
+    }
+    ...
+}
+```
+
+Notes:
+
+- This solution is only supported in Vulkan version 1.1.x or above.
+
+- Note that the Y coordinate of the viewport origin is also shifted to the bottom-left of the rectangle.
+
+- To avoid breaking our existing code the _flip_ setting is off by default.
+
+---
+
+## Integration
+
+
+orbital
+- controller
+- wheel -> zoom
+
+mouselook
+- look controller
+- WASD movement
+- wheel - forward/back
+
+common
+- escape
+- space -> toggle and-then home
+- home - reset view
+
+---
+
+## References
+
+[^invert] [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)

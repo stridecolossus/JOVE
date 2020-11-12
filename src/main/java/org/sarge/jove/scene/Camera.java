@@ -97,8 +97,10 @@ public class Camera {
 	/**
 	 * Points the camera at the given location.
 	 * @param pt Camera point-of-interest
+	 * @throws IllegalArgumentException if the location is the same as the current position of the camera
 	 */
 	public void look(Point pt) {
+		if(pos.equals(pt)) throw new IllegalArgumentException("Cannot point camera at its current position");
 		dir = Vector.of(pt, pos).normalize();
 		dirty();
 	}
@@ -123,7 +125,6 @@ public class Camera {
 	 * @return Camera right axis
 	 */
 	public Vector right() {
-		matrix();
 		return right;
 	}
 
@@ -137,8 +138,8 @@ public class Camera {
 		final float x = MathsUtil.cos(yaw) * cos;
 		final float y = MathsUtil.sin(pitch);
 		final float z = MathsUtil.sin(-yaw) * cos;
-		dir = new Vector(x, y, z).normalize();
-		dirty();
+		final Vector dir = new Vector(x, y, z).normalize();
+		direction(dir);
 	}
 
 	/**
@@ -181,15 +182,17 @@ public class Camera {
 		final Vector y = right.cross(dir).normalize();
 
 		// Calculate translation component
-		final Vector trans = new Vector(right.dot(pos), y.dot(pos), -dir.dot(pos));
+		final Matrix trans = Matrix.translation(new Vector(pos).invert());
 
-		// Build camera matrix
-		matrix = new Matrix.Builder()
+		// Build rotation matrix
+		final Matrix rot = new Matrix.Builder()
 			.identity()
 			.row(0, right)
 			.row(1, y)
-			.row(2, dir.invert())
-			.column(3, trans)
+			.row(2, dir)
 			.build();
+
+		// Create camera matrix
+		matrix = rot.multiply(trans);
 	}
 }

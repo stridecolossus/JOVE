@@ -333,9 +333,6 @@ public class ModelDemo {
 		// Create projection matrix
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, chain.extents());
 
-		// Rotate model
-		final Matrix rot = Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
-
 		// Init descriptor sets
 		new DescriptorSet.UpdateBuilder()
 				.add(descriptors, samplerBinding, sampler.resource(texture))
@@ -362,9 +359,6 @@ public class ModelDemo {
 				.viewport()
 					.flip(true)
 					.viewport(new Rectangle(chain.extents()))
-					.build()
-				.rasterizer()
-					.cullMode(VkCullModeFlag.VK_CULL_MODE_FRONT_BIT)
 					.build()
 				.depth()
 					.enable(true)
@@ -445,11 +439,14 @@ public class ModelDemo {
 //		bindings.bind(Button.of("D"), strafe.apply(-1));
 		bindings.bind(Button.of("ESCAPE"), ignored -> running.set(false));
 
+		final Matrix rot = Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
+		final Matrix mat = Matrix.translation(new Vector(0, 0.5f, 0));
+		final Matrix modelMatrix = mat.multiply(rot);
+
 		while(running.get()) {
 			desktop.poll();
 
-			final Matrix mat = Matrix.translation(new Vector(0, 0.5f, 0));
-			final Matrix matrix = proj.multiply(cam.matrix()).multiply(rot).multiply(mat);
+			final Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix); // .multiply(rot).multiply(mat);
 			uniform.load(matrix);
 
 			final int idx = chain.acquire(null, null);
