@@ -17,7 +17,6 @@ import org.sarge.jove.control.Button;
 import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.control.InputEvent.Handler;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
-import org.sarge.jove.platform.desktop.KeyboardDevice.KeyTable;
 
 import com.sun.jna.Pointer;
 
@@ -70,8 +69,7 @@ public class KeyboardDeviceTest {
 
 		// Create button
 		final int code = 256;
-		final String name = KeyTable.INSTANCE.map(code);
-		final Button button = new Button(name, 1, 2);
+		final Button button = new Button("ESCAPE", 1, 2);
 
 		// Generate an event
 		final KeyListener listener = captor.getValue();

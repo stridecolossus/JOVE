@@ -50,7 +50,7 @@ public class MessageHandler {
 		public final boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData) {
 			final var messageSeverity = IntegerEnumeration.map(VkDebugUtilsMessageSeverityFlagEXT.class, severity);
 			final var messageTypes = IntegerEnumeration.enumerate(VkDebugUtilsMessageTypeFlagEXT.class, type);
-			message(messageSeverity, messageTypes, pCallbackData);
+			message(messageSeverity, new HashSet<>(messageTypes), pCallbackData);
 			return false;
 		}
 

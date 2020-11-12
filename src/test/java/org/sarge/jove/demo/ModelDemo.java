@@ -436,6 +436,7 @@ public class ModelDemo {
 		mouse.buttons().enable(bindings);
 		mouse.pointer().enable(controller);
 		mouse.wheel().enable(zoom);
+//		mouse.wheel().enable(System.out::println);
 
 //		bindings.bind(Button.of("Button-1"), new MoveAction(+1));
 //		bindings.bind(Button.of("W"), new MoveAction(+1));

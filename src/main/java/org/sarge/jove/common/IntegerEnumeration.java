@@ -2,11 +2,11 @@ package org.sarge.jove.common;
 
 import static java.util.stream.Collectors.toMap;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
@@ -87,17 +87,17 @@ public interface IntegerEnumeration {
 	 * @param mask		Mask
 	 * @return Constants
 	 */
-	static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
+	static <E extends IntegerEnumeration> Collection<E> enumerate(Class<E> clazz, int mask) {
 		final var entry = Cache.CACHE.get(clazz);
-		final Set<E> set = new HashSet<>();
+		final List<E> values = new ArrayList<>();
 		final int max = Integer.highestOneBit(mask);
 		for(int n = 0; n < max; ++n) {
 			final int value = 1 << n;
 			if((value & mask) == value) {
-				set.add(entry.get(value));
+				values.add(entry.get(value));
 			}
 		}
-		return set;
+		return values;
 	}
 
 	/**

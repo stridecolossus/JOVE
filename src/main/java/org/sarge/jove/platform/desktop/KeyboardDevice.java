@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.InputEvent;
@@ -95,13 +93,13 @@ public class KeyboardDevice implements InputEvent.Device {
 	/**
 	 * The <i>key table</i> maps between GLFW key codes and names.
 	 */
-	public static class KeyTable {
+	private static class KeyTable {
 		/**
 		 * Singleton instance.
 		 */
 		public static final KeyTable INSTANCE = new KeyTable();
 
-		private final BidiMap<Integer, String> table = new DualHashBidiMap<>(load());
+		private final Map<Integer, String> table = load();
 
 		private KeyTable() {
 		}
@@ -109,7 +107,7 @@ public class KeyboardDevice implements InputEvent.Device {
 		/**
 		 * Helper - Maps a key code to name.
 		 */
-		public String map(int code) {
+		String map(int code) {
 			final String name = table.get(code);
 			if(name == null) throw new IllegalArgumentException("Unknown key code: " + code);
 			return name;

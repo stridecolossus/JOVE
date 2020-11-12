@@ -5,6 +5,7 @@ import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.range;
 import static org.sarge.jove.util.Check.zeroOrMore;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -135,7 +136,7 @@ public final class Button implements Type, InputEvent {
 	/**
 	 * @return Button modifiers
 	 */
-	public Set<Modifier> modifiers() {
+	public Collection<Modifier> modifiers() {
 		return IntegerEnumeration.enumerate(Modifier.class, mods);
 	}
 

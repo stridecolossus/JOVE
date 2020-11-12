@@ -24,11 +24,6 @@ public class AxisTest {
 	}
 
 	@Test
-	void parse() {
-		assertEquals(axis, Axis.parse(NAME));
-	}
-
-	@Test
 	void hash() {
 		assertEquals(Objects.hash(Axis.class, NAME), axis.hashCode());
 	}

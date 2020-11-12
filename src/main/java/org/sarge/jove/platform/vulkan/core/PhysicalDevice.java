@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
@@ -90,7 +91,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	private Queue.Family family(int index, VkQueueFamilyProperties props) {
 		final var flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
-		return new Queue.Family(this, index, props.queueCount, flags);
+		return new Queue.Family(this, index, props.queueCount, new HashSet<>(flags));
 	}
 
 	/**
