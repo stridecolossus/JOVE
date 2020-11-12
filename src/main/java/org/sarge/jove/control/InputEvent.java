@@ -1,10 +1,6 @@
 package org.sarge.jove.control;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -19,6 +15,31 @@ public interface InputEvent {
 	Type type();
 
 	/**
+	 * @return X coordinate
+	 */
+	float x();
+
+	/**
+	 * @return Y coordinate
+	 */
+	float y();
+
+	/**
+	 * A <i>handler</i> accepts an input event.
+	 */
+	@FunctionalInterface
+	interface Handler extends Consumer<InputEvent> {
+		/**
+		 * Creates an anonymous event handler.
+		 * @param code Action code
+		 * @return Anonymous event handler
+		 */
+		static Handler of(Runnable code) {
+			return ignored -> code.run();
+		}
+	}
+
+	/**
 	 * An <i>event type</i> is the descriptor for an input event.
 	 */
 	interface Type {
@@ -31,72 +52,6 @@ public interface InputEvent {
 		 * @return Event name
 		 */
 		String name();
-
-		/**
-		 * The <i>event type parser</i> instantiates an event-type from its string representation.
-		 * TODO
-		 */
-		class Parser {
-			private final Map<String, Method> registry = new HashMap<>();
-
-			/**
-			 * Parses an event-type from its string representation.
-			 * @param str String representation of the event
-			 * @return Parsed event-type
-			 * @throws IllegalArgumentException if the event-type cannot be parsed
-			 */
-			public Type parse(String str) {
-				// Find classname delimiter
-				final int idx = str.indexOf(' ');
-				if((idx < 1) || (idx == str.length())) throw new IllegalArgumentException(String.format("Invalid event-type representation: [%s]", str));
-
-				// Lookup constructor
-				final Method parse = registry.computeIfAbsent(str.substring(0, idx), Parser::register);
-
-				// Create event type
-				try {
-					final String rep = str.substring(idx + 1);
-					return (Type) parse.invoke(null, new Object[]{rep});
-				}
-				catch(InvocationTargetException e) {
-					throw new IllegalArgumentException(String.format("Error parsing event-type representation: [%s]", str), e);
-				}
-				catch(Exception e) {
-					throw new RuntimeException(String.format("Error instantiating event-type: [%s]", str), e);
-				}
-			}
-
-			/**
-			 * Looks up the parse method for the given event-type classname.
-			 * @param name Event-type classname
-			 * @return Parse method
-			 * @throws IllegalArgumentException if the event type is unknown or the parse method cannot be found
-			 */
-			private static Method register(String name) {
-				try {
-					// Lookup class
-					final Class<?> clazz = Class.forName(name);
-					if(!Type.class.isAssignableFrom(clazz)) throw new IllegalArgumentException("Not an event class: " + name);
-
-					// Lookup parse method
-					final Method method = clazz.getDeclaredMethod("parse", String.class);
-					if(!Type.class.isAssignableFrom(method.getReturnType())) throw new IllegalArgumentException("Invalid return type for parse method: " + name);
-					return method;
-				}
-				catch(ClassNotFoundException e) {
-					throw new IllegalArgumentException("Unknown event type: " + name, e);
-				}
-				catch(NoSuchMethodException e) {
-					throw new IllegalArgumentException("Cannot find parse method: " + name, e);
-				}
-				catch(IllegalArgumentException e) {
-					throw e;
-				}
-				catch(Exception e) {
-					throw new RuntimeException("Error looking up parse method: " + name, e);
-				}
-			}
-		}
 	}
 
 	/**
@@ -113,7 +68,7 @@ public interface InputEvent {
 		 * Enables generation of events.
 		 * @param handler Event handler
 		 */
-		void enable(Consumer<T> handler);
+		void enable(Handler handler);
 
 		/**
 		 * Disables event generation.

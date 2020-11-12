@@ -79,10 +79,13 @@ public class Axis implements InputEvent.Type {
 			this.value = value;
 		}
 
-		/**
-		 * @return Axis value
-		 */
-		public float value() {
+		@Override
+		public float x() {
+			return value;
+		}
+
+		@Override
+		public float y() {
 			return value;
 		}
 

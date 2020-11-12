@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.control.Button.Modifier;
 import org.sarge.jove.control.Button.Operation;
-import org.sarge.jove.control.InputEvent.Type.Parser;
 
 public class ButtonTest {
 	private static final String ID = "KEY";
@@ -44,12 +43,6 @@ public class ButtonTest {
 	@Test
 	void parse() {
 		assertEquals(button, Button.parse(NAME));
-	}
-
-	@Test
-	void parser() {
-		final Parser parser = new Parser();
-		assertEquals(button, parser.parse(Button.class.getName() + " " + NAME));
 	}
 
 	@Test

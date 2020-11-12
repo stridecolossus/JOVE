@@ -145,6 +145,16 @@ public final class Button implements Type, InputEvent {
 	}
 
 	@Override
+	public float x() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public float y() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public int hashCode() {
 		return Objects.hash(id, action, mods);
 	}

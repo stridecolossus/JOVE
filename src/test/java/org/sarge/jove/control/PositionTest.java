@@ -5,39 +5,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.InputEvent.Type.Parser;
 
 public class PositionTest {
-	private static final String NAME = "pos";
-
 	private Position pos;
 
 	@BeforeEach
 	void before() {
-		pos = new Position(NAME);
+		pos = new Position("pos");
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(NAME, pos.name());
-	}
-
-	@Test
-	void parse() throws Exception {
-		assertEquals(pos, Position.parse(NAME));
-	}
-
-	@Test
-	void parser() throws Exception {
-		final Parser parser = new Parser();
-		final var result = parser.parse(Position.class.getName() + " " + NAME);
-		assertEquals(pos, result);
+		assertEquals("pos", pos.name());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, pos.equals(pos));
-		assertEquals(true, pos.equals(new Position(NAME)));
+		assertEquals(true, pos.equals(new Position("pos")));
 		assertEquals(false, pos.equals(null));
 		assertEquals(false, pos.equals(new Position("other")));
 	}

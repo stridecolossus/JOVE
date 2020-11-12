@@ -135,6 +135,14 @@ For that reason we will largely gloss over the details of how we used CDT.
 
 We started with enumerations since these are the simplest of the components we need to generate.
 
+TODO
+
+enumeration
+    name
+    constants
+        name
+        value
+
 #### Template
 
 To generate the Java enumerations we used [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for what we were doing.
@@ -319,6 +327,15 @@ public enum VkImageUsageFlag implements IntegerEnumeration {
 ```
 
 ### Structures
+
+TODO
+
+structure
+    name
+    fields
+        name
+        type (pointer info)
+        array length
 
 #### Type Mappings
 

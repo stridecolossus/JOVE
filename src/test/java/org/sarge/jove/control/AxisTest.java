@@ -8,7 +8,6 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.InputEvent.Type.Parser;
 
 public class AxisTest {
 	private static final String NAME = "Axis";
@@ -27,13 +26,6 @@ public class AxisTest {
 	@Test
 	void parse() {
 		assertEquals(axis, Axis.parse(NAME));
-	}
-
-	@Test
-	void parser() {
-		final Parser parser = new Parser();
-		final var result = parser.parse(Axis.class.getName() + " " + NAME);
-		assertEquals(axis, result);
 	}
 
 	@Test
@@ -62,7 +54,8 @@ public class AxisTest {
 		void constructor() {
 			assertNotNull(event);
 			assertEquals(axis, event.type());
-			assertEquals(42, event.value());
+			assertEquals(42, event.x());
+			assertEquals(42, event.y());
 		}
 
 		@Test

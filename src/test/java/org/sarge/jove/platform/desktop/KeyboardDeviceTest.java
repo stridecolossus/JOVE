@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.InputEvent;
+import org.sarge.jove.control.InputEvent.Handler;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 import org.sarge.jove.platform.desktop.KeyboardDevice.KeyTable;
 
@@ -25,9 +25,8 @@ public class KeyboardDeviceTest {
 	private KeyboardDevice device;
 	private Window window;
 	private DesktopLibrary lib;
-	private Consumer<Button> handler;
+	private Handler handler;
 
-	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		// Create API
@@ -42,7 +41,7 @@ public class KeyboardDeviceTest {
 		device = new KeyboardDevice(window);
 
 		// Create handler
-		handler = mock(Consumer.class);
+		handler = mock(Handler.class);
 	}
 
 	@Test

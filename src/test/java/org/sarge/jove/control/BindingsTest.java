@@ -6,26 +6,37 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.sarge.jove.util.TestHelper.assertThrows;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.Action.Bindings;
+import org.sarge.jove.control.InputEvent.Handler;
 
-public class ActionTest {
-	private Bindings<Axis.Event> bindings;
+public class BindingsTest {
+	private Bindings bindings;
 	private Axis axis;
-	private Action<Axis.Event> action;
+	private Handler action;
 	private Axis.Event event;
 
-	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		bindings = new Bindings<>();
-		axis = new Axis("Axis");
-		action = mock(Action.class);
+		// Create an event
+		axis = new Axis("axis");
 		event = axis.create(42);
+
+		// Create an action
+		action = mock(Handler.class);
+		when(action.toString()).thenReturn("action");
+
+		// Create bindings
+		bindings = new Bindings();
 	}
 
 	@Test
@@ -37,7 +48,7 @@ public class ActionTest {
 	@Test
 	void add() {
 		bindings.add(action);
-		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
@@ -61,7 +72,7 @@ public class ActionTest {
 	@Test
 	void bind() {
 		bindings.bind(axis, action);
-		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
 		assertArrayEquals(new Axis[]{axis}, bindings.bindings(action).toArray());
 		assertEquals(Optional.of(action), bindings.binding(axis));
 	}
@@ -78,7 +89,7 @@ public class ActionTest {
 		bindings.remove(axis);
 		assertEquals(0, bindings.bindings(action).count());
 		assertEquals(Optional.empty(), bindings.binding(axis));
-		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
@@ -87,7 +98,7 @@ public class ActionTest {
 		bindings.remove(action);
 		assertEquals(0, bindings.bindings(action).count());
 		assertEquals(Optional.empty(), bindings.binding(axis));
-		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
@@ -101,7 +112,7 @@ public class ActionTest {
 		bindings.clear();
 		assertEquals(0, bindings.bindings(action).count());
 		assertEquals(Optional.empty(), bindings.binding(axis));
-		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
@@ -111,21 +122,47 @@ public class ActionTest {
 		verify(action).accept(event);
 	}
 
-	@Test
-	void runnable() {
-		// Bind an anonymous event
-		final Runnable runnable = mock(Runnable.class);
-		bindings.bind(axis, runnable);
+	@Nested
+	class LoaderTests {
+		@BeforeEach
+		void before() {
+			bindings.bind(axis, action);
+		}
 
-		// Check action wrapper is bound
-		final Optional<Action<Axis.Event>> wrapper = bindings.binding(axis);
-		assertNotNull(wrapper);
-		assertEquals(true, wrapper.isPresent());
+		@Test
+		void save() {
+			final StringWriter out = new StringWriter();
+			bindings.save(out);
+			assertEquals("action Axis-axis", out.toString().trim());
+		}
 
-		// Invoke action wrapper
-		wrapper.get().accept(event);
-		verify(runnable).run();
+		@Test
+		void load() throws IOException {
+			// Save bindings
+			final StringWriter out = new StringWriter();
+			bindings.save(out);
+
+			// Re-load bindings
+			bindings.clear();
+			bindings.load(new StringReader(out.toString()));
+
+			// Check binding
+			assertEquals(Optional.of(action), bindings.binding(axis));
+		}
+
+		@Test
+		void loadUnknownAction() {
+			assertThrows(IllegalArgumentException.class, "Action not present", () -> bindings.load(new StringReader("cobblers")));
+		}
+
+		@Test
+		void loadInvalidBinding() {
+			assertThrows(IllegalArgumentException.class, "Invalid event binding", () -> bindings.load(new StringReader("action cobblers")));
+		}
+
+		@Test
+		void loadUnknownEventType() {
+			assertThrows(IllegalArgumentException.class, "Invalid event type", () -> bindings.load(new StringReader("action cobblers-whatever")));
+		}
 	}
-
-	// TODO - save/load
 }
