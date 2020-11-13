@@ -106,7 +106,7 @@ public class Queue implements NativeObject {
 			final VulkanLibrary lib = dev.instance().library();
 			final IntByReference supported = lib.factory().integer();
 			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
-			return supported.getValue() == VulkanBoolean.TRUE.toInteger();
+			return VulkanBoolean.of(supported.getValue()) == VulkanBoolean.TRUE;
 		}
 
 		@Override

@@ -7,8 +7,8 @@ import com.sun.jna.TypeConverter;
 /**
  * A <i>Vulkan boolean</i> is a custom JNA type wrapper for boolean values.
  * <p>
- * A Vulkan boolean class is mapped to a native <code>int</code> with a value that is explicitly 1 for <code>true</code> and 0 for <code>false</code>.
- * This circumvents the default JNA mapping for a Java <code>boolean</code> which is an <i>arbitrary non-zero</i> value for <code>true</code> (-1 in this case, Vulkan explicitly checks for <code>one</code>).
+ * A Vulkan boolean class is mapped to a native {@code int} with a value that is <i>explicitly</i> 1 for {@code true} and 0 for {@code false}.
+ * This circumvents the default JNA mapping which is an <i>arbitrary non-zero</i> value for {@code true}.
  * @author Sarge
  */
 public final class VulkanBoolean {
@@ -48,23 +48,18 @@ public final class VulkanBoolean {
 				return VulkanBoolean.FALSE;
 			}
 			else {
-				return VulkanBoolean.of((int) nativeValue);
+				return of((int) nativeValue);
 			}
 		}
 	};
 
 	/**
-	 * Converts a boolean represented as a native <tt>int</tt>.
+	 * Converts a native integer value to a Vulkan boolean (where a non-zero is {@code true}).
 	 * @param value Native value
 	 * @return Vulkan boolean
 	 */
 	public static VulkanBoolean of(int value) {
-		if(value == 0) {
-			return VulkanBoolean.FALSE;
-		}
-		else {
-			return VulkanBoolean.TRUE;
-		}
+		return value == 0 ? VulkanBoolean.FALSE : VulkanBoolean.TRUE;
 	}
 
 	/**
@@ -73,12 +68,7 @@ public final class VulkanBoolean {
 	 * @return Vulkan boolean
 	 */
 	public static VulkanBoolean of(boolean bool) {
-		if(bool) {
-			return VulkanBoolean.TRUE;
-		}
-		else {
-			return VulkanBoolean.FALSE;
-		}
+		return bool ? VulkanBoolean.TRUE : VulkanBoolean.FALSE;
 	}
 
 	private final boolean value;
@@ -92,9 +82,9 @@ public final class VulkanBoolean {
 	}
 
 	/**
-	 * @return Vulkan integer representation (1 for <code>true</code>, 0 for <code>false</code>)
+	 * @return Native integer representation of this boolean (1 for {@code true} or 0 for {@code false})
 	 */
-	public int toInteger() {
+	private int toInteger() {
 		return value ? 1 : 0;
 	}
 
@@ -105,7 +95,7 @@ public final class VulkanBoolean {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof VulkanBoolean b) && (this.value == b.value);
+		return obj == this;
 	}
 
 	@Override

@@ -53,10 +53,19 @@ public interface IntegerEnumeration {
 		@SuppressWarnings("unchecked")
 		@Override
 		public Object fromNative(Object nativeValue, FromNativeContext context) {
+			// Lookup enumeration
 			final Class<?> type = context.getTargetType();
 			if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new IllegalStateException("Invalid native enumeration class: " + type.getSimpleName());
 			final var entry = Cache.CACHE.get((Class<? extends IntegerEnumeration>) type);
-			return entry.get((int) nativeValue);
+
+			// Map native value
+			final int value = (int) nativeValue;
+			if(value == 0) {
+				return entry.zero();
+			}
+			else {
+				return entry.get(value);
+			}
 		}
 	};
 
@@ -133,16 +142,20 @@ public interface IntegerEnumeration {
 		 */
 		private class Entry {
 			private final Map<Integer, ? extends IntegerEnumeration> map;
-			private final Object def;
+			private final Object zero;
 
 			/**
 			 * Constructor.
 			 * @param clazz Enumeration class
 			 */
 			private Entry(Class<? extends IntegerEnumeration> clazz) {
+				// Build reverse mapping
 				final IntegerEnumeration[] array = clazz.getEnumConstants();
 				this.map = Arrays.stream(array).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
-				this.def = array[0];
+
+				// Determine zero value
+				final Object def = map.get(0);
+				this.zero = def == null ? array[0] : def;
 			}
 
 			/**
@@ -156,17 +169,20 @@ public interface IntegerEnumeration {
 			private <E extends IntegerEnumeration> E get(int value) {
 				final E result = (E) map.get(value);
 				if(result == null) {
-					if(value == 0) {
-						// Assume default value
-						return (E) def;
-					}
-					else {
-						// Otherwise native value is invalid for this enumeration
-						final Class<?> clazz = map.values().iterator().next().getClass();
-						throw new IllegalArgumentException(String.format("Unknown enumeration value: enum=%s value=%d", clazz.getSimpleName(), value));
-					}
+					final Class<?> clazz = map.values().iterator().next().getClass();
+					throw new IllegalArgumentException(String.format("Unknown enumeration value: enum=%s value=%d", clazz.getSimpleName(), value));
 				}
 				return result;
+			}
+
+			/**
+			 * Zero (or default) value for this enumeration.
+			 * @param <E> Enumeration
+			 * @return Zero value
+			 */
+			@SuppressWarnings("unchecked")
+			private <E extends IntegerEnumeration> E zero() {
+				return (E) zero;
 			}
 		}
 

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -37,16 +38,14 @@ public class IntegerEnumerationTest {
 	@Test
 	public void map() {
 		assertEquals(MockEnum.A, IntegerEnumeration.map(MockEnum.class, 0x01));
+		assertEquals(MockEnum.B, IntegerEnumeration.map(MockEnum.class, 0x02));
+		assertEquals(MockEnum.C, IntegerEnumeration.map(MockEnum.class, 0x04));
 	}
 
 	@Test
 	public void mapInvalidLiteral() {
+		assertThrows(IllegalArgumentException.class, () -> IntegerEnumeration.map(MockEnum.class, 0));
 		assertThrows(IllegalArgumentException.class, () -> IntegerEnumeration.map(MockEnum.class, 999));
-	}
-
-	@Test
-	public void mapDefaultValue() {
-		assertEquals(MockEnum.A, IntegerEnumeration.map(MockEnum.class, 0));
 	}
 
 	@Test
@@ -84,6 +83,13 @@ public class IntegerEnumerationTest {
 
 	@Nested
 	class ConverterTests {
+		private FromNativeContext context;
+
+		@BeforeEach
+		void before() {
+			context = mock(FromNativeContext.class);
+		}
+
 		@Test
 		public void nativeType() {
 			assertEquals(Integer.class, IntegerEnumeration.CONVERTER.nativeType());
@@ -104,17 +110,19 @@ public class IntegerEnumerationTest {
 		@SuppressWarnings({"rawtypes", "unchecked"})
 		@Test
 		public void fromNative() {
-			final FromNativeContext context = mock(FromNativeContext.class);
-			final Class clazz = MockEnum.class;
+			final Class clazz = MockEnum.class; // Has to be explicit field and non-generic
 			when(context.getTargetType()).thenReturn(clazz);
 			assertEquals(MockEnum.B, IntegerEnumeration.CONVERTER.fromNative(2, context));
+		}
+
+		public void fromNativeZero() {
+			assertEquals(MockEnum.A, IntegerEnumeration.CONVERTER.fromNative(0, context));
 		}
 
 		@SuppressWarnings({"rawtypes", "unchecked"})
 		@Test
 		public void fromNativeInvalidClass() {
-			final FromNativeContext context = mock(FromNativeContext.class);
-			final Class clazz = String.class;
+			final Class clazz = String.class; // Has to be explicit field and non-generic
 			when(context.getTargetType()).thenReturn(clazz);
 			assertThrows(IllegalStateException.class, () -> IntegerEnumeration.CONVERTER.fromNative(2, context));
 		}
