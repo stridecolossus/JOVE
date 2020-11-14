@@ -126,6 +126,26 @@ public final class MathsUtil {
 	}
 
 	/**
+	 * Clamps the given floating-point value.
+	 * @param value		Value to clamp
+	 * @param min		Minimum
+	 * @param max		Maximum
+	 * @return Clamped value
+	 */
+	public static float clamp(float value, float min, float max) {
+		if(value < min) {
+			return min;
+		}
+		else
+		if(value > max) {
+			return max;
+		}
+		else {
+			return value;
+		}
+	}
+
+	/**
 	 * @param radians Angle in radians
 	 * @return Angle in degrees
 	 */
@@ -176,13 +196,14 @@ public final class MathsUtil {
 	 * @return Sine of the given angle
 	 */
 	public static float sin(float angle) {
-		final float reduced = constrain(angle);
-		if(Math.abs(reduced) <= HALF_PI / 2f) {
-			return (float) Math.sin(reduced);
-		}
-		else {
-			return (float) Math.cos(HALF_PI - reduced);
-		}
+//		final float reduced = constrain(angle);
+//		if(Math.abs(reduced) <= HALF_PI / 2f) {
+//			return (float) Math.sin(reduced);
+//		}
+//		else {
+//			return (float) Math.cos(HALF_PI - reduced);
+//		}
+		return (float) Math.sin(angle);
 	}
 
 	/**
@@ -190,7 +211,8 @@ public final class MathsUtil {
 	 * @return Cosine of the given angle
 	 */
 	public static float cos(float angle) {
-		return sin(angle + HALF_PI);
+		//return sin(angle + HALF_PI);
+		return (float) Math.cos(angle);
 	}
 
 	/**

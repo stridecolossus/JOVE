@@ -510,11 +510,15 @@ public Source<Button> buttons() {
          * @return Number of mouse buttons
          */
         private int count() {
-            // TODO - uses AWT but not supported by GLFW
+            // TODO - uses AWT, not supported by GLFW
             return MouseInfo.getNumberOfButtons();
         }
 
-        private final Button[] buttons = IntStream.rangeClosed(1, count()).mapToObj(n -> "Button-" + n).map(Button::of).toArray(Button[]::new);
+        private final Button[] buttons = IntStream
+                .rangeClosed(1, count())
+                .mapToObj(n -> "Button-" + n)
+                .map(Button::of)
+                .toArray(Button[]::new);
 
         @Override
         public List<Button> types() {
@@ -804,13 +808,33 @@ The second task for this chapter is to wrap the view transformation matrix into 
 
 ### Camera
 
-The camera is a model class representing the orientation and position of the viewer (accessors omitted):
+The camera is a model class representing the orientation and position of the viewer:
 
 ```java
 public class Camera {
     private Point pos = Point.ORIGIN;
-    private Vector dir = Vector.Z_AXIS.invert();
+    private Vector dir = Vector.Z_AXIS;
     private Vector up = Vector.Y_AXIS;
+}
+```
+
+Note that under the hood the camera direction is actually the inverse of the view direction (since we want to move the scene in the opposite direction to the camera), hence:
+
+```java
+/**
+ * @return Camera view direction
+ */
+public Vector direction() {
+    return dir.invert();
+}
+
+/**
+ * Sets the camera view direction.
+ * @param dir View direction (assumes normalized)
+ */
+public void direction(Vector dir) {
+    this.dir = dir.invert();
+    dirty();
 }
 ```
 
@@ -819,10 +843,10 @@ The camera (or view transformation) matrix is calculated as follows:
 ```java
 public Matrix matrix() {
     // Determine right axis
-    right = dir.cross(up).normalize();
+    right = up.cross(dir).normalize();
 
     // Determine up axis
-    final Vector y = right.cross(dir).normalize();
+    final Vector y = dir.cross(right).normalize();
 
     // Calculate translation component
     final Matrix trans = Matrix.translation(new Vector(pos).invert());
@@ -850,13 +874,17 @@ public static Matrix translation(Vector vec) {
 
 Notes:
 
-- The translation component is inverted since we translate the scene in the opposite direction to the camera.
+- The translation component is also inverted (for the same reason as the camera direction).
 
-- Under the hood the camera only updates the matrix when any of its properties have been modified.
+- The camera only updates the matrix when any of its properties have been modified (signalled by the `dirty()` method).
 
 The camera class implements various convenience mutators to move the eye position:
 
 ```java
+/**
+ * Moves the camera to a new position.
+ * @param pos New position
+ */
 public void move(Point pos) {
     this.pos = notNull(pos);
     dirty();
@@ -877,46 +905,177 @@ public void move(Vector vec) {
  * @see #direction()
  */
 public void move(float dist) {
-    move(dir.scale(-dist));
+    move(dir.scale(dist));
 }
 
+/**
+ * Moves the camera by the given distance in the current right axis.
+ * @param dist Distance to strafe
+ * @see #right()
+ */
 public void strafe(float dist) {
     move(right.scale(dist));
 }
 ```
 
-Finally we add the following method to point the camera in a direction specified by yaw-pitch angles:
+Finally we add the following helper to point the camera at a given location:
 
 ```java
-/**
- * Sets the camera orientation to the given yaw and pitch angles (radians).
- * @param yaw       Yaw
- * @param pitch     Pitch
- */
-public void orientation(float yaw, float pitch) {
-    final float cos = MathsUtil.cos(pitch);
-    final float x = MathsUtil.cos(yaw) * cos;
-    final float y = MathsUtil.sin(pitch);
-    final float z = MathsUtil.sin(-yaw) * cos;
-    final Vector dir = new Vector(x, y, z).normalize();
-    direction(dir);
+public void look(Point pt) {
+    dir = Vector.of(pt, pos).normalize();
+    dirty();
 }
 ```
 
-TODO - fails at poles?
-
 ### Camera Controllers
 
-The camera class is a relatively simple model, to implement richer functionality we implement a _camera controller_ action that handles the relevant input events.
+The camera class is a relatively simple model, to implement richer functionality we implement _camera controllers_ that can then be invoked by action handlers.
 
-An _orbital_ (or arcball camera) is implemented by the following controller:
+#### Mouselook Camera
 
-orbital
-mouselook
+#### Orbital Camera
+
+An _orbital_ (or arcball) camera rotates the view position about an object of interest.
+
+Rather than clutter the existing camera or derive a new sub-class we opt to create a separate _controller_ class:
+
+```java
+public class OrbitalCameraController {
+    private final Camera cam;
+    private Point target = Point.ORIGIN;
+    private final Dimensions dim;
+}
+```
+
+Moving the camera around the _target_ involves the following steps on a positional input event:
+1. Map the position to yaw-pitch angles.
+2. Calculate the resultant camera position.
+3. Point the camera at the target.
+
+This is implemented in the `update()` method of the controller:
+
+```java
+public void update(float x, float y) {
+    final float phi = horizontal.interpolate(x / dim.width());
+    final float theta = vertical.interpolate(y / dim.height());
+    final Point pos = Sphere.point(phi - MathsUtil.HALF_PI, theta, orbit.radius);
+    cam.move(target.add(pos));
+    cam.look(target);
+}
+```
+
+The _phi_ angle is a counter-clockwise rotation about the Y axis (or _yaw_ angle) and _theta_ is the vertical rotation (or _pitch_ angle).
+
+We introduce the interpolator class to map the coordinates to angles (in radians):
+
+```java
+private Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
+private Interpolator vertical = Interpolator.linear(-MathsUtil.HALF_PI, MathsUtil.HALF_PI);
+```
+
+An interpolator is a mathematical function to scale a value over a range such as an animation duration:
+
+```java
+@FunctionalInterface
+public interface Interpolator {
+    /**
+     * Applies this interpolator to the given value.
+     * @param value Value to be interpolated
+     * @return Interpolated value
+     */
+    float interpolate(float value);
+
+    /**
+     * Creates a linear (or <i>lerp</i>) interpolator over the given range.
+     * @param start     Range start
+     * @param end       Range end
+     * @return Linear interpolator
+     * @see #lerp(float, float, float)
+     */
+    static Interpolator linear(float start, float end) {
+        return value -> start + value * (end - start);
+    }
+}
+```
+
+To calculate the camera position based on the yaw-pitch angles we implement a _sphere_ geometry class as we expect this will be required elsewhere later:
+
+```java
+public record Sphere(float radius) {
+    ...
+    
+    public static Point point(float phi, float theta, float radius) {
+        final float cos = MathsUtil.cos(theta);
+        final float x = radius * cos * MathsUtil.cos(phi);
+        final float y = radius * MathsUtil.sin(theta);
+        final float z = radius * cos * MathsUtil.sin(phi);
+        return new Point(x, y, z);
+    }
+}
+```
+
+Note that this implementation means a _phi_ of zero 'points' in the X direction - hence we fiddle the angle by 90 degrees in the `update()` method to rotate to the negative Z axis.
+
+#### Zoom
+
+The orbital camera also supports a zoom function to move to view to or from the target.
+
+```java
+public void zoom(float inc) {
+    final float actual = orbit.zoom(-inc);
+    cam.move(actual);
+}
+```
+
+The _orbit_ is factored out to a helper class passed to the controller in its constructor:
+
+```java
+public static final class Orbit {
+    private final float min;
+    private final float max;
+    private final float scale;
+
+    private float radius;
+
+    /**
+     * Default constructor.
+     */
+    public Orbit() {
+        this(1, Integer.MAX_VALUE, 1);
+    }
+
+    /**
+     * Constructor.
+     * @param min       Minimum radius
+     * @param max       Maximum radius
+     * @param scale     Zoom scalar
+     */
+    public Orbit(float min, float max, float scale) {
+        if(min >= max) throw new IllegalArgumentException("Invalid zoom range");
+        this.min = positive(min);
+        this.max = max;
+        this.scale = positive(scale);
+        this.radius = min;
+    }
+
+    /**
+     * Increments this radius and clamps to the specified range.
+     * @param inc Radius increment
+     * @return Actual increment
+     */
+    private float zoom(float inc) {
+        final float prev = radius;
+        radius = MathsUtil.clamp(prev + inc * scale, min, max);
+        return radius - prev;
+    }
+}
+```
+
+The orbit class clamps the zoom radius to a specified range and prevents the camera being moved onto the target position.
 
 ### Global Flip
 
-Up until this point we have just had to deal with the fact that the Y direction in Vulkan is **down** which is inverted compared to OpenGL and just about every other 3D framework.
+Up until this point we have just dealt with the fact that the Y direction in Vulkan is **down** (which is inverted compared to OpenGL and just about every other 3D framework).
 
 However we came across a global solution[^invert] that handily flips the Vulkan viewport by specifying a 'negative' viewport rectangle.
 
@@ -952,10 +1111,77 @@ Notes:
 
 ## Integration
 
+### Camera and Render Loop
 
-orbital
-- controller
-- wheel -> zoom
+We first remove the hard-coded view transformation matrices we added in the perspective projection chapter and replace them with the new camera class.  The chalet model is viewed from above by default so we also add a model transform so that we see it from the side (and move it down a bit):
+
+```java
+final Camera cam = new Camera();
+
+final Matrix rot = Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
+final Matrix mat = Matrix.translation(new Vector(0, 0.5f, 0));
+final Matrix modelMatrix = mat.multiply(rot);
+```
+
+We also make the following modifications to the render loop:
+1. Add the _running_ flag to allow the loop to be properly exited.
+2. Invoke GLFW to poll for input events.
+3. Update the transformation matrix on each frame.
+
+```java
+final AtomicBoolean running = new AtomicBoolean(true);
+...
+
+while(running.get()) {
+    desktop.poll();
+
+    Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix);
+    uniform.load(matrix);
+
+    ...
+}
+```
+
+To finally allow the demo to be terminated we enable keyboard events and bind the ESCAPE key to the new _running_ flag:
+
+```
+final Bindings bindings = new Bindings();
+window.keyboard().enable(bindings);
+bindings.bind(Button.of("ESCAPE"), ignored -> running.set(false));
+```
+
+(We really should have done this much earlier!)
+
+If we now run the code again we should still see the chalet model and can now ESCAPE the demo.
+
+### Orbital Camera
+
+Next we add the orbital camera bound to the mouse device:
+
+```java
+// Init camera
+OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents(), new Orbit(0.75f, 25, 0.1f));
+controller.radius(3);
+
+// Enable mouse
+final MouseDevice mouse = window.mouse();
+final var pointer = mouse.pointer();
+final var wheel = mouse.wheel();
+pointer.enable(bindings);
+wheel.enable(bindings);
+
+// Bind to controller
+bindings.bind(pointer, Position.action(controller::update));
+bindings.bind(wheel, Axis.action(controller::zoom));
+```
+
+Moving the mouse should rotate the camera about the scene and the mouse-wheel is used to zoom.
+
+Sweet.
+
+### Alternative Controller
+
+
 
 mouselook
 - look controller

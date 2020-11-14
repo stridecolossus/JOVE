@@ -1,45 +1,73 @@
 package org.sarge.jove.util;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
-
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.Interpolator.StepInterpolator;
-import org.sarge.jove.util.Interpolator.StepInterpolator.Entry;
 
 public class InterpolatorTest {
 	@Test
-	public void linear() {
-		assertFloatEquals(42, Interpolator.LINEAR.interpolate(42));
+	void none() {
+		assertEquals(1, Interpolator.NONE.interpolate(1));
 	}
 
 	@Test
-	public void range() {
-		final Interpolator range = Interpolator.range(3, 5, Interpolator.LINEAR);
-		assertFloatEquals(3, range.interpolate(0));
-		assertFloatEquals(4, range.interpolate(0.5f));
-		assertFloatEquals(5, range.interpolate(1));
+	void invert() {
+		assertEquals(0, Interpolator.INVERT.interpolate(1));
 	}
 
 	@Test
-	public void sine() {
-		assertFloatEquals(0, Interpolator.SINE.interpolate(0));
-		assertFloatEquals(0.5f, Interpolator.SINE.interpolate(0.5f));
-		assertFloatEquals(1, Interpolator.SINE.interpolate(1));
+	void cosine() {
+		assertEquals(0, Interpolator.COSINE.interpolate(0));
+		assertEquals(0.5f, Interpolator.COSINE.interpolate(0.5f));
+		assertEquals(1, Interpolator.COSINE.interpolate(1));
 	}
 
 	@Test
-	public void step() {
-		final Interpolator step = new StepInterpolator(List.of(new Entry(0.5f, 1), new Entry(0, 0)));
-		assertFloatEquals(0, step.interpolate(0));
-		assertFloatEquals(1, step.interpolate(0.5f));
-		assertFloatEquals(1, step.interpolate(1));
+	void smooth() {
+		assertEquals(0, Interpolator.SMOOTH.interpolate(0));
+		assertEquals(0.5f, Interpolator.SMOOTH.interpolate(0.5f));
+		assertEquals(1, Interpolator.SMOOTH.interpolate(1));
 	}
 
 	@Test
-	public void stepEmpty() {
-		assertThrows(IllegalArgumentException.class, () -> new StepInterpolator(List.of()));
+	void square() {
+		assertEquals(0, Interpolator.SQUARED.interpolate(0));
+		assertEquals(0.25f, Interpolator.SQUARED.interpolate(0.5f));
+		assertEquals(1, Interpolator.SQUARED.interpolate(1));
+	}
+
+	@Test
+	void exponential() {
+		final Interpolator exp = Interpolator.exponent(3);
+		assertNotNull(exp);
+		assertEquals(0, exp.interpolate(0));
+		assertEquals(0.125f, exp.interpolate(0.5f));
+		assertEquals(1, exp.interpolate(1));
+	}
+
+	@Test
+	void linear() {
+		final Interpolator linear = Interpolator.linear(1, 2);
+		assertNotNull(linear);
+		assertEquals(1, linear.interpolate(0));
+		assertEquals(1.5f, linear.interpolate(0.5f));
+		assertEquals(2, linear.interpolate(1));
+	}
+
+	@Test
+	void of() {
+		final Interpolator compound = Interpolator.of(1, 2, Interpolator.SQUARED);
+		assertNotNull(compound);
+		assertEquals(1, compound.interpolate(0));
+		assertEquals(1.25f, compound.interpolate(0.5f));
+		assertEquals(2, compound.interpolate(1));
+	}
+
+	@Test
+	void lerp() {
+		assertEquals(1, Interpolator.lerp(1, 2, 0));
+		assertEquals(1.5f, Interpolator.lerp(1, 2, 0.5f));
+		assertEquals(2, Interpolator.lerp(1, 2, 1));
 	}
 }

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.MathsUtil;
 
 class CameraTest {
 	private Camera cam;
@@ -70,7 +69,7 @@ class CameraTest {
 
 	@Test
 	void look() {
-		cam.move(new Point(0, 0, -1));
+		cam.move(new Point(0, 0, 1));
 		cam.look(Point.ORIGIN);
 		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
 	}
@@ -78,23 +77,6 @@ class CameraTest {
 	@Test
 	void lookInvalid() {
 		assertThrows(IllegalArgumentException.class, () -> cam.look(Point.ORIGIN));
-	}
-
-	@Test
-	void orientation() {
-		final float angle = MathsUtil.toRadians(45);
-		cam.orientation(angle, angle);
-		final float cos = (float) Math.cos(angle);
-		final float x = cos * cos;
-		final float y = (float) Math.sin(angle);
-		final float z = (float) Math.sin(angle) * cos;
-		assertEquals(new Vector(x, y, -z).normalize(), cam.direction());
-	}
-
-	@Test
-	void orientationIdentity() {
-		cam.orientation(MathsUtil.HALF_PI, 0);
-		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
 	}
 
 	@Test
@@ -110,11 +92,11 @@ class CameraTest {
 				.identity()
 				.row(0, Vector.X_AXIS)
 				.row(1, Vector.Y_AXIS)
-				.row(2, Vector.Z_AXIS.invert())
+				.row(2, Vector.Z_AXIS)
 				.build();
 
 		// Create camera translation one unit out of the screen
-		final Point pos = new Point(0, 0, -1);
+		final Point pos = new Point(0, 0, 1);
 		final Matrix trans = Matrix.translation(new Vector(pos).invert());
 
 		// Init camera and check matrix

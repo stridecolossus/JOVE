@@ -54,7 +54,7 @@ Finally we came across JNA - having never had to deal with a native library dire
 
 We had a possible winner.
 
-### Taking JNA out for a spin
+### JNA
 
 To see whether JNA would suit our purposes we first tried it against a simpler native library.  We had already planned to use [GLFW](https://www.glfw.org/) for desktop related functionality such as managing windows, displays, input devices, etc. and it also integrates nicely with Vulkan (as we will see later on).
 
@@ -67,7 +67,7 @@ We implemented the bulk of what would become the _desktop_ package of JOVE in a 
 On a high we stripped LWJGL from our project and replaced the Vulkan components with hand-crafted JNA interfaces and structures.  We progressed to the point of instantiating the logical device in the space of an hour or so without any of the road-blocks or surprises that LWJGL threw at us.
 
 In particular:
-- There are no mysterious management methods and marshalling to/from the native layer is largely transparent - the application name is simply a string.
+- There are no mysterious management methods and marshalling to/from the native layer is generally transparent - the application name is simply a string.
 - Other than the fact that JNA mandates that all structure fields are public the internal workings are largely hidden.
 - Where we did come across problems or confusing situations there was plenty of documentation, examples, tutorials, etc. available.
 
@@ -100,7 +100,7 @@ i.e. we want to avoid diminishing returns on the time and effort to cover every 
 
 ### Tools
 
-We first tried a tool called _JNAeator_ that generates JNA bindings for a given header file which seemed perfect for our requirements.  Unfortunately the tool generated a seemingly random package structure and the generated code looked more like the SWIG bindings than the nice, neat code we had hand-crafted.  It also used yet another library called _BridJ_ and the fact that it took us some time to find a website for this tool was not encouraging.
+We first tried a tool called _JNAeator_ that generates JNA bindings for a given header file, this seemed perfect for our requirements.  Unfortunately the tool generated a seemingly random package structure and the generated code looked more like the SWIG bindings than the nice, neat code we had hand-crafted.  It also used yet another library called _BridJ_ and the fact that it took us some time to find a website for this tool was not encouraging.
 
 So we looked for a more general header parser that we could use to code generate the bindings ourselves.  We expected (probably naively) that there would be some library or tool out there that we could use to parse a C/C++ header to enumerate the structures, enumerations and API methods.
 
@@ -262,13 +262,13 @@ public enum VkImageUsageFlag implements IntegerEnumeration {
 ### Structures
 
 The data for a structure is:
-    * structure name
-    * fields
-        * name
-        * type
-        * array length
+* structure name
+* fields
+    * name
+    * type
+    * array length
 
-Generation of the structures is slightly more complex as we have to map the Vulkan and native types to the equivalent Java/JNA types.  We implemented a type mapper that looked up the JNA/Java type for a native type specified by the following resource:
+Generation of the structures is slightly more complex as we have to map the Vulkan and native types to the equivalent Java/JNA types.  We implemented a type mapper specified by the following resource:
 
 ```java
 # Primitives
@@ -358,7 +358,7 @@ final String sType = String.join("_", tokens).toUpperCase();
 values.put("sType", sType);
 ```
 
-For example the type for the `VkApplicationInfo` structure is `VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO`;
+For example the type for the `VkApplicationInfo` structure is `VK_STRUCTURE_TYPE_APPLICATION_INFO`.
 
 This saves us the effort of having to manually populate this field when we use the structure - Bonus!
 
@@ -402,7 +402,7 @@ For a library with a handful of enumerations this would be a minor issue that we
 
 Although it is not common practice a Java enumeration **can** implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).  We leverage this technique to define a sort of base interface for the generated enumerations such that we can implement common helpers to handle the mapping issue.
 
-The interface itself is trivial (already seen in the Velocity template above):
+The [interface](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/IntegerEnumeration.java) itself is trivial (already seen in the Velocity template above):
 
 ```java
 public interface IntegerEnumeration {
@@ -464,7 +464,7 @@ final class Cache {
 }
 ```
 
-Each entry contains the reverse mapping of enumeration values to the corresponding constant:
+Each entry generates the reverse mapping:
 
 ```java
 private class Entry {
@@ -501,7 +501,7 @@ Notes:
 
 - Unfortunately the cache class is publicly visible but cannot be instantiated.
 
-Finally We also add helpers to transform to/from a bit-field mask:
+Finally we also add helpers to transform to/from a bit-field mask:
 
 ```java
 IntBinaryOperator MASK = (a, b) -> a | b;
@@ -512,7 +512,7 @@ IntBinaryOperator MASK = (a, b) -> a | b;
  * @param mask        Mask
  * @return Constants
  */
-static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
+static <E extends IntegerEnumeration> Collection<E> enumerate(Class<E> clazz, int mask) {
     final var entry = Cache.CACHE.get(clazz);
     final List<E> values = new ArrayList<>();
     final int max = Integer.highestOneBit(mask);
@@ -534,8 +534,6 @@ static <E extends IntegerEnumeration> int mask(Collection<E> values) {
     return values.stream().distinct().mapToInt(IntegerEnumeration::value).reduce(0, MASK);
 }
 ```
-
-Code: [IntegerEnumeration](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/IntegerEnumeration.java).
 
 ### Type Converter
 
@@ -578,7 +576,7 @@ TypeConverter CONVERTER = new TypeConverter() {
 }
 ```
 
-Note that the `fromNative()` handles the case of a zero native value.
+Note that `fromNative()` handles the case of a zero native value.
 
 The only fly in the ointment is that we need to apply this converter to **every** JNA structure in its constructor, hence we introduce a base-class for all Vulkan structures:
 

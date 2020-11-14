@@ -15,7 +15,7 @@ public final class Check {
 	}
 
 	/**
-	 * Tests whether the given object is null.
+	 * Checks that the given object is not {@code null}.
 	 * @param obj Object to test
 	 * @param msg Reason
 	 * @throws IllegalArgumentException if the given object is <tt>null</tt>
@@ -32,7 +32,7 @@ public final class Check {
 	}
 
 	/**
-	 * Tests whether the given string is empty.
+	 * Checks that the given string is not {@code null} or empty.
 	 * @param str String to test
 	 * @param msg Reason
 	 * @throws IllegalArgumentException if the given string is empty
@@ -47,13 +47,13 @@ public final class Check {
 	}
 
 	/**
-	 * Tests whether the given collection is empty.
+	 * Checks that the given collection is not {@code null} or empty.
 	 * @param c Collection to test
 	 * @param msg Reason
 	 * @throws IllegalArgumentException if the given collection is empty
 	 */
 	public static <T> Collection<T> notEmpty(Collection<T> c, String msg) throws IllegalArgumentException {
-		if(c == null || c.isEmpty()) throw new IllegalArgumentException(msg);
+		if((c == null) || c.isEmpty()) throw new IllegalArgumentException(msg);
 		return c;
 	}
 
@@ -62,7 +62,7 @@ public final class Check {
 	}
 
 	/**
-	 * Tests whether the given map is empty.
+	 * Checks that the given map is not {@code null} or empty.
 	 * @param map Map
 	 * @param msg Reason
 	 * @return Map
@@ -78,9 +78,9 @@ public final class Check {
 	}
 
 	/**
-	 * Tests whether the given array is empty.
+	 * Checks that the given array is not {@code null} or empty.
 	 * @param array Array to test
-	 * @param <T> Type
+	 * @param <T> Array component type
 	 * @throws IllegalArgumentException if the given array is empty
 	 */
 	@SafeVarargs
@@ -92,7 +92,8 @@ public final class Check {
 	}
 
 	/**
-     * Tests whether the given value is zero-or-more.
+     * Checks that the given number is zero-or-more.
+     * @param <T> Number type
      * @param value Value to test
      */
     public static <T extends Number> T zeroOrMore(T value) {
@@ -103,7 +104,8 @@ public final class Check {
     }
 
     /**
-     * Tests whether the given value is one-or-more.
+     * Checks that the given number is one-or-more.
+     * @param <T> Number type
      * @param value Value to test
      */
     public static <T extends Number> T oneOrMore(T value) {
@@ -114,7 +116,20 @@ public final class Check {
     }
 
     /**
-     * Tests whether the given value is within the specified range.
+     * Checks that the given number is greater-than zero.
+     * @param <T> Number type
+     * @param value Value to test
+     */
+    public static <T extends Number> T positive(T value) {
+    	if(value.floatValue() <= 0) {
+    		throw new IllegalArgumentException("Must be positive and greater-than zero");
+    	}
+    	return value;
+    }
+
+    /**
+     * Checks that the given number is within the specified range.
+     * @param <T> Number type
      * @param value Value to test
      * @param min Minimum
      * @param max Maximum
@@ -129,7 +144,7 @@ public final class Check {
     }
 
 	/**
-	 * Tests whether the given floating-point value is a valid 0..1 percentile.
+	 * Checks that the given floating-point value is a valid 0..1 percentile.
 	 * @param f Value to test
 	 * @throws IllegalArgumentException if the value is not a percentile
 	 */

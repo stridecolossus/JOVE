@@ -1,16 +1,8 @@
 package org.sarge.jove.util;
 
-import static org.sarge.jove.util.Check.notEmpty;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
- * An <i>interpolator</i> applies a mathematical function to a given value.
+ * An <i>interpolator</i> applies a mathematical function to a floating-point value to implement animations or <i>tweening</i> functionality.
+ * TODO - doc
  * @author Sarge
  */
 @FunctionalInterface
@@ -23,76 +15,76 @@ public interface Interpolator {
 	float interpolate(float value);
 
 	/**
-	 * Linear interpolator
+	 * Interpolator that does nothing.
 	 */
-	Interpolator LINEAR = value -> value;
+	Interpolator NONE = value -> value;
 
 	/**
-	 * Sine interpolator.
+	 * Flip interpolator.
 	 */
-	Interpolator SINE = value -> (1 - MathsUtil.cos(value * MathsUtil.PI)) / 2f;
+	Interpolator INVERT = value -> 1 - value;
 
 	/**
-	 * Creates an adapter for an interpolator that operates over the given range.
-	 * @param start				Start value
-	 * @param end				End value
-	 * @param interpolator		Interpolator function
-	 * @return Interpolator
+	 * Cosine interpolator.
 	 */
-	static Interpolator range(float start, float end, Interpolator interpolator) {
-		final float range = end - start;
-		return value -> start + interpolator.interpolate(value) * range;
+	Interpolator COSINE = value -> (1 - MathsUtil.cos(value * MathsUtil.PI)) / 2f;
+
+	/**
+	 * Smooth step (or <i>hermite</i>) interpolator - equivalent to the GLSL <code>mix</code> function.
+	 * @see <a href="https://en.wikipedia.org/wiki/Smoothstep">Wikipedia</a>
+	 */
+	Interpolator SMOOTH = value -> value * value * (3 - 2 * value);
+
+	/**
+	 * Square interpolator.
+	 */
+	Interpolator SQUARED = value -> value * value;
+
+	/**
+	 * Creates an exponential interpolator.
+	 * @param pow Exponent
+	 * @return Exponential interpolator
+	 */
+	static Interpolator exponent(float pow) {
+		return value -> (float) Math.pow(value, pow);
+	}
+
+	// https://www.febucci.com/2018/08/easing-functions/
+	// https://gist.github.com/Fonserbc/3d31a25e87fdaa541ddf
+	// http://paulbourke.net/miscellaneous/interpolation/
+
+	/**
+	 * Creates a linear (or <i>lerp</i>) interpolator over the given range.
+	 * @param start		Range start
+	 * @param end		Range end
+	 * @return Linear interpolator
+	 * @see #lerp(float, float, float)
+	 */
+	static Interpolator linear(float start, float end) {
+		return value -> lerp(start, end, value);
 	}
 
 	/**
-	 * A <i>step interpolator</i> maps a value to a banding table.
+	 * Creates a compound interpolator over the given range.
+	 * @param start				Range start
+	 * @param end				Range end
+	 * @param interpolator		Interpolator function
+	 * @return Interpolator
+	 * @see #lerp(float, float, float)
 	 */
-	class StepInterpolator implements Interpolator {
-		/**
-		 * Interpolator entry.
-		 */
-		public static class Entry {
-			private final float step;
-			private final float value;
+	static Interpolator of(float start, float end, Interpolator interpolator) {
+		return value -> lerp(start, end, interpolator.interpolate(value));
+	}
 
-			/**
-			 * Constructor.
-			 * @param step		Step
-			 * @param value		Interpolated value
-			 */
-			public Entry(float step, float value) {
-				this.step = step;
-				this.value = value;
-			}
-
-			@Override
-			public String toString() {
-				return step + " -> " + value;
-			}
-		}
-
-		private final List<Entry> table;
-
-		/**
-		 * Constructor.
-		 * @param table Banding table
-		 * @throws IllegalArgumentException if the table is empty
-		 */
-		public StepInterpolator(List<Entry> table) {
-			this.table = new ArrayList<>(notEmpty(table));
-			Collections.sort(this.table, Comparator.comparing(e -> e.step));
-		}
-
-		@Override
-		public float interpolate(float value) {
-			final Entry def = table.get(table.size() - 1);
-			final Entry entry = table.stream().filter(e -> e.step >= value).findAny().orElse(def);
-			return entry.value;
-		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
-		}
+	/**
+	 * Linearly interpolates a value over the given range.
+	 * @param start		Range start
+	 * @param end		Range end
+	 * @param value		Value
+	 * @return Interpolated value
+	 * @see <a href="// https://en.wikipedia.org/wiki/Linear_interpolation">Wikipedia</a>
+	 */
+	static float lerp(float start, float end, float value) {
+		return start + value * (end - start);
 	}
 }

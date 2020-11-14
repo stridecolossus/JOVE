@@ -12,11 +12,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.InputEvent.Handler;
+import org.sarge.jove.control.InputEvent.Action;
+import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.control.InputEvent.Type;
 import org.sarge.jove.util.Check;
 
@@ -24,16 +26,16 @@ import org.sarge.jove.util.Check;
  * An <i>action bindings</i> maps input events to actions.
  * TODO - doc
  */
-public class Bindings implements Handler {
-	private final Map<Handler, Set<Type>> actions = new HashMap<>();
-	private final Map<Type, Handler> bindings = new HashMap<>();
+public class Bindings implements Consumer<InputEvent<?>> {
+	private final Map<Action<?>, Set<Type>> actions = new HashMap<>();
+	private final Map<Type, Action<?>> bindings = new HashMap<>();
 
 	/**
 	 * Adds an action to this set of bindings.
 	 * @param action Action handler
 	 * @throws IllegalArgumentException for a duplicate action
 	 */
-	public void add(Handler action) {
+	public void add(Action<?> action) {
 		Check.notNull(action);
 		if(actions.containsKey(action)) throw new IllegalArgumentException("Duplicate action: " + action);
 		actions.put(action, new HashSet<>());
@@ -42,7 +44,7 @@ public class Bindings implements Handler {
 	/**
 	 * @return Actions in this set of bindings
 	 */
-	public Stream<Handler> actions() {
+	public Stream<Action<?>> actions() {
 		return actions.keySet().stream();
 	}
 
@@ -51,8 +53,8 @@ public class Bindings implements Handler {
 	 * @param action Action
 	 * @return Bindings
 	 */
-	private Set<Type> get(Handler action) {
-		final var bindings = actions.get(action);
+	private Set<Type> get(Action<?> action) {
+		final var<Type> bindings = actions.get(action);
 		if(bindings == null) throw new IllegalArgumentException("Action not present: " + action);
 		return bindings;
 	}
@@ -63,7 +65,7 @@ public class Bindings implements Handler {
 	 * @return Input events bound to the given action
 	 * @throws IllegalArgumentException if the action is not present in this set of bindings
 	 */
-	public Stream<Type> bindings(Handler action) {
+	public Stream<Type> bindings(Action<?> action) {
 		return get(action).stream();
 	}
 
@@ -72,21 +74,36 @@ public class Bindings implements Handler {
 	 * @param type Input type
 	 * @return Action
 	 */
-	public Optional<Handler> binding(Type type) {
+	public Optional<Action<?>> binding(Type type) {
 		return Optional.ofNullable(bindings.get(type));
 	}
 
 	/**
 	 * Binds an input event to the given action.
+	 * @param <T> Event type
 	 * @param type			Input event
 	 * @param action		Action handler
 	 * @throws IllegalStateException if the event is already bound
 	 */
-	public void bind(Type type, Handler action) {
+	public <T extends Type> void bind(T type, Action<T> action) {
 		Check.notNull(type);
+		Check.notNull(action);
 		if(bindings.containsKey(type)) throw new IllegalStateException("Event is already bound: " + type);
 		actions.computeIfAbsent(action, ignored -> new HashSet<>()).add(type);
 		bindings.put(type, action);
+	}
+
+	/**
+	 * Binds an event source to the given action.
+	 * @param <T> Event type
+	 * @param src			Event source
+	 * @param action		Action handler
+	 * @throws IllegalArgumentException if the source does not have exactly <b>one</b> event type
+	 */
+	public <T extends Type> void bind(Source<T> src, Action<T> action) {
+		final var<T> list = src.types();
+		if(list.size() != 1) throw new IllegalArgumentException("Bound source can only have a one event type: " + src);
+		bind(list.get(0), action);
 	}
 
 	/**
@@ -94,7 +111,7 @@ public class Bindings implements Handler {
 	 * @param type Event type
 	 */
 	public void remove(Type type) {
-		final Handler action = bindings.remove(type);
+		final Action<?> action = bindings.remove(type);
 		if(action != null) {
 			actions.get(action).remove(type);
 		}
@@ -105,7 +122,7 @@ public class Bindings implements Handler {
 	 * @param action Action
 	 * @throws IllegalArgumentException if the action is not present
 	 */
-	public void remove(Handler action) {
+	public void remove(Action<?> action) {
 		final var set = get(action);
 		set.forEach(bindings::remove);
 		set.clear();
@@ -120,8 +137,8 @@ public class Bindings implements Handler {
 	}
 
 	@Override
-	public void accept(InputEvent event) {
-		final Handler action = bindings.get(event.type());
+	public void accept(InputEvent<?> event) {
+		final Action<?> action = bindings.get(event.type());
 		if(action != null) {
 			action.accept(event);
 		}
@@ -134,7 +151,7 @@ public class Bindings implements Handler {
 	 */
 	public void save(Writer out) {
 		try(final var writer = new PrintWriter(out)) {
-			for(Handler action : actions.keySet()) {
+			for(Action<?> action : actions.keySet()) {
 				final StringJoiner str = new StringJoiner(StringUtils.SPACE);
 				str.add(action.toString());
 				actions.get(action).stream().map(Bindings::write).forEach(str::add);
@@ -177,7 +194,7 @@ public class Bindings implements Handler {
 		final String[] tokens = StringUtils.split(line);
 
 		// Lookup action
-		final Handler action = actions
+		final Action<?> action = actions
 				.keySet()
 				.stream()
 				.filter(e -> e.toString().equals(tokens[0]))
@@ -188,7 +205,8 @@ public class Bindings implements Handler {
 		Arrays.stream(tokens)
 				.skip(1)
 				.map(Bindings::parse)
-				.forEach(e -> bind(e, action));
+				//.forEach(e -> bind(e, action));
+				.forEach(e -> bindings.put(e, action)); // TODO
 	}
 
 	/**

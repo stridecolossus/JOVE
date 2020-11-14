@@ -2,6 +2,7 @@ package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.jupiter.api.Test;
 
@@ -75,6 +76,14 @@ public class MathsUtilTest {
 	}
 
 	@Test
+	void clamp() {
+		assertEquals(1, MathsUtil.clamp(0, 1, 2));
+		assertEquals(1, MathsUtil.clamp(1, 1, 2));
+		assertEquals(2, MathsUtil.clamp(2, 1, 2));
+		assertEquals(2, MathsUtil.clamp(3, 1, 2));
+	}
+
+	@Test
 	void toDegrees() {
 		assertEquals(0, MathsUtil.toDegrees(0));
 		assertEquals(90, MathsUtil.toDegrees(MathsUtil.HALF_PI));
@@ -96,12 +105,26 @@ public class MathsUtilTest {
 	}
 
 	@Test
-	void trigonetry() {
-		assertEquals((float) Math.sin(0.5f), MathsUtil.sin(0.5f), 0.0001f);
-		assertEquals((float) Math.cos(0.5f), MathsUtil.cos(0.5f), 0.0001f);
-		assertEquals((float) Math.tan(0.5f), MathsUtil.tan(0.5f), 0.0001f);
-		assertEquals((float) Math.asin(0.5f), MathsUtil.asin(0.5f), 0.0001f);
-		assertEquals((float) Math.acos(0.5f), MathsUtil.acos(0.5f), 0.0001f);
-		assertEquals((float) Math.atan(0.5f), MathsUtil.atan(0.5f), 0.0001f);
+	void sin() {
+		assertFloatEquals(0, MathsUtil.sin(0));
+		assertFloatEquals(1, MathsUtil.sin(MathsUtil.HALF_PI));
+		assertFloatEquals(0, MathsUtil.sin(MathsUtil.PI));
+		assertFloatEquals(0, MathsUtil.sin(MathsUtil.TWO_PI));
+		assertFloatEquals(-1, MathsUtil.sin(-MathsUtil.HALF_PI));
+		assertFloatEquals(0, MathsUtil.sin(-MathsUtil.PI));
+		assertFloatEquals(0, MathsUtil.sin(-MathsUtil.TWO_PI));
 	}
+
+	@Test
+	void cos() {
+		assertFloatEquals(1, MathsUtil.cos(0));
+		assertFloatEquals(0, MathsUtil.cos(MathsUtil.HALF_PI));
+		assertFloatEquals(-1, MathsUtil.cos(MathsUtil.PI));
+		assertFloatEquals(1, MathsUtil.cos(MathsUtil.TWO_PI));
+		assertFloatEquals(0, MathsUtil.cos(-MathsUtil.HALF_PI));
+		assertFloatEquals(-1, MathsUtil.cos(-MathsUtil.PI));
+		assertFloatEquals(1, MathsUtil.cos(-MathsUtil.TWO_PI));
+	}
+
+	// TODO - other trig
 }

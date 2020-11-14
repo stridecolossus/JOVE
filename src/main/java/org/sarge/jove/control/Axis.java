@@ -3,8 +3,10 @@ package org.sarge.jove.control;
 import static org.sarge.jove.util.Check.notEmpty;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.control.InputEvent.Action;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -12,6 +14,15 @@ import org.sarge.jove.util.MathsUtil;
  * @author Sarge
  */
 public class Axis implements InputEvent.Type {
+	/**
+	 * Creates an adapter for an axis action that delegates to the given method.
+	 * @param action Action method
+	 * @return Axis action adapter
+	 */
+	public static Action<Axis> action(Consumer<Float> action) {
+		return event -> action.accept(event.y());
+	}
+
 	private final String name;
 
 	/**
@@ -59,7 +70,7 @@ public class Axis implements InputEvent.Type {
 	/**
 	 * Axis event.
 	 */
-	public final class Event implements InputEvent {
+	public final class Event implements InputEvent<Axis> {
 		private final float value;
 
 		/**
