@@ -92,6 +92,10 @@ public final class Button implements Type, InputEvent<Button> {
 		return new Button(id, 1, 0);
 	}
 
+	public static Action<Button> action(Runnable action) {
+		return ignored -> action.run();
+	}
+
 	private final String id;
 	private final int action;
 	private final int mods;

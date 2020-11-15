@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -18,6 +17,7 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Bindings;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.InputEvent.Action;
 import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Vector;
@@ -409,38 +409,110 @@ public class ModelDemo {
 
 		///////////////////
 
+		// Init camera
 		final Camera cam = new Camera();
 
-		final AtomicBoolean running = new AtomicBoolean(true);
-
-		final Bindings bindings = new Bindings();
-		window.keyboard().enable(bindings);
-
-		final OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents(), new Orbit(0.75f, 25, 0.1f));
-		controller.radius(3);
-
-		final MouseDevice mouse = window.mouse();
-		final var ptr = mouse.pointer();
-		final var wheel = mouse.wheel();
-		ptr.enable(bindings);
-		wheel.enable(bindings);
-
-		bindings.bind(ptr, Position.action(controller::update));
-		bindings.bind(wheel, Axis.action(controller::zoom));
-
-//		bindings.bind(Button.of("W"), new MoveAction(+1));
-//		bindings.bind(Button.of("A"), strafe.apply(+1));
-//		bindings.bind(Button.of("S"), () -> cam.move(-1));
-//		bindings.bind(Button.of("D"), strafe.apply(-1));
-		bindings.bind(Button.of("ESCAPE"), ignored -> running.set(false));
-
+		// Init local model transform
 		final Matrix rot = Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
 		final Matrix mat = Matrix.translation(new Vector(0, 0.5f, 0));
 		final Matrix modelMatrix = mat.multiply(rot);
 
-		while(running.get()) {
+		// Create running action
+		class RunAction implements Runnable {
+			private boolean running = true;
+
+			public boolean isRunning() {
+				return running;
+			}
+
+			@Override
+			public void run() {
+				running = false;
+			}
+		}
+		final RunAction runner = new RunAction();
+
+		// Init action bindings
+		final Bindings bindings = new Bindings();
+		window.keyboard().enable(bindings);
+
+		// Init mouse
+		final MouseDevice mouse = window.mouse();
+		final var pointer = mouse.pointer();
+		final var wheel = mouse.wheel();
+		pointer.enable(bindings);
+		wheel.enable(bindings);
+
+		class MoveAction {
+			private final float dist;
+
+			public MoveAction(float dist) {
+				this.dist = -dist;
+			}
+
+			void forward() {
+				move(+1);
+			}
+
+			void back() {
+				move(-1);
+			}
+
+			void move(float value) {
+				cam.move(value * dist);
+			}
+		}
+
+		// Create toggle controller action
+		class ToggleAction implements Runnable {
+			private boolean orbital;
+
+			@Override
+			public void run() {
+				// Reset bindings
+				bindings.clear();
+				orbital = !orbital;
+
+				// Add bindings
+				if(orbital) {
+					// Bind orbital controller
+					final OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents(), new Orbit(0.75f, 25, 0.1f));
+					controller.radius(3);
+					bindings.bind(pointer, Position.action(controller::update));
+					bindings.bind(wheel, Axis.action(controller::zoom));
+				}
+				else {
+					// Bind mouse-look controller
+
+					// Bind wheel
+					final MoveAction move = new MoveAction(0.25f);
+					bindings.bind(wheel, Axis.action(move::move));
+
+					// Bind keyboard controls
+					bindings.bind(Button.of("W"), Button.action(move::forward));
+					bindings.bind(Button.of("S"), Button.action(move::back));
+					bindings.bind(Button.of("A"), strafe(-0.25f));
+					bindings.bind(Button.of("D"), strafe(+0.25f));
+				}
+
+				// Bind common controls
+				bindings.bind(Button.of("ESCAPE"), Button.action(runner));
+				bindings.bind(Button.of("SPACE"), Button.action(this));
+			}
+
+			private Action<Button> strafe(float dist) {
+				return event -> cam.strafe(dist);
+			}
+		}
+		final var toggle = new ToggleAction();
+		toggle.run();
+
+		// Render loop
+		while(runner.isRunning()) {
+			// Poll events
 			desktop.poll();
 
+			// Update view matrix
 			final Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix);
 			uniform.load(matrix);
 
