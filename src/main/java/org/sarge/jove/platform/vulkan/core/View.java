@@ -80,9 +80,12 @@ public class View extends AbstractVulkanObject {
 	 * @throws IllegalArgumentException if the clear value is incompatible with this view
 	 */
 	public void clear(ClearValue clear) {
-		if(!image.descriptor().aspects().contains(clear.aspect())) {
-			throw new IllegalArgumentException(String.format("Invalid clear value for this view: expected=%s view=%s", clear.aspect(), this));
-		}
+
+		//if(clear.isValid(aspect))
+
+//		if(!image.descriptor().aspects().contains(clear.aspect())) {
+//			throw new IllegalArgumentException(String.format("Invalid clear value for this view: expected=%s view=%s", clear.aspect(), this));
+//		}
 		this.clear = notNull(clear);
 	}
 
@@ -195,6 +198,7 @@ public class View extends AbstractVulkanObject {
 
 			// Init clear value
 			if(clear == null) {
+				// TODO - only useful if attachment has clear operation
 				clear = ClearValue.of(image.descriptor().aspects());
 			}
 			view.clear = clear;

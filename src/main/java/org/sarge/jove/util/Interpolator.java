@@ -1,8 +1,18 @@
 package org.sarge.jove.util;
 
 /**
- * An <i>interpolator</i> applies a mathematical function to a floating-point value to implement animations or <i>tweening</i> functionality.
- * TODO - doc
+ * An <i>interpolator</i> applies a mathematical function to a floating-point value.
+ * <p>
+ * Interpolators are used to implement animations or <i>tweening</i> or <i>easing</i> functionality.
+ * <p>
+ * Example:
+ * <pre>
+ *  // Linear interpolation
+ *  final Interpolator linear = Interpolator.linear(1, 2);
+ *  linear.interpolate(0.0f);    	// 1.0
+ *  linear.interpolate(0.5f);    	// 1.5
+ *  linear.interpolate(1.0f);    	// 2.0
+ * </pre>
  * @author Sarge
  */
 @FunctionalInterface

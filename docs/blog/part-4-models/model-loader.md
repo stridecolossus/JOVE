@@ -409,44 +409,55 @@ public static class IndexedBuilder extends Builder {
 }
 ```
 
-The `add()` method in the indexed builder intercepts duplicates and registers the index for new unique vertices:
+The over-ridden `add()` method of the indexed builder intercepts duplicates and registers the index for new unique vertices:
 
 ```java
-public Builder add(Vertex vertex) {
+public IndexedBuilder add(Vertex vertex) {
     // Lookup existing vertex index
     final Integer prev = map.get(vertex);
+    final int idx = prev == null ? count() : prev;
 
+    // Add new vertices
     if(prev == null) {
-        // Add new vertex
-        map.put(vertex, count());
+        map.put(vertex, idx);
         super.add(vertex);
     }
+
+    ...
+
+    return this;
 }
 ```
 
-The _auto_ setting is used to automatically add an index for each vertex (including duplicates) which is used in the OBJ loader:
+The _auto_ setting is used to automatically add an index for each vertex (including duplicates) which we make use of in the OBJ loader:
 
 ```java
-if(prev == null) {
+private boolean auto = true;
+
+/**
+ * Sets whether to automatically add an index for each vertex (default is {@code true}).
+ * @param auto Whether to automatically add indices
+ */
+public IndexedBuilder setAutoIndex(boolean auto) {
+    this.auto = auto;
+    return this;
+}
+
+public IndexedBuilder add(Vertex vertex) {
     ...
     
-    // Add index for new vertex
+    // Add index
     if(auto) {
-        add(map.size() - 1);
+        add(idx);
     }
-}
-else {
-    // Add index for existing vertex
-    if(auto) {
-        add(prev);
-    }
+
+    return this;
 }
 ```
 
 We also add new methods to explicitly add or lookup indices:
 
 ```java
-@Override
 public Builder add(int index) {
     Check.zeroOrMore(index);
     if(index >= count()) throw new IndexOutOfBoundsException(...);
@@ -454,15 +465,12 @@ public Builder add(int index) {
     return this;
 }
 
-@Override
 public int indexOf(Vertex vertex) {
     final Integer index = map.get(vertex);
     if(index == null) throw new IllegalArgumentException(...);
     return index;
 }
 ```
-
-Note that in the base-class model these methods throw an exception.
 
 We can now add an optional index to the model class:
 

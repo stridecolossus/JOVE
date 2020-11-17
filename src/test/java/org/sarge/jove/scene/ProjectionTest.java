@@ -1,7 +1,6 @@
 package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,7 @@ public class ProjectionTest {
 			.build();
 
 		final Projection proj = Projection.perspective(MathsUtil.HALF_PI);
-		assertFloatEquals(1, proj.height(dim));
+		assertEquals(1, proj.height(dim));
 		assertEquals(expected, proj.matrix(0.1f, 1000f, dim));
 	}
 

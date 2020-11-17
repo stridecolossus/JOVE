@@ -1,11 +1,10 @@
 package org.sarge.jove.common;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.sarge.jove.util.TestHelper.assertFloatArrayEquals;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import java.nio.ByteBuffer;
 
@@ -46,16 +45,16 @@ public class ColourTest {
 		final ByteBuffer buffer = ByteBuffer.allocate(4 * Float.BYTES);
 		col.buffer(buffer);
 		buffer.flip();
-		assertFloatEquals(col.red(), buffer.getFloat());
-		assertFloatEquals(col.green(), buffer.getFloat());
-		assertFloatEquals(col.blue(), buffer.getFloat());
-		assertFloatEquals(col.alpha(), buffer.getFloat());
+		assertEquals(col.red(), buffer.getFloat());
+		assertEquals(col.green(), buffer.getFloat());
+		assertEquals(col.blue(), buffer.getFloat());
+		assertEquals(col.alpha(), buffer.getFloat());
 	}
 
 	@Test
 	void toArray() {
 		final float[] array = col.toArray();
-		assertFloatArrayEquals(new float[]{0.1f, 0.2f, 0.3f, 1}, array);
+		assertArrayEquals(new float[]{0.1f, 0.2f, 0.3f, 1}, array);
 	}
 
 	@Test

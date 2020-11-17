@@ -1,7 +1,6 @@
 package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +17,7 @@ public class DimensionsTest {
 	public void constructor() {
 		assertEquals(640, dim.width());
 		assertEquals(480, dim.height());
-		assertFloatEquals(640 / 480f, dim.ratio());
+		assertEquals(640 / 480f, dim.ratio());
 	}
 
 	@Test

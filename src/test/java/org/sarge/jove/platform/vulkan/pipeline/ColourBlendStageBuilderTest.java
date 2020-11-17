@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.sarge.jove.util.TestHelper.assertFloatArrayEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ public class ColourBlendStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(VulkanBoolean.TRUE, info.logicOpEnable);
 		assertEquals(VkLogicOp.VK_LOGIC_OP_COPY, info.logicOp);
-		assertFloatArrayEquals(CONSTANTS, info.blendConstants);
+		assertArrayEquals(CONSTANTS, info.blendConstants);
 		assertEquals(2, info.attachmentCount);
 		assertNotNull(info.pAttachments);
 
@@ -54,7 +54,7 @@ public class ColourBlendStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(VulkanBoolean.FALSE, info.logicOpEnable);
 		assertEquals(VkLogicOp.VK_LOGIC_OP_NO_OP, info.logicOp);
-		assertFloatArrayEquals(new float[]{0, 0, 0, 0}, info.blendConstants);
+		assertArrayEquals(new float[]{0, 0, 0, 0}, info.blendConstants);
 		assertEquals(1, info.attachmentCount);
 		assertNotNull(info.pAttachments);
 	}

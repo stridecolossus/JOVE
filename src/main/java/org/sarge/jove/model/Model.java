@@ -294,27 +294,6 @@ public interface Model {
 		}
 
 		/**
-		 * Adds an index.
-		 * @param index Index
-		 * @throws IndexOutOfBoundsException if the index is out-of-bounds for this model
-		 * @throws UnsupportedOperationException for an non-indexed builder
-		 */
-		public Builder add(int index) {
-			throw new UnsupportedOperationException();
-		}
-
-		/**
-		 * Looks up the index of the given vertex.
-		 * @param vertex Vertex
-		 * @return Vertex index
-		 * @throws IllegalArgumentException if the vertex is not present in this model
-		 * @throws UnsupportedOperationException for an non-indexed builder
-		 */
-		public int indexOf(Vertex vertex) {
-			throw new UnsupportedOperationException();
-		}
-
-		/**
 		 * @return Index or {@code null} if not indexed
 		 */
 		protected List<Integer> index() {
@@ -374,39 +353,45 @@ public interface Model {
 		}
 
 		@Override
-		public Builder add(Vertex vertex) {
+		public IndexedBuilder add(Vertex vertex) {
 			// Lookup existing vertex index
 			final Integer prev = map.get(vertex);
+			final int idx = prev == null ? count() : prev;
 
+			// Add new vertices
 			if(prev == null) {
-				// Add new vertex
-				map.put(vertex, count());
+				map.put(vertex, idx);
 				super.add(vertex);
-
-				// Add index for new vertex
-				if(auto) {
-					add(map.size() - 1);
-				}
 			}
-			else {
-				// Add index for existing vertex
-				if(auto) {
-					add(prev);
-				}
+
+			// Add index
+			if(auto) {
+				add(idx);
 			}
 
 			return this;
 		}
 
-		@Override
-		public Builder add(int index) {
+		/**
+		 * Adds an index.
+		 * @param index Index
+		 * @throws IndexOutOfBoundsException if the index is out-of-bounds for this model
+		 * @throws UnsupportedOperationException for an non-indexed builder
+		 */
+		public IndexedBuilder add(int index) {
 			Check.zeroOrMore(index);
 			if(index >= count()) throw new IndexOutOfBoundsException(String.format("Invalid vertex index: index=%d vertices=%s", index, count()));
 			this.index.add(index);
 			return this;
 		}
 
-		@Override
+		/**
+		 * Looks up the index of the given vertex.
+		 * @param vertex Vertex
+		 * @return Vertex index
+		 * @throws IllegalArgumentException if the vertex is not present in this model
+		 * @throws UnsupportedOperationException for an non-indexed builder
+		 */
 		public int indexOf(Vertex vertex) {
 			final Integer index = map.get(vertex);
 			if(index == null) throw new IllegalArgumentException("Vertex not present: " + vertex);

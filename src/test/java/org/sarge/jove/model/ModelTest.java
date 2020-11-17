@@ -94,13 +94,6 @@ public class ModelTest {
 		}
 
 		@Test
-		void indexNotSupported() {
-			builder.add(vertex);
-			assertThrows(UnsupportedOperationException.class, () -> builder.add(0));
-			assertThrows(UnsupportedOperationException.class, () -> builder.indexOf(vertex));
-		}
-
-		@Test
 		void build() {
 			// Build model
 			final Model model = builder
@@ -142,7 +135,7 @@ public class ModelTest {
 		void add() {
 			builder.add(vertex);
 			assertEquals(1, builder.count());
-			assertEquals(List.of(), builder.index());
+			assertEquals(List.of(0), builder.index());
 		}
 
 		@Test
@@ -150,7 +143,7 @@ public class ModelTest {
 			builder.add(vertex);
 			builder.add(0);
 			assertEquals(0, builder.indexOf(vertex));
-			assertEquals(List.of(0), builder.index());
+			assertEquals(List.of(0, 0), builder.index());
 		}
 
 		@Test
@@ -189,11 +182,13 @@ public class ModelTest {
 
 		@Test
 		void build() {
+			// Init model
+			// TODO - returns base-class builder!
+			builder.primitive(Primitive.LINES);
+
 			// Build indexed model
 			final Model model = builder
-					.primitive(Primitive.LINES)
 					.add(vertex)
-					.add(0)
 					.add(0)
 					.build();
 

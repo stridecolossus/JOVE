@@ -2,7 +2,6 @@ package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.sarge.jove.util.TestHelper.assertFloatEquals;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +26,6 @@ public class MathsUtilTest {
 		assertEquals(true, MathsUtil.isZero(0.00001f));
 		assertEquals(true, MathsUtil.isZero(0));
 		assertEquals(true, MathsUtil.isZero(-0));
-		assertEquals(false, MathsUtil.isZero(MathsUtil.ACCURACY));
 		assertEquals(false, MathsUtil.isZero(1));
 	}
 
@@ -106,24 +104,28 @@ public class MathsUtilTest {
 
 	@Test
 	void sin() {
-		assertFloatEquals(0, MathsUtil.sin(0));
-		assertFloatEquals(1, MathsUtil.sin(MathsUtil.HALF_PI));
-		assertFloatEquals(0, MathsUtil.sin(MathsUtil.PI));
-		assertFloatEquals(0, MathsUtil.sin(MathsUtil.TWO_PI));
-		assertFloatEquals(-1, MathsUtil.sin(-MathsUtil.HALF_PI));
-		assertFloatEquals(0, MathsUtil.sin(-MathsUtil.PI));
-		assertFloatEquals(0, MathsUtil.sin(-MathsUtil.TWO_PI));
+		check(0, MathsUtil.sin(0));
+		check(1, MathsUtil.sin(MathsUtil.HALF_PI));
+		check(0, MathsUtil.sin(MathsUtil.PI));
+		check(0, MathsUtil.sin(MathsUtil.TWO_PI));
+		check(-1, MathsUtil.sin(-MathsUtil.HALF_PI));
+		check(0, MathsUtil.sin(-MathsUtil.PI));
+		check(0, MathsUtil.sin(-MathsUtil.TWO_PI));
 	}
 
 	@Test
 	void cos() {
-		assertFloatEquals(1, MathsUtil.cos(0));
-		assertFloatEquals(0, MathsUtil.cos(MathsUtil.HALF_PI));
-		assertFloatEquals(-1, MathsUtil.cos(MathsUtil.PI));
-		assertFloatEquals(1, MathsUtil.cos(MathsUtil.TWO_PI));
-		assertFloatEquals(0, MathsUtil.cos(-MathsUtil.HALF_PI));
-		assertFloatEquals(-1, MathsUtil.cos(-MathsUtil.PI));
-		assertFloatEquals(1, MathsUtil.cos(-MathsUtil.TWO_PI));
+		check(1, MathsUtil.cos(0));
+		check(0, MathsUtil.cos(MathsUtil.HALF_PI));
+		check(-1, MathsUtil.cos(MathsUtil.PI));
+		check(1, MathsUtil.cos(MathsUtil.TWO_PI));
+		check(0, MathsUtil.cos(-MathsUtil.HALF_PI));
+		check(-1, MathsUtil.cos(-MathsUtil.PI));
+		check(1, MathsUtil.cos(-MathsUtil.TWO_PI));
+	}
+
+	private static void check(float expected, float actual) {
+		assertEquals(expected, actual, 0.00001f);
 	}
 
 	// TODO - other trig

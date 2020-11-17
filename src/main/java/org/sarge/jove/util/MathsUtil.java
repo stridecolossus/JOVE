@@ -1,5 +1,7 @@
 package org.sarge.jove.util;
 
+import static org.sarge.jove.util.Check.zeroOrMore;
+
 /**
  * Maths utilities.
  * @author Sarge
@@ -8,7 +10,18 @@ public final class MathsUtil {
 	/**
 	 * Accuracy for floating-point comparisons.
 	 */
-	public static final float ACCURACY = 0.0001f;
+	private static float ACCURACY = 0.0001f;
+
+	/**
+	 * Sets the <b>global</b> accuracy for floating-point equivalence tests.
+	 * @param accuracy Accuracy
+	 * @see #isEqual(float, float)
+	 * @see #isEqual(float[], float[])
+	 * @see #isZero(float)
+	 */
+	public static void accuracy(float accuracy) {
+		ACCURACY = zeroOrMore(accuracy);
+	}
 
 	/**
 	 * PI as floating-point.
