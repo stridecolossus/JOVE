@@ -645,9 +645,8 @@ public interface Interpolator {
 }
 ```
 
-Here we use a simple _linear_ interpolation that essentially just maps window dimensions to yaw-pitch angles - we implement a variety of other interpolation functions that will be used in future chapters (often referred to as _tweening_ or _easing functions_).
-
-We use interpolators to map the cursor coordinates to angles (in radians):
+The interpolator provides a variety of interpolation functions (often referred to as _tweening_ or _easing functions_) that will be used in future chapters.
+Here we use a simple _linear_ interpolation that maps the window dimensions to yaw-pitch angles (in radians):
 
 ```java
 private Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
@@ -656,9 +655,7 @@ private Interpolator vertical = Interpolator.linear(-MathsUtil.HALF_PI, MathsUti
 
 Note that the ranges are different for the two rotation axes.
 
-To calculate the camera position based on the yaw-pitch angles we implement a _sphere_ geometry class (that will also be used elsewhere in our library).
-
-The `point()` method calculates a point on the surface of the sphere given yaw-pitch angles and the radius:
+To calculate the camera position we implement a _sphere_ geometry class which calculates a point on the surface of the sphere given a radius and the yaw-pitch angles:
 
 ```java
 public record Sphere(float radius) {
@@ -748,7 +745,7 @@ pointer.enable(event -> controller.update(event.x(), event.y()));
 wheel.enable(event -> controller.zoom(event.y()));
 ```
 
-Moving the mouse should rotate the camera about the scene and the mouse-wheel is used to zoom in or out.
+Moving the mouse should rotate the camera about the scene and the mouse-wheel is used to zoom.
 
 Sweet.
 
@@ -760,7 +757,7 @@ The final type of event we will implement in this chapter is a _button event_ fo
 
 ### Button Events
 
-A _button event_ is slightly more complex in that it also has an _action_ and a keyboard _modifiers_ mask:
+A _button event_ is slightly more complex in that it also has an _action_ and a mask of keyboard _modifiers_:
 
 ```java
 public final class Button implements Type, InputEvent {

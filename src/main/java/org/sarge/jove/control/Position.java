@@ -2,9 +2,6 @@ package org.sarge.jove.control;
 
 import static org.sarge.jove.util.Check.notEmpty;
 
-import java.util.function.BiConsumer;
-
-import org.sarge.jove.control.InputEvent.Action;
 import org.sarge.jove.control.InputEvent.Type;
 
 /**
@@ -12,11 +9,6 @@ import org.sarge.jove.control.InputEvent.Type;
  * @author Sarge
  */
 public final class Position implements Type {
-
-	public static Action<Position> action(BiConsumer<Float, Float> action) {
-		return event -> action.accept(event.x(), event.y());
-	}
-
 	private final String name;
 
 	/**
@@ -50,7 +42,7 @@ public final class Position implements Type {
 	/**
 	 * Position event instance.
 	 */
-	public record Event(Position type, float x, float y) implements InputEvent<Position> {
+	public record Event(Position type, float x, float y) implements InputEvent {
 		// Empty
 	}
 }

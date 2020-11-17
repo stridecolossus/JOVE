@@ -5,35 +5,39 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.InputEvent.Handler;
+import org.sarge.jove.control.Action.ValueAction;
+import org.sarge.jove.control.InputEvent.Source;
 
 public class BindingsTest {
 	private Bindings bindings;
 	private Axis axis;
-	private Handler action;
-	private Axis.Event event;
+	private Source<Axis> src;
+	private ValueAction action;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		// Create an event
 		axis = new Axis("axis");
-		event = axis.create(42);
+
+		// Create event source
+		src = mock(Source.class);
+		when(src.types()).thenReturn(List.of(axis));
 
 		// Create an action
-		action = mock(Handler.class);
-		when(action.toString()).thenReturn("action");
+		action = mock(ValueAction.class);
 
 		// Create bindings
 		bindings = new Bindings();
@@ -48,7 +52,7 @@ public class BindingsTest {
 	@Test
 	void add() {
 		bindings.add(action);
-		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
@@ -71,34 +75,34 @@ public class BindingsTest {
 
 	@Test
 	void bind() {
-		bindings.bind(axis, action);
-		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
+		bindings.bind(src, action);
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 		assertArrayEquals(new Axis[]{axis}, bindings.bindings(action).toArray());
 		assertEquals(Optional.of(action), bindings.binding(axis));
 	}
 
 	@Test
 	void bindAlreadyBound() {
-		bindings.bind(axis, action);
-		assertThrows(IllegalStateException.class, () -> bindings.bind(axis, action));
+		bindings.bind(src, action);
+		assertThrows(IllegalStateException.class, () -> bindings.bind(src, action));
 	}
 
 	@Test
 	void remove() {
-		bindings.bind(axis, action);
+		bindings.bind(src, action);
 		bindings.remove(axis);
 		assertEquals(0, bindings.bindings(action).count());
 		assertEquals(Optional.empty(), bindings.binding(axis));
-		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
 	void removeAction() {
-		bindings.bind(axis, action);
+		bindings.bind(src, action);
 		bindings.remove(action);
 		assertEquals(0, bindings.bindings(action).count());
 		assertEquals(Optional.empty(), bindings.binding(axis));
-		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Test
@@ -108,25 +112,18 @@ public class BindingsTest {
 
 	@Test
 	void clear() {
-		bindings.bind(axis, action);
+		bindings.bind(src, action);
 		bindings.clear();
 		assertEquals(0, bindings.bindings(action).count());
 		assertEquals(Optional.empty(), bindings.binding(axis));
-		assertArrayEquals(new Handler[]{action}, bindings.actions().toArray());
-	}
-
-	@Test
-	void accept() {
-		bindings.bind(axis, action);
-		bindings.accept(event);
-		verify(action).accept(event);
+		assertArrayEquals(new Action[]{action}, bindings.actions().toArray());
 	}
 
 	@Nested
 	class LoaderTests {
 		@BeforeEach
 		void before() {
-			bindings.bind(axis, action);
+			bindings.bind(src, action);
 		}
 
 		@Test

@@ -240,6 +240,20 @@ public class Instance implements TransientNativeObject {
 			Check.notNull(lib);
 			Check.notEmpty(name);
 
+			/*
+VkExtensionProperties[] exts = VulkanFunction.enumerate(VulkanLibrary.EXTENSIONS, lib, VkExtensionProperties::new);
+System.out.println("supported");
+for(var e : exts) {
+	System.out.println(new String(e.extensionName));
+}
+
+VkLayerProperties[] layers2 = VulkanFunction.enumerate(VulkanLibrary.LAYERS, lib, VkLayerProperties::new);
+System.out.println("layers");
+for(var e : layers2) {
+	System.out.println(new String(e.layerName)+" spec="+e.specVersion+" impl="+e.implementationVersion);
+}
+*/
+
 			// Init application descriptor
 			final VkApplicationInfo app = new VkApplicationInfo();
 			app.pApplicationName = name;

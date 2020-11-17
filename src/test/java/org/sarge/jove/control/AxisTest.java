@@ -2,16 +2,12 @@ package org.sarge.jove.control;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 import java.util.Objects;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.InputEvent.Action;
 
 public class AxisTest {
 	private static final String NAME = "Axis";
@@ -40,16 +36,6 @@ public class AxisTest {
 		assertEquals(false, axis.equals(new Axis("Other")));
 	}
 
-	@SuppressWarnings("unchecked")
-	@Test
-	void action() {
-		final Consumer<Float> method = mock(Consumer.class);
-		final Action<Axis> action = Axis.action(method);
-		assertNotNull(action);
-		action.accept(axis.create(42));
-		verify(method).accept(42f);
-	}
-
 	@Nested
 	class EventTests {
 		private Axis.Event event;
@@ -63,8 +49,7 @@ public class AxisTest {
 		void constructor() {
 			assertNotNull(event);
 			assertEquals(axis, event.type());
-			assertEquals(42, event.x());
-			assertEquals(42, event.y());
+			assertEquals(42, event.value());
 		}
 
 		@Test

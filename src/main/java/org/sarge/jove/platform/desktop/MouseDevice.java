@@ -6,12 +6,11 @@ import java.awt.MouseInfo;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent;
+import org.sarge.jove.control.Handler;
 import org.sarge.jove.control.InputEvent.Device;
 import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.control.Position;
@@ -53,8 +52,8 @@ public class MouseDevice implements Device {
 			}
 
 			@Override
-			public void enable(Consumer<InputEvent<?>> handler) {
-				final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event(pos, (float) x, (float) y));
+			public void enable(Handler handler) {
+				final MousePositionListener listener = (ptr, x, y) -> handler.handle(new Position.Event(pos, (float) x, (float) y));
 				apply(listener);
 			}
 
@@ -94,10 +93,10 @@ public class MouseDevice implements Device {
 			}
 
 			@Override
-			public void enable(Consumer<InputEvent<?>> handler) {
+			public void enable(Handler handler) {
 				final MouseButtonListener listener = (ptr, button, action, mods) -> {
 					// TODO - action/mods
-					handler.accept(buttons[button]);
+					handler.handle(buttons[button]);
 				};
 				apply(listener);
 			}
@@ -126,8 +125,8 @@ public class MouseDevice implements Device {
 			}
 
 			@Override
-			public void enable(Consumer<InputEvent<?>> handler) {
-				final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
+			public void enable(Handler handler) {
+				final MouseScrollListener listener = (ptr, x, y) -> handler.handle(wheel.create((float) y));
 				apply(listener);
 			}
 

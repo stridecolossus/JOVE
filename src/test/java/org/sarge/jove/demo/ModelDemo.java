@@ -14,11 +14,8 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Bindings;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent.Action;
-import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.BufferedModel.ModelLoader;
@@ -159,9 +156,26 @@ public class ModelDemo {
 	}
 
 	public static void main(String[] args) throws Exception {
+
+		//System.setProperty("jna.library.path", "bollocks");
+		//System.setProperty("jna.library.path", "/VulkanSDK/1.1.101.0/Lib");
+		//System.setProperty("jna.debug_load", "true");
+		//System.setProperty("jna.debug_load.jna", "true");
+
+
+	//	System.err.println("debug="+Boolean.getBoolean("jna.debug_load"));
+		//System.err.println("path="+System.getProperty("jna.library.path"));
+
+
+
 		// Open desktop
 		final Desktop desktop = Desktop.create();
+
+		desktop.setErrorHandler(System.err::println);
+
 		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
+
+		//System.out.println("extensions="+Arrays.toString(desktop.extensions()));
 
 		// Create window
 		final var descriptor = new Window.Descriptor.Builder()
@@ -180,7 +194,7 @@ public class ModelDemo {
 				.name("test")
 				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
 				.extensions(desktop.extensions())
-				.layer(ValidationLayer.STANDARD_VALIDATION)
+				// TODO - .layer(ValidationLayer.STANDARD_VALIDATION)
 				.build();
 
 		// Attach message handler
@@ -478,31 +492,34 @@ public class ModelDemo {
 					// Bind orbital controller
 					final OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents(), new Orbit(0.75f, 25, 0.1f));
 					controller.radius(3);
-					bindings.bind(pointer, Position.action(controller::update));
-					bindings.bind(wheel, Axis.action(controller::zoom));
+					bindings.bind(pointer, controller::update);
+					bindings.bind(wheel, controller::zoom);
 				}
 				else {
 					// Bind mouse-look controller
 
 					// Bind wheel
 					final MoveAction move = new MoveAction(0.25f);
-					bindings.bind(wheel, Axis.action(move::move));
+					//bindings.bind(wheel, cam::move); // Axis.action(move::move));
 
 					// Bind keyboard controls
-					bindings.bind(Button.of("W"), Button.action(move::forward));
-					bindings.bind(Button.of("S"), Button.action(move::back));
-					bindings.bind(Button.of("A"), strafe(-0.25f));
-					bindings.bind(Button.of("D"), strafe(+0.25f));
+					bindings.bind(Button.of("W"), move::forward);
+					bindings.bind(Button.of("S"), move::back);
+//					bindings.bind(Button.of("A"), strafe(-0.25f));
+//					bindings.bind(Button.of("D"), strafe(+0.25f));
+//**/bindings.bind(Button.of("D"), move::forward);
 				}
 
 				// Bind common controls
-				bindings.bind(Button.of("ESCAPE"), Button.action(runner));
-				bindings.bind(Button.of("SPACE"), Button.action(this));
+//				bindings.bind(Button.of("ESCAPE"), Button.action(runner));
+//				bindings.bind(Button.of("SPACE"), Button.action(this));
+				bindings.bind(Button.of("ESCAPE"), runner::run);
+				bindings.bind(Button.of("SPACE"), this::run);
 			}
 
-			private Action<Button> strafe(float dist) {
-				return event -> cam.strafe(dist);
-			}
+//			private Action<Button> strafe(float dist) {
+//				return event -> cam.strafe(dist);
+//			}
 		}
 		final var toggle = new ToggleAction();
 		toggle.run();

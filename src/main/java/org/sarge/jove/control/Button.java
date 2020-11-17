@@ -17,7 +17,7 @@ import org.sarge.jove.control.InputEvent.Type;
 /**
  * A <i>button</i> describes a keyboard or controller button.
  */
-public final class Button implements Type, InputEvent<Button> {
+public final class Button implements Type, InputEvent {
 	/**
 	 * Button operations.
 	 */
@@ -92,10 +92,6 @@ public final class Button implements Type, InputEvent<Button> {
 		return new Button(id, 1, 0);
 	}
 
-	public static Action<Button> action(Runnable action) {
-		return ignored -> action.run();
-	}
-
 	private final String id;
 	private final int action;
 	private final int mods;
@@ -147,16 +143,6 @@ public final class Button implements Type, InputEvent<Button> {
 	@Override
 	public Button type() {
 		return this;
-	}
-
-	@Override
-	public float x() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public float y() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

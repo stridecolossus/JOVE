@@ -246,20 +246,9 @@ public static class Builder {
     
     ...
 
-    public Builder usage(VkBufferUsageFlag usage) {
-        this.usage.add(usage);
-    }
-
-    public Builder property(VkMemoryPropertyFlag prop) {
-        this.allocation.property(prop);
-    }
-
-    public Builder mode(VkSharingMode mode) {
-        this.mode = notNull(mode);
-    }
-
     public Builder length(long len) {
         this.allocation.size(len);
+        return this;
     }
         
     public VertexBuffer build() {
@@ -289,7 +278,7 @@ public static class Builder {
 
 ### Memory Allocation
 
-In the `build()` method, after the buffer has been created we query Vulkan for its memory requirements:
+In the `build()` method we query Vulkan for its memory requirements after the buffer has been created:
 
 ```java
 // Query memory requirements

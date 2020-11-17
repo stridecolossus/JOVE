@@ -194,15 +194,15 @@ class Buffer implements NativeObject {
      * Buffer state.
      */
     private enum State {
-        UNDEFINED,
+        INITIAL,
         RECORDING,
-        READY,
+        EXECUTABLE,
     }
 
     private final Handle handle;
     private final Pool pool;
 
-    private State state = State.UNDEFINED;
+    private State state = State.INITIAL;
 
     /**
      * Constructor.
@@ -228,7 +228,7 @@ The `begin()` method is used to start recording:
  */
 public Buffer begin(VkCommandBufferUsageFlag... flags) {
     // Check buffer can be recorded
-    if(state != State.UNDEFINED) throw new IllegalStateException(...);
+    if(state != State.INITIAL) throw new IllegalStateException(...);
 
     // Start buffer
     final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
@@ -268,7 +268,7 @@ Finally the `end()` method finishes recording:
 public Buffer end() {
     if(state != State.RECORDING) throw new IllegalStateException(...);
     check(lib.vkEndCommandBuffer(handle));
-    state = State.READY;
+    state = State.EXECUTABLE;
     return this;
 }
 ```

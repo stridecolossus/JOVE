@@ -13,7 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent.Handler;
+import org.sarge.jove.control.Handler;
 import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.control.Position;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
@@ -55,7 +55,7 @@ public class MouseDeviceTest {
 	@Test
 	void pointer() {
 		// Retrieve mouse pointer source
-		final Source<Position.Event> pointer = device.pointer();
+		final Source<Position> pointer = device.pointer();
 		assertNotNull(pointer);
 		assertNotNull(pointer.types());
 		assertEquals(1, pointer.types().size());
@@ -67,11 +67,11 @@ public class MouseDeviceTest {
 		verify(lib).glfwSetCursorPosCallback(eq(window.handle()), captor.capture());
 
 		// Generate an event
-		final Position pos = (Position) pointer.types().get(0);
+		final Position pos = pointer.types().get(0);
 		final MousePositionListener listener = captor.getValue();
 		assertNotNull(listener);
 		listener.move(null, 1, 2);
-		verify(handler).accept(new Position.Event(pos, 1, 2));
+		verify(handler).handle(new Position.Event(pos, 1, 2));
 	}
 
 	@Test
@@ -88,7 +88,7 @@ public class MouseDeviceTest {
 		verify(lib).glfwSetMouseButtonCallback(eq(window.handle()), captor.capture());
 
 		// Lookup axis
-		final Button button = (Button) buttons.types().get(0);
+		final Button button = buttons.types().get(0);
 		assertNotNull(button);
 		assertEquals("Button-1-PRESS", button.name());
 
@@ -96,19 +96,19 @@ public class MouseDeviceTest {
 		final MouseButtonListener listener = captor.getValue();
 		assertNotNull(listener);
 		listener.button(null, 0, 0, 0);
-		verify(handler).accept(button);
+		verify(handler).handle(button);
 	}
 
 	@Test
 	void wheel() {
 		// Retrieve mouse wheel source
-		final Source<Axis.Event> wheel = device.wheel();
+		final Source<Axis> wheel = device.wheel();
 		assertNotNull(wheel);
 		assertNotNull(wheel.types());
 		assertEquals(1, wheel.types().size());
 
 		// Lookup axis
-		final Axis axis = (Axis) wheel.types().get(0);
+		final Axis axis = wheel.types().get(0);
 		assertNotNull(axis);
 		assertEquals("Wheel", axis.name());
 
@@ -121,6 +121,6 @@ public class MouseDeviceTest {
 		final MouseScrollListener listener = captor.getValue();
 		assertNotNull(listener);
 		listener.scroll(null, 1, 2);
-		verify(handler).accept(axis.create(2));
+		verify(handler).handle(axis.create(2));
 	}
 }

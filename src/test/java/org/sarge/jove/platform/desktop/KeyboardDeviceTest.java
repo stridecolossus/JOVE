@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Handler;
 import org.sarge.jove.control.InputEvent;
-import org.sarge.jove.control.InputEvent.Handler;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 import com.sun.jna.Pointer;
@@ -76,6 +76,6 @@ public class KeyboardDeviceTest {
 		listener.key(null, code, 0, 1, 2);
 
 		// Check event delegated to handler
-		verify(handler).accept(button);
+		verify(handler).handle(button);
 	}
 }
