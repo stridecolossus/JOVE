@@ -206,6 +206,8 @@ public class LogicalDevice implements TransientNativeObject {
 
 	/**
 	 * Builder for a logical device.
+	 * <p>
+	 * Note that the various {@link #queue(Queue.Family)} methods silently omit duplicates since the physical device may return the same family for a given queue specification.
 	 */
 	public static class Builder {
 		private final PhysicalDevice parent;

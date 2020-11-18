@@ -782,6 +782,21 @@ public class Sampler extends AbstractVulkanObject {
 
 This is relatively simple domain object used to configure the various sampling properties.  The `Wrap` enumeration is used to simplify specification of the texture addressing mode for coordinates that are outside of the texture.
 
+We also integrate the supported features functionality implemented back in the chapter on devices, for example:
+
+```java
+/**
+ * Sets the number of texel samples for anisotropy filtering.
+ * @param maxAnisotropy Number of texel samples
+ * @throws IllegalStateException if anisotropy filtering is not enabled
+ */
+public Builder anisotropy(float anisotropy) {
+    dev.features().check("samplerAnisotropy");
+    this.anisotropy = oneOrMore(anisotropy);
+    return this;
+}
+```
+
 ---
 
 ## Descriptor Sets

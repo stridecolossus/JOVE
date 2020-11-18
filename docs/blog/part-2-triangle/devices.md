@@ -186,9 +186,7 @@ The final step for dealing with the physical device(s) is to select one that sup
 There are several properties that we can select on:
 1. The properties of a queue family provided by the device.
 2. Whether a queue family supports rendering to a Vulkan surface.
-3. The supported features of the device.
-
-#### Queue Families
+3. The supported features of the device (see the final section in this chapter).
 
 The properties of a queue family are defined by the `VkQueueFlag` enumeration and specify whether the queue supports graphics rendering, data transfer, etc.
 
@@ -205,8 +203,6 @@ public static Predicate<Family> predicate(VkQueueFlag... flags) {
 }
 ```
 
-#### Presentation Support
-
 Later we will create a Vulkan surface for our application window which can then be tested against a queue family:
 
 ```java
@@ -222,7 +218,7 @@ public boolean isPresentationSupported(Pointer surface) {
 }
 ```
 
-We add another convenience helper for presentation testing:
+And we add another convenience helper for presentation testing:
 
 ```java
 /**
@@ -235,20 +231,6 @@ public static Predicate<Family> predicate(Pointer surface) {
     return family -> family.isPresentationSupported(surface);
 }
 ```
-
-#### Supported Device Features
-
-Finally we could select based on the _device features_ required by our application:
-
-```java
-public VkPhysicalDeviceFeatures features() {
-    final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
-    instance.library().vkGetPhysicalDeviceFeatures(handle, features);
-    return features;
-}
-```
-
-We will not be using any device features for some time so we ignore this option until it is needed.
 
 ---
 
@@ -468,7 +450,7 @@ public class LogicalDevice {
      * @param parent Parent physical device
      * @param queues Work queues
      */
-    private LogicalDevice(Pointer handle, PhysicalDevice parent, List<RequiredQueue> queues) {
+    private LogicalDevice(Pointer handle, PhysicalDevice parent, Set<RequiredQueue> queues) {
         this.handle = notNull(handle);
         this.parent = notNull(parent);
         this.lib = parent.instance().library();
@@ -484,7 +466,7 @@ public class LogicalDevice {
 The local `RequiredQueue` class is a transient descriptor for a work queue that is required by the application:
 
 ```java
-private record RequiredQueue(Queue.Family family, float[] priorities) {
+private record RequiredQueue(Queue.Family family, List<Float> priorities) {
     /**
      * Populates a descriptor for a queue required by this device.
      */
@@ -497,7 +479,7 @@ Notes:
 
 - The _family_ is a queue family selected from the parent physical device.
 
-- The _priorities_ is an array of percentile values that specifies the priority of each queue (expressed as a 0..1 floating-point).
+- The _priorities_ is a list of percentile values that specifies the priority of each queue (expressed as a 0..1 floating-point).
 
 - The constructor (not shown) validates the queue specification.
 
@@ -509,7 +491,7 @@ public static class Builder {
     private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
     private final Set<String> extensions = new HashSet<>();
     private final Set<String> layers = new HashSet<>();
-    private final List<RequiredQueue> queues = new ArrayList<>();
+    private final Set<RequiredQueue> queues = new ArrayList<>();
 
     ...
 
@@ -527,7 +509,7 @@ public static class Builder {
         info.enabledLayerCount = layers.size();
 
         // Add queue descriptors
-        // TODO
+        ...
 
         // Allocate device
         final VulkanLibrary lib = parent.instance().library();
@@ -551,17 +533,17 @@ public Builder queue(Queue.Family family) {
 }
 
 public Builder queues(Queue.Family family, int num) {
-    final float[] priorities = new float[num];
-    Arrays.fill(priorities, 1);
-    return queues(family, priorities);
+    return queues(family, Collections.nCopies(num, 1f));
 }
 
-public Builder queues(Queue.Family family, float[] priorities) {
+public Builder queues(Queue.Family family, List<Float> priorities) {
     if(!parent.families().contains(family)) throw new IllegalArgumentException(...);
     queues.add(new RequiredQueue(family, priorities));
     return this;
 }
 ```
+
+Note that the required queues is a _set_ to avoid duplicates since the physical device may return the same family for different queue specifications (depending on the hardware implementation).
 
 The resultant list of required queues has two purposes:
 
@@ -713,6 +695,191 @@ final Queue presentationQueue = dev.queue(presentationFamily);
 
 ---
 
+## Supported Features
+
+Some Vulkan _features_ are optional functionality such as geometry shaders, anisotropic filtering, etc. that must be explicitly enabled when we create the logical device.
+
+Although we will not be using any optional features until later in development now seems a good time to implement support for querying and enabling features.
+
+### Supported Features
+
+We start with a new accessor on the physical device that retrieves the features _supported_ by the hardware:
+
+```java
+private DeviceFeatures features;
+
+public synchronized DeviceFeatures features() {
+    if(features == null) {
+        final var struct = new VkPhysicalDeviceFeatures();
+        instance.library().vkGetPhysicalDeviceFeatures(handle, struct);
+        features = new DeviceFeatures(struct);
+    }
+    return features;
+}
+```
+
+The accessor caches the supported features and lazily invokes the API.
+
+If we simply returned the `VkPhysicalDeviceFeatures` structure directly we would exposing the internals of the class since a JNA structure is completely mutable.
+Therefore we encapsulate the features in a new wrapper class:
+
+```java
+public class DeviceFeatures {
+    private final VkPhysicalDeviceFeatures features;
+
+    public DeviceFeatures(VkPhysicalDeviceFeatures features) {
+        this.features = features.copy();
+    }
+}
+```
+
+To test for the presence of a supported feature we add the following method:
+
+```java    
+    /**
+     * @param feature Feature name
+     * @return Whether the given feature is supported
+     * @throws IllegalArgumentException if the feature is unknown
+     */
+    public boolean isSupported(String feature) {
+        return features.readField(feature) == VulkanBoolean.TRUE;
+    }
+}
+```
+
+Note that a supported feature is queried by _name_.
+
+### Required Features
+
+To specify the features required for an application we modify the builder for the logical device
+
+```java
+public static class Builder {
+    private DeviceFeatures features = new DeviceFeatures(new VkPhysicalDeviceFeatures());
+
+    public Builder features(DeviceFeatures required) {
+        parent.features().check(required);
+        this.features = notNull(required);
+        return this;
+    }
+}
+```
+
+The required features are populated in the `build()` method and also added as a new field in the logical device.
+
+Finally we implement the `check()` method used to test that the _required_ features are a valid subset of those _supported_ by the hardware:
+
+```java
+public void check(DeviceFeatures required) {
+    // Enumerate missing features
+    final var fields = VkPhysicalDeviceFeatures.class.getFields();
+    final var missing = Arrays.stream(fields)
+            .filter(f -> get(f, required.features))
+            .filter(f -> !get(f, this.features))
+            .map(Field::getName)
+            .collect(toList());
+
+    // Check
+    if(!missing.isEmpty()) {
+        throw new IllegalStateException("Unsupported feature(s): " + missing);
+    }
+}
+
+private static boolean get(Field field, VkPhysicalDeviceFeatures obj) {
+    try {
+        return field.get(obj) == VulkanBoolean.TRUE;
+    }
+    catch(Exception e) {
+        throw new RuntimeException(e);
+    }
+}
+```
+
+> Unfortunately JNA does not provide a neat or reliable mechanism to query or compare fields so the above uses a slightly dodgy reflection-based implementation.
+
+### Integration
+
+An application can now configure the required features as illustrated in the following example:
+
+```java
+// Check supported features
+if(!gpu.features().isSupported("samplerAnisotropy")) ...
+
+// Init required features
+final var features = new VkPhysicalDeviceFeatures();
+features.samplerAnisotropy = VulkanBoolean.TRUE;
+
+// Create device
+final LogicalDevice dev = new LogicalDevice.Builder(gpu)
+    ...
+    .features(new DeviceFeatures(features))
+    .build();
+```
+
+Alternatively:
+
+```java
+// Init required features
+final DeviceFeatures features = DeviceFeatures.of(Set.of("samplerAnisotropy"));
+
+// Create device
+final LogicalDevice dev = new LogicalDevice.Builder(gpu)
+    .features(features)
+```
+
+### Device Properties
+
+For good measure we also implement a wrapper for the properties of the physical device (name, type, etc):
+
+```java
+public class Properties {
+    private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+
+    private Properties() {
+        instance.library().vkGetPhysicalDeviceProperties(handle, props);
+    }
+
+    /**
+     * @return Device name
+     */
+    public String name() {
+        return new String(props.deviceName);
+    }
+
+    /**
+     * @return Device type
+     */
+    public VkPhysicalDeviceType type() {
+        return props.deviceType;
+    }
+
+    /**
+     * @return Device limits
+     */
+    public VkPhysicalDeviceLimits limits() {
+        return props.limits.copy();
+    }
+
+    @Override
+    public String toString() {
+        return props.toString();
+    }
+}
+```
+
+Which is also lazily retrieved:
+
+```java
+public synchronized Properties properties() {
+    if(props == null) {
+        props = new Properties();
+    }
+    return props;
+}
+```
+
+---
+
 ## Summary
 
 In this chapter we:
@@ -722,4 +889,6 @@ In this chapter we:
 - Enumerated the physical devices available on the local hardware and selected one appropriate to our application
 
 - Created a logical device and the work queues we will need in subsequent chapters
+
+- Added functionality to allow an application to specify supported and required Vulkan features.
 

@@ -821,11 +821,13 @@ final Model model = loader.load("chalet.model");
 
 // Load VBO
 final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
-final VertexBuffer vbo = loadBuffer(dev, model.vertices(), copyPool);
+final VertexBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 // Load index buffer
-final VertexBuffer index = loadBuffer(dev, model.index().get(), copyPool);
+final VertexBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
 ```
+
+The `loadBuffer()` helper wraps up the code to copy data to the hardware via a staging buffer.
 
 Next we need to add a new command to the buffer class to bind an index buffer:
 

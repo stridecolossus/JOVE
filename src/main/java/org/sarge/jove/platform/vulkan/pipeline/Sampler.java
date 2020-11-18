@@ -225,7 +225,7 @@ public class Sampler extends AbstractVulkanObject {
 		/**
 		 * Sets the number of texel samples for anisotropy filtering.
 		 * @param maxAnisotropy Number of texel samples
-		 * @throws UnsupportedOperationException if anisotropy filtering is not enabled
+		 * @throws IllegalStateException if anisotropy filtering is not enabled
 		 */
 		public Builder anisotropy(float anisotropy) {
 			dev.features().check("samplerAnisotropy");
