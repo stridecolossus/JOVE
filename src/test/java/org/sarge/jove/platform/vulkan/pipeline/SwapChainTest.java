@@ -22,7 +22,6 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.Queue;
@@ -103,6 +102,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 		final Handle handle = chain.handle();
 		chain.destroy();
 		verify(lib).vkDestroySwapchainKHR(dev.handle(), handle, null);
+		verify(view).destroy();
 	}
 
 	@Nested
@@ -172,8 +172,11 @@ public class SwapChainTest extends AbstractVulkanTest {
 			assertEquals(1, info.minImageCount);
 			assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, info.imageFormat);
 			assertEquals(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, info.imageColorSpace);
+
 			assertNotNull(info.imageExtent);
-			assertEquals(extent, info.imageExtent);
+			assertEquals(2, info.imageExtent.width);
+			assertEquals(3, info.imageExtent.height);
+
 			assertEquals(1, info.imageArrayLayers);
 			assertEquals(VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, info.imageUsage);
 			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.imageSharingMode);
@@ -193,7 +196,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertNotNull(view.image());
-			assertEquals(ClearValue.of(Colour.WHITE), view.clear());
+//			assertEquals(clear, view.clear());
 		}
 
 		@Test

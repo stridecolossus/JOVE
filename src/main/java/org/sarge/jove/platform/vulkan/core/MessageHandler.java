@@ -84,12 +84,13 @@ public class MessageHandler {
 				final String compoundTypes = types.stream().map(this::toString).collect(joining("-"));
 
 				// Build message
-				final String message = new StringJoiner(":")
-					.add(toString(severity))
-					.add(compoundTypes)
-					.add(data.pMessageIdName)
-					.add(data.pMessage)
-					.toString();
+				final StringJoiner message = new StringJoiner(":");
+				message.add(toString(severity));
+				message.add(compoundTypes);
+				if(!data.pMessage.contains(data.pMessageIdName)) {
+					message.add(data.pMessageIdName);
+				}
+				message.add(data.pMessage);
 
 				// Output
 				out.println(message);

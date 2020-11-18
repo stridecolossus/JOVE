@@ -202,6 +202,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 		private final LogicalDevice dev;
 		private final Set<VkBufferUsageFlag> usage = new HashSet<>();
 		private final MemoryAllocator.Allocation allocation;
+		private long len;
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
 
 		/**
@@ -247,7 +248,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 		 * @param len Buffer length (bytes)
 		 */
 		public Builder length(long len) {
-			this.allocation.size(len);
+			this.len = oneOrMore(len);
 			return this;
 		}
 
@@ -259,7 +260,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 		public VertexBuffer build() {
 			// Validate
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
-			if(allocation.size() == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
+			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
 
 			// TODO
 			if(mode == VkSharingMode.VK_SHARING_MODE_CONCURRENT) throw new UnsupportedOperationException();
@@ -271,7 +272,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 			final VkBufferCreateInfo info = new VkBufferCreateInfo();
 			info.usage = IntegerEnumeration.mask(usage);
 			info.sharingMode = mode;
-			info.size = allocation.size();
+			info.size = len;
 			// TODO - queue families
 
 			// Allocate buffer
@@ -283,9 +284,6 @@ public class VertexBuffer extends AbstractVulkanObject {
 			final VkMemoryRequirements reqs = new VkMemoryRequirements();
 			lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
-			// Build memory allocation descriptor
-			//final MemoryAllocator.Allocation allocation = this.allocation.build();
-
 			// Allocate buffer memory
 			final Pointer mem = allocation.init(reqs).allocate();
 
@@ -293,7 +291,7 @@ public class VertexBuffer extends AbstractVulkanObject {
 			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem, 0L));
 
 			// Create buffer
-			return new VertexBuffer(handle.getValue(), dev, allocation.size(), mem);
+			return new VertexBuffer(handle.getValue(), dev, len, mem);
 		}
 	}
 }

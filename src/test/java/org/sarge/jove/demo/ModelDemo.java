@@ -26,6 +26,7 @@ import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
+import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
@@ -36,6 +37,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
+import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Camera;
 import org.sarge.jove.scene.OrbitalCameraController;
@@ -78,7 +80,7 @@ public class ModelDemo {
 					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
 					.build()
 				.build()
-				.submit(pool, true);
+				.submit(pool);
 
 		// Copy staging to texture
 		new ImageCopyCommand.Builder()
@@ -86,7 +88,7 @@ public class ModelDemo {
 				.image(texture)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 				.build()
-				.submit(pool, true);
+				.submit(pool);
 
 		// Release staging
 		staging.destroy();
@@ -103,12 +105,12 @@ public class ModelDemo {
 					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
 					.build()
 				.build()
-				.submit(pool, true);
+				.submit(pool);
 
 		return View.of(dev, texture);
 	}
 
-	private static VertexBuffer loadBuffer(LogicalDevice dev, ByteBuffer bb, Command.Pool pool) {
+	private static VertexBuffer loadBuffer(LogicalDevice dev, ByteBuffer bb, VkBufferUsageFlag usage, Command.Pool pool) {
 		// Create staging VBO
 		final VertexBuffer staging = VertexBuffer.staging(dev, bb.limit());
 
@@ -119,12 +121,12 @@ public class ModelDemo {
 		final VertexBuffer dest = new VertexBuffer.Builder(dev)
 				.length(bb.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+				.usage(usage)
 				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
 		// Copy
-		ImmediateCommand.of(staging.copy(dest)).submit(pool, true);
+		ImmediateCommand.submit(staging.copy(dest), pool);
 
 		// Release staging buffer
 		staging.destroy();
@@ -156,26 +158,13 @@ public class ModelDemo {
 	}
 
 	public static void main(String[] args) throws Exception {
-
-		//System.setProperty("jna.library.path", "bollocks");
 		//System.setProperty("jna.library.path", "/VulkanSDK/1.1.101.0/Lib");
 		//System.setProperty("jna.debug_load", "true");
-		//System.setProperty("jna.debug_load.jna", "true");
-
-
-	//	System.err.println("debug="+Boolean.getBoolean("jna.debug_load"));
-		//System.err.println("path="+System.getProperty("jna.library.path"));
-
-
 
 		// Open desktop
 		final Desktop desktop = Desktop.create();
-
 		desktop.setErrorHandler(System.err::println);
-
 		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
-
-		//System.out.println("extensions="+Arrays.toString(desktop.extensions()));
 
 		// Create window
 		final var descriptor = new Window.Descriptor.Builder()
@@ -194,7 +183,7 @@ public class ModelDemo {
 				.name("test")
 				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
 				.extensions(desktop.extensions())
-				// TODO - .layer(ValidationLayer.STANDARD_VALIDATION)
+				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build();
 
 		// Attach message handler
@@ -226,11 +215,16 @@ public class ModelDemo {
 		final Queue.Family transfer = gpu.family(transferPredicate);
 		final Queue.Family present = gpu.family(presentationPredicate);
 
+		// Init required features
+		final var features = new VkPhysicalDeviceFeatures();
+		features.samplerAnisotropy = VulkanBoolean.TRUE;
+
 		// Create device
 		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				//.queue(graphics) TODO!!!
+				.features(new DeviceFeatures(features))
+				.queue(graphics)
 				.queue(transfer)
 				.queue(present)
 				.build();
@@ -299,10 +293,10 @@ public class ModelDemo {
 
 		// Load VBO
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
-		final VertexBuffer vbo = loadBuffer(dev, model.vertices(), copyPool);
+		final VertexBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 		// Load IBO
-		final VertexBuffer index = loadBuffer(dev, model.index().get(), copyPool);
+		final VertexBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
 
 		//////////////////
 
@@ -335,7 +329,9 @@ public class ModelDemo {
 		final List<DescriptorSet> descriptors = setPool.allocate(layout, 2);
 
 		// Create sampler
-		final Sampler sampler = new Sampler.Builder(dev).build();
+		final Sampler sampler = new Sampler.Builder(dev)
+				.anisotropy(16)
+				.build();
 
 		// Create uniform buffer for the projection matrix
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
@@ -524,6 +520,10 @@ public class ModelDemo {
 		final var toggle = new ToggleAction();
 		toggle.run();
 
+		// TODO
+		//instance.handlers().remove(handler);
+		Semaphore ready = Semaphore.create(dev);
+
 		// Render loop
 		while(runner.isRunning()) {
 			// Poll events
@@ -533,11 +533,12 @@ public class ModelDemo {
 			final Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix);
 			uniform.load(matrix);
 
-			final int idx = chain.acquire(null, null);
+			final int idx = chain.acquire(ready, null);
+// ERROR:VALIDATION:Validation Error: [ VUID-vkAcquireNextImageKHR-semaphore-01780 ] Object 0: handle = 0x983e60000000003, type = VK_OBJECT_TYPE_SWAPCHAIN_KHR; | MessageID = 0x94557523 | vkAcquireNextImageKHR: semaphore and fence are both VK_NULL_HANDLE. The Vulkan spec states: semaphore and fence must not both be equal to VK_NULL_HANDLE (https://vulkan.lunarg.com/doc/view/1.2.154.1/windows/1.2-extensions/vkspec.html#VUID-vkAcquireNextImageKHR-semaphore-01780)
 
 			new Work.Builder(presentQueue)
 					.add(commands.get(idx))
-//					.wait(ready)
+					.wait(ready)
 //					.signal(finished)
 					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
 					.build()
@@ -554,13 +555,10 @@ public class ModelDemo {
 
 		//////////////
 
-		// Destroy window
-		surface.destroy();
-		window.destroy();
-		desktop.destroy();
+		ready.destroy();
 
-		final Image.DefaultImage img = (Image.DefaultImage) texture.image();
-		img.destroy();
+//		final Image.DefaultImage img = (Image.DefaultImage) texture.image();
+//		img.destroy();
 		texture.destroy();
 		sampler.destroy();
 		//Arrays.stream(uniforms).forEach(VertexBuffer::destroy);
@@ -587,6 +585,10 @@ public class ModelDemo {
 		pipelineLayout.destroy();
 		pipeline.destroy();
 		chain.destroy();
+
+		surface.destroy();
+		window.destroy();
+		desktop.destroy();
 
 		// Destroy device
 		dev.destroy();

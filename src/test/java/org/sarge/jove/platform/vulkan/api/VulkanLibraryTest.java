@@ -7,12 +7,14 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.INTEGRATION_TEST;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.VkStructureType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
@@ -54,27 +56,35 @@ public class VulkanLibraryTest {
 
 	@Nested
 	class StructureTests {
-		@SuppressWarnings("unused")
-		@Test
-		void constructor() {
-			new MockStructure();
+		private MockStructure struct;
+
+		@BeforeEach
+		void before() {
+			struct = new MockStructure();
 		}
 
 		@Test
-		void array() {
-			final var array = VulkanStructure.array(MockStructure::new, 2);
+		void copy() {
+			final MockStructure copy = struct.copy();
+			assertNotNull(copy);
+			assertEquals(true, struct.dataEquals(copy));
+		}
+
+		@Test
+		void toArray() {
+			final var array = struct.toArray(2);
 			assertNotNull(array);
 			assertEquals(2, array.length);
-			assertNotNull(array[0]);
-			assertNotNull(array[1]);
+			assertEquals(true, struct.dataEquals(array[0]));
+			assertEquals(true, struct.dataEquals(array[1]));
 		}
 
 		@Test
 		void populate() {
-			final var first = VulkanStructure.populate(MockStructure::new, List.of(1, 2), (n, struct) -> struct.field = n);
-			assertNotNull(first);
-			assertEquals(1, first.field);
-			// TODO - how to test all elements?
+			final var array = VulkanStructure.populateArray(() -> struct, List.of(VkStructureType.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO), (data, out) -> out.sType = data);
+			assertNotNull(array);
+			assertEquals(1, array.length);
+			assertEquals(VkStructureType.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, array[0].sType);
 		}
 	}
 }

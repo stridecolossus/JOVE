@@ -29,56 +29,49 @@ public interface Work {
 	void submit();
 
 	/**
-	 * Adapter for a command that can be submitted immediately.
+	 * Convenience adapter for a command that can be submitted immediately.
 	 */
 	abstract class ImmediateCommand implements Command {
 		/**
-		 * Helper - Wraps the given command as an immediate command.
-		 * @param cmd Delegate command
-		 * @return Immediate command
+		 * Helper - Submits the given command immediately.
+		 * @param cmd		Delegate command
+		 * @param pool		Command pool
 		 */
-		public static ImmediateCommand of(Command cmd) {
-			return new ImmediateCommand() {
+		public static void submit(Command cmd, Command.Pool pool) {
+			final ImmediateCommand delegate = new ImmediateCommand() {
 				@Override
 				public void execute(VulkanLibrary lib, Handle buffer) {
 					cmd.execute(lib, buffer);
 				}
 			};
+			delegate.submit(pool);
 		}
 
 		/**
-		 * Submits this one-time command to the given pool.
-		 * @param pool Command pool
-		 * @param wait Whether to wait for completion
-		 * @see Command#once(Command.Pool, Command)
-		 */
-		public void submit(Command.Pool pool, boolean wait) {
-			// Allocate one-off buffer
-			final Command.Buffer buffer = Command.once(pool, this);
-
-			// Perform work
-			try {
-				final Work work = new Builder(pool.queue()).add(buffer).build();
-				work.submit();
-			}
-			finally {
-				buffer.free();
-			}
-
-			// Wait for work to complete
-			if(wait) {
-				pool.queue().waitIdle();
-			}
-		}
-
-		/**
-		 * Submits this one-time command to the given pool.
-		 * @param pool Command pool
+		 * Submits this one-time command to the given pool and waits for the command to complete.
+		 * @param pool 		Command pool
+		 * @param after		Post submit actions
 		 * @see Command#once(Command.Pool, Command)
 		 */
 		public void submit(Command.Pool pool) {
-			submit(pool, false);
+			// Allocate one-off buffer
+			final Command.Buffer buffer = Command.once(pool, this);
+
+			try {
+				// Submit work
+				final Queue queue = pool.queue();
+				final Work work = new Builder(queue).add(buffer).build();
+				work.submit();
+
+				// Wait for completion
+				queue.waitIdle();
+			}
+			finally {
+				// Cleanup
+				buffer.free();
+			}
 		}
+		// TODO - submitAndWait()?
 	}
 
 	/**

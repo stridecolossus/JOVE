@@ -89,6 +89,14 @@ public class View extends AbstractVulkanObject {
 		this.clear = notNull(clear);
 	}
 
+	@Override
+	public synchronized void destroy() {
+		if(image instanceof TransientNativeObject obj) {
+			obj.destroy();
+		}
+		super.destroy();
+	}
+
 	/**
 	 * Builder for an image view.
 	 */

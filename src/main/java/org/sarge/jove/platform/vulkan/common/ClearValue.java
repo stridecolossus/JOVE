@@ -78,6 +78,12 @@ public interface ClearValue {
 			}
 
 			@Override
+			public boolean equals(Object obj) {
+				// TODO
+				return super.equals(obj);
+			}
+
+			@Override
 			public String toString() {
 				return String.format("colour(%s)", col);
 			}

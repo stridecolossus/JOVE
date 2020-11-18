@@ -4,8 +4,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +12,7 @@ import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
@@ -21,6 +21,7 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
+import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Memory;
@@ -36,19 +37,22 @@ public class LogicalDevice implements TransientNativeObject {
 	private final Handle handle;
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
+	private final DeviceFeatures features;
 	private final Map<Queue.Family, List<Queue>> queues;
 	private final MemoryAllocator allocator;
 
 	/**
 	 * Constructor.
-	 * @param handle Device handle
-	 * @param parent Parent physical device
-	 * @param queues Work queues
+	 * @param handle 		Device handle
+	 * @param parent 		Parent physical device
+	 * @param features		Features supported by this device
+	 * @param queues 		Work queues
 	 */
-	private LogicalDevice(Pointer handle, PhysicalDevice parent, List<RequiredQueue> queues) {
+	private LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Set<RequiredQueue> queues) {
 		this.handle = new Handle(handle);
 		this.parent = notNull(parent);
 		this.lib = parent.instance().library();
+		this.features = notNull(features);
 		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
 		this.allocator = MemoryAllocator.create(this);
 	}
@@ -59,7 +63,7 @@ public class LogicalDevice implements TransientNativeObject {
 	 * @return New queues
 	 */
 	private Stream<Queue> create(RequiredQueue queue) {
-		return IntStream.range(0, queue.priorities.length).mapToObj(n -> create(n, queue.family));
+		return IntStream.range(0, queue.priorities.size()).mapToObj(n -> create(n, queue.family));
 	}
 
 	/**
@@ -94,6 +98,13 @@ public class LogicalDevice implements TransientNativeObject {
 	 */
 	public VulkanLibrary library() {
 		return parent.instance().library();
+	}
+
+	/**
+	 * @return Features supported by this device
+	 */
+	public DeviceFeatures features() {
+		return features;
 	}
 
 	/**
@@ -156,7 +167,7 @@ public class LogicalDevice implements TransientNativeObject {
 	/**
 	 * A <i>required queue</i> is a transient descriptor for a queue required by this device.
 	 */
-	private record RequiredQueue(Queue.Family family, float[] priorities) {
+	private record RequiredQueue(Queue.Family family, List<Float> priorities) {
 		/**
 		 * Constructor.
 		 * @param family			Queue family
@@ -166,13 +177,13 @@ public class LogicalDevice implements TransientNativeObject {
 			Check.notNull(family);
 			Check.notEmpty(priorities);
 
-			if(priorities.length > family.count()) {
-				throw new IllegalArgumentException(String.format("Requested number of queues exceeds family pool size: num=%d family=%s", priorities.length, family));
+			if(priorities.size() > family.count()) {
+				throw new IllegalArgumentException(String.format("Requested number of queues exceeds family pool size: num=%d family=%s", priorities.size(), family));
 			}
 
 			for(float f : priorities) {
 				if((f < 0) || (f > 1)) {
-					throw new IllegalArgumentException("Invalid queue priority: " + Arrays.toString(priorities));
+					throw new IllegalArgumentException("Invalid queue priority: " + priorities);
 				}
 			}
 		}
@@ -182,11 +193,12 @@ public class LogicalDevice implements TransientNativeObject {
 		 */
 		private void populate(VkDeviceQueueCreateInfo info) {
 			// Allocate contiguous memory block for the priorities array
-			final Memory mem = new Memory(priorities.length * Float.BYTES);
-			mem.write(0, priorities, 0, priorities.length);
+			final float[] array = ArrayUtils.toPrimitive(priorities.toArray(Float[]::new));
+			final Memory mem = new Memory(priorities.size() * Float.BYTES);
+			mem.write(0, array, 0, array.length);
 
 			// Populate queue descriptor
-			info.queueCount = priorities.length;
+			info.queueCount = array.length;
 			info.queueFamilyIndex = family.index();
 			info.pQueuePriorities = mem;
 		}
@@ -197,10 +209,10 @@ public class LogicalDevice implements TransientNativeObject {
 	 */
 	public static class Builder {
 		private final PhysicalDevice parent;
-		private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
-		private final List<RequiredQueue> queues = new ArrayList<>();
+		private final Set<RequiredQueue> queues = new HashSet<>();
+		private DeviceFeatures features = new DeviceFeatures(new VkPhysicalDeviceFeatures());
 
 		/**
 		 * Constructor.
@@ -211,11 +223,14 @@ public class LogicalDevice implements TransientNativeObject {
 		}
 
 		/**
-		 * Sets the required features for this device.
-		 * @param features Required features
+		 * Sets the features required by this logical device.
+		 * @param required Required features
+		 * @throws IllegalStateException if the feature is not supported by the parent physical device
+		 * @see DeviceFeatures#check(DeviceFeatures)
 		 */
-		public Builder features(VkPhysicalDeviceFeatures features) {
-			this.features = notNull(features);
+		public Builder features(DeviceFeatures required) {
+			parent.features().check(required);
+			this.features = notNull(required);
 			return this;
 		}
 
@@ -255,9 +270,7 @@ public class LogicalDevice implements TransientNativeObject {
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
 		public Builder queues(Queue.Family family, int num) {
-			final float[] priorities = new float[num];
-			Arrays.fill(priorities, 1);
-			return queues(family, priorities);
+			return queues(family, Collections.nCopies(num, 1f));
 		}
 
 		/**
@@ -268,7 +281,7 @@ public class LogicalDevice implements TransientNativeObject {
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 * @throws IllegalArgumentException if the priorities array is empty or any value is not a valid 0..1 percentile
 		 */
-		public Builder queues(Queue.Family family, float[] priorities) {
+		public Builder queues(Queue.Family family, List<Float> priorities) {
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}
@@ -288,7 +301,7 @@ public class LogicalDevice implements TransientNativeObject {
 			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
 
 			// Add required features
-			info.pEnabledFeatures = features;
+			info.pEnabledFeatures = features.get();
 
 			// Add required extensions
 			info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
@@ -308,7 +321,7 @@ public class LogicalDevice implements TransientNativeObject {
 			check(lib.vkCreateDevice(parent.handle(), info, null, logical));
 
 			// Create logical device
-			return new LogicalDevice(logical.getValue(), parent, queues);
+			return new LogicalDevice(logical.getValue(), parent, features, queues);
 		}
 	}
 }

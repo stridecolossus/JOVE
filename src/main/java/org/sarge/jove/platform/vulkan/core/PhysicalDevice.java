@@ -17,10 +17,13 @@ import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
 import com.sun.jna.Pointer;
@@ -30,6 +33,44 @@ import com.sun.jna.Pointer;
  * @author Sarge
  */
 public class PhysicalDevice implements NativeObject {
+	/**
+	 * Device properties.
+	 */
+	public class Properties {
+		@SuppressWarnings("hiding")
+		private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+
+		private Properties() {
+			instance.library().vkGetPhysicalDeviceProperties(handle, props);
+		}
+
+		/**
+		 * @return Device name
+		 */
+		public String name() {
+			return new String(props.deviceName);
+		}
+
+		/**
+		 * @return Device type
+		 */
+		public VkPhysicalDeviceType type() {
+			return props.deviceType;
+		}
+
+		/**
+		 * @return Device limits
+		 */
+		public VkPhysicalDeviceLimits limits() {
+			return props.limits.copy();
+		}
+
+		@Override
+		public String toString() {
+			return props.toString();
+		}
+	}
+
 	/**
 	 * Enumerates the physical devices for the given instance.
 	 * @param instance Vulkan instance
@@ -70,6 +111,9 @@ public class PhysicalDevice implements NativeObject {
 	private final Handle handle;
 	private final Instance instance;
 	private final List<Queue.Family> families;
+
+	private DeviceFeatures features;
+	private Properties props;
 
 	/**
 	 * Constructor.
@@ -129,18 +173,22 @@ public class PhysicalDevice implements NativeObject {
 	/**
 	 * @return Device properties
 	 */
-	public VkPhysicalDeviceProperties properties() {
-		final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-		instance.library().vkGetPhysicalDeviceProperties(handle, props);
+	public synchronized Properties properties() {
+		if(props == null) {
+			props = new Properties();
+		}
 		return props;
 	}
 
 	/**
 	 * @return Features supported by this device
 	 */
-	public VkPhysicalDeviceFeatures features() {
-		final VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
-		instance.library().vkGetPhysicalDeviceFeatures(handle, features);
+	public synchronized DeviceFeatures features() {
+		if(features == null) {
+			final var struct = new VkPhysicalDeviceFeatures();
+			instance.library().vkGetPhysicalDeviceFeatures(handle, struct);
+			features = new DeviceFeatures(struct);
+		}
 		return features;
 	}
 

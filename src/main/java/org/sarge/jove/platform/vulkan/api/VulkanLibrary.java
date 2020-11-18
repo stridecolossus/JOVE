@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -18,6 +19,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
 import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Structure;
@@ -115,16 +117,59 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		}
 
 		/**
-		 * Helper - Allocates an array of the given Vulkan structure as a contiguous memory block.
+		 * Clones this structure.
 		 * @param <T> Structure type
-		 * @param ctor Constructor
-		 * @param size Array size
-		 * @return New array
+		 * @return New clone of this structure
 		 */
 		@SuppressWarnings("unchecked")
-		public static <T extends Structure> T[] array(Supplier<T> ctor, int size) {
-			final T identity = ctor.get();
-			return (T[]) identity.toArray(size);
+		public <T extends VulkanStructure> T copy() {
+			// Sync with native
+			write();
+
+			// Copy memory from this structure
+			final int size = this.size();
+			final byte[] bytes = this.getPointer().getByteArray(0, size);
+
+			// Create new memory block
+            final Memory mem = new Memory(size);
+            mem.write(0, bytes, 0, size);
+
+            // Instantiate clone
+            final var copy = newInstance(this.getClass(), mem);
+            copy.read();
+
+            // Cast to this structure type
+            return (T) copy;
+		}
+
+		@Override
+		public Structure[] toArray(int size) {
+			final Structure[] array = super.toArray(size);
+			patch(array);
+			return array;
+		}
+
+		// JNA allocates an empty memory block for a new array, patch the required type field (if present)
+		// This is pretty ropey, alternatives:
+		// 1. Somehow identify VK structures with pre-populated fields?
+		// 2. Re-implement to perform a memory copy of this object?
+		private void patch(Structure[] array) {
+			try {
+				// Lookup type field (if present)
+				final Field field = this.getClass().getField("sType");
+
+				// Patch type to array elements
+				final Object sType = field.get(this);
+				for(Structure struct : array) {
+					field.set(struct, sType);
+				}
+			}
+			catch(IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+			catch(NoSuchFieldException ignored) {
+				// Ignored
+			}
 		}
 
 		/**
@@ -136,6 +181,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		 * @param populate		Population function
 		 * @return New array or {@code null} is the source data is empty
 		 */
+		@SuppressWarnings("unchecked")
 		public static <R extends Structure, T> R[] populateArray(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
 			// Check for empty data
 			if(data.isEmpty()) {
@@ -143,7 +189,8 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 			}
 
 			// Allocate array
-			final R[] array = array(ctor, data.size());
+			final R identity = ctor.get();
+			final R[] array = (R[]) identity.toArray(data.size());
 
 			// Populate array
 			final Iterator<T> itr = data.iterator();

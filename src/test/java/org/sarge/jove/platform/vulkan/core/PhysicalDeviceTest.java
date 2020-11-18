@@ -2,13 +2,21 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -55,14 +63,35 @@ public class PhysicalDeviceTest {
 	}
 
 	@Test
-	void properties() {
-		final var props = dev.properties();
-		verify(lib).vkGetPhysicalDeviceProperties(dev.handle(), props);
+	void features() {
+		final var features = dev.features();
+		assertNotNull(features);
+		verify(lib).vkGetPhysicalDeviceFeatures(eq(dev.handle()), any());
 	}
 
 	@Test
-	void features() {
-		final var features = dev.features();
-		verify(lib).vkGetPhysicalDeviceFeatures(dev.handle(), features);
+	void properties() {
+		// Init properties
+		final Answer<Void> answer = inv -> {
+			final VkPhysicalDeviceProperties props = inv.getArgument(1);
+			props.deviceName = "device".getBytes();
+			props.deviceType = VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+			return null;
+		};
+		doAnswer(answer).when(lib).vkGetPhysicalDeviceProperties(eq(dev.handle()), any());
+
+		// Retrieve properties
+		final var props = dev.properties();
+		assertNotNull(props);
+		clearInvocations(lib);
+
+		// Check cached
+		assertEquals(props, dev.properties());
+		verifyNoInteractions(lib);
+
+		// Check properties
+		assertEquals("device", dev.properties().name());
+		assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, dev.properties().type());
+		assertNotNull(props.limits());
 	}
 }

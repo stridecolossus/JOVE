@@ -71,7 +71,7 @@ public class TextureQuadDemo {
 					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
 					.build()
 				.build()
-				.submit(pool, true);
+				.submit(pool);
 
 		// Copy staging to texture
 		new ImageCopyCommand.Builder()
@@ -79,7 +79,7 @@ public class TextureQuadDemo {
 				.image(texture)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 				.build()
-				.submit(pool, true);
+				.submit(pool);
 
 		// Release staging
 		staging.destroy();
@@ -96,7 +96,7 @@ public class TextureQuadDemo {
 					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
 					.build()
 				.build()
-				.submit(pool, true);
+				.submit(pool);
 
 		final View view = View.of(dev, texture);
 
@@ -248,7 +248,7 @@ public class TextureQuadDemo {
 
 		// Copy
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transferFamily));
-		ImmediateCommand.of(staging.copy(dest)).submit(copyPool, true);
+		ImmediateCommand.submit(staging.copy(dest), copyPool);
 
 		staging.destroy();
 

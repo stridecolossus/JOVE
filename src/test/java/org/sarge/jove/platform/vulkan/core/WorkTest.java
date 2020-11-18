@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -100,17 +101,17 @@ public class WorkTest extends AbstractVulkanTest {
 
 	@Test
 	void immediate() {
-		// Create command
-		final ImmediateCommand immediate = ImmediateCommand.of(mock(Command.class));
-
-		// Mock buffer
+		// Mock buffer for command
+		final Command cmd = mock(Command.class);
 		when(pool.allocate()).thenReturn(buffer);
 		when(buffer.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)).thenReturn(buffer);
-		when(buffer.add(immediate)).thenReturn(buffer);
+		when(buffer.add(any())).thenReturn(buffer);
 		when(buffer.end()).thenReturn(buffer);
 
+		// submit command
+		ImmediateCommand.submit(cmd, pool);
+
 		// Submit command and check is executed and released
-		immediate.submit(pool, true);
 		verify(queue).waitIdle();
 		verify(buffer).free();
 	}

@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
+import org.sarge.jove.platform.vulkan.core.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -34,12 +36,14 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		// Create image
+		// Create image descriptor
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)
 				.extents(new Image.Extents(3, 4))
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.build();
+
+		// Create image
 		image = mock(Image.class);
 		when(image.descriptor()).thenReturn(descriptor);
 
@@ -83,9 +87,17 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		final Handle handle = view.handle();
 		view.destroy();
-		verify(lib).vkDestroyImageView(dev.handle(), handle, null);
+		verify(lib).vkDestroyImageView(dev.handle(), view.handle(), null);
+		verifyNoMoreInteractions(lib);
+	}
+
+	@Test
+	void destroyImage() {
+		final DefaultImage def = mock(DefaultImage.class);
+		view = new View(new Pointer(1), def, dev);
+		view.destroy();
+		verify(def).destroy();
 	}
 
 	@Nested
@@ -99,17 +111,20 @@ public class ViewTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
+			// Init clear value
+			final ClearValue clear = ClearValue.of(Colour.WHITE);
+
 			// Build view
 			view = builder
 					.image(image)
-					.clear(ClearValue.of(Colour.WHITE))
+					.clear(clear)
 					.build();
 
 			// Check view
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertEquals(image, view.image());
-			assertEquals(ClearValue.of(Colour.WHITE), view.clear());
+			assertEquals(clear, view.clear());
 
 			// Check API
 			final ArgumentCaptor<VkImageViewCreateInfo> captor = ArgumentCaptor.forClass(VkImageViewCreateInfo.class);

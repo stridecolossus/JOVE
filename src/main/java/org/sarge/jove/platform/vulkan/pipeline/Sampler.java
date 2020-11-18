@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.jove.util.Check.oneOrMore;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -128,7 +129,7 @@ public class Sampler extends AbstractVulkanObject {
 		private VkBorderColor border;
 
 		// Anisotropy settings
-		private Float anisotropy = 16f;
+		private float anisotropy = 1f;
 
 		// TODO
 //		private boolean compareEnable;
@@ -223,10 +224,12 @@ public class Sampler extends AbstractVulkanObject {
 
 		/**
 		 * Sets the number of texel samples for anisotropy filtering.
-		 * @param maxAnisotropy Number of texel samples or {@code null} to disable anisotropy filtering (default is {@code 16})
+		 * @param maxAnisotropy Number of texel samples
+		 * @throws UnsupportedOperationException if anisotropy filtering is not enabled
 		 */
-		public Builder anisotropy(Float anisotropy) {
-			this.anisotropy = anisotropy;
+		public Builder anisotropy(float anisotropy) {
+			dev.features().check("samplerAnisotropy");
+			this.anisotropy = oneOrMore(anisotropy);
 			return this;
 		}
 
@@ -261,24 +264,20 @@ public class Sampler extends AbstractVulkanObject {
 			info.maxLod = maxLod;
 
 			// Init anisotrophy settings
-			// TODO 1..PhysicalDeviceLimits::maxSamplerAnisotropy
-			if(anisotropy == null) {
-				info.anisotropyEnable = VulkanBoolean.FALSE;
-			}
-			else {
-				// TODO - fail if cubic min/mag filter
+			if(anisotropy > 1) {
+				// TODO - invalid if cubic min/mag filter
 				info.anisotropyEnable = VulkanBoolean.TRUE;
 				info.maxAnisotropy = anisotropy;
 			}
 
 			// Init comparison operation
 			// TODO
-			info.compareEnable = VulkanBoolean.FALSE;
+//			info.compareEnable = VulkanBoolean.FALSE;
 			info.compareOp = VkCompareOp.VK_COMPARE_OP_ALWAYS;
 
 			// Init other properties
 			// TODO
-			info.unnormalizedCoordinates = VulkanBoolean.FALSE;
+//			info.unnormalizedCoordinates = VulkanBoolean.FALSE;
 
 			// Allocate sampler
 			final VulkanLibrary lib = dev.library();

@@ -86,7 +86,7 @@ public class SwapChain extends AbstractVulkanObject {
 	 * @return Image index
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) {
-		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, null /*semaphore.handle()*/, null, index)); // toPointer(semaphore), toPointer(fence), index);
+		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, semaphore.handle(), /* TODO fence */null, index));
 		return index.getValue();
 	}
 
@@ -125,6 +125,12 @@ public class SwapChain extends AbstractVulkanObject {
 	}
 	// TODO - synchronise
 	// TODO - cache descriptor?
+
+	@Override
+	public synchronized void destroy() {
+		views.forEach(View::destroy);
+		super.destroy();
+	}
 
 	/**
 	 * Builder for a swap chain.

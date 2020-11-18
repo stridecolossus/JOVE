@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.vulkan.util;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,5 +34,10 @@ public abstract class AbstractVulkanTest {
 		dev = mock(LogicalDevice.class);
 		when(dev.handle()).thenReturn(new Handle(new Pointer(42)));
 		when(dev.library()).thenReturn(lib);
+
+		// Init supported features
+		final var features = mock(DeviceFeatures.class);
+		when(dev.features()).thenReturn(features);
+		doCallRealMethod().when(features).check(anyString());
 	}
 }
