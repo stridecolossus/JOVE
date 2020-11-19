@@ -42,20 +42,6 @@ public interface Command {
 	void execute(VulkanLibrary lib, Handle buffer);
 
 	/**
-	 * Helper - Creates a one-time command buffer for the given command.
-	 * @param pool		Command pool
-	 * @param cmd 		Command
-	 * @see VkCommandBufferUsageFlag#VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
-	 */
-	static Buffer once(Pool pool, Command cmd) {
-		return pool
-				.allocate()
-				.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-				.add(cmd)
-				.end();
-	}
-
-	/**
 	 * A <i>command buffer</i> is allocated by a {@link Pool} and used to record commands.
 	 */
 	class Buffer implements NativeObject {

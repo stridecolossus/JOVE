@@ -37,7 +37,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 
 	/**
 	 * Sets whether geometry is discarded by the rasterizer (basically disabled output to the framebuffer).
-	 * @param rasterizerDiscardEnable Whether to discard geometry (default is <code>false</code>)
+	 * @param rasterizerDiscardEnable Whether to discard geometry (default is {@code false})
 	 */
 	public RasterizerStageBuilder discardEnable(boolean rasterizerDiscardEnable) {
 		this.rasterizerDiscardEnable = rasterizerDiscardEnable;
@@ -89,7 +89,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 
 	/**
 	 * Sets the line width.
-	 * @param lineWidth Line width (default is <code>one</code>)
+	 * @param lineWidth Line width (default is {@code one})
 	 * @throws IllegalArgumentException if the line width is less-than one
 	 * TODO - check feature if > 1
 	 */

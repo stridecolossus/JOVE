@@ -128,6 +128,37 @@ public interface IntegerEnumeration {
 		return mask(Arrays.asList(values));
 	}
 
+//	/**
+//	 *
+//	 * @param <E>
+//	 */
+//	class EnumConverter<E extends Enum<E>> implements Converter<E> {
+//		private final Class<E> clazz;
+//		private final Map<String, E> map;
+//
+//		/**
+//		 * Constructor.
+//		 * @param clazz
+//		 */
+//		public EnumConverter(Class<E> clazz) {
+//			this.clazz = notNull(clazz);
+//			this.map = build(clazz);
+//		}
+//
+//		private static <E extends Enum<E>> Map<String, E> build(Class<E> clazz) {
+//			final String[] parts = StringUtils.splitByCharacterTypeCamelCase(clazz.getSimpleName());
+//			final String prefix = String.join("_", Arrays.asList(parts));
+//			return Arrays.stream(clazz.getEnumConstants()).collect(toMap(e -> StringUtils.removeStart(e.name(), prefix), Function.identity()));
+//		}
+//
+//		@Override
+//		public E apply(String str) throws NumberFormatException {
+//			final E result = map.get(str);
+//			if(result == null) throw new IllegalArgumentException("Unknown enumeration constant: " + str);
+//			return result;
+//		}
+//	}
+
 	/**
 	 * Internal enumeration cache.
 	 */

@@ -29,10 +29,10 @@ public class VectorTest {
 	}
 
 	@Test
-	public void of() {
+	public void between() {
 		final Point start = new Point(1, 2, 3);
 		final Point end = new Point(4, 5, 6);
-		assertEquals(new Vector(3, 3, 3), Vector.of(start, end));
+		assertEquals(new Vector(3, 3, 3), Vector.between(start, end));
 	}
 
 	@Test

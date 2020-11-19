@@ -49,7 +49,6 @@ public class Pipeline extends AbstractVulkanObject {
 	public static class Builder {
 		// Properties
 		private final LogicalDevice dev;
-//		private final Map<VkShaderStageFlag, ShaderStageBuilder> shaders = new HashMap<>();
 		private Layout layout;
 		private RenderPass pass;
 		private final ShaderStageBuilder shaders = new ShaderStageBuilder();

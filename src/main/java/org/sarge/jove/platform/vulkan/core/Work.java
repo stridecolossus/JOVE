@@ -15,6 +15,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -58,8 +59,12 @@ public class Work {
 	 * @see Command#once(Command.Pool, Command)
 	 */
 	public static void submit(Command cmd, Command.Pool pool) {
-		// Allocate one-off buffer
-		final Command.Buffer buffer = Command.once(pool, cmd);
+		// Allocate and record command
+		final Command.Buffer buffer = pool
+				.allocate()
+				.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+				.add(cmd)
+				.end();
 
 		try {
 			// Submit work

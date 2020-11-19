@@ -3,6 +3,7 @@ package org.sarge.jove.demo;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
+import java.util.Set;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -183,7 +184,7 @@ public class TriangleDemo {
 
 //			Thread.sleep(50);
 
-			chain.present(dev.queue(present), null);
+			chain.present(dev.queue(present), Set.of());
 
 
 //			dev.queue(present).waitIdle();
@@ -193,7 +194,6 @@ public class TriangleDemo {
 		//////////////
 
 		// Destroy window
-		surface.destroy();
 		window.destroy();
 		desktop.destroy();
 
@@ -206,7 +206,9 @@ public class TriangleDemo {
 		vert.destroy();
 		frag.destroy();
 		pipeline.destroy();
+
 		chain.destroy();
+		surface.destroy();
 
 		// Destroy device
 		dev.destroy();

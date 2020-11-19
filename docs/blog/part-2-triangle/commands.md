@@ -519,22 +519,56 @@ We have several parallel lists here sized by the swapchain buffering strategy (t
 Our first render 'loop' will be a bit of a bodge - to render the triangle we emulate a single frame:
 
 ```java
+// Start next frame
 final int index = chain.acquire();
 
+// Render frame
 new Work.Builder()
     .add(commands.get(index))
     .stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
     .build()
     .submit();
 
+// TODO
 present.waitIdle();
 
+// Present frame
 chain.present(present);
 
+// TODO
 Thread.sleep(1000);
 ```
 
-We could have implemented a proper acquire-render-present loop utilising the swap-chain images but the above is sufficient to test the demo - we will be re-implementing this properly in future chapters (and adding input handling so we can terminate the thread).
+Obviously this is temporary code just sufficient to test this first demo - we will be implementing a proper render loop in future chapters.
+
+We also release the various Vulkan objects after the 'loop' has terminated:
+
+```java
+// Wait for pending work to complete
+present.waitIdle();
+
+// Release render pass
+buffers.forEach(FrameBuffer::destroy);
+pass.destroy();
+
+// Release pipeline
+vert.destroy();
+frag.destroy();
+pipeline.destroy();
+
+// Release swapchain
+chain.destroy();
+
+// Destroy window
+surface.destroy();
+window.destroy();
+desktop.destroy();
+
+// Destroy device
+pool.destroy();
+dev.destroy();
+instance.destroy();
+```
 
 ### All that for a triangle?
 

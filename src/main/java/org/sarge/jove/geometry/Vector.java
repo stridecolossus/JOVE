@@ -28,7 +28,7 @@ public final class Vector extends Tuple {
 	 * @param end		End point
 	 * @return Vector between the given points
 	 */
-	public static Vector of(Point start, Point end) {
+	public static Vector between(Point start, Point end) {
 		return new Vector(end.x - start.x, end.y - start.y, end.z - start.z);
 	}
 

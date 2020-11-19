@@ -13,7 +13,7 @@ import org.sarge.jove.util.MathsUtil;
  * Builder for a Vulkan format.
  * <p>
  * Finding a format within the {@link VkFormat} enumeration can be difficult given the large number of available formats and the naming strategy.
- * This intention of this builder is to provide a programmatic means of specifying common data/image formats.
+ * The purpose of this builder is to provide a programmatic means of specifying common data/image formats.
  * <p>
  * Example:
  * <pre>

@@ -50,7 +50,7 @@ public interface PositionFactory {
 	static PositionFactory extents(Extents extents, Random random) {
 		return () -> {
 			final Point min = extents.min();
-			final Vector range = Vector.of(min, extents.max());
+			final Vector range = Vector.between(min, extents.max());
 			return new Point(
 					random(min.x, range.x, random),
 					random(min.y, range.y, random),

@@ -28,8 +28,8 @@ public record Plane(Vector normal, float dist) {
 	 * @return Plane
 	 */
 	public static Plane of(Point a, Point b, Point c) {
-		final Vector u = Vector.of(a, b);
-		final Vector v = Vector.of(b, c);
+		final Vector u = Vector.between(a, b);
+		final Vector v = Vector.between(b, c);
 		final Vector normal = u.cross(v).normalize();
 		final float dist = -a.dot(normal);
 		return new Plane(normal, dist);

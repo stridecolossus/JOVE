@@ -48,16 +48,6 @@ class CommandTest extends AbstractVulkanTest {
 		cmd = mock(Command.class);
 	}
 
-	@Test
-	void once() {
-		final Pool pool = Pool.create(queue);
-		final Buffer buffer = Command.once(pool, cmd);
-		assertEquals(true, buffer.isReady());
-		verify(lib).vkBeginCommandBuffer(eq(buffer.handle()), any(VkCommandBufferBeginInfo.class));
-		verify(cmd).execute(lib, buffer.handle());
-		verify(lib).vkEndCommandBuffer(buffer.handle());
-	}
-
 	@Nested
 	class BufferTests {
 		private Buffer buffer;

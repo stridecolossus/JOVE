@@ -167,17 +167,9 @@ PhysicalDevice
     .forEach(System.out::println);
 ```
 
-The device properties are retrieved by an on-demand accessor:
+(We implement the `properties()` accessor at the end of this chapter).
 
-```java
-public VkPhysicalDeviceProperties properties() {
-    final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-    instance.library().vkGetPhysicalDeviceProperties(handle, props);
-    return props;
-}
-```
-
-On a normal PC there will generally just be the one device (the GPU).
+On a normal PC there will generally just be one or two devices (the GPU and maybe an on-board graphics card).
 
 ### Selecting a Device
 
@@ -728,7 +720,7 @@ public class DeviceFeatures {
     private final VkPhysicalDeviceFeatures features;
 
     public DeviceFeatures(VkPhysicalDeviceFeatures features) {
-        this.features = features.copy();
+        this.features = features;
     }
 }
 ```
@@ -829,7 +821,7 @@ final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 
 ### Device Properties
 
-For good measure we also implement a wrapper for the properties of the physical device (name, type, etc):
+For good measure we also implement a local wrapper class for the properties of the physical device:
 
 ```java
 public class Properties {
@@ -867,7 +859,7 @@ public class Properties {
 }
 ```
 
-Which is also lazily retrieved:
+Which is also lazily instantiated:
 
 ```java
 public synchronized Properties properties() {

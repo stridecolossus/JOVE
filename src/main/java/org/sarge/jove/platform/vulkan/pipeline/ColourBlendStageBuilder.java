@@ -119,33 +119,23 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 			private VkBlendFactor dest;
 			private VkBlendOp op = VkBlendOp.VK_BLEND_OP_ADD;
 
-			/**
-			 * Constructor.
-			 * @param src		Default source blend factor
-			 * @param dest		Default destination blend factor
-			 */
-			private BlendOperationBuilder(VkBlendFactor src, VkBlendFactor dest) {
-				this.src = src;
-				this.dest = dest;
-			}
-
 			private BlendOperationBuilder() {
 			}
 
 			/**
 			 * Sets the source colour blend factor.
-			 * @param srcBlendFactor Source colour blend factor
+			 * @param src Source colour blend factor
 			 */
-			public AttachmentBuilder sourceBlendFactor(VkBlendFactor src) {
+			public AttachmentBuilder source(VkBlendFactor src) {
 				this.src = notNull(src);
 				return AttachmentBuilder.this;
 			}
 
 			/**
 			 * Sets the destination colour blend factor.
-			 * @param dstBlendFactor Destination colour blend factor
+			 * @param dest Destination colour blend factor
 			 */
-			public AttachmentBuilder destinationBlendFactor(VkBlendFactor dest) {
+			public AttachmentBuilder destination(VkBlendFactor dest) {
 				this.dest = notNull(dest);
 				return AttachmentBuilder.this;
 			}
@@ -162,10 +152,14 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 		private boolean enabled;
 		private int mask = DEFAULT_COLOUR_MASK;
-		private final BlendOperationBuilder colour = new BlendOperationBuilder(VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA, VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
-		private final BlendOperationBuilder alpha = new BlendOperationBuilder(VkBlendFactor.VK_BLEND_FACTOR_ONE, VkBlendFactor.VK_BLEND_FACTOR_ZERO);
+		private final BlendOperationBuilder colour = new BlendOperationBuilder();
+		private final BlendOperationBuilder alpha = new BlendOperationBuilder();
 
 		private AttachmentBuilder() {
+			colour.source(VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA);
+			colour.destination(VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+			alpha.source(VkBlendFactor.VK_BLEND_FACTOR_ONE);
+			alpha.destination(VkBlendFactor.VK_BLEND_FACTOR_ZERO);
 			attachments.add(this);
 		}
 

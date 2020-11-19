@@ -41,10 +41,7 @@ public record Sphere(float radius) {
 	 * Notes:
 	 * <li><i>phi</i> is the counter-clockwise rotation (or <i>yaw</i>) about the Y axis (looking <b>down</b> onto the sphere) in the range 0...2 pi</li>
 	 * <li><i>theta</i> is the vertical rotation (or <i>pitch</i>) in the range -/+ half pi</li>
-	 * </ul>
-	 * Note that this method assumes <i>phi</i> is zero in the direction of the positive X axis.
-	 * i.e. apply a 90 degree clockwise rotation to
-	 * TODO
+	 * <li>by default the horizontal angle (<i>phi</i>) is zero in the direction of the positive X axis (add -90 degree to align with the Vulkan negative Z direction)</li>
 	 * </ul>
 	 * <p>
 	 * @param phi			Horizontal (or <i>yaw</i>) angle

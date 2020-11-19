@@ -99,7 +99,7 @@ public class Camera {
 	 */
 	public void look(Point pt) {
 		if(pos.equals(pt)) throw new IllegalArgumentException("Cannot point camera at its current position");
-		dir = Vector.of(pt, pos).normalize();
+		dir = Vector.between(pt, pos).normalize();
 		dirty();
 	}
 

@@ -46,7 +46,7 @@ public record SphereVolume(Point centre, float radius) implements BoundingVolume
 	@Override
 	public Optional<Point> intersect(Ray ray) {
 		// Build vector from sphere to ray origin
-		final Vector vec = Vector.of(centre, ray.origin());
+		final Vector vec = Vector.between(centre, ray.origin());
 
 		if(vec.dot(ray.direction()) < 0) {
 			// Sphere is behind the ray origin
@@ -59,7 +59,7 @@ public record SphereVolume(Point centre, float radius) implements BoundingVolume
 			if(dist < 0) {
 				// Ray origin is within the sphere
 				final Point pc = new Point(ray.direction().project(vec));
-				final float d = MathsUtil.sqrt(dist - Vector.of(pc, ray.origin()).magnitude());
+				final float d = MathsUtil.sqrt(dist - Vector.between(pc, ray.origin()).magnitude());
 				final Tuple result = ray.origin().add(ray.direction().scale(d));
 				return Optional.of(new Point(result));
 			}

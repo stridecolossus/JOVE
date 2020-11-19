@@ -66,6 +66,8 @@ public interface Converter<T> extends Function<String, T> {
 		}
 	};
 
+	// TODO - following unused?
+
 	/**
 	 * Creates a converter for the given enumeration.
 	 * <p>

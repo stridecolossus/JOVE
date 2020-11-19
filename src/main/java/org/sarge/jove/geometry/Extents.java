@@ -29,7 +29,7 @@ public record Extents(Point min, Point max) {
 	 * @return Centre point
 	 */
 	public Point centre() {
-		final Vector vec = Vector.of(min, max);
+		final Vector vec = Vector.between(min, max);
 		return min.add(vec.scale(MathsUtil.HALF));
 	}
 
@@ -37,7 +37,7 @@ public record Extents(Point min, Point max) {
 	 * @return Largest extent size
 	 */
 	public float size() {
-		final Vector vec = Vector.of(min, max);
+		final Vector vec = Vector.between(min, max);
 		return Float.max(vec.x, Float.max(vec.y, vec.z));
 	}
 

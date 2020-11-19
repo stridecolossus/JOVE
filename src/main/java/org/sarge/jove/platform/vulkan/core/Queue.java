@@ -117,9 +117,9 @@ public class Queue implements NativeObject {
 		@Override
 		public boolean equals(Object obj) {
 			return
-					obj instanceof Family that &&
-					this.device() == that.device() &&
-					this.index == that.index;
+					(obj instanceof Family that) &&
+					(this.device() == that.device()) &&
+					(this.index == that.index);
 		}
 
 		@Override
@@ -144,9 +144,6 @@ public class Queue implements NativeObject {
 		this.family = notNull(family);
 	}
 
-	/**
-	 * @return Queue handle
-	 */
 	@Override
 	public Handle handle() {
 		return handle;
