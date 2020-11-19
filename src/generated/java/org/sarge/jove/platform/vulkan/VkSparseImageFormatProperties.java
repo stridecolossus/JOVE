@@ -17,8 +17,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSparseImageFormatProperties extends VulkanStructure {
 	public static class ByValue extends VkSparseImageFormatProperties implements Structure.ByValue { }
 	public static class ByReference extends VkSparseImageFormatProperties implements Structure.ByReference { }
-	
-	public VkImageAspectFlags aspectMask;
+
+	public VkImageAspectFlag aspectMask;
 	public VkExtent3D imageGranularity;
 	public int flags;
 }

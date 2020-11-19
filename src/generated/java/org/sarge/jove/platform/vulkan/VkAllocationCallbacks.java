@@ -21,11 +21,11 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkAllocationCallbacks extends VulkanStructure {
 	public static class ByValue extends VkAllocationCallbacks implements Structure.ByValue { }
 	public static class ByReference extends VkAllocationCallbacks implements Structure.ByReference { }
-	
+
 	public Pointer pUserData;
-	public PFN_vkAllocationFunction pfnAllocation;
-	public PFN_vkReallocationFunction pfnReallocation;
-	public PFN_vkFreeFunction pfnFree;
-	public PFN_vkInternalAllocationNotification pfnInternalAllocation;
-	public PFN_vkInternalFreeNotification pfnInternalFree;
+	public Pointer pfnAllocation;
+	public Pointer pfnReallocation;
+	public Pointer pfnFree;
+	public Pointer pfnInternalAllocation;
+	public Pointer pfnInternalFree;
 }

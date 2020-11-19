@@ -17,8 +17,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDrmFormatModifierPropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkDrmFormatModifierPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkDrmFormatModifierPropertiesEXT implements Structure.ByReference { }
-	
+
 	public long drmFormatModifier;
 	public int drmFormatModifierPlaneCount;
-	public VkFormatFeatureFlags drmFormatModifierTilingFeatures;
+	public VkFormatFeatureFlag drmFormatModifierTilingFeatures;
 }

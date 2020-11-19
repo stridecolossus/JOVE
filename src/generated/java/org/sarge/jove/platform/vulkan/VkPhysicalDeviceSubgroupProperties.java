@@ -22,11 +22,11 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceSubgroupProperties extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceSubgroupProperties implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceSubgroupProperties implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
 	public Pointer pNext;
 	public int subgroupSize;
-	public VkShaderStageFlags supportedStages;
-	public VkSubgroupFeatureFlags supportedOperations;
+	public VkShaderStageFlag supportedStages;
+	public VkSubgroupFeatureFlag supportedOperations;
 	public VulkanBoolean quadOperationsInAllStages;
 }

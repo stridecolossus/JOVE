@@ -19,9 +19,9 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkObjectTablePushConstantEntryNVX extends VulkanStructure {
 	public static class ByValue extends VkObjectTablePushConstantEntryNVX implements Structure.ByValue { }
 	public static class ByReference extends VkObjectTablePushConstantEntryNVX implements Structure.ByReference { }
-	
+
 	public VkObjectEntryTypeNVX type;
 	public int flags;
 	public Pointer pipelineLayout;
-	public VkShaderStageFlags stageFlags;
+	public VkShaderStageFlag stageFlags;
 }

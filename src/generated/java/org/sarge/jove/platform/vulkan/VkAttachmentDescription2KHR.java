@@ -26,12 +26,12 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkAttachmentDescription2KHR extends VulkanStructure {
 	public static class ByValue extends VkAttachmentDescription2KHR implements Structure.ByValue { }
 	public static class ByReference extends VkAttachmentDescription2KHR implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2_KHR;
 	public Pointer pNext;
 	public int flags;
 	public VkFormat format;
-	public VkSampleCountFlagBits samples;
+	public VkSampleCountFlag samples;
 	public VkAttachmentLoadOp loadOp;
 	public VkAttachmentStoreOp storeOp;
 	public VkAttachmentLoadOp stencilLoadOp;

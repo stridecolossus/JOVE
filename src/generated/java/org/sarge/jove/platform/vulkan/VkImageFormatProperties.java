@@ -19,10 +19,10 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkImageFormatProperties extends VulkanStructure {
 	public static class ByValue extends VkImageFormatProperties implements Structure.ByValue { }
 	public static class ByReference extends VkImageFormatProperties implements Structure.ByReference { }
-	
+
 	public VkExtent3D maxExtent;
 	public int maxMipLevels;
 	public int maxArrayLayers;
-	public VkSampleCountFlags sampleCounts;
+	public VkSampleCountFlag sampleCounts;
 	public long maxResourceSize;
 }

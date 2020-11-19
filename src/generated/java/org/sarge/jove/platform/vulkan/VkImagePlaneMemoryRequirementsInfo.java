@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkImagePlaneMemoryRequirementsInfo extends VulkanStructure {
 	public static class ByValue extends VkImagePlaneMemoryRequirementsInfo implements Structure.ByValue { }
 	public static class ByReference extends VkImagePlaneMemoryRequirementsInfo implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_PLANE_MEMORY_REQUIREMENTS_INFO;
 	public Pointer pNext;
-	public VkImageAspectFlagBits planeAspect;
+	public VkImageAspectFlag planeAspect;
 }

@@ -19,9 +19,9 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkImportMemoryHostPointerInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkImportMemoryHostPointerInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkImportMemoryHostPointerInfoEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT;
 	public Pointer pNext;
-	public VkExternalMemoryHandleTypeFlagBits handleType;
+	public VkExternalMemoryHandleTypeFlag handleType;
 	public Pointer pHostPointer;
 }

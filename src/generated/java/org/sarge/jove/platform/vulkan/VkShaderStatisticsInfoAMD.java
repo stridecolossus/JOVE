@@ -21,8 +21,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkShaderStatisticsInfoAMD extends VulkanStructure {
 	public static class ByValue extends VkShaderStatisticsInfoAMD implements Structure.ByValue { }
 	public static class ByReference extends VkShaderStatisticsInfoAMD implements Structure.ByReference { }
-	
-	public VkShaderStageFlags shaderStageMask;
+
+	public VkShaderStageFlag shaderStageMask;
 	public VkShaderResourceUsageAMD resourceUsage;
 	public int numPhysicalVgprs;
 	public int numPhysicalSgprs;

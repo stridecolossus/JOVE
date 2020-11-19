@@ -21,10 +21,10 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSampleLocationsInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkSampleLocationsInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkSampleLocationsInfoEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
 	public Pointer pNext;
-	public VkSampleCountFlagBits sampleLocationsPerPixel;
+	public VkSampleCountFlag sampleLocationsPerPixel;
 	public VkExtent2D sampleLocationGridSize;
 	public int sampleLocationsCount;
 	public Pointer pSampleLocations;

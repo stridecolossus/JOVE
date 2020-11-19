@@ -18,9 +18,9 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkExternalImageFormatPropertiesNV extends VulkanStructure {
 	public static class ByValue extends VkExternalImageFormatPropertiesNV implements Structure.ByValue { }
 	public static class ByReference extends VkExternalImageFormatPropertiesNV implements Structure.ByReference { }
-	
+
 	public VkImageFormatProperties imageFormatProperties;
-	public VkExternalMemoryFeatureFlagsNV externalMemoryFeatures;
-	public VkExternalMemoryHandleTypeFlagsNV exportFromImportedHandleTypes;
-	public VkExternalMemoryHandleTypeFlagsNV compatibleHandleTypes;
+	public VkExternalMemoryFeatureFlagBitsNV externalMemoryFeatures;
+	public VkExternalMemoryHandleTypeFlagNV exportFromImportedHandleTypes;
+	public VkExternalMemoryHandleTypeFlagNV compatibleHandleTypes;
 }

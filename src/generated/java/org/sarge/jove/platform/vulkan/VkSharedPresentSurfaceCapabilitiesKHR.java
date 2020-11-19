@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSharedPresentSurfaceCapabilitiesKHR extends VulkanStructure {
 	public static class ByValue extends VkSharedPresentSurfaceCapabilitiesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkSharedPresentSurfaceCapabilitiesKHR implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SHARED_PRESENT_SURFACE_CAPABILITIES_KHR;
 	public Pointer pNext;
-	public VkImageUsageFlags sharedPresentSupportedUsageFlags;
+	public VkImageUsageFlag sharedPresentSupportedUsageFlags;
 }

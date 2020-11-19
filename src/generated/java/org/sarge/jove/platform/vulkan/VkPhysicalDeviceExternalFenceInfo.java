@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceExternalFenceInfo extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceExternalFenceInfo implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceExternalFenceInfo implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO;
 	public Pointer pNext;
-	public VkExternalFenceHandleTypeFlagBits handleType;
+	public VkExternalFenceHandleTypeFlag handleType;
 }

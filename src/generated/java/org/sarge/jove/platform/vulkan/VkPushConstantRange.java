@@ -17,8 +17,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPushConstantRange extends VulkanStructure {
 	public static class ByValue extends VkPushConstantRange implements Structure.ByValue { }
 	public static class ByReference extends VkPushConstantRange implements Structure.ByReference { }
-	
-	public VkShaderStageFlags stageFlags;
+
+	public VkShaderStageFlag stageFlags;
 	public int offset;
 	public int size;
 }

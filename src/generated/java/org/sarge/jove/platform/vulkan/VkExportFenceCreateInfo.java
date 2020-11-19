@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkExportFenceCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkExportFenceCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkExportFenceCreateInfo implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO;
 	public Pointer pNext;
-	public VkExternalFenceHandleTypeFlags handleTypes;
+	public VkExternalFenceHandleTypeFlag handleTypes;
 }

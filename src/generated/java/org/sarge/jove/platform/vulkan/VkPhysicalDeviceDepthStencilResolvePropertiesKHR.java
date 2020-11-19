@@ -22,11 +22,11 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceDepthStencilResolvePropertiesKHR extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceDepthStencilResolvePropertiesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceDepthStencilResolvePropertiesKHR implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES_KHR;
 	public Pointer pNext;
-	public VkResolveModeFlagsKHR supportedDepthResolveModes;
-	public VkResolveModeFlagsKHR supportedStencilResolveModes;
+	public VkResolveModeFlagKHR supportedDepthResolveModes;
+	public VkResolveModeFlagKHR supportedStencilResolveModes;
 	public VulkanBoolean independentResolveNone;
 	public VulkanBoolean independentResolve;
 }

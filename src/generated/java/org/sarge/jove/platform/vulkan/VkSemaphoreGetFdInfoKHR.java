@@ -19,9 +19,9 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSemaphoreGetFdInfoKHR extends VulkanStructure {
 	public static class ByValue extends VkSemaphoreGetFdInfoKHR implements Structure.ByValue { }
 	public static class ByReference extends VkSemaphoreGetFdInfoKHR implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR;
 	public Pointer pNext;
 	public Pointer semaphore;
-	public VkExternalSemaphoreHandleTypeFlagBits handleType;
+	public VkExternalSemaphoreHandleTypeFlag handleType;
 }

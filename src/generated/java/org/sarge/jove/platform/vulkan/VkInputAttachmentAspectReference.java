@@ -17,8 +17,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkInputAttachmentAspectReference extends VulkanStructure {
 	public static class ByValue extends VkInputAttachmentAspectReference implements Structure.ByValue { }
 	public static class ByReference extends VkInputAttachmentAspectReference implements Structure.ByReference { }
-	
+
 	public int subpass;
 	public int inputAttachmentIndex;
-	public VkImageAspectFlags aspectMask;
+	public VkImageAspectFlag aspectMask;
 }

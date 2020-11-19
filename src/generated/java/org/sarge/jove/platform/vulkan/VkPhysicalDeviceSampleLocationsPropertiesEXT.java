@@ -23,10 +23,10 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceSampleLocationsPropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceSampleLocationsPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceSampleLocationsPropertiesEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
 	public Pointer pNext;
-	public VkSampleCountFlags sampleLocationSampleCounts;
+	public VkSampleCountFlag sampleLocationSampleCounts;
 	public VkExtent2D maxSampleLocationGridSize;
 	public float[] sampleLocationCoordinateRange = new float[2];
 	public int sampleLocationSubPixelBits;

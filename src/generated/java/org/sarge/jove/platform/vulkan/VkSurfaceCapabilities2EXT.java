@@ -28,7 +28,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSurfaceCapabilities2EXT extends VulkanStructure {
 	public static class ByValue extends VkSurfaceCapabilities2EXT implements Structure.ByValue { }
 	public static class ByReference extends VkSurfaceCapabilities2EXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_EXT;
 	public Pointer pNext;
 	public int minImageCount;
@@ -37,9 +37,9 @@ public class VkSurfaceCapabilities2EXT extends VulkanStructure {
 	public VkExtent2D minImageExtent;
 	public VkExtent2D maxImageExtent;
 	public int maxImageArrayLayers;
-	public VkSurfaceTransformFlagsKHR supportedTransforms;
+	public VkSurfaceTransformFlagKHR supportedTransforms;
 	public VkSurfaceTransformFlagKHR currentTransform;
-	public VkCompositeAlphaFlagsKHR supportedCompositeAlpha;
-	public VkImageUsageFlags supportedUsageFlags;
-	public VkSurfaceCounterFlagsEXT supportedSurfaceCounters;
+	public VkCompositeAlphaFlagKHR supportedCompositeAlpha;
+	public VkImageUsageFlag supportedUsageFlags;
+	public VkSurfaceCounterFlagEXT supportedSurfaceCounters;
 }

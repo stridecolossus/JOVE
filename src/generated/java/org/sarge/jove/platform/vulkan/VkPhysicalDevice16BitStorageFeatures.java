@@ -22,8 +22,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDevice16BitStorageFeatures extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDevice16BitStorageFeatures implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDevice16BitStorageFeatures implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16_BIT_STORAGE_FEATURES;
+
+	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
 	public Pointer pNext;
 	public VulkanBoolean storageBuffer16BitAccess;
 	public VulkanBoolean uniformAndStorageBuffer16BitAccess;

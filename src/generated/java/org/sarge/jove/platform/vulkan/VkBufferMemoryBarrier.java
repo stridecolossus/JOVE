@@ -24,11 +24,11 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkBufferMemoryBarrier extends VulkanStructure {
 	public static class ByValue extends VkBufferMemoryBarrier implements Structure.ByValue { }
 	public static class ByReference extends VkBufferMemoryBarrier implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
 	public Pointer pNext;
-	public VkAccessFlags srcAccessMask;
-	public VkAccessFlags dstAccessMask;
+	public VkAccessFlag srcAccessMask;
+	public VkAccessFlag dstAccessMask;
 	public int srcQueueFamilyIndex;
 	public int dstQueueFamilyIndex;
 	public Pointer buffer;

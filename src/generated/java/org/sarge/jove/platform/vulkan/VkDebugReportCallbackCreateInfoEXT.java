@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
+import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
@@ -20,10 +21,10 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDebugReportCallbackCreateInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkDebugReportCallbackCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkDebugReportCallbackCreateInfoEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;
-	public PFN_vkDebugReportCallbackEXT pfnCallback;
+	public Callback pfnCallback;
 	public Pointer pUserData;
 }

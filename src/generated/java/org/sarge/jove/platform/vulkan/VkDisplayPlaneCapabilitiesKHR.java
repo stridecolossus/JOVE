@@ -23,8 +23,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDisplayPlaneCapabilitiesKHR extends VulkanStructure {
 	public static class ByValue extends VkDisplayPlaneCapabilitiesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkDisplayPlaneCapabilitiesKHR implements Structure.ByReference { }
-	
-	public VkDisplayPlaneAlphaFlagsKHR supportedAlpha;
+
+	public VkDisplayPlaneAlphaFlagKHR supportedAlpha;
 	public VkOffset2D minSrcPosition;
 	public VkOffset2D maxSrcPosition;
 	public VkExtent2D minSrcExtent;

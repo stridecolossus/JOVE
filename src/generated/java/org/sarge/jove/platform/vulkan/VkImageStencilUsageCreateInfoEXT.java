@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkImageStencilUsageCreateInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkImageStencilUsageCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkImageStencilUsageCreateInfoEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO_EXT;
 	public Pointer pNext;
-	public VkImageUsageFlags stencilUsage;
+	public VkImageUsageFlag stencilUsage;
 }

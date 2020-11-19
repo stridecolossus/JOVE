@@ -17,8 +17,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkClearAttachment extends VulkanStructure {
 	public static class ByValue extends VkClearAttachment implements Structure.ByValue { }
 	public static class ByReference extends VkClearAttachment implements Structure.ByReference { }
-	
-	public VkImageAspectFlags aspectMask;
+
+	public VkImageAspectFlag aspectMask;
 	public int colorAttachment;
 	public VkClearValue clearValue;
 }

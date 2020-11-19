@@ -17,8 +17,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkFormatProperties extends VulkanStructure {
 	public static class ByValue extends VkFormatProperties implements Structure.ByValue { }
 	public static class ByReference extends VkFormatProperties implements Structure.ByReference { }
-	
-	public VkFormatFeatureFlags linearTilingFeatures;
-	public VkFormatFeatureFlags optimalTilingFeatures;
-	public VkFormatFeatureFlags bufferFeatures;
+
+	public VkFormatFeatureFlag linearTilingFeatures;
+	public VkFormatFeatureFlag optimalTilingFeatures;
+	public VkFormatFeatureFlag bufferFeatures;
 }

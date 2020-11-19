@@ -22,12 +22,12 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDisplayPropertiesKHR extends VulkanStructure {
 	public static class ByValue extends VkDisplayPropertiesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkDisplayPropertiesKHR implements Structure.ByReference { }
-	
+
 	public long display;
 	public String displayName;
 	public VkExtent2D physicalDimensions;
 	public VkExtent2D physicalResolution;
-	public VkSurfaceTransformFlagsKHR supportedTransforms;
+	public VkSurfaceTransformFlagKHR supportedTransforms;
 	public VulkanBoolean planeReorderPossible;
 	public VulkanBoolean persistentContent;
 }

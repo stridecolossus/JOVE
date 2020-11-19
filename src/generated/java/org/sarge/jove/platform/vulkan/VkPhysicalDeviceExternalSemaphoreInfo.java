@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceExternalSemaphoreInfo extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceExternalSemaphoreInfo implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceExternalSemaphoreInfo implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO;
 	public Pointer pNext;
-	public VkExternalSemaphoreHandleTypeFlagBits handleType;
+	public VkExternalSemaphoreHandleTypeFlag handleType;
 }
