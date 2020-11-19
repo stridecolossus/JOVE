@@ -128,9 +128,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 					.depth(1)
 					.build()
-				.dependency()
+				.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
 					.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-					.destination().index(0)
 					.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 					.destination().access(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 					.build()
@@ -261,9 +260,22 @@ public class RenderPassTest extends AbstractVulkanTest {
 		// TODO - split this up
 
 		@Test
-		void dependencyInvalidSubpass() {
+		void dependencyEmptySubpass() {
+			assertThrows(IllegalArgumentException.class, "Invalid sub-pass", () -> builder.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0));
+		}
+
+		@Test
+		void dependencyInvalidSubpassIndex() {
 			add();
-			assertThrows(IllegalArgumentException.class, "Invalid sub-pass", () -> builder.dependency().source().index(0));
+			builder.subpass().depth(0);
+			assertThrows(IllegalArgumentException.class, "Invalid sub-pass", () -> builder.dependency(0, 1));
+		}
+
+		@Test
+		void dependencyEmptyStages() {
+			add();
+			builder.subpass().depth(0);
+			assertThrows(IllegalArgumentException.class, "Invalid sub-pass", () -> builder.dependency(0, 0).build());
 		}
 	}
 }

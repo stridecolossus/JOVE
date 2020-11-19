@@ -92,24 +92,18 @@ public class SwapChain extends AbstractVulkanObject {
 
 	/**
 	 * Presents the next frame.
-	 * @param
-	 * @param queue Presentation queue
+	 * @param queue				Presentation queue
+	 * @param semaphores		Wait semaphores
 	 */
-	public void present(Queue queue, Semaphore semaphore) {
+	public void present(Queue queue, Set<Semaphore> semaphores) {
 		// Create presentation descriptor
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 
-		// Add semaphore
-//		final PointerHandle semaphore = frame.finished();
-//		if(semaphore != null) {
-//			info.waitSemaphoreCount = 1;
-//			info.pWaitSemaphores = StructureHelper.pointers(Arrays.asList(semaphore.handle()));
-//		}
+		// Populate wait semaphores
+		info.waitSemaphoreCount = semaphores.size();
+		info.pWaitSemaphores = Handle.toPointerArray(semaphores);
 
-//		info.waitSemaphoreCount = 1; // semaphores.size();
-//		info.pWaitSemaphores = Handle.memory(new Handle[]{semaphore.handle()});
-
-		// Add swap-chains
+		// Populate swap-chain
 		info.swapchainCount = 1;
 		info.pSwapchains = Handle.toPointerArray(List.of(this));
 
@@ -121,10 +115,9 @@ public class SwapChain extends AbstractVulkanObject {
 
 		// Present frame
 		final VulkanLibrary lib = device().library();
-		check(lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info}));
+		check(lib.vkQueuePresentKHR(queue.handle(), info));
 	}
-	// TODO - synchronise
-	// TODO - cache descriptor?
+	// TODO - cache descriptor -> factory -> work submit?
 
 	@Override
 	public synchronized void destroy() {

@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -19,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pImageIndices",
 	"pResults"
 })
-public class VkPresentInfoKHR extends VulkanStructure {
+public class VkPresentInfoKHR extends VulkanStructure implements ByReference {
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	public Pointer pNext;
 	public int waitSemaphoreCount;

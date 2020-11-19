@@ -24,7 +24,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
@@ -248,7 +247,7 @@ public class TextureQuadDemo {
 
 		// Copy
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transferFamily));
-		ImmediateCommand.submit(staging.copy(dest), copyPool);
+		Work.submit(staging.copy(dest), copyPool);
 
 		staging.destroy();
 
@@ -333,17 +332,11 @@ public class TextureQuadDemo {
 				.end();
 		}
 
-//		final Semaphore ready = Semaphore.create(dev);
-//		final Semaphore finished = Semaphore.create(dev);
-
 		for(int n = 0; n < 25; ++n) {
 			final int index = chain.acquire(null, null);
 
-			new Work.Builder(presentQueue)
+			new Work.Builder()
 					.add(commands.get(index))
-//					.wait(ready)
-//					.signal(finished)
-					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
 					.build()
 					.submit();
 
@@ -354,11 +347,7 @@ public class TextureQuadDemo {
 
 			presentQueue.waitIdle();
 			Thread.sleep(50);
-
-//			dev.queue(present).waitIdle();
 		}
-
-			//Thread.sleep(2500);
 
 		//////////////
 

@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -28,7 +29,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.DrawCommand;
@@ -126,7 +126,7 @@ public class ModelDemo {
 				.build();
 
 		// Copy
-		ImmediateCommand.submit(staging.copy(dest), pool);
+		Work.submit(staging.copy(dest), pool);
 
 		// Release staging buffer
 		staging.destroy();
@@ -267,12 +267,11 @@ public class ModelDemo {
 					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 					.depth(1)
 					.build()
-//				.dependency()
-//					.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-//					.destination(0)
-//					.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-//					.destination(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-//					.build()
+				.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
+					.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.destination().access(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+					.build()
 				.build();
 
 		// Load shaders
@@ -300,8 +299,8 @@ public class ModelDemo {
 
 		//////////////////
 
-		final Command.Pool graphicsPool = Command.Pool.create(dev.queue(graphics));
-
+		final Queue graphicsQueue = dev.queue(graphics);
+		final Command.Pool graphicsPool = Command.Pool.create(graphicsQueue);
 		final View texture = texture(dev, graphicsPool);
 
 		// Create descriptor layout
@@ -395,9 +394,7 @@ public class ModelDemo {
 				.collect(toList());
 
 		// Create command pool
-		final Queue presentQueue = dev.queue(present);
-		final Command.Pool pool = Command.Pool.create(presentQueue);
-		final List<Command.Buffer> commands = pool.allocate(buffers.size());
+		final List<Command.Buffer> commands = graphicsPool.allocate(buffers.size());
 
 		// Record render commands
 		for(int n = 0; n < commands.size(); ++n) {
@@ -413,9 +410,6 @@ public class ModelDemo {
 					.add(RenderPass.END_COMMAND)
 				.end();
 		}
-
-//		final Semaphore ready = Semaphore.create(dev);
-//		final Semaphore finished = Semaphore.create(dev);
 
 		///////////////////
 
@@ -520,9 +514,10 @@ public class ModelDemo {
 		final var toggle = new ToggleAction();
 		toggle.run();
 
-		// TODO
-		//instance.handlers().remove(handler);
-		Semaphore ready = Semaphore.create(dev);
+		// Create semaphores for render loop synchronisation
+		final Queue presentQueue = dev.queue(present);
+		final Semaphore ready = Semaphore.create(dev);
+		final Semaphore finished = Semaphore.create(dev);
 
 		// Render loop
 		while(runner.isRunning()) {
@@ -533,35 +528,36 @@ public class ModelDemo {
 			final Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix);
 			uniform.load(matrix);
 
+			// Get next frame to render
 			final int idx = chain.acquire(ready, null);
 // ERROR:VALIDATION:Validation Error: [ VUID-vkAcquireNextImageKHR-semaphore-01780 ] Object 0: handle = 0x983e60000000003, type = VK_OBJECT_TYPE_SWAPCHAIN_KHR; | MessageID = 0x94557523 | vkAcquireNextImageKHR: semaphore and fence are both VK_NULL_HANDLE. The Vulkan spec states: semaphore and fence must not both be equal to VK_NULL_HANDLE (https://vulkan.lunarg.com/doc/view/1.2.154.1/windows/1.2-extensions/vkspec.html#VUID-vkAcquireNextImageKHR-semaphore-01780)
 
-			new Work.Builder(presentQueue)
+			// Submit render task
+			new Work.Builder()
 					.add(commands.get(idx))
-					.wait(ready)
-//					.signal(finished)
-					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+					.wait(ready, VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+//					.wait(ready, VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+					.signal(finished)
 					.build()
 					.submit();
 
-			presentQueue.waitIdle();
-//			Thread.sleep(50);
+			// Present next frame
+			chain.present(presentQueue, Set.of(finished));
 
-			chain.present(presentQueue, null);
+			// TODO
 			presentQueue.waitIdle();
-
-			//Thread.sleep(50);
 		}
+
+		// Wait for pending work to complete
+		dev.waitIdle();
 
 		//////////////
 
 		ready.destroy();
+		finished.destroy();
 
-//		final Image.DefaultImage img = (Image.DefaultImage) texture.image();
-//		img.destroy();
 		texture.destroy();
 		sampler.destroy();
-		//Arrays.stream(uniforms).forEach(VertexBuffer::destroy);
 		uniform.destroy();
 		vbo.destroy();
 		index.destroy();
@@ -570,9 +566,8 @@ public class ModelDemo {
 		setPool.destroy();
 		layout.destroy();
 
-		pool.destroy();
-		copyPool.destroy();
 		graphicsPool.destroy();
+		copyPool.destroy();
 
 		vert.destroy();
 		frag.destroy();

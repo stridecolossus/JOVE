@@ -15,7 +15,6 @@ import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
 import org.sarge.jove.platform.vulkan.VkColorSpaceKHR;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -175,11 +174,11 @@ public class TriangleDemo {
 //		for(int n = 0; n < 100; ++n) {
 			final int index = chain.acquire(null, null);
 
-			new Work.Builder(queue)
+			new Work.Builder()
 					.add(commands.get(index))
-					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
 					.build()
 					.submit();
+
 			dev.queue(present).waitIdle();
 
 //			Thread.sleep(50);

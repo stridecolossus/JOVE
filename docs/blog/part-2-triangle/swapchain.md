@@ -130,10 +130,15 @@ This class initially has no functionality but will be expanded when we address t
 public class View {
     private final Pointer handle;
     private final Image image;
+
+    View(Pointer handle, Image image, LogicalDevice dev) {
+        super(handle, dev, dev.library()::vkDestroyImageView);
+        this.image = notNull(image);
+    }
 }
 ```
 
-Note that both of these new domain objects are managed by Vulkan and therefore do not need to be explicitly destroyed by the application.
+Note the swapchain images are managed by Vulkan and do not need to be explicitly destroyed by the application.
 
 ### The Swap Chain
 
@@ -258,6 +263,16 @@ private View view(Pointer handle) {
 }
 ```
 
+Although the swapchain _images_ are managed by Vulkan the application needs to release the image _views_:
+
+```java
+@Override
+public synchronized void destroy() {
+    views.forEach(View::destroy);
+    super.destroy();
+}
+```
+
 Finally we extend the API for these new types:
 
 ```java
@@ -302,11 +317,11 @@ public int acquire() {
 When an image has been completed it can be presented to the surface:
 
 ```java
-public void present(Queue queue) {
+public void present(Queue queue, Set<Semaphore> semaphores) {
     // Create presentation descriptor
     final VkPresentInfoKHR info = new VkPresentInfoKHR();
 
-    // Add swap-chains
+    // Populate swap-chain
     info.swapchainCount = 1;
     info.pSwapchains = Handle.toPointerArray(List.of(this));
 
@@ -318,14 +333,14 @@ public void present(Queue queue) {
 
     // Present frame
     final VulkanLibrary lib = device().library();
-    check(lib.vkQueuePresentKHR(queue.handle(), new VkPresentInfoKHR[]{info}));
+    check(lib.vkQueuePresentKHR(queue.handle(), info));
 }
 ```
 
 Notes:
 - The API is designed to present multiple swapchains but we limit ourselves to one for the moment.
 - We create the descriptor for presentation on every invocation of the presentation method - we may want to cache these later.
-- We will address synchronisation in a future chapter.
+- Synchronisation is addressed in a future chapter.
 
 ### Format Builder
 

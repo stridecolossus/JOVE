@@ -108,8 +108,8 @@ public class RenderPass extends AbstractVulkanObject {
 		/**
 		 * @return New dependency builder
 		 */
-		public DependencyBuilder dependency() {
-			return new DependencyBuilder();
+		public DependencyBuilder dependency(int src, int dest) {
+			return new DependencyBuilder(src, dest);
 		}
 
 		/**
@@ -345,25 +345,30 @@ public class RenderPass extends AbstractVulkanObject {
 
 		/**
 		 * Builder for a render pass dependency.
+		 * <p>
+		 * Notes:
+		 * <ul>
+		 * <li>The special case {@link RenderPass#VK_SUBPASS_EXTERNAL} index specifies the implicit sub-pass before or after the render pass</li>
+		 * <li>All dependencies <b>must</b> specify at least one pipeline stage</li>
+		 * </ul>
 		 */
 		public class DependencyBuilder {
 			/**
 			 * Source or destination sub-pass dependency.
 			 */
 			public class Dependency {
-				private int index = VK_SUBPASS_EXTERNAL;
+				private final int index;
 				private final Set<VkPipelineStageFlag> stages = new HashSet<>();
 				private final Set<VkAccessFlag> access = new HashSet<>();
 
 				/**
-				 * Sets the sub-pass index.
+				 * Constructor.
 				 * @param index Sub-pass index
 				 * @throws IllegalArgumentException for an invalid index
 				 */
-				public DependencyBuilder index(int index) {
-					if(index >= subpasses.size()) throw new IllegalArgumentException("Invalid sub-pass index: " + index);
-					this.index = zeroOrMore(index);
-					return DependencyBuilder.this;
+				private Dependency(int index) {
+					if((index != VK_SUBPASS_EXTERNAL) && (index >= subpasses.size())) throw new IllegalArgumentException("Invalid sub-pass index: " + index);
+					this.index = index;
 				}
 
 				/**
@@ -388,7 +393,9 @@ public class RenderPass extends AbstractVulkanObject {
 				 * @return Pipeline stages mask
 				 */
 				private int stages() {
-					return IntegerEnumeration.mask(stages);
+					final int mask = IntegerEnumeration.mask(stages);
+					if(mask == 0) throw new IllegalArgumentException("No pipeline stage(s) specified for sub-pass dependency: subpass=" + index);
+					return mask;
 				}
 
 				/**
@@ -399,8 +406,17 @@ public class RenderPass extends AbstractVulkanObject {
 				}
 			}
 
-			private final Dependency src = new Dependency();
-			private final Dependency dest = new Dependency();
+			private final Dependency src, dest;
+
+			/**
+			 * Constructor.
+			 * @param src		Source index
+			 * @param dest		Destination index
+			 */
+			private DependencyBuilder(int src, int dest) {
+				this.src = new Dependency(src);
+				this.dest = new Dependency(dest);
+			}
 
 			/**
 			 * @return Source dependency

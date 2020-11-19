@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.Queue;
+import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -36,6 +37,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class SwapChainTest extends AbstractVulkanTest {
 	private SwapChain chain;
 	private View view;
+	private Semaphore semaphore;
 
 	@BeforeEach
 	void before() {
@@ -56,6 +58,10 @@ public class SwapChainTest extends AbstractVulkanTest {
 
 		// Create swapchain
 		chain = new SwapChain(new Pointer(2), dev, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, List.of(view));
+
+		// Create semaphore
+		semaphore = mock(Semaphore.class);
+		when(semaphore.handle()).thenReturn(new Handle(new Pointer(3)));
 	}
 
 	@Test
@@ -68,8 +74,9 @@ public class SwapChainTest extends AbstractVulkanTest {
 
 	@Test
 	void acquire() {
-		assertEquals(0, chain.acquire(null, null));
-		verify(lib).vkAcquireNextImageKHR(eq(dev.handle()), eq(chain.handle()), eq(Long.MAX_VALUE), isNull(), isNull(), isA(IntByReference.class));
+		final Handle handle = semaphore.handle();
+		assertEquals(0, chain.acquire(semaphore, null));
+		verify(lib).vkAcquireNextImageKHR(eq(dev.handle()), eq(chain.handle()), eq(Long.MAX_VALUE), eq(handle), isNull(), isA(IntByReference.class));
 	}
 
 	@Test
@@ -77,24 +84,24 @@ public class SwapChainTest extends AbstractVulkanTest {
 		// Present to queue
 		final Queue queue = mock(Queue.class);
 		when(queue.handle()).thenReturn(new Handle(new Pointer(42)));
-		chain.present(queue, null);
+		chain.present(queue, Set.of(semaphore));
 
 		// Check API
-		final ArgumentCaptor<VkPresentInfoKHR[]> captor = ArgumentCaptor.forClass(VkPresentInfoKHR[].class);
+		final ArgumentCaptor<VkPresentInfoKHR> captor = ArgumentCaptor.forClass(VkPresentInfoKHR.class);
 		verify(lib).vkQueuePresentKHR(eq(queue.handle()), captor.capture());
 
-		// Check descriptors
-		final VkPresentInfoKHR[] array = captor.getValue();
-		assertNotNull(array);
-		assertEquals(1, array.length);
-
 		// Check descriptor
-		final VkPresentInfoKHR info = array[0];
+		final VkPresentInfoKHR info = captor.getValue();
 		assertNotNull(info);
+
+		// Check swapchain
 		assertEquals(1, info.swapchainCount);
 		assertNotNull(info.pSwapchains);
 		assertNotNull(info.pImageIndices);
-		// TODO - semaphore
+
+		// Check semaphores
+		assertEquals(1, info.waitSemaphoreCount);
+		assertNotNull(info.pWaitSemaphores);
 	}
 
 	@Test

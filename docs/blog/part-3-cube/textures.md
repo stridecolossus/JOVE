@@ -287,6 +287,17 @@ public interface Image extends NativeObject {
 ```
 
 We introduce an _image descriptor_ and refactor the swapchain accordingly (with a custom image implementation that cannot be destroyed).
+The view class is also refactor to destroy the underlying image as required:
+
+```java
+@Override
+public synchronized void destroy() {
+    if(image instanceof TransientNativeObject obj) {
+        obj.destroy();
+    }
+    super.destroy();
+}
+```
 
 Now we can add a builder to the image class to support textures:
 
@@ -420,33 +431,41 @@ public class Barrier implements ImmediateCommand {
 }
 ```
 
-For our demo we will be executing this command immediately and waiting for it to complete.  For convenience we introduce the `ImmediateCommand` adapter to run one-time commands (building on the work class we introduced previously):
+For our demo we will be executing this command immediately and waiting for it to complete.  For convenience we introduce the `ImmediateCommand` adapter to run one-time commands:
 
 ```java
-abstract class ImmediateCommand implements Command {
+public static abstract class ImmediateCommand implements Command {
     /**
-     * Submits this command to the given pool.
+     * Submits this as a <i>one-time</i> command to the given pool and waits for completion.
      * @param pool Command pool
-     * @param wait Whether to wait for completion
+     * @see Command#once(Command.Pool, Command)
+     * @see Work#submit(Command, Command.Pool)
      */
-    public void submit(Command.Pool pool, boolean wait) {
-        // Allocate one-off buffer
-        final Command.Buffer buffer = Command.once(pool, this);
+    public void submit(Command.Pool pool) {
+        Work.submit(this, pool);
+    }
+}
+```
 
-        try {
-            // Perform work
-            final Work work = new Builder(pool.queue()).add(buffer).build();
-            work.submit();
-        }
-        finally {
-            // Release
-            buffer.free();
-        }
+This delegates to a new helper on the `Work` class we implemented previously:
 
-        // Wait for work to complete
-        if(wait) {
-            pool.queue().waitIdle();
-        }
+```java
+public static void submit(Command cmd, Command.Pool pool) {
+    // Allocate one-off buffer
+    final Command.Buffer buffer = Command.once(pool, cmd);
+
+    try {
+        // Submit work
+        final Queue queue = pool.queue();
+        final Work work = new Builder().add(buffer).build();
+        work.submit();
+
+        // Wait for completion
+        queue.waitIdle();
+    }
+    finally {
+        // Cleanup
+        buffer.free();
     }
 }
 ```

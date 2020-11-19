@@ -24,7 +24,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
@@ -232,7 +231,7 @@ public class RotatingCubeDemo {
 
 		// Copy
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
-		ImmediateCommand.submit(staging.copy(dest), copyPool);
+		Work.submit(staging.copy(dest), copyPool);
 		staging.destroy();
 
 		//////////////////
@@ -384,9 +383,6 @@ public class RotatingCubeDemo {
 				.end();
 		}
 
-//		final Semaphore ready = Semaphore.create(dev);
-//		final Semaphore finished = Semaphore.create(dev);
-
 		///////////////////
 
 		final long period = 5000;
@@ -400,21 +396,15 @@ public class RotatingCubeDemo {
 
 			final int index = chain.acquire(null, null);
 
-			new Work.Builder(presentQueue)
+			new Work.Builder()
 					.add(commands.get(index))
-//					.wait(ready)
-//					.signal(finished)
-					.stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
 					.build()
 					.submit();
 
 			presentQueue.waitIdle();
-//			Thread.sleep(50);
 
 			chain.present(presentQueue, null);
 			presentQueue.waitIdle();
-
-			//Thread.sleep(50);
 		}
 
 		//////////////

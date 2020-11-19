@@ -392,33 +392,65 @@ Later we will factor this out to a factory when we address vertex buffers and mo
 
 ### Submitting Work
 
-Submitting a command buffer to a work queue involves populating a descriptor of the work to be performed comprising the command buffers to execute and various synchronisation declarations.
+Submitting a command buffer to a work queue involves populating a descriptor of the work to be performed comprising a _batch_ of command buffers and synchronisation declarations.
 We will ignore synchronisation until a future chapter as it is not needed for the triangle demo.
 
 We define a _work_ class with the obligatory builder:
 
 ```java
-@FunctionalInterface
-public interface Work {
+public class Work {
+    private final VkSubmitInfo info;
+    private final Queue queue;
+
     /**
-     * Submits this work to the given queue.
+     * Constructor.
+     * @param info          Descriptor for this work batch
+     * @param queue         Work queue
      */
-    void submit();
+    public Work(VkSubmitInfo info, Queue queue) {
+        this.info = notNull(info);
+        this.queue = notNull(queue);
+    }
+
+    /**
+     * @return Work queue for this batch
+     */
+    public Queue queue() {
+        return queue;
+    }
 
     public static class Builder {
-        private final Queue queue;
         private final List<Command.Buffer> buffers = new ArrayList<>();
+        private Queue queue;
+        
+        ...
+
+        public Work build() {
+            if(buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
+            final VkSubmitInfo info = new VkSubmitInfo();
+            info.commandBufferCount = buffers.size();
+            info.pCommandBuffers = Handle.toPointerArray(buffers);
+            return new Work(info, queue);
+        }
     }
 }
 ```
 
-A command buffer is added to the work submission using the following method:
+The target queue for the work is determined from the command buffer when it is added to the batch:
 
 ```java
 public Builder add(Command.Buffer buffer) {
-    // Validate queue
-    if(queue.family() != buffer.pool().queue().family()) {
-        throw new IllegalArgumentException(...);
+    // Check buffer has been recorded
+    if(!buffer.isReady()) throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
+
+    // Initialise queue
+    final Queue q = buffer.pool().queue();
+    if(queue == null) {
+        queue = q;
+    }
+    else
+    if(queue.family() != q.family()) {
+        throw new IllegalArgumentException("Command buffers must all have the same queue: " + buffer);
     }
 
     // Add buffer to this work
@@ -428,28 +460,25 @@ public Builder add(Command.Buffer buffer) {
 }
 ```
 
-Note that each submission must be allocated from the same queue family.
+Note that each work submission must be allocated from the same queue family.
 
-Finally we populate the submission descriptor and invoke the relevant API method:
+Finally a collection of work batches is submitted for execution to the queue as follows:
 
 ```java
-public Work build() {
-    // Create submission descriptor
-    if(buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
+public static void submit(List<Work> work, Fence fence) {
+    // Determine submission queue and check all batches have the same queue
+    Check.notEmpty(work);
+    final Queue queue = work.get(0).queue;
+    if(!work.stream().map(e -> e.queue).allMatch(queue::equals)) {
+        throw new IllegalArgumentException(...);
+    }
 
-    // Populate command buffers
-    final VkSubmitInfo info = new VkSubmitInfo();
-    info.commandBufferCount = buffers.size();
-    info.pCommandBuffers = Handle.toPointerArray(buffers);
+    // Convert descriptors to array
+    final var array = work.stream().map(e -> e.info).toArray(VkSubmitInfo[]::new);
 
-    // TODO - synchronisation
-    // TODO - stage flags
-
-    // Create work
-    return () -> {
-        final VulkanLibrary lib = queue.device().library();
-        check(lib.vkQueueSubmit(queue.handle(), 1, new VkSubmitInfo[]{info}, null));
-    };
+    // Submit work
+    final VulkanLibrary lib = queue.device().library();
+    check(lib.vkQueueSubmit(queue.handle(), array.length, array, null));
 }
 ```
 

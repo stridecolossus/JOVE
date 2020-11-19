@@ -65,8 +65,8 @@ interface VulkanLibraryLogicalDevice {
 	/**
 	 * Presents to the swap-chain.
 	 * @param queue					Presentation queue
-	 * @param pPresentInfo			Descriptor(s)
+	 * @param pPresentInfo			Pointer to descriptor
 	 * @return Result code
 	 */
-	int vkQueuePresentKHR(Handle queue, VkPresentInfoKHR[] pPresentInfo);
+	int vkQueuePresentKHR(Handle queue, VkPresentInfoKHR pPresentInfo);
 }
