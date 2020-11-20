@@ -2,8 +2,6 @@ package org.sarge.jove.control;
 
 import static org.sarge.jove.util.Check.notEmpty;
 
-import java.util.Objects;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 
@@ -38,7 +36,7 @@ public class Axis implements InputEvent.Type {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(Axis.class, name);
+		return name.hashCode();
 	}
 
 	@Override
@@ -59,7 +57,7 @@ public class Axis implements InputEvent.Type {
 	/**
 	 * Axis event.
 	 */
-	public final class Event implements InputEvent {
+	public final class Event implements InputEvent<Axis> {
 		private final float value;
 
 		/**

@@ -10,10 +10,10 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Handler;
 import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
@@ -48,7 +48,7 @@ public class KeyboardDevice implements InputEvent.Device {
 	 * Helper - Enables this keyboard for the given event handler.
 	 * @param handler Event handler
 	 */
-	public void enable(Handler handler) {
+	public void enable(Consumer<InputEvent<Button>> handler) {
 		final var keyboard = keyboard();
 		keyboard.enable(handler);
 	}
@@ -64,12 +64,12 @@ public class KeyboardDevice implements InputEvent.Device {
 			}
 
 			@Override
-			public void enable(Handler handler) {
+			public void enable(Consumer<InputEvent<Button>> handler) {
 				// Create callback adapter
 				final KeyListener listener = (ptr, key, scancode, action, mods) -> {
 					final String name = KeyTable.INSTANCE.map(key);
 					final Button button = new Button(name, action, mods);
-					handler.handle(button);
+					handler.accept(button);
 				};
 
 				// Register callback

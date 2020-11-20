@@ -3,7 +3,7 @@ package org.sarge.jove.control;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.Set;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -27,7 +27,7 @@ public class ButtonTest {
 	void constructor() {
 		assertEquals(ID, button.id());
 		assertEquals(Operation.PRESS, button.operation());
-		assertEquals(Set.of(Modifier.CONTROL), button.modifiers());
+		assertEquals(List.of(Modifier.CONTROL), button.modifiers());
 		assertEquals(NAME, button.name());
 	}
 
@@ -36,7 +36,7 @@ public class ButtonTest {
 		button = Button.of(ID);
 		assertEquals(ID, button.id());
 		assertEquals(Operation.PRESS, button.operation());
-		assertEquals(Set.of(), button.modifiers());
+		assertEquals(List.of(), button.modifiers());
 		assertEquals("KEY-PRESS", button.name());
 	}
 

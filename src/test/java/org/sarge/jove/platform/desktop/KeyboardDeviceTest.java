@@ -8,13 +8,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Handler;
 import org.sarge.jove.control.InputEvent;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
@@ -24,7 +24,6 @@ public class KeyboardDeviceTest {
 	private KeyboardDevice device;
 	private Window window;
 	private DesktopLibrary lib;
-	private Handler handler;
 
 	@BeforeEach
 	void before() {
@@ -38,9 +37,6 @@ public class KeyboardDeviceTest {
 
 		// Create device
 		device = new KeyboardDevice(window);
-
-		// Create handler
-		handler = mock(Handler.class);
 	}
 
 	@Test
@@ -57,9 +53,11 @@ public class KeyboardDeviceTest {
 		assertEquals(List.of(), src.types());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	void enable() {
 		// Enable button events
+		final Consumer<InputEvent<Button>> handler = mock(Consumer.class);
 		device.enable(handler);
 
 		// Check API
@@ -76,6 +74,6 @@ public class KeyboardDeviceTest {
 		listener.key(null, code, 0, 1, 2);
 
 		// Check event delegated to handler
-		verify(handler).handle(button);
+		verify(handler).accept(button);
 	}
 }

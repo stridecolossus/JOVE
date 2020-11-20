@@ -3,8 +3,6 @@ package org.sarge.jove.control;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Objects;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,7 +23,7 @@ public class AxisTest {
 
 	@Test
 	void hash() {
-		assertEquals(Objects.hash(Axis.class, NAME), axis.hashCode());
+		assertEquals(NAME.hashCode(), axis.hashCode());
 	}
 
 	@Test

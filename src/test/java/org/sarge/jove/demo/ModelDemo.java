@@ -15,6 +15,8 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.control.Action.PositionAction;
+import org.sarge.jove.control.Action.ValueAction;
 import org.sarge.jove.control.Bindings;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.geometry.Matrix;
@@ -22,7 +24,6 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.desktop.Desktop;
-import org.sarge.jove.platform.desktop.MouseDevice;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -41,7 +42,6 @@ import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Camera;
 import org.sarge.jove.scene.OrbitalCameraController;
-import org.sarge.jove.scene.OrbitalCameraController.Orbit;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.MathsUtil;
@@ -187,11 +187,11 @@ public class ModelDemo {
 				.build();
 
 		// Attach message handler
-		final var handler = new MessageHandler.Builder()
+		final var debug = new MessageHandler.Builder()
 				.init()
 				.callback(MessageHandler.CONSOLE)
 				.build();
-		instance.handlers().add(handler);
+		instance.handlers().add(debug);
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
@@ -418,101 +418,40 @@ public class ModelDemo {
 
 		// Init local model transform
 		final Matrix rot = Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
-		final Matrix mat = Matrix.translation(new Vector(0, 0.5f, 0));
-		final Matrix modelMatrix = mat.multiply(rot);
+		final Matrix trans = Matrix.translation(new Vector(0, 0.5f, 0));
+		final Matrix scale = Matrix.scale(new Vector(1, 1, 1));
+		final Matrix modelMatrix = trans.multiply(rot).multiply(scale);
 
-		// Create running action
-		class RunAction implements Runnable {
-			private boolean running = true;
+		/////////////////
 
-			public boolean isRunning() {
-				return running;
-			}
-
-			@Override
-			public void run() {
-				running = false;
-			}
-		}
-		final RunAction runner = new RunAction();
-
-		// Init action bindings
+		// Create action bindings
 		final Bindings bindings = new Bindings();
-		window.keyboard().enable(bindings);
 
 		// Init mouse
-		final MouseDevice mouse = window.mouse();
-		final var pointer = mouse.pointer();
+		final var mouse = window.mouse();
 		final var wheel = mouse.wheel();
-		pointer.enable(bindings);
-		wheel.enable(bindings);
+		final var pointer = mouse.pointer();
+		wheel.enable(bindings::accept);
+		pointer.enable(bindings::accept);
 
-		class MoveAction {
-			private final float dist;
+		// Init keyboard
+		final var keyboard = window.keyboard();
+		keyboard.enable(bindings::accept);
 
-			public MoveAction(float dist) {
-				this.dist = -dist;
-			}
+		// Bind run action
+		final RunAction runner = new RunAction();
+		bindings.add(runner);
+		bindings.bind(Button.of("ESCAPE"), runner);
 
-			void forward() {
-				move(+1);
-			}
+		// Bind camera controller
+		final OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents());
+		controller.range(0.75f, 25);
+		controller.scale(0.25f);
+		controller.radius(3);
+		bindings.bind(pointer, (PositionAction) controller::update);
+		bindings.bind(wheel, (ValueAction) controller::zoom);
 
-			void back() {
-				move(-1);
-			}
-
-			void move(float value) {
-				cam.move(value * dist);
-			}
-		}
-
-		// Create toggle controller action
-		class ToggleAction implements Runnable {
-			private boolean orbital;
-
-			@Override
-			public void run() {
-				// Reset bindings
-				bindings.clear();
-				orbital = !orbital;
-
-				// Add bindings
-				if(orbital) {
-					// Bind orbital controller
-					final OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents(), new Orbit(0.75f, 25, 0.1f));
-					controller.radius(3);
-					bindings.bind(pointer, controller::update);
-					bindings.bind(wheel, controller::zoom);
-				}
-				else {
-					// Bind mouse-look controller
-
-					// Bind wheel
-					final MoveAction move = new MoveAction(0.25f);
-					//bindings.bind(wheel, cam::move); // Axis.action(move::move));
-
-					// Bind keyboard controls
-					bindings.bind(Button.of("W"), move::forward);
-					bindings.bind(Button.of("S"), move::back);
-//					bindings.bind(Button.of("A"), strafe(-0.25f));
-//					bindings.bind(Button.of("D"), strafe(+0.25f));
-//**/bindings.bind(Button.of("D"), move::forward);
-				}
-
-				// Bind common controls
-//				bindings.bind(Button.of("ESCAPE"), Button.action(runner));
-//				bindings.bind(Button.of("SPACE"), Button.action(this));
-				bindings.bind(Button.of("ESCAPE"), runner::run);
-				bindings.bind(Button.of("SPACE"), this::run);
-			}
-
-//			private Action<Button> strafe(float dist) {
-//				return event -> cam.strafe(dist);
-//			}
-		}
-		final var toggle = new ToggleAction();
-		toggle.run();
+		/////////////////
 
 		// Create semaphores for render loop synchronisation
 		final Queue presentQueue = dev.queue(present);
