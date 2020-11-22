@@ -12,6 +12,7 @@ import java.util.Set;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
@@ -20,8 +21,8 @@ import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Queue;
-import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
@@ -34,10 +35,10 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>swap chain</i> presents rendered images to a {@link Surface}.
+ * A <i>swapchain</i> presents rendered images to a {@link Surface}.
  * @author Sarge
  */
-public class SwapChain extends AbstractVulkanObject {
+public class Swapchain extends AbstractVulkanObject {
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> views;
@@ -50,7 +51,7 @@ public class SwapChain extends AbstractVulkanObject {
 	 * @param format		Image format
 	 * @param views			Image views
 	 */
-	SwapChain(Pointer handle, LogicalDevice dev, VkFormat format, List<View> views) {
+	Swapchain(Pointer handle, LogicalDevice dev, VkFormat format, List<View> views) {
 		super(handle, dev, dev.library()::vkDestroySwapchainKHR);
 		final Image.Extents dim = views.get(0).image().descriptor().extents();
 		this.format = notNull(format);
@@ -81,15 +82,27 @@ public class SwapChain extends AbstractVulkanObject {
 
 	/**
 	 * Acquires the next image in this swap-chain.
-	 * @param semaphore		Optional semaphore
+	 * @param semaphore		Optional semaphore signalled when the frame has been acquired
 	 * @param fence			Optional fence
 	 * @return Image index
+	 * @throws IllegalArgumentException if both the semaphore and fence are {@code null}
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) {
-		// TODO
-		final Handle s = semaphore == null ? null : semaphore.handle();
-		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, s, /*semaphore.handle(), /* TODO fence */null, index));
+		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
+		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, handle(semaphore), handle(fence), index));
 		return index.getValue();
+	}
+
+	/**
+	 * Helper - Extract the handle from the given optional object.
+	 */
+	private static Handle handle(NativeObject obj) {
+		if(obj == null) {
+			return null;
+		}
+		else {
+			return obj.handle();
+		}
 	}
 
 	/**
@@ -333,7 +346,7 @@ public class SwapChain extends AbstractVulkanObject {
 		 * @return New swap-chain
 		 * @throws IllegalArgumentException if the image format has not been specified
 		 */
-		public SwapChain build() {
+		public Swapchain build() {
 			// Validate
 			if(info.imageFormat == null) throw new IllegalArgumentException("Image format not specified");
 
@@ -373,7 +386,7 @@ public class SwapChain extends AbstractVulkanObject {
 					.collect(toList());
 
 			// Create swap-chain
-			return new SwapChain(chain.getValue(), dev, info.imageFormat, views);
+			return new Swapchain(chain.getValue(), dev, info.imageFormat, views);
 		}
 
 		/**

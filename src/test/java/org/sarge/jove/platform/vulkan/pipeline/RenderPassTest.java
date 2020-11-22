@@ -277,5 +277,16 @@ public class RenderPassTest extends AbstractVulkanTest {
 			builder.subpass().depth(0);
 			assertThrows(IllegalArgumentException.class, "Invalid sub-pass", () -> builder.dependency(0, 0).build());
 		}
+
+		@Test
+		void dependencyInvalidIndices() {
+			add();
+			builder
+				.attachment()
+				.format(VkFormat.VK_FORMAT_R16G16B16A16_UNORM)
+				.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+				.build();
+			assertThrows(IllegalArgumentException.class, "cannot be greater-than", () -> builder.dependency(1, 0).build());
+		}
 	}
 }

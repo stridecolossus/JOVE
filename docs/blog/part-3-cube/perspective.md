@@ -934,15 +934,25 @@ The above should give us this:
 To animate the cube we remove the static rotation and add the following to the render loop to update the matrix on every frame:
 
 ```java
-final long period = 5000;
+long period = 5000;
+long end = System.currentTimeMillis() + period * 2;
+Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
 
-for(int n = 0; n < 1000; ++n) {
-    float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
-    Matrix rot = Matrix.rotation(Vector.Y_AXIS, angle);
-    Matrix matrix = proj.multiply(view).multiply(rot);
-    uniform.load(matrix);
+while(true) {
+    // Stop loop
+    final long now = System.currentTimeMillis();
+    if(now >= end) {
+        break;
+    }
 
-    int index = chain.acquire(null, null);
+    // Update rotation
+    final float angle = (now % period) * MathsUtil.TWO_PI / period;
+    final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
+    final Matrix rot = rotY.multiply(rotX);
+    uniform.load(rot, rot.length(), 2 * rot.length());
+
+    // Acquire next frame
+    int index = chain.acquire();
     
     ...
 }
@@ -953,6 +963,8 @@ The code to calculate the _angle_ interpolates a 5 second period onto the unit c
 Hopefully when we run the demo we can now finally see the goal for this chapter: the proverbial rotating textured cube.
 
 Huzzah!
+
+Note that the above _should_ be generating a number of validation errors on each iteration of the loop - we will address these issues in the next chapter.
 
 ---
 

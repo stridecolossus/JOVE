@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Set;
+import java.util.function.IntFunction;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -16,6 +16,7 @@ import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.control.Action.PositionAction;
+import org.sarge.jove.control.Action.SimpleAction;
 import org.sarge.jove.control.Action.ValueAction;
 import org.sarge.jove.control.Bindings;
 import org.sarge.jove.control.Button;
@@ -30,14 +31,9 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.pipeline.Barrier;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
-import org.sarge.jove.platform.vulkan.pipeline.DrawCommand;
-import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
-import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
-import org.sarge.jove.platform.vulkan.pipeline.Sampler;
-import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
+import org.sarge.jove.platform.vulkan.pipeline.*;
+import org.sarge.jove.platform.vulkan.pipeline.Runner.Frame;
+import org.sarge.jove.platform.vulkan.pipeline.Runner.FrameState;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Camera;
@@ -47,8 +43,6 @@ import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.MathsUtil;
 
 public class ModelDemo {
-
-
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources");
@@ -241,7 +235,7 @@ public class ModelDemo {
 				.build();
 
 		// Create swap-chain
-		final SwapChain chain = new SwapChain.Builder(dev, surface)
+		final Swapchain chain = new Swapchain.Builder(dev, surface)
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
@@ -438,11 +432,6 @@ public class ModelDemo {
 		final var keyboard = window.keyboard();
 		keyboard.enable(bindings::accept);
 
-		// Bind run action
-		final RunAction runner = new RunAction();
-		bindings.add(runner);
-		bindings.bind(Button.of("ESCAPE"), runner);
-
 		// Bind camera controller
 		final OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents());
 		controller.range(0.75f, 25);
@@ -453,47 +442,40 @@ public class ModelDemo {
 
 		/////////////////
 
-		// Create semaphores for render loop synchronisation
-		final Queue presentQueue = dev.queue(present);
-		final Semaphore ready = Semaphore.create(dev);
-		final Semaphore finished = Semaphore.create(dev);
+		// Create render loop
+		final IntFunction<Frame> factory = idx -> new Frame() {
+			@Override
+			public void render(FrameState state, View view) {
+				state.render(commands.get(idx));
+			}
 
-		// Render loop
-		while(runner.isRunning()) {
-			// Poll events
-			desktop.poll();
+			@Override
+			public boolean update() {
+				// Handle input events
+				desktop.poll();
 
-			// Update view matrix
-			final Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix);
-			uniform.load(matrix);
+				// Update view matrix
+				final Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix);
+				uniform.load(matrix);
 
-			// Get next frame to render
-			final int idx = chain.acquire(ready, null);
-// ERROR:VALIDATION:Validation Error: [ VUID-vkAcquireNextImageKHR-semaphore-01780 ] Object 0: handle = 0x983e60000000003, type = VK_OBJECT_TYPE_SWAPCHAIN_KHR; | MessageID = 0x94557523 | vkAcquireNextImageKHR: semaphore and fence are both VK_NULL_HANDLE. The Vulkan spec states: semaphore and fence must not both be equal to VK_NULL_HANDLE (https://vulkan.lunarg.com/doc/view/1.2.154.1/windows/1.2-extensions/vkspec.html#VUID-vkAcquireNextImageKHR-semaphore-01780)
+				return true;
+			}
+		};
+		final Runner runner = new Runner(chain, 2, factory, dev.queue(present));
 
-			// Submit render task
-			new Work.Builder()
-					.add(commands.get(idx))
-					.wait(ready, VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-//					.wait(ready, VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
-					.signal(finished)
-					.build()
-					.submit();
+		// Bind run action
+		//final StopAction stop = new StopAction();
+		bindings.bind(Button.of("ESCAPE"), (SimpleAction) runner::stop); // TODO - stop action <-- runner
 
-			// Present next frame
-			chain.present(presentQueue, Set.of(finished));
-
-			// TODO
-			presentQueue.waitIdle();
-		}
+		// Start rendering
+		runner.run();
 
 		// Wait for pending work to complete
 		dev.waitIdle();
 
 		//////////////
 
-		ready.destroy();
-		finished.destroy();
+		runner.destroy();
 
 		texture.destroy();
 		sampler.destroy();

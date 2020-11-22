@@ -106,7 +106,13 @@ public class RenderPass extends AbstractVulkanObject {
 		}
 
 		/**
+		 * Starts a new sub-pass dependency.
+		 * <p>
+		 * The special case {@link RenderPass#VK_SUBPASS_EXTERNAL} index is used for the implicit sub-pass before or after the render pass.
+		 * @param src		Source index
+		 * @param dest		Destination index
 		 * @return New dependency builder
+		 * @throws IllegalArgumentException if the source index is greater-than the destination
 		 */
 		public DependencyBuilder dependency(int src, int dest) {
 			return new DependencyBuilder(src, dest);
@@ -412,8 +418,12 @@ public class RenderPass extends AbstractVulkanObject {
 			 * Constructor.
 			 * @param src		Source index
 			 * @param dest		Destination index
+			 * @throws IllegalArgumentException if the source index is greater-than the destination
 			 */
 			private DependencyBuilder(int src, int dest) {
+				if((src > dest) && (src != VK_SUBPASS_EXTERNAL) && (dest != VK_SUBPASS_EXTERNAL)) {
+					throw new IllegalArgumentException(String.format("Source subpass %d cannot be greater-than destination %d", src, dest));
+				}
 				this.src = new Dependency(src);
 				this.dest = new Dependency(dest);
 			}

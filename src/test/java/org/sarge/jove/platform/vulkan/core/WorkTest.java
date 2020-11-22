@@ -18,6 +18,7 @@ import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 

@@ -7,11 +7,10 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkFenceCreateFlag implements IntegerEnumeration {
- 	VK_FENCE_CREATE_SIGNALED_BIT(1), 	
- 	VK_FENCE_CREATE_FLAG_BITS_MAX_ENUM(2147483647); 	
+ 	VK_FENCE_CREATE_SIGNALED_BIT(1);
 
 	private final int value;
-	
+
 	private VkFenceCreateFlag(int value) {
 		this.value = value;
 	}

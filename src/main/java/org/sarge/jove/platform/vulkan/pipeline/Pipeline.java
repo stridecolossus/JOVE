@@ -6,7 +6,6 @@ import static org.sarge.jove.util.Check.notNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
@@ -123,15 +122,6 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public ViewportStageBuilder viewport() {
 			return viewport;
-		}
-
-		/**
-		 * Convenience method to initialise the viewport stage to a single viewport/scissor with the given rectangle.
-		 * @param rect Viewport/scissor rectangle
-		 */
-		public Builder viewport(Rectangle rect) {
-			viewport.viewport(rect).scissor(rect);
-			return this;
 		}
 
 		/**

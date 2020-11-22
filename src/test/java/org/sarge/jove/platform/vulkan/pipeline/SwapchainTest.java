@@ -23,9 +23,10 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.Image;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Queue;
-import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -34,10 +35,11 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
-public class SwapChainTest extends AbstractVulkanTest {
-	private SwapChain chain;
+public class SwapchainTest extends AbstractVulkanTest {
+	private Swapchain swapchain;
 	private View view;
 	private Semaphore semaphore;
+	private Fence fence;
 
 	@BeforeEach
 	void before() {
@@ -57,26 +59,47 @@ public class SwapChainTest extends AbstractVulkanTest {
 		when(view.image()).thenReturn(image);
 
 		// Create swapchain
-		chain = new SwapChain(new Pointer(2), dev, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, List.of(view));
+		swapchain = new Swapchain(new Pointer(2), dev, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, List.of(view));
 
 		// Create semaphore
 		semaphore = mock(Semaphore.class);
 		when(semaphore.handle()).thenReturn(new Handle(new Pointer(3)));
+
+		// Create fence
+		fence = mock(Fence.class);
+		when(fence.handle()).thenReturn(new Handle(new Pointer(4)));
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(chain.handle());
-		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, chain.format());
-		assertEquals(new Dimensions(3, 4), chain.extents());
-		assertEquals(List.of(view), chain.views());
+		assertNotNull(swapchain.handle());
+		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, swapchain.format());
+		assertEquals(new Dimensions(3, 4), swapchain.extents());
+		assertEquals(List.of(view), swapchain.views());
 	}
 
 	@Test
-	void acquire() {
+	void acquireSemaphore() {
 		final Handle handle = semaphore.handle();
-		assertEquals(0, chain.acquire(semaphore, null));
-		verify(lib).vkAcquireNextImageKHR(eq(dev.handle()), eq(chain.handle()), eq(Long.MAX_VALUE), eq(handle), isNull(), isA(IntByReference.class));
+		assertEquals(0, swapchain.acquire(semaphore, null));
+		verify(lib).vkAcquireNextImageKHR(eq(dev.handle()), eq(swapchain.handle()), eq(Long.MAX_VALUE), eq(handle), isNull(), isA(IntByReference.class));
+	}
+
+	@Test
+	void acquireFence() {
+		final Handle handle = fence.handle();
+		swapchain.acquire(null, fence);
+		verify(lib).vkAcquireNextImageKHR(eq(dev.handle()), eq(swapchain.handle()), eq(Long.MAX_VALUE), isNull(), eq(handle), isA(IntByReference.class));
+	}
+
+	@Test
+	void acquireBoth() {
+		swapchain.acquire(semaphore, fence);
+	}
+
+	@Test
+	void acquireNeither() {
+		assertThrows(IllegalArgumentException.class, () -> swapchain.acquire(null, null));
 	}
 
 	@Test
@@ -84,7 +107,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 		// Present to queue
 		final Queue queue = mock(Queue.class);
 		when(queue.handle()).thenReturn(new Handle(new Pointer(42)));
-		chain.present(queue, Set.of(semaphore));
+		swapchain.present(queue, Set.of(semaphore));
 
 		// Check API
 		final ArgumentCaptor<VkPresentInfoKHR> captor = ArgumentCaptor.forClass(VkPresentInfoKHR.class);
@@ -106,15 +129,15 @@ public class SwapChainTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		final Handle handle = chain.handle();
-		chain.destroy();
+		final Handle handle = swapchain.handle();
+		swapchain.destroy();
 		verify(lib).vkDestroySwapchainKHR(dev.handle(), handle, null);
 		verify(view).destroy();
 	}
 
 	@Nested
 	class BuilderTests {
-		private SwapChain.Builder builder;
+		private Swapchain.Builder builder;
 		private Surface surface;
 		private VkSurfaceCapabilitiesKHR caps;
 		private VkExtent2D extent;
@@ -150,23 +173,23 @@ public class SwapChainTest extends AbstractVulkanTest {
 			caps.currentExtent = extent;
 
 			// Create builder
-			builder = new SwapChain.Builder(dev, surface);
+			builder = new Swapchain.Builder(dev, surface);
 		}
 
 		@Test
 		void build() {
 			// Create chain
-			chain = builder
+			swapchain = builder
 					.format(VkFormat.VK_FORMAT_R8G8B8A8_UNORM)
 					.clear(Colour.WHITE)
 					.build();
 
 			// Check swapchain
-			assertNotNull(chain);
-			assertNotNull(chain.handle());
-			assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, chain.format());
-			assertNotNull(chain.views());
-			assertEquals(1, chain.views().size());
+			assertNotNull(swapchain);
+			assertNotNull(swapchain.handle());
+			assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, swapchain.format());
+			assertNotNull(swapchain.views());
+			assertEquals(1, swapchain.views().size());
 
 			// Check allocation
 			final ArgumentCaptor<VkSwapchainCreateInfoKHR> captor = ArgumentCaptor.forClass(VkSwapchainCreateInfoKHR.class);
@@ -199,7 +222,7 @@ public class SwapChainTest extends AbstractVulkanTest {
 			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), eq(factory.ptr.getValue()), isA(IntByReference.class), isA(Pointer[].class));
 
 			// Check view
-			final View view = chain.views().get(0);
+			final View view = swapchain.views().get(0);
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertNotNull(view.image());

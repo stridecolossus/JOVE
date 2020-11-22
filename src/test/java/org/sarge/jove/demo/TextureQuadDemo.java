@@ -30,7 +30,7 @@ import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
-import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
+import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.DataSource;
 
@@ -178,7 +178,7 @@ public class TextureQuadDemo {
 				.build();
 
 		// Create swap-chain
-		final SwapChain chain = new SwapChain.Builder(dev, surface)
+		final Swapchain chain = new Swapchain.Builder(dev, surface)
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
@@ -294,7 +294,9 @@ public class TextureQuadDemo {
 				.input()
 					.binding(layout)
 					.build()
-				.viewport(new Rectangle(chain.extents()))
+				.viewport()
+					.viewport(new Rectangle(chain.extents()))
+					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)

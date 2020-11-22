@@ -24,7 +24,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
-import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
+import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.DataSource;
 
@@ -104,7 +104,7 @@ public class TriangleDemo {
 				.build();
 
 		// Create swap-chain
-		final SwapChain chain = new SwapChain.Builder(dev, surface)
+		final Swapchain chain = new Swapchain.Builder(dev, surface)
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)

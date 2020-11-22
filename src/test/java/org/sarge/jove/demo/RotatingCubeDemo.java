@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -24,13 +25,14 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
-import org.sarge.jove.platform.vulkan.pipeline.SwapChain;
+import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
@@ -174,7 +176,7 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Create swap-chain
-		final SwapChain chain = new SwapChain.Builder(dev, surface)
+		final Swapchain chain = new Swapchain.Builder(dev, surface)
 				.count(2)
 				.format(format)
 				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
@@ -194,12 +196,11 @@ public class RotatingCubeDemo {
 				.subpass()
 					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 					.build()
-//				.dependency()
-//					.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-//					.destination(0)
-//					.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-//					.destination(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-//					.build()
+				.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
+					.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.destination().access(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+					.build()
 				.build();
 
 		// Load shaders
@@ -286,13 +287,6 @@ public class RotatingCubeDemo {
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
 		uniform.load(proj, proj.length(), 0);
 
-/*
-		final Camera cam = new Camera();
-//		cam.direction(Vector.Z_AXIS.invert());
-		cam.up(Vector.Y_AXIS.invert());
-		cam.move(new Point(0, 0, -1));
-		cam.look(Point.ORIGIN);
-*/
 		final Matrix pos = new Matrix.Builder()
 				.identity()
 				.row(0, Vector.X_AXIS)
@@ -307,26 +301,6 @@ public class RotatingCubeDemo {
 
 		final Matrix view = pos.multiply(trans);
 		uniform.load(view, view.length(), view.length());
-
-		// Create uniform buffer per swapchain image
-//		final VertexBuffer[] uniforms = new VertexBuffer[3];
-//		for(int n = 0; n < uniforms.length; ++n) {
-//			uniforms[n] = new VertexBuffer.Builder(dev)
-//					.length(projSize)
-//					.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-//					.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-//					.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-//					.build();
-//
-//			uniforms[n].load(
-//		}
-
-//		// Apply sampler to the descriptor sets
-//		new DescriptorSet.Resource.Builder()
-//				.descriptors(descriptors)
-//				.add(0, sampler.update(texture))
-//				.add(1, uniform.update())
-//				.update(dev);
 
 		//////////////////
 
@@ -345,7 +319,9 @@ public class RotatingCubeDemo {
 				.assembly()
 					.topology(cube.primitive())
 					.build()
-				.viewport(rect)
+				.viewport()
+					.viewport(rect)
+					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)
@@ -385,27 +361,40 @@ public class RotatingCubeDemo {
 
 		///////////////////
 
-		final long period = 5000;
+		// Create semaphores for render loop synchronisation
+		final Semaphore ready = dev.semaphore();
+		final Semaphore finished = dev.semaphore();
+
+		final long period = 2500;
+		final long end = System.currentTimeMillis() + period * 2;
 		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
 
-		for(int n = 0; n < 1000; ++n) {
-			final float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
+		while(true) {
+			final long now = System.currentTimeMillis();
+			if(now >= end) {
+				break;
+			}
+
+			final float angle = (now % period) * MathsUtil.TWO_PI / period;
 			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
 			final Matrix rot = rotY.multiply(rotX);
 			uniform.load(rot, rot.length(), 2 * rot.length());
 
-			final int index = chain.acquire(null, null);
+			final int index = chain.acquire(ready, null);
 
 			new Work.Builder()
 					.add(commands.get(index))
+					.wait(ready, VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.signal(finished)
 					.build()
 					.submit();
 
-			presentQueue.waitIdle();
+			chain.present(presentQueue, Set.of(finished));
 
-			chain.present(presentQueue, null);
-			presentQueue.waitIdle();
+			//presentQueue.waitIdle();
 		}
+
+		presentQueue.waitIdle();
 
 		//////////////
 

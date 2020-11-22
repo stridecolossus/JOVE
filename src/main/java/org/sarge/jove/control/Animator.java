@@ -4,7 +4,6 @@ import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Frame;
 import org.sarge.jove.control.Player.Playable;
 import org.sarge.jove.control.Player.State;
 
@@ -12,7 +11,7 @@ import org.sarge.jove.control.Player.State;
  * An <i>animator</i> cycles a value over a given period.
  * @author Sarge
  */
-public class Animator implements Playable, Frame.Listener {
+public class Animator implements Playable { //, Frame.Listener {
 	/**
 	 * Animation.
 	 */
@@ -96,15 +95,16 @@ public class Animator implements Playable, Frame.Listener {
 		this.repeat = repeat;
 	}
 
-	@Override
-	public void update(Frame frame) {
+//	@Override
+	public void update(long elapsed) { // Frame frame) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
 		// Update time position
-		time += frame.elapsed() * speed;
+//		time += frame.elapsed() * speed;
+		time += elapsed * speed;
 
 		// Check for completed animation
 		if(time > duration) {

@@ -18,6 +18,7 @@ import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
@@ -141,6 +142,30 @@ public class LogicalDevice implements TransientNativeObject {
 	 */
 	public Queue queue(Queue.Family family) {
 		return queues(family).get(0);
+	}
+
+	/**
+	 * A <i>semaphore</i> is used to synchronise operations within or across command queues.
+	 */
+	public class Semaphore extends AbstractVulkanObject {
+		/**
+		 * Constructor.
+		 * @param handle Semaphore handle
+		 */
+		private Semaphore(Pointer handle) {
+			super(handle, LogicalDevice.this, lib::vkDestroySemaphore);
+		}
+	}
+
+	/**
+	 * Creates a new semaphore.
+	 * @return New semaphore
+	 */
+	public Semaphore semaphore() {
+		final VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
+		final PointerByReference handle = lib.factory().pointer();
+		VulkanLibrary.check(lib.vkCreateSemaphore(this.handle(), info, null, handle));
+		return new Semaphore(handle.getValue());
 	}
 
 	/**

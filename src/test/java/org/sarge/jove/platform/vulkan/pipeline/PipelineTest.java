@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -87,7 +88,9 @@ public class PipelineTest extends AbstractVulkanTest {
 			pipeline = builder
 					.layout(layout)
 					.pass(pass)
-					.viewport(rect)
+					.viewport()
+						.viewport(rect)
+						.build()
 					.shader()
 						.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 						.shader(mock(Shader.class))
@@ -136,22 +139,22 @@ public class PipelineTest extends AbstractVulkanTest {
 		@Test
 		void buildIncomplete() {
 			// Check empty builder
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, "pipeline layout", () -> builder.build());
 
 			// Add layout
 			builder.layout(layout);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, "render pass", () -> builder.build());
 
 			// Add render-pass
 			builder.pass(pass);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalStateException.class, "vertex shader", () -> builder.build());
 
-			// Add viewport stage
-			builder.viewport(rect);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-
-			// Add vertex shader
+			// Add shader
 			addVertexShaderStage();
+			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build());
+
+			// Add viewport stage, should now build successfully
+			builder.viewport().viewport(rect).build();
 			builder.build();
 		}
 
