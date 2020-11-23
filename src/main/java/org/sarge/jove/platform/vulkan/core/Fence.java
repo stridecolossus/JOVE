@@ -63,6 +63,7 @@ public class Fence extends AbstractVulkanObject {
 	 * @param fences		Fences
 	 * @param all			Whether to wait for all or any fence
 	 * @param timeout		Timeout (ms)
+	 * @throws VulkanException if the API method fails
 	 */
 	public static void wait(LogicalDevice dev, Collection<Fence> fences, boolean all, long timeout) {
 		final Pointer[] array = Handle.toArray(fences);
@@ -81,6 +82,7 @@ public class Fence extends AbstractVulkanObject {
 
 	/**
 	 * @return Whether this fence has been signalled
+	 * @throws VulkanException if the status cannot be retrieved
 	 */
 	public boolean signalled() {
 		final LogicalDevice dev = this.device();

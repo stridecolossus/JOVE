@@ -2,10 +2,11 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.util.Check.notNull;
 
-import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.desktop.Desktop;
@@ -78,15 +79,15 @@ public class Runner {
 	/**
 	 * A <i>frame state</i> tracks the synchronisation state of an <i>in-flight</i> frame during rendering.
 	 */
-	public final class FrameState {
+	public static final class FrameState {
 		private final Semaphore ready, finished;
 		private final Fence fence;
 
 		/**
 		 * Constructor.
+		 * @param dev Logical device
 		 */
-		FrameState() {
-			final LogicalDevice dev = swapchain.device();
+		private FrameState(LogicalDevice dev) {
 			this.ready = dev.semaphore();
 			this.finished = dev.semaphore();
 			this.fence = Fence.create(dev, VkFenceCreateFlag.VK_FENCE_CREATE_SIGNALED_BIT);
@@ -131,7 +132,6 @@ public class Runner {
 			return new Work.Builder()
 					.add(buffer)
 					.wait(ready, VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-					//.wait(state.ready(), VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
 					.signal(finished)
 					.build();
 		}
@@ -180,29 +180,27 @@ public class Runner {
 	// Configuration
 	private final Swapchain swapchain;
 	private final Queue queue;
-	private final IntFunction<Frame> factory;
+	private final Frame[] frames;
 
 	// State
-	private final FrameState[] frames;
+	private final FrameState[] states;
 	private final AtomicBoolean running = new AtomicBoolean();
 	private int current;
 
 	/**
 	 * Constructor.
 	 * @param swapchain		Swapchain
-	 * @param size			Number of frames-in-flight
+	 * @param size			Number of in-flight frames (one-or-more)
 	 * @param factory		Factory for frames to be rendered
 	 * @param queue			Presentation queue
 	 */
 	public Runner(Swapchain swapchain, int size, IntFunction<Frame> factory, Queue queue) {
 		Check.oneOrMore(size);
 		this.swapchain = notNull(swapchain);
-		this.factory = notNull(factory);
 		this.queue = notNull(queue);
-		this.frames = new FrameState[size];
-		Arrays.setAll(frames, ignored -> new FrameState());
+		this.frames = IntStream.range(0, swapchain.views().size()).mapToObj(factory::apply).toArray(Frame[]::new);
+		this.states = Stream.generate(() -> new FrameState(swapchain.device())).limit(size).toArray(FrameState[]::new);
 	}
-	// TODO - size min 1, can be larger than swapchain
 
 	/**
 	 * @return Whether currently running
@@ -214,7 +212,7 @@ public class Runner {
 	/**
 	 * Runs this frame render loop on the current thread.
 	 */
-	public final void run() {
+	public final void start() {
 		// Start running
 		running.set(true);
 
@@ -228,8 +226,8 @@ public class Runner {
 	 * Renders the next frame.
 	 */
 	protected void frame() {
-		// Start next frame
-		final FrameState state = frames[current];
+		// Start next in-flight frame
+		final FrameState state = states[current];
 		state.waitFence();
 
 		// Acquire next swapchain image
@@ -238,8 +236,8 @@ public class Runner {
 		state.waitFence();
 
 		// Render frame
+		final Frame frame = frames[index];
 		final View view = swapchain.views().get(index);
-		final Frame frame = factory.apply(index);
 		frame.render(state, view);
 
 		// Present frame
@@ -252,7 +250,7 @@ public class Runner {
 		}
 
 		// Select next frame
-		if(++current >= frames.length) {
+		if(++current >= states.length) {
 			current = 0;
 		}
 	}
@@ -264,14 +262,6 @@ public class Runner {
 		running.set(false);
 	}
 
-//		// TODO - create once?
-//		new Work.Builder()
-//				.add(buffer.apply(index))
-//				.wait(frame.ready(), VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT) // TODO - factory helper?
-//				.signal(frame.finished())
-//				.build()
-//				.submit(frame.fence());
-
 	/**
 	 * Releases the frame-tracker resources for this runner.
 	 * @throws IllegalStateException if still running
@@ -279,7 +269,7 @@ public class Runner {
 	public void destroy() {
 		if(running.get()) throw new IllegalStateException("Cannot destroy when running");
 
-		for(FrameState f : frames) {
+		for(FrameState f : states) {
 			f.destroy();
 		}
 	}

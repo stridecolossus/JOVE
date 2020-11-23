@@ -76,13 +76,8 @@ public class Instance implements TransientNativeObject {
 	 */
 	public class HandlerManager {
 		private final Map<MessageHandler, Pointer> handlers = new HashMap<>();
-		private final Function create;
-		private final Function destroy;
-
-		private HandlerManager() {
-			this.create = function("vkCreateDebugUtilsMessengerEXT");
-			this.destroy = function("vkDestroyDebugUtilsMessengerEXT");
-		}
+		private final Function create = function("vkCreateDebugUtilsMessengerEXT");
+		private final Function destroy = function("vkDestroyDebugUtilsMessengerEXT");
 
 		/**
 		 * Adds a message handler to this instance.

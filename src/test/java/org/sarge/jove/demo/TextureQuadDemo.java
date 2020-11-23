@@ -340,7 +340,7 @@ public class TextureQuadDemo {
 			new Work.Builder()
 					.add(commands.get(index))
 					.build()
-					.submit();
+					.submit(null);
 
 			presentQueue.waitIdle();
 			Thread.sleep(50);

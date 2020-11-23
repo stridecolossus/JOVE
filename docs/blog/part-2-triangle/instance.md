@@ -597,8 +597,6 @@ The handler object itself defines the messages that a particular application is 
 
 ```java
 public class MessageHandler {
-    ...
-
     private final MessageCallback callback;
     private final Pointer data;
     private final Set<VkDebugUtilsMessageSeverityFlagEXT> severities;
@@ -644,13 +642,8 @@ As already noted the diagnostics functionality is an extension and not part of t
 
 ```java
 public class HandlerManager {
-    private final Function create;
-    private final Function destroy;
-
-    private HandlerManager() {
-        this.create = function("vkCreateDebugUtilsMessengerEXT");
-        this.destroy = function("vkDestroyDebugUtilsMessengerEXT");
-    }
+    private final Function create = function("vkCreateDebugUtilsMessengerEXT");
+    private final Function destroy = function("vkDestroyDebugUtilsMessengerEXT");
 }
 ```
 

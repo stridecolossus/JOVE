@@ -115,8 +115,6 @@ public class Image {
     private final Extents extents;
     private final Set<VkImageAspectFlag> aspect;
 
-    private VkImageLayout layout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
-
     public Image(Pointer handle, LogicalDevice dev, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspect) {
     }
 }
@@ -317,7 +315,7 @@ public int acquire() {
 When an image has been completed it can be presented to the surface:
 
 ```java
-public void present(Queue queue, Set<Semaphore> semaphores) {
+public void present(Queue queue) {
     // Create presentation descriptor
     final VkPresentInfoKHR info = new VkPresentInfoKHR();
 

@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.util.Check.notNull;
 
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.common.NativeObject.TransientNativeObject;
 
 import com.sun.jna.Pointer;
@@ -23,6 +24,20 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
 		 * @param allocator		Allocator
 		 */
 		void destroy(Handle dev, Handle handle, Handle allocator);
+	}
+
+	/**
+	 * Helper - Extracts the handle from the given optional object.
+	 * @param obj Native object
+	 * @return Handle of the given object or {@code null}
+	 */
+	protected static Handle handle(NativeObject obj) {
+		if(obj == null) {
+			return null;
+		}
+		else {
+			return obj.handle();
+		}
 	}
 
 	private final Handle handle;

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Set;
+import java.util.function.IntFunction;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -25,12 +25,14 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
+import org.sarge.jove.platform.vulkan.pipeline.Runner;
+import org.sarge.jove.platform.vulkan.pipeline.Runner.Frame;
+import org.sarge.jove.platform.vulkan.pipeline.Runner.FrameState;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
@@ -361,39 +363,48 @@ public class RotatingCubeDemo {
 
 		///////////////////
 
-		// Create semaphores for render loop synchronisation
-		final Semaphore ready = dev.semaphore();
-		final Semaphore finished = dev.semaphore();
+		// Create renderer
+		final IntFunction<Frame> factory = idx -> new Frame() {
+			private static final long PERIOD = 2500;
 
-		final long period = 2500;
-		final long end = System.currentTimeMillis() + period * 2;
-		final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
-
-		while(true) {
-			final long now = System.currentTimeMillis();
-			if(now >= end) {
-				break;
+			@Override
+			public void render(FrameState state, View view) {
+				state.render(commands.get(idx));
 			}
 
-			final float angle = (now % period) * MathsUtil.TWO_PI / period;
-			final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
-			final Matrix rot = rotY.multiply(rotX);
-			uniform.load(rot, rot.length(), 2 * rot.length());
+			@Override
+			public boolean update() {
+				// TODO
+				//presentQueue.waitIdle();
 
-			final int index = chain.acquire(ready, null);
+				// Handle input events
+				desktop.poll();
 
-			new Work.Builder()
-					.add(commands.get(index))
-					.wait(ready, VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-					.signal(finished)
-					.build()
-					.submit();
+				// Update view matrix
+				final long now = System.currentTimeMillis();
+				final float angle = (now % PERIOD) * MathsUtil.TWO_PI / PERIOD;
+				final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
+				final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
+				final Matrix rot = rotY.multiply(rotX);
+				uniform.load(rot, rot.length(), 2 * rot.length());
 
-			chain.present(presentQueue, Set.of(finished));
+				return true;
+			}
+		};
 
-			//presentQueue.waitIdle();
-		}
+		// Create render loop
+		final Runner runner = new Runner(chain, 2, factory, dev.queue(present));
 
+//		// Create stop action
+//		final KeyListener listener = (ptr, key, scancode, action, mods) -> {
+//			if(key == 256) {
+//				runner.stop();
+//			}
+//		};
+//		window.library().glfwSetKeyCallback(window.handle(), listener);
+
+		// Start render loop
+		runner.start();
 		presentQueue.waitIdle();
 
 		//////////////

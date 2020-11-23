@@ -3,6 +3,9 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,12 +17,17 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+
+import com.sun.jna.ptr.PointerByReference;
 
 public class LogicalDeviceTest {
 	private static final String FEATURE = "samplerAnisotropy";
@@ -126,6 +134,22 @@ public class LogicalDeviceTest {
 	@Test
 	void allocator() {
 		assertNotNull(device.allocator());
+	}
+
+	@Test
+	void semaphore() {
+		// Create semaphore
+		final Semaphore semaphore = device.semaphore();
+		assertNotNull(semaphore);
+
+		// Check API
+		final ArgumentCaptor<VkSemaphoreCreateInfo> captor = ArgumentCaptor.forClass(VkSemaphoreCreateInfo.class);
+		verify(lib).vkCreateSemaphore(eq(device.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+
+		// Check create descriptor
+		final VkSemaphoreCreateInfo info = captor.getValue();
+		assertNotNull(info);
+		assertEquals(0, info.flags);
 	}
 
 	@Test

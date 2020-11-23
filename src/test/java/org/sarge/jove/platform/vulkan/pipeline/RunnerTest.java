@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -24,10 +23,9 @@ import org.junit.jupiter.api.Timeout;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.pipeline.Runner.Frame;
@@ -46,6 +44,7 @@ public class RunnerTest extends AbstractVulkanTest {
 	// Runner
 	private Runner runner;
 	private Frame frame;
+	private Semaphore semaphore;
 
 	// Thread
 	private Thread thread;
@@ -68,6 +67,11 @@ public class RunnerTest extends AbstractVulkanTest {
 		// Create frame
 		frame = mock(Frame.class);
 
+		// Mock synchronisation
+		semaphore = mock(Semaphore.class);
+		when(semaphore.handle()).thenReturn(new Handle(new Pointer(2)));
+		when(dev.semaphore()).thenReturn(semaphore);
+
 		// Create runner (note two frames but only one swapchain image)
 		runner = new Runner(swapchain, 2, ignored -> frame, queue);
 
@@ -87,7 +91,7 @@ public class RunnerTest extends AbstractVulkanTest {
 	private void start() {
 		final Runnable wrapper = () -> {
 			start.countDown();
-			runner.run();
+			runner.start();
 			end.countDown();
 		};
 		thread = new Thread(wrapper);
@@ -115,10 +119,6 @@ public class RunnerTest extends AbstractVulkanTest {
 		assertNotNull(state.ready());
 		assertNotNull(state.finished());
 		assertNotNull(state.fence());
-
-		// Check API
-		verify(lib, times(2 * 2)).vkCreateSemaphore(eq(dev.handle()), isA(VkSemaphoreCreateInfo.class), isNull(), eq(factory.ptr));
-		verify(lib, times(2)).vkCreateFence(eq(dev.handle()), isA(VkFenceCreateInfo.class), isNull(), eq(factory.ptr));
 
 		// Check render loop
 		verify(swapchain).acquire(state.ready(), state.fence());
@@ -162,8 +162,8 @@ public class RunnerTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		runner.destroy();
-		verify(lib, times(2 * 2)).vkDestroySemaphore(eq(dev.handle()), isA(Handle.class), isNull());
-		verify(lib, times(2)).vkDestroyFence(eq(dev.handle()), isA(Handle.class), isNull());
+		verify(semaphore, times(2 * 2)).destroy();
+		// TODO - fence
 	}
 
 	@Test

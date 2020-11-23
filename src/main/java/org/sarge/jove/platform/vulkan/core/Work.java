@@ -48,9 +48,8 @@ public class Work {
 		final var array = work.stream().map(e -> e.info).toArray(VkSubmitInfo[]::new);
 
 		// Submit work
-		final Handle fenceHandle = fence == null ? null : fence.handle(); // TODO - nasty
 		final VulkanLibrary lib = queue.device().library();
-		check(lib.vkQueueSubmit(queue.handle(), array.length, array, fenceHandle));
+		check(lib.vkQueueSubmit(queue.handle(), array.length, array, AbstractVulkanObject.handle(fence)));
 	}
 
 	/**
@@ -71,7 +70,7 @@ public class Work {
 			// Submit work
 			final Queue queue = pool.queue();
 			final Work work = new Builder().add(buffer).build();
-			work.submit();
+			work.submit(null);
 
 			// Wait for completion
 			queue.waitIdle();
@@ -109,14 +108,6 @@ public class Work {
 	 */
 	public void submit(Fence fence) {
 		submit(List.of(this), fence);
-	}
-
-	/**
-	 * Submits this work batch.
-	 * @see #submit(List, Fence)
-	 */
-	public void submit() {
-		submit(null);
 	}
 
 	@Override

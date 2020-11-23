@@ -46,6 +46,12 @@ public class AbstractVulkanObjectTest {
 	}
 
 	@Test
+	void handle() {
+		assertEquals(obj.handle(), AbstractVulkanObject.handle(obj));
+		assertEquals(null, AbstractVulkanObject.handle(null));
+	}
+
+	@Test
 	void destroy() {
 		final Handle handle = obj.handle();
 		obj.destroy();

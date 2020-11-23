@@ -468,7 +468,7 @@ public class ModelDemo {
 		bindings.bind(Button.of("ESCAPE"), (SimpleAction) runner::stop); // TODO - stop action <-- runner
 
 		// Start rendering
-		runner.run();
+		runner.start();
 
 		// Wait for pending work to complete
 		dev.waitIdle();

@@ -12,7 +12,6 @@ import java.util.Set;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
@@ -91,18 +90,6 @@ public class Swapchain extends AbstractVulkanObject {
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
 		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, handle(semaphore), handle(fence), index));
 		return index.getValue();
-	}
-
-	/**
-	 * Helper - Extract the handle from the given optional object.
-	 */
-	private static Handle handle(NativeObject obj) {
-		if(obj == null) {
-			return null;
-		}
-		else {
-			return obj.handle();
-		}
 	}
 
 	/**

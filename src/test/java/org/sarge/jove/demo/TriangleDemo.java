@@ -178,7 +178,7 @@ public class TriangleDemo {
 			new Work.Builder()
 					.add(commands.get(index))
 					.build()
-					.submit();
+					.submit(null);
 
 			dev.queue(present).waitIdle();
 
