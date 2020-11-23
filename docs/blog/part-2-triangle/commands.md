@@ -514,9 +514,9 @@ for(int n = 0; n < buffers.size(); ++n) {
 
 We have several parallel lists here sized by the swapchain buffering strategy (the swapchain image/views, the frame buffers and the commands) which we will eventually want to compose into an actual object but the above is fine for the moment.
 
-### Render Loop
+### Rendering
 
-Our first render 'loop' will be a bit of a bodge - to render the triangle we emulate a single frame:
+To render the triangle we emulate a single frame:
 
 ```java
 // Start next frame
@@ -574,15 +574,11 @@ instance.destroy();
 
 If all goes well when we run the demo we should see the following:
 
-
 ![Triangle](triangle.png)
-
 
 Viola!
 
 There are a few gotchas that could result in staring at a blank screen:
-
-- Ensure that a diagnostics handler has been attached to the Vulkan instance to check for obvious mistakes.
 
 - Although not covered in this demo the rasterizer pipeline stage specifies culling of back-facing polygons by default.  The triangle vertices are counter-clockwise (which _should_ be the default winding order) but changing the culling mode (or disabling culling altogether) is worth checking.
 

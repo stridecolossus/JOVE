@@ -56,6 +56,7 @@ public class CubeBuilder {
 		return new CubeBuilder().size(1).build();
 	}
 
+	private final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
 	private float size = 1;
 	private boolean clockwise = false;
 
@@ -82,13 +83,10 @@ public class CubeBuilder {
 	 * @return New cube model
 	 */
 	public Model build() {
-		// Init builder
-		final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
-
 		// Add two triangles for each cube face
 		for(int[] face : FACES) {
-			add(face, LEFT, builder);
-			add(face, RIGHT, builder);
+			add(face, LEFT);
+			add(face, RIGHT);
 		}
 
 		// Construct model
@@ -99,9 +97,8 @@ public class CubeBuilder {
 	 * Adds a triangle.
 	 * @param face			Quad face indices
 	 * @param triangle		Triangle indices within this face
-	 * @param builder		Model builder
 	 */
-	private void add(int[] face, int[] triangle, Model.Builder builder) {
+	private void add(int[] face, int[] triangle) {
 		// Build triangle vertices
 		final List<Vertex> vertices = new ArrayList<>(3);
 		for(int n = 0; n < 3; ++n) {

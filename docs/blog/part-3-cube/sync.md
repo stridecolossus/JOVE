@@ -15,9 +15,9 @@ To ensure that operations occur in the correct order Vulkan provides several syn
 - a _fence_ synchronises between the host and the GPU, i.e. between the host and rendering operations.
 - pipeline barriers
 
-To resolve the various validation errors that we are receiving we will create and integrate new domain objects for synchronisation.
-
 We will start with a temporary solution to gracefully terminate the application via the keyboard (rather than having to bodge a loop counter or use the IDE).
+
+Note that during this chapter the demo application will start generating validation errors (e.g. attempting to re-use command buffers that are not in the correct state) which we will address as they arise.
 
 ---
 

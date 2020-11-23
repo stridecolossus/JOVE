@@ -88,7 +88,6 @@ public class ModelDemo {
 		staging.destroy();
 
 		// Transition texture ready for sampling
-		// TODO - source flag & access flag and old-layout could be initialised from previous barrier?
 		new Barrier.Builder()
 				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
 				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
@@ -212,6 +211,7 @@ public class ModelDemo {
 		// Init required features
 		final var features = new VkPhysicalDeviceFeatures();
 		features.samplerAnisotropy = VulkanBoolean.TRUE;
+		gpu.features().check(new DeviceFeatures(features));
 
 		// Create device
 		final LogicalDevice dev = new LogicalDevice.Builder(gpu)

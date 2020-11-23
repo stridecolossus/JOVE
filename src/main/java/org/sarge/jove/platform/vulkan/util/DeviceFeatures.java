@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
@@ -72,8 +73,8 @@ public class DeviceFeatures {
 	 */
 	public void check(DeviceFeatures required) {
 		// Enumerate missing features
-		final var fields = VkPhysicalDeviceFeatures.class.getFields();
-		final var missing = Arrays.stream(fields)
+		final Field[] fields = VkPhysicalDeviceFeatures.class.getFields();
+		final Collection<String> missing = Arrays.stream(fields)
 				.filter(f -> get(f, required.features))
 				.filter(f -> !get(f, this.features))
 				.map(Field::getName)

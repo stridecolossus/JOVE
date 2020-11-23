@@ -4,17 +4,17 @@ title: Vertex Buffers
 
 ## Overview
 
-In this chapter we will replace the hard-coded triangle data in the vertex shader with a _vertex buffer_.
+In this chapter we will replace the hard-coded triangle data in the vertex shader with a _vertex buffer_ (sometimes referred to as a _vertex buffer object_ or VBO).
 
-A vertex buffer (sometimes referred to as a _vertex buffer object_ or VBO) is used to transfer vertex data from the application to the hardware.
+We will then transfer the vertex data to a _device local_ buffer (i.e. memory on the GPU) for the optimal performance.
 
 This process involves the following steps:
 
 1. build the vertex data
 2. convert it to an interleaved NIO buffer
-3. allocate a _staging_ vertex buffer (visible to the host)
+3. allocate a _staging_ buffer (visible to the host)
 4. copy the interleaved data to this staging buffer
-5. allocate a _device local_ vertex buffer (visible to the hardware)
+5. allocate a _device local_ buffer (visible to the hardware)
 6. copy the staged data to this buffer
 
 We will need:
@@ -213,10 +213,10 @@ public class VertexBuffer extends AbstractVulkanObject {
 
     /**
      * Constructor.
-     * @param handle        Buffer handle
-     * @param dev            Logical device
-     * @param len            Length (bytes)
-     * @param mem            Memory handle
+     * @param handle    Buffer handle
+     * @param dev       Logical device
+     * @param len       Length (bytes)
+     * @param mem       Memory handle
      */
     VertexBuffer(Pointer handle, LogicalDevice dev, long len, Pointer mem) {
         super(handle, dev, dev.library()::vkDestroyBuffer);
@@ -275,6 +275,8 @@ public static class Builder {
     }
 }
 ```
+
+The various _usage_ flags specify the purpose(s) of the buffer, e.g. whether it is a VBO, a destination for a copy operation, etc.
 
 ### Memory Allocation
 
@@ -385,31 +387,26 @@ final VertexBuffer dest = new VertexBuffer.Builder(dev)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
     .build();
 
-// Copy
+// Copy from staging to device
 final Queue queue = dev.queue(transferFamily);
-final Command.Pool copyPool = Command.Pool.create(queue);
-final Command.Buffer copyBuffer = Command.once(copyPool, staging.copy(dest));
-new Work.Builder().add(copyBuffer).build().submit();
+final Command.Pool pool = Command.Pool.create(queue);
+final Command.Buffer copy = pool
+    .allocate()
+    .begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+    .add(staging.copy(dest))
+    .end();
+new Work.Builder()
+    .add(copyBuffer)
+    .build()
+    .submit();
 queue.waitIdle();
-copyBuffer.free();
+copy.free();
 
 // Release staging
 staging.destroy();
 ```
 
-The copy operation uses a _one-time command_ that is allocated by a new helper in the command class:
-
-```java
-static Buffer once(Pool pool, Command cmd) {
-    return pool
-        .allocate()
-        .begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-        .add(cmd)
-        .end();
-}
-```
-
-The copy code is still a bit messy and long-winded - we will come back and simplify this later.
+The copy portion of the code is messy and long-winded - we will come back and simplify this later.
 
 ---
 
@@ -499,9 +496,8 @@ public class Allocation {
 }
 ```
 
-The _filter_ is a bit-mask of the available memory types corresponding to the `memoryTypeBits` field of the `VkMemoryRequirements` structure returned by Vulkan.
-
-We also provide a convenience method to initialise the allocation from a memory requirements structure:
+The _filter_ is a bit-mask of the available memory types specified by the `memoryTypeBits` field of the `VkMemoryRequirements` structure returned by Vulkan.
+We also provide a convenience method to initialise the allocation from this structure:
 
 ```java
 public Allocation init(VkMemoryRequirements reqs) {
@@ -704,6 +700,10 @@ public class AttributeBuilder {
     }
 }
 ```
+
+The _loc_ field corresponds to the _layout_ directives in the GLSL shader (see below).
+
+The _offset_ specifies the offset (in bytes) of the attribute within the vertex.
 
 ### Revised Stage Builder
 

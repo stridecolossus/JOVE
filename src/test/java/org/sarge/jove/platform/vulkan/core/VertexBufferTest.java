@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.nio.ByteBuffer;
 
@@ -69,6 +70,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		final VertexBuffer dest = mock(VertexBuffer.class);
 		final Handle destHandle = new Handle(new Pointer(5));
 		when(dest.handle()).thenReturn(destHandle);
+		when(dest.length()).thenReturn(buffer.length());
 
 		// Execute copy command
 		final Handle handle = new Handle(new Pointer(6));
@@ -85,6 +87,12 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		assertNotNull(array);
 		assertEquals(1, array.length);
 		assertEquals(3, array[0].size);
+	}
+
+	@Test
+	void copyTooSmall() {
+		final VertexBuffer dest = mock(VertexBuffer.class);
+		assertThrows(IllegalStateException.class, "too small", () -> buffer.copy(dest));
 	}
 
 	@Test

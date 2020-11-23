@@ -26,71 +26,52 @@ For this we will need:
 
 Matrices are central to 3D graphics programming - we will create a new matrix domain class to support perspective projection and the rotation animation.
 
-> We could of course easily use a third-party maths library but the point of this project is to learn the basics so we craft our own implementation from scratch.  Note that we will not attempt an explanation of matrix mathematics here as there many excellent tutorials that we have used to implement our own solution (TODO links to references).  
+> We could of course easily use a third-party maths library but the point of this project is to learn the basics so we craft our own implementation from scratch.  Note that we will not attempt an explanation of matrix mathematics here, there are plenty of excellent tutorials[^matrix] that we have used to implement our own solution.
 
-We enumerate the following requirements for our matrix class:
-- immutable - this is our default approach for all domain objects where appropriate and feasible.
-- column-major - following the Vulkan standard.
-- arbitrary matrix _order_ (the size of the matrix).
-- limited to square matrices, i.e. same width and height - basically this makes things much simpler.
+We first establish the following requirements and constraints:
+
+- immutable (the default for all domain classes where logical and feasible).
+
+- limit to _square_ matrices (i.e. same width and height) which makes things a lot simpler.
+
+- support an arbitrary _order_ (or size) of matrices.
 
 With the above in mind the first-cut matrix class is as follows:
 
 ```java
 public final class Matrix implements Bufferable {
-    /**
-     * Creates an identity matrix.
-     * @param order Matrix order
-     * @return Identity matrix
-     */
-    public static Matrix identity(int order) {
-    }
-
     private final int order;
     private final float[] matrix;
 
-    /**
-     * Constructor.
-     * @param matrix    Column-major matrix elements
-     * @param order     Matrix order
-     * @throws IllegalArgumentException if the length of the given array does not match the specified matrix order
-     */
-    public Matrix(int order, float[] matrix) {
+    public Matrix(float[] matrix) {
+        this((int) MathsUtil.sqrt(matrix.length), Arrays.copyOf(matrix, matrix.length));
+    }
+
+    private Matrix(int order, float[] matrix) {
         if(matrix.length != order * order) throw new IllegalArgumentException("Invalid matrix length");
         this.order = oneOrMore(order);
-        this.matrix = Arrays.copyOf(matrix, matrix.length);
+        this.matrix = matrix;
     }
 
     public int order() {
         return order;
     }
 
-    /**
-     * Retrieves a matrix element.
-     * @param row Matrix row
-     * @param col Column
-     * @return Matrix element
-     * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
-     */
     public float get(int row, int col) {
     }
     
     @Override
     public void buffer(FloatBuffer buffer) {
     }
-
-    /**
-     * Multiplies two matrices.
-     * @param m Matrix
-     * @return New matrix
-     * @throws IllegalArgumentException if the given matrix is not of the same order as this matrix
-     */
-    public Matrix multiply(Matrix m) {
-    }
 }
 ```
 
-The matrix is represented as a one-dimensional array in column-major order.  We could have implemented a 2D array but Java multi-dimensional arrays are objects in their own right which seems overkill for such a small amount of data.  Alternatively each element could be a separate class member but that would make the code verbose and error-prone (the supposed benefits are questionable for a JVM based implementation).
+The matrix is represented as a one-dimensional array in _column-major_ order (matching the default layout for matrices in GLSL shaders).
+
+> We could have implemented a 2D array but Java multi-dimensional arrays are objects in their own right which seems overkill for such a small amount of data.
+    
+> Alternatively each element could be a separate class member but that would make the code verbose and error-prone (the supposed benefits are questionable in the 21st century and especially for a JVM based implementation).
+   
 
 The matrix is `Bufferable` so we can copy it to an NIO buffer:
 
@@ -103,22 +84,20 @@ public void buffer(ByteBuffer buffer) {
 }
 ```
 
-Ideally we would implement this by converting the buffer using `toFloatBuffer()` and using a bulk-copy operation but the above is simpler.
+Alternatively we could have implemented buffering by converting the buffer using `toFloatBuffer()` and using a bulk-copy operation at the expense of additional complexity.
 
-We provide an array constructor but in general it will be considerably easier to create a matrix using a builder:
+We provide an array constructor but in general a matrix will be created using a builder:
 
 ```java
 public static class Builder {
-    private final float[] matrix;
-    private final int order;
+    private Matrix matrix;
 
     public Builder(int order) {
-        this.order = oneOrMore(order);
-        this.matrix = new float[order * order];
+        this.matrix = new Matrix(order);
     }
 
     public Builder identity() {
-        for(int n = 0; n < order; ++n) {
+        for(int n = 0; n < matrix.order; ++n) {
             set(n, n, 1);
         }
         return this;
@@ -131,15 +110,20 @@ public static class Builder {
     }
 
     public Matrix build() {
-        return new Matrix(order, matrix);
+        final Matrix result = matrix;
+        matrix = null;
+        return result;
     }
 }
 ```
 
 We add the following (not shown) to complete implementation of the matrix for the moment:
+
 - A `multiply()` operation to compose matrices.
+
 - Convenience helpers and constants for 4-order matrices (which is the most common use-case).
-- Helpers to populate a row or column with a given tuple.
+
+- Helpers to populate a row or column with a given `Tuple`.
 
 ### Perspective Projection
 
@@ -417,15 +401,11 @@ We also add a convenience `apply()` method implemented using the new builder to 
 
 The above may well seem overly complicated - and it's possible that we have over-engineered our solution - but as we have already observed descriptor sets are complex beasts:
 
-- The same `VkWriteDescriptorSet` descriptor is used to update **all** types of resource.
+- The same `VkWriteDescriptorSet` descriptor is used to update **all** types of resource (i.e. the descriptor is a sort of union type).
 
-- However only **one** type can be specified in any given update.
+- However only **one** type can be specified in any given write descriptor.
 
-- Different fields in the descriptor are populated depending on the descriptor type (specified in the binding), e.g. `pImageInfo` for a sampler, hence the `apply()` method in the new `Resource` interface, i.e. the write descriptor is a sort of union type.
-
-- Multiple resources can be applied to a descriptor set in one update, e.g. we could apply a sampler and a uniform buffer in one call.
-
-- The API supports multiple updates to multiple descriptor sets in one invocation with the intention of reducing the number of calls when descriptors are volatile.
+- On the other hand multiple resources (with any combination of types) can be applied in a single invocation of `vkUpdateDescriptorSets` (to reduce the number of API calls).
 
 We have attempted to bear all the above in mind while trying to decouple the logic for the different types of resource (we only have two now but there will be more).
 
@@ -441,7 +421,7 @@ First we create a new vertex buffer for the uniform buffer and load the matrix:
 
 ```java
 final VertexBuffer uniform = new VertexBuffer.Builder(dev)
-    .length(Matrix.LENGTH)
+    .length(Matrix.IDENTITY().length())
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -452,30 +432,21 @@ uniform.load(Matrix.IDENTITY);
 
 Note that this buffer is only visible to the host - eventually the matrix data in the uniform buffer will be updated every frame (i.e. for the rotation) so a staging buffer would just add extra complexity and overhead.
 
-We also take the opportunity to implement overloaded variants of the `load()` method to accept either a byte-buffer or a bufferable object:
+We also take the opportunity to implement overloaded variants of the `load()` method to accept both byte-buffers and bufferable objects:
 
 ```java
 public void load(ByteBuffer buffer) {
-    load(buffer, 0);
+    load(Bufferable.of(bb));
 }
 
-/**
- * Loads the given bufferable object to this vertex buffer at the specified offset.
- * @param buffer        Data buffer
- * @param offset        Offset into this vertex buffer (bytes)
- * @throws IllegalStateException if the size of the given buffer exceeds the length of this vertex buffer
- */
-public void load(ByteBuffer buffer, long offset) {
-    load(Bufferable.of(buffer), buffer.remaining(), offset);
+public void load(Bufferable obj) {
+    load(obj, obj.length(), 0);
 }
 
-/**
- * Loads the given bufferable object to this vertex buffer at the specified offset.
- * @param buffer        Bufferable object
- * @param len           Length of the object (bytes)
- * @param offset        Offset into this vertex buffer (bytes)
- * @throws IllegalStateException if the length of given bufferable object exceeds the length of this vertex buffer
- */
+public void load(Bufferable obj, long offset) {
+    load(obj, obj.length(), offset);
+}
+
 public void load(Bufferable obj, long len, long offset) {
     ...
 }
@@ -654,24 +625,6 @@ public class Model {
 }
 ```
 
-The approach for generating the interleaved buffer is the same as the existing quad demo:
-
-```java
-public ByteBuffer vertices() {
-    // Allocate buffer
-    final int len = vertices.size() * layout.size() * Float.BYTES;
-    vertexBuffer = Bufferable.allocate(len);
-
-    // Buffer vertices
-    for(Vertex v : vertices) {
-        layout.buffer(v, vertexBuffer);
-    }
-
-    // Prepare VBO
-    return vertexBuffer.rewind();
-}
-```
-
 The new primitive enumeration replicates `VkPrimitiveTopology` but provides some additional helper functionality (without having to modify the code-generated class).
 In particular we add the following method to test whether the number of vertices in a given model is valid for the primitive:
 
@@ -687,6 +640,24 @@ public boolean isValidVertexCount(int count) {
     else {
         return (count % size) == 0;
     }
+}
+```
+
+The approach for generating the interleaved buffer is the same as the existing quad demo:
+
+```java
+public ByteBuffer vertices() {
+    // Allocate buffer
+    final int len = vertices.size() * layout.size() * Float.BYTES;
+    vertexBuffer = Bufferable.allocate(len);
+
+    // Buffer vertices
+    for(Vertex v : vertices) {
+        layout.buffer(v, vertexBuffer);
+    }
+
+    // Prepare VBO
+    return vertexBuffer.rewind();
 }
 ```
 
@@ -706,6 +677,9 @@ We can now build on the new model class to construct a cube:
 
 ```java
 public class CubeBuilder {
+    private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
+    
+    private final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
     private float size = 1;
     private boolean clockwise = false;
     
@@ -719,16 +693,12 @@ public class CubeBuilder {
 The build method creates two _triangles_ for each face of the cube:
 
 ```java
-private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
 
 public Model build() {
-    // Init builder
-    final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
-
     // Add two triangles for each cube face
     for(int[] face : FACES) {
-        add(face, LEFT, builder);
-        add(face, RIGHT, builder);
+        add(face, LEFT);
+        add(face, RIGHT);
     }
 
     // Construct model
@@ -779,7 +749,7 @@ The method to add a triangle generates three vertices for each triangle and adds
 ```java
 private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2D[]::new);
 
-private void add(int[] face, int[] triangle, Model.Builder builder) {
+private void add(int[] face, int[] triangle) {
     for(int n = 0; n < 3; ++n) {
         // Lookup vertex position for this triangle
         final int index = face[triangle[n]];

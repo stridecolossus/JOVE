@@ -302,45 +302,21 @@ static <T> T[] enumerate(VulkanFunction<T[]> func, VulkanLibrary lib, IntFunctio
 
 ---
 
-## Structure Arrays
+## Vulkan Structure Arrays
 
-We are often required to allocate and populate JNA structure arrays to be passed to Vulkan, e.g. when creating the pipeline.
+Vulkan makes heavy use of structures to configure a variety of objects (e.g. the pipeline) and we are also often required to allocate and populate arrays of these structures.
 
-The following simple helper makes allocating a structure array slightly less tedious:
+Unlike a standard POJO an array of JNA structures **must** be allocated using the `toArray()` helper method which introduces complications:
 
-```java
-abstract class VulkanStructure extends Structure {
-    /**
-     * Helper - Allocates an array of the given Vulkan structure as a contiguous memory block.
-     * @param <T> Structure type
-     * @param ctor Constructor
-     * @param size Array size
-     * @return New array
-     */
-    @SuppressWarnings("unchecked")
-    public static <T extends VulkanStructure> T[] array(Supplier<T> ctor, int size) {
-        final T identity = ctor.get();
-        return (T[]) identity.toArray(size);
-    }
-}
-```
+- We often have to handle the case where the array is empty (or even `null`).
 
-A structure array can then be allocated as follows:
+- We cannot simply transform a collection of domain objects to an array using (for example) the stream `toArray()` method (since the JNA array must be a contiguous block of memory).
 
-```java
-final var array = VulkanStructure.toArray(VkClearValue::new, num);
-```
+- Many native methods expect a pointer-to-array value, i.e. the **first** element of the array.
 
-To populate a structure array we would generally have to:
-1. Handle the case where the source data is empty.
-2. Allocate the array.
-3. Iterate through the array using a for..next loop.
-4. Copy the data from the source collection to each element of the array.
-5. Use the **first** element of the array for a pointer-to-structure value.
+Whilst none of the above is particularly difficult to overcome it can be tedious, error-prone, and less testable.
 
-Whilst this is not difficult it can be tedious, error-prone and makes testing slightly messier.
-
-We provide another helper that separates the iteration and structure population:
+Therefore we provide another helper on the base-class structure that separates these aspects:
 
 ```java
 /**
@@ -352,7 +328,7 @@ We provide another helper that separates the iteration and structure population:
  * @param populate        Population function
  * @return <b>First</b> element of the new array
  */
-public static <R extends VulkanStructure, T> R array(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
+public static <R extends VulkanStructure, T> R populate(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
     // Check for empty data
     if(data.isEmpty()) {
         return null;
@@ -384,6 +360,6 @@ info.clearValueCount = values.size();
 info.pClearValues = VulkanStructure.populate(VkClearValue::new, values, ClearValue::populate);
 ```
 
-This factors out the population code from the array allocation and iteration logic reducing the potential for cock-ups and improves testability.
+This approach separates the array allocation, the iteration logic, and the process of populating an array element, reducing the potential for cock-ups and improving testability.
 
 Note that `populate()` returns the **first** element as this is the common approach for a JNA structure array.

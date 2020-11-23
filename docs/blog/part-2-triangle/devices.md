@@ -764,8 +764,8 @@ Finally we implement the `check()` method used to test that the _required_ featu
 ```java
 public void check(DeviceFeatures required) {
     // Enumerate missing features
-    final var fields = VkPhysicalDeviceFeatures.class.getFields();
-    final var missing = Arrays.stream(fields)
+    final Field[] fields = VkPhysicalDeviceFeatures.class.getFields();
+    final Collection<String> missing = Arrays.stream(fields)
             .filter(f -> get(f, required.features))
             .filter(f -> !get(f, this.features))
             .map(Field::getName)
@@ -794,12 +794,12 @@ private static boolean get(Field field, VkPhysicalDeviceFeatures obj) {
 An application can now configure the required features as illustrated in the following example:
 
 ```java
-// Check supported features
-if(!gpu.features().isSupported("samplerAnisotropy")) ...
-
 // Init required features
 final var features = new VkPhysicalDeviceFeatures();
 features.samplerAnisotropy = VulkanBoolean.TRUE;
+
+// Check supported features
+gpu.features().check(new DeviceFeatures(features));
 
 // Create device
 final LogicalDevice dev = new LogicalDevice.Builder(gpu)

@@ -53,6 +53,7 @@ what is Vulkan
     - [Vertex Buffers](blog/part-3-cube/vertex-buffers)
     - [Textures and Descriptor Sets](blog/part-3-cube/textures)
     - [Perspective Projection](blog/part-3-cube/perspective)
+    - [The Render Loop and Synchronisation](blog/part-3-cube/sync)
    
    
 - Part 4 - Models

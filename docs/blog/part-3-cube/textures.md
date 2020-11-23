@@ -438,7 +438,6 @@ public static abstract class ImmediateCommand implements Command {
     /**
      * Submits this as a <i>one-time</i> command to the given pool and waits for completion.
      * @param pool Command pool
-     * @see Command#once(Command.Pool, Command)
      * @see Work#submit(Command, Command.Pool)
      */
     public void submit(Command.Pool pool) {
@@ -451,8 +450,12 @@ This delegates to a new helper on the `Work` class we implemented previously:
 
 ```java
 public static void submit(Command cmd, Command.Pool pool) {
-    // Allocate one-off buffer
-    final Command.Buffer buffer = Command.once(pool, cmd);
+    // Allocate and record command
+    final Command.Buffer buffer = pool
+        .allocate()
+        .begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+        .add(cmd)
+        .end();
 
     try {
         // Submit work
@@ -470,7 +473,9 @@ public static void submit(Command cmd, Command.Pool pool) {
 }
 ```
 
-A barrier is used to synchronise access to images, buffers and memory objects.   For the moment we only need the image barrier part of this object which is implemented as a nested local class:
+A _barrier_ is used to synchronise access to images, buffers and memory objects.
+
+For the current demo we only need the image barrier part which is implemented as a nested local class:
 
 ```java
 public class ImageBarrierBuilder {
@@ -493,10 +498,6 @@ public class ImageBarrierBuilder {
 
         // Populate sub-resource range descriptor
         subresource.populate(barrier.subresourceRange);
-
-        // TODO
-        barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
-        barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;
     }
 
     public Builder build() {
@@ -512,9 +513,13 @@ public class ImageBarrierBuilder {
 }
 ```
 
+The _src_ and _dest_ fields specify how the image is used before and after the barrier transition.
+
 ### Image sub-resources
 
-The barrier also contains a configurable _image sub-resource range_ which we implement as another nested builder:
+The barrier also configures the _sub-resource range_ which specifies a _view_ of the image, e.g. the number of accessible mipmap levels.
+
+The sub-resource range is implemented as another nested builder:
 
 ```java
 public class ImageSubResourceBuilder<T> {
@@ -525,10 +530,6 @@ public class ImageSubResourceBuilder<T> {
     private int baseArrayLayer;
     private int layerCount = 1;
 
-    /**
-     * Constructor.
-     * @param parent Parent builder
-     */
     public ImageSubResourceBuilder(T parent) {
         this.parent = notNull(parent);
     }

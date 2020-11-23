@@ -12,6 +12,8 @@ A _frame buffer_ is comprised of a number of _attachments_ that are used during 
 
 We will also implement the _render pass_ that specifies how the attachments are managed during the rendering process.
 
+> Note that some of the code in this chapter uses some helpers and base-classes that are outlined [later](/JOVE/blog/part-2-triangle/improvements).
+
 ---
 
 ## The Swapchain
@@ -23,8 +25,6 @@ Before we can actually start on the swapchain we will need:
 1. A rendering surface with accessors for capabilities and image formats supported by the graphics hardware.
 
 2. New domain classes for the swapchain images and views.
-
-> Note that some of the code in this chapter uses some helpers and base-classes that are outlined later in [this chapter](/JOVE/blog/part-2-triangle/improvements).
 
 We start with a new domain class for the _rendering surface_ that wraps the handle we previously retrieved from GLFW:
 
@@ -100,7 +100,9 @@ While this object does not contain much functionality it abstracts over the vari
 
 ### Images and Views
 
-A Vulkan _image_ is essentially a descriptor for an image _object_ managed by Vulkan (i.e. we are not actually dealing with image _data_ here).
+The swapchain is comprised of a number of images that are used during rendering.
+
+Note that a Vulkan image defines the _properties_ of the image on the hardware, i.e. it is distinct from the _buffer_ that contains the actual image data.
 
 The new class is relatively trivial at this stage:
 
@@ -120,9 +122,7 @@ public class Image {
 }
 ```
 
-An _image view_ is a reference to an image and is the entry-point for operations on images such as transforms, sampling, etc.
-
-This class initially has no functionality but will be expanded when we address textures:
+An _image view_ is a reference to an image and is the entry-point for operations on that image such as layout transforms, sampling, etc.
 
 ```java
 public class View {
@@ -135,6 +135,8 @@ public class View {
     }
 }
 ```
+
+This class initially has no functionality but will be expanded as we progress (in particular when we address texture sampling):
 
 Note the swapchain images are managed by Vulkan and do not need to be explicitly destroyed by the application.
 

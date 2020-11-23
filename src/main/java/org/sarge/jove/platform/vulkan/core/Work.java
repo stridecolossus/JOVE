@@ -127,7 +127,6 @@ public class Work {
 		/**
 		 * Submits this as a <i>one-time</i> command to the given pool and waits for completion.
 		 * @param pool Command pool
-		 * @see Command#once(Command.Pool, Command)
 		 * @see Work#submit(Command, Command.Pool)
 		 */
 		public void submit(Command.Pool pool) {

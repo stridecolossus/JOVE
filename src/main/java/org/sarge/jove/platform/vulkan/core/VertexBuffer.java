@@ -173,10 +173,17 @@ public class VertexBuffer extends AbstractVulkanObject {
 	 * Creates a command to copy this buffer to the given buffer.
 	 * @param dest Destination buffer
 	 * @return New copy command
+	 * @throws IllegalStateException if the destination buffer is too small
 	 */
 	public Command copy(VertexBuffer dest) {
+		if(len > dest.length()) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
+		// TODO - add usage flags to VBO, we can then check that copyinf is logical
+
+		// Build copy descriptor
 		final VkBufferCopy region = new VkBufferCopy();
 		region.size = len;
+
+		// Create copy command
 		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, VertexBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
 	}
 
