@@ -2,12 +2,14 @@ package org.sarge.jove.platform.desktop;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,25 +23,36 @@ import com.sun.jna.ptr.PointerByReference;
 public class WindowTest {
 	private Window window;
 	private DesktopLibrary lib;
-	private Window.Descriptor props;
+	private Window.Descriptor descriptor;
 
 	@BeforeEach
-	public void before() {
+	void before() {
+		// Init native library
 		lib = mock(DesktopLibrary.class);
-		props = new Window.Descriptor.Builder().title("title").size(new Dimensions(640, 480)).property(Window.Property.DECORATED).build();
-		window = new Window(new Pointer(1), lib, props);
+		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(new Pointer(42));
+
+		// Create window
+		descriptor = new Window.Descriptor.Builder().title("title").size(new Dimensions(640, 480)).property(Window.Property.DECORATED).build();
+		window = Window.create(lib, descriptor, null);
 	}
 
 	@Test
-	public void constructor() {
+	void constructor() {
 		assertNotNull(window.handle());
-		assertEquals(props, window.descriptor());
+		assertEquals(descriptor, window.descriptor());
 		assertNotNull(window.keyboard());
 		assertNotNull(window.mouse());
+		verify(lib).glfwWindowHint(0x00020005, 1);
 	}
 
 	@Test
-	public void surface() {
+	void createFailed() {
+		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(null);
+		assertThrows(RuntimeException.class, () -> Window.create(lib, descriptor, null));
+	}
+
+	@Test
+	void surface() {
 		// Init API
 		final Handle vulkan = new Handle(new Pointer(42));
 		final Pointer ptr = new Pointer(2);
@@ -56,10 +69,8 @@ public class WindowTest {
 	}
 
 	@Test
-	public void destroy() {
+	void destroy() {
 		window.destroy();
 		verify(lib).glfwDestroyWindow(window.handle());
 	}
-
-	// TODO - descriptor tests
 }
