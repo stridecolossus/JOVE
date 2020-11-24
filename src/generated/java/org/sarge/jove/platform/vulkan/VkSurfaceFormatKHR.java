@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,9 +13,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"colorSpace"
 })
 public class VkSurfaceFormatKHR extends VulkanStructure {
-	public static class ByValue extends VkSurfaceFormatKHR implements Structure.ByValue { }
-	public static class ByReference extends VkSurfaceFormatKHR implements Structure.ByReference { }
-	
 	public VkFormat format;
 	public VkColorSpaceKHR colorSpace;
 }

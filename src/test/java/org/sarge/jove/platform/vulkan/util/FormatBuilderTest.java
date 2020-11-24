@@ -64,6 +64,6 @@ public class FormatBuilderTest {
 	void imageFormat() {
 		final ImageData image = mock(ImageData.class);
 		when(image.components()).thenReturn(List.of(8, 8, 8, 8));
-		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, FormatBuilder.format(image));
+		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_SRGB, FormatBuilder.format(image));
 	}
 }

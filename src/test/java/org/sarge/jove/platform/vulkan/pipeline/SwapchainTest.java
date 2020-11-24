@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.List;
 import java.util.Set;
@@ -46,7 +47,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		// Specify image swapchain descriptor
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.extents(new Image.Extents(3, 4))
-				.format(VkFormat.VK_FORMAT_R8G8B8A8_UNORM)
+				.format(VkFormat.VK_FORMAT_R8G8B8A8_SRGB)
 				.build();
 
 		// Create swapchain image
@@ -59,7 +60,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		when(view.image()).thenReturn(image);
 
 		// Create swapchain
-		swapchain = new Swapchain(new Pointer(2), dev, VkFormat.VK_FORMAT_R8G8B8A8_UNORM, List.of(view));
+		swapchain = new Swapchain(new Pointer(2), dev, Swapchain.DEFAULT_FORMAT, List.of(view));
 
 		// Create semaphore
 		semaphore = mock(Semaphore.class);
@@ -73,7 +74,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 	@Test
 	void constructor() {
 		assertNotNull(swapchain.handle());
-		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, swapchain.format());
+		assertEquals(Swapchain.DEFAULT_FORMAT, swapchain.format());
 		assertEquals(new Dimensions(3, 4), swapchain.extents());
 		assertEquals(List.of(view), swapchain.views());
 	}
@@ -146,13 +147,13 @@ public class SwapchainTest extends AbstractVulkanTest {
 		void before() {
 			// Create surface
 			surface = mock(Surface.class);
-			when(surface.handle()).thenReturn(new Handle(new Pointer(42)));
+			when(surface.handle()).thenReturn(new Handle(new Pointer(2)));
 			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR));
 
 			// Init supported formats
 			final VkSurfaceFormatKHR format = new VkSurfaceFormatKHR();
-			format.format = VkFormat.VK_FORMAT_R8G8B8A8_UNORM;
-			format.colorSpace = VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+			format.format = Swapchain.DEFAULT_FORMAT;
+			format.colorSpace = Swapchain.DEFAULT_COLOUR_SPACE;
 			when(surface.formats()).thenReturn(Set.of(format));
 
 			// Init surface capabilities descriptor
@@ -180,14 +181,13 @@ public class SwapchainTest extends AbstractVulkanTest {
 		void build() {
 			// Create chain
 			swapchain = builder
-					.format(VkFormat.VK_FORMAT_R8G8B8A8_UNORM)
 					.clear(Colour.WHITE)
 					.build();
 
 			// Check swapchain
 			assertNotNull(swapchain);
 			assertNotNull(swapchain.handle());
-			assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, swapchain.format());
+			assertEquals(VkFormat.VK_FORMAT_B8G8R8A8_SRGB, swapchain.format());
 			assertNotNull(swapchain.views());
 			assertEquals(1, swapchain.views().size());
 
@@ -200,7 +200,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertNotNull(info);
 			assertEquals(surface.handle(), info.surface);
 			assertEquals(1, info.minImageCount);
-			assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_UNORM, info.imageFormat);
+			assertEquals(VkFormat.VK_FORMAT_B8G8R8A8_SRGB, info.imageFormat);
 			assertEquals(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, info.imageColorSpace);
 
 			assertNotNull(info.imageExtent);
@@ -243,12 +243,13 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 		@Test
 		void invalidFormat() {
-			assertThrows(IllegalArgumentException.class, () -> builder.format(VkFormat.VK_FORMAT_A1R5G5B5_UNORM_PACK16));
+			assertThrows(IllegalArgumentException.class, "Unsupported swapchain format", () -> builder.format(VkFormat.VK_FORMAT_UNDEFINED).build());
 		}
 
 		@Test
 		void invalidColourSpace() {
-			assertThrows(IllegalArgumentException.class, () -> builder.space(VkColorSpaceKHR.VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT));
+			builder.format(Swapchain.DEFAULT_FORMAT);
+			assertThrows(IllegalArgumentException.class, "Unsupported swapchain format", () -> builder.space(VkColorSpaceKHR.VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT).build());
 		}
 
 		@Test
@@ -274,7 +275,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 		@Test
 		void invalidPresentationMode() {
-			assertThrows(IllegalArgumentException.class, () -> builder.present(VkPresentModeKHR.VK_PRESENT_MODE_IMMEDIATE_KHR));
+			assertThrows(IllegalArgumentException.class, () -> builder.mode(VkPresentModeKHR.VK_PRESENT_MODE_IMMEDIATE_KHR));
 		}
 	}
 }

@@ -226,28 +226,30 @@ public class ModelDemo {
 		// Create rendering surface
 		final Surface surface = new Surface(surfaceHandle, dev);
 
-		// Specify required image format
-		final VkFormat format = new FormatBuilder()
-				.components(FormatBuilder.BGRA)
-				.bytes(1)
-				.signed(false)
-				.type(FormatBuilder.Type.NORMALIZED)
-				.build();
+//		// Specify required image format
+//		final VkFormat format = new FormatBuilder()
+//				.components(FormatBuilder.BGRA)
+//				.bytes(1)
+//				//.signed(false)
+//				//.type(FormatBuilder.Type.NORMALIZED)
+//				.signed(true)
+//				.type(FormatBuilder.Type.RGB)
+//				.build();
 
 		// Create swap-chain
-		final Swapchain chain = new Swapchain.Builder(dev, surface)
-				.count(2)
-				.format(format)
-				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
+		final Swapchain swapchain = new Swapchain.Builder(dev, surface)
+				.count(3)
+				.clear(new Colour(0.1f, 0.1f, 0.1f, 1))
+				// TODO
+				//.mode(VkPresentModeKHR.VK_PRESENT_MODE_MAILBOX_KHR)
 				.build();
 
-		final View depth = depth(dev, Image.Extents.of(chain.extents()));
+		final View depth = depth(dev, Image.Extents.of(swapchain.extents()));
 
 		// Create render pass
 		final RenderPass pass = new RenderPass.Builder(dev)
 				.attachment()
-					.format(format)
+					.format(swapchain.format())
 					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
 					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
 					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
@@ -319,7 +321,7 @@ public class ModelDemo {
 				.max(2 * 2)
 				.build();
 
-		final List<DescriptorSet> descriptors = setPool.allocate(layout, 2);
+		final List<DescriptorSet> descriptors = setPool.allocate(layout, swapchain.views().size());
 
 		// Create sampler
 		final Sampler sampler = new Sampler.Builder(dev)
@@ -335,7 +337,7 @@ public class ModelDemo {
 				.build();
 
 		// Create projection matrix
-		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, chain.extents());
+		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
 
 		// Init descriptor sets
 		new DescriptorSet.UpdateBuilder()
@@ -362,7 +364,7 @@ public class ModelDemo {
 					.build()
 				.viewport()
 					.flip(true)
-					.viewport(new Rectangle(chain.extents()))
+					.viewport(new Rectangle(swapchain.extents()))
 					.build()
 				.rasterizer()
 					.frontFace(true)
@@ -381,7 +383,7 @@ public class ModelDemo {
 				.build();
 
 		// Create frame buffers
-		final var buffers = chain
+		final var buffers = swapchain
 				.views()
 				.stream()
 				.map(v -> FrameBuffer.create(List.of(v, depth), pass))
@@ -433,7 +435,7 @@ public class ModelDemo {
 		keyboard.enable(bindings::accept);
 
 		// Bind camera controller
-		final OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents());
+		final OrbitalCameraController controller = new OrbitalCameraController(cam, swapchain.extents());
 		controller.range(0.75f, 25);
 		controller.scale(0.25f);
 		controller.radius(3);
@@ -461,7 +463,7 @@ public class ModelDemo {
 				return true;
 			}
 		};
-		final Runner runner = new Runner(chain, 2, factory, dev.queue(present));
+		final Runner runner = new Runner(swapchain, 2, factory, dev.queue(present));
 
 		// Bind run action
 		//final StopAction stop = new StopAction();
@@ -500,7 +502,7 @@ public class ModelDemo {
 		// Destroy pipeline
 		pipelineLayout.destroy();
 		pipeline.destroy();
-		chain.destroy();
+		swapchain.destroy();
 
 		surface.destroy();
 		window.destroy();

@@ -83,6 +83,8 @@ public class Runner {
 		private final Semaphore ready, finished;
 		private final Fence fence;
 
+//		private long start, elapsed;
+
 		/**
 		 * Constructor.
 		 * @param dev Logical device
@@ -121,6 +123,33 @@ public class Runner {
 			fence.waitReady();
 			fence.reset();
 		}
+
+		/*
+		private static final long WAIT = 1000 / 60;
+
+		private void update() {
+			final long now = System.currentTimeMillis();
+			elapsed = now - start;
+			start = now;
+
+			///////
+
+			final long wait = 3 * (WAIT - elapsed);
+			if(wait > 0) {
+//				System.out.println("elapsed="+elapsed+" wait="+wait);
+				try {
+					Thread.sleep(wait);
+				}
+				catch(InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		public long elapsed() {
+			return elapsed;
+		}
+		*/
 
 		/**
 		 * Helper - Creates a work submission to render to this frame.
@@ -213,6 +242,12 @@ public class Runner {
 	 * Runs this frame render loop on the current thread.
 	 */
 	public final void start() {
+//		//
+//		final long now = System.currentTimeMillis();
+//		for(FrameState state : states) {
+//			state.start = now;
+//		}
+
 		// Start running
 		running.set(true);
 
@@ -229,6 +264,7 @@ public class Runner {
 		// Start next in-flight frame
 		final FrameState state = states[current];
 		state.waitFence();
+//		state.update();
 
 		// Acquire next swapchain image
 		// TODO - using same fence for both cases, does this work? need 1. for frame itself and 2. for image being rendered (pass null to acquire)?

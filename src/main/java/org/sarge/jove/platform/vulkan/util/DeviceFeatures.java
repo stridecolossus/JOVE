@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.util.Check;
 
 /**
  * A set of <i>device features</i> specifies the features supported by a physical or logical device.
@@ -61,6 +62,8 @@ public class DeviceFeatures {
 	 * @throws IllegalStateException
 	 */
 	public void check(String feature) throws IllegalStateException {
+		Check.notEmpty(feature);
+
 		if(!isSupported(feature)) {
 			throw new IllegalStateException("Unsupported feature: " + feature);
 		}

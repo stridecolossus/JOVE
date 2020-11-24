@@ -20,6 +20,7 @@ public class TestHelper {
 	 * @param code			Code
 	 */
 	public static void assertThrows(Class<? extends Exception> clazz, String message, Executable code) {
+		Check.notEmpty(message);
 		final Exception e = Assertions.assertThrows(clazz, code);
 		assertTrue(e.getMessage().contains(message), () -> String.format("Expected exception message: expected=[%s] actual=[%s]", message, e.getMessage()));
 	}

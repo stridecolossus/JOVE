@@ -221,6 +221,21 @@ public class RenderPass extends AbstractVulkanObject {
 			}
 
 			/**
+			 * Populates the descriptor for this attachment.
+			 * @param Attachment descriptor
+			 */
+			void populate(VkAttachmentDescription desc) {
+				desc.format = format;
+				desc.samples = samples;
+				desc.loadOp = loadOp;
+				desc.storeOp = storeOp;
+				desc.stencilLoadOp = stencilLoadOp;
+				desc.stencilStoreOp = stencilStoreOp;
+				desc.initialLayout = initialLayout;
+				desc.finalLayout = finalLayout;
+			}
+
+			/**
 			 * Constructs this attachment.
 			 * @throws IllegalArgumentException if the attachment format or final layout has not been specified
 			 * @throws IllegalArgumentException if the format is invalid for the final layout
@@ -231,21 +246,6 @@ public class RenderPass extends AbstractVulkanObject {
 				// TODO - validation https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkAttachmentDescription.html
 				attachments.add(this);
 				return Builder.this;
-			}
-
-			/**
-			 * Populates the descriptor for this attachment.
-			 * @param Attachment descriptor
-			 */
-			private void populate(VkAttachmentDescription desc) {
-				desc.format = format;
-				desc.samples = samples;
-				desc.loadOp = loadOp;
-				desc.storeOp = storeOp;
-				desc.stencilLoadOp = stencilLoadOp;
-				desc.stencilStoreOp = stencilStoreOp;
-				desc.initialLayout = initialLayout;
-				desc.finalLayout = finalLayout;
 			}
 		}
 
@@ -323,7 +323,7 @@ public class RenderPass extends AbstractVulkanObject {
 			 * Populates the descriptor for this sub-pass.
 			 * @param desc Sub-pass descriptor
 			 */
-			private void populate(VkSubpassDescription desc) {
+			void populate(VkSubpassDescription desc) {
 				// Init descriptor
 				desc.pipelineBindPoint = bind;
 
@@ -445,7 +445,7 @@ public class RenderPass extends AbstractVulkanObject {
 			/**
 			 * Populates the dependency descriptor.
 			 */
-			private void populate(VkSubpassDependency dep) {
+			void populate(VkSubpassDependency dep) {
 				// Populate source
 				dep.srcSubpass = src.index;
 				dep.srcStageMask = src.stages();

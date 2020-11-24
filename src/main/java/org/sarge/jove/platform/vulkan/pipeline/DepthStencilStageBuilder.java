@@ -21,7 +21,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 		write(true);
 		compare(VkCompareOp.VK_COMPARE_OP_LESS);
 
-		// TODO
+		// TODO - requires feature
 		info.depthBoundsTestEnable = VulkanBoolean.FALSE;
 		info.minDepthBounds = 0;
 		info.maxDepthBounds = 1;
@@ -59,6 +59,6 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 
 	@Override
 	protected VkPipelineDepthStencilStateCreateInfo result() {
-		return info;
+		return info.copy();
 	}
 }

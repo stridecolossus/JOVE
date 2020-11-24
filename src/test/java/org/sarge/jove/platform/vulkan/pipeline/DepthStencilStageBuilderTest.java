@@ -31,17 +31,16 @@ public class DepthStencilStageBuilderTest {
 		assertEquals(VulkanBoolean.FALSE, result.depthWriteEnable);
 		assertEquals(VkCompareOp.VK_COMPARE_OP_GREATER, result.depthCompareOp);
 		assertEquals(VulkanBoolean.FALSE, result.stencilTestEnable);
-		// TODO
 	}
 
 	@Test
 	void buildDefaults() {
 		final var result = builder.result();
 		assertNotNull(result);
+		assertEquals(0, result.flags);
 		assertEquals(VulkanBoolean.FALSE, result.depthTestEnable);
 		assertEquals(VulkanBoolean.TRUE, result.depthWriteEnable);
 		assertEquals(VkCompareOp.VK_COMPARE_OP_LESS, result.depthCompareOp);
 		assertEquals(VulkanBoolean.FALSE, result.stencilTestEnable);
-		// TODO
 	}
 }

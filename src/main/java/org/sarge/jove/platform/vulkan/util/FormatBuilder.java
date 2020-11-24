@@ -66,11 +66,12 @@ public class FormatBuilder {
 	 * @return Image format
 	 */
 	public static VkFormat format(ImageData image) {
+		// TODO - should probably be deriving this from the image header somehow?
 		return new FormatBuilder()
 				.components(image.components().size())
 				.bytes(1)
-				.signed(false)
-				.type(Type.NORMALIZED)
+				.signed(true)
+				.type(Type.RGB)			// TODO - assumes SRGB colour-space
 				.build();
 	}
 
@@ -152,7 +153,7 @@ public class FormatBuilder {
 		final String format = new StringJoiner("_")
 			.add("VK_FORMAT")
 			.add(layout.toString())
-			.add((signed ? "S" : "U") + type.token) // TODO - SRGB
+			.add((signed ? "S" : "U") + type.token)
 			.toString();
 
 		// Lookup format

@@ -38,6 +38,21 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Swapchain extends AbstractVulkanObject {
+	/**
+	 * Default swapchain image format.
+	 */
+	public static final VkFormat DEFAULT_FORMAT = VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
+
+	/**
+	 * Default swapchain colour-space.
+	 */
+	public static final VkColorSpaceKHR DEFAULT_COLOUR_SPACE = VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+
+	/**
+	 * Default presentation mode (guaranteed on all Vulkan implementations).
+	 */
+	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
+
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> views;
@@ -131,11 +146,8 @@ public class Swapchain extends AbstractVulkanObject {
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
-		// Dependencies
-		private final Surface surface;
-		private final LogicalDevice dev;
-
 		// Properties
+		private final LogicalDevice dev;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private ClearValue clear = ClearValue.COLOUR;
 
@@ -159,11 +171,11 @@ public class Swapchain extends AbstractVulkanObject {
 		 */
 		public Builder(LogicalDevice dev, Surface surface) {
 			this.dev = notNull(dev);
-			this.surface = notNull(surface);
 			this.caps = surface.capabilities();
 			this.formats = surface.formats();
 			this.modes = surface.modes();
 			init();
+			info.surface = surface.handle();
 		}
 
 		/**
@@ -173,12 +185,13 @@ public class Swapchain extends AbstractVulkanObject {
 			extent(caps.currentExtent.width, caps.currentExtent.height);
 			count(caps.minImageCount);
 			transform(caps.currentTransform);
-			space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
+			format(DEFAULT_FORMAT);
+			space(DEFAULT_COLOUR_SPACE);
 			arrays(1);
-			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE); // or concurrent?
+			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
 			usage(VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 			alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
-			present(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR);
+			mode(DEFAULT_PRESENTATION_MODE);
 			clipped(true);
 		}
 
@@ -186,8 +199,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * Sets the number of images.
 		 * @param num Number of images
 		 * @throws IllegalArgumentException if the number of image is not supported by the surface
-		 * @see VkSurfaceCapabilitiesKHR#minImageCount
-		 * @see VkSurfaceCapabilitiesKHR#maxImageCount
+		 * @see VkSurfaceCapabilitiesKHR
 		 */
 		public Builder count(int num) {
 			info.minImageCount = Check.range(num, caps.minImageCount, caps.maxImageCount);
@@ -197,11 +209,9 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Sets the image format.
 		 * @param format Image format
-		 * @throws IllegalArgumentException if the format is not supported by the surface
 		 * @see VkSurfaceFormatKHR
 		 */
 		public Builder format(VkFormat format) {
-			if(!formats.stream().map(f -> f.format).anyMatch(format::equals)) throw new IllegalArgumentException("Unsupported image format: " + format);
 			info.imageFormat = notNull(format);
 			return this;
 		}
@@ -209,11 +219,9 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Sets the colour-space.
 		 * @param space Colour-space
-		 * @throws IllegalArgumentException if the colour-space is not supported by the surface
 		 * @see VkSurfaceFormatKHR
 		 */
 		public Builder space(VkColorSpaceKHR space) {
-			if(!formats.stream().map(f -> f.colorSpace).anyMatch(space::equals)) throw new IllegalArgumentException("Unsupported surface colour-space: " + space);
 			info.imageColorSpace = notNull(space);
 			return this;
 		}
@@ -235,6 +243,7 @@ public class Swapchain extends AbstractVulkanObject {
 			extent(extent.width(), extent.height());
 			return this;
 		}
+		// TODO - constrain by actual resolution using glfwGetFramebufferSize()
 
 		/**
 		 * Helper - Populates the swapchain extents.
@@ -304,7 +313,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the given mode is not supported by the surface
 		 * @see Surface#modes()
 		 */
-		public Builder present(VkPresentModeKHR mode) {
+		public Builder mode(VkPresentModeKHR mode) {
 			if(!modes.contains(mode)) throw new IllegalArgumentException("Presentation mode not supported: " + mode);
 			info.presentMode = notNull(mode);
 			return this;
@@ -331,14 +340,16 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Constructs this swap-chain.
 		 * @return New swap-chain
-		 * @throws IllegalArgumentException if the image format has not been specified
+		 * @throws IllegalArgumentException if the image format and colour-space are not supported by the given surface
 		 */
 		public Swapchain build() {
-			// Validate
-			if(info.imageFormat == null) throw new IllegalArgumentException("Image format not specified");
-
-			// Complete descriptor
-			info.surface = surface.handle();
+			// Check image format and colour-space are supported by the surface
+			formats
+					.stream()
+					.filter(f -> f.format == info.imageFormat)
+					.filter(f -> f.colorSpace == info.imageColorSpace)
+					.findAny()
+					.orElseThrow(() -> new IllegalArgumentException(String.format("Unsupported swapchain format: format=%s space=%s", info.imageFormat, info.imageColorSpace)));
 
 			// TODO
 			info.queueFamilyIndexCount = 0;
