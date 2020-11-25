@@ -27,6 +27,7 @@ public class InputAssemblyStageBuilderTest {
 
 		// Check descriptor
 		assertNotNull(info);
+		assertEquals(0, info.flags);
 		assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST, info.topology);
 		assertEquals(VulkanBoolean.TRUE, info.primitiveRestartEnable);
 	}

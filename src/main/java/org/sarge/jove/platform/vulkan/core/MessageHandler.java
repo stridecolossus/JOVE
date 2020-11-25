@@ -5,6 +5,7 @@ import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -50,7 +51,7 @@ public class MessageHandler {
 		public final boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData) {
 			final var messageSeverity = IntegerEnumeration.map(VkDebugUtilsMessageSeverityFlagEXT.class, severity);
 			final var messageTypes = IntegerEnumeration.enumerate(VkDebugUtilsMessageTypeFlagEXT.class, type);
-			message(messageSeverity, new HashSet<>(messageTypes), pCallbackData);
+			message(messageSeverity, messageTypes, pCallbackData);
 			return false;
 		}
 
@@ -60,7 +61,7 @@ public class MessageHandler {
 		 * @param types			Type(s)
 		 * @param data			Additional data
 		 */
-		protected abstract void message(VkDebugUtilsMessageSeverityFlagEXT severity, Set<VkDebugUtilsMessageTypeFlagEXT> types, VkDebugUtilsMessengerCallbackDataEXT data);
+		protected abstract void message(VkDebugUtilsMessageSeverityFlagEXT severity, Collection<VkDebugUtilsMessageTypeFlagEXT> types, VkDebugUtilsMessengerCallbackDataEXT data);
 	}
 
 	/**
@@ -79,7 +80,7 @@ public class MessageHandler {
 	public static MessageCallback writer(PrintWriter out) {
 		return new AbstractMessageCallback() {
 			@Override
-			protected void message(VkDebugUtilsMessageSeverityFlagEXT severity, Set<VkDebugUtilsMessageTypeFlagEXT> types, VkDebugUtilsMessengerCallbackDataEXT data) {
+			protected void message(VkDebugUtilsMessageSeverityFlagEXT severity, Collection<VkDebugUtilsMessageTypeFlagEXT> types, VkDebugUtilsMessengerCallbackDataEXT data) {
 				// Build compound types token
 				final String compoundTypes = types.stream().map(this::toString).collect(joining("-"));
 

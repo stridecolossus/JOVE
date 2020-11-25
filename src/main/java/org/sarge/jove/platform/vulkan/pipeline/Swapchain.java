@@ -15,6 +15,7 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
+import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Fence;
@@ -67,7 +68,11 @@ public class Swapchain extends AbstractVulkanObject {
 	 */
 	Swapchain(Pointer handle, LogicalDevice dev, VkFormat format, List<View> views) {
 		super(handle, dev, dev.library()::vkDestroySwapchainKHR);
-		final Image.Extents dim = views.get(0).image().descriptor().extents();
+
+		final View first = views.get(0);
+		final Image.Extents dim = first.image().descriptor().extents();
+		assert first.image().descriptor().aspects().contains(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT);
+
 		this.format = notNull(format);
 		this.extents = new Dimensions(dim.width(), dim.height());
 		this.views = List.copyOf(views);
@@ -333,7 +338,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param clear Clear colour
 		 */
 		public Builder clear(Colour clear) {
-			this.clear = ClearValue.of(clear);
+			this.clear = new ColourClearValue(clear);
 			return this;
 		}
 

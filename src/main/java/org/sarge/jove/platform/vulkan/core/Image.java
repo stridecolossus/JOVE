@@ -4,14 +4,18 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Pointer;
@@ -41,6 +45,18 @@ public interface Image extends NativeObject {
 		}
 
 		/**
+		 * Helper - Populates a Vulkan rectangle.
+		 * @param in		Rectangle
+		 * @param out		Vulkan rectangle
+		 */
+		public static void populate(Rectangle in, VkRect2D out) {
+			out.offset.x = in.x();
+			out.offset.y = in.y();
+			out.extent.width = in.width();
+			out.extent.height = in.height();
+		}
+
+		/**
 		 * Constructor.
 		 * @param width
 		 * @param height
@@ -62,26 +78,22 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Converts to a {@link VkRect2D}.
-		 * @return Rectangle
+		 * Populates a Vulkan rectangle from this extents.
+		 * @param rect Rectangle to populate
 		 */
-		public VkRect2D toRect2D() {
-			final VkRect2D rect = new VkRect2D();
+		public void populate(VkRect2D rect) {
 			rect.extent.width = width;
 			rect.extent.height = height;
-			return rect;
 		}
 
 		/**
-		 * Converts to a {@link VkExtent3D}.
-		 * @return Extents
+		 * Populate a Vulkan 3D extent from this extents.
+		 * @param extent Extents to populate
 		 */
-		public VkExtent3D toExtent3D() {
-			final VkExtent3D extent = new VkExtent3D();
+		public void populate(VkExtent3D extent) {
 			extent.width = width;
 			extent.height = height;
 			extent.depth = depth;
-			return extent;
 		}
 	}
 
@@ -91,12 +103,44 @@ public interface Image extends NativeObject {
 	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) {
 		/**
 		 * Constructor.
+		 * @param type			Image type
+		 * @param format		Format
+		 * @param extents		Extents
+		 * @param aspects		Image aspect(s)
+		 * @throws IllegalArgumentException unless at least one image aspect has been specified
+		 * @throws IllegalArgumentException if the combination of image aspects is not valid
+		 * @throws IllegalArgumentException if the extents are invalid for the given image type
 		 */
 		public Descriptor {
-			Check.notNull(type);
-			Check.notNull(format);
-			Check.notNull(extents);
-			Check.notNull(aspects);
+			this.type = notNull(type);
+			this.format = notNull(format);
+			this.extents = notNull(extents);
+			this.aspects = Set.copyOf(aspects);
+			validateTypeExtents();
+			validateAspects();
+			// TODO - validate format against aspects, e.g. D32_FLOAT is not stencil, D32_FLOAT_S8_UINT has stencil
+		}
+
+		private void validateTypeExtents() {
+			final boolean valid = switch(type) {
+				case VK_IMAGE_TYPE_1D -> (extents.height == 1) && (extents.depth == 1);
+				case VK_IMAGE_TYPE_2D -> extents.depth == 1;
+				case VK_IMAGE_TYPE_3D -> true; // TODO - layers = 1
+			};
+			if(!valid) {
+				throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
+			}
+		}
+
+		private static final Collection<Set<VkImageAspectFlag>> VALID_ASPECTS = List.of(
+				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT),
+				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT),
+				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT)
+		);
+
+		private void validateAspects() {
+			if(aspects.isEmpty()) throw new IllegalArgumentException("Image must have at least one aspect");
+			if(!VALID_ASPECTS.contains(aspects)) throw new IllegalArgumentException("Invalid image aspects: " + aspects);
 		}
 
 		/**
@@ -264,7 +308,7 @@ public interface Image extends NativeObject {
 		 * Sets the number of array layers.
 		 * @param arrayLayers Number of array layers (default is {@code 1})
 		 */
-		public  Builder arrayLayers(int arrayLayers) {
+		public Builder arrayLayers(int arrayLayers) {
 			info.arrayLayers = oneOrMore(arrayLayers);
 			return this;
 		}
@@ -339,15 +383,21 @@ public interface Image extends NativeObject {
 		/**
 		 * Constructs this image.
 		 * @return New image
+		 * @throws VulkanException if the image cannot be created
+		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#VK_IMAGE_TYPE_3D} image
+		 * @see Descriptor#Descriptor(VkImageType, VkFormat, Extents, Set)
 		 */
 		public Image build() {
-			// Validate image
-			if(info.format == null) throw new IllegalArgumentException("Image format not specified");
-			if(extents == null) throw new IllegalArgumentException("Image extents not specified");
-			// TODO - aspects not empty?
+			// Validate
+			if(info.format == null) throw new IllegalArgumentException("No image format specified");
+			if(extents == null) throw new IllegalArgumentException("No image extents specified");
+			if((info.imageType == VkImageType.VK_IMAGE_TYPE_3D) && (info.arrayLayers != 1)) throw new IllegalArgumentException("Array layers must be one for a 3D image");
+
+			// Create image descriptor
+			final Descriptor descriptor = new Descriptor(info.imageType, info.format, extents, aspects);
 
 			// Complete create descriptor
-			info.extent = this.extents.toExtent3D();
+			extents.populate(info.extent);
 			info.usage = IntegerEnumeration.mask(usage);
 
 			// Allocate image
@@ -357,7 +407,6 @@ public interface Image extends NativeObject {
 
 			// Create image descriptor
 			final Handle handle = new Handle(ref.getValue());
-			final Descriptor descriptor = new Descriptor(info.imageType, info.format, extents, aspects);
 
 			// Retrieve image memory requirements
 			final var reqs = new VkMemoryRequirements();

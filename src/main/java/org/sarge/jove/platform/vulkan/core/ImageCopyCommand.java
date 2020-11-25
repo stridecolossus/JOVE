@@ -123,15 +123,13 @@ public class ImageCopyCommand extends ImmediateCommand {
 			// ...TODO
 
 			// Complete descriptor
-			region.imageExtent = image.descriptor().extents().toExtent3D();
+			image.descriptor().extents().populate(region.imageExtent);
 			region.imageOffset = new VkOffset3D();
 
 			// TODO
 //			public long bufferOffset;
 //			public int bufferRowLength;			// 0 or >= imageExtent.width
 //			public int bufferImageHeight;		// 0 or >= imageExtent.height
-
-			// TODO - one aspect
 
 			// Create copy command
 			return new ImageCopyCommand(image, buffer, new VkBufferImageCopy[]{region}, layout);

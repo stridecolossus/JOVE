@@ -66,6 +66,7 @@ public class RunnerTest extends AbstractVulkanTest {
 
 		// Create frame
 		frame = mock(Frame.class);
+		when(frame.update()).thenReturn(true);
 
 		// Mock synchronisation
 		semaphore = mock(Semaphore.class);
@@ -88,14 +89,21 @@ public class RunnerTest extends AbstractVulkanTest {
 		}
 	}
 
-	private void start() {
+	private void start() throws InterruptedException {
+		// Start runner in separate thread
 		final Runnable wrapper = () -> {
-			start.countDown();
 			runner.start();
 			end.countDown();
 		};
 		thread = new Thread(wrapper);
 		thread.start();
+
+		// Wait until running
+		// TODO - nasty/flakey
+		while(!runner.isRunning()) {
+			// Repeat
+		}
+		start.countDown();
 	}
 
 	@Test
@@ -167,8 +175,9 @@ public class RunnerTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void destroyRunning() {
+	void destroyRunning() throws InterruptedException {
 		start();
+		start.await();
 		assertThrows(IllegalStateException.class, () -> runner.destroy());
 	}
 }

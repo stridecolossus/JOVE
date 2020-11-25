@@ -3,6 +3,7 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.util.MathsUtil;
 
@@ -50,6 +51,7 @@ public class QuaternionTest {
 		assertEquals(new Quaternion(quaternion.w, 0, -quaternion.y, 0), quaternion.conjugate());
 	}
 
+	@Disabled
 	@Test
 	public void toRotation() {
 		final Rotation rot = Rotation.of(Vector.Y_AXIS, MathsUtil.PI);

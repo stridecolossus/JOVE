@@ -48,14 +48,7 @@ public class ViewportStageBuilderTest {
 
 	@Test
 	void flip() {
-		// Build descriptor
-		final var descriptor = builder
-				.flip(true)
-				.viewport(rect)
-				.scissor(rect)
-				.result();
-
-		// Check viewport is flipped in the Y direction
+		final var descriptor = builder.flip(true).viewport(rect).result();
 		assertEquals(1, descriptor.pViewports.x);
 		assertEquals(2 + 4, descriptor.pViewports.y);
 		assertEquals(3, descriptor.pViewports.width);

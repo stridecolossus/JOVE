@@ -50,10 +50,10 @@ public class ShaderStageBuilderTest {
 		// Check descriptor
 		final VkPipelineShaderStageCreateInfo info = builder.result();
 		assertNotNull(info);
+		assertEquals(0, info.flags);
 		assertEquals("name", info.pName);
 		assertEquals(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT, info.stage);
 		assertEquals(shader.handle(), info.module);
-		assertEquals(0, info.flags);
 	}
 
 	@Test

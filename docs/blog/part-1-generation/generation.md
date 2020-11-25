@@ -209,7 +209,7 @@ The line that actually generates a enumeration constant might be slightly confus
 ${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
 ```
 
-The purpose of the `if..else..end` directive is to add commas between each constant or a semi-colon after the last constant.
+The purpose of the `if..else..end` directive is to add commas between each constant and a final semi-colon at the end.
 
 Using the generator the following Vulkan enumeration:
 
@@ -258,6 +258,12 @@ public enum VkImageUsageFlag implements IntegerEnumeration {
     }
 }
 ```
+
+Notes:
+
+- Enumerations that are bit-masks are suffixed with `Bits` with an additional `typedef` that essentially removes this suffix (as in the example above) - the code generator strips the suffix.
+
+- Most of the enumerations have synthetic values that specify the minimum, maximum, range, etc. of the enumeration - these are discarded as superfluous.
 
 ### Structures
 
@@ -345,7 +351,7 @@ Notes:
 
 - The fields in a JNA structure must also be specified in the `@FieldOrder` annotation.
 
-- We also instantiate array types which is required by JNA in order to size the memory of the structure.
+- We also initialise all array type fields - this is required by JNA in order to size the memory of the structure.
 
 All top-level Vulkan structures have the _sType_ field which identifies its type to the native layer.
 
@@ -361,8 +367,6 @@ values.put("sType", sType);
 For example the type for the `VkApplicationInfo` structure is `VK_STRUCTURE_TYPE_APPLICATION_INFO`.
 
 This saves us the effort of having to manually populate this field when we use the structure - Bonus!
-
-(We should probably have made this field final).
 
 ### Methods
 

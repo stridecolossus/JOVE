@@ -3,12 +3,16 @@ package org.sarge.jove.platform.vulkan.common;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.Percentile;
 import org.sarge.jove.platform.vulkan.VkClearValue;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
+import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
 
 public class ClearValueTest {
 	private VkClearValue value;
@@ -21,34 +25,49 @@ public class ClearValueTest {
 	@Test
 	void colour() {
 		// Create colour clear value
-		final ClearValue clear = ClearValue.of(Colour.WHITE);
-		assertNotNull(clear);
-		assertEquals(true, clear.isValid(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
+		final ClearValue clear = new ColourClearValue(Colour.WHITE);
+		assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, clear.aspect());
 
 		// Apply clear
 		clear.populate(value);
 		assertNotNull(value.color);
 		assertArrayEquals(Colour.WHITE.toArray(), value.color.float32);
+
+		// Check equality
+		assertEquals(true, clear.equals(clear));
+		assertEquals(true, clear.equals(new ColourClearValue(Colour.WHITE)));
+		assertEquals(false, clear.equals(null));
+		assertEquals(false, clear.equals(new ColourClearValue(Colour.BLACK)));
+
+		// Check default
+		assertEquals(ClearValue.COLOUR, new ColourClearValue(Colour.BLACK));
 	}
 
 	@Test
 	void depth() {
 		// Create depth clear value
-		final ClearValue clear = ClearValue.depth(0.5f);
-		assertNotNull(clear);
-		assertEquals(true, clear.isValid(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT));
+		final ClearValue clear = new DepthClearValue(Percentile.HALF);
+		assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, clear.aspect());
 
 		// Apply clear
 		clear.populate(value);
 		assertNotNull(value.depthStencil);
 		assertEquals(0.5f, value.depthStencil.depth);
 		assertEquals(0, value.depthStencil.stencil);
+
+		// Check equality
+		assertEquals(true, clear.equals(clear));
+		assertEquals(true, clear.equals(new DepthClearValue(Percentile.HALF)));
+		assertEquals(false, clear.equals(null));
+		assertEquals(false, clear.equals(new DepthClearValue(Percentile.ONE)));
+
+		// Check default
+		assertEquals(ClearValue.DEPTH, new DepthClearValue(Percentile.ONE));
 	}
 
 	@Test
 	void none() {
 		ClearValue.NONE.populate(null);
-		assertEquals(true, ClearValue.NONE.isValid(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
-		assertEquals(true, ClearValue.NONE.isValid(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT));
+		assertThrows(UnsupportedOperationException.class, () -> ClearValue.NONE.aspect());
 	}
 }

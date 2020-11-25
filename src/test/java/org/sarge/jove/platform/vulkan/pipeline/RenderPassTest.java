@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -115,7 +114,17 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertNotNull(info);
 			assertEquals(pass.handle(), info.renderPass);
 			assertEquals(buffer.handle(), info.framebuffer);
-			assertTrue(buffer.extents().toRect2D().dataEquals(info.renderArea));
+
+			// Check render area
+			assertNotNull(info.renderArea);
+			assertNotNull(info.renderArea.offset);
+			assertNotNull(info.renderArea.extent);
+			assertEquals(0, info.renderArea.offset.x);
+			assertEquals(0, info.renderArea.offset.y);
+			assertEquals(3, info.renderArea.extent.width);
+			assertEquals(4, info.renderArea.extent.height);
+
+			// Check clear values
 			assertEquals(1, info.clearValueCount);
 			assertNotNull(info.pClearValues);
 		}

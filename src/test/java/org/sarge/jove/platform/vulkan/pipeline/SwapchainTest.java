@@ -47,7 +47,8 @@ public class SwapchainTest extends AbstractVulkanTest {
 		// Specify image swapchain descriptor
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.extents(new Image.Extents(3, 4))
-				.format(VkFormat.VK_FORMAT_R8G8B8A8_SRGB)
+				.format(FORMAT)
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.build();
 
 		// Create swapchain image

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Random;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
@@ -30,6 +31,7 @@ public class PositionFactoryTest {
 		assertEquals(Point.ORIGIN, factory.position());
 	}
 
+	@Disabled
 	@Test
 	public void spherical() {
 		final Point pos = PositionFactory.sphere(3, new Random()).position();

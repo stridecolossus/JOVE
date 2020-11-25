@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject.TransientNativeObject;
+import org.sarge.jove.common.Percentile;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
@@ -192,7 +193,7 @@ public class LogicalDevice implements TransientNativeObject {
 	/**
 	 * A <i>required queue</i> is a transient descriptor for a queue required by this device.
 	 */
-	private record RequiredQueue(Queue.Family family, List<Float> priorities) {
+	private record RequiredQueue(Queue.Family family, List<Percentile> priorities) {
 		/**
 		 * Constructor.
 		 * @param family			Queue family
@@ -201,15 +202,8 @@ public class LogicalDevice implements TransientNativeObject {
 		public RequiredQueue {
 			Check.notNull(family);
 			Check.notEmpty(priorities);
-
 			if(priorities.size() > family.count()) {
 				throw new IllegalArgumentException(String.format("Requested number of queues exceeds family pool size: num=%d family=%s", priorities.size(), family));
-			}
-
-			for(float f : priorities) {
-				if((f < 0) || (f > 1)) {
-					throw new IllegalArgumentException("Invalid queue priority: " + priorities);
-				}
 			}
 		}
 
@@ -217,8 +211,10 @@ public class LogicalDevice implements TransientNativeObject {
 		 * Populates a descriptor for a queue required by this device.
 		 */
 		private void populate(VkDeviceQueueCreateInfo info) {
+			// Convert percentile priorities to array
+			final float[] array = ArrayUtils.toPrimitive(priorities.stream().map(Percentile::floatValue).toArray(Float[]::new));
+
 			// Allocate contiguous memory block for the priorities array
-			final float[] array = ArrayUtils.toPrimitive(priorities.toArray(Float[]::new));
 			final Memory mem = new Memory(priorities.size() * Float.BYTES);
 			mem.write(0, array, 0, array.length);
 
@@ -297,7 +293,7 @@ public class LogicalDevice implements TransientNativeObject {
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
 		public Builder queues(Queue.Family family, int num) {
-			return queues(family, Collections.nCopies(num, 1f));
+			return queues(family, Collections.nCopies(num, Percentile.ONE));
 		}
 
 		/**
@@ -308,7 +304,7 @@ public class LogicalDevice implements TransientNativeObject {
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 * @throws IllegalArgumentException if the priorities array is empty or any value is not a valid 0..1 percentile
 		 */
-		public Builder queues(Queue.Family family, List<Float> priorities) {
+		public Builder queues(Queue.Family family, List<Percentile> priorities) {
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}

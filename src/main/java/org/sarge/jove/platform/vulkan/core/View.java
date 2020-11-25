@@ -5,6 +5,7 @@ import static org.sarge.jove.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
+import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
@@ -45,7 +46,7 @@ public class View extends AbstractVulkanObject {
 
 	private final Image image;
 
-	private ClearValue clear;
+	private ClearValue clear = ClearValue.NONE;
 
 	/**
 	 * Constructor.
@@ -80,12 +81,12 @@ public class View extends AbstractVulkanObject {
 	 * @throws IllegalArgumentException if the clear value is incompatible with this view
 	 */
 	public void clear(ClearValue clear) {
-
-		//if(clear.isValid(aspect))
-
-//		if(!image.descriptor().aspects().contains(clear.aspect())) {
-//			throw new IllegalArgumentException(String.format("Invalid clear value for this view: expected=%s view=%s", clear.aspect(), this));
-//		}
+		if(clear != ClearValue.NONE) {
+			final VkImageAspectFlag flag = clear.aspect();
+			if(!image.descriptor().aspects().contains(flag)) {
+				throw new IllegalArgumentException(String.format("Invalid clear value for this view: expected=%s view=%s", flag, this));
+			}
+		}
 		this.clear = notNull(clear);
 	}
 
@@ -205,11 +206,9 @@ public class View extends AbstractVulkanObject {
 			final View view = new View(handle.getValue(), image, dev);
 
 			// Init clear value
-			if(clear == null) {
-				// TODO - only useful if attachment has clear operation
-				clear = ClearValue.of(image.descriptor().aspects());
+			if(clear != null) {
+				view.clear(clear);
 			}
-			view.clear = clear;
 
 			return view;
 		}

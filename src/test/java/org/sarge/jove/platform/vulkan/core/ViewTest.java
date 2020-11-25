@@ -18,12 +18,12 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
-import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
+import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.core.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -38,7 +38,7 @@ public class ViewTest extends AbstractVulkanTest {
 	void before() {
 		// Create image descriptor
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-				.format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM)
+				.format(FORMAT)
 				.extents(new Image.Extents(3, 4))
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.build();
@@ -56,19 +56,19 @@ public class ViewTest extends AbstractVulkanTest {
 		assertEquals(new Handle(new Pointer(1)), view.handle());
 		assertEquals(dev, view.device());
 		assertEquals(image, view.image());
-		assertEquals(null, view.clear());
+		assertEquals(ClearValue.NONE, view.clear());
 	}
 
 	@Test
 	void clear() {
-		final ClearValue clear = ClearValue.of(Colour.WHITE);
+		final ClearValue clear = new ColourClearValue(Colour.WHITE);
 		view.clear(clear);
 		assertEquals(clear, view.clear());
 	}
 
 	@Test
 	void clearInvalidAspect() {
-		assertThrows(IllegalArgumentException.class, () -> view.clear(ClearValue.depth(1)));
+		assertThrows(IllegalArgumentException.class, () -> view.clear(ClearValue.DEPTH));
 	}
 
 	@Test
@@ -112,7 +112,7 @@ public class ViewTest extends AbstractVulkanTest {
 		@Test
 		void build() {
 			// Init clear value
-			final ClearValue clear = ClearValue.of(Colour.WHITE);
+			final ClearValue clear = new ColourClearValue(Colour.WHITE);
 
 			// Build view
 			view = builder
@@ -136,7 +136,7 @@ public class ViewTest extends AbstractVulkanTest {
 			assertEquals(image.handle(), info.image);
 			assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_2D, info.viewType);
 			assertEquals(0, info.flags);
-			assertEquals(VkFormat.VK_FORMAT_B8G8R8A8_UNORM, info.format);
+			assertEquals(FORMAT, info.format);
 
 			// Check component mapping
 			assertNotNull(info.components);

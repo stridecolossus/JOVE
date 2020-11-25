@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
@@ -17,6 +18,8 @@ import com.sun.jna.Pointer;
  * @author Sarge
  */
 public abstract class AbstractVulkanTest {
+	public static final VkFormat FORMAT = VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT;
+
 	protected MockReferenceFactory factory;
 	protected LogicalDevice dev;
 	protected VulkanLibrary lib;

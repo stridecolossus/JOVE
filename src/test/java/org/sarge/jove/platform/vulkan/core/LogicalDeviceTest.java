@@ -15,9 +15,11 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Percentile;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -66,7 +68,7 @@ public class LogicalDeviceTest {
 
 		// Create logical device
 		device = new LogicalDevice.Builder(parent)
-				.queues(family, List.of(0.1f, 0.2f))
+				.queues(family, List.of(Percentile.HALF, Percentile.ONE))
 				.extension("ext")
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.features(new DeviceFeatures(features))
@@ -79,6 +81,7 @@ public class LogicalDeviceTest {
 		assertEquals(parent, device.parent());
 	}
 
+	@DisplayName("Query device for all available queues")
 	@Test
 	void queues() {
 		// Check queues
@@ -97,6 +100,7 @@ public class LogicalDeviceTest {
 		assertNotNull(queue.handle());
 	}
 
+	@DisplayName("Query device for all queues in the given family")
 	@Test
 	void queuesFamily() {
 		final var queues = device.queues(family);
@@ -104,6 +108,7 @@ public class LogicalDeviceTest {
 		assertEquals(2, queues.size());
 	}
 
+	@DisplayName("Query device for the first queue in the given family")
 	@Test
 	void queue() {
 		final Queue queue = device.queue(family);
@@ -111,6 +116,7 @@ public class LogicalDeviceTest {
 		assertEquals(family, queue.family());
 	}
 
+	@DisplayName("Wait for queue to complete execution")
 	@Test
 	void queueWaitIdle() {
 		final Queue queue = device.queues().get(family).get(0);
@@ -118,6 +124,14 @@ public class LogicalDeviceTest {
 		verify(lib).vkQueueWaitIdle(queue.handle());
 	}
 
+	@DisplayName("Wait for all queues to complete execution")
+	@Test
+	void waitIdle() {
+		device.waitIdle();
+		verify(lib).vkDeviceWaitIdle(device.handle());
+	}
+
+	@DisplayName("Check features supported by the device")
 	@Test
 	void features() {
 		final DeviceFeatures features = device.features();
@@ -125,17 +139,13 @@ public class LogicalDeviceTest {
 		assertEquals(true, features.isSupported(FEATURE));
 	}
 
-	@Test
-	void waitIdle() {
-		device.waitIdle();
-		verify(lib).vkDeviceWaitIdle(device.handle());
-	}
-
+	@DisplayName("Create a memory allocator for this device")
 	@Test
 	void allocator() {
 		assertNotNull(device.allocator());
 	}
 
+	@DisplayName("Create a sempahore for this device")
 	@Test
 	void semaphore() {
 		// Create semaphore
@@ -167,6 +177,7 @@ public class LogicalDeviceTest {
 			builder = new LogicalDevice.Builder(parent);
 		}
 
+		@DisplayName("Duplicate queues should be aggregated")
 		@Test
 		void duplicate() {
 			builder.queue(family);
@@ -175,26 +186,25 @@ public class LogicalDeviceTest {
 			assertEquals(1, device.queues(family).size());
 		}
 
-		@Test
-		void invalidPriority() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, List.of(2f)));
-		}
-
+		@DisplayName("Cannot request more queues than available")
 		@Test
 		void invalidQueueCount() {
 			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, 3));
 		}
 
+		@DisplayName("Cannot request a queue from a different device")
 		@Test
 		void invalidQueueFamily() {
 			assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(Queue.Family.class)));
 		}
 
+		@DisplayName("Cannot request an extension that is not available")
 		@Test
 		void invalidExtension() {
 			assertThrows(IllegalArgumentException.class, () -> builder.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS));
 		}
 
+		@DisplayName("Cannot request features that are not available")
 		@Test
 		void invalidSupportedFeature() {
 			final var required = new VkPhysicalDeviceFeatures();

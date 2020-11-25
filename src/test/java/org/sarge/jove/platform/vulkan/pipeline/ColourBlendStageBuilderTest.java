@@ -39,6 +39,7 @@ public class ColourBlendStageBuilderTest {
 
 		// Check descriptor
 		assertNotNull(info);
+		assertEquals(0, info.flags);
 		assertEquals(VulkanBoolean.TRUE, info.logicOpEnable);
 		assertEquals(VkLogicOp.VK_LOGIC_OP_COPY, info.logicOp);
 		assertArrayEquals(CONSTANTS, info.blendConstants);

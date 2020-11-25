@@ -15,13 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkAccessFlag;
-import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.Queue;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
@@ -47,10 +48,19 @@ public class BarrierTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Barrier.Builder();
-			descriptor = new Image.Descriptor.Builder().format(VkFormat.VK_FORMAT_B8G8R8A8_UNORM).extents(new Image.Extents(3, 4)).build();
+			// Create image descriptor
+			descriptor = new Image.Descriptor.Builder()
+					.format(AbstractVulkanTest.FORMAT)
+					.extents(new Image.Extents(3, 4))
+					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+					.build();
+
+			// Create image
 			image = mock(Image.class);
 			when(image.descriptor()).thenReturn(descriptor);
+
+			// Create barrier
+			builder = new Barrier.Builder();
 		}
 
 		@Test
