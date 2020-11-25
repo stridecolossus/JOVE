@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
@@ -27,6 +28,7 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor;
+import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.core.Image.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -47,6 +49,8 @@ public class ImageTest extends AbstractVulkanTest {
 				.format(FORMAT)
 				.extents(new Image.Extents(3, 4))
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.mipLevels(2)
+				.arrayLayers(3)
 				.build();
 
 		// Create image
@@ -75,26 +79,26 @@ public class ImageTest extends AbstractVulkanTest {
 		@DisplayName("Image must have at least aspect")
 		@Test
 		void emptyAspects() {
-			assertThrows(IllegalArgumentException.class, "must have at least one aspect", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), Set.of()));
+			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), Set.of(), 1, 1));
 		}
 
 		@DisplayName("Image aspects must be a valid combination")
 		@Test
 		void invalidAspects() {
 			final var aspects = Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT);
-			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), aspects));
+			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), aspects, 1, 1));
 		}
 
 		@DisplayName("2D image must have depth of one")
 		@Test
 		void invalidExtentsDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4, 5), COLOUR));
+			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 1));
 		}
 
 		@DisplayName("2D image must have height and depth of one")
 		@Test
 		void invalidExtentsHeightDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_1D, FORMAT, new Extents(3, 4, 5), COLOUR));
+			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_1D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 1));
 		}
 	}
 
@@ -256,6 +260,60 @@ public class ImageTest extends AbstractVulkanTest {
 					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT);
 
 			assertThrows(IllegalArgumentException.class, "must be one for a 3D image", () -> builder.build());
+		}
+	}
+
+	@Nested
+	class SubResourceBuilderTests {
+		private SubResourceBuilder<Object> builder;
+
+		@BeforeEach
+		void before() {
+			builder = descriptor.builder(new Object());
+		}
+
+		@Test
+		void constructor() {
+			assertNotNull(builder);
+		}
+
+		@Test
+		void mipLevelInvalid() {
+			assertThrows(IllegalArgumentException.class, "mip level", () -> builder.mipLevel(3));
+		}
+
+		@Test
+		void baseArrayLayerInvalid() {
+			assertThrows(IllegalArgumentException.class, "base array layer", () -> builder.baseArrayLayer(4));
+		}
+
+		@Test
+		void build() {
+			assertNotNull(builder.build());
+		}
+
+		@Test
+		void populate() {
+			// Configure sub-resource
+			builder.mipLevel(1);
+			builder.baseArrayLayer(2);
+
+			// Populate range
+			final var range = new VkImageSubresourceRange();
+			builder.populate(range);
+			assertEquals(1, range.baseMipLevel);
+			assertEquals(2, range.baseArrayLayer);
+			assertEquals(SubResourceBuilder.REMAINING, range.levelCount);
+			assertEquals(SubResourceBuilder.REMAINING, range.layerCount);
+			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), range.aspectMask);
+
+			// Populate layers
+			final var layers = new VkImageSubresourceLayers();
+			builder.populate(layers);
+			assertEquals(1, layers.mipLevel);
+			assertEquals(2, layers.baseArrayLayer);
+			assertEquals(SubResourceBuilder.REMAINING, range.layerCount);
+			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), layers.aspectMask);
 		}
 	}
 }

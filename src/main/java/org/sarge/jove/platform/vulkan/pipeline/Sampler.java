@@ -24,6 +24,8 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Sampler extends AbstractVulkanObject {
+//  TODO - public static final float VK_LOD_CLAMP_NONE = 1000.0f;
+
 	/**
 	 * Helper - Determines the number of mipmap levels for the given image dimensions.
 	 * @param dim Image dimensions
@@ -245,9 +247,13 @@ public class Sampler extends AbstractVulkanObject {
 			info.magFilter = magFilter;
 			info.minFilter = minFilter;
 
-			// Init address mode
-			if((border == null) && Arrays.stream(addressMode).anyMatch(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER::equals)) {
-				throw new IllegalArgumentException("Border colour not specified for addressing mode");
+			// Init addressing modes
+			if(border == null) {
+				for(VkSamplerAddressMode mode : addressMode) {
+					if(mode == VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER) {
+						throw new IllegalArgumentException("Border colour must be specified for clamp-to-border address mode");
+					}
+				}
 			}
 			info.addressModeU = addressMode[0];
 			info.addressModeV = addressMode[1];

@@ -54,17 +54,9 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	 */
 	String INTEGRATION_TEST = "vulkan-integration-test";
 
+// TODO
 //    public static final int
-//        VK_MAX_PHYSICAL_DEVICE_NAME_SIZE = 256,
-//        VK_UUID_SIZE                     = 16,
-//        VK_MAX_EXTENSION_NAME_SIZE       = 256,
-//        VK_MAX_DESCRIPTION_SIZE          = 256,
-//        VK_MAX_MEMORY_TYPES              = 32,
-//        VK_MAX_MEMORY_HEAPS              = 16,
-//        VK_REMAINING_MIP_LEVELS          = (~0),
-//        VK_REMAINING_ARRAY_LAYERS        = (~0),
 //        VK_ATTACHMENT_UNUSED             = (~0),
-//    public static final float VK_LOD_CLAMP_NONE = 1000.0f;
 //    public static final long VK_WHOLE_SIZE = (~0L);
 
 	/**

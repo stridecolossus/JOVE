@@ -361,34 +361,34 @@ public class Swapchain extends AbstractVulkanObject {
 			info.pQueueFamilyIndices = null;
 			info.oldSwapchain = null;
 
-			// Allocate swap-chain
+			// Create swapchain
 			final VulkanLibrary lib = dev.library();
 			final ReferenceFactory factory = lib.factory();
 			final PointerByReference chain = factory.pointer();
 			check(lib.vkCreateSwapchainKHR(dev.handle(), info, null, chain));
 
-			// Get swap-chain images
+			// Retrieve swapchain images
 			final VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
 			final var handles = VulkanFunction.enumerate(func, lib, factory::pointers);
 
-			// Init image descriptor
-			final Image.Extents extents = new Image.Extents(info.imageExtent.width, info.imageExtent.height);
-			final Image.Descriptor descriptor = new Image.Descriptor(VkImageType.VK_IMAGE_TYPE_2D, info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
-
-			// Init view builder
-			final View.Builder builder = new View.Builder(dev);
-			builder.clear(clear);
+			// Init swapchain image descriptor
+			final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+					.format(info.imageFormat)
+					.extents(new Image.Extents(info.imageExtent.width, info.imageExtent.height))
+					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+					.build();
 
 			// Create image views
 			final var views = Arrays
 					.stream(handles)
 					.map(Handle::new)
 					.map(image -> new SwapChainImage(image, descriptor))
-					.map(builder::image)
+					.map(image -> new View.Builder(dev, image))
+					.map(builder -> builder.clear(clear))
 					.map(View.Builder::build)
 					.collect(toList());
 
-			// Create swap-chain
+			// Create domain object
 			return new Swapchain(chain.getValue(), dev, info.imageFormat, views);
 		}
 

@@ -16,9 +16,9 @@ import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.core.Image;
+import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
-import org.sarge.jove.platform.vulkan.util.ImageSubResourceBuilder;
 import org.sarge.jove.util.Check;
 
 /**
@@ -101,11 +101,11 @@ public class Barrier extends ImmediateCommand {
 		 */
 		public class ImageBarrierBuilder {
 			private final Image image;
+			private final SubResourceBuilder<ImageBarrierBuilder> subresource;
 			private final Set<VkAccessFlag> src = new HashSet<>();
 			private final Set<VkAccessFlag> dest = new HashSet<>();
 			private VkImageLayout oldLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
 			private VkImageLayout newLayout;
-			private final ImageSubResourceBuilder<ImageBarrierBuilder> subresource = new ImageSubResourceBuilder<>(this);
 
 			/**
 			 * Constructor.
@@ -113,7 +113,7 @@ public class Barrier extends ImmediateCommand {
 			 */
 			ImageBarrierBuilder(Image image) {
 				this.image = notNull(image);
-				image.descriptor().aspects().forEach(subresource::aspect); // TODO
+				this.subresource = image.descriptor().builder(this);
 			}
 
 			/**
@@ -153,12 +153,11 @@ public class Barrier extends ImmediateCommand {
 			}
 
 			/**
-			 * @return Builder for the image sub-resource range
+			 * @return Image sub-resource builder for this barrier
 			 */
-			public ImageSubResourceBuilder<ImageBarrierBuilder> subresource() {
+			public SubResourceBuilder<ImageBarrierBuilder> subresource() {
 				return subresource;
 			}
-			// TODO - check vs parent image
 
 			/**
 			 * Populates an image barrier descriptor.

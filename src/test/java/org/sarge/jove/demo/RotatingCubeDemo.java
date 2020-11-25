@@ -77,9 +77,8 @@ public class RotatingCubeDemo {
 				.submit(pool);
 
 		// Copy staging to texture
-		new ImageCopyCommand.Builder()
+		new ImageCopyCommand.Builder(texture)
 				.buffer(staging)
-				.image(texture)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 				.build()
 				.submit(pool);
@@ -100,7 +99,7 @@ public class RotatingCubeDemo {
 				.build()
 				.submit(pool);
 
-		return View.of(dev, texture);
+		return new View.Builder(dev, texture).build();
 	}
 
 	public static void main(String[] args) throws Exception {

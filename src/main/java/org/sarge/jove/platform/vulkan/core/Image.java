@@ -1,14 +1,17 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
+import static org.sarge.jove.util.Check.zeroOrMore;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
@@ -100,28 +103,43 @@ public interface Image extends NativeObject {
 	/**
 	 * Descriptor for an image.
 	 */
-	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) {
+	final class Descriptor {
+		private static final Collection<Set<VkImageAspectFlag>> VALID_ASPECTS = List.of(
+				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT),
+				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT),
+				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT)
+		);
+
+		private final VkImageType type;
+		private final VkFormat format;
+		private final Extents extents;
+		private final Set<VkImageAspectFlag> aspects;
+		private final int levels;
+		private final int layers;
+
 		/**
 		 * Constructor.
 		 * @param type			Image type
 		 * @param format		Format
 		 * @param extents		Extents
 		 * @param aspects		Image aspect(s)
-		 * @throws IllegalArgumentException unless at least one image aspect has been specified
-		 * @throws IllegalArgumentException if the combination of image aspects is not valid
+		 * @param levels		Number of mip levels
+		 * @param layers		Number of array layers
+		 * @throws IllegalArgumentException if the image aspects is empty or is an invalid combination
 		 * @throws IllegalArgumentException if the extents are invalid for the given image type
 		 */
-		public Descriptor {
+		public Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects, int levels, int layers) {
 			this.type = notNull(type);
 			this.format = notNull(format);
 			this.extents = notNull(extents);
-			this.aspects = Set.copyOf(aspects);
-			validateTypeExtents();
-			validateAspects();
-			// TODO - validate format against aspects, e.g. D32_FLOAT is not stencil, D32_FLOAT_S8_UINT has stencil
+			this.aspects = Set.copyOf(notEmpty(aspects));
+			this.levels = oneOrMore(levels);
+			this.layers = oneOrMore(layers);
+			validate();
 		}
 
-		private void validateTypeExtents() {
+		private void validate() {
+			// Validate extents
 			final boolean valid = switch(type) {
 				case VK_IMAGE_TYPE_1D -> (extents.height == 1) && (extents.depth == 1);
 				case VK_IMAGE_TYPE_2D -> extents.depth == 1;
@@ -130,17 +148,61 @@ public interface Image extends NativeObject {
 			if(!valid) {
 				throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
 			}
+
+			// Validate image aspects
+			if(!VALID_ASPECTS.contains(aspects)) throw new IllegalArgumentException("Invalid image aspects: " + aspects);
+
+			// TODO - validate format against aspects, e.g. D32_FLOAT is not stencil, D32_FLOAT_S8_UINT has stencil
 		}
 
-		private static final Collection<Set<VkImageAspectFlag>> VALID_ASPECTS = List.of(
-				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT),
-				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT),
-				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT)
-		);
+		/**
+		 * @return Type of this image
+		 */
+		public VkImageType type() {
+			return type;
+		}
 
-		private void validateAspects() {
-			if(aspects.isEmpty()) throw new IllegalArgumentException("Image must have at least one aspect");
-			if(!VALID_ASPECTS.contains(aspects)) throw new IllegalArgumentException("Invalid image aspects: " + aspects);
+		/**
+		 * @return Image format
+		 */
+		public VkFormat format() {
+			return format;
+		}
+
+		/**
+		 * @return Image extents
+		 */
+		public Extents extents() {
+			return extents;
+		}
+
+		/**
+		 * @return Image aspect(s)
+		 */
+		public Set<VkImageAspectFlag> aspects() {
+			return aspects;
+		}
+
+		/**
+		 * Creates a nested sub-resource range builder for this image descriptor.
+		 * @param <T> Parent builder type
+		 * @param parent Parent builder
+		 * @return New sub-resource builder
+		 */
+		public <T> SubResourceBuilder<T> builder(T parent) {
+			return new SubResourceBuilder<>(parent);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append("type", type)
+					.append("format", format)
+					.append("extent", extents)
+					.append("aspects", aspects)
+					.append("mip-levels", levels)
+					.append("array-layers", layers)
+					.build();
 		}
 
 		/**
@@ -151,10 +213,12 @@ public interface Image extends NativeObject {
 			private VkFormat format;
 			private Extents extents;
 			private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+			private int levels = 1;
+			private int layers = 1;
 
 			/**
-			 * Sets the image type.
-			 * @param type Image type (default is {@link VkImageType#VK_IMAGE_TYPE_2D})
+			 * Sets the image type (default is {@link VkImageType#VK_IMAGE_TYPE_2D}).
+			 * @param type Image type
 			 */
 			public Builder type(VkImageType type) {
 				this.type = notNull(type);
@@ -184,20 +248,157 @@ public interface Image extends NativeObject {
 			 * @param aspect Image aspect
 			 */
 			public Builder aspect(VkImageAspectFlag aspect) {
-				Check.notNull(aspect);
-				aspects.add(aspect);
+				aspects.add(notNull(aspect));
+				return this;
+			}
+
+			/**
+			 * Sets the number of mip levels (default is one).
+			 * @param levels Number of mip levels
+			 */
+			public Builder mipLevels(int levels) {
+				this.levels = oneOrMore(levels);
+				return this;
+			}
+
+			/**
+			 * Sets the number of array levels (default is one).
+			 * @param levels Number of array levels
+			 */
+			public Builder arrayLayers(int layers) {
+				this.layers = oneOrMore(layers);
 				return this;
 			}
 
 			/**
 			 * Constructs this descriptor.
 			 * @return New image descriptor
-			 * @throws IllegalArgumentException if the format or extents are not specified
 			 */
 			public Descriptor build() {
-				Check.notNull(format);
-				Check.notNull(extents);
-				return new Descriptor(type, format, extents, aspects);
+				return new Descriptor(type, format, extents, aspects, levels, layers);
+			}
+		}
+
+		/**
+		 * Nested builder for an image sub-resource range <b>or</b> layers.
+		 * <p>
+		 * The aspect(s) of the sub-resource view are initialised to those of this image if not explicitly configured.
+		 * <p>
+		 * @param <T> Parent builder type
+		 */
+		public class SubResourceBuilder<T> {
+			/**
+			 * Special case identifier indicating the <i>remaining</i> number of mip levels or array layers.
+			 */
+			public static final int REMAINING = (~0);
+
+			private final T parent;
+			private final Set<VkImageAspectFlag> aspectMask = new HashSet<>();
+			private int mipLevel;
+			private int levelCount = REMAINING;
+			private int baseArrayLayer;
+			private int layerCount = REMAINING;
+
+			private SubResourceBuilder(T parent) {
+				this.parent = notNull(parent);
+			}
+
+			/**
+			 * Adds an image aspect to this range.
+			 * @param aspect Image aspect
+			 */
+			public SubResourceBuilder<T> aspect(VkImageAspectFlag aspect) {
+				aspectMask.add(notNull(aspect));
+				return this;
+			}
+
+			/**
+			 * Sets the mip level (or the {@code baseMipLevel} field for a {@link VkImageSubresourceRange}).
+			 * @param mipLevel Mip level
+			 * @throws IllegalArgumentException if the mip level exceeds that of the parent image
+			 */
+			public SubResourceBuilder<T> mipLevel(int mipLevel) {
+				if(mipLevel > levels) {
+					throw new IllegalArgumentException(String.format("Sub-resource mip level %d cannot exceed number of image mip levels %d", mipLevel, levels));
+				}
+				this.mipLevel = zeroOrMore(mipLevel);
+				return this;
+			}
+
+			/**
+			 * Sets the number of mip levels accessible to this view.
+			 * @param levelCount Number of mip levels
+			 */
+			public SubResourceBuilder<T> levelCount(int levelCount) {
+				// TODO - validate
+				this.levelCount = oneOrMore(levelCount);
+				return this;
+			}
+
+			/**
+			 * Sets the first array layer accessible to this view.
+			 * @param baseArrayLayer Base array layer
+			 * @throws IllegalArgumentException if the array layer exceeds that of the parent image
+			 */
+			public SubResourceBuilder<T> baseArrayLayer(int baseArrayLayer) {
+				if(baseArrayLayer > layers) {
+					throw new IllegalArgumentException(String.format("Sub-resource base array layer %d cannot exceed number of image layers %d", baseArrayLayer, layers));
+				}
+				this.baseArrayLayer = zeroOrMore(baseArrayLayer);
+				return this;
+			}
+
+			/**
+			 * Sets the number of array layers accessible to this view.
+			 * @param layerCount Number of array layers
+			 */
+			public SubResourceBuilder<T> layerCount(int layerCount) {
+				// TODO - validate
+				this.layerCount = oneOrMore(layerCount);
+				return this;
+			}
+
+			/**
+			 * Populates an image sub-resource range descriptor
+			 * @param range Range descriptor
+			 */
+			public void populate(VkImageSubresourceRange range) {
+				range.aspectMask = mask();
+				range.baseMipLevel = mipLevel;
+				range.levelCount = levelCount;
+				range.baseArrayLayer = baseArrayLayer;
+				range.layerCount = layerCount;
+			}
+
+			/**
+			 * Populates an image sub-resource layers descriptor
+			 * @return Layers descriptor
+			 */
+			public void populate(VkImageSubresourceLayers layers) {
+				layers.aspectMask = mask();
+				layers.mipLevel = mipLevel;
+				layers.baseArrayLayer = baseArrayLayer;
+				layers.layerCount = layerCount;
+			}
+
+			/**
+			 * Initialises the aspect mask to the parent image if not explicitly configured by the client.
+			 */
+			private int mask() {
+				if(aspectMask.isEmpty()) {
+					return IntegerEnumeration.mask(aspects);
+				}
+				else {
+					return IntegerEnumeration.mask(aspectMask);
+				}
+			}
+
+			/**
+			 * Constructs this image sub-resource.
+			 * @return Parent builder
+			 */
+			public T build() {
+				return parent;
 			}
 		}
 	}
@@ -236,7 +437,7 @@ public interface Image extends NativeObject {
 	}
 
 	/**
-	 * Builder for an image.
+	 * Builder for a {@link DefaultImage}.
 	 */
 	class Builder {
 		private final LogicalDevice dev;
@@ -248,6 +449,7 @@ public interface Image extends NativeObject {
 
 		/**
 		 * Constructor.
+		 * @param dev Logical device
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
@@ -385,6 +587,7 @@ public interface Image extends NativeObject {
 		 * @return New image
 		 * @throws VulkanException if the image cannot be created
 		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#VK_IMAGE_TYPE_3D} image
+		 * @throws VulkanException if the image cannot be created
 		 * @see Descriptor#Descriptor(VkImageType, VkFormat, Extents, Set)
 		 */
 		public Image build() {
@@ -394,7 +597,7 @@ public interface Image extends NativeObject {
 			if((info.imageType == VkImageType.VK_IMAGE_TYPE_3D) && (info.arrayLayers != 1)) throw new IllegalArgumentException("Array layers must be one for a 3D image");
 
 			// Create image descriptor
-			final Descriptor descriptor = new Descriptor(info.imageType, info.format, extents, aspects);
+			final Descriptor descriptor = new Descriptor(info.imageType, info.format, extents, aspects, info.mipLevels, info.arrayLayers);
 
 			// Complete create descriptor
 			extents.populate(info.extent);

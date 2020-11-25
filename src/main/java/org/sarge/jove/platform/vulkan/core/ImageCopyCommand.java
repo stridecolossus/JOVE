@@ -9,8 +9,8 @@ import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkOffset3D;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
-import org.sarge.jove.platform.vulkan.util.ImageSubResourceBuilder;
 import org.sarge.jove.util.Check;
 
 /**
@@ -56,18 +56,18 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 */
 	public static class Builder {
 		private final VkBufferImageCopy region = new VkBufferImageCopy();
-		private final ImageSubResourceBuilder<Builder> subresource = new ImageSubResourceBuilder<>(this);
+		private final SubResourceBuilder<Builder> subresource;
 		private VertexBuffer buffer;
 		private Image image;
 		private VkImageLayout layout;
 
 		/**
-		 * Sets the image.
+		 * Constructor.
 		 * @param image Image
 		 */
-		public Builder image(Image image) {
+		public Builder(Image image) {
 			this.image = notNull(image);
-			return this;
+			this.subresource = image.descriptor().builder(this);
 		}
 
 		/**
@@ -98,9 +98,9 @@ public class ImageCopyCommand extends ImmediateCommand {
 		}
 
 		/**
-		 * @return Builder for the image sub-resource layers
+		 * @return Builder for the image sub-resource
 		 */
-		public ImageSubResourceBuilder<Builder> subresource() {
+		public SubResourceBuilder<Builder> subresource() {
 			return subresource;
 		}
 
@@ -115,14 +115,8 @@ public class ImageCopyCommand extends ImmediateCommand {
 			if(buffer == null) throw new IllegalArgumentException("Data buffer not specified");
 			if(layout == null) throw new IllegalArgumentException("Image layout not specified");
 
-			// Init sub-resource layers
-			// TODO...
-			image.descriptor().aspects().forEach(subresource::aspect); // TODO
-			if(subresource.aspectCount() != 1) throw new IllegalArgumentException("Expected exactly one image aspect");
+			// Populate descriptor
 			subresource.populate(region.imageSubresource);
-			// ...TODO
-
-			// Complete descriptor
 			image.descriptor().extents().populate(region.imageExtent);
 			region.imageOffset = new VkOffset3D();
 

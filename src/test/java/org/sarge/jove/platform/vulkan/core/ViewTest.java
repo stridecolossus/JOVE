@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.core.Image.DefaultImage;
+import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -72,13 +73,6 @@ public class ViewTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void of() {
-		final View result = View.of(dev, image);
-		assertEquals(dev, result.device());
-		assertEquals(image, result.image());
-	}
-
-	@Test
 	void type() {
 		assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_1D, View.type(VkImageType.VK_IMAGE_TYPE_1D));
 		assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_2D, View.type(VkImageType.VK_IMAGE_TYPE_2D));
@@ -106,19 +100,14 @@ public class ViewTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			builder = new View.Builder(dev);
+			builder = new View.Builder(dev, image);
 		}
 
 		@Test
 		void build() {
-			// Init clear value
-			final ClearValue clear = new ColourClearValue(Colour.WHITE);
-
 			// Build view
-			view = builder
-					.image(image)
-					.clear(clear)
-					.build();
+			final ClearValue clear = new ColourClearValue(Colour.WHITE);
+			view = builder.clear(clear).build();
 
 			// Check view
 			assertNotNull(view);
@@ -149,14 +138,9 @@ public class ViewTest extends AbstractVulkanTest {
 			assertNotNull(info.subresourceRange);
 			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), info.subresourceRange.aspectMask);
 			assertEquals(0, info.subresourceRange.baseMipLevel);
-			assertEquals(1, info.subresourceRange.levelCount);
+			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.levelCount);
 			assertEquals(0, info.subresourceRange.baseArrayLayer);
-			assertEquals(1, info.subresourceRange.layerCount);
-		}
-
-		@Test
-		void buildRequiresImage() {
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.layerCount);
 		}
 	}
 }

@@ -77,9 +77,8 @@ public class ModelDemo {
 				.submit(pool);
 
 		// Copy staging to texture
-		new ImageCopyCommand.Builder()
+		new ImageCopyCommand.Builder(texture)
 				.buffer(staging)
-				.image(texture)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 				.build()
 				.submit(pool);
@@ -101,7 +100,7 @@ public class ModelDemo {
 				.submit(pool);
 
 		// Create view
-		return View.of(dev, texture);
+		return new View.Builder(dev, texture).build();
 	}
 
 	private static VertexBuffer loadBuffer(LogicalDevice dev, ByteBuffer bb, VkBufferUsageFlag usage, Command.Pool pool) {
@@ -129,26 +128,24 @@ public class ModelDemo {
 	}
 
 	private static View depth(LogicalDevice dev, Image.Extents extents) {
-			// Create depth buffer image
-			final Image depth = new Image.Builder(dev)
+		// Create depth buffer image
+		final Image depth = new Image.Builder(dev)
+			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
+			.extents(extents)
+			.format(VkFormat.VK_FORMAT_D32_SFLOAT)
+			.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
+			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			.build();
+
+		// Create view
+		final View view = new View.Builder(dev, depth)
+			.subresource()
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
-				.extents(extents)
-				.format(VkFormat.VK_FORMAT_D32_SFLOAT)
-				.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
-				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-				.build();
+				.build()
+			.build();
 
-			// Create view
-			final View view = new View.Builder(dev)
-					.image(depth)
-					.subresource()
-						.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
-						.build()
-					.build();
-
-			return view;
-
+		return view;
 	}
 
 	public static void main(String[] args) throws Exception {

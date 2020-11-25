@@ -83,14 +83,13 @@ public class ImageCopyCommandTest {
 
 		@BeforeEach
 		void before() {
-			builder = new ImageCopyCommand.Builder();
+			builder = new ImageCopyCommand.Builder(image);
 		}
 
 		@Test
 		void build() {
 			// Build copy command
 			final Command copy = builder
-					.image(image)
 					.buffer(buffer)
 					.layout(LAYOUT)
 					.build();
@@ -129,20 +128,14 @@ public class ImageCopyCommandTest {
 		}
 
 		@Test
-		void buildRequiresImage() {
-			builder.buffer(buffer).layout(LAYOUT);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@Test
 		void buildRequiresBuffer() {
-			builder.image(image).layout(LAYOUT);
+			builder.layout(LAYOUT);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
 		@Test
 		void buildRequiresImageLayout() {
-			builder.image(image).buffer(buffer);
+			builder.buffer(buffer);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 	}

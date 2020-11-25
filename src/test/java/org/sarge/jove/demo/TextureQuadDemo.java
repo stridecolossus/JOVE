@@ -73,9 +73,8 @@ public class TextureQuadDemo {
 				.submit(pool);
 
 		// Copy staging to texture
-		new ImageCopyCommand.Builder()
+		new ImageCopyCommand.Builder(texture)
 				.buffer(staging)
-				.image(texture)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 				.build()
 				.submit(pool);
@@ -97,9 +96,7 @@ public class TextureQuadDemo {
 				.build()
 				.submit(pool);
 
-		final View view = View.of(dev, texture);
-
-		return view;
+		return new View.Builder(dev, texture).build();
 	}
 
 	public static void main(String[] args) throws Exception {

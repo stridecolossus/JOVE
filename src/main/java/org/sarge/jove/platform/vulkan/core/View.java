@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.util.ImageSubResourceBuilder;
+import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -21,16 +21,6 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class View extends AbstractVulkanObject {
-	/**
-	 * Convenience factory that creates a simple view of the given image.
-	 * @param dev		Logical device
-	 * @param image		Image
-	 * @return New view of the given image
-	 */
-	public static View of(LogicalDevice dev, Image image) {
-		return new Builder(dev).image(image).build();
-	}
-
 	/**
 	 * Helper - Maps an image type to the corresponding view type.
 	 * @param type Image type
@@ -115,27 +105,21 @@ public class View extends AbstractVulkanObject {
 		}
 
 		private final LogicalDevice dev;
-		private Image image;
+		private final Image image;
+		private final SubResourceBuilder<Builder> subresource;
+
 		private VkImageViewType type;
 		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
-		private final ImageSubResourceBuilder<Builder> subresource = new ImageSubResourceBuilder<>(this);
 		private ClearValue clear;
 
 		/**
 		 * Constructor.
 		 * @param dev Logical device
 		 */
-		public Builder(LogicalDevice dev) {
+		public Builder(LogicalDevice dev, Image image) {
 			this.dev = notNull(dev);
-		}
-
-		/**
-		 * Sets the image descriptor for this view.
-		 * @param descriptor Image descriptor
-		 */
-		public Builder image(Image image) {
 			this.image = notNull(image);
-			return this;
+			this.subresource = image.descriptor().builder(this);
 		}
 
 		/**
@@ -166,9 +150,9 @@ public class View extends AbstractVulkanObject {
 		}
 
 		/**
-		 * @return Image sub-resource range builder
+		 * @return Sub-resource builder for this view
 		 */
-		public ImageSubResourceBuilder<Builder> subresource() {
+		public SubResourceBuilder<Builder> subresource() {
 			return subresource;
 		}
 
@@ -185,9 +169,6 @@ public class View extends AbstractVulkanObject {
 			if(type == null) {
 				type = View.type(image.descriptor().type());
 			}
-
-			// TODO
-			image.descriptor().aspects().forEach(subresource::aspect); // TODO
 
 			// Build view descriptor
 			final VkImageViewCreateInfo info = new VkImageViewCreateInfo();

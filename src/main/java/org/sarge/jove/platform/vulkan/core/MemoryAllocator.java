@@ -95,6 +95,10 @@ public class MemoryAllocator {
 
 	// TODO - stats
 
+	// TODO - are these needed?
+	//  VK_MAX_MEMORY_TYPES              = 32,
+	//  VK_MAX_MEMORY_HEAPS              = 16,
+
 	@Override
 	public String toString() {
 		// TODO - stats
