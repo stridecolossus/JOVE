@@ -60,7 +60,7 @@ class Frustum implements BoundingVolume {
 	@Override
 	public boolean intersects(Point centre, float radius) {
 		for(int n = 0; n < planes.length; ++n) {
-			if(Math.abs(planes[n].distance(centre)) > radius) {
+			if(Math.abs(planes[n].distanceTo(centre)) > radius) {
 				return false;
 			}
 		}

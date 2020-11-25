@@ -417,7 +417,7 @@ public interface Image extends NativeObject {
 		 * @param mem			Internal memory
 		 * @param dev			Logical device
 		 */
-		protected DefaultImage(Handle handle, Descriptor descriptor, Pointer mem, LogicalDevice dev) {
+		protected DefaultImage(Pointer handle, Descriptor descriptor, Pointer mem, LogicalDevice dev) {
 			super(handle, dev, dev.library()::vkDestroyImage);
 			this.descriptor = notNull(descriptor);
 			this.mem = notNull(mem);
@@ -605,22 +605,19 @@ public interface Image extends NativeObject {
 
 			// Allocate image
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = lib.factory().pointer();
-			check(lib.vkCreateImage(dev.handle(), info, null, ref));
-
-			// Create image descriptor
-			final Handle handle = new Handle(ref.getValue());
+			final PointerByReference handle = lib.factory().pointer();
+			check(lib.vkCreateImage(dev.handle(), info, null, handle));
 
 			// Retrieve image memory requirements
 			final var reqs = new VkMemoryRequirements();
-			lib.vkGetImageMemoryRequirements(dev.handle(), handle, reqs);
+			lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate image memory
 			final Pointer mem = allocation.init(reqs).allocate();
-			check(lib.vkBindImageMemory(dev.handle(), handle, mem, 0));
+			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem, 0));
 
 			// Create image
-			return new DefaultImage(handle, descriptor, mem, dev);
+			return new DefaultImage(handle.getValue(), descriptor, mem, dev);
 		}
 	}
 }

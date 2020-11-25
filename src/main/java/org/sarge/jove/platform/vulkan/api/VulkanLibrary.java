@@ -54,11 +54,6 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	 */
 	String INTEGRATION_TEST = "vulkan-integration-test";
 
-// TODO
-//    public static final int
-//        VK_ATTACHMENT_UNUSED             = (~0),
-//    public static final long VK_WHOLE_SIZE = (~0L);
-
 	/**
 	 * Function to retrieve the available extensions for this Vulkan implementation.
 	 */

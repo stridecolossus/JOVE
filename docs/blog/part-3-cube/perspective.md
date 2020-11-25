@@ -901,7 +901,8 @@ The above should give us this:
 
 ### Animation
 
-To animate the cube we remove the static rotation and add the following to the render loop to update the matrix on every frame:
+To animate the cube we need some sort of loop to render multiple frames and some logic to modify the view matrix over time.
+For the moment we bodge a temporary time-based loop that applies the matrix and exits the loop after a couple of rotations:
 
 ```java
 long period = 5000;
@@ -922,19 +923,28 @@ while(true) {
     uniform.load(rot, rot.length(), 2 * rot.length());
 
     // Acquire next frame
-    int index = chain.acquire();
+    int index = swapchain.acquire();
+
+    // Render frame
+    new Work.Builder()
+        .add(render)
+        .build()
+        .submit();
     
-    ...
+    // TODO
+    presentQueue.waitIdle();
 }
 ```
 
-The code to calculate the _angle_ interpolates a 5 second period onto the unit circle.
+Notes:
+
+- The code to calculate the _angle_ interpolates a 5 second period onto the unit circle.
+
+- This loop _should_ be generating a number of validation errors on every frame - we will address these issues in the next chapter.
 
 Hopefully when we run the demo we can now finally see the goal for this chapter: the proverbial rotating textured cube.
 
 Huzzah!
-
-Note that the above _should_ be generating a number of validation errors on each iteration of the loop - we will address these issues in the next chapter.
 
 ---
 

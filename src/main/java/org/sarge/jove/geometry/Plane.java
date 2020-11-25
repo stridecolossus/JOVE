@@ -6,7 +6,7 @@ import org.sarge.jove.util.Check;
  * Plane in 3D space.
  * @author Sarge
  */
-public record Plane(Vector normal, float dist) {
+public record Plane(Vector normal, float distance) {
 	/**
 	 * Sides of a plane.
 	 */
@@ -55,19 +55,12 @@ public record Plane(Vector normal, float dist) {
 	}
 
 	/**
-	 * @return Distance of the plane from the origin
-	 */
-	public float distance() {
-		return dist;
-	}
-
-	/**
 	 * Determines the distance of the given point from this plane.
 	 * @param pt Point
 	 * @return Distance to the given point
 	 */
-	public float distance(Point pt) {
-		return normal.dot(pt) - dist;
+	public float distanceTo(Point pt) {
+		return normal.dot(pt) - distance;
 	}
 
 	/**
@@ -76,7 +69,7 @@ public record Plane(Vector normal, float dist) {
 	 * @return Side
 	 */
 	public Side side(Point pt) {
-		final float d = distance(pt);
+		final float d = distanceTo(pt);
 		if(d < 0) {
 			return Side.BACK;
 		}

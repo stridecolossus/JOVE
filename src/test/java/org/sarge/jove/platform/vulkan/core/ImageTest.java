@@ -38,7 +38,7 @@ public class ImageTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspectFlag> COLOUR = Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT);
 
 	private DefaultImage image;
-	private Handle handle;
+	private Pointer handle;
 	private Descriptor descriptor;
 	private Pointer mem;
 
@@ -54,14 +54,14 @@ public class ImageTest extends AbstractVulkanTest {
 				.build();
 
 		// Create image
-		handle = new Handle(new Pointer(1));
+		handle = new Pointer(1);
 		mem = new Pointer(2);
 		image = new DefaultImage(handle, descriptor, mem, dev);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(handle, image.handle());
+		assertEquals(new Handle(handle), image.handle());
 		assertEquals(dev, image.device());
 		assertEquals(descriptor, image.descriptor());
 	}
@@ -105,7 +105,7 @@ public class ImageTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		image.destroy();
-		verify(lib).vkDestroyImage(dev.handle(), handle, null);
+		verify(lib).vkDestroyImage(dev.handle(), image.handle(), null);
 		verify(lib).vkFreeMemory(dev.handle(), mem, null);
 	}
 
@@ -236,7 +236,7 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.sharingMode);
 
 			// Check memory allocation
-			verify(lib).vkBindImageMemory(dev.handle(), image.handle(), mem, 0);
+			verify(lib).vkBindImageMemory(dev.handle(), factory.ptr.getValue(), mem, 0);
 		}
 
 		@Test

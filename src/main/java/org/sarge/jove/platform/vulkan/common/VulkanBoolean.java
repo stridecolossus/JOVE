@@ -7,8 +7,9 @@ import com.sun.jna.TypeConverter;
 /**
  * A <i>Vulkan boolean</i> is a custom JNA type wrapper for boolean values.
  * <p>
- * A Vulkan boolean class is mapped to a native {@code int} with a value that is <i>explicitly</i> 1 for {@code true} and 0 for {@code false}.
+ * An instance of this class is mapped to a native {@code int} with a value that is <i>explicitly</i> 1 for {@code true} and 0 for {@code false}.
  * This circumvents the default JNA mapping which is an <i>arbitrary non-zero</i> value for {@code true}.
+ * <p>
  * @author Sarge
  */
 public final class VulkanBoolean {
@@ -86,6 +87,13 @@ public final class VulkanBoolean {
 	 */
 	private int toInteger() {
 		return value ? 1 : 0;
+	}
+
+	/**
+	 * @return Value of this boolean wrapper
+	 */
+	public boolean toBoolean() {
+		return value;
 	}
 
 	@Override

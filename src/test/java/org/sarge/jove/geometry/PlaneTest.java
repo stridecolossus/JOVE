@@ -21,7 +21,7 @@ public class PlaneTest {
 
 	@Test
 	public void distance() {
-		assertEquals(-3, plane.distance(Point.ORIGIN));
+		assertEquals(-3, plane.distanceTo(Point.ORIGIN));
 		// TODO - what is distance used for anyway?
 		//assertEquals(-5, plane.distance(new Point(0, 4, 0)));
 	}

@@ -4,7 +4,7 @@ import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>percentile</i> represents a floating-point value in the range 0 to 100%.
+ * A <i>percentile</i> represents a value in the range 0 to 100%.
  * @author Sarge
  * @see Check#isPercentile(float)
  */

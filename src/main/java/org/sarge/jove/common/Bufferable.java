@@ -9,6 +9,11 @@ import java.nio.ByteOrder;
  */
 public interface Bufferable {
 	/**
+	 * Native byte order for NIO buffers.
+	 */
+	ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
+
+	/**
 	 * Writes this object to the given buffer.
 	 * @param buffer Buffer
 	 */
@@ -18,11 +23,6 @@ public interface Bufferable {
 	 * @return Length of this object (bytes)
 	 */
 	long length();
-
-	/**
-	 * Native byte order for NIO buffers.
-	 */
-	ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
 
 	/**
 	 * Wraps the given byte-buffer as a bufferable.

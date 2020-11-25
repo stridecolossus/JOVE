@@ -84,7 +84,7 @@ public interface IntegerEnumeration {
 	 * Tests whether an integer mask contains the given enumeration value.
 	 * @param mask			Mask
 	 * @param constant		Enumeration constant
-	 * @return Whether is present
+	 * @return Whether the mask contains the given constant
 	 */
 	static <E extends IntegerEnumeration> boolean contains(int mask, E constant) {
 		return (constant.value() & mask) != 0;
@@ -94,7 +94,7 @@ public interface IntegerEnumeration {
 	 * Converts an integer mask to a set of enumeration constants.
 	 * @param clazz		Enumeration class
 	 * @param mask		Mask
-	 * @return Constants
+	 * @return Enumeration constants (in ascending order of value)
 	 */
 	static <E extends IntegerEnumeration> Collection<E> enumerate(Class<E> clazz, int mask) {
 		final var entry = Cache.CACHE.get(clazz);
@@ -127,37 +127,6 @@ public interface IntegerEnumeration {
 	static <E extends IntegerEnumeration> int mask(E... values) {
 		return mask(Arrays.asList(values));
 	}
-
-//	/**
-//	 *
-//	 * @param <E>
-//	 */
-//	class EnumConverter<E extends Enum<E>> implements Converter<E> {
-//		private final Class<E> clazz;
-//		private final Map<String, E> map;
-//
-//		/**
-//		 * Constructor.
-//		 * @param clazz
-//		 */
-//		public EnumConverter(Class<E> clazz) {
-//			this.clazz = notNull(clazz);
-//			this.map = build(clazz);
-//		}
-//
-//		private static <E extends Enum<E>> Map<String, E> build(Class<E> clazz) {
-//			final String[] parts = StringUtils.splitByCharacterTypeCamelCase(clazz.getSimpleName());
-//			final String prefix = String.join("_", Arrays.asList(parts));
-//			return Arrays.stream(clazz.getEnumConstants()).collect(toMap(e -> StringUtils.removeStart(e.name(), prefix), Function.identity()));
-//		}
-//
-//		@Override
-//		public E apply(String str) throws NumberFormatException {
-//			final E result = map.get(str);
-//			if(result == null) throw new IllegalArgumentException("Unknown enumeration constant: " + str);
-//			return result;
-//		}
-//	}
 
 	/**
 	 * Internal enumeration cache.

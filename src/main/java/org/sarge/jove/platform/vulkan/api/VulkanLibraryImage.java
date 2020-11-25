@@ -39,7 +39,7 @@ interface VulkanLibraryImage {
 	 * @param image					Image
 	 * @param pMemoryRequirements	Returned memory requirements
 	 */
-	void vkGetImageMemoryRequirements(Handle device, Handle image, VkMemoryRequirements pMemoryRequirements);
+	void vkGetImageMemoryRequirements(Handle device, Pointer image, VkMemoryRequirements pMemoryRequirements);
 
 	/**
 	 * Binds image memory.
@@ -49,7 +49,7 @@ interface VulkanLibraryImage {
 	 * @param memoryOffset		Offset
 	 * @return Result code
 	 */
-	int vkBindImageMemory(Handle device, Handle image, Pointer memory, long memoryOffset);
+	int vkBindImageMemory(Handle device, Pointer image, Pointer memory, long memoryOffset);
 
 	void vkCmdCopyBufferToImage(Handle commandBuffer, Handle srcBuffer, Handle dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
 	void vkCmdCopyImageToBuffer(Handle commandBuffer, Handle srcImage, VkImageLayout srcImageLayout, Handle dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);

@@ -7,7 +7,6 @@ package org.sarge.jove.util;
  * <p>
  * Example:
  * <pre>
- *  // Linear interpolation
  *  final Interpolator linear = Interpolator.linear(1, 2);
  *  linear.interpolate(0.0f);    	// 1.0
  *  linear.interpolate(0.5f);    	// 1.5
@@ -19,7 +18,7 @@ package org.sarge.jove.util;
 public interface Interpolator {
 	/**
 	 * Applies this interpolator to the given value.
-	 * @param value Value to be interpolated
+	 * @param value Value to be interpolated (assumed to be a 0..1 percentile value)
 	 * @return Interpolated value
 	 */
 	float interpolate(float value);

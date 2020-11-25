@@ -20,6 +20,7 @@ import com.sun.jna.ptr.IntByReference;
  * <li>retrieve the actual array</li>
  * </ol>
  * @param <T> Vulkan type
+ * @author Sarge
  */
 @FunctionalInterface
 public interface VulkanFunction<T> {
