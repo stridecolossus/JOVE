@@ -218,22 +218,10 @@ public class ModelDemo {
 		// Create rendering surface
 		final Surface surface = new Surface(surfaceHandle, dev);
 
-//		// Specify required image format
-//		final VkFormat format = new FormatBuilder()
-//				.components(FormatBuilder.BGRA)
-//				.bytes(1)
-//				//.signed(false)
-//				//.type(FormatBuilder.Type.NORMALIZED)
-//				.signed(true)
-//				.type(FormatBuilder.Type.RGB)
-//				.build();
-
 		// Create swap-chain
 		final Swapchain swapchain = new Swapchain.Builder(dev, surface)
 				.count(2)
 				.clear(new Colour(0.1f, 0.1f, 0.1f, 1))
-				// TODO
-				//.mode(VkPresentModeKHR.VK_PRESENT_MODE_MAILBOX_KHR)
 				.build();
 
 		final View depth = depth(dev, Image.Extents.of(swapchain.extents()));
