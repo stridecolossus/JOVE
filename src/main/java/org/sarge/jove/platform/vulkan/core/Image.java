@@ -292,12 +292,13 @@ public interface Image extends NativeObject {
 			 */
 			public static final int REMAINING = (~0);
 
+			// TODO - remaining levels/layers
 			private final T parent;
 			private final Set<VkImageAspectFlag> aspectMask = new HashSet<>();
 			private int mipLevel;
-			private int levelCount = REMAINING;
+			private int levelCount = 1; // REMAINING;
 			private int baseArrayLayer;
-			private int layerCount = REMAINING;
+			private int layerCount = 1; // REMAINING;
 
 			private SubResourceBuilder(T parent) {
 				this.parent = notNull(parent);
@@ -375,6 +376,7 @@ public interface Image extends NativeObject {
 			 * @return Layers descriptor
 			 */
 			public void populate(VkImageSubresourceLayers layers) {
+				// TODO - colour => not depth or stencil
 				layers.aspectMask = mask();
 				layers.mipLevel = mipLevel;
 				layers.baseArrayLayer = baseArrayLayer;

@@ -120,6 +120,19 @@ public class View extends AbstractVulkanObject {
 			this.dev = notNull(dev);
 			this.image = notNull(image);
 			this.subresource = image.descriptor().builder(this);
+			this.clear = clear(image.descriptor());
+		}
+
+		/**
+		 * @return Default clear value for the given image
+		 */
+		private static ClearValue clear(Image.Descriptor descriptor) {
+			if(descriptor.aspects().contains(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)) {
+				return ClearValue.DEPTH;
+			}
+			else {
+				return ClearValue.NONE;
+			}
 		}
 
 		/**
@@ -187,9 +200,7 @@ public class View extends AbstractVulkanObject {
 			final View view = new View(handle.getValue(), image, dev);
 
 			// Init clear value
-			if(clear != null) {
-				view.clear(clear);
-			}
+			view.clear(clear);
 
 			return view;
 		}

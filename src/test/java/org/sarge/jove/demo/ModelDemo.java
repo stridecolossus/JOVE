@@ -139,13 +139,7 @@ public class ModelDemo {
 			.build();
 
 		// Create view
-		final View view = new View.Builder(dev, depth)
-			.subresource()
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
-				.build()
-			.build();
-
-		return view;
+		return new View.Builder(dev, depth).build();
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -236,7 +230,7 @@ public class ModelDemo {
 
 		// Create swap-chain
 		final Swapchain swapchain = new Swapchain.Builder(dev, surface)
-				.count(3)
+				.count(2)
 				.clear(new Colour(0.1f, 0.1f, 0.1f, 1))
 				// TODO
 				//.mode(VkPresentModeKHR.VK_PRESENT_MODE_MAILBOX_KHR)

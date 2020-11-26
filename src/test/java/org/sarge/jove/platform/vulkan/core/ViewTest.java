@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
+import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
@@ -25,7 +26,6 @@ import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.core.Image.DefaultImage;
-import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -65,6 +65,11 @@ public class ViewTest extends AbstractVulkanTest {
 		final ClearValue clear = new ColourClearValue(Colour.WHITE);
 		view.clear(clear);
 		assertEquals(clear, view.clear());
+	}
+
+	@Test
+	void clearNone() {
+		view.clear(ClearValue.NONE);
 	}
 
 	@Test
@@ -138,9 +143,31 @@ public class ViewTest extends AbstractVulkanTest {
 			assertNotNull(info.subresourceRange);
 			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), info.subresourceRange.aspectMask);
 			assertEquals(0, info.subresourceRange.baseMipLevel);
-			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.levelCount);
+// TODO - remaining levels/layers
+//			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.levelCount);
+			assertEquals(1, info.subresourceRange.levelCount);
 			assertEquals(0, info.subresourceRange.baseArrayLayer);
-			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.layerCount);
+//			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.layerCount);
+			assertEquals(1, info.subresourceRange.layerCount);
+		}
+
+		@Test
+		void buildDefaultDepthClearValue() {
+			// Create descriptor for depth buffer
+			final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+					.format(VkFormat.VK_FORMAT_D32_SFLOAT)
+					.extents(new Image.Extents(3, 4))
+					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
+					.build();
+
+			// Create depth buffer
+			final Image depth = mock(Image.class);
+			when(depth.descriptor()).thenReturn(descriptor);
+
+			// Create view and check default clear value
+			final View view = new View.Builder(dev, depth).build();
+			assertNotNull(view);
+			assertEquals(ClearValue.DEPTH, view.clear());
 		}
 	}
 }

@@ -172,8 +172,8 @@ public class RotatingCubeDemo {
 		final VkFormat format = new FormatBuilder()
 				.components(FormatBuilder.BGRA)
 				.bytes(1)
-				.signed(false)
-				.type(FormatBuilder.Type.NORMALIZED)
+				.signed(true)
+				.type(FormatBuilder.Type.RGB)
 				.build();
 
 		// Create swap-chain

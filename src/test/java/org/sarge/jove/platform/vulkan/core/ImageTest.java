@@ -303,8 +303,11 @@ public class ImageTest extends AbstractVulkanTest {
 			builder.populate(range);
 			assertEquals(1, range.baseMipLevel);
 			assertEquals(2, range.baseArrayLayer);
-			assertEquals(SubResourceBuilder.REMAINING, range.levelCount);
-			assertEquals(SubResourceBuilder.REMAINING, range.layerCount);
+// TODO - remaining levels/layers
+//			assertEquals(SubResourceBuilder.REMAINING, range.levelCount);
+//			assertEquals(SubResourceBuilder.REMAINING, range.layerCount);
+			assertEquals(1, range.levelCount);
+			assertEquals(1, range.layerCount);
 			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), range.aspectMask);
 
 			// Populate layers
@@ -312,7 +315,8 @@ public class ImageTest extends AbstractVulkanTest {
 			builder.populate(layers);
 			assertEquals(1, layers.mipLevel);
 			assertEquals(2, layers.baseArrayLayer);
-			assertEquals(SubResourceBuilder.REMAINING, range.layerCount);
+//			assertEquals(SubResourceBuilder.REMAINING, range.layerCount);
+			assertEquals(1, range.layerCount);
 			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), layers.aspectMask);
 		}
 	}
