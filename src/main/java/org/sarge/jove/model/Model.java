@@ -195,7 +195,7 @@ public interface Model {
 
 			// Build IBO
 			if(indexBuffer == null) {
-				final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
+				final int[] array = index.stream().mapToInt(Integer::intValue).toArray(); // TODO - is this the best way?
 				indexBuffer = Bufferable.allocate(array.length * Integer.BYTES);
 				indexBuffer.asIntBuffer().put(array);
 			}
@@ -309,6 +309,21 @@ public interface Model {
 		public Model build() {
 			return new DefaultModel(primitive, layout, vertices, index());
 		}
+
+		@Override
+		public String toString() {
+			final var builder = new ToStringBuilder(this)
+					.append("primitive", primitive)
+					.append("layout", layout)
+					.append("vertices", count());
+
+			final List<Integer> index = index();
+			if(index != null) {
+				builder.append("index", index.size());
+			}
+
+			return builder.build();
+		}
 	}
 
 	/**
@@ -356,17 +371,23 @@ public interface Model {
 		public IndexedBuilder add(Vertex vertex) {
 			// Lookup existing vertex index
 			final Integer prev = map.get(vertex);
-			final int idx = prev == null ? count() : prev;
 
 			// Add new vertices
+			final int index;
 			if(prev == null) {
-				map.put(vertex, idx);
+				// Add new vertex
+				index = count();
+				map.put(vertex, index);
 				super.add(vertex);
+			}
+			else {
+				// Existing vertex
+				index = prev;
 			}
 
 			// Add index
 			if(auto) {
-				add(idx);
+				add(index);
 			}
 
 			return this;

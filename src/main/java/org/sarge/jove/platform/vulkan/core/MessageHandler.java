@@ -16,6 +16,7 @@ import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
+import org.sarge.jove.platform.vulkan.core.Instance.HandlerManager;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Callback;
@@ -164,6 +165,16 @@ public class MessageHandler {
 		info.pfnUserCallback = callback;
 		info.pUserData = data;
 		return info;
+	}
+
+	/**
+	 * Convenience method to attach this handler to the given instance.
+	 * @param instance Instance
+	 * @see Instance#handlers()
+	 * @see HandlerManager#add(MessageHandler)
+	 */
+	public void add(Instance instance) {
+		instance.handlers().add(this);
 	}
 
 	/**

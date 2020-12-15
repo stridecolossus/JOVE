@@ -64,6 +64,7 @@ public class MouseDeviceTest {
 		final ArgumentCaptor<MousePositionListener> captor = ArgumentCaptor.forClass(MousePositionListener.class);
 		pointer.enable(handler);
 		verify(lib).glfwSetCursorPosCallback(eq(window.handle()), captor.capture());
+		verify(window).register(handler, captor.getValue());
 
 		// Generate an event
 		final Position pos = pointer.types().get(0);
@@ -86,6 +87,7 @@ public class MouseDeviceTest {
 		final ArgumentCaptor<MouseButtonListener> captor = ArgumentCaptor.forClass(MouseButtonListener.class);
 		buttons.enable(handler);
 		verify(lib).glfwSetMouseButtonCallback(eq(window.handle()), captor.capture());
+		verify(window).register(handler, captor.getValue());
 
 		// Lookup axis
 		final Button button = buttons.types().get(0);
@@ -118,6 +120,7 @@ public class MouseDeviceTest {
 		final ArgumentCaptor<MouseScrollListener> captor = ArgumentCaptor.forClass(MouseScrollListener.class);
 		wheel.enable(handler);
 		verify(lib).glfwSetScrollCallback(eq(window.handle()), captor.capture());
+		verify(window).register(handler, captor.getValue());
 
 		// Generate an event
 		final MouseScrollListener listener = captor.getValue();

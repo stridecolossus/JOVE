@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
 
 import com.sun.jna.Pointer;
@@ -28,20 +27,25 @@ public class DesktopTest {
 	private DesktopLibrary lib;
 
 	@BeforeEach
-	public void before() {
+	void before() {
 		lib = mock(DesktopLibrary.class);
 		desktop = new Desktop(lib);
 	}
 
 	@Test
-	public void version() {
+	void constructor() {
+		assertEquals(lib, desktop.library());
+	}
+
+	@Test
+	void version() {
 		final String ver = "ver";
 		when(lib.glfwGetVersionString()).thenReturn(ver);
 		assertEquals(ver, desktop.version());
 	}
 
 	@Test
-	public void isVulkanSupported() {
+	void isVulkanSupported() {
 		when(lib.glfwVulkanSupported()).thenReturn(true);
 		assertEquals(true, desktop.isVulkanSupported());
 	}
@@ -53,7 +57,7 @@ public class DesktopTest {
 	}
 
 	@Test
-	public void extensions() {
+	void extensions() {
 		final String[] extensions = {"one", "two"};
 		final Answer<Pointer> answer = inv -> {
 			final IntByReference count = inv.getArgument(0);
@@ -65,7 +69,7 @@ public class DesktopTest {
 	}
 
 	@Test
-	public void setErrorHandler() {
+	void setErrorHandler() {
 		// Set error handler
 		@SuppressWarnings("unchecked")
 		final Consumer<String> handler = mock(Consumer.class);
@@ -83,38 +87,14 @@ public class DesktopTest {
 	}
 
 	@Test
-	public void monitors() {
-		// TODO
-	}
-
-	@Test
-	public void window() {
-		final Window.Descriptor descriptor = new Window.Descriptor.Builder().title("title").size(new Dimensions(1, 2)).build();
-		when(lib.glfwCreateWindow(1, 2, "title", null, null)).thenReturn(new Pointer(42));
-		final Window window = desktop.window(descriptor);
-		assertNotNull(window);
-	}
-
-//	@Test
-//	public void windowFullScreen() {
-//		final Pointer handle = new Pointer(42);
-//		final Monitor.DisplayMode mode = new Monitor.DisplayMode(new Dimensions(3, 4), new int[]{1, 2, 3}, 60);
-//		final Monitor monitor = new Monitor(handle, "name", new Dimensions(1, 2), List.of(mode));
-//		final WindowDescriptor props = new WindowDescriptor.Builder().title("title").size(new Dimensions(1, 2)).monitor(monitor).build();
-//		when(instance.glfwCreateWindow(1, 2, "title", new Handle(handle), null)).thenReturn(new Pointer(42));
-//		final Window window = service.window(props);
-//		assertNotNull(window);
-//	}
-
-	@Test
-	public void destroy() {
+	void destroy() {
 		desktop.destroy();
 		verify(lib).glfwTerminate();
 	}
 
 	@Tag("GLFW")
 	@Test
-	public void create() {
+	void create() {
 		final Desktop desktop = Desktop.create();
 		desktop.destroy();
 	}

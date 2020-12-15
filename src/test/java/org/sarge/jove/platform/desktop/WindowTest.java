@@ -11,6 +11,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -23,7 +25,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class WindowTest {
 	private Window window;
 	private DesktopLibrary lib;
-	private Window.Descriptor descriptor;
+	private Desktop desktop;
 
 	@BeforeEach
 	void before() {
@@ -31,24 +33,47 @@ public class WindowTest {
 		lib = mock(DesktopLibrary.class);
 		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(new Pointer(42));
 
+		// Init desktop
+		desktop = mock(Desktop.class);
+		when(desktop.library()).thenReturn(lib);
+
 		// Create window
-		descriptor = new Window.Descriptor.Builder().title("title").size(new Dimensions(640, 480)).property(Window.Property.DECORATED).build();
-		window = Window.create(lib, descriptor, null);
+		window = new Window.Builder(desktop)
+				.title("title")
+				.size(new Dimensions(640, 480))
+				.property(Window.Property.DECORATED)
+				.build();
 	}
 
 	@Test
 	void constructor() {
+		// Check window
 		assertNotNull(window.handle());
-		assertEquals(descriptor, window.descriptor());
+		assertEquals(lib, window.library());
+
+		// Check descriptor
+		assertNotNull(window.descriptor());
+		assertEquals("title", window.descriptor().title());
+		assertEquals(new Dimensions(640, 480), window.descriptor().size());
+		assertEquals(Set.of(Window.Property.DECORATED), window.descriptor().properties());
+
+		// Check devices
 		assertNotNull(window.keyboard());
 		assertNotNull(window.mouse());
+
+		// Check GLFW window hints applied
 		verify(lib).glfwWindowHint(0x00020005, 1);
 	}
 
 	@Test
 	void createFailed() {
 		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(null);
-		assertThrows(RuntimeException.class, () -> Window.create(lib, descriptor, null));
+		assertThrows(RuntimeException.class, () -> Window.create(lib, new Window.Descriptor("title", new Dimensions(640, 480), Set.of()), null));
+	}
+
+	@Test
+	void register() {
+		window.register(new Object(), new Object());
 	}
 
 	@Test

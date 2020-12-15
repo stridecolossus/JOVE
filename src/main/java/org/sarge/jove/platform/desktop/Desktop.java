@@ -69,6 +69,13 @@ public class Desktop {
 	}
 
 	/**
+	 * @return GLFW library
+	 */
+	DesktopLibrary library() {
+		return lib;
+	}
+
+	/**
 	 * @return GLFW version
 	 */
 	public String version() {

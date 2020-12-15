@@ -4,9 +4,11 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.TransientNativeObject;
+import org.sarge.jove.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -68,51 +70,13 @@ public class Window implements TransientNativeObject {
 	}
 
 	/**
-	 *
+	 * Descriptor for the properties of a window.
 	 */
 	public record Descriptor(String title, Dimensions size, Set<Property> properties) {
-		/**
-		 * Builder for a window descriptor.
-		 */
-		public static class Builder {
-			private String title;
-			private Dimensions size;
-			private final Set<Property> props = new HashSet<>();
-
-			/**
-			 * Sets the window title.
-			 * @param title Title
-			 */
-			public Builder title(String title) {
-				this.title = title;
-				return this;
-			}
-
-			/**
-			 * Sets the size of the window.
-			 * @param size Window size
-			 */
-			public Builder size(Dimensions size) {
-				this.size = size;
-				return this;
-			}
-
-			/**
-			 * Adds a window property.
-			 * @param p Property
-			 */
-			public Builder property(Property p) {
-				props.add(p);
-				return this;
-			}
-
-			/**
-			 * Constructs this descriptor.
-			 * @param New descriptor
-			 */
-			public Descriptor build() {
-				return new Descriptor(title, size, props);
-			}
+		public Descriptor {
+			Check.notEmpty(title);
+			Check.notNull(size);
+			Check.notNull(properties);
 		}
 	}
 
@@ -124,7 +88,7 @@ public class Window implements TransientNativeObject {
 	 * @return New window
 	 * @throws RuntimeException if the window cannot be created
 	 */
-	static Window create(DesktopLibrary lib, Descriptor descriptor, Monitor monitor) {
+	public static Window create(DesktopLibrary lib, Descriptor descriptor, Monitor monitor) {
 		// TODO
 		if(monitor != null) throw new UnsupportedOperationException();
 
@@ -146,6 +110,7 @@ public class Window implements TransientNativeObject {
 	private final Handle handle;
 	private final DesktopLibrary lib;
 	private final Descriptor descriptor;
+	private final WeakHashMap<Object, Object> registry = new WeakHashMap<>();
 
 	/**
 	 * Constructor.
@@ -193,6 +158,15 @@ public class Window implements TransientNativeObject {
 	}
 
 	/**
+	 * Registers a native callback bound to the given handler to prevent GC of callbacks.
+	 * @param handler			Handler
+	 * @param callback			Callback
+	 */
+	void register(Object handler, Object callback) {
+		registry.put(handler, callback);
+	}
+
+	/**
 	 * Creates a Vulkan rendering surface for this window.
 	 * @param vulkan Vulkan instance handle
 	 * @return Vulkan surface
@@ -209,5 +183,59 @@ public class Window implements TransientNativeObject {
 	@Override
 	public void destroy() {
 		lib.glfwDestroyWindow(handle);
+	}
+
+	/**
+	 * Builder for a window.
+	 */
+	public static class Builder {
+		private final DesktopLibrary lib;
+		private String title;
+		private Dimensions size;
+		private final Set<Property> props = new HashSet<>();
+
+		/**
+		 * Constructor.
+		 * @param desktop Desktop service
+		 */
+		public Builder(Desktop desktop) {
+			this.lib = desktop.library();
+		}
+
+		/**
+		 * Sets the window title.
+		 * @param title Title
+		 */
+		public Builder title(String title) {
+			this.title = title;
+			return this;
+		}
+
+		/**
+		 * Sets the size of the window.
+		 * @param size Window size
+		 */
+		public Builder size(Dimensions size) {
+			this.size = size;
+			return this;
+		}
+
+		/**
+		 * Adds a window property.
+		 * @param p Property
+		 */
+		public Builder property(Property p) {
+			props.add(p);
+			return this;
+		}
+
+		/**
+		 * Constructs this window.
+		 * @param New window
+		 */
+		public Window build() {
+			final var desc = new Descriptor(title, size, props);
+			return Window.create(lib, desc, null);			// TODO - monitor
+		}
 	}
 }

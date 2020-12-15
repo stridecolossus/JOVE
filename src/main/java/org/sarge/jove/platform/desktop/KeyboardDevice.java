@@ -74,6 +74,7 @@ public class KeyboardDevice implements InputEvent.Device {
 
 				// Register callback
 				apply(listener);
+				window.register(handler, listener);
 			}
 
 			@Override

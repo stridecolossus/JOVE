@@ -38,6 +38,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
+import org.sarge.jove.util.Interpolator;
 import org.sarge.jove.util.MathsUtil;
 
 public class RotatingCubeDemo {
@@ -108,12 +109,11 @@ public class RotatingCubeDemo {
 		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new Window.Descriptor.Builder()
+		final Window window = new Window.Builder(desktop)
 				.title("demo")
 				.size(new Dimensions(1280, 760))
 				.property(Window.Property.DISABLE_OPENGL)
 				.build();
-		final Window window = desktop.window(descriptor);
 
 		// Init Vulkan
 		final VulkanLibrary lib = VulkanLibrary.create();
@@ -208,7 +208,7 @@ public class RotatingCubeDemo {
 		final Path dir = new File("./src/test/resources/demo/cube.rotate").toPath(); // TODO - root + resolve
 		final var src = DataSource.of(dir);
 		final var shaderLoader = DataSource.loader(src, Shader.loader(dev));
-		final Shader vert = shaderLoader.load("spv.cube.vert");
+		final Shader vert = shaderLoader.load("spv.cube.instanced.vert");
 		final Shader frag = shaderLoader.load("spv.cube.frag");
 
 		//////////////////
@@ -267,8 +267,8 @@ public class RotatingCubeDemo {
 		// Create sampler
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
-		// Create uniform buffer for the projection matrix
-		final long uniformLength = 3 * Matrix.IDENTITY.length();
+		// Create uniform buffer for projection, view and 4 models
+		final long uniformLength = (2 + 4) * Matrix.IDENTITY.length();
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 				.length(uniformLength)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
@@ -297,7 +297,7 @@ public class RotatingCubeDemo {
 
 		final Matrix trans = new Matrix.Builder()
 				.identity()
-				.column(3, new Point(0, 0, -3))
+				.column(3, new Point(0, 0, -3.5f))
 				.build();
 
 		final Matrix view = pos.multiply(trans);
@@ -346,7 +346,7 @@ public class RotatingCubeDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 1, 0, 0);
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 4, 0, 0);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb
@@ -362,9 +362,17 @@ public class RotatingCubeDemo {
 
 		///////////////////
 
+		final long PERIOD = 5000;
+		final long LENGTH = Matrix.IDENTITY.length();
+		final long OFFSET = LENGTH * 2;
+
+		final Interpolator linear = Interpolator.linear(0, MathsUtil.TWO_PI);
+		final Interpolator cosine = Interpolator.COSINE.andThen(linear);
+		final Interpolator squared = Interpolator.SQUARED.andThen(linear);
+		final Interpolator pulse = Interpolator.linear(1, 1.25f);
+
 		// Create renderer
 		final IntFunction<Frame> factory = idx -> new Frame() {
-			private static final long PERIOD = 2500;
 
 			@Override
 			public void render(FrameState state, View view) {
@@ -374,18 +382,20 @@ public class RotatingCubeDemo {
 			@Override
 			public boolean update() {
 				// TODO
-				//presentQueue.waitIdle();
+				presentQueue.waitIdle();
 
 				// Handle input events
 				desktop.poll();
 
-				// Update view matrix
-				final long now = System.currentTimeMillis();
-				final float angle = (now % PERIOD) * MathsUtil.TWO_PI / PERIOD;
-				final Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
-				final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
-				final Matrix rot = rotY.multiply(rotX);
-				uniform.load(rot, rot.length(), 2 * rot.length());
+				// Update rotation matrices
+				final float time = System.currentTimeMillis() % PERIOD / (float) PERIOD;
+				uniform.load(Matrix.rotation(Vector.X_AXIS, linear.interpolate(time)), LENGTH, OFFSET);
+				uniform.load(Matrix.rotation(Vector.Y_AXIS, cosine.interpolate(time)), LENGTH, OFFSET + LENGTH);
+				uniform.load(Matrix.rotation(Vector.Z_AXIS, squared.interpolate(time)), LENGTH, OFFSET + 2 * LENGTH);
+
+				// Update pulsing matrix
+				final float scale = Interpolator.SMOOTH.andThen(pulse).interpolate(time);
+				uniform.load(Matrix.scale(new Vector(scale, scale, scale)), LENGTH, OFFSET + 3 * LENGTH);
 
 				return true;
 			}
@@ -394,13 +404,8 @@ public class RotatingCubeDemo {
 		// Create render loop
 		final Runner runner = new Runner(chain, 2, factory, dev.queue(present));
 
-//		// Create stop action
-//		final KeyListener listener = (ptr, key, scancode, action, mods) -> {
-//			if(key == 256) {
-//				runner.stop();
-//			}
-//		};
-//		window.library().glfwSetKeyCallback(window.handle(), listener);
+		// Create stop action
+		window.keyboard().enable(ignored -> runner.stop());
 
 		// Start render loop
 		runner.start();

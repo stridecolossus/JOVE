@@ -700,6 +700,13 @@ public static void submit(List<Work> work, Fence fence) {
 
 We can finally remove the `waitIdle()` call in the `update()` method and should no longer see validation errors when we run the demo.
 
+### ???
+
+issue
+GLFW listeners being garbage collected
+separate thread with weak ref to listener -> is released!!!
+TODO - solution
+
 ---
 
 ## XXX

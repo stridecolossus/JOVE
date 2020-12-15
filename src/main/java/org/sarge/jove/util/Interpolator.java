@@ -1,97 +1,119 @@
 package org.sarge.jove.util;
 
 /**
- * An <i>interpolator</i> applies a mathematical function to a floating-point value.
- * <p>
- * Interpolators are used to implement animations or <i>tweening</i> or <i>easing</i> functionality.
- * <p>
- * Example:
- * <pre>
- *  final Interpolator linear = Interpolator.linear(1, 2);
- *  linear.interpolate(0.0f);    	// 1.0
- *  linear.interpolate(0.5f);    	// 1.5
- *  linear.interpolate(1.0f);    	// 2.0
- * </pre>
+ * An <i>interpolator</i>
+ * TODO
+ *
+ * P(0) = 0
+ * P(1) = 1
+ * P(t) = ???
+ *
+ *
  * @author Sarge
  */
 @FunctionalInterface
 public interface Interpolator {
 	/**
 	 * Applies this interpolator to the given value.
-	 * @param value Value to be interpolated (assumed to be a 0..1 percentile value)
+	 * @param value Value to be interpolated (assumes normalized)
 	 * @return Interpolated value
 	 */
-	float interpolate(float value);
+	float interpolate(float t);
+
+	// TODO
+	//* @see <a href="https://en.wikipedia.org/wiki/Smoothstep">Wikipedia</a>
+////https://www.febucci.com/2018/08/easing-functions/
+//	Interpolator COSINE = value -> (1 - MathsUtil.cos(value * MathsUtil.PI)) / 2f;
 
 	/**
-	 * Interpolator that does nothing.
+	 * Linear interpolation, i.e. does nothing.
 	 */
-	Interpolator NONE = value -> value;
+	Interpolator LINEAR = t -> t;
 
 	/**
-	 * Flip interpolator.
+	 * Quadratic (or squared) function.
 	 */
-	Interpolator INVERT = value -> 1 - value;
+	Interpolator QUADRATIC = t -> t * t;
 
 	/**
-	 * Cosine interpolator.
+	 * Cubic function.
 	 */
-	Interpolator COSINE = value -> (1 - MathsUtil.cos(value * MathsUtil.PI)) / 2f;
+	Interpolator CUBIC = t -> t * t * t;
 
 	/**
-	 * Smooth step (or <i>hermite</i>) interpolator - equivalent to the GLSL <code>mix</code> function.
-	 * @see <a href="https://en.wikipedia.org/wiki/Smoothstep">Wikipedia</a>
+	 * Convenience interpolator for the common <i>smooth step</i> (or <i>hermite</i>) interpolator.
+	 * TODO - equivalent to mix(smooth start, smooth stop, ???)
 	 */
-	Interpolator SMOOTH = value -> value * value * (3 - 2 * value);
+	Interpolator SMOOTH = t -> t * t * (3 - 2 * t);
+
+	Interpolator FLIP = t -> 1 - t;
 
 	/**
-	 * Square interpolator.
+	 * Creates an interpolator that raises the parameter to the power of the given exponent.
+	 * @param exp Exponent
+	 * @return Power function
+	 * @see Math#pow(double, double)
 	 */
-	Interpolator SQUARED = value -> value * value;
-
-	/**
-	 * Creates an exponential interpolator.
-	 * @param pow Exponent
-	 * @return Exponential interpolator
-	 */
-	static Interpolator exponent(float pow) {
-		return value -> (float) Math.pow(value, pow);
+	static Interpolator pow(float exp) {
+		return t -> (float) Math.pow(t, exp);
 	}
 
-	// https://www.febucci.com/2018/08/easing-functions/
-	// https://gist.github.com/Fonserbc/3d31a25e87fdaa541ddf
-	// http://paulbourke.net/miscellaneous/interpolation/
+	/**
+	 * Creates a <i>flip</i> (or <i>inverse</i>) interpolation function: <code>1 - P(t)</code>.
+	 * @param func Delegate function
+	 * @return Flip function
+	 */
+	static Interpolator flip(Interpolator func) {
+		return t -> 1 - func.interpolate(t);
+	}
 
 	/**
-	 * Creates a linear (or <i>lerp</i>) interpolator over the given range.
-	 * @param start		Range start
-	 * @param end		Range end
+	 * Creates a scaling interpolation function: <code>t * P(t)</code>.
+	 * @param func Delegate function
+	 * @return Scaling function
+	 */
+	static Interpolator scale(Interpolator func) {
+		return t -> t * func.interpolate(t);
+	}
+
+	/**
+	 * Creates an interpolator that mixes two functions according to a given weighting.
+	 * TODO - explain weight -> b, doc, example
+	 * @param start			Start function
+	 * @param end			End function
+	 * @param weight		Weight
+	 * @return Compound interpolator
+	 */
+	static Interpolator mix(Interpolator start, Interpolator end, float weight) {
+		return t -> (1 - weight) * start.interpolate(t) + weight * end.interpolate(t);
+	}
+
+	static Interpolator of(Interpolator... interpolators) {
+		return t -> {
+			float result = t;
+			for(Interpolator i : interpolators) {
+				result = i.interpolate(result);
+			}
+			return result;
+		};
+	}
+
+	/**
+	 * Helper - Creates a linear floating-point interpolator.
+	 * @param start		Start value
+	 * @param end		End value
 	 * @return Linear interpolator
-	 * @see #lerp(float, float, float)
 	 */
-	static Interpolator linear(float start, float end) {
-		return value -> lerp(start, end, value);
+	static Interpolator lerp(float start, float end) {
+		return t -> start + t * (end - start);
 	}
 
 	/**
-	 * Creates a compound interpolator over the given range.
-	 * @param start				Range start
-	 * @param end				Range end
-	 * @param interpolator		Interpolator function
-	 * @return Interpolator
-	 * @see #lerp(float, float, float)
-	 */
-	static Interpolator of(float start, float end, Interpolator interpolator) {
-		return value -> lerp(start, end, interpolator.interpolate(value));
-	}
-
-	/**
-	 * Linearly interpolates a value over the given range.
-	 * @param start		Range start
-	 * @param end		Range end
-	 * @param value		Value
+	 * Helper - Performs a linear floating-point linear.
+	 * @param start		Start value
+	 * @param end		End value
+	 * @param value		Value to interpolate
 	 * @return Interpolated value
-	 * @see <a href="// https://en.wikipedia.org/wiki/Linear_interpolation">Wikipedia</a>
 	 */
 	static float lerp(float start, float end, float value) {
 		return start + value * (end - start);

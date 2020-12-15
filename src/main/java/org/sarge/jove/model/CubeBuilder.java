@@ -53,7 +53,7 @@ public class CubeBuilder {
 	 * @return New cube
 	 */
 	public static Model create() {
-		return new CubeBuilder().size(1).build();
+		return new CubeBuilder().size(0.5f).build();
 	}
 
 	private final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);

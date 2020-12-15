@@ -64,6 +64,7 @@ public class KeyboardDeviceTest {
 		final ArgumentCaptor<KeyListener> captor = ArgumentCaptor.forClass(KeyListener.class);
 		verify(lib).glfwSetKeyCallback(eq(window.handle()), captor.capture());
 		assertNotNull(captor.getValue());
+		verify(window).register(handler, captor.getValue());
 
 		// Create button
 		final int code = 256;

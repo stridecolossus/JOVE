@@ -56,6 +56,7 @@ public class MouseDevice implements Device {
 			public void enable(Consumer<InputEvent<Position>> handler) {
 				final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event(pos, (float) x, (float) y));
 				apply(listener);
+				window.register(handler, listener);
 			}
 
 			@Override
@@ -100,6 +101,7 @@ public class MouseDevice implements Device {
 					handler.accept(buttons[button]);
 				};
 				apply(listener);
+				window.register(handler, listener);
 			}
 
 			@Override
@@ -129,6 +131,8 @@ public class MouseDevice implements Device {
 			public void enable(Consumer<InputEvent<Axis>> handler) {
 				final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
 				apply(listener);
+				window.register(handler, listener);
+				// TODO - what about disable?
 			}
 
 			@Override
@@ -138,6 +142,7 @@ public class MouseDevice implements Device {
 
 			private void apply(MouseScrollListener listener) {
 				window.library().glfwSetScrollCallback(window.handle(), listener);
+				//window.register(listener);
 			}
 		};
 	}
