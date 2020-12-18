@@ -46,6 +46,9 @@ public interface Interpolator {
 	 */
 	Interpolator SMOOTH = t -> t * t * (3 - 2 * t);
 
+	/**
+	 * Flip (or invert) interpolator.
+	 */
 	Interpolator FLIP = t -> 1 - t;
 
 	/**
@@ -88,28 +91,18 @@ public interface Interpolator {
 		return t -> (1 - weight) * start.interpolate(t) + weight * end.interpolate(t);
 	}
 
-	static Interpolator of(Interpolator... interpolators) {
-		return t -> {
-			float result = t;
-			for(Interpolator i : interpolators) {
-				result = i.interpolate(result);
-			}
-			return result;
-		};
-	}
-
 	/**
 	 * Helper - Creates a linear floating-point interpolator.
 	 * @param start		Start value
 	 * @param end		End value
 	 * @return Linear interpolator
 	 */
-	static Interpolator lerp(float start, float end) {
+	static Interpolator linear(float start, float end) {
 		return t -> start + t * (end - start);
 	}
 
 	/**
-	 * Helper - Performs a linear floating-point linear.
+	 * Helper - Performs a one-off linear floating-point interpolation.
 	 * @param start		Start value
 	 * @param end		End value
 	 * @param value		Value to interpolate

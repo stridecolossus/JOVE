@@ -131,7 +131,7 @@ public class RotatingCubeDemo {
 		final var handler = new MessageHandler.Builder()
 				.init()
 				.callback(MessageHandler.CONSOLE)
-				.build();
+				.attach();
 		instance.handlers().add(handler);
 
 		// Lookup surface

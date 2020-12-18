@@ -59,6 +59,15 @@ public class ObjectModelTest {
 	}
 
 	@Test
+	void flip() {
+		final var coords = group.coordinates();
+		group.setFlipTextureCoordinates(true);
+		coords.add(new Coordinate2D(1, 2));
+		assertEquals(1, coords.size());
+		assertEquals(new Coordinate2D(1, -2), coords.get(1));
+	}
+
+	@Test
 	void start() {
 		group.start();
 		assertEquals(1, group.builders().count());

@@ -13,17 +13,6 @@ import org.sarge.jove.platform.obj.ObjectModel.ComponentList;
  * @param <T> Model component type
  */
 public class ArrayParser<T> implements Parser {
-
-//	public static BiConsumer<Group, Coordinate2D> coordinates(boolean flip) {
-//		if(flip) {
-//			return (group, coords) -> group.coord(new Coordinate2D(coords.u, -coords.v));
-//		}
-//		else {
-//			return Group::coord;
-//		}
-//	}
-//	// TODO - do this in builder? add flip to coords class?
-
 	private final int size;
 	private final Function<float[], T> ctor;
 	private final Function<ObjectModel, ComponentList<T>> mapper;

@@ -152,12 +152,11 @@ public class ModelDemo {
 		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new Window.Descriptor.Builder()
+		final Window window = new Window.Builder(desktop)
 				.title("demo")
 				.size(new Dimensions(1280, 760))
 				.property(Window.Property.DISABLE_OPENGL)
 				.build();
-		final Window window = desktop.window(descriptor);
 
 		// Init Vulkan
 		final VulkanLibrary lib = VulkanLibrary.create();
@@ -171,12 +170,9 @@ public class ModelDemo {
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build();
 
+
 		// Attach message handler
-		final var debug = new MessageHandler.Builder()
-				.init()
-				.callback(MessageHandler.CONSOLE)
-				.build();
-		instance.handlers().add(debug);
+		instance.handler().init().attach();
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
@@ -319,11 +315,43 @@ public class ModelDemo {
 		// Create projection matrix
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
 
+		/*
 		// Init descriptor sets
 		new DescriptorSet.UpdateBuilder()
 				.add(descriptors, samplerBinding, sampler.resource(texture))
 				.add(descriptors, uniformBinding, uniform.resource())
 				.apply(dev);
+*/
+		//////////////////
+
+		/**
+		 *
+		 * SET RESOURCES
+		 *
+		 * set[n].update(samplerBinding, sampler);
+		 * set[n].update(uniformBinding, ubo);
+		 *
+		 * OR
+		 *
+		 * samplerBinding.update(set, sampler);
+		 * samplerBinding.update(sets[], sampler);
+		 *
+		 * OR
+		 *
+		 * sampler.update(samplerBinding, set);
+		 * sampler.update(samplerBinding, sets[]);
+		 *
+		 * -----------------
+		 *
+		 * APPLY UPDATE
+		 *
+		 * set[n].update();
+		 * sets.update();
+		 * sets[A,B].update();
+		 *
+		 *
+		 */
+
 
 		//////////////////
 

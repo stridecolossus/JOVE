@@ -241,14 +241,14 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void buildRequiresUsageFlags() {
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.attach());
 		}
 
 		@Test
 		void buildEmptyBufferLength() {
 			builder.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 			when(allocation.size()).thenReturn(0L);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.attach());
 		}
 
 		@Test

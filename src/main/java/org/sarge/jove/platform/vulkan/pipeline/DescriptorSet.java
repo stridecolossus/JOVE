@@ -534,7 +534,7 @@ public class DescriptorSet implements NativeObject {
 		/**
 		 * Constructor.
 		 * @param binding			Binding
-		 * @param resources			Resources to updates
+		 * @param resources			Resources to update
 		 * @throws IllegalArgumentException if the resources are empty, the binding is invalid for the given descriptor set, or the descriptor type does not match the resource
 		 */
 		private Update(Layout.Binding binding, Collection<Resource<T>> resources) {
@@ -574,10 +574,12 @@ public class DescriptorSet implements NativeObject {
 			write.dstSet = DescriptorSet.this.handle();
 			write.dstArrayElement = 0;
 
-			// Add resource array
-			final Resource<T> instance = res.iterator().next();
-			final T array = VulkanStructure.populate(instance.identity(), res, Resource::populate);
-			instance.apply(array, write);
+//			// Add resource array
+//			final Resource<T> instance = res.iterator().next();
+//			final T array = VulkanStructure.populate(instance.identity(), res, Resource::populate);
+//			instance.apply(array, write);
+
+
 			write.descriptorCount = res.size();
 		}
 

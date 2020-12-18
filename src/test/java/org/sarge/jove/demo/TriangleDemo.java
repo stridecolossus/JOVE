@@ -35,12 +35,11 @@ public class TriangleDemo {
 		if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
 		// Create window
-		final var descriptor = new Window.Descriptor.Builder()
+		final Window window = new Window.Builder(desktop)
 				.title("demo")
 				.size(new Dimensions(1280, 760))
 				.property(Window.Property.DISABLE_OPENGL)
 				.build();
-		final Window window = desktop.window(descriptor);
 
 		// Init Vulkan
 		final VulkanLibrary lib = VulkanLibrary.create();
@@ -55,11 +54,11 @@ public class TriangleDemo {
 				.build();
 
 		// Attach message handler
-		final var handler = new MessageHandler.Builder()
+		new MessageHandler.Builder()
 				.init()
 				.callback(MessageHandler.CONSOLE)
-				.build();
-		instance.handlers().add(handler);
+				.attach()
+				.add(instance);
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());

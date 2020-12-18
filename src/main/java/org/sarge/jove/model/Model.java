@@ -312,17 +312,11 @@ public interface Model {
 
 		@Override
 		public String toString() {
-			final var builder = new ToStringBuilder(this)
+			return new ToStringBuilder(this)
 					.append("primitive", primitive)
 					.append("layout", layout)
-					.append("vertices", count());
-
-			final List<Integer> index = index();
-			if(index != null) {
-				builder.append("index", index.size());
-			}
-
-			return builder.build();
+					.append("vertices", count())
+					.build();
 		}
 	}
 
@@ -417,6 +411,14 @@ public interface Model {
 			final Integer index = map.get(vertex);
 			if(index == null) throw new IllegalArgumentException("Vertex not present: " + vertex);
 			return index;
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.appendSuper(super.toString())
+					.append("index", index.size())
+					.build();
 		}
 	}
 }

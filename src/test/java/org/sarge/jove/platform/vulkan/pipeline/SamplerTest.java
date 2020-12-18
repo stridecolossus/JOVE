@@ -156,13 +156,13 @@ public class SamplerTest extends AbstractVulkanTest {
 		@Test
 		void buildRequiresBorderColour() {
 			builder.wrap(1, Wrap.BORDER, false);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.attach());
 		}
 
 		@Test
 		void buildInvalidLOD() {
 			builder.minLod(2).maxLod(1);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.attach());
 		}
 	}
 }

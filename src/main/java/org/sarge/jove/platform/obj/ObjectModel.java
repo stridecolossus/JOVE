@@ -29,7 +29,7 @@ public class ObjectModel {
 	 * @param <T> Component type
 	 */
 	public static class ComponentList<T> {
-		private final List<T> list = new ArrayList<>();
+		protected final List<T> list = new ArrayList<>();
 
 		/**
 		 * @return Size of this list
@@ -71,9 +71,26 @@ public class ObjectModel {
 		}
 	}
 
+	/**
+	 * Special case component list that optionally flips texture coordinates.
+	 */
+	private static class FlipTextureComponentList extends ComponentList<Coordinate2D> {
+		private boolean flip;
+
+		@Override
+		void add(Coordinate2D coords) {
+			if(flip) {
+				super.add(new Coordinate2D(coords.u, -coords.v));
+			}
+			else {
+				super.add(coords);
+			}
+		}
+	}
+
 	// Data
 	private final ComponentList<Point> vertices = new ComponentList<>();
-	private final ComponentList<Coordinate2D> coords = new ComponentList<>();
+	private final FlipTextureComponentList coords = new FlipTextureComponentList();
 	private final ComponentList<Vector> normals = new ComponentList<>();
 
 	// Models
@@ -122,6 +139,14 @@ public class ObjectModel {
 	 */
 	public Stream<Model.Builder> builders() {
 		return builders.stream();
+	}
+
+	/**
+	 * Sets whether to vertically flip texture coordinates.
+	 * @param flip Whether to flip coordinates (default is {@code false})
+	 */
+	public void setFlipTextureCoordinates(boolean flip) {
+		coords.flip = flip;
 	}
 
 	/**
