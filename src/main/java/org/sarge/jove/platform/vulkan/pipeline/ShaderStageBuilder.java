@@ -8,9 +8,9 @@ import java.util.Map;
 
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
+import org.sarge.jove.platform.vulkan.util.StructureCollector;
 
 /**
  * Builder for a shader stage.
@@ -110,6 +110,6 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	protected VkPipelineShaderStageCreateInfo result() {
 		assert entry == null;
 		if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalStateException("No vertex shader specified");
-		return VulkanStructure.populate(VkPipelineShaderStageCreateInfo::new, shaders.values(), Entry::populate);
+		return StructureCollector.toArray(shaders.values(), VkPipelineShaderStageCreateInfo::new, Entry::populate);
 	}
 }

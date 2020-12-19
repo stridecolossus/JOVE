@@ -59,6 +59,6 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 
 	@Override
 	protected VkPipelineDepthStencilStateCreateInfo result() {
-		return info.copy();
+		return info;
 	}
 }

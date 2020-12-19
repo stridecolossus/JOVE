@@ -88,12 +88,15 @@ public class StructureCollectorTest {
 	}
 
 	@Test
-	void element() {
-		final var adapter = StructureCollector.first(collector);
-		assertNotNull(adapter);
+	void toArray() {
+		final MockStructure result = StructureCollector.toArray(List.of(obj), MockStructure::new, populate);
+		assertNotNull(result);
+		verify(populate).accept(obj, result);
+	}
 
-		final MockStructure first = adapter.finisher().apply(List.of(obj));
-		assertNotNull(first);
-		verify(populate).accept(obj, first);
+	@Test
+	void toArrayEmpty() {
+		final MockStructure result = StructureCollector.toArray(List.of(), MockStructure::new, populate);
+		assertEquals(null, result);
 	}
 }

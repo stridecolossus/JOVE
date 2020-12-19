@@ -13,8 +13,8 @@ import org.sarge.jove.platform.vulkan.VkColorComponentFlag;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.StructureCollector;
 
 /**
  * Builder for the colour-blend pipeline stage.
@@ -91,7 +91,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 		// Add attachment descriptors
 		info.attachmentCount = attachments.size();
-		info.pAttachments = VulkanStructure.populate(VkPipelineColorBlendAttachmentState::new, attachments, AttachmentBuilder::populate);
+		info.pAttachments = StructureCollector.toArray(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
 
 		// Init global colour blending settings
 		if(logic == null) {

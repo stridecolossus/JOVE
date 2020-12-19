@@ -14,12 +14,12 @@ import java.util.Set;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.util.StructureCollector;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -68,7 +68,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 		// Init clear values
 		info.clearValueCount = values.size();
-		info.pClearValues = VulkanStructure.populate(VkClearValue::new, values, ClearValue::populate);
+		info.pClearValues = StructureCollector.toArray(values, VkClearValue::new, ClearValue::populate);
 
 		// Create command
 		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
@@ -129,16 +129,16 @@ public class RenderPass extends AbstractVulkanObject {
 			// Add attachments
 			if(attachments.isEmpty()) throw new IllegalArgumentException("At least one attachment must be specified");
 			info.attachmentCount = attachments.size();
-			info.pAttachments = VulkanStructure.populate(VkAttachmentDescription::new, attachments, AttachmentBuilder::populate);
+			info.pAttachments = StructureCollector.toArray(attachments, VkAttachmentDescription::new, AttachmentBuilder::populate);
 
 			// Add sub-passes
 			if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
 			info.subpassCount = subpasses.size();
-			info.pSubpasses = VulkanStructure.populate(VkSubpassDescription::new, subpasses, SubPassBuilder::populate);
+			info.pSubpasses = StructureCollector.toArray(subpasses, VkSubpassDescription::new, SubPassBuilder::populate);
 
 			// Add dependencies
 			info.dependencyCount = dependencies.size();
-			info.pDependencies = VulkanStructure.populate(VkSubpassDependency::new, dependencies, DependencyBuilder::populate);
+			info.pDependencies = StructureCollector.toArray(dependencies, VkSubpassDependency::new, DependencyBuilder::populate);
 
 			// Allocate render pass
 			final VulkanLibrary lib = dev.library();
@@ -329,7 +329,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 				// Populate colour attachments
 				desc.colorAttachmentCount = colour.size();
-				desc.pColorAttachments = VulkanStructure.populate(VkAttachmentReference::new, colour, Reference::populate);
+				desc.pColorAttachments = StructureCollector.toArray(colour, VkAttachmentReference::new, Reference::populate);
 
 				// Populate depth attachment
 				if(depth != null) {

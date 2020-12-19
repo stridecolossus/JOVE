@@ -21,9 +21,9 @@ import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
+import org.sarge.jove.platform.vulkan.util.StructureCollector;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Memory;
@@ -336,7 +336,7 @@ public class LogicalDevice implements TransientNativeObject {
 
 			// Add queue descriptors
 			info.queueCreateInfoCount = queues.size();
-			info.pQueueCreateInfos = VulkanStructure.populate(VkDeviceQueueCreateInfo::new, queues, RequiredQueue::populate);
+			info.pQueueCreateInfos = StructureCollector.toArray(queues, VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
 
 			// Allocate device
 			final VulkanLibrary lib = parent.instance().library();

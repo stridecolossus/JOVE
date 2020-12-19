@@ -15,7 +15,6 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
@@ -465,7 +464,7 @@ public class DescriptorSet implements NativeObject {
 				final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
 				info.flags = IntegerEnumeration.mask(flags);
 				info.poolSizeCount = entries.size();
-				info.pPoolSizes = VulkanStructure.populate(VkDescriptorPoolSize::new, entries.entrySet(), Builder::populate);
+				info.pPoolSizes = StructureCollector.toArray(entries.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 				info.maxSets = max;
 
 				// Allocate pool
@@ -589,7 +588,7 @@ public class DescriptorSet implements NativeObject {
 			// Init layout descriptor
 			final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
 			info.bindingCount = bindings.size();
-			info.pBindings = VulkanStructure.populate(VkDescriptorSetLayoutBinding::new, bindings, Binding::populate);
+			info.pBindings = StructureCollector.toArray(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();

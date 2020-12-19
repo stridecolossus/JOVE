@@ -32,8 +32,6 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class RenderPassTest extends AbstractVulkanTest {
-	private static final VkFormat FORMAT = VkFormat.VK_FORMAT_R8G8B8A8_UNORM;
-
 	private RenderPass.Builder renderPassBuilder;
 
 	@BeforeEach

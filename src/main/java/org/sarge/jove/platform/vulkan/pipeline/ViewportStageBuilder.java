@@ -8,7 +8,7 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
+import org.sarge.jove.platform.vulkan.util.StructureCollector;
 import org.sarge.jove.util.Check;
 
 /**
@@ -120,12 +120,12 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		// Add viewports
 		final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 		info.viewportCount = count;
-		info.pViewports = VulkanStructure.populate(VkViewport::new, viewports, Viewport::populate);
+		info.pViewports = StructureCollector.toArray(viewports, VkViewport::new, Viewport::populate);
 
 		// Add scissors
 		if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
 		info.scissorCount = count;
-		info.pScissors = VulkanStructure.populate(VkRect2D.ByReference::new, scissors, ViewportStageBuilder::rectangle);
+		info.pScissors = StructureCollector.toArray(scissors, VkRect2D.ByReference::new, ViewportStageBuilder::rectangle);
 		// TODO - pScissors ignored if dynamic
 
 		return info;

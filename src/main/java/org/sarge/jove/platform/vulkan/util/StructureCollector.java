@@ -4,6 +4,7 @@ import static org.sarge.jove.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -12,26 +13,48 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import com.sun.jna.Structure;
 
 /**
- * TODO
- * @author Sarge
+ * A <i>structure collector</i> is used to convert a stream to a contiguous JNA structure array.
+ * <p>
+ * Example usage:
+ * <p>
+ * <pre>
+ * Collection&lt;DomainObject&gt; data = ...
+ * BiConsumer&lt;DomainObject, SomeStructure&gt; populate = ...
+ * SomeStructure[] array = data.stream().collect(new StructureCollector<>(SomeStructure::new, populate));
+ * </pre>
+ * The {@code toArray()} helper can be used to transform a collection where the target is the <i>first</i> element of the array:
+ * <pre>
+ * SomeStructure first = StructureCollector.toArray(data, SomeStructure::new, populate);
+ * </pre>
+ * <p>
  * @param <T> Data type
  * @param <R> Resultant JNA structure type
+ * <p>
+ * @author Sarge
  */
 public class StructureCollector <T, R extends Structure> implements Collector<T, List<T>, R[]> {
 	/**
-	 * Convenience adapter for a structure collector that returns the <b>first</b> element of the resultant array.
+	 * Helper - Converts the given collection to a contiguous array referenced by the <b>first</b> element.
 	 * @param <T> Data type
 	 * @param <R> Resultant JNA structure type
-	 * @param collector Underlying structure collector
-	 * @return First element collector
+	 * @param data			Data
+	 * @param identity		Identity constructor
+	 * @param populate		Population function
+	 * @return <b>First</b> element of the array
 	 */
-	public static <T, R extends Structure> Collector<T, List<T>, R> first(StructureCollector<T, R> collector) {
-		return Collectors.collectingAndThen(collector, array -> array[0]);
+	public static <T, R extends Structure> R toArray(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+		final R[] array = data.stream().collect(new StructureCollector<>(identity, populate));
+
+		if(array == null) {
+			return null;
+		}
+		else {
+			return array[0];
+		}
 	}
 
 	private final Supplier<R> identity;

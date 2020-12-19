@@ -1,11 +1,7 @@
 package org.sarge.jove.platform.vulkan.api;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
@@ -131,79 +127,33 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 
 		@Override
 		public Structure[] toArray(int size) {
+			// Allocate array
 			final Structure[] array = super.toArray(size);
-			patch(array);
+
+			// Find type field if present
+			final var sType = getFieldList()
+					.stream()
+					.filter(f -> f.getName().equals("sType"))
+					.findAny();
+
+			// Patch type field as required
+			sType.ifPresent(f -> patch(f, array));
+
 			return array;
 		}
 
-		// JNA allocates an empty memory block for a new array, patch the required type field (if present)
-		// This is pretty ropey, alternatives:
-		// 1. Somehow identify VK structures with pre-populated fields?
-		// 2. Re-implement to perform a memory copy of this object?
-		private void patch(Structure[] array) {
+		/**
+		 * Initialises the type field of all elements in the given array.
+		 */
+		private void patch(Field sType, Structure[] array) {
 			try {
-				// Lookup type field (if present)
-				final Field field = this.getClass().getField("sType");
-
-				// Patch type to array elements
-				final Object sType = field.get(this);
+				final Object value = sType.get(this);
 				for(Structure struct : array) {
-					field.set(struct, sType);
+					sType.set(struct, value);
 				}
 			}
-			catch(IllegalAccessException e) {
+			catch(Exception e) {
 				throw new RuntimeException(e);
-			}
-			catch(NoSuchFieldException ignored) {
-				// Ignored
-			}
-		}
-
-		/**
-		 * Helper - Allocates and populates an array of the given Vulkan structure as a contiguous memory block.
-		 * @param <R> Structure type
-		 * @param <T> Source data type
-		 * @param ctor			Constructor
-		 * @param data			Data
-		 * @param populate		Population function
-		 * @return New array or {@code null} is the source data is empty
-		 */
-		@SuppressWarnings("unchecked")
-		public static <R extends Structure, T> R[] populateArray(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
-			// Check for empty data
-			if(data.isEmpty()) {
-				return null;
-			}
-
-			// Allocate array
-			final R identity = ctor.get();
-			final R[] array = (R[]) identity.toArray(data.size());
-
-			// Populate array
-			final Iterator<T> itr = data.iterator();
-			for(int n = 0; n < array.length; ++n) {
-				populate.accept(itr.next(), array[n]);
-			}
-
-			return array;
-		}
-
-		/**
-		 * Helper - Allocates and populates an array of the given Vulkan structure as a contiguous memory block and returns the <b>first</b> element.
-		 * @param <R> Structure type
-		 * @param <T> Source data type
-		 * @param ctor			Constructor
-		 * @param data			Data
-		 * @param populate		Population function
-		 * @return <b>First</b> element of the new array or {@code null} if the source data is empty
-		 */
-		public static <R extends Structure, T> R populate(Supplier<R> ctor, Collection<T> data, BiConsumer<T, R> populate) {
-			final R[] array = populateArray(ctor, data, populate);
-			if(array == null) {
-				return null;
-			}
-			else {
-				return array[0];
 			}
 		}
 	}
