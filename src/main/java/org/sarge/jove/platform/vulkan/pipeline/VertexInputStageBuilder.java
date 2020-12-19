@@ -55,7 +55,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 
 		// Add binding
 		new BindingBuilder()
-				.binding(index)
+				.index(index)
 				.stride(layout.size() * Float.BYTES)
 				.build();
 
@@ -133,7 +133,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		 * Sets the binding index.
 		 * @param binding Binding index
 		 */
-		public BindingBuilder binding(int binding) {
+		public BindingBuilder index(int binding) {
 			this.binding = zeroOrMore(binding);
 			return this;
 		}

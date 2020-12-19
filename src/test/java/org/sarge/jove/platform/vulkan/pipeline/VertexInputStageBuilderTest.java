@@ -23,7 +23,7 @@ public class VertexInputStageBuilderTest {
 	}
 
 	private void addBinding() {
-		builder.binding().binding(0).stride(2).build();
+		builder.binding().index(0).stride(2).build();
 	}
 
 	@Test
@@ -41,7 +41,7 @@ public class VertexInputStageBuilderTest {
 		// Build descriptor
 		final var descriptor = builder
 				.binding()
-					.binding(1)
+					.index(1)
 					.stride(2)
 					.build()
 				.attribute()
@@ -98,7 +98,7 @@ public class VertexInputStageBuilderTest {
 	@Test
 	void bindingDuplicateIndex() {
 		addBinding();
-		assertThrows(IllegalArgumentException.class, "Duplicate binding index", () -> builder.binding().binding(0).build());
+		assertThrows(IllegalArgumentException.class, "Duplicate binding index", () -> builder.binding().index(0).build());
 	}
 
 	@Test

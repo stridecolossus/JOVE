@@ -18,10 +18,10 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler.Wrap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
-import org.sarge.jove.platform.vulkan.util.Resource;
 
 import com.sun.jna.Pointer;
 
@@ -48,13 +48,11 @@ public class SamplerTest extends AbstractVulkanTest {
 
 	@Nested
 	class ResourceTests {
-		private VkDescriptorImageInfo info;
-		private Resource<VkDescriptorImageInfo> res;
+		private Resource res;
 		private View view;
 
 		@BeforeEach
 		void before() {
-			info = new VkDescriptorImageInfo();
 			view = mock(View.class);
 			res = sampler.resource(view);
 			when(view.handle()).thenReturn(new Handle(new Pointer(2)));
@@ -66,26 +64,17 @@ public class SamplerTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void identity() {
-			final var identity = res.identity();
-			assertNotNull(identity);
-			assertNotNull(identity.get());
-			assertEquals(VkDescriptorImageInfo.class, identity.get().getClass());
-		}
-
-		@Test
 		void populate() {
-			res.populate(info);
+			// Populate write descriptor
+			final var write = new VkWriteDescriptorSet();
+			res.populate(write);
+
+			// Check descriptor
+			final VkDescriptorImageInfo info = write.pImageInfo;
+			assertNotNull(info);
 			assertEquals(sampler.handle(), info.sampler);
 			assertEquals(view.handle(), info.imageView);
 			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, info.imageLayout);
-		}
-
-		@Test
-		void update() {
-			final var write = new VkWriteDescriptorSet();
-			res.apply(info, write);
-			assertEquals(info, write.pImageInfo);
 		}
 	}
 
@@ -156,13 +145,13 @@ public class SamplerTest extends AbstractVulkanTest {
 		@Test
 		void buildRequiresBorderColour() {
 			builder.wrap(1, Wrap.BORDER, false);
-			assertThrows(IllegalArgumentException.class, () -> builder.attach());
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
 		@Test
 		void buildInvalidLOD() {
 			builder.minLod(2).maxLod(1);
-			assertThrows(IllegalArgumentException.class, () -> builder.attach());
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 	}
 }

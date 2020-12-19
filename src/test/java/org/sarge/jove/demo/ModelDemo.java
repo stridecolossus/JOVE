@@ -170,7 +170,6 @@ public class ModelDemo {
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build();
 
-
 		// Attach message handler
 		instance.handler().init().attach();
 
@@ -315,43 +314,14 @@ public class ModelDemo {
 		// Create projection matrix
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
 
-		/*
 		// Init descriptor sets
-		new DescriptorSet.UpdateBuilder()
-				.add(descriptors, samplerBinding, sampler.resource(texture))
-				.add(descriptors, uniformBinding, uniform.resource())
-				.apply(dev);
-*/
-		//////////////////
-
-		/**
-		 *
-		 * SET RESOURCES
-		 *
-		 * set[n].update(samplerBinding, sampler);
-		 * set[n].update(uniformBinding, ubo);
-		 *
-		 * OR
-		 *
-		 * samplerBinding.update(set, sampler);
-		 * samplerBinding.update(sets[], sampler);
-		 *
-		 * OR
-		 *
-		 * sampler.update(samplerBinding, set);
-		 * sampler.update(samplerBinding, sets[]);
-		 *
-		 * -----------------
-		 *
-		 * APPLY UPDATE
-		 *
-		 * set[n].update();
-		 * sets.update();
-		 * sets[A,B].update();
-		 *
-		 *
-		 */
-
+		final DescriptorSet.Resource samplerResource = sampler.resource(texture);
+		for(int n = 0; n < descriptors.size(); ++n) {
+			final DescriptorSet ds = descriptors.get(n);
+			ds.set(samplerBinding, samplerResource);
+			ds.set(uniformBinding, uniform);
+		}
+		DescriptorSet.update(dev, descriptors);
 
 		//////////////////
 

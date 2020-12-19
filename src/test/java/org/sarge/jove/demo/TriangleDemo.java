@@ -20,7 +20,14 @@ import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.Instance;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
+import org.sarge.jove.platform.vulkan.core.Queue;
+import org.sarge.jove.platform.vulkan.core.Shader;
+import org.sarge.jove.platform.vulkan.core.Surface;
+import org.sarge.jove.platform.vulkan.core.Work;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
@@ -54,11 +61,7 @@ public class TriangleDemo {
 				.build();
 
 		// Attach message handler
-		new MessageHandler.Builder()
-				.init()
-				.callback(MessageHandler.CONSOLE)
-				.attach()
-				.add(instance);
+		instance.handler().init().attach();
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());

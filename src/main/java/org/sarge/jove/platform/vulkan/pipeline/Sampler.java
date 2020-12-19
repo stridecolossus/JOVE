@@ -5,17 +5,15 @@ import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.util.Resource;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -81,56 +79,31 @@ public class Sampler extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Creates a descriptor set resource for this sampler with the given texture image.
-	 * @param view Texture image
+	 * Creates a descriptor set resource for this sampler with the given texture image-view.
+	 * @param view Texture image-view
 	 * @return Sampler resource
 	 */
-	public Resource<Sampler> resource(View view) {
-//		return new Resource<>() {
-//			@Override
-//			public VkDescriptorType type() {
-//				return VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-//			}
-//
-//			@Override
-//			public Supplier<VkDescriptorImageInfo> identity() {
-//				return VkDescriptorImageInfo::new;
-//			}
-//
-//			@Override
-//			public void populate(VkDescriptorImageInfo info) {
-//				info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-//				info.sampler = Sampler.this.handle();
-//				info.imageView = view.handle();
-//			}
-//
-//			@Override
-//			public void apply(VkDescriptorImageInfo descriptor, VkWriteDescriptorSet write) {
-//				write.pImageInfo = descriptor;
-//			}
-//		};
-
-		return new Resource<>() {
+	public Resource resource(View view) {
+		return new Resource() {
 			@Override
 			public VkDescriptorType type() {
-				return null;
+				return VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			}
 
 			@Override
-			public void populate(Collection<Sampler> res, VkWriteDescriptorSet write) {
-				write.pImageInfo = VulkanStructure.populate(VkDescriptorImageInfo::new, res, this::populate);
-			}
-
-			private void populate(Sampler sampler, VkDescriptorImageInfo info) {
+			public void populate(VkWriteDescriptorSet write) {
+				// Create sampler descriptor
+				final var info = new VkDescriptorImageInfo();
 				info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				info.sampler = sampler.handle();
+				info.sampler = Sampler.this.handle();
 				info.imageView = view.handle();
+
+				// Add to write descriptor
+				// TODO - assumes one entry!
+				write.pImageInfo = info;
 			}
 		};
 	}
-
-//	private class SamplerResource implements Resource<VkDescriptorImageInfo> {
-//	}
 
 	/**
 	 * Builder for a sampler.

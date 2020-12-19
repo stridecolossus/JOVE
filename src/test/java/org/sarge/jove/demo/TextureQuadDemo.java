@@ -9,6 +9,7 @@ import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
@@ -24,6 +25,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
@@ -124,11 +126,7 @@ public class TextureQuadDemo {
 				.build();
 
 		// Attach message handler
-		new MessageHandler.Builder()
-				.init()
-				.callback(MessageHandler.CONSOLE)
-				.attach()
-				.add(instance);
+		instance.handler().init().attach();
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
@@ -266,14 +264,16 @@ public class TextureQuadDemo {
 				.max(3)
 				.build();
 
+		// Create descriptors
 		final List<DescriptorSet> descriptors = setPool.allocate(setLayout, chain.views().size());
 
-		// Create sampler
+		// Add sampler
 		final Sampler sampler = new Sampler.Builder(dev).build();
 		final var res = sampler.resource(texture);
 		for(DescriptorSet set : descriptors) {
-			set.update(binding, res).apply();
+			set.set(binding, res);
 		}
+		DescriptorSet.update(dev, descriptors);
 
 		//////////////////
 
@@ -329,8 +329,9 @@ public class TextureQuadDemo {
 				.end();
 		}
 
+		final Semaphore semaphore = dev.semaphore();
 		for(int n = 0; n < 25; ++n) {
-			final int index = chain.acquire(null, null);
+			final int index = chain.acquire(semaphore, null);
 
 			new Work.Builder()
 					.add(commands.get(index))
@@ -340,7 +341,7 @@ public class TextureQuadDemo {
 			presentQueue.waitIdle();
 			Thread.sleep(50);
 
-			chain.present(presentQueue, null);
+			chain.present(presentQueue, Set.of(semaphore));
 
 			presentQueue.waitIdle();
 			Thread.sleep(50);
@@ -353,8 +354,6 @@ public class TextureQuadDemo {
 		window.destroy();
 		desktop.destroy();
 
-		final Image.DefaultImage img = (Image.DefaultImage) texture.image();
-		img.destroy();
 		texture.destroy();
 		sampler.destroy();
 

@@ -8,14 +8,13 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.Resource;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.util.Check;
 import org.sarge.jove.util.PointerArray;
 
@@ -26,7 +25,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>vertex buffer</i> is used to copy data to the hardware.
  * @author Sarge
  */
-public class VertexBuffer extends AbstractVulkanObject {
+public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.Resource {
 	/**
 	 * Helper - Creates a staging buffer.
 	 * @param dev Logical device
@@ -123,33 +122,18 @@ public class VertexBuffer extends AbstractVulkanObject {
 		}
 	}
 
-	/**
-	 * Creates a uniform buffer resource for this vertex buffer.
-	 * @return Uniform buffer resource
-	 */
-	public Resource<VkDescriptorBufferInfo> resource() {
-		return new Resource<>() {
-			@Override
-			public VkDescriptorType type() {
-				return VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			}
+	@Override
+	public VkDescriptorType type() {
+		return VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	}
 
-			@Override
-			public Supplier<VkDescriptorBufferInfo> identity() {
-				return VkDescriptorBufferInfo::new;
-			}
-
-			public void populate(VkDescriptorBufferInfo info) {
-				info.buffer = VertexBuffer.this.handle();
-				info.offset = 0;
-				info.range = len;
-			}
-
-			@Override
-			public void apply(VkDescriptorBufferInfo descriptor, VkWriteDescriptorSet write) {
-				write.pBufferInfo = descriptor;
-			}
-		};
+	@Override
+	public void populate(VkWriteDescriptorSet write) {
+		final var info = new VkDescriptorBufferInfo();
+		info.buffer = handle();
+		info.offset = 0;
+		info.range = len;
+		write.pBufferInfo = info;
 	}
 
 	/**

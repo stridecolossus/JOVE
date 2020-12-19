@@ -24,7 +24,6 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
-import org.sarge.jove.platform.vulkan.util.Resource;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -147,41 +146,21 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 	@Nested
 	class UniformBufferResourceTests {
-		private Resource<VkDescriptorBufferInfo> res;
-		private VkDescriptorBufferInfo info;
-
-		@BeforeEach
-		void before() {
-			res = buffer.resource();
-			info = new VkDescriptorBufferInfo();
-		}
-
 		@Test
 		void constructor() {
-			assertNotNull(res);
-			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, res.type());
-		}
-
-		@Test
-		void identity() {
-			assertNotNull(res.identity());
-			assertNotNull(res.identity().get());
-			assertEquals(VkDescriptorBufferInfo.class, res.identity().get().getClass());
+			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffer.type());
 		}
 
 		@Test
 		void populate() {
-			res.populate(info);
+			final var write = new VkWriteDescriptorSet();
+			buffer.populate(write);
+
+			final VkDescriptorBufferInfo info = write.pBufferInfo;
+			assertNotNull(info);
 			assertEquals(buffer.handle(), info.buffer);
 			assertEquals(buffer.length(), info.range);
 			assertEquals(0, info.offset);
-		}
-
-		@Test
-		void apply() {
-			final var write = new VkWriteDescriptorSet();
-			res.apply(info, write);
-			assertEquals(info, write.pBufferInfo);
 		}
 	}
 
@@ -241,14 +220,14 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void buildRequiresUsageFlags() {
-			assertThrows(IllegalArgumentException.class, () -> builder.attach());
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
 		@Test
 		void buildEmptyBufferLength() {
 			builder.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 			when(allocation.size()).thenReturn(0L);
-			assertThrows(IllegalArgumentException.class, () -> builder.attach());
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
 		@Test

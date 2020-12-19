@@ -27,6 +27,7 @@ import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
@@ -128,11 +129,7 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Attach message handler
-		final var handler = new MessageHandler.Builder()
-				.init()
-				.callback(MessageHandler.CONSOLE)
-				.attach();
-		instance.handlers().add(handler);
+		instance.handler().init().attach();
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
@@ -277,10 +274,14 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Init descriptor sets
-		new DescriptorSet.UpdateBuilder()
-				.add(descriptors, samplerBinding, sampler.resource(texture))
-				.add(descriptors, uniformBinding, uniform.resource())
-				.apply(dev);
+		final Resource samplerResource = sampler.resource(texture);
+		for(DescriptorSet set : descriptors) {
+			set.set(samplerBinding, samplerResource);
+			set.set(uniformBinding, uniform);
+		}
+
+		// Apply updates
+		DescriptorSet.update(dev, descriptors);
 
 		//////////////
 
@@ -367,9 +368,9 @@ public class RotatingCubeDemo {
 		final long OFFSET = LENGTH * 2;
 
 		final Interpolator linear = Interpolator.linear(0, MathsUtil.TWO_PI);
-		final Interpolator cosine = Interpolator.COSINE.andThen(linear);
-		final Interpolator squared = Interpolator.SQUARED.andThen(linear);
-		final Interpolator pulse = Interpolator.linear(1, 1.25f);
+//		final Interpolator cosine = Interpolator.COSINE.andThen(linear);
+//		final Interpolator squared = Interpolator.SQUARED.andThen(linear);
+//		final Interpolator pulse = Interpolator.linear(1, 1.25f);
 
 		// Create renderer
 		final IntFunction<Frame> factory = idx -> new Frame() {
@@ -390,12 +391,12 @@ public class RotatingCubeDemo {
 				// Update rotation matrices
 				final float time = System.currentTimeMillis() % PERIOD / (float) PERIOD;
 				uniform.load(Matrix.rotation(Vector.X_AXIS, linear.interpolate(time)), LENGTH, OFFSET);
-				uniform.load(Matrix.rotation(Vector.Y_AXIS, cosine.interpolate(time)), LENGTH, OFFSET + LENGTH);
-				uniform.load(Matrix.rotation(Vector.Z_AXIS, squared.interpolate(time)), LENGTH, OFFSET + 2 * LENGTH);
-
-				// Update pulsing matrix
-				final float scale = Interpolator.SMOOTH.andThen(pulse).interpolate(time);
-				uniform.load(Matrix.scale(new Vector(scale, scale, scale)), LENGTH, OFFSET + 3 * LENGTH);
+//				uniform.load(Matrix.rotation(Vector.Y_AXIS, cosine.interpolate(time)), LENGTH, OFFSET + LENGTH);
+//				uniform.load(Matrix.rotation(Vector.Z_AXIS, squared.interpolate(time)), LENGTH, OFFSET + 2 * LENGTH);
+//
+//				// Update pulsing matrix
+//				final float scale = Interpolator.SMOOTH.andThen(pulse).interpolate(time);
+//				uniform.load(Matrix.scale(new Vector(scale, scale, scale)), LENGTH, OFFSET + 3 * LENGTH);
 
 				return true;
 			}
