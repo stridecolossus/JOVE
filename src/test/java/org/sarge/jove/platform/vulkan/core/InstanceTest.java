@@ -2,14 +2,13 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.INTEGRATION_TEST;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -24,7 +23,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT;
@@ -34,7 +32,8 @@ import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.Instance.Message;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;
@@ -43,16 +42,16 @@ import com.sun.jna.ptr.PointerByReference;
 public class InstanceTest {
 	private VulkanLibrary lib;
 	private Instance instance;
-	private PointerByReference ref;
+	private PointerByReference ptr;
 
 	@BeforeEach
 	void before() {
 		// Init API
 		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
 
-		// Note instance handle
-		ref = lib.factory().pointer();
+		ptr = new PointerByReference(new Pointer(1));
+		when(lib.factory().pointer()).thenReturn(ptr);
 
 		// Create instance
 		instance = new Instance.Builder()
@@ -67,14 +66,14 @@ public class InstanceTest {
 	void constructor() {
 		assertNotNull(instance);
 		assertEquals(lib, instance.library());
-		assertEquals(new Handle(ref.getValue()), instance.handle());
+		assertNotNull(instance.handle());
 	}
 
 	@Test
 	void create() {
-		// Check API invocation
+		// Check API
 		final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
-		verify(lib).vkCreateInstance(captor.capture(), isNull(), eq(ref));
+		verify(lib).vkCreateInstance(captor.capture(), isNull(), eq(ptr));
 
 		// Check instance descriptor
 		final VkInstanceCreateInfo info = captor.getValue();
@@ -96,14 +95,14 @@ public class InstanceTest {
 	@Test
 	void destroy() {
 		instance.destroy();
-		verify(lib).vkDestroyInstance(ref.getValue(), null);
+		verify(lib).vkDestroyInstance(ptr.getValue(), null);
 	}
 
 	@Test
 	void function() {
 		final Pointer func = new Pointer(2);
 		final String name = "name";
-		when(lib.vkGetInstanceProcAddr(ref.getValue(), name)).thenReturn(func);
+		when(lib.vkGetInstanceProcAddr(ptr.getValue(), name)).thenReturn(func);
 		assertEquals(func, instance.function(name));
 	}
 
@@ -112,7 +111,7 @@ public class InstanceTest {
 		assertThrows(RuntimeException.class, () -> instance.function("cobblers"));
 	}
 
-	@Tag(INTEGRATION_TEST)
+	@Tag(AbstractVulkanTest.INTEGRATION_TEST)
 	@Test
 	void build() {
 		// Create real API
@@ -217,10 +216,10 @@ public class InstanceTest {
 			// Check arguments (note that we cannot compare arrays directly as JNA structures are not equal)
 			final Object[] args = captor.getValue();
 			assertEquals(4, args.length);
-			assertEquals(ref.getValue(), args[0]);
+			assertEquals(ptr.getValue(), args[0]);
 			assertNotNull(args[1]);
 			assertEquals(null, args[2]);
-			assertEquals(lib.factory().pointer(), args[3]);
+			assertEquals(ptr, args[3]);
 
 			// Check descriptor
 			final VkDebugUtilsMessengerCreateInfoEXT info = (VkDebugUtilsMessengerCreateInfoEXT) args[1];
@@ -247,10 +246,10 @@ public class InstanceTest {
 		@Disabled("TODO")
 		@Test
 		void destroy() {
-			handler.init().attach();
-			instance.destroy();
-			final Object[] args = new Object[]{ref.getValue(), lib.factory().pointer().getValue(), null};
-			verify(func).invoke(args);
+//			handler.init().attach();
+//			instance.destroy();
+//			final Object[] args = new Object[]{ref.getValue(), lib.factory().pointer().getValue(), null};
+//			verify(func).invoke(args);
 		}
 	}
 }

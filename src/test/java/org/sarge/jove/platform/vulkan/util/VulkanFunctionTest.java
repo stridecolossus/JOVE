@@ -21,8 +21,9 @@ public class VulkanFunctionTest {
 	@BeforeEach
 	public void before() {
 		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
-		count = lib.factory().integer();
+		count = new IntByReference(1);
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
+		when(lib.factory().integer()).thenReturn(count);
 	}
 
 	@SuppressWarnings("unchecked")

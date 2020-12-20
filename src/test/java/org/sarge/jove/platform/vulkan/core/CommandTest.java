@@ -197,10 +197,10 @@ class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		void free() {
-			pool.allocate();
+			final Buffer buffer = pool.allocate();
 			pool.free();
 			assertEquals(0, pool.buffers().count());
-			verify(lib).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, factory.pointers);
+			verify(lib).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, Handle.toArray(List.of(buffer)));
 		}
 
 		@Test

@@ -46,11 +46,6 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	String EXTENSION_SWAP_CHAIN = "VK_KHR_swapchain";
 
 	/**
-	 * Identifier for a Vulkan integration test.
-	 */
-	String INTEGRATION_TEST = "vulkan-integration-test";
-
-	/**
 	 * Function to retrieve the available extensions for this Vulkan implementation.
 	 */
 	VulkanFunction<VkExtensionProperties> EXTENSIONS = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);

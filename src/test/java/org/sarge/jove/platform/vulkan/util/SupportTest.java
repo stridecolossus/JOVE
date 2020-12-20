@@ -13,6 +13,8 @@ import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.Support.Extensions;
 
+import com.sun.jna.ptr.IntByReference;
+
 public class SupportTest {
 	private static final String RESULT = "result";
 
@@ -25,7 +27,8 @@ public class SupportTest {
 	void before() {
 		// Create API
 		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
+		when(lib.factory().integer()).thenReturn(new IntByReference(1));
 
 		// Create enumeration function
 		func = mock(VulkanFunction.class);

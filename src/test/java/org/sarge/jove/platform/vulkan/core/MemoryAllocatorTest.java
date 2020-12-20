@@ -28,6 +28,7 @@ import org.sarge.jove.platform.vulkan.core.MemoryAllocator.Allocation;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class MemoryAllocatorTest extends AbstractVulkanTest {
 	private MemoryAllocator allocator;
@@ -80,11 +81,11 @@ public class MemoryAllocatorTest extends AbstractVulkanTest {
 	void allocate() {
 		// Allocate memory
 		final Pointer mem = allocation.allocate();
-		assertEquals(factory.ptr.getValue(), mem);
+		assertNotNull(mem);
 
 		// Check API
 		final ArgumentCaptor<VkMemoryAllocateInfo> captor = ArgumentCaptor.forClass(VkMemoryAllocateInfo.class);
-		verify(lib).vkAllocateMemory(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+		verify(lib).vkAllocateMemory(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
 
 		// Check allocation descriptor
 		final var info = captor.getValue();

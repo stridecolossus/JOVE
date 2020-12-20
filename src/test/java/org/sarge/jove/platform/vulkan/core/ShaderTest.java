@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
@@ -17,10 +16,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.Loader;
+
+import com.sun.jna.ptr.PointerByReference;
 
 public class ShaderTest extends AbstractVulkanTest {
 	private static final byte[] CODE = new byte[]{42};
@@ -33,15 +33,15 @@ public class ShaderTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void constructor() {
-		assertNotNull(shader.handle());
-	}
-
-	@Test
 	void create() {
-		// Check allocation
+		// Check API
 		final var captor = ArgumentCaptor.forClass(VkShaderModuleCreateInfo.class);
-		verify(lib).vkCreateShaderModule(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+		verify(lib).vkCreateShaderModule(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+
+		// Create shader
+		final Shader shader = Shader.create(dev, CODE);
+		assertNotNull(shader);
+		assertNotNull(shader.handle());
 
 		// Check descriptor
 		final var info = captor.getValue();
@@ -58,9 +58,8 @@ public class ShaderTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		final Handle handle = shader.handle();
 		shader.destroy();
-		verify(lib).vkDestroyShaderModule(dev.handle(), handle, null);
+		verify(lib).vkDestroyShaderModule(dev.handle(), shader.handle(), null);
 	}
 
 	@Nested
@@ -74,14 +73,13 @@ public class ShaderTest extends AbstractVulkanTest {
 
 		@Test
 		void load() throws IOException {
-			shader = loader.load(new ByteArrayInputStream(new byte[]{}));
+			final Shader shader = loader.load(new ByteArrayInputStream(CODE));
 			assertNotNull(shader);
-			verify(lib, atLeastOnce()).vkCreateShaderModule(eq(dev.handle()), isA(VkShaderModuleCreateInfo.class), isNull(), eq(factory.ptr));
 		}
 
 		@SuppressWarnings("resource")
 		@Test
-		void loadFile() throws Exception {
+		void loadInvalidFile() throws Exception {
 			loader.load(new FileInputStream("./src/test/resources/thiswayup.jpg"));
 		}
 	}

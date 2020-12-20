@@ -27,8 +27,9 @@ import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class LogicalDeviceTest {
@@ -43,7 +44,8 @@ public class LogicalDeviceTest {
 	void before() {
 		// Init API
 		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
+		when(lib.factory().pointer()).thenReturn(new PointerByReference(new Pointer(1)));
 
 		// Create instance
 		final Instance instance = mock(Instance.class);

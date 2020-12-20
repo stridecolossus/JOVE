@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
@@ -71,13 +72,13 @@ public class FenceTest extends AbstractVulkanTest {
 
 	@Test
 	void create() {
+		// Mock API
+		final ArgumentCaptor<VkFenceCreateInfo> captor = ArgumentCaptor.forClass(VkFenceCreateInfo.class);
+		when(lib.vkCreateFence(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class))).thenReturn(VulkanLibrary.SUCCESS);
+
 		// Create fence
 		fence = Fence.create(dev, VkFenceCreateFlag.VK_FENCE_CREATE_SIGNALED_BIT);
 		assertNotNull(fence);
-
-		// Check API
-		final ArgumentCaptor<VkFenceCreateInfo> captor = ArgumentCaptor.forClass(VkFenceCreateInfo.class);
-		verify(lib).vkCreateFence(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
 
 		// Check descriptor
 		final VkFenceCreateInfo info = captor.getValue();

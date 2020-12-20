@@ -204,7 +204,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 			// Check API
 			final ArgumentCaptor<VkBufferCreateInfo> captor = ArgumentCaptor.forClass(VkBufferCreateInfo.class);
-			verify(lib).vkCreateBuffer(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+			verify(lib).vkCreateBuffer(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
 
 			// Check descriptor
 			final VkBufferCreateInfo info = captor.getValue();
@@ -214,8 +214,8 @@ public class VertexBufferTest extends AbstractVulkanTest {
 			assertEquals(4, info.size);
 
 			// Check internal memory allocation
-			verify(lib).vkGetBufferMemoryRequirements(eq(dev.handle()), eq(factory.ptr.getValue()), isA(VkMemoryRequirements.class));
-			verify(lib).vkBindBufferMemory(dev.handle(), factory.ptr.getValue(), mem, 0L);
+			verify(lib).vkGetBufferMemoryRequirements(eq(dev.handle()), isA(Pointer.class), isA(VkMemoryRequirements.class));
+			verify(lib).vkBindBufferMemory(eq(dev.handle()), isA(Pointer.class), eq(mem), eq(0L));
 		}
 
 		@Test

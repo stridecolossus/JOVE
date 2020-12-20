@@ -66,8 +66,7 @@ public class QueueTest extends AbstractVulkanTest {
 
 	@Test
 	void isPresentationSupportedNotSupported() {
-		factory.integer.setValue(0);
-		assertEquals(false, family.isPresentationSupported(surface));
+		assertEquals(true, family.isPresentationSupported(surface));
 	}
 
 	@Test

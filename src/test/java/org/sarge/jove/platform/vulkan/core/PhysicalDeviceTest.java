@@ -20,7 +20,6 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.MockReferenceFactory;
 
 import com.sun.jna.Pointer;
 
@@ -33,7 +32,6 @@ public class PhysicalDeviceTest {
 	void before() {
 		// Create Vulkan
 		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(new MockReferenceFactory());
 
 		// Create an instance
 		instance = mock(Instance.class);

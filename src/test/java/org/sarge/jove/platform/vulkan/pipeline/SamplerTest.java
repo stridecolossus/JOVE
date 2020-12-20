@@ -4,6 +4,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -24,6 +25,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class SamplerTest extends AbstractVulkanTest {
 	private Sampler sampler;
@@ -110,7 +112,7 @@ public class SamplerTest extends AbstractVulkanTest {
 
 			// Check API
 			final ArgumentCaptor<VkSamplerCreateInfo> captor = ArgumentCaptor.forClass(VkSamplerCreateInfo.class);
-			verify(lib).vkCreateSampler(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+			verify(lib).vkCreateSampler(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
 
 			// Check descriptor
 			final VkSamplerCreateInfo info = captor.getValue();

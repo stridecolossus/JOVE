@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -21,6 +22,7 @@ import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class FrameBufferTest extends AbstractVulkanTest {
 	private FrameBuffer buffer;
@@ -69,7 +71,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 	void create() {
 		// Check allocation
 		final ArgumentCaptor<VkFramebufferCreateInfo> captor = ArgumentCaptor.forClass(VkFramebufferCreateInfo.class);
-		verify(lib).vkCreateFramebuffer(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+		verify(lib).vkCreateFramebuffer(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
 
 		// Check descriptor
 		final var info = captor.getValue();

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -30,6 +31,7 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass.Builder.SubPassBuilder
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class RenderPassTest extends AbstractVulkanTest {
 	private RenderPass.Builder renderPassBuilder;
@@ -171,7 +173,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 			// Check allocation
 			final ArgumentCaptor<VkRenderPassCreateInfo> captor = ArgumentCaptor.forClass(VkRenderPassCreateInfo.class);
-			verify(lib).vkCreateRenderPass(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+			verify(lib).vkCreateRenderPass(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
 
 			// Check descriptor
 			final var info = captor.getValue();

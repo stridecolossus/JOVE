@@ -4,6 +4,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Layout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class PipelineTest extends AbstractVulkanTest {
 	private Pipeline pipeline;
@@ -82,7 +84,7 @@ public class PipelineTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
-			final Pointer[] array = factory.array(1);
+//			final Pointer[] array = factory.array(1);
 
 			// Build pipeline
 			pipeline = builder
@@ -102,7 +104,7 @@ public class PipelineTest extends AbstractVulkanTest {
 
 			// Check allocation
 			final ArgumentCaptor<VkGraphicsPipelineCreateInfo[]> captor = ArgumentCaptor.forClass(VkGraphicsPipelineCreateInfo[].class);
-			verify(lib).vkCreateGraphicsPipelines(eq(dev.handle()), isNull(), eq(1), captor.capture(), isNull(), eq(array));
+			verify(lib).vkCreateGraphicsPipelines(eq(dev.handle()), isNull(), eq(1), captor.capture(), isNull(), isA(Pointer[].class));
 			assertEquals(1, captor.getValue().length);
 
 			// Check descriptor
@@ -191,7 +193,7 @@ public class PipelineTest extends AbstractVulkanTest {
 
 			// Check pipeline allocation
 			final ArgumentCaptor<VkPipelineLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineLayoutCreateInfo.class);
-			verify(lib).vkCreatePipelineLayout(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+			verify(lib).vkCreatePipelineLayout(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
 
 			// Check descriptor
 			final VkPipelineLayoutCreateInfo info = captor.getValue();

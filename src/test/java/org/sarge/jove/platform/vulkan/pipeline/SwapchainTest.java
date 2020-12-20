@@ -220,7 +220,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertEquals(null, info.oldSwapchain);
 
 			// Check view allocation
-			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), eq(factory.ptr.getValue()), isA(IntByReference.class), isA(Pointer[].class));
+			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), isA(Pointer.class), isA(IntByReference.class), isA(Pointer[].class));
 
 			// Check view
 			final View view = swapchain.views().get(0);

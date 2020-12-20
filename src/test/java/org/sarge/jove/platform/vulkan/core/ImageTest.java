@@ -33,6 +33,7 @@ import org.sarge.jove.platform.vulkan.core.Image.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class ImageTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspectFlag> COLOUR = Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT);
@@ -215,8 +216,9 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT), descriptor.aspects());
 
 			// Check API
+			//final var ref = new TestHelper.PointerByReferenceMatcher();
 			final ArgumentCaptor<VkImageCreateInfo> captor = ArgumentCaptor.forClass(VkImageCreateInfo.class);
-			verify(lib).vkCreateImage(eq(dev.handle()), captor.capture(), isNull(), eq(factory.ptr));
+			verify(lib).vkCreateImage(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
 
 			// Check create image descriptor
 			final VkImageCreateInfo info = captor.getValue();
@@ -236,7 +238,7 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.sharingMode);
 
 			// Check memory allocation
-			verify(lib).vkBindImageMemory(dev.handle(), factory.ptr.getValue(), mem, 0);
+			verify(lib).vkBindImageMemory(eq(dev.handle()), isA(Pointer.class), eq(mem), eq(0L));
 		}
 
 		@Test

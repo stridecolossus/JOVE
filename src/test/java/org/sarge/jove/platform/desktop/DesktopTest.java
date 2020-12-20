@@ -3,8 +3,7 @@ package org.sarge.jove.platform.desktop;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,12 +14,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.stubbing.Answer;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
+import org.sarge.jove.util.TestHelper.IntByReferenceMatcher;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.StringArray;
-import com.sun.jna.ptr.IntByReference;
 
 public class DesktopTest {
 	private Desktop desktop;
@@ -59,12 +56,8 @@ public class DesktopTest {
 	@Test
 	void extensions() {
 		final String[] extensions = {"one", "two"};
-		final Answer<Pointer> answer = inv -> {
-			final IntByReference count = inv.getArgument(0);
-			count.setValue(extensions.length);
-			return new StringArray(extensions);
-		};
-		doAnswer(answer).when(lib).glfwGetRequiredInstanceExtensions(isA(IntByReference.class));
+		final IntByReferenceMatcher count = new IntByReferenceMatcher(2);
+		when(lib.glfwGetRequiredInstanceExtensions(argThat(count))).thenReturn(new StringArray(extensions));
 		assertArrayEquals(extensions, desktop.extensions());
 	}
 
