@@ -230,7 +230,7 @@ public class ModelDemo {
 					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
 					.build()
 				.attachment()
-					.format(VkFormat.VK_FORMAT_D32_SFLOAT)		// TODO - lookup optimal/available
+					.format(depth.image().descriptor().format())
 					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
 					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 					.build()

@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
@@ -57,6 +58,15 @@ public class View extends AbstractVulkanObject {
 	}
 
 	/**
+	 * Helper.
+	 * @return Image extents
+	 * @see Image.Descriptor#extents()
+	 */
+	public final Image.Extents extents() {
+		return image().descriptor().extents();
+	}
+
+	/**
 	 * Clear value for this attachment.
 	 * @return Clear value
 	 */
@@ -86,6 +96,15 @@ public class View extends AbstractVulkanObject {
 			obj.destroy();
 		}
 		super.destroy();
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
+				.append("image", image)
+				.append("clear", clear)
+				.build();
 	}
 
 	/**

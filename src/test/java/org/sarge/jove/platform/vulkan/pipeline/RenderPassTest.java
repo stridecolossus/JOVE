@@ -84,6 +84,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertNotNull(pass);
 			assertNotNull(pass.handle());
 			assertEquals(dev, pass.device());
+			assertEquals(1, pass.count());
 		}
 
 		@DisplayName("Create command to begin a render pass")
@@ -170,6 +171,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 			assertNotNull(pass);
 			assertNotNull(pass.handle());
 			assertEquals(dev, pass.device());
+			assertEquals(1, pass.count());
 
 			// Check allocation
 			final ArgumentCaptor<VkRenderPassCreateInfo> captor = ArgumentCaptor.forClass(VkRenderPassCreateInfo.class);

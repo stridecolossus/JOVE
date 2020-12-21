@@ -436,6 +436,11 @@ public interface Image extends NativeObject {
 			dev.library().vkFreeMemory(dev.handle(), mem, null);
 			super.destroy();
 		}
+
+		@Override
+		public String toString() {
+			return descriptor.toString();
+		}
 	}
 
 	/**

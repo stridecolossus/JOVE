@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -35,10 +36,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		pass = mock(RenderPass.class);
 		when(pass.handle()).thenReturn(new Handle(new Pointer(1)));
 		when(pass.device()).thenReturn(dev);
-
-		// Create swapchain image-view
-		view = mock(View.class);
-		when(view.handle()).thenReturn(new Handle(new Pointer(2)));
+		when(pass.count()).thenReturn(1);
 
 		// Init image descriptor
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
@@ -51,7 +49,9 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		final Image image = mock(Image.class);
 		when(image.descriptor()).thenReturn(descriptor);
 
-		// Create swapchain image
+		// Create swapchain attachment
+		view = mock(View.class);
+		when(view.handle()).thenReturn(new Handle(new Pointer(2)));
 		when(view.image()).thenReturn(image);
 
 		// Create buffer
@@ -83,6 +83,31 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		assertEquals(4, info.height);
 		assertEquals(1, info.layers);
 		assertEquals(0, info.flags);
+	}
+
+	@Test
+	void createInvalidAttachmentCount() {
+		assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(List.of(), pass));
+		assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(List.of(view, view), pass));
+	}
+
+	@Test
+	void createInvalidExtents() {
+		// Create image with different extents
+		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+				.extents(new Image.Extents(5, 6))
+				.format(FORMAT)
+				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.build();
+
+		// Create second attachment
+		final View other = mock(View.class);
+		when(other.image()).thenReturn(mock(Image.class));
+		when(other.image().descriptor()).thenReturn(descriptor);
+
+		// Check different extents
+		when(pass.count()).thenReturn(2);
+		assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(List.of(view, other), pass));
 	}
 
 	@Test

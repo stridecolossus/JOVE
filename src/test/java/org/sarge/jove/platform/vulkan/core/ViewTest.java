@@ -58,6 +58,7 @@ public class ViewTest extends AbstractVulkanTest {
 		assertEquals(dev, view.device());
 		assertEquals(image, view.image());
 		assertEquals(ClearValue.NONE, view.clear());
+		assertEquals(new Image.Extents(3, 4), view.extents());
 	}
 
 	@Test

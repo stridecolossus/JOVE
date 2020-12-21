@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.jove.util.Check.oneOrMore;
 import static org.sarge.jove.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
@@ -39,16 +40,24 @@ public class RenderPass extends AbstractVulkanObject {
 	 */
 	public static final int VK_SUBPASS_EXTERNAL = (~0);
 
-	// TODO - number of attachments & check frame buffer
-	// TODO - separate attachment descriptor?
+	private final int count;
 
 	/**
 	 * Constructor.
 	 * @param handle		Render pass handle
 	 * @param dev			Logical device
+	 * @param count			Number of attachments
 	 */
-	RenderPass(Pointer handle, LogicalDevice dev) {
+	RenderPass(Pointer handle, LogicalDevice dev, int count) {
 		super(handle, dev, dev.library()::vkDestroyRenderPass);
+		this.count = oneOrMore(count);
+	}
+
+	/**
+	 * @return Number of attachments
+	 */
+	public int count() {
+		return count;
 	}
 
 	/**
@@ -139,6 +148,7 @@ public class RenderPass extends AbstractVulkanObject {
 			// Add dependencies
 			info.dependencyCount = dependencies.size();
 			info.pDependencies = StructureCollector.toArray(dependencies, VkSubpassDependency::new, DependencyBuilder::populate);
+			// TODO - enforce number of dependencies = subpass + before + after?
 
 			// Allocate render pass
 			final VulkanLibrary lib = dev.library();
@@ -146,7 +156,7 @@ public class RenderPass extends AbstractVulkanObject {
 			check(lib.vkCreateRenderPass(dev.handle(), info, null, pass));
 
 			// Create render pass
-			return new RenderPass(pass.getValue(), dev);
+			return new RenderPass(pass.getValue(), dev, attachments.size());
 		}
 
 		/**
