@@ -18,6 +18,8 @@ import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.Image.Extents;
+import org.sarge.jove.platform.vulkan.util.Memory;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.Check;
 
@@ -451,7 +453,7 @@ public interface Image extends NativeObject {
 		private final VkImageCreateInfo info = new VkImageCreateInfo();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
 		private final Set<VkImageAspectFlag> aspects = new HashSet<>();
-		private final MemoryAllocator.Allocation allocation;
+		private final MemoryAllocator.Request request;
 		private Extents extents;
 
 		/**
@@ -460,7 +462,7 @@ public interface Image extends NativeObject {
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
-			this.allocation = dev.allocator().allocation();
+			this.request = dev.allocator().request();
 			init();
 		}
 
@@ -575,7 +577,7 @@ public interface Image extends NativeObject {
 		 * @param prop Memory property
 		 */
 		public Builder property(VkMemoryPropertyFlag prop) {
-			allocation.property(prop);
+			request.property(prop);
 			return this;
 		}
 
@@ -620,11 +622,12 @@ public interface Image extends NativeObject {
 			lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate image memory
-			final Pointer mem = allocation.init(reqs).allocate();
-			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem, 0));
+			final Memory mem = request.init(reqs).allocate();
+			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.memory(), 0));
 
 			// Create image
-			return new DefaultImage(handle.getValue(), descriptor, mem, dev);
+			// TODO - use memory object
+			return new DefaultImage(handle.getValue(), descriptor, mem.memory(), dev);
 		}
 	}
 }

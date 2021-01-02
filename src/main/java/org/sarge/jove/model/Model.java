@@ -367,21 +367,21 @@ public interface Model {
 			final Integer prev = map.get(vertex);
 
 			// Add new vertices
-			final int index;
+			final int idx;
 			if(prev == null) {
 				// Add new vertex
-				index = count();
-				map.put(vertex, index);
+				idx = count();
+				map.put(vertex, idx);
 				super.add(vertex);
 			}
 			else {
 				// Existing vertex
-				index = prev;
+				idx= prev;
 			}
 
 			// Add index
 			if(auto) {
-				add(index);
+				add(idx);
 			}
 
 			return this;

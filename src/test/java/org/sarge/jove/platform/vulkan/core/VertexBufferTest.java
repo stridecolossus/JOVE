@@ -23,6 +23,7 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.util.Memory;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -167,20 +168,22 @@ public class VertexBufferTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private VertexBuffer.Builder builder;
-		private MemoryAllocator.Allocation allocation;
+		private MemoryAllocator.Request allocation;
 
 		@BeforeEach
 		void before() {
 			// Init VBO memory allocation
 			// Init image memory
-			final Pointer mem = new Pointer(3);
+			final Pointer ptr = new Pointer(3);
+			final Memory mem = mock(Memory.class);
+			when(mem.memory()).thenReturn(ptr);
 			final MemoryAllocator allocator = mock(MemoryAllocator.class);
-			allocation = mock(MemoryAllocator.Allocation.class);
+			allocation = mock(MemoryAllocator.Request.class);
 			when(dev.allocator()).thenReturn(allocator);
-			when(allocator.allocation()).thenReturn(allocation);
+			when(allocator.request()).thenReturn(allocation);
 			when(allocation.allocate()).thenReturn(mem);
 			when(allocation.init(any())).thenReturn(allocation);
-			when(allocation.size()).thenReturn(4L);
+			//when(allocation.size()).thenReturn(4L);
 
 			// Create builder
 			builder = new VertexBuffer.Builder(dev);
@@ -226,7 +229,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		@Test
 		void buildEmptyBufferLength() {
 			builder.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-			when(allocation.size()).thenReturn(0L);
+//			when(allocation.size()).thenReturn(0L);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 

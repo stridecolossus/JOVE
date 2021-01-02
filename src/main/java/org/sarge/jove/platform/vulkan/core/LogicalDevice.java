@@ -41,7 +41,9 @@ public class LogicalDevice implements TransientNativeObject {
 	private final VulkanLibrary lib;
 	private final DeviceFeatures features;
 	private final Map<Queue.Family, List<Queue>> queues;
-	private final MemoryAllocator allocator;
+	private MemoryAllocator allocator;
+
+	// https://android.jlelse.eu/lazy-initialisation-whats-a-correct-implementation-64c4638561e
 
 	/**
 	 * Constructor.
@@ -56,7 +58,7 @@ public class LogicalDevice implements TransientNativeObject {
 		this.lib = parent.instance().library();
 		this.features = notNull(features);
 		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
-		this.allocator = MemoryAllocator.create(this);
+		this.allocator = new MemoryAllocator(this);
 	}
 
 	/**

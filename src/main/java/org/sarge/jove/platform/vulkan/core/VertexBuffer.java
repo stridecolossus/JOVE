@@ -15,6 +15,7 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
+import org.sarge.jove.platform.vulkan.util.Memory;
 import org.sarge.jove.util.Check;
 import org.sarge.jove.util.PointerArray;
 
@@ -192,7 +193,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	public static class Builder {
 		private final LogicalDevice dev;
 		private final Set<VkBufferUsageFlag> usage = new HashSet<>();
-		private final MemoryAllocator.Allocation allocation;
+		private final MemoryAllocator.Request allocation;
 		private long len;
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
 
@@ -202,7 +203,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
-			this.allocation = dev.allocator().allocation();
+			this.allocation = dev.allocator().request();
 		}
 
 		/**
@@ -276,13 +277,14 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 			lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate buffer memory
-			final Pointer mem = allocation.init(reqs).allocate();
+			final Memory mem = allocation.init(reqs).allocate();
 
 			// Bind memory
-			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem, 0L));
+			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.memory(), 0L));
 
 			// Create buffer
-			return new VertexBuffer(handle.getValue(), dev, len, mem);
+			// TODO - use memory object
+			return new VertexBuffer(handle.getValue(), dev, len, mem.memory());
 		}
 	}
 }

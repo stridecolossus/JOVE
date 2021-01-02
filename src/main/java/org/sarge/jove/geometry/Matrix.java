@@ -220,6 +220,7 @@ public final class Matrix implements Transform, Bufferable {
 		return new Matrix(order, result);
 	}
 
+	// TODO
 	public Point multiply(Point pt) {
 		// Convert to homogeneous array
 		if(order != DEFAULT_ORDER) throw new IllegalArgumentException("Can only multiply a vector by a matrix with order of 4");
@@ -248,12 +249,11 @@ public final class Matrix implements Transform, Bufferable {
 		if(obj == this) {
 			return true;
 		}
-		else {
-			return
+
+		return
 				(obj instanceof Matrix that) &&
 				(this.order == that.order) &&
 				MathsUtil.isEqual(this.matrix, that.matrix);
-		}
 	}
 
 	@Override

@@ -41,9 +41,9 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	 * Creates an integer percentile.
 	 * @param value Percentile as a 0..100 integer
 	 * @return Percentile
+	 * @throws ArrayIndexOutOfBoundsException if the given value is not in the range 0...100
 	 */
 	public static Percentile of(int value) {
-		Check.range(value, 0, MAX);
 		return INTEGERS[value];
 	}
 

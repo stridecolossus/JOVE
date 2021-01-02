@@ -31,6 +31,7 @@ import org.sarge.jove.platform.vulkan.core.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.core.Image.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.util.Memory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -170,10 +171,14 @@ public class ImageTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
+			final Pointer ptr = new Pointer(1);
+			final Memory mem = mock(Memory.class);
+			when(mem.memory()).thenReturn(ptr);
+
 			// Init image memory
-			final Pointer mem = new Pointer(1);
-			final MemoryAllocator.Allocation allocation = mock(MemoryAllocator.Allocation.class);
-			when(allocator.allocation()).thenReturn(allocation);
+//			final Pointer mem = new Pointer(1);
+			final MemoryAllocator.Request allocation = mock(MemoryAllocator.Request.class);
+			when(allocator.request()).thenReturn(allocation);
 			when(allocation.allocate()).thenReturn(mem);
 			when(allocation.init(any())).thenReturn(allocation);
 
@@ -238,7 +243,7 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.sharingMode);
 
 			// Check memory allocation
-			verify(lib).vkBindImageMemory(eq(dev.handle()), isA(Pointer.class), eq(mem), eq(0L));
+			verify(lib).vkBindImageMemory(eq(dev.handle()), isA(Pointer.class), eq(ptr), eq(0L));
 		}
 
 		@Test

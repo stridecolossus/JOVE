@@ -71,10 +71,10 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
 	/**
 	 * Constructor.
-	 * @param r
-	 * @param g
-	 * @param b
-	 * @param a
+	 * @param red
+	 * @param green
+	 * @param blue
+	 * @param alpha
 	 * @throws IllegalArgumentException if any argument is not a percentile value
 	 */
 	public Colour {
