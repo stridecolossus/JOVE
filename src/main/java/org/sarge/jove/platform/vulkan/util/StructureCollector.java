@@ -46,8 +46,8 @@ public class StructureCollector <T, R extends Structure> implements Collector<T,
 	 * @param populate		Population function
 	 * @return <b>First</b> element of the array
 	 */
-	public static <T, R extends Structure> R toArray(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
-		final R[] array = data.stream().collect(new StructureCollector<>(identity, populate));
+	public static <T, R extends Structure> R toPointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+		final R[] array = toArray(data, identity, populate);
 
 		if(array == null) {
 			return null;
@@ -55,6 +55,35 @@ public class StructureCollector <T, R extends Structure> implements Collector<T,
 		else {
 			return array[0];
 		}
+	}
+
+	/**
+	 * Transforms the given data collection to a contiguous array.
+	 * @param <T> Data type
+	 * @param <R> Resultant JNA structure type
+	 * @param data			Data
+	 * @param identity		Identity constructor
+	 * @param populate		Population function
+	 * @return Contiguous array
+	 */
+	public static <T, R extends Structure> R[] toArray(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+		// Check for empty data
+		if(data.isEmpty()) {
+			return null;
+		}
+
+		// Allocate contiguous array
+		@SuppressWarnings("unchecked")
+		final R[] array = (R[]) identity.get().toArray(data.size());
+
+		// Populate array
+		final Iterator<T> itr = data.iterator();
+		for(final R element : array) {
+			populate.accept(itr.next(), element);
+		}
+		assert !itr.hasNext();
+
+		return array;
 	}
 
 	private final Supplier<R> identity;
@@ -93,27 +122,7 @@ public class StructureCollector <T, R extends Structure> implements Collector<T,
 
 	@Override
 	public Function<List<T>, R[]> finisher() {
-		return this::finish;
-	}
-
-	@SuppressWarnings("unchecked")
-	private R[] finish(List<T> list) {
-		// Check for empty data
-		if(list.isEmpty()) {
-			return null;
-		}
-
-		// Allocate contiguous array
-		final R[] array = (R[]) identity.get().toArray(list.size());
-
-		// Populate array
-		final Iterator<T> itr = list.iterator();
-		for(final R element : array) {
-			populate.accept(itr.next(), element);
-		}
-		assert !itr.hasNext();
-
-		return array;
+		return list -> toArray(list, identity, populate);
 	}
 
 	@Override

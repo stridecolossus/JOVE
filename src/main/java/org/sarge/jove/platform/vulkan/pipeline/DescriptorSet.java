@@ -293,7 +293,7 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		/**
-		 * @return Maximum number of sets that can be allocated by this pool
+		 * @return Maximum number of sets that <b>can</b> be allocated by this pool
 		 */
 		public int maximum() {
 			return max;
@@ -464,7 +464,7 @@ public class DescriptorSet implements NativeObject {
 				final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
 				info.flags = IntegerEnumeration.mask(flags);
 				info.poolSizeCount = entries.size();
-				info.pPoolSizes = StructureCollector.toArray(entries.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
+				info.pPoolSizes = StructureCollector.toPointer(entries.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 				info.maxSets = max;
 
 				// Allocate pool
@@ -588,7 +588,7 @@ public class DescriptorSet implements NativeObject {
 			// Init layout descriptor
 			final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
 			info.bindingCount = bindings.size();
-			info.pBindings = StructureCollector.toArray(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
+			info.pBindings = StructureCollector.toPointer(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();

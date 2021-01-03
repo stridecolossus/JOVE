@@ -50,6 +50,8 @@ public class ModelDemo {
 		final var loader = DataSource.loader(src, new ImageData.Loader());
 		final ImageData image = loader.load("demo/model/chalet.jpg");
 		final VkFormat format = FormatBuilder.format(image);
+//		//System.out.println(format); // VK_FORMAT_R8G8B8A8_SRGB
+//		final VkFormat format = VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
 
 		// Copy image to staging buffer
 		final VertexBuffer staging = VertexBuffer.staging(dev, image.data().limit());
@@ -100,6 +102,12 @@ public class ModelDemo {
 				.submit(pool);
 
 		// Create view
+//		final VkComponentMapping mapping = new VkComponentMapping();
+//		mapping.r = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_A;
+//		mapping.g = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_B;
+//		mapping.b = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_G;
+//		mapping.a = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_R;
+//		return new View.Builder(dev, texture).mapping(mapping).build();
 		return new View.Builder(dev, texture).build();
 	}
 

@@ -116,7 +116,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * @throws IllegalArgumentException if the matrix is not square or the array length does not match the matrix order
 	 */
 	public Matrix(float[] matrix) {
-		this((int) MathsUtil.sqrt(matrix.length), Arrays.copyOf(matrix, matrix.length));
+		this(order(matrix.length), Arrays.copyOf(matrix, matrix.length));
 	}
 
 	/**
@@ -125,9 +125,24 @@ public final class Matrix implements Transform, Bufferable {
 	 * @param matrix		Matrix
 	 */
 	private Matrix(int order, float[] matrix) {
-		if(matrix.length != order * order) throw new IllegalArgumentException("Invalid matrix length");
-		this.order = oneOrMore(order);
+		assert matrix.length == order * order;
+		this.order = order;
 		this.matrix = matrix;
+	}
+
+	/**
+	 * Determines the order of the matrix.
+	 * @param len Matrix length
+	 * @return Order
+	 */
+	private static int order(int len) {
+		return switch(len) {
+			case 1 -> 1;
+			case 4 -> 2;
+			case 9 -> 3;
+			case 16 -> 4;
+			default -> (int) MathsUtil.sqrt(len);
+		};
 	}
 
 	/**
@@ -282,7 +297,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @param order Matrix order
 		 */
 		public Builder(int order) {
-			this.matrix = new Matrix(order);
+			this.matrix = new Matrix(oneOrMore(order));
 		}
 
 		/**

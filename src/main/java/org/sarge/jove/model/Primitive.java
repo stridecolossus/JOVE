@@ -1,5 +1,7 @@
 package org.sarge.jove.model;
 
+import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
+
 /**
  * Drawing primitives.
  * @author Sarge
@@ -8,41 +10,44 @@ public enum Primitive {
 	/**
 	 * Triangles.
 	 */
-	TRIANGLES(3),
+	TRIANGLES(3, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
 
 	/**
 	 * Strip of triangles.
 	 */
-	TRIANGLE_STRIP(3),
+	TRIANGLE_STRIP(3, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP),
 
 	/**
 	 * Triangle fan.
 	 */
-	TRIANGLE_FAN(3),
+	TRIANGLE_FAN(3, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN),
 
 	/**
 	 * Points.
 	 */
-	POINTS(1),
+	POINTS(1, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_POINT_LIST),
 
 	/**
 	 * Lines.
 	 */
-	LINES(2),
+	LINES(2, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST),
 
 	/**
 	 * Strip of lines.
 	 */
-	LINE_STRIP(2);
+	LINE_STRIP(2, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_STRIP);
 
 	private final int size;
+	private final VkPrimitiveTopology topology;
 
 	/**
 	 * Constructor.
-	 * @param size Number of vertices per primitive
+	 * @param size 			Number of vertices per primitive
+	 * @param topology		Vulkan topology
 	 */
-	private Primitive(int size) {
+	private Primitive(int size, VkPrimitiveTopology topology) {
 		this.size = size;
+		this.topology = topology;
 	}
 
 	/**
@@ -50,6 +55,13 @@ public enum Primitive {
 	 */
 	public int size() {
 		return size;
+	}
+
+	/**
+	 * @return Vulkan primitive topology
+	 */
+	public VkPrimitiveTopology topology() {
+		return topology;
 	}
 
 	/**

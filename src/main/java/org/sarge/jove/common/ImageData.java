@@ -138,6 +138,7 @@ public interface ImageData {
 			};
 
 			// Buffer image data
+			// TODO - duplicate code here and in swizzle()
 			final DataBufferByte data = (DataBufferByte) result.getRaster().getDataBuffer();
 			final ByteBuffer buffer = Bufferable.allocate(data.getData());
 

@@ -180,6 +180,8 @@ public class View extends AbstractVulkanObject {
 			this.mapping = notNull(mapping);
 			return this;
 		}
+		// TODO - use this and remove swizzle in image
+		// TODO - no need to init since all zeroes?
 
 		/**
 		 * @return Sub-resource builder for this view

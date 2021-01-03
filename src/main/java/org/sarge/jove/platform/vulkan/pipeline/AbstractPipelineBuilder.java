@@ -17,6 +17,7 @@ abstract class AbstractPipelineBuilder<T> {
 	protected void parent(Pipeline.Builder parent) {
 		this.parent = notNull(parent);
 	}
+	// TODO - can we get rid of this without enforcing all the derived builders to have a ctor for the parent? proxy is too nasty
 
 	/**
 	 * @return Result of this builder

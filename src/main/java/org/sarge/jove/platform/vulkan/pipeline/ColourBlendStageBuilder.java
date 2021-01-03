@@ -91,7 +91,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 		// Add attachment descriptors
 		info.attachmentCount = attachments.size();
-		info.pAttachments = StructureCollector.toArray(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
+		info.pAttachments = StructureCollector.toPointer(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
 
 		// Init global colour blending settings
 		if(logic == null) {

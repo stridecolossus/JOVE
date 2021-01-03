@@ -18,7 +18,7 @@ In this chapter we will implement the mandatory fixed-function pipeline stages a
 
 ### Pipeline Class
 
-The pipeline domain class itself is trivial:
+The pipeline domain class itself is relatively trivial:
 
 ```java
 public class Pipeline extends AbstractVulkanObject {
@@ -31,12 +31,7 @@ public class Pipeline extends AbstractVulkanObject {
         super(handle, dev, dev.library()::vkDestroyPipeline);
     }
 
-    /**
-     * Creates a command to bind this pipeline.
-     * @return New bind pipeline command
-     */
-    public Command bind() {
-        return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, handle());
+    public static class Builder {
     }
 
     /**
@@ -47,9 +42,38 @@ public class Pipeline extends AbstractVulkanObject {
 }
 ```
 
-The _pipeline layout_ specifies the resources (texture samplers, uniform buffers, etc) used by the pipeline.
-Although none of these are needed for the triangle demo we are still required to specify a layout for the pipeline.
-We will gloss over construction of the layout until a future chapter.
+### Pipeline Layout
+
+The _pipeline layout_ specifies the _resources_ (texture samplers, uniform buffers, etc) and _push constants_ used by the pipeline.
+
+None of these are needed for the triangle demo but we are still required to specify a layout for the pipeline.
+
+We create a bare-bones implementation this this stage of development:
+
+```java
+public static class Layout extends AbstractVulkanObject {
+    private Layout(Pointer handle, LogicalDevice dev) {
+        super(handle, dev, dev.library()::vkDestroyPipelineLayout);
+    }
+
+    public static class Builder {
+        private final LogicalDevice dev;
+
+        public Builder(LogicalDevice dev) {
+            this.dev = notNull(dev);
+        }
+
+        public Layout build() {
+            final VkPipelineLayoutCreateInfo info = new VkPipelineLayoutCreateInfo();
+            // TODO
+            final VulkanLibrary lib = dev.library();
+            final PointerByReference layout = lib.factory().pointer();
+            check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));
+            return new Layout(layout.getValue(), dev);
+        }
+    }
+}
+```
 
 ### Pipeline Builder
 
@@ -124,16 +148,22 @@ We next implement a unit-test for the parent builder shown here to illustrate th
 class BuilderTest {
     private Pipeline.Builder builder;
     private Rectangle rect;
+    private Pipeline.Layout layout;
+    private RenderPass pass;
 
     @BeforeEach
     void before() {
         builder = new Pipeline.Builder(dev);
         rect = new Rectangle(new Dimensions(3, 4));
+        layout = mock(Pipeline.Layout.class);
+        pass = mock(RenderPass.class);
     }
 
     @Test
     void build() {
         pipeline = builder
+            .layout(layout)
+            .pass(pass)
             .viewport()
                 .viewport(rect)
                 .scissor(rect)
@@ -148,8 +178,6 @@ class BuilderTest {
     }
 }
 ```
-
-For the triangle demo the only mandatory information is the viewport pipeline stage and the vertex shader.
 
 ### Nested Builders
 
@@ -263,39 +291,27 @@ return new Pipeline(pipelines[0], dev);
 
 ### Viewport Pipeline Stage
 
-Rather than clog this chapter up by covering the design and development of every nested builder we introduce them as they are used.
+Rather than clog this chapter up by covering the design and development of every nested builder we will introduce them as they are needed.
 
 The only fixed-function stage builder that we **must** configure for any application is the viewport which specifies:
 - The viewport rectangle(s) that define the regions of the framebuffer that will be rendered to.
 - The scissor rectangles that define the drawing regions for the rasterizer.
+
+The builder for the viewport stage is relatively simple:
 
 ```java
 public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
     /**
      * Transient viewport descriptor.
      */
-    private record Viewport(Rectangle rect, float min, float max) {
+    private record Viewport(Rectangle rect, Percentile min, Percentile max) {
     }
 
     private final List<Viewport> viewports = new ArrayList<>();
     private final List<Rectangle> scissors = new ArrayList<>();
     
-    private boolean copy = true;
-
-    public ViewportStageBuilder setCopyScissor(boolean copy) {
-        this.copy = copy;
-        return this;
-    }
-
-    public ViewportStageBuilder viewport(Rectangle rect, float min, float max) {
-        // Add viewport
+    public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
         viewports.add(new Viewport(rect, min, max, flip));
-
-        // Add scissor
-        if(copy) {
-            scissor(rect);
-        }
-
         return this;
     }
 
@@ -304,31 +320,62 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
     }
 
     public ViewportStageBuilder scissor(Rectangle rect) {
-        scissors.add(rect);
+        scissors.add(notNull(rect));
         return this;
     }
 }
 ```
 
-The `setCopyScissor` setting is used to automatically create a scissor rectangle for each viewport (the most common case).
-
 The build method creates the viewport and scissor rectangle arrays:
 
 ```java
-@Override
 protected VkPipelineViewportStateCreateInfo result() {
+    // Validate
+    final int count = viewports.size();
+    if(count == 0) throw new IllegalArgumentException("No viewports specified");
+    if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
+
     // Add viewports
     final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
-    if(viewports.isEmpty()) throw new IllegalArgumentException("No viewports specified");
-    info.viewportCount = viewports.size();
-    info.pViewports = VulkanStructure.array(VkViewport::new, viewports, Viewport::populate);
+    info.viewportCount = count;
+    info.pViewports = StructureCollector.toArray(viewports, VkViewport::new, Viewport::populate);
 
     // Add scissors
     if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
-    info.scissorCount = scissors.size();
-    info.pScissors = VulkanStructure.array(VkRect2D.ByReference::new, scissors, this::rectangle);
+    info.scissorCount = count;
+    info.pScissors = StructureCollector.toArray(scissors, VkRect2D.ByReference::new, ViewportStageBuilder::rectangle);
 
     return info;
+}
+```
+
+The descriptors are populated by the following helper methods:
+
+```java
+private record Viewport(Rectangle rect, Percentile min, Percentile max, boolean flip) {
+    private void populate(VkViewport viewport) {
+        rectangle(rect, viewport);
+        viewport.minDepth = min.floatValue();
+        viewport.maxDepth = max.floatValue();
+    }
+}
+
+private static void rectangle(Rectangle rect, VkRect2D out) {
+    out.offset.x = rect.x();
+    out.offset.y = rect.y();
+    out.extent.width = rect.width();
+    out.extent.height = rect.height();
+}
+```
+
+The most common case is a single viewport with a corresponding scissor rectangle, so we add a helper that copies the most recent viewport rectangle:
+
+```java
+public ViewportStageBuilder copyScissor() {
+    if(viewports.isEmpty()) throw new IllegalStateException("No viewports have been specified");
+    final Viewport prev = viewports.get(viewports.size() - 1);
+    scissor(prev.rect);
+    return this;
 }
 ```
 

@@ -258,6 +258,7 @@ public class RotatingCubeDemo {
 				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3)
 				.max(2 * 3)
 				.build();
+				// .add(3, layout)
 
 		final List<DescriptorSet> descriptors = setPool.allocate(setLayout, 3);
 

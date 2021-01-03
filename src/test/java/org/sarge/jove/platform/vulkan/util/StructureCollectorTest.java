@@ -88,15 +88,15 @@ public class StructureCollectorTest {
 	}
 
 	@Test
-	void toArray() {
-		final MockStructure result = StructureCollector.toArray(List.of(obj), MockStructure::new, populate);
+	void toPointer() {
+		final MockStructure result = StructureCollector.toPointer(List.of(obj), MockStructure::new, populate);
 		assertNotNull(result);
 		verify(populate).accept(obj, result);
 	}
 
 	@Test
-	void toArrayEmpty() {
-		final MockStructure result = StructureCollector.toArray(List.of(), MockStructure::new, populate);
+	void toPointerEmpty() {
+		final MockStructure result = StructureCollector.toPointer(List.of(), MockStructure::new, populate);
 		assertEquals(null, result);
 	}
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Percentile;
 import org.sarge.jove.common.Rectangle;
 
 public class ViewportStageBuilderTest {
@@ -21,7 +22,10 @@ public class ViewportStageBuilderTest {
 	@Test
 	void build() {
 		// Build descriptor
-		final var descriptor = builder.viewport(rect).result();
+		final var descriptor = builder
+				.viewport(rect, new Percentile(0.1f), new Percentile(0.2f))
+				.scissor(rect)
+				.result();
 
 		// Check descriptor
 		assertNotNull(descriptor);
@@ -35,8 +39,8 @@ public class ViewportStageBuilderTest {
 		assertEquals(2, descriptor.pViewports.y);
 		assertEquals(3, descriptor.pViewports.width);
 		assertEquals(4, descriptor.pViewports.height);
-		assertEquals(0, descriptor.pViewports.minDepth);
-		assertEquals(1, descriptor.pViewports.maxDepth);
+		assertEquals(0.1f, descriptor.pViewports.minDepth);
+		assertEquals(0.2f, descriptor.pViewports.maxDepth);
 
 		// Check scissor
 		assertNotNull(descriptor.pScissors);
@@ -48,7 +52,11 @@ public class ViewportStageBuilderTest {
 
 	@Test
 	void flip() {
-		final var descriptor = builder.flip(true).viewport(rect).result();
+		final var descriptor = builder
+				.flip(true)
+				.viewport(rect)
+				.scissor(rect)
+				.result();
 		assertEquals(1, descriptor.pViewports.x);
 		assertEquals(2 + 4, descriptor.pViewports.y);
 		assertEquals(3, descriptor.pViewports.width);
@@ -62,7 +70,6 @@ public class ViewportStageBuilderTest {
 
 	@Test
 	void createRequiresScissor() {
-		builder.setCopyScissor(false);
 		builder.viewport(rect);
 		assertThrows(IllegalArgumentException.class, () -> builder.result());
 	}

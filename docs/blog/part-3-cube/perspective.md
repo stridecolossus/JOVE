@@ -44,13 +44,27 @@ public final class Matrix implements Bufferable {
     private final float[] matrix;
 
     public Matrix(float[] matrix) {
-        this((int) MathsUtil.sqrt(matrix.length), Arrays.copyOf(matrix, matrix.length));
+        this(order(matrix.length), Arrays.copyOf(matrix, matrix.length));
     }
 
     private Matrix(int order, float[] matrix) {
-        if(matrix.length != order * order) throw new IllegalArgumentException("Invalid matrix length");
-        this.order = oneOrMore(order);
+        this.order = order;
         this.matrix = matrix;
+    }
+
+    /**
+     * Determines the order of the matrix.
+     * @param len Matrix length
+     * @return Order
+     */
+    private static int order(int len) {
+        return switch(len) {
+            case 1 -> 1;
+            case 4 -> 2;
+            case 9 -> 3;
+            case 16 -> 4;
+            default -> (int) MathsUtil.sqrt(len);
+        };
     }
 
     public int order() {
@@ -93,7 +107,7 @@ public static class Builder {
     private Matrix matrix;
 
     public Builder(int order) {
-        this.matrix = new Matrix(order);
+        this.matrix = new Matrix(oneOrMore(order));
     }
 
     public Builder identity() {
@@ -415,9 +429,34 @@ We have attempted to bear all the above in mind while trying to decouple the log
 
 ### Creating the Uniform Buffer
 
-As an intermediate step we will apply an identity matrix to the demo to test the uniform buffer before we start messing around with the perspective projection.
+As an intermediate step we will apply the identity matrix to the demo to test the uniform buffer before we start messing around with perspective projection.
 
-First we create a new vertex buffer for the uniform buffer and load the matrix:
+First we add a constant for a 4-order identity matrix:
+
+```java
+public final class Matrix implements Transform, Bufferable {
+    /**
+     * Default order size for a matrix.
+     */
+    public static final int DEFAULT_ORDER = 4;
+
+    /**
+     * Default identity matrix.
+     */
+    public static final Matrix IDENTITY = identity(DEFAULT_ORDER);
+
+    /**
+     * Creates an identity matrix.
+     * @param order Matrix order
+     * @return Identity matrix
+     */
+    public static Matrix identity(int order) {
+        return new Builder(order).identity().build();
+    }
+}
+```
+
+Next we create a new uniform buffer and load the identity matrix:
 
 ```java
 final VertexBuffer uniform = new VertexBuffer.Builder(dev)
@@ -430,7 +469,7 @@ final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 uniform.load(Matrix.IDENTITY);
 ```
 
-Note that this buffer is only visible to the host - eventually the matrix data in the uniform buffer will be updated every frame (i.e. for the rotation) so a staging buffer would just add extra complexity and overhead.
+Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than a device-local buffer - eventually the matrix will be updated every frame (for the rotation) so a device-local / staging buffer buffer would just add extra complexity and overhead.
 
 We also take the opportunity to implement overloaded variants of the `load()` method to accept both byte-buffers and bufferable objects:
 

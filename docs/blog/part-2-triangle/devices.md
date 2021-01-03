@@ -154,7 +154,10 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
 }
 ```
 
-Note that again we invoke the same API method twice to retrieve the queue families.  However in this case we use `toArray()` on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method (i.e. our array is equivalent to a native pointer-to-structure).  This is the standard approach for an array of JNA structures, we will abstract this common pattern in the next chapter.
+Note that again we invoke the same API method twice to retrieve the queue families.  
+However in this case we use `toArray()` on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method 
+(i.e. our array is equivalent to a native pointer-to-structure).  
+This is the standard approach for an array of JNA structures, we will abstract this common pattern at the end of the chapter.
 
 We can now add some temporary code to the demo to output the physical devices:
 
@@ -458,7 +461,7 @@ public class LogicalDevice {
 The local `RequiredQueue` class is a transient descriptor for a work queue that is required by the application:
 
 ```java
-private record RequiredQueue(Queue.Family family, List<Float> priorities) {
+private record RequiredQueue(Queue.Family family, List<Percentile> priorities) {
     /**
      * Populates a descriptor for a queue required by this device.
      */
@@ -557,20 +560,25 @@ Notes:
 
 - JNA requires a contiguous memory block for the array (which is actually a native pointer-to-array type).
 
-The `populate()` method generates the descriptor for each queue:
+The `populate()` method generates the descriptor for each `RequiredQueue`:
 
 ```java
 private void populate(VkDeviceQueueCreateInfo info) {
+    // Convert percentile priorities to array
+    final float[] array = ArrayUtils.toPrimitive(priorities.stream().map(Percentile::floatValue).toArray(Float[]::new));
+
     // Allocate contiguous memory block for the priorities array
-    final Memory mem = new Memory(priorities.length * Float.BYTES);
-    mem.write(0, priorities, 0, priorities.length);
-    
+    final Memory mem = new Memory(priorities.size() * Float.BYTES);
+    mem.write(0, array, 0, array.length);
+
     // Populate queue descriptor
-    info.queueCount = priorities.length;
+    info.queueCount = array.length;
     info.queueFamilyIndex = family.index();
     info.pQueuePriorities = mem;
 }
 ```
+
+Note that the `pQueuePriorities` field is a contiguous block of floating-point values mapped to a `const float*` type.
 
 ### Work Queues
 
@@ -872,6 +880,230 @@ public synchronized Properties properties() {
 
 ---
 
+## Improvements
+
+### Two-Stage Invocation
+
+When enumerating the physical devices we first came across API methods that are invoked **twice** to retrieve an array from Vulkan.
+
+The process is generally:
+1. Invoke an API method with an integer-by-reference value to determine the length of the array (the array itself is `null`).
+2. Allocate the array accordingly.
+3. Invoke again to populate the array (passing the length value and the empty array).
+
+This is a common pattern across the Vulkan API which we refer to as _two-stage invocation_.
+
+We define the following interface to abstract a Vulkan API method that employs two-stage invocation:
+
+```java
+public interface VulkanFunction<T> {
+    /**
+     * Vulkan API method that retrieves an array of the given type.
+     * @param lib       Vulkan library
+     * @param count     Return-by-reference count of the number of array elements
+     * @param array     Array instance or <code>null</code> to retrieve size of the array
+     * @return Vulkan result code
+     */
+    int enumerate(VulkanLibrary lib, IntByReference count, T array);
+}
+```
+
+The API method can now be defined as follows:
+
+```java
+VulkanFunction<Pointer[]> func = (api, count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
+```
+
+We next add a helper method encapsulating the process described above:
+
+```java
+static <T> T[] enumerate(VulkanFunction<T[]> func, VulkanLibrary lib, IntFunction<T[]> factory) {
+    // Determine array length
+    final IntByReference count = lib.factory().integer();
+    check(func.enumerate(lib, count, null));
+
+    // Allocate array
+    final T[] array = factory.apply(count.getValue());
+
+    // Retrieve array
+    if(array.length > 0) {
+        check(func.enumerate(lib, count, array));
+    }
+
+    return array;
+}
+```
+
+and refactor the code to enumerate the devices:
+
+```java
+public static Stream<PhysicalDevice> devices(Instance instance) {
+    final VulkanFunction<Pointer[]> func = (api, count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
+    final Pointer[] handles = VulkanFunction.enumerate(func, instance.library(), Pointer[]::new);
+    return Arrays.stream(handles).map(ptr -> create(ptr, instance));
+}
+```
+
+This implementation is suitable for an array where the component type is automatically marshalled by JNA (such as the device pointers in the above example).
+
+However for an array of JNA structures we need a second implementation since the result **must** be a contiguous block of memory allocated using the `toArray` helper:
+
+```java
+static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, Supplier<T> identity) {
+    // Count number of values
+    final IntByReference count = lib.factory().integer();
+    check(func.enumerate(lib, count, null));
+
+    // Retrieve values
+    if(count.getValue() > 0) {
+        final T[] array = (T[]) identity.get().toArray(count.getValue());
+        check(func.enumerate(lib, count, array[0]));
+        return array;
+    }
+    else {
+        return (T[]) Array.newInstance(identity.getClass(), 0);
+    }
+}
+```
+
+The _identity_ supplies an instance of the structure used to allocate the resultant array.
+
+The code to retrieve the queue families now becomes:
+
+```java
+VkQueueFamilyProperties[] families = VulkanFunction.enumerate(func, instance.library(), VkQueueFamilyProperties::new);
+```
+
+This abstraction centralises the process of two-stage invocation reducing code complexity, duplication and testing.
+
+### Structure Arrays
+
+Vulkan makes heavy use of structures to configure a variety of objects and we are also often required to allocate and populate arrays of these structures.
+
+However an array of JNA structures poses a number of problems:
+
+- Unlike a standard POJO an array of JNA structures **must** be allocated using the JNA `toArray()` helper method to create a contiguous memory block.
+
+- This implies we must know the size of the data to allocate the array which imposes constrains on how we build the array (in particular whether we can employ Java streams).
+
+- Additionally there are edge cases where the data is empty (or even `null`).
+
+- Finally many API methods expect a pointer-to-array value, i.e. the **first** element of the array.
+
+Whilst none of this is particularly difficult to overcome it can be tedious, error-prone, and resulting in less testable code.
+
+To address the above issues we implement the following method that allocates and populates a JNA array from an arbitrary collection of domain objects:
+
+```java
+public class StructureCollector {
+    public static <T, R extends Structure> R[] toArray(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+        // Check for empty data
+        if(data.isEmpty()) {
+            return null;
+        }
+    
+        // Allocate contiguous array
+        @SuppressWarnings("unchecked")
+        final R[] array = (R[]) identity.get().toArray(data.size());
+    
+        // Populate array
+        final Iterator<T> itr = data.iterator();
+        for(final R element : array) {
+            populate.accept(itr.next(), element);
+        }
+        assert !itr.hasNext();
+    
+        return array;
+    }
+}
+```
+
+Notes:
+
+- T is the domain type, e.g. `RequiredQueue`
+
+- R is the component type of the resultant JNA structure array, e.g. `VkDeviceQueueCreateInfo`
+
+- The _identity_ is an instance of the structure used to allocate the array.
+
+- The `populate` method 'fills' an array element from the corresponding domain object.
+
+The edge cases are handled by the following:
+
+```java
+public static <T, R extends Structure> R toPointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+    final R[] array = toArray(data, identity, populate);
+
+    if(array == null) {
+        return null;
+    }
+    else {
+        return array[0];
+    }
+}
+```
+
+In the logical device we use this helper to build the array of required queue descriptors:
+
+```java
+info.pQueueCreateInfos = StructureCollector.toPointer(queues, VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
+```
+
+We also provide a more generalised custom stream collector:
+
+```java
+public class StructureCollector <T, R extends Structure> implements Collector<T, List<T>, R[]> {
+    private final Supplier<R> identity;
+    private final BiConsumer<T, R> populate;
+    private final Set<Characteristics> chars;
+
+    /**
+     * Constructor.
+     * @param identity      Identity structure
+     * @param populate      Population function
+     * @param chars         Stream characteristics
+     */
+    public StructureCollector(Supplier<R> identity, BiConsumer<T, R> populate, Characteristics... chars) {
+        this.identity = notNull(identity);
+        this.populate = notNull(populate);
+        this.chars = Set.copyOf(Arrays.asList(chars));
+    }
+
+    @Override
+    public Supplier<List<T>> supplier() {
+        return ArrayList::new;
+    }
+
+    @Override
+    public BiConsumer<List<T>, T> accumulator() {
+        return List::add;
+    }
+
+    @Override
+    public BinaryOperator<List<T>> combiner() {
+        return (left, right) -> {
+            left.addAll(right);
+            return left;
+        };
+    }
+
+    @Override
+    public Function<List<T>, R[]> finisher() {
+        return list -> toArray(list, identity, populate);
+    }
+}
+```
+
+Conclusions:
+
+- The helper methods encapsulates the logic for allocation and population of the resultant array (reducing code duplication).
+
+- Separating the iteration from the population logic simplifies application code.
+
+- We _could_ have used JNA structures directly (instead of custom domain objects) but we would still need to perform a field-by-field copy to the contiguous block.
+
+---
+
 ## Summary
 
 In this chapter we:
@@ -882,5 +1114,6 @@ In this chapter we:
 
 - Created a logical device and the work queues we will need in subsequent chapters
 
-- Added functionality to allow an application to specify supported and required Vulkan features.
+- Implemented functionality to allow an application to specify supported and required Vulkan features.
 
+- Added helper code to handle _two stage invocation_ and population of structure arrays.

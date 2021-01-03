@@ -77,7 +77,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 		// Init clear values
 		info.clearValueCount = values.size();
-		info.pClearValues = StructureCollector.toArray(values, VkClearValue::new, ClearValue::populate);
+		info.pClearValues = StructureCollector.toPointer(values, VkClearValue::new, ClearValue::populate);
 
 		// Create command
 		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
@@ -138,16 +138,16 @@ public class RenderPass extends AbstractVulkanObject {
 			// Add attachments
 			if(attachments.isEmpty()) throw new IllegalArgumentException("At least one attachment must be specified");
 			info.attachmentCount = attachments.size();
-			info.pAttachments = StructureCollector.toArray(attachments, VkAttachmentDescription::new, AttachmentBuilder::populate);
+			info.pAttachments = StructureCollector.toPointer(attachments, VkAttachmentDescription::new, AttachmentBuilder::populate);
 
 			// Add sub-passes
 			if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
 			info.subpassCount = subpasses.size();
-			info.pSubpasses = StructureCollector.toArray(subpasses, VkSubpassDescription::new, SubPassBuilder::populate);
+			info.pSubpasses = StructureCollector.toPointer(subpasses, VkSubpassDescription::new, SubPassBuilder::populate);
 
 			// Add dependencies
 			info.dependencyCount = dependencies.size();
-			info.pDependencies = StructureCollector.toArray(dependencies, VkSubpassDependency::new, DependencyBuilder::populate);
+			info.pDependencies = StructureCollector.toPointer(dependencies, VkSubpassDependency::new, DependencyBuilder::populate);
 			// TODO - enforce number of dependencies = subpass + before + after?
 
 			// Allocate render pass
@@ -339,7 +339,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 				// Populate colour attachments
 				desc.colorAttachmentCount = colour.size();
-				desc.pColorAttachments = StructureCollector.toArray(colour, VkAttachmentReference::new, Reference::populate);
+				desc.pColorAttachments = StructureCollector.toPointer(colour, VkAttachmentReference::new, Reference::populate);
 
 				// Populate depth attachment
 				if(depth != null) {
