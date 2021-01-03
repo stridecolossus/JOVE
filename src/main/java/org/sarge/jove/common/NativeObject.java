@@ -51,6 +51,8 @@ public interface NativeObject {
 				else {
 					final Handle handle = (Handle) value;
 					return handle.handle;
+					// TODO - clone pointer?
+					// TODO - could differentiate cases ~ context, e.g. clone for structure
 				}
 			}
 

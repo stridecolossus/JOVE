@@ -311,7 +311,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
     private final List<Rectangle> scissors = new ArrayList<>();
     
     public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
-        viewports.add(new Viewport(rect, min, max, flip));
+        viewports.add(new Viewport(rect, min, max));
         return this;
     }
 
@@ -326,7 +326,9 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 }
 ```
 
-The build method creates the viewport and scissor rectangle arrays:
+The percentile type is described at the end of this chapter.
+
+The builder creates the viewport and scissor rectangle arrays:
 
 ```java
 protected VkPipelineViewportStateCreateInfo result() {
@@ -338,12 +340,12 @@ protected VkPipelineViewportStateCreateInfo result() {
     // Add viewports
     final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
     info.viewportCount = count;
-    info.pViewports = StructureCollector.toArray(viewports, VkViewport::new, Viewport::populate);
+    info.pViewports = StructureCollector.toPointer(viewports, VkViewport::new, Viewport::populate);
 
     // Add scissors
     if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
     info.scissorCount = count;
-    info.pScissors = StructureCollector.toArray(scissors, VkRect2D.ByReference::new, ViewportStageBuilder::rectangle);
+    info.pScissors = StructureCollector.toPointer(scissors, VkRect2D.ByReference::new, ViewportStageBuilder::rectangle);
 
     return info;
 }
@@ -352,7 +354,7 @@ protected VkPipelineViewportStateCreateInfo result() {
 The descriptors are populated by the following helper methods:
 
 ```java
-private record Viewport(Rectangle rect, Percentile min, Percentile max, boolean flip) {
+private record Viewport ... {
     private void populate(VkViewport viewport) {
         rectangle(rect, viewport);
         viewport.minDepth = min.floatValue();
@@ -622,7 +624,124 @@ Phew!
 
 ---
 
+## Improvements
+
+### Percentile Values
+
+For the min/max depth of the viewport we introduced the `Percentile` class that represents a percentile value as a 0..1 floating-point number:
+
+```java
+public final class Percentile extends Number implements Comparable<Percentile> {
+    private final float value;
+
+    /**
+     * Constructor.
+     * @param value Percentile as a 0..1 floating-point value
+     */
+    public Percentile(float value) {
+        Check.isPercentile(value);
+        this.value = value;
+    }
+
+    @Override
+    public float floatValue() {
+        return value;
+    }
+
+    ...
+}
+```
+
+We also add convenience constants:
+
+```java
+/**
+ * Maximum value of a percentile expressed as an integer.
+ */
+public static final int MAX = 100;
+
+/**
+ * Zero percentile.
+ */
+public static final Percentile ZERO = new Percentile(0);
+
+/**
+ * 50% percentile.
+ */
+public static final Percentile HALF = new Percentile(0.5f);
+
+/**
+ * 100% percentile.
+ */
+public static final Percentile ONE = new Percentile(1);
+```
+
+Finally we add support for percentiles specified by a 0..100 integer:
+
+```java
+private static final Percentile[] INTEGERS = new Percentile[MAX + 1];
+
+static {
+    for(int n = 0; n <= MAX; ++n) {
+        INTEGERS[n] = new Percentile(n / (float) MAX);
+    }
+}
+
+/**
+ * Creates an integer percentile.
+ * @param value Percentile as a 0..100 integer
+ * @return Percentile
+ * @throws ArrayIndexOutOfBoundsException if the given value is not in the range 0...100
+ */
+public static Percentile of(int value) {
+    return INTEGERS[value];
+}
+
+...
+
+@Override
+public String toString() {
+    return (int) (value * MAX) + "%";
+}
+```
+
+We can now refactor the queue priorities in the `RequiredQueue` class using this new type.
+
+---
+
+## Testing Support
+
+Any unit-test that is dependant on the logical device (which is the majority of them) generally require the same test setup.
+
+We introduce the following test base-class and refactor all existing test cases accordingly:
+
+```java
+public abstract class AbstractVulkanTest {
+    protected MockReferenceFactory factory;
+    protected LogicalDevice dev;
+    protected VulkanLibrary lib;
+
+    @BeforeEach
+    private final void beforeVulkanTest() {
+        // Create API
+        lib = mock(VulkanLibrary.class);
+
+        // Init reference factory
+        factory = new MockReferenceFactory();
+        when(lib.factory()).thenReturn(factory);
+
+        // Create logical device
+        dev = mock(LogicalDevice.class);
+        when(dev.handle()).thenReturn(new Handle(new Pointer(42)));
+        when(dev.library()).thenReturn(lib);
+    }
+}
+```
+
+Note that we give the setup method a relatively unique name (and make it private and final) to avoid potentially conflicting with the sub-class.
+
+---
+
 ## Summary
 
-In this chapter we implemented a number of builders to configure the graphics pipeline and implemented shader modules.
-
+In this chapter we implemented a nested builder to configure the graphics pipeline and shader modules.

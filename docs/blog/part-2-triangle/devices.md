@@ -474,7 +474,9 @@ Notes:
 
 - The _family_ is a queue family selected from the parent physical device.
 
-- The _priorities_ is a list of percentile values that specifies the priority of each queue (expressed as a 0..1 floating-point).
+- The _priorities_ is a list of percentile values that specifies the priority of each queue.
+
+- The `Percentile` class is a custom wrapper for a percentile represented as a 0..1 floating-point value.
 
 - The constructor (not shown) validates the queue specification.
 
@@ -551,14 +553,14 @@ We populate the array of required queues in the descriptor for the logical devic
 ```java
 // Add queue descriptors
 info.queueCreateInfoCount = queues.size();
-info.pQueueCreateInfos = VulkanStructure.array(VkDeviceQueueCreateInfo::new, queues, RequiredQueue::populate)[0];
+info.pQueueCreateInfos = StructureCollector.toPointer(VkDeviceQueueCreateInfo::new, queues, RequiredQueue::populate);
 ```
 
 Notes:
 
-- The `VulkanStructure::array` construct is detailed in the next chapter.
-
 - JNA requires a contiguous memory block for the array (which is actually a native pointer-to-array type).
+
+- The `StructureCollector` is detailed at the end of this chapter.
 
 The `populate()` method generates the descriptor for each `RequiredQueue`:
 

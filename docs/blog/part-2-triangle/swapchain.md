@@ -760,6 +760,196 @@ This class is little more than a handle and a list of views - we will probably w
 
 ---
 
+## Improvements
+
+### Native Handles
+
+Up until now most of our domain classes have a _handle_ represented by a JNA pointer.
+
+There are a couple of issues with this approach:
+
+- A JNA pointer is mutable - if we expose the handle we potentially break the class.
+
+- There are several API methods that require us to pass an array of pointers which currently requires fiddly transformations.
+
+To solve the mutability issue we first define an object that contains a handle:
+
+```java
+public interface NativeObject {
+    /**
+     * @return Handle
+     */
+    Handle handle();
+}
+```
+
+The handle is an opaque wrapper for the pointer:
+
+```java
+final class Handle {
+    /**
+     * Native type converter for a handle.
+     */
+    public static final TypeConverter CONVERTER = new TypeConverter() {
+        ...
+    };
+
+    private final Pointer handle;
+
+    /**
+     * Constructor.
+     * @param handle Pointer handle
+     */
+    public Handle(Pointer handle) {
+        Check.notNull(handle);
+        this.handle = new Pointer(Pointer.nativeValue(handle));
+    }
+}
+```
+
+Again we make use of the JNA type converter mechanism to transform this new type to/from its native representation:
+
+```java
+public static final TypeConverter CONVERTER = new TypeConverter() {
+    @Override
+    public Class<?> nativeType() {
+        return Pointer.class;
+    }
+
+    @Override
+    public Object toNative(Object value, ToNativeContext context) {
+        if(value == null) {
+            return null;
+        }
+        else {
+            final Handle handle = (Handle) value;
+            return handle.handle;
+        }
+    }
+
+    @Override
+    public Object fromNative(Object value, FromNativeContext context) {
+        if(value == null) {
+            return null;
+        }
+        else {
+            return new Handle((Pointer) value);
+        }
+    }
+};
+```
+
+TODO - pointer array
+
+We can now refactor the domain classes, structures and API methods to use the immutable handle making our code somewhat more type-safe and better documented.
+
+### Abstract Vulkan Object
+
+With the above in place we will be implementing a number of new domain components that share the following requirements:
+
+- A JNA handle.
+
+- A reference to the 'parent' logical device.
+
+- A _destructor_ method, e.g. `vkDestroyRenderPass`.
+
+This seems a valid case for introducing a base-class that abstracts the common pattern:
+
+```java
+public abstract class AbstractVulkanObject implements TransientNativeObject {
+    private final Handle handle;
+    private final LogicalDevice dev;
+    private final Destructor destructor;
+    
+    /**
+     * Constructor.
+     * @param handle        Handle
+     * @param dev           Parent logical device
+     * @param destructor    Destructor API method
+     */
+    protected AbstractVulkanObject(Pointer handle, LogicalDevice dev, Destructor destructor) {
+        this.handle = new Handle(handle);
+        this.dev = notNull(dev);
+        this.destructor = notNull(destructor);
+    }
+
+    @Override
+    public Handle handle() {
+        return handle;
+    }
+
+    public LogicalDevice device() {
+        return dev;
+    }
+    
+    ...
+}
+```
+
+The _destructor_ defines the API method used to destroy the object:
+
+```java
+@FunctionalInterface
+public interface Destructor {
+    /**
+     * Destroys this object.
+     * @param dev           Logical device
+     * @param handle        Handle
+     * @param allocator     Allocator
+     */
+    void destroy(Handle dev, Handle handle, Handle allocator);
+}
+```
+
+An object that can be destroyed by the application is defined as follows:
+
+```java
+interface TransientNativeObject extends NativeObject {
+    /**
+     * Destroys this object.
+     */
+    void destroy();
+}
+```
+
+Finally we implement the `destroy` method using the destructor:
+
+```java
+private boolean destroyed;
+
+...
+
+/**
+ * @return Whether this object has been destroyed
+ */
+public boolean isDestroyed() {
+    return destroyed;
+}
+
+@Override
+public synchronized void destroy() {
+    if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
+    destructor.destroy(dev.handle(), handle, null);
+    destroyed = true;
+}
+```
+
+We can now simplify the domain classes introduced in this chapter (and the GLFW package) by refactoring using the new handle and base-class, for example:
+
+```java
+public class RenderPass extends AbstractVulkanObject {
+    RenderPass(Pointer handle, LogicalDevice dev) {
+        super(handle, dev, dev.library()::vkDestroyRenderPass);
+    }
+    
+    ...
+}
+```
+
+Additionally we could now use `TransientNativeObject` to track native resources and check for orphaned objects.
+
+---
+
 ## Summary
 
 In this chapter we implemented the swapchain, render pass and frame-buffer domain objects.

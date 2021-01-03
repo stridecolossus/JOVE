@@ -41,9 +41,6 @@ buffer
 We start with an outline class for commands, buffers and pools:
 
 ```java
-/**
- * A <i>command</i> encapsulates a piece of work performed on a {@link Command.Buffer}.
- */
 @FunctionalInterface
 public interface Command {
     /**
@@ -67,7 +64,7 @@ public interface Command {
 }
 ```
 
-The command interface abstracts the signature of a `VkCmdXXX` command whose arguments are always comprised of the API and a handle to the command buffer.
+The `Command` interface abstracts the signature of a Vulkan command whose arguments are always comprised of the API and a handle to the command buffer.
 
 ### Command Pool
 
@@ -216,7 +213,7 @@ class Buffer implements NativeObject {
 }
 ```
 
-The _state_ is used to track whether the buffer has been recorded.
+The _state_ is used to track whether the buffer has been recorded (with the enumeration names being based on the Vulkan documentation).
 
 The `begin()` method is used to start recording:
 
@@ -281,18 +278,11 @@ Notes:
 
 ## Command Implementation
 
-We can now implement the specific commands required for the triangle demo (see the pseudo-code above):
+We can now implement the specific commands required for the triangle demo (based on the pseudo-code above).
 
-### Rendering
-
-We add the following factory method to the render pass class to start rendering:
+We add the following factory method to the `RenderPass` class to start rendering:
 
 ```java
-/**
- * Creates a command to begin rendering.
- * @param buffer Frame buffer
- * @return Begin rendering command
- */
 public Command begin(FrameBuffer buffer) {
     // Create descriptor
     final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
@@ -301,12 +291,11 @@ public Command begin(FrameBuffer buffer) {
     info.renderArea = buffer.extents().toRect2D();
 
     // Init clear values
-    // TODO - hard-coded!
-    final Colour col = new Colour(0.3f, 0.3f, 0.3f, 1);
+    // TODO...
     final VkClearValue clear = new VkClearValue();
     clear.setType("color");
     clear.color.setType("float32");
-    clear.color.float32 = col.toArray();
+    clear.color.float32 = new float[]{0.3f, 0.3f, 0.3f, 1};
     info.clearValueCount = 1;
     info.pClearValues = clear;
     // ...TODO
@@ -316,81 +305,35 @@ public Command begin(FrameBuffer buffer) {
 }
 ```
 
-This command also initialises the clear values for the frame buffer attachments - we have hard-coded a grey colour for the single colour attachment.  In a future chapter we will replace this temporary code with a proper implementation for both colour and depth attachments.
+The command also initialises the clear values for the frame buffer attachments - we have hard-coded a grey colour for our single colour attachment.  
+In a future chapter we will replace this temporary code with a proper implementation for both colour and depth attachments.
 
 > We explain the purpose of the various `setType()` calls when we address depth buffers in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
 
-We introduce a simple RGBA colour domain object for the clear colour:
+Ending the render pass can be defined as a constant since there are no additional arguments:
 
 ```java
-public record Colour(float red, float green, float blue, float alpha) {
-    /**
-     * White colour.
-     */
-    public static final Colour WHITE = new Colour(1, 1, 1, 1);
-
-    /**
-     * Black colour.
-     */
-    public static final Colour BLACK = new Colour(0, 0, 0, 1);
-
-    public Colour {
-        Check.isPercentile(red);
-        Check.isPercentile(green);
-        Check.isPercentile(blue);
-        Check.isPercentile(alpha);
-    }
-
-    /**
-     * @return This colour as an RGBA array of floating-point values
-     */
-    public float[] toArray() {
-        return new float[]{red, green, blue, alpha};
-    }
-
-    @Override
-    public String toString() {
-        return Arrays.toString(toArray());
-    }
-}
-```
-
-Finally we add the following command to end a render pass:
-
-```java
-/**
- * End render pass command.
- */
 public static final Command END_COMMAND = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 ```
 
-### Bind Pipeline
-
-To bind the pipeline in the render sequence we add the following factory to the pipeline class:
+To bind a pipeline in the render sequence we add the following factory method to the `Pipeline` class:
 
 ```java
-/**
- * Creates a command to bind this pipeline.
- * @return New bind pipeline command
- */
 public Command bind() {
     return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.handle());
 }
 ```
 
-### Drawing
-
-For the moment we hard-code the drawing command in the demo:
+Finally for the moment we hard-code the drawing command in the demo:
 
 ```java
 Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
 ```
 
-This command specified three vertices in a single instance, both starting at index zero.
-
+This specifies the three triangles vertices, in a single instance, both starting at index zero.
 Later we will factor this out to a factory when we address vertex buffers and models.
 
-### Submitting Work
+## Submitting Work
 
 Submitting a command buffer to a work queue involves populating a descriptor of the work to be performed comprising a _batch_ of command buffers and synchronisation declarations.
 We will ignore synchronisation until a future chapter as it is not needed for the triangle demo.

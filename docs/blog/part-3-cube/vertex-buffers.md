@@ -4,33 +4,41 @@ title: Vertex Buffers
 
 ## Overview
 
-In this chapter we will replace the hard-coded triangle data in the vertex shader with a _vertex buffer_ (sometimes referred to as a _vertex buffer object_ or VBO).
+In this chapter we will replace the hard-coded triangle data in the shader with a _vertex buffer_ (sometimes referred to as a _vertex buffer object_ or VBO).
 
-We will then transfer the vertex data to a _device local_ buffer (i.e. memory on the GPU) for the optimal performance.
+We will then transfer the vertex data to a _device local_ buffer (i.e. memory on the GPU) for optimal performance.
 
 This process involves the following steps:
 
-1. build the vertex data
-2. convert it to an interleaved NIO buffer
-3. allocate a _staging_ buffer (visible to the host)
-4. copy the interleaved data to this staging buffer
-5. allocate a _device local_ buffer (visible to the hardware)
-6. copy the staged data to this buffer
+1. Build the vertex data.
 
-We will need:
+2. Convert it to an interleaved NIO buffer.
 
-- domain classes for the vertex data
-- a mechanism to transform the data to an interleaved NIO buffer
-- the vertex buffer class
-- a new command to copy from the staging buffer to the device
-- modifications to the vertex input stage of the pipeline to refer to the vertex buffer
-- an updated shader that uses the vertex buffer
+3. Allocate a _staging_ buffer (visible to the host).
+
+4. Copy the interleaved data to this staging buffer.
+
+5. Allocate a _device local_ buffer (visible to the hardware).
+
+6. Copy the staged data to this buffer.
+
+7. Release the staging buffer.
+
+We will need to implement the following:
+
+- New domain classes to specify the vertex data.
+
+- The vertex buffer object itself.
+
+- A command to copy between buffers.
+
+- The _vertex input stage_ of the pipeline to configure the structure of the vertex data.
 
 ---
 
 ## Vertex Data
 
-### Defining a Vertex
+### Vertex Components
 
 A _vertex_ can consist of some or all of the following components:
 
@@ -38,6 +46,47 @@ A _vertex_ can consist of some or all of the following components:
 - normal
 - texture coordinates
 - colour
+
+
+
+
+We introduce a simple RGBA colour domain object for the clear colour:
+
+```java
+public record Colour(float red, float green, float blue, float alpha) {
+    /**
+     * White colour.
+     */
+    public static final Colour WHITE = new Colour(1, 1, 1, 1);
+
+    /**
+     * Black colour.
+     */
+    public static final Colour BLACK = new Colour(0, 0, 0, 1);
+
+    public Colour {
+        Check.isPercentile(red);
+        Check.isPercentile(green);
+        Check.isPercentile(blue);
+        Check.isPercentile(alpha);
+    }
+
+    /**
+     * @return This colour as an RGBA array of floating-point values
+     */
+    public float[] toArray() {
+        return new float[]{red, green, blue, alpha};
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(toArray());
+    }
+}
+```
+
+
+
 
 We already have a colour class but we will need new domain objects to represent the other vertex components.
 
@@ -88,6 +137,8 @@ public final class Point extends Tuple {
     }
 }
 ```
+
+### Composing the Vertex
 
 Finally we compose these domain objects into the new vertex class:
 

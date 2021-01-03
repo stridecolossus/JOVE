@@ -46,8 +46,6 @@ what is Vulkan
     - [Swapchain and Render Pass](blog/part-2-triangle/swapchain)
     - [Pipelines](blog/part-2-triangle/pipeline)
     - [Rendering Commands](blog/part-2-triangle/commands)
-    - [Improvements](blog/part-2-triangle/improvements)
-
 
 - Part 3 - Textured Cube
     - [Vertex Buffers](blog/part-3-cube/vertex-buffers)
