@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.NativeObject.TransientNativeObject;
+import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Pointer;
@@ -17,7 +17,7 @@ import com.sun.jna.ptr.PointerByReference;
  * Native window implemented using GLFW.
  * @author Sarge
  */
-public class Window implements TransientNativeObject {
+public class Window extends AbstractTransientNativeObject {
 	/**
 	 * Window properties.
 	 */
@@ -107,7 +107,6 @@ public class Window implements TransientNativeObject {
 		return new Window(window, lib, descriptor);
 	}
 
-	private final Handle handle;
 	private final DesktopLibrary lib;
 	private final Descriptor descriptor;
 	private final WeakHashMap<Object, Object> registry = new WeakHashMap<>();
@@ -119,14 +118,9 @@ public class Window implements TransientNativeObject {
 	 * @param descriptor		Window descriptor
 	 */
 	Window(Pointer window, DesktopLibrary lib, Descriptor descriptor) {
-		this.handle = new Handle(window);
+		super(window);
 		this.lib = notNull(lib);
 		this.descriptor = notNull(descriptor);
-	}
-
-	@Override
-	public Handle handle() {
-		return handle;
 	}
 
 	/**
@@ -173,7 +167,7 @@ public class Window implements TransientNativeObject {
 	 */
 	public Handle surface(Handle vulkan) {
 		final PointerByReference ref = new PointerByReference();
-		final int result = lib.glfwCreateWindowSurface(vulkan, handle, null, ref);
+		final int result = lib.glfwCreateWindowSurface(vulkan, this.handle(), null, ref);
 		if(result != 0) {
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
@@ -181,8 +175,8 @@ public class Window implements TransientNativeObject {
 	}
 
 	@Override
-	public void destroy() {
-		lib.glfwDestroyWindow(handle);
+	protected void release() {
+		lib.glfwDestroyWindow(this.handle());
 	}
 
 	/**

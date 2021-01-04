@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.util;
+package org.sarge.jove.common;
 
 import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
@@ -12,21 +12,13 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.util.Memory.Pool.Allocator;
 import org.sarge.jove.util.Check;
 
-import com.sun.jna.Pointer;
-
 /**
- * Block of memory allocated by an {@link Allocator} and managed by a memory {@link Pool}.
+ * TODO
  * @author Sarge
  */
-public interface Memory {
-	/**
-	 * @return Pointer to this memory
-	 */
-	Pointer memory();
-
+public interface DeviceMemory extends TransientNativeObject {
 	/**
 	 * @return Memory offset
 	 */
@@ -38,32 +30,20 @@ public interface Memory {
 	long size();
 
 	/**
-	 * @return Whether this memory has been released
+	 * Template implementation.
 	 */
-	boolean isDestroyed();
-
-	/**
-	 * Destroys this memory.
-	 * @throws IllegalStateException if this memory has already been destroyed
-	 */
-	void destroy();
-	// TODO - transient native?
-
-	/**
-	 * Partial implementation;
-	 */
-	abstract class AbstractMemory implements Memory {
+	abstract class AbstractDeviceMemory extends AbstractTransientNativeObject implements DeviceMemory {
 		private final long size;
 		private final long offset;
 
-		protected boolean destroyed;
-
 		/**
 		 * Constructor.
+		 * @param handle		Memory handle
 		 * @param size			Memory size
 		 * @param offset		Block offset
 		 */
-		protected AbstractMemory(long size, long offset) {
+		protected AbstractDeviceMemory(Handle handle, long size, long offset) {
+			super(handle);
 			this.size = oneOrMore(size);
 			this.offset = zeroOrMore(offset);
 		}
@@ -79,40 +59,23 @@ public interface Memory {
 		}
 
 		@Override
-		public boolean isDestroyed() {
-			return destroyed;
-		}
-
-		@Override
-		public final synchronized void destroy() {
-			if(destroyed) throw new IllegalStateException("Memory has already been destroyed: " + this);
-			destroyed = true;
-			release();
-		}
-
-		/**
-		 * Releases this memory.
-		 */
-		protected abstract void release();
-
-		@Override
 		public int hashCode() {
-			return Objects.hash(memory(), size, offset);
+			return Objects.hash(handle(), size, offset);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
 			return
-					(obj instanceof AbstractMemory that) &&
+					(obj instanceof AbstractDeviceMemory that) &&
 					(this.size == that.size) &&
 					(this.offset == that.offset) &&
-					this.memory().equals(that.memory());
+					this.handle().equals(that.handle());
 		}
 
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
-					.append("memory", memory())
+					.append("handle", handle())
 					.append("offset", offset)
 					.append("size", size)
 					.build();
@@ -160,7 +123,7 @@ public interface Memory {
 			 * @return Pointer to the new memory
 			 * @throws AllocationException if the memory cannot be allocated
 			 */
-			Memory allocate(long size) throws AllocationException;
+			DeviceMemory allocate(long size) throws AllocationException;
 
 			/**
 			 * Creates an adapter that allocates memory blocks of the given page size.
@@ -183,7 +146,7 @@ public interface Memory {
 		 * A <i>memory block</i> is a chunk of memory in this pool.
 		 */
 		private class Block {
-			private final Memory block;
+			private final DeviceMemory block;
 			private final List<BlockMemory> allocations = new ArrayList<>();
 			private long next;
 
@@ -191,7 +154,7 @@ public interface Memory {
 			 * Constructor.
 			 * @param block Memory block
 			 */
-			private Block(Memory block) {
+			private Block(DeviceMemory block) {
 				this.block = notNull(block);
 			}
 
@@ -215,7 +178,7 @@ public interface Memory {
 			 * @param size Memory size
 			 * @return New memory
 			 */
-			private Memory allocate(long size) {
+			private DeviceMemory allocate(long size) {
 				assert isAvailable(size);
 
 				// Allocate from available memory
@@ -267,21 +230,16 @@ public interface Memory {
 			*/
 
 			/**
-			 * Memory implementation allocated from this block.
+			 * Memory allocated from this block.
 			 */
-			private class BlockMemory extends AbstractMemory {
+			private class BlockMemory extends AbstractDeviceMemory {
 				/**
 				 * Constructor.
-				 * @param size			Memory size
-				 * @param offset		Block offset
+				 * @param size
+				 * @param offset
 				 */
 				private BlockMemory(long size, long offset) {
-					super(size, offset);
-				}
-
-				@Override
-				public Pointer memory() {
-					return block.memory();
+					super(block.handle(), size, offset);
 				}
 
 				@Override
@@ -297,8 +255,7 @@ public interface Memory {
 				 */
 				private BlockMemory reallocate() {
 					// Re-allocate memory
-					assert destroyed;
-					destroyed = false;
+					restore();
 
 					// Update memory stats
 					++count;
@@ -349,8 +306,8 @@ public interface Memory {
 		/**
 		 * @return Memory allocated from this pool
 		 */
-		public Stream<? extends Memory> allocations() {
-			return blocks.stream().flatMap(Block::stream).filter(Predicate.not(Memory::isDestroyed));
+		public Stream<? extends DeviceMemory> allocations() {
+			return blocks.stream().flatMap(Block::stream).filter(Predicate.not(DeviceMemory::isDestroyed));
 		}
 
 		/**
@@ -360,7 +317,7 @@ public interface Memory {
 		 */
 		private Block create(long size) {
 			// Allocate new memory block
-			final Memory mem = allocator.allocate(size);
+			final DeviceMemory mem = allocator.allocate(size);
 			if(mem == null) throw new AllocationException("Allocator returned null memory");
 			if(mem.size() < size) throw new AllocationException("Allocator returned invalid memory: " + mem);
 
@@ -391,7 +348,7 @@ public interface Memory {
 		 * @throws IllegalArgumentException if the given size is zero-or-less
 		 * @throws AllocationException if the memory cannot be allocated by this pool
 		 */
-		public synchronized Memory allocate(long size) throws AllocationException {
+		public synchronized DeviceMemory allocate(long size) throws AllocationException {
 			if(size < 1) throw new IllegalArgumentException("Invalid memory size: " + size);
 
 			// Create new block if the pool is exhausted
@@ -411,7 +368,7 @@ public interface Memory {
 		 * @param size Memory size
 		 * @return Memory allocated from a new block
 		 */
-		private Memory allocateNew(long size) {
+		private DeviceMemory allocateNew(long size) {
 			final Block block = create(size);
 			return block.allocate(size);
 		}
@@ -421,11 +378,11 @@ public interface Memory {
 		 * @param size Memory size
 		 * @return Re-allocated memory
 		 */
-		private Optional<Memory> reallocate(long size) {
+		private Optional<DeviceMemory> reallocate(long size) {
 			return blocks
 					.stream()
 					.flatMap(Block::stream)
-					.filter(Memory::isDestroyed)
+					.filter(DeviceMemory::isDestroyed)
 					.filter(mem -> mem.size() >= size)
 					.findAny()
 					.map(mem -> mem.reallocate());
@@ -437,7 +394,7 @@ public interface Memory {
 		 * @param size Memory size
 		 * @return New memory
 		 */
-		private Optional<Memory> allocateExisting(long size) {
+		private Optional<DeviceMemory> allocateExisting(long size) {
 			return blocks
 					.stream()
 					.filter(block -> block.isAvailable(size))

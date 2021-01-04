@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -49,21 +48,14 @@ public class IntegerEnumerationTest {
 	}
 
 	@Test
-	public void contains() {
-		assertEquals(false, IntegerEnumeration.contains(0, MockEnum.A));
-		assertEquals(true, IntegerEnumeration.contains(0b001, MockEnum.A));
-		assertEquals(true, IntegerEnumeration.contains(0b101, MockEnum.A));
-		assertEquals(true, IntegerEnumeration.contains(0b111, MockEnum.A));
-	}
-
-	@Test
 	public void enumerate() {
-		assertEquals(List.of(), IntegerEnumeration.enumerate(MockEnum.class, 0));
-		assertEquals(List.of(MockEnum.A), IntegerEnumeration.enumerate(MockEnum.class, 0b001));
-		assertEquals(List.of(MockEnum.B), IntegerEnumeration.enumerate(MockEnum.class, 0b010));
-		assertEquals(List.of(MockEnum.C), IntegerEnumeration.enumerate(MockEnum.class, 0b100));
-		assertEquals(List.of(MockEnum.A, MockEnum.C), IntegerEnumeration.enumerate(MockEnum.class, 0b101));
-		assertEquals(List.of(MockEnum.A, MockEnum.B, MockEnum.C), IntegerEnumeration.enumerate(MockEnum.class, 0b111));
+		assertEquals(Set.of(), IntegerEnumeration.enumerate(MockEnum.class, 0));
+		assertEquals(Set.of(MockEnum.A), IntegerEnumeration.enumerate(MockEnum.class, 0b001));
+		assertEquals(Set.of(MockEnum.B), IntegerEnumeration.enumerate(MockEnum.class, 0b010));
+		assertEquals(Set.of(MockEnum.C), IntegerEnumeration.enumerate(MockEnum.class, 0b100));
+		assertEquals(Set.of(MockEnum.A, MockEnum.C), IntegerEnumeration.enumerate(MockEnum.class, 0b101));
+		assertEquals(Set.of(MockEnum.A, MockEnum.B, MockEnum.C), IntegerEnumeration.enumerate(MockEnum.class, 0b111));
+		// TODO - check order
 	}
 
 	@Test

@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.api;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -26,7 +25,7 @@ interface VulkanLibraryMemory {
 	 * @param memory			Memory
 	 * @param pAllocator		Allocator
 	 */
-	void vkFreeMemory(Handle device, Pointer memory, Handle pAllocator);
+	void vkFreeMemory(Handle device, Handle memory, Handle pAllocator);
 
 	/**
 	 * Maps buffer memory.
@@ -38,12 +37,12 @@ interface VulkanLibraryMemory {
 	 * @param ppData			Returned pointer to the memory buffer
 	 * @return Result code
 	 */
-	int vkMapMemory(Handle device, Pointer memory, long offset, long size, int flags, PointerByReference ppData);
+	int vkMapMemory(Handle device, Handle memory, long offset, long size, int flags, PointerByReference ppData);
 
 	/**
 	 * Un-maps buffer memory.
 	 * @param device			Logical device
 	 * @param memory			Buffer memory
 	 */
-	void vkUnmapMemory(Handle device, Pointer memory);
+	void vkUnmapMemory(Handle device, Handle memory);
 }

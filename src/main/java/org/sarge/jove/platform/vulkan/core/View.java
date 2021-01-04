@@ -4,6 +4,7 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
@@ -91,11 +92,11 @@ public class View extends AbstractVulkanObject {
 	}
 
 	@Override
-	public synchronized void destroy() {
-		if(image instanceof TransientNativeObject obj) {
+	protected void release() {
+		if(image instanceof AbstractTransientNativeObject obj) {
 			obj.destroy();
 		}
-		super.destroy();
+		super.release();
 	}
 
 	@Override

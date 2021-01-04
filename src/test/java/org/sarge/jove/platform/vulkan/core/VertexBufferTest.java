@@ -19,11 +19,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.Memory;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -31,17 +31,19 @@ import com.sun.jna.ptr.PointerByReference;
 
 public class VertexBufferTest extends AbstractVulkanTest {
 	private VertexBuffer buffer;
-	private Pointer mem;
+	private DeviceMemory mem;
 
 	@BeforeEach
 	void before() {
-		mem = new Pointer(3);
-		buffer = new VertexBuffer(new Pointer(1), dev, 3, mem);
+		mem = mock(DeviceMemory.class);
+		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
+
+		buffer = new VertexBuffer(new Pointer(2), 3, mem, dev);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(new Pointer(1)), buffer.handle());
+		assertEquals(new Handle(new Pointer(2)), buffer.handle());
 		assertEquals(dev, buffer.device());
 		assertEquals(3, buffer.length());
 	}
@@ -115,8 +117,8 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		buffer.load(Bufferable.of(ByteBuffer.allocate(3)));
 
 		// Check memory is mapped
-		verify(lib).vkMapMemory(dev.handle(), mem, 0, 3L, 0, ref);
-		verify(lib).vkUnmapMemory(dev.handle(), mem);
+		verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, 3L, 0, ref);
+		verify(lib).vkUnmapMemory(dev.handle(), mem.handle());
 
 		// Load bufferable at offset
 		final Bufferable obj = mock(Bufferable.class);
@@ -139,10 +141,11 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		final Handle handle = buffer.handle();
+//		final Handle handle = buffer.handle();
 		buffer.destroy();
-		verify(lib).vkFreeMemory(dev.handle(), mem, null);
-		verify(lib).vkDestroyBuffer(dev.handle(), handle, null);
+//		verify(lib).vkFreeMemory(dev.handle(), mem, null);
+		verify(lib).vkDestroyBuffer(dev.handle(), buffer.handle(), null);
+		verify(mem).destroy();
 	}
 
 	@Nested
@@ -174,9 +177,9 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		void before() {
 			// Init VBO memory allocation
 			// Init image memory
-			final Pointer ptr = new Pointer(3);
-			final Memory mem = mock(Memory.class);
-			when(mem.memory()).thenReturn(ptr);
+//			final Pointer ptr = new Pointer(3);
+//			final DeviceMemory mem = mock(DeviceMemory.class);
+//			when(mem.memory()).thenReturn(ptr);
 			final MemoryAllocator allocator = mock(MemoryAllocator.class);
 			allocation = mock(MemoryAllocator.Request.class);
 			when(dev.allocator()).thenReturn(allocator);
@@ -218,7 +221,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 			// Check internal memory allocation
 			verify(lib).vkGetBufferMemoryRequirements(eq(dev.handle()), isA(Pointer.class), isA(VkMemoryRequirements.class));
-			verify(lib).vkBindBufferMemory(eq(dev.handle()), isA(Pointer.class), eq(mem), eq(0L));
+			verify(lib).vkBindBufferMemory(eq(dev.handle()), isA(Pointer.class), eq(mem.handle()), eq(0L));
 		}
 
 		@Test

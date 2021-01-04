@@ -92,6 +92,7 @@ public class PipelineTest extends AbstractVulkanTest {
 					.pass(pass)
 					.viewport()
 						.viewport(rect)
+						.scissor(rect)
 						.build()
 					.shader()
 						.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
@@ -156,7 +157,7 @@ public class PipelineTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build());
 
 			// Add viewport stage, should now build successfully
-			builder.viewport().viewport(rect).build();
+			builder.viewport().viewport(rect).scissor(rect).build();
 			builder.build();
 		}
 

@@ -31,7 +31,7 @@ class MatrixTest {
 
 	@Test
 	void constructorInvalidArrayDimensions() {
-		assertThrows(AssertionError.class, () -> new Matrix(new float[]{1, 2, 3}));
+		assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[]{1, 2, 3}));
 	}
 
 	@Test

@@ -563,7 +563,9 @@ void main() {
 }
 ```
 
-which is simply passed through to the next stage by the fragment shader:
+Note the use of the built-in `gl_VertexIndex` variable which is used to index into the two arrays.
+
+The colour for each vertex is simply passed through to the next stage by the fragment shader:
 
 ```glsl
 #version 450
@@ -707,9 +709,7 @@ public String toString() {
 
 We can now refactor the queue priorities in the `RequiredQueue` class using this new type.
 
----
-
-## Testing Support
+### Testing Support
 
 Any unit-test that is dependant on the logical device (which is the majority of them) generally require the same test setup.
 

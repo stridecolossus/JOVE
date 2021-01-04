@@ -134,6 +134,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * Determines the order of the matrix.
 	 * @param len Matrix length
 	 * @return Order
+	 * @throws IllegalArgumentException if the given length is not square
 	 */
 	private static int order(int len) {
 		return switch(len) {
@@ -141,7 +142,11 @@ public final class Matrix implements Transform, Bufferable {
 			case 4 -> 2;
 			case 9 -> 3;
 			case 16 -> 4;
-			default -> (int) MathsUtil.sqrt(len);
+			default -> {
+				final int order = (int) MathsUtil.sqrt(len);
+				if(len != order * order) throw new IllegalArgumentException("Matrix must be square");
+				yield order;
+			}
 		};
 	}
 

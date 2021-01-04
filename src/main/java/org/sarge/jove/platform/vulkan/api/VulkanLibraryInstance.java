@@ -27,7 +27,7 @@ interface VulkanLibraryInstance {
 	 * @param instance		Instance handle
 	 * @param allocator		Allocator
 	 */
-	void vkDestroyInstance(Pointer instance, Handle allocator);
+	void vkDestroyInstance(Handle instance, Handle allocator);
 
 	/**
 	 * Enumerates extension properties.
@@ -52,5 +52,5 @@ interface VulkanLibraryInstance {
 	 * @param name			Function name
 	 * @return Function pointer
 	 */
-	Pointer vkGetInstanceProcAddr(Pointer instance, String name);
+	Pointer vkGetInstanceProcAddr(Handle instance, String name);
 }

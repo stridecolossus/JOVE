@@ -142,9 +142,9 @@ public class Swapchain extends AbstractVulkanObject {
 	// TODO - cache descriptor -> factory -> work submit?
 
 	@Override
-	public synchronized void destroy() {
+	protected void release() {
 		views.forEach(View::destroy);
-		super.destroy();
+		super.release();
 	}
 
 	/**
@@ -198,6 +198,16 @@ public class Swapchain extends AbstractVulkanObject {
 			alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
 			mode(DEFAULT_PRESENTATION_MODE);
 			clipped(true);
+		}
+
+		/**
+		 * Tests whether an integer mask contains the given enumeration value.
+		 * @param mask			Mask
+		 * @param constant		Enumeration constant
+		 * @return Whether the mask contains the given constant
+		 */
+		private static <E extends IntegerEnumeration> boolean contains(int mask, E constant) {
+			return (constant.value() & mask) != 0;
 		}
 
 		/**
@@ -276,7 +286,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the usage flag is not supported by the surface
 		 */
 		public Builder usage(VkImageUsageFlag usage) {
-			if(!IntegerEnumeration.contains(caps.supportedUsageFlags, usage)) throw new IllegalArgumentException("Usage not supported: " + usage);
+			if(!contains(caps.supportedUsageFlags, usage)) throw new IllegalArgumentException("Usage not supported: " + usage);
 			info.imageUsage = notNull(usage);
 			return this;
 		}
@@ -296,7 +306,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the transform is not supported by the surface
 		 */
 		public Builder transform(VkSurfaceTransformFlagKHR transform) {
-			if(!IntegerEnumeration.contains(caps.supportedTransforms, transform)) throw new IllegalArgumentException("Transform not supported: " + transform);
+			if(!contains(caps.supportedTransforms, transform)) throw new IllegalArgumentException("Transform not supported: " + transform);
 			info.preTransform = notNull(transform);
 			return this;
 		}
@@ -307,7 +317,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the given alpha function is not supported
 		 */
 		public Builder alpha(VkCompositeAlphaFlagKHR alpha) {
-			if(!IntegerEnumeration.contains(caps.supportedCompositeAlpha, alpha)) throw new IllegalArgumentException("Compositive alpha not supported: " + alpha);
+			if(!contains(caps.supportedCompositeAlpha, alpha)) throw new IllegalArgumentException("Compositive alpha not supported: " + alpha);
 			info.compositeAlpha = notNull(alpha);
 			return this;
 		}

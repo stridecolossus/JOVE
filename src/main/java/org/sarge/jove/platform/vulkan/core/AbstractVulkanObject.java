@@ -2,9 +2,8 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.util.Check.notNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.common.NativeObject.TransientNativeObject;
+import org.sarge.jove.common.AbstractTransientNativeObject;
 
 import com.sun.jna.Pointer;
 
@@ -12,7 +11,7 @@ import com.sun.jna.Pointer;
  * Convenience base-class for a Vulkan object derived from the logical device.
  * @author Sarge
  */
-public abstract class AbstractVulkanObject implements TransientNativeObject {
+public abstract class AbstractVulkanObject extends AbstractTransientNativeObject {
 	/**
 	 * Destructor method.
 	 */
@@ -41,11 +40,8 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
 		}
 	}
 
-	private final Handle handle;
 	private final LogicalDevice dev;
 	private final Destructor destructor;
-
-	private boolean destroyed;
 
 	/**
 	 * Constructor.
@@ -54,14 +50,9 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
 	 * @param destructor	Destructor API method
 	 */
 	protected AbstractVulkanObject(Pointer handle, LogicalDevice dev, Destructor destructor) {
-		this.handle = new Handle(handle);
+		super(handle);
 		this.dev = notNull(dev);
 		this.destructor = notNull(destructor);
-	}
-
-	@Override
-	public Handle handle() {
-		return handle;
 	}
 
 	/**
@@ -71,26 +62,8 @@ public abstract class AbstractVulkanObject implements TransientNativeObject {
 		return dev;
 	}
 
-	/**
-	 * @return Whether this object has been destroyed
-	 */
-	public boolean isDestroyed() {
-		return destroyed;
-	}
-
-	/**
-	 * Destroys this object.
-	 * @throws IllegalStateException if this object has already been destroyed
-	 */
 	@Override
-	public synchronized void destroy() {
-		if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
-		destructor.destroy(dev.handle(), handle, null);
-		destroyed = true;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append("handle", handle).build();
+	protected void release() {
+		destructor.destroy(dev.handle(), this.handle(), null);
 	}
 }

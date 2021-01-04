@@ -388,9 +388,9 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		@Override
-		public synchronized void destroy() {
-			super.destroy();
+		protected void release() {
 			sets.clear();
+			super.release();
 		}
 
 		@Override

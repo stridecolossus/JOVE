@@ -199,7 +199,7 @@ public interface Vertex {
 		 * @param normal Vertex normal
 		 */
 		public Builder normal(Vector normal) {
-			this.normal = normal;
+			this.normal = notNull(normal);
 			return this;
 		}
 
@@ -208,7 +208,7 @@ public interface Vertex {
 		 * @param coords Texture coordinate
 		 */
 		public Builder coords(TextureCoordinate coords) {
-			this.coords = coords;
+			this.coords = notNull(coords);
 			return this;
 		}
 
@@ -217,7 +217,7 @@ public interface Vertex {
 		 * @param col Vertex colour
 		 */
 		public Builder colour(Colour col) {
-			this.col = col;
+			this.col = notNull(col);
 			return this;
 		}
 

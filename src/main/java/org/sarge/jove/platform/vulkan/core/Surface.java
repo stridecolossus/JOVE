@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.common.NativeObject.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
@@ -25,8 +25,7 @@ import com.sun.jna.ptr.IntByReference;
  * A <i>surface</i> is used to render to a window.
  * @author Sarge
  */
-public class Surface implements TransientNativeObject {
-	private final Handle handle;
+public class Surface extends AbstractTransientNativeObject {
 	private final LogicalDevice dev;
 
 	/**
@@ -35,13 +34,8 @@ public class Surface implements TransientNativeObject {
 	 * @param dev			Device
 	 */
 	public Surface(Handle handle, LogicalDevice dev) {
-		this.handle = notNull(handle);
+		super(handle);
 		this.dev = notNull(dev);
-	}
-
-	@Override
-	public Handle handle() {
-		return handle;
 	}
 
 	/**
@@ -86,7 +80,7 @@ public class Surface implements TransientNativeObject {
 	}
 
 	@Override
-	public synchronized void destroy() {
+	protected void release() {
 		final Instance instance = dev.parent().instance();
 		final VulkanLibrarySurface lib = instance.library();
 		lib.vkDestroySurfaceKHR(instance.handle(), handle, null);

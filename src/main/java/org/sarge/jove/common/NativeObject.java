@@ -21,16 +21,6 @@ public interface NativeObject {
 	Handle handle();
 
 	/**
-	 * A <i>transient native object</i> can be destroyed by the application.
-	 */
-	interface TransientNativeObject extends NativeObject {
-		/**
-		 * Destroys this object.
-		 */
-		void destroy();
-	}
-
-	/**
 	 * A <i>handle</i> is an opaque wrapper for a JNA pointer referencing a native object.
 	 */
 	final class Handle {

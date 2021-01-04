@@ -12,14 +12,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.Image.Extents;
-import org.sarge.jove.platform.vulkan.util.Memory;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.Check;
 
@@ -412,16 +411,16 @@ public interface Image extends NativeObject {
 	 */
 	class DefaultImage extends AbstractVulkanObject implements Image {
 		private final Descriptor descriptor;
-		private final Pointer mem;
+		private final DeviceMemory mem;
 
 		/**
 		 * Constructor.
 		 * @param handle		Handle
 		 * @param descriptor	Image descriptor
-		 * @param mem			Internal memory
+		 * @param mem			Device memory
 		 * @param dev			Logical device
 		 */
-		protected DefaultImage(Pointer handle, Descriptor descriptor, Pointer mem, LogicalDevice dev) {
+		protected DefaultImage(Pointer handle, Descriptor descriptor, DeviceMemory mem, LogicalDevice dev) {
 			super(handle, dev, dev.library()::vkDestroyImage);
 			this.descriptor = notNull(descriptor);
 			this.mem = notNull(mem);
@@ -433,15 +432,20 @@ public interface Image extends NativeObject {
 		}
 
 		@Override
-		public synchronized void destroy() {
-			final LogicalDevice dev = this.device();
-			dev.library().vkFreeMemory(dev.handle(), mem, null);
-			super.destroy();
+		protected void release() {
+			if(!mem.isDestroyed()) {
+				mem.destroy();
+			}
+			super.release();
 		}
 
 		@Override
 		public String toString() {
-			return descriptor.toString();
+			return new ToStringBuilder(this)
+					.appendSuper(super.toString())
+					.append("descriptor", descriptor)
+					.append("mem", mem)
+					.build();
 		}
 	}
 
@@ -597,7 +601,6 @@ public interface Image extends NativeObject {
 		 * @throws VulkanException if the image cannot be created
 		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#VK_IMAGE_TYPE_3D} image
 		 * @throws VulkanException if the image cannot be created
-		 * @see Descriptor#Descriptor(VkImageType, VkFormat, Extents, Set)
 		 */
 		public Image build() {
 			// Validate
@@ -622,12 +625,12 @@ public interface Image extends NativeObject {
 			lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate image memory
-			final Memory mem = request.init(reqs).allocate();
-			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.memory(), 0));
+			final DeviceMemory mem = request.init(reqs).allocate();
+			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.handle(), 0));
 
 			// Create image
 			// TODO - use memory object
-			return new DefaultImage(handle.getValue(), descriptor, mem.memory(), dev);
+			return new DefaultImage(handle.getValue(), descriptor, mem, dev);
 		}
 	}
 }

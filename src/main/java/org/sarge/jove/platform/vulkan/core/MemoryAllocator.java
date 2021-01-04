@@ -14,7 +14,12 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.DeviceMemory;
+import org.sarge.jove.common.DeviceMemory.AbstractDeviceMemory;
+import org.sarge.jove.common.DeviceMemory.Pool;
+import org.sarge.jove.common.DeviceMemory.Pool.AllocationException;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
@@ -22,14 +27,9 @@ import org.sarge.jove.platform.vulkan.VkMemoryType;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.Memory;
-import org.sarge.jove.platform.vulkan.util.Memory.AbstractMemory;
-import org.sarge.jove.platform.vulkan.util.Memory.Pool;
-import org.sarge.jove.platform.vulkan.util.Memory.Pool.AllocationException;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.MathsUtil;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -180,7 +180,7 @@ public class MemoryAllocator {
 		 * @return Memory
 		 * @throws VulkanException if the memory cannot be allocated
 		 */
-		private Memory allocate(long size) {
+		private DeviceMemory allocate(long size) {
 			// Init memory descriptor
 			final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
 		    info.allocationSize = size;
@@ -188,21 +188,19 @@ public class MemoryAllocator {
 
 		    // Allocate memory
 		    final VulkanLibrary lib = dev.library();
-		    final PointerByReference mem = lib.factory().pointer();
-		    check(lib.vkAllocateMemory(dev.handle(), info, null, mem));
+		    final PointerByReference ptr = lib.factory().pointer();
+		    check(lib.vkAllocateMemory(dev.handle(), info, null, ptr));
 
 		    // Create memory wrapper
-		    return new AbstractMemory(size, 0) {
-		    	private final Pointer ptr = mem.getValue();
-
+		    return new AbstractDeviceMemory(new Handle(ptr.getValue()), size, 0) {
 		    	@Override
-		    	public Pointer memory() {
-		    		return ptr;
+		    	protected void release() {
+		    		dev.library().vkFreeMemory(dev.handle(), handle, null);
 		    	}
 
 		    	@Override
-		    	protected void release() {
-		    		dev.library().vkFreeMemory(dev.handle(), ptr, null);
+		    	protected void restore() {
+		    		throw new UnsupportedOperationException();
 		    	}
 		    };
 		}
@@ -248,7 +246,7 @@ public class MemoryAllocator {
 		this.heaps = Arrays
 				.stream(props.memoryHeaps)
 				.limit(props.memoryHeapCount)
-				.map(e -> new Heap(e.size, enumerate(e.flags)))
+				.map(e -> new Heap(e.size, IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, e.flags)))
 				.collect(toList());
 
 		// Enumerate memory types
@@ -256,7 +254,7 @@ public class MemoryAllocator {
 		for(int n = 0; n < types.length; ++n) {
 			final VkMemoryType info = props.memoryTypes[n];
 			final Heap heap = heaps.get(info.heapIndex);
-			final var flags = enumerate(info.propertyFlags);
+			final var flags = IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, info.propertyFlags);
 			types[n] = new Type(n, heap, flags);
 		}
 
@@ -264,14 +262,6 @@ public class MemoryAllocator {
 		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
 		this.max = limits.maxMemoryAllocationCount;
 		this.page = limits.bufferImageGranularity;
-	}
-
-	/**
-	 * Helper - Enumerates a memory properties set.
-	 */
-	private static Set<VkMemoryPropertyFlag> enumerate(int flags) {
-		// TODO
-		return Set.copyOf(IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, flags));
 	}
 
 	/**
@@ -323,7 +313,7 @@ public class MemoryAllocator {
 		private int filter = Integer.MAX_VALUE;
 		private final Set<VkMemoryPropertyFlag> flags = new HashSet<>();
 
-		protected Request() {
+		private Request() {
 		}
 
 		/**
@@ -370,7 +360,7 @@ public class MemoryAllocator {
 		 * @throws IllegalArgumentException if the memory size has not been specified
 		 * @throws AllocationException if the memory cannot be allocated
 		 */
-		public Memory allocate() throws AllocationException {
+		public DeviceMemory allocate() throws AllocationException {
 			if(size == 0) throw new IllegalArgumentException("Memory size not specified");
 			final Type type = find();
 			return type.pool.allocate(size); // TODO - page

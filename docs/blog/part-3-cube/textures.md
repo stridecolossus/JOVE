@@ -622,6 +622,8 @@ new Barrier.Builder()
 
 ## Texture Sampling
 
+
+
 ### Texture Coordinates
 
 Before we progress any further we will modify the demo to include texture coordinates and render a quad rather than a triangle.
@@ -646,6 +648,8 @@ The default drawing primitive is a _triangle strip_ which assumes vertices adher
 ```
 
 The first triangle is comprised of the first three vertices with each subsequent triangle incrementing the 'index' by one, giving us 012, 123, 234, etc.
+
+
 
 A triangle strip has an _alternating_ winding order (the default order is counter-clockwise) which results in the following:
 

@@ -56,6 +56,7 @@ public final class Matrix implements Bufferable {
      * Determines the order of the matrix.
      * @param len Matrix length
      * @return Order
+     * @throws IllegalArgumentException if the given length is not square
      */
     private static int order(int len) {
         return switch(len) {
@@ -63,24 +64,48 @@ public final class Matrix implements Bufferable {
             case 4 -> 2;
             case 9 -> 3;
             case 16 -> 4;
-            default -> (int) MathsUtil.sqrt(len);
+            default -> {
+                final int order = (int) MathsUtil.sqrt(len);
+                if(len != order * order) throw new IllegalArgumentException("Matrix must be square");
+                yield order;
+            }
         };
     }
 
     public int order() {
         return order;
     }
-
-    public float get(int row, int col) {
-    }
-    
-    @Override
-    public void buffer(FloatBuffer buffer) {
-    }
 }
 ```
 
 The matrix is represented as a one-dimensional array in _column-major_ order (matching the default layout for matrices in GLSL shaders).
+
+
+TODO
+
+```java
+/**
+ * Retrieves a matrix element.
+ * @param row Matrix row
+ * @param col Column
+ * @return Matrix element
+ * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
+ */
+public float get(int row, int col) {
+    return matrix[index(row, col)];
+}
+
+/**
+ * @param row
+ * @param col
+ * @return Matrix index
+ */
+private int index(int row, int col) {
+    return row + order * col;
+}
+```
+
+
 
 > We could have implemented a 2D array but Java multi-dimensional arrays are objects in their own right which seems overkill for such a small amount of data.
     

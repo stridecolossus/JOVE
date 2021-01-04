@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
+import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
@@ -31,7 +32,6 @@ import org.sarge.jove.platform.vulkan.core.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.core.Image.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.Memory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -42,7 +42,7 @@ public class ImageTest extends AbstractVulkanTest {
 	private DefaultImage image;
 	private Pointer handle;
 	private Descriptor descriptor;
-	private Pointer mem;
+	private DeviceMemory mem;
 
 	@BeforeEach
 	void before() {
@@ -55,9 +55,11 @@ public class ImageTest extends AbstractVulkanTest {
 				.arrayLayers(3)
 				.build();
 
+		mem = mock(DeviceMemory.class);
+		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
+
 		// Create image
-		handle = new Pointer(1);
-		mem = new Pointer(2);
+		handle = new Pointer(2);
 		image = new DefaultImage(handle, descriptor, mem, dev);
 	}
 
@@ -108,7 +110,7 @@ public class ImageTest extends AbstractVulkanTest {
 	void destroy() {
 		image.destroy();
 		verify(lib).vkDestroyImage(dev.handle(), image.handle(), null);
-		verify(lib).vkFreeMemory(dev.handle(), mem, null);
+		verify(mem).destroy();
 	}
 
 	@Nested
@@ -171,9 +173,9 @@ public class ImageTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
-			final Pointer ptr = new Pointer(1);
-			final Memory mem = mock(Memory.class);
-			when(mem.memory()).thenReturn(ptr);
+//			final Pointer ptr = new Pointer(1);
+//			final DeviceMemory mem = mock(DeviceMemory.class);
+//			when(mem.memory()).thenReturn(ptr);
 
 			// Init image memory
 //			final Pointer mem = new Pointer(1);
@@ -243,7 +245,8 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.sharingMode);
 
 			// Check memory allocation
-			verify(lib).vkBindImageMemory(eq(dev.handle()), isA(Pointer.class), eq(ptr), eq(0L));
+			//final var h = mem.handle();
+			verify(lib).vkBindImageMemory(eq(dev.handle()), isA(Pointer.class), eq(mem.handle()), eq(0L));
 		}
 
 		@Test

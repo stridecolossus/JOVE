@@ -49,7 +49,7 @@ interface VulkanLibraryImage {
 	 * @param memoryOffset		Offset
 	 * @return Result code
 	 */
-	int vkBindImageMemory(Handle device, Pointer image, Pointer memory, long memoryOffset);
+	int vkBindImageMemory(Handle device, Pointer image, Handle memory, long memoryOffset);
 
 	void vkCmdCopyBufferToImage(Handle commandBuffer, Handle srcBuffer, Handle dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
 	void vkCmdCopyImageToBuffer(Handle commandBuffer, Handle srcImage, VkImageLayout srcImageLayout, Handle dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);

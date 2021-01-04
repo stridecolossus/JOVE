@@ -41,8 +41,8 @@ public class PercentileTest {
 
 	@Test
 	void integerInvalidRange() {
-		assertThrows(IllegalArgumentException.class, () -> Percentile.of(-1));
-		assertThrows(IllegalArgumentException.class, () -> Percentile.of(101));
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> Percentile.of(-1));
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> Percentile.of(101));
 	}
 
 	@Nested

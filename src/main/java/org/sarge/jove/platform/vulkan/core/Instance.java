@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.common.NativeObject.TransientNativeObject;
+import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT;
@@ -41,8 +41,7 @@ import com.sun.jna.ptr.PointerByReference;
  * An <i>instance</i> is the root object for a Vulkan application.
  * @author Sarge
  */
-public class Instance implements TransientNativeObject {
-	private final Pointer handle;
+public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
 
 	private Handler.Manager manager;
@@ -53,13 +52,8 @@ public class Instance implements TransientNativeObject {
 	 * @param handle		Instance handle
 	 */
 	private Instance(VulkanLibrary lib, Pointer handle) {
-		this.handle = notNull(handle);
+		super(handle);
 		this.lib = notNull(lib);
-	}
-
-	@Override
-	public Handle handle() {
-		return new Handle(handle);
 	}
 
 	/**
@@ -89,11 +83,8 @@ public class Instance implements TransientNativeObject {
 		return new Handler();
 	}
 
-	/**
-	 * Destroys this instance and any active message handlers.
-	 */
 	@Override
-	public synchronized void destroy() {
+	protected void release() {
 		// Destroy active handlers
 		if(manager != null) {
 			manager.destroy();

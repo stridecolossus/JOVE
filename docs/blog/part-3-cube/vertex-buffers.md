@@ -18,7 +18,7 @@ This process involves the following steps:
 
 4. Copy the interleaved data to this staging buffer.
 
-5. Allocate a _device local_ buffer (visible to the hardware).
+5. Allocate a _device local_ buffer (visible only to the hardware).
 
 6. Copy the staged data to this buffer.
 
@@ -40,57 +40,14 @@ We will need to implement the following:
 
 ### Vertex Components
 
-A _vertex_ can consist of some or all of the following components:
+We will define a _vertex_ as a compound object consisting of the following components:
 
 - position
 - normal
 - texture coordinates
 - colour
 
-
-
-
-We introduce a simple RGBA colour domain object for the clear colour:
-
-```java
-public record Colour(float red, float green, float blue, float alpha) {
-    /**
-     * White colour.
-     */
-    public static final Colour WHITE = new Colour(1, 1, 1, 1);
-
-    /**
-     * Black colour.
-     */
-    public static final Colour BLACK = new Colour(0, 0, 0, 1);
-
-    public Colour {
-        Check.isPercentile(red);
-        Check.isPercentile(green);
-        Check.isPercentile(blue);
-        Check.isPercentile(alpha);
-    }
-
-    /**
-     * @return This colour as an RGBA array of floating-point values
-     */
-    public float[] toArray() {
-        return new float[]{red, green, blue, alpha};
-    }
-
-    @Override
-    public String toString() {
-        return Arrays.toString(toArray());
-    }
-}
-```
-
-
-
-
-We already have a colour class but we will need new domain objects to represent the other vertex components.
-
-Points and normals are roughly the same so we will create a small class hierarchy with the following base-class:
+Positions and normals are roughly the same so we will create a small class hierarchy with the following base-class:
 
 ```java
 public class Tuple implements Bufferable {
@@ -102,6 +59,11 @@ public class Tuple implements Bufferable {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    @Override
+    public final long length() {
+        return SIZE * Float.BYTES;
     }
 
     @Override
@@ -120,10 +82,15 @@ public interface Bufferable {
      * @param buffer Buffer
      */
     void buffer(ByteBuffer buffer);
+    
+    /**
+     * @return Length of this object (bytes)
+     */
+    long length();
 }
 ```
 
-The vertex position is trivial at this stage:
+The vertex position can now be represented by the following simple domain object:
 
 ```java
 public final class Point extends Tuple {
@@ -138,9 +105,35 @@ public final class Point extends Tuple {
 }
 ```
 
-### Composing the Vertex
+Finally we add an RGBA colour:
 
-Finally we compose these domain objects into the new vertex class:
+```java
+public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
+    public static final Colour WHITE = new Colour(1, 1, 1, 1);
+    public static final Colour BLACK = new Colour(0, 0, 0, 1);
+
+    public Colour {
+        Check.isPercentile(red);
+        Check.isPercentile(green);
+        Check.isPercentile(blue);
+        Check.isPercentile(alpha);
+    }
+
+    @Override
+    public void buffer(ByteBuffer buffer) {
+        buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
+    }
+
+    @Override
+    public long length() {
+        return SIZE * Float.BYTES;
+    }
+}
+```
+
+We will not be using normals or the texture coordinates for the triangle demo so we will gloss over these objects until they are required.
+
+We can now compose these domain objects into the new vertex class:
 
 ```java
 public interface Vertex {
@@ -164,10 +157,8 @@ public interface Vertex {
 }
 ```
 
-Notes:
-- The colour class is modified to be `Bufferable`.
-- Generally we should model optional properties properly using a Java `Optional` but we have intentionally broken that rule here for the sake of simplicity.
-- For the moment we will gloss over the vector and texture coordinate classes as they are not needed until later in development.
+Note that all the components of the vertex are optional.
+Generally we would model optional properties properly using a Java `Optional` but we have intentionally broken that rule here for the sake of simplicity.
 
 ### Buffering Vertices
 
@@ -628,7 +619,7 @@ This works fine for our simple demos at this stage of development but we will ne
 
 ---
 
-## Vertex Input Configuration
+## Vertex Configuration
 
 ### Vertex Input Pipeline Stage
 
@@ -640,11 +631,22 @@ This consists of two pieces of information:
 
 2. A number of _attribute_ descriptors that define the format of each component of a vertex (i.e. each component of the layout).
 
-We add two new nested builders to the `VertexInputStageBuilder` to construct these new objects.
+We add two new nested builders to the pipeline stage builder:
 
-### Vertex Input Bindings
+```java
+public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
+    private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
+    private final List<AttributeBuilder> attributes = new ArrayList<>();
 
-The builder for a binding is relatively simple:
+    public class BindingBuilder {
+    }
+    
+    public class AttributeBuilder {
+    }   
+}
+```
+
+The nested builder for the bindings is relatively simple:
 
 ```java
 public class BindingBuilder {
@@ -713,9 +715,7 @@ public VertexInputStageBuilder build() {
 
 Note that we add the builder itself to the parent rather than creating any intermediate POJO for the binding data.
 
-### Vertex Attributes
-
-The builder for a vertex attribute follows the same pattern:
+The builder for the vertex attributes follows the same pattern:
 
 ```java
 public class AttributeBuilder {
@@ -756,39 +756,31 @@ The _loc_ field corresponds to the _layout_ directives in the GLSL shader (see b
 
 The _offset_ specifies the offset (in bytes) of the attribute within the vertex.
 
-### Revised Stage Builder
-
-Next we integrate these child builders into the vertex input stage builder:
+Finally we can complete the parent builder for the vertex input stage:
 
 ```java
-public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
-    private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
-    private final List<AttributeBuilder> attributes = new ArrayList<>();
-
+protected VkPipelineVertexInputStateCreateInfo result() {
+    // Validate bindings
     ...
-    
-    @Override
-    protected VkPipelineVertexInputStateCreateInfo result() {
-        // Validate bindings
-        ...
 
-        // Create descriptor
-        final var info = new VkPipelineVertexInputStateCreateInfo();
+    // Create descriptor
+    final var info = new VkPipelineVertexInputStateCreateInfo();
 
-        // Add binding descriptions
-        if(!bindings.isEmpty()) {
-            info.vertexBindingDescriptionCount = bindings.size();
-            info.pVertexBindingDescriptions = VulkanStructure.populate(VkVertexInputBindingDescription::new, bindings.values(), BindingBuilder::populate);
+    // Add binding descriptions
+    if(!bindings.isEmpty()) {
+        info.vertexBindingDescriptionCount = bindings.size();
+        info.pVertexBindingDescriptions = StructureCollector.toPointer(VkVertexInputBindingDescription::new, bindings.values(), BindingBuilder::populate);
 
-            // Add attributes
-            info.vertexAttributeDescriptionCount = attributes.size();
-            info.pVertexAttributeDescriptions = VulkanStructure.populate(VkVertexInputAttributeDescription::new, attributes, AttributeBuilder::populate);
-        }
-
-        return info;
+        // Add attributes
+        info.vertexAttributeDescriptionCount = attributes.size();
+        info.pVertexAttributeDescriptions = StructureCollector.toPointer(VkVertexInputAttributeDescription::new, attributes, AttributeBuilder::populate);
     }
+
+    return info;
 }
 ```
+
+### Convenience
 
 We also take the opportunity to implement a convenience method to create the binding and attributes for a given vertex layout.
 

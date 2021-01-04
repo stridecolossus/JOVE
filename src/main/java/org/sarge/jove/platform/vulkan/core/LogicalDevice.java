@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.NativeObject.TransientNativeObject;
+import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Percentile;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
@@ -35,8 +35,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>logical device</i> is an instance of a {@link PhysicalDevice} that can be used to perform work.
  * @author Sarge
  */
-public class LogicalDevice implements TransientNativeObject {
-	private final Handle handle;
+public class LogicalDevice extends AbstractTransientNativeObject {
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
 	private final DeviceFeatures features;
@@ -53,12 +52,12 @@ public class LogicalDevice implements TransientNativeObject {
 	 * @param queues 		Work queues
 	 */
 	private LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Set<RequiredQueue> queues) {
-		this.handle = new Handle(handle);
+		super(handle);
 		this.parent = notNull(parent);
 		this.lib = parent.instance().library();
 		this.features = notNull(features);
 		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
-		this.allocator = new MemoryAllocator(this);
+//		this.allocator = new MemoryAllocator(this);
 	}
 
 	/**
@@ -80,14 +79,6 @@ public class LogicalDevice implements TransientNativeObject {
 		final PointerByReference queue = lib.factory().pointer();
 		lib.vkGetDeviceQueue(handle, family.index(), index, queue);
 		return new Queue(queue.getValue(), this, family);
-	}
-
-	/**
-	 * @return Device handle
-	 */
-	@Override
-	public Handle handle() {
-		return handle;
 	}
 
 	/**
@@ -122,6 +113,10 @@ public class LogicalDevice implements TransientNativeObject {
 	 * @return Memory allocator for this device
 	 */
 	public MemoryAllocator allocator() {
+		if(allocator == null) {
+			allocator = new MemoryAllocator(this);
+		}
+
 		return allocator;
 	}
 
@@ -179,7 +174,7 @@ public class LogicalDevice implements TransientNativeObject {
 	}
 
  	@Override
-	public void destroy() {
+	protected void release() {
 		lib.vkDestroyDevice(handle, null);
 	}
 

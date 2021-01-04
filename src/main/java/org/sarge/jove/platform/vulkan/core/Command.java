@@ -298,9 +298,9 @@ public interface Command {
 		}
 
 		@Override
-		public synchronized void destroy() {
+		protected void release() {
 			buffers.clear();
-			super.destroy();
+			super.release();
 		}
 
 		@Override

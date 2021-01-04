@@ -49,7 +49,7 @@ interface VulkanLibraryBuffer {
 	 * @param memoryOffset		Offset
 	 * @return Result code
 	 */
-	int vkBindBufferMemory(Handle device, Pointer buffer, Pointer memory, long memoryOffset);
+	int vkBindBufferMemory(Handle device, Pointer buffer, Handle memory, long memoryOffset);
 
 	/**
 	 * Binds a vertex buffer.

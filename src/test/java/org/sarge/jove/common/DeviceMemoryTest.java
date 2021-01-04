@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.util;
+package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,27 +15,28 @@ import static org.sarge.jove.util.TestHelper.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
-import org.sarge.jove.platform.vulkan.util.Memory.Pool;
-import org.sarge.jove.platform.vulkan.util.Memory.Pool.AllocationException;
-import org.sarge.jove.platform.vulkan.util.Memory.Pool.Allocator;
+import org.sarge.jove.common.DeviceMemory.Pool;
+import org.sarge.jove.common.DeviceMemory.Pool.AllocationException;
+import org.sarge.jove.common.DeviceMemory.Pool.Allocator;
+import org.sarge.jove.common.NativeObject.Handle;
 
 import com.sun.jna.Pointer;
 
-public class MemoryTest {
+public class DeviceMemoryTest {
 	private Pool pool;
 	private Allocator allocator;
-	private Pointer ptr;
+	private Handle handle;
 
 	@BeforeEach
 	void before() {
 		// Create memory block
-		ptr = new Pointer(42);
+		handle = new Handle(new Pointer(42));
 
 		// Create allocator
-		final Answer<Memory> answer = inv -> {
+		final Answer<DeviceMemory> answer = inv -> {
 			final long size = inv.getArgument(0);
-			final Memory block = mock(Memory.class);
-			when(block.memory()).thenReturn(ptr);
+			final DeviceMemory block = mock(DeviceMemory.class);
+			when(block.handle()).thenReturn(handle);
 			when(block.size()).thenReturn(size);
 			return block;
 		};
@@ -58,9 +59,9 @@ public class MemoryTest {
 	@Test
 	void allocate() {
 		// Allocate memory
-		final Memory mem = pool.allocate(1);
+		final DeviceMemory mem = pool.allocate(1);
 		assertNotNull(mem);
-		assertEquals(ptr, mem.memory());
+		assertEquals(handle, mem.handle());
 		assertEquals(0, mem.offset());
 		assertEquals(1, mem.size());
 		assertEquals(false, mem.isDestroyed());
@@ -69,7 +70,7 @@ public class MemoryTest {
 		verify(allocator).allocate(1);
 
 		// Check allocations
-		assertArrayEquals(new Memory[]{mem}, pool.allocations().toArray());
+		assertArrayEquals(new DeviceMemory[]{mem}, pool.allocations().toArray());
 		assertEquals(1, pool.size());
 		assertEquals(0, pool.free());
 		assertEquals(1, pool.count());
@@ -80,7 +81,7 @@ public class MemoryTest {
 		pool.add(10);
 		int offset = 0;
 		for(int n = 0; n < 3; ++n) {
-			final Memory mem = pool.allocate(n + 1);
+			final DeviceMemory mem = pool.allocate(n + 1);
 			assertNotNull(mem);
 			assertEquals(n + 1, mem.size());
 			assertEquals(offset, mem.offset());
@@ -94,14 +95,14 @@ public class MemoryTest {
 
 	@Test
 	void reallocate() {
-		final Memory mem = pool.allocate(1);
+		final DeviceMemory mem = pool.allocate(1);
 		mem.destroy();
 		assertEquals(mem, pool.allocate(1));
 		assertEquals(false, mem.isDestroyed());
 		assertEquals(1, pool.size());
 		assertEquals(0, pool.free());
 		assertEquals(1, pool.count());
-		assertArrayEquals(new Memory[]{mem}, pool.allocations().toArray());
+		assertArrayEquals(new DeviceMemory[]{mem}, pool.allocations().toArray());
 	}
 
 	@Test
@@ -123,7 +124,7 @@ public class MemoryTest {
 
 	@Test
 	void destroy() {
-		final Memory mem = pool.allocate(1);
+		final DeviceMemory mem = pool.allocate(1);
 		mem.destroy();
 		assertEquals(true, mem.isDestroyed());
 		assertEquals(0, pool.allocations().count());
@@ -134,7 +135,7 @@ public class MemoryTest {
 
 	@Test
 	void destroyAlreadyDestroyed() {
-		final Memory mem = pool.allocate(1);
+		final DeviceMemory mem = pool.allocate(1);
 		mem.destroy();
 		assertThrows(IllegalStateException.class, () -> mem.destroy());
 	}
@@ -163,7 +164,7 @@ public class MemoryTest {
 	@Test
 	void paged() {
 		final Allocator paged = Allocator.paged(3, allocator);
-		final Memory mem = paged.allocate(2);
+		final DeviceMemory mem = paged.allocate(2);
 		assertNotNull(mem);
 		assertEquals(3, mem.size());
 	}

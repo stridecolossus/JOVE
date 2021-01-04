@@ -11,11 +11,11 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
-import org.sarge.jove.platform.vulkan.util.Memory;
 import org.sarge.jove.util.Check;
 import org.sarge.jove.util.PointerArray;
 
@@ -43,7 +43,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	}
 
 	private final long len;
-	private final Pointer mem;
+	private final DeviceMemory mem;
 
 	/**
 	 * Constructor.
@@ -52,7 +52,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	 * @param len			Length (bytes)
 	 * @param mem			Memory handle
 	 */
-	VertexBuffer(Pointer handle, LogicalDevice dev, long len, Pointer mem) {
+	VertexBuffer(Pointer handle, long len, DeviceMemory mem, LogicalDevice dev) {
 		super(handle, dev, dev.library()::vkDestroyBuffer);
 		this.len = oneOrMore(len);
 		this.mem = notNull(mem);
@@ -110,7 +110,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		final LogicalDevice dev = this.device();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference data = lib.factory().pointer();
-		check(lib.vkMapMemory(dev.handle(), mem, offset, len, 0, data));
+		check(lib.vkMapMemory(dev.handle(), mem.handle(), offset, len, 0, data));
 
 		try {
 			// Copy to memory
@@ -119,7 +119,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		}
 		finally {
 			// Cleanup
-			lib.vkUnmapMemory(dev.handle(), mem);
+			lib.vkUnmapMemory(dev.handle(), mem.handle());
 		}
 	}
 
@@ -173,10 +173,12 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	}
 
 	@Override
-	public synchronized void destroy() {
+	protected void release() {
 		final LogicalDevice dev = super.device();
-		dev.library().vkFreeMemory(dev.handle(), mem, null);
-		super.destroy();
+		dev.library().vkDestroyBuffer(dev.handle(), this.handle(), null);
+		if(!mem.isDestroyed()) {
+			mem.destroy();
+		}
 	}
 
 	@Override
@@ -277,14 +279,14 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 			lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate buffer memory
-			final Memory mem = allocation.init(reqs).allocate();
+			final DeviceMemory mem = allocation.init(reqs).allocate();
 
 			// Bind memory
-			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.memory(), 0L));
+			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L));
 
 			// Create buffer
 			// TODO - use memory object
-			return new VertexBuffer(handle.getValue(), dev, len, mem.memory());
+			return new VertexBuffer(handle.getValue(), len, mem, dev);
 		}
 	}
 }

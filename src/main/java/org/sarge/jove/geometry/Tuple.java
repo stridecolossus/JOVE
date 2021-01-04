@@ -74,7 +74,7 @@ public class Tuple implements Bufferable {
 	}
 
 	@Override
-	public long length() {
+	public final long length() {
 		return SIZE * Float.BYTES;
 	}
 

@@ -2,11 +2,11 @@ package org.sarge.jove.common;
 
 import static java.util.stream.Collectors.toMap;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
@@ -81,24 +81,14 @@ public interface IntegerEnumeration {
 	}
 
 	/**
-	 * Tests whether an integer mask contains the given enumeration value.
-	 * @param mask			Mask
-	 * @param constant		Enumeration constant
-	 * @return Whether the mask contains the given constant
-	 */
-	static <E extends IntegerEnumeration> boolean contains(int mask, E constant) {
-		return (constant.value() & mask) != 0;
-	}
-
-	/**
 	 * Converts an integer mask to a set of enumeration constants.
 	 * @param clazz		Enumeration class
 	 * @param mask		Mask
 	 * @return Enumeration constants (in ascending order of value)
 	 */
-	static <E extends IntegerEnumeration> Collection<E> enumerate(Class<E> clazz, int mask) {
+	static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
 		final var entry = Cache.CACHE.get(clazz);
-		final List<E> values = new ArrayList<>();
+		final Set<E> values = new TreeSet<>();
 		final int max = Integer.highestOneBit(mask);
 		for(int n = 0; n < max; ++n) {
 			final int value = 1 << n;

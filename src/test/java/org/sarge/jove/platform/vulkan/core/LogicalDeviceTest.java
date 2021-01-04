@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Percentile;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
@@ -144,6 +145,9 @@ public class LogicalDeviceTest {
 	@DisplayName("Create a memory allocator for this device")
 	@Test
 	void allocator() {
+		final var props = mock(PhysicalDevice.Properties.class);
+		when(props.limits()).thenReturn(new VkPhysicalDeviceLimits());
+		when(parent.properties()).thenReturn(props);
 		assertNotNull(device.allocator());
 	}
 
