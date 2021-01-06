@@ -20,7 +20,7 @@ public interface Parser {
 	};
 
 	/**
-	 * Parser for a group command (either <b>g</b> or <b>s</b>, arguments are ignored).
+	 * Parser for a new object command (either {@code o} or {@code g}).
 	 * @see ObjectModel#start()
 	 */
 	Parser GROUP = (args, model) -> model.start();

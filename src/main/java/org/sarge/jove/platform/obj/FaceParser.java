@@ -1,11 +1,5 @@
 package org.sarge.jove.platform.obj;
 
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Vertex;
-import org.sarge.jove.platform.obj.ObjectModel.ComponentList;
-
 /**
  * The <i>face parser</i> parses an OBJ face command.
  * <p>
@@ -15,46 +9,39 @@ import org.sarge.jove.platform.obj.ObjectModel.ComponentList;
 public class FaceParser implements Parser {
 	@Override
 	public void parse(String[] args, ObjectModel model) {
-		// Update/validate face size
-		model.init(args.length);
+		// Validate face
+		if(args.length != 3) {
+			throw new IllegalArgumentException("Expected triangle face");
+		}
 
-		// Parse face and add vertices
+		// Parse vertices for this face
 		for(String face : args) {
 			// Tokenize face
 			final String[] parts = face.trim().split("/");
 			if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
 
-			// Add vertex position
-			final Vertex.Builder vertex = new Vertex.Builder();
-			final Point pos = lookup(model.vertices(), parts[0]);
-			vertex.position(pos);
-
-			// Add optional texture coordinate
-			if(parts.length > 1) {
-				final Coordinate2D coords = lookup(model.coordinates(), parts[1]);
-				vertex.coords(coords);
+			// Clean
+			for(int n = 0; n < parts.length; ++n) {
+				parts[n] = parts[n].trim();
 			}
 
-			// Add optional vertex normal
-			if(parts.length == 3) {
-				final Vector normal = lookup(model.normals(), parts[2]);
-				vertex.normal(normal);
+			// Parse mandatory vertex position index
+			final int v = Integer.parseInt(parts[0]);
+
+			// Parse optional normal index
+			final Integer n = parts.length == 3 ? Integer.parseInt(parts[2]) : null;
+
+			// Parse optional texture coordinate index
+			final Integer tc;
+			if((parts.length > 1) && !parts[1].isEmpty()) {
+				tc = Integer.parseInt(parts[1]);
+			}
+			else {
+				tc = null;
 			}
 
 			// Add vertex
-			model.add(vertex.build());
+			model.vertex(v, n, tc);
 		}
-	}
-
-	/**
-	 * Helper - Looks up a component from the given list.
-	 * @param <T> Component type
-	 * @param list		List
-	 * @param str 		Index string
-	 * @return Specified component
-	 * @see ComponentList#get(int)
-	 */
-	private static <T> T lookup(ComponentList<T> list, String index) {
-		return list.get(Integer.parseInt(index.trim()));
 	}
 }

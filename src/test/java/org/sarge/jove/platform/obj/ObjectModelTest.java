@@ -4,47 +4,52 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.obj.ObjectModel.ComponentList;
 
 public class ObjectModelTest {
-	private ObjectModel group;
+	private ObjectModel model;
 
 	@BeforeEach
 	void before() {
-		group = new ObjectModel();
+		model = new ObjectModel();
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(group.vertices());
-		assertNotNull(group.normals());
-		assertNotNull(group.coordinates());
-		assertEquals(0, group.vertices().size());
-		assertEquals(0, group.normals().size());
-		assertEquals(0, group.coordinates().size());
-		assertNotNull(group.builders());
-		assertEquals(0, group.builders().count());
+		assertEquals(true, model.isEmpty());
+		assertNotNull(model.vertices());
+		assertNotNull(model.normals());
+		assertNotNull(model.coordinates());
+		assertEquals(0, model.vertices().size());
+		assertEquals(0, model.normals().size());
+		assertEquals(0, model.coordinates().size());
 	}
 
 	@Test
 	void vertices() {
-		final var vertices = group.vertices();
+		final var vertices = model.vertices();
 		vertices.add(Point.ORIGIN);
-		assertEquals(1, group.vertices().size());
+		assertEquals(1, model.vertices().size());
 		assertEquals(Point.ORIGIN, vertices.get(1));
+		assertEquals(false, model.isEmpty());
 	}
 
 	@Test
 	void normals() {
-		final var normals = group.normals();
+		final var normals = model.normals();
 		normals.add(Vector.X_AXIS);
 		assertEquals(1, normals.size());
 		assertEquals(Vector.X_AXIS, normals.get(1));
@@ -52,7 +57,7 @@ public class ObjectModelTest {
 
 	@Test
 	void coordinates() {
-		final var coords = group.coordinates();
+		final var coords = model.coordinates();
 		coords.add(Coordinate2D.BOTTOM_LEFT);
 		assertEquals(1, coords.size());
 		assertEquals(Coordinate2D.BOTTOM_LEFT, coords.get(1));
@@ -60,74 +65,62 @@ public class ObjectModelTest {
 
 	@Test
 	void flip() {
-		final var coords = group.coordinates();
-		group.setFlipTextureCoordinates(true);
+		final var coords = model.coordinates();
+		model.setFlipTextureCoordinates(true);
 		coords.add(new Coordinate2D(1, 2));
 		assertEquals(1, coords.size());
 		assertEquals(new Coordinate2D(1, -2), coords.get(1));
 	}
 
+	@Nested
+	class VertexTests {
+		@BeforeEach
+		void before() {
+			model.vertices().add(Point.ORIGIN);
+			model.normals().add(Vector.X_AXIS);
+			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
+		}
+
+		@DisplayName("Add a vertex with all 3 components")
+		@Test
+		void face() {
+			model.vertex(1, 1, 1);
+		}
+
+		@DisplayName("Add a vertex with just the position")
+		@Test
+		void faceVertexOnly() {
+			model.vertex(1, null, null);
+		}
+
+		@DisplayName("Add a vertex with a normal")
+		@Test
+		void faceVertexNormal() {
+			model.vertex(1, 1, null);
+		}
+
+		@DisplayName("Add a vertex with a texture coordinate")
+		@Test
+		void faceVertexTexture() {
+			model.vertex(1, null, 1);
+		}
+
+		@Test
+		void vertexInvalidIndex() {
+			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(2, 1, 1));
+		}
+	}
+
 	@Test
 	void start() {
-		group.start();
-		assertEquals(1, group.builders().count());
-		assertNotNull(group.current());
+		model.vertices().add(Point.ORIGIN);
+		model.start();
+		assertEquals(true, model.isEmpty());
 	}
 
 	@Test
-	void startNullModel() {
-		group = new ObjectModel(() -> null);
-		assertThrows(NullPointerException.class, () -> group.start());
-	}
-
-	@Test
-	void currentNotStarted() {
-		assertThrows(IllegalStateException.class, () -> group.current());
-	}
-
-	@Test
-	void init() {
-		// Init model consisting of triangles with normals
-		group.normals().add(Vector.X_AXIS);
-		group.start();
-		group.init(3);
-		assertEquals(Primitive.TRIANGLES, group.current().primitive());
-
-		// Add a triangle and check layout
-		for(int n = 0; n < 3; ++n) {
-			final Vertex vertex = new Vertex.Builder().position(Point.ORIGIN).normal(Vector.X_AXIS).build();
-			group.add(vertex);
-		}
-		assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL), group.current().build().layout());
-	}
-
-	@Test
-	void initInvalidPrimitive() {
-		group.start();
-		assertThrows(UnsupportedOperationException.class, () -> group.init(0));
-		assertThrows(UnsupportedOperationException.class, () -> group.init(4));
-	}
-
-	@Test
-	void initFaceSizeMismatch() {
-		group.start();
-		group.init(2);
-		assertThrows(IllegalStateException.class, () -> group.init(3));
-	}
-
-	@Test
-	void add() {
-		group.start();
-		group.init(2);
-		group.add(Vertex.of(Point.ORIGIN));
-		group.add(Vertex.of(Point.ORIGIN));
-		assertEquals(Primitive.LINES, group.current().primitive());
-		assertEquals(new Vertex.Layout(Vertex.Component.POSITION), group.current().build().layout());
-	}
-
-	@Test
-	void addNotInitialised() {
-		assertThrows(IllegalStateException.class, () -> group.add(Vertex.of(Point.ORIGIN)));
+	void startEmptyModel() {
+		model.start();
 	}
 
 	@Nested
@@ -139,18 +132,23 @@ public class ObjectModelTest {
 		void before() {
 			obj = new Object();
 			list = new ComponentList<>();
-			list.add(obj);
-			list.add(new Object());
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(0, list.size());
 		}
 
 		@Test
 		void get() {
+			list.add(obj);
 			assertEquals(obj, list.get(1));
 		}
 
 		@Test
 		void getNegativeIndex() {
-			assertEquals(obj, list.get(-2));
+			list.add(obj);
+			assertEquals(obj, list.get(-1));
 		}
 
 		@Test
@@ -160,8 +158,56 @@ public class ObjectModelTest {
 
 		@Test
 		void getInvalidIndex() {
-			assertThrows(IndexOutOfBoundsException.class, () -> list.get(3));
-			assertThrows(IndexOutOfBoundsException.class, () -> list.get(-3));
+			assertThrows(IndexOutOfBoundsException.class, () -> list.get(1));
+			assertThrows(IndexOutOfBoundsException.class, () -> list.get(-1));
+		}
+	}
+
+	@Nested
+	class BuildTests {
+		private void triangle() {
+			model.vertices().add(Point.ORIGIN);
+			model.normals().add(Vector.X_AXIS);
+			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
+			for(int n = 0; n < 3; ++n) {
+				model.vertex(1, 1, 1);
+			}
+		}
+
+		@Test
+		void build() {
+			// Construct a triangle
+			triangle();
+
+			// Build model
+			assertNotNull(model.build());
+			assertEquals(1, model.build().count());
+
+			// Check resultant model
+			final Model result = model.build().iterator().next();
+			assertNotNull(result);
+			assertEquals(Primitive.TRIANGLES, result.primitive());
+			assertEquals(List.of(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.TEXTURE_COORDINATE), result.layout().components());
+			assertEquals(3, result.count());
+			assertEquals(Optional.empty(), result.index());
+		}
+
+		@Test
+		void buildEmptyModel() {
+			assertThrows(IllegalStateException.class, () -> model.build());
+		}
+
+		@Test
+		void buildMultiple() {
+			// Add a group
+			triangle();
+
+			// Add another group
+			model.start();
+			triangle();
+
+			// Construct and model per group
+			assertEquals(2, model.build().count());
 		}
 	}
 }

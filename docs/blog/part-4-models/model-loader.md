@@ -23,10 +23,12 @@ The most common commands are:
 | vn            | x y z         | normal                | vn 0.4 0.5 0.6    |
 | vt            | u v           | texture coordinate    | vt 0.7 0.8        |
 | f             | see below     | face or triangle      | f 1//3 4//6 7//9  |
-| s             | n/a           | smoothing group       | s                 |
+| o             | name          | object                | o head            |
+| g             | name          | polygon group         | g body            |
+| s             | flag          | smoothing group       | s 1               |
 
-The *face* command specifies the vertices of a polygon (usually a triangle) as a tuple of indices delimited by the slash character.
-Each vertex consists of a position index, optional normal index, and an optional texture coordinate index.
+The _face_ command specifies the vertices of a polygon as a tuple of indices delimited by the slash character.
+Each vertex consists of a position index and optional normal and texture coordinate indices.
 
 | example                   | description                               |
 | -------                   | -----------                               |
@@ -38,30 +40,79 @@ Each vertex consists of a position index, optional normal index, and an optional
 Example:
 
 ```
+o object
 v 0.1 0.2 0.3
 v 0.4 0.5 0.6
 v 0.7 0.8 0.9
 vt 0 0
 vt 0 1
 vt 1 0
+g group
 f 1/1 2/2 3/3
 ```
 
-We will implement the minimal functionality required for our test models therefore we apply the following constraints on the scope of the loader:
+We will implement the minimal functionality required for our test models therefore we apply the following assumptions and constraints on the scope of the loader:
 
 - Face primitives are assumed to be triangles.
 
-- We assume a single smoothing group - this is the case for the models we are using  but at some point we will need to extend the scope to generate multiple models per group.
+- Only the above commands will be supported - all others will be ignored.
 
-- The OBJ format supports material descriptors that specify texture properties (amongst others) - for the moment we will hard-code the associated texture image.
+- The OBJ format supports material descriptors (.MTL) that specify texture properties (amongst others) - for the moment we will simply hard-code the associated texture image.
+
+### Transient Model
+
+Loading an OBJ model consists of two main steps:
+1. Load the vertex components (v, vn, vt).
+2. Load the object triangles (f) that index into this data to build the resultant object.
+
+This implies we need an intermediate data structure to hold the vertex components:
+
+```java
+public static class ObjectModel {
+    private final ComponentList<Point> vertices = new ComponentList<>();
+    private final ComponentList<Vector> normals = new ComponentList<>();
+    private final ComponentList<Coordinate2D> coords = new ComponentList<>();
+}
+```
+
+The vertex components are represented by the following class that are used to look up the components for a given face:
+
+```java
+public static class ComponentList<T> {
+    protected final List<T> list = new ArrayList<>();
+
+    void add(T obj) {
+        list.add(notNull(obj));
+    }
+
+    /**
+     * Retrieves an object from this list by index.
+     * @param index 1..n or negative from the end of the list
+     * @return Specified object
+     * @throws IndexOutOfBoundsException if the index is zero or is out-of-bounds for this list
+     */
+    public T get(int index) {
+        if(index > 0) {
+            return list.get(index - 1);
+        }
+        else
+        if(index < 0) {
+            return list.get(list.size() + index);
+        }
+        else {
+            throw new IndexOutOfBoundsException("Invalid zero index");
+        }
+    }
+}
+```
 
 ### Model Loader
 
-The loading process is:
-1. Create a transient model for the OBJ object (detailed below).
-2. Load each line of the OBJ model file, skipping empty lines and comments.
-3. Parse each command line and mutate the model accordingly.
-4. Create the resultant model.
+We can now parse the OBJ file and construct the transient model as follows:
+1. Create a new transient OBJ model.
+2. Load each line of the OBJ model file (skipping comments and empty lines).
+3. Parse each command line and update the model accordingly.
+4. Generate the resultant JOVE model(s).
 
 The loader parses each line of the model as follows:
 
@@ -69,7 +120,7 @@ The loader parses each line of the model as follows:
 public class ObjectModelLoader {
     public Model load(Reader r) throws IOException {
         // Create transient model
-        final ObjectModel model = model();
+        final ObjectModel model = new ObjectModel();
 
         // Parse OBJ model
         try(final LineNumberReader in = new LineNumberReader(r)) {
@@ -80,26 +131,32 @@ public class ObjectModelLoader {
                 .forEach(line -> parse(line, model));
         }
         catch(Exception e) {
-            throw new IOException(String.format("%s at line %d", e.getMessage(), in.getLineNumber()), e);
+            throw new IOException(...);
         }
 
-        // Construct model
+        // Construct models
         return model.build();
     }
 }
 ```
 
-The `isComment()` method is as follows:
+The `isComment` method checks for lines that start with a configured comment token:
 
 ```java
-private boolean isComment(String line) {
-    return comments.stream().anyMatch(line::startsWith);
+public class ObjectModelLoader {
+    private Set<String> comments = Set.of("#");
+
+    private boolean isComment(String line) {
+        return comments.stream().anyMatch(line::startsWith);
+    }
+
+    public void setCommentTokens(Set<String> comments) {
+        this.comments = Set.copyOf(comments);
+    }
 }
 ```
 
-and we add a setter that allows the user to specify the comment token(s).
-
-The `parse()` method first separates the command token from the arguments and then delegates to the `Parser` for that command:
+The `parse` method first separates the command token from the arguments and then delegates to a `Parser` for that command:
 
 ```java
 private void parse(String line, ObjectModel model) {
@@ -137,6 +194,18 @@ public interface Parser {
 }
 ```
 
+Eahc parser is registered with the loader indexed by OBJ command token:
+
+```java
+public class ObjectModelLoader {
+    private final Map<String, Parser> parsers = new HashMap<>();
+
+    public void add(String token, Parser parser) {
+        parsers.put(token, parser);
+    }
+}
+```
+
 ### Error Handling
 
 The OBJ format is quite vague and models are notoriously flakey so our loader needs to be robust but not overly stringent.
@@ -144,27 +213,16 @@ The OBJ format is quite vague and models are notoriously flakey so our loader ne
 We add a callback handler with implementations to either ignore unknown commands or throw an exception depending on the application:
 
 ```java
-/**
- * Handler to ignore unknown commands.
- */
 public static final Consumer<String> HANDLER_IGNORE = str -> {
     // Empty block
 };
 
-/**
- * Handler that throws an exception.
- * @throws IllegalArgumentException for an unknown command
- */
 public static final Consumer<String> HANDLER_THROW = str -> {
     throw new IllegalArgumentException("Unsupported OBJ command: " + str);
 };
 
 private Consumer<String> handler = HANDLER_THROW;
 
-/**
- * Sets the callback handler for unknown commands (default is {@link #HANDLER_THROW}).
- * @param handler Unknown command handler
- */
 public void setUnknownCommandHandler(Consumer<String> handler) {
     this.handler = notNull(handler);
 }
@@ -181,70 +239,70 @@ private void parse(String line, ObjectModel model) {
 
 In addition we can specify the `IGNORE` parser for a given command.
 
-### Transient Model
+### Vertex Components
 
-The `ObjectModel` is a transient working representation of the OBJ model consisting of the vertices, normals and texture coordinates loaded by the various command parsers:
+The process for parsing the various vertex components each follows the same pattern:
+1. Parse the line to a floating-point array (checking the number of array elements matches the expected length).
+2. Construct the relevant domain object given this array.
+3. Add the result to the relevant list in the OBJ model.
+
+We abstract this pattern into the following generic parser:
 
 ```java
-public static class ObjectModel {
-    private final List<Point> vertices = new ArrayList<>();
-    private final List<Coordinate2D> coords = new ArrayList<>();
-    private final List<Vector> normals = new ArrayList<>();
-    private final Model.Builder builder;
+public class ArrayParser<T> implements Parser {
+    private final float[] array;
+    private final Function<float[], T> ctor;
+    private final Function<ObjectModel, ComponentList<T>> mapper;
 
-    /**
-     * Constructor.
-     * @param Underlying model builder
-     */
-    protected ObjectModel(Model.Builder builder) {
-        this.builder = notNull(builder);
+    public ArrayParser(int size, Function<float[], T> ctor, Function<ObjectModel, ComponentList<T>> mapper) {
+        this.array = new float[size];
+        this.ctor = notNull(ctor);
+        this.mapper = notNull(mapper);
+    }
+
+    @Override
+    public void parse(String[] args, ObjectModel model) {
     }
 }
 ```
 
-The loader exposes the protected `model()` and `builder()` factory methods that can be over-ridden to alter or extend the implementation.
+Where _ctor_ maps an array to the domain object constructor and _mapper_ retrieves the component list for that type of component.
 
-### Vertex Components
-
-To parse the various vertex component commands we create a factory method:
+The parser first validates the data and then parses the elements:
 
 ```java
-/**
- * Creates a parser for a floating-point array command.
- * @param <T> Data-type
- * @param size            Expected size of the data
- * @param ctor            Array constructor
- * @param setter        Model setter method
- * @return New array parser
- */
-static <T> Parser of(int size, Function<float[], T> ctor, BiConsumer<ObjectModel, T> setter) {
-    return (args, model) -> {
-        // Validate
-        if(args.length != size) {
-            throw new IllegalArgumentException(String.format("Invalid number of tokens: expected=%d actual=%d", size, args.length));
-        }
+// Validate
+if(args.length != size) {
+    throw new IllegalArgumentException(...);
+}
 
-        // Convert to array
-        final float[] array = new float[size];
-        for(int n = 0; n < size; ++n) {
-            array[n] = Float.parseFloat(args[n]);
-        }
-
-        // Create object using array constructor
-        final T value = ctor.apply(array);
-
-        // Add to transient model
-        setter.accept(model, value);
-    };
+// Convert to array
+for(int n = 0; n < size; ++n) {
+    array[n] = Float.parseFloat(args[n].trim());
 }
 ```
 
-This parser performs the following:
-1. Converts the arguments to a floating-point array
-2. Constructs a vertex component from this array
-3. Add the result to the transient model
+Next we construct the domain object given the parsed array and add it to the model using the _mapper_ to lookup the relevant component list:
 
-The OBJ loader registers the most common command parsers in its constructor:
+```java
+// Create object using array constructor
+final T value = ctor.apply(array);
+
+// Add to transient model
+mapper.apply(model).add(value);
+```
+
+We add array constructors to the appropriate domain objects, for example:
+
+```java
+public class Coordinate2D {
+    public Coordinate2D(float[] array) {
+        this(array[0], array[1]);
+    }
+}
+```
+
+Finally we register a parser for each vertex component:
 
 ```java
 public ObjectModelLoader() {
@@ -259,123 +317,194 @@ private void init() {
 }
 ```
 
-And we implement array constructors in the relevant domain classes.
-
 ### Face Parser
 
-The face parser iterates over a face polygon and generates `Vertex` instances:
+The face parser iterates over the vertices of a face:
 
 ```java
-Parser FACE = new Parser() {
+public class FaceParser implements Parser {
     @Override
     public void parse(String[] args, ObjectModel model) {
+        // Validate face
+        if(args.length != 3) {
+            throw new IllegalArgumentException("Expected triangle face");
+        }
+
+        // Parse vertices for this face
         for(String face : args) {
-            // Tokenize face
-            final String[] parts = face.trim().split("/");
-        
-            // Lookup vertex position
-            final Vertex.Builder vertex = new Vertex.Builder();
-            final Point pos = lookup(model.vertices, parts[0]);
-            vertex.position(pos);
-        
-            // Lookup optional texture coordinate
-            if(parts.length > 1) {
-                final Coordinate2D coords = lookup(model.coords, parts[1]);
-                vertex.coords(coords);
-            }
-        
-            // Lookup vertex normal
-            if(parts.length == 3) {
-                final Vector normal = lookup(model.normals, parts[2]);
-                vertex.normal(normal);
-            }
-        
-            // Add vertex
-            model.add(vertex.build());
+            ...
         }
     }
 }
 ```
 
-The `lookup()` helper parses an index and retrieves the specified vertex component from the transient model:
+Each vertex is comprised of a slash-delimited array that specifies the various components of the vertex:
 
 ```java
-private <T> T lookup(List<T> list, String str) {
-    final int index = Integer.parseInt(str.trim());
-    if(index > 0) {
-        return list.get(index - 1);
-    }
-    else
-    if(index < 0) {
-        return list.get(list.size() + index);
-    }
-    else {
-        throw new IndexOutOfBoundsException("Invalid zero index");
-    }
+// Tokenize face
+final String[] parts = face.trim().split("/");
+if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
+
+// Clean
+for(int n = 0; n < parts.length; ++n) {
+    parts[n] = parts[n].trim();
 }
 ```
 
-Note that face indices can also be negative specifying a reverse index from the end of a list.
+Which are then parsed to integer indices (only the vertex position is mandatory) and added to the model:
 
-Finally we also register the default face parser:
+```java
+// Parse mandatory vertex position index
+final int v = Integer.parseInt(parts[0]);
+
+// Parse optional normal index
+final Integer n = parts.length == 3 ? Integer.parseInt(parts[2]) : null;
+
+// Parse optional texture coordinate index
+final Integer tc;
+if((parts.length > 1) && !parts[1].isEmpty()) {
+    tc = Integer.parseInt(parts[1]);
+}
+else {
+    tc = null;
+}
+
+// Add vertex
+model.vertex(v, n, tc);
+```
+
+The `vertex` method looks up the components and constructs a `Vertex` which is added to the builder for the current group (covered in the following section):
+
+```java
+public void vertex(int v, Integer n, Integer tc) {
+    // Build vertex
+    final var vertex = new Vertex.Builder();
+    vertex.position(vertices.get(v));
+
+    // Add optional normal
+    if(n != null) {
+        vertex.normal(normals.get(n));
+    }
+
+    // Add optional texture coordinate
+    if(tc != null) {
+        vertex.coords(coords.get(tc));
+    }
+
+    // Add to model
+    final Model.Builder builder = current();
+    builder.add(vertex.build());
+}
+```
+
+Finally we also register the default face parser in the main loader class:
 
 ```
 private void init() {
     ...
-    add("f", Parser.FACE);
-    add("s", Parser.IGNORE);
-    add("g", Parser.IGNORE);
+    add("f", new FaceParser());
 }
 ```
 
-### Model Initialisation
+### Groups
 
-One of the issues we face (pun intended) when parsing an OBJ model is that we do not know the vertex layout or drawing primitive up-front.
-We could mandate that the developer is responsible for configuring the model before loading but this feels overly restrictive - 
-it would be much nicer if the loader determined this information for us.
-Therefore the face parser *initialises* the model when we first encounter a face definition.
+A single OBJ file can be comprised of multiple _objects_ which corresponds to a list of JOVE models.
 
-The face parser invokes the following method on the transient model for every face:
+The transient OBJ model maintains a list of builders for each object and initialises the first in the constructor:
 
 ```java
-void update(int size) {
-    if(init) {
-        // Check face matches existing primitive
-        if(size != builder.primitive().size()) throw new IllegalArgumentException(...);
+public class ObjectModel {
+    private final Deque<Model.Builder> builders = new LinkedList<>();
+
+    public ObjectModel() {
+        add();
     }
-    else {
-        // Initialise model
-        init(size);
-        init = true;
+
+    /**
+     * Adds a new model for the next group.
+     */
+    private void add() {
+        final Model.Builder next = new Model.Builder();
+        next.primitive(Primitive.TRIANGLES);
+        builders.add(next);
     }
 }
 ```
 
-The _init_ flag is used to determine whether the model has been initialised and each subsequent face is validated against the selected primitive.
-
-The `init()` method determines the vertex layout and primitive based on the number of vertices in the face:
+A new object is started by the following command parser:
 
 ```java
-private void init(int size) {
-    // Init primitive
-    final Primitive primitive = switch(size) {
-        case 1 -> Primitive.POINTS;
-        case 2 -> Primitive.LINES;
-        case 3 -> Primitive.TRIANGLES;
-        default -> throw new IllegalArgumentException("Unsupported primitive size: " + size);
-    };
-    builder.primitive(primitive);
+public interface Parser {
+    /**
+     * Parser for a new object command (either {@code o} or {@code g}).
+     * @see ObjectModel#start()
+     */
+    Parser GROUP = (args, model) -> model.start();
+}
+```
 
-    // Init layout
+Which delegates to the `start` method:
+
+```java
+public void start() {
+    // Ignore if the current group is empty
+    if(isEmpty()) {
+        return;
+    }
+
+    // Initialise the vertex layout for the previous model
+    init();
+    
+    // Reset transient model
+    vertices.list.clear();
+    normals.list.clear();
+    coords.list.clear();
+
+    // Start new model
+    add();
+}
+```
+
+This method also initialises the vertex layout of the most recent model builder:
+
+```java
+private void init() {
+    // Determine vertex layout for the current object group
     final var layout = new ArrayList<Vertex.Component>();
     layout.add(Vertex.Component.POSITION);
-    if(!normals.isEmpty()) {
+    if(!normals.list.isEmpty()) {
         layout.add(Vertex.Component.NORMAL);
     }
-    if(!coords.isEmpty()) {
+    if(!coords.list.isEmpty()) {
         layout.add(Vertex.Component.TEXTURE_COORDINATE);
     }
+
+    // Initialise current model
+    final Model.Builder builder = current();
     builder.layout(new Vertex.Layout(layout));
+}
+```
+
+The resultant model(s) are constructed in the `build` method:
+
+```java
+public Stream<Model> build() {
+    if(isEmpty()) throw new IllegalStateException("Model is empty");
+    init();
+    return builders.stream().map(Model.Builder::build);
+}
+```
+
+Note that we also invoke `init` here to initialise the vertex layout of the last model before construction.
+
+Finally we register parsers for the relevant object and group commands:
+
+```java
+private void init() {
+    ...
+    add("o", Parser.GROUP);
+    add("g", Parser.GROUP);
+    add("s", Parser.IGNORE);
 }
 ```
 

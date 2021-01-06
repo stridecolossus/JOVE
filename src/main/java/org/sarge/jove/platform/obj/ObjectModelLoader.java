@@ -66,9 +66,9 @@ public class ObjectModelLoader extends LoaderAdapter<Reader, Stream<Model>> {
 		add("vt", new ArrayParser<>(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coordinates));
 		add("vn", new ArrayParser<>(Vector.SIZE, Vector::new, ObjectModel::normals));
 		add("f", new FaceParser());
-		add("s", Parser.GROUP);
+		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);
-		add("o", Parser.IGNORE);		// TODO - clears model and de-init?
+		add("s", Parser.IGNORE);
 	}
 
 	/**
@@ -124,7 +124,7 @@ public class ObjectModelLoader extends LoaderAdapter<Reader, Stream<Model>> {
 	/**
 	 * Loads an OBJ model.
 	 * @param r Reader
-	 * @return Resultant model builder
+	 * @return Resultant model(s)
 	 * @throws IOException if the model cannot be loaded
 	 * @see #create()
 	 */
@@ -148,7 +148,7 @@ public class ObjectModelLoader extends LoaderAdapter<Reader, Stream<Model>> {
 		}
 
 		// Construct models
-		return model.builders().map(Model.Builder::build);
+		return model.build();
 	}
 
 	/**

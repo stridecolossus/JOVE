@@ -1,16 +1,12 @@
 package org.sarge.jove.platform.obj;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex;
 
 public class FaceParserTest {
 	private FaceParser parser;
@@ -19,43 +15,43 @@ public class FaceParserTest {
 	@BeforeEach
 	void before() {
 		parser = new FaceParser();
-		model = new ObjectModel();
-		model.vertices().add(Point.ORIGIN);
-		model.start();
+		model = mock(ObjectModel.class);
 	}
 
 	@Test
 	void parsePosition() {
 		parser.parse(new String[]{"1", "1", "1"}, model);
-		final Model result = model.current().build();
-		assertEquals(3, result.count());
-		assertEquals(new Vertex.Layout(Vertex.Component.POSITION), result.layout());
-		assertEquals(Primitive.TRIANGLES, result.primitive());
+		verify(model, times(3)).vertex(1, null, null);
 	}
 
 	@Test
 	void parsePositionTexture() {
-		model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 		parser.parse(new String[]{"1/1", "1/1", "1/1"}, model);
-		final Model result = model.current().build();
-		assertEquals(3, result.count());
-		assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE), result.layout());
-		assertEquals(Primitive.TRIANGLES, result.primitive());
+		verify(model, times(3)).vertex(1, null, 1);
 	}
 
 	@Test
 	void parsePositionTextureNormal() {
-		model.normals().add(Vector.X_AXIS);
-		model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 		parser.parse(new String[]{"1/1/1", "1/1/1", "1/1/1"}, model);
-		final Model result = model.current().build();
-		assertEquals(3, result.count());
-		assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.TEXTURE_COORDINATE), result.layout());
-		assertEquals(Primitive.TRIANGLES, result.primitive());
+		verify(model, times(3)).vertex(1, 1, 1);
 	}
 
 	@Test
-	void parseInvalidFace() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1/2/3/4"}, model));
+	void parsePositionNormal() {
+		parser.parse(new String[]{"1//1", "1//1", "1//1"}, model);
+		verify(model, times(3)).vertex(1, 1, null);
+	}
+
+	@Test
+	void parseInvalidFaceLength() {
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1", "2", "3", "4"}, model));
+	}
+
+	@Test
+	void parseInvalidFaceComponents() {
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"", "1", "1"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1/2/3/4", "1", "1"}, model));
 	}
 }
