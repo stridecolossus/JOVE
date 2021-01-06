@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
@@ -11,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -18,9 +18,11 @@ import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.DeviceMemory.AbstractDeviceMemory;
 import org.sarge.jove.common.DeviceMemory.Pool;
 import org.sarge.jove.common.DeviceMemory.Pool.AllocationException;
+import org.sarge.jove.common.DeviceMemory.Pool.Allocator;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
+import org.sarge.jove.platform.vulkan.VkMemoryHeap;
 import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkMemoryType;
@@ -38,17 +40,18 @@ import com.sun.jna.ptr.PointerByReference;
  * Usage:
  * <pre>
  *  // Create allocator
- *  LogicalDevice dev = ...
- *  MemoryAllocator allocator = new MemoryAllocator(dev);
+ *  MemoryAllocator allocator = dev.allocator();
  *
  *  // Retrieve memory requirements
  *  VkMemoryRequirements reqs = ...
  *
  *  // Allocate memory
- *  Memory mem = allocator
+ *  DeviceMemory mem = allocator
  *      .request()
  *      .init(reqs)
- *      .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+ *      .required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+ *      .optimal(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+ *      .optimal(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
  *      .allocate();
  *
  *  ...
@@ -59,23 +62,34 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 // http://kylehalladay.com/blog/tutorial/2017/12/13/Custom-Allocators-Vulkan.html
-public class MemoryAllocator {
+// https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html
+public class VulkanAllocator {
 	/**
 	 * A <i>memory heap</i> specifies the properties of a group of device memory types.
 	 */
-	public static final class Heap {
+	public static class Heap {
+		private final int index;
 		private final long size;
 		private final Set<VkMemoryPropertyFlag> props;
 		private final List<Type> types = new ArrayList<>();
 
 		/**
 		 * Constructor.
+		 * @param index		Heap index
 		 * @param size		Heap size
 		 * @param props		Memory properties
 		 */
-		private Heap(long size, Set<VkMemoryPropertyFlag> props) {
+		private Heap(int index, long size, Set<VkMemoryPropertyFlag> props) {
+			this.index = zeroOrMore(index);
 			this.size = oneOrMore(size);
 			this.props = Set.copyOf(props);
+		}
+
+		/**
+		 * @return Heap index
+		 */
+		public int index() {
+			return index;
 		}
 
 		/**
@@ -126,11 +140,11 @@ public class MemoryAllocator {
 	/**
 	 * A <i>memory type</i> defines a type of device memory supported by the hardware.
 	 */
-	public final class Type {
+	public static class Type {
 		private final int index;
 		private final Heap heap;
-		private final Set<VkMemoryPropertyFlag> props;
-		private final Pool pool = new Pool(this::allocate);
+		private final int props;
+		private final Pool pool; // = new DeviceMemory.Pool(this::allocate);
 
 		/**
 		 * Constructor.
@@ -138,10 +152,11 @@ public class MemoryAllocator {
 		 * @param heap		Memory heap
 		 * @param props		Properties
 		 */
-		private Type(int index, Heap heap, Set<VkMemoryPropertyFlag> props) {
+		private Type(int index, Heap heap, int props, Allocator allocator) {
 			this.index = zeroOrMore(index);
 			this.heap = notNull(heap);
-			this.props = Set.copyOf(props);
+			this.props = props;
+			this.pool = new Pool(allocator);
 			heap.types.add(this);
 		}
 
@@ -156,7 +171,7 @@ public class MemoryAllocator {
 		 * @return Memory properties
 		 */
 		public Set<VkMemoryPropertyFlag> properties() {
-			return props;
+			return IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, props);
 		}
 
 		/**
@@ -173,18 +188,117 @@ public class MemoryAllocator {
 			return pool;
 		}
 
-		/**
-		 * Allocates a new memory block.
-		 * @param type		Memory type
-		 * @param size		Size (bytes)
-		 * @return Memory
-		 * @throws VulkanException if the memory cannot be allocated
-		 */
-		private DeviceMemory allocate(long size) {
+//		/**
+//		 * Allocates a new memory block.
+//		 * @param type		Memory type
+//		 * @param size		Size (bytes)
+//		 * @return Memory
+//		 * @throws VulkanException if the memory cannot be allocated
+//		 */
+//		private DeviceMemory allocate(long size) {
+//			// Init memory descriptor
+//			final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
+//		    info.allocationSize = size;
+//		    info.memoryTypeIndex = index;
+//
+//		    // Allocate memory
+//		    final VulkanLibrary lib = dev.library();
+//		    final PointerByReference ptr = lib.factory().pointer();
+//		    check(lib.vkAllocateMemory(dev.handle(), info, null, ptr));
+//
+//		    // Create memory wrapper
+//		    return new AbstractDeviceMemory(new Handle(ptr.getValue()), size, 0) {
+//		    	@Override
+//		    	protected void release() {
+//		    		dev.library().vkFreeMemory(dev.handle(), handle, null);
+//		    	}
+//
+//		    	@Override
+//		    	protected void restore() {
+//		    		throw new UnsupportedOperationException();
+//		    	}
+//		    };
+//		}
+
+		@Override
+		public int hashCode() {
+			return Integer.hashCode(index);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return (obj instanceof Type that) && (this.index == that.index);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append("index", index)
+					.append("heap", heap)
+					.append("properties", properties())
+					.build();
+		}
+	}
+
+//	private final LogicalDevice dev;
+	private final List<Heap> heaps;
+	private final List<Type> types;
+	private final int max;
+//	private final long page;
+
+	/**
+	 * Constructor.
+	 * @param dev Logical device
+	 * @throws VulkanException if the allocator cannot be created
+	 */
+	public VulkanAllocator(LogicalDevice dev) {
+		// Retrieve memory properties for this device
+		final var props = new VkPhysicalDeviceMemoryProperties();
+		dev.library().vkGetPhysicalDeviceMemoryProperties(dev.parent().handle(), props);
+
+		// Retrieve global memory parameters
+		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
+
+		// Enumerate memory heaps
+		final List<Heap> heaps = new ArrayList<>();
+		for(int n = 0; n < props.memoryHeapCount; ++n) {
+			final VkMemoryHeap h = props.memoryHeaps[n];
+			final var flags = IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, h.flags);
+			final Heap heap = new Heap(n, h.size, flags);
+			heaps.add(heap);
+		}
+
+		// Enumerate memory types array
+		final Type[] types = new Type[props.memoryTypeCount];
+		for(int n = 0; n < types.length; ++n) {
+			final VkMemoryType info = props.memoryTypes[n];
+			final Heap heap = heaps.get(info.heapIndex);
+			final Allocator allocator = allocator(n, limits.bufferImageGranularity, dev);
+			types[n] = new Type(n, heap, info.propertyFlags, allocator);
+		}
+
+		// Init allocator
+//		this.dev = dev;
+		this.heaps = List.copyOf(heaps);
+		this.types = Arrays.asList(types);
+		this.max = limits.maxMemoryAllocationCount;
+//		this.page = limits.bufferImageGranularity;
+	}
+
+	/**
+	 *
+	 * @param type
+	 * @param page
+	 * @param dev
+	 * @return
+	 */
+	protected Allocator allocator(int type, long page, LogicalDevice dev) {
+		// Create allocator
+		final Allocator allocator = size -> {
 			// Init memory descriptor
 			final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
 		    info.allocationSize = size;
-		    info.memoryTypeIndex = index;
+		    info.memoryTypeIndex = type;
 
 		    // Allocate memory
 		    final VulkanLibrary lib = dev.library();
@@ -203,65 +317,10 @@ public class MemoryAllocator {
 		    		throw new UnsupportedOperationException();
 		    	}
 		    };
-		}
+		};
 
-		@Override
-		public int hashCode() {
-			return Integer.hashCode(index);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return (obj instanceof Type that) && (this.index == that.index);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("index", index)
-					.append("heap", heap)
-					.append("properties", props)
-					.build();
-		}
-	}
-
-	private final LogicalDevice dev;
-	private final List<Heap> heaps;
-	private final Type[] types;
-	private final int max;
-	private final long page;
-
-	/**
-	 * Constructor.
-	 * @param dev Logical device
-	 * @throws VulkanException if the allocator cannot be created
-	 */
-	MemoryAllocator(LogicalDevice dev) {
-		// Retrieve memory properties for this device
-		final var props = new VkPhysicalDeviceMemoryProperties();
-		dev.library().vkGetPhysicalDeviceMemoryProperties(dev.parent().handle(), props);
-		this.dev = dev;
-
-		// Enumerate memory heaps
-		this.heaps = Arrays
-				.stream(props.memoryHeaps)
-				.limit(props.memoryHeapCount)
-				.map(e -> new Heap(e.size, IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, e.flags)))
-				.collect(toList());
-
-		// Enumerate memory types
-		this.types = new Type[props.memoryTypeCount];
-		for(int n = 0; n < types.length; ++n) {
-			final VkMemoryType info = props.memoryTypes[n];
-			final Heap heap = heaps.get(info.heapIndex);
-			final var flags = IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, info.propertyFlags);
-			types[n] = new Type(n, heap, flags);
-		}
-
-		// Lookup global memory parameters
-		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
-		this.max = limits.maxMemoryAllocationCount;
-		this.page = limits.bufferImageGranularity;
+		// Wrap as paged allocator
+		return Allocator.paged(page, allocator);
 	}
 
 	/**
@@ -275,7 +334,7 @@ public class MemoryAllocator {
 	 * @return Memory types
 	 */
 	public List<Type> types() {
-		return Arrays.asList(types);
+		return types;
 	}
 
 	/**
@@ -300,18 +359,14 @@ public class MemoryAllocator {
 		return super.toString();
 	}
 
-//		// TODO - stats
-//		// TODO - are these needed?
-//		//  VK_MAX_MEMORY_TYPES              = 32,
-//		//  VK_MAX_MEMORY_HEAPS              = 16,
-
 	/**
 	 * An <i>memory allocation request</i> configures a request for a block of memory.
 	 */
 	public class Request {
 		private long size;
 		private int filter = Integer.MAX_VALUE;
-		private final Set<VkMemoryPropertyFlag> flags = new HashSet<>();
+		private final Set<VkMemoryPropertyFlag> optimal = new HashSet<>();
+		private final Set<VkMemoryPropertyFlag> required = new HashSet<>();
 
 		private Request() {
 		}
@@ -346,11 +401,20 @@ public class MemoryAllocator {
 		}
 
 		/**
-		 * Adds a memory property.
-		 * @param flag Memory property
+		 * Adds an <i>optimal</i> memory property.
+		 * @param flag Optimal memory property
 		 */
-		public Request property(VkMemoryPropertyFlag flag) {
-			flags.add(notNull(flag));
+		public Request optimal(VkMemoryPropertyFlag flag) {
+			optimal.add(notNull(flag));
+			return this;
+		}
+
+		/**
+		 * Adds a <i>required</i> memory property.
+		 * @param flag Required memory property
+		 */
+		public Request required(VkMemoryPropertyFlag flag) {
+			required.add(notNull(flag));
 			return this;
 		}
 
@@ -362,22 +426,30 @@ public class MemoryAllocator {
 		 */
 		public DeviceMemory allocate() throws AllocationException {
 			if(size == 0) throw new IllegalArgumentException("Memory size not specified");
-			final Type type = find();
-			return type.pool.allocate(size); // TODO - page
+
+			// Find optimal/required memory type for this request
+			final Type type = find(optimal)
+					.or(() -> find(required))
+					.orElseThrow(() -> new AllocationException("No memory type available:" + this));
+
+			//
+
+			// Delegate to memory pool for this type
+			return type.pool.allocate(size);
+			// TODO - page
 		}
 
 		/**
 		 * Finds the memory type for this request.
-		 * @return Memory type index
-		 * @throws AllocationException if no memory type is available for this request
+		 * @return Memory type
 		 */
-		private Type find() throws AllocationException {
-			for(int n = 0; n < types.length; ++n) {
-				if(MathsUtil.isBit(filter, n) && types[n].props.containsAll(flags)) {
-					return types[n];
-				}
-			}
-			throw new AllocationException("No memory type available:" + this);
+		private Optional<Type> find(Set<VkMemoryPropertyFlag> flags) {
+			final int mask = IntegerEnumeration.mask(flags);
+			return types
+					.stream()
+					.filter(type -> MathsUtil.isBit(filter, type.index))
+					.filter(type -> MathsUtil.isMask(type.props, mask))
+					.findAny();
 		}
 
 		@Override
@@ -385,7 +457,8 @@ public class MemoryAllocator {
 			return new ToStringBuilder(this)
 					.append("size", size)
 					.append("filter", filter)
-					.append("flags", flags)
+					.append("optimal", optimal)
+					.append("required", required)
 					.build();
 		}
 	}

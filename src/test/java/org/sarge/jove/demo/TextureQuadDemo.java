@@ -60,7 +60,7 @@ public class TextureQuadDemo {
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
 		// Transition texture ready for copying
@@ -235,7 +235,7 @@ public class TextureQuadDemo {
 				.length(bb.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
 		// Copy

@@ -64,7 +64,7 @@ public class RotatingCubeDemo {
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
 		// Transition texture ready for copying
@@ -225,7 +225,7 @@ public class RotatingCubeDemo {
 				.length(vertices.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
 		// Copy
@@ -270,8 +270,8 @@ public class RotatingCubeDemo {
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 				.length(uniformLength)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 				.build();
 
 		// Init descriptor sets

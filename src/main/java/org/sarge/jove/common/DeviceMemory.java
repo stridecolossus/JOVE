@@ -115,6 +115,7 @@ public interface DeviceMemory extends TransientNativeObject {
 		/**
 		 * A <i>memory allocator</i> allocates new memory blocks on demand.
 		 */
+		@FunctionalInterface
 		public interface Allocator {
 			/**
 			 * Allocates a new block of memory.
@@ -333,7 +334,7 @@ public interface DeviceMemory extends TransientNativeObject {
 		/**
 		 * Adds free memory to this pool.
 		 * @param size Memory to add
-		 * @throws IllegalArgumentException if the given size is zero
+		 * @throws IllegalArgumentException if the given size is zero-or-less
 		 * @throws AllocationException if the memory cannot be allocated
 		 */
 		public synchronized void add(long size) throws AllocationException {

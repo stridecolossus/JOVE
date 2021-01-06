@@ -159,12 +159,12 @@ public class ImageTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private Image.Builder builder;
-		private MemoryAllocator allocator;
+		private VulkanAllocator allocator;
 
 		@BeforeEach
 		void before() {
 			// Init memory allocator
-			allocator = mock(MemoryAllocator.class);
+			allocator = mock(VulkanAllocator.class);
 			when(dev.allocator()).thenReturn(allocator);
 
 			// Create builder
@@ -179,7 +179,7 @@ public class ImageTest extends AbstractVulkanTest {
 
 			// Init image memory
 //			final Pointer mem = new Pointer(1);
-			final MemoryAllocator.Request allocation = mock(MemoryAllocator.Request.class);
+			final VulkanAllocator.Request allocation = mock(VulkanAllocator.Request.class);
 			when(allocator.request()).thenReturn(allocation);
 			when(allocation.allocate()).thenReturn(mem);
 			when(allocation.init(any())).thenReturn(allocation);
@@ -205,7 +205,7 @@ public class ImageTest extends AbstractVulkanTest {
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 				.samples(VkSampleCountFlag.VK_SAMPLE_COUNT_2_BIT)
 				.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_PROTECTED_BIT)
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT)
 				.build();

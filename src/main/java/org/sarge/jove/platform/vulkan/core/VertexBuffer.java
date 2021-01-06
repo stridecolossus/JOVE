@@ -37,8 +37,8 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		return new VertexBuffer.Builder(dev)
 				.length(len)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 				.build();
 	}
 
@@ -195,7 +195,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	public static class Builder {
 		private final LogicalDevice dev;
 		private final Set<VkBufferUsageFlag> usage = new HashSet<>();
-		private final MemoryAllocator.Request allocation;
+		private final VulkanAllocator.Request request;
 		private long len;
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
 
@@ -205,7 +205,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
-			this.allocation = dev.allocator().request();
+			this.request = dev.allocator().request();
 		}
 
 		/**
@@ -219,11 +219,20 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		}
 
 		/**
-		 * Adds a memory property for this buffer.
-		 * @param prop Memory property
+		 * Adds an <i>optimal</i> memory property.
+		 * @param prop Optimal memory property
 		 */
-		public Builder property(VkMemoryPropertyFlag prop) {
-			this.allocation.property(prop);
+		public Builder optimal(VkMemoryPropertyFlag prop) {
+			request.optimal(prop);
+			return this;
+		}
+
+		/**
+		 * Adds a <i>required</i> memory property.
+		 * @param prop Required memory property
+		 */
+		public Builder required(VkMemoryPropertyFlag prop) {
+			request.required(prop);
 			return this;
 		}
 
@@ -279,7 +288,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 			lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate buffer memory
-			final DeviceMemory mem = allocation.init(reqs).allocate();
+			final DeviceMemory mem = request.init(reqs).allocate();
 
 			// Bind memory
 			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L));

@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
 import org.sarge.jove.util.Check;
+import org.sarge.jove.util.LazySupplier;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
@@ -40,7 +41,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
 	private final DeviceFeatures features;
 	private final Map<Queue.Family, List<Queue>> queues;
-	private MemoryAllocator allocator;
+	private final LazySupplier<VulkanAllocator> allocator;
 
 	// https://android.jlelse.eu/lazy-initialisation-whats-a-correct-implementation-64c4638561e
 
@@ -57,7 +58,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 		this.lib = parent.instance().library();
 		this.features = notNull(features);
 		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
-//		this.allocator = new MemoryAllocator(this);
+		this.allocator = new LazySupplier<>(() -> new VulkanAllocator(this));
 	}
 
 	/**
@@ -112,12 +113,8 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	/**
 	 * @return Memory allocator for this device
 	 */
-	public MemoryAllocator allocator() {
-		if(allocator == null) {
-			allocator = new MemoryAllocator(this);
-		}
-
-		return allocator;
+	public VulkanAllocator allocator() {
+		return allocator.get();
 	}
 
 	/**

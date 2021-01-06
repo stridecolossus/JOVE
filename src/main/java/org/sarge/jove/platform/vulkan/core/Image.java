@@ -457,7 +457,7 @@ public interface Image extends NativeObject {
 		private final VkImageCreateInfo info = new VkImageCreateInfo();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
 		private final Set<VkImageAspectFlag> aspects = new HashSet<>();
-		private final MemoryAllocator.Request request;
+		private final VulkanAllocator.Request request;
 		private Extents extents;
 
 		/**
@@ -577,11 +577,20 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Adds a memory property.
-		 * @param prop Memory property
+		 * Adds an <i>optimal</i> memory property.
+		 * @param prop Optimal memory property
 		 */
-		public Builder property(VkMemoryPropertyFlag prop) {
-			request.property(prop);
+		public Builder optimal(VkMemoryPropertyFlag prop) {
+			request.optimal(prop);
+			return this;
+		}
+
+		/**
+		 * Adds a <i>required</i> memory property.
+		 * @param prop Required memory property
+		 */
+		public Builder required(VkMemoryPropertyFlag prop) {
+			request.required(prop);
 			return this;
 		}
 

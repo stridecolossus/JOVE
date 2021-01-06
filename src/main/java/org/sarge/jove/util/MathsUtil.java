@@ -115,7 +115,6 @@ public final class MathsUtil {
 	 * @throws IllegalArgumentException if the given mask is zero or negative
 	 */
 	public static boolean isMask(int value, int mask) {
-		Check.oneOrMore(mask);
 		return (value & mask) == mask;
 	}
 

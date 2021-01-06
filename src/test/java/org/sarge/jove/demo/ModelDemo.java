@@ -64,7 +64,7 @@ public class ModelDemo {
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
 		// Transition texture ready for copying
@@ -123,7 +123,7 @@ public class ModelDemo {
 				.length(bb.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(usage)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
 		// Copy
@@ -143,7 +143,7 @@ public class ModelDemo {
 			.format(VkFormat.VK_FORMAT_D32_SFLOAT)
 			.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
 			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-			.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.build();
 
 		// Create view
@@ -315,8 +315,8 @@ public class ModelDemo {
 		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
 				.length(Matrix.IDENTITY.length())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-				.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 				.build();
 
 		// Create projection matrix

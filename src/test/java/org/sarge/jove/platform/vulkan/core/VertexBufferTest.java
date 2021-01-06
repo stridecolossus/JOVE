@@ -171,7 +171,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private VertexBuffer.Builder builder;
-		private MemoryAllocator.Request allocation;
+		private VulkanAllocator.Request allocation;
 
 		@BeforeEach
 		void before() {
@@ -180,8 +180,8 @@ public class VertexBufferTest extends AbstractVulkanTest {
 //			final Pointer ptr = new Pointer(3);
 //			final DeviceMemory mem = mock(DeviceMemory.class);
 //			when(mem.memory()).thenReturn(ptr);
-			final MemoryAllocator allocator = mock(MemoryAllocator.class);
-			allocation = mock(MemoryAllocator.Request.class);
+			final VulkanAllocator allocator = mock(VulkanAllocator.class);
+			allocation = mock(VulkanAllocator.Request.class);
 			when(dev.allocator()).thenReturn(allocator);
 			when(allocator.request()).thenReturn(allocation);
 			when(allocation.allocate()).thenReturn(mem);
@@ -200,7 +200,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 					.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
 					.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 					.mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE)
-					.property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+					.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 					.build();
 
 			// Check buffer
