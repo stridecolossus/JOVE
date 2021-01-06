@@ -204,10 +204,6 @@ public interface Model {
 			return Optional.of(indexBuffer.rewind());
 		}
 
-//		public Model buffer() {
-//			return new BufferedModel(this);
-//		}
-
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)

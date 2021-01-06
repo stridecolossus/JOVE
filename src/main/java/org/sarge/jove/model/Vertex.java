@@ -171,8 +171,10 @@ public interface Vertex {
 
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this).append("layout", layout).append("size", size).build();
-
+			return new ToStringBuilder(this)
+					.append("layout", layout)
+					.append("size", size)
+					.build();
 		}
 	}
 

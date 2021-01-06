@@ -54,8 +54,8 @@ what is Vulkan
     - [Perspective Projection](blog/part-3-cube/perspective)
     - [The Render Loop and Synchronisation](blog/part-3-cube/sync)
    
-   
 - Part 4 - Models
-    - [Models and the Depth Buffer](blog/part-4-models/model-loader)
+    - [Model Loader](blog/part-4-models/model-loader)
+    - [Depth Buffers](blog/part-4-models/depth-buffer)
     - [Input Handling](blog/part-4-models/input-handling)
     
