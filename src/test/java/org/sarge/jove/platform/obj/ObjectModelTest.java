@@ -17,7 +17,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.platform.obj.ObjectModel.ComponentList;
+import org.sarge.jove.platform.obj.ObjectModel.VertexComponentList;
 
 public class ObjectModelTest {
 	private ObjectModel model;
@@ -125,13 +125,13 @@ public class ObjectModelTest {
 
 	@Nested
 	class ComponentListTests {
-		private ComponentList<Object> list;
+		private List<Object> list;
 		private Object obj;
 
 		@BeforeEach
 		void before() {
 			obj = new Object();
-			list = new ComponentList<>();
+			list = new VertexComponentList<>();
 		}
 
 		@Test

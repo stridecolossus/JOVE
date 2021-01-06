@@ -2,9 +2,9 @@ package org.sarge.jove.platform.obj;
 
 import static org.sarge.jove.util.Check.notNull;
 
+import java.util.List;
 import java.util.function.Function;
 
-import org.sarge.jove.platform.obj.ObjectModel.ComponentList;
 import org.sarge.jove.util.Check;
 
 /**
@@ -15,7 +15,7 @@ import org.sarge.jove.util.Check;
 public class ArrayParser<T> implements Parser {
 	private final float[] array;
 	private final Function<float[], T> ctor;
-	private final Function<ObjectModel, ComponentList<T>> mapper;
+	private final Function<ObjectModel, List<T>> mapper;
 
 	/**
 	 * Constructor.
@@ -23,7 +23,7 @@ public class ArrayParser<T> implements Parser {
 	 * @param ctor			Array constructor
 	 * @param mapper		Extracts the component list from the model
 	 */
-	public ArrayParser(int size, Function<float[], T> ctor, Function<ObjectModel, ComponentList<T>> mapper) {
+	public ArrayParser(int size, Function<float[], T> ctor, Function<ObjectModel, List<T>> mapper) {
 		Check.oneOrMore(size);
 		this.array = new float[size];
 		this.ctor = notNull(ctor);

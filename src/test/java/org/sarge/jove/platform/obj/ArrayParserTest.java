@@ -6,10 +6,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.platform.obj.ObjectModel.ComponentList;
 
 public class ArrayParserTest {
 	private Parser parser;
@@ -20,7 +21,7 @@ public class ArrayParserTest {
 	void before() {
 		parser = new ArrayParser<>(3, Point::new, ObjectModel::vertices);
 		model = mock(ObjectModel.class);
-		when(model.vertices()).thenReturn(mock(ComponentList.class));
+		when(model.vertices()).thenReturn(mock(List.class));
 	}
 
 	@Test

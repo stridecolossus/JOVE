@@ -376,7 +376,7 @@ public interface Model {
 			}
 			else {
 				// Existing vertex
-				idx= prev;
+				idx = prev;
 			}
 
 			// Add index

@@ -24,71 +24,44 @@ import org.sarge.jove.model.Vertex;
  */
 public class ObjectModel {
 	/**
-	 * A <i>component list</i> is a mutable list of vertex components.
-	 * @param <T> Component type
+	 * List of OBJ vertex components that can also be retrieved using negative indices.
 	 */
-	public static class ComponentList<T> {
-		protected final List<T> list = new ArrayList<>();
-
-		/**
-		 * @return Size of this list
-		 */
-		public int size() {
-			return list.size();
-		}
-
-		/**
-		 * Adds an object to this list.
-		 * @param obj Object to add
-		 */
-		public void add(T obj) {
-			list.add(notNull(obj));
-		}
-
-		/**
-		 * Retrieves an object from this list by index.
-		 * @param index 1..n or negative from the <b>end</b> of the list
-		 * @return Specified object
-		 * @throws IndexOutOfBoundsException if the index is zero or is out-of-bounds for this list
-		 */
+	static class VertexComponentList<T> extends ArrayList<T> {
+		@Override
 		public T get(int index) {
 			if(index > 0) {
-				return list.get(index - 1);
+				return super.get(index - 1);
 			}
-			else if(index < 0) {
-				return list.get(list.size() + index);
+			else
+			if(index < 0) {
+				return super.get(size() + index);
 			}
 			else {
 				throw new IndexOutOfBoundsException("Invalid zero index");
 			}
-		}
-
-		@Override
-		public String toString() {
-			return String.valueOf(list.size());
 		}
 	}
 
 	/**
 	 * Special case component list that optionally flips texture coordinates.
 	 */
-	private static class FlipTextureComponentList extends ComponentList<Coordinate2D> {
+	private static class FlipTextureComponentList extends VertexComponentList<Coordinate2D> {
 		private boolean flip;
 
 		@Override
-		public void add(Coordinate2D coords) {
+		public boolean add(Coordinate2D coords) {
 			if(flip) {
-				super.add(new Coordinate2D(coords.u, -coords.v));
+				return super.add(new Coordinate2D(coords.u, -coords.v));
 			}
 			else {
-				super.add(coords);
+				return super.add(coords);
 			}
 		}
 	}
 
 	// Data
-	private final ComponentList<Point> vertices = new ComponentList<>();
-	private final ComponentList<Vector> normals = new ComponentList<>();
+	private final List<Point> vertices = new VertexComponentList<>();
+	private final List<Vector> normals = new VertexComponentList<>();
 	private final FlipTextureComponentList coords = new FlipTextureComponentList();
 
 	// Models
@@ -114,21 +87,21 @@ public class ObjectModel {
 	/**
 	 * @return Vertices
 	 */
-	public ComponentList<Point> vertices() {
+	public List<Point> vertices() {
 		return vertices;
 	}
 
 	/**
 	 * @return Normals
 	 */
-	public ComponentList<Vector> normals() {
+	public List<Vector> normals() {
 		return normals;
 	}
 
 	/**
 	 * @return Texture coordinates
 	 */
-	public ComponentList<Coordinate2D> coordinates() {
+	public List<Coordinate2D> coordinates() {
 		return coords;
 	}
 
@@ -141,17 +114,17 @@ public class ObjectModel {
 	}
 
 	/**
+	 * @return Whether the current object group is empty
+	 */
+	public boolean isEmpty() {
+		return vertices.isEmpty();
+	}
+
+	/**
 	 * @return Builder for the current object group
 	 */
 	private Model.Builder current() {
 		return builders.getLast();
-	}
-
-	/**
-	 * @return Whether the current model is empty
-	 */
-	public boolean isEmpty() {
-		return vertices.list.isEmpty();
 	}
 
 	/**
@@ -177,9 +150,9 @@ public class ObjectModel {
 		init();
 
 		// Reset transient model
-		vertices.list.clear();
-		normals.list.clear();
-		coords.list.clear();
+		vertices.clear();
+		normals.clear();
+		coords.clear();
 
 		// Start new model
 		add();
@@ -192,10 +165,10 @@ public class ObjectModel {
 		// Determine vertex layout for the current object group
 		final var layout = new ArrayList<Vertex.Component>();
 		layout.add(Vertex.Component.POSITION);
-		if(!normals.list.isEmpty()) {
+		if(!normals.isEmpty()) {
 			layout.add(Vertex.Component.NORMAL);
 		}
-		if(!coords.list.isEmpty()) {
+		if(!coords.isEmpty()) {
 			layout.add(Vertex.Component.TEXTURE_COORDINATE);
 		}
 
@@ -246,9 +219,9 @@ public class ObjectModel {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("vertices", vertices)
-				.append("normals", normals)
-				.append("coords", coords)
+				.append("vertices", vertices.size())
+				.append("normals", normals.size())
+				.append("coords", coords.size())
 				.append("models", builders.size())
 				.build();
 	}

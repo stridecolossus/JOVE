@@ -4,7 +4,7 @@ title: Models and the Depth Buffer
 
 ## Overview
 
-In this chapter we will load and render a static model and implement a _depth buffer_ attachment.
+In this chapter we will load and render a static OBJ model and implement a _depth buffer_ attachment.
 
 ---
 
@@ -51,7 +51,7 @@ g group
 f 1/1 2/2 3/3
 ```
 
-We will implement the minimal functionality required for our test models therefore we apply the following assumptions and constraints on the scope of the loader:
+We will only implement the minimal functionality required for our test models therefore we apply the following assumptions and constraints on the scope of the loader:
 
 - Face primitives are assumed to be triangles.
 
@@ -63,41 +63,30 @@ We will implement the minimal functionality required for our test models therefo
 
 Loading an OBJ model consists of two main steps:
 1. Load the vertex components (v, vn, vt).
-2. Load the object triangles (f) that index into this data to build the resultant object.
+2. Load the object faces (f) that index into this data to build the resultant object.
 
 This implies we need an intermediate data structure to hold the vertex components:
 
 ```java
 public static class ObjectModel {
-    private final ComponentList<Point> vertices = new ComponentList<>();
-    private final ComponentList<Vector> normals = new ComponentList<>();
-    private final ComponentList<Coordinate2D> coords = new ComponentList<>();
+    private final List<Point> vertices = new VertexComponentList<>();
+    private final List<Vector> normals = new VertexComponentList<>();
+    private final List<Coordinate2D> coords = new VertexComponentList<>();
 }
 ```
 
-The vertex components are represented by the following class that are used to look up the components for a given face:
+The custom list implementation retrieves a vertex component using an OBJ index (which starts at one and can be negative):
 
 ```java
-public static class ComponentList<T> {
-    protected final List<T> list = new ArrayList<>();
-
-    void add(T obj) {
-        list.add(notNull(obj));
-    }
-
-    /**
-     * Retrieves an object from this list by index.
-     * @param index 1..n or negative from the end of the list
-     * @return Specified object
-     * @throws IndexOutOfBoundsException if the index is zero or is out-of-bounds for this list
-     */
+static class VertexComponentList<T> extends ArrayList<T> {
+    @Override
     public T get(int index) {
         if(index > 0) {
-            return list.get(index - 1);
+            return super.get(index - 1);
         }
         else
         if(index < 0) {
-            return list.get(list.size() + index);
+            return super.get(size() + index);
         }
         else {
             throw new IndexOutOfBoundsException("Invalid zero index");
@@ -108,13 +97,13 @@ public static class ComponentList<T> {
 
 ### Model Loader
 
-We can now parse the OBJ file and construct the transient model as follows:
+We can now parse the OBJ file and construct the model as follows:
 1. Create a new transient OBJ model.
-2. Load each line of the OBJ model file (skipping comments and empty lines).
+2. Load each line of the OBJ file (skipping comments and empty lines).
 3. Parse each command line and update the model accordingly.
 4. Generate the resultant JOVE model(s).
 
-The loader parses each line of the model as follows:
+The loader parses each line of the model and delegates to the local `parse` method:
 
 ```java
 public class ObjectModelLoader {
@@ -194,7 +183,7 @@ public interface Parser {
 }
 ```
 
-Eahc parser is registered with the loader indexed by OBJ command token:
+Each parser is registered with the loader indexed by the OBJ command token:
 
 ```java
 public class ObjectModelLoader {
@@ -214,7 +203,6 @@ We add a callback handler with implementations to either ignore unknown commands
 
 ```java
 public static final Consumer<String> HANDLER_IGNORE = str -> {
-    // Empty block
 };
 
 public static final Consumer<String> HANDLER_THROW = str -> {
@@ -237,12 +225,12 @@ private void parse(String line, ObjectModel model) {
 }
 ```
 
-In addition we can specify the `IGNORE` parser for a given command.
+In addition the application can specify the `IGNORE` parser for a given command.
 
 ### Vertex Components
 
 The process for parsing the various vertex components each follows the same pattern:
-1. Parse the line to a floating-point array (checking the number of array elements matches the expected length).
+1. Parse the line to a floating-point array (checking that the number of array elements matches the expected length).
 2. Construct the relevant domain object given this array.
 3. Add the result to the relevant list in the OBJ model.
 
@@ -252,9 +240,9 @@ We abstract this pattern into the following generic parser:
 public class ArrayParser<T> implements Parser {
     private final float[] array;
     private final Function<float[], T> ctor;
-    private final Function<ObjectModel, ComponentList<T>> mapper;
+    private final Function<ObjectModel, List<T>> mapper;
 
-    public ArrayParser(int size, Function<float[], T> ctor, Function<ObjectModel, ComponentList<T>> mapper) {
+    public ArrayParser(int size, Function<float[], T> ctor, Function<ObjectModel, List<T>> mapper) {
         this.array = new float[size];
         this.ctor = notNull(ctor);
         this.mapper = notNull(mapper);
@@ -266,9 +254,9 @@ public class ArrayParser<T> implements Parser {
 }
 ```
 
-Where _ctor_ maps an array to the domain object constructor and _mapper_ retrieves the component list for that type of component.
+Where _ctor_ maps an array to the domain object constructor and _mapper_ retrieves the list for that type of component.
 
-The parser first validates the data and then parses the elements:
+The `parse` method first validates the data and then parses the array elements:
 
 ```java
 // Validate
@@ -310,16 +298,16 @@ public ObjectModelLoader() {
 }
 
 private void init() {
-    add("v", Parser.of(Point.SIZE, Point::new, ObjectModel::vertex));
-    add("vt", Parser.of(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coord));
-    add("vn", Parser.of(Vector.SIZE, Vector::new, ObjectModel::normal));
+    add("v", Parser.of(Point.SIZE, Point::new, ObjectModel::vertices));
+    add("vn", Parser.of(Vector.SIZE, Vector::new, ObjectModel::normals));
+    add("vt", Parser.of(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coordinates));
     ...
 }
 ```
 
 ### Face Parser
 
-The face parser iterates over the vertices of a face:
+The face parser iterates over the vertices of a face (we assume each face is a triangle):
 
 ```java
 public class FaceParser implements Parser {
@@ -338,7 +326,7 @@ public class FaceParser implements Parser {
 }
 ```
 
-Each vertex is comprised of a slash-delimited array that specifies the various components of the vertex:
+Each vertex is comprised of a slash-delimited array that specifies the components of the vertex:
 
 ```java
 // Tokenize face
@@ -397,7 +385,7 @@ public void vertex(int v, Integer n, Integer tc) {
 }
 ```
 
-Finally we also register the default face parser in the main loader class:
+Finally we register the default face parser in the main loader class:
 
 ```
 private void init() {
@@ -408,7 +396,7 @@ private void init() {
 
 ### Groups
 
-A single OBJ file can be comprised of multiple _objects_ which corresponds to a list of JOVE models.
+A single OBJ file can be comprised of multiple _objects_ which results in a list of JOVE models.
 
 The transient OBJ model maintains a list of builders for each object and initialises the first in the constructor:
 
@@ -431,7 +419,7 @@ public class ObjectModel {
 }
 ```
 
-A new object is started by the following command parser:
+A new object is started by the following command:
 
 ```java
 public interface Parser {
@@ -456,26 +444,26 @@ public void start() {
     init();
     
     // Reset transient model
-    vertices.list.clear();
-    normals.list.clear();
-    coords.list.clear();
+    vertices.clear();
+    normals.clear();
+    coords.clear();
 
     // Start new model
     add();
 }
 ```
 
-This method also initialises the vertex layout of the most recent model builder:
+This method also initialises the vertex layout of the _previous_ model builder:
 
 ```java
 private void init() {
     // Determine vertex layout for the current object group
     final var layout = new ArrayList<Vertex.Component>();
     layout.add(Vertex.Component.POSITION);
-    if(!normals.list.isEmpty()) {
+    if(!normals.isEmpty()) {
         layout.add(Vertex.Component.NORMAL);
     }
-    if(!coords.list.isEmpty()) {
+    if(!coords.isEmpty()) {
         layout.add(Vertex.Component.TEXTURE_COORDINATE);
     }
 
@@ -524,21 +512,10 @@ We implement the following model builder sub-class that maintains a map of the v
 public static class IndexedBuilder extends Builder {
     private final List<Integer> index = new ArrayList<>();
     private final Map<Vertex, Integer> map = new HashMap<>();
-
-    private boolean auto = true;
-
-    /**
-     * Sets whether to automatically add an index for each vertex (default is {@code true}).
-     * @param auto Whether to automatically add indices
-     */
-    public IndexedBuilder setAutoIndex(boolean auto) {
-        this.auto = auto;
-        return this;
-    }
 }
 ```
 
-The over-ridden `add()` method of the indexed builder intercepts duplicates and registers the index for new unique vertices:
+The over-ridden `add` method intercepts duplicates and registers the index for new unique vertices:
 
 ```java
 public IndexedBuilder add(Vertex vertex) {
@@ -558,7 +535,7 @@ public IndexedBuilder add(Vertex vertex) {
 }
 ```
 
-The _auto_ setting is used to automatically add an index for each vertex (including duplicates) which we make use of in the OBJ loader:
+The _auto_ setting is used to automatically add an index for each vertex which we make use of in the OBJ loader:
 
 ```java
 private boolean auto = true;
