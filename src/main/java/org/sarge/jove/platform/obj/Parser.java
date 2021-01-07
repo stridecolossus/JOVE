@@ -8,12 +8,12 @@ public interface Parser {
 	 * Parses the given arguments.
 	 * @param args 		Arguments
 	 * @param model		OBJ model
-	 * @throws NumberFormatException is the data cannot be parsed
+	 * @throws NumberFormatException if the data cannot be parsed
 	 */
 	void parse(String[] args, ObjectModel model);
 
 	/**
-	 * Parser that ignores the arguments.
+	 * Parser that ignores a command.
 	 */
 	Parser IGNORE = (args, model) -> {
 		// Does nowt
@@ -23,5 +23,13 @@ public interface Parser {
 	 * Parser for a new object command (either {@code o} or {@code g}).
 	 * @see ObjectModel#start()
 	 */
-	Parser GROUP = (args, model) -> model.start();
+	Parser GROUP = (args, model) -> {
+		// Start new object
+		model.start();
+
+		// Init object name
+		if(args.length > 0) {
+			model.name(args[0].trim());
+		}
+	};
 }

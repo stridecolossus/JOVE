@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
@@ -26,7 +28,6 @@ import com.sun.jna.Pointer;
 
 public class WorkTest extends AbstractVulkanTest {
 	private Work work;
-	private VkSubmitInfo info;
 	private Queue queue;
 	private Command.Pool pool;
 	private Command.Buffer buffer;
@@ -49,11 +50,8 @@ public class WorkTest extends AbstractVulkanTest {
 		when(buffer.handle()).thenReturn(new Handle(new Pointer(2)));
 		when(buffer.isReady()).thenReturn(true);
 
-		// Init batch descriptor
-		info = new VkSubmitInfo();
-
 		// Create work
-		work = new Work(info, queue);
+		work = new Work.Builder().add(buffer).build();
 	}
 
 	@Test
@@ -63,10 +61,39 @@ public class WorkTest extends AbstractVulkanTest {
 
 	@Test
 	void submit() {
+		work.submit(null);
+		check(null);
+	}
+
+	@Test
+	void submitFence() {
 		final Fence fence = mock(Fence.class);
 		when(fence.handle()).thenReturn(new Handle(new Pointer(2)));
 		work.submit(fence);
-		verify(lib).vkQueueSubmit(queue.handle(), 1, new VkSubmitInfo[]{info}, fence.handle());
+		check(fence.handle());
+	}
+
+	private VkSubmitInfo check(Handle fence) {
+		// Check API
+		final ArgumentCaptor<VkSubmitInfo[]> captor = ArgumentCaptor.forClass(VkSubmitInfo[].class);
+		verify(lib).vkQueueSubmit(eq(queue.handle()), eq(1), captor.capture(), eq(fence));
+
+		// Check submit
+		final VkSubmitInfo[] array = captor.getValue();
+		assertNotNull(array);
+		assertEquals(1, array.length);
+
+		// Check descriptor
+		final VkSubmitInfo info = array[0];
+		assertNotNull(info);
+		assertEquals(1, info.commandBufferCount);
+		assertNotNull(info.pCommandBuffers);
+		assertEquals(0, info.waitSemaphoreCount);
+		assertEquals(null, info.pWaitSemaphores);
+		assertEquals(null, info.pWaitDstStageMask);
+		assertEquals(0, info.signalSemaphoreCount);
+		assertEquals(null, info.pSignalSemaphores);
+		return info;
 	}
 
 	@Test

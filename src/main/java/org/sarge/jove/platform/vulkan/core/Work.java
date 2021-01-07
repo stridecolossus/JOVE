@@ -66,17 +66,12 @@ public class Work {
 				.add(cmd)
 				.end();
 
+		// Submit work and wait for completion
 		try {
-			// Submit work
-			final Queue queue = pool.queue();
-			final Work work = new Builder().add(buffer).build();
-			work.submit(null);
-
-			// Wait for completion
-			queue.waitIdle();
+			new Builder().add(buffer).build().submit(null);
+			pool.queue().waitIdle();
 		}
 		finally {
-			// Cleanup
 			buffer.free();
 		}
 	}
@@ -89,7 +84,7 @@ public class Work {
 	 * @param info 			Descriptor for this work batch
 	 * @param queue			Work queue
 	 */
-	public Work(VkSubmitInfo info, Queue queue) {
+	Work(VkSubmitInfo info, Queue queue) {
 		this.info = notNull(info);
 		this.queue = notNull(queue);
 	}

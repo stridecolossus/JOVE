@@ -4,7 +4,7 @@ title: Model Loader
 
 ## Overview
 
-In this chapter we will implement a loader for an OBJ model.
+In this chapter we will create a loader for an OBJ model and implement vertex de-duplication.
 
 ---
 
@@ -175,7 +175,7 @@ public interface Parser {
     void parse(String[] args, ObjectModel model);
 
     /**
-     * Parser that ignores the arguments.
+     * Parser that ignores a command.
      */
     Parser IGNORE = (args, model) -> {
         // Does nowt
@@ -270,13 +270,10 @@ for(int n = 0; n < size; ++n) {
 }
 ```
 
-Next we construct the domain object given the parsed array and add it to the model using the _mapper_ to lookup the relevant component list:
+Next we construct the domain object given the parsed array and add it to the model:
 
 ```java
-// Create object using array constructor
 final T value = ctor.apply(array);
-
-// Add to transient model
 mapper.apply(model).add(value);
 ```
 
@@ -298,9 +295,9 @@ public ObjectModelLoader() {
 }
 
 private void init() {
-    add("v", Parser.of(Point.SIZE, Point::new, ObjectModel::vertices));
-    add("vn", Parser.of(Vector.SIZE, Vector::new, ObjectModel::normals));
-    add("vt", Parser.of(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coordinates));
+    add("v", new ArrayParser<>(Point.SIZE, Point::new, ObjectModel::vertices));
+    add("vn", new ArrayParser<>(Vector.SIZE, Vector::new, ObjectModel::normals));
+    add("vt", new ArrayParser<>(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coordinates));
     ...
 }
 ```
@@ -387,7 +384,7 @@ public void vertex(int v, Integer n, Integer tc) {
 
 Finally we register the default face parser in the main loader class:
 
-```
+```java
 private void init() {
     ...
     add("f", new FaceParser());
@@ -453,7 +450,7 @@ public void start() {
 }
 ```
 
-This method also initialises the vertex layout of the _previous_ model builder:
+The `init` method initialises the vertex layout of the _previous_ model builder:
 
 ```java
 private void init() {
@@ -521,78 +518,24 @@ The over-ridden `add` method intercepts duplicates and stores the index of new v
 public IndexedBuilder add(Vertex vertex) {
     // Lookup existing vertex index
     final Integer prev = map.get(vertex);
-    final int idx = prev == null ? count() : prev;
 
-    // Add new vertices
-    if(prev == null) {
-        map.put(vertex, idx);
-        super.add(vertex);
-    }
-
-    ...
-
-    return this;
-}
-```
-
-The _auto_ setting is used to automatically add an index for each vertex (whether duplicate or existing):
-
-```java
-private boolean auto = true;
-
-/**
- * Sets whether to automatically add an index for each vertex (default is {@code true}).
- * @param auto Whether to automatically add indices
- */
-public IndexedBuilder setAutoIndex(boolean auto) {
-    this.auto = auto;
-    return this;
-}
-
-public IndexedBuilder add(Vertex vertex) {
-    // Lookup existing vertex index
-    final Integer prev = map.get(vertex);
-
-    // Add new vertices
-    final int idx;
     if(prev == null) {
         // Add new vertex
-        idx = count();
+        final int idx = count();
         map.put(vertex, idx);
+        index.add(idx);
         super.add(vertex);
     }
     else {
-        // Existing vertex
-        idx = prev;
-    }
-
-    // Add index
-    if(auto) {
-        add(idx);
+        // Add existing vertex
+        index.add(prev);
     }
 
     return this;
 }
 ```
 
-We also add new methods to explicitly add or lookup indices:
-
-```java
-public Builder add(int index) {
-    Check.zeroOrMore(index);
-    if(index >= count()) throw new IndexOutOfBoundsException(...);
-    this.index.add(index);
-    return this;
-}
-
-public int indexOf(Vertex vertex) {
-    final Integer index = map.get(vertex);
-    if(index == null) throw new IllegalArgumentException(...);
-    return index;
-}
-```
-
-We can now add the optional index to the model class:
+We can now add an optional index to the model class:
 
 ```java
 private final List<Integer> index;
@@ -619,7 +562,7 @@ public Optional<ByteBuffer> index() {
 }
 ```
 
-All this work reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
+All refactoring work reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
 
 Result.
 
@@ -644,10 +587,10 @@ We create the new `ModelLoader` class that will be responsible for reading and w
 
 ```java
 public static class ModelLoader {
-    public void write(Model model, DataOutputStream out) throws IOException {
+    public Model load(DataInputStream in) throws IOException {
     }
 
-    public Model load(DataInputStream in) throws IOException {
+    public void write(Model model, DataOutputStream out) throws IOException {
     }
 }
 ```
@@ -735,6 +678,7 @@ public class BufferedModel extends AbstractModel {
     }
 
     public static class ModelLoader {
+        ...
     }
 }
 ```
@@ -791,29 +735,28 @@ private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
 
 We also introduce a `VERSION` for our custom file format (and modify the write method accordingly).
 
-We output the model once and then modify the demo to read the buffered model thereafter:
-
-```java
-var loader = DataSource.loader(src, new ModelLoader());
-Model model = loader.load("chalet.model");
-```
-
+We output the buffered model once and then modify the demo to read the persisted data thereafter.
 There is still a lot of conversions of byte buffers to/from arrays but our model is now loaded in a matter of milliseconds - Nice!
 
 ---
 
 ## Loader Support
 
-During the creation of the OBJ and buffered model loaders we took a detour to refactor the various loaders we had implemented so far (including images and shaders).
+We now have several loaders that all perform roughly the same functionality but with differing data types:
 
-First we created a _loader_ abstraction:
+| implementation        | input type        | resource type     |
+| --------------        | ----------        | -------------     |
+| ObjectModelLoader     | Reader            | Stream<Model>     |
+| ShaderLoader          | InputStream       | Shader            |
+| ImageData.Loader      | BufferedImage     | ImageData         |
+| ModelLoader           | DataInputStream   | BufferedModel     |
+
+As things stand the demo applications are required to implement fiddly I/O code to open the various resources and handle resource cleanup and exceptions.
+Ideally we would like the loaders to encapsulate this logic such that the application simply refers to resources by filename.
+
+We first create an abstraction for a general loader:
 
 ```java
-/**
- * A <i>loader</i> defines a mechanism for loading a resource.
- * @param <T> Input type
- * @param <R> Resource type
- */
 @FunctionalInterface
 public interface Loader<T, R> {
     /**
@@ -826,26 +769,39 @@ public interface Loader<T, R> {
 }
 ```
 
-And defined a base-class adapter that is required to implement the `open()` method to map an arbitrary resource from an input stream:
+Where `<T>` is the input type (e.g. `DataInputStream` for the model loader above) and `<R>` is the resource type.
+
+We adapt this interface with a template implementation that converts a general input-stream to the loader-specific input type:
 
 ```java
-/**
- * Adapter for a loader with an intermediate data type mapped from an {@link InputStream}.
- * @param <T> Intermediate type
- * @param <R> Resource type
- */
-abstract class LoaderAdapter<T, R> implements Loader<T, R> {
+abstract class Adapter<T, R> implements Loader<T, R> {
     /**
-     * Maps the given input-stream to an instance of the intermediate type.
+     * Maps the given input-stream to the input type for this loader.
      * @param in Input-stream
-     * @return Intermediate object
+     * @return Input type
      * @throws IOException if the stream cannot be opened
      */
-    protected abstract T open(InputStream in) throws IOException;
+    protected abstract T map(InputStream in) throws IOException;
 }
 ```
 
-Next we added a _data source_ that maps a filename to an input-stream:
+We can now refactor the various loaders accordingly, for example:
+
+```java
+public static class ModelLoader extends Loader.Adapter<DataInputStream, Model> {
+    @Override
+    protected DataInputStream map(InputStream in) throws IOException {
+        return new DataInputStream(in);
+    }
+
+    @Override
+    public Model load(DataInputStream in) throws IOException {
+        ...
+    }
+}
+```
+
+Next we introduce a _data source_ that allows the application to define a centralised resource factory:
 
 ```java
 public interface DataSource {
@@ -859,47 +815,27 @@ public interface DataSource {
 }
 ```
 
-and provided an implementation for the a file-system directory:
+With factory methods to create a data-source from a given directory:
 
 ```java
-/**
- * Creates a file-system data-source at the given directory.
- * @param dir Directory
- * @return Data-source
- * @throws IllegalArgumentException if the directory does not exist
- */
 static DataSource of(Path dir) {
-    if(!Files.exists(dir)) throw new IllegalArgumentException("Data-source directory does not exist: " + dir);
+    if(!Files.exists(dir)) throw new IllegalArgumentException(...);
     return name -> Files.newInputStream(dir.resolve(name));
 }
 
-/**
- * Creates a file-system data-source at the given directory.
- * @param dir Directory
- * @return Data-source
- * @throws IllegalArgumentException if the directory does not exist
- */
 static DataSource of(String dir) {
     return of(Paths.get(dir));
 }
 ```
 
-The final piece of the jigsaw is the following factory method that allows us to compose these two types:
+The final piece of the jigsaw is the following method that wraps a loader adapter:
 
 ```java
-/**
- * Creates an adapter for a loader with the given data-source.
- * @param <R> Resource type
- * @param <T> Intermediate type
- * @param src           Data-source
- * @param loader        Delegate loader
- * @return Data-source loader
- */
-static <T, R> Loader<String, R> loader(DataSource src, LoaderAdapter<T, R> loader) {
+default <T, R> Loader<String, R> loader(Loader.Adapter<T, R> loader) {
     return name -> {
-        try(final InputStream in = src.open(name)) {
-            final T obj = loader.open(in);
-            return loader.load(obj);
+        try(final InputStream in = open(name)) {
+            final T input = loader.map(in);
+            return loader.load(input);
         }
         catch(IOException e) {
             throw new RuntimeException("Error loading resource: " + name, e);
@@ -908,18 +844,15 @@ static <T, R> Loader<String, R> loader(DataSource src, LoaderAdapter<T, R> loade
 }
 ```
 
-We can then define a centralised data-source and combine it with loaders to lookup resources by name:
+An application can now define a data-source and combine it with the various loaders to load resources by filename:
 
 ```java
-final DataSource src = DataSource.of("./src/test/resources");
-
-...
-
-final var loader = DataSource.loader(src, new ObjectModelLoader());
-final Model model = loader.load("example.obj");
+DataSource src = DataSource.of("./src/test/resources");
+var loader = src.loader(new ModelLoader());
+Model model = loader.load("chalet.model");
 ```
 
-This has the benefit of separating the mapping of filenames to resources (handled by the data-sources) from the actual loaders, with the bonus that the checked I/O exceptions can be caught in a single location.
+This separates the mapping of filenames to resources from the actual loaders, with the added bonus that the handling of the checked I/O exceptions is centralised in a single location.
 
 ---
 
@@ -932,4 +865,6 @@ In this chapter we implemented:
 - Index buffers.
 
 - Model persistence.
+
+- An improved loader abstraction.
 

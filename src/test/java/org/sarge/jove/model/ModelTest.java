@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model.Builder;
+import org.sarge.jove.model.Model.DefaultModel;
 import org.sarge.jove.model.Model.IndexedBuilder;
 
 public class ModelTest {
@@ -32,11 +33,12 @@ public class ModelTest {
 
 		@BeforeEach
 		void before() {
-			model = Model.of(Primitive.TRIANGLE_STRIP, LAYOUT, List.of(vertex, vertex, vertex));
+			model = new DefaultModel(Model.DEFAULT_NAME, Primitive.TRIANGLE_STRIP, new Vertex.Layout(Vertex.Component.POSITION), List.of(vertex, vertex, vertex), null);
 		}
 
 		@Test
 		void constructor() {
+			assertEquals(Model.DEFAULT_NAME, model.name());
 			assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
 			assertEquals(LAYOUT, model.layout());
 			assertEquals(3, model.count());
@@ -52,18 +54,6 @@ public class ModelTest {
 			assertEquals(len, vertices.limit());
 			assertEquals(0, vertices.position());
 			// TODO - assertEquals(true, vertices.isReadOnly());
-		}
-
-		@Test
-		void invalidNormals() {
-			vertex = new Vertex.Builder().normal(Vector.X_AXIS).build();
-			assertThrows(IllegalArgumentException.class, () -> Model.of(Primitive.LINES, new Vertex.Layout(Vertex.Component.NORMAL), List.of(vertex, vertex)));
-		}
-
-		@Test
-		void invalidVertexCount() {
-			assertThrows(IllegalArgumentException.class, () -> Model.of(Primitive.TRIANGLE_STRIP, LAYOUT, List.of(vertex)));
-			assertThrows(IllegalArgumentException.class, () -> Model.of(Primitive.TRIANGLE_STRIP, LAYOUT, List.of(vertex, vertex)));
 		}
 	}
 
@@ -91,6 +81,22 @@ public class ModelTest {
 		@Test
 		void validate() {
 			assertThrows(IllegalArgumentException.class, () -> builder.add(mock(Vertex.class)));
+		}
+
+		@Test
+		void invalidNormals() {
+			final Vertex normal = new Vertex.Builder().normal(Vector.X_AXIS).build();
+			builder
+					.primitive(Primitive.LINES)
+					.layout(new Vertex.Layout(Vertex.Component.NORMAL))
+					.add(normal)
+					.add(normal);
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void invalidVertexCount() {
+			assertThrows(IllegalArgumentException.class, () -> builder.add(vertex).build());
 		}
 
 		@Test
@@ -139,11 +145,12 @@ public class ModelTest {
 		}
 
 		@Test
-		void index() {
+		void addDuplicate() {
 			builder.add(vertex);
-			builder.add(0);
-			assertEquals(0, builder.indexOf(vertex));
+			builder.add(vertex);
+			assertEquals(1, builder.count());
 			assertEquals(List.of(0, 0), builder.index());
+			assertEquals(0, builder.indexOf(vertex));
 		}
 
 		@Test
@@ -158,38 +165,14 @@ public class ModelTest {
 		}
 
 		@Test
-		void setAutoIndexed() {
-			// Add a vertex
-			builder.setAutoIndex(true);
-			builder.add(vertex);
-			assertEquals(0, builder.indexOf(vertex));
-			assertEquals(1, builder.count());
-			assertEquals(List.of(0), builder.index());
-
-			// Add same vertex and check has same index
-			builder.add(vertex);
-			assertEquals(1, builder.count());
-			assertEquals(List.of(0, 0), builder.index());
-		}
-
-		@Test
-		void duplication() {
-			builder.add(vertex);
-			builder.add(vertex);
-			assertEquals(1, builder.count());
-			assertEquals(0, builder.indexOf(vertex));
-		}
-
-		@Test
 		void build() {
 			// Init model
-			// TODO - returns base-class builder!
 			builder.primitive(Primitive.LINES);
 
 			// Build indexed model
 			final Model model = builder
 					.add(vertex)
-					.add(0)
+					.add(vertex)
 					.build();
 
 			// Check model

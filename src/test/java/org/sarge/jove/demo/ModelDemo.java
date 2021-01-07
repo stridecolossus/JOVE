@@ -31,6 +31,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Runner.Frame;
 import org.sarge.jove.platform.vulkan.pipeline.Runner.FrameState;
@@ -47,7 +48,7 @@ public class ModelDemo {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources");
 		final var src = DataSource.of(dir);
-		final var loader = DataSource.loader(src, new ImageData.Loader());
+		final var loader = src.loader(new ImageData.Loader());
 		final ImageData image = loader.load("demo/model/chalet.jpg");
 		final VkFormat format = FormatBuilder.format(image);
 //		//System.out.println(format); // VK_FORMAT_R8G8B8A8_SRGB
@@ -256,7 +257,7 @@ public class ModelDemo {
 		// Load shaders
 		final Path dir = new File("./src/test/resources/demo/model").toPath();
 		final var src = DataSource.of(dir);
-		final var shaderLoader = DataSource.loader(src, Shader.loader(dev));
+		final var shaderLoader = src.loader(new ShaderLoader(dev));
 		final Shader vert = shaderLoader.load("spv.chalet.vert");
 		final Shader frag = shaderLoader.load("spv.chalet.frag");
 
@@ -264,9 +265,10 @@ public class ModelDemo {
 
 		// Load model
 //		final ObjectModelLoader objLoader = new ObjectModelLoader();
-//		final Model model = objLoader.load(new FileReader("./src/test/resources/demo/model/chalet.obj")).build();
+//		final Model obj = objLoader.load(new FileReader("./src/test/resources/demo/model/chalet.obj")).iterator().next();
+//		new ModelLoader().write(obj, new FileOutputStream("./src/test/resources/demo/model/chalet.model"));
 		/////
-		final var loader = DataSource.loader(src, new ModelLoader());
+		final var loader = src.loader(new ModelLoader());
 		final Model model = loader.load("chalet.model");
 
 		// Load VBO

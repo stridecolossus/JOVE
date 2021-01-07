@@ -24,7 +24,7 @@ public class BufferedModelTest {
 		void constructor() {
 			final ByteBuffer vertices = ByteBuffer.allocate(1);
 			final ByteBuffer index = ByteBuffer.allocate(1);
-			final Model model = new BufferedModel(Primitive.LINES, new Vertex.Layout(Vertex.Component.POSITION), vertices, index, 2);
+			final Model model = new BufferedModel("model", Primitive.LINES, new Vertex.Layout(Vertex.Component.POSITION), vertices, index, 2);
 			assertEquals(Primitive.LINES, model.primitive());
 			assertEquals(new Vertex.Layout(Vertex.Component.POSITION), model.layout());
 			assertEquals(2, model.count());

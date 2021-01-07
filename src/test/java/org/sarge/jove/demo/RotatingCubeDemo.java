@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
@@ -49,7 +50,7 @@ public class RotatingCubeDemo {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources");
 		final var src = DataSource.of(dir);
-		final var loader = DataSource.loader(src, new ImageData.Loader());
+		final var loader = src.loader(new ImageData.Loader());
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
 
@@ -204,7 +205,7 @@ public class RotatingCubeDemo {
 		// Load shaders
 		final Path dir = new File("./src/test/resources/demo/cube.rotate").toPath(); // TODO - root + resolve
 		final var src = DataSource.of(dir);
-		final var shaderLoader = DataSource.loader(src, Shader.loader(dev));
+		final var shaderLoader = src.loader(new ShaderLoader(dev));
 		final Shader vert = shaderLoader.load("spv.cube.instanced.vert");
 		final Shader frag = shaderLoader.load("spv.cube.frag");
 

@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.model.Model.AbstractModel;
-import org.sarge.jove.util.Loader.LoaderAdapter;
+import org.sarge.jove.util.Loader;
 
 /**
  * Loader for a buffered model.
@@ -29,14 +29,15 @@ public class BufferedModel extends AbstractModel {
 
 	/**
 	 * Constructor.
+	 * @param name				Model name
 	 * @param primitive			Drawing primitive
 	 * @param layout			Vertex layout
 	 * @param vertices			Vertex buffer
 	 * @param index				Optional index buffer
 	 * @param count				Number of vertices
 	 */
-	protected BufferedModel(Primitive primitive, Vertex.Layout layout, ByteBuffer vertices, ByteBuffer index, int count) {
-		super(primitive, layout);
+	protected BufferedModel(String name, Primitive primitive, Vertex.Layout layout, ByteBuffer vertices, ByteBuffer index, int count) {
+		super(name, primitive, layout);
 		this.vertices = notNull(vertices);
 		this.index = Optional.ofNullable(index);
 		this.count = zeroOrMore(count);
@@ -61,7 +62,7 @@ public class BufferedModel extends AbstractModel {
 	/**
 	 * Loader for a buffered model.
 	 */
-	public static class ModelLoader extends LoaderAdapter<DataInputStream, Model> {
+	public static class ModelLoader extends Loader.Adapter<DataInputStream, Model> {
 		private static final int VERSION = 1;
 		private static final String DELIMITER = "-";
 
@@ -81,6 +82,9 @@ public class BufferedModel extends AbstractModel {
 		private static void write(Model model, DataOutputStream out) throws IOException {
 			// Write file format version
 			out.writeInt(VERSION);
+
+			// Write model name
+			out.writeUTF(model.name());
 
 			// Write model primitive
 			out.writeUTF(model.primitive().name());
@@ -119,7 +123,7 @@ public class BufferedModel extends AbstractModel {
 		}
 
 		@Override
-		protected DataInputStream open(InputStream in) throws IOException {
+		protected DataInputStream map(InputStream in) throws IOException {
 			return new DataInputStream(in);
 		}
 
@@ -137,6 +141,9 @@ public class BufferedModel extends AbstractModel {
 				throw new UnsupportedOperationException(String.format("Unsupported version: version=%d supported=%d", version, VERSION));
 			}
 
+			// Load model name
+			final String name = in.readUTF();
+
 			// Load primitive
 			final Primitive primitive = Primitive.valueOf(in.readUTF());
 
@@ -151,7 +158,7 @@ public class BufferedModel extends AbstractModel {
 			final ByteBuffer index = loadBuffer(in);
 
 			// Create model
-			return new BufferedModel(primitive, new Vertex.Layout(layout), vertices, index, count);
+			return new BufferedModel(name, primitive, new Vertex.Layout(layout), vertices, index, count);
 		}
 
 		/**

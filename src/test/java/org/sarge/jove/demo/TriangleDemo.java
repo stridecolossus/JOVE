@@ -26,6 +26,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Shader;
+import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.Work;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
@@ -127,7 +128,8 @@ public class TriangleDemo {
 				.build();
 
 		// Load shaders
-		final var loader = DataSource.loader(DataSource.of("./src/test/resources/demo/triangle"), Shader.loader(dev));
+		final DataSource src = DataSource.of("./src/test/resources/demo/triangle");
+		final var loader = src.loader(new ShaderLoader(dev));
 		final Shader vert = loader.load("spv.triangle.vert");
 		final Shader frag = loader.load("spv.triangle.frag");
 

@@ -159,6 +159,15 @@ public class ObjectModel {
 	}
 
 	/**
+	 * Sets the name of the current object.
+	 * @param name Object name
+	 */
+	public void name(String name) {
+		final Model.Builder builder = current();
+		builder.name(name);
+	}
+
+	/**
 	 * Initialises the model layout.
 	 */
 	private void init() {

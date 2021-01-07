@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
@@ -17,8 +18,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
+import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.Loader;
 
 import com.sun.jna.ptr.PointerByReference;
 
@@ -64,11 +65,18 @@ public class ShaderTest extends AbstractVulkanTest {
 
 	@Nested
 	class LoaderTests {
-		private Loader<InputStream, Shader> loader;
+		private ShaderLoader loader;
 
 		@BeforeEach
 		void before() {
-			loader = Shader.loader(dev);
+			loader = new ShaderLoader(dev);
+		}
+
+		@SuppressWarnings("resource")
+		@Test
+		void map() throws IOException {
+			final InputStream in = mock(InputStream.class);
+			assertEquals(in, loader.map(in));
 		}
 
 		@Test

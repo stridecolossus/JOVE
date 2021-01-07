@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.util.Check.notNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,28 +41,37 @@ public class Shader extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Creates a shader loader.
-	 * @param dev Logical device
-	 * @return Shader loader
-	 */
-	public static Loader<InputStream, Shader> loader(LogicalDevice dev) {
-		return in -> {
-			try {
-				final byte[] code = in.readAllBytes();
-				return create(dev, code);
-			}
-			catch(IOException e) {
-				throw new RuntimeException(e);
-			}
-		};
-	}
-
-	/**
 	 * Constructor.
 	 * @param handle 		Shader module handle
 	 * @param dev			Device
 	 */
 	private Shader(Pointer handle, LogicalDevice dev) {
 		super(handle, dev, dev.library()::vkDestroyShaderModule);
+	}
+
+	/**
+	 * Loader for a shader.
+	 */
+	public static class ShaderLoader extends Loader.Adapter<InputStream, Shader> {
+		private final LogicalDevice dev;
+
+		/**
+		 * Constructor.
+		 * @param dev Logical device
+		 */
+		public ShaderLoader(LogicalDevice dev) {
+			this.dev = notNull(dev);
+		}
+
+		@Override
+		public Shader load(InputStream in) throws IOException {
+			final byte[] code = in.readAllBytes();
+			return create(dev, code);
+		}
+
+		@Override
+		protected InputStream map(InputStream in) throws IOException {
+			return in;
+		}
 	}
 }

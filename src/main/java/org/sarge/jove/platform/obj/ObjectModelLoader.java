@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,16 +19,14 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Model.IndexedBuilder;
-import org.sarge.jove.model.Primitive;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.Loader.LoaderAdapter;
+import org.sarge.jove.util.Loader;
 
 /**
  * Loader for an OBJ model.
  * @author Sarge
  */
-public class ObjectModelLoader extends LoaderAdapter<Reader, Stream<Model>> {
+public class ObjectModelLoader extends Loader.Adapter<Reader, Stream<Model>> {
 	private static final String[] EMPTY_ARGUMENTS = new String[]{};
 
 	/**
@@ -101,23 +98,16 @@ public class ObjectModelLoader extends LoaderAdapter<Reader, Stream<Model>> {
 	/**
 	 * Creates a new transient OBJ model.
 	 * <p>
-	 * The default implementation creates an {@link IndexedBuilder} with the following configuration:
-	 * <ul>
-	 * <li>a {@link Primitive#TRIANGLES} drawing primitive</li>
-	 * <li>vertex indices automatically added (see {@link IndexedBuilder#setAutoIndex(boolean)})</li>
-	 * </ul>
-	 * <p>
 	 * Over-ride to provide a custom OBJ model and/or underlying builder.
 	 * <p>
 	 * @return New OBJ model
 	 */
 	protected ObjectModel create() {
-		final Supplier<Model.Builder> factory = () -> new Model.IndexedBuilder().setAutoIndex(true).primitive(Primitive.TRIANGLES);
-		return new ObjectModel(factory);
+		return new ObjectModel(Model.IndexedBuilder::new);
 	}
 
 	@Override
-	protected Reader open(InputStream in) {
+	protected Reader map(InputStream in) {
 		return new InputStreamReader(in);
 	}
 

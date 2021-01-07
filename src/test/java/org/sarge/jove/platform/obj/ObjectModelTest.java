@@ -72,6 +72,11 @@ public class ObjectModelTest {
 		assertEquals(new Coordinate2D(1, -2), coords.get(1));
 	}
 
+	@Test
+	void name() {
+		model.name("name");
+	}
+
 	@Nested
 	class VertexTests {
 		@BeforeEach
@@ -176,6 +181,10 @@ public class ObjectModelTest {
 
 		@Test
 		void build() {
+			// Set model name
+			final String name = "name";
+			model.name(name);
+
 			// Construct a triangle
 			triangle();
 
@@ -186,6 +195,7 @@ public class ObjectModelTest {
 			// Check resultant model
 			final Model result = model.build().iterator().next();
 			assertNotNull(result);
+			assertEquals(name, result.name());
 			assertEquals(Primitive.TRIANGLES, result.primitive());
 			assertEquals(List.of(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.TEXTURE_COORDINATE), result.layout().components());
 			assertEquals(3, result.count());

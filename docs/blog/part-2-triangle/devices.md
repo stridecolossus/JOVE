@@ -130,7 +130,7 @@ public static Stream<PhysicalDevice> devices(Instance instance) {
 }
 ```
 
-which delegates to a helper that retrieves the queue families for a device and creates the domain object:
+Which delegates to a local helper that retrieves the queue families for each device and creates the domain object:
 
 ```java
 private static PhysicalDevice create(Pointer handle, Instance instance) {
@@ -154,9 +154,9 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
 }
 ```
 
-Note that again we invoke the same API method twice to retrieve the queue families.  
-However in this case we use `toArray()` on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method 
-(i.e. our array is equivalent to a native pointer-to-structure).  
+Note that again we invoke the same API method twice to retrieve the queue families.
+However in this case we use `toArray()` on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method
+(i.e. our array is equivalent to a native pointer-to-structure).
 This is the standard approach for an array of JNA structures, we will abstract this common pattern at the end of the chapter.
 
 We can now add some temporary code to the demo to output the physical devices:

@@ -6,8 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.sarge.jove.util.Loader.LoaderAdapter;
-
 /**
  * A <i>data source</i> opens an input-stream for a given resource by name.
  */
@@ -42,36 +40,17 @@ public interface DataSource {
 	}
 
 	/**
-	 * Creates an adapter for a loader with the given data-source.
+	 * Creates a loader based on this data-source.
+	 * @param <T> Input type
 	 * @param <R> Resource type
-	 * @param <T> Intermediate type
-	 * @param src			Data-source
-	 * @param loader		Delegate loader
+	 * @param loader Loader adapter
 	 * @return Data-source loader
 	 */
-	static <T, R> Loader<String, R> loader(DataSource src, LoaderAdapter<T, R> loader) {
+	default <T, R> Loader<String, R> loader(Loader.Adapter<T, R> loader) {
 		return name -> {
-			try(final InputStream in = src.open(name)) {
-				final T obj = loader.open(in);
-				return loader.load(obj);
-			}
-			catch(IOException e) {
-				throw new RuntimeException("Error loading resource: " + name, e);
-			}
-		};
-	}
-
-	/**
-	 * Creates an adapter for a loader with the given data-source.
-	 * @param <R> Resource type
-	 * @param src			Data-source
-	 * @param loader		Delegate loader
-	 * @return Data-source loader
-	 */
-	static <R> Loader<String, R> loader(DataSource src, Loader<InputStream, R> loader) {
-		return name -> {
-			try(final InputStream in = src.open(name)) {
-				return loader.load(in);
+			try(final InputStream in = open(name)) {
+				final T input = loader.map(in);
+				return loader.load(input);
 			}
 			catch(IOException e) {
 				throw new RuntimeException("Error loading resource: " + name, e);
@@ -79,4 +58,3 @@ public interface DataSource {
 		};
 	}
 }
-

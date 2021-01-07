@@ -1,5 +1,6 @@
 package org.sarge.jove.model;
 
+import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.nio.ByteBuffer;
@@ -11,13 +12,22 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.util.Check;
 
 /**
  * A <i>model</i> is comprised of a list of vertices and an optional index rendered according to a {@link Primitive} and {@link Vertex.Layout}.
  * @author Sarge
  */
 public interface Model {
+	/**
+	 * Default model name.
+	 */
+	String DEFAULT_NAME = "model";
+
+	/**
+	 * @return Model name
+	 */
+	String name();
+
 	/**
 	 * @return Drawing primitive
 	 */
@@ -44,37 +54,24 @@ public interface Model {
 	Optional<ByteBuffer> index();
 
 	/**
-	 * Creates a un-indexed model.
-	 * @param primitive		Drawing primitive
-	 * @param layout		Vertex layout
-	 * @param vertices		Vertices
-	 * @return New model
-	 * @throws IllegalArgumentException if any vertex does not match the given layout
-	 * @throws IllegalArgumentException if the number of vertices does not match the drawing primitive
-	 * @see Primitive#isValidVertexCount(int)
-	 */
-	static Model of(Primitive primitive, Vertex.Layout layout, List<Vertex> vertices) {
-		final var builder = new Model.Builder().primitive(primitive).layout(layout);
-		vertices.forEach(builder::add);
-		return builder.build();
-	}
-
-	/**
 	 * Partial implementation.
 	 */
 	abstract class AbstractModel implements Model {
+		private final String name;
 		private final Primitive primitive;
 		private final Vertex.Layout layout;
 
 		/**
 		 * Constructor.
+		 * @param name			Model name
 		 * @param primitive		Drawing primitive
 		 * @param layout		Vertex layout
 		 * @throws IllegalArgumentException if the number of vertices does not match the drawing primitive
 		 * @throws IllegalArgumentException if the model contains normals but the primitive does not (see {@link Primitive#hasNormals()})
 		 * @see Primitive#isValidVertexCount(int)
 		 */
-		protected AbstractModel(Primitive primitive, Vertex.Layout layout) {
+		protected AbstractModel(String name, Primitive primitive, Vertex.Layout layout) {
+			this.name = notEmpty(name);
 			this.primitive = notNull(primitive);
 			this.layout = notNull(layout);
 		}
@@ -94,6 +91,14 @@ public interface Model {
 			if(layout.components().contains(Vertex.Component.NORMAL) && !primitive.hasNormals()) {
 				throw new IllegalArgumentException("Drawing primitive does not support normals: " + primitive);
 			}
+		}
+
+		/**
+		 * @return Model name
+		 */
+		@Override
+		public final String name() {
+			return name;
 		}
 
 		@Override
@@ -123,6 +128,7 @@ public interface Model {
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
+					.append("name", name)
 					.append("primitive", primitive())
 					.append("layout", layout())
 					.append("count", count())
@@ -142,6 +148,7 @@ public interface Model {
 
 		/**
 		 * Constructor.
+		 * @param name			Model name
 		 * @param primitive		Drawing primitive
 		 * @param layout		Vertex layout
 		 * @param vertices		Vertices
@@ -150,8 +157,8 @@ public interface Model {
 		 * @throws IllegalArgumentException if the model contains normals but the primitive does not (see {@link Primitive#hasNormals()})
 		 * @see Primitive#isValidVertexCount(int)
 		 */
-		protected DefaultModel(Primitive primitive, Vertex.Layout layout, List<Vertex> vertices, List<Integer> index) {
-			super(primitive, layout);
+		protected DefaultModel(String name, Primitive primitive, Vertex.Layout layout, List<Vertex> vertices, List<Integer> index) {
+			super(name, primitive, layout);
 			this.vertices = notNull(vertices);
 			this.index = index;
 			validate();
@@ -229,15 +236,18 @@ public interface Model {
 	 * </pre>
 	 */
 	class Builder {
+		private String name = "model";
 		private Primitive primitive = Primitive.TRIANGLE_STRIP;
 		private Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION);
 		private final List<Vertex> vertices = new ArrayList<>();
 
 		/**
-		 * @return Drawing primitive for this model
+		 * Sets the name of this model.
+		 * @param name Model name
 		 */
-		public final Primitive primitive() {
-			return primitive;
+		public Builder name(String name) {
+			this.name = notEmpty(name);
+			return this;
 		}
 
 		/**
@@ -303,12 +313,13 @@ public interface Model {
 		 * @see Primitive#isValidVertexCount(int)
 		 */
 		public Model build() {
-			return new DefaultModel(primitive, layout, vertices, index());
+			return new DefaultModel(name, primitive, layout, vertices, index());
 		}
 
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
+					.append("name", name)
 					.append("primitive", primitive)
 					.append("layout", layout)
 					.append("vertices", count())
@@ -341,17 +352,6 @@ public interface Model {
 		private final List<Integer> index = new ArrayList<>();
 		private final Map<Vertex, Integer> map = new HashMap<>();
 
-		private boolean auto = true;
-
-		/**
-		 * Sets whether to automatically add an index for each vertex (default is {@code true}).
-		 * @param auto Whether to automatically add indices
-		 */
-		public IndexedBuilder setAutoIndex(boolean auto) {
-			this.auto = auto;
-			return this;
-		}
-
 		@Override
 		protected List<Integer> index() {
 			return index;
@@ -362,37 +362,18 @@ public interface Model {
 			// Lookup existing vertex index
 			final Integer prev = map.get(vertex);
 
-			// Add new vertices
-			final int idx;
 			if(prev == null) {
 				// Add new vertex
-				idx = count();
+				final int idx = count();
 				map.put(vertex, idx);
+				index.add(idx);
 				super.add(vertex);
 			}
 			else {
-				// Existing vertex
-				idx = prev;
+				// Add existing vertex
+				index.add(prev);
 			}
 
-			// Add index
-			if(auto) {
-				add(idx);
-			}
-
-			return this;
-		}
-
-		/**
-		 * Adds an index.
-		 * @param index Index
-		 * @throws IndexOutOfBoundsException if the index is out-of-bounds for this model
-		 * @throws UnsupportedOperationException for an non-indexed builder
-		 */
-		public IndexedBuilder add(int index) {
-			Check.zeroOrMore(index);
-			if(index >= count()) throw new IndexOutOfBoundsException(String.format("Invalid vertex index: index=%d vertices=%s", index, count()));
-			this.index.add(index);
 			return this;
 		}
 

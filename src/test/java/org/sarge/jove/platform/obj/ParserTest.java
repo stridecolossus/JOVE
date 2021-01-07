@@ -23,7 +23,16 @@ public class ParserTest {
 
 	@Test
 	void group() {
-		Parser.GROUP.parse(null, model);
+		final String name = "name";
+		Parser.GROUP.parse(new String[]{name}, model);
 		verify(model).start();
+		verify(model).name(name);
+	}
+
+	@Test
+	void groupAnonymous() {
+		Parser.GROUP.parse(new String[]{}, model);
+		verify(model).start();
+		verifyNoMoreInteractions(model);
 	}
 }

@@ -37,6 +37,8 @@ public class CubeBuilder {
 			{ 1, 7, 3, 5 }, // Bottom
 	};
 
+	// TODO - LEFT, RIGHT and QUAD should be in a separate utility class?
+
 	// Triangle indices for a face
 	private static final int[] LEFT = {0, 1, 2};
 	private static final int[] RIGHT = {2, 1, 3};

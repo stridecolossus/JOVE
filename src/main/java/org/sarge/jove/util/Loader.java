@@ -20,17 +20,17 @@ public interface Loader<T, R> {
 	R load(T in) throws IOException;
 
 	/**
-	 * Adapter for a loader with an intermediate data type mapped from an {@link InputStream}.
-	 * @param <T> Intermediate type
+	 * Adapter for a loader used to map an input-stream to its input type.
+	 * @param <T> Input type
 	 * @param <R> Resource type
 	 */
-	abstract class LoaderAdapter<T, R> implements Loader<T, R> {
+	abstract class Adapter<T, R> implements Loader<T, R> {
 		/**
-		 * Maps the given input-stream to an instance of the intermediate type.
+		 * Maps the given input-stream to the input type for this loader.
 		 * @param in Input-stream
-		 * @return Intermediate object
+		 * @return Input type
 		 * @throws IOException if the stream cannot be opened
 		 */
-		protected abstract T open(InputStream in) throws IOException;
+		protected abstract T map(InputStream in) throws IOException;
 	}
 }
