@@ -11,6 +11,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -20,8 +22,11 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Supported;
+import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 
 public class PhysicalDeviceTest {
 	private PhysicalDevice dev;
@@ -55,12 +60,6 @@ public class PhysicalDeviceTest {
 	}
 
 	@Test
-	void support() {
-		assertNotNull(dev.extensions());
-		assertNotNull(dev.layers());
-	}
-
-	@Test
 	void features() {
 		final var features = dev.features();
 		assertNotNull(features);
@@ -91,5 +90,18 @@ public class PhysicalDeviceTest {
 		assertEquals("device", dev.properties().name());
 		assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, dev.properties().type());
 		assertNotNull(props.limits());
+	}
+
+	@Test
+	void supported() {
+		// Init library
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
+		when(lib.factory().integer()).thenReturn(new IntByReference());
+
+		// Check supported
+		final Supported supported = dev.supported();
+		assertNotNull(supported);
+		assertEquals(Set.of(), supported.extensions());
+		assertEquals(Set.of(), supported.layers());
 	}
 }

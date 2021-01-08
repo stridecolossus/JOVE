@@ -1,13 +1,8 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import java.util.Set;
-import java.util.function.Supplier;
 
-import org.sarge.jove.platform.vulkan.VkLayerProperties;
-import org.sarge.jove.platform.vulkan.util.Support;
 import org.sarge.jove.util.Check;
-
-import com.sun.jna.Native;
 
 /**
  * Descriptor for a <i>validation layer</i>.
@@ -53,20 +48,5 @@ public record ValidationLayer(String name, int version) {
 				.stream()
 				.filter(layer -> layer.name.equals(this.name))
 				.anyMatch(layer -> layer.version <= this.version);
-	}
-
-	/**
-	 * Support helper for retrieval of supporting validation layers.
-	 */
-	public static class ValidationLayerSupport extends Support<VkLayerProperties, ValidationLayer> {
-		@Override
-		protected Supplier<VkLayerProperties> identity() {
-			return VkLayerProperties::new;
-		}
-
-		@Override
-		protected ValidationLayer map(VkLayerProperties struct) {
-			return new ValidationLayer(Native.toString(struct.layerName), struct.implementationVersion);
-		}
 	}
 }

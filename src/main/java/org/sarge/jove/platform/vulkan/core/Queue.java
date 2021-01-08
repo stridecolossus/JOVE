@@ -38,11 +38,12 @@ public class Queue implements NativeObject {
 		 * @return Queue flags predicate
 		 */
 		public static Predicate<Family> predicate(VkQueueFlag... flags) {
-			return family -> family.flags().containsAll(Arrays.asList(flags));
+			final var list = Arrays.asList(flags);
+			return family -> family.flags().containsAll(list);
 		}
 
 		/**
-		 * Helper - Create a predicate for a queue family that supports presentation.
+		 * Helper - Create a predicate for a queue family that supports presentation to the given surface.
 		 * @param surface Vulkan surface
 		 * @return Presentation predicate
 		 * @see #isPresentationSupported(org.sarge.jove.common.NativeObject.Handle)
@@ -106,7 +107,7 @@ public class Queue implements NativeObject {
 			final VulkanLibrary lib = dev.instance().library();
 			final IntByReference supported = lib.factory().integer();
 			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
-			return VulkanBoolean.of(supported.getValue()) == VulkanBoolean.TRUE;
+			return VulkanBoolean.of(supported.getValue()).toBoolean();
 		}
 
 		@Override

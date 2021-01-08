@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -41,9 +42,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
 	private final DeviceFeatures features;
 	private final Map<Queue.Family, List<Queue>> queues;
-	private final LazySupplier<VulkanAllocator> allocator;
-
-	// https://android.jlelse.eu/lazy-initialisation-whats-a-correct-implementation-64c4638561e
+	private final Supplier<VulkanAllocator> allocator;
 
 	/**
 	 * Constructor.

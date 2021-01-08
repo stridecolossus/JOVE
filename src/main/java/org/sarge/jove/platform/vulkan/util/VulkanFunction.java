@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 
-import java.lang.reflect.Array;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
@@ -93,13 +92,11 @@ public interface VulkanFunction<T> {
 		check(func.enumerate(lib, count, null));
 
 		// Retrieve values
-		if(count.getValue() > 0) {
-			final T[] array = (T[]) identity.get().toArray(count.getValue());
+		final T[] array = (T[]) identity.get().toArray(count.getValue());
+		if(array.length > 0) {
 			check(func.enumerate(lib, count, array[0]));
-			return array;
 		}
-		else {
-			return (T[]) Array.newInstance(identity.getClass(), 0);
-		}
+
+		return array;
 	}
 }

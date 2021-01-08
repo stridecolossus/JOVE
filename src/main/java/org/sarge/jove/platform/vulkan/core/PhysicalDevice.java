@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -23,8 +24,10 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Supported;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.util.LazySupplier;
 
 import com.sun.jna.Pointer;
 
@@ -33,44 +36,6 @@ import com.sun.jna.Pointer;
  * @author Sarge
  */
 public class PhysicalDevice implements NativeObject {
-	/**
-	 * Device properties.
-	 */
-	public class Properties {
-		@SuppressWarnings("hiding")
-		private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-
-		private Properties() {
-			instance.library().vkGetPhysicalDeviceProperties(handle, props);
-		}
-
-		/**
-		 * @return Device name
-		 */
-		public String name() {
-			return new String(props.deviceName);
-		}
-
-		/**
-		 * @return Device type
-		 */
-		public VkPhysicalDeviceType type() {
-			return props.deviceType;
-		}
-
-		/**
-		 * @return Device limits
-		 */
-		public VkPhysicalDeviceLimits limits() {
-			return props.limits.copy();
-		}
-
-		@Override
-		public String toString() {
-			return props.toString();
-		}
-	}
-
 	/**
 	 * Enumerates the physical devices for the given instance.
 	 * @param instance Vulkan instance
@@ -111,9 +76,8 @@ public class PhysicalDevice implements NativeObject {
 	private final Handle handle;
 	private final Instance instance;
 	private final List<Queue.Family> families;
-
-	private DeviceFeatures features;
-	private Properties props;
+	private final Supplier<Properties> props = new LazySupplier<>(Properties::new);
+	private final Supplier<DeviceFeatures> features = new LazySupplier<>(this::loadFeatures);
 
 	/**
 	 * Constructor.
@@ -138,9 +102,6 @@ public class PhysicalDevice implements NativeObject {
 		return new Queue.Family(this, index, props.queueCount, new HashSet<>(flags));
 	}
 
-	/**
-	 * @return Device handle
-	 */
 	@Override
 	public Handle handle() {
 		return handle;
@@ -171,39 +132,73 @@ public class PhysicalDevice implements NativeObject {
 	}
 
 	/**
+	 * Device properties.
+	 */
+	public class Properties {
+		@SuppressWarnings("hiding")
+		private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+
+		private Properties() {
+			instance.library().vkGetPhysicalDeviceProperties(handle, props);
+		}
+
+		/**
+		 * @return Device name
+		 */
+		public String name() {
+			return new String(props.deviceName);
+		}
+
+		/**
+		 * @return Device type
+		 */
+		public VkPhysicalDeviceType type() {
+			return props.deviceType;
+		}
+
+		/**
+		 * @return Device limits
+		 */
+		public VkPhysicalDeviceLimits limits() {
+			return props.limits.copy();
+		}
+
+		@Override
+		public String toString() {
+			return props.toString();
+		}
+	}
+
+	/**
 	 * @return Device properties
 	 */
-	public synchronized Properties properties() {
-		if(props == null) {
-			props = new Properties();
-		}
-		return props;
+	public Properties properties() {
+		return props.get();
 	}
 
 	/**
 	 * @return Features supported by this device
 	 */
-	public synchronized DeviceFeatures features() {
-		if(features == null) {
-			final var struct = new VkPhysicalDeviceFeatures();
-			instance.library().vkGetPhysicalDeviceFeatures(handle, struct);
-			features = new DeviceFeatures(struct);
-		}
-		return features;
+	public DeviceFeatures features() {
+		return features.get();
 	}
 
 	/**
-	 * @return Supported extensions function
+	 * Retrieves the features supported by this device.
 	 */
-	public VulkanFunction<VkExtensionProperties> extensions() {
-		return (api, count, extensions) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, extensions);
+	private DeviceFeatures loadFeatures() {
+		final var struct = new VkPhysicalDeviceFeatures();
+		instance.library().vkGetPhysicalDeviceFeatures(handle, struct);
+		return new DeviceFeatures(struct);
 	}
 
 	/**
-	 * @return Supported validation layers function
+	 * @return Extensions and validation layers supported by this device
 	 */
-	public VulkanFunction<VkLayerProperties> layers() {
-		return (api, count, layers) -> api.vkEnumerateDeviceLayerProperties(handle, count, layers);
+	public Supported supported() {
+		final VulkanFunction<VkExtensionProperties> extensions = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, array);
+		final VulkanFunction<VkLayerProperties> layers = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(handle, count, array);
+		return new Supported(instance.library(), extensions, layers);
 	}
 
 	@Override

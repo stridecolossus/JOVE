@@ -69,34 +69,34 @@ public class TriangleDemo {
 
 		// Create queue family predicates
 		final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		//final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
 		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
 				.filter(PhysicalDevice.predicate(graphicsPredicate))
-				.filter(PhysicalDevice.predicate(transferPredicate))
+				//.filter(PhysicalDevice.predicate(transferPredicate))
 				.filter(PhysicalDevice.predicate(presentationPredicate))
 				.findAny()
 				.orElseThrow(() -> new RuntimeException("No GPU available"));
 
 		// Lookup required queues
-//		final QueueFamily graphics = gpu.find(graphicsPredicate, "Graphics family not available");
-		final Queue.Family transfer = gpu.family(transferPredicate);
+		final Queue.Family graphics = gpu.family(graphicsPredicate);
+		//final Queue.Family transfer = gpu.family(transferPredicate);
 		final Queue.Family present = gpu.family(presentationPredicate);
 
 		// Create device
 		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-//				.queue(graphics)
-				.queue(transfer)
+				.queue(graphics)
+//				.queue(transfer)
 				.queue(present)
 				.build();
 
 		// Create rendering surface
-		final Surface surface = new Surface(surfaceHandle, dev);
+		final Surface surface = new Surface(surfaceHandle, gpu);
 
 		// Specify required image format
 		final VkFormat format = new FormatBuilder()

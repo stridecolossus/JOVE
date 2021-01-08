@@ -220,7 +220,7 @@ public class ModelDemo {
 				.build();
 
 		// Create rendering surface
-		final Surface surface = new Surface(surfaceHandle, dev);
+		final Surface surface = new Surface(surfaceHandle, gpu);
 
 		// Create swap-chain
 		final Swapchain swapchain = new Swapchain.Builder(dev, surface)

@@ -8,6 +8,7 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.common.Supported;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
@@ -46,16 +47,6 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	String EXTENSION_SWAP_CHAIN = "VK_KHR_swapchain";
 
 	/**
-	 * Function to retrieve the available extensions for this Vulkan implementation.
-	 */
-	VulkanFunction<VkExtensionProperties> EXTENSIONS = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
-
-	/**
-	 * Function to retrieve the available validation layers for this Vulkan implementation.
-	 */
-	VulkanFunction<VkLayerProperties> LAYERS = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
-
-	/**
 	 * Type mapper for custom JOVE types.
 	 */
 	TypeMapper MAPPER = mapper();
@@ -83,6 +74,16 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		};
 
 		return Native.load(name, VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
+	}
+
+	/**
+	 * @param lib Vulkan API
+	 * @return Extensions and validation layers supported by this implementation
+	 */
+	static Supported supported(VulkanLibrary lib) {
+		final VulkanFunction<VkExtensionProperties> extensions = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
+		final VulkanFunction<VkLayerProperties> layers = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
+		return new Supported(lib, extensions, layers);
 	}
 
 	/**

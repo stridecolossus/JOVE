@@ -6,15 +6,160 @@ title: Vulkan Devices
 
 Now we have a Vulkan instance we can use it to enumerate the _physical devices_ available on the local hardware and select one that satisfies the requirements of the application.
 
-This will partially be dependant on having a Vulkan rendering surface so we will also implement GLFW to create a window and surface.
+This will partially be dependant on having a Vulkan rendering surface so we will first extend the _desktop_ service to create a native GLFW window.
 
-Finally we will create a _logical device_ from the selected physical device and specify the _work queues_ we will require for future chapters.
+Finally we will create a _logical device_ from the selected physical device and specify the _work queues_ we will use in subsequent chapters.
 
 ---
 
-## Let's get Physical
+## The Rendering Surface
 
-### The Physical Device
+### Application Window
+
+The obvious starting point is a _window_ class that encapsulates a GLFW window handle:
+
+```java
+public class Window {
+    private final Handle handle;
+    private final DesktopLibrary lib;
+    private final Descriptor descriptor;
+
+    /**
+     * Constructor.
+     * @param window            Window handle
+     * @param lib               GLFW API
+     * @param descriptor        Window descriptor
+     */
+    private Window(Pointer window, DesktopLibrary lib, Descriptor descriptor) {
+        this.handle = new Handle(window);
+        this.lib = notNull(lib);
+        this.descriptor = notNull(descriptor);
+    }
+
+    public void destroy() {
+        lib.glfwDestroyWindow(handle);
+    }
+}
+```
+
+The _window descriptor_ wraps up the details of the window in a simple class with a convenience builder:
+
+```java
+public record Descriptor(String title, Dimensions size, Set<Property> properties) {
+    public static class Builder {
+        private String title;
+        private Dimensions size;
+        private final Set<Property> props = new HashSet<>();
+        
+        ...
+        
+        public Builder property(Property p) {
+            props.add(p);
+            return this;
+        }
+
+        public Descriptor build() {
+            return new Descriptor(title, size, props);
+        }
+    }
+}
+```
+
+The properties is an enumeration that maps to the various GLFW window hints:
+
+```java
+public enum Property {
+    RESIZABLE(0x00020003),
+    DECORATED(0x00020005),
+    AUTO_ICONIFY(0x00020006),
+    MAXIMISED(0x00020008),
+    DISABLE_OPENGL(0x00022001),
+
+    private final int hint;
+
+    private Property(int hint) {
+        this.hint = hint;
+    }
+
+    /**
+     * Applies this property.
+     * @param lib Desktop library
+     */
+    void apply(DesktopLibrary lib) {
+        final int value = this == DISABLE_OPENGL ? 0 : 1; // TODO
+        lib.glfwWindowHint(hint, value);
+    }
+}
+```
+
+This is just the bare-bones we need for the forseeable future but we are likely to need to refactor the descriptor and properties to support other functionality, e.g. full-screen windows.
+
+Finally we add a factory method to create a window:
+
+```java
+/**
+ * Creates a GLFW window.
+ * @param lib                GLFW library
+ * @param descriptor        Window descriptor
+ * @return New window
+ * @throws RuntimeException if the window cannot be created
+ */
+public static Window create(DesktopLibrary lib, Descriptor descriptor) {
+    // Apply window hints
+    lib.glfwDefaultWindowHints();
+    descriptor.properties().forEach(p -> p.apply(lib));
+
+    // Create window
+    final Dimensions size = descriptor.size();
+    final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);
+    if(window == null) {
+        throw new RuntimeException(...);
+    }
+
+    // Create window wrapper
+    return new Window(window, lib, descriptor);
+}
+```
+
+### Vulkan Surface
+
+To create a Vulkan surface for a given window we add the following to the new class:
+
+```java
+public Handle surface(Handle instance) {
+    final PointerByReference ref = new PointerByReference();
+    final int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
+    if(result != 0) {
+        throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
+    }
+    return new Handle(ref.getValue());
+}
+```
+
+We can now create a window and retrieve the surface in the demo:
+
+```java
+// Create instance
+Instance instance = ...
+
+// Create window
+Window window = new Window.Builder(desktop)
+    .title("demo")
+    .size(new Dimensions(1280, 760))
+    .property(Window.Property.DISABLE_OPENGL)
+    .build();
+
+// Retrieve rendering surface
+Handle surface = window.surface(instance.handle());
+```
+
+The `DISABLE_OPENGL` property specifies that the new window should **not** create an OpenGL context (which GLFW does by default).
+
+---
+
+## Physical Devices
+
+### Domain Classes
 
 A _physical device_ represents a hardware component that supports Vulkan, i.e. the GPU.
 
@@ -101,6 +246,42 @@ private Queue.Family family(int index, VkQueueFamilyProperties props) {
 }
 ```
 
+We also implement a lazily instantiated accessor for the properties of the device:
+
+```java
+private final Supplier<Properties> props = new LazySupplier<>(Properties::new);
+
+public Properties properties() {
+    return props.get();
+}
+
+public class Properties {
+    @SuppressWarnings("hiding")
+    private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+
+    private Properties() {
+        instance.library().vkGetPhysicalDeviceProperties(handle, props);
+    }
+
+    public String name() {
+        return new String(props.deviceName);
+    }
+
+    public VkPhysicalDeviceType type() {
+        return props.deviceType;
+    }
+
+    public VkPhysicalDeviceLimits limits() {
+        return props.limits;
+    }
+
+    @Override
+    public String toString() {
+        return props.toString();
+    }
+}
+```
+
 ### Enumerating the Physical Devices
 
 To enumerate the available physical devices we invoke the `vkEnumeratePhysicalDevices()` API method _twice_:
@@ -159,243 +340,64 @@ However in this case we use `toArray()` on an instance of a `VkQueueFamilyProper
 (i.e. our array is equivalent to a native pointer-to-structure).
 This is the standard approach for an array of JNA structures, we will abstract this common pattern at the end of the chapter.
 
-We can now add some temporary code to the demo to output the physical devices:
+We can now add some temporary code to the demo to dump the available physical devices:
 
 ```java
 PhysicalDevice
     .devices(instance)
     .map(PhysicalDevice::properties)
-    .map(props -> props.deviceName)
-    .map(String::new)
+    .map(Properties::name)
     .forEach(System.out::println);
 ```
-
-(We implement the `properties()` accessor at the end of this chapter).
 
 On a normal PC there will generally just be one or two devices (the GPU and maybe an on-board graphics card).
 
 ### Selecting a Device
 
-The final step for dealing with the physical device(s) is to select one that supports the requirements of an application.
+The final step for dealing with the physical devices is to select one that supports the requirements of an application.
 
 There are several properties that we can select on:
 1. The properties of a queue family provided by the device.
-2. Whether a queue family supports rendering to a Vulkan surface.
-3. The supported features of the device (see the final section in this chapter).
+2. Whether the device supports rendering to the Vulkan surface.
+3. The supported _features_ of the device (covered in later chapters).
 
 The properties of a queue family are defined by the `VkQueueFlag` enumeration and specify whether the queue supports graphics rendering, data transfer, etc.
 
-We add the following helper factory to the queue family class to create a predicate for a set of flags:
+We add the following helper factory to the queue family class to create a predicate for a set of queue flags:
 
 ```java
-/**
- * Helper - Creates a queue family predicate for the given flags.
- * @param flags Queue flags
- * @return Queue flags predicate
- */
 public static Predicate<Family> predicate(VkQueueFlag... flags) {
-    return family -> family.flags().containsAll(Arrays.asList(flags));
+    final var list = Arrays.asList(flags);
+    return family -> family.flags().containsAll(list);
 }
 ```
 
-Later we will create a Vulkan surface for our application window which can then be tested against a queue family:
+And another to test whether the family supports presentation to a given surface:
 
 ```java
-/**
- * @param surface Rendering surface
- * @return Whether this family supports presentation to the given surface
- */
-public boolean isPresentationSupported(Pointer surface) {
-    final VulkanLibrary lib = dev.instance().library();
-    final IntByReference supported = lib.factory().integer();
-    check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
-    return VulkanBoolean.of(supported.getValue()) == VulkanBoolean.TRUE;
-}
-```
-
-And we add another convenience helper for presentation testing:
-
-```java
-/**
- * Helper - Create a predicate for a queue family that supports presentation.
- * @param surface Vulkan surface
- * @return Presentation predicate
- * @see #isPresentationSupported(org.sarge.jove.common.NativeObject.Handle)
- */
-public static Predicate<Family> predicate(Pointer surface) {
+public static Predicate<Family> predicate(Handle surface) {
     return family -> family.isPresentationSupported(surface);
 }
 ```
 
----
-
-## The Rendering Surface
-
-Before we can progress with selection of the physical device we need to create a window and a Vulkan rendering surface.
-
-### Application Window
-
-The obvious starting point is a window class that encapsulates a GLFW window handle:
+Which delegates to the following method:
 
 ```java
-public class Window {
-    private final Handle handle;
-    private final DesktopLibrary lib;
-    private final Descriptor descriptor;
-
-    /**
-     * Constructor.
-     * @param window            Window handle
-     * @param lib                GLFW API
-     * @param descriptor        Window descriptor
-     */
-    private Window(Pointer window, DesktopLibrary lib, Descriptor descriptor) {
-        this.handle = new Handle(window);
-        this.lib = notNull(lib);
-        this.descriptor = notNull(descriptor);
-    }
-
-    public void destroy() {
-        lib.glfwDestroyWindow(handle);
-    }
+public boolean isPresentationSupported(Handle surface) {
+    final VulkanLibrary lib = dev.instance().library();
+    final IntByReference supported = lib.factory().integer();
+    check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
+    return VulkanBoolean.of(supported.getValue()).toBoolean();
 }
 ```
 
-The _window descriptor_ wraps up the details of the window in a simple class with a convenience builder:
+We can then walk the available devices and find one that matches our requirements:
 
 ```java
-public record Descriptor(String title, Dimensions size, Set<Property> properties) {
-    public static class Builder {
-        private String title;
-        private Dimensions size;
-        private final Set<Property> props = new HashSet<>();
-        
-        ...
-        
-        public Builder property(Property p) {
-            props.add(p);
-            return this;
-        }
+var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
-        public Descriptor build() {
-            return new Descriptor(title, size, props);
-        }
-    }
-}
-```
-
-The properties is an enumeration that maps to the various GLFW window hints:
-
-```java
-public enum Property {
-    RESIZABLE(0x00020003),
-    DECORATED(0x00020005),
-    AUTO_ICONIFY(0x00020006),
-    MAXIMISED(0x00020008),
-    DISABLE_OPENGL(0x00022001),
-
-    private final int hint;
-
-    private Property(int hint) {
-        this.hint = hint;
-    }
-
-    /**
-     * Applies this property.
-     * @param lib Desktop library
-     */
-    void apply(DesktopLibrary lib) {
-        final int value = this == DISABLE_OPENGL ? 0 : 1; // TODO
-        lib.glfwWindowHint(hint, value);
-    }
-}
-```
-
-This is just the bare-bones we need for the forseeable future but we are likely to need to refactor the descriptor and properties to support other functionality, e.g. full-screen windows.
-
-Finally we add a factory method to create a window:
-
-```java
-/**
- * Creates a GLFW window.
- * @param lib                GLFW library
- * @param descriptor        Window descriptor
- * @return New window
- * @throws RuntimeException if the window cannot be created
- */
-public static Window create(DesktopLibrary lib, Descriptor descriptor) {
-    // Apply window hints
-    lib.glfwDefaultWindowHints();
-    descriptor.properties().forEach(p -> p.apply(lib));
-
-    // Create window
-    final Dimensions size = descriptor.size();
-    final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);    // TODO - monitors
-    if(window == null) {
-        throw new RuntimeException(...);
-    }
-
-    // Create window wrapper
-    return new Window(window, lib, descriptor);
-}
-```
-
-### Vulkan Surface
-
-To create a Vulkan surface for a given window we add the following to the new class:
-
-```java
-/**
- * Creates a Vulkan rendering surface for this window.
- * @param vulkan Vulkan instance handle
- * @return Vulkan surface
- */
-public Pointer surface(Pointer vulkan) {
-    final PointerByReference ref = new PointerByReference();
-    final int result = lib.glfwCreateWindowSurface(vulkan, handle, null, ref);
-    if(result != 0) {
-        throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
-    }
-    return ref.getValue();
-}
-```
-
-We can now create a window and surface in the demo:
-
-```java
-// Create instance
-final Instance instance = ...
-
-// Create window
-final var descriptor = new Window.Descriptor.Builder()
-    .title("demo")
-    .size(new Dimensions(1280, 760))
-    .property(Window.Property.DISABLE_OPENGL)
-    .build();
-final Window window = Window.create(descriptor);
-
-// Create rendering surface
-final Pointer surface = window.surface(instance);
-```
-
-The `DISABLE_OPENGL` property specifies that the new window should **not** create an OpenGL context (which GLFW does by default) which will otherwise cause our Vulkan implementation to fail.
-
-### Presentation Support Redux
-
-With a handle to the surface we can now return to selecting the physical device.
-
-First we define predicates for our device requirements:
-
-```java
-// Create queue family predicates
-final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-final var presentationPredicate = Queue.Family.predicate(surface);
-```
-
-We can then walk the available devices and find one that matches these requirements:
-
-```java
-final PhysicalDevice gpu = PhysicalDevice
+PhysicalDevice gpu = PhysicalDevice
     .devices(instance)
     .filter(PhysicalDevice.predicate(graphicsPredicate))
     .filter(PhysicalDevice.predicate(presentationPredicate))
@@ -403,7 +405,7 @@ final PhysicalDevice gpu = PhysicalDevice
     .orElseThrow(() -> new RuntimeException("No GPU available"));
 ```
 
-Finally we add the following convenience helper to the physical device to select a queue family:
+Finally we add the following helper to the physical device to select a queue family:
 
 ```java
 public Queue.Family family(Predicate<Queue.Family> test) {
@@ -411,24 +413,22 @@ public Queue.Family family(Predicate<Queue.Family> test) {
 }
 ```
 
-And extract the relevant families from the selected device:
+And in the demo we extract the families from the selected device:
 
 ```java
-final Queue.Family transferFamily = gpu.family(transferPredicate);
-final Queue.Family presentationFamily = gpu.family(presentationPredicate);
+Queue.Family graphicsFamily = gpu.family(graphicsPredicate);
+Queue.Family presentFamily = gpu.family(presentationPredicate);
 ```
 
 Note that these could actually be the same object depending on how the GPU implements its queues.
 
 ---
 
-## Logical Captain
+## Logical Device
+
+### Domain Classes
 
 The _logical device_ is an instance of the physical device we have selected from those available on the hardware.
-
-We will create the logical device domain class and complete the queue class we defined at the very start of this chapter.
-
-### The Logical Device
 
 Again we start with an outline for the logical device:
 
@@ -476,7 +476,7 @@ Notes:
 
 - The _priorities_ is a list of percentile values that specifies the priority of each queue.
 
-- The `Percentile` class is a custom wrapper for a percentile represented as a 0..1 floating-point value.
+- The `Percentile` class is a custom wrapper for a percentile represented as a 0..1 floating-point value (covered in the next chapter).
 
 - The constructor (not shown) validates the queue specification.
 
@@ -485,7 +485,6 @@ The logical device is highly configurable so we create a builder:
 ```java
 public static class Builder {
     private PhysicalDevice parent;
-    private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
     private final Set<String> extensions = new HashSet<>();
     private final Set<String> layers = new HashSet<>();
     private final Set<RequiredQueue> queues = new ArrayList<>();
@@ -495,7 +494,6 @@ public static class Builder {
     public LogicalDevice build() {
         // Create descriptor
         final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
-        info.pEnabledFeatures = features;
 
         // Add required extensions
         info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
@@ -519,8 +517,8 @@ public static class Builder {
 }
 ```
 
-Note that we can also specify extensions and validation layers at the device level as well as for the instance.
-This distinction is ignored by more up-to-date Vulkan implementation but we retain both for backwards compatibility.
+We can specify extensions and validation layers at both the instance and device level, e.g. for the swap-chain.
+Note more recent Vulkan implementations will ignore validation layers specified at the device level (we retain both for backwards compatibility).
 
 The builder provides several over-loaded methods to specify one or more required work queues:
 
@@ -644,8 +642,6 @@ public Queue queue(Queue.Family family) {
 }
 ```
 
-### Unit-Testing
-
 The builder for the logical device is quite complex so the unit-test has a large number of failure cases (a selection are shown here):
 
 ```java
@@ -693,191 +689,6 @@ final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 // Lookup work queues
 final Queue graphicsQueue = dev.queue(graphicsFamily);    
 final Queue presentationQueue = dev.queue(presentationFamily);
-```
-
----
-
-## Supported Features
-
-Some Vulkan _features_ are optional functionality such as geometry shaders, anisotropic filtering, etc. that must be explicitly enabled when we create the logical device.
-
-Although we will not be using any optional features until later in development now seems a good time to implement support for querying and enabling features.
-
-### Supported Features
-
-We start with a new accessor on the physical device that retrieves the features _supported_ by the hardware:
-
-```java
-private DeviceFeatures features;
-
-public synchronized DeviceFeatures features() {
-    if(features == null) {
-        final var struct = new VkPhysicalDeviceFeatures();
-        instance.library().vkGetPhysicalDeviceFeatures(handle, struct);
-        features = new DeviceFeatures(struct);
-    }
-    return features;
-}
-```
-
-The accessor caches the supported features and lazily invokes the API.
-
-If we simply returned the `VkPhysicalDeviceFeatures` structure directly we would exposing the internals of the class since a JNA structure is completely mutable.
-Therefore we encapsulate the features in a new wrapper class:
-
-```java
-public class DeviceFeatures {
-    private final VkPhysicalDeviceFeatures features;
-
-    public DeviceFeatures(VkPhysicalDeviceFeatures features) {
-        this.features = features;
-    }
-}
-```
-
-To test for the presence of a supported feature we add the following method:
-
-```java    
-    /**
-     * @param feature Feature name
-     * @return Whether the given feature is supported
-     * @throws IllegalArgumentException if the feature is unknown
-     */
-    public boolean isSupported(String feature) {
-        return features.readField(feature) == VulkanBoolean.TRUE;
-    }
-}
-```
-
-Note that a supported feature is queried by _name_.
-
-### Required Features
-
-To specify the features required for an application we modify the builder for the logical device
-
-```java
-public static class Builder {
-    private DeviceFeatures features = new DeviceFeatures(new VkPhysicalDeviceFeatures());
-
-    public Builder features(DeviceFeatures required) {
-        parent.features().check(required);
-        this.features = notNull(required);
-        return this;
-    }
-}
-```
-
-The required features are populated in the `build()` method and also added as a new field in the logical device.
-
-Finally we implement the `check()` method used to test that the _required_ features are a valid subset of those _supported_ by the hardware:
-
-```java
-public void check(DeviceFeatures required) {
-    // Enumerate missing features
-    final Field[] fields = VkPhysicalDeviceFeatures.class.getFields();
-    final Collection<String> missing = Arrays.stream(fields)
-            .filter(f -> get(f, required.features))
-            .filter(f -> !get(f, this.features))
-            .map(Field::getName)
-            .collect(toList());
-
-    // Check
-    if(!missing.isEmpty()) {
-        throw new IllegalStateException("Unsupported feature(s): " + missing);
-    }
-}
-
-private static boolean get(Field field, VkPhysicalDeviceFeatures obj) {
-    try {
-        return field.get(obj) == VulkanBoolean.TRUE;
-    }
-    catch(Exception e) {
-        throw new RuntimeException(e);
-    }
-}
-```
-
-> Unfortunately JNA does not provide a neat or reliable mechanism to query or compare fields so the above uses a slightly dodgy reflection-based implementation.
-
-### Integration
-
-An application can now configure the required features as illustrated in the following example:
-
-```java
-// Init required features
-final var features = new VkPhysicalDeviceFeatures();
-features.samplerAnisotropy = VulkanBoolean.TRUE;
-
-// Check supported features
-gpu.features().check(new DeviceFeatures(features));
-
-// Create device
-final LogicalDevice dev = new LogicalDevice.Builder(gpu)
-    ...
-    .features(new DeviceFeatures(features))
-    .build();
-```
-
-Alternatively:
-
-```java
-// Init required features
-final DeviceFeatures features = DeviceFeatures.of(Set.of("samplerAnisotropy"));
-
-// Create device
-final LogicalDevice dev = new LogicalDevice.Builder(gpu)
-    .features(features)
-```
-
-### Device Properties
-
-For good measure we also implement a local wrapper class for the properties of the physical device:
-
-```java
-public class Properties {
-    private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-
-    private Properties() {
-        instance.library().vkGetPhysicalDeviceProperties(handle, props);
-    }
-
-    /**
-     * @return Device name
-     */
-    public String name() {
-        return new String(props.deviceName);
-    }
-
-    /**
-     * @return Device type
-     */
-    public VkPhysicalDeviceType type() {
-        return props.deviceType;
-    }
-
-    /**
-     * @return Device limits
-     */
-    public VkPhysicalDeviceLimits limits() {
-        return props.limits.copy();
-    }
-
-    @Override
-    public String toString() {
-        return props.toString();
-    }
-}
-```
-
-Which is also lazily instantiated:
-
-```java
-public synchronized Properties properties() {
-    if(props == null) {
-        props = new Properties();
-    }
-    return props;
-}
 ```
 
 ---
@@ -948,7 +759,7 @@ public static Stream<PhysicalDevice> devices(Instance instance) {
 
 This implementation is suitable for an array where the component type is automatically marshalled by JNA (such as the device pointers in the above example).
 
-However for an array of JNA structures we need a second implementation since the result **must** be a contiguous block of memory allocated using the `toArray` helper:
+However for an array of JNA structures we need a second, slightly different implementation since the result **must** be a contiguous block of memory allocated using the `toArray` helper:
 
 ```java
 static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, Supplier<T> identity) {
@@ -957,18 +768,17 @@ static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary
     check(func.enumerate(lib, count, null));
 
     // Retrieve values
-    if(count.getValue() > 0) {
-        final T[] array = (T[]) identity.get().toArray(count.getValue());
+    final T[] array = (T[]) identity.get().toArray(count.getValue());
+    if(array.length > 0) {
         check(func.enumerate(lib, count, array[0]));
-        return array;
     }
-    else {
-        return (T[]) Array.newInstance(identity.getClass(), 0);
-    }
+
+    return array;
 }
 ```
 
 The _identity_ supplies an instance of the structure used to allocate the resultant array.
+Note that in this case the API method accepts a pointer-to-structure which maps to the **first** element of the allocated array.
 
 The code to retrieve the queue families now becomes:
 
@@ -978,7 +788,79 @@ VkQueueFamilyProperties[] families = VulkanFunction.enumerate(func, instance.lib
 
 This abstraction centralises the process of two-stage invocation reducing code complexity, duplication and testing.
 
-### Structure Arrays
+### Supported Extensions and Layers
+
+Although our demos simply assume that the expected extensions and validation layers are available (e.g. the swapchain extension and diagnostics layers)
+a well-behaved application would act depending on which are supported by the local Vulkan implementation.
+
+With the `VulkanFunction` in place we can take the opportunity now to implement functionality to retrieve the supported extensions and validation layers.
+
+The following new domain class accepts the API methods to retrieve the supported extensions and layers at either the device or instance level:
+
+```java
+public class Supported {
+    private final Set<String> extensions;
+    private final Set<ValidationLayer> layers;
+
+    public Supported(VulkanLibrary lib, VulkanFunction<VkExtensionProperties> extensionsFunction, VulkanFunction<VkLayerProperties> layersFunction) {
+        this.extensions = extensions(lib, extensionsFunction);
+        this.layers = layers(lib, layersFunction);
+    }
+
+    public Set<String> extensions() {
+        return extensions;
+    }
+
+    public Set<ValidationLayer> layers() {
+        return layers;
+    }
+}
+```
+
+The extensions are retrieved and converted to a set of strings using a local helper:
+
+```java
+private static Set<String> extensions(VulkanLibrary lib, VulkanFunction<VkExtensionProperties> extensions) {
+    return Arrays
+        .stream(VulkanFunction.enumerate(extensions, lib, VkExtensionProperties::new))
+        .map(e -> e.extensionName)
+        .map(String::new)
+        .collect(toSet());
+}
+```
+
+And similarly for the validation layers:
+
+```java
+private static Set<ValidationLayer> layers(VulkanLibrary lib, VulkanFunction<VkLayerProperties> layers) {
+    return Arrays
+        .stream(VulkanFunction.enumerate(layers, lib, VkLayerProperties::new))
+        .map(layer -> new ValidationLayer(Native.toString(layer.layerName), layer.implementationVersion))
+        .collect(toSet());
+}
+```
+
+This new class is used to retrieve the extensions and layers for a `PhysicalDevice` via a new on-demand accessor:
+
+```java
+public Supported supported() {
+    VulkanFunction<VkExtensionProperties> extensions = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, array);
+    VulkanFunction<VkLayerProperties> layers = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(handle, count, array);
+    return new Supported(instance.library(), extensions, layers);
+}
+```
+
+And at the implementation level via the following static accessor method on the `VulkanLibrary` interface itself:
+
+```java
+static Supported supported(VulkanLibrary lib) {
+    VulkanFunction<VkExtensionProperties> extensions = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
+    VulkanFunction<VkLayerProperties> layers = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
+    return new Supported(lib, extensions, layers);
+}
+```
+
+### Structure Collector
 
 Vulkan makes heavy use of structures to configure a variety of objects and we are also often required to allocate and populate arrays of these structures.
 
@@ -1116,6 +998,4 @@ In this chapter we:
 
 - Created a logical device and the work queues we will need in subsequent chapters
 
-- Implemented functionality to allow an application to specify supported and required Vulkan features.
-
-- Added helper code to handle _two stage invocation_ and population of structure arrays.
+- Added supporting functionality for _two stage invocation_ and population of structure arrays.

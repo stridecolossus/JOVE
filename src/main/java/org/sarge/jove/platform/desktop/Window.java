@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.AbstractTransientNativeObject;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.util.Check;
 
 import com.sun.jna.Pointer;
@@ -162,12 +162,12 @@ public class Window extends AbstractTransientNativeObject {
 
 	/**
 	 * Creates a Vulkan rendering surface for this window.
-	 * @param vulkan Vulkan instance handle
+	 * @param instance Vulkan instance
 	 * @return Vulkan surface
 	 */
-	public Handle surface(Handle vulkan) {
+	public Handle surface(Handle instance) {
 		final PointerByReference ref = new PointerByReference();
-		final int result = lib.glfwCreateWindowSurface(vulkan, this.handle(), null, ref);
+		final int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
 		if(result != 0) {
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}

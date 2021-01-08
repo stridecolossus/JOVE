@@ -161,7 +161,7 @@ public class TextureQuadDemo {
 				.build();
 
 		// Create rendering surface
-		final Surface surface = new Surface(surfaceHandle, dev);
+		final Surface surface = new Surface(surfaceHandle, gpu);
 
 		// Specify required image format
 		final VkFormat format = new FormatBuilder()

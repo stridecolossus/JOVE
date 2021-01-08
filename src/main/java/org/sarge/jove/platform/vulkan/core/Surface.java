@@ -22,18 +22,18 @@ import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import com.sun.jna.ptr.IntByReference;
 
 /**
- * A <i>surface</i> is used to render to a window.
+ * A <i>surface</i> defines the capabilities of a Vulkan rendering surface.
  * @author Sarge
  */
 public class Surface extends AbstractTransientNativeObject {
-	private final LogicalDevice dev;
+	private final PhysicalDevice dev;
 
 	/**
 	 * Constructor.
 	 * @param surface		Surface handle
 	 * @param dev			Device
 	 */
-	public Surface(Handle handle, LogicalDevice dev) {
+	public Surface(Handle handle, PhysicalDevice dev) {
 		super(handle);
 		this.dev = notNull(dev);
 	}
@@ -42,9 +42,9 @@ public class Surface extends AbstractTransientNativeObject {
 	 * @return Capabilities of this surface
 	 */
 	public VkSurfaceCapabilitiesKHR capabilities() {
-		final VulkanLibrary lib = dev.library();
+		final VulkanLibrary lib = dev.instance().library();
 		final VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR();
-		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.parent().handle(), handle, caps));
+		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.handle(), handle, caps));
 		return caps;
 	}
 
@@ -52,8 +52,8 @@ public class Surface extends AbstractTransientNativeObject {
 	 * @return Formats supported by this surface
 	 */
 	public Collection<VkSurfaceFormatKHR> formats() {
-		final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.parent().handle(), handle, count, array);
-		final var formats = VulkanFunction.enumerate(func, dev.library(), VkSurfaceFormatKHR::new);
+		final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.handle(), handle, count, array);
+		final var formats = VulkanFunction.enumerate(func, dev.instance().library(), VkSurfaceFormatKHR::new);
 		return Arrays.stream(formats).collect(toList());
 	}
 
@@ -63,14 +63,13 @@ public class Surface extends AbstractTransientNativeObject {
 	public Set<VkPresentModeKHR> modes() {
 		// Count number of supported modes
 		// TODO - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
-		final VulkanLibrary lib = dev.library();
-		final Handle handle = dev.parent().handle();
+		final VulkanLibrary lib = dev.instance().library();
 		final IntByReference count = lib.factory().integer();
-		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(handle, this.handle, count, null));
+		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev.handle(), this.handle, count, null));
 
 		// Retrieve modes
 		final int[] array = new int[count.getValue()];
-		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(handle, this.handle, count, array));
+		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev.handle(), this.handle, count, array));
 
 		// Convert to enumeration
 		return Arrays
@@ -81,7 +80,7 @@ public class Surface extends AbstractTransientNativeObject {
 
 	@Override
 	protected void release() {
-		final Instance instance = dev.parent().instance();
+		final Instance instance = dev.instance();
 		final VulkanLibrarySurface lib = instance.library();
 		lib.vkDestroySurfaceKHR(instance.handle(), handle, null);
 	}

@@ -14,6 +14,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
+@SuppressWarnings("unchecked")
 public class VulkanFunctionTest {
 	private VulkanLibrary lib;
 	private IntByReference count;
@@ -26,7 +27,6 @@ public class VulkanFunctionTest {
 		when(lib.factory().integer()).thenReturn(count);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	void enumerate() {
 		final VulkanFunction<String[]> func = mock(VulkanFunction.class);
@@ -37,7 +37,6 @@ public class VulkanFunctionTest {
 		verify(func).enumerate(lib, count, array);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	void enumerateStructure() {
 		// Create identity instance
@@ -53,5 +52,21 @@ public class VulkanFunctionTest {
 		assertArrayEquals(array, result);
 		verify(func).enumerate(lib, count, null);
 		verify(func).enumerate(lib, count, identity);
+	}
+
+	@Test
+	void enumerateStructureEmpty() {
+		// Create identity instance
+		final Structure identity = mock(Structure.class);
+		when(identity.toArray(0)).thenReturn(new Structure[]{});
+
+		// Create function
+		final VulkanFunction<Structure> func = mock(VulkanFunction.class);
+		count.setValue(0);
+
+		// Invoke and check empty array returned
+		final Structure[] result = VulkanFunction.enumerate(func, lib, () -> identity);
+		assertNotNull(result);
+		assertEquals(0, result.length);
 	}
 }
