@@ -225,13 +225,16 @@ Again we are not going into the details of how the matrix is calculated but this
 
 ---
 
-## Uniform Buffer Objects
+## Uniform Buffers
 
-To pass a matrix to the shader we will next implement a _uniform buffer object_ which is a descriptor set resource (as the sampler was in the previous chapter).  Note that a uniform buffer (or UBO) is basically just a vertex buffer that has a more specialised purpose.
+To pass a matrix to the shader we will next implement a _uniform buffer object_ which is another descriptor set resource. 
+Note that a uniform buffer (or UBO) is basically just a vertex buffer with a more specialised purpose.
 
-The process of updating the resources in a descriptor set was a quick-and-dirty implementation in the previous chapter.  We will re-factor this code to support multiple updates in one step and add support for uniform buffers.
+The process of updating the resources in a descriptor set was a quick-and-dirty implementation in the previous chapter. 
+We will re-factor this code to support multiple updates in one step and add support for uniform buffers.
 
-Descriptor sets are a particularly complex and difficult aspect of Vulkan (at least they were for this author).  We will present the solution we implemented and discuss some of the design issues and complexities after.
+Descriptor sets are a particularly complex and difficult aspect of Vulkan (at least they were for this author). 
+We present the eventual solution and discuss some of the design issues and complexities later.
 
 ### Resources
 
@@ -685,14 +688,61 @@ public class Model {
      * @return Vertex buffer
      */
     public ByteBuffer vertices() {
+        ...
     }
 }
 ```
 
-The new primitive enumeration replicates `VkPrimitiveTopology` but provides some additional helper functionality (without having to modify the code-generated class).
-In particular we add the following method to test whether the number of vertices in a given model is valid for the primitive:
+To avoid fiddling the code-generated `VkPrimitiveTopology` enumeration we implement a wrapper:
 
 ```java
+public enum Primitive {
+    /**
+     * Triangles.
+     */
+    TRIANGLES(3, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
+    
+    ...
+    
+    /**
+     * @return Number of vertices per primitive
+     */
+    public int size() {
+        return size;
+    }
+
+    /**
+     * @return Vulkan primitive topology
+     */
+    public VkPrimitiveTopology topology() {
+        return topology;
+    }
+}    
+```
+
+Which provides the following additional helper methods that are used when constructing models:
+
+```java
+/**
+ * @return Whether this primitive is a strip
+ */
+public boolean isStrip() {
+    return switch(this) {
+        case TRIANGLE_STRIP, TRIANGLE_FAN, LINE_STRIP -> true;
+        default -> false;
+    };
+}
+
+/**
+ * @return Whether this primitive supports face normals
+ */
+public boolean hasNormals() {
+    return switch(this) {
+        case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
+        default -> false;
+    };
+}
+
 /**
  * @param count Number of vertices
  * @return Whether the given number of vertices is valid for this primitive
@@ -745,7 +795,6 @@ public class CubeBuilder {
     
     private final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
     private float size = 1;
-    private boolean clockwise = false;
     
     ...
     
@@ -759,13 +808,11 @@ The build method creates two _triangles_ for each face of the cube:
 ```java
 
 public Model build() {
-    // Add two triangles for each cube face
     for(int[] face : FACES) {
-        add(face, LEFT);
-        add(face, RIGHT);
+        for(int corner : TRIANGLES) {
+            ...
+        }
     }
-
-    // Construct model
     return builder.build();
 }
 ```
@@ -801,40 +848,47 @@ private static final int[][] FACES = {
 };
 ```
 
-The two triangles for each face are specified by indices with alternate winding orders (exactly the same as we did for the quad in the previous chapter):
+The two triangles for each face are specified by the following helper class:
 
 ```java
-private static final int[] LEFT =  {0, 1, 2};
-private static final int[] RIGHT = {2, 1, 3};
-```
-
-The method to add a triangle generates three vertices for each triangle and adds them to the model:
-
-```java
-private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2D[]::new);
-
-private void add(int[] face, int[] triangle) {
-    for(int n = 0; n < 3; ++n) {
-        // Lookup vertex position for this triangle
-        final int index = face[triangle[n]];
-        final Point pos = VERTICES[index].scale(size);
-
-        // Lookup texture coordinate
-        final Coordinate2D coord = QUAD[triangle[n]];
-
-        // Build vertex
-        final Vertex v = new Vertex.Builder()
-                .position(pos)
-                .coords(coord)
-                .build();
-
-        // Add to model
-        builder.add(v);
-    }
+public final class Quad {
+    public static final List<Integer> LEFT = List.of(0, 1, 2);
+    public static final List<Integer> RIGHT = List.of(2, 1, 3);
 }
 ```
 
-To construct a cube we could have implemented a more cunning approach using a triangle-strip wrapped around the cube (for example) which would perhaps result in slightly more efficient storage and rendering performance, but for such a trivial model it's hardly worth the trouble.
+Note that triangles have alternate winding orders (exactly the same as we did for the quad in the previous chapter).
+
+In the loop we can now construct the vertices for each face and build the model:
+
+```java
+public Model build() {
+    for(int[] face : FACES) {
+        for(int corner : TRIANGLES) {
+            // Lookup cube vertex for this triangle
+            final int index = face[corner];
+            final Point pos = VERTICES[index].scale(size);
+    
+            // Lookup texture coordinate for this corner
+            final Coordinate2D tc = Quad.COORDINATES.get(corner);
+    
+            // Build vertex
+            final Vertex v = new Vertex.Builder()
+                .position(pos)
+                .coords(tc)
+                .build();
+    
+            // Add quad vertex to model
+            builder.add(v);
+        }
+    }
+    return builder.build();
+}
+```
+
+> We could have implemented a more cunning approach using a triangle-strip wrapped around the cube (for example) which would perhaps result in slightly more efficient storage and rendering performance, but for such a trivial model it's hardly worth the trouble.
+
+Note that at the time of writing we hard-code the vertex layout and do not include model normals.
 
 ### Input Assembly Pipeline Stage
 
@@ -845,7 +899,15 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
     private VkPrimitiveTopology topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
     private boolean restart;
     
-    ...
+    public InputAssemblyStageBuilder topology(Primitive primitive) {
+        this.topology = primitive.topology();
+        return this;
+    }
+
+    public InputAssemblyStageBuilder restart(boolean restart) {
+        this.restart = restart;
+        return this;
+    }
     
     @Override
     protected VkPipelineInputAssemblyStateCreateInfo result() {
@@ -856,8 +918,6 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
     }
 }
 ```
-
-We add an over-loaded setter that maps a `Primitive` to the `VkPrimitiveTopology` equivalent.
 
 This new stage configuration is added to the pipeline:
 

@@ -17,7 +17,7 @@ import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
+import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;

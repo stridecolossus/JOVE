@@ -1,11 +1,10 @@
 package org.sarge.jove.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.stream.Stream;
 
+import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
+import org.sarge.jove.util.MathsUtil;
 
 /**
  * Builder for a cube constructed as a {@link Primitive#TRIANGLES}.
@@ -37,30 +36,23 @@ public class CubeBuilder {
 			{ 1, 7, 3, 5 }, // Bottom
 	};
 
-	// TODO - LEFT, RIGHT and QUAD should be in a separate utility class?
-
-	// Triangle indices for a face
-	private static final int[] LEFT = {0, 1, 2};
-	private static final int[] RIGHT = {2, 1, 3};
-
-	// Quad texture coordinates
-	private static final Coordinate2D[] QUAD = Coordinate2D.QUAD.toArray(Coordinate2D[]::new);
+	// Indices for the two triangles per face quad
+	private static final int[] TRIANGLES = Stream.concat(Quad.LEFT.stream(), Quad.RIGHT.stream()).mapToInt(Integer::intValue).toArray();
 
 	// Default layout
 	private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
-	// TODO - setter?
+	// TODO - setter? compute normals?
 
 	/**
-	 * Convenience factory method to create a unit-cube.
+	 * Convenience method to create a unit-cube.
 	 * @return New cube
 	 */
 	public static Model create() {
-		return new CubeBuilder().size(0.5f).build();
+		return new CubeBuilder().size(MathsUtil.HALF).build();
 	}
 
 	private final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
 	private float size = 1;
-	private boolean clockwise = false;
 
 	/**
 	 * Sets the size of this cube (default is {@code one}).
@@ -72,61 +64,29 @@ public class CubeBuilder {
 	}
 
 	/**
-	 * Sets the triangle winding order (default is {@code false}, anti-clockwise).
-	 * @param clockwise Whether triangles are clockwise or anti-clockwise
-	 */
-	public CubeBuilder order(boolean clockwise) {
-		this.clockwise = clockwise;
-		return this;
-	}
-
-	/**
-	 * Creates a model for this cube.
+	 * Constructs this cube.
 	 * @return New cube model
 	 */
 	public Model build() {
-		// Add two triangles for each cube face
 		for(int[] face : FACES) {
-			add(face, LEFT);
-			add(face, RIGHT);
-		}
+			for(int corner : TRIANGLES) {
+				// Lookup cube vertex for this triangle
+				final int index = face[corner];
+				final Point pos = VERTICES[index].scale(size);
 
-		// Construct model
+				// Lookup texture coordinate for this corner
+				final Coordinate2D tc = Quad.COORDINATES.get(corner);
+
+				// Build vertex
+				final Vertex v = new Vertex.Builder()
+						.position(pos)
+						.coords(tc)
+						.build();
+
+				// Add quad vertex to model
+				builder.add(v);
+			}
+		}
 		return builder.build();
-	}
-
-	/**
-	 * Adds a triangle.
-	 * @param face			Quad face indices
-	 * @param triangle		Triangle indices within this face
-	 */
-	private void add(int[] face, int[] triangle) {
-		// Build triangle vertices
-		final List<Vertex> vertices = new ArrayList<>(3);
-		for(int n = 0; n < 3; ++n) {
-			// Lookup vertex position for this triangle
-			final int index = face[triangle[n]];
-			final Point pos = VERTICES[index].scale(size);
-
-			// Lookup texture coordinate
-			final Coordinate2D coord = QUAD[triangle[n]];
-
-			// Build vertex
-			final Vertex v = new Vertex.Builder()
-					.position(pos)
-					.coords(coord)
-					.build();
-
-			// Add to model
-			vertices.add(v);
-		}
-
-		// Reverse for clockwise winding order
-		if(clockwise) {
-			Collections.reverse(vertices);
-		}
-
-		// Add to model
-		vertices.forEach(builder::add);
 	}
 }

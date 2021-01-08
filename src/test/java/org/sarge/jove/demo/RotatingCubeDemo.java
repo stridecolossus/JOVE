@@ -289,7 +289,7 @@ public class RotatingCubeDemo {
 		//////////////
 
 		// Load the projection matrix
-		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
+		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.dimensions());
 		uniform.load(proj, proj.length(), 0);
 
 		final Matrix pos = new Matrix.Builder()

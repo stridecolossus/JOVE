@@ -10,13 +10,11 @@ public class RectangleTest {
 
 	@BeforeEach
 	void before() {
-		rect = new Rectangle(new Coordinate(1, 2), new Dimensions(3, 4));
+		rect = new Rectangle(1, 2, 3, 4);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Coordinate(1, 2), rect.pos());
-		assertEquals(new Dimensions(3, 4), rect.size());
 		assertEquals(1, rect.x());
 		assertEquals(2, rect.y());
 		assertEquals(3, rect.width());
@@ -24,21 +22,14 @@ public class RectangleTest {
 	}
 
 	@Test
-	void constructorDimensions() {
-		rect = new Rectangle(new Dimensions(3, 4));
-		assertEquals(Coordinate.ORIGIN, rect.pos());
-		assertEquals(new Dimensions(3, 4), rect.size());
-	}
-
-	@Test
-	void constructorComponents() {
-		assertEquals(rect, new Rectangle(1, 2, 3, 4));
+	void dimensions() {
+		assertEquals(new Dimensions(3, 4), rect.dimensions());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, rect.equals(rect));
 		assertEquals(false, rect.equals(null));
-		assertEquals(false, rect.equals(new Rectangle(new Coordinate(1, 2), new Dimensions(8, 9))));
+		assertEquals(false, rect.equals(new Rectangle(1, 2, 8, 9)));
 	}
 }

@@ -11,7 +11,7 @@ import org.sarge.jove.util.MathsUtil;
 /**
  * A <i>texture coordinate</i> is a 1D, 2D or 3D coordinate.
  */
-public interface TextureCoordinate extends Bufferable {
+public interface Coordinate extends Bufferable {
 	/**
 	 * @return Texture coordinates as an array
 	 */
@@ -23,7 +23,7 @@ public interface TextureCoordinate extends Bufferable {
 	 * @return Texture coordinate
 	 * @throws IllegalArgumentException if the array length is not in the range 1..3
 	 */
-	static TextureCoordinate of(float[] array) {
+	static Coordinate of(float[] array) {
 		return switch(array.length) {
 			case 1 ->	new Coordinate1D(array[0]);
 			case 2 ->	new Coordinate2D(array[0], array[1]);
@@ -35,7 +35,7 @@ public interface TextureCoordinate extends Bufferable {
 	/**
 	 * One-dimensional texture coordinate.
 	 */
-	class Coordinate1D implements TextureCoordinate {
+	class Coordinate1D implements Coordinate {
 		public final float u;
 
 		/**

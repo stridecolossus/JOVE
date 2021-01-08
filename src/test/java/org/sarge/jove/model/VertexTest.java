@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.TextureCoordinate;
-import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
+import org.sarge.jove.geometry.Coordinate;
+import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex.Builder;
 import org.sarge.jove.model.Vertex.Component;
@@ -54,7 +54,7 @@ public class VertexTest {
 		void size() {
 			assertEquals(Point.SIZE, Component.POSITION.size());
 			assertEquals(Vector.SIZE, Component.NORMAL.size());
-			assertEquals(TextureCoordinate.Coordinate2D.SIZE, Component.TEXTURE_COORDINATE.size());
+			assertEquals(Coordinate.Coordinate2D.SIZE, Component.TEXTURE_COORDINATE.size());
 			assertEquals(Colour.SIZE, Component.COLOUR.size());
 		}
 
