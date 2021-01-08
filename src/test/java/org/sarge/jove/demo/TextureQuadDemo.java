@@ -294,6 +294,7 @@ public class TextureQuadDemo {
 					.build()
 				.viewport()
 					.viewport(new Rectangle(chain.extents()))
+					.copyScissor()
 					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)

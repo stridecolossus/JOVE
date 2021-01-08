@@ -758,7 +758,7 @@ We first create an abstraction for a general loader:
 
 ```java
 @FunctionalInterface
-public interface Loader<T, R> {
+public interface ResourceLoader<T, R> {
     /**
      * Loads a resource.
      * @param in Input data
@@ -774,7 +774,7 @@ Where `<T>` is the input type (e.g. `DataInputStream` for the model loader above
 We adapt this interface with a template implementation that converts a general input-stream to the loader-specific input type:
 
 ```java
-abstract class Adapter<T, R> implements Loader<T, R> {
+abstract class Adapter<T, R> implements ResourceLoader<T, R> {
     /**
      * Maps the given input-stream to the input type for this loader.
      * @param in Input-stream
@@ -788,7 +788,7 @@ abstract class Adapter<T, R> implements Loader<T, R> {
 We can now refactor the various loaders accordingly, for example:
 
 ```java
-public static class ModelLoader extends Loader.Adapter<DataInputStream, Model> {
+public static class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Model> {
     @Override
     protected DataInputStream map(InputStream in) throws IOException {
         return new DataInputStream(in);
@@ -800,6 +800,8 @@ public static class ModelLoader extends Loader.Adapter<DataInputStream, Model> {
     }
 }
 ```
+
+This allows the loaders to expose the `load` method for easier testability but hides the input type mapping logic.
 
 Next we introduce a _data source_ that allows the application to define a centralised resource factory:
 
@@ -828,12 +830,12 @@ static DataSource of(String dir) {
 }
 ```
 
-The final piece of the jigsaw is the following method that wraps a loader adapter:
+The final piece of the jigsaw is the following factory method on the `ResourceLoader` that combines an adapter and a data-source:
 
 ```java
-default <T, R> Loader<String, R> loader(Loader.Adapter<T, R> loader) {
+static <T, R> ResourceLoader<String, R> of(DataSource src, Adapter<T, R> loader) {
     return name -> {
-        try(final InputStream in = open(name)) {
+        try(final InputStream in = src.open(name)) {
             final T input = loader.map(in);
             return loader.load(input);
         }
@@ -847,12 +849,20 @@ default <T, R> Loader<String, R> loader(Loader.Adapter<T, R> loader) {
 An application can now define a data-source and combine it with the various loaders to load resources by filename:
 
 ```java
+// Create data-source
 DataSource src = DataSource.of("./src/test/resources");
-var loader = src.loader(new ModelLoader());
-Model model = loader.load("chalet.model");
+
+// Load model
+var modelLoader = ResourceLoader.of(src, new ModelLoader());
+Model model = modelLoader.load("chalet.model");
+
+// Load texture image
+var imageLoader = ResourceLoader.of(src, new ImageData.Loader());
+ImageData image = imageLoader.load("chalet.jpg");
 ```
 
-This separates the mapping of filenames to resources from the actual loaders, with the added bonus that the handling of the checked I/O exceptions is centralised in a single location.
+This separates the mapping of filenames to resources from the actual loaders and centralises the common loader pattern.
+We also have the added bonus that the handling of the checked I/O exceptions is centralised in a single location.
 
 ---
 

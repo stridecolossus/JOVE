@@ -7,7 +7,6 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -259,16 +258,7 @@ public class Instance extends AbstractTransientNativeObject {
 		/**
 		 * Message handler that outputs to the console.
 		 */
-		public static final Consumer<Message> CONSOLE = writer(new PrintWriter(System.out));
-
-		/**
-		 * Creates a message handler that writes a message to the given output stream.
-		 * @param out Output stream
-		 * @return New message handler
-		 */
-		public static Consumer<Message> writer(PrintWriter out) {
-			return out::println;
-		}
+		public static final Consumer<Message> CONSOLE = System.err::println;
 
 		/**
 		 * Helper - Converts the given severity flag to a human-readable string.
@@ -362,14 +352,14 @@ public class Instance extends AbstractTransientNativeObject {
 		 * A <i>message callback</i> is invoked by Vulkan to report errors, diagnostics, etc.
 		 */
 		private static class MessageCallback implements Callback {
-			private final Consumer<Message> consumer;
+			private final Consumer<Message> handler;
 
 			/**
 			 * Constructor.
-			 * @param manager Message handler
+			 * @param handler Message handler
 			 */
-			private MessageCallback(Consumer<Message> consumer) {
-				this.consumer = notNull(consumer);
+			private MessageCallback(Consumer<Message> handler) {
+				this.handler = notNull(handler);
 			}
 
 			/**
@@ -390,7 +380,7 @@ public class Instance extends AbstractTransientNativeObject {
 				final Message message = new Message(severityEnum, typesEnum, pCallbackData);
 
 				// Delegate to handler
-				consumer.accept(message);
+				handler.accept(message);
 
 				// Continue execution
 				return false;

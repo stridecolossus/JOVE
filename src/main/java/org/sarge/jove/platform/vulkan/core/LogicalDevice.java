@@ -142,10 +142,6 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	 * A <i>semaphore</i> is used to synchronise operations within or across command queues.
 	 */
 	public class Semaphore extends AbstractVulkanObject {
-		/**
-		 * Constructor.
-		 * @param handle Semaphore handle
-		 */
 		private Semaphore(Pointer handle) {
 			super(handle, LogicalDevice.this, lib::vkDestroySemaphore);
 		}

@@ -10,7 +10,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.List;
@@ -175,7 +174,7 @@ public class InstanceTest {
 		@Test
 		void writer() {
 			final var out = new StringWriter();
-			final Consumer<Message> handler = Message.writer(new PrintWriter(out));
+			final Consumer<Message> handler = msg -> out.append(msg.toString());
 			assertNotNull(handler);
 			handler.accept(message);
 			assertEquals(message.toString(), out.toString().trim());
@@ -198,7 +197,7 @@ public class InstanceTest {
 			doReturn(func).when(spy).function("vkDestroyDebugUtilsMessengerEXT");
 
 			// Create message handler builder
-			handler = spy.handler();
+			handler = instance.handler();
 		}
 
 		@Test

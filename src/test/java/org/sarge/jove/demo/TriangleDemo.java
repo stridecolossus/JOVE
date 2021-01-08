@@ -141,6 +141,7 @@ public class TriangleDemo {
 				.pass(pass)
 				.viewport()
 					.viewport(extent)
+					.copyScissor()
 					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
