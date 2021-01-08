@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.model.Model.AbstractModel;
-import org.sarge.jove.util.Loader;
+import org.sarge.jove.util.ResourceLoader;
 
 /**
  * Loader for a buffered model.
@@ -62,7 +62,7 @@ public class BufferedModel extends AbstractModel {
 	/**
 	 * Loader for a buffered model.
 	 */
-	public static class ModelLoader extends Loader.Adapter<DataInputStream, Model> {
+	public static class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Model> {
 		private static final int VERSION = 1;
 		private static final String DELIMITER = "-";
 

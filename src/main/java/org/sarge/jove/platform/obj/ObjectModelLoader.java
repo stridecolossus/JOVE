@@ -20,13 +20,13 @@ import org.sarge.jove.geometry.TextureCoordinate.Coordinate2D;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.Loader;
+import org.sarge.jove.util.ResourceLoader;
 
 /**
  * Loader for an OBJ model.
  * @author Sarge
  */
-public class ObjectModelLoader extends Loader.Adapter<Reader, Stream<Model>> {
+public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Model>> {
 	private static final String[] EMPTY_ARGUMENTS = new String[]{};
 
 	/**

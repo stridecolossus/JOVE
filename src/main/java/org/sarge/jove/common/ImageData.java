@@ -16,7 +16,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.Loader.Adapter;
+import org.sarge.jove.util.ResourceLoader;
 
 /**
  * Wrapper for general image data.
@@ -89,7 +89,7 @@ public interface ImageData {
 	/**
 	 * Loader for an image.
 	 */
-	class Loader extends Adapter<BufferedImage, ImageData> {
+	class Loader extends ResourceLoader.Adapter<BufferedImage, ImageData> {
 		private boolean add = true;
 
 		/**

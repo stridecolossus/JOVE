@@ -42,6 +42,7 @@ import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.Interpolator;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.ResourceLoader;
 
 public class RotatingCubeDemo {
 
@@ -50,7 +51,7 @@ public class RotatingCubeDemo {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources");
 		final var src = DataSource.of(dir);
-		final var loader = src.loader(new ImageData.Loader());
+		final var loader = ResourceLoader.of(src, new ImageData.Loader());
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
 
@@ -205,9 +206,9 @@ public class RotatingCubeDemo {
 		// Load shaders
 		final Path dir = new File("./src/test/resources/demo/cube.rotate").toPath(); // TODO - root + resolve
 		final var src = DataSource.of(dir);
-		final var shaderLoader = src.loader(new ShaderLoader(dev));
-		final Shader vert = shaderLoader.load("spv.cube.instanced.vert");
-		final Shader frag = shaderLoader.load("spv.cube.frag");
+		final var loader = ResourceLoader.of(src, new ShaderLoader(dev));
+		final Shader vert = loader.load("spv.cube.instanced.vert");
+		final Shader frag = loader.load("spv.cube.frag");
 
 		//////////////////
 

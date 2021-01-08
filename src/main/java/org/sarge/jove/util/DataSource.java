@@ -38,23 +38,4 @@ public interface DataSource {
 	static DataSource of(String dir) {
 		return of(Paths.get(dir));
 	}
-
-	/**
-	 * Creates a loader based on this data-source.
-	 * @param <T> Input type
-	 * @param <R> Resource type
-	 * @param loader Loader adapter
-	 * @return Data-source loader
-	 */
-	default <T, R> Loader<String, R> loader(Loader.Adapter<T, R> loader) {
-		return name -> {
-			try(final InputStream in = open(name)) {
-				final T input = loader.map(in);
-				return loader.load(input);
-			}
-			catch(IOException e) {
-				throw new RuntimeException("Error loading resource: " + name, e);
-			}
-		};
-	}
 }

@@ -9,7 +9,7 @@ import java.io.InputStream;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.util.Loader;
+import org.sarge.jove.util.ResourceLoader;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -52,7 +52,7 @@ public class Shader extends AbstractVulkanObject {
 	/**
 	 * Loader for a shader.
 	 */
-	public static class ShaderLoader extends Loader.Adapter<InputStream, Shader> {
+	public static class ShaderLoader extends ResourceLoader.Adapter<InputStream, Shader> {
 		private final LogicalDevice dev;
 
 		/**

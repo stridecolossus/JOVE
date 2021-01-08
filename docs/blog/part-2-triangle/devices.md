@@ -6,7 +6,7 @@ title: Vulkan Devices
 
 Now we have a Vulkan instance we can use it to enumerate the _physical devices_ available on the local hardware and select one that satisfies the requirements of the application.
 
-This will partially be dependant on having a Vulkan rendering surface so we will first extend the _desktop_ service to create a native GLFW window.
+This will be partially dependant on having a Vulkan rendering surface so first we will extend the _desktop_ service to create a native GLFW window.
 
 Finally we will create a _logical device_ from the selected physical device and specify the _work queues_ we will use in subsequent chapters.
 
@@ -234,9 +234,8 @@ The queue class itself will be fleshed out when we implement the logical device.
 The queue families can now be created in the constructor from a set of Vulkan descriptors:
 
 ```java
-PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
-    this.handle = notNull(handle);
-    this.instance = notNull(instance);
+{
+    ...
     this.families = IntStream.range(0, families.length).mapToObj(n -> family(n, families[n])).collect(toList());
 }
 
@@ -791,11 +790,11 @@ This abstraction centralises the process of two-stage invocation reducing code c
 ### Supported Extensions and Layers
 
 Although our demos simply assume that the expected extensions and validation layers are available (e.g. the swapchain extension and diagnostics layers)
-a well-behaved application would act depending on which are supported by the local Vulkan implementation.
+a well-behaved application would adapt to those supported by the local Vulkan implementation.
 
 With the `VulkanFunction` in place we can take the opportunity now to implement functionality to retrieve the supported extensions and validation layers.
 
-The following new domain class accepts the API methods to retrieve the supported extensions and layers at either the device or instance level:
+The following new helper class encapsulated the logic for retrieval of the supported extensions and layers at either the device or instance level:
 
 ```java
 public class Supported {

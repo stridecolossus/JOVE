@@ -42,13 +42,14 @@ import org.sarge.jove.scene.OrbitalCameraController;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.ResourceLoader;
 
 public class ModelDemo {
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources");
 		final var src = DataSource.of(dir);
-		final var loader = src.loader(new ImageData.Loader());
+		final var loader = ResourceLoader.of(src, new ImageData.Loader());
 		final ImageData image = loader.load("demo/model/chalet.jpg");
 		final VkFormat format = FormatBuilder.format(image);
 //		//System.out.println(format); // VK_FORMAT_R8G8B8A8_SRGB
@@ -257,9 +258,9 @@ public class ModelDemo {
 		// Load shaders
 		final Path dir = new File("./src/test/resources/demo/model").toPath();
 		final var src = DataSource.of(dir);
-		final var shaderLoader = src.loader(new ShaderLoader(dev));
-		final Shader vert = shaderLoader.load("spv.chalet.vert");
-		final Shader frag = shaderLoader.load("spv.chalet.frag");
+		final var loader = ResourceLoader.of(src, new ShaderLoader(dev));
+		final Shader vert = loader.load("spv.chalet.vert");
+		final Shader frag = loader.load("spv.chalet.frag");
 
 		//////////////////
 
@@ -268,8 +269,7 @@ public class ModelDemo {
 //		final Model obj = objLoader.load(new FileReader("./src/test/resources/demo/model/chalet.obj")).iterator().next();
 //		new ModelLoader().write(obj, new FileOutputStream("./src/test/resources/demo/model/chalet.model"));
 		/////
-		final var loader = src.loader(new ModelLoader());
-		final Model model = loader.load("chalet.model");
+		final Model model = ResourceLoader.of(src, new ModelLoader()).load("chalet.model");
 
 		// Load VBO
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));

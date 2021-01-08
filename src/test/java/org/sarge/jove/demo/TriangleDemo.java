@@ -35,6 +35,7 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.DataSource;
+import org.sarge.jove.util.ResourceLoader;
 
 public class TriangleDemo {
 	public static void main(String[] args) throws Exception {
@@ -129,7 +130,7 @@ public class TriangleDemo {
 
 		// Load shaders
 		final DataSource src = DataSource.of("./src/test/resources/demo/triangle");
-		final var loader = src.loader(new ShaderLoader(dev));
+		final var loader = ResourceLoader.of(src, new ShaderLoader(dev));
 		final Shader vert = loader.load("spv.triangle.vert");
 		final Shader frag = loader.load("spv.triangle.frag");
 

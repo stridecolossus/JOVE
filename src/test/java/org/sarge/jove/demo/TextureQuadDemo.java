@@ -36,6 +36,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.DataSource;
+import org.sarge.jove.util.ResourceLoader;
 
 public class TextureQuadDemo {
 
@@ -44,7 +45,7 @@ public class TextureQuadDemo {
 		// Load image
 		final Path dir = Paths.get("./src/test/resources"); // /thiswayup.jpg");
 		final var src = DataSource.of(dir);
-		final var loader = src.loader(new ImageData.Loader());
+		final var loader = ResourceLoader.of(src, new ImageData.Loader());
 //		final ImageData image = loader.load("heightmap.gif"); // "thiswayup.jpg");
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
@@ -202,9 +203,9 @@ public class TextureQuadDemo {
 		final Path dir = new File("./src/test/resources/demo/texture.quad").toPath(); // TODO - root + resolve
 //		final var shaderLoader = DataSource.loader(new CompileShaderDataSource(DataSource.of(dir)), Shader.loader(dev));
 		final DataSource src = DataSource.of(dir);
-		final var shaderLoader = src.loader(new ShaderLoader(dev));
-		final Shader vert = shaderLoader.load("spv.quad.vert");
-		final Shader frag = shaderLoader.load("spv.quad.frag");
+		final var loader = ResourceLoader.of(src, new ShaderLoader(dev));
+		final Shader vert = loader.load("spv.quad.vert");
+		final Shader frag = loader.load("spv.quad.frag");
 
 		//////////////////
 
