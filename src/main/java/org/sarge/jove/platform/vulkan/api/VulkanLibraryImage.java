@@ -51,7 +51,26 @@ interface VulkanLibraryImage {
 	 */
 	int vkBindImageMemory(Handle device, Pointer image, Handle memory, long memoryOffset);
 
+	/**
+	 * Copies a buffer to an image.
+	 * @param commandBuffer		Command
+	 * @param srcBuffer			Buffer
+	 * @param dstImage			Image
+	 * @param dstImageLayout	Image layout
+	 * @param regionCount		Number of regions
+	 * @param pRegions			Regions
+	 */
 	void vkCmdCopyBufferToImage(Handle commandBuffer, Handle srcBuffer, Handle dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
+
+	/**
+	 * Copies an image to a buffer.
+	 * @param commandBuffer		Command
+	 * @param srcImage			Image
+	 * @param srcImageLayout	Image layout
+	 * @param dstBuffer			Buffer
+	 * @param regionCount		Number of regions
+	 * @param pRegions			Regions
+	 */
 	void vkCmdCopyImageToBuffer(Handle commandBuffer, Handle srcImage, VkImageLayout srcImageLayout, Handle dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
 
 	/**

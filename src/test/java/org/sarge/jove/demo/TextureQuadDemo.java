@@ -16,8 +16,8 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
@@ -211,14 +211,14 @@ public class TextureQuadDemo {
 
 		// Build triangle vertices
 		final Vertex[] vertices = {
-				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_LEFT).build(),
-				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
-				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
-				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
+				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coordinates(Coordinate2D.TOP_LEFT).build(),
+				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coordinates(Coordinate2D.BOTTOM_LEFT).build(),
+				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coordinates(Coordinate2D.TOP_RIGHT).build(),
+				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coordinates(Coordinate2D.BOTTOM_RIGHT).build(),
 		};
 
 		// Define vertex layout
-		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
+		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE);
 
 		// Create interleaved buffer
 		final ByteBuffer bb = ByteBuffer.allocate(vertices.length * layout.size() * Float.BYTES).order(ByteOrder.nativeOrder());
@@ -254,7 +254,7 @@ public class TextureQuadDemo {
 		final View texture = texture(dev, graphicsPool);
 
 		// Create descriptor layout
-		final DescriptorSet.Layout.Binding binding = new DescriptorSet.Layout.Binding.Builder()
+		final var binding = new DescriptorSet.Binding.Builder()
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
@@ -274,7 +274,7 @@ public class TextureQuadDemo {
 		final Sampler sampler = new Sampler.Builder(dev).build();
 		final var res = sampler.resource(texture);
 		for(DescriptorSet set : descriptors) {
-			set.set(binding, res);
+			set.entry(binding).set(res);
 		}
 		DescriptorSet.update(dev, descriptors);
 

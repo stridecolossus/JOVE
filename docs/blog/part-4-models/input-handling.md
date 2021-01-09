@@ -10,6 +10,8 @@ There are several ways we could have gone about implementing event handling and 
 
 We discuss the rationale for the design we eventually ended up with and illustrate some of the challenges we faced.
 
+This chapter also introduces a number of new helper methods on the `Matrix` and `Vector` domain classes that are covered at the end of the document.
+
 ---
 
 ## Analysis
@@ -346,10 +348,7 @@ while(...) {
     desktop.poll();
 
     // Update camera translation
-    final Matrix trans = new Matrix.Builder()
-        .identity()
-        .column(3, new Point(0, 0, -z.get()))
-        .build();
+    final Matrix trans = Matrix.translation(new Vector(0, 0, -z.get()));
 
     // Update scene matrix
     final Matrix view = rot.multiply(trans);
@@ -363,7 +362,7 @@ while(...) {
 Notes:
 - We use an atomic integer because we need an effectively `final` value in the handler lambda.
 - The camera translation is moved to the render loop so that it is recalculated on each frame.
-- We also add `poll()` for input events.
+- We also add `poll` for input events.
 
 We should now be able to move the model in the Z direction using the mouse wheel.
 
@@ -390,17 +389,10 @@ public class Camera {
 Under the hood the camera direction is actually the inverse of the view direction (since we move the scene in the opposite direction to the camera) hence:
 
 ```java
-/**
- * @return Camera view direction
- */
 public Vector direction() {
     return dir.invert();
 }
 
-/**
- * Sets the camera view direction.
- * @param dir View direction (assumes normalized)
- */
 public void direction(Vector dir) {
     this.dir = dir.invert();
     dirty();
@@ -433,19 +425,11 @@ public Matrix matrix() {
 }
 ```
 
-The translation matrix is built using a new helper:
-
-```java
-public static Matrix translation(Vector vec) {
-    return new Builder().identity().column(3, vec).build();
-}
-```
-
 Notes:
 
 - The translation component is also inverted (for the same reason as the camera direction).
 - We invert the local up axis of the camera since the Y axis is inverted for Vulkan.
-- The camera only updates the matrix when any of its properties have been modified (signalled by the `dirty()` method).
+- The camera only updates the matrix when any of its properties have been modified (signalled by the `dirty` method).
 
 We provide various mutators to move the camera position:
 
@@ -585,8 +569,6 @@ public Source<Position.Event> pointer() {
 
 The camera class is a simple model class - to implement richer functionality we introduce a  _camera controller_ that is invoked by action handlers.
 
-#### Controller
-
 An _orbital_ (or arcball) camera controller rotates the view position about a target point-of-interest.
 
 Rather than complicate the existing camera or derive a new sub-class we opt to create a separate _controller_ class:
@@ -617,8 +599,6 @@ public void update(float x, float y) {
 ```
 
 The _phi_ angle is a counter-clockwise rotation about the Y axis (or _yaw_ angle) and _theta_ is the vertical rotation (or _pitch_ angle).  Note that a _phi_ of zero 'points' in the X direction - hence we fiddle the angle by 90 degrees in the `update()` method to rotate to the negative Z axis.
-
-#### Supporting Geometry
 
 An _interpolator_ is a mathematical function to scale a value over a range (such as an animation duration):
 
@@ -653,6 +633,8 @@ private Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
 private Interpolator vertical = Interpolator.linear(-MathsUtil.HALF_PI, MathsUtil.HALF_PI);
 ```
 
+TODO - move / explain this above?
+
 Note that the ranges are different for the two rotation axes.
 
 To calculate the camera position we implement a _sphere_ geometry class which calculates a point on the surface of the sphere given a radius and the yaw-pitch angles:
@@ -670,8 +652,6 @@ public record Sphere(float radius) {
     }
 }
 ```
-
-#### Zoom
 
 The orbital controller also supports a _zoom_ function to move the eye position towards or away from the target:
 
@@ -1178,16 +1158,20 @@ In the next section we will illustrate how the bindings can be used to control t
 ---
 
 
+## Integration
 
 
+mouselook
+- look controller
+- WASD movement
+- wheel - forward/back
 
+common
+- escape
+- space -> toggle and-then home
+- home - reset view
 
-
-
-
-
-
-
+---
 
 
 ### Global Flip
@@ -1224,32 +1208,78 @@ Notes:
 
 - To avoid breaking our existing code the _flip_ setting is off by default.
 
----
+
+
+### Geometry Methods
+
+A translation matrix is built using a new helper:
+
+```java
+class Matrix {
+    public static Matrix translation(Vector vec) {
+        return new Builder().identity().column(3, vec).build();
+    }
+}
+```
+
+The _cross product_ calculates the vector that is perpendicular to the given vectors:
+
+```java
+class Vector {
+    public Vector cross(Vector vec) {
+        final float x = this.y * vec.z - this.z * vec.y;
+        final float y = this.z * vec.x - this.x * vec.z;
+        final float z = this.x * vec.y - this.y * vec.x;
+        return new Vector(x, y, z);
+    }
+}
+```
+
+matrix row/column
+
+```java
+public Builder row(int row, Tuple vec) {
+    set(row, 0, vec.x);
+    set(row, 1, vec.y);
+    set(row, 2, vec.z);
+    return this;
+}
+
+public Builder column(int col, Tuple vec) {
+    set(0, col, vec.x);
+    set(1, col, vec.y);
+    set(2, col, vec.z);
+    return this;
+}
+```
+
+multiply
+
+```java
+public Matrix multiply(Matrix m) {
+    final float[] result = new float[matrix.length];
+    for(int r = 0; r < order; ++r) {
+        for(int c = 0; c < order; ++c) {
+            float total = 0;
+            for(int n = 0; n < order; ++n) {
+                total += get(r, n) * m.get(n, c);
+            }
+            final int index = index(r, c);
+            result[index] = total;
+        }
+    }
+
+    return new Matrix(order, result);
+}
+```
 
 
 
-
-
-
-
-## Integration
-
-
-
-
-
-mouselook
-- look controller
-- WASD movement
-- wheel - forward/back
-
-common
-- escape
-- space -> toggle and-then home
-- home - reset view
-
----
 
 ## References
 
 [^invert]: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
+
+TODO - other refs?
+
+

@@ -936,3 +936,5 @@ In this chapter we:
 - Completed the builder for the vertex input pipeline stage.
 
 - Implemented a first-cut memory allocator.
+
+The API methods in this chapter are defined in the `VulkanLibraryBuffer` JNA interface.

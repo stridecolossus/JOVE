@@ -40,7 +40,7 @@ public class CubeBuilder {
 	private static final int[] TRIANGLES = Stream.concat(Quad.LEFT.stream(), Quad.RIGHT.stream()).mapToInt(Integer::intValue).toArray();
 
 	// Default layout
-	private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
+	private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE);
 	// TODO - setter? compute normals?
 
 	/**
@@ -80,7 +80,7 @@ public class CubeBuilder {
 				// Build vertex
 				final Vertex v = new Vertex.Builder()
 						.position(pos)
-						.coords(tc)
+						.coordinates(tc)
 						.build();
 
 				// Add quad vertex to model

@@ -242,12 +242,12 @@ public class RotatingCubeDemo {
 		final View texture = texture(dev, graphicsPool);
 
 		// Create descriptor layout
-		final var samplerBinding = new DescriptorSet.Layout.Binding.Builder()
+		final var samplerBinding = new DescriptorSet.Binding.Builder()
 				.binding(0)
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
-		final var uniformBinding = new DescriptorSet.Layout.Binding.Builder()
+		final var uniformBinding = new DescriptorSet.Binding.Builder()
 				.binding(1)
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
@@ -279,8 +279,8 @@ public class RotatingCubeDemo {
 		// Init descriptor sets
 		final Resource samplerResource = sampler.resource(texture);
 		for(DescriptorSet set : descriptors) {
-			set.set(samplerBinding, samplerResource);
-			set.set(uniformBinding, uniform);
+			set.entry(samplerBinding).set(samplerResource);
+			set.entry(uniformBinding).set(uniform);
 		}
 
 		// Apply updates

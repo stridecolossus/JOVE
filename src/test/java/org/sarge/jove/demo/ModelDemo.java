@@ -285,13 +285,13 @@ public class ModelDemo {
 		final View texture = texture(dev, graphicsPool);
 
 		// Create descriptor layout
-		final var samplerBinding = new DescriptorSet.Layout.Binding.Builder()
+		final var samplerBinding = new DescriptorSet.Binding.Builder()
 				.binding(0)
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
 
-		final var uniformBinding = new DescriptorSet.Layout.Binding.Builder()
+		final var uniformBinding = new DescriptorSet.Binding.Builder()
 				.binding(1)
 				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
@@ -328,8 +328,8 @@ public class ModelDemo {
 		final DescriptorSet.Resource samplerResource = sampler.resource(texture);
 		for(int n = 0; n < descriptors.size(); ++n) {
 			final DescriptorSet ds = descriptors.get(n);
-			ds.set(samplerBinding, samplerResource);
-			ds.set(uniformBinding, uniform);
+			ds.entry(samplerBinding).set(samplerResource);
+			ds.entry(uniformBinding).set(uniform);
 		}
 		DescriptorSet.update(dev, descriptors);
 

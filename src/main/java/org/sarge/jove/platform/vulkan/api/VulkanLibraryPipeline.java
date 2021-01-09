@@ -61,5 +61,18 @@ interface VulkanLibraryPipeline {
 	 */
 	void vkCmdBindPipeline(Handle commandBuffer, VkPipelineBindPoint pipelineBindPoint, Handle pipeline);
 
+	/**
+	 * Command to apply a pipeline barrier.
+	 * @param commandBuffer
+	 * @param srcStageMask
+	 * @param dstStageMask
+	 * @param dependencyFlags
+	 * @param memoryBarrierCount
+	 * @param pMemoryBarriers
+	 * @param bufferMemoryBarrierCount
+	 * @param pBufferMemoryBarriers
+	 * @param imageMemoryBarrierCount
+	 * @param pImageMemoryBarriers
+	 */
 	void vkCmdPipelineBarrier(Handle commandBuffer, int srcStageMask, int dstStageMask, int dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 }

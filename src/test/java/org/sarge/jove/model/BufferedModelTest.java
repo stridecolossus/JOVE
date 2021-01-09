@@ -41,12 +41,12 @@ public class BufferedModelTest {
 		@BeforeEach
 		void before() {
 			// Create vertex
-			final Vertex vertex = new Vertex.Builder().position(new Point(1, 2, 3)).coords(Coordinate2D.BOTTOM_LEFT).build();
+			final Vertex vertex = new Vertex.Builder().position(new Point(1, 2, 3)).coordinates(Coordinate2D.BOTTOM_LEFT).build();
 
 			// Create model
 			model = new IndexedBuilder()
 					.primitive(Primitive.LINES)
-					.layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE)
+					.layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE)
 					.add(vertex)
 					.add(vertex)
 					.build();

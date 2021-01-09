@@ -537,3 +537,4 @@ There are a few gotchas that could result in staring at a blank screen:
 
 In this final chapter for this phase of development we implemented commands and a crude render loop to display a triangle.
 
+The API methods introduced in this chapter are defined in the `VulkanLibraryCommandBuffer` JNA interface.

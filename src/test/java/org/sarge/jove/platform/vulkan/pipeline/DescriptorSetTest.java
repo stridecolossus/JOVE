@@ -32,9 +32,9 @@ import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Binding;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Entry;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout.Binding;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Pool;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -77,27 +77,26 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			final Entry entry = descriptor.entry(binding);
 			assertNotNull(entry);
 			assertEquals(Optional.empty(), entry.resource());
-			assertEquals(true, entry.isDirty());
+		}
+
+		@Test
+		void entryInvalidBinding() {
+			final Binding other = new Binding(999, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT));
+			assertThrows(IllegalArgumentException.class, () -> descriptor.entry(other));
 		}
 
 		@Test
 		void set() {
 			final Entry entry = descriptor.entry(binding);
-			descriptor.set(binding, res);
+			entry.set(res);
+			entry.set(res);
 			assertEquals(Optional.of(res), entry.resource());
-			assertEquals(true, entry.isDirty());
-		}
-
-		@Test
-		void setInvalidBinding() {
-			final Binding other = new Binding(999, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT));
-			assertThrows(IllegalArgumentException.class, () -> descriptor.set(other, res));
 		}
 
 		@Test
 		void setInvalidResource() {
 			when(res.type()).thenReturn(VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-			assertThrows(IllegalArgumentException.class, () -> descriptor.set(binding, res));
+			assertThrows(IllegalArgumentException.class, () -> descriptor.entry(binding).set(res));
 		}
 
 		@Test
@@ -287,7 +286,6 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			void build() {
 				// Build pool
 				pool = builder
-						.max(3)
 						.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, 3)
 						.flag(VkDescriptorPoolCreateFlag.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
 						.build();
@@ -312,6 +310,18 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			}
 
 			@Test
+			void max() {
+				pool = builder
+						.max(1)
+						.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, 1)
+						.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+						.build();
+
+				assertEquals(1, pool.maximum());
+				assertEquals(1, pool.available());
+			}
+
+			@Test
 			void buildEmpty() {
 				assertThrows(IllegalArgumentException.class, () -> builder.build());
 			}
@@ -329,11 +339,8 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@Test
 		void update() {
 			// Update resource
-			descriptor.set(binding, res);
-
-			// Apply update
+			descriptor.entry(binding).set(res);
 			DescriptorSet.update(dev, Set.of(descriptor));
-			assertEquals(false, descriptor.entry(binding).isDirty());
 
 			// Check API
 			final ArgumentCaptor<VkWriteDescriptorSet[]> captor = ArgumentCaptor.forClass(VkWriteDescriptorSet[].class);
@@ -357,7 +364,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@Test
 		void applyNone() {
 			// Update resource
-			descriptor.set(binding, res);
+			descriptor.entry(binding).set(res);
 			DescriptorSet.update(dev, Set.of(descriptor));
 			clearInvocations(lib);
 

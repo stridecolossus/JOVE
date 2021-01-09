@@ -550,7 +550,22 @@ private class Manager {
 
 The `LazySupplier' is covered at the end of the chapter.
 
-As already noted the diagnostics mechanism is an extension and not part of the public Vulkan API, therefore we add the following helper to the `Instance` to lookup the API method to create the handler:
+As already noted the diagnostics mechanism is an extension and not part of the public Vulkan API.
+The methods to create and destroy a message handler are function pointers that are retrieved using the following API method (assuming the relevant extension is present):
+
+```
+interface VulkanLibraryInstance {
+    /**
+     * Looks up an instance function.
+     * @param instance      Vulkan instance
+     * @param name          Function name
+     * @return Function pointer
+     */
+    Pointer vkGetInstanceProcAddr(Handle instance, String name);
+}
+```
+
+Which is used by the following helper on the `Instance` class to lookup a JNA function by name:
 
 ```java
 public Function function(String name) {
@@ -560,7 +575,7 @@ public Function function(String name) {
 }
 ```
 
-The `create` method invokes this function with an array of the relevant arguments (which again we have to determine from the documentation):
+The `create` method invokes the JNA function with an array of the relevant arguments (which again is determined from the documentation):
 
 ```java
 private void create(VkDebugUtilsMessengerCreateInfoEXT info) {
@@ -574,7 +589,7 @@ private void create(VkDebugUtilsMessengerCreateInfoEXT info) {
 }
 ```
 
-All this code is tied together in the following factory method on the instance class:
+All this code is tied together in the following factory method that creates a new message handler:
 
 ```java
 public class Instance {
@@ -591,7 +606,7 @@ public class Instance {
 }
 ```
 
-Finally we add the following method to the manager to release all attached handlers:
+Finally we add the following method to the manager to release the attached handlers:
 
 ```java
 private void destroy() {
@@ -621,7 +636,7 @@ public void destroy() {
 }
 ```
 
-Note that this implementation assumes that handlers persist for the lifetime of the instance (which seems a safe assumption at this stage).
+Note that this implementation assumes that handlers persist for the lifetime of the instance (which seems a safe assumption).
 
 ### Message Formatting
 

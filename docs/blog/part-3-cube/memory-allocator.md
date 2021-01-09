@@ -395,3 +395,4 @@ stats
 
 In this chapter we designed and implemented the device memory allocator using a memory pool.
 
+The API methods to manage device memory are defined in the `VulkanLibraryMemory` JNA interface.

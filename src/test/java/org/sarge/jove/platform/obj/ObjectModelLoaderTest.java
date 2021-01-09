@@ -64,7 +64,7 @@ public class ObjectModelLoaderTest {
 			final Model model = array[0];
 			assertNotNull(model);
 			assertEquals(Primitive.TRIANGLES, model.primitive());
-			assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.TEXTURE_COORDINATE), model.layout());
+			assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.COORDINATE), model.layout());
 			assertEquals(3, model.count());
 
 			// Check vertex buffer

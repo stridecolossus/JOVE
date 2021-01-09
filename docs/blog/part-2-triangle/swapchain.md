@@ -954,3 +954,4 @@ Additionally we could now use `TransientNativeObject` to track native resources 
 
 In this chapter we implemented the swapchain, render pass and frame-buffer domain objects.
 
+The API methods introduced in this chapter are defined in the `VulkanLibrarySwapChain`, `VulkanLibraryRenderPass` and `VulkanLibraryFrameBuffer` JNA interfaces.

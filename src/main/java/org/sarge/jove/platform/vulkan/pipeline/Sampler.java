@@ -80,10 +80,10 @@ public class Sampler extends AbstractVulkanObject {
 
 	/**
 	 * Creates a descriptor set resource for this sampler with the given texture image-view.
-	 * @param view Texture image-view
+	 * @param texture Texture
 	 * @return Sampler resource
 	 */
-	public Resource resource(View view) {
+	public Resource resource(View texture) {
 		return new Resource() {
 			@Override
 			public VkDescriptorType type() {
@@ -96,10 +96,9 @@ public class Sampler extends AbstractVulkanObject {
 				final var info = new VkDescriptorImageInfo();
 				info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				info.sampler = Sampler.this.handle();
-				info.imageView = view.handle();
+				info.imageView = texture.handle();
 
 				// Add to write descriptor
-				// TODO - assumes one entry!
 				write.pImageInfo = info;
 			}
 		};

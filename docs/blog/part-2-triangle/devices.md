@@ -998,3 +998,8 @@ In this chapter we:
 - Created a logical device and the work queues we will need in subsequent chapters
 
 - Added supporting functionality for _two stage invocation_ and population of structure arrays.
+
+The API methods in this chapter are defined in the following JNA interfaces:
+- `VulkanLibraryPhysicalDevice`
+- `VulkanLibraryLogicalDevice`
+- `VulkanLibrarySurface`

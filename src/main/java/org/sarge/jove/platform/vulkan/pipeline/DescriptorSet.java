@@ -18,7 +18,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout.Binding;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
 import org.sarge.jove.util.Check;
 
@@ -52,7 +51,7 @@ import com.sun.jna.ptr.PointerByReference;
  *
  *  // Update descriptor sets
  *  Resource sampler = ...
- *  descriptor.set(binding, sampler);
+ *  descriptor.entry(binding).set(sampler);
  *  ...
  *
  *  // Apply updates
@@ -71,7 +70,7 @@ public class DescriptorSet implements NativeObject {
 		VkDescriptorType type();
 
 		/**
-		 * Populates the given write descriptor for this resource.
+		 * Populates the write descriptor for this resource.
 		 * @param write Write descriptor
 		 */
 		void populate(VkWriteDescriptorSet write);
@@ -96,12 +95,18 @@ public class DescriptorSet implements NativeObject {
 		/**
 		 * @return Whether this entry has been updated
 		 */
-		public boolean isDirty() {
-			return dirty;
+		private boolean isDirty() {
+			if(dirty) {
+				dirty = false;
+				return true;
+			}
+			else {
+				return false;
+			}
 		}
 
 		/**
-		 * @return Resource for this entry
+		 * @return Resource for this binding entry
 		 */
 		public Optional<Resource> resource() {
 			return Optional.ofNullable(res);
@@ -110,24 +115,30 @@ public class DescriptorSet implements NativeObject {
 		/**
 		 * Sets the resource for this entry.
 		 * @param res Resource
+		 * @throws IllegalArgumentException if the type of resource does not match the binding
 		 */
 		public void set(Resource res) {
+			// Validate resource for this entry
+			if(res.type() != binding.type()) {
+				throw new IllegalArgumentException(String.format("Invalid resource type: expected=%s actual=%s", binding.type(), res.type()));
+			}
+
+			// Set resource and mark as updated
 			this.res = notNull(res);
 			this.dirty = true;
 		}
 
 		/**
-		 * Creates a write descriptor for this entry.
-		 * @param binding		Binding
-		 * @param set			Descriptor set
-		 * @return Write descriptor
+		 * Populates the write descriptor for this entry.
+		 * @param write Write descriptor
 		 */
 		private void populate(VkWriteDescriptorSet write) {
 			// Validate
-			assert dirty;
-			if(res == null) throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%d", DescriptorSet.this, binding.index));
+			if(res == null) {
+				throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%d", DescriptorSet.this, binding.index));
+			}
 
-			// Create write descriptor
+			// Init write descriptor
 			write.dstBinding = binding.index();
 			write.descriptorType = binding.type();
 			write.dstSet = handle();
@@ -136,9 +147,6 @@ public class DescriptorSet implements NativeObject {
 
 			// Populate resource
 			res.populate(write);
-
-			// Mark as updated
-			dirty = false;
 		}
 
 		@Override
@@ -152,7 +160,7 @@ public class DescriptorSet implements NativeObject {
 
 	private final Handle handle;
 	private final Layout layout;
-	private final Map<Binding, Entry> resources;
+	private final Map<Binding, Entry> entries;
 
 	/**
 	 * Constructor.
@@ -162,7 +170,7 @@ public class DescriptorSet implements NativeObject {
 	DescriptorSet(Handle handle, Layout layout) {
 		this.handle = notNull(handle);
 		this.layout = notNull(layout);
-		this.resources = layout.bindings.values().stream().collect(toMap(Function.identity(), Entry::new));
+		this.entries = layout.bindings.values().stream().collect(toMap(Function.identity(), Entry::new));
 	}
 
 	@Override
@@ -171,7 +179,7 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * @return Descriptor layout
+	 * @return Layout for this descriptor set
 	 */
 	public Layout layout() {
 		return layout;
@@ -184,30 +192,9 @@ public class DescriptorSet implements NativeObject {
 	 * @throws IllegalArgumentException if this descriptor set does not contain the given binding
 	 */
 	public Entry entry(Binding binding) {
-		if(!layout.bindings.values().contains(binding)) {
-			throw new IllegalArgumentException("Invalid binding for descriptor: " + binding);
-		}
-		return resources.get(binding);
-	}
-
-	/**
-	 * Sets the resource for the given binding.
-	 * @param binding		Binding
-	 * @param res			Resource
-	 * @throws IllegalArgumentException if this descriptor set does not contain the given binding
-	 * @throws IllegalArgumentException if the type of resource does not match the binding
-	 */
-	public void set(Binding binding, Resource res) {
-		if(res.type() != binding.type()) throw new IllegalArgumentException(String.format("Invalid resource type: expected=%s actual=%s", binding.type(), res.type()));
-		final Entry entry = entry(binding);
-		entry.set(res);
-	}
-
-	/**
-	 * @return Resource entries
-	 */
-	private Stream<Entry> stream() {
-		return resources.values().stream();
+		final Entry entry = entries.get(binding);
+		if(entry == null) throw new IllegalArgumentException("Invalid binding for descriptor: " + binding);
+		return entry;
 	}
 
 	/**
@@ -220,10 +207,10 @@ public class DescriptorSet implements NativeObject {
 	public static void update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
 		if(descriptors.isEmpty()) throw new IllegalStateException("Cannot update empty descriptor sets");
 
-		// Enumerate dirty entries
+		// Enumerate dirty resources
 		final var writes = descriptors
 				.stream()
-				.flatMap(DescriptorSet::stream)
+				.flatMap(set -> set.entries.values().stream())
 				.filter(Entry::isDirty)
 				.collect(new StructureCollector<>(VkWriteDescriptorSet::new, Entry::populate));
 
@@ -270,7 +257,7 @@ public class DescriptorSet implements NativeObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("handle", handle)
-				.append("resources", resources.values())
+				.append("resources", entries.values())
 				.build();
 	}
 
@@ -285,7 +272,7 @@ public class DescriptorSet implements NativeObject {
 		 * Constructor.
 		 * @param handle		Pool handle
 		 * @param dev			Logical device
-		 * @param max			Maximum number of descriptor sets
+		 * @param max			Maximum number of descriptor sets that <b>can</b> be allocated by this pool
 		 */
 		Pool(Pointer handle, LogicalDevice dev, int max) {
 			super(handle, dev, dev.library()::vkDestroyDescriptorPool);
@@ -409,7 +396,7 @@ public class DescriptorSet implements NativeObject {
 			private final LogicalDevice dev;
 			private final Map<VkDescriptorType, Integer> entries = new HashMap<>();
 			private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
-			private int max = 1;
+			private Integer max;
 
 			/**
 			 * Constructor.
@@ -432,7 +419,7 @@ public class DescriptorSet implements NativeObject {
 			}
 
 			/**
-			 * Sets the maximum number of sets to allocate from this pool.
+			 * Sets the maximum number of sets that <b>can</b> be allocated from this pool.
 			 * @param max Maximum number of sets
 			 */
 			public Builder max(int max) {
@@ -452,13 +439,26 @@ public class DescriptorSet implements NativeObject {
 			/**
 			 * Constructs this pool.
 			 * @return New descriptor-set pool
-			 * @throws IllegalArgumentException if the available sets is empty or the total number of exceeds the specified maximum
+			 * @throws IllegalArgumentException if the available sets is empty or the pool size exceeds the specified maximum
 			 */
 			public Pool build() {
-				// Validate
-				final int total = entries.values().stream().mapToInt(Integer::intValue).sum();
-				if(entries.isEmpty()) throw new IllegalArgumentException("No pool sizes specified");
-				if(total > max) throw new IllegalArgumentException(String.format("Total available descriptor sets exceeds the specified maximum: total=%d max=%d", total, max));
+				// Determine logical maximum number of sets that can be allocated
+				final int limit = entries
+						.values()
+						.stream()
+						.mapToInt(Integer::intValue)
+						.max()
+						.orElseThrow(() -> new IllegalArgumentException("No pool sizes specified"));
+
+				// Initialise or validate the maximum number of sets
+				if(max == null) {
+					max = limit;
+				}
+				else {
+					if(limit > max) {
+						throw new IllegalArgumentException(String.format("Total available descriptor sets exceeds the specified maximum: limit=%d max=%d", limit, max));
+					}
+				}
 
 				// Init pool descriptor
 				final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
@@ -487,95 +487,95 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
+	 * A <i>descriptor set binding</i> defines a binding for a descriptor set {@link Layout}.
+	 */
+	public static record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
+		/**
+		 * Constructor.
+		 * @param index			Binding index
+		 * @param type			Descriptor type
+		 * @param count			Array size
+		 * @param stages		Pipeline stage flags
+		 * @throws IllegalArgumentException if pipeline stages is empty
+		 */
+		public Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
+			if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stages specified for binding");
+			this.index = zeroOrMore(index);
+			this.type = notNull(type);
+			this.count = oneOrMore(count);
+			this.stages = Set.copyOf(stages);
+		}
+
+		/**
+		 * Populates a layout binding descriptor.
+		 */
+		private void populate(VkDescriptorSetLayoutBinding info) {
+			info.binding = index;
+			info.descriptorType = type;
+			info.descriptorCount = count;
+			info.stageFlags = IntegerEnumeration.mask(stages);
+		}
+
+		/**
+		 * Builder for a layout binding.
+		 */
+		public static class Builder {
+			private int binding;
+			private VkDescriptorType type;
+			private int count = 1;
+			private final Set<VkShaderStageFlag> stages = new HashSet<>();
+
+			/**
+			 * Sets the index of this binding.
+			 * @param binding Binding index
+			 */
+			public Builder binding(int binding) {
+				this.binding = zeroOrMore(binding);
+				return this;
+			}
+
+			/**
+			 * Sets the descriptor type for this binding.
+			 * @param type Descriptor type
+			 */
+			public Builder type(VkDescriptorType type) {
+				this.type = notNull(type);
+				return this;
+			}
+
+			/**
+			 * Sets the array count of this binding.
+			 * @param count Array count
+			 */
+			public Builder count(int count) {
+				this.count = oneOrMore(count);
+				return this;
+			}
+
+			/**
+			 * Adds a shader stage to this binding.
+			 * @param stage Shader stage
+			 */
+			public Builder stage(VkShaderStageFlag stage) {
+				stages.add(notNull(stage));
+				return this;
+			}
+
+			/**
+			 * Constructs this binding.
+			 * @return New layout binding
+			 */
+			public Binding build() {
+				return new Binding(binding, type, count, stages);
+			}
+		}
+	}
+
+	/**
 	 * A <i>descriptor set layout</i> specifies the resource bindings for a descriptor set.
 	 * @see Resource
 	 */
 	public static class Layout extends AbstractVulkanObject {
-		/**
-		 * Descriptor for a binding in this layout.
-		 */
-		public static record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
-			/**
-			 * Constructor.
-			 * @param index			Binding index
-			 * @param type			Descriptor type
-			 * @param count			Array size
-			 * @param stages		Pipeline stage flags
-			 * @throws IllegalArgumentException if pipeline stages is empty
-			 */
-			public Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
-				if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stages specified for binding");
-				this.index = zeroOrMore(index);
-				this.type = notNull(type);
-				this.count = oneOrMore(count);
-				this.stages = Set.copyOf(stages);
-			}
-
-			/**
-			 * Populates a layout binding descriptor.
-			 */
-			private void populate(VkDescriptorSetLayoutBinding info) {
-				info.binding = index;
-				info.descriptorType = type;
-				info.descriptorCount = count;
-				info.stageFlags = IntegerEnumeration.mask(stages);
-			}
-
-			/**
-			 * Builder for a layout binding.
-			 */
-			public static class Builder {
-				private int binding;
-				private VkDescriptorType type;
-				private int count = 1;
-				private final Set<VkShaderStageFlag> stages = new HashSet<>();
-
-				/**
-				 * Sets the index of this binding.
-				 * @param binding Binding index
-				 */
-				public Builder binding(int binding) {
-					this.binding = zeroOrMore(binding);
-					return this;
-				}
-
-				/**
-				 * Sets the descriptor type for this binding.
-				 * @param type Descriptor type
-				 */
-				public Builder type(VkDescriptorType type) {
-					this.type = notNull(type);
-					return this;
-				}
-
-				/**
-				 * Sets the array count of this binding.
-				 * @param count Array count
-				 */
-				public Builder count(int count) {
-					this.count = oneOrMore(count);
-					return this;
-				}
-
-				/**
-				 * Adds a shader stage to this binding.
-				 * @param stage Shader stage
-				 */
-				public Builder stage(VkShaderStageFlag stage) {
-					stages.add(notNull(stage));
-					return this;
-				}
-
-				/**
-				 * Constructs this binding.
-				 * @return New layout binding
-				 */
-				public Binding build() {
-					return new Binding(binding, type, count, stages);
-				}
-			}
-		}
-
 		/**
 		 * Creates a descriptor set layout.
 		 * @param dev			Logical device

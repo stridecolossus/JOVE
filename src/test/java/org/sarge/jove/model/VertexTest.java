@@ -20,7 +20,7 @@ import org.sarge.jove.model.Vertex.DefaultVertex;
 import org.sarge.jove.model.Vertex.Layout;
 
 public class VertexTest {
-	private static final Component[] LAYOUT = {Component.POSITION, Component.NORMAL, Component.TEXTURE_COORDINATE, Component.COLOUR};
+	private static final Component[] LAYOUT = {Component.POSITION, Component.NORMAL, Component.COORDINATE, Component.COLOUR};
 
 	private Vertex vertex;
 	private Vector normal;
@@ -35,7 +35,7 @@ public class VertexTest {
 	void constructor() {
 		assertEquals(Point.ORIGIN, vertex.position());
 		assertEquals(normal, vertex.normal());
-		assertEquals(Coordinate2D.BOTTOM_RIGHT, vertex.coords());
+		assertEquals(Coordinate2D.BOTTOM_RIGHT, vertex.coordinates());
 		assertEquals(Colour.WHITE, vertex.colour());
 	}
 
@@ -44,7 +44,7 @@ public class VertexTest {
 		vertex = Vertex.of(Point.ORIGIN);
 		assertEquals(Point.ORIGIN, vertex.position());
 		assertEquals(null, vertex.normal());
-		assertEquals(null, vertex.coords());
+		assertEquals(null, vertex.coordinates());
 		assertEquals(null, vertex.colour());
 	}
 
@@ -54,7 +54,7 @@ public class VertexTest {
 		void size() {
 			assertEquals(Point.SIZE, Component.POSITION.size());
 			assertEquals(Vector.SIZE, Component.NORMAL.size());
-			assertEquals(Coordinate.Coordinate2D.SIZE, Component.TEXTURE_COORDINATE.size());
+			assertEquals(Coordinate.Coordinate2D.SIZE, Component.COORDINATE.size());
 			assertEquals(Colour.SIZE, Component.COLOUR.size());
 		}
 
@@ -62,7 +62,7 @@ public class VertexTest {
 		void map() {
 			assertEquals(Point.ORIGIN, Component.POSITION.map(vertex));
 			assertEquals(normal, Component.NORMAL.map(vertex));
-			assertEquals(Coordinate2D.BOTTOM_RIGHT, Component.TEXTURE_COORDINATE.map(vertex));
+			assertEquals(Coordinate2D.BOTTOM_RIGHT, Component.COORDINATE.map(vertex));
 			assertEquals(Colour.WHITE, Component.COLOUR.map(vertex));
 		}
 	}
@@ -111,7 +111,7 @@ public class VertexTest {
 			final ByteBuffer expected = ByteBuffer.allocate(len);
 			vertex.position().buffer(expected);
 			vertex.normal().buffer(expected);
-			vertex.coords().buffer(expected);
+			vertex.coordinates().buffer(expected);
 			vertex.colour().buffer(expected);
 			assertEquals(expected, buffer);
 		}
@@ -139,7 +139,7 @@ public class VertexTest {
 			final Vertex result = builder
 					.position(Point.ORIGIN)
 					.normal(normal)
-					.coords(Coordinate2D.BOTTOM_RIGHT)
+					.coordinates(Coordinate2D.BOTTOM_RIGHT)
 					.colour(Colour.WHITE)
 					.build();
 

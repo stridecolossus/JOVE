@@ -42,6 +42,8 @@ public class Pipeline extends AbstractVulkanObject {
 }
 ```
 
+The API methods to create and manage the pipeline are defined in the `VulkanLibraryPipeline` JNA interface.
+
 ### Pipeline Layout
 
 The _pipeline layout_ specifies the _resources_ (texture samplers, uniform buffers, etc) and _push constants_ used by the pipeline.
@@ -434,6 +436,8 @@ public static Shader load(LogicalDevice dev, InputStream in) throws IOException 
 }
 ```
 
+The API methods to create and destroy the shader are defined in the `VulkanLibraryShader` JNA interface.
+
 ### Builder
 
 The shader stage pipeline builder creates an **array** of `VkPipelineShaderStageCreateInfo` descriptors:
@@ -745,3 +749,4 @@ Note that we give the setup method a relatively unique name (and make it private
 ## Summary
 
 In this chapter we implemented a nested builder to configure the graphics pipeline and shader modules.
+

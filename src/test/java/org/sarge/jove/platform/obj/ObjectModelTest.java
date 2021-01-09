@@ -197,7 +197,7 @@ public class ObjectModelTest {
 			assertNotNull(result);
 			assertEquals(name, result.name());
 			assertEquals(Primitive.TRIANGLES, result.primitive());
-			assertEquals(List.of(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.TEXTURE_COORDINATE), result.layout().components());
+			assertEquals(List.of(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.COORDINATE), result.layout().components());
 			assertEquals(3, result.count());
 			assertEquals(Optional.empty(), result.index());
 		}

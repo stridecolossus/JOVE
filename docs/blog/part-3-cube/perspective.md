@@ -4,7 +4,8 @@ title: Perspective Projection
 
 ## Overview
 
-We now have almost all the Vulkan functionality required to implement the proverbial rotating textured cube.  The next step is to introduce perspective projection so that fragments that are more distant in the scene appear correctly foreshortened.
+We now have almost all the Vulkan functionality required to implement the proverbial rotating textured cube. 
+The next step is to introduce perspective projection so that fragments that are more distant in the scene appear correctly foreshortened.
 
 For this we will need:
 
@@ -1076,15 +1077,13 @@ Huzzah!
 
 In this chapter we implemented perspective projection to render a 3D rotating cube.
 
-To support this demo we also implemented:
+To support this demo we created:
 
-- the matrix class.
+- The matrix class.
 
-- uniform buffers.
+- Uniform buffers.
 
-- the model class and builder.
-
-- an improved mechanism for updating descriptor sets.
+- The model class and builder.
 
 ---
 

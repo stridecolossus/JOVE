@@ -178,7 +178,7 @@ public class ObjectModel {
 			layout.add(Vertex.Component.NORMAL);
 		}
 		if(!coords.isEmpty()) {
-			layout.add(Vertex.Component.TEXTURE_COORDINATE);
+			layout.add(Vertex.Component.COORDINATE);
 		}
 
 		// Initialise current model
@@ -205,7 +205,7 @@ public class ObjectModel {
 
 		// Add optional texture coordinate
 		if(tc != null) {
-			vertex.coords(coords.get(tc));
+			vertex.coordinates(coords.get(tc));
 		}
 
 		// Add to model

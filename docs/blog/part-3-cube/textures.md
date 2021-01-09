@@ -6,7 +6,8 @@ title: Textures and Descriptor Sets
 
 In this chapter we will load and apply a _texture_ to our demo.
 
-This will involve uploading the image data to the hardware in a similar fashion to the vertex buffers we implemented in the previous step.  However for texture images we also make use of _pipeline barriers_ to transform the image to the appropriate layout at various stages.
+This will involve uploading the image data to the hardware in a similar fashion to the vertex buffers we implemented in the previous step. 
+However for texture images we also make use of _pipeline barriers_ to transform the image to the appropriate layout at various stages.
 
 The process of loading a texture is as follows:
 
@@ -667,8 +668,8 @@ After changing the number of vertices to 4 in the drawing command we should see 
 Next we implement the texture coordinate domain class that we glossed over earlier:
 
 ```java
-public interface TextureCoordinate extends Bufferable {
-    class Coordinate1D implements TextureCoordinate {
+public interface Coordinate extends Bufferable {
+    class Coordinate1D implements Coordinate {
         public final float u;
 
         public Coordinate1D(float u) {
@@ -714,16 +715,16 @@ public interface TextureCoordinate extends Bufferable {
 We can now replace the colour data in the quad with texture coordinates:
 
 ```java
-new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_LEFT).build(),
-new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_LEFT).build(),
-new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coords(Coordinate2D.TOP_RIGHT).build(),
-new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coords(Coordinate2D.BOTTOM_RIGHT).build(),
+new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coordinates(Coordinate2D.TOP_LEFT).build(),
+new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coordinates(Coordinate2D.BOTTOM_LEFT).build(),
+new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coordinates(Coordinate2D.TOP_RIGHT).build(),
+new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coordinates(Coordinate2D.BOTTOM_RIGHT).build(),
 ```
 
 and modify the vertex layout accordingly:
 
 ```java
-Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
+Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE);
 ```
 
 ### Shader Modifications
@@ -806,6 +807,8 @@ public class Sampler extends AbstractVulkanObject {
 
 This is relatively simple domain object used to configure the various sampling properties.  The `Wrap` enumeration is used to simplify specification of the texture addressing mode for coordinates that are outside of the texture.
 
+TODO
+
 We also integrate the supported features functionality implemented back in the chapter on devices, for example:
 
 ```java
@@ -823,436 +826,6 @@ public Builder anisotropy(float anisotropy) {
 
 ---
 
-## Descriptor Sets
-
-The final piece of functionality we need to implement are _descriptor sets_.
-
-- A descriptor set is comprised of the _resources_ used by the pipeline during rendering (samplers, uniform buffers, etc).
-
-- Sets are allocated from a _descriptor set pool_ (similar to commands).
-
-- A _descriptor set layout_ specifies the resource bindings for a descriptor set.
-
-### Domain Class
-
-The first-cut class outline is as follows:
-
-```java
-public class DescriptorSet implements NativeObject {
-    private final Handle handle;
-    private final Layout layout;
-
-    ...
-
-    /**
-     * Creates a pipeline bind command for this descriptor set.
-     * @param layout Pipeline layout
-     * @return New bind command
-     */
-    public Command bind(Pipeline.Layout layout) {
-    }
-
-    /**
-     * A <i>descriptor set pool</i> is used to allocate and manage a group of descriptor sets.
-     */
-    public static class Pool extends AbstractVulkanObject {
-    }
-
-    /**
-     * Layout for a descriptor-set.
-     */
-    public static class Layout extends AbstractVulkanObject {
-    }
-}
-```
-
-The bind method has two over-loaded variants:
-
-```java
-public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
-    final Pointer[] handles = Handle.toArray(sets);
-
-    return (api, cmd) -> api.vkCmdBindDescriptorSets(
-            cmd,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-            layout.handle(),
-            0,                  // First set
-            1,                  // Count
-            handles,
-            0,                  // Dynamic offset count
-            null                // Dynamic offsets
-    );
-}
-
-public Command bind(Pipeline.Layout layout) {
-    return bind(layout, List.of(this));
-}
-```
-
-### Descriptor Set Layout
-
-We tackle the layout first:
-
-```java
-public static class Layout extends AbstractVulkanObject {
-    private final Map<Integer, Binding> bindings;
-
-    /**
-     * Constructor.
-     * @param handle        Layout handle
-     * @param dev           Logical device
-     * @param bindings      Bindings
-     */
-    Layout(Pointer handle, LogicalDevice dev, List<Binding> bindings) {
-        super(handle, dev, dev.library()::vkDestroyDescriptorSetLayout);
-        Check.notEmpty(bindings);
-        this.bindings = bindings.stream().collect(toMap(Binding::binding, Function.identity()));
-    }
-}
-```
-
-A layout is comprised of a number of resource bindings defined as follows:
-
-```java
-public static record Binding(int binding, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
-}
-```
-
-We implement a convenience builder for the binding and add a populate method for the binding descriptor used below:
-
-```java
-private void populate(VkDescriptorSetLayoutBinding info) {
-    info.binding = binding;
-    info.descriptorType = type;
-    info.descriptorCount = count;
-    info.stageFlags = IntegerEnumeration.mask(stages);
-}
-```
-
-A layout is created by a static factory method:
-
-```java
-public static Layout create(LogicalDevice dev, List<Binding> bindings) {
-    // Init layout descriptor
-    final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
-    info.bindingCount = bindings.size();
-    info.pBindings = VulkanStructure.array(VkDescriptorSetLayoutBinding::new, bindings, Binding::populate);
-
-    // Allocate layout
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference handle = lib.factory().pointer();
-    check(lib.vkCreateDescriptorSetLayout(dev.handle(), info, null, handle));
-
-    // Create layout
-    return new Layout(handle.getValue(), dev, bindings);
-}
-```
-
-### Descriptor Set Pool
-
-Next we implement the descriptor set pool:
-
-```java
-public static class Pool extends AbstractVulkanObject {
-    private final Set<DescriptorSet> sets = new HashSet<>();
-    private final int max;
-
-    /**
-     * Constructor.
-     * @param handle        Pool handle
-     * @param dev           Logical device
-     * @param max           Maximum number of descriptor sets
-     */
-    Pool(Pointer handle, LogicalDevice dev, int max) {
-        super(handle, dev, dev.library()::vkDestroyDescriptorPool);
-        this.max = oneOrMore(max);
-    }
-}
-```
-
-The pool has a _max_ member that we assume is an overall limit on the number of sets that it can allocate.
-
-We add the following method to allocate a number of sets from the pool:
-
-```java
-public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
-    // Check pool size
-    if(this.sets.size() + layouts.size() > max) {
-        throw new IllegalArgumentException("Number of descriptor sets exceeds the maximum for this pool");
-    }
-
-    // Build allocation descriptor
-    final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
-    info.descriptorPool = this.handle();
-    info.descriptorSetCount = layouts.size();
-    info.pSetLayouts = Handle.toPointerArray(layouts);
-
-    // Allocate descriptors sets
-    final LogicalDevice dev = this.device();
-    final VulkanLibrary lib = dev.library();
-    final Pointer[] handles = lib.factory().pointers(layouts.size());
-    check(lib.vkAllocateDescriptorSets(dev.handle(), info, handles));
-
-    // Create descriptor sets
-    final List<DescriptorSet> sets = new ArrayList<>(handles.length);
-    for(int n = 0; n < handles.length; ++n) {
-        final Handle handle = new Handle(handles[n]);
-        final DescriptorSet set = new DescriptorSet(handle, layouts.get(n));
-        sets.add(set);
-    }
-
-    // Maintain allocated sets
-    this.sets.addAll(sets);
-
-    return sets;
-}
-```
-
-And the corresponding methods to release descriptor sets:
-
-```java
-public synchronized void free(Collection<DescriptorSet> sets) {
-    if(!this.sets.containsAll(sets)) throw new IllegalArgumentException(...);
-    this.sets.removeAll(sets);
-    final LogicalDevice dev = this.device();
-    check(dev.library().vkFreeDescriptorSets(dev.handle(), this.handle(), sets.size(), Handle.toArray(sets)));
-}
-
-public synchronized void free() {
-    if(sets.isEmpty()) throw new IllegalArgumentException("Pool is already empty");
-    final LogicalDevice dev = this.device();
-    check(dev.library().vkResetDescriptorPool(dev.handle(), this.handle(), 0));
-    sets.clear();
-}
-
-@Override
-public synchronized void destroy() {
-    super.destroy();
-    sets.clear();
-}
-```
-
-Note that descriptor sets are managed by the pool and are automatically released when the pool is destroyed.
-
-To construct a pool we provide a builder:
-
-```java
-public static class Builder {
-    private final LogicalDevice dev;
-    private final Map<VkDescriptorType, Integer> entries = new HashMap<>();
-    private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
-    private int max = 1;
-}
-```
-
-The _entries_ field is a table of the pool sizes for each descriptor type (we don't bother implementing a transient object):
-
-```java
-public Builder add(VkDescriptorType type, int count) {
-    Check.notNull(type);
-    Check.oneOrMore(count);
-    entries.put(type, count);
-    return this;
-}
-```
-
-We add a local helper to transform an entry to the Vulkan descriptor:
-
-```java
-private static void populate(Map.Entry<VkDescriptorType, Integer> entry, VkDescriptorPoolSize size) {
-    size.type = entry.getKey();
-    size.descriptorCount = entry.getValue();
-}
-```
-
-The build method first validates that the overall pool size does not exceed the maximum:
-
-```java
-public Pool build() {
-    // Validate
-    final int total = entries.values().stream().mapToInt(Integer::intValue).sum();
-    if(entries.isEmpty()) throw new IllegalArgumentException("No pool sizes specified");
-    if(total > max) throw new IllegalArgumentException(...);
-```
-
-Next we transform the entries map to an array and populate the descriptor for the pool:
-
-```java
-    // Init pool descriptor
-    final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
-    info.flags = IntegerEnumeration.mask(flags);
-    info.poolSizeCount = entries.size();
-    info.pPoolSizes = VulkanStructure.array(VkDescriptorPoolSize::new, entries.entrySet(), Builder::populate);
-    info.maxSets = max;
-```
-
-Finally we invoke the API to allocate the pool and create the domain object:
-
-```java
-    // Allocate pool
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference handle = lib.factory().pointer();
-    check(lib.vkCreateDescriptorPool(dev.handle(), info, null, handle));
-
-    // Create pool
-    return new Pool(handle.getValue(), dev, max);
-}
-```
-
-### Updating Descriptor Sets
-
-The _resources_ in a descriptor set needs to be initialised before they are bound to the pipeline.
-
-We add the following temporary code to the descriptor set class to apply the texture sampler:
-
-```java
-// TODO - temporary
-public void sampler(int binding, Sampler sampler, View view) {
-    final VkDescriptorImageInfo image = new VkDescriptorImageInfo();
-    image.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    image.imageView = view.handle();
-    image.sampler = sampler.handle();
-
-    final VkWriteDescriptorSet write = new VkWriteDescriptorSet();
-    write.dstBinding = binding;
-    write.descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    write.dstSet = this.handle();
-    write.descriptorCount = 1;
-    write.dstArrayElement = 0;  
-    write.pImageInfo = StructureHelper.structures(List.of(image));
-
-    dev.library().vkUpdateDescriptorSets(dev.handle(), 1, new VkWriteDescriptorSet[]{write}, 0, null);
-}
-```
-
-This will be replaced with a more flexible implementation in the next chapter when we introduce other resources.
-
-### Pipeline Layout
-
-In the previous demo we created a bare-bones pipeline layout implementation which we now need to flesh out to support descriptor sets.
-
-We update the pipeline layout builder:
-
-```java
-public static class Builder {
-    private final List<DescriptorSet.Layout> sets = new ArrayList<>();
-
-    /**
-     * Adds a descriptor-set to this layout.
-     * @param layout Descriptor-set layout
-     */
-    public Builder add(DescriptorSet.Layout layout) {
-        Check.notNull(layout);
-        sets.add(layout);
-        return this;
-    }
-}
-```
-
-And add the following code to the build method:
-
-```java
-// Add descriptor set layouts
-info.setLayoutCount = sets.size();
-info.pSetLayouts = Handle.toPointerArray(sets);
-```
-
----
-
-## Integration #3
-
-We now have all the components we need to apply the texture to our demo.
-
-First we create a descriptor set layout for a sampler that will be used in the fragment shader:
-
-```java
-final var binding = new DescriptorSet.Layout.Binding.Builder()
-    .type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-    .stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
-    .build();
-
-final var layout = DescriptorSet.Layout.create(dev, List.of(binding));
-```
-
-Which is added to the pipeline layout:
-
-```java
-final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
-    .add(layout)
-    .build();
-```
-
-Next we create a descriptor set pool:
-
-```java
-final var pool = new DescriptorSet.Pool.Builder(dev)
-    .add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
-    .max(2)
-    .build();
-```
-
-We allocate a descriptor set for each swapchain image:
-
-```java
-final var descriptors = pool.allocate(layout, 2);
-```
-
-And initialise each with the texture sampler:
-
-```java
-final Sampler sampler = new Sampler.Builder(dev).build();
-
-for(DescriptorSet set : descriptors) {
-    set.sampler(0, sampler, texture);
-}
-```
-
-Finally we bind the descriptor set in the rendering sequence (before the draw command).
-
-The only other change we need to make is to actually sample the texture in the fragment shader which involves:
-
-1. Adding a layout declaration for a `uniform sampler2D` with the binding index we specified in the descriptor set.
-
-2. Invoking the built-in `texture` function to sample the texture with the coordinate passed from the vertex shader.
-
-The fragment shader should look like this:
-
-```glsl
-#version 450 core
-
-layout(binding = 0) uniform sampler2D texSampler;
-
-layout(location = 0) in vec2 texCoord;
-
-layout(location = 0) out vec4 outColor;
-
-void main(void) {
-    outColor = texture(texSampler, texCoord);
-}
-```
-
-If all goes well we should finally see the textured quad:
-
-![Textured Quad](textured-quad.png)
-
-There are a lot of steps in this chapter and therefore plenty that can go wrong.  Vulkan will generally throw a hissy fit if we attempt any invalid operations, e.g. forgetting to provide the target layout when performing an image transition.  However it is quite easy to specify a 'correct' pipeline and still end up with a black rectangle!  With so much going on behind the scenes this can be very difficult to diagnose - here are some possible failure cases:
-
-- Verify that the image contains RGBA data once it is loaded and that it matches the expected Vulkan format which is `VK_FORMAT_R8G8B8A8_UNORM` in this example.
-
-- Ensure the texture alpha channel has a non-zero value.
-
-- Double-check that the winding order is counter-clockwise and back-facing fragments are being discarded (or turn off face culling).
-
-- Also check that the drawing primitive is a triangle strip.
-
-- Walk through the process of loading and transitioning the image and ensure that the previous/next layouts are correct and that image has the `VK_IMAGE_ASPECT_COLOR_BIT` aspect.
-
-- Check that the image data is being copied to the vertex buffer and not the other way round (yes we really did this!)
-
-- Ensure that the descriptor set and layout are bound to the pipeline and added to the rendering sequence.
-
----
-
 ## Summary
 
 In this chapter we:
@@ -1265,3 +838,4 @@ In this chapter we:
 
 - Implemented descriptor sets to configure the sampler in the pipeline.
 
+The API methods to manage images, views and sampler are defined in the `VulkanLibraryImage` JNA interface.

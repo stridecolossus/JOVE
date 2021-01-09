@@ -11,8 +11,8 @@ import java.util.function.Function;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Coordinate;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.Check;
 
@@ -34,7 +34,7 @@ public interface Vertex {
 	/**
 	 * @return Texture coordinates
 	 */
-	Coordinate coords();
+	Coordinate coordinates();
 
 	/**
 	 * @return Colour
@@ -53,7 +53,7 @@ public interface Vertex {
 	/**
 	 * Default implementation.
 	 */
-	record DefaultVertex(Point position, Vector normal, Coordinate coords, Colour colour) implements Vertex {
+	record DefaultVertex(Point position, Vector normal, Coordinate coordinates, Colour colour) implements Vertex {
 		// Empty
 	}
 
@@ -63,7 +63,7 @@ public interface Vertex {
 	enum Component {
 		POSITION(Point.SIZE, Vertex::position),
 		NORMAL(Vector.SIZE, Vertex::normal),
-		TEXTURE_COORDINATE(Coordinate.Coordinate2D.SIZE, Vertex::coords),
+		COORDINATE(Coordinate.Coordinate2D.SIZE, Vertex::coordinates),
 		COLOUR(Colour.SIZE, Vertex::colour);
 
 		private final int size;
@@ -209,7 +209,7 @@ public interface Vertex {
 		 * Sets the texture coordinate of this vertex.
 		 * @param coords Texture coordinate
 		 */
-		public Builder coords(Coordinate coords) {
+		public Builder coordinates(Coordinate coords) {
 			this.coords = notNull(coords);
 			return this;
 		}
