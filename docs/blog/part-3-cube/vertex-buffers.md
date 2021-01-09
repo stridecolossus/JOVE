@@ -158,7 +158,8 @@ public interface Vertex {
 ```
 
 Note that all the components of the vertex are optional.
-Generally we would model optional properties properly using a Java `Optional` but we have intentionally broken that rule here for the sake of simplicity.
+
+> Generally we would model these optional properties using an `Optional` but we have intentionally broken that rule here for the sake of simplicity.
 
 ### Buffering Vertices
 
@@ -228,7 +229,6 @@ final Vertex[] vertices = {
 final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COLOUR);
 
 // Create interleaved buffer
-// TODO - helper
 final ByteBuffer bb = ByteBuffer
     .allocate(vertices.length * layout.size() * Float.BYTES)
     .order(ByteOrder.nativeOrder());
@@ -244,23 +244,16 @@ bb.rewind();
 
 ## Vertex Buffers
 
-### Vertex Buffer Creation
+### Domain Class
 
 Next we implement the vertex buffer domain class that will be used for both the staging and device-local buffers:
 
 ```java
 public class VertexBuffer extends AbstractVulkanObject {
     private final long len;
-    private final Pointer mem;
+    private final DeviceMemory mem;
 
-    /**
-     * Constructor.
-     * @param handle    Buffer handle
-     * @param dev       Logical device
-     * @param len       Length (bytes)
-     * @param mem       Memory handle
-     */
-    VertexBuffer(Pointer handle, LogicalDevice dev, long len, Pointer mem) {
+    VertexBuffer(Pointer handle, LogicalDevice dev, long len, DeviceMemory mem) {
         super(handle, dev, dev.library()::vkDestroyBuffer);
         this.len = oneOrMore(len);
         this.mem = notNull(mem);
@@ -275,113 +268,120 @@ public class VertexBuffer extends AbstractVulkanObject {
 }
 ```
 
-The _mem_ class member is a pointer to the internal memory of the buffer (whether host or device local).
+The _mem_ class member is a handle to the device memory for the buffer - memory allocation is covered in the following chapter.
+
+The memory is released in the over-ridden destructor of the buffer:
+
+```java
+@Override
+protected void release() {
+    final LogicalDevice dev = super.device();
+    dev.library().vkDestroyBuffer(dev.handle(), this.handle(), null);
+
+    if(!mem.isDestroyed()) {
+        mem.destroy();
+    }
+}
+```
+
+Finally a buffer can be bound to a pipeline:
+
+```java
+public Command bind() {
+    final PointerArray array = Handle.toPointerArray(List.of(this));
+    return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
+}
+```
+
+### Builder
 
 As normal a vertex buffer is created via a builder:
 
 ```java
 public static class Builder {
-    private final Set<VkBufferUsageFlag> usage = new HashSet<>();
-    private final MemoryAllocator.Allocation allocation;
-    private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+    private final LogicalDevice dev;
     private long len;
-    
-    ...
+    private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+    private final Set<VkBufferUsageFlag> usage = new HashSet<>();
+    private final VulkanAllocator.Request request;
 
-    public Builder length(long len) {
-        this.allocation.size(len);
-        return this;
-    }
-        
-    public VertexBuffer build() {
-        // Validate
-        if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
-        if(allocation.size() == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
-    
-        // Build buffer descriptor
-        final VkBufferCreateInfo info = new VkBufferCreateInfo();
-        info.usage = IntegerEnumeration.mask(usage);
-        info.sharingMode = mode;
-        info.size = allocation.size();
-    
-        // Allocate buffer
-        final VulkanLibrary lib = dev.library();
-        final PointerByReference handle = lib.factory().pointer();
-        check(lib.vkCreateBuffer(dev.handle(), info, null, handle));
-    
-        // TODO - allocate memory    
-        ...
-    
-        // Create buffer
-        return new VertexBuffer(handle.getValue(), dev, allocation.size(), mem);
+    public Builder(LogicalDevice dev) {
+        this.dev = notNull(dev);
+        this.request = dev.allocator().request();
     }
 }
 ```
 
-The various _usage_ flags specify the purpose(s) of the buffer, e.g. whether it is a VBO, a destination for a copy operation, etc.
+Creating the buffer involves the following steps:
+1. Instantiate the buffer object.
+2. Retrieve the memory requirements for the new buffer.
+3. Allocate device memory given these requirements.
+4. Bind the memory to the buffer.
 
-### Memory Allocation
-
-In the `build()` method we query Vulkan for its memory requirements after the buffer has been created:
+In the `build` method the vertex buffer is instantiated as follows:
 
 ```java
-// Query memory requirements
+// Build buffer descriptor
+final VkBufferCreateInfo info = new VkBufferCreateInfo();
+info.usage = IntegerEnumeration.mask(usage);
+info.sharingMode = mode;
+info.size = len;
+
+// Allocate buffer
+final VulkanLibrary lib = dev.library();
+final PointerByReference handle = lib.factory().pointer();
+check(lib.vkCreateBuffer(dev.handle(), info, null, handle));
+```
+
+Next we query the memory requirements for the new buffer:
+
+```java
 final VkMemoryRequirements reqs = new VkMemoryRequirements();
 lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 ```
 
-These requirements are passed to the memory allocator (covered in the following section) which allocates a memory block of the appropriate type:
+Note that the returned `size` may be larger than the configured length of the buffer (depending on how the hardware handles alignment):
+
+These requirements are passed to the allocator which returns memory of the appropriate type:
 
 ```java
-// Allocate buffer memory
-final Pointer mem = allocation.init(reqs).allocate();
+final DeviceMemory mem = request.init(reqs).allocate();
 ```
 
-And the memory pointer is bound to the buffer:
+Which is then bound to the new buffer:
 
 ```java
-// Bind memory
-check(lib.vkBindBufferMemory(logical, handle, mem, 0L));
+check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L));
 ```
 
-The internal memory is released in the over-ridden destroy method of the vertex buffer:
+And finally we create the domain object:
 
 ```java
-@Override
-public synchronized void destroy() {
-    final LogicalDevice dev = super.device();
-    dev.library().vkFreeMemory(dev.handle(), mem, null);
-    super.destroy();
-}
+return new VertexBuffer(handle.getValue(), dev, len, mem);
 ```
 
-### Populating a Buffer
+### Population
 
 Populating a vertex buffer consists of the following steps:
 1. Map the internal memory to an NIO buffer.
 2. Copy the source data to this buffer.
 3. Release the memory mapping.
 
-We add the following method to the vertex buffer class to load the interleaved data:
+We add the following method to load data to the buffer:
 
 ```java
-/**
- * Loads the given buffer to this vertex buffer.
- * @param buffer Data buffer
- * @throws IllegalStateException if the size of the given buffer exceeds the length of this vertex buffer
- */
-public void load(ByteBuffer obj, long len, long offset) {
+public void load(Bufferable obj, long len, long offset) {
     // Check buffer
     Check.zeroOrMore(offset);
     if(offset + len > this.len) {
-        throw new IllegalStateException(...);
+        throw new IllegalStateException(String.format("Buffer exceeds size of this VBO: length=%d offset=%d this=%s", len, offset, this));
     }
 
     // Map buffer memory
     final LogicalDevice dev = this.device();
     final VulkanLibrary lib = dev.library();
     final PointerByReference data = lib.factory().pointer();
-    check(lib.vkMapMemory(dev.handle(), mem, offset, len, 0, data));
+    check(lib.vkMapMemory(dev.handle(), mem.handle(), offset, len, 0, data));
 
     try {
         // Copy to memory
@@ -390,8 +390,43 @@ public void load(ByteBuffer obj, long len, long offset) {
     }
     finally {
         // Cleanup
-        lib.vkUnmapMemory(dev.handle(), mem);
+        lib.vkUnmapMemory(dev.handle(), mem.handle());
     }
+}
+```
+
+And provide the following over-loaded variants:
+
+```java
+public void load(ByteBuffer bb) {
+    load(Bufferable.of(bb));
+}
+
+public void load(Bufferable obj) {
+    load(obj, obj.length(), 0);
+}
+
+public void load(Bufferable obj, long offset) {
+    load(obj, obj.length(), offset);
+}
+```
+
+The interleaved NIO buffer is converted to a general `Bufferable` using a static helper:
+
+```java
+static Bufferable of(ByteBuffer bb) {
+    return new Bufferable() {
+        @Override
+        public long length() {
+            return bb.remaining();
+        }
+
+        @Override
+        public void buffer(ByteBuffer dest) {
+            if(bb.remaining() == 0) throw new IllegalStateException("Empty source buffer");
+            dest.put(bb);
+        }
+    };
 }
 ```
 
@@ -412,7 +447,7 @@ We bring all this together in the demo to copy the triangle vertex data to the h
 ```java
 // Create staging VBO
 final VertexBuffer staging = new VertexBuffer.Builder(dev)
-    .length(bb.capacity())
+    .length(bb.limit())
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -423,7 +458,7 @@ staging.load(bb);
 
 // Create device VBO
 final VertexBuffer dest = new VertexBuffer.Builder(dev)
-    .length(bb.capacity())
+    .length(bb.limit())
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -449,173 +484,6 @@ staging.destroy();
 ```
 
 The copy portion of the code is messy and long-winded - we will come back and simplify this later.
-
----
-
-## Memory Allocator
-
-### Allocator
-
-The process of allocating the memory for the buffer will be largely replicated when we address textures in the next chapter - so we encapsulate memory allocation into the following helper:
-
-```java
-public class MemoryAllocator {
-    /**
-     * Creates a memory allocator for the given logical device.
-     * @param dev Logical device
-     * @return New memory allocator
-     */
-    static MemoryAllocator create(LogicalDevice dev) {
-        // Retrieve memory properties for this device
-        final var props = new VkPhysicalDeviceMemoryProperties();
-        dev.library().vkGetPhysicalDeviceMemoryProperties(dev.parent().handle(), props);
-
-        // Create allocator
-        return new MemoryAllocator(dev, props);
-    }
-
-    private final LogicalDevice dev;
-    private final VkPhysicalDeviceMemoryProperties props;
-
-    /**
-     * Constructor.
-     * @param dev           Logical device
-     * @param props         Memory properties
-     */
-    private MemoryAllocator(LogicalDevice dev, VkPhysicalDeviceMemoryProperties props) {
-        this.dev = notNull(dev);
-        this.props = notNull(props);
-    }
-}
-```
-
-Originally the `VkPhysicalDeviceMemoryProperties` was retrieved via an accessor on the physical device but we now incorporate this in the new class and remove the accessor.
-
-A _memory allocation_ is specified by a local class that provides a builder-like interface:
-
-```java
-/**
- * @return New memory allocation
- */
-public Allocation allocation() {
-    return new Allocation();
-}
-
-/**
- * An <i>allocation</i> specifies memory requirements.
- */
-public class Allocation {
-    private long size;
-    private int filter = Integer.MAX_VALUE;
-    private final Set<VkMemoryPropertyFlag> flags = new HashSet<>();
-
-    /**
-     * Sets the required size of the memory.
-     * @param size Required memory size (bytes)
-     */
-    public Allocation size(long size) {
-        this.size = oneOrMore(size);
-        return this;
-    }
-
-    /**
-     * Sets the memory type filter bit-mask.
-     * @param filter Memory type filter mask
-     */
-    public Allocation filter(int filter) {
-        this.filter = filter;
-        return this;
-    }
-
-    /**
-     * Adds a memory property.
-     * @param flag Memory property
-     */
-    public Allocation property(VkMemoryPropertyFlag flag) {
-        flags.add(notNull(flag));
-        return this;
-    }
-}
-```
-
-The _filter_ is a bit-mask of the available memory types specified by the `memoryTypeBits` field of the `VkMemoryRequirements` structure returned by Vulkan.
-We also provide a convenience method to initialise the allocation from this structure:
-
-```java
-public Allocation init(VkMemoryRequirements reqs) {
-    size(reqs.size);
-    filter(reqs.memoryTypeBits);
-    return this;
-}
-```
-
-### Memory Allocation
-
-The memory block is allocated as follows:
-
-```java
-public Pointer allocate() {
-    // Validate
-    if(size == 0) throw new IllegalArgumentException("Memory size not specified");
-
-    // Find memory type
-    final int mask = IntegerEnumeration.mask(flags);
-    final int type = findMemoryType(filter, mask);
-
-    // Init memory descriptor
-    final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
-    info.allocationSize = size;
-    info.memoryTypeIndex = type;
-
-    // Allocate memory
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference mem = lib.factory().pointer();
-    check(lib.vkAllocateMemory(dev.handle(), info, null, mem));
-
-    // Get memory handle
-    return mem.getValue();
-}
-```
-
-The process of selecting the appropriate memory type is:
-1. Walk the available memory types array.
-2. Filter (by index) against the given `filter` bit-mask.
-3. Filter by the required memory types.
-
-This is implemented by the following helper:
-
-```java
-/**
- * Finds a memory type for the given memory properties.
- * @param filter        Memory types filter mask
- * @param mask          Memory properties bit-field
- * @return Memory type index
- * @throws RuntimeException if no suitable memory type is available
- */
-private int findMemoryType(int filter, int mask) {
-    // Find matching memory type index
-    for(int n = 0; n < props.memoryTypeCount; ++n) {
-        if(MathsUtil.isBit(filter, n) && MathsUtil.isMask(props.memoryTypes[n].propertyFlags, mask)) {
-            return n;
-        }
-    }
-
-    // Otherwise memory not available for this device
-    throw new RuntimeException("No memory type available for specified memory properties:" + props);
-}
-```
-
-### Future Enhancements
-
-This works fine for our simple demos at this stage of development but we will need several enhancements for a production-ready allocator:
-
-- The above creates a new memory block for every allocation but the total number of active allocations is capped by the hardware.  In general the allocator should maintain a memory _pool_ from which requested memory blocks are allocated (i.e. pointer offsets into a larger block of memory), with the pool growing as required within the constraints of the hardware.
-
-- Vulkan also supports various memory _heaps_ that offer more optimal properties and performance for different memory scenarios, which are completely ignored in this implementation.
-
-- Ideally the allocation would specify _required_ and _optimal_ memory requirements with the allocator falling back to the minimum requirements if the optimal strategy is not available.
-
-- The allocator should also provide statistics to the application for diagnostics purposes (number of allocations, heap sizes, memory constraints, etc).
 
 ---
 
@@ -881,15 +749,6 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
 
 ### Integration #3
 
-The last change we need to make is a new command to bind the vertex buffer in the rendering sequence (before the draw command):
-
-```java
-public Command bind() {
-    final PointerArray array = Handle.toPointerArray(List.of(this));
-    return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
-}
-```
-
 The above should work but doesn't achieve anything since we are not yet using the vertex buffer in the shader.
 
 We need to make the following changes to the vertex shader code:
@@ -931,10 +790,10 @@ A good test is to change one of the vertex positions and/or colours to make sure
 
 In this chapter we:
 
-- Created new vertex domain objects and the vertex buffer object to transfer the triangle 'model' from the application to the hardware.
+- Created new domain objects to define the triangle vertices.
+
+- Implemented the vertex buffer object to transfer the data from the application to the hardware.
 
 - Completed the builder for the vertex input pipeline stage.
-
-- Implemented a first-cut memory allocator.
 
 The API methods in this chapter are defined in the `VulkanLibraryBuffer` JNA interface.

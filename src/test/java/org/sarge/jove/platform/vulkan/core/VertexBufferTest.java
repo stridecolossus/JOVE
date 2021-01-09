@@ -38,7 +38,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		mem = mock(DeviceMemory.class);
 		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
 
-		buffer = new VertexBuffer(new Pointer(2), 3, mem, dev);
+		buffer = new VertexBuffer(new Pointer(2), dev, 3, mem);
 	}
 
 	@Test

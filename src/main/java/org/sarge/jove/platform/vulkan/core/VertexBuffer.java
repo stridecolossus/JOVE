@@ -52,7 +52,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	 * @param len			Length (bytes)
 	 * @param mem			Memory handle
 	 */
-	VertexBuffer(Pointer handle, long len, DeviceMemory mem, LogicalDevice dev) {
+	VertexBuffer(Pointer handle, LogicalDevice dev, long len, DeviceMemory mem) {
 		super(handle, dev, dev.library()::vkDestroyBuffer);
 		this.len = oneOrMore(len);
 		this.mem = notNull(mem);
@@ -194,10 +194,10 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	 */
 	public static class Builder {
 		private final LogicalDevice dev;
-		private final Set<VkBufferUsageFlag> usage = new HashSet<>();
-		private final VulkanAllocator.Request request;
 		private long len;
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+		private final Set<VkBufferUsageFlag> usage = new HashSet<>();
+		private final VulkanAllocator.Request request;
 
 		/**
 		 * Constructor.
@@ -295,7 +295,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 
 			// Create buffer
 			// TODO - use memory object
-			return new VertexBuffer(handle.getValue(), len, mem, dev);
+			return new VertexBuffer(handle.getValue(), dev, len, mem);
 		}
 	}
 }

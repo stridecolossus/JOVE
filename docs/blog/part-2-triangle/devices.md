@@ -283,7 +283,7 @@ public class Properties {
 
 ### Enumerating the Physical Devices
 
-To enumerate the available physical devices we invoke the `vkEnumeratePhysicalDevices()` API method _twice_:
+To enumerate the available physical devices we invoke the `vkEnumeratePhysicalDevices` API method _twice_:
 
 1. Once to retrieve the number of devices via an integer-by-reference value (the array parameter is set to null).
 

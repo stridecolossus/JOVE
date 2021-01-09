@@ -50,7 +50,8 @@ what is Vulkan
 - Part 3 - Textured Cube
     - [Vertex Buffers](blog/part-3-cube/vertex-buffers)
     - [Memory Allocator](blog/part-3-cube/memory-allocator)
-    - [Textures and Descriptor Sets](blog/part-3-cube/textures)
+    - [Texture Sampling](blog/part-3-cube/textures)
+    - [Descriptor Sets](blog/part-3-cube/descriptor-sets)
     - [Perspective Projection](blog/part-3-cube/perspective)
     - [The Render Loop and Synchronisation](blog/part-3-cube/sync)
    

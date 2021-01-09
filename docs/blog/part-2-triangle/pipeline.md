@@ -427,6 +427,8 @@ public class Shader extends AbstractVulkanObject {
 }
 ```
 
+The `Bufferable` helper class (covered in a later chapter) allocates an NIO buffer that wraps the given byte-array.
+
 A shader is loaded from an input stream using a static factory method:
 
 ```java

@@ -7,7 +7,7 @@ title: Memory Allocator
 In the previous chapter we skipped over the process of allocating device memory for the vertex buffers.
 Here we will flesh out the memory allocator which will also be used in the next chapter for allocation of texture memory.
 
-However the maximum number of memory allocations supported by the hardware is limited.
+The maximum number of memory allocations supported by the hardware is limited. 
 A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool (growing the available memory as required).
 
 Initially we will simply allocate a new memory block for every request and once that is working extend our implementation to use a memory pool.
