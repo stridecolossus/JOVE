@@ -52,7 +52,7 @@ public class TextureQuadDemo {
 		//System.out.println(format);
 
 		// Copy image to staging buffer
-		final VertexBuffer staging = VertexBuffer.staging(dev, image.data().limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().limit());
 		staging.load(image.data());
 
 		// Create texture
@@ -228,13 +228,13 @@ public class TextureQuadDemo {
 		bb.rewind();
 
 		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, bb.limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, bb.limit());
 
 		// Load to staging
 		staging.load(bb);
 
 		// Create device VBO
-		final VertexBuffer dest = new VertexBuffer.Builder(dev)
+		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
 				.length(bb.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)

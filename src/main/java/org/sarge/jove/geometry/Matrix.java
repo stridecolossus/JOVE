@@ -151,14 +151,6 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	/**
-	 * Internal constructor.
-	 * @param order Matrix order
-	 */
-	private Matrix(int order) {
-		this(order, new float[order * order]);
-	}
-
-	/**
 	 * @return Order (or size) of this matrix
 	 */
 	public int order() {
@@ -183,6 +175,13 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	/**
+	 * Determines the column-major index into the array.
+	 */
+	private static int index(int order, int row, int col) {
+		return row + order * col;
+	}
+
+	/**
 	 * Retrieves a matrix element.
 	 * @param row Matrix row
 	 * @param col Column
@@ -190,16 +189,8 @@ public final class Matrix implements Transform, Bufferable {
 	 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 	 */
 	public float get(int row, int col) {
-		return matrix[index(row, col)];
-	}
-
-	/**
-	 * @param row
-	 * @param col
-	 * @return Matrix index
-	 */
-	private int index(int row, int col) {
-		return row + order * col;
+		final int index = index(order, row, col);
+		return matrix[index];
 	}
 
 	/**
@@ -209,7 +200,7 @@ public final class Matrix implements Transform, Bufferable {
 		final float[] trans = new float[matrix.length];
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				final int index = index(c, r);			// Note row-column interchanged
+				final int index = index(order, c, r);			// Note row-column interchanged
 				trans[index] = get(r, c);
 			}
 		}
@@ -232,7 +223,7 @@ public final class Matrix implements Transform, Bufferable {
 				for(int n = 0; n < order; ++n) {
 					total += get(r, n) * m.get(n, c);
 				}
-				final int index = index(r, c);
+				final int index = index(order, r, c);
 				result[index] = total;
 			}
 		}
@@ -295,14 +286,16 @@ public final class Matrix implements Transform, Bufferable {
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private Matrix matrix;
+		private final int order;
+		private float[] matrix;
 
 		/**
 		 * Constructor for a matrix of the given order.
 		 * @param order Matrix order
 		 */
 		public Builder(int order) {
-			this.matrix = new Matrix(oneOrMore(order));
+			this.order = oneOrMore(order);
+			this.matrix = new float[order * order];
 		}
 
 		/**
@@ -317,7 +310,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * Invoking this method on a builder that has already been mutated is undefined, i.e. this method should be invoked <b>first</b> if required.
 		 */
 		public Builder identity() {
-			for(int n = 0; n < matrix.order; ++n) {
+			for(int n = 0; n < order; ++n) {
 				set(n, n, 1);
 			}
 			return this;
@@ -331,34 +324,34 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			final int index = matrix.index(row, col);
-			matrix.matrix[index] = value;
+			final int index = index(order, row, col);
+			matrix[index] = value;
 			return this;
 		}
 
 		/**
-		 * Sets a matrix row to the given vector.
-		 * @param row Row index
-		 * @param vec Vector
+		 * Sets a matrix row to the given tuple.
+		 * @param row		Row index
+		 * @param tuple 	Tuple
 		 * @throws ArrayIndexOutOfBoundsException if the row is out-of-bounds
 		 */
-		public Builder row(int row, Tuple vec) {
-			set(row, 0, vec.x);
-			set(row, 1, vec.y);
-			set(row, 2, vec.z);
+		public Builder row(int row, Tuple tuple) {
+			set(row, 0, tuple.x);
+			set(row, 1, tuple.y);
+			set(row, 2, tuple.z);
 			return this;
 		}
 
 		/**
-		 * Sets a matrix column to the given vector.
-		 * @param col Column index
-		 * @param vec Vector
+		 * Sets a matrix column to the given tuple.
+		 * @param col 		Column index
+		 * @param tuple		Tuple
 		 * @throws ArrayIndexOutOfBoundsException if the column is out-of-bounds
 		 */
-		public Builder column(int col, Tuple vec) {
-			set(0, col, vec.x);
-			set(1, col, vec.y);
-			set(2, col, vec.z);
+		public Builder column(int col, Tuple tuple) {
+			set(0, col, tuple.x);
+			set(1, col, tuple.y);
+			set(2, col, tuple.z);
 			return this;
 		}
 
@@ -367,8 +360,8 @@ public final class Matrix implements Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			final Matrix result = matrix;
-			matrix = null;
+			final Matrix result = new Matrix(order, matrix);
+			this.matrix = null;
 			return result;
 		}
 	}

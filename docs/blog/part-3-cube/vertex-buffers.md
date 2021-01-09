@@ -249,11 +249,11 @@ bb.rewind();
 Next we implement the vertex buffer domain class that will be used for both the staging and device-local buffers:
 
 ```java
-public class VertexBuffer extends AbstractVulkanObject {
+public class VulkanBuffer extends AbstractVulkanObject {
     private final long len;
     private final DeviceMemory mem;
 
-    VertexBuffer(Pointer handle, LogicalDevice dev, long len, DeviceMemory mem) {
+    VulkanBuffer(Pointer handle, LogicalDevice dev, long len, DeviceMemory mem) {
         super(handle, dev, dev.library()::vkDestroyBuffer);
         this.len = oneOrMore(len);
         this.mem = notNull(mem);
@@ -357,7 +357,7 @@ check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L))
 And finally we create the domain object:
 
 ```java
-return new VertexBuffer(handle.getValue(), dev, len, mem);
+return new VulkanBuffer(handle.getValue(), dev, len, mem);
 ```
 
 ### Population
@@ -435,7 +435,7 @@ static Bufferable of(ByteBuffer bb) {
 Finally we add a factory method that creates a command to copy between vertex buffers, this will be used to move the vertex data from the staging buffer to the hardware.
 
 ```java
-public Command copy(VertexBuffer dest) {
+public Command copy(VulkanBuffer dest) {
     final VkBufferCopy region = new VkBufferCopy();
     region.size = len;
     return (api, cb) -> api.vkCmdCopyBuffer(cb, this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
@@ -446,7 +446,7 @@ We bring all this together in the demo to copy the triangle vertex data to the h
 
 ```java
 // Create staging VBO
-final VertexBuffer staging = new VertexBuffer.Builder(dev)
+final VulkanBuffer staging = new VulkanBuffer.Builder(dev)
     .length(bb.limit())
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
@@ -457,7 +457,7 @@ final VertexBuffer staging = new VertexBuffer.Builder(dev)
 staging.load(bb);
 
 // Create device VBO
-final VertexBuffer dest = new VertexBuffer.Builder(dev)
+final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
     .length(bb.limit())
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)

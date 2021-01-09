@@ -16,6 +16,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model.Builder;
 import org.sarge.jove.model.Model.DefaultModel;
 import org.sarge.jove.model.Model.IndexedBuilder;
+import org.sarge.jove.platform.vulkan.VkFrontFace;
 
 public class ModelTest {
 	private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION);
@@ -33,13 +34,16 @@ public class ModelTest {
 
 		@BeforeEach
 		void before() {
-			model = new DefaultModel(Model.DEFAULT_NAME, Primitive.TRIANGLE_STRIP, new Vertex.Layout(Vertex.Component.POSITION), List.of(vertex, vertex, vertex), null);
+			final var layout = new Vertex.Layout(Vertex.Component.POSITION);
+			final var vertices = List.of(vertex, vertex, vertex);
+			model = new DefaultModel(Model.DEFAULT_NAME, Primitive.TRIANGLE_STRIP, VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE, layout, vertices, null);
 		}
 
 		@Test
 		void constructor() {
 			assertEquals(Model.DEFAULT_NAME, model.name());
 			assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
+			assertEquals(VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE, model.winding());
 			assertEquals(LAYOUT, model.layout());
 			assertEquals(3, model.count());
 			assertNotNull(model.index());

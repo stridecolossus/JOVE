@@ -56,7 +56,7 @@ public class RotatingCubeDemo {
 		final VkFormat format = FormatBuilder.format(image);
 
 		// Copy image to staging buffer
-		final VertexBuffer staging = VertexBuffer.staging(dev, image.data().limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().limit());
 		staging.load(image.data());
 
 		// Create texture
@@ -217,13 +217,13 @@ public class RotatingCubeDemo {
 		final var vertices = cube.vertices();
 
 		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, vertices.limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, vertices.limit());
 
 		// Load to staging
 		staging.load(vertices);
 
 		// Create device VBO
-		final VertexBuffer dest = new VertexBuffer.Builder(dev)
+		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
 				.length(vertices.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
@@ -269,7 +269,7 @@ public class RotatingCubeDemo {
 
 		// Create uniform buffer for projection, view and 4 models
 		final long uniformLength = (2 + 4) * Matrix.IDENTITY.length();
-		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
+		final VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
 				.length(uniformLength)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
@@ -280,7 +280,7 @@ public class RotatingCubeDemo {
 		final Resource samplerResource = sampler.resource(texture);
 		for(DescriptorSet set : descriptors) {
 			set.entry(samplerBinding).set(samplerResource);
-			set.entry(uniformBinding).set(uniform);
+			set.entry(uniformBinding).set(uniform.uniform());
 		}
 
 		// Apply updates
@@ -290,7 +290,7 @@ public class RotatingCubeDemo {
 
 		// Load the projection matrix
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.dimensions());
-		uniform.load(proj, proj.length(), 0);
+		uniform.load(proj, 0);
 
 		final Matrix pos = new Matrix.Builder()
 				.identity()
@@ -305,7 +305,8 @@ public class RotatingCubeDemo {
 				.build();
 
 		final Matrix view = pos.multiply(trans);
-		uniform.load(view, view.length(), view.length());
+//		uniform.load(view, view.length(), view.length());
+		uniform.load(view, view.length());
 
 		//////////////////
 
@@ -367,8 +368,8 @@ public class RotatingCubeDemo {
 		///////////////////
 
 		final long PERIOD = 5000;
-		final long LENGTH = Matrix.IDENTITY.length();
-		final long OFFSET = LENGTH * 2;
+//		final long LENGTH = Matrix.IDENTITY.length();
+//		final long OFFSET = LENGTH * 2;
 
 		final Interpolator linear = Interpolator.linear(0, MathsUtil.TWO_PI);
 //		final Interpolator cosine = Interpolator.COSINE.andThen(linear);
@@ -393,7 +394,7 @@ public class RotatingCubeDemo {
 
 				// Update rotation matrices
 				final float time = System.currentTimeMillis() % PERIOD / (float) PERIOD;
-				uniform.load(Matrix.rotation(Vector.X_AXIS, linear.interpolate(time)), LENGTH, OFFSET);
+				uniform.load(Matrix.rotation(Vector.X_AXIS, linear.interpolate(time)), 2 * Matrix.IDENTITY.length());
 //				uniform.load(Matrix.rotation(Vector.Y_AXIS, cosine.interpolate(time)), LENGTH, OFFSET + LENGTH);
 //				uniform.load(Matrix.rotation(Vector.Z_AXIS, squared.interpolate(time)), LENGTH, OFFSET + 2 * LENGTH);
 //

@@ -56,7 +56,7 @@ public class ModelDemo {
 //		final VkFormat format = VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
 
 		// Copy image to staging buffer
-		final VertexBuffer staging = VertexBuffer.staging(dev, image.data().limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().limit());
 		staging.load(image.data());
 
 		// Create texture
@@ -113,15 +113,15 @@ public class ModelDemo {
 		return new View.Builder(dev, texture).build();
 	}
 
-	private static VertexBuffer loadBuffer(LogicalDevice dev, ByteBuffer bb, VkBufferUsageFlag usage, Command.Pool pool) {
+	private static VulkanBuffer loadBuffer(LogicalDevice dev, ByteBuffer bb, VkBufferUsageFlag usage, Command.Pool pool) {
 		// Create staging VBO
-		final VertexBuffer staging = VertexBuffer.staging(dev, bb.limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, bb.limit());
 
 		// Load to staging
 		staging.load(bb);
 
 		// Create device VBO
-		final VertexBuffer dest = new VertexBuffer.Builder(dev)
+		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
 				.length(bb.limit())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(usage)
@@ -273,10 +273,10 @@ public class ModelDemo {
 
 		// Load VBO
 		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
-		final VertexBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
+		final VulkanBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 		// Load IBO
-		final VertexBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
+		final VulkanBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
 
 		//////////////////
 
@@ -314,7 +314,7 @@ public class ModelDemo {
 				.build();
 
 		// Create uniform buffer for the projection matrix
-		final VertexBuffer uniform = new VertexBuffer.Builder(dev)
+		final VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
 				.length(Matrix.IDENTITY.length())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
@@ -329,7 +329,7 @@ public class ModelDemo {
 		for(int n = 0; n < descriptors.size(); ++n) {
 			final DescriptorSet ds = descriptors.get(n);
 			ds.entry(samplerBinding).set(samplerResource);
-			ds.entry(uniformBinding).set(uniform);
+			ds.entry(uniformBinding).set(uniform.uniform());
 		}
 		DescriptorSet.update(dev, descriptors);
 
@@ -355,7 +355,7 @@ public class ModelDemo {
 					.viewport(new Rectangle(swapchain.extents()))
 					.build()
 				.rasterizer()
-					.frontFace(true)
+					.winding(model.winding())
 					.build()
 				.depth()
 					.enable(true)

@@ -21,10 +21,10 @@ final Model model = loader.load("chalet.model");
 
 // Load VBO
 final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
-final VertexBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
+final VulkanBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 // Load index buffer
-final VertexBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
+final VulkanBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
 ```
 
 The `loadBuffer()` helper wraps up the code to copy data to the hardware via a staging buffer.
@@ -36,8 +36,6 @@ public Command bindIndexBuffer() {
     return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
 }
 ```
-
-And we rename the existing method to `bindVertexBuffer()` to differentiate the commands.  We also get around to renaming the class to `VulkanBuffer` since it is not really just for vertex data.
 
 Finally we add a helper for the drawing command:
 
@@ -472,42 +470,46 @@ public static class ObjectModel {
 
 #### Rasterizer Pipeline Stage
 
-The inside-out problem is due to the fact that the triangles in the OBJ model are opposite to the default winding order.
+The inside-out problem is due to the fact that the OBJ model has a right-handed coordinate system, which results in triangles with the opposite winding order to the default.
 
-We take a small detour to fully implement the builder for the rasterizer pipeline stage (which again is pretty simple):
+We take a small detour to fully implement the builder for the rasterizer pipeline stage (that configures the winding order):
 
 ```java
 public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
-    private boolean depthClampEnable;
-    private boolean rasterizerDiscardEnable;
-    private VkPolygonMode polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL;
-    private VkCullModeFlag cullMode = VkCullModeFlag.VK_CULL_MODE_BACK_BIT;
-    private VkFrontFace frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    private boolean depthBiasEnable;
-    private float depthBiasConstantFactor;
-    private float depthBiasClamp;
-    private float depthBiasSlopeFactor;
-    private float lineWidth = 1;
+    private final VkPipelineRasterizationStateCreateInfo info = new VkPipelineRasterizationStateCreateInfo();
+
+    public RasterizerStageBuilder() {
+        depthClamp(false);
+        discard(false);
+        polygon(VkPolygonMode.VK_POLYGON_MODE_FILL);
+        cull(VkCullModeFlag.VK_CULL_MODE_BACK_BIT);
+        winding(VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE);
+        lineWidth(1);
+    }
+    
+    ...
 
     @Override
     protected VkPipelineRasterizationStateCreateInfo result() {
-        final var info = new VkPipelineRasterizationStateCreateInfo();
-        ...
         return info;
     }
 }
 ```
 
-And we swap the face-culling property (alternatively we could swap the winding order, either works):
+Next we add a new `winding` property to the model class which is initialised to _clockwise_ in the OBJ loader.
+
+Finally we apply the winding order when configuring the pipeline:
 
 ```java
 final Pipeline pipeline = new Pipeline.Builder(dev)
     ...
     .rasterizer()
-        .cullMode(VkCullModeFlag.VK_CULL_MODE_FRONT_BIT)
+        .winding(model.winding())
         .build()
     ...
 ```
+
+Alternatively we could have configured the `cullMode` of the rasterizer to cull front-facing polygons, either works.
 
 #### Conclusion
 

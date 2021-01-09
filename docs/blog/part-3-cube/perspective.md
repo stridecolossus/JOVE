@@ -81,39 +81,24 @@ public final class Matrix implements Bufferable {
 
 The matrix is represented as a one-dimensional array in _column-major_ order (matching the default layout for matrices in GLSL shaders).
 
-
-TODO
+Indices into the array are calculated by the following helper:
 
 ```java
-/**
- * Retrieves a matrix element.
- * @param row Matrix row
- * @param col Column
- * @return Matrix element
- * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
- */
-public float get(int row, int col) {
-    return matrix[index(row, col)];
-}
-
-/**
- * @param row
- * @param col
- * @return Matrix index
- */
-private int index(int row, int col) {
+private static int index(int order, int row, int col) {
     return row + order * col;
 }
 ```
 
+For example to lookup a matrix element:
 
+```java
+public float get(int row, int col) {
+    final int index = index(order, row, col);
+    return matrix[index];
+}
+```
 
-> We could have implemented a 2D array but Java multi-dimensional arrays are objects in their own right which seems overkill for such a small amount of data.
-    
-> Alternatively each element could be a separate class member but that would make the code verbose and error-prone (the supposed benefits are questionable in the 21st century and especially for a JVM based implementation).
-   
-
-The matrix is `Bufferable` so we can copy it to an NIO buffer:
+The matrix is also `Bufferable` so it can be copied to an NIO buffer:
 
 ```java
 @Override
@@ -124,50 +109,50 @@ public void buffer(ByteBuffer buffer) {
 }
 ```
 
-Alternatively we could have implemented buffering by converting the buffer using `toFloatBuffer()` and using a bulk-copy operation at the expense of additional complexity.
-
 We provide an array constructor but in general a matrix will be created using a builder:
 
 ```java
 public static class Builder {
-    private Matrix matrix;
+    private final int order;
+    private float[] matrix;
 
     public Builder(int order) {
-        this.matrix = new Matrix(oneOrMore(order));
+        this.order = oneOrMore(order);
+        this.matrix = new float[order * order];
     }
 
-    public Builder identity() {
-        for(int n = 0; n < matrix.order; ++n) {
-            set(n, n, 1);
-        }
-        return this;
-    }
+    ...
     
-    public Builder set(int row, int col, float value) {
-        final int index = row + order * col;
-        matrix[index] = value;
-        return this;
-    }
-
     public Matrix build() {
-        final Matrix result = matrix;
-        matrix = null;
-        return result;
+        return new Matrix(order, matrix);
     }
 }
 ```
 
-We add the following (not shown) to complete implementation of the matrix for the moment:
+Which provides methods to initialise an empty matrix to identity:
 
-- A `multiply()` operation to compose matrices.
+```java
+public Builder identity() {
+    for(int n = 0; n < order; ++n) {
+        set(n, n, 1);
+    }
+    return this;
+}
+```
 
-- Convenience helpers and constants for 4-order matrices (which is the most common use-case).
+And set a matrix element:
 
-- Helpers to populate a row or column with a given `Tuple`.
+```java
+public Builder set(int row, int col, float value) {
+    final int index = index(order, row, col);
+    matrix[index] = value;
+    return this;
+}
+```
 
 ### Perspective Projection
 
-With the matrix builder in place we can now implement the perspective projection:
+We can now use this functionality to build the perspective projection matrix:
 
 ```java
 public interface Projection {
@@ -222,245 +207,43 @@ public interface Projection {
 }
 ```
 
-Again we are not going into the details of how the matrix is calculated but this[^projection] tutorial was very helpful.
+The above implementation is based on this[^projection] tutorial.
 
----
+### Uniform Buffers
 
-## Uniform Buffers
+To pass the perspective matrix to the shader we will next implement a _uniform buffer object_ (or UBO), a descriptor set resource implemented as a vertex buffer.
 
-To pass a matrix to the shader we will next implement a _uniform buffer object_ which is another descriptor set resource. 
-Note that a uniform buffer (or UBO) is basically just a vertex buffer with a more specialised purpose.
-
-The process of updating the resources in a descriptor set was a quick-and-dirty implementation in the previous chapter. 
-We will re-factor this code to support multiple updates in one step and add support for uniform buffers.
-
-Descriptor sets are a particularly complex and difficult aspect of Vulkan (at least they were for this author). 
-We present the eventual solution and discuss some of the design issues and complexities later.
-
-### Resources
-
-We first create an abstraction for descriptor set _resources_ defined as follows:
+We add a new factory method to the buffer class to create the uniform buffer resource:
 
 ```java
-public interface Resource<T extends Structure> {
-    /**
-     * @return Descriptor type
-     */
-    VkDescriptorType type();
+public DescriptorSet.Resource uniform() {
+    require(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
-    /**
-     * @return Identity instance
-     */
-    Supplier<T> identity();
-
-    /**
-     * Populates the update descriptor for this resource.
-     * @param descriptor Update descriptor
-     */
-    void populate(T descriptor);
-
-    /**
-     * Adds this update to the given write descriptor.
-     * @param descriptor        Update descriptor
-     * @param write             Write descriptor
-     */
-    void apply(T descriptor, VkWriteDescriptorSet write);
-}
-```
-
-We refactor the temporary code in the last chapter and move it to the sampler class:
-
-```java
-/**
- * Creates a descriptor set resource for this sampler with the given texture image.
- * @param view Texture image
- * @return Sampler resource
- */
-public Resource<VkDescriptorImageInfo> resource(View view) {
-    return new Resource<>() {
-        @Override
-        public VkDescriptorType type() {
-            return VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        }
-
-        @Override
-        public Supplier<VkDescriptorImageInfo> identity() {
-            return VkDescriptorImageInfo::new;
-        }
-
-        @Override
-        public void populate(VkDescriptorImageInfo info) {
-            info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            info.sampler = Sampler.this.handle();
-            info.imageView = view.handle();
-        }
-
-        @Override
-        public void apply(VkDescriptorImageInfo descriptor, VkWriteDescriptorSet write) {
-            write.pImageInfo = descriptor;
-        }
-    };
-}
-```
-
-To support uniform buffers we add a similar implementation in the vertex buffer class:
-
-```java
-/**
- * Creates a uniform buffer resource for this vertex buffer.
- * @return Uniform buffer resource
- */
-public Resource<VkDescriptorBufferInfo> uniform() {
-    return new Resource<>() {
+    return new DescriptorSet.Resource() {
         @Override
         public VkDescriptorType type() {
             return VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         }
 
         @Override
-        public Supplier<VkDescriptorBufferInfo> identity() {
-            return VkDescriptorBufferInfo::new;
-        }
-
-        public void populate(VkDescriptorBufferInfo info) {
-            info.buffer = VertexBuffer.this.handle();
+        public void populate(VkWriteDescriptorSet write) {
+            final var info = new VkDescriptorBufferInfo();
+            info.buffer = handle();
             info.offset = 0;
             info.range = len;
-        }
-
-        @Override
-        public void apply(VkDescriptorBufferInfo descriptor, VkWriteDescriptorSet write) {
-            write.pBufferInfo = descriptor;
+            write.pBufferInfo = info;
         }
     };
 }
 ```
 
-The `apply()` method in both implementations sets the relevant pointer array field in the `VkWriteDescriptorSet` descriptor.
+We also take the opportunity to store the usage flags in the domain object and add the `require` invariant test (as above) to the relevant buffer methods.
 
-### Descriptor Set Updates
-
-We next add a new local class to the descriptor set that specifies a set of resource _updates_ to be applied:
-
-```java
-public class Update<T extends Structure> {
-    private final Layout.Binding binding;
-    private final Collection<Resource<T>> res;
-
-    /**
-     * Constructor.
-     * @param binding       Binding
-     * @param updates       Resources to updates
-     */
-    private Update(Layout.Binding binding, Collection<Resource<T>> res) {
-        this.binding = notNull(binding);
-        this.res = Set.copyOf(res);
-    }
-
-    /**
-     * Populates the given write descriptor.
-     * @param write Write descriptor
-     */
-    void populate(VkWriteDescriptorSet write) {
-    }
-}
-```
-
-The `populate()` method is used to fill a write descriptor for an update.
-
-We first initialise the write descriptor based on the binding:
-
-```java
-// Init write descriptor
-write.dstBinding = binding.binding;
-write.descriptorType = binding.type;
-write.dstSet = DescriptorSet.this.handle();
-write.dstArrayElement = 0;
-```
-
-Next we transform the updates to an array:
-
-```java
-// Add resource array
-write.descriptorCount = updates.size();
-final Resource<T> instance = updates.iterator().next();
-final T array = VulkanStructure.populate(instance.identity(), updates, Resource::populate);
-```
-
-Note that we use an _arbitrary_ entry from the collection of updates to retrieve the identity instance for the array.
-
-Finally we invoke the apply() method in the resource to set the resultant array or object to the relevant field in the descriptor:
-
-```java
-instance.apply(array, write);
-```
-
-We add the following factory method to the descriptor set to create an update for a given set of resources:
-
-```java
-public <T extends Structure> Update<T> update(Layout.Binding binding, Collection<Resource<T>> updates) {
-    return new Update<>(binding, updates);
-}
-```
-
-### Applying Updates
-
-To apply an update or a group of update we add another relatively simple builder:
-
-```java
-public static class UpdateBuilder {
-    private final List<Update<?>> updates = new ArrayList<>();
-
-    /**
-     * Adds a group of updates to the given descriptor sets.
-     * @param <T> Resource type
-     * @param sets          Descriptor sets to update
-     * @param binding       Binding
-     * @param res           Resources
-     */
-    public <T extends Structure> UpdateBuilder add(Collection<DescriptorSet> sets, Binding binding, Collection<Resource<T>> res) {
-        for(DescriptorSet set : sets) {
-            final Update<?> update = set.update(binding, res);
-            updates.add(update);
-        }
-        return this;
-    }
-}
-```
-
-The `apply()` method converts the updates to an array and invokes the API to apply the changes:
-
-```java
-public void apply(LogicalDevice dev) {
-    if(updates.isEmpty()) throw new IllegalArgumentException("Empty updates");
-    final var array = VulkanStructure.populateArray(VkWriteDescriptorSet::new, updates, Update::populate);
-    dev.library().vkUpdateDescriptorSets(dev.handle(), array.length, array, 0, null);
-}
-```
-
-We also add a convenience `apply()` method implemented using the new builder to apply an update directly.
-
-### Conclusion
-
-The above may well seem overly complicated - and it's possible that we have over-engineered our solution - but as we have already observed descriptor sets are complex beasts:
-
-- The same `VkWriteDescriptorSet` descriptor is used to update **all** types of resource (i.e. the descriptor is a sort of union type).
-
-- However only **one** type can be specified in any given write descriptor.
-
-- On the other hand multiple resources (with any combination of types) can be applied in a single invocation of `vkUpdateDescriptorSets` (to reduce the number of API calls).
-
-We have attempted to bear all the above in mind while trying to decouple the logic for the different types of resource (we only have two now but there will be more).
-
----
-
-## Integration #1
-
-### Creating the Uniform Buffer
+### Integration #1
 
 As an intermediate step we will apply the identity matrix to the demo to test the uniform buffer before we start messing around with perspective projection.
 
-First we add a constant for a 4-order identity matrix:
+First we add constants for a 4-order identity matrix:
 
 ```java
 public final class Matrix implements Transform, Bufferable {
@@ -474,11 +257,6 @@ public final class Matrix implements Transform, Bufferable {
      */
     public static final Matrix IDENTITY = identity(DEFAULT_ORDER);
 
-    /**
-     * Creates an identity matrix.
-     * @param order Matrix order
-     * @return Identity matrix
-     */
     public static Matrix identity(int order) {
         return new Builder(order).identity().build();
     }
@@ -488,8 +266,8 @@ public final class Matrix implements Transform, Bufferable {
 Next we create a new uniform buffer and load the identity matrix:
 
 ```java
-final VertexBuffer uniform = new VertexBuffer.Builder(dev)
-    .length(Matrix.IDENTITY().length())
+VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
+    .length(Matrix.IDENTITY.length())
     .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -499,28 +277,6 @@ uniform.load(Matrix.IDENTITY);
 ```
 
 Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than a device-local buffer - eventually the matrix will be updated every frame (for the rotation) so a device-local / staging buffer buffer would just add extra complexity and overhead.
-
-We also take the opportunity to implement overloaded variants of the `load()` method to accept both byte-buffers and bufferable objects:
-
-```java
-public void load(ByteBuffer buffer) {
-    load(Bufferable.of(bb));
-}
-
-public void load(Bufferable obj) {
-    load(obj, obj.length(), 0);
-}
-
-public void load(Bufferable obj, long offset) {
-    load(obj, obj.length(), offset);
-}
-
-public void load(Bufferable obj, long len, long offset) {
-    ...
-}
-```
-
-### Adding the Uniform Buffer
 
 Next we add a second binding to the descriptor set layout for the uniform buffer:
 
@@ -536,34 +292,34 @@ Binding uniformBinding = new Binding.Builder()
 Layout layout = Layout.create(dev, List.of(samplerBinding, uniformBinding));
 ```
 
-And add the new resource type to the descriptor set pool:
+Register the new resource type with the descriptor set pool:
 
 ```java
 Pool pool = new Pool.Builder(dev)
     .add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
     .add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2)
-    .max(2 * 2)
+    .max(2)
     .build();
 ```
 
-Finally we use the new functionality to apply the updates:
+And finally update the descriptor sets:
 
 ```java
-new DescriptorSet.UpdateBuilder()
-    .add(descriptors, samplerBinding, sampler.resource(texture))
-    .add(descriptors, uniformBinding, uniform.resource())
-    .apply(dev);
+Resource uniformResource = uniform.uniform();
+for(DescriptorSet set : descriptors) {
+    ...
+    set.entry(uniformBinding).set(uniform);
+}
 ```
 
-Note that we are using the same uniform buffer for each descriptor set - this is fine for the moment since we are not changing the matrix between frames.  In future chapters we will create a separate uniform buffer for each frame.
+Note that we are using the same uniform buffer for each descriptor set - this is fine for the moment since we are not changing the matrix between frames. 
+In future chapters we will create a separate uniform buffer for each frame.
 
-### Applying the Matrix
-
-Finally we modify the vertex shader to use the matrix which involves:
+The last step is to modify the vertex shader to use the matrix which involves:
 1. Adding a new `layout` declaration for the uniform buffer which contains a 4-order matrix:
 2. Multiplying the vertex position by the matrix.
 
-The vertex shader should now be as follows:
+The vertex shader should look like the following:
 
 ```glsl
 #version 450
@@ -586,11 +342,11 @@ void main() {
 
 If all goes well we should still see the flat textured quad since the identity matrix essentially does nothing.
 
-### View Transformation
+### View Transform
 
-We can now use the matrix class and the perspective projection to apply a view transformation to the demo.
+We can now use the matrix class and the perspective projection to apply a _view transform_ to the demo.
 
-First we create the view (or camera) transformation:
+First we create the _view_ (or _camera_) transformation matrices:
 
 ```java
 final Matrix rot = new Matrix.Builder()
@@ -608,7 +364,8 @@ final Matrix trans = new Matrix.Builder()
 final Matrix view = rot.multiply(trans);
 ```
 
-The _rot_ matrix is the camera orientation and _trans_ is the camera (or eye) position which moves the camera one unit 'out' of the screen (or moves the scene one unit into the screen, whichever way you look at it).
+The _rot_ matrix is the camera orientation and _trans_ is the camera (or eye) position which moves the camera one unit 'out' of the screen 
+(or moves the scene one unit into the screen, whichever way you look at it).
 
 Notes:
 - The Y (or up) direction is inverted for Vulkan.
@@ -633,7 +390,7 @@ public final class Vector extends Tuple {
 }
 ```
 
-Next we replace the identity matrix with the perspective projection matrix, multiply it with the view transformation, and upload the result to the uniform buffer:
+Next we replace the identity matrix we used above with the actual perspective projection, multiply it with the view transforma, and upload the result to the uniform buffer:
 
 ```java
 final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
@@ -662,11 +419,11 @@ We are now going to replace the hard-coded quad with a cube model which will req
 
 1. A new domain class for a general model that encapsulates vertex data.
 
-2. A builder to construct the model.
+2. A builder to construct a model.
 
 3. And a more specialised implementation to construct the cube.
 
-### The Model
+### Model Builder
 
 Initially the model class is quite straight-forward (we will be adding more functionality as we go):
 
@@ -721,7 +478,7 @@ public enum Primitive {
 }    
 ```
 
-Which provides the following additional helper methods that are used when constructing models:
+The new enumeration provides the following additional helper methods that are used when constructing models:
 
 ```java
 /**
@@ -776,7 +533,23 @@ public ByteBuffer vertices() {
 }
 ```
 
-Next we add a builder to the model, for the moment this has almost no functionality other than a test in the `add()` method to validate a vertex against the layout:
+Next we add a builder to the model:
+
+```java
+class Builder {
+    private Primitive primitive = Primitive.TRIANGLE_STRIP;
+    private Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION);
+    private final List<Vertex> vertices = new ArrayList<>();
+    
+    ...
+    
+    public Model build() {
+        return new Model(primitive, layout, vertices);
+    }
+}
+```
+
+The only notable method is `add` which validates the model vertices:
 
 ```java
 public Builder add(Vertex vertex) {
@@ -804,7 +577,7 @@ public class CubeBuilder {
 }
 ```
 
-The build method creates two _triangles_ for each face of the cube:
+The `build` method creates two _triangles_ for each face of the cube:
 
 ```java
 
@@ -849,12 +622,13 @@ private static final int[][] FACES = {
 };
 ```
 
-The two triangles for each face are specified by the following helper class:
+The two triangles for each face are specified by the following constants:
 
 ```java
 public final class Quad {
     public static final List<Integer> LEFT = List.of(0, 1, 2);
     public static final List<Integer> RIGHT = List.of(2, 1, 3);
+    public static final List<Coordinate2D> COORDINATES = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
 }
 ```
 
@@ -891,7 +665,7 @@ public Model build() {
 
 Note that at the time of writing we hard-code the vertex layout and do not include model normals.
 
-### Input Assembly Pipeline Stage
+### Input Assembly
 
 Since the cube uses triangles (as opposed to the previous default of a _strip_ of triangles) we need to implement the _input assembly pipeline stage_ builder, which is very simple:
 
@@ -931,11 +705,7 @@ Pipeline pipeline = new Pipeline.Builder(dev)
     ...
 ```
 
----
-
-## Integration #2
-
-### Rendering the Cube
+### Integration #2
 
 We can now create a cube model:
 
@@ -944,22 +714,22 @@ Model cube = new CubeBuilder().build();
 ByteBuffer vertices = cube.vertices();
 ```
 
-load it into the staging buffer:
+Load it into the staging buffer:
 
 ```java
-VertexBuffer staging = VertexBuffer.staging(dev, vertices.limit());
+VulkanBuffer staging = VulkanBuffer.staging(dev, vertices.limit());
 staging.load(vertices);
 ```
 
-not forgetting to size the destination VBO accordingly:
+Not forgetting to size the destination VBO accordingly:
 
 ```java
-VertexBuffer dest = new VertexBuffer.Builder(dev)
+VulkanBuffer dest = new VulkanBuffer.Builder(dev)
     .length(vertices.limit())
     ...
 ```
 
-and also update the draw command:
+And also update the draw command:
 
 ```java
 Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 1, 0, 0);
@@ -967,9 +737,7 @@ Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 1, 0, 0);
 
 When we run the code it should look roughly the same as the quad demo since we will be looking at the front face of the cube.
 
-### Rotation
-
-Next we will apply a rotation to the cube by implemented the following factory method on the matrix class to generate a rotation matrix about a given axis:
+Next we will apply a rotation to the cube by implemented the following factory on the `Matrix` class to generate a rotation about a given axis:
 
 ```java
 public static Matrix rotation(Vector axis, float angle) {
@@ -1024,15 +792,13 @@ The above should give us this:
 
 ![Rotated Cube](cube.png)
 
-### Animation
-
-To animate the cube we need some sort of loop to render multiple frames and some logic to modify the view matrix over time.
+To animate the cube we need some sort of loop to render multiple frames and logic to modify the view matrix over time. 
 For the moment we bodge a temporary time-based loop that applies the matrix and exits the loop after a couple of rotations:
 
 ```java
 long period = 5000;
 long end = System.currentTimeMillis() + period * 2;
-Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.DEGREES_TO_RADIANS * 45);
+Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.toRadians(45));
 
 while(true) {
     // Stop loop

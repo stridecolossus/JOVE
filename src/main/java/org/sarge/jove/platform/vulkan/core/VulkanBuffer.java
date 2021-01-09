@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.util.Check.notEmpty;
 import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
 
@@ -23,18 +24,18 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>vertex buffer</i> is used to copy data to the hardware.
+ * A <i>Vulkan buffer</i> is used to copy data to the hardware.
  * @author Sarge
  */
-public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.Resource {
+public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * Helper - Creates a staging buffer.
 	 * @param dev Logical device
 	 * @param len Buffer length (bytes)
 	 * @return New staging buffer
 	 */
-	public static VertexBuffer staging(LogicalDevice dev, long len) {
-		return new VertexBuffer.Builder(dev)
+	public static VulkanBuffer staging(LogicalDevice dev, long len) {
+		return new VulkanBuffer.Builder(dev)
 				.length(len)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
@@ -42,6 +43,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 				.build();
 	}
 
+	private final Set<VkBufferUsageFlag> usage;
 	private final long len;
 	private final DeviceMemory mem;
 
@@ -49,13 +51,22 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	 * Constructor.
 	 * @param handle		Buffer handle
 	 * @param dev			Logical device
+	 * @param usage			Usage flags
 	 * @param len			Length (bytes)
 	 * @param mem			Memory handle
 	 */
-	VertexBuffer(Pointer handle, LogicalDevice dev, long len, DeviceMemory mem) {
+	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsageFlag> usage, long len, DeviceMemory mem) {
 		super(handle, dev, dev.library()::vkDestroyBuffer);
+		this.usage = Set.copyOf(notEmpty(usage));
 		this.len = oneOrMore(len);
 		this.mem = notNull(mem);
+	}
+
+	/**
+	 * @return Usage flags for this buffer
+	 */
+	public Set<VkBufferUsageFlag> usage() {
+		return usage;
 	}
 
 	/**
@@ -66,7 +77,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	}
 
 	/**
-	 * Loads the given buffer to this buffer.
+	 * Loads the given NIO buffer to this buffer.
 	 * @param bb Source buffer
 	 */
 	public void load(ByteBuffer bb) {
@@ -76,7 +87,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	/**
 	 * Loads the given bufferable object to this buffer.
 	 * @param buffer Data buffer
-	 * @throws IllegalStateException if the size of the given buffer exceeds the length of this vertex buffer
+	 * @throws IllegalStateException if the size of the object exceeds the length of this vertex buffer
 	 */
 	public void load(Bufferable obj) {
 		load(obj, obj.length(), 0);
@@ -86,7 +97,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	 * Loads the given bufferable object to this buffer at the specified offset.
 	 * @param buffer 		Data buffer
 	 * @param offset		Offset into this vertex buffer (bytes)
-	 * @throws IllegalStateException if the size of the given buffer exceeds the length of this vertex buffer
+	 * @throws IllegalStateException if the size of the given object exceeds the length of this vertex buffer
 	 */
 	public void load(Bufferable obj, long offset) {
 		load(obj, obj.length(), offset);
@@ -99,7 +110,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	 * @param offset		Offset into this vertex buffer (bytes)
 	 * @throws IllegalStateException if the length of given bufferable object exceeds the length of this vertex buffer
 	 */
-	public void load(Bufferable obj, long len, long offset) {
+	private void load(Bufferable obj, long len, long offset) {
 		// Check buffer
 		Check.zeroOrMore(offset);
 		if(offset + len > this.len) {
@@ -123,24 +134,35 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		}
 	}
 
-	@Override
-	public VkDescriptorType type() {
-		return VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	}
+	/**
+	 * @return This buffer as a uniform buffer resource
+	 */
+	public DescriptorSet.Resource uniform() {
+		require(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
-	@Override
-	public void populate(VkWriteDescriptorSet write) {
-		final var info = new VkDescriptorBufferInfo();
-		info.buffer = handle();
-		info.offset = 0;
-		info.range = len;
-		write.pBufferInfo = info;
+		return new DescriptorSet.Resource() {
+			@Override
+			public VkDescriptorType type() {
+				return VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			}
+
+			@Override
+			public void populate(VkWriteDescriptorSet write) {
+				final var info = new VkDescriptorBufferInfo();
+				info.buffer = handle();
+				info.offset = 0;
+				info.range = len;
+				write.pBufferInfo = info;
+			}
+		};
 	}
 
 	/**
 	 * @return Command to bind this buffer
 	 */
 	public Command bindVertexBuffer() {
+		require(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		// TODO - support binding multiple VBO
 		final PointerArray array = Handle.toPointerArray(List.of(this));
 		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
 	}
@@ -149,27 +171,39 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 	 * @return Command to bind this index buffer
 	 */
 	public Command bindIndexBuffer() {
+		require(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
 		// TODO - 16/32 depending on size
-		// TODO - check data is integer => sub-class?
 	}
 
 	/**
 	 * Creates a command to copy this buffer to the given buffer.
+	 * Note that this method does not enforce any restrictions on the <i>usage</i> of either buffer (other than being a valid source and destination).
 	 * @param dest Destination buffer
 	 * @return New copy command
-	 * @throws IllegalStateException if the destination buffer is too small
+	 * @throws IllegalStateException if this buffer is not a source, the given buffer is not a destination, or it is too small
 	 */
-	public Command copy(VertexBuffer dest) {
+	public Command copy(VulkanBuffer dest) {
+		// Validate
 		if(len > dest.length()) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
-		// TODO - add usage flags to VBO, we can then check that copyinf is logical
+		require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+		dest.require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
 		// Build copy descriptor
 		final VkBufferCopy region = new VkBufferCopy();
 		region.size = len;
 
 		// Create copy command
-		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, VertexBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
+		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, VulkanBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
+	}
+
+	/**
+	 * @throws IllegalStateException if this buffer does not support the given usage flag
+	 */
+	private void require(VkBufferUsageFlag flag) {
+		if(!usage.contains(flag)) {
+			throw new IllegalStateException(String.format("Invalid usage for buffer: usage=%s buffer=%s", flag, this));
+		}
 	}
 
 	@Override
@@ -186,6 +220,8 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		return new ToStringBuilder(this)
 				.append("handle", this.handle())
 				.append("len", len)
+				.append("mem", mem.handle())
+				.append("usage", usage)
 				.build();
 	}
 
@@ -260,7 +296,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 		 * @return New vertex buffer
 		 * @throws IllegalArgumentException if the buffer length is zero or no usage flags are specified
 		 */
-		public VertexBuffer build() {
+		public VulkanBuffer build() {
 			// Validate
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
 			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
@@ -294,8 +330,7 @@ public class VertexBuffer extends AbstractVulkanObject implements DescriptorSet.
 			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L));
 
 			// Create buffer
-			// TODO - use memory object
-			return new VertexBuffer(handle.getValue(), dev, len, mem);
+			return new VulkanBuffer(handle.getValue(), dev, usage, len, mem);
 		}
 	}
 }

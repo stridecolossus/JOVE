@@ -22,11 +22,11 @@ public class RasterizerStageBuilderTest {
 	void build() {
 		// Create a shader stage
 		final var info = builder
-				.depthClampEnable(true)
-				.discardEnable(true)
-				.polygonMode(VkPolygonMode.VK_POLYGON_MODE_LINE)
-				.cullMode(VkCullModeFlag.VK_CULL_MODE_FRONT_AND_BACK)
-				.frontFace(true)
+				.depthClamp(true)
+				.discard(true)
+				.polygon(VkPolygonMode.VK_POLYGON_MODE_LINE)
+				.cull(VkCullModeFlag.VK_CULL_MODE_FRONT_AND_BACK)
+				.winding(VkFrontFace.VK_FRONT_FACE_CLOCKWISE)
 				.lineWidth(2)
 				.result();
 

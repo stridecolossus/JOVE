@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.platform.vulkan.VkFrontFace;
 
 /**
  * A <i>model</i> is comprised of a list of vertices and an optional index rendered according to a {@link Primitive} and {@link Vertex.Layout}.
@@ -32,6 +33,11 @@ public interface Model {
 	 * @return Drawing primitive
 	 */
 	Primitive primitive();
+
+	/**
+	 * @return Winding order for front-facing polygons
+	 */
+	VkFrontFace winding();
 
 	/**
 	 * @return Vertex layout
@@ -59,20 +65,23 @@ public interface Model {
 	abstract class AbstractModel implements Model {
 		private final String name;
 		private final Primitive primitive;
+		private final VkFrontFace winding;
 		private final Vertex.Layout layout;
 
 		/**
 		 * Constructor.
 		 * @param name			Model name
 		 * @param primitive		Drawing primitive
+		 * @param winding		Winding order for front-facing polygons
 		 * @param layout		Vertex layout
 		 * @throws IllegalArgumentException if the number of vertices does not match the drawing primitive
 		 * @throws IllegalArgumentException if the model contains normals but the primitive does not (see {@link Primitive#hasNormals()})
 		 * @see Primitive#isValidVertexCount(int)
 		 */
-		protected AbstractModel(String name, Primitive primitive, Vertex.Layout layout) {
+		protected AbstractModel(String name, Primitive primitive, VkFrontFace winding, Vertex.Layout layout) {
 			this.name = notEmpty(name);
 			this.primitive = notNull(primitive);
+			this.winding = notNull(winding);
 			this.layout = notNull(layout);
 		}
 
@@ -107,6 +116,11 @@ public interface Model {
 		}
 
 		@Override
+		public final VkFrontFace winding() {
+			return winding;
+		}
+
+		@Override
 		public final Vertex.Layout layout() {
 			return layout;
 		}
@@ -120,6 +134,7 @@ public interface Model {
 			return
 					(obj instanceof Model that) &&
 					this.primitive().equals(that.primitive()) &&
+					this.winding().equals(that.winding()) &&
 					this.layout().equals(that.layout()) &&
 					this.vertices().equals(that.vertices()) &&
 					this.index().equals(that.index());
@@ -130,6 +145,7 @@ public interface Model {
 			return new ToStringBuilder(this)
 					.append("name", name)
 					.append("primitive", primitive())
+					.append("winding", winding())
 					.append("layout", layout())
 					.append("count", count())
 					.append("indexed", index().isPresent())
@@ -150,6 +166,7 @@ public interface Model {
 		 * Constructor.
 		 * @param name			Model name
 		 * @param primitive		Drawing primitive
+		 * @param winding		Winding order for front-facing polygons
 		 * @param layout		Vertex layout
 		 * @param vertices		Vertices
 		 * @param index			Optional index
@@ -157,8 +174,8 @@ public interface Model {
 		 * @throws IllegalArgumentException if the model contains normals but the primitive does not (see {@link Primitive#hasNormals()})
 		 * @see Primitive#isValidVertexCount(int)
 		 */
-		protected DefaultModel(String name, Primitive primitive, Vertex.Layout layout, List<Vertex> vertices, List<Integer> index) {
-			super(name, primitive, layout);
+		protected DefaultModel(String name, Primitive primitive, VkFrontFace winding, Vertex.Layout layout, List<Vertex> vertices, List<Integer> index) {
+			super(name, primitive, winding, layout);
 			this.vertices = notNull(vertices);
 			this.index = index;
 			validate();
@@ -238,6 +255,7 @@ public interface Model {
 	class Builder {
 		private String name = "model";
 		private Primitive primitive = Primitive.TRIANGLE_STRIP;
+		private VkFrontFace winding = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		private Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION);
 		private final List<Vertex> vertices = new ArrayList<>();
 
@@ -251,11 +269,20 @@ public interface Model {
 		}
 
 		/**
-		 * Sets the drawing primitive for this model.
+		 * Sets the drawing primitive for this model (default is {@link Primitive#TRIANGLE_STRIP}).
 		 * @param primitive Drawing primitive
 		 */
 		public Builder primitive(Primitive primitive) {
 			this.primitive = notNull(primitive);
+			return this;
+		}
+
+		/**
+		 * Sets the winding order for front-facing polygons (default is counter-clockwise).
+		 * @param winding Winding order
+		 */
+		public Builder windingOrder(VkFrontFace winding) {
+			this.winding = notNull(winding);
 			return this;
 		}
 
@@ -313,7 +340,7 @@ public interface Model {
 		 * @see Primitive#isValidVertexCount(int)
 		 */
 		public Model build() {
-			return new DefaultModel(name, primitive, layout, vertices, index());
+			return new DefaultModel(name, primitive, winding, layout, vertices, index());
 		}
 
 		@Override

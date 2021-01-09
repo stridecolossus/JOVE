@@ -375,7 +375,7 @@ final ImageData image = ImageData.load(new FileInputStream("./src/test/resources
 
 // Copy image to staging buffer
 final ByteBuffer bb = image.buffer();
-final VertexBuffer staging = VertexBuffer.staging(dev, bb.capacity());
+final VulkanBuffer staging = VulkanBuffer.staging(dev, bb.capacity());
 staging.load(bb);
 
 // Determine image format
@@ -562,7 +562,7 @@ After preparing the texture the next step is to copy the image from the staging 
 ```java
 public class ImageCopyCommand extends ImmediateCommand {
     private final Image image;
-    private final VertexBuffer buffer;
+    private final VulkanBuffer buffer;
     private final VkBufferImageCopy[] regions;
     private final VkImageLayout layout;
 

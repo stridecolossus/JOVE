@@ -19,7 +19,7 @@ import org.sarge.jove.util.Check;
  */
 public class ImageCopyCommand extends ImmediateCommand {
 	private final Image image;
-	private final VertexBuffer buffer;
+	private final VulkanBuffer buffer;
 	private final VkBufferImageCopy[] regions;
 	private final VkImageLayout layout;
 
@@ -30,7 +30,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 * @param region		Region descriptor
 	 * @param layout		Image layout
 	 */
-	protected ImageCopyCommand(Image image, VertexBuffer buffer, VkBufferImageCopy[] regions, VkImageLayout layout) {
+	protected ImageCopyCommand(Image image, VulkanBuffer buffer, VkBufferImageCopy[] regions, VkImageLayout layout) {
 		Check.notEmpty(regions);
 		this.image = notNull(image);
 		this.buffer = notNull(buffer);
@@ -57,7 +57,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	public static class Builder {
 		private final VkBufferImageCopy region = new VkBufferImageCopy();
 		private final SubResourceBuilder<Builder> subresource;
-		private VertexBuffer buffer;
+		private VulkanBuffer buffer;
 		private Image image;
 		private VkImageLayout layout;
 
@@ -74,7 +74,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 * Sets the buffer.
 		 * @param buffer Data buffer
 		 */
-		public Builder buffer(VertexBuffer buffer) {
+		public Builder buffer(VulkanBuffer buffer) {
 			this.buffer = notNull(buffer);
 			return this;
 		}

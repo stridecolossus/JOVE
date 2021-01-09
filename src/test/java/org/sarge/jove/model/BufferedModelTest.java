@@ -12,10 +12,11 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model.IndexedBuilder;
+import org.sarge.jove.platform.vulkan.VkFrontFace;
 
 public class BufferedModelTest {
 	@Nested
@@ -24,7 +25,7 @@ public class BufferedModelTest {
 		void constructor() {
 			final ByteBuffer vertices = ByteBuffer.allocate(1);
 			final ByteBuffer index = ByteBuffer.allocate(1);
-			final Model model = new BufferedModel("model", Primitive.LINES, new Vertex.Layout(Vertex.Component.POSITION), vertices, index, 2);
+			final Model model = new BufferedModel("model", Primitive.LINES, VkFrontFace.VK_FRONT_FACE_CLOCKWISE, new Vertex.Layout(Vertex.Component.POSITION), vertices, index, 2);
 			assertEquals(Primitive.LINES, model.primitive());
 			assertEquals(new Vertex.Layout(Vertex.Component.POSITION), model.layout());
 			assertEquals(2, model.count());
@@ -46,6 +47,7 @@ public class BufferedModelTest {
 			// Create model
 			model = new IndexedBuilder()
 					.primitive(Primitive.LINES)
+					.windingOrder(VkFrontFace.VK_FRONT_FACE_CLOCKWISE)
 					.layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE)
 					.add(vertex)
 					.add(vertex)

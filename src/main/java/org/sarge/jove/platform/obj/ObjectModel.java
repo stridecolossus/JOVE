@@ -10,12 +10,13 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
+import org.sarge.jove.platform.vulkan.VkFrontFace;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing and maintains the list of generated models.
@@ -134,6 +135,7 @@ public class ObjectModel {
 		assert isEmpty();
 		final Model.Builder next = notNull(factory.get());
 		next.primitive(Primitive.TRIANGLES);
+		next.windingOrder(VkFrontFace.VK_FRONT_FACE_CLOCKWISE);
 		builders.add(next);
 	}
 

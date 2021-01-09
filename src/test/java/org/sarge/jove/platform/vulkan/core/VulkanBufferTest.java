@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -23,22 +24,27 @@ import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
-public class VertexBufferTest extends AbstractVulkanTest {
-	private VertexBuffer buffer;
+public class VulkanBufferTest extends AbstractVulkanTest {
+	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+
+	private VulkanBuffer buffer;
 	private DeviceMemory mem;
 
 	@BeforeEach
 	void before() {
+		// Init device memory
 		mem = mock(DeviceMemory.class);
 		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
 
-		buffer = new VertexBuffer(new Pointer(2), dev, 3, mem);
+		// Create buffer
+		buffer = new VulkanBuffer(new Pointer(2), dev, FLAGS, 3, mem);
 	}
 
 	@Test
@@ -46,55 +52,77 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		assertEquals(new Handle(new Pointer(2)), buffer.handle());
 		assertEquals(dev, buffer.device());
 		assertEquals(3, buffer.length());
+		assertEquals(FLAGS, buffer.usage());
 	}
 
-	@Test
-	void bind() {
-		final Handle handle = new Handle(new Pointer(4));
-		final Command cmd = buffer.bindVertexBuffer();
-		assertNotNull(cmd);
-		cmd.execute(lib, handle);
-		verify(lib).vkCmdBindVertexBuffers(eq(handle), eq(0), eq(1), isA(Pointer.class), eq(new long[]{0}));
-	}
+	@Nested
+	class CommandTests {
+		private Handle handle;
+		private VulkanBuffer dest;
+		private VulkanBuffer index;
 
-	@Test
-	void bindIndexBuffer() {
-		final Handle handle = new Handle(new Pointer(5));
-		final Command cmd = buffer.bindIndexBuffer();
-		assertNotNull(cmd);
-		cmd.execute(lib, handle);
-		verify(lib).vkCmdBindIndexBuffer(handle, buffer.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
-	}
+		@BeforeEach
+		void before() {
+			final var flags = Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+			dest = new VulkanBuffer(new Pointer(2), dev, flags, 3, mem);
+			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT), 3, mem);
+			handle = new Handle(new Pointer(42));
+		}
 
-	@Test
-	void copy() {
-		// Create a destination buffer
-		final VertexBuffer dest = mock(VertexBuffer.class);
-		final Handle destHandle = new Handle(new Pointer(5));
-		when(dest.handle()).thenReturn(destHandle);
-		when(dest.length()).thenReturn(buffer.length());
+		@Test
+		void bind() {
+			final Command cmd = buffer.bindVertexBuffer();
+			assertNotNull(cmd);
+			cmd.execute(lib, handle);
+			verify(lib).vkCmdBindVertexBuffers(eq(handle), eq(0), eq(1), isA(Pointer.class), eq(new long[]{0}));
+		}
 
-		// Execute copy command
-		final Handle handle = new Handle(new Pointer(6));
-		final Command cmd = buffer.copy(dest);
-		assertNotNull(cmd);
-		cmd.execute(lib, handle);
+		@Test
+		void bindIndexBuffer() {
+			final Command cmd = index.bindIndexBuffer();
+			assertNotNull(cmd);
+			cmd.execute(lib, handle);
+			verify(lib).vkCmdBindIndexBuffer(handle, index.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
+		}
 
-		// Check API
-		final ArgumentCaptor<VkBufferCopy[]> captor = ArgumentCaptor.forClass(VkBufferCopy[].class);
-		verify(lib).vkCmdCopyBuffer(eq(handle), eq(buffer.handle()), eq(destHandle), eq(1), captor.capture());
+		@Test
+		void copy() {
+			// Execute copy command
+			final Command cmd = buffer.copy(dest);
+			assertNotNull(cmd);
+			cmd.execute(lib, handle);
 
-		// Check region
-		final VkBufferCopy[] array = captor.getValue();
-		assertNotNull(array);
-		assertEquals(1, array.length);
-		assertEquals(3, array[0].size);
-	}
+			// Check API
+			final ArgumentCaptor<VkBufferCopy[]> captor = ArgumentCaptor.forClass(VkBufferCopy[].class);
+			verify(lib).vkCmdCopyBuffer(eq(handle), eq(buffer.handle()), eq(handle), eq(1), captor.capture());
 
-	@Test
-	void copyTooSmall() {
-		final VertexBuffer dest = mock(VertexBuffer.class);
-		assertThrows(IllegalStateException.class, "too small", () -> buffer.copy(dest));
+			// Check region
+			final VkBufferCopy[] array = captor.getValue();
+			assertNotNull(array);
+			assertEquals(1, array.length);
+			assertEquals(3, array[0].size);
+		}
+
+		@Test
+		void copyTooSmall() {
+			final VulkanBuffer dest = mock(VulkanBuffer.class);
+			assertThrows(IllegalStateException.class, "Destination buffer is too small", () -> buffer.copy(dest));
+		}
+
+		@Test
+		void copyInvalidDirection() {
+			assertThrows(IllegalStateException.class, "Invalid usage", () -> dest.copy(buffer));
+		}
+
+		@Test
+		void copySelf() {
+			assertThrows(IllegalStateException.class, "Invalid usage", () -> buffer.copy(buffer));
+		}
+
+		@Test
+		void copyInvalidUsage() {
+			assertThrows(IllegalStateException.class, "Invalid usage", () -> buffer.copy(index));
+		}
 	}
 
 	@Test
@@ -120,11 +148,12 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, 3L, 0, ref);
 		verify(lib).vkUnmapMemory(dev.handle(), mem.handle());
 
-		// Load bufferable at offset
-		final Bufferable obj = mock(Bufferable.class);
-		when(data.getByteBuffer(0, 1)).thenReturn(bb);
-		buffer.load(obj, 1, 2);
-		verify(obj).buffer(bb);
+		// TODO
+//		// Load bufferable at offset
+//		final Bufferable obj = mock(Bufferable.class);
+//		when(data.getByteBuffer(0, 1)).thenReturn(bb);
+//		buffer.load(obj, 2);
+//		verify(obj).buffer(bb);
 	}
 
 	@Test
@@ -150,27 +179,43 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 	@Nested
 	class UniformBufferResourceTests {
+		private DescriptorSet.Resource uniform;
+
+		@BeforeEach
+		void before() {
+			final VulkanBuffer vbo = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT), 3, mem);
+			uniform = vbo.uniform();
+		}
+
 		@Test
 		void constructor() {
-			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffer.type());
+			assertNotNull(uniform);
+			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniform.type());
 		}
 
 		@Test
 		void populate() {
+			// Populate write descriptor
 			final var write = new VkWriteDescriptorSet();
-			buffer.populate(write);
+			uniform.populate(write);
 
+			// Check descriptor
 			final VkDescriptorBufferInfo info = write.pBufferInfo;
 			assertNotNull(info);
 			assertEquals(buffer.handle(), info.buffer);
 			assertEquals(buffer.length(), info.range);
 			assertEquals(0, info.offset);
 		}
+
+		@Test
+		void uniformInvalidBuffer() {
+			assertThrows(IllegalStateException.class, "Invalid usage", () -> buffer.uniform());
+		}
 	}
 
 	@Nested
 	class BuilderTests {
-		private VertexBuffer.Builder builder;
+		private VulkanBuffer.Builder builder;
 		private VulkanAllocator.Request allocation;
 
 		@BeforeEach
@@ -189,7 +234,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 			//when(allocation.size()).thenReturn(4L);
 
 			// Create builder
-			builder = new VertexBuffer.Builder(dev);
+			builder = new VulkanBuffer.Builder(dev);
 		}
 
 		@Test
@@ -238,7 +283,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void staging() {
-			buffer = VertexBuffer.staging(dev, 4);
+			buffer = VulkanBuffer.staging(dev, 4);
 			assertNotNull(buffer);
 			assertEquals(4, buffer.length());
 		}

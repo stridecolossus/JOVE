@@ -16,25 +16,22 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
 	private final VkPipelineRasterizationStateCreateInfo info = new VkPipelineRasterizationStateCreateInfo();
 
-	/**
-	 * Constructor.
-	 */
-	public RasterizerStageBuilder() {
-		info.depthClampEnable = VulkanBoolean.FALSE;
-		info.rasterizerDiscardEnable = VulkanBoolean.FALSE;
-		info.polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL;
-		info.cullMode = VkCullModeFlag.VK_CULL_MODE_BACK_BIT;
-		info.frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	RasterizerStageBuilder() {
+		depthClamp(false);
+		discard(false);
+		polygon(VkPolygonMode.VK_POLYGON_MODE_FILL);
+		cull(VkCullModeFlag.VK_CULL_MODE_BACK_BIT);
+		winding(VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE);
+		lineWidth(1);
 		info.depthBiasEnable = VulkanBoolean.FALSE;
-		info.lineWidth = 1;
 	}
 
 	/**
-	 * Sets whether fragment depth values are clamped (default is <code>false</code>)
+	 * Sets whether fragment depth values are clamped (default is {@code false})
 	 * @param depthClampEnable Whether to clamp depth values
 	 * TODO - check feature
 	 */
-	public RasterizerStageBuilder depthClampEnable(boolean depthClampEnable) {
+	public RasterizerStageBuilder depthClamp(boolean depthClampEnable) {
 		info.depthClampEnable = VulkanBoolean.of(depthClampEnable);
 		return this;
 	}
@@ -43,7 +40,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	 * Sets whether geometry is discarded by the rasterizer (basically disabled output to the framebuffer).
 	 * @param rasterizerDiscardEnable Whether to discard geometry (default is {@code false})
 	 */
-	public RasterizerStageBuilder discardEnable(boolean rasterizerDiscardEnable) {
+	public RasterizerStageBuilder discard(boolean rasterizerDiscardEnable) {
 		info.rasterizerDiscardEnable = VulkanBoolean.of(rasterizerDiscardEnable);
 		return this;
 	}
@@ -53,7 +50,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	 * @param polygonMode Polygon mode (default is {@link VkPolygonMode#VK_POLYGON_MODE_FILL})
 	 * TODO - check feature if not fill, line, point
 	 */
-	public RasterizerStageBuilder polygonMode(VkPolygonMode polygonMode) {
+	public RasterizerStageBuilder polygon(VkPolygonMode polygonMode) {
 		info.polygonMode = notNull(polygonMode);
 		return this;
 	}
@@ -62,17 +59,17 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	 * Sets the face culling mode.
 	 * @param cullMode Face culling mode (default is {@link VkCullModeFlag#VK_CULL_MODE_BACK_BIT})
 	 */
-	public RasterizerStageBuilder cullMode(VkCullModeFlag cullMode) {
+	public RasterizerStageBuilder cull(VkCullModeFlag cullMode) {
 		info.cullMode = notNull(cullMode);
 		return this;
 	}
 
 	/**
-	 * Sets the vertex order for front-facing faces.
-	 * @param clockwise Whether the vertex order is clockwise or counter-clockwise (default is {@link VkFrontFace#VK_FRONT_FACE_COUNTER_CLOCKWISE})
+	 * Sets the vertex winding order for front-facing faces.
+	 * @param frontFace Winding order (default is {@link VkFrontFace#VK_FRONT_FACE_COUNTER_CLOCKWISE})
 	 */
-	public RasterizerStageBuilder frontFace(boolean clockwise) {
-		info.frontFace = clockwise ? VkFrontFace.VK_FRONT_FACE_CLOCKWISE : VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	public RasterizerStageBuilder winding(VkFrontFace frontFace) {
+		info.frontFace = notNull(frontFace);
 		return this;
 	}
 

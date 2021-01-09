@@ -181,27 +181,27 @@ public final class MathsUtil {
 		return (float) Math.sqrt(f);
 	}
 
-	/**
-	 * Ensures the given angle is within the safe range on x86 processors.
-	 * @param angle Angle (radians)
-	 * @return Constrained angle
-	 */
-	private static float constrain(float angle) {
-		// Clamp angle to two-PI space
-		float result = angle % TWO_PI;
-
-		// Clamp to PI space
-		if(Math.abs(result) > PI) {
-			result = result - TWO_PI;
-		}
-
-		// Clamp to half-PI space
-		if(Math.abs(result) > HALF_PI) {
-			result = PI - result;
-		}
-
-		return result;
-	}
+//	/**
+//	 * Ensures the given angle is within the safe range on x86 processors.
+//	 * @param angle Angle (radians)
+//	 * @return Constrained angle
+//	 */
+//	private static float constrain(float angle) {
+//		// Clamp angle to two-PI space
+//		float result = angle % TWO_PI;
+//
+//		// Clamp to PI space
+//		if(Math.abs(result) > PI) {
+//			result = result - TWO_PI;
+//		}
+//
+//		// Clamp to half-PI space
+//		if(Math.abs(result) > HALF_PI) {
+//			result = PI - result;
+//		}
+//
+//		return result;
+//	}
 
 	/**
 	 * @param angle Angle (radians)

@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.model.Model.AbstractModel;
+import org.sarge.jove.platform.vulkan.VkFrontFace;
 import org.sarge.jove.util.ResourceLoader;
 
 /**
@@ -31,13 +32,14 @@ public class BufferedModel extends AbstractModel {
 	 * Constructor.
 	 * @param name				Model name
 	 * @param primitive			Drawing primitive
+	 * @param winding			Winding order for front-facing polygons
 	 * @param layout			Vertex layout
 	 * @param vertices			Vertex buffer
 	 * @param index				Optional index buffer
 	 * @param count				Number of vertices
 	 */
-	protected BufferedModel(String name, Primitive primitive, Vertex.Layout layout, ByteBuffer vertices, ByteBuffer index, int count) {
-		super(name, primitive, layout);
+	protected BufferedModel(String name, Primitive primitive, VkFrontFace winding, Vertex.Layout layout, ByteBuffer vertices, ByteBuffer index, int count) {
+		super(name, primitive, winding, layout);
 		this.vertices = notNull(vertices);
 		this.index = Optional.ofNullable(index);
 		this.count = zeroOrMore(count);
@@ -83,20 +85,17 @@ public class BufferedModel extends AbstractModel {
 			// Write file format version
 			out.writeInt(VERSION);
 
-			// Write model name
+			// Write model properties
 			out.writeUTF(model.name());
-
-			// Write model primitive
 			out.writeUTF(model.primitive().name());
+			out.writeBoolean(model.winding() == VkFrontFace.VK_FRONT_FACE_CLOCKWISE);
 
 			// Write vertex layout
 			final String layout = model.layout().components().stream().map(Enum::name).collect(joining(DELIMITER));
 			out.writeUTF(layout);
 
-			// Write vertex count
-			out.writeInt(model.count());
-
 			// Write VBO
+			out.writeInt(model.count());
 			write(model.vertices(), out);
 
 			// Write index
@@ -141,24 +140,21 @@ public class BufferedModel extends AbstractModel {
 				throw new UnsupportedOperationException(String.format("Unsupported version: version=%d supported=%d", version, VERSION));
 			}
 
-			// Load model name
+			// Load model properties
 			final String name = in.readUTF();
-
-			// Load primitive
 			final Primitive primitive = Primitive.valueOf(in.readUTF());
+			final VkFrontFace winding = in.readBoolean() ? VkFrontFace.VK_FRONT_FACE_CLOCKWISE : VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-			// Load layout
+			// Load vertex layout
 			final var layout = Arrays.stream(in.readUTF().split(DELIMITER)).map(Vertex.Component::valueOf).collect(toList());
 
-			// Load vertex count
+			// Load data
 			final int count = in.readInt();
-
-			// Load buffers
 			final ByteBuffer vertices = loadBuffer(in);
 			final ByteBuffer index = loadBuffer(in);
 
 			// Create model
-			return new BufferedModel(name, primitive, new Vertex.Layout(layout), vertices, index, count);
+			return new BufferedModel(name, primitive, winding, new Vertex.Layout(layout), vertices, index, count);
 		}
 
 		/**

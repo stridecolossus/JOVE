@@ -27,7 +27,7 @@ public class ImageCopyCommandTest {
 	private static final VkImageLayout LAYOUT = VkImageLayout.VK_IMAGE_LAYOUT_GENERAL;
 
 	private Image image;
-	private VertexBuffer buffer;
+	private VulkanBuffer buffer;
 	private VkBufferImageCopy region;
 	private Handle handle;
 	private VulkanLibrary lib;
@@ -51,7 +51,7 @@ public class ImageCopyCommandTest {
 		when(image.descriptor()).thenReturn(descriptor);
 
 		// Create data buffer
-		buffer = mock(VertexBuffer.class);
+		buffer = mock(VulkanBuffer.class);
 		when(buffer.handle()).thenReturn(new Handle(new Pointer(5)));
 
 		// Create copy descriptor
