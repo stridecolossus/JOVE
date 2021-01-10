@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.api;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
@@ -91,20 +91,13 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	 * Note that this class must be defined as a member of the associated API in order for the type mapper to work correctly.
 	 */
 	abstract class VulkanStructure extends Structure {
-		/**
-		 * Helper - Retrieves the names of the fields in the given structure.
-		 * @param struct Vulkan structure
-		 * @return Field names
-		 */
-		public static Stream<String> names(VulkanStructure struct) {
-			return struct.getFieldList().stream().map(Field::getName);
-		}
-
-		/**
-		 * Constructor.
-		 */
 		protected VulkanStructure() {
 			super(MAPPER);
+		}
+
+		@Override
+		public List<Field> getFieldList() {
+			return super.getFieldList();
 		}
 
 		@Override
@@ -123,7 +116,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		}
 
 		/**
-		 * Initialises the type field of all elements in the given array.
+		 * Initialises the type field of all elements in the array.
 		 */
 		private void patch(Field sType, Structure[] array) {
 			try {

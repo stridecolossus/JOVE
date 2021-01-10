@@ -82,6 +82,11 @@ public class VulkanLibraryTest {
 		}
 
 		@Test
+		void getFieldList() {
+			assertNotNull(struct.getFieldList());
+		}
+
+		@Test
 		void toArray() {
 			final MockStructure[] array = (MockStructure[]) struct.toArray(2);
 			assertNotNull(array);
