@@ -200,7 +200,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @throws IllegalStateException if this buffer does not support the given usage flag
 	 */
-	private void require(VkBufferUsageFlag flag) {
+	void require(VkBufferUsageFlag flag) {
 		if(!usage.contains(flag)) {
 			throw new IllegalStateException(String.format("Invalid usage for buffer: usage=%s buffer=%s", flag, this));
 		}

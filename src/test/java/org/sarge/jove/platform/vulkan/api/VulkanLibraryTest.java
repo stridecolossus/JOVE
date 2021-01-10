@@ -82,13 +82,6 @@ public class VulkanLibraryTest {
 		}
 
 		@Test
-		void copy() {
-			final MockStructure copy = struct.copy();
-			assertNotNull(copy);
-			assertEquals(true, struct.dataEquals(copy));
-		}
-
-		@Test
 		void toArray() {
 			final MockStructure[] array = (MockStructure[]) struct.toArray(2);
 			assertNotNull(array);

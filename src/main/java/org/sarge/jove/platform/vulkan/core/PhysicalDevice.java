@@ -160,7 +160,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @return Device limits
 		 */
 		public VkPhysicalDeviceLimits limits() {
-			return props.limits.copy();
+			return props.limits;
 		}
 
 		@Override

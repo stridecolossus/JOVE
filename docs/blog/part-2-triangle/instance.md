@@ -414,7 +414,7 @@ Vulkan implements the `STANDARD_VALIDATION` layer that provides an excellent err
 
 However there is one complication - for some reason the reporting mechanism is not a core part of the API but is itself an extension.
 
-We start with a new domain class that defines a handler and the JNA callback invoked by Vulkan to report errors and messages:
+We start with a new domain class that defines a message handler and the JNA callback invoked by Vulkan to report errors and messages:
 
 ```java
 public static class Handler {
@@ -423,10 +423,12 @@ public static class Handler {
      */
     private static class MessageCallback implements Callback {
     }
+
+    private final Consumer<Message> handler;
 }
 ```
 
-We have to define the signature of the callback ourselves using the documentation, as an extension it is not defined in the API:
+We have to define the signature of the callback ourselves based on the documentation, as an extension it is not defined in the API:
 
 ```java
 public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData) {
@@ -439,7 +441,9 @@ Where:
 - _pCallbackData_ is a structure containing the message details.
 - _pUserData_ is an optional, arbitrary pointer associated with the handler (redundant for an OO implementation).
 
-The callback implementation transforms the bit-masks to the relevant enumerations and wraps the message in a new domain object:
+Note that JNA requires a callback implementation to contain a single method (the name is arbitrary) but this is not enforced by the compiler (as a functional interface for example).
+
+The callback implementation transforms the bit-masks to the relevant enumerations and wraps the message in the new `Message` object:
 
 ```java
 public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData) {
@@ -458,7 +462,7 @@ public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackData
 }
 ```
 
-The `Message` class is a simple POJO:
+The `Message` class is a simple POJO that composes the message details:
 
 ```java
 public record Message(
@@ -468,21 +472,9 @@ public record Message(
 )
 ```
 
-Which is passed to a simple handler:
-
-```java
-private static class MessageCallback implements Callback {
-    private final Consumer<Message> handler;
-
-    private MessageCallback(Consumer<Message> handler) {
-        this.handler = notNull(handler);
-    }
-}
-```
-
 ### Message Handler
 
-We next implement the handler class itself which is a builder used to specify the diagnostic requirements for an application:
+We next implement the handler class itself which is a builder used to configure the diagnostic requirements for an application:
 
 ```java
 public static class Handler {
@@ -512,9 +504,9 @@ public static class Handler {
 }
 ```
 
-The convenience `init` method (not shown) initialises the handler to common settings - warning/errors for general and validation messages.
+We add the convenience `init` method (not shown) that initialises the handler to common settings - warning/errors for general and validation messages.
 
-The 'build' method of the handler populates a descriptor and attaches the handler to the instance:
+The `attach` method populates the creation descriptor and attaches the handler to the instance:
 
 ```java
 public void attach() {
@@ -530,7 +522,7 @@ public void attach() {
 }
 ```
 
-The `manager` encapsulates the logic for creating and managing the message handlers:
+The `Manager` encapsulates the logic for creating and managing message handlers:
 
 ```java
 private class Manager {
@@ -548,12 +540,12 @@ private class Manager {
 }
 ```
 
-The `LazySupplier' is covered at the end of the chapter.
+The `LazySupplier` is covered at the end of the chapter.
 
-As already noted the diagnostics mechanism is an extension and not part of the public Vulkan API.
-The methods to create and destroy a message handler are function pointers that are retrieved using the following API method (assuming the relevant extension is present):
+As already noted the diagnostics mechanism is an extension and not part of the public Vulkan API. 
+The methods to create and destroy a message handler are function pointers looked up using the following API method (assuming the relevant extension is present):
 
-```
+```java
 interface VulkanLibraryInstance {
     /**
      * Looks up an instance function.
@@ -565,7 +557,7 @@ interface VulkanLibraryInstance {
 }
 ```
 
-Which is used by the following helper on the `Instance` class to lookup a JNA function by name:
+We implement a helper method on the `Instance` class to lookup a JNA function by name:
 
 ```java
 public Function function(String name) {
@@ -589,12 +581,18 @@ private void create(VkDebugUtilsMessengerCreateInfoEXT info) {
 }
 ```
 
-All this code is tied together in the following factory method that creates a new message handler:
+All this code is tied together in the `handler` factory method that creates a new message handler:
 
 ```java
 public class Instance {
     private final VulkanLibrary lib;
     private final LazySupplier<Manager> manager;
+
+    private Instance(VulkanLibrary lib, Pointer handle) {
+        super(handle);
+        this.manager = new LazySupplier<>(() -> new Manager(handle));
+        this.lib = notNull(lib);
+    }
 
     /**
      * Creates a builder for a new message handler to be attached to this instance.
@@ -606,7 +604,7 @@ public class Instance {
 }
 ```
 
-Finally we add the following method to the manager to release the attached handlers:
+Finally we add the following method to the manager to release attached handlers:
 
 ```java
 private void destroy() {
@@ -682,7 +680,7 @@ private static String clean(String name, String type) {
 ```
 
 The `clean` method is possibly slightly confusing but it basically just strips the prefix and suffix of an enumeration constant,
-for example `VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT` becomes `VERBOSE`.
+for example `VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT` becomes `VERBOSE`.
 
 Example formatted message (excluding the message text):
 
@@ -721,7 +719,7 @@ public interface VulkanLibrary {
 }
 ```
 
-Finally we create and attach a handler with the default configuration in the demo:
+Finally in the demo we create and attach a handler with a default configuration:
 
 ```java
 instance
@@ -740,7 +738,7 @@ From now on when we screw things up we should receive error messages on the cons
 
 There will several cases throughout the Vulkan API where we will employ _lazy initialisation_ to defer instantiation of some object and/or invocation of an API method.
 
-We implement a custom supplier for handle lazy instantiation of some object:
+We create a custom supplier for lazy initialisation:
 
 ```java
 public class LazySupplier<T> implements Supplier<T> {
@@ -771,9 +769,10 @@ public class LazySupplier<T> implements Supplier<T> {
 }
 ```
 
-We implement the `LazySupplier` not for performance reasons but mainly to ensure that API methods are invoked closer to the code where they are used
+The rationale for lazy initialisation is not performance reasons but mainly to ensure that API methods are invoked closer to the code where they are used
 (such as when we lookup the create method for the diagnostics handler). 
-However this implementation is also thread-safe should that become a requirement.
+
+However this implementation is also relatively cheaply thread-safe should that become a requirement:
 
 The first line of the `get` method may look odd or even pointless:
 
@@ -781,7 +780,7 @@ The first line of the `get` method may look odd or even pointless:
 final T result = value;
 ```
 
-This is performing **one** read of the _volatile_ lazily instantiated object which allows the following code to avoid the `synchronized` block if the value has been populated.
+This is performing **one** read of the _volatile_ lazily instantiated object allowing the following code to avoid the `synchronized` block if the value has been populated.
 
 Reference: [DZone article](https://dzone.com/articles/be-lazy-with-java-8)
 

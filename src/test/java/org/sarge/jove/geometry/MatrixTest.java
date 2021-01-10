@@ -131,7 +131,7 @@ class MatrixTest {
 		@Test
 		void scale() {
 			final Matrix expected = new Builder().identity().set(2, 2, 3).build();
-			assertEquals(expected, Matrix.scale(new Tuple(1, 1, 3)));
+			assertEquals(expected, Matrix.scale(new Vector(1, 1, 3)));
 		}
 
 		@Test

@@ -14,7 +14,9 @@ public class TupleTest {
 
 	@BeforeEach
 	public void before() {
-		tuple = new Tuple(1, 2, 3);
+		tuple = new Tuple(1, 2, 3) {
+			// Empty
+		};
 	}
 
 	@Test
@@ -28,13 +30,22 @@ public class TupleTest {
 
 	@Test
 	public void array() {
-		final Tuple other = new Tuple(new float[]{1, 2, 3});
-		assertEquals(tuple, other);
+		tuple = new Tuple(new float[]{1, 2, 3}) {
+			// Empty
+		};
+		assertEquals(1, tuple.x);
+		assertEquals(2, tuple.y);
+		assertEquals(3, tuple.z);
 	}
 
 	@Test
 	public void copy() {
-		assertEquals(tuple, new Tuple(tuple));
+		tuple = new Tuple(tuple) {
+			// Empty
+		};
+		assertEquals(1, tuple.x);
+		assertEquals(2, tuple.y);
+		assertEquals(3, tuple.z);
 	}
 
 	@Test

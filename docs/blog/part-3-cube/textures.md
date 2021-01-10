@@ -640,7 +640,7 @@ final Vertex[] vertices = {
 };
 ```
 
-The default drawing primitive is a _triangle strip_ which assumes vertices adhere to the following pattern:
+The default drawing primitive is a _triangle strip_ which assumes vertices are ordered as follows:
 
 ```
 0---2---4-- etc
@@ -648,18 +648,8 @@ The default drawing primitive is a _triangle strip_ which assumes vertices adher
 1---3---5
 ```
 
-The first triangle is comprised of the first three vertices with each subsequent triangle incrementing the 'index' by one, giving us 012, 123, 234, etc.
-
-
-
-A triangle strip has an _alternating_ winding order (the default order is counter-clockwise) which results in the following:
-
-triangle | vertices | order
--------- | -------- | -----
-1        | 012      | counter-clockwise
-2        | 123      | clockwise
-3        | 234      | counter-clockwise
-etc      |          |
+The first triangle is comprised of the first three vertices with each subsequent triangle incrementing the 'index' by one resulting in 012, 123, 234, etc. 
+Additionally the triangles in the strip have an _alternating_ winding order.
 
 After changing the number of vertices to 4 in the drawing command we should see something like the following:
 

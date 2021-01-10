@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -119,9 +118,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"nonCoherentAtomSize"
 })
 public class VkPhysicalDeviceLimits extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceLimits implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceLimits implements Structure.ByReference { }
-
 	public int maxImageDimension1D;
 	public int maxImageDimension2D;
 	public int maxImageDimension3D;

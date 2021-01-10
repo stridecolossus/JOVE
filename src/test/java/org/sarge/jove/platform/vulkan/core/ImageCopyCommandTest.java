@@ -1,36 +1,29 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
-import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkOffset3D;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
 public class ImageCopyCommandTest {
-	private static final VkImageLayout LAYOUT = VkImageLayout.VK_IMAGE_LAYOUT_GENERAL;
-
 	private Image image;
 	private VulkanBuffer buffer;
-	private VkBufferImageCopy region;
-	private Handle handle;
+	private Handle cmd;
 	private VulkanLibrary lib;
+	private ImageCopyCommand.Builder builder;
 
 	@BeforeEach
 	void before() {
@@ -38,105 +31,89 @@ public class ImageCopyCommandTest {
 		lib = mock(VulkanLibrary.class);
 
 		// Create command buffer
-		handle = new Handle(new Pointer(1));
+		cmd = new Handle(new Pointer(1));
 
-		// Create image
-		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-				.extents(new Image.Extents(3, 4))
-				.format(VkFormat.VK_FORMAT_A1R5G5B5_UNORM_PACK16)
+		// Define image
+		final var descriptor = new Image.Descriptor.Builder()
+				.extents(new Image.Extents(1, 1))
+				.format(AbstractVulkanTest.FORMAT)
 				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
 				.build();
+
+		// Create image
 		image = mock(Image.class);
 		when(image.handle()).thenReturn(new Handle(new Pointer(2)));
 		when(image.descriptor()).thenReturn(descriptor);
 
 		// Create data buffer
 		buffer = mock(VulkanBuffer.class);
-		when(buffer.handle()).thenReturn(new Handle(new Pointer(5)));
+		when(buffer.handle()).thenReturn(new Handle(new Pointer(3)));
 
-		// Create copy descriptor
-		region = new VkBufferImageCopy();
-	}
-
-	@Test
-	void copyImageToBuffer() {
-		final VkBufferImageCopy[] array = new VkBufferImageCopy[]{region};
-		final ImageCopyCommand copy = new ImageCopyCommand(image, buffer, array, LAYOUT);
-		copy.execute(lib, handle);
-		verify(lib).vkCmdCopyBufferToImage(handle, buffer.handle(), image.handle(), LAYOUT, 1, array);
+		// Create copy command builder
+		builder = new ImageCopyCommand.Builder();
 	}
 
 	@Test
 	void copyBufferToImage() {
-		final VkBufferImageCopy[] array = new VkBufferImageCopy[]{region};
-		final ImageCopyCommand copy = new ImageCopyCommand(image, buffer, array, LAYOUT);
-		final Command inverse = copy.invert();
-		assertNotNull(inverse);
-		inverse.execute(lib, handle);
-		verify(lib).vkCmdCopyImageToBuffer(handle, image.handle(), LAYOUT, buffer.handle(), 1, array);
+		// Create command to copy the buffer to the image
+		final ImageCopyCommand copy = builder
+				.image(image)
+				.buffer(buffer)
+				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+				.build();
 
+		// Perform copy operation
+		copy.execute(lib, cmd);
+		verify(buffer).require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+		verify(lib).vkCmdCopyBufferToImage(cmd, buffer.handle(), image.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, copy.regions());
 	}
 
-	@Nested
-	class BuilderTests {
-		private ImageCopyCommand.Builder builder;
+	@Test
+	void copyImageToBuffer() {
+		// Create command to copy the image to the buffer
+		final ImageCopyCommand copy = builder
+				.image(image)
+				.buffer(buffer)
+				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+				.invert()
+				.build();
 
-		@BeforeEach
-		void before() {
-			builder = new ImageCopyCommand.Builder(image);
-		}
+		// Perform copy operation
+		copy.execute(lib, cmd);
+		verify(buffer).require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+		verify(lib).vkCmdCopyImageToBuffer(cmd, image.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer.handle(), 1, copy.regions());
+	}
 
-		@Test
-		void build() {
-			// Build copy command
-			final Command copy = builder
-					.buffer(buffer)
-					.layout(LAYOUT)
-					.build();
+	@Test
+	void buildEmptyImage() {
+		assertThrows(IllegalArgumentException.class, () -> builder.buffer(buffer).build());
+	}
 
-			// Copy
-			assertNotNull(copy);
-			copy.execute(lib, handle);
+	@Test
+	void buildEmptyImageLayout() {
+		assertThrows(IllegalArgumentException.class, () -> builder.image(image).buffer(buffer).build());
+	}
 
-			// Check API
-			final ArgumentCaptor<VkBufferImageCopy[]> captor = ArgumentCaptor.forClass(VkBufferImageCopy[].class);
-			final Handle bufferHandle = buffer.handle();
-			final Handle imageHandle = image.handle();
-			verify(lib).vkCmdCopyBufferToImage(eq(handle), eq(bufferHandle), eq(imageHandle), eq(LAYOUT), eq(1), captor.capture());
-			assertNotNull(captor.getValue());
-			assertEquals(1, captor.getValue().length);
+	@Test
+	void buildSubresourceEmptyImage() {
+		assertThrows(IllegalStateException.class, () -> builder.buffer(buffer).subresource());
+	}
 
-			// Check descriptor
-			final VkBufferImageCopy info = captor.getValue()[0];
-			assertEquals(0, info.bufferOffset);
-			assertEquals(0, info.bufferRowLength);
-			assertEquals(0, info.bufferImageHeight);
+	@Test
+	void buildEmptyBuffer() {
+		assertThrows(IllegalArgumentException.class, () -> builder.image(image).build());
+	}
 
-			// Check image offsets
-			assertNotNull(info.imageOffset);
-			assertTrue(info.imageOffset.dataEquals(new VkOffset3D()));
+	@Test
+	void buildInvalidImageLayout() {
+		builder.image(image).buffer(buffer).layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		assertThrows(IllegalStateException.class, () -> builder.build());
+	}
 
-			// Check image extents
-			assertNotNull(info.imageExtent);
-			assertEquals(3, info.imageExtent.width);
-			assertEquals(4, info.imageExtent.height);
-			assertEquals(1, info.imageExtent.depth);
-
-			// Check sub-resource
-			assertNotNull(info.imageSubresource);
-			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), info.imageSubresource.aspectMask);
-		}
-
-		@Test
-		void buildRequiresBuffer() {
-			builder.layout(LAYOUT);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@Test
-		void buildRequiresImageLayout() {
-			builder.buffer(buffer);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
+	@Test
+	void buildInvalidBuffer() {
+		doThrow(IllegalStateException.class).when(buffer).require(any());
+		builder.image(image).buffer(buffer).layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		assertThrows(IllegalStateException.class, () -> builder.build());
 	}
 }

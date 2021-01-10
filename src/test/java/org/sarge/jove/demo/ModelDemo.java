@@ -81,7 +81,8 @@ public class ModelDemo {
 				.submit(pool);
 
 		// Copy staging to texture
-		new ImageCopyCommand.Builder(texture)
+		new ImageCopyCommand.Builder()
+				.image(texture)
 				.buffer(staging)
 				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 				.build()

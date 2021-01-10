@@ -11,7 +11,7 @@ import org.sarge.jove.util.MathsUtil;
  * Base-class for geometry with an XYZ tuple.
  * @author Sarge
  */
-public class Tuple implements Bufferable {
+public abstract class Tuple implements Bufferable {
 	/**
 	 * Size of a tuple.
 	 */

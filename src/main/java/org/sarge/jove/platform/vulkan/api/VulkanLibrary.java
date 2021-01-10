@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.api;
 
 import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
@@ -16,7 +17,6 @@ import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
 import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
-import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Structure;
@@ -95,45 +95,22 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 			super(MAPPER);
 		}
 
-		/**
-		 * Clones this structure.
-		 * @param <T> Structure type
-		 * @return New clone of this structure
-		 */
-		@SuppressWarnings("unchecked")
-		public <T extends VulkanStructure> T copy() {
-			// Sync with native
-			write();
-
-			// Copy memory from this structure
-			final int size = this.size();
-			final byte[] bytes = this.getPointer().getByteArray(0, size);
-
-			// Create new memory block
-            final Memory mem = new Memory(size);
-            mem.write(0, bytes, 0, size);
-
-            // Instantiate clone
-            final var copy = newInstance(this.getClass(), mem);
-            copy.read();
-
-            // Cast to this structure type
-            return (T) copy;
+		public Stream<String> fields() {
+			return getFieldList().stream().map(Field::getName);
 		}
+		// TODO
 
 		@Override
 		public Structure[] toArray(int size) {
 			// Allocate array
 			final Structure[] array = super.toArray(size);
 
-			// Find type field if present
-			final var sType = getFieldList()
+			// Patch structure type field
+			getFieldList()
 					.stream()
 					.filter(f -> f.getName().equals("sType"))
-					.findAny();
-
-			// Patch type field as required
-			sType.ifPresent(f -> patch(f, array));
+					.findAny()
+					.ifPresent(f -> patch(f, array));
 
 			return array;
 		}
