@@ -4,8 +4,10 @@ import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.util.Check.notNull;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 /**
@@ -28,6 +30,15 @@ public class DeviceFeatures {
 		return new DeviceFeatures(struct);
 	}
 
+	/**
+	 * @param features		Features
+	 * @param name			Field name
+	 * @return Whether the given feature is supported
+	 */
+	private static boolean isSupported(VkPhysicalDeviceFeatures features, String name) {
+		return features.readField(name) == VulkanBoolean.TRUE;
+	}
+
 	private final VkPhysicalDeviceFeatures features;
 
 	/**
@@ -36,74 +47,40 @@ public class DeviceFeatures {
 	 */
 	public DeviceFeatures(VkPhysicalDeviceFeatures features) {
 		this.features = notNull(features);
-		this.features.write();
+		features.write();
 	}
 
-//	/**
-//	 * @return Device features descriptor
-//	 */
-//	public VkPhysicalDeviceFeatures get() {
-//		return features.copy();
-//	}
-
 	/**
-	 * @param feature Feature name
+	 * @param name Feature name
 	 * @return Whether the given feature is supported
 	 * @throws IllegalArgumentException if the feature is unknown
 	 */
-	public boolean isSupported(String feature) {
-		return features.readField(feature) == VulkanBoolean.TRUE;
+	public boolean isSupported(String name) {
+		return isSupported(features, name);
 	}
 
-	public void check(DeviceFeatures that) {
-		for(String name : features.fields().collect(toList())) {
-			if((features.readField(name) == VulkanBoolean.TRUE) && (that.features.readField(name) == VulkanBoolean.FALSE)) {
-				System.out.println("name="+name);
-			}
+	/**
+	 * Tests whether the given required features are supported by this set of features.
+	 * @param required Required features
+	 */
+	public void check(VkPhysicalDeviceFeatures required) {
+		// Init required features
+		required.write();
+
+		// Enumerate unsupported features
+		final var missing = VulkanStructure.names(required)
+				.filter(f -> isSupported(required, f))
+				.filter(Predicate.not(this::isSupported))
+				.collect(toList());
+
+		// Check for unsupported features
+		if(!missing.isEmpty()) {
+			throw new IllegalArgumentException("Feature(s) not supported: " + missing);
 		}
 	}
-}
 
-//
-//	/**
-//	 * Helper -
-//	 * @param feature
-//	 * @throws IllegalStateException
-//	 */
-//	public void check(String feature) throws IllegalStateException {
-//		Check.notEmpty(feature);
-//
-//		if(!isSupported(feature)) {
-//			throw new IllegalStateException("Unsupported feature: " + feature);
-//		}
-//	}
-//
-//	/**
-//	 * Checks that this set of features supports the given required features.
-//	 * @param required Required features
-//	 * @throws IllegalStateException if any required feature is not in this set of supported features
-//	 */
-//	public void check(DeviceFeatures required) {
-//		// Enumerate missing features
-//		final Field[] fields = VkPhysicalDeviceFeatures.class.getFields();
-//		final Collection<String> missing = Arrays.stream(fields)
-//				.filter(f -> get(f, required.features))
-//				.filter(f -> !get(f, this.features))
-//				.map(Field::getName)
-//				.collect(toList());
-//
-//		// Check
-//		if(!missing.isEmpty()) {
-//			throw new IllegalStateException("Unsupported feature(s): " + missing);
-//		}
-//	}
-//
-//	private static boolean get(Field field, VkPhysicalDeviceFeatures obj) {
-//		try {
-//			return field.get(obj) == VulkanBoolean.TRUE;
-//		}
-//		catch(Exception e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
-//}
+	@Override
+	public String toString() {
+		return features.toString();
+	}
+}

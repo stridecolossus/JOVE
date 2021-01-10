@@ -35,7 +35,6 @@ import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Runner.Frame;
 import org.sarge.jove.platform.vulkan.pipeline.Runner.FrameState;
-import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Camera;
 import org.sarge.jove.scene.OrbitalCameraController;
@@ -209,13 +208,13 @@ public class ModelDemo {
 		// Init required features
 		final var features = new VkPhysicalDeviceFeatures();
 		features.samplerAnisotropy = VulkanBoolean.TRUE;
-		gpu.features().check(new DeviceFeatures(features));
+		gpu.features().check(features);
 
 		// Create device
 		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.features(new DeviceFeatures(features))
+				.features(features)
 				.queue(graphics)
 				.queue(transfer)
 				.queue(present)

@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.List;
 import java.util.Set;
@@ -74,7 +73,7 @@ public class LogicalDeviceTest {
 				.queues(family, List.of(Percentile.HALF, Percentile.ONE))
 				.extension("ext")
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.features(new DeviceFeatures(features))
+				.features(features)
 				.build();
 	}
 
@@ -208,14 +207,6 @@ public class LogicalDeviceTest {
 		@Test
 		void invalidExtension() {
 			assertThrows(IllegalArgumentException.class, () -> builder.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS));
-		}
-
-		@DisplayName("Cannot request features that are not available")
-		@Test
-		void invalidSupportedFeature() {
-			final var required = new VkPhysicalDeviceFeatures();
-			required.wideLines = VulkanBoolean.TRUE;
-			assertThrows(IllegalStateException.class, "wideLines", () -> builder.features(new DeviceFeatures(required)));
 		}
 	}
 }

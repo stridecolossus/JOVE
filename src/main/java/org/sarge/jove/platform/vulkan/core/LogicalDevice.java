@@ -224,7 +224,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private final Set<RequiredQueue> queues = new HashSet<>();
-		private DeviceFeatures features = new DeviceFeatures(new VkPhysicalDeviceFeatures());
+		private VkPhysicalDeviceFeatures features;
 
 		/**
 		 * Constructor.
@@ -237,12 +237,9 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 		/**
 		 * Sets the features required by this logical device.
 		 * @param required Required features
-		 * @throws IllegalStateException if the feature is not supported by the parent physical device
-		 * @see DeviceFeatures#check(DeviceFeatures)
 		 */
-		public Builder features(DeviceFeatures required) {
-			parent.features().check(required);
-			this.features = notNull(required);
+		public Builder features(VkPhysicalDeviceFeatures features) {
+			this.features = notNull(features);
 			return this;
 		}
 
@@ -313,7 +310,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
 
 			// Add required features
-			info.pEnabledFeatures = features.get();
+			info.pEnabledFeatures = features;
 
 			// Add required extensions
 			info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
@@ -333,7 +330,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 			check(lib.vkCreateDevice(parent.handle(), info, null, logical));
 
 			// Create logical device
-			return new LogicalDevice(logical.getValue(), parent, features, queues);
+			return new LogicalDevice(logical.getValue(), parent, new DeviceFeatures(features), queues);
 		}
 	}
 }

@@ -1,5 +1,5 @@
 ---
-title: Textures and Descriptor Sets
+title: Descriptor Sets
 ---
 
 ## Overview
@@ -442,13 +442,6 @@ public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> set
 }
 ```
 
-### API
-
-The API for descriptor sets is as follows:
-
-```java
-```
-
 ---
 
 ## Texture Sampling Redux
@@ -598,4 +591,4 @@ In this chapter we:
 
 - Applied texture sampling to the quad demo.
 
-The API methods in this chapter are defined in the new `VulkanLibraryDescriptorSet` JNA library interface.
+The API methods in this chapter are defined in the `VulkanLibraryDescriptorSet` JNA library interface.

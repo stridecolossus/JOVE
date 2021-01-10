@@ -91,14 +91,21 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	 * Note that this class must be defined as a member of the associated API in order for the type mapper to work correctly.
 	 */
 	abstract class VulkanStructure extends Structure {
+		/**
+		 * Helper - Retrieves the names of the fields in the given structure.
+		 * @param struct Vulkan structure
+		 * @return Field names
+		 */
+		public static Stream<String> names(VulkanStructure struct) {
+			return struct.getFieldList().stream().map(Field::getName);
+		}
+
+		/**
+		 * Constructor.
+		 */
 		protected VulkanStructure() {
 			super(MAPPER);
 		}
-
-		public Stream<String> fields() {
-			return getFieldList().stream().map(Field::getName);
-		}
-		// TODO
 
 		@Override
 		public Structure[] toArray(int size) {

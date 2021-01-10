@@ -1,10 +1,14 @@
 package org.sarge.jove.platform.vulkan.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 public class DeviceFeaturesTest {
 	private static final String SUPPORTED = "samplerAnisotropy";
@@ -14,24 +18,9 @@ public class DeviceFeaturesTest {
 
 	@BeforeEach
 	void before() {
-		features = DeviceFeatures.of(Set.of(SUPPORTED));
-	}
-
-	@Test
-	void test() {
-
-		System.out.println("features="+features);
-
-		features.check(new DeviceFeatures(new VkPhysicalDeviceFeatures()));
-
-
-	}
-
-	/*
-	@Test
-	void constructor() {
-		assertNotNull(features.get());
-		assertEquals(VulkanBoolean.TRUE, features.get().samplerAnisotropy);
+		final var struct = new VkPhysicalDeviceFeatures();
+		struct.samplerAnisotropy = VulkanBoolean.TRUE;
+		features = new DeviceFeatures(struct);
 	}
 
 	@Test
@@ -41,27 +30,33 @@ public class DeviceFeaturesTest {
 	}
 
 	@Test
-	void isSupportedUnknown() {
+	void isSupportedInvalidField() {
 		assertThrows(IllegalArgumentException.class, () -> features.isSupported("cobblers"));
 	}
 
 	@Test
 	void check() {
-//		features.check(SUPPORTED);
-//		features.check(features);
-//		features.check(new DeviceFeatures(new VkPhysicalDeviceFeatures()));
+		final var required = new VkPhysicalDeviceFeatures();
+		required.samplerAnisotropy = VulkanBoolean.TRUE;
+		features.check(required);
+	}
+
+	@Test
+	void checkEmpty() {
+		features.check(new VkPhysicalDeviceFeatures());
 	}
 
 	@Test
 	void checkNotSupported() {
-		assertThrows(IllegalStateException.class, "Unsupported feature: " + NOT_SUPPORTED, () -> features.check(NOT_SUPPORTED));
+		final var required = new VkPhysicalDeviceFeatures();
+		required.wideLines = VulkanBoolean.TRUE;
+		assertThrows(IllegalArgumentException.class, () -> features.check(required));
 	}
 
 	@Test
-	void checkMismatch() {
-		final var required = new VkPhysicalDeviceFeatures();
-		required.wideLines = VulkanBoolean.TRUE;
-		assertThrows(IllegalStateException.class, "Unsupported feature(s): [wideLines]", () -> features.check(new DeviceFeatures(required)));
+	void of() {
+		final DeviceFeatures other = DeviceFeatures.of(Set.of(SUPPORTED));
+		assertEquals(true, other.isSupported(SUPPORTED));
+		assertEquals(false, other.isSupported(NOT_SUPPORTED));
 	}
-	*/
 }

@@ -77,7 +77,7 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * A <i>descriptor set entry</i> holds the resource for a given binding.
+	 * An <i>entry</i> holds the resource for a given binding in this descriptor set.
 	 */
 	public class Entry {
 		private final Binding binding;
