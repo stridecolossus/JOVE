@@ -83,9 +83,9 @@ public class View extends AbstractVulkanObject {
 	 */
 	public void clear(ClearValue clear) {
 		if(clear != ClearValue.NONE) {
-			final VkImageAspectFlag flag = clear.aspect();
-			if(!image.descriptor().aspects().contains(flag)) {
-				throw new IllegalArgumentException(String.format("Invalid clear value for this view: expected=%s view=%s", flag, this));
+			final var aspects = image.descriptor().aspects();
+			if(!aspects.contains(clear.aspect())) {
+				throw new IllegalArgumentException(String.format("Invalid clear value for this view: clear=%s view=%s", clear, this));
 			}
 		}
 		this.clear = notNull(clear);

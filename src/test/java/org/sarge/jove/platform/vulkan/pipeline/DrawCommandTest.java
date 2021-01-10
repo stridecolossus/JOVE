@@ -18,32 +18,50 @@ import org.sarge.jove.platform.vulkan.core.Command;
 import com.sun.jna.Pointer;
 
 public class DrawCommandTest {
-	private Model model;
+	private static final int COUNT = 42;
+
 	private VulkanLibrary lib;
-	private Handle handle;
+	private Handle buffer;
 
 	@BeforeEach
 	void before() {
 		lib = mock(VulkanLibrary.class);
-		handle = new Handle(new Pointer(1));
-		model = mock(Model.class);
-		when(model.count()).thenReturn(42);
+		buffer = new Handle(new Pointer(1));
 	}
 
 	@Test
-	void of() {
-		final Command draw = DrawCommand.of(model);
+	void draw() {
+		final Command draw = DrawCommand.draw(COUNT);
 		assertNotNull(draw);
-		draw.execute(lib, handle);
-		verify(lib).vkCmdDraw(handle, 42, 1, 0, 0);
+		draw.execute(lib, buffer);
+		verify(lib).vkCmdDraw(buffer, COUNT, 1, 0, 0);
 	}
 
 	@Test
 	void indexed() {
-		when(model.index()).thenReturn(Optional.of(ByteBuffer.allocate(1)));
+		final Command draw = DrawCommand.indexed(COUNT);
+		assertNotNull(draw);
+		draw.execute(lib, buffer);
+		verify(lib).vkCmdDrawIndexed(buffer, COUNT, 1, 0, 0, 0);
+	}
+
+	@Test
+	void of() {
+		// Create a model
+		final Model model = mock(Model.class);
+		when(model.count()).thenReturn(COUNT);
+
+		// Create draw command
 		final Command draw = DrawCommand.of(model);
 		assertNotNull(draw);
-		draw.execute(lib, handle);
-		verify(lib).vkCmdDrawIndexed(handle, 42, 1, 0, 0, 0);
+		draw.execute(lib, buffer);
+		verify(lib).vkCmdDraw(buffer, COUNT, 1, 0, 0);
+
+		// Create draw command for indexed model
+		when(model.index()).thenReturn(Optional.of(ByteBuffer.allocate(0)));
+		final Command indexed = DrawCommand.of(model);
+		assertNotNull(indexed);
+		indexed.execute(lib, buffer);
+		verify(lib).vkCmdDrawIndexed(buffer, COUNT, 1, 0, 0, 0);
 	}
 }

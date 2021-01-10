@@ -381,6 +381,7 @@ public class ModelDemo {
 		final List<Command.Buffer> commands = graphicsPool.allocate(buffers.size());
 
 		// Record render commands
+		final Command draw = DrawCommand.of(model);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb
@@ -390,7 +391,7 @@ public class ModelDemo {
 					.add(vbo.bindVertexBuffer())
 					.add(index.bindIndexBuffer())
 					.add(descriptors.get(n).bind(pipelineLayout))
-					.add(DrawCommand.of(model))
+					.add(draw)
 					.add(RenderPass.END_COMMAND)
 				.end();
 		}

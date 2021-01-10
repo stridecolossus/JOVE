@@ -494,7 +494,7 @@ public RenderPass build() {
 
     // Add dependencies
     info.dependencyCount = dependencies.size();
-    info.pDependencies = VulkanStructure.populate(VkSubpassDependency::new, dependencies, DependencyBuilder::populate);
+    info.pDependencies = StructureCollector.toPointer(VkSubpassDependency::new, dependencies, DependencyBuilder::populate);
     
     ...
 }

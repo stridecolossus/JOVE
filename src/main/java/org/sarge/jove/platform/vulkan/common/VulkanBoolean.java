@@ -35,7 +35,7 @@ public final class VulkanBoolean {
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
 			if(value == null) {
-				return VulkanBoolean.FALSE.toInteger();
+				return 0;
 			}
 			else {
 				final VulkanBoolean bool = (VulkanBoolean) value;
@@ -55,7 +55,7 @@ public final class VulkanBoolean {
 	};
 
 	/**
-	 * Converts a native integer value to a Vulkan boolean (where a non-zero is {@code true}).
+	 * Converts a native integer value to a Vulkan boolean (non-zero is {@code true}).
 	 * @param value Native value
 	 * @return Vulkan boolean
 	 */

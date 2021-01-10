@@ -562,7 +562,15 @@ public Optional<ByteBuffer> index() {
 }
 ```
 
-All refactoring work reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
+And implement the command to bind the index buffer on the `VulkanBuffer` class:
+
+```java
+public Command bindIndexBuffer() {
+    return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
+}
+```
+
+All this refactoring work reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
 
 Result.
 
@@ -570,20 +578,19 @@ Result.
 
 ### Model Persistence
 
-When we test the loader 
+One problem with the OBJ loader is it quite slow even though we are developing on a decent gaming machine.
 
+One obvious observation is that the following parts of the loading process are repeated *every* time we execute the demo:
 
-When we debug and test the new loader we find that it is now quite slow (despite the fact we are developing on a gaming machine with a decent processor and fast SSD).
+1. Load and parse the OBJ model.
 
-One obvious observation is that much of the loading process is repeated *every* time we execute the demo:
-1. Load and parse the OBJ file to the transient model.
-2. Build the de-duplicated model from the transient model.
-3. Generate the interleaved vertex data.
-4. Construct the vertex and index buffers.
+2. De-duplication.
 
-We really only need to do the above *once* therefore we implement a persistence mechanism for a model.
+3. Generation of the NIO buffers for the vertex data and the index.
 
-We create the new `ModelLoader` class that will be responsible for reading and writing a buffered model:
+However we _really_ only need the resultant NIO buffers - there we will implement a persistence mechanism for a model so that we only need to do the above _once_ for a given model.
+
+We create a new `ModelLoader` class that will be responsible for reading and writing a buffered model:
 
 ```java
 public static class ModelLoader {
@@ -595,7 +602,7 @@ public static class ModelLoader {
 }
 ```
 
-We use data streams so that we can persist Java primitives and byte arrays.
+We use data streams so that we can persist Java primitives the byte arrays for the VBO and index.
 
 The model primitive is output as a UTF string:
 
@@ -610,17 +617,21 @@ private static final String DELIMITER = "-";
 
 ...
 
-final String layout = model.layout().components().stream().map(Enum::name).collect(joining(DELIMITER));
+final String layout = model
+    .layout()
+    .components()
+    .stream()
+    .map(Enum::name)
+    .collect(joining(DELIMITER));
+
 out.writeUTF(layout);
 ```
 
 Finally we write the vertex and index buffers:
 
 ```java
-// Write vertex count
-out.writeInt(model.count());
-
 // Write VBO
+out.writeInt(model.count());
 write(model.vertices(), out);
 
 // Write index
@@ -633,7 +644,7 @@ else {
 }
 ```
 
-The `write()` helper outputs the length of a byte buffer and then writes it as an array:
+The `write` helper outputs the length of the buffer and then writes it as an array:
 
 ```java
 private static void write(ByteBuffer bb, DataOutputStream out) throws IOException {
@@ -644,9 +655,10 @@ private static void write(ByteBuffer bb, DataOutputStream out) throws IOExceptio
 }
 ```
 
-The handling of the optional index buffer is a bit ugly but things get messy when we mix optional values, lambdas and checked exceptions so it will have to do.
+> The handling of the optional index buffer is a bit ugly but things get messy when we mix optional values, lambdas and checked exceptions so it will have to do.
 
-We obviously do not want to recreate an instance of the existing model implementation when we load a persisted model so we create a new *buffered model* with the vertex and index buffers as members.  We convert the existing model class to an interface and add a skeleton implementation shared by both:
+We obviously do not want to recreate an instance of the _existing_ model implementation, so we will create a new _buffered model_ with the VBO and index as members. 
+The existing model class is refactored as an interface and we add a skeleton implementation shared by both:
 
 ```java
 public class BufferedModel extends AbstractModel {
@@ -701,10 +713,8 @@ public Model load(DataInputStream in) throws IOException {
     // Load layout
     final var layout = Arrays.stream(in.readUTF().split(DELIMITER)).map(Vertex.Component::valueOf).collect(toList());
     
-    // Load vertex count
-    final int count = in.readInt();
-    
     // Load buffers
+    final int count = in.readInt();
     final ByteBuffer vertices = loadBuffer(in);
     final ByteBuffer index = loadBuffer(in);
     
@@ -713,7 +723,7 @@ public Model load(DataInputStream in) throws IOException {
 }
 ```
 
-The helper to load the buffers is slightly more complicated as we also need to handle the case of an empty index buffer:
+The `loadBuffer` helper loads to an NIO buffer and handles the case of the optional index:
 
 ```java
 private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {

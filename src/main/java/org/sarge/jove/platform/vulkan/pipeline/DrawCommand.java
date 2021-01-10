@@ -9,17 +9,36 @@ import org.sarge.jove.platform.vulkan.core.Command;
  */
 public interface DrawCommand extends Command {
 	/**
-	 * Creates a drawing command.
+	 * Helper - Creates a drawing command for the given model.
 	 * @param model Model to draw
 	 * @return Drawing command
 	 */
-	static DrawCommand of(Model model) {
+	static Command of(Model model) {
 		if(model.index().isPresent()) {
-			return (api, handle) -> api.vkCmdDrawIndexed(handle, model.count(), 1, 0, 0, 0);
+			return indexed(model.count());
 		}
 		else {
-			return (api, handle) -> api.vkCmdDraw(handle, model.count(), 1, 0, 0);
+			return draw(model.count());
 		}
 	}
+
+	/**
+	 * Creates a new draw command.
+	 * @param count Number of vertices
+	 * @return New draw command
+	 */
+	static Command draw(int count) {
+		return (api, handle) -> api.vkCmdDraw(handle, count, 1, 0, 0);
+	}
+
+	/**
+	 * Creates a new indexed draw command.
+	 * @param count Number of vertices
+	 * @return New indexed draw command
+	 */
+	static Command indexed(int count) {
+		return (api, handle) -> api.vkCmdDrawIndexed(handle, count, 1, 0, 0, 0);
+	}
+
 	// TODO - instancing, offset, etc
 }

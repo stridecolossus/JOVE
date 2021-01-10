@@ -31,14 +31,14 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class RenderPass extends AbstractVulkanObject {
 	/**
-	 * End render pass command.
-	 */
-	public static final Command END_COMMAND = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
-
-	/**
 	 * Index of the implicit sub-pass before or after the render pass.
 	 */
 	public static final int VK_SUBPASS_EXTERNAL = (~0);
+
+	/**
+	 * End render pass command.
+	 */
+	public static final Command END_COMMAND = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 
 	private final int count;
 

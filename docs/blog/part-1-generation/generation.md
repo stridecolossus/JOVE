@@ -390,19 +390,20 @@ At the time of writing the API consists of 91 methods so the decision to impleme
 
 ---
 
-## Improvements
+## Vulkan Enumerations
 
-There were a couple of improvements to the base-classes of the enumerations and structures that are discussed here.
-
-### Integer Enumerations
+### Background
 
 When we first started using the code generated enumerations we realised there were a couple of flaws in our thinking:
 
-1. Many of the Vulkan enumerations are not a set of contiguous values and/or are actually bit-fields (as in the examples above).  We needed some mechanism to map _from_ a native value to the relevant enumeration constant that worked for _all_ generated enumerations.
+1. Many of the Vulkan enumerations are not a set of contiguous values and/or are actually bit-fields (as in the examples above). 
+We needed some mechanism to map _from_ a native value to the relevant enumeration constant that worked for _all_ generated enumerations.
 
 2. A native enumeration is implemented as an integer value and was being mapped to `int` in the code generated structures and API methods - this is error prone and not self-documenting.
 
 For a library with a handful of enumerations this would be a minor issue that we could work around but we needed something more practical for the large number of Vulkan enumerations!
+
+### Solution
 
 Although it is not common practice a Java enumeration **can** implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).  We leverage this technique to define a sort of base interface for the generated enumerations such that we can implement common helpers to handle the mapping issue.
 
@@ -620,90 +621,4 @@ Notes:
 - The new structure base-class **must** be defined as a member of the API for the mapper to work correctly.
 
 - We use the the same mapper when instantiating the library so that the converter also applies to all API methods.
-
-### Vulkan Booleans
-
-During development of the Java implementation of the Vulkan API we came across a curious problem that stumped us for some time when we first tackled code using boolean values, as described in [this](https://stackoverflow.com/questions/55225896/jna-maps-java-boolean-to-1-integer) stack-overflow question.
-
-In summary: a Vulkan boolean is represented as zero (for false) or one (for true) - so far so logical.  However by default JNA maps a Java boolean to zero for false but -1 for true!
-
-WTF!
-
-There are a lot of boolean values used across Vulkan so we needed some global solution to over-ride the default JNA mapping.
-
-We crafted the simple [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class to map a Java boolean to/from a native integer and implemented another JNA type converter:
-
-```java
-public final class VulkanBoolean {
-    public static final VulkanBoolean TRUE = new VulkanBoolean(true);
-    public static final VulkanBoolean FALSE = new VulkanBoolean(false);
-    
-    /**
-     * Converts a native integer value to a Vulkan boolean (where a non-zero is {@code true}).
-     * @param value Native value
-     * @return Vulkan boolean
-     */
-    public static VulkanBoolean of(int value) {
-        return value == 0 ? VulkanBoolean.FALSE : VulkanBoolean.TRUE;
-    }
-
-    public static VulkanBoolean of(boolean bool) {
-        return bool ? VulkanBoolean.TRUE : VulkanBoolean.FALSE;
-    }
-
-    private final boolean value;
-
-    private VulkanBoolean(boolean value) {
-        this.value = value;
-    }
-
-    /**
-     * @return Native integer representation of this boolean (1 for {@code true} or 0 for {@code false})
-     */
-    private int toInteger() {
-        return value ? 1 : 0;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this;
-    }
-}
-```
-
-We again use a JNA type converter to this value map to/from the native integer implementation:
-
-```java
-static final TypeConverter CONVERTER = new TypeConverter() {
-    @Override
-    public Class<?> nativeType() {
-        return Integer.class;
-    }
-
-    @Override
-    public Object toNative(Object value, ToNativeContext context) {
-        if(value == null) {
-            return VulkanBoolean.FALSE.toInteger();
-        }
-        else {
-            final VulkanBoolean bool = (VulkanBoolean) value;
-            return bool.toInteger();
-        }
-    }
-
-    @Override
-    public Object fromNative(Object nativeValue, FromNativeContext context) {
-        if(nativeValue == null) {
-            return VulkanBoolean.FALSE;
-        }
-        else {
-            return of((int) nativeValue);
-        }
-    }
-};
-```
-
-This solves the mapping problem in API methods and JNA structures that contain booleans and also has the side-benefit of being more type-safe and self-documenting.
-
-As it turns out the JNA `W32APITypeMapper` helper class probably already solves this issue but by this point we had already code-generated the structures.
 

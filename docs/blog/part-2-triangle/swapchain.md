@@ -948,6 +948,92 @@ public class RenderPass extends AbstractVulkanObject {
 
 Additionally we could now use `TransientNativeObject` to track native resources and check for orphaned objects.
 
+### Vulkan Booleans
+
+Development of the swapchain was the first time we came across JNA code using boolean values and we encountered a curious problem that stumped us for some time.
+See [this](https://stackoverflow.com/questions/55225896/jna-maps-java-boolean-to-1-integer) stack-overflow question.
+
+In summary: a Vulkan boolean is represented as zero (for false) or one (for true) - so far so logical. 
+But by default JNA maps a Java boolean to zero for false but **minus one** for true!  WTF!
+
+There are a lot of boolean values used across Vulkan so we needed some global solution to over-ride the default JNA mapping.
+
+We crafted the following [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class to map a Java boolean to/from a native integer represented as the expected 0 or 1 value:
+
+```java
+public final class VulkanBoolean {
+    public static final VulkanBoolean TRUE = new VulkanBoolean(true);
+    public static final VulkanBoolean FALSE = new VulkanBoolean(false);
+    
+    /**
+     * Converts a native integer value to a Vulkan boolean (non-zero is {@code true}).
+     * @param value Native value
+     * @return Vulkan boolean
+     */
+    public static VulkanBoolean of(int value) {
+        return value == 0 ? VulkanBoolean.FALSE : VulkanBoolean.TRUE;
+    }
+
+    public static VulkanBoolean of(boolean bool) {
+        return bool ? VulkanBoolean.TRUE : VulkanBoolean.FALSE;
+    }
+
+    private final boolean value;
+
+    private VulkanBoolean(boolean value) {
+        this.value = value;
+    }
+
+    /**
+     * @return Native integer representation of this boolean (1 for {@code true} or 0 for {@code false})
+     */
+    private int toInteger() {
+        return value ? 1 : 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
+}
+```
+
+Again we used a JNA type converter to map the new type to/from its native representation:
+
+```java
+static final TypeConverter CONVERTER = new TypeConverter() {
+    @Override
+    public Class<?> nativeType() {
+        return Integer.class;
+    }
+
+    @Override
+    public Object toNative(Object value, ToNativeContext context) {
+        if(value == null) {
+            return 0;
+        }
+        else {
+            final VulkanBoolean bool = (VulkanBoolean) value;
+            return bool.toInteger();
+        }
+    }
+
+    @Override
+    public Object fromNative(Object nativeValue, FromNativeContext context) {
+        if(nativeValue == null) {
+            return VulkanBoolean.FALSE;
+        }
+        else {
+            return of((int) nativeValue);
+        }
+    }
+};
+```
+
+This solves the mapping problem in API methods and JNA structures that contain booleans and also has the side-benefit of being more type-safe and self-documenting.
+
+> As it turns out the JNA `W32APITypeMapper` helper class probably already solves this issue but by this point we had already code-generated the structures.
+
 ---
 
 ## Summary
