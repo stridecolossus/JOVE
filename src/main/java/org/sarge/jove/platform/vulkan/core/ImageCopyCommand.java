@@ -29,7 +29,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 * Constructor.
 	 * @param image			Image
 	 * @param buffer		Buffer
-	 * @param region		Region(s) descriptor
+	 * @param copy		Region(s) descriptor
 	 * @param layout		Image layout
 	 * @param toImage		Whether copying <i>to</i> or <i>from</i> the image
 	 * @throws IllegalStateException if the image or buffer is not a valid source/destination for this operation
@@ -78,7 +78,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	public static class Builder {
 		private Image image;
 		private VkImageLayout layout;
-		private final VkBufferImageCopy region = new VkBufferImageCopy();
+		private final VkBufferImageCopy copy = new VkBufferImageCopy();
 		private SubResourceBuilder<Builder> subresource;
 		private VulkanBuffer buffer;
 		private boolean toImage = true;
@@ -107,7 +107,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 * @param offset Image offset
 		 */
 		public Builder offset(VkOffset3D offset) {
-			region.imageOffset = notNull(offset);
+			copy.imageOffset = notNull(offset);
 			return this;
 		}
 
@@ -149,9 +149,9 @@ public class ImageCopyCommand extends ImmediateCommand {
 			if(layout == null) throw new IllegalArgumentException("Image layout not specified");
 
 			// Populate descriptor
-			subresource.populate(region.imageSubresource);
-			image.descriptor().extents().populate(region.imageExtent);
-			region.imageOffset = new VkOffset3D();
+			subresource.populate(copy.imageSubresource);
+			image.descriptor().extents().populate(copy.imageExtent);
+			copy.imageOffset = new VkOffset3D();
 
 			// TODO
 //			public long bufferOffset;
@@ -159,7 +159,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 //			public int bufferImageHeight;		// 0 or >= imageExtent.height
 
 			// Create copy command
-			return new ImageCopyCommand(image, buffer, new VkBufferImageCopy[]{region}, layout, toImage);
+			return new ImageCopyCommand(image, buffer, new VkBufferImageCopy[]{copy}, layout, toImage);
 		}
 	}
 }

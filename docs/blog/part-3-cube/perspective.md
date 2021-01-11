@@ -481,9 +481,6 @@ public enum Primitive {
 The new enumeration provides the following additional helper methods that are used when constructing models:
 
 ```java
-/**
- * @return Whether this primitive is a strip
- */
 public boolean isStrip() {
     return switch(this) {
         case TRIANGLE_STRIP, TRIANGLE_FAN, LINE_STRIP -> true;
@@ -491,9 +488,6 @@ public boolean isStrip() {
     };
 }
 
-/**
- * @return Whether this primitive supports face normals
- */
 public boolean hasNormals() {
     return switch(this) {
         case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
@@ -501,10 +495,6 @@ public boolean hasNormals() {
     };
 }
 
-/**
- * @param count Number of vertices
- * @return Whether the given number of vertices is valid for this primitive
- */
 public boolean isValidVertexCount(int count) {
     if(isStrip()) {
         return (count == 0) || (count >= size);
@@ -577,20 +567,6 @@ public class CubeBuilder {
 }
 ```
 
-The `build` method creates two _triangles_ for each face of the cube:
-
-```java
-
-public Model build() {
-    for(int[] face : FACES) {
-        for(int corner : TRIANGLES) {
-            ...
-        }
-    }
-    return builder.build();
-}
-```
-
 The cube vertices are specified as a simple array:
 
 ```java
@@ -622,7 +598,7 @@ private static final int[][] FACES = {
 };
 ```
 
-The two triangles for each face are specified by the following constants:
+Each face is a quad consisting of two triangles specified by the following constants:
 
 ```java
 public final class Quad {
@@ -632,9 +608,15 @@ public final class Quad {
 }
 ```
 
-Note that triangles have alternate winding orders (exactly the same as we did for the quad in the previous chapter).
+Note that the triangles have alternate winding orders (exactly the same as we did for the quad in the previous chapter).
 
-In the loop we can now construct the vertices for each face and build the model:
+The triangle indices are aggregated into a single array per face:
+
+```java
+private static final int[] TRIANGLES = Stream.concat(Quad.LEFT.stream(), Quad.RIGHT.stream()).mapToInt(Integer::intValue).toArray();
+```
+
+In the build method we can now construct the vertices for each face and build the model:
 
 ```java
 public Model build() {

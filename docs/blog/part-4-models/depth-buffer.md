@@ -14,15 +14,15 @@ After cloning the code from the previous demo we first load the buffered model a
 
 ```java
 // Load model
-final var loader = DataSource.loader(src, new ModelLoader());
-final Model model = loader.load("chalet.model");
+var loader = ResourceLoader.of(src, new ModelLoader());
+Model model = loader.load("chalet.model");
 
 // Load VBO
-final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
-final VulkanBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
+Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
+VulkanBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 // Load index buffer
-final VulkanBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
+VulkanBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
 ```
 
 The `loadBuffer` helper wraps up the code to copy data to the hardware via a staging buffer.

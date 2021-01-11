@@ -128,15 +128,15 @@ public static class Pool extends AbstractVulkanObject {
 }
 ```
 
-The pool has a _max_ member that we assume is an overall limit on the number of sets that it can allocate.
+The _max_ member configures the maximum number of descriptors that can be allocated from the pool.
 
 We add the following method to allocate a number of sets from the pool:
 
 ```java
 public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
     // Check pool size
-    if(this.sets.size() + layouts.size() > max) {
-        throw new IllegalArgumentException("Number of descriptor sets exceeds the maximum for this pool");
+    if(sets.size() + layouts.size() > max) {
+        throw new IllegalArgumentException(...);
     }
 
     // Build allocation descriptor
@@ -150,19 +150,29 @@ public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
     final VulkanLibrary lib = dev.library();
     final Pointer[] handles = lib.factory().pointers(layouts.size());
     check(lib.vkAllocateDescriptorSets(dev.handle(), info, handles));
+    ...
+}
+```
 
+And transform the returned descriptor set handles to the domain object:
+
+```java
+    ...
+    
     // Create descriptor sets
-    final List<DescriptorSet> sets = new ArrayList<>(handles.length);
-    for(int n = 0; n < handles.length; ++n) {
-        final Handle handle = new Handle(handles[n]);
-        final DescriptorSet set = new DescriptorSet(handle, layouts.get(n));
-        sets.add(set);
-    }
-
-    // Maintain allocated sets
-    this.sets.addAll(sets);
-
-    return sets;
+    final IntFunction<DescriptorSet> ctor = index -> {
+        final Handle handle = new Handle(handles[index]);
+        return new DescriptorSet(handle, layouts.get(index));
+    };
+    final var allocated = IntStream
+        .range(0, handles.length)
+        .mapToObj(ctor)
+        .collect(toList());
+    
+    // Record sets allocated by this pool
+    sets.addAll(allocated);
+    
+    return allocated;
 }
 ```
 

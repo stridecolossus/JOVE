@@ -11,8 +11,6 @@ import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
-import com.sun.jna.Native;
-
 /**
  *
  * @author Sarge
@@ -49,7 +47,7 @@ public class Supported {
 	private static Set<ValidationLayer> layers(VulkanLibrary lib, VulkanFunction<VkLayerProperties> layers) {
 		return Arrays
 				.stream(VulkanFunction.enumerate(layers, lib, VkLayerProperties::new))
-				.map(layer -> new ValidationLayer(Native.toString(layer.layerName), layer.implementationVersion))
+				.map(layer -> new ValidationLayer(new String(layer.layerName), layer.implementationVersion))
 				.collect(toSet());
 	}
 

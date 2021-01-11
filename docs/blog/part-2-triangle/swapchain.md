@@ -12,7 +12,7 @@ A _frame buffer_ is comprised of a number of _attachments_ that are used during 
 
 We will also implement the _render pass_ that specifies how the attachments are managed during the rendering process.
 
-> Note that some of the code in this chapter uses some helpers and base-classes that are outlined [later](/JOVE/blog/part-2-triangle/improvements).
+Note there are several new framework classes introduced here that are covered in detail at the end of the chapter.
 
 ---
 
@@ -24,7 +24,7 @@ Before we can actually start on the swapchain we will need:
 
 1. A rendering surface with accessors for capabilities and image formats supported by the graphics hardware.
 
-2. New domain classes for the swapchain images and views.
+2. New domain classes for the swapchain images.
 
 We start with a new domain class for the _rendering surface_ that wraps the handle we previously retrieved from GLFW:
 
@@ -107,7 +107,7 @@ Note that a Vulkan image defines the _properties_ of the image on the hardware, 
 The new class is relatively trivial at this stage:
 
 ```java
-public class Image {
+public class Image extends NativeObject {
     public record Extents(int width, int height, int depth) {
     }
 
@@ -125,7 +125,7 @@ public class Image {
 An _image view_ is a reference to an image and is the entry-point for operations on that image such as layout transforms, sampling, etc.
 
 ```java
-public class View {
+public class View extends AbstractVulkanObject {
     private final Pointer handle;
     private final Image image;
 
@@ -645,12 +645,12 @@ public RenderPass build() {
     // Add attachments
     if(attachments.isEmpty()) throw new IllegalArgumentException("At least one attachment must be specified");
     info.attachmentCount = attachments.size();
-    info.pAttachments = VulkanStructure.array(VkAttachmentDescription::new, attachments, AttachmentBuilder::populate);
+    info.pAttachments = StructureCollector.toPointer(VkAttachmentDescription::new, attachments, AttachmentBuilder::populate);
 
     // Add sub-passes
     if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
     info.subpassCount = subpasses.size();
-    info.pSubpasses = VulkanStructure.array(VkSubpassDescription::new, subpasses, SubPassBuilder::populate);
+    info.pSubpasses = StructureCollector.toPointer(VkSubpassDescription::new, subpasses, SubPassBuilder::populate);
 
     // Allocate render pass
     final VulkanLibrary lib = dev.library();
@@ -723,22 +723,12 @@ public class FrameBuffer extends AbstractVulkanObject {
 
     private final List<View> attachments;
 
-    /**
-     * Constructor.
-     * @param handle            Handle
-     * @param dev               Logical device
-     * @param extents           Image extents
-     * @param attachments       Image attachments
-     */
     private FrameBuffer(Pointer handle, LogicalDevice dev, List<View> attachments) {
         super(handle, dev, dev.library()::vkDestroyFramebuffer);
         this.extents = notNull(extents);
         this.attachments = List.copyOf(notEmpty(attachments));
     }
 
-    /**
-     * @return Image attachments
-     */
     public List<View> attachments() {
         return attachments;
     }
@@ -762,7 +752,7 @@ This class is little more than a handle and a list of views - we will probably w
 
 ## Improvements
 
-### Native Handles
+### Native Objects
 
 Up until now most of our domain classes have a _handle_ represented by a JNA pointer.
 
@@ -841,7 +831,69 @@ public static final TypeConverter CONVERTER = new TypeConverter() {
 
 TODO - pointer array
 
-We can now refactor the domain classes, structures and API methods to use the immutable handle making our code somewhat more type-safe and better documented.
+We can now refactor the domain classes, structures and API methods using immutable handles making the code more type-safe and better documented.
+
+### Transient Objects
+
+For objects that are managed (i.e. can be released) by the application we extend the above:
+
+```java
+public interface TransientNativeObject extends NativeObject {
+    /**
+     * Destroys this object.
+     * @throws IllegalStateException if this object has already been destroyed
+     */
+    void destroy();
+
+    /**
+     * @return Whether this object has been destroyed
+     */
+    boolean isDestroyed();
+}
+```
+
+And provide a template implementation:
+
+```java
+public abstract class AbstractTransientNativeObject implements TransientNativeObject {
+    protected final Handle handle;
+
+    private boolean destroyed;
+
+    /**
+     * Constructor.
+     * @param handle Native handle
+     */
+    protected AbstractTransientNativeObject(Pointer handle) {
+        this.handle = new Handle(handle);
+    }
+
+    @Override
+    public Handle handle() {
+        return handle;
+    }
+
+    @Override
+    public boolean isDestroyed() {
+        return destroyed;
+    }
+
+    @Override
+    public synchronized void destroy() {
+        if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
+        release();
+        destroyed = true;
+    }
+
+    /**
+     * Releases this object.
+     * @see #destroy()
+     */
+    protected abstract void release();
+}
+```
+
+This centralises the logic for managing native objects that are managed by the application.
 
 ### Abstract Vulkan Object
 
@@ -853,36 +905,19 @@ With the above in place we will be implementing a number of new domain component
 
 - A _destructor_ method, e.g. `vkDestroyRenderPass`.
 
-This seems a valid case for introducing a base-class that abstracts the common pattern:
+This seems a valid case for introducing a further base-class that abstracts the common pattern:
 
 ```java
-public abstract class AbstractVulkanObject implements TransientNativeObject {
+public abstract class AbstractVulkanObject extends AbstractTransientNativeObject {
     private final Handle handle;
     private final LogicalDevice dev;
     private final Destructor destructor;
     
-    /**
-     * Constructor.
-     * @param handle        Handle
-     * @param dev           Parent logical device
-     * @param destructor    Destructor API method
-     */
     protected AbstractVulkanObject(Pointer handle, LogicalDevice dev, Destructor destructor) {
         this.handle = new Handle(handle);
         this.dev = notNull(dev);
         this.destructor = notNull(destructor);
     }
-
-    @Override
-    public Handle handle() {
-        return handle;
-    }
-
-    public LogicalDevice device() {
-        return dev;
-    }
-    
-    ...
 }
 ```
 
@@ -901,52 +936,17 @@ public interface Destructor {
 }
 ```
 
-An object that can be destroyed by the application is defined as follows:
-
-```java
-interface TransientNativeObject extends NativeObject {
-    /**
-     * Destroys this object.
-     */
-    void destroy();
-}
-```
-
-Finally we implement the `destroy` method using the destructor:
-
-```java
-private boolean destroyed;
-
-...
-
-/**
- * @return Whether this object has been destroyed
- */
-public boolean isDestroyed() {
-    return destroyed;
-}
-
-@Override
-public synchronized void destroy() {
-    if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
-    destructor.destroy(dev.handle(), handle, null);
-    destroyed = true;
-}
-```
-
-We can now simplify the domain classes introduced in this chapter (and the GLFW package) by refactoring using the new handle and base-class, for example:
+We can now simplify the domain classes introduced in this chapter (and the GLFW package), for example:
 
 ```java
 public class RenderPass extends AbstractVulkanObject {
     RenderPass(Pointer handle, LogicalDevice dev) {
         super(handle, dev, dev.library()::vkDestroyRenderPass);
     }
-    
-    ...
 }
 ```
 
-Additionally we could now use `TransientNativeObject` to track native resources and check for orphaned objects.
+Additionally the `TransientNativeObject` interface can be used to track native resources and check for orphaned objects.
 
 ### Vulkan Booleans
 
@@ -958,7 +958,7 @@ But by default JNA maps a Java boolean to zero for false but **minus one** for t
 
 There are a lot of boolean values used across Vulkan so we needed some global solution to over-ride the default JNA mapping.
 
-We crafted the following [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class to map a Java boolean to/from a native integer represented as the expected 0 or 1 value:
+We created the [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class to map a Java boolean to/from a native integer represented as zero or one:
 
 ```java
 public final class VulkanBoolean {

@@ -6,9 +6,11 @@ title: Vulkan Devices
 
 Now we have a Vulkan instance we can use it to enumerate the _physical devices_ available on the local hardware and select one that satisfies the requirements of the application.
 
+We will then create a _logical device_ from the selected physical device and specify the _work queues_ we will use in subsequent chapters.
+
 This will be partially dependant on having a Vulkan rendering surface so first we will extend the _desktop_ service to create a native GLFW window.
 
-Finally we will create a _logical device_ from the selected physical device and specify the _work queues_ we will use in subsequent chapters.
+> Taking advantage of the GLFW support for Vulkan has pros and cons: Creating the Vulkan surface using GLFW will be _considerably_ simpler than implementing platform-specific Vulkan extensions.  On the other hand the resultant demo code is slightly convoluted due to the inter-dependencies between the various components, e.g. we need the instance to create the surface, before we can select a device that supports presentation, etc.
 
 ---
 
@@ -834,7 +836,7 @@ And similarly for the validation layers:
 private static Set<ValidationLayer> layers(VulkanLibrary lib, VulkanFunction<VkLayerProperties> layers) {
     return Arrays
         .stream(VulkanFunction.enumerate(layers, lib, VkLayerProperties::new))
-        .map(layer -> new ValidationLayer(Native.toString(layer.layerName), layer.implementationVersion))
+        .map(layer -> new ValidationLayer(new String(layer.layerName), layer.implementationVersion))
         .collect(toSet());
 }
 ```

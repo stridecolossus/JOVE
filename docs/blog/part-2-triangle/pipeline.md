@@ -318,7 +318,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
     }
 
     public ViewportStageBuilder viewport(Rectangle viewport) {
-        return viewport(viewport, 0, 1);
+        return viewport(viewport, Percentile.ZERO, Percentile.ONE);
     }
 
     public ViewportStageBuilder scissor(Rectangle rect) {

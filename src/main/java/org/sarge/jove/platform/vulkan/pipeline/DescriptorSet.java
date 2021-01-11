@@ -1,13 +1,23 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.jove.util.Check.notNull;
 import static org.sarge.jove.util.Check.oneOrMore;
 import static org.sarge.jove.util.Check.zeroOrMore;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -307,7 +317,7 @@ public class DescriptorSet implements NativeObject {
 		 */
 		public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
 			// Check pool size
-			if(this.sets.size() + layouts.size() > max) {
+			if(sets.size() + layouts.size() > max) {
 				throw new IllegalArgumentException("Number of descriptor sets exceeds the maximum for this pool");
 			}
 
@@ -324,17 +334,16 @@ public class DescriptorSet implements NativeObject {
 			check(lib.vkAllocateDescriptorSets(dev.handle(), info, handles));
 
 			// Create descriptor sets
-			final List<DescriptorSet> sets = new ArrayList<>(handles.length);
-			for(int n = 0; n < handles.length; ++n) {
-				final Handle handle = new Handle(handles[n]);
-				final DescriptorSet set = new DescriptorSet(handle, layouts.get(n));
-				sets.add(set);
-			}
+			final IntFunction<DescriptorSet> ctor = index -> {
+				final Handle handle = new Handle(handles[index]);
+				return new DescriptorSet(handle, layouts.get(index));
+			};
+			final var allocated = IntStream.range(0, handles.length).mapToObj(ctor).collect(toList());
 
-			// Maintain allocated sets
-			this.sets.addAll(sets);
+			// Record sets allocated by this pool
+			sets.addAll(allocated);
 
-			return sets;
+			return allocated;
 		}
 
 		/**
@@ -394,7 +403,7 @@ public class DescriptorSet implements NativeObject {
 		 */
 		public static class Builder {
 			private final LogicalDevice dev;
-			private final Map<VkDescriptorType, Integer> entries = new HashMap<>();
+			private final Map<VkDescriptorType, Integer> pool = new HashMap<>();
 			private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
 			private Integer max;
 
@@ -414,7 +423,7 @@ public class DescriptorSet implements NativeObject {
 			public Builder add(VkDescriptorType type, int count) {
 				Check.notNull(type);
 				Check.oneOrMore(count);
-				entries.put(type, count);
+				pool.put(type, count);
 				return this;
 			}
 
@@ -443,7 +452,7 @@ public class DescriptorSet implements NativeObject {
 			 */
 			public Pool build() {
 				// Determine logical maximum number of sets that can be allocated
-				final int limit = entries
+				final int limit = pool
 						.values()
 						.stream()
 						.mapToInt(Integer::intValue)
@@ -463,8 +472,8 @@ public class DescriptorSet implements NativeObject {
 				// Init pool descriptor
 				final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
 				info.flags = IntegerEnumeration.mask(flags);
-				info.poolSizeCount = entries.size();
-				info.pPoolSizes = StructureCollector.toPointer(entries.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
+				info.poolSizeCount = pool.size();
+				info.pPoolSizes = StructureCollector.toPointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 				info.maxSets = max;
 
 				// Allocate pool

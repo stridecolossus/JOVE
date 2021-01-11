@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.util.Check.notNull;
 
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -46,8 +45,9 @@ public class DeviceFeatures {
 	 * @param features Features descriptor
 	 */
 	public DeviceFeatures(VkPhysicalDeviceFeatures features) {
-		this.features = notNull(features);
-		features.write();
+		// TODO
+		this.features = features == null ? new VkPhysicalDeviceFeatures() : features; //notNull(features);
+		this.features.write();
 	}
 
 	/**

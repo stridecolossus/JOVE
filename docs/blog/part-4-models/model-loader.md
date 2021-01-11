@@ -588,7 +588,7 @@ One obvious observation is that the following parts of the loading process are r
 
 3. Generation of the NIO buffers for the vertex data and the index.
 
-However we _really_ only need the resultant NIO buffers - there we will implement a persistence mechanism for a model so that we only need to do the above _once_ for a given model.
+However we _really_ only need the resultant NIO buffers - therefore we will implement a persistence mechanism for a model so that we only need to do the above _once_ for a given model.
 
 We create a new `ModelLoader` class that will be responsible for reading and writing a buffered model:
 

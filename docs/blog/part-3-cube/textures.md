@@ -523,7 +523,7 @@ The barrier also configures the _sub-resource range_ which specifies a _view_ of
 The sub-resource range is implemented as another nested builder:
 
 ```java
-public class ImageSubResourceBuilder<T> {
+public class SubResourceBuilder<T> {
     private final T parent;
     private final Set<VkImageAspectFlag> aspects = new HashSet<>();
     private int mipLevel;
@@ -531,7 +531,7 @@ public class ImageSubResourceBuilder<T> {
     private int baseArrayLayer;
     private int layerCount = 1;
 
-    public ImageSubResourceBuilder(T parent) {
+    public SubResourceBuilder(T parent) {
         this.parent = notNull(parent);
     }
     
@@ -551,9 +551,9 @@ public class ImageSubResourceBuilder<T> {
 }
 ```
 
-Image sub-resources are used in several areas so this nested builder has a generic _parent_ returned in its `build()` method (similar to the approach we took when constructing the pipeline).
+Image sub-resources are used in several places so this nested builder has a generic _parent_ returned in its `build` method (similar to the approach we took when constructing the pipeline).
 
-A slight irritation that only came to light during development of the copy command (below) is that there are two slightly different Vulkan descriptors for image sub-resources.  We bodge the sub-resource builder to support both (i.e. overloaded `populate()` methods) rather than creating two separate builders or some overly complex class-hierarchy.
+A slight irritation that only came to light during development of the copy command (below) is that there are two slightly different Vulkan descriptors for image sub-resources.  We bodge the sub-resource builder to support both (i.e. overloaded `populate` methods) rather than creating two separate builders or some overly complex class-hierarchy.
 
 ### Image Copying
 
@@ -561,10 +561,11 @@ After preparing the texture the next step is to copy the image from the staging 
 
 ```java
 public class ImageCopyCommand extends ImmediateCommand {
-    private final Image image;
-    private final VulkanBuffer buffer;
-    private final VkBufferImageCopy[] regions;
-    private final VkImageLayout layout;
+    private Image image;
+    private VkImageLayout layout;
+    private final VkBufferImageCopy copy = new VkBufferImageCopy();
+    private SubResourceBuilder<Builder> subresource;
+    private VulkanBuffer buffer;
 
     ...
     
@@ -573,21 +574,27 @@ public class ImageCopyCommand extends ImmediateCommand {
         lib.vkCmdCopyBufferToImage(handle, buffer.handle(), image.handle(), layout, regions.length, regions);
     }
 
-    /**
-     * Inverts this command to copy <b>from</b> the image to the buffer.
-     * @return Inverted copy command
-     */
-    public Command invert() {
-        return (api, handle) -> api.vkCmdCopyImageToBuffer(handle, image.handle(), layout, buffer.handle(), regions.length, regions);
-    }
-
     public static class Builder {
         ...
     }
 }
 ```
 
-The `invert()` method converts this command to copy from the texture to the buffer, we won't be using this for some time but it's trivial to implement while we're at it.
+The builder populates the `VkBufferImageCopy` descriptor for the copy operation:
+
+```java
+public ImageCopyCommand build() {
+    // Populate descriptor
+    subresource.populate(copy.imageSubresource);
+    image.descriptor().extents().populate(copy.imageExtent);
+    copy.imageOffset = new VkOffset3D();
+
+    // Create copy command
+    return new ImageCopyCommand(image, buffer, new VkBufferImageCopy[]{copy}, layout, toImage);
+}
+```
+
+Later on we will extend this command to handle copying _from_ and image to a buffer and to batch copy operations.
 
 ### Integration #2
 
