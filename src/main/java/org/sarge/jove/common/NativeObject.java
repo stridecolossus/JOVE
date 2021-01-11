@@ -1,11 +1,13 @@
 package org.sarge.jove.common;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.sarge.jove.util.Check;
-import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.FromNativeContext;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
@@ -25,7 +27,55 @@ public interface NativeObject {
 	 */
 	final class Handle {
 		/**
-		 * Native type converter for a handle.
+		 * Converts the given objects to an array of handles.
+		 * @param objects Native objects
+		 * @return Handle array
+		 */
+		public static HandleArray toArray(Collection<? extends NativeObject> objects) {
+			// Check for empty data
+			if(objects.isEmpty()) {
+				return null;
+			}
+
+			// Convert to array
+			final Pointer[] array = objects
+					.stream()
+					.map(NativeObject::handle)
+					.map(handle -> handle.handle)
+					.toArray(Pointer[]::new);
+
+			// Create JNA wrapper
+			return new HandleArray(array);
+		}
+
+		private final Pointer handle;
+
+		/**
+		 * Constructor.
+		 * @param handle Pointer handle
+		 */
+		public Handle(Pointer handle) {
+			Check.notNull(handle);
+			this.handle = new Pointer(Pointer.nativeValue(handle));
+		}
+
+		@Override
+		public int hashCode() {
+			return handle.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return (obj instanceof Handle that) && this.handle.equals(that.handle);
+		}
+
+		@Override
+		public String toString() {
+			return handle.toString();
+		}
+
+		/**
+		 * JNA type converter for this handle.
 		 */
 		public static final TypeConverter CONVERTER = new TypeConverter() {
 			@Override
@@ -58,57 +108,23 @@ public interface NativeObject {
 		};
 
 		/**
-		 * Creates an array of handle pointers for the given native objects.
-		 * @param objects Native objects
-		 * @return Pointer array
+		 * Array of handles.
 		 */
-		public static Pointer[] toArray(Collection<? extends NativeObject> objects) {
-			return objects
-					.stream()
-					.map(NativeObject::handle)
-					.map(obj -> obj.handle)
-					//.map(Pointer::nativeValue) // TODO - clone?
-					.toArray(Pointer[]::new);
-		}
+		public static class HandleArray extends Memory {
+			private final Pointer[] array;
 
-		/**
-		 * Creates a pointer array for the pointers to the given native objects.
-		 * @param objects Native objects
-		 * @return Pointer array or {@code null} if empty
-		 */
-		public static PointerArray toPointerArray(Collection<? extends NativeObject> objects) {
-			if(objects.isEmpty()) {
-				return null;
+			private HandleArray(Pointer[] array) {
+				super(Native.POINTER_SIZE * array.length);
+				for(int n = 0; n < array.length; ++n) {
+					setPointer(n * Native.POINTER_SIZE, array[n]);
+				}
+				this.array = array;
 			}
-			else {
-				return new PointerArray(toArray(objects));
+
+			@Override
+			public boolean equals(Object obj) {
+				return (obj instanceof HandleArray that) && Arrays.equals(array, that.array);
 			}
-		}
-
-		private final Pointer handle;
-
-		/**
-		 * Constructor.
-		 * @param handle Pointer handle
-		 */
-		public Handle(Pointer handle) {
-			Check.notNull(handle);
-			this.handle = new Pointer(Pointer.nativeValue(handle));
-		}
-
-		@Override
-		public int hashCode() {
-			return handle.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return (obj instanceof Handle that) && this.handle.equals(that.handle);
-		}
-
-		@Override
-		public String toString() {
-			return handle.toString();
 		}
 	}
 }

@@ -9,9 +9,12 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -25,12 +28,10 @@ import com.sun.jna.ptr.PointerByReference;
 
 public class FenceTest extends AbstractVulkanTest {
 	private Fence fence;
-	private Pointer handle;
 
 	@BeforeEach
 	void before() {
-		handle = new Pointer(1);
-		fence = new Fence(handle, dev);
+		fence = new Fence(new Pointer(1), dev);
 	}
 
 	@Test
@@ -55,13 +56,13 @@ public class FenceTest extends AbstractVulkanTest {
 	@Test
 	void reset() {
 		fence.reset();
-		verify(lib).vkResetFences(dev.handle(), 1, new Pointer[]{handle});
+		verify(lib).vkResetFences(dev.handle(), 1, Handle.toArray(List.of(fence)));
 	}
 
 	@Test
 	void waitReady() {
 		fence.waitReady();
-		verify(lib).vkWaitForFences(dev.handle(), 1, new Pointer[]{handle}, VulkanBoolean.TRUE, Long.MAX_VALUE);
+		verify(lib).vkWaitForFences(dev.handle(), 1, Handle.toArray(List.of(fence)), VulkanBoolean.TRUE, Long.MAX_VALUE);
 	}
 
 	@Test

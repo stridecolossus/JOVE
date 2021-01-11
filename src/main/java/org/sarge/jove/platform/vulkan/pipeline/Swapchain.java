@@ -123,11 +123,11 @@ public class Swapchain extends AbstractVulkanObject {
 
 		// Populate wait semaphores
 		info.waitSemaphoreCount = semaphores.size();
-		info.pWaitSemaphores = Handle.toPointerArray(semaphores);
+		info.pWaitSemaphores = Handle.toArray(semaphores);
 
 		// Populate swap-chain
 		info.swapchainCount = 1;
-		info.pSwapchains = Handle.toPointerArray(List.of(this));
+		info.pSwapchains = Handle.toArray(List.of(this));
 
 		// Set image indices
 		final int[] array = new int[]{index.getValue()};

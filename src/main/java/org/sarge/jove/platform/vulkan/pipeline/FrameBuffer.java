@@ -53,7 +53,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
 		info.attachmentCount = attachments.size();
-		info.pAttachments = Handle.toPointerArray(attachments);
+		info.pAttachments = Handle.toArray(attachments);
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO

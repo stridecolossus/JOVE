@@ -249,15 +249,13 @@ public class DescriptorSet implements NativeObject {
 	 * @return New bind command
 	 */
 	public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
-		final Pointer[] handles = Handle.toArray(sets);
-
 		return (api, cmd) -> api.vkCmdBindDescriptorSets(
 				cmd,
 				VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
 				layout.handle(),
 				0,					// First set
-				1,					// Count // TODO - count = handles.length???
-				handles,
+				sets.size(),
+				Handle.toArray(sets),
 				0,					// Dynamic offset count
 				null				// Dynamic offsets
 		);
@@ -325,7 +323,7 @@ public class DescriptorSet implements NativeObject {
 			final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
 			info.descriptorPool = this.handle();
 			info.descriptorSetCount = layouts.size();
-			info.pSetLayouts = Handle.toPointerArray(layouts);
+			info.pSetLayouts = Handle.toArray(layouts);
 
 			// Allocate descriptors sets
 			final LogicalDevice dev = this.device();

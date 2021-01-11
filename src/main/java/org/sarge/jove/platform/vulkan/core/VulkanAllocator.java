@@ -158,6 +158,8 @@ public class VulkanAllocator {
 			this.props = props;
 			this.pool = new Pool(allocator);
 			heap.types.add(this);
+
+			//System.out.println(index+ " "+IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, props)+" "+heap);
 		}
 
 		/**
@@ -444,6 +446,10 @@ public class VulkanAllocator {
 		 * @return Memory type
 		 */
 		private Optional<Type> find(Set<VkMemoryPropertyFlag> flags) {
+			if(flags.isEmpty()) {
+				return Optional.empty();
+			}
+
 			final int mask = IntegerEnumeration.mask(flags);
 			return types
 					.stream()

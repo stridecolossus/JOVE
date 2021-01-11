@@ -109,7 +109,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			// Check API
 			final Handle handle = new Handle(new Pointer(3));
 			bind.execute(lib, handle);
-			verify(lib).vkCmdBindDescriptorSets(handle, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.handle(), 0, 1, new Pointer[]{new Pointer(2)}, 0, null);
+			verify(lib).vkCmdBindDescriptorSets(handle, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.handle(), 0, 1, Handle.toArray(List.of(descriptor)), 0, null);
 		}
 	}
 

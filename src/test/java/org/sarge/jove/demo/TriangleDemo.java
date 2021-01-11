@@ -23,6 +23,7 @@ import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Instance;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Shader;
@@ -136,8 +137,9 @@ public class TriangleDemo {
 
 		// Create pipeline
 		final Rectangle extent = new Rectangle(chain.extents());
+		final var layout = new Pipeline.Layout.Builder(dev).build();
 		final Pipeline pipeline = new Pipeline.Builder(dev)
-				.layout(new Pipeline.Layout.Builder(dev).build()) // TODO
+				.layout(layout)
 				.pass(pass)
 				.viewport()
 					.viewport(extent)
@@ -179,7 +181,8 @@ public class TriangleDemo {
 		}
 
 //		for(int n = 0; n < 100; ++n) {
-			final int index = chain.acquire(null, null);
+		final Semaphore semaphore = dev.semaphore();
+			final int index = chain.acquire(semaphore, null);
 
 			new Work.Builder()
 					.add(commands.get(index))
@@ -207,11 +210,13 @@ public class TriangleDemo {
 		buffers.forEach(FrameBuffer::destroy);
 		pool.destroy();
 		pass.destroy();
+		semaphore.destroy();
 
 		// Destroy pipeline
 		vert.destroy();
 		frag.destroy();
 		pipeline.destroy();
+		layout.destroy();
 
 		chain.destroy();
 		surface.destroy();

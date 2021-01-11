@@ -212,13 +212,13 @@ public class Work {
 
 			// Populate command buffers
 			info.commandBufferCount = buffers.size();
-			info.pCommandBuffers = Handle.toPointerArray(buffers);
+			info.pCommandBuffers = Handle.toArray(buffers);
 
 			if(!wait.isEmpty()) {
 				// Populate wait semaphores
 				final var semaphores = wait.stream().map(Pair::getLeft).collect(toList());
 				info.waitSemaphoreCount = wait.size();
-				info.pWaitSemaphores = Handle.toPointerArray(semaphores);
+				info.pWaitSemaphores = Handle.toArray(semaphores);
 
 				// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
 				final int[] stages = wait.stream().map(Pair::getRight).mapToInt(Integer::intValue).toArray();
@@ -229,7 +229,7 @@ public class Work {
 
 			// Populate signal semaphores
 			info.signalSemaphoreCount = signal.size();
-			info.pSignalSemaphores = Handle.toPointerArray(signal);
+			info.pSignalSemaphores = Handle.toArray(signal);
 
 			// Create work
 			return new Work(info, queue);

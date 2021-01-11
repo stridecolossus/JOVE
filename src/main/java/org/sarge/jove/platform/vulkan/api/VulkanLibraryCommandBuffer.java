@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.api;
 
 import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.NativeObject.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
@@ -55,7 +56,7 @@ interface VulkanLibraryCommandBuffer {
 	 * @param commandBufferCount	Number of buffers
 	 * @param pCommandBuffers		Buffer handles
 	 */
-	void vkFreeCommandBuffers(Handle device, Handle commandPool, int commandBufferCount, Pointer[] pCommandBuffers);
+	void vkFreeCommandBuffers(Handle device, Handle commandPool, int commandBufferCount, HandleArray pCommandBuffers);
 
 	/**
 	 * Starts recording.

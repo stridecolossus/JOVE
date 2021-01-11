@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -52,9 +53,9 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the fences cannot be reset
 	 */
 	public static void reset(LogicalDevice dev, Collection<Fence> fences) {
-		final Pointer[] array = Handle.toArray(fences);
+		final var array = Handle.toArray(fences);
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkResetFences(dev.handle(), array.length, array));
+		check(lib.vkResetFences(dev.handle(), fences.size(), array));
 	}
 
 	/**
@@ -66,9 +67,9 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the API method fails
 	 */
 	public static void wait(LogicalDevice dev, Collection<Fence> fences, boolean all, long timeout) {
-		final Pointer[] array = Handle.toArray(fences);
+		final HandleArray array = Handle.toArray(fences);
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkWaitForFences(dev.handle(), array.length, array, VulkanBoolean.of(all), timeout));
+		check(lib.vkWaitForFences(dev.handle(), fences.size(), array, VulkanBoolean.of(all), timeout));
 	}
 
 	/**
