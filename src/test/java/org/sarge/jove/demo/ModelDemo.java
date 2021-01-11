@@ -14,7 +14,6 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.control.Action.PositionAction;
 import org.sarge.jove.control.Action.SimpleAction;
 import org.sarge.jove.control.Action.ValueAction;
@@ -265,9 +264,10 @@ public class ModelDemo {
 		//////////////////
 
 		// Load model
-//		final ObjectModelLoader objLoader = new ObjectModelLoader();
-//		final Model obj = objLoader.load(new FileReader("./src/test/resources/demo/model/chalet.obj")).iterator().next();
-//		new ModelLoader().write(obj, new FileOutputStream("./src/test/resources/demo/model/chalet.model"));
+		/////
+//		final var objLoader = new ObjectModelLoader();
+//		final Model obj = ResourceLoader.of(src, objLoader).load("chalet.obj").iterator().next();
+//		new ModelLoader().write(obj, new FileOutputStream(new File("./src/test/resources/demo/model/chalet.model")));
 		/////
 		final Model model = ResourceLoader.of(src, new ModelLoader()).load("chalet.model");
 
@@ -303,7 +303,7 @@ public class ModelDemo {
 		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
 				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
 				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2)
-				.max(2 * 2)
+				.max(2)
 				.build();
 
 		final List<DescriptorSet> descriptors = setPool.allocate(layout, swapchain.views().size());
@@ -350,10 +350,7 @@ public class ModelDemo {
 				.assembly()
 					.topology(model.primitive())
 					.build()
-				.viewport()
-					.flip(true)
-					.viewport(new Rectangle(swapchain.extents()))
-					.build()
+				.viewport(swapchain.extents())
 				.rasterizer()
 					.winding(model.winding())
 					.build()

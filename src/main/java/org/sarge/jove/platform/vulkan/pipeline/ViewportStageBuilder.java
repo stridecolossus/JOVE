@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
+import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.Check;
 
 /**
@@ -20,14 +21,14 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	/**
 	 * Transient viewport descriptor.
 	 */
-	private record Viewport(Rectangle rect, Percentile min, Percentile max, boolean flip) {
+	private record Viewport(Rectangle rect, Percentile min, Percentile max) {
 		public Viewport {
 			Check.notNull(rect);
 			Check.notNull(min);
 			Check.notNull(max);
 		}
 
-		private void populate(VkViewport viewport) {
+		private void populate(VkViewport viewport, boolean flip) {
 			// Populate viewport rectangle
 			if(flip) {
 				viewport.x = rect.x();
@@ -73,7 +74,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	 * @param max			Maximum depth
 	 */
 	public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
-		viewports.add(new Viewport(rect, min, max, flip));
+		viewports.add(new Viewport(rect, min, max));
 		return this;
 	}
 
@@ -94,42 +95,24 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		return this;
 	}
 
-	/**
-	 * Adds a scissor rectangle copied from the most recent viewport.
-	 * @throws IllegalStateException if there are no viewports
-	 */
-	public ViewportStageBuilder copyScissor() {
-		if(viewports.isEmpty()) throw new IllegalStateException("No viewports have been specified");
-		final Viewport prev = viewports.get(viewports.size() - 1);
-		scissor(prev.rect);
-		return this;
-	}
-
 	@Override
 	protected VkPipelineViewportStateCreateInfo result() {
 		// Validate
 		final int count = viewports.size();
 		if(count == 0) throw new IllegalArgumentException("No viewports specified");
 		if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
+		// TODO - count < limits.maxViewports
+		// TODO - count = 1 unless multiple viewports feature
 
 		// Add viewports
 		final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 		info.viewportCount = count;
-		info.pViewports = StructureCollector.toPointer(viewports, VkViewport::new, Viewport::populate);
+		info.pViewports = StructureCollector.toPointer(viewports, VkViewport::new, (rec, viewport) -> rec.populate(viewport, flip));
 
 		// Add scissors
-		if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
 		info.scissorCount = count;
-		info.pScissors = StructureCollector.toPointer(scissors, VkRect2D.ByReference::new, ViewportStageBuilder::rectangle);
-		// TODO - pScissors ignored if dynamic
+		info.pScissors = StructureCollector.toPointer(scissors, VkRect2D.ByReference::new, VulkanHelper::populate);
 
 		return info;
-	}
-
-	private static void rectangle(Rectangle rect, VkRect2D out) {
-		out.offset.x = rect.x();
-		out.offset.y = rect.y();
-		out.extent.width = rect.width();
-		out.extent.height = rect.height();
 	}
 }

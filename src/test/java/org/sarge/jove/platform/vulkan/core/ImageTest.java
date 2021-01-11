@@ -130,16 +130,6 @@ public class ImageTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void populateRectangle() {
-			final VkRect2D rect = new VkRect2D();
-			extents.populate(rect);
-			assertEquals(0, rect.offset.x);
-			assertEquals(0, rect.offset.y);
-			assertEquals(2, rect.extent.width);
-			assertEquals(3, rect.extent.height);
-		}
-
-		@Test
 		void populateExtents() {
 			final VkExtent3D result = new VkExtent3D();
 			extents.populate(result);

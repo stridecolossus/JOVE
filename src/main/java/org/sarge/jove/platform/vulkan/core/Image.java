@@ -16,7 +16,6 @@ import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
@@ -49,18 +48,6 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Helper - Populates a Vulkan rectangle.
-		 * @param in		Rectangle
-		 * @param out		Vulkan rectangle
-		 */
-		public static void populate(Rectangle in, VkRect2D out) {
-			out.offset.x = in.x();
-			out.offset.y = in.y();
-			out.extent.width = in.width();
-			out.extent.height = in.height();
-		}
-
-		/**
 		 * Constructor.
 		 * @param width
 		 * @param height
@@ -82,19 +69,10 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Populates a Vulkan rectangle from this extents.
-		 * @param rect Rectangle to populate
-		 */
-		public void populate(VkRect2D rect) {
-			rect.extent.width = width;
-			rect.extent.height = height;
-		}
-
-		/**
 		 * Populate a Vulkan 3D extent from this extents.
 		 * @param extent Extents to populate
 		 */
-		public void populate(VkExtent3D extent) {
+		void populate(VkExtent3D extent) {
 			extent.width = width;
 			extent.height = height;
 			extent.depth = depth;

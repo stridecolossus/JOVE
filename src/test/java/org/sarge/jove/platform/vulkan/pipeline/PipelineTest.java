@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
@@ -61,7 +60,6 @@ public class PipelineTest extends AbstractVulkanTest {
 	class BuilderTests {
 		private Pipeline.Builder builder;
 		private Pipeline.Layout layout;
-		private Rectangle rect;
 		private RenderPass pass;
 
 		@BeforeEach
@@ -69,7 +67,6 @@ public class PipelineTest extends AbstractVulkanTest {
 			builder = new Pipeline.Builder(dev);
 			layout = mock(Pipeline.Layout.class);
 			pass = mock(RenderPass.class);
-			rect = new Rectangle(new Dimensions(3, 4));
 		}
 
 		@Test
@@ -84,16 +81,11 @@ public class PipelineTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
-//			final Pointer[] array = factory.array(1);
-
 			// Build pipeline
 			pipeline = builder
 					.layout(layout)
 					.pass(pass)
-					.viewport()
-						.viewport(rect)
-						.scissor(rect)
-						.build()
+					.viewport(new Dimensions(3, 4))
 					.shader()
 						.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 						.shader(mock(Shader.class))
@@ -126,6 +118,10 @@ public class PipelineTest extends AbstractVulkanTest {
 			assertNotNull(info.pRasterizationState);
 			assertNotNull(info.pColorBlendState);
 
+			// Check viewport stage
+			assertEquals(1, info.pViewportState.viewportCount);
+			assertEquals(1, info.pViewportState.scissorCount);
+
 			// Check shader stage descriptor
 			assertEquals(1, info.stageCount);
 			assertNotNull(info.pStages);
@@ -157,7 +153,7 @@ public class PipelineTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build());
 
 			// Add viewport stage, should now build successfully
-			builder.viewport().viewport(rect).scissor(rect).build();
+			builder.viewport(new Dimensions(3, 4));
 			builder.build();
 		}
 

@@ -11,8 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
@@ -57,6 +57,7 @@ public class ObjectModelTest {
 
 	@Test
 	void coordinates() {
+		model.setFlipTextureCoordinates(false);
 		final var coords = model.coordinates();
 		coords.add(Coordinate2D.BOTTOM_LEFT);
 		assertEquals(1, coords.size());
@@ -66,7 +67,6 @@ public class ObjectModelTest {
 	@Test
 	void flip() {
 		final var coords = model.coordinates();
-		model.setFlipTextureCoordinates(true);
 		coords.add(new Coordinate2D(1, 2));
 		assertEquals(1, coords.size());
 		assertEquals(new Coordinate2D(1, -2), coords.get(1));

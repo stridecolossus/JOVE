@@ -326,9 +326,7 @@ public class RotatingCubeDemo {
 				.assembly()
 					.topology(cube.primitive())
 					.build()
-				.viewport()
-					.viewport(rect)
-					.build()
+				.viewport(chain.extents())
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)
@@ -420,12 +418,9 @@ public class RotatingCubeDemo {
 		//////////////
 
 		// Destroy window
-		surface.destroy();
 		window.destroy();
 		desktop.destroy();
 
-		final Image.DefaultImage img = (Image.DefaultImage) texture.image();
-		img.destroy();
 		texture.destroy();
 		sampler.destroy();
 		//Arrays.stream(uniforms).forEach(VertexBuffer::destroy);
@@ -449,6 +444,7 @@ public class RotatingCubeDemo {
 		pipelineLayout.destroy();
 		pipeline.destroy();
 		chain.destroy();
+		surface.destroy();
 
 		// Destroy device
 		dev.destroy();

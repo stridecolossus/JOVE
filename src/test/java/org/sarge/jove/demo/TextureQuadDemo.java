@@ -15,7 +15,6 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Vertex;
@@ -293,10 +292,7 @@ public class TextureQuadDemo {
 				.input()
 					.binding(layout)
 					.build()
-				.viewport()
-					.viewport(new Rectangle(chain.extents()))
-					.copyScissor()
-					.build()
+				.viewport(chain.extents())
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)

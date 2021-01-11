@@ -8,7 +8,6 @@ import java.util.Set;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
@@ -136,15 +135,11 @@ public class TriangleDemo {
 		final Shader frag = loader.load("spv.triangle.frag");
 
 		// Create pipeline
-		final Rectangle extent = new Rectangle(chain.extents());
 		final var layout = new Pipeline.Layout.Builder(dev).build();
 		final Pipeline pipeline = new Pipeline.Builder(dev)
 				.layout(layout)
 				.pass(pass)
-				.viewport()
-					.viewport(extent)
-					.copyScissor()
-					.build()
+				.viewport(chain.extents())
 				.shader()
 					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
 					.shader(vert)

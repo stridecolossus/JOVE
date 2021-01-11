@@ -47,7 +47,7 @@ public class ObjectModel {
 	 * Special case component list that optionally flips texture coordinates.
 	 */
 	private static class FlipTextureComponentList extends VertexComponentList<Coordinate2D> {
-		private boolean flip;
+		private boolean flip = true;
 
 		@Override
 		public boolean add(Coordinate2D coords) {
@@ -108,7 +108,7 @@ public class ObjectModel {
 
 	/**
 	 * Sets whether to vertically flip texture coordinates.
-	 * @param flip Whether to flip coordinates (default is {@code false})
+	 * @param flip Whether to flip coordinates (default is {@code true})
 	 */
 	public void setFlipTextureCoordinates(boolean flip) {
 		coords.flip = flip;
