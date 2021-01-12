@@ -581,7 +581,7 @@ TypeConverter CONVERTER = new TypeConverter() {
 }
 ```
 
-Note that `fromNative()` handles the case of a zero native value.
+Note that `fromNative` handles the case of a zero native value.
 
 The only fly in the ointment is that we need to apply this converter to **every** JNA structure in its constructor, hence we introduce a base-class for all Vulkan structures:
 

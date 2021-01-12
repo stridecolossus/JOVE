@@ -215,7 +215,7 @@ class Buffer implements NativeObject {
 
 The _state_ is used to track whether the buffer has been recorded (with the enumeration names being based on the Vulkan documentation).
 
-The `begin()` method is used to start recording:
+The `begin` method is used to start recording:
 
 ```java
 /**
@@ -254,7 +254,7 @@ public Buffer add(Command cmd) {
 }
 ```
 
-Finally the `end()` method finishes recording:
+Finally the `end` method finishes recording:
 
 ```java
 /**
@@ -308,7 +308,7 @@ public Command begin(FrameBuffer buffer) {
 The command also initialises the clear values for the frame buffer attachments - we have hard-coded a grey colour for our single colour attachment.  
 In a future chapter we will replace this temporary code with a proper implementation for both colour and depth attachments.
 
-> We explain the purpose of the various `setType()` calls when we address depth buffers in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
+> We explain the purpose of the various `setType` calls when we address depth buffers in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
 
 Ending the render pass can be defined as a constant since there are no additional arguments:
 
@@ -372,7 +372,7 @@ public class Work {
             if(buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
             final VkSubmitInfo info = new VkSubmitInfo();
             info.commandBufferCount = buffers.size();
-            info.pCommandBuffers = Handle.toPointerArray(buffers);
+            info.pCommandBuffers = Handle.toArray(buffers);
             return new Work(info, queue);
         }
     }

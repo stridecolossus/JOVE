@@ -189,7 +189,7 @@ This is clearly not viable for the pipeline - the parent class would become unwi
 Therefore we need to factor out the nested builders into their own source files whilst maintaining the fluid interface.
 After some research we failed to find a decent strategy or pattern for this approach (though we did find some absolutely hideous solutions using reflection and other shenanigans).
 
-Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its `build()` method) and a protected `result()` method that constructs the resultant object.  We wrap this up in an abstract base-class:
+Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its `build` method) and a protected `result` method that constructs the resultant object.  We wrap this up in an abstract base-class:
 
 ```java
 abstract class AbstractPipelineBuilder<T> {
@@ -233,7 +233,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 }
 ```
 
-Finally the pipeline builder initialises the `parent()` of each nested builder in its constructor.
+Finally the pipeline builder initialises the `parent` of each nested builder in its constructor.
 
 This is a slightly shonky implementation but it is relatively simple and achieves our goal of a fluid nested builder. 
 The resultant classes are relatively self-contained and are therefore more manageable and testable (and the nastier details are at least package-private).

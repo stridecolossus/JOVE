@@ -198,10 +198,11 @@ public final class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix transpose() {
 		final float[] trans = new float[matrix.length];
+		int index = 0;
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				final int index = index(order, c, r);			// Note row-column interchanged
 				trans[index] = get(r, c);
+				++index;
 			}
 		}
 		return new Matrix(order, trans);
@@ -216,18 +217,24 @@ public final class Matrix implements Transform, Bufferable {
 	public Matrix multiply(Matrix m) {
 		if(m.order != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
 
+		// Multiply matrices
 		final float[] result = new float[matrix.length];
-		for(int r = 0; r < order; ++r) {
-			for(int c = 0; c < order; ++c) {
+		int index = 0;
+		for(int c = 0; c < order; ++c) {
+			for(int r = 0; r < order; ++r) {
+				// Sum this row by the corresponding column
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
 					total += get(r, n) * m.get(n, c);
 				}
-				final int index = index(order, r, c);
+
+				// Set result element
 				result[index] = total;
+				++index;
 			}
 		}
 
+		// Create resultant matrix
 		return new Matrix(order, result);
 	}
 

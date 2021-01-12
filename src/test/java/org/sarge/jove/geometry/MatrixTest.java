@@ -35,6 +35,11 @@ class MatrixTest {
 	}
 
 	@Test
+	void transpose() {
+		assertEquals(new Matrix(new float[]{1, 3, 2, 4}), matrix.transpose());
+	}
+
+	@Test
 	void multiply() {
 		final Matrix result = matrix.multiply(matrix);
 		final Matrix expected = new Matrix(new float[]{7, 10, 15, 22});

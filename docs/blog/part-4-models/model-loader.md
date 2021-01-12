@@ -574,7 +574,7 @@ All this refactoring work reduces the size of the interleaved model from 30Mb to
 
 Result.
 
-> Initially we tried to protect the buffers using `asReadOnlyBuffer()` but this seemed to break our unit-tests (equality of buffers is complex) and caused issues when we came to integration so they are exposed as mutable for the moment.
+> Initially we tried to protect the buffers using `asReadOnlyBuffer` but this seemed to break our unit-tests (equality of buffers is complex) and caused issues when we came to integration so they are exposed as mutable for the moment.
 
 ### Model Persistence
 

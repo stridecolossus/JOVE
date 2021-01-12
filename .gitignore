@@ -9,3 +9,5 @@ src/test/resources/vert.spv
 src/test/resources/frag.spv
 *.spv
 *.model
+*.model
+src/test/resources/demo/model/chalet.model

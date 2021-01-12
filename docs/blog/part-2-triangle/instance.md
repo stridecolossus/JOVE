@@ -158,7 +158,7 @@ public record Version(int major, int minor, int patch) implements Comparable<Ver
 }
 ```
 
-In the `build()` method we use the code-generated structures for the first time to populate the application and engine details:
+In the `build` method we use the code-generated structures for the first time to populate the application and engine details:
 
 ```java
 // Init application descriptor
@@ -199,7 +199,7 @@ return new Instance(api, handle.getValue());
 
 Note that the handle to the newly created instance is returned in the `PointerByReference` object which maps to a native `VkInstance*` return-by-reference type.
 
-The `check()` method wraps an API call and validates the result code:
+The `check` method wraps an API call and validates the result code:
 
 ```java
 public interface VulkanLibrary {
@@ -789,7 +789,7 @@ Reference: [DZone article](https://dzone.com/articles/be-lazy-with-java-8)
 TODO
 
 The Vulkan API (and many other native libraries) make extensive use of by-reference types to return data (with the return value generally being some sort of error code).
-For example the `vkCreateInstance()` API method returns the handle of the newly instance created instance via a JNA `PointerByReference` from which the actual handle is extracted.
+For example the `vkCreateInstance` API method returns the handle of the newly instance created instance via a JNA `PointerByReference` from which the actual handle is extracted.
 
 Mercifully this approach is generally uncommon in Java but it poses an awkward problem for unit-testing - if the code allocates the by-reference internally we have no way of mocking it beforehand, the returned pointer will be un-initialised and subsequent code that depends on that value will fail.
 

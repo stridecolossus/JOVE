@@ -284,12 +284,22 @@ protected void release() {
 }
 ```
 
-Finally a buffer can be bound to a pipeline:
+The buffer can be bound to a pipeline:
 
 ```java
 public Command bind() {
-    final PointerArray array = Handle.toPointerArray(List.of(this));
+    final PointerArray array = Handle.toArray(List.of(this));
     return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
+}
+```
+
+Finally we add a command factory for copying between vertex buffers, this will be used to move the vertex data from the staging buffer to the hardware.
+
+```java
+public Command copy(VulkanBuffer dest) {
+    final VkBufferCopy region = new VkBufferCopy();
+    region.size = len;
+    return (api, cb) -> api.vkCmdCopyBuffer(cb, this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
 }
 ```
 
@@ -432,16 +442,6 @@ static Bufferable of(ByteBuffer bb) {
 
 ### Integration #2
 
-Finally we add a factory method that creates a command to copy between vertex buffers, this will be used to move the vertex data from the staging buffer to the hardware.
-
-```java
-public Command copy(VulkanBuffer dest) {
-    final VkBufferCopy region = new VkBufferCopy();
-    region.size = len;
-    return (api, cb) -> api.vkCmdCopyBuffer(cb, this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
-}
-```
-
 We bring all this together in the demo to copy the triangle vertex data to the hardware:
 
 ```java
@@ -464,7 +464,7 @@ final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
     .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
     .build();
 
-// Copy from staging to device
+// Create command to copy from staging to device
 final Queue queue = dev.queue(transferFamily);
 final Command.Pool pool = Command.Pool.create(queue);
 final Command.Buffer copy = pool
@@ -472,18 +472,19 @@ final Command.Buffer copy = pool
     .begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
     .add(staging.copy(dest))
     .end();
+    
+// Perform copy
 new Work.Builder()
     .add(copyBuffer)
     .build()
     .submit();
 queue.waitIdle();
-copy.free();
 
 // Release staging
 staging.destroy();
 ```
 
-The copy portion of the code is messy and long-winded - we will come back and simplify this later.
+The copy portion of the code is quite long-winded - we will come back and simplify this later.
 
 ---
 
@@ -495,9 +496,9 @@ We next need to configure the structure of the vertex data in the pipeline.
 
 This consists of two pieces of information:
 
-1. A _binding_ description that specifies the data to be passed to the shader (essentially corresponding to a vertex layout).
+1. A _binding_ description that specifies the data to be passed to the shader (corresponding to the vertex layout).
 
-2. A number of _attribute_ descriptors that define the format of each component of a vertex (i.e. each component of the layout).
+2. A number of _attribute_ descriptors that define the format of each vertex (the vertex components).
 
 We add two new nested builders to the pipeline stage builder:
 
@@ -556,7 +557,7 @@ public class BindingBuilder {
 
 The _stride_ is the number of bytes per vertex which normally is the size() attribute of the vertex layout.
 
-Again we add a `populate()` method that fills an instance of the Vulkan descriptor from this data:
+Again we add a `populate` method that fills an instance of the Vulkan descriptor from this data:
 
 ```java
 void populate(VkVertexInputBindingDescription desc) {

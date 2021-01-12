@@ -265,8 +265,7 @@ public class ModelDemo {
 
 		// Load model
 		/////
-//		final var objLoader = new ObjectModelLoader();
-//		final Model obj = ResourceLoader.of(src, objLoader).load("chalet.obj").iterator().next();
+//		final Model obj = ResourceLoader.of(src, new ObjectModelLoader()).load("chalet.obj").iterator().next();
 //		new ModelLoader().write(obj, new FileOutputStream(new File("./src/test/resources/demo/model/chalet.model")));
 		/////
 		final Model model = ResourceLoader.of(src, new ModelLoader()).load("chalet.model");

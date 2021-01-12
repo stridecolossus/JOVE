@@ -323,7 +323,7 @@ public void present(Queue queue) {
 
     // Populate swap-chain
     info.swapchainCount = 1;
-    info.pSwapchains = Handle.toPointerArray(List.of(this));
+    info.pSwapchains = Handle.toArray(List.of(this));
 
     // Set image indices
     final int[] array = new int[]{index.getValue()};
@@ -378,7 +378,7 @@ public class FormatBuilder {
 }
 ```
 
-The build method constructs the format name from the various fields and looks up the enumeration constant using `valueOf()`:
+The build method constructs the format name from the various fields and looks up the enumeration constant using `valueOf`:
 
 ```java
 public VkFormat build() {
@@ -527,7 +527,7 @@ public class AttachmentBuilder {
 }
 ```
 
-The parent builder will allocate the attachment and sub-pass descriptors that are initialised by the `populate()` method.
+The parent builder will allocate the attachment and sub-pass descriptors that are initialised by the `populate` method.
 
 ### Sub-Passes
 
@@ -706,7 +706,7 @@ public class FrameBuffer extends AbstractVulkanObject {
         final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
         info.renderPass = pass.handle();
         info.attachmentCount = views.size();
-        info.pAttachments = Handle.toPointerArray(views);
+        info.pAttachments = Handle.toArray(views);
         info.width = extents.width();
         info.height = extents.height();
         info.layers = 1; // TODO

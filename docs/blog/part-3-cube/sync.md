@@ -107,7 +107,7 @@ public final void run() {
 }
 ```
 
-The `frame()` method essentially 'inverts' the existing render loop code using the new _frame_ class:
+The `frame` method essentially 'inverts' the existing render loop code using the new _frame_ class:
 
 ```java
 protected void frame() {
@@ -228,7 +228,7 @@ public int acquire(Semaphore semaphore, Fence fence) {
 }
 ```
 
-The semaphore and fence (which we will cover later in this chapter) are both optional so we add the `handle()` helper to extract the handle if it is not `null`.  However note that the API expects **either** a semaphore, or a fence, or both, so we also add an invariant test in the `acquire()` method (this is one of the validation errors that we are receiving).
+The semaphore and fence (which we will cover later in this chapter) are both optional so we add the `handle` helper to extract the handle if it is not `null`.  However note that the API expects **either** a semaphore, or a fence, or both, so we also add an invariant test in the `acquire` method (this is one of the validation errors that we are receiving).
 
 Finally the presentation method is refactored to wait on a semaphore that signals when the frame is ready to be presented:
 
@@ -237,7 +237,7 @@ public void present(Queue queue, Set<Semaphore> semaphores) {
     ...
     // Populate wait semaphores
     info.waitSemaphoreCount = semaphores.size();
-    info.pWaitSemaphores = Handle.toPointerArray(semaphores);
+    info.pWaitSemaphores = Handle.toArray(semaphores);
     ...
 }
 ```
@@ -281,7 +281,7 @@ if(!wait.isEmpty()) {
     // Populate wait semaphores
     final var semaphores = wait.stream().map(Pair::getLeft).collect(toList());
     info.waitSemaphoreCount = wait.size();
-    info.pWaitSemaphores = Handle.toPointerArray(semaphores);
+    info.pWaitSemaphores = Handle.toArray(semaphores);
     ...
 ```
 
@@ -304,7 +304,7 @@ We also add the signal semaphores to the `pSignalSemaphores` field in the descri
 ### Frames In-Flight
 
 There are still several issues with our implementation even if we add semaphores to the render loop:
-- The `update()` method waits on the device to complete all pending work before proceeding to the next frame.
+- The `update` method waits on the device to complete all pending work before proceeding to the next frame.
 - The render loop is essentially single-threaded for one frame.
 
 To fully utilise the multi-threaded nature of the pipeline we will:
@@ -370,7 +370,7 @@ protected void frame() {
 ```
 
 Note that we now have **two** arrays:
-1. The array of `frames` indexed by the `index` of the swapchain image (returned by the `acquire()` method).
+1. The array of `frames` indexed by the `index` of the swapchain image (returned by the `acquire` method).
 2. The `states` array indexed by the `current` in-flight frame (which is cycled at the end of the loop).
 
 > The names are slightly over-loaded but they will have to do.
@@ -470,7 +470,7 @@ public class Dependency {
 }
 ```
 
-As usual we implement a `populate()` method to configure a dependency:
+As usual we implement a `populate` method to configure a dependency:
 
 ```java
 private void populate(VkSubpassDependency dep) {
@@ -536,13 +536,13 @@ Here we create a dependency between the implicit starting sub-pass and our singl
 1. The `source` clause tells the render pass to wait for the colour attachment of the swapchain image to be available.
 2. Our sub-pass (the `destination`) waits until the colour attachment is ready for writing (rendering) before it is executed.
 
-We also change the pipeline stage of the _wait_ semaphore in the `update()` method to `VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT` rather than `VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT` meaning the render task waits on the swapchain image rather than the entire pipeline.
+We also change the pipeline stage of the _wait_ semaphore in the `update` method to `VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT` rather than `VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT` meaning the render task waits on the swapchain image rather than the entire pipeline.
 
 ---
 
 ## Fences
 
-Although all this new functionality optimises use of the pipeline and render pass, if we remove the `waitIdle()` call in the `update()` method we still get validation errors - the application is constantly queueing up more render tasks that are trying to reuse the same command buffers.
+Although all this new functionality optimises use of the pipeline and render pass, if we remove the `waitIdle` call in the `update` method we still get validation errors - the application is constantly queueing up more render tasks that are trying to reuse the same command buffers.
 
 ### Fence Class
 
@@ -662,7 +662,7 @@ The render loop is modified to wait for the fence to be signalled before:
 1. acquiring the next swapchain image.
 2. and rendering the frame.
 
-We also pass the `fence` to the swapchain `acquire()` method resulting in the following:
+We also pass the `fence` to the swapchain `acquire` method resulting in the following:
 
 ```java
 protected void frame() {
@@ -679,7 +679,7 @@ protected void frame() {
 }
 ```
 
-The `waitFence()` helper method combines waiting for the fence to be signalled and then resets it:
+The `waitFence` helper method combines waiting for the fence to be signalled and then resets it:
 
 ```java
 private void waitFence() {
@@ -688,7 +688,7 @@ private void waitFence() {
 }
 ```
 
-The fence is passed to the `submit()` method when we render a frame:
+The fence is passed to the `submit` method when we render a frame:
 
 ```java
 public static void submit(List<Work> work, Fence fence) {
@@ -698,7 +698,7 @@ public static void submit(List<Work> work, Fence fence) {
 }
 ```
 
-We can finally remove the `waitIdle()` call in the `update()` method and should no longer see validation errors when we run the demo.
+We can finally remove the `waitIdle` call in the `update` method and should no longer see validation errors when we run the demo.
 
 ### ???
 

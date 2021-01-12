@@ -337,7 +337,7 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
 ```
 
 Note that again we invoke the same API method twice to retrieve the queue families.
-However in this case we use `toArray()` on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method
+However in this case we use `toArray` on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method
 (i.e. our array is equivalent to a native pointer-to-structure).
 This is the standard approach for an array of JNA structures, we will abstract this common pattern at the end of the chapter.
 
@@ -561,7 +561,7 @@ Notes:
 
 - The `StructureCollector` is detailed at the end of this chapter.
 
-The `populate()` method generates the descriptor for each `RequiredQueue`:
+The `populate` method generates the descriptor for each `RequiredQueue`:
 
 ```java
 private void populate(VkDeviceQueueCreateInfo info) {
@@ -867,7 +867,7 @@ Vulkan makes heavy use of structures to configure a variety of objects and we ar
 
 However an array of JNA structures poses a number of problems:
 
-- Unlike a standard POJO an array of JNA structures **must** be allocated using the JNA `toArray()` helper method to create a contiguous memory block.
+- Unlike a standard POJO an array of JNA structures **must** be allocated using the JNA `toArray` helper method to create a contiguous memory block.
 
 - This implies we must know the size of the data to allocate the array which imposes constrains on how we build the array (in particular whether we can employ Java streams).
 

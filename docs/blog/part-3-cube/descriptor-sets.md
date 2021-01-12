@@ -128,7 +128,7 @@ public static class Pool extends AbstractVulkanObject {
 }
 ```
 
-The _max_ member configures the maximum number of descriptors that can be allocated from the pool.
+The _max_ member configures the maximum number of descriptors that can be allocated from the pool (allowing the implementation to potentially optimise and pre-allocate the pool).
 
 We add the following method to allocate a number of sets from the pool:
 
@@ -143,7 +143,7 @@ public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
     final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
     info.descriptorPool = this.handle();
     info.descriptorSetCount = layouts.size();
-    info.pSetLayouts = Handle.toPointerArray(layouts);
+    info.pSetLayouts = Handle.toArray(layouts);
 
     // Allocate descriptors sets
     final LogicalDevice dev = this.device();
@@ -154,7 +154,7 @@ public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
 }
 ```
 
-And transform the returned descriptor set handles to the domain object:
+The returned handles are then transformed to the domain object:
 
 ```java
     ...
@@ -176,7 +176,7 @@ And transform the returned descriptor set handles to the domain object:
 }
 ```
 
-And corresponding methods to release descriptor sets:
+We also implement the other API methods for management of the pool:
 
 ```java
 public synchronized void free(Collection<DescriptorSet> sets) {
@@ -207,13 +207,13 @@ To construct a pool we provide a builder:
 ```java
 public static class Builder {
     private final LogicalDevice dev;
-    private final Map<VkDescriptorType, Integer> entries = new HashMap<>();
+    private final Map<VkDescriptorType, Integer> pool = new HashMap<>();
     private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
     private Integer max;
 }
 ```
 
-The _entries_ field is a table of the pool sizes for each descriptor type (we don't bother implementing a transient object):
+The _pool_ is a table of the pool sizes for each descriptor type (we don't bother implementing a transient object):
 
 ```java
 public Builder add(VkDescriptorType type, int count) {
@@ -224,7 +224,7 @@ public Builder add(VkDescriptorType type, int count) {
 }
 ```
 
-We add a local helper to transform an entry to the Vulkan descriptor:
+We add a local helper to transform a pool entry to the Vulkan descriptor:
 
 ```java
 private static void populate(Map.Entry<VkDescriptorType, Integer> entry, VkDescriptorPoolSize size) {
@@ -237,7 +237,7 @@ The `build` method first validates that the configured pool size does not exceed
 
 ```java
 // Determine logical maximum number of sets that can be allocated
-final int limit = entries
+final int limit = pool
     .values()
     .stream()
     .mapToInt(Integer::intValue)
@@ -262,7 +262,7 @@ Next we transform the entries map to an array and populate the descriptor for th
 final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
 info.flags = IntegerEnumeration.mask(flags);
 info.poolSizeCount = entries.size();
-info.pPoolSizes = StructureCollector.toPointer(entries.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
+info.pPoolSizes = StructureCollector.toPointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 info.maxSets = max;
 ```
 
@@ -422,35 +422,27 @@ And add the following code to the build method:
 
 ```java
 info.setLayoutCount = sets.size();
-info.pSetLayouts = Handle.toPointerArray(sets);
+info.pSetLayouts = Handle.toArray(sets);
 ```
 
-Finally we implement the following method on the descriptor set class to bind it to the pipeline:
-
-```java
-public Command bind(Pipeline.Layout layout) {
-    return bind(layout, List.of(this));
-}
-```
-
-Which delegates to an over-loaded variant that binds multiple descriptor sets:
+Finally we implement the following method to bind a number of descriptor sets to the pipeline:
 
 ```java
 public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
-    final Pointer[] handles = Handle.toArray(sets);
-
     return (api, cmd) -> api.vkCmdBindDescriptorSets(
             cmd,
             VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
             layout.handle(),
             0,                  // First set
-            1,                  // Count
-            handles,
+            sets.size(),
+            Handle.toArray(sets),
             0,                  // Dynamic offset count
             null                // Dynamic offsets
     );
 }
 ```
+
+With an over-loaded variant for a single descriptor set instance.
 
 ---
 

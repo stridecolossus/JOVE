@@ -228,7 +228,7 @@ void load(String filename, int w, int h, int components) throws IOException {
 
 ### Texture Images
 
-Up until now we have not needed to create an image explicitly (the swapchain images were created for us).  However texture images will need to be managed by the application, i.e. a native object with an explicit `destroy()` method.  Therefore we refactor the existing image class to an interface and create separate implementations for the two cases.
+Up until now we have not needed to create an image explicitly (the swapchain images were created for us).  However texture images will need to be managed by the application, i.e. a native object with an explicit `destroy` method.  Therefore we refactor the existing image class to an interface and create separate implementations for the two cases.
 
 The image class now looks like this:
 
@@ -239,33 +239,17 @@ public interface Image extends NativeObject {
      */
     Descriptor descriptor();
 
-    /**
-     * Image extents.
-     */
     record Extents(int width, int height, int depth) {
         ...
     }
     
-    /**
-     * Descriptor for an image.
-     */
     record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) {
     }
     
-    /**
-     * Default implementation.
-     */
     class DefaultImage extends AbstractVulkanObject implements Image {
         private final Descriptor descriptor;
         private final Pointer mem;
 
-        /**
-         * Constructor.
-         * @param handle        Handle
-         * @param descriptor    Image descriptor
-         * @param mem           Internal memory
-         * @param dev           Logical device
-         */
         protected DefaultImage(Handle handle, Descriptor descriptor, Pointer mem, LogicalDevice dev) {
             super(handle, dev, dev.library()::vkDestroyImage);
             this.descriptor = notNull(descriptor);
@@ -278,7 +262,7 @@ public interface Image extends NativeObject {
         }
 
         @Override
-        public synchronized void destroy() {
+        public void release() {
             final LogicalDevice dev = this.device();
             dev.library().vkFreeMemory(dev.handle(), mem, null);
             super.destroy();
@@ -288,17 +272,6 @@ public interface Image extends NativeObject {
 ```
 
 We introduce an _image descriptor_ and refactor the swapchain accordingly (with a custom image implementation that cannot be destroyed).
-The view class is also refactor to destroy the underlying image as required:
-
-```java
-@Override
-public synchronized void destroy() {
-    if(image instanceof TransientNativeObject obj) {
-        obj.destroy();
-    }
-    super.destroy();
-}
-```
 
 Now we can add a builder to the image class to support textures:
 
@@ -336,8 +309,8 @@ The build method creates the image in roughly the same fashion as creating a ver
 ```java
 public Image build() {
     // Validate image
-    if(info.format == null) throw new IllegalArgumentException("Image format not specified");
-    if(extents == null) throw new IllegalArgumentException("Image extents not specified");
+    if(info.format == null) throw new IllegalArgumentException(...);
+    if(extents == null) throw new IllegalArgumentException(...);
 
     // Complete descriptor
     info.extent = this.extents.toExtent3D();
@@ -485,7 +458,12 @@ public class ImageBarrierBuilder {
     private final Set<VkAccessFlag> dest = new HashSet<>();
     private VkImageLayout oldLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
     private VkImageLayout newLayout;
-    private final ImageSubResourceBuilder<ImageBarrierBuilder> subresource = new ImageSubResourceBuilder<>(this);
+    private final SubResourceBuilder<ImageBarrierBuilder> subresource;
+
+    ImageBarrierBuilder(Image image) {
+        this.image = notNull(image);
+        this.subresource = image.descriptor().builder(this);
+    }
 
     ...
 

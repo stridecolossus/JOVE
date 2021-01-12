@@ -213,7 +213,7 @@ The above implementation is based on this[^projection] tutorial.
 
 To pass the perspective matrix to the shader we will next implement a _uniform buffer object_ (or UBO), a descriptor set resource implemented as a vertex buffer.
 
-We add a new factory method to the buffer class to create the uniform buffer resource:
+This just involves creating a descriptor set resource from a `VulkanBuffer`:
 
 ```java
 public DescriptorSet.Resource uniform() {
@@ -237,13 +237,13 @@ public DescriptorSet.Resource uniform() {
 }
 ```
 
-We also take the opportunity to store the usage flags in the domain object and add the `require` invariant test (as above) to the relevant buffer methods.
+We also take this opportunity to add the `require` invariant test which throws an exception if the intended usage of the buffer is not valid.
 
 ### Integration #1
 
 As an intermediate step we will apply the identity matrix to the demo to test the uniform buffer before we start messing around with perspective projection.
 
-First we add constants for a 4-order identity matrix:
+First we add support for a standard 4-order identity matrix:
 
 ```java
 public final class Matrix implements Transform, Bufferable {
@@ -263,7 +263,7 @@ public final class Matrix implements Transform, Bufferable {
 }
 ```
 
-Next we create a new uniform buffer and load the identity matrix:
+Next we create a new uniform buffer and load the identity:
 
 ```java
 VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
@@ -276,7 +276,7 @@ VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
 uniform.load(Matrix.IDENTITY);
 ```
 
-Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than a device-local buffer - eventually the matrix will be updated every frame (for the rotation) so a device-local / staging buffer buffer would just add extra complexity and overhead.
+Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than a device-local buffer - eventually the matrix will be rotated every frame so a device-local / staging buffer buffer would just add extra complexity and overhead.
 
 Next we add a second binding to the descriptor set layout for the uniform buffer:
 
@@ -344,9 +344,84 @@ If all goes well we should still see the flat textured quad since the identity m
 
 ### View Transform
 
-We can now use the matrix class and the perspective projection to apply a _view transform_ to the demo.
+We will now use the matrix class and the perspective projection to apply a _view transform_ to the demo.
 
-First we create the _view_ (or _camera_) transformation matrices:
+First we add the following methods to the matrix builder to populate a row or column of the matrix:
+
+```java
+public Builder row(int row, Tuple vec) {
+    set(row, 0, vec.x);
+    set(row, 1, vec.y);
+    set(row, 2, vec.z);
+    return this;
+}
+
+public Builder column(int col, Tuple vec) {
+    set(0, col, vec.x);
+    set(1, col, vec.y);
+    set(2, col, vec.z);
+    return this;
+}
+```
+
+Matrix multiplication is implemented as follows:
+
+```java
+public Matrix multiply(Matrix m) {
+    // Multiply matrices
+    final float[] result = new float[matrix.length];
+    int index = 0;
+    for(int c = 0; c < order; ++c) {
+        for(int r = 0; r < order; ++r) {
+            // Sum this row by the corresponding column
+            float total = 0;
+            for(int n = 0; n < order; ++n) {
+                total += get(r, n) * m.get(n, c);
+            }
+
+            // Set result element
+            result[index] = total;
+            ++index;
+        }
+    }
+
+    // Create resultant matrix
+    return new Matrix(order, result);
+}
+```
+
+Each element of the resultant matrix is the _sum_ of its _row_ multiplied by the corresponding _column_ in the right-hand matrix:
+
+For example, given the following matrices:
+
+```
+[a b]   [c .]
+[. .]   [d .]
+```
+
+The result for element [0, 0] is `a * c + b * d` (and similarly for the rest of the matrix).
+
+Note that the `multiply` implementation performs this operation in column-major order (such that the result `index` is a simple increment).
+
+We also introduce the _vector_ domain class at this point:
+
+```java
+public final class Vector extends Tuple {
+    public static final Vector X_AXIS = new Vector(1, 0, 0);
+    public static final Vector Y_AXIS = new Vector(0, 1, 0);
+    public static final Vector Z_AXIS = new Vector(0, 0, 1);
+
+    public Vector(float x, float y, float z) {
+        super(x, y, z);
+    }
+
+    public Vector invert() {
+        return new Vector(-x, -y, -z);
+    }
+}
+```
+
+We can now build the _view_ (or _camera_) transformation matrices:
 
 ```java
 final Matrix rot = new Matrix.Builder()
@@ -372,25 +447,7 @@ Notes:
 - The Z axis points _out_ from the screen towards the viewer.
 - Later on we will wrap the view transform into a camera class.
 
-We introduce the _vector_ domain class at this point:
-
-```java
-public final class Vector extends Tuple {
-    public static final Vector X_AXIS = new Vector(1, 0, 0);
-    public static final Vector Y_AXIS = new Vector(0, 1, 0);
-    public static final Vector Z_AXIS = new Vector(0, 0, 1);
-
-    public Vector(float x, float y, float z) {
-        super(x, y, z);
-    }
-
-    public Vector invert() {
-        return new Vector(-x, -y, -z);
-    }
-}
-```
-
-Next we replace the identity matrix we used above with the actual perspective projection, multiply it with the view transforma, and upload the result to the uniform buffer:
+Next we replace the identity matrix we used above with the actual perspective projection, multiply it with the view transform, and upload the result to the uniform buffer:
 
 ```java
 final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
