@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -114,28 +115,6 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	 */
 	public VulkanAllocator allocator() {
 		return allocator.get();
-	}
-
-	/**
-	 * Helper - Looks up the work queue(s) for the given family.
-	 * @param family Queue family
-	 * @return Queue(s)
-	 * @throws IllegalArgumentException if this device does not contain queues with the given family
-	 */
-	public List<Queue> queues(Queue.Family family) {
-		final var list = queues.get(family);
-		if(list == null) throw new IllegalArgumentException("Queue family not present: " + family);
-		return list;
-	}
-
-	/**
-	 * Helper - Looks up the <b>first</b> work queue for the given family.
-	 * @param family Queue family
-	 * @return Queue
-	 * @throws IllegalArgumentException if this device does not contain a queue with the given family
-	 */
-	public Queue queue(Queue.Family family) {
-		return queues(family).get(0);
 	}
 
 	/**
@@ -266,34 +245,43 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 
 		/**
 		 * Adds a <b>single</b> queue of the given family to this device.
-		 * @param family Queue family
+		 * @param ref Queue reference
+		 * @throws NoSuchElementException if the queue reference is invalid
+		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
 		 */
-		public Builder queue(Queue.Family family) {
-			return queues(family, 1);
+		public Builder queue(Queue.Reference ref) {
+			return queues(ref, 1);
 		}
 
 		/**
 		 * Adds the specified number of queues of the given family to this device.
-		 * @param family	Queue family
+		 * @param ref		Queue reference
 		 * @param num		Number of queues
+		 * @throws NoSuchElementException if the queue reference is invalid
+		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
-		public Builder queues(Queue.Family family, int num) {
-			return queues(family, Collections.nCopies(num, Percentile.ONE));
+		public Builder queues(Queue.Reference ref, int num) {
+			return queues(ref, Collections.nCopies(num, Percentile.ONE));
 		}
 
 		/**
 		 * Adds multiple queues of the given family with the specified work priorities to this device.
-		 * @param family		Queue family
+		 * @param ref			Queue reference
 		 * @param priorities	Queue priorities
+		 * @throws NoSuchElementException if the queue reference is invalid
 		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 * @throws IllegalArgumentException if the priorities array is empty or any value is not a valid 0..1 percentile
 		 */
-		public Builder queues(Queue.Family family, List<Percentile> priorities) {
+		public Builder queues(Queue.Reference ref, List<Percentile> priorities) {
+			// Validate family for this device
+			final Queue.Family family = ref.family();
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}
+
+			// Register required queue
 			queues.add(new RequiredQueue(family, priorities));
 			return this;
 		}

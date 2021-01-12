@@ -6,7 +6,6 @@ import static org.sarge.jove.util.Check.notNull;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -119,16 +118,6 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public List<Queue.Family> families() {
 		return families;
-	}
-
-	/**
-	 * Helper - Finds a matching queue family for this device.
-	 * @param test Queue family predicate
-	 * @return Matching queue family
-	 * @throws NoSuchElementException if a matching queue is not present
-	 */
-	public Queue.Family family(Predicate<Queue.Family> test) {
-		return families.stream().filter(test).findAny().orElseThrow();
 	}
 
 	/**

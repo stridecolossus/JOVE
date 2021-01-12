@@ -69,30 +69,22 @@ public class TriangleDemo {
 		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		//final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
-		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
+		final var graphics = Queue.Selector.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var present = Queue.Selector.of(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
-				.filter(PhysicalDevice.predicate(graphicsPredicate))
-				//.filter(PhysicalDevice.predicate(transferPredicate))
-				.filter(PhysicalDevice.predicate(presentationPredicate))
+				.filter(graphics)
+				.filter(present)
 				.findAny()
 				.orElseThrow(() -> new RuntimeException("No GPU available"));
-
-		// Lookup required queues
-		final Queue.Family graphics = gpu.family(graphicsPredicate);
-		//final Queue.Family transfer = gpu.family(transferPredicate);
-		final Queue.Family present = gpu.family(presentationPredicate);
 
 		// Create device
 		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.queue(graphics)
-//				.queue(transfer)
 				.queue(present)
 				.build();
 
@@ -158,7 +150,7 @@ public class TriangleDemo {
 				.collect(toList());
 
 		// Create command pool
-		final Queue queue = dev.queue(present);
+		final Queue queue = present.queue(dev);
 		final Command.Pool pool = Command.Pool.create(queue);
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
@@ -184,11 +176,11 @@ public class TriangleDemo {
 					.build()
 					.submit(null);
 
-			dev.queue(present).waitIdle();
+			queue.waitIdle();
 
 //			Thread.sleep(50);
 
-			chain.present(dev.queue(present), Set.of());
+			chain.present(queue, Set.of());
 
 
 //			dev.queue(present).waitIdle();

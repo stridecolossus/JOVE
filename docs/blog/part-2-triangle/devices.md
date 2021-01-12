@@ -450,7 +450,11 @@ public class LogicalDevice {
         this.handle = notNull(handle);
         this.parent = notNull(parent);
         this.lib = parent.instance().library();
-        this.queues = ... // TODO
+        this.queues = ...
+    }
+
+    public Map<Queue.Family, List<Queue>> queues() {
+        return queues;
     }
 
     public void destroy() {
@@ -610,39 +614,6 @@ private Queue create(int index, Queue.Family family) {
 }
 ```
 
-We implement several over-loaded accessors to lookup a work queue from the device:
-
-```java
-/**
- * @return Work queues for this device ordered by family
- */
-public Map<Queue.Family, List<Queue>> queues() {
-    return queues;
-}
-
-/**
- * Helper - Looks up the work queue(s) for the given family.
- * @param family Queue family
- * @return Queue(s)
- * @throws IllegalArgumentException if this device does not contain queues with the given family
- */
-public List<Queue> queues(Queue.Family family) {
-    final var list = queues.get(family);
-    if(list == null) throw new IllegalArgumentException("Queue family not present: " + family);
-    return list;
-}
-
-/**
- * Helper - Looks up the <b>first</b> work queue for the given family.
- * @param family Queue family
- * @return Queue
- * @throws IllegalArgumentException if this device does not contain a queue with the given family
- */
-public Queue queue(Queue.Family family) {
-    return queues(family).get(0);
-}
-```
-
 The builder for the logical device is quite complex so the unit-test has a large number of failure cases (a selection are shown here):
 
 ```java
@@ -674,8 +645,6 @@ class BuilderTests {
 }
 ```
 
-### Integration
-
 We can now create a logical device in the demo and lookup the specified work queues:
 
 ```java
@@ -688,9 +657,145 @@ final LogicalDevice dev = new LogicalDevice.Builder(gpu)
     .build();
     
 // Lookup work queues
-final Queue graphicsQueue = dev.queue(graphicsFamily);    
-final Queue presentationQueue = dev.queue(presentationFamily);
+final Queue graphicsQueue = dev.queue().get(graphicsFamily).get(0);
+final Queue presentationQueue = dev.queues().get(presentationFamily).get(0);
 ```
+
+### Queue Selector
+
+When reviewing the demo code as it stands we see that the process of specifying and retrieving the work queues is rather awkward.
+
+For each queue we currently have three objects:
+
+- A predicate used to select the physical device.
+
+- The queue family specifying the required queues when creating the logical device.
+
+- And finally the work queue itself.
+
+In addition the logic to retrieve the queues from the logical device is pretty ugly.
+
+Ideally we would like to compose these concerns into a single object that supports all the use-cases.
+
+We create a _selector_ that composes the queue predicate and a _reference_ to the family:
+
+```java
+public static class Selector extends Reference implements Predicate<PhysicalDevice> {
+    private final Predicate<Family> predicate;
+
+    public Selector(Predicate<Family> predicate) {
+        this.predicate = notNull(predicate);
+    }
+
+    @Override
+    public boolean test(PhysicalDevice dev) {
+        ...
+    }
+}
+```
+
+The `Reference` is basically a hidden accessor for the family:
+
+```java
+static abstract class Reference {
+    /**
+     * @return Queue family
+     */
+    abstract Family family();
+}
+```
+
+Which is implemented by the existing queue family:
+
+```java
+public static class Family extends Reference {
+    @Override
+    final Family family() {
+        return this;
+    }
+}
+```
+
+We can now refactor the various `queue` methods in the builder for the logical device to accept this new type (i.e. so we can pass either a queue family or a selector):
+
+The selector itself is implemented as follows:
+
+```java
+private Optional<Family> family = Optional.empty();
+
+@Override
+public boolean test(PhysicalDevice dev) {
+    family = dev.families().stream().filter(predicate).findAny();
+    return family.isPresent();
+}
+
+@Override
+public Family family() {
+    return family.orElseThrow();
+}
+```
+
+Note that we initialise the family as part of the predicate test (see below).
+
+We add convenience factory methods to create selectors:
+
+```java
+public static Selector of(VkQueueFlag... flags) {
+    final var set = Arrays.asList(flags);
+    return new Selector(family -> family.flags.containsAll(set));
+}
+
+public static Selector of(Handle surface) {
+    return new Selector(family -> family.isPresentationSupported(surface));
+}
+```
+
+And helper methods to retrieve the queue(s) from the logical device:
+
+```java
+public List<Queue> list(LogicalDevice dev) {
+    final var list = dev.queues().get(family());
+    if(list == null) throw new NoSuchElementException("Queue family is not available");
+    return list;
+}
+
+public Queue queue(LogicalDevice dev) {
+    final var list = list(dev);
+    return list.get(0);
+}
+```
+
+We can now refactor the demo as follows:
+
+```java
+// Create queue selectors
+var graphics = Queue.Selector.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+var present = Queue.Selector.of(surfaceHandle);
+
+// Find GPU
+PhysicalDevice gpu = PhysicalDevice
+    .devices(instance)
+    .filter(graphics)
+    .filter(present)
+    .findAny()
+    .orElseThrow(() -> new RuntimeException("No GPU available"));
+
+// Create logical device
+LogicalDevice dev = new LogicalDevice.Builder(gpu)
+    ...
+    .queue(graphics)
+    .queue(present)
+    .build();
+
+// Retrieve work queues
+Queue graphicsQueue = graphics.queue();
+Queue presentationQueue = present.queue();
+```
+
+This refactoring reduces the number of objects we have to deal with and simplifies the code, with minimal impact on the existing classes (the previous approach can still be used if required).
+
+> A valid criticism of the selector is that fact that the queue family is initialised as a side-effect of the predicate. 
+Obviously we would prefer to avoid this approach (particularly if the code was intended to be thread-safe) but for this use-case it does the job.
 
 ---
 

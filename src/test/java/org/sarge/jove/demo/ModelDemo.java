@@ -185,24 +185,19 @@ public class ModelDemo {
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
 
-		// Create queue family predicates
-		final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
-		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
+		// Create queue selectors
+		final var graphics = Queue.Selector.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var transfer = Queue.Selector.of(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var present = Queue.Selector.of(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
-				.filter(PhysicalDevice.predicate(graphicsPredicate))
-				.filter(PhysicalDevice.predicate(transferPredicate))
-				.filter(PhysicalDevice.predicate(presentationPredicate))
+				.filter(graphics)
+				.filter(transfer)
+				.filter(present)
 				.findAny()
 				.orElseThrow(() -> new RuntimeException("No GPU available"));
-
-		// Lookup required queues
-		final Queue.Family graphics = gpu.family(graphicsPredicate);
-		final Queue.Family transfer = gpu.family(transferPredicate);
-		final Queue.Family present = gpu.family(presentationPredicate);
 
 		// Init required features
 		final var features = new VkPhysicalDeviceFeatures();
@@ -271,7 +266,7 @@ public class ModelDemo {
 		final Model model = ResourceLoader.of(src, new ModelLoader()).load("chalet.model");
 
 		// Load VBO
-		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
+		final Command.Pool copyPool = Command.Pool.create(transfer.queue(dev)); //dev.queue(transfer));
 		final VulkanBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 		// Load IBO
@@ -279,7 +274,7 @@ public class ModelDemo {
 
 		//////////////////
 
-		final Queue graphicsQueue = dev.queue(graphics);
+		final Queue graphicsQueue = graphics.queue(dev); //dev.queue(graphics);
 		final Command.Pool graphicsPool = Command.Pool.create(graphicsQueue);
 		final View texture = texture(dev, graphicsPool);
 
@@ -448,7 +443,7 @@ public class ModelDemo {
 				return true;
 			}
 		};
-		final Runner runner = new Runner(swapchain, 2, factory, dev.queue(present));
+		final Runner runner = new Runner(swapchain, 2, factory, present.queue(dev));
 
 		// Bind run action
 		//final StopAction stop = new StopAction();

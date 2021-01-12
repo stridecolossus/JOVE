@@ -138,23 +138,18 @@ public class RotatingCubeDemo {
 		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		final var transferPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
-		final var presentationPredicate = Queue.Family.predicate(surfaceHandle);
+		final var graphics = Queue.Selector.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var transfer = Queue.Selector.of(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var present  = Queue.Selector.of(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
-				.filter(PhysicalDevice.predicate(graphicsPredicate))
-				.filter(PhysicalDevice.predicate(transferPredicate))
-				.filter(PhysicalDevice.predicate(presentationPredicate))
+				.filter(graphics)
+				.filter(transfer)
+				.filter(present)
 				.findAny()
 				.orElseThrow(() -> new RuntimeException("No GPU available"));
-
-		// Lookup required queues
-		final Queue.Family graphics = gpu.family(graphicsPredicate);
-		final Queue.Family transfer = gpu.family(transferPredicate);
-		final Queue.Family present = gpu.family(presentationPredicate);
 
 		// Create device
 		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
@@ -232,13 +227,13 @@ public class RotatingCubeDemo {
 				.build();
 
 		// Copy
-		final Command.Pool copyPool = Command.Pool.create(dev.queue(transfer));
+		final Command.Pool copyPool = Command.Pool.create(transfer.queue(dev));
 		Work.submit(staging.copy(dest), copyPool);
 		staging.destroy();
 
 		//////////////////
 
-		final Command.Pool graphicsPool = Command.Pool.create(dev.queue(graphics));
+		final Command.Pool graphicsPool = Command.Pool.create(graphics.queue(dev));
 
 		final View texture = texture(dev, graphicsPool);
 
@@ -345,7 +340,7 @@ public class RotatingCubeDemo {
 				.collect(toList());
 
 		// Create command pool
-		final Queue presentQueue = dev.queue(present);
+		final Queue presentQueue = present.queue(dev);
 		final Command.Pool pool = Command.Pool.create(presentQueue);
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
@@ -406,7 +401,7 @@ public class RotatingCubeDemo {
 		};
 
 		// Create render loop
-		final Runner runner = new Runner(chain, 2, factory, dev.queue(present));
+		final Runner runner = new Runner(chain, 2, factory, presentQueue);
 
 		// Create stop action
 		window.keyboard().enable(ignored -> runner.stop());

@@ -6,7 +6,10 @@ import static org.sarge.jove.util.Check.oneOrMore;
 import static org.sarge.jove.util.Check.zeroOrMore;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -23,10 +26,86 @@ import com.sun.jna.ptr.IntByReference;
  * A <i>queue</i> is used to submit work to the hardware.
  */
 public class Queue implements NativeObject {
+	private final Handle handle;
+	private final LogicalDevice dev;
+	private final Family family;
+
+	/**
+	 * Constructor.
+	 * @param handle 		Queue handle
+	 * @param dev			Parent logical device
+	 * @param family 		Queue family
+	 */
+	Queue(Pointer handle, LogicalDevice dev, Family family) {
+		this.dev = notNull(dev);
+		this.handle = new Handle(handle);
+		this.family = notNull(family);
+	}
+
+	@Override
+	public Handle handle() {
+		return handle;
+	}
+
+	/**
+	 * @return Queue family
+	 */
+	public Family family() {
+		return family;
+	}
+
+	/**
+	 * @return Logical device
+	 */
+	public LogicalDevice device() {
+		return dev;
+	}
+
+	/**
+	 * Waits for this queue to become idle.
+	 */
+	public void waitIdle() {
+		check(dev.library().vkQueueWaitIdle(handle));
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(handle, family);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj instanceof Queue that) &&
+				handle.equals(that.handle) &&
+				family.equals(that.family);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("handle", handle)
+				.append("family", family)
+				.build();
+	}
+
+	/**
+	 * A <i>queue reference</i>
+	 * TODO
+	 * @see Selector
+	 */
+	static abstract class Reference {
+		/**
+		 * @param dev Physical device
+		 * @throws NoSuchElementException if the queue family does not exist
+		 */
+		abstract Family family();
+	}
+
 	/**
 	 * A <i>queue family</i> defines the properties of a group of queues.
 	 */
-	public static class Family {
+	public static class Family extends Reference {
 		/**
 		 * Index for the <i>ignored</i> queue family.
 		 */
@@ -111,6 +190,11 @@ public class Queue implements NativeObject {
 		}
 
 		@Override
+		public final Family family() {
+			return this;
+		}
+
+		@Override
 		public int hashCode() {
 			return Objects.hash(dev, index());
 		}
@@ -129,66 +213,104 @@ public class Queue implements NativeObject {
 		}
 	}
 
-	private final Handle handle;
-	private final LogicalDevice dev;
-	private final Family family;
-
 	/**
-	 * Constructor.
-	 * @param handle 		Queue handle
-	 * @param dev			Parent logical device
-	 * @param family 		Queue family
+	 * A <i>queue selector</i> is a helper class used to select the required work queues from the device.
+	 * <p>
+	 * Example usage:
+	 * <pre>
+	 *  // Define a selector for a queue
+	 *  Selector selector = Selector.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+	 *
+	 *  // Select a physical device that supports this queue
+	 *  PhysicalDevice parent = PhysicalDevice.enumerate(...)
+	 *      .filter(selector)
+	 *      ...
+	 *
+	 *  // Specify the required queue properties for the logical device
+	 *  LogicalDevice dev = new LogicalDevice.Builder(parent)
+	 *  	.queue(selector, 3)
+	 *  	...
+	 *
+	 *  // Retrieve the queue(s)
+	 *  List&lt;Queue&gt; list = selector.list();
+	 *  Queue queue = selector.queue();
+	 * </pre>
+	 * <p>
+	 * @see PhysicalDevice#families()
+	 * @see LogicalDevice#queues()
 	 */
-	Queue(Pointer handle, LogicalDevice dev, Family family) {
-		this.dev = notNull(dev);
-		this.handle = new Handle(handle);
-		this.family = notNull(family);
-	}
+	public static class Selector extends Reference implements Predicate<PhysicalDevice> {
+		/**
+		 * Creates a selector for a queue with the given flags.
+		 * @param flags Queue flag(s)
+		 * @return New queue selector
+		 * @see Family#flags()
+		 */
+		public static Selector of(VkQueueFlag... flags) {
+			final var set = Arrays.asList(flags);
+			return new Selector(family -> family.flags.containsAll(set));
+		}
 
-	@Override
-	public Handle handle() {
-		return handle;
-	}
+		/**
+		 * Creates a selector for a queue that supports presentation to the given Vulkan surface.
+		 * @param surface Vulkan surface
+		 * @return New presentation selector
+		 * @see Family#isPresentationSupported(org.sarge.jove.common.NativeObject.Handle)
+		 */
+		public static Selector of(Handle surface) {
+			return new Selector(family -> family.isPresentationSupported(surface));
+		}
 
-	/**
-	 * @return Queue family
-	 */
-	public Family family() {
-		return family;
-	}
+		private final Predicate<Family> predicate;
 
-	/**
-	 * @return Logical device
-	 */
-	public LogicalDevice device() {
-		return dev;
-	}
+		private Optional<Family> family = Optional.empty();
+		private Queue queue;
 
-	/**
-	 * Waits for this queue to become idle.
-	 */
-	public void waitIdle() {
-		check(dev.library().vkQueueWaitIdle(handle));
-	}
+		/**
+		 * Constructor.
+		 * @param predicate Queue predicate
+		 */
+		public Selector(Predicate<Family> predicate) {
+			this.predicate = notNull(predicate);
+		}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(handle, family);
-	}
+		@Override
+		public boolean test(PhysicalDevice dev) {
+			assert family.isEmpty();
+			family = dev.families().stream().filter(predicate).findAny();
+			return family.isPresent();
+		}
 
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj instanceof Queue that) &&
-				handle.equals(that.handle) &&
-				family.equals(that.family);
-	}
+		@Override
+		Family family() {
+			return family.orElseThrow();
+		}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("handle", handle)
-				.append("family", family)
-				.build();
+		/**
+		 * Retrieves the work queues specified by this selector from the given device.
+		 * @param dev Logical device
+		 * @return Queues
+		 * @throws NoSuchElementException if the queue is not present
+		 */
+		public List<Queue> list(LogicalDevice dev) {
+			assert queue == null;
+			final var list = dev.queues().get(family());
+			if(list == null) throw new NoSuchElementException("Queue family is not available");
+			return list;
+		}
+
+		/**
+		 * Retrieves the <b>first</b> work queue specified by this selector from the given device.
+		 * @param dev Logical device
+		 * @return Queue
+		 * @throws NoSuchElementException if the queue is not present
+		 */
+		public Queue queue(LogicalDevice dev) {
+			if(queue == null) {
+				final var list = list(dev);
+				queue = list.get(0);
+			}
+			return queue;
+		}
 	}
 }

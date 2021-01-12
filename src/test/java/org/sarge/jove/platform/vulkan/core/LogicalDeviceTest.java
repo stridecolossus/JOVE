@@ -102,22 +102,6 @@ public class LogicalDeviceTest {
 		assertNotNull(queue.handle());
 	}
 
-	@DisplayName("Query device for all queues in the given family")
-	@Test
-	void queuesFamily() {
-		final var queues = device.queues(family);
-		assertNotNull(queues);
-		assertEquals(2, queues.size());
-	}
-
-	@DisplayName("Query device for the first queue in the given family")
-	@Test
-	void queue() {
-		final Queue queue = device.queue(family);
-		assertNotNull(queue);
-		assertEquals(family, queue.family());
-	}
-
 	@DisplayName("Wait for queue to complete execution")
 	@Test
 	void queueWaitIdle() {
@@ -188,7 +172,7 @@ public class LogicalDeviceTest {
 			builder.queue(family);
 			builder.queue(family);
 			device = builder.build();
-			assertEquals(1, device.queues(family).size());
+			assertEquals(1, device.queues().get(family).size());
 		}
 
 		@DisplayName("Cannot request more queues than available")
