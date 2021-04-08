@@ -112,7 +112,6 @@ public final class MathsUtil {
 	 * @param value		Value
 	 * @param mask		Bit-wise mask
 	 * @return Whether the given value matches the specified bit-wise mask
-	 * @throws IllegalArgumentException if the given mask is zero or negative
 	 */
 	public static boolean isMask(int value, int mask) {
 		return (value & mask) == mask;

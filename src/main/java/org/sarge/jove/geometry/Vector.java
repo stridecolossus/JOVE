@@ -1,12 +1,14 @@
 package org.sarge.jove.geometry;
 
+import java.nio.ByteBuffer;
+
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
-public final class Vector extends Tuple {
+public record Vector(float x, float y, float z) implements Tuple {
 	/**
 	 * X-axis vector.
 	 */
@@ -29,33 +31,20 @@ public final class Vector extends Tuple {
 	 * @return Vector between the given points
 	 */
 	public static Vector between(Point start, Point end) {
-		return new Vector(end.x - start.x, end.y - start.y, end.z - start.z);
+		return start.toVector().invert().add(end.toVector());
 	}
 
 	/**
-	 * Constructor.
-	 * @param x
-	 * @param y
-	 * @param z
+	 * Creates a vector from the given array.
+	 * @param array Vector array
+	 * @return New vector
 	 */
-	public Vector(float x, float y, float z) {
-		super(x, y, z);
-	}
-
-	/**
-	 * Array constructor.
-	 * @param array Vector as an array
-	 */
-	public Vector(float[] array) {
-		super(array);
-	}
-
-	/**
-	 * Copy constructor.
-	 * @param tuple Tuple
-	 */
-	public Vector(Tuple tuple) {
-		super(tuple);
+	public static Vector of(float[] array) {
+		if(array.length != 3) throw new IllegalArgumentException("Invalid array length: " + array.length);
+		final float x = array[0];
+		final float y = array[1];
+		final float z = array[2];
+		return new Vector(x, y, z);
 	}
 
 	/**
@@ -63,6 +52,13 @@ public final class Vector extends Tuple {
 	 */
 	public float magnitude() {
 		return (x * x) + (y * y) + (z * z);
+	}
+
+	/**
+	 * @return This vector as a point relative to the origin
+	 */
+	public Point toPoint() {
+		return new Point(x, y, z);
 	}
 
 	/**
@@ -102,6 +98,16 @@ public final class Vector extends Tuple {
 			final float f = 1f / MathsUtil.sqrt(len);
 			return scale(f);
 		}
+	}
+
+	/**
+	 * Calculates the dot (or scalar) product of this and the given vector.
+	 * @param vec Vector
+	 * @return Dot product
+	 */
+	public final float dot(Vector vec) {
+		// TODO - |v| * |u| * cos(angle)
+		return x * vec.x + y * vec.y + z * vec.z;
 	}
 
 	/**
@@ -154,5 +160,19 @@ public final class Vector extends Tuple {
 	public Vector reflect(Vector normal) {
 		final float f = this.dot(normal) * -2f;
 		return normal.scale(f).add(this);
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		buffer.putFloat(x).putFloat(y).putFloat(z);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj instanceof Vector that) &&
+				MathsUtil.isEqual(this.x, that.x) &&
+				MathsUtil.isEqual(this.y, that.y) &&
+				MathsUtil.isEqual(this.z, that.z);
 	}
 }

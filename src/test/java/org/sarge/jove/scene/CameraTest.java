@@ -39,7 +39,7 @@ class CameraTest {
 		final Vector vec = new Vector(1, 2, 3);
 		cam.move(vec);
 		cam.move(vec);
-		assertEquals(new Point(vec.scale(2)), cam.position());
+		assertEquals(vec.scale(2).toPoint(), cam.position());
 	}
 
 	@Test
@@ -97,7 +97,7 @@ class CameraTest {
 
 		// Create camera translation one unit out of the screen
 		final Point pos = new Point(0, 0, 1);
-		final Matrix trans = Matrix.translation(new Vector(pos).invert());
+		final Matrix trans = Matrix.translation(pos.toVector().invert());
 
 		// Init camera and check matrix
 		cam.move(pos);

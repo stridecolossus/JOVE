@@ -22,7 +22,7 @@ public final class Quaternion implements Transform {
 		final float half = rot.angle() * MathsUtil.HALF;
 		final float sin = MathsUtil.sin(half);
 		final Vector axis = rot.axis();
-		return new Quaternion(MathsUtil.cos(half), axis.x * sin, axis.y * sin, axis.z * sin);
+		return new Quaternion(MathsUtil.cos(half), axis.x() * sin, axis.y() * sin, axis.z() * sin);
 	}
 
 	public final float w, x, y, z;
@@ -101,7 +101,7 @@ public final class Quaternion implements Transform {
 	 * @return Rotated vector
 	 */
 	public Vector rotate(Vector vec) {
-		final Quaternion q = new Quaternion(0, vec.x, vec.y, vec.z);
+		final Quaternion q = new Quaternion(0, vec.x(), vec.y(), vec.z());
 		final Quaternion result = this.multiply(q).multiply(this.conjugate());
 		return new Vector(result.x, result.y, result.z);
 	}

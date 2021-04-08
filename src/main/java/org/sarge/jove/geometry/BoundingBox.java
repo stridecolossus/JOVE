@@ -36,9 +36,9 @@ public final class BoundingBox implements BoundingVolume {
 
 	@Override
 	public boolean contains(Point pt) {
-		if(!contains(pt.x, min.x, max.x)) return false;
-		if(!contains(pt.y, min.y, max.y)) return false;
-		if(!contains(pt.z, min.z, max.z)) return false;
+		if(!contains(pt.x(), min.x(), max.x())) return false;
+		if(!contains(pt.y(), min.y(), max.y())) return false;
+		if(!contains(pt.z(), min.z(), max.z())) return false;
 		return true;
 	}
 

@@ -72,7 +72,8 @@ public class CubeBuilder {
 			for(int corner : TRIANGLES) {
 				// Lookup cube vertex for this triangle
 				final int index = face[corner];
-				final Point pos = VERTICES[index].scale(size);
+				final Point pt = VERTICES[index];
+				final Point pos = scale(pt); // VERTICES[index].scale(size);
 
 				// Lookup texture coordinate for this corner
 				final Coordinate2D tc = Quad.COORDINATES.get(corner);
@@ -88,5 +89,9 @@ public class CubeBuilder {
 			}
 		}
 		return builder.build();
+	}
+
+	private Point scale(Point v) {
+		return new Point(v.x() * size, v.y() * size, v.z() * size);
 	}
 }

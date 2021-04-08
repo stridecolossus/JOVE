@@ -16,7 +16,7 @@ public class PlaneTest {
 	@Test
 	public void constructor() {
 		assertEquals(Vector.X_AXIS, plane.normal());
-		assertEquals(3, plane.distance(), 0.0001f);
+		assertEquals(3, plane.distance());
 	}
 
 	@Test

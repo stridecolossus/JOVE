@@ -166,7 +166,7 @@ public class Camera {
 		final Vector y = dir.cross(right).normalize();
 
 		// Calculate translation component
-		final Matrix trans = Matrix.translation(new Vector(pos).invert());
+		final Matrix trans = Matrix.translation(pos.toVector().invert());
 
 		// Build rotation matrix
 		final Matrix rot = new Matrix.Builder()

@@ -38,7 +38,7 @@ public record Extents(Point min, Point max) {
 	 */
 	public float size() {
 		final Vector vec = Vector.between(min, max);
-		return Float.max(vec.x, Float.max(vec.y, vec.z));
+		return Float.max(vec.x(), Float.max(vec.y(), vec.z()));
 	}
 
 	/**
@@ -85,10 +85,9 @@ public record Extents(Point min, Point max) {
 		 * @param pt Point to add
 		 */
 		public Builder add(Point pt) {
-			final float[] array = pt.toArray();
-			for(int n = 0; n < 3; ++n) {
-				update(array[n], n);
-			}
+			update(pt.x(), 0);
+			update(pt.y(), 1);
+			update(pt.z(), 2);
 			return this;
 		}
 
@@ -114,7 +113,7 @@ public record Extents(Point min, Point max) {
 		 * @see #add(Point)
 		 */
 		public Extents build() {
-			return new Extents(new Point(min), new Point(max));
+			return new Extents(Point.of(min), Point.of(max));
 		}
 	}
 }

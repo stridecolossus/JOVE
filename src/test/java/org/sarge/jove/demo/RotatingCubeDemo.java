@@ -15,7 +15,6 @@ import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.CubeBuilder;
 import org.sarge.jove.model.Model;
@@ -297,7 +296,7 @@ public class RotatingCubeDemo {
 
 		final Matrix trans = new Matrix.Builder()
 				.identity()
-				.column(3, new Point(0, 0, -3.5f))
+				.column(3, new Vector(0, 0, -3.5f))
 				.build();
 
 		final Matrix view = pos.multiply(trans);

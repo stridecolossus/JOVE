@@ -31,7 +31,7 @@ public record Plane(Vector normal, float distance) {
 		final Vector u = Vector.between(a, b);
 		final Vector v = Vector.between(b, c);
 		final Vector normal = u.cross(v).normalize();
-		final float dist = -a.dot(normal);
+		final float dist = -a.toVector().dot(normal);
 		return new Plane(normal, dist);
 	}
 
@@ -42,7 +42,7 @@ public record Plane(Vector normal, float distance) {
 	 * @return Plane
 	 */
 	public static Plane of(Vector normal, Point pt) {
-		return new Plane(normal, -pt.dot(normal));
+		return new Plane(normal, -pt.toVector().dot(normal));
 	}
 
 	/**
@@ -60,7 +60,7 @@ public record Plane(Vector normal, float distance) {
 	 * @return Distance to the given point
 	 */
 	public float distanceTo(Point pt) {
-		return normal.dot(pt) - distance;
+		return normal.dot(pt.toVector()) - distance;
 	}
 
 	/**

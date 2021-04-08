@@ -15,8 +15,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.util.Check;
@@ -59,9 +59,9 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v", new ArrayParser<>(Point.SIZE, Point::new, ObjectModel::vertices));
+		add("v", new ArrayParser<>(Point.SIZE, Point::of, ObjectModel::vertices));
 		add("vt", new ArrayParser<>(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coordinates));
-		add("vn", new ArrayParser<>(Vector.SIZE, Vector::new, ObjectModel::normals));
+		add("vn", new ArrayParser<>(Vector.SIZE, Vector::of, ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

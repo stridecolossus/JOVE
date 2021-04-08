@@ -12,9 +12,9 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
-					<source>14</source>
-					<target>14</target>
-					<release>14</release>
+					<source>15</source>
+					<target>15</target>
+					<release>15</release>
 					<compilerArgs>--enable-preview</compilerArgs>
 					<compilerArgs>-XX:+ShowCodeDetailsInExceptionMessages</compilerArgs>
 				</configuration>

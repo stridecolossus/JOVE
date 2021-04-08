@@ -32,8 +32,8 @@ public record SphereVolume(Point centre, float radius) implements BoundingVolume
 
 	@Override
 	public Extents extents() {
-		final Point min = new Point(-radius, -radius, -radius);
-		final Point max = new Point(radius, radius, radius);
+		final Vector min = new Vector(-radius, -radius, -radius);
+		final Vector max = new Vector(radius, radius, radius);
 		return new Extents(centre.add(min), centre.add(max));
 	}
 
@@ -58,10 +58,10 @@ public record SphereVolume(Point centre, float radius) implements BoundingVolume
 			else
 			if(dist < 0) {
 				// Ray origin is within the sphere
-				final Point pc = new Point(ray.direction().project(vec));
+				final Point pc = ray.direction().project(vec).toPoint();
 				final float d = MathsUtil.sqrt(dist - Vector.between(pc, ray.origin()).magnitude());
-				final Tuple result = ray.origin().add(ray.direction().scale(d));
-				return Optional.of(new Point(result));
+				final Point result = ray.origin().add(ray.direction().scale(d));
+				return Optional.of(result);
 			}
 			else {
 				// Ray origin touching sphere
@@ -70,8 +70,8 @@ public record SphereVolume(Point centre, float radius) implements BoundingVolume
 		}
 		else {
 			// Determine intersection point
-			final Tuple pt = ray.direction().project(vec);
-			final float dist = centre.distance(pt);
+			final Point pos = ray.direction().project(vec).toPoint();
+			final float dist = centre.distance(pos);
 			final float r = radius * radius;
 			if(dist > r) {
 				// Ray does not intersect
@@ -92,7 +92,7 @@ public record SphereVolume(Point centre, float radius) implements BoundingVolume
 				}
 				else {
 					// Ray touches sphere
-					return Optional.of(new Point(pt));
+					return Optional.of(pos);
 				}
 			}
 		}

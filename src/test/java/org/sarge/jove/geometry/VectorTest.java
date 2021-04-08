@@ -1,42 +1,60 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.MathsUtil;
 
+@SuppressWarnings("static-method")
 public class VectorTest {
 	private Vector vec;
 
 	@BeforeEach
-	public void before() {
-		vec = new Vector(3, 4, 5);
+	void before() {
+		vec = new Vector(1, 2, 3);
 	}
 
 	@Test
-	public void constructor() {
-		assertEquals(3, vec.x, 0.0001f);
-		assertEquals(4, vec.y, 0.0001f);
-		assertEquals(5, vec.z, 0.0001f);
+	void constructor() {
+		assertEquals(1, vec.x());
+		assertEquals(2, vec.y());
+		assertEquals(3, vec.z());
 	}
 
 	@Test
-	public void axes() {
+	void axes() {
 		assertEquals(new Vector(1, 0, 0), Vector.X_AXIS);
 		assertEquals(new Vector(0, 1, 0), Vector.Y_AXIS);
 		assertEquals(new Vector(0, 0, 1), Vector.Z_AXIS);
 	}
 
 	@Test
-	public void between() {
-		final Point start = new Point(1, 2, 3);
-		final Point end = new Point(4, 5, 6);
-		assertEquals(new Vector(3, 3, 3), Vector.between(start, end));
+	void array() {
+		assertEquals(vec, Vector.of(new float[]{1, 2, 3}));
 	}
 
 	@Test
-	public void angle() {
+	void arrayInvalidLength() {
+		assertThrows(IllegalArgumentException.class, () -> Vector.of(new float[]{1, 2}));
+		assertThrows(IllegalArgumentException.class, () -> Vector.of(new float[]{1, 2, 3, 4}));
+	}
+
+	@Test
+	void between() {
+		assertEquals(vec, Vector.between(Point.ORIGIN, vec.toPoint()));
+	}
+
+	@Test
+	void toPoint() {
+		assertEquals(new Point(1, 2, 3), vec.toPoint());
+	}
+
+	@Test
+	void angle() {
 		assertEquals(0f, Vector.X_AXIS.angle(Vector.X_AXIS));
 		// TODO
 //		assertEquals(1f, Vector.X_AXIS.angle(Vector.Y_AXIS));
@@ -44,35 +62,58 @@ public class VectorTest {
 	}
 
 	@Test
-	public void magnitude() {
-		assertEquals(50, vec.magnitude(), 0.0001f);
+	void magnitude() {
+		assertEquals(1 * 1 + 2 * 2 + 3 * 3, vec.magnitude());
 	}
 
 	@Test
-	public void invert() {
-		assertEquals(new Vector(-3, -4, -5), vec.invert());
+	void invert() {
+		assertEquals(new Vector(-1, -2, -3), vec.invert());
 	}
 
 	@Test
-	public void normalize() {
-		final float scale = 1f / MathsUtil.sqrt(50);
-		assertEquals(new Vector(3 * scale, 4 * scale, 5 *scale), vec.normalize());
+	void normalize() {
+		final float scale = 1 / (float) Math.sqrt(vec.magnitude());
+		assertEquals(vec.scale(scale), vec.normalize());
 	}
 
 	@Test
-	public void normalizeSelf() {
+	void normalizeSelf() {
 		final Vector result = vec.normalize();
-		assertEquals(result, result.normalize());
+		assertSame(result, result.normalize());
 	}
 
 	@Test
-	public void cross() {
+	void cross() {
 		// TODO
 	}
 
 	@Test
-	public void project() {
-		final Tuple result = Vector.X_AXIS.project(vec);
-		assertEquals(new Vector(3, 0, 0), result);
+	void project() {
+		// TODO
+		//assertEquals(new Vector(3, 0, 0), Vector.X_AXIS.project(vec));
+	}
+
+	@Test
+	void buffer() {
+		final ByteBuffer buffer = ByteBuffer.allocate(3 * Float.BYTES);
+		vec.buffer(buffer);
+		buffer.flip();
+		assertEquals(1, buffer.getFloat());
+		assertEquals(2, buffer.getFloat());
+		assertEquals(3, buffer.getFloat());
+	}
+
+	@Test
+	void length() {
+		assertEquals(3 * Float.BYTES, vec.length());
+	}
+
+	@Test
+	public void equals() {
+		assertEquals(true, vec.equals(vec));
+		assertEquals(true, vec.equals(new Vector(1, 2, 3)));
+		assertEquals(false, vec.equals(null));
+		assertEquals(false, vec.equals(new Vector(4, 5, 6)));
 	}
 }

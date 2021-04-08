@@ -60,13 +60,17 @@ public final class Matrix implements Transform, Bufferable {
 	 * @param scale Scaling tuple
 	 * @return Scaling matrix
 	 */
-	public static Matrix scale(Tuple scale) {
+	public static Matrix scale(float x, float y, float z) {
 		return new Builder()
 			.identity()
-			.set(0, 0, scale.x)
-			.set(1, 1, scale.y)
-			.set(2, 2, scale.z)
+			.set(0, 0, x)
+			.set(1, 1, y)
+			.set(2, 2, z)
 			.build();
+	}
+
+	public static Matrix scale(float scale) {
+		return scale(scale, scale, scale);
 	}
 
 	/**
@@ -242,11 +246,12 @@ public final class Matrix implements Transform, Bufferable {
 	public Point multiply(Point pt) {
 		// Convert to homogeneous array
 		if(order != DEFAULT_ORDER) throw new IllegalArgumentException("Can only multiply a vector by a matrix with order of 4");
-		final float[] array = new float[4];
-		array[0] = pt.x;
-		array[1] = pt.y;
-		array[2] = pt.z;
-		array[3] = 1;
+		final float[] array = {pt.x(), pt.y(), pt.z(), 1};
+//		final float[] array = new float[4];
+//		array[0] = pt.x;
+//		array[1] = pt.y;
+//		array[2] = pt.z;
+//		array[3] = 1;
 
 		// Multiply
 		final float[] result = new float[4];
@@ -337,28 +342,28 @@ public final class Matrix implements Transform, Bufferable {
 		}
 
 		/**
-		 * Sets a matrix row to the given tuple.
+		 * Sets a matrix row to the given vector.
 		 * @param row		Row index
-		 * @param tuple 	Tuple
+		 * @param vec 		Vector
 		 * @throws ArrayIndexOutOfBoundsException if the row is out-of-bounds
 		 */
-		public Builder row(int row, Tuple tuple) {
-			set(row, 0, tuple.x);
-			set(row, 1, tuple.y);
-			set(row, 2, tuple.z);
+		public Builder row(int row, Vector vec) {
+			set(row, 0, vec.x());
+			set(row, 1, vec.y());
+			set(row, 2, vec.z());
 			return this;
 		}
 
 		/**
-		 * Sets a matrix column to the given tuple.
+		 * Sets a matrix column to the given vector.
 		 * @param col 		Column index
-		 * @param tuple		Tuple
+		 * @param vec		Vector
 		 * @throws ArrayIndexOutOfBoundsException if the column is out-of-bounds
 		 */
-		public Builder column(int col, Tuple tuple) {
-			set(0, col, tuple.x);
-			set(1, col, tuple.y);
-			set(2, col, tuple.z);
+		public Builder column(int col, Vector vec) {
+			set(0, col, vec.x());
+			set(1, col, vec.y());
+			set(2, col, vec.z());
 			return this;
 		}
 

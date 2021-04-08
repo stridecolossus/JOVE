@@ -41,6 +41,6 @@ public class ParticleTest {
 	public void update() {
 		particle.add(vec);
 		particle.update();
-		assertEquals(new Point(vec), particle.position());
+		assertEquals(vec.toPoint(), particle.position());
 	}
 }

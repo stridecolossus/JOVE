@@ -1,57 +1,51 @@
 package org.sarge.jove.geometry;
 
+import java.nio.ByteBuffer;
+
+import org.sarge.jove.util.MathsUtil;
+
 /**
  * Point in 3D space.
  * @author Sarge
  */
-public final class Point extends Tuple {
+public record Point(float x, float y, float z) implements Tuple {
 	/**
 	 * Origin point.
 	 */
 	public static final Point ORIGIN = new Point(0, 0, 0);
 
 	/**
-	 * Constructor.
-	 * @param x
-	 * @param y
-	 * @param z
-	 */
-	public Point(float x, float y, float z) {
-		super(x, y, z);
-	}
-
-	/**
-	 * Array constructor.
+	 * Creates a point from the given array.
 	 * @param array Point array
-	 */
-	public Point(float[] array) {
-		super(array);
-	}
-
-	/**
-	 * Copy constructor.
-	 * @param t Tuple to copy
-	 */
-	public Point(Tuple t) {
-		super(t);
-	}
-
-	/**
-	 * Adds the given tuple to this point.
-	 * @param t Tuple to add
 	 * @return New point
 	 */
-	public Point add(Tuple t) {
-		return new Point(x + t.x, y + t.y, z + t.z);
+	public static Point of(float[] array) {
+		if(array.length != 3) throw new IllegalArgumentException("Invalid array length: " + array.length);
+		final float x = array[0];
+		final float y = array[1];
+		final float z = array[2];
+		return new Point(x, y, z);
 	}
 
 	/**
-	 * Scales this point.
-	 * @param scale Scaling factor
-	 * @return Scaled point
+	 * @return This point as a vector relative to the origin
 	 */
-	public Point scale(float scale) {
-		return new Point(x * scale, y * scale, z * scale);
+	public Vector toVector() {
+		return new Vector(x, y, z);
+	}
+
+	/**
+	 * Moves this point by the given vector.
+	 * @param vec Vector
+	 * @return Moved point
+	 */
+	public Point add(Vector vec) {
+		return new Point(x + vec.x(), y + vec.y(), z + vec.z());
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		buffer.putFloat(x).putFloat(y).putFloat(z);
 	}
 
 	/**
@@ -59,10 +53,19 @@ public final class Point extends Tuple {
 	 * @param point Destination point
 	 * @return Distance squared
 	 */
-	public float distance(Tuple point) {
+	public float distance(Point point) {
 		final float dx = point.x - x;
 		final float dy = point.y - y;
 		final float dz = point.z - z;
 		return dx * dx + dy * dy + dz * dz;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj instanceof Point that) &&
+				MathsUtil.isEqual(this.x, that.x) &&
+				MathsUtil.isEqual(this.y, that.y) &&
+				MathsUtil.isEqual(this.z, that.z);
 	}
 }

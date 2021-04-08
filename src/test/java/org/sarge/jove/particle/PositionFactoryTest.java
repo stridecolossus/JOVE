@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
 
+@SuppressWarnings("static-method")
 public class PositionFactoryTest {
 	@Test
 	public void origin() {
@@ -36,6 +36,6 @@ public class PositionFactoryTest {
 	public void spherical() {
 		final Point pos = PositionFactory.sphere(3, new Random()).position();
 		assertNotNull(pos);
-		assertEquals(3 * 3, new Vector(pos).magnitude(), 0.0001f);
+		assertEquals(3 * 3, pos.toVector().magnitude(), 0.0001f);
 	}
 }
