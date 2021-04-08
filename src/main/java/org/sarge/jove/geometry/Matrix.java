@@ -30,12 +30,12 @@ public final class Matrix implements Transform, Bufferable {
 	/**
 	 * Default order size for a matrix.
 	 */
-	public static final int DEFAULT_ORDER = 4;
+	private static final int DEFAULT_ORDER = 4;
 
 	/**
-	 * Default identity matrix.
+	 * Convenience 4x4 identity matrix.
 	 */
-	public static final Matrix IDENTITY = identity(DEFAULT_ORDER);
+	public static final Matrix IDENTITY = new Matrix.Builder(DEFAULT_ORDER).identity().build();
 
 	/**
 	 * Creates an identity matrix.

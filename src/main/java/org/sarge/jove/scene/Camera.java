@@ -8,7 +8,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
 /**
- * A <i>camera</i> represents a viewers position and orientation.
+ * A <i>camera</i> represents the viewers position and orientation.
  * @author Sarge
  */
 public class Camera {
@@ -18,11 +18,11 @@ public class Camera {
 
 	// Axes
 	private Vector up = Vector.Y_AXIS;
-	private transient Vector right;
+	private Vector right;
 
 	// Matrix
-	private transient Matrix matrix;
-	private transient boolean dirty;
+	private Matrix matrix;
+	private boolean dirty;
 
 	// https://learnopengl.com/Getting-started/Camera
 

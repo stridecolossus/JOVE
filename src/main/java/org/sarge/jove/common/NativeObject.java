@@ -12,7 +12,6 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
 
-
 /**
  * A <i>native object</i> is a resource managed by a native library and referenced by a JNA pointer.
  * @author Sarge

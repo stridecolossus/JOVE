@@ -11,7 +11,7 @@ import org.sarge.lib.util.Percentile;
 /**
  * A <i>clear value</i> specifies the clear operation for an attachment.
  */
-public interface ClearValue {
+public interface ClearValue {		// TODO - seal
 	/**
 	 * Populates the given clear value descriptor.
 	 * @param value Descriptor

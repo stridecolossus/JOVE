@@ -68,7 +68,6 @@ class MatrixTest {
 	class IdentityTests {
 		@Test
 		void constructor() {
-			assertEquals(4, Matrix.DEFAULT_ORDER);
 			assertEquals(4, Matrix.IDENTITY.order());
 			assertEquals(4 * 4 * Float.BYTES, Matrix.IDENTITY.length());
 		}

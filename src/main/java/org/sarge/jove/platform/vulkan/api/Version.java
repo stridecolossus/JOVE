@@ -7,8 +7,6 @@ import static org.sarge.lib.util.Check.zeroOrMore;
  * Vulkan version.
  */
 public record Version(int major, int minor, int patch) implements Comparable<Version> {
-	private static final char DELIMITER = '.';
-
 	/**
 	 * Constructor.
 	 * @param major
@@ -36,12 +34,6 @@ public record Version(int major, int minor, int patch) implements Comparable<Ver
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(major);
-		sb.append(DELIMITER);
-		sb.append(minor);
-		sb.append(DELIMITER);
-		sb.append(patch);
-		return sb.toString();
+		return String.format("%d.%d.%d", major, minor, patch);
 	}
 }

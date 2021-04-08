@@ -27,13 +27,13 @@ import com.sun.jna.Structure;
  * SomeStructure[] array = data.stream().collect(new StructureCollector<>(SomeStructure::new, populate));
  * </pre>
  * The {@code toArray()} helper can be used to transform a collection where the target is the <i>first</i> element of the array:
+ * <p>
  * <pre>
  * SomeStructure first = StructureCollector.toArray(data, SomeStructure::new, populate);
  * </pre>
  * <p>
  * @param <T> Data type
  * @param <R> Resultant JNA structure type
- * <p>
  * @author Sarge
  */
 public class StructureCollector <T, R extends Structure> implements Collector<T, List<T>, R[]> {

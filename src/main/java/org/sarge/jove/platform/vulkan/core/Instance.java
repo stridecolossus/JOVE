@@ -340,12 +340,13 @@ public class Instance extends AbstractTransientNativeObject {
 	 * <p>
 	 * Example usage that attaches a handler that outputs validation errors to the error console:
 	 * <pre>
-	 *  instance
-	 *  	.handler()
-	 *  	.severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-	 *  	.type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-	 *  	.handler(System.err::println)
-	 *  	.attach();
+	 * instance
+	 *     .handler()
+	 *     .severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	 *     .type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+	 *     .handler(System.err::println)
+	 *     .attach();
+	 * </pre>
 	 */
 	public static class Handler {
 		/**

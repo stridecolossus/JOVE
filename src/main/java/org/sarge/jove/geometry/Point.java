@@ -18,6 +18,7 @@ public record Point(float x, float y, float z) implements Tuple {
 	 * Creates a point from the given array.
 	 * @param array Point array
 	 * @return New point
+	 * @throws IllegalArgumentException if the array is not comprised of three elements
 	 */
 	public static Point of(float[] array) {
 		if(array.length != 3) throw new IllegalArgumentException("Invalid array length: " + array.length);

@@ -14,12 +14,12 @@ import com.sun.jna.TypeConverter;
  */
 public final class VulkanBoolean {
 	/**
-	 * Boolean <tt>true</tt>.
+	 * Boolean {@code true}.
 	 */
 	public static final VulkanBoolean TRUE = new VulkanBoolean(true);
 
 	/**
-	 * Boolean <tt>false</tt>.
+	 * Boolean {@code false}.
 	 */
 	public static final VulkanBoolean FALSE = new VulkanBoolean(false);
 

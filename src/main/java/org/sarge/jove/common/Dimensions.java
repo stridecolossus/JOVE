@@ -42,7 +42,7 @@ public record Dimensions(int width, int height) {
 	}
 
 	/**
-	 * Tests whether this dimensions is larger than the given dimensions.
+	 * Tests whether these dimensions are larger than the given dimensions.
 	 * @param dim Dimensions
 	 * @return Whether exceeded
 	 */

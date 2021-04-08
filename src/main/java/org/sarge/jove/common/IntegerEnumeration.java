@@ -107,13 +107,14 @@ public interface IntegerEnumeration {
 	static <E extends IntegerEnumeration> int mask(Collection<E> values) {
 		return values.stream().distinct().mapToInt(IntegerEnumeration::value).reduce(0, MASK);
 	}
+	// TODO - set? therefore can assume distinct
 
 	/**
 	 * Builds an integer mask from the given enumeration constants.
 	 * @param values Enumeration constants
 	 * @return Mask
 	 */
-	@SuppressWarnings("unchecked")
+	@SafeVarargs
 	static <E extends IntegerEnumeration> int mask(E... values) {
 		return mask(Arrays.asList(values));
 	}

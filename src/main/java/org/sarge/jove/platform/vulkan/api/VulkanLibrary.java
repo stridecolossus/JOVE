@@ -61,6 +61,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
 		return mapper;
 	}
+	// TODO - or expose and allow public mutable? i.e. less inter-dependencies?
 
 	/**
 	 * Instantiates the Vulkan API.
@@ -88,7 +89,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 
 	/**
 	 * Base-class Vulkan JNA structure.
-	 * Note that this class must be defined as a member of the associated API in order for the type mapper to work correctly.
+	 * Note that this class <b>must</b> be defined as a member of the associated API in order for the type mapper to work correctly.
 	 */
 	abstract class VulkanStructure extends Structure {
 		protected VulkanStructure() {

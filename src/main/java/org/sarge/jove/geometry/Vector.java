@@ -38,6 +38,7 @@ public record Vector(float x, float y, float z) implements Tuple {
 	 * Creates a vector from the given array.
 	 * @param array Vector array
 	 * @return New vector
+	 * @throws IllegalArgumentException if the array is not comprised of three elements
 	 */
 	public static Vector of(float[] array) {
 		if(array.length != 3) throw new IllegalArgumentException("Invalid array length: " + array.length);

@@ -11,31 +11,17 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
  * @author Sarge
  */
 public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipelineDepthStencilStateCreateInfo> {
-	private final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
-
-	/**
-	 * Constructor.
-	 */
-	public DepthStencilStageBuilder() {
-		enable(false);
-		write(true);
-		compare(VkCompareOp.VK_COMPARE_OP_LESS);
-
-		// TODO - requires feature
-		info.depthBoundsTestEnable = VulkanBoolean.FALSE;
-		info.minDepthBounds = 0;
-		info.maxDepthBounds = 1;
-
-		// TODO - stencil
-		info.stencilTestEnable = VulkanBoolean.FALSE;
-	}
+	private boolean enable;
+	private boolean write = true;
+	private boolean bounds;
+	private VkCompareOp op = VkCompareOp.VK_COMPARE_OP_LESS;
 
 	/**
 	 * Sets whether depth-testing is enabled (default is {@code false}).
-	 * @param enabled Whether depth-test is enabled
+	 * @param enable Whether depth-test is enabled
 	 */
-	public DepthStencilStageBuilder enable(boolean enabled) {
-		info.depthTestEnable = VulkanBoolean.of(enabled);
+	public DepthStencilStageBuilder enable(boolean enable) {
+		this.enable = enable;
 		return this;
 	}
 
@@ -44,7 +30,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 	 * @param write Whether to write to the depth buffer
 	 */
 	public DepthStencilStageBuilder write(boolean write) {
-		info.depthWriteEnable = VulkanBoolean.of(write);
+		this.write = write;
 		return this;
 	}
 
@@ -53,12 +39,21 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 	 * @param op Depth-test function
 	 */
 	public DepthStencilStageBuilder compare(VkCompareOp op) {
-		info.depthCompareOp = notNull(op);
+		this.op = notNull(op);
 		return this;
 	}
 
 	@Override
 	protected VkPipelineDepthStencilStateCreateInfo result() {
+		final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
+		info.depthTestEnable = VulkanBoolean.of(enable);
+		info.depthWriteEnable = VulkanBoolean.of(write);
+		info.depthCompareOp = op;
+		// TODO...
+		info.depthBoundsTestEnable = VulkanBoolean.of(bounds);
+		info.minDepthBounds = 0;
+		info.maxDepthBounds = 1;
+		info.stencilTestEnable = VulkanBoolean.FALSE;
 		return info;
 	}
 }

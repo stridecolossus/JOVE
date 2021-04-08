@@ -6,17 +6,6 @@ package org.sarge.jove.common;
  */
 public record Rectangle(int x, int y, int width, int height) {
 	/**
-	 * Canonical constructor.
-	 * @param x
-	 * @param y
-	 * @param width
-	 * @param height
-	 */
-	public Rectangle {
-		// Empty
-	}
-
-	/**
 	 * Constructor for a rectangle at the origin.
 	 * @param size Rectangle size
 	 */

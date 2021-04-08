@@ -12,8 +12,8 @@ import org.sarge.lib.util.Check;
 /**
  * Builder for a Vulkan format.
  * <p>
- * Finding a format within the {@link VkFormat} enumeration can be difficult given the large number of available formats and the naming strategy.
- * The purpose of this builder is to provide a programmatic means of specifying common data/image formats.
+ * Finding a Vulkan format within the {@link VkFormat} enumeration can be difficult given the large number of available formats.
+ * However the naming convention is very consistent and therefore a format can often be more easily specified programatically.
  * <p>
  * Example:
  * <pre>
