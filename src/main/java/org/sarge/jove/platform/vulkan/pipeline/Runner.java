@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,7 +19,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.core.Work;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>frame runner</i> encapsulates a render loop.

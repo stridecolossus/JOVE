@@ -1,18 +1,18 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.Percentile;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
+import org.sarge.lib.util.Percentile;
 
 /**
  * Builder for the viewport stage descriptor.

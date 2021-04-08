@@ -1,6 +1,6 @@
 package org.sarge.jove.control;
 
-import static org.sarge.jove.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notEmpty;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;

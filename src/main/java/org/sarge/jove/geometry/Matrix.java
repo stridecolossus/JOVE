@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.jove.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;

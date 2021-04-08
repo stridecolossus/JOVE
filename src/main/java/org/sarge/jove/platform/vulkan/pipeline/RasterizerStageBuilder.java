@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import org.sarge.jove.platform.vulkan.VkCullModeFlag;
 import org.sarge.jove.platform.vulkan.VkFrontFace;

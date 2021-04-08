@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * RGBA colour.

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,7 +19,7 @@ import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>pipeline barrier</i> is used to synchronize access to resources within a pipeline or to perform image layout transitions.

@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.obj;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.List;
 import java.util.function.Function;
 
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * An <i>array parser</i> parses an OBJ vertex component that is instantiated from a floating-point array (e.g. a vertex, normal or texture coordinate).

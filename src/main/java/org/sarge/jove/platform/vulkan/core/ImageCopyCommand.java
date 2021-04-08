@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 
@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.VkOffset3D;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * An <i>image copy command</i> is used to copy and image to/from a vertex buffer.

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -8,7 +8,7 @@ import java.util.WeakHashMap;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

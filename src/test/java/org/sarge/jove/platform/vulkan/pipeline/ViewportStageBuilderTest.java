@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Percentile;
 import org.sarge.jove.common.Rectangle;
+import org.sarge.lib.util.Percentile;
 
 public class ViewportStageBuilderTest {
 	private ViewportStageBuilder builder;

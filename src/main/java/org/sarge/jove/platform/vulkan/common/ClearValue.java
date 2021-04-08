@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Percentile;
 import org.sarge.jove.platform.vulkan.VkClearValue;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Percentile;
 
 /**
  * A <i>clear value</i> specifies the clear operation for an attachment.

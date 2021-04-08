@@ -2,8 +2,8 @@ package org.sarge.jove.geometry;
 
 import java.util.Optional;
 
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * Bounding volume defined by a simple sphere.

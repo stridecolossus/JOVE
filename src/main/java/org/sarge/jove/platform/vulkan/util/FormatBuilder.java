@@ -1,13 +1,13 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.StringJoiner;
 
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * Builder for a Vulkan format.

@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
-import org.sarge.jove.common.Percentile;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
@@ -26,8 +25,9 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
-import org.sarge.jove.util.Check;
-import org.sarge.jove.util.LazySupplier;
+import org.sarge.lib.util.Check;
+import org.sarge.lib.util.LazySupplier;
+import org.sarge.lib.util.Percentile;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;

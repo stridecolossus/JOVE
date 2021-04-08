@@ -1,7 +1,7 @@
 package org.sarge.jove.common;
 
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * Viewport or window dimensions.

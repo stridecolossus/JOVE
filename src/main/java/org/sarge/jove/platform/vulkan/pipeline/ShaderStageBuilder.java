@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.Check.notEmpty;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashMap;
 import java.util.Map;

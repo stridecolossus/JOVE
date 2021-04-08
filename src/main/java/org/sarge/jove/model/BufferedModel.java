@@ -2,8 +2,8 @@ package org.sarge.jove.model;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

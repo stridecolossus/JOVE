@@ -8,11 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Percentile;
 import org.sarge.jove.platform.vulkan.VkClearValue;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
+import org.sarge.lib.util.Percentile;
 
 public class ClearValueTest {
 	private VkClearValue value;

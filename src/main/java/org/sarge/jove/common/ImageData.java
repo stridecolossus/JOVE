@@ -1,7 +1,7 @@
 package org.sarge.jove.common;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -15,8 +15,8 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.ResourceLoader;
+import org.sarge.lib.util.Check;
 
 /**
  * Wrapper for general image data.

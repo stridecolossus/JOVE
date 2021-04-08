@@ -1,7 +1,7 @@
 package org.sarge.jove.model;
 
-import static org.sarge.jove.util.Check.notEmpty;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -26,7 +26,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Supported;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-import org.sarge.jove.util.LazySupplier;
+import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;
 

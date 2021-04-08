@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.obj;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,8 +19,8 @@ import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.ResourceLoader;
+import org.sarge.lib.util.Check;
 
 /**
  * Loader for an OBJ model.

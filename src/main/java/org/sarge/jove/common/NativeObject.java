@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.Memory;
@@ -11,6 +11,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
+
 
 /**
  * A <i>native object</i> is a resource managed by a native library and referenced by a JNA pointer.

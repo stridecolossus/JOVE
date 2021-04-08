@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import static org.sarge.jove.util.Check.oneOrMore;
-import static org.sarge.jove.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 /**
  * Vulkan version.

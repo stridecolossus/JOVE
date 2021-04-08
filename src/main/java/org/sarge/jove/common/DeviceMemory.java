@@ -1,8 +1,6 @@
 package org.sarge.jove.common;
 
-import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.oneOrMore;
-import static org.sarge.jove.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +10,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * TODO

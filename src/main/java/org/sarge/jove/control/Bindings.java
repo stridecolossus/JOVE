@@ -13,7 +13,7 @@ import org.sarge.jove.control.Action.PositionAction;
 import org.sarge.jove.control.Action.ValueAction;
 import org.sarge.jove.control.InputEvent.Source;
 import org.sarge.jove.control.InputEvent.Type;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * An <i>action bindings</i> maps input events to actions.

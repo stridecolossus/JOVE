@@ -1,16 +1,16 @@
 package org.sarge.jove.scene;
 
-import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.positive;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.positive;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Sphere;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.Interpolator;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * An <i>orbital camera controller</i>

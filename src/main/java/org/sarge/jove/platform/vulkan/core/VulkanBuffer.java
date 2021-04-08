@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.jove.util.Check.notEmpty;
-import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
@@ -18,7 +18,7 @@ import org.sarge.jove.common.NativeObject.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

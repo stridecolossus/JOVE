@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;

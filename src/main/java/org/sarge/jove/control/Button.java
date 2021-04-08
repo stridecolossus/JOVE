@@ -1,9 +1,9 @@
 package org.sarge.jove.control;
 
 import static java.util.stream.Collectors.joining;
-import static org.sarge.jove.util.Check.notEmpty;
-import static org.sarge.jove.util.Check.range;
-import static org.sarge.jove.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.range;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.Collection;
 import java.util.HashSet;

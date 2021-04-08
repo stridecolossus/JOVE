@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.common.AbstractTransientNativeObject;
+import org.sarge.jove.common.NativeObject;
 
 import com.sun.jna.Pointer;
 

@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -14,7 +14,7 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Coordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>vertex</i> is comprised of a vertex position, normal, colour and texture coordinates.

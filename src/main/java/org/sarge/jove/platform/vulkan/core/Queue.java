@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.oneOrMore;
-import static org.sarge.jove.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.Arrays;
 import java.util.List;

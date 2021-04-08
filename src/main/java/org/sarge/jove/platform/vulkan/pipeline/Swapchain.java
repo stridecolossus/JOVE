@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,7 +27,7 @@ import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;

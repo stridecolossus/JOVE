@@ -1,11 +1,12 @@
 package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.ArgumentMatcher;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;

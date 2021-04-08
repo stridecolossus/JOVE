@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.Check;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>sphere</i>

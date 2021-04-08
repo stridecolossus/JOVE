@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * Plane in 3D space.

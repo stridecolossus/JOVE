@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.common;
 
 import java.util.Set;
 
-import org.sarge.jove.util.Check;
+import org.sarge.lib.util.Check;
 
 /**
  * Descriptor for a <i>validation layer</i>.

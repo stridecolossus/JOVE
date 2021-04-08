@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.awt.MouseInfo;
 import java.util.Arrays;

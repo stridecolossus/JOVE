@@ -1,7 +1,7 @@
 package org.sarge.jove.control;
 
-import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Player.Playable;

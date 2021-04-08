@@ -4,8 +4,8 @@ import static java.util.stream.Collectors.joining;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.jove.util.Check.notEmpty;
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,8 +28,8 @@ import org.sarge.jove.platform.vulkan.api.Version;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.util.Check;
-import org.sarge.jove.util.LazySupplier;
+import org.sarge.lib.util.Check;
+import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Function;
@@ -301,7 +301,7 @@ public class Instance extends AbstractTransientNativeObject {
 		 * @param data			Message data
 		 */
 		public Message {
-			Check.notEmpty(severity);
+			Check.notNull(severity);
 			Check.notEmpty(types);
 			Check.notNull(data);
 		}

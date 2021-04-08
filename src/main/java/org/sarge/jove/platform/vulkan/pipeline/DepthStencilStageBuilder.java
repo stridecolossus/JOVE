@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.Check.notNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.VkCompareOp;
 import org.sarge.jove.platform.vulkan.VkPipelineDepthStencilStateCreateInfo;

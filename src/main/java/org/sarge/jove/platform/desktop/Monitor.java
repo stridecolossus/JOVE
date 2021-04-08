@@ -1,15 +1,14 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.jove.util.Check.notEmpty;
-import static org.sarge.jove.util.Check.notNull;
-import static org.sarge.jove.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.common.NativeObject.Handle;
 
 /**
  * A <i>monitor</i> describes a physical monitor attached to this system.
@@ -81,6 +80,7 @@ public final class Monitor implements NativeObject {
 	/**
 	 * @return Monitor handle
 	 */
+	@Override
 	public Handle handle() {
 		return handle;
 	}
