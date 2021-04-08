@@ -11,3 +11,4 @@ src/test/resources/frag.spv
 *.model
 *.model
 src/test/resources/demo/model/chalet.model
+.classpath
