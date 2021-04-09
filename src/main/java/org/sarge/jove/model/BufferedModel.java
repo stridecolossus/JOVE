@@ -1,182 +1,58 @@
 package org.sarge.jove.model;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Optional;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.model.Model.AbstractModel;
-import org.sarge.jove.platform.vulkan.VkFrontFace;
-import org.sarge.jove.util.ResourceLoader;
 
 /**
- * Loader for a buffered model.
+ * A <i>buffered model</i> TODO
  * @author Sarge
  */
-public class BufferedModel extends AbstractModel {
-	private final ByteBuffer vertices;
-	private final Optional<ByteBuffer> index;
-	private final int count;
+public class BufferedModel implements Model {
+	private final Header header;
+	private final Bufferable vertices;
+	private final Optional<Bufferable> index;
 
 	/**
 	 * Constructor.
-	 * @param name				Model name
-	 * @param primitive			Drawing primitive
-	 * @param winding			Winding order for front-facing polygons
-	 * @param layout			Vertex layout
-	 * @param vertices			Vertex buffer
-	 * @param index				Optional index buffer
-	 * @param count				Number of vertices
+	 * @param header		Model header
+	 * @param vertices		Vertex buffer
+	 * @param index			Optional index buffer
 	 */
-	protected BufferedModel(String name, Primitive primitive, VkFrontFace winding, Vertex.Layout layout, ByteBuffer vertices, ByteBuffer index, int count) {
-		super(name, primitive, winding, layout);
+	public BufferedModel(Header header, Bufferable vertices, Bufferable index) {
+		this.header = notNull(header);
 		this.vertices = notNull(vertices);
 		this.index = Optional.ofNullable(index);
-		this.count = zeroOrMore(count);
-		validate();
 	}
 
 	@Override
-	public int count() {
-		return count;
+	public Header header() {
+		return header;
 	}
 
 	@Override
-	public ByteBuffer vertices() {
-		return vertices.rewind();
+	public boolean isIndexed() {
+		return index.isPresent();
 	}
 
 	@Override
-	public Optional<ByteBuffer> index() {
-		return index.map(ByteBuffer::rewind);
+	public Bufferable vertexBuffer() {
+		return vertices;
 	}
 
-	/**
-	 * Loader for a buffered model.
-	 */
-	public static class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Model> {
-		private static final int VERSION = 1;
-		private static final String DELIMITER = "-";
+	@Override
+	public Optional<Bufferable> indexBuffer() {
+		return index;
+	}
 
-		/**
-		 * Writes the given model to an output stream.
-		 * @param model		Model
-		 * @param out		Output stream
-		 * @throws IOException if the model cannot be written
-		 */
-		public void write(Model model, OutputStream out) throws IOException {
-			write(model, new DataOutputStream(out));
-		}
-
-		/**
-		 * Writes the given model.
-		 */
-		private static void write(Model model, DataOutputStream out) throws IOException {
-			// Write file format version
-			out.writeInt(VERSION);
-
-			// Write model properties
-			out.writeUTF(model.name());
-			out.writeUTF(model.primitive().name());
-			out.writeBoolean(model.winding() == VkFrontFace.VK_FRONT_FACE_CLOCKWISE);
-
-			// Write vertex layout
-			final String layout = model.layout().components().stream().map(Enum::name).collect(joining(DELIMITER));
-			out.writeUTF(layout);
-
-			// Write VBO
-			out.writeInt(model.count());
-			write(model.vertices(), out);
-
-			// Write index
-			final var index = model.index();
-			if(index.isPresent()) {
-				write(index.get(), out);
-			}
-			else {
-				out.writeInt(0);
-			}
-
-			// Done
-			out.flush();
-		}
-
-		/**
-		 * Writes the given byte-buffer.
-		 */
-		private static void write(ByteBuffer bb, DataOutputStream out) throws IOException {
-			final byte[] bytes = new byte[bb.limit()];
-			bb.get(bytes);
-			out.writeInt(bytes.length);
-			out.write(bytes);
-		}
-
-		@Override
-		protected DataInputStream map(InputStream in) throws IOException {
-			return new DataInputStream(in);
-		}
-
-		/**
-		 * Loads a buffered model.
-		 * @param in Input stream
-		 * @return New model
-		 * @throws IOException if the model cannot be loaded
-		 */
-		@Override
-		public Model load(DataInputStream in) throws IOException {
-			// Load and verify file format version
-			final int version = in.readInt();
-			if(version > VERSION) {
-				throw new UnsupportedOperationException(String.format("Unsupported version: version=%d supported=%d", version, VERSION));
-			}
-
-			// Load model properties
-			final String name = in.readUTF();
-			final Primitive primitive = Primitive.valueOf(in.readUTF());
-			final VkFrontFace winding = in.readBoolean() ? VkFrontFace.VK_FRONT_FACE_CLOCKWISE : VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
-
-			// Load vertex layout
-			final var layout = Arrays.stream(in.readUTF().split(DELIMITER)).map(Vertex.Component::valueOf).collect(toList());
-
-			// Load data
-			final int count = in.readInt();
-			final ByteBuffer vertices = loadBuffer(in);
-			final ByteBuffer index = loadBuffer(in);
-
-			// Create model
-			return new BufferedModel(name, primitive, winding, new Vertex.Layout(layout), vertices, index, count);
-		}
-
-		/**
-		 * Loads a buffer.
-		 * @param in Input stream
-		 * @return New buffer or {@code null} if empty
-		 * @throws IOException if the buffer cannot be loaded
-		 */
-		private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
-			// Read buffer size
-			final int len = in.readInt();
-			if(len == 0) {
-				return null;
-			}
-
-			// Load bytes
-			final byte[] bytes = new byte[len];
-			final int actual = in.read(bytes);
-			if(actual != len) throw new IOException(String.format("Error loading buffer: expected=%d actual=%d", len, actual));
-
-			// Convert to buffer
-			return Bufferable.allocate(bytes);
-		}
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append(header)
+				.append("index", isIndexed())
+				.build();
 	}
 }

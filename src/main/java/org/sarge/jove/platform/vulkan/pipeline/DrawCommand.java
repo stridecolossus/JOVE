@@ -14,11 +14,12 @@ public interface DrawCommand extends Command {
 	 * @return Drawing command
 	 */
 	static Command of(Model model) {
-		if(model.index().isPresent()) {
-			return indexed(model.count());
+		final int count = model.header().count();
+		if(model.isIndexed()) {
+			return indexed(count);
 		}
 		else {
-			return draw(model.count());
+			return draw(count);
 		}
 	}
 

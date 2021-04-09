@@ -19,6 +19,7 @@ import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.VertexModel;
 import org.sarge.jove.util.ResourceLoader;
 import org.sarge.lib.util.Check;
 
@@ -103,7 +104,7 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	 * @return New OBJ model
 	 */
 	protected ObjectModel create() {
-		return new ObjectModel(Model.IndexedBuilder::new);
+		return new ObjectModel(VertexModel.IndexedBuilder::new);
 	}
 
 	@Override

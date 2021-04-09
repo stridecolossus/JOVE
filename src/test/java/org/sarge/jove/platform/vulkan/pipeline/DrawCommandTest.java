@@ -5,13 +5,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.nio.ByteBuffer;
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Command;
 
@@ -45,23 +45,31 @@ public class DrawCommandTest {
 		verify(lib).vkCmdDrawIndexed(buffer, COUNT, 1, 0, 0, 0);
 	}
 
-	@Test
-	void of() {
-		// Create a model
-		final Model model = mock(Model.class);
-		when(model.count()).thenReturn(COUNT);
+	@Nested
+	class ModelTests {
+		private Model model;
 
-		// Create draw command
-		final Command draw = DrawCommand.of(model);
-		assertNotNull(draw);
-		draw.execute(lib, buffer);
-		verify(lib).vkCmdDraw(buffer, COUNT, 1, 0, 0);
+		@BeforeEach
+		void before() {
+			model = mock(Model.class);
+			when(model.header()).thenReturn(new Header(Primitive.POINTS, true, COUNT));
+		}
 
-		// Create draw command for indexed model
-		when(model.index()).thenReturn(Optional.of(ByteBuffer.allocate(0)));
-		final Command indexed = DrawCommand.of(model);
-		assertNotNull(indexed);
-		indexed.execute(lib, buffer);
-		verify(lib).vkCmdDrawIndexed(buffer, COUNT, 1, 0, 0, 0);
+		@Test
+		void draw() {
+			final Command draw = DrawCommand.of(model);
+			assertNotNull(draw);
+			draw.execute(lib, buffer);
+			verify(lib).vkCmdDraw(buffer, COUNT, 1, 0, 0);
+		}
+
+		@Test
+		void indexed() {
+			when(model.isIndexed()).thenReturn(true);
+			final Command indexed = DrawCommand.of(model);
+			assertNotNull(indexed);
+			indexed.execute(lib, buffer);
+			verify(lib).vkCmdDrawIndexed(buffer, COUNT, 1, 0, 0, 0);
+		}
 	}
 }

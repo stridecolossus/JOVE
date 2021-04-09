@@ -270,7 +270,7 @@ public class ModelDemo {
 		final VulkanBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 		// Load IBO
-		final VulkanBuffer index = loadBuffer(dev, model.index().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
+		final VulkanBuffer index = loadBuffer(dev, model.indexBuffer().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
 
 		//////////////////
 

@@ -16,7 +16,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.platform.vulkan.VkFrontFace;
+import org.sarge.jove.model.VertexModel;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing and maintains the list of generated models.
@@ -66,14 +66,14 @@ public class ObjectModel {
 	private final FlipTextureComponentList coords = new FlipTextureComponentList();
 
 	// Models
-	private final Supplier<Model.Builder> factory;
-	private final Deque<Model.Builder> builders = new LinkedList<>();
+	private final Supplier<VertexModel.Builder> factory;
+	private final Deque<VertexModel.Builder> builders = new LinkedList<>();
 
 	/**
 	 * Constructor.
 	 * @param factory Factory for the model builder
 	 */
-	public ObjectModel(Supplier<Model.Builder> factory) {
+	public ObjectModel(Supplier<VertexModel.Builder> factory) {
 		this.factory = notNull(factory);
 		add();
 	}
@@ -82,7 +82,7 @@ public class ObjectModel {
 	 * Constructor using a default model builder.
 	 */
 	public ObjectModel() {
-		this(Model.Builder::new);
+		this(VertexModel.Builder::new);
 	}
 
 	/**
@@ -124,7 +124,7 @@ public class ObjectModel {
 	/**
 	 * @return Builder for the current object group
 	 */
-	private Model.Builder current() {
+	private VertexModel.Builder current() {
 		return builders.getLast();
 	}
 
@@ -133,9 +133,9 @@ public class ObjectModel {
 	 */
 	private void add() {
 		assert isEmpty();
-		final Model.Builder next = notNull(factory.get());
+		final VertexModel.Builder next = notNull(factory.get());
 		next.primitive(Primitive.TRIANGLES);
-		next.windingOrder(VkFrontFace.VK_FRONT_FACE_CLOCKWISE);
+		next.clockwise(true);
 		builders.add(next);
 	}
 
@@ -165,8 +165,9 @@ public class ObjectModel {
 	 * @param name Object name
 	 */
 	public void name(String name) {
-		final Model.Builder builder = current();
-		builder.name(name);
+		// TODO
+//		final VertexModel.Builder builder = current();
+//		builder.name(name);
 	}
 
 	/**
@@ -184,7 +185,7 @@ public class ObjectModel {
 		}
 
 		// Initialise current model
-		final Model.Builder builder = current();
+		final VertexModel.Builder builder = current();
 		builder.layout(new Vertex.Layout(layout));
 	}
 
@@ -211,7 +212,7 @@ public class ObjectModel {
 		}
 
 		// Add to model
-		final Model.Builder builder = current();
+		final VertexModel.Builder builder = current();
 		builder.add(vertex.build());
 	}
 
@@ -224,7 +225,7 @@ public class ObjectModel {
 	public Stream<Model> build() {
 		if(isEmpty()) throw new IllegalStateException("Model is empty");
 		init();
-		return builders.stream().map(Model.Builder::build);
+		return builders.stream().map(VertexModel.Builder::build);
 	}
 
 	@Override
