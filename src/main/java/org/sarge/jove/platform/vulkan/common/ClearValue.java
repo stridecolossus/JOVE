@@ -10,8 +10,9 @@ import org.sarge.lib.util.Percentile;
 
 /**
  * A <i>clear value</i> specifies the clear operation for an attachment.
+ * @author Sarge
  */
-public interface ClearValue {		// TODO - seal
+public sealed interface ClearValue {
 	/**
 	 * Populates the given clear value descriptor.
 	 * @param value Descriptor
@@ -33,9 +34,31 @@ public interface ClearValue {		// TODO - seal
 	 */
 	ClearValue DEPTH = new DepthClearValue(Percentile.ONE);
 
+	final class EmptyClearValue implements ClearValue {
+		private EmptyClearValue() {
+		}
+
+		@Override
+		public VkImageAspectFlag aspect() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void populate(VkClearValue value) {
+			// Does nowt
+		}
+
+		@Override
+		public String toString() {
+			return "none";
+		}
+	}
+
 	/**
 	 * Empty clear value.
 	 */
+	ClearValue NONE = new EmptyClearValue();
+	/*
 	ClearValue NONE = new ClearValue() {
 		@Override
 		public VkImageAspectFlag aspect() {
@@ -52,11 +75,12 @@ public interface ClearValue {		// TODO - seal
 			return "none";
 		}
 	};
+	*/
 
 	/**
 	 * Clear value for a colour attachment.
 	 */
-	class ColourClearValue implements ClearValue {
+	final class ColourClearValue implements ClearValue {
 		private final Colour col;
 
 		/**
@@ -93,7 +117,7 @@ public interface ClearValue {		// TODO - seal
 	/**
 	 * Clear value for a depth attachment.
 	 */
-	class DepthClearValue implements ClearValue {
+	final class DepthClearValue implements ClearValue {
 		private final float depth;
 
 		public DepthClearValue(Percentile depth) {

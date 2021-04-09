@@ -60,7 +60,7 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	 */
 	private void init() {
 		add("v", new ArrayParser<>(Point.SIZE, Point::of, ObjectModel::vertices));
-		add("vt", new ArrayParser<>(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coordinates));
+		add("vt", new ArrayParser<>(Coordinate2D.SIZE, Coordinate2D::of, ObjectModel::coordinates));
 		add("vn", new ArrayParser<>(Vector.SIZE, Vector::of, ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);

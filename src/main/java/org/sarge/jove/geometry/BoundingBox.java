@@ -9,7 +9,7 @@ import java.util.Optional;
  * @author Sarge
  */
 public final class BoundingBox implements BoundingVolume {
-	private final Point min, max;
+	private final Point min, max; // TODO - extents?
 
 	/**
 	 * Constructor.

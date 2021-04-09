@@ -32,9 +32,8 @@ public record SphereVolume(Point centre, float radius) implements BoundingVolume
 
 	@Override
 	public Extents extents() {
-		final Vector min = new Vector(-radius, -radius, -radius);
-		final Vector max = new Vector(radius, radius, radius);
-		return new Extents(centre.add(min), centre.add(max));
+		final Vector vec = new Vector(radius, radius, radius);
+		return new Extents(centre.add(vec.invert()), centre.add(vec));
 	}
 
 	@Override

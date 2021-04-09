@@ -57,6 +57,11 @@ public interface Vertex {
 		// Empty
 	}
 
+	// TODO -
+	// - Component should be a class
+	// - below enum part of default vertex
+	// i.e. makes Vertex opaque, can get rid of getters
+
 	/**
 	 * A <i>vertex component</i> refers to a property of a vertex.
 	 */

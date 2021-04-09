@@ -2,8 +2,6 @@ package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
@@ -12,11 +10,6 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>texture coordinate</i> is a 1D, 2D or 3D coordinate.
  */
 public interface Coordinate extends Bufferable {
-	/**
-	 * @return Texture coordinates as an array
-	 */
-	float[] toArray();
-
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
@@ -35,22 +28,7 @@ public interface Coordinate extends Bufferable {
 	/**
 	 * One-dimensional texture coordinate.
 	 */
-	class Coordinate1D implements Coordinate {
-		public final float u;
-
-		/**
-		 * Constructor.
-		 * @param u
-		 */
-		public Coordinate1D(float u) {
-			this.u = u;
-		}
-
-		@Override
-		public float[] toArray() {
-			return new float[]{u};
-		}
-
+	record Coordinate1D(float u) implements Coordinate {
 		@Override
 		public void buffer(ByteBuffer buffer) {
 			buffer.putFloat(u);
@@ -62,25 +40,15 @@ public interface Coordinate extends Bufferable {
 		}
 
 		@Override
-		public int hashCode() {
-			return Objects.hash(u);
-		}
-
-		@Override
 		public boolean equals(Object obj) {
 			return (obj instanceof Coordinate1D that) && MathsUtil.isEqual(this.u, that.u);
-		}
-
-		@Override
-		public final String toString() {
-			return Arrays.toString(toArray());
 		}
 	}
 
 	/**
 	 * Two-dimensional texture coordinate.
 	 */
-	class Coordinate2D extends Coordinate1D {
+	record Coordinate2D(float u, float v) implements Coordinate {
 		/**
 		 * Size of 2D coordinates.
 		 */
@@ -95,34 +63,9 @@ public interface Coordinate extends Bufferable {
 			TOP_RIGHT 		= new Coordinate2D(1, 0),
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
 
-		/**
-		 * Default texture coordinates for a quad with a counter-clockwise winding order.
-		 */
-		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
-
-		public final float v;
-
-		/**
-		 * Constructor.
-		 * @param u
-		 * @param v
-		 */
-		public Coordinate2D(float u, float v) {
-			super(u);
-			this.v = v;
-		}
-
-		/**
-		 * Array constructor.
-		 * @param array Array
-		 */
-		public Coordinate2D(float[] array) {
-			this(array[0], array[1]);
-		}
-
-		@Override
-		public float[] toArray() {
-			return new float[]{u, v};
+		// TODO
+		public static Coordinate2D of(float[] array) {
+			return (Coordinate2D) Coordinate.of(array);
 		}
 
 		@Override
@@ -133,11 +76,6 @@ public interface Coordinate extends Bufferable {
 		@Override
 		public long length() {
 			return 2 * Float.BYTES;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(u, v);
 		}
 
 		@Override
@@ -152,25 +90,7 @@ public interface Coordinate extends Bufferable {
 	/**
 	 * Three-dimensional texture coordinate.
 	 */
-	class Coordinate3D extends Coordinate2D {
-		public final float w;
-
-		/**
-		 * Constructor.
-		 * @param u
-		 * @param v
-		 * @param w
-		 */
-		public Coordinate3D(float u, float v, float w) {
-			super(u, v);
-			this.w = w;
-		}
-
-		@Override
-		public float[] toArray() {
-			return new float[]{u, v, w};
-		}
-
+	record Coordinate3D(float u, float v, float w) implements Coordinate {
 		@Override
 		public void buffer(ByteBuffer buffer) {
 			buffer.putFloat(u).putFloat(v).putFloat(w);
@@ -179,11 +99,6 @@ public interface Coordinate extends Bufferable {
 		@Override
 		public long length() {
 			return 3 * Float.BYTES;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(u, v, w);
 		}
 
 		@Override

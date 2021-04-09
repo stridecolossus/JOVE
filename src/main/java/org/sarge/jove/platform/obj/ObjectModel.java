@@ -52,7 +52,7 @@ public class ObjectModel {
 		@Override
 		public boolean add(Coordinate2D coords) {
 			if(flip) {
-				return super.add(new Coordinate2D(coords.u, -coords.v));
+				return super.add(new Coordinate2D(coords.u(), -coords.v()));
 			}
 			else {
 				return super.add(coords);

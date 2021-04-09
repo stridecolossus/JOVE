@@ -181,6 +181,8 @@ public interface Model {
 			validate();
 		}
 
+		// TODO - should be Bufferable rather than List<Vertex>? model doesn't care what it is
+
 		@Override
 		public int count() {
 			if(index == null) {

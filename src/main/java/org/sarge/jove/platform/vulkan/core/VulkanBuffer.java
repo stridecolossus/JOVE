@@ -24,7 +24,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>Vulkan buffer</i> is used to copy data to the hardware.
+ * A <i>Vulkan buffer</i> is used to copy data to/from the hardware.
  * @author Sarge
  */
 public class VulkanBuffer extends AbstractVulkanObject {

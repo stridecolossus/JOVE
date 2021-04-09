@@ -42,20 +42,6 @@ public record Extents(Point min, Point max) {
 	}
 
 	/**
-	 * Creates a compound extents.
-	 * @param extents Extents to add
-	 * @return Compound extents
-	 */
-	public Extents add(Extents extents) {
-		return new Builder()
-			.add(this.min)
-			.add(this.max)
-			.add(extents.min)
-			.add(extents.max)
-			.build();
-	}
-
-	/**
 	 * Builder for extents.
 	 */
 	public static class Builder {

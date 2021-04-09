@@ -69,17 +69,17 @@ public interface BoundingVolume {
 
 		@Override
 		public boolean intersects(BoundingVolume vol) {
-			return true;
+			return true; // TODO - really?
 		}
 
 		@Override
 		public boolean intersects(Point centre, float radius) {
-			return true;
+			return true; // TODO - really?
 		}
 
 		@Override
 		public boolean intersects(Extents extents) {
-			return true;
+			return true; // TODO - really?
 		}
 	};
 

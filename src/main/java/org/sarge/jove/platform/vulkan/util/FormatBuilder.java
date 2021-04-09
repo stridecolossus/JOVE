@@ -144,9 +144,10 @@ public class FormatBuilder {
 
 		// Build component layout
 		final StringBuilder layout = new StringBuilder();
+		final int size = bytes * Byte.SIZE;
 		for(int n = 0; n < num; ++n) {
 			layout.append(components.charAt(n));
-			layout.append(bytes * Byte.SIZE);
+			layout.append(size);
 		}
 
 		// Build format string

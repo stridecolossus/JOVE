@@ -1,7 +1,5 @@
 package org.sarge.jove.util;
 
-import static org.sarge.lib.util.Check.zeroOrMore;
-
 import org.sarge.lib.util.Check;
 
 /**
@@ -12,53 +10,37 @@ public final class MathsUtil {
 	/**
 	 * Accuracy for floating-point comparisons.
 	 */
-	private static float ACCURACY = 0.0001f;
-
-	/**
-	 * Sets the <b>global</b> accuracy for floating-point equivalence tests.
-	 * @param accuracy Accuracy
-	 * @see #isEqual(float, float)
-	 * @see #isEqual(float[], float[])
-	 * @see #isZero(float)
-	 */
-	public static void accuracy(float accuracy) {
-		ACCURACY = zeroOrMore(accuracy);
-	}
-
-	/**
-	 * PI as floating-point.
-	 */
-	public static final float PI = (float) Math.PI;
-
-	/**
-	 * Half-PI.
-	 */
-	public static final float HALF_PI = PI / 2f;
-
-	/**
-	 * Double PI.
-	 */
-	public static final float TWO_PI = 2f * PI;
-
-	/**
-	 * Degrees in a half-circle.
-	 */
-	public static final float HALF_CIRCLE_DEGREES = 180;
-
-	/**
-	 * Converts degrees to radians.
-	 */
-	public static final float DEGREES_TO_RADIANS = PI / HALF_CIRCLE_DEGREES;
-
-	/**
-	 * Converts radians to degrees.
-	 */
-	public static final float RADIANS_TO_DEGREES = HALF_CIRCLE_DEGREES / PI;
+	private static final float ACCURACY = Float.parseFloat(System.getProperty("jove.accuracy", "0.0001")); // TODO - doc
 
 	/**
 	 * Half value.
 	 */
 	public static final float HALF = 0.5f;
+
+	/**
+	 * PI (or 180 degrees).
+	 */
+	public static final float PI = (float) Math.PI;
+
+	/**
+	 * Half-PI (or 90 degrees).
+	 */
+	public static final float HALF_PI = PI * HALF;
+
+	/**
+	 * Double PI (or 360 degrees).
+	 */
+	public static final float TWO_PI = 2f * PI;
+
+	/**
+	 * Converts degrees to radians.
+	 */
+	private static final float DEGREES_TO_RADIANS = PI / 180f;
+
+	/**
+	 * Converts radians to degrees.
+	 */
+	private static final float RADIANS_TO_DEGREES = 1f / DEGREES_TO_RADIANS;
 
 	private MathsUtil() {
 	}

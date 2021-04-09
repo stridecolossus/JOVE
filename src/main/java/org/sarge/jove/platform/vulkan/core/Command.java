@@ -276,7 +276,7 @@ public interface Command {
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
 			final LogicalDevice dev = super.device();
-			final int mask = IntegerEnumeration.mask(Arrays.asList(flags));
+			final int mask = IntegerEnumeration.mask(flags);
 			check(dev.library().vkResetCommandPool(dev.handle(), this.handle(), mask));
 		}
 

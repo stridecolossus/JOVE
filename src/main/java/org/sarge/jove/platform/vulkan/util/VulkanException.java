@@ -4,7 +4,7 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkResult;
 
 /**
- * A <i>Vulkan exception</i> wraps an error code returned from the Vulkan platform.
+ * A <i>Vulkan exception</i> wraps an error code returned by the Vulkan platform.
  * @author Sarge
  */
 public class VulkanException extends RuntimeException {

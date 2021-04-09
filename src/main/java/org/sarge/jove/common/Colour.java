@@ -106,10 +106,10 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * @return Pixel value
 	 */
 	public int toPixel() {
-		final int a = mask(this.alpha);
-		final int r = mask(this.red);
-		final int g = mask(this.green);
-		final int b = mask(this.blue);
+		final int a = mask(alpha);
+		final int r = mask(red);
+		final int g = mask(green);
+		final int b = mask(blue);
 		return (a << 24) | (r << 16) | (g << 8) | b;
 	}
 
