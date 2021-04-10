@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
@@ -83,10 +82,5 @@ public class Surface extends AbstractTransientNativeObject {
 		final Instance instance = dev.instance();
 		final VulkanLibrarySurface lib = instance.library();
 		lib.vkDestroySurfaceKHR(instance.handle(), handle, null);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(handle).build();
 	}
 }

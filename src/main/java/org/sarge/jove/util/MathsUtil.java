@@ -4,6 +4,10 @@ import org.sarge.lib.util.Check;
 
 /**
  * Maths utilities.
+ * <p>
+ * This class provides a suite of floating-point comparison operators that offer approximate equivalence, e.g. {@link #isEqual(float, float)}.
+ * The accuracy of these methods can be configured via the {@code jove.accuracy} system property.
+ * <p>
  * @author Sarge
  */
 public final class MathsUtil {
@@ -30,17 +34,17 @@ public final class MathsUtil {
 	/**
 	 * Double PI (or 360 degrees).
 	 */
-	public static final float TWO_PI = 2f * PI;
+	public static final float TWO_PI = 2 * PI;
 
 	/**
 	 * Converts degrees to radians.
 	 */
-	private static final float DEGREES_TO_RADIANS = PI / 180f;
+	private static final float DEGREES_TO_RADIANS = PI / 180;
 
 	/**
 	 * Converts radians to degrees.
 	 */
-	private static final float RADIANS_TO_DEGREES = 1f / DEGREES_TO_RADIANS;
+	private static final float RADIANS_TO_DEGREES = 1 / DEGREES_TO_RADIANS;
 
 	private MathsUtil() {
 	}

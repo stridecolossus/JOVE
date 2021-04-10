@@ -16,7 +16,7 @@ public class VulkanException extends RuntimeException {
 	 * @param message		Additional message
 	 */
 	public VulkanException(int result, String message) {
-		super(String.format("%s: [%d] %s", message, result, reason(result)));
+		super(String.format("[%d]%s: %s", result, reason(result), message));
 		this.result = result;
 	}
 

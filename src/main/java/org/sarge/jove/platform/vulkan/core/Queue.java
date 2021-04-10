@@ -24,6 +24,7 @@ import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>queue</i> is used to submit work to the hardware.
+ * @author Sarge
  */
 public class Queue implements NativeObject {
 	private final Handle handle;

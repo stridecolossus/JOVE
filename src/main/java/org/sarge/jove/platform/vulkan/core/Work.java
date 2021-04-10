@@ -53,10 +53,9 @@ public class Work {
 	}
 
 	/**
-	 * Helper - Submits a <i>one-time</i> command to the given pool and waits for completion.
+	 * Helper - Submits a <i>one time</i> command to the given pool and waits for completion.
 	 * @param cmd		Command
 	 * @param pool 		Command pool
-	 * @see Command#once(Command.Pool, Command)
 	 */
 	public static void submit(Command cmd, Command.Pool pool) {
 		// Allocate and record command
@@ -120,7 +119,7 @@ public class Work {
 	 */
 	public static abstract class ImmediateCommand implements Command {
 		/**
-		 * Submits this as a <i>one-time</i> command to the given pool and waits for completion.
+		 * Submits this as a <i>one time</i> command to the given pool and waits for completion.
 		 * @param pool Command pool
 		 * @see Work#submit(Command, Command.Pool)
 		 */

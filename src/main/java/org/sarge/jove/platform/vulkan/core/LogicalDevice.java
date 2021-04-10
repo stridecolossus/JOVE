@@ -141,7 +141,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	 * Waits for this device to become idle.
 	 */
 	public void waitIdle() {
-		lib.vkDeviceWaitIdle(handle);
+		check(lib.vkDeviceWaitIdle(handle));
 	}
 
  	@Override

@@ -14,7 +14,7 @@ import org.sarge.jove.geometry.Vector;
 public class Camera {
 	// Camera state
 	private Point pos = Point.ORIGIN;
-	private Vector dir = Vector.Z_AXIS;			// Note is actually inverse of the view direction
+	private Vector dir = Vector.Z_AXIS;			// Note this is actually the inverse of the view direction
 
 	// Axes
 	private Vector up = Vector.Y_AXIS;

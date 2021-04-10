@@ -80,7 +80,7 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(COLOUR, descriptor.aspects());
 		}
 
-		@DisplayName("Image must have at least aspect")
+		@DisplayName("Image must have at least one aspect")
 		@Test
 		void emptyAspects() {
 			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), Set.of(), 1, 1));

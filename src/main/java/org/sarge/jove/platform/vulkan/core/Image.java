@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
@@ -82,19 +81,13 @@ public interface Image extends NativeObject {
 	/**
 	 * Descriptor for an image.
 	 */
-	final class Descriptor {
+	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects, int levels, int layers) {
+		// Valid image aspect combinations
 		private static final Collection<Set<VkImageAspectFlag>> VALID_ASPECTS = List.of(
 				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT),
 				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT),
 				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT)
 		);
-
-		private final VkImageType type;
-		private final VkFormat format;
-		private final Extents extents;
-		private final Set<VkImageAspectFlag> aspects;
-		private final int levels;
-		private final int layers;
 
 		/**
 		 * Constructor.
@@ -107,17 +100,15 @@ public interface Image extends NativeObject {
 		 * @throws IllegalArgumentException if the image aspects is empty or is an invalid combination
 		 * @throws IllegalArgumentException if the extents are invalid for the given image type
 		 */
-		public Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects, int levels, int layers) {
-			this.type = notNull(type);
-			this.format = notNull(format);
-			this.extents = notNull(extents);
-			this.aspects = Set.copyOf(notEmpty(aspects));
-			this.levels = oneOrMore(levels);
-			this.layers = oneOrMore(layers);
-			validate();
-		}
+		public Descriptor {
+			// Validate
+			Check.notNull(type);
+			Check.notNull(format);
+			Check.notNull(extents);
+			Check.notEmpty(aspects);
+			Check.oneOrMore(levels);
+			Check.oneOrMore(layers);
 
-		private void validate() {
 			// Validate extents
 			final boolean valid = switch(type) {
 				case VK_IMAGE_TYPE_1D -> (extents.height == 1) && (extents.depth == 1);
@@ -135,34 +126,6 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * @return Type of this image
-		 */
-		public VkImageType type() {
-			return type;
-		}
-
-		/**
-		 * @return Image format
-		 */
-		public VkFormat format() {
-			return format;
-		}
-
-		/**
-		 * @return Image extents
-		 */
-		public Extents extents() {
-			return extents;
-		}
-
-		/**
-		 * @return Image aspect(s)
-		 */
-		public Set<VkImageAspectFlag> aspects() {
-			return aspects;
-		}
-
-		/**
 		 * Creates a nested sub-resource range builder for this image descriptor.
 		 * @param <T> Parent builder type
 		 * @param parent Parent builder
@@ -170,18 +133,6 @@ public interface Image extends NativeObject {
 		 */
 		public <T> SubResourceBuilder<T> builder(T parent) {
 			return new SubResourceBuilder<>(parent);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("type", type)
-					.append("format", format)
-					.append("extent", extents)
-					.append("aspects", aspects)
-					.append("mip-levels", levels)
-					.append("array-layers", layers)
-					.build();
 		}
 
 		/**

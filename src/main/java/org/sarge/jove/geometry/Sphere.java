@@ -57,4 +57,5 @@ public record Sphere(float radius) {
 		final float z = radius * cos * MathsUtil.sin(phi);
 		return new Vector(x, y, z);
 	}
+	// TODO - better to factor out scale(radius)
 }
