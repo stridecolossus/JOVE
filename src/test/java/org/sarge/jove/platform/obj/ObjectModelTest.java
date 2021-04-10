@@ -204,11 +204,6 @@ public class ObjectModelTest {
 		}
 
 		@Test
-		void buildEmptyModel() {
-			assertThrows(IllegalStateException.class, () -> model.build());
-		}
-
-		@Test
 		void buildMultiple() {
 			// Add a group
 			triangle();

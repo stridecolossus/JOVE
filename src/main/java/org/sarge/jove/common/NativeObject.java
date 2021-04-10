@@ -59,6 +59,13 @@ public interface NativeObject {
 			this.handle = new Pointer(Pointer.nativeValue(handle));
 		}
 
+		/**
+		 * @return Copy of the underlying JNA pointer
+		 */
+		public Pointer toPointer() {
+			return new Pointer(Pointer.nativeValue(handle));
+		}
+
 		@Override
 		public int hashCode() {
 			return handle.hashCode();

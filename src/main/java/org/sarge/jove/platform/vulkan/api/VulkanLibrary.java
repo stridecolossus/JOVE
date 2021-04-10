@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +104,11 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 
 		@Override
 		public Structure[] toArray(int size) {
+			// TODO - hmmm didn't have to do this previously?
+			if(size == 0) {
+				return (Structure[]) Array.newInstance(getClass(), 0);
+			}
+
 			// Allocate array
 			final Structure[] array = super.toArray(size);
 

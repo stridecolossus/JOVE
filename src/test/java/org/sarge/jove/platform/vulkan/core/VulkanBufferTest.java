@@ -56,7 +56,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Nested
 	class CommandTests {
-		private Handle handle;
+		private Handle cmdHandle;
 		private VulkanBuffer dest;
 		private VulkanBuffer index;
 
@@ -65,23 +65,23 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			final var flags = Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 			dest = new VulkanBuffer(new Pointer(2), dev, flags, 3, mem);
 			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT), 3, mem);
-			handle = new Handle(new Pointer(42));
+			cmdHandle = new Handle(new Pointer(42));
 		}
 
 		@Test
 		void bind() {
 			final Command cmd = buffer.bindVertexBuffer();
 			assertNotNull(cmd);
-			cmd.execute(lib, handle);
-			verify(lib).vkCmdBindVertexBuffers(eq(handle), eq(0), eq(1), isA(Pointer.class), eq(new long[]{0}));
+			cmd.execute(lib, cmdHandle);
+			verify(lib).vkCmdBindVertexBuffers(eq(cmdHandle), eq(0), eq(1), isA(Pointer.class), eq(new long[]{0}));
 		}
 
 		@Test
 		void bindIndexBuffer() {
 			final Command cmd = index.bindIndexBuffer();
 			assertNotNull(cmd);
-			cmd.execute(lib, handle);
-			verify(lib).vkCmdBindIndexBuffer(handle, index.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
+			cmd.execute(lib, cmdHandle);
+			verify(lib).vkCmdBindIndexBuffer(cmdHandle, index.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
 		}
 
 		@Test
@@ -89,11 +89,11 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			// Execute copy command
 			final Command cmd = buffer.copy(dest);
 			assertNotNull(cmd);
-			cmd.execute(lib, handle);
+			cmd.execute(lib, cmdHandle);
 
 			// Check API
 			final ArgumentCaptor<VkBufferCopy[]> captor = ArgumentCaptor.forClass(VkBufferCopy[].class);
-			verify(lib).vkCmdCopyBuffer(eq(handle), eq(buffer.handle()), eq(handle), eq(1), captor.capture());
+			verify(lib).vkCmdCopyBuffer(eq(cmdHandle), eq(buffer.handle()), eq(dest.handle()), eq(1), captor.capture());
 
 			// Check region
 			final VkBufferCopy[] array = captor.getValue();
@@ -268,8 +268,9 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			assertEquals(4, info.size);
 
 			// Check internal memory allocation
+			final var h = mem.handle(); // TODO
 			verify(lib).vkGetBufferMemoryRequirements(eq(dev.handle()), isA(Pointer.class), isA(VkMemoryRequirements.class));
-			verify(lib).vkBindBufferMemory(eq(dev.handle()), isA(Pointer.class), eq(mem.handle()), eq(0L));
+			verify(lib).vkBindBufferMemory(eq(dev.handle()), isA(Pointer.class), eq(h), eq(0L));
 		}
 
 		@Test

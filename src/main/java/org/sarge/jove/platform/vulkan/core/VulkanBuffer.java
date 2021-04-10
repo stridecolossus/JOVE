@@ -92,8 +92,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @throws IllegalStateException if the size of the given object exceeds the length of this vertex buffer
 	 */
 	public void load(Bufferable obj, long offset) {
-		// Check buffer
 		Check.zeroOrMore(offset);
+
+		// Check buffer
+		final int len = obj.length();
 		if(offset + len > this.len) {
 			throw new IllegalStateException(String.format("Buffer exceeds size of this VBO: length=%d offset=%d this=%s", len, offset, this));
 		}

@@ -1,8 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.stream.Collectors.joining;
-import static org.apache.commons.lang3.StringUtils.removeEnd;
-import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
@@ -12,16 +9,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.StringJoiner;
-import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.api.Version;
@@ -31,7 +22,6 @@ import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.LazySupplier;
 
-import com.sun.jna.Callback;
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;
 import com.sun.jna.StringArray;
@@ -43,7 +33,8 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
-	private final LazySupplier<Manager> manager;
+	private final Supplier<Function> create = new LazySupplier<>(() -> function("vkCreateDebugUtilsMessengerEXT"));
+	private final Collection<Pointer> handlers = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -51,8 +42,7 @@ public class Instance extends AbstractTransientNativeObject {
 	 * @param handle		Instance handle
 	 */
 	private Instance(VulkanLibrary lib, Pointer handle) {
-		super(handle);
-		this.manager = new LazySupplier<>(() -> new Manager(handle));
+		super(new Handle(handle));
 		this.lib = notNull(lib);
 	}
 
@@ -70,32 +60,47 @@ public class Instance extends AbstractTransientNativeObject {
 	 * @throws RuntimeException if the function cannot be found
 	 */
 	public Function function(String name) {
+		// Lookup function pointer
 		final Pointer ptr = lib.vkGetInstanceProcAddr(handle, name);
 		if(ptr == null) throw new RuntimeException("Cannot find function pointer: " + name);
-		return Function.getFunction(ptr);
+
+		// Convert to function (first case is a test helper)
+		if(ptr instanceof Function func) {
+			return func;
+		}
+		else {
+			return Function.getFunction(ptr);
+		}
 	}
 
 	/**
-	 * Creates a builder for a new message handler to be attached to this instance.
-	 * @return New message handler builder
+	 * Attaches a diagnostics message handler to this instance.
+	 * @param handler Message handler descriptor
+	 * @throws RuntimeException if the diagnostics extension is not present
 	 */
-	public Handler handler() {
-		return new Handler(manager.get());
+	public void attach(VkDebugUtilsMessengerCreateInfoEXT handler) {
+		final PointerByReference handle = lib.factory().pointer();
+		final Object[] args = {super.handle.toPointer(), handler, null, handle};
+		check(create.get().invokeInt(args));
+		handlers.add(handle.getValue());
 	}
 
 	@Override
 	protected void release() {
-		manager.get().destroy();
+		if(!handlers.isEmpty()) {
+			final Pointer ptr = super.handle.toPointer();
+			final Function destroy = function("vkDestroyDebugUtilsMessengerEXT");
+			for(Pointer handle : handlers) {
+				final Object[] args = new Object[]{ptr, handle, null};
+				destroy.invoke(args);
+			}
+		}
+
 		lib.vkDestroyInstance(handle, null);
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append("handle", handle).build();
-	}
-
 	/**
-	 * Builder for a Vulkan instance.
+	 * Builder for an instance.
 	 */
 	public static class Builder {
 		private VulkanLibrary lib;
@@ -198,268 +203,6 @@ public class Instance extends AbstractTransientNativeObject {
 
 			// Create instance wrapper
 			return new Instance(lib, handle.getValue());
-		}
-	}
-
-	/**
-	 * The <i>manager</i> is used to attach diagnostics message handlers to this instance.
-	 */
-	private class Manager {
-		private final Pointer dev;
-		private final Collection<Pointer> handlers = new ArrayList<>();
-		private final LazySupplier<Function> create = new LazySupplier<>(() -> function("vkCreateDebugUtilsMessengerEXT"));
-
-		/**
-		 * Constructor.
-		 * @param dev Logical device handle
-		 */
-		private Manager(Pointer dev) {
-			this.dev = dev;
-		}
-
-		/**
-		 * Creates a message handler.
-		 * @param info Handler descriptor
-		 */
-		private void create(VkDebugUtilsMessengerCreateInfoEXT info) {
-			// Create handler
-			final PointerByReference handle = lib.factory().pointer();
-			final Object[] args = {dev, info, null, handle};
-			check(create.get().invokeInt(args));
-
-			// Register handler
-			handlers.add(handle.getValue());
-		}
-
-		/**
-		 * Destroys all attached handlers.
-		 */
-		private void destroy() {
-			// Ignore if unused
-			if(handlers.isEmpty()) {
-				return;
-			}
-
-			// Lookup destroy API method
-			final Function destroy = function("vkDestroyDebugUtilsMessengerEXT");
-
-			// Release handlers
-			for(Pointer handle : handlers) {
-				final Object[] args = new Object[]{dev, handle, null};
-				destroy.invoke(args);
-			}
-		}
-	}
-
-	/**
-	 * A <i>message</i> is a diagnostics report generated by Vulkan.
-	 */
-	public record Message(VkDebugUtilsMessageSeverityFlagEXT severity, Collection<VkDebugUtilsMessageTypeFlagEXT> types, VkDebugUtilsMessengerCallbackDataEXT data) {
-		/**
-		 * Message handler that outputs to the console.
-		 */
-		public static final Consumer<Message> CONSOLE = System.err::println;
-
-		/**
-		 * Helper - Converts the given severity flag to a human-readable string.
-		 * @param severity Message severity
-		 * @return Severity string
-		 */
-		public static String toString(VkDebugUtilsMessageSeverityFlagEXT severity) {
-			return clean(severity.name(), "SEVERITY");
-		}
-
-		/**
-		 * Helper - Converts the given message type to a human-readable string.
-		 * @param type Message type
-		 * @return Message type string
-		 */
-		public static String toString(VkDebugUtilsMessageTypeFlagEXT type) {
-			return clean(type.name(), "TYPE");
-		}
-
-		/**
-		 * Helper - Strips the surrounding text from the given enumeration constant name.
-		 * @param name Enumeration constant name
-		 * @param type Type name
-		 * @return Cleaned name
-		 */
-		private static String clean(String name, String type) {
-			final String prefix = new StringBuilder()
-					.append("VK_DEBUG_UTILS_MESSAGE_")
-					.append(type)
-					.append("_")
-					.toString();
-
-			return removeEnd(removeStart(name, prefix), "_BIT_EXT");
-		}
-
-		/**
-		 * Constructor.
-		 * @param severity		Severity
-		 * @param types			Message type(s)
-		 * @param data			Message data
-		 */
-		public Message {
-			Check.notNull(severity);
-			Check.notEmpty(types);
-			Check.notNull(data);
-		}
-
-		/**
-		 * Constructs a string representation of this message.
-		 * <p>
-		 * The message text is a colon-delimited string comprised of the following elements:
-		 * <ul>
-		 * <li>severity</li>
-		 * <li>type(s)</li>
-		 * <li>message identifier</li>
-		 * <li>message text</li>
-		 * </ul>
-		 * Example:
-		 * <code>ERROR:VALIDATION-GENERAL:1234:message</code>
-		 * <p>
-		 * @return Message text
-		 */
-		@Override
-		public String toString() {
-			final String compoundTypes = types.stream().map(Message::toString).collect(joining("-"));
-			final StringJoiner str = new StringJoiner(":");
-			str.add(toString(severity));
-			str.add(compoundTypes);
-			if(!data.pMessage.contains(data.pMessageIdName)) {
-				str.add(data.pMessageIdName);
-			}
-			str.add(data.pMessage);
-			return str.toString();
-		}
-	}
-
-	/**
-	 * Builder for a message handler.
-	 * <p>
-	 * Example usage that attaches a handler that outputs validation errors to the error console:
-	 * <pre>
-	 * instance
-	 *     .handler()
-	 *     .severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-	 *     .type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-	 *     .handler(System.err::println)
-	 *     .attach();
-	 * </pre>
-	 */
-	public static class Handler {
-		/**
-		 * A <i>message callback</i> is invoked by Vulkan to report errors, diagnostics, etc.
-		 */
-		private static class MessageCallback implements Callback {
-			private final Consumer<Message> handler;
-
-			/**
-			 * Constructor.
-			 * @param handler Message handler
-			 */
-			private MessageCallback(Consumer<Message> handler) {
-				this.handler = notNull(handler);
-			}
-
-			/**
-			 * Invoked on receipt of a Vulkan diagnostics message.
-			 * @param severity			Severity
-			 * @param type				Message type(s)
-			 * @param pCallbackData		Message
-			 * @param pUserData			User data
-			 * @return Whether to terminate or continue
-			 */
-			@SuppressWarnings("unused")
-			public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData) {
-				// Transform bit-masks to enumerations
-				final VkDebugUtilsMessageSeverityFlagEXT severityEnum = IntegerEnumeration.map(VkDebugUtilsMessageSeverityFlagEXT.class, severity);
-				final Collection<VkDebugUtilsMessageTypeFlagEXT> typesEnum = IntegerEnumeration.enumerate(VkDebugUtilsMessageTypeFlagEXT.class, type);
-
-				// Create message wrapper
-				final Message message = new Message(severityEnum, typesEnum, pCallbackData);
-
-				// Delegate to handler
-				handler.accept(message);
-
-				// Continue execution
-				return false;
-			}
-		}
-
-		private final Manager manager;
-		private final Set<VkDebugUtilsMessageSeverityFlagEXT> severity = new HashSet<>();
-		private final Set<VkDebugUtilsMessageTypeFlagEXT> types = new HashSet<>();
-		private Consumer<Message> handler = Message.CONSOLE;
-
-		/**
-		 * Constructor.
-		 */
-		private Handler(Manager manager) {
-			this.manager = manager;
-		}
-
-		/**
-		 * Sets the message handler (default is {@link Message#CONSOLE}).
-		 * @param handler Message handler
-		 */
-		public Handler handler(Consumer<Message> handler) {
-			this.handler = notNull(handler);
-			return this;
-		}
-
-		/**
-		 * Adds a message severity to be reported by this handler.
-		 * @param severity Message severity
-		 */
-		public Handler severity(VkDebugUtilsMessageSeverityFlagEXT severity) {
-			this.severity.add(notNull(severity));
-			return this;
-		}
-
-		/**
-		 * Adds a message type to be reported by this handler.
-		 * @param type Message type
-		 */
-		public Handler type(VkDebugUtilsMessageTypeFlagEXT type) {
-			types.add(notNull(type));
-			return this;
-		}
-
-		/**
-		 * Convenience method to initialise this builder to the following default settings:
-		 * <ul>
-		 * <li>warnings or higher</li>
-		 * <li>general or validation message types</li>
-		 * </ul>
-		 */
-		public Handler init() {
-			severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT);
-			severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
-			type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT);
-			type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT);
-			return this;
-		}
-
-		/**
-		 * Constructs this message handler and attaches it to the instance.
-		 * @throws IllegalArgumentException if the message severities or message types are empty
-		 */
-		public void attach() {
-			// Validate
-			if(severity.isEmpty()) throw new IllegalArgumentException("No message severities specified");
-			if(types.isEmpty()) throw new IllegalArgumentException("No message types specified");
-
-			// Create handler descriptor
-			final VkDebugUtilsMessengerCreateInfoEXT info = new VkDebugUtilsMessengerCreateInfoEXT();
-			info.messageSeverity = IntegerEnumeration.mask(severity);
-			info.messageType = IntegerEnumeration.mask(types);
-			info.pfnUserCallback = new MessageCallback(handler);
-			info.pUserData = null;
-
-			// Create handler
-			manager.create(info);
 		}
 	}
 }

@@ -53,6 +53,7 @@ public class DeviceFeaturesTest {
 		assertThrows(IllegalArgumentException.class, () -> features.check(required));
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	void of() {
 		final DeviceFeatures other = DeviceFeatures.of(Set.of(SUPPORTED));

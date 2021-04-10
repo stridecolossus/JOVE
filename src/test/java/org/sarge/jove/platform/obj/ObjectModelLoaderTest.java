@@ -14,7 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.Vertex.Component;
+import org.sarge.jove.model.Vertex.Layout;
 
 public class ObjectModelLoaderTest {
 	private ObjectModelLoader loader;
@@ -26,12 +27,10 @@ public class ObjectModelLoaderTest {
 
 	@Nested
 	class LoaderTests {
-		private String data;
-
-		@BeforeEach
-		void before() {
+		@Test
+		void load() throws IOException {
 			// Create an OBJ file
-			data = """
+			final String data = """
 					# comment
 
 					v 1 2 3
@@ -46,13 +45,9 @@ public class ObjectModelLoaderTest {
 					vt 3 4
 					vt 5 6
 
-					g
 					f 1/1/1 2/2/2 3/3/3
 			""";
-		}
 
-		@Test
-		void load() throws IOException {
 			// Load OBJ models
 			final Stream<Model> models = loader.load(new StringReader(data));
 			assertNotNull(models);
@@ -65,7 +60,7 @@ public class ObjectModelLoaderTest {
 			final DefaultModel model = (DefaultModel) array[0];
 			assertNotNull(model);
 			assertEquals(Primitive.TRIANGLES, model.header().primitive());
-			assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.COORDINATE), model.header().layout());
+			assertEquals(new Layout(Component.POSITION, Component.NORMAL, Component.COORDINATE), model.header().layout());
 			assertEquals(3, model.count());
 
 			// Check vertex buffer
@@ -88,7 +83,7 @@ public class ObjectModelLoaderTest {
 		@Test
 		void loadIgnoreUnknownCommand() throws IOException {
 			loader.setUnknownCommandHandler(ObjectModelLoader.HANDLER_IGNORE);
-			loader.load(new StringReader("cobblers\n" + data));
+			loader.load(new StringReader("cobblers"));
 		}
 	}
 }

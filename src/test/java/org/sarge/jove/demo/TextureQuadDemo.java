@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
+import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
@@ -129,7 +130,7 @@ public class TextureQuadDemo {
 				.build();
 
 		// Attach message handler
-		instance.handler().init().attach();
+		instance.attach(new HandlerBuilder().init().build());
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());

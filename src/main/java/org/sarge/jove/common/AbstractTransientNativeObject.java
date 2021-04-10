@@ -4,8 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.sun.jna.Pointer;
-
 /**
  * A <i>transient native object</i> is a template implementation for a native object that is managed by the application.
  */
@@ -13,14 +11,6 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 	protected final Handle handle;
 
 	private boolean destroyed;
-
-	/**
-	 * Constructor.
-	 * @param handle Native handle
-	 */
-	protected AbstractTransientNativeObject(Pointer handle) {
-		this.handle = new Handle(handle);
-	}
 
 	/**
 	 * Constructor.

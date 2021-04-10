@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toList;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -10,7 +11,8 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 /**
- * A <i>device features</i> specifies the Vulkan features supported by a physical or logical device.
+ * Wrapper for the <i>device features</i> supported by a physical or logical device.
+ * @see VkPhysicalDeviceFeatures
  * @author Sarge
  */
 public class DeviceFeatures {
@@ -22,8 +24,8 @@ public class DeviceFeatures {
 	 * @see VkPhysicalDeviceFeatures
 	 */
 	public static DeviceFeatures of(Set<String> features) {
-		final var struct = new VkPhysicalDeviceFeatures();
-		for(String str : features) {
+		final VkPhysicalDeviceFeatures struct = new VkPhysicalDeviceFeatures();
+		for(final String str : features) {
 			struct.writeField(str, VulkanBoolean.TRUE);
 		}
 		return new DeviceFeatures(struct);
@@ -45,8 +47,7 @@ public class DeviceFeatures {
 	 * @param features Features descriptor
 	 */
 	public DeviceFeatures(VkPhysicalDeviceFeatures features) {
-		// TODO
-		this.features = features == null ? new VkPhysicalDeviceFeatures() : features; //notNull(features);
+		this.features = notNull(features);
 		this.features.write();
 	}
 

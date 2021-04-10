@@ -53,7 +53,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	 * @param queues 		Work queues
 	 */
 	private LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Set<RequiredQueue> queues) {
-		super(handle);
+		super(new Handle(handle));
 		this.parent = notNull(parent);
 		this.lib = parent.instance().library();
 		this.features = notNull(features);
@@ -203,7 +203,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private final Set<RequiredQueue> queues = new HashSet<>();
-		private VkPhysicalDeviceFeatures features;
+		private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
 
 		/**
 		 * Constructor.

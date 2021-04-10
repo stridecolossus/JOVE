@@ -13,10 +13,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.model.DefaultModel;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing and maintains the list of generated models.
@@ -219,11 +219,9 @@ public class ObjectModel {
 	/**
 	 * Constructs the model(s).
 	 * @return Model(s)
-	 * @throws IllegalStateException if the model is empty
 	 * @throws IllegalArgumentException if the models cannot be constructed
 	 */
 	public Stream<Model> build() {
-		if(isEmpty()) throw new IllegalStateException("Model is empty");
 		init();
 		return builders.stream().map(DefaultModel.Builder::build);
 	}

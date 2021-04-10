@@ -40,6 +40,7 @@ public class SamplerTest extends AbstractVulkanTest {
 		assertEquals(new Handle(new Pointer(1)), sampler.handle());
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	void levels() {
 		assertEquals(1, Sampler.levels(new Dimensions(1, 1)));
@@ -92,8 +93,10 @@ public class SamplerTest extends AbstractVulkanTest {
 		@Test
 		void build() {
 			// Init required features
-			final DeviceFeatures features = dev.features();
+			// TODO - messy
+			final DeviceFeatures features = mock(DeviceFeatures.class);
 			when(features.isSupported("samplerAnisotropy")).thenReturn(true);
+			when(dev.features()).thenReturn(features);
 
 			// Create sampler
 			final Sampler sampler = builder

@@ -235,8 +235,8 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.sharingMode);
 
 			// Check memory allocation
-			//final var h = mem.handle();
-			verify(lib).vkBindImageMemory(eq(dev.handle()), isA(Pointer.class), eq(mem.handle()), eq(0L));
+			final var h = mem.handle();
+			verify(lib).vkBindImageMemory(eq(dev.handle()), isA(Pointer.class), eq(h)/*mem.handle())*/, eq(0L));
 		}
 
 		@Test

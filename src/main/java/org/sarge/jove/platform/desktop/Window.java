@@ -118,7 +118,7 @@ public class Window extends AbstractTransientNativeObject {
 	 * @param descriptor		Window descriptor
 	 */
 	Window(Pointer window, DesktopLibrary lib, Descriptor descriptor) {
-		super(window);
+		super(new Handle(window));
 		this.lib = notNull(lib);
 		this.descriptor = notNull(descriptor);
 	}

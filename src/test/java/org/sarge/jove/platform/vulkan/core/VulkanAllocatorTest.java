@@ -193,13 +193,13 @@ public class VulkanAllocatorTest extends AbstractVulkanTest {
 		@Test
 		void allocateEmptyMemoryProperties() {
 			request.size(1);
-			assertThrows(AllocationException.class, "xxx", () -> request.allocate());
+			assertThrows(AllocationException.class, "No memory type available", () -> request.allocate());
 		}
 
 		@Test
 		void allocateTypeNotSupported() {
 			request.size(1).required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
-			assertThrows(AllocationException.class, "xxx", () -> request.allocate());
+			assertThrows(AllocationException.class, "No memory type available", () -> request.allocate());
 		}
 
 		@Test

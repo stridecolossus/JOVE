@@ -30,6 +30,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Runner.Frame;
@@ -180,7 +181,7 @@ public class ModelDemo {
 				.build();
 
 		// Attach message handler
-		instance.handler().init().attach();
+		instance.attach(HandlerBuilder.create());
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());

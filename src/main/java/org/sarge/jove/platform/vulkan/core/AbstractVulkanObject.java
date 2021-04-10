@@ -50,7 +50,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	 * @param destructor	Destructor API method
 	 */
 	protected AbstractVulkanObject(Pointer handle, LogicalDevice dev, Destructor destructor) {
-		super(handle);
+		super(new Handle(handle));
 		this.dev = notNull(dev);
 		this.destructor = notNull(destructor);
 	}

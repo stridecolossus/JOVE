@@ -23,6 +23,7 @@ import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Instance;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
+import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Shader;
@@ -63,7 +64,7 @@ public class TriangleDemo {
 				.build();
 
 		// Attach message handler
-		instance.handler().init().attach();
+		instance.attach(new HandlerBuilder().init().build());
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());

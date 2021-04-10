@@ -23,6 +23,7 @@ import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.ptr.IntByReference;
 
+@SuppressWarnings("static-method")
 public class VulkanLibraryTest {
 	@Test
 	void version() {
