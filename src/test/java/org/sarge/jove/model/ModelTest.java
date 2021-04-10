@@ -7,35 +7,39 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.model.Vertex.Component;
+import org.sarge.jove.model.Vertex.Layout;
 
 public class ModelTest {
 	@Nested
 	class HeaderTests {
 		private Header header;
+		private Layout layout;
 
 		@BeforeEach
 		void before() {
-			header = new Header(Primitive.TRIANGLES, true, 3);
+			layout = new Layout(Component.POSITION);
+			header = new Header(Primitive.TRIANGLES, layout, true);
 		}
 
 		@Test
 		void constructor() {
 			assertEquals(Primitive.TRIANGLES, header.primitive());
+			assertEquals(layout, header.layout());
 			assertEquals(true, header.clockwise());
-			assertEquals(3, header.count());
 		}
 
 		@Test
-		void invalidVertexCount() {
-			assertThrows(IllegalArgumentException.class, () -> new Header(Primitive.TRIANGLES, true, 2));
+		void invalidPrimitiveNormals() {
+			assertThrows(IllegalArgumentException.class, () -> new Header(Primitive.LINES, new Layout(Component.NORMAL), true));
 		}
 
 		@Test
 		void equals() {
 			assertEquals(true, header.equals(header));
-			assertEquals(true, header.equals(new Header(Primitive.TRIANGLES, true, 3)));
+			assertEquals(true, header.equals(new Header(Primitive.TRIANGLES, layout, true)));
 			assertEquals(false, header.equals(null));
-			assertEquals(false, header.equals(new Header(Primitive.TRIANGLES, true, 0)));
+			assertEquals(false, header.equals(new Header(Primitive.LINE_STRIP, layout, true)));
 		}
 	}
 }

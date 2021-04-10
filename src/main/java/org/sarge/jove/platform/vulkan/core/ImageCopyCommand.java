@@ -29,7 +29,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 * Constructor.
 	 * @param image			Image
 	 * @param buffer		Buffer
-	 * @param copy		Region(s) descriptor
+	 * @param regions		Copy region(s)
 	 * @param layout		Image layout
 	 * @param toImage		Whether copying <i>to</i> or <i>from</i> the image
 	 * @throws IllegalStateException if the image or buffer is not a valid source/destination for this operation
@@ -61,6 +61,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	protected VkBufferImageCopy[] regions() {
 		return regions;
 	}
+	// TODO
 
 	@Override
 	public void execute(VulkanLibrary lib, Handle handle) {

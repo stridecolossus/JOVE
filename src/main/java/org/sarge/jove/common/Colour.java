@@ -90,7 +90,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	@Override
-	public long length() {
+	public int length() {
 		return SIZE * Float.BYTES;
 	}
 

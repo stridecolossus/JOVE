@@ -55,7 +55,7 @@ public class RotatingCubeDemo {
 		final VkFormat format = FormatBuilder.format(image);
 
 		// Copy image to staging buffer
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().length());
 		staging.load(image.data());
 
 		// Create texture
@@ -209,17 +209,15 @@ public class RotatingCubeDemo {
 
 		// Buffer cube
 		final Model cube = CubeBuilder.create();
-		final var vertices = cube.vertices();
+		final var vertices = cube.vertexBuffer();
 
 		// Create staging VBO
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, vertices.limit());
-
-		// Load to staging
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, vertices.length());
 		staging.load(vertices);
 
 		// Create device VBO
 		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
-				.length(vertices.limit())
+				.length(vertices.length())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -315,10 +313,10 @@ public class RotatingCubeDemo {
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
-					.binding(cube.layout())
+					.binding(cube.header().layout())
 					.build()
 				.assembly()
-					.topology(cube.primitive())
+					.topology(cube.header().primitive())
 					.build()
 				.viewport(chain.extents())
 				.shader()

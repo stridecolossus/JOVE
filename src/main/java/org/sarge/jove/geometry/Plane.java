@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.lib.util.Check;
 
 /**
- * Plane in 3D space.
+ * A <i>plane</i> is a flat surface in 3D space.
  * @author Sarge
  */
 public record Plane(Vector normal, float distance) {

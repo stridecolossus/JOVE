@@ -1,9 +1,14 @@
 package org.sarge.jove.platform.vulkan.util;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 
 public final class VulkanHelper {
+	private static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
+
 	private VulkanHelper() {
 	}
 
@@ -17,5 +22,14 @@ public final class VulkanHelper {
 		out.offset.y = in.y();
 		out.extent.width = in.width();
 		out.extent.height = in.height();
+	}
+
+	/**
+	 * Allocate a new byte buffer.
+	 * @param len Buffer length
+	 * @return New byte buffer
+	 */
+	public static ByteBuffer buffer(int len) {
+		return ByteBuffer.allocate(len).order(NATIVE_ORDER);
 	}
 }

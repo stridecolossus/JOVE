@@ -5,12 +5,12 @@ import static java.util.stream.Collectors.toList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
@@ -34,6 +34,7 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.ResourceLoader;
 
@@ -51,7 +52,7 @@ public class TextureQuadDemo {
 		//System.out.println(format);
 
 		// Copy image to staging buffer
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().length());
 		staging.load(image.data());
 
 		// Create texture
@@ -216,17 +217,29 @@ public class TextureQuadDemo {
 		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE);
 
 		// Create interleaved buffer
-		final ByteBuffer bb = ByteBuffer.allocate(vertices.length * layout.size() * Float.BYTES).order(ByteOrder.nativeOrder());
+		final int len = layout.size() * Float.BYTES;
+		final ByteBuffer bb = VulkanHelper.buffer(len);
 		for(Vertex v : vertices) {
 			layout.buffer(v, bb);
 		}
 		bb.rewind();
 
-		// Create staging VBO
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, bb.limit());
+		// Create bufferable wrapper
+		final Bufferable bufferable = new Bufferable() {
+			@Override
+			public int length() {
+				return len;
+			}
+
+			@Override
+			public void buffer(ByteBuffer buffer) {
+				buffer.put(bb);
+			}
+		};
 
 		// Load to staging
-		staging.load(bb);
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, len);
+		staging.load(bufferable);
 
 		// Create device VBO
 		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)

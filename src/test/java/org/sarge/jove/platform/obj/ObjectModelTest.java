@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.model.VertexModel;
 import org.sarge.jove.platform.obj.ObjectModel.VertexComponentList;
 
 public class ObjectModelTest {
@@ -184,6 +184,7 @@ public class ObjectModelTest {
 			// Set model name
 			final String name = "name";
 			model.name(name);
+			// TODO - unused
 
 			// Construct a triangle
 			triangle();
@@ -193,12 +194,12 @@ public class ObjectModelTest {
 			assertEquals(1, model.build().count());
 
 			// Check resultant model
-			final VertexModel result = (VertexModel) model.build().iterator().next();
+			final Model result = model.build().iterator().next();
 			assertNotNull(result);
 //			assertEquals(name, result.name());
 			assertEquals(Primitive.TRIANGLES, result.header().primitive());
-			assertEquals(List.of(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.COORDINATE), result.layout().components());
-			assertEquals(3, result.header().count());
+			assertEquals(List.of(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.COORDINATE), result.header().layout().components());
+			assertEquals(3, result.count());
 			assertEquals(Optional.empty(), result.indexBuffer());
 		}
 

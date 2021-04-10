@@ -9,7 +9,7 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>matrix</i> is a 2D square array used for geometry transformation and projection.
+ * A <i>matrix</i> is a 2-dimensional square array used for geometry transformation and projection.
  * <p>
  * Notes:
  * <ul>
@@ -19,6 +19,7 @@ import org.sarge.jove.util.MathsUtil;
  */
 // TODO
 // - determinant, invert, etc
+// - SIMD/vector operations?
 public final class Matrix implements Transform, Bufferable {
 
 	// http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
@@ -174,7 +175,7 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public long length() {
+	public int length() {
 		return order * order * Float.BYTES;
 	}
 
@@ -318,8 +319,7 @@ public final class Matrix implements Transform, Bufferable {
 		}
 
 		/**
-		 * Initialises this matrix to the identity matrix.
-		 * Invoking this method on a builder that has already been mutated is undefined, i.e. this method should be invoked <b>first</b> if required.
+		 * Initialises this matrix to identity (only affects the diagonal elements).
 		 */
 		public Builder identity() {
 			for(int n = 0; n < order; ++n) {

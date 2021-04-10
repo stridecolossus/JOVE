@@ -14,7 +14,7 @@ public interface DrawCommand extends Command {
 	 * @return Drawing command
 	 */
 	static Command of(Model model) {
-		final int count = model.header().count();
+		final int count = model.count();
 		if(model.isIndexed()) {
 			return indexed(count);
 		}

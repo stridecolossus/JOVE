@@ -12,38 +12,37 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.DefaultModel.Builder;
+import org.sarge.jove.model.DefaultModel.IndexedBuilder;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.Layout;
-import org.sarge.jove.model.VertexModel.Builder;
-import org.sarge.jove.model.VertexModel.IndexedBuilder;
 
-public class VertexModelTest {
-	private VertexModel model;
+public class DefaultModelTest {
+	private DefaultModel model;
 	private Header header;
-	private Layout layout;
 	private List<Integer> index;
 	private Vertex vertex;
 
 	@BeforeEach
 	void before() {
-		header = new Header(Primitive.TRIANGLES, true, 3);
-		layout = new Layout(Component.POSITION);
+		header = new Header(Primitive.TRIANGLES, new Layout(Component.POSITION), true);
 		vertex = Vertex.of(Point.ORIGIN);
 		index = List.of(1, 1, 1);
-		model = new VertexModel(header, layout, List.of(vertex), index);
+		model = new DefaultModel(header, List.of(vertex), index);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(header, model.header());
+		assertEquals(3, model.count());
 		assertEquals(List.of(vertex), model.vertices());
 		assertEquals(Optional.of(index), model.index());
 	}
 
 	@Test
 	void unindexed() {
-		model = new VertexModel(new Header(Primitive.POINTS, true, 1), layout, List.of(vertex), null);
+		model = new DefaultModel(header, List.of(vertex, vertex, vertex), null);
 		assertEquals(Optional.empty(), model.index());
 	}
 
@@ -81,17 +80,16 @@ public class VertexModelTest {
 		@Test
 		void build() {
 			// Build model
-			final VertexModel model = builder
+			final DefaultModel model = builder
 					.primitive(Primitive.LINES)
 					.clockwise(true)
-					.layout(layout)
 					.add(vertex)
 					.add(vertex)
 					.build();
 
 			// Verify model
 			assertNotNull(model);
-			assertEquals(new Header(Primitive.LINES, true, 2), model.header());
+			assertEquals(new Header(Primitive.LINES, new Layout(Component.POSITION), true), model.header());
 			assertEquals(false, model.isIndexed());
 			assertEquals(List.of(vertex, vertex), model.vertices());
 			assertEquals(Optional.empty(), model.index());
@@ -99,9 +97,9 @@ public class VertexModelTest {
 
 		@Test
 		void buildEmpty() {
-			final VertexModel model = builder.build();
+			final DefaultModel model = builder.build();
 			assertNotNull(model);
-			assertEquals(new Header(Primitive.TRIANGLE_STRIP, false, 0), model.header());
+			assertEquals(new Header(Primitive.TRIANGLE_STRIP, new Layout(Component.POSITION), false), model.header());
 			assertEquals(List.of(), model.vertices());
 			assertEquals(Optional.empty(), model.index());
 		}
@@ -132,7 +130,7 @@ public class VertexModelTest {
 		void build() {
 			// Build an indexed model that re-uses some vertices
 			final Vertex other = Vertex.of(new Point(1, 2, 3));
-			final VertexModel model = builder
+			final DefaultModel model = builder
 					.add(vertex)
 					.add(other)
 					.add(vertex)
@@ -141,16 +139,16 @@ public class VertexModelTest {
 			// Verify the indexed model
 			assertNotNull(model);
 			assertEquals(true, model.isIndexed());
-			assertEquals(new Header(Primitive.TRIANGLE_STRIP, false, 3), model.header());
+			assertEquals(3, model.count());
 			assertEquals(List.of(vertex, other), model.vertices());
 			assertEquals(Optional.of(List.of(0, 1, 0)), model.index());
 		}
 
 		@Test
 		void buildEmpty() {
-			final VertexModel model = builder.build();
+			final DefaultModel model = builder.build();
 			assertNotNull(model);
-			assertEquals(new Header(Primitive.TRIANGLE_STRIP, false, 0), model.header());
+			assertEquals(0, model.count());
 			assertEquals(List.of(), model.vertices());
 			assertEquals(Optional.of(List.of()), model.index());
 		}

@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.lib.util.Check;
 
 /**
- * Projection ray.
+ * A <i>ray</i> is a vector relative to an originating position.
  * @author Sarge
  */
 public record Ray(Point origin, Vector direction) {

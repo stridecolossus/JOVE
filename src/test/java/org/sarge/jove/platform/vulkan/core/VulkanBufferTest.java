@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
-import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -137,12 +136,14 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(factory.pointer()).thenReturn(ref);
 		when(ref.getValue()).thenReturn(data);
 
-		// Init internal buffer
-		final ByteBuffer bb = mock(ByteBuffer.class);
-		when(data.getByteBuffer(0, 3)).thenReturn(bb);
+//		// Init internal buffer
+//		final ByteBuffer bb = mock(ByteBuffer.class);
+//		when(data.getByteBuffer(0, 3)).thenReturn(bb);
 
 		// Load buffer
-		buffer.load(Bufferable.of(ByteBuffer.allocate(3)));
+		final Bufferable obj = mock(Bufferable.class);
+		when(obj.length()).thenReturn(3);
+		buffer.load(obj);
 
 		// Check memory is mapped
 		verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, 3L, 0, ref);
@@ -158,14 +159,16 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void loadBufferTooLarge() {
-		final ByteBuffer bb = ByteBuffer.allocate(999);
-		assertThrows(IllegalStateException.class, () -> buffer.load(Bufferable.of(bb)));
+		final Bufferable obj = mock(Bufferable.class);
+		when(obj.length()).thenReturn(999);
+		assertThrows(IllegalStateException.class, () -> buffer.load(obj));
 	}
 
 	@Test
 	void loadInvalidOffset() {
-		final ByteBuffer bb = ByteBuffer.allocate(1);
-		assertThrows(IllegalStateException.class, () -> buffer.load(Bufferable.of(bb), 3));
+		final Bufferable obj = mock(Bufferable.class);
+		when(obj.length()).thenReturn(1);
+		assertThrows(IllegalStateException.class, () -> buffer.load(obj, 3));
 	}
 
 	@Test

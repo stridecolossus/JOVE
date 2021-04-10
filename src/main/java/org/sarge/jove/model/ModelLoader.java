@@ -8,12 +8,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.model.Model.Header;
-import org.sarge.jove.platform.vulkan.VkFrontFace;
+import org.sarge.jove.model.Vertex.Layout;
 import org.sarge.jove.util.ResourceLoader;
 
 /**
@@ -30,6 +29,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 	 * @param out		Output stream
 	 * @throws IOException if the model cannot be written
 	 */
+	@SuppressWarnings("static-method")
 	public void write(Model model, OutputStream out) throws IOException {
 		write(model, new DataOutputStream(out));
 	}
@@ -42,17 +42,17 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		out.writeInt(VERSION);
 
 		// Write model properties
-		out.writeUTF(model.name());
-		out.writeUTF(model.primitive().name());
-		out.writeBoolean(model.winding() == VkFrontFace.VK_FRONT_FACE_CLOCKWISE);
+		final Header header = model.header();
+		out.writeUTF(header.primitive().name());
+		out.writeBoolean(header.clockwise());
 
 		// Write vertex layout
-		final String layout = model.layout().components().stream().map(Enum::name).collect(joining(DELIMITER));
+		final String layout = header.layout().components().stream().map(Enum::name).collect(joining(DELIMITER));
 		out.writeUTF(layout);
 
 		// Write VBO
 		out.writeInt(model.count());
-		write(model.vertices(), out);
+		write(model.vertexBuffer(), out);
 
 		// Write index
 		final var index = model.indexBuffer();
@@ -67,12 +67,36 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		out.flush();
 	}
 
+//	/**
+//	 * Allocates a direct NIO buffer of the given length.
+//	 * @param len Length
+//	 * @return New direct buffer
+//	 */
+//	static ByteBuffer allocate(int len) {
+//		return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
+//	}
+//
+//	/**
+//	 * Allocates a direct NIO buffer that wraps the given array.
+//	 * @param bytes Array
+//	 * @return New NIO buffer
+//	 */
+//	static ByteBuffer allocate(byte[] bytes) {
+//		final ByteBuffer bb = allocate(bytes.length);
+//		bb.put(bytes);
+//		bb.flip();
+//		return bb;
+//	}
+//	// 	/**
+//	 * Native byte order for NIO buffers.
+//	 */
+//	public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
+
 	/**
-	 * Writes the given byte-buffer.
+	 * Writes the given buffer.
 	 */
-	private static void write(ByteBuffer bb, DataOutputStream out) throws IOException {
-		final byte[] bytes = new byte[bb.limit()];
-		bb.get(bytes);
+	private static void write(Bufferable data, DataOutputStream out) throws IOException {
+		final byte[] bytes = data.toByteArray();
 		out.writeInt(bytes.length);
 		out.write(bytes);
 	}
@@ -97,7 +121,6 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		}
 
 		// Load model properties
-		final String name = in.readUTF();
 		final Primitive primitive = Primitive.valueOf(in.readUTF());
 		final boolean clockwise = in.readBoolean();
 
@@ -106,11 +129,11 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 
 		// Load data
 		final int count = in.readInt();
-		final ByteBuffer vertices = loadBuffer(in);
-		final ByteBuffer index = loadBuffer(in);
+		final Bufferable vertices = loadBuffer(in);
+		final Bufferable index = loadBuffer(in);
 
 		// Create model
-		return new BufferedModel(new Header(primitive, winding, count), vertices, index);
+		return new BufferedModel(new Header(primitive, new Layout(layout), clockwise), count, vertices, index);
 	}
 
 	/**
@@ -119,7 +142,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 	 * @return New buffer or {@code null} if empty
 	 * @throws IOException if the buffer cannot be loaded
 	 */
-	private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
+	private static Bufferable loadBuffer(DataInputStream in) throws IOException {
 		// Read buffer size
 		final int len = in.readInt();
 		if(len == 0) {
@@ -131,7 +154,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		final int actual = in.read(bytes);
 		if(actual != len) throw new IOException(String.format("Error loading buffer: expected=%d actual=%d", len, actual));
 
-		// Convert to buffer
-		return Bufferable.allocate(bytes);
+		// Convert to bufferable object
+		return Bufferable.of(bytes);
 	}
 }

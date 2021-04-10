@@ -9,52 +9,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.Layout;
 
 /**
- * A <i>vertex model</i> is comprised of a collection of vertices.
+ * A <i>default model</i> is comprised of a collection of vertices.
  * TODO
  * - buffers on demand
  * @author Sarge
  */
-public class VertexModel implements Model {
-	private final Header header;
-	private final Layout layout;
+public class DefaultModel extends AbstractModel {
 	private final List<Vertex> vertices;
 	private final Optional<List<Integer>> index;
 
 	/**
 	 * Constructor.
 	 * @param header			Model header
-	 * @param layout			Vertex layout
 	 * @param vertices			Vertices
 	 * @param index				Optional index
 	 */
-	public VertexModel(Header header, Layout layout, List<Vertex> vertices, List<Integer> index) {
-		this.header = notNull(header);
-		this.layout = notNull(layout);
+	public DefaultModel(Header header, List<Vertex> vertices, List<Integer> index) {
+		super(header, index == null ? vertices.size() : index.size());
 		this.vertices = List.copyOf(vertices);
-		this.index = Optional.ofNullable(index);
-	}
-
-	@Override
-	public Header header() {
-		return header;
+		this.index = Optional.ofNullable(index).map(List::copyOf);
 	}
 
 	@Override
 	public boolean isIndexed() {
 		return index.isPresent();
-	}
-
-	/**
-	 * @return Vertex layout of this model
-	 */
-	public Layout layout() {
-		return layout;
 	}
 
 	/**
@@ -74,15 +58,16 @@ public class VertexModel implements Model {
 	@Override
 	public Bufferable vertexBuffer() {
 		return new Bufferable() {
-			private final int len = vertices.size() * layout.size() * Float.BYTES;
+			private final int len = vertices.size() * header().layout().size() * Float.BYTES;
 
 			@Override
-			public long length() {
+			public int length() {
 				return len;
 			}
 
 			@Override
 			public void buffer(ByteBuffer buffer) {
+				final Layout layout = header().layout();
 				for(final Vertex v : vertices) {
 					layout.buffer(v, buffer);
 				}
@@ -92,7 +77,7 @@ public class VertexModel implements Model {
 
 	@Override
 	public Optional<Bufferable> indexBuffer() {
-		return index.map(VertexModel::index);
+		return index.map(DefaultModel::index);
 	}
 
 	/**
@@ -101,7 +86,7 @@ public class VertexModel implements Model {
 	private static Bufferable index(List<Integer> index) {
 		return new Bufferable() {
 			@Override
-			public long length() {
+			public int length() {
 				return index.size() * Integer.BYTES;
 			}
 
@@ -118,16 +103,7 @@ public class VertexModel implements Model {
 	 * @return Buffered model
 	 */
 	public BufferedModel buffer() {
-		return new BufferedModel(header, vertexBuffer(), indexBuffer().orElse(null));
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(header)
-				.append("vertices", vertices.size())
-				.append("index", index.map(List::size).orElse(0))
-				.build();
+		return new BufferedModel(header(), count(), vertexBuffer(), indexBuffer().orElse(null));
 	}
 
 	/**
@@ -137,7 +113,9 @@ public class VertexModel implements Model {
 		private Primitive primitive = Primitive.TRIANGLE_STRIP;
 		private boolean clockwise;
 		private Layout layout = new Layout(Component.POSITION);
+
 		protected final List<Vertex> vertices = new ArrayList<>();
+		protected List<Integer> index;
 
 		/**
 		 * Sets the drawing primitive (default is {@link Primitive#TRIANGLE_STRIP}).
@@ -184,29 +162,21 @@ public class VertexModel implements Model {
 		 * Constructs this model.
 		 * @return New vertex model
 		 */
-		public VertexModel build() {
-			return build(vertices.size(), null);
-		}
-
-		/**
-		 * Constructs this model.
-		 * @param count		Vertex count
-		 * @param index		Optional index
-		 * @return New model
-		 * @throws IllegalArgumentException for an invalid model
-		 */
-		protected VertexModel build(int count, List<Integer> index) {
-			final Header header = new Header(primitive, clockwise, count);
-			return new VertexModel(header, layout, vertices, index);
+		public DefaultModel build() {
+			return new DefaultModel(new Header(primitive, layout, clockwise), vertices, index);
 		}
 	}
 
 	/**
 	 * Builder for an indexed model.
+	 * TODO - doc, auto
 	 */
 	public static class IndexedBuilder extends Builder {
-		private final List<Integer> index = new ArrayList<>();
 		private final Map<Vertex, Integer> map = new HashMap<>();
+
+		public IndexedBuilder() {
+			index = new ArrayList<>();
+		}
 
 		@Override
 		public Builder add(Vertex v) {
@@ -223,11 +193,6 @@ public class VertexModel implements Model {
 				index.add(prev);
 			}
 			return this;
-		}
-
-		@Override
-		public VertexModel build() {
-			return build(index.size(), index);
 		}
 	}
 }

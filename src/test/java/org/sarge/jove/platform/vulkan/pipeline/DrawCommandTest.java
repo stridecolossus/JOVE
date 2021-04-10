@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Model.Header;
-import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Command;
 
@@ -52,7 +50,7 @@ public class DrawCommandTest {
 		@BeforeEach
 		void before() {
 			model = mock(Model.class);
-			when(model.header()).thenReturn(new Header(Primitive.POINTS, true, COUNT));
+			when(model.count()).thenReturn(COUNT);
 		}
 
 		@Test

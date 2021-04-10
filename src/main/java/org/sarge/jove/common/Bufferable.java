@@ -1,18 +1,14 @@
 package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+
+import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 
 /**
- * A <i>bufferable</i> object can be written to an NIO buffer.
+ * A <i>bufferable</i> is a data object that can be written to an NIO buffer.
  * @author Sarge
  */
 public interface Bufferable {
-	/**
-	 * Native byte order for NIO buffers.
-	 */
-	ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
-
 	/**
 	 * Writes this object to the given buffer.
 	 * @param buffer Buffer
@@ -22,46 +18,39 @@ public interface Bufferable {
 	/**
 	 * @return Length of this object (bytes)
 	 */
-	long length();
+	int length();
 
 	/**
-	 * Wraps the given byte-buffer as a bufferable.
-	 * @param bb Byte-buffer
+	 * Helper - Converts this bufferable object to a byte array.
+	 * @return Byte array
+	 */
+	default byte[] toByteArray() {
+		final ByteBuffer bb = VulkanHelper.buffer(length());
+		buffer(bb);
+		return bb.array();
+	}
+
+	/**
+	 * Wraps the given byte array as a bufferable.
+	 * @param bytes Byte array
 	 * @return Wrapped bufferable
 	 */
-	static Bufferable of(ByteBuffer bb) {
+	static Bufferable of(byte[] bytes) {
 		return new Bufferable() {
 			@Override
-			public long length() {
-				return bb.remaining();
+			public int length() {
+				return bytes.length;
 			}
 
 			@Override
-			public void buffer(ByteBuffer dest) {
-				if(bb.remaining() == 0) throw new IllegalStateException("Empty source buffer"); // TODO
-				dest.put(bb);
+			public void buffer(ByteBuffer buffer) {
+				buffer.put(bytes);
+			}
+
+			@Override
+			public byte[] toByteArray() {
+				return bytes;
 			}
 		};
-	}
-
-	/**
-	 * Allocates a direct NIO buffer of the given length.
-	 * @param len Length
-	 * @return New direct buffer
-	 */
-	static ByteBuffer allocate(int len) {
-		return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
-	}
-
-	/**
-	 * Allocates a direct NIO buffer that wraps the given array.
-	 * @param bytes Array
-	 * @return New NIO buffer
-	 */
-	static ByteBuffer allocate(byte[] bytes) {
-		final ByteBuffer bb = allocate(bytes.length);
-		bb.put(bytes);
-		bb.flip();
-		return bb;
 	}
 }

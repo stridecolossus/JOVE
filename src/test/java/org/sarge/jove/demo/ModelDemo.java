@@ -4,12 +4,12 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.IntFunction;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
@@ -21,8 +21,8 @@ import org.sarge.jove.control.Bindings;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.BufferedModel.ModelLoader;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.ModelLoader;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
@@ -54,7 +54,7 @@ public class ModelDemo {
 //		final VkFormat format = VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
 
 		// Copy image to staging buffer
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().length());
 		staging.load(image.data());
 
 		// Create texture
@@ -112,16 +112,16 @@ public class ModelDemo {
 		return new View.Builder(dev, texture).build();
 	}
 
-	private static VulkanBuffer loadBuffer(LogicalDevice dev, ByteBuffer bb, VkBufferUsageFlag usage, Command.Pool pool) {
+	private static VulkanBuffer loadBuffer(LogicalDevice dev, Bufferable obj, VkBufferUsageFlag usage, Command.Pool pool) {
 		// Create staging VBO
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, bb.limit());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, obj.length());
 
 		// Load to staging
-		staging.load(bb);
+		staging.load(obj);
 
 		// Create device VBO
 		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
-				.length(bb.limit())
+				.length(obj.length())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(usage)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -267,7 +267,7 @@ public class ModelDemo {
 
 		// Load VBO
 		final Command.Pool copyPool = Command.Pool.create(transfer.queue(dev)); //dev.queue(transfer));
-		final VulkanBuffer vbo = loadBuffer(dev, model.vertices(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
+		final VulkanBuffer vbo = loadBuffer(dev, model.vertexBuffer(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 		// Load IBO
 		final VulkanBuffer index = loadBuffer(dev, model.indexBuffer().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
@@ -339,14 +339,14 @@ public class ModelDemo {
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
-					.binding(model.layout())
+					.binding(model.header().layout())
 					.build()
 				.assembly()
-					.topology(model.primitive())
+					.topology(model.header().primitive())
 					.build()
 				.viewport(swapchain.extents())
 				.rasterizer()
-					.winding(model.winding())
+					.clockwise(model.header().clockwise())
 					.build()
 				.depth()
 					.enable(true)

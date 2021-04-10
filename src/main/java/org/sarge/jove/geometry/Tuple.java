@@ -13,7 +13,7 @@ interface Tuple extends Bufferable {
 	int SIZE = 3;
 
 	@Override
-	default long length() {
+	default int length() {
 		return SIZE * Float.BYTES;
 	}
 }

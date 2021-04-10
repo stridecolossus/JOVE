@@ -11,10 +11,10 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.model.VertexModel;
 
 public class ObjectModelLoaderTest {
 	private ObjectModelLoader loader;
@@ -62,11 +62,11 @@ public class ObjectModelLoaderTest {
 			assertEquals(1, array.length);
 
 			// Check model
-			final VertexModel model = (VertexModel) array[0];
+			final DefaultModel model = (DefaultModel) array[0];
 			assertNotNull(model);
 			assertEquals(Primitive.TRIANGLES, model.header().primitive());
-			assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.COORDINATE), model.layout());
-			assertEquals(3, model.header().count());
+			assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.COORDINATE), model.header().layout());
+			assertEquals(3, model.count());
 
 			// Check vertex buffer
 			assertNotNull(model.vertices());

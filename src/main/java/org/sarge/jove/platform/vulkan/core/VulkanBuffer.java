@@ -77,40 +77,21 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Loads the given NIO buffer to this buffer.
-	 * @param bb Source buffer
-	 */
-	public void load(ByteBuffer bb) {
-		load(Bufferable.of(bb));
-	}
-
-	/**
 	 * Loads the given bufferable object to this buffer.
 	 * @param buffer Data buffer
 	 * @throws IllegalStateException if the size of the object exceeds the length of this vertex buffer
 	 */
 	public void load(Bufferable obj) {
-		load(obj, obj.length(), 0);
-	}
-
-	/**
-	 * Loads the given bufferable object to this buffer at the specified offset.
-	 * @param buffer 		Data buffer
-	 * @param offset		Offset into this vertex buffer (bytes)
-	 * @throws IllegalStateException if the size of the given object exceeds the length of this vertex buffer
-	 */
-	public void load(Bufferable obj, long offset) {
-		load(obj, obj.length(), offset);
+		load(obj, 0);
 	}
 
 	/**
 	 * Loads the given bufferable object to this buffer at the specified offset.
 	 * @param buffer 		Bufferable object
-	 * @param len			Length of the object (bytes)
 	 * @param offset		Offset into this vertex buffer (bytes)
-	 * @throws IllegalStateException if the length of given bufferable object exceeds the length of this vertex buffer
+	 * @throws IllegalStateException if the size of the given object exceeds the length of this vertex buffer
 	 */
-	private void load(Bufferable obj, long len, long offset) {
+	public void load(Bufferable obj, long offset) {
 		// Check buffer
 		Check.zeroOrMore(offset);
 		if(offset + len > this.len) {

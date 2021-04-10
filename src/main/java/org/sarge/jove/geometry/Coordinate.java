@@ -7,7 +7,8 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>texture coordinate</i> is a 1D, 2D or 3D coordinate.
+ * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
+ * @author Sarge
  */
 public interface Coordinate extends Bufferable {
 	/**
@@ -35,7 +36,7 @@ public interface Coordinate extends Bufferable {
 		}
 
 		@Override
-		public long length() {
+		public int length() {
 			return 1 * Float.BYTES;
 		}
 
@@ -74,7 +75,7 @@ public interface Coordinate extends Bufferable {
 		}
 
 		@Override
-		public long length() {
+		public int length() {
 			return 2 * Float.BYTES;
 		}
 
@@ -97,7 +98,7 @@ public interface Coordinate extends Bufferable {
 		}
 
 		@Override
-		public long length() {
+		public int length() {
 			return 3 * Float.BYTES;
 		}
 

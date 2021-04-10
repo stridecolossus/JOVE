@@ -4,33 +4,28 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Optional;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.model.Model.AbstractModel;
 
 /**
  * A <i>buffered model</i> TODO
  * @author Sarge
  */
-public class BufferedModel implements Model {
-	private final Header header;
+public class BufferedModel extends AbstractModel {
 	private final Bufferable vertices;
 	private final Optional<Bufferable> index;
 
 	/**
 	 * Constructor.
 	 * @param header		Model header
+	 * @param count			Number of vertices
 	 * @param vertices		Vertex buffer
 	 * @param index			Optional index buffer
 	 */
-	public BufferedModel(Header header, Bufferable vertices, Bufferable index) {
-		this.header = notNull(header);
+	public BufferedModel(Header header, int count, Bufferable vertices, Bufferable index) {
+		super(header, count);
 		this.vertices = notNull(vertices);
 		this.index = Optional.ofNullable(index);
-	}
-
-	@Override
-	public Header header() {
-		return header;
 	}
 
 	@Override
@@ -46,13 +41,5 @@ public class BufferedModel implements Model {
 	@Override
 	public Optional<Bufferable> indexBuffer() {
 		return index;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(header)
-				.append("index", isIndexed())
-				.build();
 	}
 }

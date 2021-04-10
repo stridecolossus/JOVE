@@ -51,7 +51,7 @@ public class CubeBuilder {
 		return new CubeBuilder().size(MathsUtil.HALF).build();
 	}
 
-	private final VertexModel.Builder builder = new VertexModel.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
+	private final DefaultModel.Builder builder = new DefaultModel.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
 	private float size = 1;
 
 	/**
@@ -67,7 +67,7 @@ public class CubeBuilder {
 	 * Constructs this cube.
 	 * @return New cube model
 	 */
-	public VertexModel build() {
+	public DefaultModel build() {
 		for(int[] face : FACES) {
 			for(int corner : TRIANGLES) {
 				// Lookup cube vertex for this triangle

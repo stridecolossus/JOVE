@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,29 +33,21 @@ public class ImageDataTest {
 
 	@Test
 	void constructor() {
-		// Create image
-		final int len = 3 * (3 * 4);
-		final ImageData image = new DefaultImageData(size, components, ByteBuffer.allocate(len));
+		final int len = 3 * size.width() * size.height();
+		final ImageData image = new DefaultImageData(size, components, Bufferable.of(new byte[len]));
 		assertEquals(size, image.size());
 		assertEquals(components, image.components());
-
-		// Check data buffer
-		final var data = image.data();
-		assertNotNull(data);
-		assertEquals(len, data.capacity());
-		assertEquals(len, data.limit());
-		assertEquals(0, data.position());
-		assertEquals(true, data.isReadOnly());
 	}
 
 	@Test
 	void constructorInvalidArrayLength() {
-		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, ByteBuffer.allocate(42)));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, Bufferable.of(new byte[0])));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, Bufferable.of(new byte[42])));
 	}
 
 	@Test
 	void constructorEmptyComponents() {
-		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, List.of(), ByteBuffer.allocate(42)));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, List.of(), Bufferable.of(new byte[3 * 3 * 4])));
 	}
 
 	@Nested
@@ -86,7 +77,7 @@ public class ImageDataTest {
 			assertEquals(new Dimensions(w, h), image.size());
 			assertNotNull(image.components());
 			assertEquals(components, image.components().size());
-			assertEquals(w * h * image.components().size(), image.data().capacity());
+			assertEquals(w * h * image.components().size(), image.data().length());
 		}
 
 		@Test

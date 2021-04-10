@@ -49,7 +49,7 @@ public record Vector(float x, float y, float z) implements Tuple {
 	}
 
 	/**
-	 * @return Magnitude (<b>squared</b>) of this vector
+	 * @return Magnitude (or length <b>squared</b>) of this vector
 	 */
 	public float magnitude() {
 		return (x * x) + (y * y) + (z * z);
@@ -106,7 +106,7 @@ public record Vector(float x, float y, float z) implements Tuple {
 	 * @param vec Vector
 	 * @return Dot product
 	 */
-	public final float dot(Vector vec) {
+	public float dot(Vector vec) {
 		// TODO - |v| * |u| * cos(angle)
 		return x * vec.x + y * vec.y + z * vec.z;
 	}

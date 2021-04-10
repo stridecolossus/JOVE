@@ -29,7 +29,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>command</i> encapsulates a piece of work performed on a {@link Command.Buffer}.
+ * A <i>command</i> represents a piece of work performed on the GPU.
  * @author Sarge
  */
 @FunctionalInterface

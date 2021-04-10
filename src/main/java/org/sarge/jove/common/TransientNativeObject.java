@@ -1,7 +1,7 @@
 package org.sarge.jove.common;
 
 /**
- * A <i>transient native object</i> is defines a native resource that is managed by the application.
+ * A <i>transient native object</i> is a native resource that is managed by the application.
  */
 public interface TransientNativeObject extends NativeObject {
 	/**

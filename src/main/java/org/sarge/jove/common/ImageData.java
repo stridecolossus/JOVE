@@ -8,7 +8,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,7 +35,7 @@ public interface ImageData {
 	/**
 	 * @return Image data
 	 */
-	ByteBuffer data();
+	Bufferable data();
 
 	/**
 	 * Default implementation.
@@ -44,7 +43,7 @@ public interface ImageData {
 	class DefaultImageData implements ImageData {
 		private final Dimensions size;
 		private final List<Integer> components;
-		private final ByteBuffer data;
+		private final Bufferable data;
 
 		/**
 		 * Constructor.
@@ -52,14 +51,14 @@ public interface ImageData {
 		 * @param components		Component sizes
 		 * @param bytes				Image data
 		 */
-		public DefaultImageData(Dimensions size, List<Integer> components, ByteBuffer data) {
+		public DefaultImageData(Dimensions size, List<Integer> components, Bufferable data) {
 			Check.notEmpty(components);
 			final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
-			if(expected != data.capacity()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
+			if(expected != data.length()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
 
 			this.size = notNull(size);
 			this.components = List.copyOf(components);
-			this.data = data.asReadOnlyBuffer();
+			this.data = notNull(data);
 		}
 
 		@Override
@@ -73,8 +72,8 @@ public interface ImageData {
 		}
 
 		@Override
-		public ByteBuffer data() {
-			return data.rewind();
+		public Bufferable data() {
+			return data;
 		}
 
 		@Override
@@ -139,8 +138,8 @@ public interface ImageData {
 
 			// Buffer image data
 			// TODO - duplicate code here and in swizzle()
-			final DataBufferByte data = (DataBufferByte) result.getRaster().getDataBuffer();
-			final ByteBuffer buffer = Bufferable.allocate(data.getData());
+			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
+			final Bufferable data = Bufferable.of(buffer.getData());
 
 			// Enumerate image components
 			final int[] components = result.getColorModel().getComponentSize();
@@ -148,7 +147,7 @@ public interface ImageData {
 
 			// Create image wrapper
 			final Dimensions dim = new Dimensions(result.getWidth(), result.getHeight());
-			return new DefaultImageData(dim, list, buffer);
+			return new DefaultImageData(dim, list, data);
 		}
 
 		/**

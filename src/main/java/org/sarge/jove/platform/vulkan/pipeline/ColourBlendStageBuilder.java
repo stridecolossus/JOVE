@@ -26,19 +26,19 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 	 */
 	private static VkColorComponentFlag component(int ch) {
 		return switch(ch) {
-		case 'R' -> VkColorComponentFlag.VK_COLOR_COMPONENT_R_BIT;
-		case 'G' -> VkColorComponentFlag.VK_COLOR_COMPONENT_G_BIT;
-		case 'B' -> VkColorComponentFlag.VK_COLOR_COMPONENT_B_BIT;
-		case 'A' -> VkColorComponentFlag.VK_COLOR_COMPONENT_A_BIT;
-		default -> throw new IllegalArgumentException("Invalid colour component: " + String.valueOf((char) ch));
+			case 'R' -> VkColorComponentFlag.VK_COLOR_COMPONENT_R_BIT;
+			case 'G' -> VkColorComponentFlag.VK_COLOR_COMPONENT_G_BIT;
+			case 'B' -> VkColorComponentFlag.VK_COLOR_COMPONENT_B_BIT;
+			case 'A' -> VkColorComponentFlag.VK_COLOR_COMPONENT_A_BIT;
+			default -> throw new IllegalArgumentException("Invalid colour component: " + String.valueOf((char) ch));
 		};
 	}
 
 	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponentFlag.values());
 
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
-	private VkLogicOp logic;
 	private final float[] constants = new float[4];
+	private VkLogicOp logic; // NULL indicates no global colour blending (see build method)
 
 	/**
 	 * Constructor.

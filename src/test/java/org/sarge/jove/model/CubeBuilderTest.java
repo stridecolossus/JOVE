@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.model.Vertex.Layout;
 
 public class CubeBuilderTest {
 	private CubeBuilder builder;
@@ -17,9 +18,11 @@ public class CubeBuilderTest {
 
 	@Test
 	void build() {
-		final VertexModel cube = builder.build();
+		final Layout expected = new Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE);
+		final Model cube = builder.build();
 		assertNotNull(cube);
-		assertEquals(new Header(Primitive.TRIANGLES, false, (2 * 3) * 6), cube.header());
-		assertEquals(new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE), cube.layout());
+		assertEquals(new Header(Primitive.TRIANGLES, expected, false), cube.header());
+		assertEquals((2 * 3) * 6, cube.count());
+		assertEquals(false, cube.isIndexed());
 	}
 }

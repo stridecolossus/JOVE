@@ -2,37 +2,32 @@ package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("static-method")
 public class BufferableTest {
 	@Test
-	void allocate() {
-		final ByteBuffer buffer = Bufferable.allocate(new byte[]{42});
-		assertNotNull(buffer);
-		assertEquals(1, buffer.capacity());
-		assertEquals(1, buffer.limit());
-		assertEquals(0, buffer.position());
-		assertEquals(42, buffer.get());
-		assertEquals(true, buffer.isDirect());
-	}
-
-	@Test
 	void of() {
-		// Create buffers
-		final ByteBuffer src = ByteBuffer.allocate(42);
-		final ByteBuffer dest = mock(ByteBuffer.class);
+		// Wrap array as a bufferable
+		final byte[] array = {1, 2, 3};
+		final Bufferable bufferable = Bufferable.of(array);
+		assertNotNull(bufferable);
+		assertEquals(3, bufferable.length());
+		assertSame(array, bufferable.toByteArray());
 
-		// Wrap source as bufferable
-		final Bufferable obj = Bufferable.of(src);
-		assertEquals(42, obj.length());
+		// Convert back to buffer
+		final ByteBuffer bb = ByteBuffer.allocate(3);
+		bufferable.buffer(bb);
+		assertEquals(0, bb.remaining());
 
-		// Check buffer operation
-		obj.buffer(dest);
-		verify(dest).put(src);
+		// Check contents
+		bb.flip();
+		assertEquals(1, bb.get());
+		assertEquals(2, bb.get());
+		assertEquals(3, bb.get());
 	}
 }

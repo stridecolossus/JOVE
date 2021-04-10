@@ -156,10 +156,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 			return this;
 		}
 
-		/**
-		 * @param desc Vertex binding descriptor
-		 */
-		public void populate(VkVertexInputBindingDescription desc) {
+		private void populate(VkVertexInputBindingDescription desc) {
 			desc.binding = binding;
 			desc.stride = stride;
 			desc.inputRate = rate;
@@ -229,9 +226,6 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 			return this;
 		}
 
-		/**
-		 * @param attr Attribute descriptor
-		 */
 		private void populate(VkVertexInputAttributeDescription attr) {
 			attr.binding = binding;
 			attr.location = loc;

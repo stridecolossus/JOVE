@@ -66,10 +66,20 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	/**
 	 * Sets the vertex winding order for front-facing faces.
 	 * @param frontFace Winding order (default is {@link VkFrontFace#VK_FRONT_FACE_COUNTER_CLOCKWISE})
+	 * @see #clockwise(boolean)
 	 */
 	public RasterizerStageBuilder winding(VkFrontFace frontFace) {
 		this.frontFace = notNull(frontFace);
 		return this;
+	}
+
+	/**
+	 * Sets the vertex winding order.
+	 * @param clockwise Vertex winding order
+	 * @see #winding(VkFrontFace)
+	 */
+	public RasterizerStageBuilder clockwise(boolean clockwise) {
+		return winding(clockwise ? VkFrontFace.VK_FRONT_FACE_CLOCKWISE : VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE);
 	}
 
 	/**

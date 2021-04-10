@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * Point in 3D space.
+ * A <i>point</i> is a position in 3D space.
  * @author Sarge
  */
 public record Point(float x, float y, float z) implements Tuple {
