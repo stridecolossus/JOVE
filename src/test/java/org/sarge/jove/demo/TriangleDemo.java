@@ -64,7 +64,7 @@ public class TriangleDemo {
 				.build();
 
 		// Attach message handler
-		instance.attach(new HandlerBuilder().init().build());
+		instance.attach(HandlerBuilder.create());
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
@@ -120,6 +120,8 @@ public class TriangleDemo {
 					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 					.build()
 				.build();
+
+		// TODO - need to re-generate the shader to get correct triangle winding order???
 
 		// Load shaders
 		final DataSource src = DataSource.of("./src/test/resources/demo/triangle");

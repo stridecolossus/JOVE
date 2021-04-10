@@ -218,7 +218,7 @@ public class TextureQuadDemo {
 		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE);
 
 		// Create interleaved buffer
-		final int len = layout.size() * Float.BYTES;
+		final int len = vertices.length * layout.size() * Float.BYTES;
 		final ByteBuffer bb = VulkanHelper.buffer(len);
 		for(Vertex v : vertices) {
 			layout.buffer(v, bb);
@@ -300,6 +300,9 @@ public class TextureQuadDemo {
 				.pass(pass)
 				.input()
 					.binding(layout)
+					.build()
+				.rasterizer()
+					.clockwise(true) // TODO, also need to flip
 					.build()
 				.viewport(chain.extents())
 				.shader()

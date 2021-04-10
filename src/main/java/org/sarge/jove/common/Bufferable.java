@@ -25,9 +25,21 @@ public interface Bufferable {
 	 * @return Byte array
 	 */
 	default byte[] toByteArray() {
-		final ByteBuffer bb = VulkanHelper.buffer(length());
+		// Buffer this object
+		final int len = this.length();
+		final ByteBuffer bb = VulkanHelper.buffer(len); // TODO - needs to be direct?
 		buffer(bb);
-		return bb.array();
+
+		// Convert to array
+		if(bb.isDirect()) {
+			final byte[] array = new byte[len];
+			bb.rewind();
+			bb.get(array);
+			return array;
+		}
+		else {
+			return bb.array();
+		}
 	}
 
 	/**

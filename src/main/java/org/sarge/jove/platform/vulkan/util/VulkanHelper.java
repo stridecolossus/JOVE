@@ -30,6 +30,6 @@ public final class VulkanHelper {
 	 * @return New byte buffer
 	 */
 	public static ByteBuffer buffer(int len) {
-		return ByteBuffer.allocate(len).order(NATIVE_ORDER);
+		return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
 	}
 }
