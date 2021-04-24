@@ -53,8 +53,8 @@ public interface ImageData {
 		 */
 		public DefaultImageData(Dimensions size, List<Integer> components, Bufferable data) {
 			Check.notEmpty(components);
-			final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
-			if(expected != data.length()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
+//			final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
+//			if(expected != data.length()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
 
 			this.size = notNull(size);
 			this.components = List.copyOf(components);

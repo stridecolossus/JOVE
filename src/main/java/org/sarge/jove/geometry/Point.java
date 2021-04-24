@@ -2,17 +2,23 @@ package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
 
+import org.sarge.jove.common.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>point</i> is a position in 3D space.
  * @author Sarge
  */
-public record Point(float x, float y, float z) implements Tuple {
+public record Point(float x, float y, float z) implements Component {
 	/**
 	 * Origin point.
 	 */
 	public static final Point ORIGIN = new Point(0, 0, 0);
+
+	/**
+	 * Layout of a point.
+	 */
+	public static final Layout LAYOUT = Layout.of(3, Float.class);
 
 	/**
 	 * Creates a point from the given array.
@@ -42,6 +48,11 @@ public record Point(float x, float y, float z) implements Tuple {
 	 */
 	public Point add(Vector vec) {
 		return new Point(x + vec.x(), y + vec.y(), z + vec.z());
+	}
+
+	@Override
+	public Layout layout() {
+		return LAYOUT;
 	}
 
 	@Override

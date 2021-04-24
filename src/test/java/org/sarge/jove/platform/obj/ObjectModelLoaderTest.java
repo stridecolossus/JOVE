@@ -11,10 +11,10 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.Layout;
 
 public class ObjectModelLoaderTest {

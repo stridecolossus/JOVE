@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.model.Model.Header;
-import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.Layout;
 
 public class ModelTest {

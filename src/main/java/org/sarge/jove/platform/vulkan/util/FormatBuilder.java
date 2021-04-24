@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.StringJoiner;
 
+import org.sarge.jove.common.Component;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.MathsUtil;
@@ -53,6 +54,20 @@ public class FormatBuilder {
 		SCALED("SCALED"),
 		RGB("RGB");
 
+		/**
+		 * Maps the given component type to the corresponding format type suffix.
+		 * @param type Component type
+		 * @return Format type
+		 * @throws IllegalArgumentException if the type is unsupported
+		 */
+		public static Type of(Class<?> type) {
+			return switch(type.getSimpleName().toLowerCase()) {
+				case "int", "integer" -> Type.INTEGER;
+				case "float" -> Type.FLOAT;
+				default -> throw new IllegalArgumentException("Unsupported component type: " + type);
+			};
+		}
+
 		private final String token;
 
 		private Type(String token) {
@@ -72,6 +87,19 @@ public class FormatBuilder {
 				.bytes(1)
 				.signed(true)
 				.type(Type.RGB)			// TODO - assumes SRGB colour-space
+				.build();
+	}
+
+	/**
+	 * Helper - Determines the format for the given component layout.
+	 * @param layout component layout
+	 * @return Component format
+	 */
+	public static VkFormat format(Component.Layout layout) {
+		return new FormatBuilder()
+				.components(layout.size())
+				.bytes(layout.bytes())
+				.type(Type.of(layout.type()))
 				.build();
 	}
 
@@ -117,7 +145,7 @@ public class FormatBuilder {
 
 	/**
 	 * Sets whether the data type is signed.
-	 * @param signed Whether signed type (default is <code>true</code>)
+	 * @param signed Whether signed type (default is {@code true})
 	 */
 	public FormatBuilder signed(boolean signed) {
 		this.signed = signed;
@@ -127,6 +155,7 @@ public class FormatBuilder {
 	/**
 	 * Sets the data type.
 	 * @param type Data type (default is {@link Type#FLOAT})
+	 * @see Type#of(Class)
 	 */
 	public FormatBuilder type(Type type) {
 		this.type = notNull(type);

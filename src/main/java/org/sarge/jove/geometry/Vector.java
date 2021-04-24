@@ -2,13 +2,15 @@ package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
 
+import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
-public record Vector(float x, float y, float z) implements Tuple {
+public record Vector(float x, float y, float z) implements Bufferable, Component {
 	/**
 	 * X-axis vector.
 	 */
@@ -23,6 +25,11 @@ public record Vector(float x, float y, float z) implements Tuple {
 	 * Z-axis vector (negative Z is <i>into</i> the screen).
 	 */
 	public static final Vector Z_AXIS = new Vector(0, 0, 1);
+
+	/**
+	 * Layout of a vector.
+	 */
+	public static final Layout LAYOUT = Layout.of(3, Float.class);
 
 	/**
 	 * Creates a vector between the given points.
@@ -161,6 +168,11 @@ public record Vector(float x, float y, float z) implements Tuple {
 	public Vector reflect(Vector normal) {
 		final float f = this.dot(normal) * -2f;
 		return normal.scale(f).add(this);
+	}
+
+	@Override
+	public Layout layout() {
+		return LAYOUT;
 	}
 
 	@Override

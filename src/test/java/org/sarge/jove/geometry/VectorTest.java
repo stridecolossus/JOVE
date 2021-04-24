@@ -8,9 +8,9 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Component.Layout;
 
-@SuppressWarnings("static-method")
-public class VectorTest {
+class VectorTest {
 	private Vector vec;
 
 	@BeforeEach
@@ -105,7 +105,8 @@ public class VectorTest {
 	}
 
 	@Test
-	void length() {
+	void layout() {
+		assertEquals(Layout.of(3, Float.class), vec.layout());
 		assertEquals(3 * Float.BYTES, vec.length());
 	}
 

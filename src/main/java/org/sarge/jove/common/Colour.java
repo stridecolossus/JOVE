@@ -9,12 +9,7 @@ import org.sarge.lib.util.Check;
  * RGBA colour.
  * @author Sarge
  */
-public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
-	/**
-	 * Size of a colour.
-	 */
-	public static final int SIZE = 4;
-
+public record Colour(float red, float green, float blue, float alpha) implements Component {
 	/**
 	 * Material colour types.
 	 */
@@ -33,6 +28,11 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * Black colour.
 	 */
 	public static final Colour BLACK = new Colour(0, 0, 0, 1);
+
+	/**
+	 * Layout of a colour.
+	 */
+	public static final Layout LAYOUT = Layout.of(4, Float.class);
 
 	private static final int MASK = 0xff;
 	private static final float INV_MASK = 1f / MASK;
@@ -90,8 +90,8 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	@Override
-	public int length() {
-		return SIZE * Float.BYTES;
+	public Layout layout() {
+		return LAYOUT;
 	}
 
 	/**
@@ -112,6 +112,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		final int b = mask(blue);
 		return (a << 24) | (r << 16) | (g << 8) | b;
 	}
+	// TODO - some sort of pixel converter? pixel int to/from colour?
 
 	private static int mask(float f) {
 		return (int) (f * MASK);

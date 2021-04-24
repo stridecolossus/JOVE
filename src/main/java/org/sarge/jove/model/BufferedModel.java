@@ -18,12 +18,11 @@ public class BufferedModel extends AbstractModel {
 	/**
 	 * Constructor.
 	 * @param header		Model header
-	 * @param count			Number of vertices
 	 * @param vertices		Vertex buffer
 	 * @param index			Optional index buffer
 	 */
-	public BufferedModel(Header header, int count, Bufferable vertices, Bufferable index) {
-		super(header, count);
+	public BufferedModel(Header header, Bufferable vertices, Bufferable index) {
+		super(header);
 		this.vertices = notNull(vertices);
 		this.index = Optional.ofNullable(index);
 	}

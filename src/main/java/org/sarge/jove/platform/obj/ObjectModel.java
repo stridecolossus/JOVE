@@ -11,12 +11,14 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.Vertex.Layout;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing and maintains the list of generated models.
@@ -175,13 +177,13 @@ public class ObjectModel {
 	 */
 	private void init() {
 		// Determine vertex layout for the current object group
-		final var layout = new ArrayList<Vertex.Component>();
-		layout.add(Vertex.Component.POSITION);
+		final var layout = new ArrayList<Component>();
+		layout.add(Layout.POSITION);
 		if(!normals.isEmpty()) {
-			layout.add(Vertex.Component.NORMAL);
+			layout.add(Layout.NORMAL);
 		}
 		if(!coords.isEmpty()) {
-			layout.add(Vertex.Component.COORDINATE);
+			layout.add(Layout.COORDINATE);
 		}
 
 		// Initialise current model
@@ -208,7 +210,7 @@ public class ObjectModel {
 
 		// Add optional texture coordinate
 		if(tc != null) {
-			vertex.coordinates(coords.get(tc));
+			vertex.coordinate(coords.get(tc));
 		}
 
 		// Add to model
@@ -225,6 +227,7 @@ public class ObjectModel {
 		init();
 		return builders.stream().map(DefaultModel.Builder::build);
 	}
+	// TODO - assume one model at a time, factor out building per model, this class (or maybe loader?) should be meta-model that returns the resultant list
 
 	@Override
 	public String toString() {

@@ -4,16 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.geometry.Coordinate.Coordinate1D;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Coordinate.Coordinate3D;
 
-@SuppressWarnings("static-method")
-public class TextureCoordinateTest {
+class CoordinateTest {
 	@Test
 	void one() {
 		final Coordinate1D one = new Coordinate1D(1);
 		assertEquals(1, one.u());
+		assertEquals(Layout.of(1, Float.class), one.layout());
 		assertEquals(1 * Float.BYTES, one.length());
 		assertEquals(true, one.equals(one));
 		assertEquals(true, one.equals(new Coordinate1D(1)));
@@ -26,7 +27,7 @@ public class TextureCoordinateTest {
 		final Coordinate2D two = new Coordinate2D(1, 2);
 		assertEquals(1, two.u());
 		assertEquals(2, two.v());
-		assertEquals(2, Coordinate2D.SIZE);
+		assertEquals(Layout.of(2, Float.class), two.layout());
 		assertEquals(2 * Float.BYTES, two.length());
 		assertEquals(true, two.equals(two));
 		assertEquals(true, two.equals(new Coordinate2D(1, 2)));
@@ -40,6 +41,7 @@ public class TextureCoordinateTest {
 		assertEquals(1, three.u());
 		assertEquals(2, three.v());
 		assertEquals(3, three.w());
+		assertEquals(Layout.of(3, Float.class), three.layout());
 		assertEquals(3 * Float.BYTES, three.length());
 		assertEquals(true, three.equals(three));
 		assertEquals(true, three.equals(new Coordinate3D(1, 2, 3)));

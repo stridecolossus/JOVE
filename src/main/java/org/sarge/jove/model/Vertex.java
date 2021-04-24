@@ -1,195 +1,119 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.geometry.Coordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.lib.util.Check;
 
 /**
- * A <i>vertex</i> is comprised of a vertex position, normal, colour and texture coordinates.
+ * A <i>vertex</i> is a compound element of a <i>vertex buffer</i> (or VBO).
+ * <p>
+ * TODO
+ * <p>
  * @author Sarge
  */
-public interface Vertex {
+public class Vertex implements Bufferable {
 	/**
-	 * @return Vertex position
-	 */
-	Point position();
-
-	/**
-	 * @return Normal
-	 */
-	Vector normal();
-
-	/**
-	 * @return Texture coordinates
-	 */
-	Coordinate coordinates();
-
-	/**
-	 * @return Colour
-	 */
-	Colour colour();
-
-	/**
-	 * Creates a simple vertex at the given position.
-	 * @param pos Vertex position
+	 * Creates a vertex from the given components.
+	 * @param components Vertex components
 	 * @return New vertex
 	 */
-	static Vertex of(Point pos) {
-		return new DefaultVertex(pos, null, null, null);
+	public static Vertex of(Component... components) {
+		return new Vertex(components);
 	}
 
 	/**
-	 * Default implementation.
+	 * Creates a vertex from the given collection of components.
+	 * @param components Vertex components
+	 * @return New vertex
 	 */
-	record DefaultVertex(Point position, Vector normal, Coordinate coordinates, Colour colour) implements Vertex {
-		// Empty
+	public static Vertex of(List<Component> components) {
+		return new Vertex(components.toArray(Component[]::new));
 	}
 
-	// TODO -
-	// - Component should be a class
-	// - below enum part of default vertex
-	// i.e. makes Vertex opaque, can get rid of getters
+	private final Component[] components;
 
 	/**
-	 * A <i>vertex component</i> refers to a property of a vertex.
+	 * Constructor.
+	 * @param components Vertex components
 	 */
-	enum Component {
-		POSITION(Point.SIZE, Vertex::position),
-		NORMAL(Vector.SIZE, Vertex::normal),
-		COORDINATE(Coordinate.Coordinate2D.SIZE, Vertex::coordinates),
-		COLOUR(Colour.SIZE, Vertex::colour);
-
-		private final int size;
-		private final Function<Vertex, Bufferable> mapper;
-
-		/**
-		 * Constructor.
-		 * @param size			Component size
-		 * @param mapper		Extractor
-		 */
-		private Component(int size, Function<Vertex, Bufferable> mapper) {
-			this.size = size;
-			this.mapper = mapper;
-		}
-
-		/**
-		 * @return Size of this component (number of floating-point values)
-		 */
-		public int size() {
-			return size;
-		}
-
-		/**
-		 * Extracts this component from the given vertex.
-		 * @param vertex Vertex
-		 * @return Vertex component
-		 */
-		protected Bufferable map(Vertex vertex) {
-			return mapper.apply(vertex);
-		}
+	protected Vertex(Component[] components) {
+		this.components = notNull(components);
 	}
 
 	/**
-	 * A <i>vertex layout</i> specifies the component layout of vertices.
+	 * @return Components of this vertex
 	 */
-	class Layout {
-		private final List<Component> layout;
-		private final int size;
+	public List<Component> components() {
+		return Arrays.asList(components);
+	}
 
-		/**
-		 * Constructor.
-		 * @param layout Component layout
-		 * @throws IllegalArgumentException if the layout is empty or contains a duplicate component
-		 */
-		public Layout(List<Component> layout) {
-			Check.notEmpty(layout);
-			if(layout.size() != new HashSet<>(layout).size()) throw new IllegalArgumentException("Layout cannot contain duplicate components: " + layout);
-			this.layout = List.copyOf(layout);
-			this.size = layout.stream().mapToInt(Component::size).sum();
-		}
+	/**
+	 * Retrieves a vertex component by index.
+	 * @param <T> Component type
+	 * @param index Index
+	 * @return Vertex component
+	 * @throws ArrayIndexOutOfBoundsException for an invalid index
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Bufferable> T get(int index) {
+		return (T) components[index];
+	}
 
-		/**
-		 * Constructor.
-		 * @param layout Component layout
-		 * @throws IllegalArgumentException if the layout is empty or contains a duplicate component
-		 */
-		public Layout(Component... layout) {
-			this(Arrays.asList(layout));
-		}
+	/**
+	 * @return Layout of this vertex
+	 */
+	public List<Layout> layout() {
+		return Arrays.stream(components).map(Component::layout).collect(toList());
+	}
 
-		/**
-		 * @return Layout
-		 */
-		public List<Component> components() {
-			return layout;
-		}
+	@Override
+	public int length() {
+		return Arrays.stream(components).mapToInt(Component::length).sum();
+	}
 
-		/**
-		 * @return Total size of this layout (number of floating-point values)
-		 */
-		public int size() {
-			return size;
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		for(Component obj : components) {
+			obj.buffer(buffer);
 		}
+	}
 
-		/**
-		 * Tests whether the components of the given vertex matches this layout.
-		 * @param vertex Vertex
-		 * @return Whether vertex matches this layout
-		 */
-		public boolean matches(Vertex vertex) {
-			for(Component c : layout) {
-				if(c.map(vertex) == null) {
-					return false;
-				}
-			}
-			return true;
-		}
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(components);
+	}
 
-		/**
-		 * Writes a vertex to the given buffer according to this layout.
-		 * @param vertex Vertex
-		 * @param buffer Output buffer
-		 * @throws NullPointerException if the vertex does not match this layout
-		 */
-		public void buffer(Vertex vertex, ByteBuffer buffer) {
-			for(final var c : layout) {
-				c.map(vertex).buffer(buffer);
-			}
-		}
+	@Override
+	public boolean equals(Object obj) {
+		return (obj instanceof Vertex that) && Arrays.equals(this.components, that.components);
+	}
 
-		@Override
-		public boolean equals(Object obj) {
-			return (obj instanceof Layout that) && this.layout.equals(that.layout);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("layout", layout)
-					.append("size", size)
-					.build();
-		}
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append(components).build();
 	}
 
 	/**
 	 * Builder for a vertex.
 	 */
-	class Builder {
+	public static class Builder {
 		private Point pos;
 		private Vector normal;
-		private Coordinate coords;
+		private Coordinate coord;
 		private Colour col;
 
 		/**
@@ -211,11 +135,11 @@ public interface Vertex {
 		}
 
 		/**
-		 * Sets the texture coordinate of this vertex.
-		 * @param coords Texture coordinate
+		 * Sets the vertex texture coordinate.
+		 * @param coord Vertex coordinate
 		 */
-		public Builder coordinates(Coordinate coords) {
-			this.coords = notNull(coords);
+		public Builder coordinate(Coordinate coord) {
+			this.coord = notNull(coord);
 			return this;
 		}
 
@@ -233,7 +157,12 @@ public interface Vertex {
 		 * @return New vertex
 		 */
 		public Vertex build() {
-			return new DefaultVertex(pos, normal, coords, col);
+			final Component[] components = Stream
+					.of(pos, normal, coord, col)
+					.filter(Objects::nonNull)
+					.toArray(Component[]::new);
+
+			return new Vertex(components);
 		}
 	}
 }

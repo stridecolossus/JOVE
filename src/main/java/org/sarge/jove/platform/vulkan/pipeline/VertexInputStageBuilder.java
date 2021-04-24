@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkVertexInputAttributeDescription;
@@ -49,26 +49,25 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * The binding index is allocated to the next available index.
 	 * @param layout Vertex layout
 	 */
-	public VertexInputStageBuilder binding(Vertex.Layout layout) {
+	public VertexInputStageBuilder binding(List<Layout> layout) {
 		// Allocate next binding
 		final int index = bindings.size();
+
+		// Calculate vertex stride for this layout
+		final int stride = layout.stream().mapToInt(Layout::length).sum();
 
 		// Add binding
 		new BindingBuilder()
 				.index(index)
-				.stride(layout.size() * Float.BYTES)
+				.stride(stride)
 				.build();
 
-		// Add attribute for each component
+		// Add attribute for each layout component
 		int offset = 0;
 		int loc = 0;
-		for(Vertex.Component c : layout.components()) {
+		for(Layout c : layout) {
 			// Determine component format
-			final VkFormat format = new FormatBuilder()
-					.components(c.size())
-					.type(FormatBuilder.Type.FLOAT)
-					.bytes(Float.BYTES)
-					.build();
+			final VkFormat format = FormatBuilder.format(c);
 
 			// Add attribute for component
 			new AttributeBuilder()
@@ -80,9 +79,10 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 
 			// Increment offset to the start of the next attribute
 			++loc;
-			offset += c.size() * Float.BYTES;
+			offset += c.length();
+			// TODO - assumes contiguous => introduce offset (default 0)
 		}
-		assert offset == layout.size() * Float.BYTES;
+		assert offset == stride;
 
 		return this;
 	}

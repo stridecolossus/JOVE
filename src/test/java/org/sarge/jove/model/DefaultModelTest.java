@@ -11,11 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DefaultModel.Builder;
 import org.sarge.jove.model.DefaultModel.IndexedBuilder;
 import org.sarge.jove.model.Model.Header;
-import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.model.Vertex.Layout;
 
 public class DefaultModelTest {

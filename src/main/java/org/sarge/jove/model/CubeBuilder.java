@@ -40,7 +40,7 @@ public class CubeBuilder {
 	private static final int[] TRIANGLES = Stream.concat(Quad.LEFT.stream(), Quad.RIGHT.stream()).mapToInt(Integer::intValue).toArray();
 
 	// Default layout
-	private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE);
+//	private static final Layout LAYOUT = Layout.of(Layout.POSITION, Layout.COORDINATE);
 	// TODO - setter? compute normals?
 
 	/**
@@ -51,7 +51,7 @@ public class CubeBuilder {
 		return new CubeBuilder().size(MathsUtil.HALF).build();
 	}
 
-	private final DefaultModel.Builder builder = new DefaultModel.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
+	private final DefaultModel.Builder builder = new DefaultModel.Builder().primitive(Primitive.TRIANGLES); //.layout(LAYOUT);
 	private float size = 1;
 
 	/**
@@ -78,16 +78,15 @@ public class CubeBuilder {
 				// Lookup texture coordinate for this corner
 				final Coordinate2D tc = Quad.COORDINATES.get(corner);
 
-				// Build vertex
+				// Add quad vertex to model
 				final Vertex v = new Vertex.Builder()
 						.position(pos)
-						.coordinates(tc)
+						.coordinate(tc)
 						.build();
-
-				// Add quad vertex to model
 				builder.add(v);
 			}
 		}
+
 		return builder.build();
 	}
 

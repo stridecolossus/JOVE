@@ -1,6 +1,5 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -8,10 +7,9 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.common.Component.Layout;
 
-@SuppressWarnings("static-method")
-public class PointTest {
+class PointTest {
 	private Point pos;
 
 	@BeforeEach
@@ -49,7 +47,7 @@ public class PointTest {
 
 	@Test
 	void distance() {
-		assertTrue(MathsUtil.isEqual(27, pos.distance(new Point(4, 5, 6))));
+		assertEquals(27, pos.distance(new Point(4, 5, 6)));
 	}
 
 	@Test
@@ -68,7 +66,8 @@ public class PointTest {
 	}
 
 	@Test
-	void length() {
+	void layout() {
+		assertEquals(Layout.of(3, Float.class), pos.layout());
 		assertEquals(3 * Float.BYTES, pos.length());
 	}
 

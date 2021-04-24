@@ -12,11 +12,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.obj.ObjectModel.VertexComponentList;
 
 public class ObjectModelTest {
@@ -198,7 +198,7 @@ public class ObjectModelTest {
 			assertNotNull(result);
 //			assertEquals(name, result.name());
 			assertEquals(Primitive.TRIANGLES, result.header().primitive());
-			assertEquals(List.of(Vertex.Component.POSITION, Vertex.Component.NORMAL, Vertex.Component.COORDINATE), result.header().layout().components());
+			assertEquals(List.of(Component.POSITION, Component.NORMAL, Component.COORDINATE), result.header().layout().components());
 			assertEquals(3, result.count());
 			assertEquals(Optional.empty(), result.indexBuffer());
 		}

@@ -1,0 +1,2 @@
+indexed model
+- can we use some sort of bulk collections operation rather than iteratively testing each vertex? would we want to?

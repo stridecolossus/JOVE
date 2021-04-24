@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -17,7 +16,6 @@ import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Vertex;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
@@ -35,7 +33,6 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.ResourceLoader;
 
@@ -162,6 +159,7 @@ public class TextureQuadDemo {
 		final Surface surface = new Surface(surfaceHandle, gpu);
 
 		// Specify required image format
+		// TODO - do we introduce format builder here or later?
 		final VkFormat format = new FormatBuilder()
 				.components(FormatBuilder.BGRA)
 				.bytes(1)
@@ -207,44 +205,21 @@ public class TextureQuadDemo {
 		//////////////////
 
 		// Build triangle vertices
-		final Vertex[] vertices = {
-				new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coordinates(Coordinate2D.TOP_LEFT).build(),
-				new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).coordinates(Coordinate2D.BOTTOM_LEFT).build(),
-				new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).coordinates(Coordinate2D.TOP_RIGHT).build(),
-				new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).coordinates(Coordinate2D.BOTTOM_RIGHT).build(),
-		};
-
-		// Define vertex layout
-		final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COORDINATE);
-
-		// Create interleaved buffer
-		final int len = vertices.length * layout.size() * Float.BYTES;
-		final ByteBuffer bb = VulkanHelper.buffer(len);
-		for(Vertex v : vertices) {
-			layout.buffer(v, bb);
-		}
-		bb.rewind();
-
-		// Create bufferable wrapper
-		final Bufferable bufferable = new Bufferable() {
-			@Override
-			public int length() {
-				return len;
-			}
-
-			@Override
-			public void buffer(ByteBuffer buffer) {
-				buffer.put(bb);
-			}
-		};
+		final var vertices = Bufferable.of(
+				new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT,
+				new Point(-0.5f, +0.5f, 0), Coordinate2D.BOTTOM_LEFT,
+				new Point(+0.5f, -0.5f, 0), Coordinate2D.TOP_RIGHT,
+				new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT
+		);
 
 		// Load to staging
+		final int len = vertices.length();
 		final VulkanBuffer staging = VulkanBuffer.staging(dev, len);
-		staging.load(bufferable);
+		staging.load(vertices);
 
 		// Create device VBO
 		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
-				.length(bb.limit())
+				.length(len)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -299,7 +274,18 @@ public class TextureQuadDemo {
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
-					.binding(layout)
+					.binding()
+						.stride((Point.SIZE + Coordinate2D.SIZE) * Float.BYTES)
+						.build()
+					.attribute()
+						.location(0)
+						.format(VkFormat.VK_FORMAT_R32G32B32_SFLOAT)
+						.build()
+					.attribute()
+						.location(1)
+						.format(VkFormat.VK_FORMAT_R32G32_SFLOAT)
+						.offset(Point.SIZE * Float.BYTES)
+						.build()
 					.build()
 				.rasterizer()
 					.clockwise(true) // TODO, also need to flip
@@ -328,7 +314,7 @@ public class TextureQuadDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, vertices.length, 1, 0, 0);		// TODO - builder
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, len, 1, 0, 0);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb

@@ -1,128 +1,69 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyFloat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Coordinate;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex.Builder;
-import org.sarge.jove.model.Vertex.Component;
-import org.sarge.jove.model.Vertex.DefaultVertex;
-import org.sarge.jove.model.Vertex.Layout;
 
-public class VertexTest {
-	private static final Component[] LAYOUT = {Component.POSITION, Component.NORMAL, Component.COORDINATE, Component.COLOUR};
-
+class VertexTest {
 	private Vertex vertex;
-	private Vector normal;
 
 	@BeforeEach
 	void before() {
-		normal = new Vector(1, 2, 3);
-		vertex = new DefaultVertex(Point.ORIGIN, normal, Coordinate2D.BOTTOM_RIGHT, Colour.WHITE);
+		vertex = Vertex.of(Point.ORIGIN, Colour.BLACK);
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(Point.ORIGIN, vertex.position());
-		assertEquals(normal, vertex.normal());
-		assertEquals(Coordinate2D.BOTTOM_RIGHT, vertex.coordinates());
-		assertEquals(Colour.WHITE, vertex.colour());
+	void components() {
+		assertEquals(List.of(Point.ORIGIN, Colour.BLACK), vertex.components());
 	}
 
 	@Test
-	void of() {
-		vertex = Vertex.of(Point.ORIGIN);
-		assertEquals(Point.ORIGIN, vertex.position());
-		assertEquals(null, vertex.normal());
-		assertEquals(null, vertex.coordinates());
-		assertEquals(null, vertex.colour());
+	void get() {
+		assertEquals(Point.ORIGIN, vertex.get(0));
+		assertEquals(Colour.BLACK, vertex.get(1));
 	}
 
-	@Nested
-	class ComponentTests {
-		@Test
-		void size() {
-			assertEquals(Point.SIZE, Component.POSITION.size());
-			assertEquals(Vector.SIZE, Component.NORMAL.size());
-			assertEquals(Coordinate.Coordinate2D.SIZE, Component.COORDINATE.size());
-			assertEquals(Colour.SIZE, Component.COLOUR.size());
-		}
-
-		@Test
-		void map() {
-			assertEquals(Point.ORIGIN, Component.POSITION.map(vertex));
-			assertEquals(normal, Component.NORMAL.map(vertex));
-			assertEquals(Coordinate2D.BOTTOM_RIGHT, Component.COORDINATE.map(vertex));
-			assertEquals(Colour.WHITE, Component.COLOUR.map(vertex));
-		}
+	@Test
+	void layout() {
+		assertEquals(List.of(Point.ORIGIN.layout(), Colour.BLACK.layout()), vertex.layout());
 	}
 
-	@Nested
-	class LayoutTests {
-		private Layout layout;
+	@Test
+	void length() {
+		assertEquals((3 + 4) * Float.BYTES, vertex.length());
+	}
 
-		@BeforeEach
-		void before() {
-			layout = new Layout(LAYOUT);
-		}
+	@Test
+	void buffer() {
+		final ByteBuffer buffer = mock(ByteBuffer.class);
+		when(buffer.putFloat(anyFloat())).thenReturn(buffer);
+		vertex.buffer(buffer);
+		verify(buffer, times(3 + 3)).putFloat(0);
+		verify(buffer, times(1)).putFloat(1);
+	}
 
-		@Test
-		void constructor() {
-			assertArrayEquals(LAYOUT, layout.components().toArray());
-			assertEquals(3 + 3 + 2 + 4, layout.size());
-		}
-
-		@Test
-		void constructorEmptyComponents() {
-			assertThrows(IllegalArgumentException.class, () -> new Layout());
-		}
-
-		@Test
-		void constructorDuplicateComponent() {
-			assertThrows(IllegalArgumentException.class, () -> new Layout(Component.NORMAL, Component.NORMAL));
-		}
-
-		@Test
-		void matches() {
-			assertEquals(true, layout.matches(vertex));
-			assertEquals(false, layout.matches(Vertex.of(Point.ORIGIN)));
-		}
-
-		@Test
-		void buffer() {
-			// Buffer vertex
-			final int len = layout.size() * Float.BYTES;
-			final ByteBuffer buffer = ByteBuffer.allocate(len);
-			layout.buffer(vertex, buffer);
-			assertEquals(len, buffer.limit());
-			assertEquals(len, buffer.position());
-
-			// Check buffer
-			final ByteBuffer expected = ByteBuffer.allocate(len);
-			vertex.position().buffer(expected);
-			vertex.normal().buffer(expected);
-			vertex.coordinates().buffer(expected);
-			vertex.colour().buffer(expected);
-			assertEquals(expected, buffer);
-		}
-
-		@Test
-		void equals() {
-			assertEquals(true, layout.equals(layout));
-			assertEquals(true, layout.equals(new Layout(LAYOUT)));
-			assertEquals(false, layout.equals(null));
-			assertEquals(false, layout.equals(new Layout(Component.NORMAL)));
-		}
+	@Test
+	void equals() {
+		assertEquals(true, vertex.equals(vertex));
+		assertEquals(true, vertex.equals(Vertex.of(Point.ORIGIN, Colour.BLACK)));
+		assertEquals(false, vertex.equals(null));
+		assertEquals(false, vertex.equals(Vertex.of(Point.ORIGIN)));
 	}
 
 	@Nested
@@ -136,14 +77,19 @@ public class VertexTest {
 
 		@Test
 		void build() {
-			final Vertex result = builder
+			// Build a vertex
+			vertex = builder
 					.position(Point.ORIGIN)
-					.normal(normal)
-					.coordinates(Coordinate2D.BOTTOM_RIGHT)
-					.colour(Colour.WHITE)
+					.normal(Vector.X_AXIS)
+					.coordinate(Coordinate2D.BOTTOM_LEFT)
+					.colour(Colour.BLACK)
 					.build();
 
-			assertEquals(vertex, result);
+			// Validate vertex
+			assertNotNull(vertex);
+			assertNotNull(vertex.layout());
+			assertEquals(4, vertex.layout().size());
+			assertEquals((3 + 3 + 2 + 4) * Float.BYTES, vertex.length());
 		}
 	}
 }

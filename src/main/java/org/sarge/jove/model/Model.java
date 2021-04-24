@@ -1,13 +1,13 @@
 package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.model.Vertex.Layout;
+import org.sarge.jove.common.Component.Layout;
 import org.sarge.lib.util.Check;
 
 /**
@@ -16,40 +16,34 @@ import org.sarge.lib.util.Check;
  */
 public interface Model {
 	/**
-	 * A <i>model header</i> is a descriptor for the rendering properties of the model.
+	 * Descriptor for this model.
 	 */
-	record Header(Primitive primitive, Layout layout, boolean clockwise) {
+	record Header(Primitive primitive, int count, boolean clockwise) {
 		/**
 		 * Constructor.
 		 * @param primitive			Drawing primitive
-		 * @param layout			Vertex layout
+		 * @param count				Number of vertices
 		 * @param clockwise			Triangle winding order
-		 * @throws IllegalArgumentException if the vertex layout contains normals which are not supported by the drawing primitive
 		 */
 		public Header {
 			Check.notNull(primitive);
-			Check.notNull(layout);
+			Check.zeroOrMore(count);
 
-			if(!primitive.hasNormals() && layout.components().contains(Vertex.Component.NORMAL)) {
-				throw new IllegalArgumentException("Drawing primitive does not support normals: " + primitive);
+			if(!primitive.isValidVertexCount(count)) {
+				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
 		}
 	}
 
 	/**
-	 * @return Descriptor for this model
+	 * @return Model header
 	 */
 	Header header();
 
 	/**
-	 * @return Number of vertices
+	 * @return Vertex layout
 	 */
-	int count();
-
-	/**
-	 * @return Whether this is an indexed model
-	 */
-	boolean isIndexed();
+	List<Layout> layout();
 
 	/**
 	 * @return Vertex buffer
@@ -57,33 +51,27 @@ public interface Model {
 	Bufferable vertexBuffer();
 
 	/**
+	 * @return Whether this is an indexed model
+	 */
+	boolean isIndexed();
+
+	/**
 	 * @return Index buffer
 	 */
 	Optional<Bufferable> indexBuffer();
 
 	/**
-	 * Partial implementation that also applies validation.
+	 * Skeleton implementation.
 	 */
 	abstract class AbstractModel implements Model {
 		private final Header header;
-		private final int count;
 
 		/**
 		 * Constructor.
-		 * @param header		Model header
-		 * @param count			Number of vertices
-		 * @throws IllegalArgumentException if the number of vertices is invalid for the drawing primitive
+		 * @param header Model header
 		 */
-		protected AbstractModel(Header header, int count) {
+		protected AbstractModel(Header header) {
 			this.header = notNull(header);
-			this.count = zeroOrMore(count);
-			validate();
-		}
-
-		private void validate() {
-			if(!header.primitive.isValidVertexCount(count)) {
-				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, header.primitive));
-			}
 		}
 
 		@Override
@@ -92,15 +80,9 @@ public interface Model {
 		}
 
 		@Override
-		public final int count() {
-			return count;
-		}
-
-		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
 					.append(header)
-					.append("count", count)
 					.append("indexed", isIndexed())
 					.build();
 		}

@@ -10,19 +10,21 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.AbstractModel;
-import org.sarge.jove.model.Vertex.Component;
-import org.sarge.jove.model.Vertex.Layout;
 
 /**
  * A <i>default model</i> is comprised of a collection of vertices.
  * TODO
  * - buffers on demand
+ * @see Vertex
  * @author Sarge
  */
 public class DefaultModel extends AbstractModel {
 	private final List<Vertex> vertices;
 	private final Optional<List<Integer>> index;
+	private final List<Layout> layout;
 
 	/**
 	 * Constructor.
@@ -30,15 +32,21 @@ public class DefaultModel extends AbstractModel {
 	 * @param vertices			Vertices
 	 * @param index				Optional index
 	 */
-	public DefaultModel(Header header, List<Vertex> vertices, List<Integer> index) {
-		super(header, index == null ? vertices.size() : index.size());
+	protected DefaultModel(Header header, List<Vertex> vertices, List<Integer> index) {
+		super(header);
 		this.vertices = List.copyOf(vertices);
 		this.index = Optional.ofNullable(index).map(List::copyOf);
+		this.layout = vertices.get(0).layout(); // TODO
 	}
 
 	@Override
 	public boolean isIndexed() {
 		return index.isPresent();
+	}
+
+	@Override
+	public List<Layout> layout() {
+		return layout;
 	}
 
 	/**
@@ -58,18 +66,15 @@ public class DefaultModel extends AbstractModel {
 	@Override
 	public Bufferable vertexBuffer() {
 		return new Bufferable() {
-			private final int len = vertices.size() * header().layout().size() * Float.BYTES;
-
 			@Override
 			public int length() {
-				return len;
+				return 0; // TODO
 			}
 
 			@Override
 			public void buffer(ByteBuffer buffer) {
-				final Layout layout = header().layout();
-				for(final Vertex v : vertices) {
-					layout.buffer(v, buffer);
+				for(Vertex v : vertices) {
+					v.buffer(buffer);
 				}
 			}
 		};
@@ -103,19 +108,18 @@ public class DefaultModel extends AbstractModel {
 	 * @return Buffered model
 	 */
 	public BufferedModel buffer() {
-		return new BufferedModel(header(), count(), vertexBuffer(), indexBuffer().orElse(null));
+		return new BufferedModel(header(), vertexBuffer(), indexBuffer().orElse(null));
 	}
 
 	/**
-	 * Builder for a vertex model.
+	 * Builder for a model.
 	 */
 	public static class Builder {
 		private Primitive primitive = Primitive.TRIANGLE_STRIP;
+		private List<Layout> layout = List.of(Point.LAYOUT);
 		private boolean clockwise;
-		private Layout layout = new Layout(Component.POSITION);
 
 		protected final List<Vertex> vertices = new ArrayList<>();
-		protected List<Integer> index;
 
 		/**
 		 * Sets the drawing primitive (default is {@link Primitive#TRIANGLE_STRIP}).
@@ -136,47 +140,55 @@ public class DefaultModel extends AbstractModel {
 		}
 
 		/**
-		 * Sets the vertex layout.
-		 * TODO - undefined if changed with vertices added? ditto primitive?
-		 * @param layout Vertex layout
-		 */
-		public Builder layout(Layout layout) {
-			this.layout = notNull(layout);
-			return this;
-		}
-
-		/**
 		 * Adds a vertex.
 		 * @param v Vertex
 		 * @throws IllegalArgumentException if the vertex does not match the configured layout
 		 */
 		public Builder add(Vertex v) {
-			if(!layout.matches(v)) {
-				throw new IllegalArgumentException(String.format("Vertex %s does not match layout %s", v, layout));
-			}
+			// TODO - check matching vertex
 			vertices.add(v);
 			return this;
 		}
 
+		// TODO
+		// compute normals
+		// - walk index -> faces (triangles) ~ primitive
+		// - accumulate normal @ each vertex of each face (cross product)
+		// - normalise all
+		// - invalid if no normals
+		// implies:
+		// - operations on model?
+		// - face iterator?
+		// - normal accessor and accumulator/mutator
+
 		/**
 		 * Constructs this model.
-		 * @return New vertex model
+		 * @return New model
 		 */
 		public DefaultModel build() {
-			return new DefaultModel(new Header(primitive, layout, clockwise), vertices, index);
+			//final int count = index == null ? vertices.size() : index.size();
+			return build(null, vertices.size());
+		}
+
+		/**
+		 * Constructs this model.
+		 * @param index		Index or {@code null} if not indexed
+		 * @param count		Number of vertices
+		 * @return New model
+		 */
+		protected final DefaultModel build(List<Integer> index, int count) {
+			return new DefaultModel(new Header(primitive, count, clockwise), vertices, index);
 		}
 	}
 
 	/**
 	 * Builder for an indexed model.
 	 * TODO - doc, auto
+	 * TODO - could be a plug in strategy for add() method? i.e. base builder has index but unused unless this plug-in?
 	 */
 	public static class IndexedBuilder extends Builder {
 		private final Map<Vertex, Integer> map = new HashMap<>();
-
-		public IndexedBuilder() {
-			index = new ArrayList<>();
-		}
+		private final List<Integer> index = new ArrayList<>();
 
 		@Override
 		public Builder add(Vertex v) {
@@ -193,6 +205,11 @@ public class DefaultModel extends AbstractModel {
 				index.add(prev);
 			}
 			return this;
+		}
+
+		@Override
+		public DefaultModel build() {
+			return build(index, index.size());
 		}
 	}
 }

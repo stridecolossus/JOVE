@@ -9,11 +9,12 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder.Type;
 
-public class FormatBuilderTest {
+class FormatBuilderTest {
 	private FormatBuilder builder;
 
 	@BeforeEach
@@ -61,9 +62,26 @@ public class FormatBuilderTest {
 	}
 
 	@Test
-	void imageFormat() {
+	void image() {
 		final ImageData image = mock(ImageData.class);
 		when(image.components()).thenReturn(List.of(8, 8, 8, 8));
 		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_SRGB, FormatBuilder.format(image));
+	}
+
+	@Test
+	void layout() {
+		final var layout = Layout.of(3, Float.class);
+		assertEquals(VkFormat.VK_FORMAT_R32G32B32_SFLOAT, FormatBuilder.format(layout));
+	}
+
+	@Test
+	void types() {
+		assertEquals(Type.FLOAT, Type.of(Float.class));
+		assertEquals(Type.INTEGER, Type.of(Integer.class));
+	}
+
+	@Test
+	void invalidComponentTypeMapping() {
+		assertThrows(IllegalArgumentException.class, () -> Type.of(String.class));
 	}
 }
