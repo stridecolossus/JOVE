@@ -15,9 +15,14 @@ import org.sarge.jove.model.Model.AbstractModel;
 
 /**
  * A <i>default model</i> is comprised of a collection of vertices.
- * TODO
- * - buffers on demand
- * @see Vertex
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>The vertex and index buffers are generated on-demand</li>
+ * <li>The {@link #vertexBuffer()} method generates an interleaved VBO</li>
+ * </ul>
+ * <p>
+ * @see Vertex#buffer(ByteBuffer)
  * @author Sarge
  */
 public class DefaultModel extends AbstractModel {

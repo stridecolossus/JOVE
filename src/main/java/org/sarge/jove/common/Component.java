@@ -3,12 +3,12 @@ package org.sarge.jove.common;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>component</i> is a bufferable type comprised of a number of Java primitives.
+ * A <i>component</i> is a compound bufferable type with a defined structure used to model inter-leaved vertex data.
  * @author Sarge
  */
 public interface Component extends Bufferable {
 	/**
-	 * A <i>component layout</i> is a descriptor for the structure of this component.
+	 * A <i>component layout</i> is a descriptor for the structure of a component.
 	 */
 	record Layout(int size, int bytes, Class<?> type) {
 		/**

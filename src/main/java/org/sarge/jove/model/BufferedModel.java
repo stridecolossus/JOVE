@@ -8,7 +8,7 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.model.Model.AbstractModel;
 
 /**
- * A <i>buffered model</i> TODO
+ * A <i>buffered model</i> is a default implementation with the vertices and index stored as {@link Bufferable} data objects.
  * @author Sarge
  */
 public class BufferedModel extends AbstractModel {

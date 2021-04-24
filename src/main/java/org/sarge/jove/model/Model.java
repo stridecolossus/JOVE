@@ -33,6 +33,9 @@ public interface Model {
 			if(!primitive.isValidVertexCount(count)) {
 				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
+
+			// TODO - check primitive supports normals
+			// primitive.hasNormals()
 		}
 
 		/**

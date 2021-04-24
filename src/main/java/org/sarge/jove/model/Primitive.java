@@ -69,18 +69,18 @@ public enum Primitive {
 	 */
 	public boolean isStrip() {
 		return switch(this) {
-		case TRIANGLE_STRIP, TRIANGLE_FAN, LINE_STRIP -> true;
-		default -> false;
+			case TRIANGLE_STRIP, TRIANGLE_FAN, LINE_STRIP -> true;
+			default -> false;
 		};
 	}
 
 	/**
 	 * @return Whether this primitive supports face normals
 	 */
-	public boolean hasNormals() {
+	public boolean isNormalSupported() {
 		return switch(this) {
-		case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
-		default -> false;
+			case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
+			default -> false;
 		};
 	}
 

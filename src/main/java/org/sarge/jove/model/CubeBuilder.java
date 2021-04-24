@@ -39,10 +39,6 @@ public class CubeBuilder {
 	// Indices for the two triangles per face quad
 	private static final int[] TRIANGLES = Stream.concat(Quad.LEFT.stream(), Quad.RIGHT.stream()).mapToInt(Integer::intValue).toArray();
 
-	// Default layout
-//	private static final Layout LAYOUT = Layout.of(Layout.POSITION, Layout.COORDINATE);
-	// TODO - setter? compute normals?
-
 	/**
 	 * Convenience method to create a unit-cube.
 	 * @return New cube
@@ -51,7 +47,7 @@ public class CubeBuilder {
 		return new CubeBuilder().size(MathsUtil.HALF).build();
 	}
 
-	private final DefaultModel.Builder builder = new DefaultModel.Builder().primitive(Primitive.TRIANGLES); //.layout(LAYOUT);
+	private final DefaultModel.Builder builder = new DefaultModel.Builder().primitive(Primitive.TRIANGLES);
 	private float size = 1;
 
 	/**
@@ -73,7 +69,7 @@ public class CubeBuilder {
 				// Lookup cube vertex for this triangle
 				final int index = face[corner];
 				final Point pt = VERTICES[index];
-				final Point pos = scale(pt); // VERTICES[index].scale(size);
+				final Point pos = scale(pt);
 
 				// Lookup texture coordinate for this corner
 				final Coordinate2D tc = Quad.COORDINATES.get(corner);
@@ -90,6 +86,7 @@ public class CubeBuilder {
 		return builder.build();
 	}
 
+	// TODO - helper on point?
 	private Point scale(Point v) {
 		return new Point(v.x() * size, v.y() * size, v.z() * size);
 	}
