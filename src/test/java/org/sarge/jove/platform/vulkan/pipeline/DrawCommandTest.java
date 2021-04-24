@@ -5,11 +5,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Command;
 
@@ -50,7 +54,7 @@ public class DrawCommandTest {
 		@BeforeEach
 		void before() {
 			model = mock(Model.class);
-			when(model.count()).thenReturn(COUNT);
+			when(model.header()).thenReturn(new Header(List.of(), Primitive.POINTS, COUNT, false));
 		}
 
 		@Test

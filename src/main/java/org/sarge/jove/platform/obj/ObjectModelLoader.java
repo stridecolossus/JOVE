@@ -11,15 +11,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.sarge.jove.geometry.Coordinate;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Model;
 import org.sarge.jove.model.DefaultModel;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.util.ResourceLoader;
 import org.sarge.lib.util.Check;
 
@@ -29,6 +31,7 @@ import org.sarge.lib.util.Check;
  */
 public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Model>> {
 	private static final String[] EMPTY_ARGUMENTS = new String[]{};
+	private static final Function<float[], Coordinate2D> TEXTURE_MAPPER = array -> (Coordinate2D) Coordinate.of(array);
 
 	/**
 	 * Handler to ignore unknown commands.
@@ -60,9 +63,9 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v", new ArrayParser<>(Point.SIZE, Point::of, ObjectModel::vertices));
-		add("vt", new ArrayParser<>(Coordinate2D.SIZE, Coordinate2D::of, ObjectModel::coordinates));
-		add("vn", new ArrayParser<>(Vector.SIZE, Vector::of, ObjectModel::normals));
+		add("v", new ArrayParser<>(3, Point::of, ObjectModel::vertices));
+		add("vt", new ArrayParser<>(2, TEXTURE_MAPPER, ObjectModel::coordinates));
+		add("vn", new ArrayParser<>(3, Vector::of, ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

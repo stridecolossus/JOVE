@@ -340,7 +340,7 @@ public class ModelDemo {
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
-					.binding(model.header().layout())
+					.binding(model.header())
 					.build()
 				.assembly()
 					.topology(model.header().primitive())

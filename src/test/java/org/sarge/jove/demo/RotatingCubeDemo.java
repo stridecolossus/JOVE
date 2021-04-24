@@ -314,7 +314,7 @@ public class RotatingCubeDemo {
 				.layout(pipelineLayout)
 				.pass(pass)
 				.input()
-					.binding(cube.header().layout())
+					.binding(cube.header())
 					.build()
 				.assembly()
 					.topology(cube.header().primitive())
@@ -343,7 +343,7 @@ public class RotatingCubeDemo {
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 
 		// Record render commands
-		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 4, 0, 0);
+		final Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.header().count(), 4, 0, 0);
 		for(int n = 0; n < commands.size(); ++n) {
 			final Command.Buffer cb = commands.get(n);
 			cb

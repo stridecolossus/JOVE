@@ -3,11 +3,13 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.model.Model.Header;
-import org.sarge.jove.model.Vertex.Layout;
 
 public class CubeBuilderTest {
 	private CubeBuilder builder;
@@ -19,11 +21,10 @@ public class CubeBuilderTest {
 
 	@Test
 	void build() {
-		final Layout expected = new Layout(Component.POSITION, Component.COORDINATE);
+		final var layout = List.of(Layout.TUPLE, Coordinate2D.LAYOUT);
 		final Model cube = builder.build();
 		assertNotNull(cube);
-		assertEquals(new Header(Primitive.TRIANGLES, expected, false), cube.header());
-		assertEquals((2 * 3) * 6, cube.count());
+		assertEquals(new Header(layout, Primitive.TRIANGLES, (2 * 3) * 6, false), cube.header());
 		assertEquals(false, cube.isIndexed());
 	}
 }

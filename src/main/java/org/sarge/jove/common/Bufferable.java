@@ -1,6 +1,7 @@
 package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 
@@ -40,6 +41,23 @@ public interface Bufferable {
 		else {
 			return bb.array();
 		}
+	}
+
+	// TODO
+	static Bufferable of(Bufferable... objects) {
+		return new Bufferable() {
+			@Override
+			public int length() {
+				return Arrays.stream(objects).mapToInt(Bufferable::length).sum();
+			}
+
+			@Override
+			public void buffer(ByteBuffer buffer) {
+				for(Bufferable obj : objects) {
+					obj.buffer(buffer);
+				}
+			}
+		};
 	}
 
 	/**

@@ -12,10 +12,16 @@ public interface Component extends Bufferable {
 	 */
 	record Layout(int size, int bytes, Class<?> type) {
 		/**
+		 * Convenience layout for a 3-component floating-point tuple.
+		 */
+		public static final Layout TUPLE = Layout.of(3);
+
+		/**
 		 * Creates a component layout of the given type.
 		 * @param size			Size of this component
 		 * @param type			Component type
 		 * @return New layout
+		 * @throws IllegalArgumentException for an unsupported component type
 		 */
 		public static Layout of(int size, Class<?> type) {
 			return switch(type.getSimpleName().toLowerCase()) {
@@ -24,6 +30,15 @@ public interface Component extends Bufferable {
 				case "short" 			-> new Layout(size, Short.BYTES, Short.class);
 				default -> throw new IllegalArgumentException("Unsupported component type: " + type.getSimpleName());
 			};
+		}
+
+		/**
+		 * Helper - Creates a layout with floating-point components.
+		 * @param size Size of this component
+		 * @return New floating-point layout
+		 */
+		public static Layout of(int size) {
+			return new Layout(size, Float.BYTES, Float.class);
 		}
 
 		/**

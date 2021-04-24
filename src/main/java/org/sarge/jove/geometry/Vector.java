@@ -27,11 +27,6 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	public static final Vector Z_AXIS = new Vector(0, 0, 1);
 
 	/**
-	 * Layout of a vector.
-	 */
-	public static final Layout LAYOUT = Layout.of(3, Float.class);
-
-	/**
 	 * Creates a vector between the given points.
 	 * @param start		Starting point
 	 * @param end		End point
@@ -172,7 +167,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 
 	@Override
 	public Layout layout() {
-		return LAYOUT;
+		return Layout.TUPLE;
 	}
 
 	@Override

@@ -11,11 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Component;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.obj.ObjectModel.VertexComponentList;
 
@@ -181,26 +182,23 @@ public class ObjectModelTest {
 
 		@Test
 		void build() {
-			// Set model name
-			final String name = "name";
-			model.name(name);
-			// TODO - unused
-
-			// Construct a triangle
+			// Build triangle model
 			triangle();
-
-			// Build model
 			assertNotNull(model.build());
 			assertEquals(1, model.build().count());
 
 			// Check resultant model
 			final Model result = model.build().iterator().next();
 			assertNotNull(result);
-//			assertEquals(name, result.name());
-			assertEquals(Primitive.TRIANGLES, result.header().primitive());
-			assertEquals(List.of(Component.POSITION, Component.NORMAL, Component.COORDINATE), result.header().layout().components());
-			assertEquals(3, result.count());
 			assertEquals(Optional.empty(), result.indexBuffer());
+
+			// Check model header
+			final Header header = result.header();
+			assertNotNull(header);
+			assertEquals(Primitive.TRIANGLES, header.primitive());
+			assertEquals(3, header.count());
+			assertEquals(true, header.clockwise());
+			assertEquals(List.of(Layout.TUPLE, Layout.TUPLE, Coordinate2D.LAYOUT), header.layout());
 		}
 
 		@Test

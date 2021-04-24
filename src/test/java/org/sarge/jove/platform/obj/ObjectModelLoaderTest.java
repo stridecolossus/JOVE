@@ -6,16 +6,18 @@ import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex.Layout;
 
 public class ObjectModelLoaderTest {
 	private ObjectModelLoader loader;
@@ -59,9 +61,12 @@ public class ObjectModelLoaderTest {
 			// Check model
 			final DefaultModel model = (DefaultModel) array[0];
 			assertNotNull(model);
-			assertEquals(Primitive.TRIANGLES, model.header().primitive());
-			assertEquals(new Layout(Component.POSITION, Component.NORMAL, Component.COORDINATE), model.header().layout());
-			assertEquals(3, model.count());
+
+			// Check header
+			final Header header = model.header();
+			assertEquals(3, header.count());
+			assertEquals(Primitive.TRIANGLES, header.primitive());
+			assertEquals(List.of(Layout.TUPLE, Layout.TUPLE, Coordinate2D.LAYOUT), header.layout());
 
 			// Check vertex buffer
 			assertNotNull(model.vertices());

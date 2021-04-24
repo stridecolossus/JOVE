@@ -1,21 +1,20 @@
 package org.sarge.jove.model;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.util.ResourceLoader;
 
 /**
- * TODO
+ * The <i>model loader</i> persists a vertex model.
  * @author Sarge
  */
 public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, BufferedModel> {
@@ -42,11 +41,17 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		// Write model header
 		final Header header = model.header();
 		out.writeUTF(header.primitive().name());
-		out.write(header.count());
+		out.writeInt(header.count());
 		out.writeBoolean(header.clockwise());
 
 		// Write vertex layout
-
+		final var layout = header.layout();
+		out.writeInt(layout.size());
+		for(Layout c : header.layout()) {
+			out.writeInt(c.size());
+			out.writeInt(c.bytes());
+			out.writeUTF(c.type().getName());
+		}
 
 		// Write VBO
 		write(model.vertexBuffer(), out);
@@ -83,6 +88,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 	 * @param in Input stream
 	 * @return New model
 	 * @throws IOException if the model cannot be loaded
+	 * @throws UnsupportedOperationException if the file version is unsupported by this loader
 	 */
 	@Override
 	public BufferedModel load(DataInputStream in) throws IOException {
@@ -98,14 +104,28 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		final boolean clockwise = in.readBoolean();
 
 		// Load vertex layout
-		final var layout = Arrays.stream(in.readUTF().split(DELIMITER)).map(Component::valueOf).collect(toList());
+		final int num = in.readInt();
+		final List<Layout> layout = new ArrayList<>();
+		for(int n = 0; n < num; ++n) {
+			final int size = in.readInt();
+			final int bytes = in.readInt();
+			final String name = in.readUTF();
+			final Class<?> type;
+			try {
+				type = Class.forName(name);
+			}
+			catch(ClassNotFoundException e) {
+				throw new IOException("Unknown layout component type: " + name, e);
+			}
+			layout.add(new Layout(size, bytes, type));
+		}
 
 		// Load data
 		final Bufferable vertices = loadBuffer(in);
 		final Bufferable index = loadBuffer(in);
 
 		// Create model
-		return new BufferedModel(new Header(primitive, count, clockwise), vertices, index);
+		return new BufferedModel(new Header(layout, primitive, count, clockwise), vertices, index);
 	}
 
 	/**

@@ -11,14 +11,12 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Component;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.model.Vertex.Layout;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing and maintains the list of generated models.
@@ -150,8 +148,8 @@ public class ObjectModel {
 			return;
 		}
 
-		// Initialise the vertex layout for the previous model
-		init();
+//		// Initialise the vertex layout for the previous model
+//		init();
 
 		// Reset transient model
 		vertices.clear();
@@ -172,24 +170,24 @@ public class ObjectModel {
 //		builder.name(name);
 	}
 
-	/**
-	 * Initialises the model layout.
-	 */
-	private void init() {
-		// Determine vertex layout for the current object group
-		final var layout = new ArrayList<Component>();
-		layout.add(Layout.POSITION);
-		if(!normals.isEmpty()) {
-			layout.add(Layout.NORMAL);
-		}
-		if(!coords.isEmpty()) {
-			layout.add(Layout.COORDINATE);
-		}
-
-		// Initialise current model
-		final DefaultModel.Builder builder = current();
-		builder.layout(new Vertex.Layout(layout));
-	}
+//	/**
+//	 * Initialises the model layout.
+//	 */
+//	private void init() {
+//		// Determine vertex layout for the current object group
+//		final var layout = new ArrayList<Component>();
+//		layout.add(Layout.POSITION);
+//		if(!normals.isEmpty()) {
+//			layout.add(Layout.NORMAL);
+//		}
+//		if(!coords.isEmpty()) {
+//			layout.add(Layout.COORDINATE);
+//		}
+//
+//		// Initialise current model
+//		final DefaultModel.Builder builder = current();
+//		builder.layout(new Vertex.Layout(layout));
+//	}
 
 	/**
 	 * Adds a face vertex to the current model.
@@ -224,7 +222,7 @@ public class ObjectModel {
 	 * @throws IllegalArgumentException if the models cannot be constructed
 	 */
 	public Stream<Model> build() {
-		init();
+//		init();
 		return builders.stream().map(DefaultModel.Builder::build);
 	}
 	// TODO - assume one model at a time, factor out building per model, this class (or maybe loader?) should be meta-model that returns the resultant list

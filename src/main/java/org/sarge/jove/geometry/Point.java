@@ -16,11 +16,6 @@ public record Point(float x, float y, float z) implements Component {
 	public static final Point ORIGIN = new Point(0, 0, 0);
 
 	/**
-	 * Layout of a point.
-	 */
-	public static final Layout LAYOUT = Layout.of(3, Float.class);
-
-	/**
 	 * Creates a point from the given array.
 	 * @param array Point array
 	 * @return New point
@@ -52,7 +47,7 @@ public record Point(float x, float y, float z) implements Component {
 
 	@Override
 	public Layout layout() {
-		return LAYOUT;
+		return Layout.TUPLE;
 	}
 
 	@Override

@@ -18,9 +18,10 @@ public interface Model {
 	/**
 	 * Descriptor for this model.
 	 */
-	record Header(Primitive primitive, int count, boolean clockwise) {
+	record Header(List<Layout> layout, Primitive primitive, int count, boolean clockwise) {
 		/**
 		 * Constructor.
+		 * @param layout			Vertex layout
 		 * @param primitive			Drawing primitive
 		 * @param count				Number of vertices
 		 * @param clockwise			Triangle winding order
@@ -33,17 +34,26 @@ public interface Model {
 				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
 		}
+
+		/**
+		 * @return Vertex stride (bytes)
+		 */
+		public int stride() {
+			return layout.stream().mapToInt(Layout::length).sum();
+		}
+
+		/**
+		 * @return Vertex buffer length (bytes)
+		 */
+		public int length() {
+			return count * stride();
+		}
 	}
 
 	/**
 	 * @return Model header
 	 */
 	Header header();
-
-	/**
-	 * @return Vertex layout
-	 */
-	List<Layout> layout();
 
 	/**
 	 * @return Vertex buffer

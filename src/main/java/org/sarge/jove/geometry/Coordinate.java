@@ -1,11 +1,7 @@
 package org.sarge.jove.geometry;
 
-import static java.util.stream.Collectors.toList;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.IntStream;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Component;
@@ -16,11 +12,6 @@ import org.sarge.jove.util.MathsUtil;
  * @author Sarge
  */
 public interface Coordinate extends Bufferable, Component {
-	/**
-	 * Coordinate layouts ordered by size.
-	 */
-	List<Layout> LAYOUTS = IntStream.range(1, 4).mapToObj(n -> Layout.of(n, Float.class)).collect(toList());
-
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
@@ -42,7 +33,7 @@ public interface Coordinate extends Bufferable, Component {
 	record Coordinate1D(float u) implements Coordinate {
 		@Override
 		public Layout layout() {
-			return LAYOUTS.get(0);
+			return Layout.of(1);
 		}
 
 		@Override
@@ -69,6 +60,11 @@ public interface Coordinate extends Bufferable, Component {
 			TOP_RIGHT 		= new Coordinate2D(1, 0),
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
 
+		/**
+		 * Layout for a 2D coordinate.
+		 */
+		public static final Layout LAYOUT = Layout.of(2);
+
 		@Override
 		public void buffer(ByteBuffer buffer) {
 			buffer.putFloat(u).putFloat(v);
@@ -76,7 +72,7 @@ public interface Coordinate extends Bufferable, Component {
 
 		@Override
 		public Layout layout() {
-			return LAYOUTS.get(1);
+			return LAYOUT;
 		}
 
 		@Override
@@ -99,7 +95,7 @@ public interface Coordinate extends Bufferable, Component {
 
 		@Override
 		public Layout layout() {
-			return LAYOUTS.get(2);
+			return Layout.TUPLE;
 		}
 
 		@Override

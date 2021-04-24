@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Component.Layout;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.AbstractModel;
 
 /**
@@ -24,7 +23,6 @@ import org.sarge.jove.model.Model.AbstractModel;
 public class DefaultModel extends AbstractModel {
 	private final List<Vertex> vertices;
 	private final Optional<List<Integer>> index;
-	private final List<Layout> layout;
 
 	/**
 	 * Constructor.
@@ -36,17 +34,11 @@ public class DefaultModel extends AbstractModel {
 		super(header);
 		this.vertices = List.copyOf(vertices);
 		this.index = Optional.ofNullable(index).map(List::copyOf);
-		this.layout = vertices.get(0).layout(); // TODO
 	}
 
 	@Override
 	public boolean isIndexed() {
 		return index.isPresent();
-	}
-
-	@Override
-	public List<Layout> layout() {
-		return layout;
 	}
 
 	/**
@@ -68,7 +60,7 @@ public class DefaultModel extends AbstractModel {
 		return new Bufferable() {
 			@Override
 			public int length() {
-				return 0; // TODO
+				return header().length();
 			}
 
 			@Override
@@ -116,7 +108,6 @@ public class DefaultModel extends AbstractModel {
 	 */
 	public static class Builder {
 		private Primitive primitive = Primitive.TRIANGLE_STRIP;
-		private List<Layout> layout = List.of(Point.LAYOUT);
 		private boolean clockwise;
 
 		protected final List<Vertex> vertices = new ArrayList<>();
@@ -166,7 +157,6 @@ public class DefaultModel extends AbstractModel {
 		 * @return New model
 		 */
 		public DefaultModel build() {
-			//final int count = index == null ? vertices.size() : index.size();
 			return build(null, vertices.size());
 		}
 
@@ -177,7 +167,8 @@ public class DefaultModel extends AbstractModel {
 		 * @return New model
 		 */
 		protected final DefaultModel build(List<Integer> index, int count) {
-			return new DefaultModel(new Header(primitive, count, clockwise), vertices, index);
+			final List<Layout> layout = vertices.isEmpty() ? List.of() : vertices.get(0).layout();
+			return new DefaultModel(new Header(layout, primitive, count, clockwise), vertices, index);
 		}
 	}
 
