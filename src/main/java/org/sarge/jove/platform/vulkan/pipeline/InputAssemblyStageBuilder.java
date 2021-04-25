@@ -7,6 +7,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 /**
  * Builder for the input assembly pipeline stage.
+ * @see VkPipelineInputAssemblyStateCreateInfo
  * @author Sarge
  */
 public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelineInputAssemblyStateCreateInfo> {

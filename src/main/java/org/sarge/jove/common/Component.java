@@ -3,12 +3,36 @@ package org.sarge.jove.common;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>component</i> is a compound bufferable type with a defined structure used to model inter-leaved vertex data.
+ * A <i>component</i> is a compound bufferable type with a defined structure (generally used to model inter-leaved vertex data).
  * @author Sarge
  */
 public interface Component extends Bufferable {
 	/**
 	 * A <i>component layout</i> is a descriptor for the structure of a component.
+	 * <p>
+	 * A layout is comprised of:
+	 * <ul>
+	 * <li>the {@link #size} which specifies the number of <i>elements</i> that comprise the component, e.g. 3 for a 3D point</li>
+	 * <li>the number of {@link #bytes} per element, e.g. {@link Float#BYTES}</li>
+	 * <li>the {@link #type} of each element, e.g. {@link Float}</li>
+	 * </ul>
+	 * Examples:
+	 * <p>
+	 * The following all construct a synonymous layout for a floating-point 3-tuple:
+	 * <pre>
+	 *     // Constructor
+	 *     new Layout(3, Float.BYTES, Float.class);
+	 *
+	 *     // Factory
+	 *     Layout.of(3, Float.class);
+	 *     Layout.of(3, Float.TYPE);
+	 *     Layout.of(3, float.class);
+	 *
+	 *     // Convenience floating-point factory
+	 *     Layout.of(3);
+	 * </pre>
+	 * <p>
+	 * In addition the convenience {@link #TUPLE} constant defines the layout for a floating-point 3-tuple.
 	 */
 	record Layout(int size, int bytes, Class<?> type) {
 		/**
@@ -18,6 +42,15 @@ public interface Component extends Bufferable {
 
 		/**
 		 * Creates a component layout of the given type.
+		 * <p>
+		 * Notes:
+		 * <ul>
+		 * <li>Supported types are float, integer and short</li>
+		 * <li>The {@link #type} parameter can be the wrapper or primitive type</li>
+		 * <li>The number of {@link #bytes} is specified by the corresponding constant, e.g. {@link Float#BYTES}</li>
+		 * <li>The type returned by {@link #type()} is the wrapper class, e.g. {@link Float}</li>
+		 * </ul>
+		 * <p>
 		 * @param size			Size of this component
 		 * @param type			Component type
 		 * @return New layout

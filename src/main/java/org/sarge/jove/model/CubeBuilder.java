@@ -36,7 +36,7 @@ public class CubeBuilder {
 			{ 1, 7, 3, 5 }, // Bottom
 	};
 
-	// Indices for the two triangles per face quad
+	// Indices for the two triangles of each face
 	private static final int[] TRIANGLES = Stream.concat(Quad.LEFT.stream(), Quad.RIGHT.stream()).mapToInt(Integer::intValue).toArray();
 
 	/**

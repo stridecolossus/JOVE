@@ -4,6 +4,7 @@ import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
 
 /**
  * Drawing primitives.
+ * @see VkPrimitiveTopology
  * @author Sarge
  */
 public enum Primitive {

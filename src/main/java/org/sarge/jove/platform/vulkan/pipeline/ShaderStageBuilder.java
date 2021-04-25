@@ -14,6 +14,9 @@ import org.sarge.jove.platform.vulkan.util.StructureCollector;
 
 /**
  * Builder for a shader stage.
+ * @see VkPipelineShaderStageCreateInfo
+ * @see Shader
+ * @author Sarge
  */
 public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShaderStageCreateInfo> {
 	/**

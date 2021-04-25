@@ -14,7 +14,7 @@ public final class MathsUtil {
 	/**
 	 * Accuracy for floating-point comparisons.
 	 */
-	private static final float ACCURACY = Float.parseFloat(System.getProperty("jove.accuracy", "0.0001")); // TODO - doc
+	private static final float ACCURACY = Float.parseFloat(System.getProperty("jove.accuracy", "0.0001"));
 
 	/**
 	 * Half value.

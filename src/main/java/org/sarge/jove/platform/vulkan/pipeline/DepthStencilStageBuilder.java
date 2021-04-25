@@ -8,6 +8,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 /**
  * Builder for the depth-stencil pipeline stage.
+ * @see VkPipelineDepthStencilStateCreateInfo
  * @author Sarge
  */
 public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipelineDepthStencilStateCreateInfo> {

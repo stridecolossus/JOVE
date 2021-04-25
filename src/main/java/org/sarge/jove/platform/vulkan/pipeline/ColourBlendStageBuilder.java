@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.sarge.jove.common.IntegerEnumeration;
@@ -18,6 +17,7 @@ import org.sarge.jove.platform.vulkan.util.StructureCollector;
 
 /**
  * Builder for the colour-blend pipeline stage.
+ * @see VkPipelineColorBlendStateCreateInfo
  * @author Sarge
  */
 public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineColorBlendStateCreateInfo> {
@@ -39,13 +39,6 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 	private final float[] constants = new float[4];
 	private VkLogicOp logic; // NULL indicates no global colour blending (see build method)
-
-	/**
-	 * Constructor.
-	 */
-	ColourBlendStageBuilder() {
-		Arrays.fill(constants, 0);
-	}
 
 	/**
 	 * Starts a new attachment.

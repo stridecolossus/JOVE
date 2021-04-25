@@ -4,7 +4,8 @@ import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.core.Command;
 
 /**
- * A <i>draw command</i> is used to draw a model.
+ * A <i>draw command</i> is used to render a model.
+ * @see Model
  * @author Sarge
  */
 public interface DrawCommand extends Command {

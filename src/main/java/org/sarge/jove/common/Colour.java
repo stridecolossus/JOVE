@@ -41,7 +41,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * Creates a colour from the given floating-point array (either a 4-element RGBA array or 3-element RGB with alpha initialised to <b>one</b>)
 	 * @param array Colour array
 	 * @return New colour
-	 * @throws IllegalArgumentException if the array is not an RGB or RGBA array or any component is not a percentile value
+	 * @throws IllegalArgumentException if the array is not an RGB or RGBA array or any component is not a valid percentile value
 	 */
 	public static Colour of(float[] array) {
 		final float alpha = switch(array.length) {

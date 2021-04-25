@@ -22,6 +22,8 @@ import org.sarge.jove.model.Model.AbstractModel;
  * <li>The {@link #vertexBuffer()} method generates an interleaved VBO</li>
  * </ul>
  * <p>
+ * TODO - doc indexed
+ * <p>
  * @see Vertex#buffer(ByteBuffer)
  * @author Sarge
  */
@@ -35,7 +37,7 @@ public class DefaultModel extends AbstractModel {
 	 * @param vertices			Vertices
 	 * @param index				Optional index
 	 */
-	protected DefaultModel(Header header, List<Vertex> vertices, List<Integer> index) {
+	public DefaultModel(Header header, List<Vertex> vertices, List<Integer> index) {
 		super(header);
 		this.vertices = List.copyOf(vertices);
 		this.index = Optional.ofNullable(index).map(List::copyOf);

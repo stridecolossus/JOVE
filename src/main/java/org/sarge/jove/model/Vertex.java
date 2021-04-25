@@ -21,8 +21,20 @@ import org.sarge.jove.geometry.Vector;
 /**
  * A <i>vertex</i> is a compound element of a <i>vertex buffer</i> (or VBO).
  * <p>
- * TODO
+ * A vertex is essentially a wrapper for an array of {@link Component} bufferable objects.
  * <p>
+ * A {@link Builder} can be used to create a vertex comprised of the common built-in primitives, e.g.
+ * <pre>
+ * 	Vertex v = new Builder()
+ * 		.position(new Point(...))
+ * 		.normal(new Vector(...))
+ * 		.coordinate(new Coordinate2D(...))
+ * 		.colour(new Colour(...))
+ * 		.build();
+ * </pre>
+ * <p>
+ * @see Component
+ * @see DefaultModel
  * @author Sarge
  */
 public class Vertex implements Bufferable {

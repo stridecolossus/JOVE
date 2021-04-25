@@ -25,8 +25,12 @@ public interface Model {
 		 * @param primitive			Drawing primitive
 		 * @param count				Number of vertices
 		 * @param clockwise			Triangle winding order
+		 * @throws IllegalArgumentException if the {@link #count} is invalid for the given {@link #primitive}
+		 * @see Primitive#isValidVertexCount(int)
+		 * @see Primitive#isNormalSupported()
 		 */
 		public Header {
+			Check.notNull(layout);
 			Check.notNull(primitive);
 			Check.zeroOrMore(count);
 

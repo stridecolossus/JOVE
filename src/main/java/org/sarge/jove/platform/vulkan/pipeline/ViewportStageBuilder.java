@@ -16,6 +16,8 @@ import org.sarge.lib.util.Percentile;
 
 /**
  * Builder for the viewport stage descriptor.
+ * @see VkPipelineViewportStateCreateInfo
+ * @author Sarge
  */
 public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
 	/**

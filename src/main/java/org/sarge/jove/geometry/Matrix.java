@@ -58,7 +58,6 @@ public final class Matrix implements Transform, Bufferable {
 
 	/**
 	 * Creates a scaling matrix.
-	 * @param scale Scaling tuple
 	 * @return Scaling matrix
 	 */
 	public static Matrix scale(float x, float y, float z) {
@@ -70,6 +69,11 @@ public final class Matrix implements Transform, Bufferable {
 			.build();
 	}
 
+	/**
+	 * Creates a scaling matrix.
+	 * @param scale Scaling tuple (for all three directions)
+	 * @return Scaling matrix
+	 */
 	public static Matrix scale(float scale) {
 		return scale(scale, scale, scale);
 	}

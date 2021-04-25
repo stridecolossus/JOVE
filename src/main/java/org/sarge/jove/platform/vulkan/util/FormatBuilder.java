@@ -110,7 +110,7 @@ public class FormatBuilder {
 	private boolean signed = true;
 
 	/**
-	 * Sets the colour component characters, e.g. <code>ARGB</code>
+	 * Sets the colour component characters, e.g. {@code ARGB}.
 	 * @param components Colour component string
 	 * @throws IllegalArgumentException if the given components string is empty, contains an invalid character, or is longer than 4 components
 	 */

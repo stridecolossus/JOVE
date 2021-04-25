@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 /**
  * Builder for the rasterizer pipeline stage.
+ * @see VkPipelineRasterizationStateCreateInfo
  * @author Sarge
  */
 public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
@@ -36,7 +37,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	}
 
 	/**
-	 * Sets whether geometry is discarded by the rasterizer (basically disabled output to the framebuffer).
+	 * Sets whether geometry is discarded by the rasterizer (basically disabling output to the framebuffer).
 	 * @param rasterizerDiscardEnable Whether to discard geometry (default is {@code false})
 	 */
 	public RasterizerStageBuilder discard(boolean rasterizerDiscardEnable) {

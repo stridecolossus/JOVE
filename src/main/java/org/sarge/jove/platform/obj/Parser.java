@@ -1,7 +1,8 @@
 package org.sarge.jove.platform.obj;
 
 /**
- * Parser for a OBJ command line.
+ * A <i>parser</i> handles an OBJ command line.
+ * @author Sarge
  */
 public interface Parser {
 	/**

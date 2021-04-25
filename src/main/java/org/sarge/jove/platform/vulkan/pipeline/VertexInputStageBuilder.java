@@ -23,6 +23,7 @@ import org.sarge.jove.platform.vulkan.util.StructureCollector;
 
 /**
  * Builder for the vertex input pipeline stage descriptor.
+ * @see VkPipelineVertexInputStateCreateInfo
  * @author Sarge
  */
 public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
@@ -46,9 +47,49 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	}
 
 	/**
-	 * Helper - Adds a vertex input binding and attributes for the given vertex layout.
-	 * The binding index is allocated to the next available index.
-	 * @param layout Vertex layout
+	 * Helper - Adds a vertex input binding and attributes for the given model.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>The binding index is allocated as the next available index</li>
+	 * <li>Vertex data is assumed to be contiguous, i.e. the offset of each component is the end of the previous element</li>
+	 * </ul>
+	 * <p>
+	 * Using this helper is equivalent to the following code:
+	 * <pre>
+	 *  // Define model header
+	 *  Model.Header header = ...
+	 *
+	 *  // Allocate binding index
+	 *  int index = ...
+	 *
+	 *  // Create builder
+	 *  VertexInputStageBuilder builder = new VertexInputStageBuilder();
+	 *
+	 *  // Configure binding
+	 *  builder
+	 *  	.binding()
+	 *  	.index(index)
+	 *  	.stride(header.stride())
+	 *  	.build();
+	 *
+	 *  // Configure vertex attribute for each component of the model
+	 *  int loc = 0;
+	 *  int offset = 0;
+	 *  for(Layout layout : header.layout()) {
+	 *  	builder
+	 *  		.attribute()
+	 *  		.binding(index)
+	 *  		.location(loc)
+	 *  		.format(FormatBuilder.format(layout))
+	 *  		.offset(offset)
+	 *  		.build();
+	 *
+	 *  	++loc;
+	 *  	offset += layout.length();
+	 *  }
+	 * </pre>
+	 * @param header Model header
 	 */
 	public VertexInputStageBuilder binding(Model.Header header) {
 		// Allocate next binding

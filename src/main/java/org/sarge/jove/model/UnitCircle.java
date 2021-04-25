@@ -45,3 +45,4 @@ public final class UnitCircle {
 		return points;
 	}
 }
+// TODO - refactor with sphere

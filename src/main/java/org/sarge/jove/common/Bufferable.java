@@ -23,7 +23,7 @@ public interface Bufferable {
 
 	/**
 	 * Helper - Converts this bufferable object to a byte array.
-	 * @return Byte array
+	 * @return This bufferable as a byte array
 	 */
 	default byte[] toByteArray() {
 		// Buffer this object
@@ -41,23 +41,6 @@ public interface Bufferable {
 		else {
 			return bb.array();
 		}
-	}
-
-	// TODO
-	static Bufferable of(Bufferable... objects) {
-		return new Bufferable() {
-			@Override
-			public int length() {
-				return Arrays.stream(objects).mapToInt(Bufferable::length).sum();
-			}
-
-			@Override
-			public void buffer(ByteBuffer buffer) {
-				for(Bufferable obj : objects) {
-					obj.buffer(buffer);
-				}
-			}
-		};
 	}
 
 	/**
@@ -80,6 +63,29 @@ public interface Bufferable {
 			@Override
 			public byte[] toByteArray() {
 				return bytes;
+			}
+		};
+	}
+
+	/**
+	 * Creates a compound bufferable object.
+	 * @param objects Bufferable objects
+	 * @return Compound bufferable
+	 */
+	static Bufferable of(Bufferable... objects) {
+		final int len = Arrays.stream(objects).mapToInt(Bufferable::length).sum();
+
+		return new Bufferable() {
+			@Override
+			public int length() {
+				return len;
+			}
+
+			@Override
+			public void buffer(ByteBuffer buffer) {
+				for(Bufferable obj : objects) {
+					obj.buffer(buffer);
+				}
 			}
 		};
 	}
