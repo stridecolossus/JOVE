@@ -1,7 +1,6 @@
 package org.sarge.jove.particle;
 
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.range;
 
 import java.util.Random;
 
@@ -9,6 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * Vector factory that generates a cone of particles.
@@ -26,8 +26,9 @@ public class ConeVectorFactory implements VectorFactory {
 	 * @throws IllegalArgumentException if the radius is larger than {@link MathsUtil#HALF_PI}
 	 */
 	public ConeVectorFactory(Vector normal, float radius, Random random) {
+		Check.range(radius, 0f, MathsUtil.HALF_PI);
 		this.normal = notNull(normal);
-		this.radius = range(radius, 0f, MathsUtil.HALF_PI) / 2f;
+		this.radius = radius / 2f;
 		this.random = notNull(random);
 	}
 

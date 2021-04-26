@@ -5,7 +5,8 @@ import static org.sarge.lib.util.Check.notNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>transient native object</i> is a template implementation for a native object that is managed by the application.
+ * A <i>transient native object</i> is a template implementation for a native object managed by the application.
+ * @author Sarge
  */
 public abstract class AbstractTransientNativeObject implements TransientNativeObject {
 	protected final Handle handle;

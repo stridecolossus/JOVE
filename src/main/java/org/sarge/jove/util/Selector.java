@@ -30,7 +30,7 @@ public class Selector<T> {
 	 * Selects the optimal value from the given list of candidates.
 	 * @param list List of candidates
 	 * @return Optimal value or the fallback is not available
-	 * @throws NoSuchElementException if the optimal is not present in the candidates and the fallback is empty
+	 * @throws NoSuchElementException if an optimal value is not present in the candidates and the fallback is empty
 	 */
 	public T select(List<T> list) {
 		return list.stream().filter(predicate).findAny().or(() -> def).orElseThrow();

@@ -27,8 +27,8 @@ import com.sun.jna.Memory;
 
 /**
  * The <i>work</i> class is comprised of a <i>batch</i> of commands to be submitted to a {@link Queue}.
- * @author Sarge
  * @see Command
+ * @author Sarge
  */
 public class Work {
 	/**
@@ -152,9 +152,10 @@ public class Work {
 			if(queue == null) {
 				queue = q;
 			}
-			else
-			if(queue.family() != q.family()) {
-				throw new IllegalArgumentException("Command buffers must all have the same queue: " + buffer);
+			else {
+				if(queue.family() != q.family()) {
+					throw new IllegalArgumentException("Command buffers must all have the same queue: " + buffer);
+				}
 			}
 
 			// Add buffer to this work

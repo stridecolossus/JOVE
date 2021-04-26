@@ -56,9 +56,9 @@ public record Point(float x, float y, float z) implements Component {
 	}
 
 	/**
-	 * Calculates the distance (<b>squared</b>) to the given point.
+	 * Calculates the distance <b>squared</b> to the given point.
 	 * @param point Destination point
-	 * @return Distance squared
+	 * @return Distance <b>squared</b>
 	 */
 	public float distance(Point point) {
 		final float dx = point.x - x;

@@ -1,8 +1,8 @@
 package org.sarge.jove.particle;
 
-import org.sarge.jove.geometry.BoundingVolume;
 import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.scene.Volume;
 
 /**
  * Collision surface.
@@ -55,7 +55,7 @@ public interface Surface {
 	 * @param vol Bounding volume
 	 * @return Bounding volume surface
 	 */
-	static Surface volume(BoundingVolume vol) {
+	static Surface volume(Volume vol) {
 		// TODO
 		// return pos -> vol.intersect(null);
 		return pos -> false;

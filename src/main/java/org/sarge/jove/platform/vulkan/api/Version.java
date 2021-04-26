@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.zeroOrMore;
 
 /**
  * Vulkan version.
+ * @author Sarge
  */
 public record Version(int major, int minor, int patch) implements Comparable<Version> {
 	/**

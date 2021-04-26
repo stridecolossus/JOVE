@@ -16,10 +16,6 @@ public record Plane(Vector normal, float distance) {
 		INTERSECT
 	}
 
-	// TODO
-	// - invert?
-	// - ctors for XYZ planes and XY XZ YZ etc?
-
 	/**
 	 * Creates a plane from the given triangle of points.
 	 * @param a

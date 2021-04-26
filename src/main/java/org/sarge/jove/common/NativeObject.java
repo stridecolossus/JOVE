@@ -13,7 +13,7 @@ import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
 
 /**
- * A <i>native object</i> is a resource managed by a native library and referenced by a JNA pointer.
+ * A <i>native object</i> is a resource created by the native layer referenced by a JNA pointer.
  * @author Sarge
  */
 public interface NativeObject {
@@ -23,7 +23,7 @@ public interface NativeObject {
 	Handle handle();
 
 	/**
-	 * A <i>handle</i> is an opaque wrapper for a JNA pointer referencing a native object.
+	 * A <i>handle</i> is an opaque wrapper for a JNA pointer.
 	 */
 	final class Handle {
 		/**

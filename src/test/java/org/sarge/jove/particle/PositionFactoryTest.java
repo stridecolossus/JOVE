@@ -27,7 +27,7 @@ public class PositionFactoryTest {
 
 	@Test
 	public void extents() {
-		final var factory = PositionFactory.extents(Extents.EMPTY, new Random());
+		final var factory = PositionFactory.extents(new Extents(Point.ORIGIN, Point.ORIGIN), new Random());
 		assertEquals(Point.ORIGIN, factory.position());
 	}
 

@@ -5,7 +5,10 @@ import org.sarge.lib.util.Check;
 
 /**
  * A <i>sphere</i>
- * TODO - integrate into SphereVolume
+ * TODO
+ * - integrate into SphereVolume
+ * - no need to be record
+ * - sphere volume extends and adds centre?
  * @author Sarge
  */
 public record Sphere(float radius) {

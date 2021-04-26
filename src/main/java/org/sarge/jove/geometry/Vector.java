@@ -83,7 +83,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	/**
 	 * Scales this vector.
 	 * @param f Scalar
-	 * @return New scaled vector
+	 * @return Scaled vector
 	 */
 	public Vector scale(float f) {
 		return new Vector(x * f, y * f, z * f);

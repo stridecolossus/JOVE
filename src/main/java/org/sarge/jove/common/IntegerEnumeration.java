@@ -31,7 +31,7 @@ public interface IntegerEnumeration {
 	IntBinaryOperator MASK = (a, b) -> a | b;
 
 	/**
-	 * Converts an integer enumeration to/from a native <code>int</code> value.
+	 * Converts an integer enumeration to/from a native {@code int}.
 	 */
 	TypeConverter CONVERTER = new TypeConverter() {
 		@Override

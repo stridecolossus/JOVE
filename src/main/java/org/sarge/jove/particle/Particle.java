@@ -11,6 +11,7 @@ import org.sarge.jove.geometry.Vector;
  * @author Sarge
  * TODO
  * - reflect
+ * - is-a vertex?
  */
 public class Particle {
 	private static final Vector IDLE = new Vector(0, 0, 0);

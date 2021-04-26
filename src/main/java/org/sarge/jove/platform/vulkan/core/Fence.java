@@ -99,6 +99,7 @@ public class Fence extends AbstractVulkanObject {
 		else {
 			throw new VulkanException(result);
 		}
+		// Note - cannot use switch expression here (values must be constants)
 	}
 
 	/**

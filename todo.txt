@@ -3,3 +3,17 @@ indexed model
 
 pipeline
 - nasty base-classes, initialisation, result() method, etc. Can we make these just builders somehow?
+
+volumes
+- introduce abstract impl
+- no point in records for impls -> class
+- SphereVolume composes a Sphere + centre
+- Extents = volume?
+- or BoundingVolume.of(Extents)
+- no need for 3 intersects() methods, just make it use instanceof
+- compound should defensive copy
+- integrate Sphere helper and UnitCircle and Matrix.rotation()?
+- Extents also should not be a record
+- BoundingBox === Extents? no need for final
+- Frustum should have a builder!
+- Frustum remove reflection tostring
