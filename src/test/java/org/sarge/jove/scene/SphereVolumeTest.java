@@ -1,7 +1,12 @@
 package org.sarge.jove.scene;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -9,6 +14,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Ray;
+import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
 class SphereVolumeTest {
@@ -56,6 +64,13 @@ class SphereVolumeTest {
 		assertEquals(false, sphere.within(OUTSIDE * OUTSIDE, RADIUS));
 	}
 
+	@Test
+	void intersects() {
+		final Volume vol = mock(Volume.class);
+		when(vol.extents()).thenReturn(new Extents(Point.ORIGIN, Point.ORIGIN));
+		assertEquals(true, sphere.intersects(vol));
+	}
+
 	@Nested
 	class SphereSphereIntersectionTests {
 		private Point outside;
@@ -94,12 +109,87 @@ class SphereVolumeTest {
 
 	@Nested
 	class SphereExtentsIntersectionTests {
-		// TODO
+		@Test
+		void inside() {
+			assertEquals(true, sphere.intersects(new Extents(Point.ORIGIN, Point.ORIGIN)));
+		}
+
+		@Test
+		void intersects() {
+			assertEquals(true, sphere.intersects(new Extents(Point.ORIGIN, new Point(RADIUS, 0, 0))));
+		}
+
+		@Test
+		void touching() {
+			final Point pt = new Point(RADIUS, 0, 0);
+			assertEquals(true, sphere.intersects(new Extents(pt, pt)));
+		}
+
+		@Test
+		void outside() {
+			final Point pt = new Point(OUTSIDE, 0, 0);
+			assertEquals(false, sphere.intersects(new Extents(pt, pt)));
+		}
 	}
 
 	@Nested
 	class SphereRayIntersectionTests {
-		// TODO
+		/**
+		 * Runs an intersection test.
+		 * @param origin			Ray origin
+		 * @param expected			Expected intersection points
+		 */
+		private void run(Point origin, Point... expected) {
+			final var intersections = sphere.intersect(new Ray(origin, Vector.X_AXIS));
+			final var actual = intersections.map(Intersection::point).collect(toList());
+			assertEquals(List.of(expected), actual);
+			// TODO - test distances?
+		}
+
+		@DisplayName("Sphere is behind the ray but does not intersect")
+		@Test
+		void behindNotIntersecting() {
+			run(new Point(OUTSIDE, 0, 0));
+		}
+
+		@DisplayName("Sphere is behind the ray which originates inside the sphere")
+		@Test
+		void behindInside() {
+			run(new Point(1, 0, 0), new Point(RADIUS, 0, 0));
+		}
+
+		@DisplayName("Sphere is behind the ray and the ray is on the sphere surface")
+		@Test
+		void behindTouching() {
+			final Point pt = new Point(RADIUS, 0, 0);
+			run(pt, pt);
+		}
+
+		@DisplayName("Sphere is ahead of the ray but does not intersect")
+		@Test
+		void outside() {
+			run(new Point(-OUTSIDE, -OUTSIDE, 0));
+		}
+
+		@DisplayName("Sphere is ahead of the ray which originates inside the sphere")
+		@Test
+		void inside() {
+			run(new Point(-1, 0, 0), new Point(RADIUS, 0, 0));
+		}
+
+		@DisplayName("Sphere is ahead of the ray and is intersected twice")
+		@Test
+		void intersects() {
+			// TODO
+			run(new Point(-OUTSIDE, 0, 0), new Point(-RADIUS, 0, 0)); // , new Point(RADIUS, 0, 0));
+		}
+
+		@DisplayName("Sphere is ahead of the ray which originates on the sphere surface")
+		@Test
+		void touching() {
+			final Point left = new Point(-RADIUS, 0, 0);
+			run(left, left, new Point(RADIUS, 0, 0));
+		}
 	}
 
 	@Test

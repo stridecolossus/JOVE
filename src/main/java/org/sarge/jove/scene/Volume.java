@@ -1,10 +1,11 @@
 package org.sarge.jove.scene;
 
-import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
  * A <i>bounding volume</i> defines an abstract volume of space used for frustum clipping and intersection tests.
@@ -23,14 +24,6 @@ public interface Volume {
 	boolean contains(Point pt);
 
 	/**
-	 * Determines the intersection of this volume and given ray
-	 * @param ray Ray
-	 * @return Intersection
-	 * TODO - introduce lazy evaluated intersection point, i.e. this just returns y/n with method to then determine actual intersection point
-	 */
-	Optional<Point> intersect(Ray ray);
-
-	/**
 	 * Determines whether this volume intersects the given volume.
 	 * @param vol Volume
 	 * @return Whether the volumes intersects
@@ -40,11 +33,13 @@ public interface Volume {
 		throw new UnsupportedOperationException(String.format("Unsupported volumes: this=%s that=%s", this, vol));
 	}
 
-// TODO - ?
-//	interface Intersection {
-//		Optional<Point> intersection();
-// yes | no | touching
-//	}
+	/**
+	 * Determines the intersection(s) of this volume and the given ray.
+	 * Note that bounding volume implementations do not need to guarantee any implicit ordering of the results (e.g. distance from the ray).
+	 * @param ray Ray
+	 * @return Intersections
+	 */
+	Stream<Intersection> intersect(Ray ray);
 
 	/**
 	 * Empty bounding volume.
@@ -61,8 +56,8 @@ public interface Volume {
 		}
 
 		@Override
-		public Optional<Point> intersect(Ray ray) {
-			return Optional.empty();
+		public Stream<Intersection> intersect(Ray ray) {
+			return Intersection.NONE;
 		}
 
 		@Override

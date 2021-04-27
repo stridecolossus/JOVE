@@ -3,12 +3,13 @@ package org.sarge.jove.scene;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Objects;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
  * A <i>bounding box</i> is an axis-aligned rectangular volume implemented as an adapter of an {@link Extents}.
@@ -36,7 +37,7 @@ public final class BoundingBox implements Volume {
 	}
 
 	@Override
-	public Optional<Point> intersect(Ray ray) {
+	public Stream<Intersection> intersect(Ray ray) {
 		// TODO
 		return null;
 	}

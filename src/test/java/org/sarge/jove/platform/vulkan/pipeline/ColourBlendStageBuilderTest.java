@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkBlendFactor;
 import org.sarge.jove.platform.vulkan.VkBlendOp;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 public class ColourBlendStageBuilderTest {
 	private static final float[] CONSTANTS = {1, 2, 3, 4};

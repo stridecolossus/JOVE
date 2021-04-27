@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.VkCompareOp;
 import org.sarge.jove.platform.vulkan.VkPipelineDepthStencilStateCreateInfo;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
  * Builder for the depth-stencil pipeline stage.

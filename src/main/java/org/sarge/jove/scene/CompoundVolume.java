@@ -2,12 +2,13 @@ package org.sarge.jove.scene;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
  * A <i>compound volume</i> is comprised of a list of bounding volumes.
@@ -57,7 +58,7 @@ public class CompoundVolume implements Volume {
 	}
 
 	@Override
-	public Optional<Point> intersect(Ray ray) {
+	public Stream<Intersection> intersect(Ray ray) {
 		// TODO
 		return null;
 	}

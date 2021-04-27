@@ -8,7 +8,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 public class DeviceFeaturesTest {
 	private static final String SUPPORTED = "samplerAnisotropy";

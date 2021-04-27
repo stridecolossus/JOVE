@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.util;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.ToNativeContext;

@@ -117,7 +117,7 @@ public record Message(VkDebugUtilsMessageSeverityFlagEXT severity, Collection<Vk
 		private Consumer<Message> consumer = System.err::println;
 
 		/**
-		 * Sets the message consumer (default dumps message to the error console).
+		 * Sets the message consumer (the default dumps messages to the error console).
 		 * @param consumer Message consumer
 		 */
 		public HandlerBuilder consumer(Consumer<Message> consumer) {

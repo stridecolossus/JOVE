@@ -54,9 +54,14 @@ class VectorTest {
 	}
 
 	@Test
+	void dot() {
+		assertEquals(1f, Vector.X_AXIS.dot(Vector.X_AXIS));
+		assertEquals(0f, Vector.X_AXIS.dot(Vector.Y_AXIS));
+	}
+
+	@Test
 	void angle() {
-		assertEquals(0f, Vector.X_AXIS.angle(Vector.X_AXIS));
-		// TODO
+// TODO
 //		assertEquals(1f, Vector.X_AXIS.angle(Vector.Y_AXIS));
 //		assertEquals(1f, Vector.X_AXIS.angle(new Vector(-1, 0, 0)));
 	}

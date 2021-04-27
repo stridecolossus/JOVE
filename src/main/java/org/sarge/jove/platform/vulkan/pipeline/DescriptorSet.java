@@ -211,10 +211,11 @@ public class DescriptorSet implements NativeObject {
 	 * Updates the resources for the given dirty descriptor sets.
 	 * @param dev				Logical device
 	 * @param descriptors		Descriptor sets to update
+	 * @return Number of updated descriptor sets
 	 * @throws IllegalStateException if the descriptor sets are empty
 	 * @see Entry#isDirty()
 	 */
-	public static void update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
+	public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
 		if(descriptors.isEmpty()) throw new IllegalStateException("Cannot update empty descriptor sets");
 
 		// Enumerate dirty resources
@@ -226,12 +227,14 @@ public class DescriptorSet implements NativeObject {
 
 		// Ignore if nothing to update
 		if(writes == null) {
-			return;
+			return 0;
 		}
 
 		// Apply update
 		dev.library().vkUpdateDescriptorSets(dev.handle(), writes.length, writes, 0, null);
+		return writes.length;
 	}
+	// TODO - test return value
 
 	/**
 	 * Helper - Creates a pipeline bind command for this descriptor set.
@@ -345,7 +348,7 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		/**
-		 * Helper - Allocates a number of descriptor-sets all with the given layout.
+		 * Helper - Allocates a number of descriptor-sets with the given layout.
 		 * @param layout		Layout
 		 * @param num			Number of sets to allocate
 		 * @return New descriptor-sets
@@ -503,7 +506,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param type			Descriptor type
 		 * @param count			Array size
 		 * @param stages		Pipeline stage flags
-		 * @throws IllegalArgumentException if pipeline stages is empty
+		 * @throws IllegalArgumentException if the pipeline {@link #stages} is empty
 		 */
 		public Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
 			if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stages specified for binding");

@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -232,7 +233,7 @@ public interface Command {
 			// Init descriptor
 			final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
 			info.level = primary ? VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY : VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-			info.commandBufferCount = num;
+			info.commandBufferCount = oneOrMore(num);
 			info.commandPool = this.handle();
 
 			// Allocate buffers

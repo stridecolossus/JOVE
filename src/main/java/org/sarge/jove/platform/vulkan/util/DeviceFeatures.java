@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 
 /**
  * Wrapper for the <i>device features</i> supported by a physical or logical device.

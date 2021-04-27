@@ -25,7 +25,7 @@ public final class Quad {
 	public static final List<Integer> RIGHT = List.of(2, 1, 3);
 
 	/**
-	 * Texture coordinates for a quad.
+	 * Texture coordinates for a quad ordered according to the triangles indices specified by {@link #LEFT} and {@link #RIGHT}.
 	 */
 	public static final List<Coordinate2D> COORDINATES = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
 

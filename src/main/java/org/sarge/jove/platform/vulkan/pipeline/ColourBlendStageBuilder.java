@@ -12,8 +12,8 @@ import org.sarge.jove.platform.vulkan.VkColorComponentFlag;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
  * Builder for the colour-blend pipeline stage.

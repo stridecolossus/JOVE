@@ -47,7 +47,9 @@ class PointTest {
 
 	@Test
 	void distance() {
-		assertEquals(27, pos.distance(new Point(4, 5, 6)));
+		final Point pt = new Point(4, 5, 6);
+		assertEquals(27, pos.distance(pt));
+		assertEquals(27, pt.distance(pos));
 	}
 
 	@Test

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 public class InputAssemblyStageBuilderTest {
 	private InputAssemblyStageBuilder builder;

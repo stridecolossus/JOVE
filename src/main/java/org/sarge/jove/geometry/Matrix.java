@@ -274,10 +274,6 @@ public final class Matrix implements Transform, Bufferable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == this) {
-			return true;
-		}
-
 		return
 				(obj instanceof Matrix that) &&
 				(this.order == that.order) &&

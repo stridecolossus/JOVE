@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkPipelineInputAssemblyStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
  * Builder for the input assembly pipeline stage.

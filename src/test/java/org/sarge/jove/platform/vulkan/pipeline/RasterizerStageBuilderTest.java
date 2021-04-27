@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkCullModeFlag;
 import org.sarge.jove.platform.vulkan.VkFrontFace;
 import org.sarge.jove.platform.vulkan.VkPolygonMode;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 public class RasterizerStageBuilderTest {
 	private RasterizerStageBuilder builder;

@@ -17,12 +17,12 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler.Wrap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

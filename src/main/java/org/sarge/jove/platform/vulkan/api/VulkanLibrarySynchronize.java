@@ -5,7 +5,7 @@ import org.sarge.jove.common.NativeObject.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.ptr.PointerByReference;
 

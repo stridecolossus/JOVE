@@ -62,7 +62,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * Creates a set of work queues..
+	 * Creates a set of work queues.
 	 * @param info Descriptor for the queues
 	 * @return New queues
 	 */

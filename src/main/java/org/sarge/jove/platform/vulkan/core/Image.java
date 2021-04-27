@@ -68,7 +68,7 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Populate a Vulkan 3D extent from this extents.
+		 * Populates a Vulkan 3D extent from this object.
 		 * @param extent Extents to populate
 		 */
 		void populate(VkExtent3D extent) {

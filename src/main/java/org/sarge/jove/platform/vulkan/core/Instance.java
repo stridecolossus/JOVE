@@ -91,7 +91,7 @@ public class Instance extends AbstractTransientNativeObject {
 			final Pointer ptr = super.handle.toPointer();
 			final Function destroy = function("vkDestroyDebugUtilsMessengerEXT");
 			for(Pointer handle : handlers) {
-				final Object[] args = new Object[]{ptr, handle, null};
+				final Object[] args = {ptr, handle, null};
 				destroy.invoke(args);
 			}
 		}

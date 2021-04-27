@@ -16,7 +16,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.Image;
@@ -26,6 +25,7 @@ import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.lib.util.Check;
 
@@ -403,7 +403,7 @@ public class Swapchain extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Image implementation for a swapchain image.
+		 * Implementation for a swapchain image.
 		 */
 		private static class SwapChainImage implements Image {
 			private final Handle handle;

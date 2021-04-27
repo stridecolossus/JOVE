@@ -54,7 +54,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 * @return Magnitude (or length <b>squared</b>) of this vector
 	 */
 	public float magnitude() {
-		return (x * x) + (y * y) + (z * z);
+		return dot(this);
 	}
 
 	/**
@@ -104,12 +104,26 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	}
 
 	/**
-	 * Calculates the dot (or scalar) product of this and the given vector.
+	 * Calculates the <i>dot</i> (or inner, scalar) product of this and the given vector.
+	 * <p>
+	 * The dot product is a scalar value that expresses the angular relationship between two vectors and is calculated as follows:
+	 * <pre>
+	 * {@code a.b = |a| |b| cos(angle)}
+	 * </pre>
+	 * <p>
+	 * Some properties of the dot product:
+	 * <ul>
+	 * <li>zero if the vectors are orthogonal (i.e. perpendicular, or at right angles)</li>
+	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
+	 * <li>negative if the angle is greater than 90 degrees</li>
+	 * <li>commutative {@code a.b = b.a}</li>
+	 * <li>equivalent to the cosine of the angle between two unit-vectors</li>
+	 * </ul>
+	 * <p>
 	 * @param vec Vector
 	 * @return Dot product
 	 */
 	public float dot(Vector vec) {
-		// TODO - |v| * |u| * cos(angle)
 		return x * vec.x + y * vec.y + z * vec.z;
 	}
 
@@ -118,6 +132,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 * Assumes both vectors have been normalized.
 	 * @param vec Vector
 	 * @return Angle between vectors (radians)
+	 * @see #dot(Vector)
 	 */
 	public float angle(Vector vec) {
 		final float dot = dot(vec);
@@ -145,15 +160,19 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 		final float z = this.x * vec.y - this.y * vec.x;
 		return new Vector(x, y, z);
 	}
+	// TODO - doc
+	// TODO - right-handed?
+	// https://en.wikipedia.org/wiki/Cross_product#:~:text=by%20the%20symbol-,.,%2C%20engineering%2C%20and%20computer%20programming.
 
 	/**
 	 * Projects the given vector onto this vector.
 	 * @param vec Vector to project
-	 * @return Projected vector as a tuple
+	 * @return Projected vector
 	 */
 	public Vector project(Vector vec) {
 		return scale(this.dot(vec));
 	}
+	// TODO - doc
 
 	/**
 	 * Reflects this vector about the given normal.

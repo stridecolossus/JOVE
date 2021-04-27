@@ -7,7 +7,7 @@ import org.sarge.jove.platform.vulkan.VkCullModeFlag;
 import org.sarge.jove.platform.vulkan.VkFrontFace;
 import org.sarge.jove.platform.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPolygonMode;
-import org.sarge.jove.platform.vulkan.common.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
  * Builder for the rasterizer pipeline stage.
