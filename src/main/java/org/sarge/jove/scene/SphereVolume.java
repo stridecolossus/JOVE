@@ -104,14 +104,14 @@ public class SphereVolume implements Volume {
 		// Determine length of the nearest point on the ray to the centre of the sphere
 		final Vector vec = Vector.between(ray.origin(), centre);
 		final float nearest = ray.direction().dot(vec);
+		final float len = vec.magnitude();
 
 		// Check case for sphere behind the ray origin
 		if(nearest < 0) {
-			return intersectBehind(ray, vec, nearest);
+			return intersectBehind(ray, len, nearest);
 		}
 
 		// Calc distance of the nearest point from the sphere centre (using triangles)
-		final float len = vec.magnitude();
 		final float dist = nearest * nearest - len;
 
 		// Stop if ray does not intersect
@@ -140,32 +140,25 @@ public class SphereVolume implements Volume {
 	}
 
 	/**
-	 * Determines intersection for the case where the sphere centre is <i>behind</i> the ray.
+	 * Determines intersections for the case where the sphere centre is <i>behind</i> the ray.
 	 * @param ray			Intersection ray
-	 * @param vec			Vector from the ray origin to the centre of the sphere
+	 * @param len			Distance from the ray origin to the centre of the sphere
 	 * @param nearest		Length of the projected nearest point on the ray to the sphere centre
 	 */
-	protected Intersection intersectBehind(Ray ray, Vector vec, float nearest) {
+	protected Intersection intersectBehind(Ray ray, float len, float nearest) {
 		// Stop if ray is outside of the sphere
 		final float r = radius * radius;
-		final float len = vec.magnitude();
 		if(len > r) {
 			return Intersection.NONE;
 		}
 
 		// Otherwise calc intersection point
 		if(len < r) {
-			/*
-			// Ray originates inside the sphere
-//			final Vector proj = ray.direction().scale(angle);
-//			final Point nearest = ray.origin().add(proj);
-			final Point nearest = ray.scale(angle);
-			final float d = centre.distance(nearest);
-//			final float offset = MathsUtil.sqrt(r - d) - MathsUtil.sqrt(proj.magnitude()); // surely proj.mag() === angle?
-			final float offset = MathsUtil.sqrt(r - d);
-			return Intersection.stream(ray.scale(offset), offset - MathsUtil.sqrt(angle));
-			*/
-			return null;
+			return () -> {
+				final float dist = len - nearest * nearest;
+				final float offset = MathsUtil.sqrt(r - dist);
+				return List.of(offset + nearest);
+			};
 		}
 		else {
 			// Ray originates on the sphere surface

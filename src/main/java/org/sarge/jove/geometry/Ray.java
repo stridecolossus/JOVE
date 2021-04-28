@@ -21,7 +21,7 @@ public record Ray(Point origin, Vector direction) {
 	}
 
 	/**
-	 * Helper - Calculates the point on this ray at the given distance from the origin.
+	 * Helper - Calculates the point on this ray at the given distance from the origin, i.e. solves the line equation for the given scalar.
 	 * @param dist Distance from the origin
 	 * @return Point on this ray
 	 */
