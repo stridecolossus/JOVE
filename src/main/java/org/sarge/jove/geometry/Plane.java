@@ -17,11 +17,11 @@ public record Plane(Vector normal, float distance) {
 	}
 
 	/**
-	 * Creates a plane from the given triangle of points.
+	 * Creates a plane containing the given triangle of points.
 	 * @param a
 	 * @param b
 	 * @param c
-	 * @return Plane
+	 * @return New plane
 	 */
 	public static Plane of(Point a, Point b, Point c) {
 		final Vector u = Vector.between(a, b);
@@ -35,7 +35,7 @@ public record Plane(Vector normal, float distance) {
 	 * Creates a plane given a normal and a point on the plane.
 	 * @param normal		Plane normal
 	 * @param pt			Point on the plane
-	 * @return Plane
+	 * @return New plane
 	 */
 	public static Plane of(Vector normal, Point pt) {
 		return new Plane(normal, -pt.toVector().dot(normal));
@@ -55,7 +55,7 @@ public record Plane(Vector normal, float distance) {
 	 * @param pt Point
 	 * @return Distance to the given point
 	 */
-	public float distanceTo(Point pt) {
+	public float distance(Point pt) {
 		return normal.dot(pt.toVector()) - distance;
 	}
 
@@ -65,7 +65,7 @@ public record Plane(Vector normal, float distance) {
 	 * @return Side
 	 */
 	public Side side(Point pt) {
-		final float d = distanceTo(pt);
+		final float d = distance(pt);
 		if(d < 0) {
 			return Side.BACK;
 		}

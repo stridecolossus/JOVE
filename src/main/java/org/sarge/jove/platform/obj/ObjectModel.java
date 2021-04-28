@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Coordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DefaultModel;
@@ -20,8 +20,7 @@ import org.sarge.jove.model.Vertex;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing and maintains the list of generated models.
- * <p>
- * TODO
+ * @author Sarge
  */
 public class ObjectModel {
 	/**
@@ -43,27 +42,10 @@ public class ObjectModel {
 		}
 	}
 
-	/**
-	 * Special case component list that optionally flips texture coordinates.
-	 */
-	private static class FlipTextureComponentList extends VertexComponentList<Coordinate2D> {
-		private boolean flip = true;
-
-		@Override
-		public boolean add(Coordinate2D coords) {
-			if(flip) {
-				return super.add(new Coordinate2D(coords.u(), -coords.v()));
-			}
-			else {
-				return super.add(coords);
-			}
-		}
-	}
-
 	// Data
 	private final List<Point> vertices = new VertexComponentList<>();
 	private final List<Vector> normals = new VertexComponentList<>();
-	private final FlipTextureComponentList coords = new FlipTextureComponentList();
+	private final List<Coordinate> coords = new VertexComponentList<>();
 
 	// Models
 	private final Supplier<DefaultModel.Builder> factory;
@@ -102,16 +84,8 @@ public class ObjectModel {
 	/**
 	 * @return Texture coordinates
 	 */
-	public List<Coordinate2D> coordinates() {
+	public List<Coordinate> coordinates() {
 		return coords;
-	}
-
-	/**
-	 * Sets whether to vertically flip texture coordinates.
-	 * @param flip Whether to flip coordinates (default is {@code true})
-	 */
-	public void setFlipTextureCoordinates(boolean flip) {
-		coords.flip = flip;
 	}
 
 	/**
@@ -148,9 +122,6 @@ public class ObjectModel {
 			return;
 		}
 
-//		// Initialise the vertex layout for the previous model
-//		init();
-
 		// Reset transient model
 		vertices.clear();
 		normals.clear();
@@ -159,35 +130,6 @@ public class ObjectModel {
 		// Start new model
 		add();
 	}
-
-	/**
-	 * Sets the name of the current object.
-	 * @param name Object name
-	 */
-	public void name(String name) {
-		// TODO
-//		final VertexModel.Builder builder = current();
-//		builder.name(name);
-	}
-
-//	/**
-//	 * Initialises the model layout.
-//	 */
-//	private void init() {
-//		// Determine vertex layout for the current object group
-//		final var layout = new ArrayList<Component>();
-//		layout.add(Layout.POSITION);
-//		if(!normals.isEmpty()) {
-//			layout.add(Layout.NORMAL);
-//		}
-//		if(!coords.isEmpty()) {
-//			layout.add(Layout.COORDINATE);
-//		}
-//
-//		// Initialise current model
-//		final DefaultModel.Builder builder = current();
-//		builder.layout(new Vertex.Layout(layout));
-//	}
 
 	/**
 	 * Adds a face vertex to the current model.
@@ -222,7 +164,6 @@ public class ObjectModel {
 	 * @throws IllegalArgumentException if the models cannot be constructed
 	 */
 	public Stream<Model> build() {
-//		init();
 		return builders.stream().map(DefaultModel.Builder::build);
 	}
 	// TODO - assume one model at a time, factor out building per model, this class (or maybe loader?) should be meta-model that returns the resultant list

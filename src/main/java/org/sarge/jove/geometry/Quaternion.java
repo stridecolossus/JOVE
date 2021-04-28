@@ -69,7 +69,7 @@ public final class Quaternion implements Transform {
 			return this;
 		}
 		else {
-			final float mag = 1f / MathsUtil.sqrt(magnitude);
+			final float mag = 1 / MathsUtil.sqrt(magnitude);
 			return new Quaternion(w * mag, x * mag, y * mag, z * mag);
 		}
 	}
@@ -136,14 +136,10 @@ public final class Quaternion implements Transform {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == this) {
-			return true;
-		}
-
 		return
 				(obj instanceof Quaternion that) &&
 				MathsUtil.isEqual(this.w, that.w) &&
-				MathsUtil.isEqual(this.x, that.z) &&
+				MathsUtil.isEqual(this.x, that.x) &&
 				MathsUtil.isEqual(this.y, that.y) &&
 				MathsUtil.isEqual(this.z, that.z);
 	}

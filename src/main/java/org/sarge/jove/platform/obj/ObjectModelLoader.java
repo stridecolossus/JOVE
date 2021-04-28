@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.geometry.Coordinate;
-import org.sarge.jove.geometry.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DefaultModel;
@@ -31,7 +30,14 @@ import org.sarge.lib.util.Check;
  */
 public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Model>> {
 	private static final String[] EMPTY_ARGUMENTS = new String[]{};
-	private static final Function<float[], Coordinate2D> TEXTURE_MAPPER = array -> (Coordinate2D) Coordinate.of(array);
+
+	/**
+	 * Adapter for an array parser to vertically flip texture coordinates.
+	 */
+	protected static final Function<float[], Coordinate> FLIP = array -> {
+		array[1] = -array[1];
+		return Coordinate.of(array);
+	};
 
 	/**
 	 * Handler to ignore unknown commands.
@@ -64,7 +70,7 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	 */
 	private void init() {
 		add("v", new ArrayParser<>(3, Point::of, ObjectModel::vertices));
-		add("vt", new ArrayParser<>(2, TEXTURE_MAPPER, ObjectModel::coordinates));
+		add("vt", new ArrayParser<>(2, FLIP, ObjectModel::coordinates));
 		add("vn", new ArrayParser<>(3, Vector::of, ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);

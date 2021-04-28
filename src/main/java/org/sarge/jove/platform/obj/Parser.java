@@ -25,15 +25,13 @@ public interface Parser {
 	 * @see ObjectModel#start()
 	 */
 	Parser GROUP = (args, model) -> {
-
 		// TODO - models indexed by name, return map on build
-
 		// Start new object
 		model.start();
 
-		// Init object name
-		if(args.length > 0) {
-			model.name(args[0].trim());
-		}
+//		// Init object name
+//		if(args.length > 0) {
+//			model.name(args[0].trim());
+//		}
 	};
 }

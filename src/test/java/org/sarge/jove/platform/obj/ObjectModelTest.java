@@ -58,24 +58,10 @@ public class ObjectModelTest {
 
 	@Test
 	void coordinates() {
-		model.setFlipTextureCoordinates(false);
 		final var coords = model.coordinates();
 		coords.add(Coordinate2D.BOTTOM_LEFT);
 		assertEquals(1, coords.size());
 		assertEquals(Coordinate2D.BOTTOM_LEFT, coords.get(1));
-	}
-
-	@Test
-	void flip() {
-		final var coords = model.coordinates();
-		coords.add(new Coordinate2D(1, 2));
-		assertEquals(1, coords.size());
-		assertEquals(new Coordinate2D(1, -2), coords.get(1));
-	}
-
-	@Test
-	void name() {
-		model.name("name");
 	}
 
 	@Nested

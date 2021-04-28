@@ -3,12 +3,16 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.sarge.jove.geometry.Vector.X_AXIS;
+import static org.sarge.jove.geometry.Vector.Y_AXIS;
+import static org.sarge.jove.geometry.Vector.Z_AXIS;
 
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.util.MathsUtil;
 
 class VectorTest {
 	private Vector vec;
@@ -27,9 +31,9 @@ class VectorTest {
 
 	@Test
 	void axes() {
-		assertEquals(new Vector(1, 0, 0), Vector.X_AXIS);
-		assertEquals(new Vector(0, 1, 0), Vector.Y_AXIS);
-		assertEquals(new Vector(0, 0, 1), Vector.Z_AXIS);
+		assertEquals(new Vector(1, 0, 0), X_AXIS);
+		assertEquals(new Vector(0, 1, 0), Y_AXIS);
+		assertEquals(new Vector(0, 0, 1), Z_AXIS);
 	}
 
 	@Test
@@ -54,19 +58,6 @@ class VectorTest {
 	}
 
 	@Test
-	void dot() {
-		assertEquals(1f, Vector.X_AXIS.dot(Vector.X_AXIS));
-		assertEquals(0f, Vector.X_AXIS.dot(Vector.Y_AXIS));
-	}
-
-	@Test
-	void angle() {
-// TODO
-//		assertEquals(1f, Vector.X_AXIS.angle(Vector.Y_AXIS));
-//		assertEquals(1f, Vector.X_AXIS.angle(new Vector(-1, 0, 0)));
-	}
-
-	@Test
 	void magnitude() {
 		assertEquals(1 * 1 + 2 * 2 + 3 * 3, vec.magnitude());
 	}
@@ -79,7 +70,7 @@ class VectorTest {
 	@Test
 	void normalize() {
 		final float scale = 1 / (float) Math.sqrt(vec.magnitude());
-		assertEquals(vec.scale(scale), vec.normalize());
+		assertEquals(new Vector(1 * scale, 2 * scale, 3 * scale), vec.normalize());
 	}
 
 	@Test
@@ -89,14 +80,56 @@ class VectorTest {
 	}
 
 	@Test
+	void dot() {
+		assertEquals(1 * 1 + 2 * 2 + 3 * 3, vec.dot(vec));
+	}
+
+	@Test
+	void dotAxes() {
+		assertEquals(1f, X_AXIS.dot(X_AXIS));
+		assertEquals(-1f, X_AXIS.dot(X_AXIS.invert()));
+		assertEquals(0f, X_AXIS.dot(Y_AXIS));
+		assertEquals(0f, X_AXIS.dot(Z_AXIS));
+	}
+
+	@Test
+	void angle() {
+		assertEquals(0f, X_AXIS.angle(X_AXIS));
+		assertEquals(MathsUtil.PI, X_AXIS.angle(X_AXIS.invert()));
+		assertEquals(MathsUtil.HALF_PI, X_AXIS.angle(Y_AXIS));
+		assertEquals(MathsUtil.HALF_PI, X_AXIS.angle(Z_AXIS));
+	}
+
+	@Test
 	void cross() {
-		// TODO
+		assertEquals(Z_AXIS, X_AXIS.cross(Y_AXIS));
+		assertEquals(Z_AXIS.invert(), Y_AXIS.cross(X_AXIS));
 	}
 
 	@Test
 	void project() {
-		// TODO
-		//assertEquals(new Vector(3, 0, 0), Vector.X_AXIS.project(vec));
+		assertEquals(new Vector(1, 2, 3), vec.project(X_AXIS));
+		assertEquals(new Vector(2, 4, 6), vec.project(Y_AXIS));
+		assertEquals(new Vector(3, 6, 9), vec.project(Z_AXIS));
+	}
+
+	@Test
+	void projectAxes() {
+		assertEquals(new Vector(1, 0, 0), X_AXIS.project(vec));
+		assertEquals(new Vector(0, 2, 0), Y_AXIS.project(vec));
+		assertEquals(new Vector(0, 0, 3), Z_AXIS.project(vec));
+	}
+
+	@Test
+	void reflect() {
+		assertEquals(new Vector(-1, 2, 3), vec.reflect(X_AXIS));
+		assertEquals(new Vector(1, -2, 3), vec.reflect(Y_AXIS));
+		assertEquals(new Vector(1, 2, -3), vec.reflect(Z_AXIS));
+	}
+
+	@Test
+	void reflectSelf() {
+		assertEquals(vec.invert(), vec.reflect(vec.normalize()));
 	}
 
 	@Test

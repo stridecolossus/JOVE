@@ -179,7 +179,7 @@ public class Extents {
 		}
 
 		/**
-		 * Constructs extents bounding the added points.
+		 * Constructs this extents.
 		 * The behaviour of an extents builder without any points is undefined.
 		 * @return New extents
 		 * @see #add(Point)

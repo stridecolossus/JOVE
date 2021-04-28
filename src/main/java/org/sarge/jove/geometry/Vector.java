@@ -27,13 +27,16 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	public static final Vector Z_AXIS = new Vector(0, 0, 1);
 
 	/**
-	 * Creates a vector between the given points.
+	 * Creates the vector between the given points.
 	 * @param start		Starting point
 	 * @param end		End point
 	 * @return Vector between the given points
 	 */
 	public static Vector between(Point start, Point end) {
-		return start.toVector().invert().add(end.toVector());
+		final float dx = end.x() - start.x();
+		final float dy = end.y() - start.y();
+		final float dz = end.z() - start.z();
+		return new Vector(dx, dy, dz);
 	}
 
 	/**
@@ -98,7 +101,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 			return this;
 		}
 		else {
-			final float f = 1f / MathsUtil.sqrt(len);
+			final float f = 1 / MathsUtil.sqrt(len);
 			return scale(f);
 		}
 	}
@@ -107,9 +110,8 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 * Calculates the <i>dot</i> (or inner, scalar) product of this and the given vector.
 	 * <p>
 	 * The dot product is a scalar value that expresses the angular relationship between two vectors and is calculated as follows:
-	 * <pre>
-	 * {@code a.b = |a| |b| cos(angle)}
-	 * </pre>
+	 * <p>
+	 * <pre>A.B = |A| |B| cos(angle)</pre>
 	 * <p>
 	 * Some properties of the dot product:
 	 * <ul>
@@ -122,6 +124,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 * <p>
 	 * @param vec Vector
 	 * @return Dot product
+	 * @see <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia</a>
 	 */
 	public float dot(Vector vec) {
 		return x * vec.x + y * vec.y + z * vec.z;
@@ -150,9 +153,26 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 
 	/**
 	 * Calculates the <i>cross product</i> of this and the given vector.
-	 * Assumes both vectors have been normalized.
+	 * <p>
+	 * The cross product is a vector perpendicular to two given vectors (and thus a normal to the plane containing them).
+	 * <p>
+	 * Mathematically the cross product is calculated as follows:
+	 * <p>
+	 * <pre>A x B = |A| |B| sin(angle) N</pre>
+	 * <p>
+	 * where:
+	 * <br><i>angle</i> is the angle between the vectors in the plane containing A and B
+	 * <br><i>N</i> is a unit-vector perpendicular to the plane (see below).
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>non-commutative</li>
+	 * <li>by convention the direction of the resultant vector is given by the <i>right-hand rule</i></li>
+	 * </ul>
+	 * <p>
 	 * @param vec Vector
 	 * @return Cross product
+	 * @see <a href="https://en.wikipedia.org/wiki/Cross_product#:~:text=by%20the%20symbol-,.,%2C%20engineering%2C%20and%20computer%20programming">Wikipedia</a>
 	 */
 	public Vector cross(Vector vec) {
 		final float x = this.y * vec.z - this.z * vec.y;
@@ -160,9 +180,6 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 		final float z = this.x * vec.y - this.y * vec.x;
 		return new Vector(x, y, z);
 	}
-	// TODO - doc
-	// TODO - right-handed?
-	// https://en.wikipedia.org/wiki/Cross_product#:~:text=by%20the%20symbol-,.,%2C%20engineering%2C%20and%20computer%20programming.
 
 	/**
 	 * Projects the given vector onto this vector.
@@ -170,9 +187,8 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 * @return Projected vector
 	 */
 	public Vector project(Vector vec) {
-		return scale(this.dot(vec));
+		return scale(dot(vec));
 	}
-	// TODO - doc
 
 	/**
 	 * Reflects this vector about the given normal.
@@ -180,7 +196,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 * @return Reflected vector
 	 */
 	public Vector reflect(Vector normal) {
-		final float f = this.dot(normal) * -2f;
+		final float f = dot(normal) * -2f;
 		return normal.scale(f).add(this);
 	}
 
