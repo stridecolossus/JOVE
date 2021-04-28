@@ -3,8 +3,8 @@ package org.sarge.jove.scene;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.positive;
 
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
@@ -20,7 +20,7 @@ import org.sarge.jove.util.MathsUtil;
  */
 public class SphereVolume implements Volume {
 	/**
-	 * Helper - Creates a sphere volume that contains the given extents.
+	 * Helper - Creates a sphere volume that encloses the given extents.
 	 * @param extents Extents
 	 * @return Sphere volume
 	 */
@@ -93,150 +93,89 @@ public class SphereVolume implements Volume {
 
 	/**
 	 * @param dist Distance squared
-	 * @return Whether the given squared distance is less-than-or-equal to the given sphere radius
+	 * @return Whether the squared distance is less-than-or-equal to the given sphere radius
 	 */
-	protected static boolean within(float dist, float radius) {
+	protected static final boolean within(float dist, float radius) {
 		return dist <= radius * radius;
 	}
 
 	@Override
-	public Stream<Intersection> intersect(Ray ray) {
+	public Intersection intersect(Ray ray) {
+		// Determine length of the nearest point on the ray to the centre of the sphere
 		final Vector vec = Vector.between(ray.origin(), centre);
-		final float angle = vec.dot(ray.direction());
-		if(angle < 0) {
-			return behind(ray, vec);
+		final float nearest = ray.direction().dot(vec);
+
+		// Check case for sphere behind the ray origin
+		if(nearest < 0) {
+			return intersectBehind(ray, vec, nearest);
 		}
-		else {
-			return ahead(ray, angle);
+
+		// Calc distance of the nearest point from the sphere centre (using triangles)
+		final float len = vec.magnitude();
+		final float dist = nearest * nearest - len;
+
+		// Stop if ray does not intersect
+		final float r = radius * radius;
+		if(Math.abs(dist) > r) {
+			return Intersection.NONE;
 		}
+
+		// Create lazy intersection record
+		return () -> {
+			// Calculate offset from nearest point to intersection(s)
+			final float offset = MathsUtil.sqrt(r - dist);
+
+			// Build intersection results
+			final float b = nearest + offset;
+			if(len < r) {
+				// Ray origin is inside the sphere
+				return List.of(b);
+			}
+			else {
+				// Ray is outside the sphere (two intersections)
+				final float a = nearest - offset;
+				return List.of(a, b);
+			}
+		};
 	}
 
 	/**
-	 * Determines intersections for the case where the sphere centre is behind the ray.
+	 * Determines intersection for the case where the sphere centre is <i>behind</i> the ray.
+	 * @param ray			Intersection ray
+	 * @param vec			Vector from the ray origin to the centre of the sphere
+	 * @param nearest		Length of the projected nearest point on the ray to the sphere centre
 	 */
-	private Stream<Intersection> behind(Ray ray, Vector vec) {
+	protected Intersection intersectBehind(Ray ray, Vector vec, float nearest) {
+		// Stop if ray is outside of the sphere
 		final float r = radius * radius;
-		final float dist = r - vec.magnitude();
-		if(dist > 0) {
-			// Ray is outside the sphere
+		final float len = vec.magnitude();
+		if(len > r) {
 			return Intersection.NONE;
 		}
-		else
-		if(dist < 0) {
+
+		// Otherwise calc intersection point
+		if(len < r) {
+			/*
 			// Ray originates inside the sphere
-			// TODO
+//			final Vector proj = ray.direction().scale(angle);
+//			final Point nearest = ray.origin().add(proj);
+			final Point nearest = ray.scale(angle);
+			final float d = centre.distance(nearest);
+//			final float offset = MathsUtil.sqrt(r - d) - MathsUtil.sqrt(proj.magnitude()); // surely proj.mag() === angle?
+			final float offset = MathsUtil.sqrt(r - d);
+			return Intersection.stream(ray.scale(offset), offset - MathsUtil.sqrt(angle));
+			*/
 			return null;
 		}
 		else {
 			// Ray originates on the sphere surface
-			return Intersection.stream(ray.origin(), dist); // TODO - root
-		}
-	}
-
-	/**
-	 * Determines intersections for the case where the sphere centre is ahead of the ray.
-	 */
-	private Stream<Intersection> ahead(Ray ray, float angle) {
-		// Determine nearest point by projecting the centre of the sphere onto the ray
-		final Vector proj = ray.direction().scale(angle);
-		final Point pt = ray.origin().add(proj);
-
-		// Calc distance of the projected point from the centre
-		final float d = centre.distance(pt);
-
-		// Determine intersection result
-		final float r = radius * radius;
-		if(d > r) {
-			// Ray is outside the sphere
-			return Intersection.NONE;
-		}
-		else
-		if(d < r) {
-			// Ray intersects the sphere (twice)
-			final float base = MathsUtil.sqrt(proj.magnitude());
-			final float offset = MathsUtil.sqrt(r - d * d);
-			final Point i = ray.origin().add(ray.direction().scale(base - offset));
-			return Intersection.stream(i, base - offset);
-
-			// TODO - case for inside sphere (one result)
-
-//				final Vector v = ray.direction().scale(offset);
-//				final Intersection left = Intersection.of(pt.add(v.invert()), base - offset);
-//				final Intersection right = Intersection.of(pt.add(v), base + offset);
-//				return List.of(left, right);
-		}
-		else {
-			// Ray is a tangent
-			return Intersection.stream(pt, d);
+			return Intersection.of(0f);
 		}
 	}
 
 	// https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection#bounding_spheres
 	// http://www.lighthouse3d.com/tutorials/maths/ray-sphere-intersection/
-////	@Override
-//	public Stream<Intersection> intersect2222(Ray ray) {
-//		// Build vector from sphere to ray origin
-//		final Vector vec = Vector.between(centre, ray.origin());
-//
-//		if(vec.dot(ray.direction()) < 0) {
-//			// Sphere is behind the ray origin
-//			final float dist = radius * radius - vec.magnitude();
-//			if(dist > 0) {
-//				// No intersection
-//				return Intersection.NONE;
-//			}
-//			else
-//			if(dist < 0) {
-//				// Ray origin is within the sphere
-//				final Intersection intersection = new Intersection() {
-//					@Override
-//					public Point point() {
-//						final Point pc = ray.direction().project(vec).toPoint();
-//						final float d = MathsUtil.sqrt(dist - Vector.between(pc, ray.origin()).magnitude());
-//						return ray.origin().add(ray.direction().scale(d));
-//					}
-//
-//					@Override
-//					public float distance() {
-//						return dist;
-//					}
-//				};
-//				return List.of(intersection);
-//			}
-//			else {
-//				// Ray origin touching sphere
-//				return Intersection.of(ray.origin(), dist);
-//			}
-//		}
-//		else {
-//			// Determine intersection point
-//			final Point pos = ray.direction().project(vec).toPoint();
-//			final float dist = centre.distance(pos);
-//			final float r = radius * radius;
-//			if(dist > r) {
-//				// Ray does not intersect
-//				return Intersection.NONE;
-//			}
-//			else {
-//				// TODO - this seems very fishy, why length vs radius squared?
-//				final float len = vec.magnitude();
-//				if(len > r) {
-//					// Origin is outside of the sphere
-//					return Intersection.NONE;
-//				}
-//				else
-//				if(len < r) {
-//					// Origin is inside the sphere
-//					// TODO - ???
-//					return null; // Optional.empty();
-//				}
-//				else {
-//					// Ray touches sphere
-//					return Intersection.of(pos, dist);
-//				}
-//			}
-//		}
-//	}
+	// http://kylehalladay.com/blog/tutorial/math/2013/12/24/Ray-Sphere-Intersection.html
 
 	@Override
 	public int hashCode() {
@@ -245,10 +184,7 @@ public class SphereVolume implements Volume {
 
 	@Override
 	public boolean equals(Object obj) {
-		return
-				(obj instanceof SphereVolume that) &&
-				this.centre.equals(that.centre) &&
-				MathsUtil.isEqual(this.radius, that.radius);
+		return (obj instanceof SphereVolume that) && this.centre.equals(that.centre) && MathsUtil.isEqual(this.radius, that.radius);
 	}
 
 	@Override

@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,8 +20,8 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
 class SphereVolumeTest {
-	private static final int RADIUS = 3;
-	private static final int OUTSIDE = 4;
+	private static final float RADIUS = 3;
+	private static final float OUTSIDE = 4;
 
 	private SphereVolume sphere;
 
@@ -135,60 +135,57 @@ class SphereVolumeTest {
 	@Nested
 	class SphereRayIntersectionTests {
 		/**
-		 * Runs an intersection test.
 		 * @param origin			Ray origin
-		 * @param expected			Expected intersection points
+		 * @param expected			Expected intersection points (X axis only, relative to ray origin)
 		 */
-		private void run(Point origin, Point... expected) {
-			final var intersections = sphere.intersect(new Ray(origin, Vector.X_AXIS));
-			final var actual = intersections.map(Intersection::point).collect(toList());
-			assertEquals(List.of(expected), actual);
-			// TODO - test distances?
+		private void test(Point origin, Float... expected) {
+			final var list = Arrays.stream(expected).map(n -> n - origin.x()).collect(toList());
+			final Intersection result = sphere.intersect(new Ray(origin, Vector.X_AXIS));
+			assertNotNull(result);
+			assertEquals(list, result.distances());
 		}
 
 		@DisplayName("Sphere is behind the ray but does not intersect")
 		@Test
 		void behindNotIntersecting() {
-			run(new Point(OUTSIDE, 0, 0));
+			test(new Point(OUTSIDE, 0, 0));
 		}
 
 		@DisplayName("Sphere is behind the ray which originates inside the sphere")
 		@Test
 		void behindInside() {
-			run(new Point(1, 0, 0), new Point(RADIUS, 0, 0));
+			test(new Point(1, 0, 0), RADIUS);
 		}
 
 		@DisplayName("Sphere is behind the ray and the ray is on the sphere surface")
 		@Test
 		void behindTouching() {
-			final Point pt = new Point(RADIUS, 0, 0);
-			run(pt, pt);
+			test(new Point(RADIUS, 0, 0), RADIUS);
 		}
 
 		@DisplayName("Sphere is ahead of the ray but does not intersect")
 		@Test
 		void outside() {
-			run(new Point(-OUTSIDE, -OUTSIDE, 0));
+			test(new Point(-OUTSIDE, OUTSIDE, 0));
 		}
 
 		@DisplayName("Sphere is ahead of the ray which originates inside the sphere")
 		@Test
 		void inside() {
-			run(new Point(-1, 0, 0), new Point(RADIUS, 0, 0));
+			test(new Point(-1, 0, 0), RADIUS);
 		}
 
 		@DisplayName("Sphere is ahead of the ray and is intersected twice")
 		@Test
 		void intersects() {
 			// TODO
-			run(new Point(-OUTSIDE, 0, 0), new Point(-RADIUS, 0, 0)); // , new Point(RADIUS, 0, 0));
+			test(new Point(-OUTSIDE, 0, 0), -RADIUS, RADIUS);
 		}
 
 		@DisplayName("Sphere is ahead of the ray which originates on the sphere surface")
 		@Test
 		void touching() {
-			final Point left = new Point(-RADIUS, 0, 0);
-			run(left, left, new Point(RADIUS, 0, 0));
+			test(new Point(-RADIUS, 0, 0), -RADIUS, RADIUS);
 		}
 	}
 

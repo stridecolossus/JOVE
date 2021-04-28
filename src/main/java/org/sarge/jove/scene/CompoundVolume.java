@@ -2,7 +2,6 @@ package org.sarge.jove.scene;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
@@ -58,7 +57,7 @@ public class CompoundVolume implements Volume {
 	}
 
 	@Override
-	public Stream<Intersection> intersect(Ray ray) {
+	public Intersection intersect(Ray ray) {
 		// TODO
 		return null;
 	}

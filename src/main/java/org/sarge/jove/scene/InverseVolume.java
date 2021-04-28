@@ -3,7 +3,6 @@ package org.sarge.jove.scene;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
@@ -39,7 +38,7 @@ public class InverseVolume implements Volume {
 	}
 
 	@Override
-	public Stream<Intersection> intersect(Ray ray) {
+	public Intersection intersect(Ray ray) {
 		// TODO
 		return vol.intersect(ray);
 	}

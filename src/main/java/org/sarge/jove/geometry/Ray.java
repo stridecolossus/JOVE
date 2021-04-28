@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
-import java.util.stream.Stream;
+import java.util.Arrays;
+import java.util.List;
 
 import org.sarge.lib.util.Check;
 
@@ -20,53 +21,37 @@ public record Ray(Point origin, Vector direction) {
 	}
 
 	/**
-	 * An <i>intersection</i> is a descriptor for the intersection of this ray with a volume.
-	 * <p>
-	 * The purpose of this interface is to allow the caller to query the number of intersections (if any) and apply appropriate application logic,
-	 * while supporting lazily evaluation of the intersection point(s), i.e. an intersection is essentially a <i>supplier</i>.
-	 * <p>
-	 * Alternatively for cases where the intersection point is evaluated as a process or side-effect of the intersection logic the convenience {@link DefaultIntersection} can be returned.
-	 * <p>
-	 * The {@link #NONE} constant is used where the ray does not intersect with the volume.
+	 * Helper - Calculates the point on this ray at the given distance from the origin.
+	 * @param dist Distance from the origin
+	 * @return Point on this ray
+	 */
+	public Point point(float dist) {
+		return origin.add(direction.scale(dist));
+	}
+
+	/**
+	 * A <i>ray intersection</i> is a lazily evaluated list of intersection results on this ray.
 	 */
 	public static interface Intersection {
 		/**
-		 * @return Intersection point
+		 * @return List of intersection points expressed as distance(s) from the ray origin
+		 * @see Ray#point(float)
 		 */
-		Point point();
+		List<Float> distances();
 
 		/**
-		 * @return Minimum distance of this intersection to the ray (default implementation returns <b>zero</b>)
+		 * Empty intersection.
 		 */
-		float distance();
+		Intersection NONE = Intersection.of();
 
 		/**
-		 * Result for an empty list of intersections.
+		 * Helper - Creates an intersection result for a literal array of evaluated distance(s).
+		 * @param intersections Intersection distance(s)
+		 * @return Literal intersection
 		 */
-		Stream<Intersection> NONE = Stream.empty();
-
-		/**
-		 * Default implementation for an fully evaluated intersection.
-		 */
-		record DefaultIntersection(Point point, float distance) implements Intersection {
-			/**
-			 * Constructor.
-			 * @param point				Intersection point
-			 * @param distance			Minimum distance of this intersection to the ray
-			 */
-			public DefaultIntersection {
-				Check.notNull(point);
-			}
-		}
-
-		/**
-		 * Helper - Creates a single intersection result.
-		 * @param pt		Intersection point
-		 * @param dist		Minimum distance
-		 * @return Single intersection stream
-		 */
-		static Stream<Intersection> stream(Point pt, float dist) {
-			return Stream.of(new DefaultIntersection(pt, dist));
+		static Intersection of(Float... dist) {
+			final List<Float> list = Arrays.asList(dist);
+			return () -> list;
 		}
 	}
 }

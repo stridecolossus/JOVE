@@ -5,11 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.spy;
 
-import java.util.Optional;
+import java.util.List;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 class VolumeTest {
 	@Test
@@ -38,7 +39,9 @@ class VolumeTest {
 
 		@Test
 		void intersectsRay() {
-			assertEquals(Optional.empty(), Volume.NULL.intersect(null));
+			final Intersection intersection = Volume.NULL.intersect(null);
+			assertNotNull(intersection);
+			assertEquals(List.of(), intersection.distances());
 		}
 
 		@Test

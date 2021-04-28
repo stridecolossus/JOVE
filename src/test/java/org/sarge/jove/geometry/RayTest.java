@@ -1,17 +1,14 @@
 package org.sarge.jove.geometry;
 
-import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.geometry.Ray.Intersection.DefaultIntersection;
 
 class RayTest {
 	private Ray ray;
@@ -27,25 +24,26 @@ class RayTest {
 		assertEquals(Vector.X_AXIS, ray.direction());
 	}
 
+	@Test
+	void scale() {
+		assertEquals(Point.ORIGIN, ray.point(0));
+		assertEquals(new Point(1, 0, 0), ray.point(1));
+		assertEquals(new Point(2, 0, 0), ray.point(2));
+	}
+
 	@Nested
 	class IntersectionTests {
 		@Test
 		void none() {
-			assertEquals(0, Intersection.NONE.count());
+			assertEquals(List.of(), Intersection.NONE.distances());
 		}
 
 		@Test
-		void intersection() {
-			final Intersection intersection = new DefaultIntersection(Point.ORIGIN, 42);
-			assertEquals(Point.ORIGIN, intersection.point());
-			assertEquals(42f, intersection.distance());
-		}
-
-		@Test
-		void stream() {
-			final Stream<Intersection> intersections = Intersection.stream(Point.ORIGIN, 42);
-			assertNotNull(intersections);
-			assertEquals(List.of(new DefaultIntersection(Point.ORIGIN, 42)), intersections.collect(toList()));
+		void of() {
+			final float result = 42;
+			final Intersection intersection = Intersection.of(result);
+			assertNotNull(intersection);
+			assertEquals(List.of(result), intersection.distances());
 		}
 	}
 }

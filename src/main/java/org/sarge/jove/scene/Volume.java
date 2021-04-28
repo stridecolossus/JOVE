@@ -1,7 +1,5 @@
 package org.sarge.jove.scene;
 
-import java.util.stream.Stream;
-
 import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
@@ -35,11 +33,10 @@ public interface Volume {
 
 	/**
 	 * Determines the intersection(s) of this volume and the given ray.
-	 * Note that bounding volume implementations do not need to guarantee any implicit ordering of the results (e.g. distance from the ray).
 	 * @param ray Ray
 	 * @return Intersections
 	 */
-	Stream<Intersection> intersect(Ray ray);
+	Intersection intersect(Ray ray);
 
 	/**
 	 * Empty bounding volume.
@@ -56,7 +53,7 @@ public interface Volume {
 		}
 
 		@Override
-		public Stream<Intersection> intersect(Ray ray) {
+		public Intersection intersect(Ray ray) {
 			return Intersection.NONE;
 		}
 
