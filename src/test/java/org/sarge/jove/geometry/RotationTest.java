@@ -2,23 +2,43 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.Animator;
-import org.sarge.jove.control.Animator.Animation;
+import org.sarge.jove.geometry.Rotation.AbstractRotation;
 import org.sarge.jove.geometry.Rotation.MutableRotation;
 import org.sarge.jove.util.MathsUtil;
 
-public class RotationTest {
+class RotationTest {
 	@Test
-	public void rotation() {
-		final Rotation rot = Rotation.of(Vector.Y_AXIS, MathsUtil.HALF_PI);
-		assertEquals(Vector.Y_AXIS, rot.axis());
-		assertEquals(MathsUtil.HALF_PI, rot.angle());
+	void of() {
+		final Rotation rot = Rotation.of(Vector.X_AXIS, MathsUtil.PI);
+		assertNotNull(rot);
+		assertEquals(Vector.X_AXIS, rot.axis());
+		assertEquals(MathsUtil.PI, rot.angle());
+	}
+
+	@Nested
+	class AbstractRotationTests {
+		private AbstractRotation rot;
+
+		@BeforeEach
+		void before() {
+			rot = new AbstractRotation(Vector.X_AXIS) {
+				@Override
+				public float angle() {
+					return 0;
+				}
+			};
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(Vector.X_AXIS, rot.axis());
+			assertEquals(false, rot.isDirty());
+			assertEquals(Quaternion.of(rot).matrix(), rot.matrix());
+		}
 	}
 
 	@Nested
@@ -26,42 +46,29 @@ public class RotationTest {
 		private MutableRotation rot;
 
 		@BeforeEach
-		public void before() {
-			rot = new MutableRotation(Vector.Y_AXIS, 0);
+		void before() {
+			rot = new MutableRotation(Vector.X_AXIS);
 		}
 
 		@Test
-		public void constructor() {
-			assertEquals(Vector.Y_AXIS, rot.axis());
-			assertEquals(0, rot.angle());
+		void constructor() {
+			assertEquals(Vector.X_AXIS, rot.axis());
 			assertEquals(true, rot.isDirty());
 		}
 
 		@Test
-		public void angle() {
-			rot.angle(MathsUtil.HALF_PI);
-			assertEquals(MathsUtil.HALF_PI, rot.angle());
-		}
-
-		@Test
-		public void matrix() {
-			assertEquals(Matrix.rotation(Vector.Y_AXIS, 0), rot.matrix());
+		void matrix() {
+			assertEquals(Rotation.of(Vector.X_AXIS, 0).matrix(), rot.matrix());
 			assertEquals(false, rot.isDirty());
 		}
 
 		@Test
-		public void animation() {
-			// Create rotation animation
-			final Animation animation = rot.animation();
-			assertNotNull(animation);
-
-			// Create animator
-			final Animator animator = mock(Animator.class);
-			when(animator.position()).thenReturn(0.5f);
-
-			// Update rotation
-			animation.update(animator);
-			assertEquals(MathsUtil.PI, rot.angle());
+		void angle() {
+			rot.matrix();
+			rot.angle(MathsUtil.PI);
+			assertEquals(true, rot.isDirty());
+			assertEquals(Rotation.of(Vector.X_AXIS, MathsUtil.PI).matrix(), rot.matrix());
+			assertEquals(false, rot.isDirty());
 		}
 	}
 }

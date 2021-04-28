@@ -2,14 +2,14 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.control.Animator.Animation;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * Counter-clockwise rotation about an arbitrary axis.
+ * A <i>rotation</i> is a counter-clockwise rotation about an arbitrary axis.
  * @author Sarge
  */
-public interface Rotation {
+public interface Rotation extends Transform {
 	/**
 	 * @return Rotation axis
 	 */
@@ -21,18 +21,48 @@ public interface Rotation {
 	float angle();
 
 	/**
+	 * Skeleton implementation.
+	 */
+	abstract class AbstractRotation implements Rotation {
+		private final Vector axis;
+
+		/**
+		 * Constructor.
+		 * @param axis Rotation axis
+		 */
+		protected AbstractRotation(Vector axis) {
+			this.axis = notNull(axis);
+		}
+
+		@Override
+		public final Vector axis() {
+			return axis;
+		}
+
+		@Override
+		public Matrix matrix() {
+			return Quaternion.of(this).matrix();
+		}
+
+		@Override
+		public final boolean equals(Object obj) {
+			return (obj instanceof Rotation rot) && this.axis.equals(rot.axis()) && MathsUtil.isEqual(this.angle(), rot.angle());
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this).append(axis).append(angle()).build();
+		}
+	}
+
+	/**
 	 * Creates a fixed rotation.
 	 * @param axis		Axis
 	 * @param angle		Rotation angle (radians)
-	 * @return Rotation
+	 * @return Fixed rotation
 	 */
 	static Rotation of(Vector axis, float angle) {
-		return new Rotation() {
-			@Override
-			public Vector axis() {
-				return axis;
-			}
-
+		return new AbstractRotation(axis) {
 			@Override
 			public float angle() {
 				return angle;
@@ -43,26 +73,16 @@ public interface Rotation {
 	/**
 	 * Mutable implementation.
 	 */
-	class MutableRotation implements Rotation, Transform {
-		private final Vector axis;
+	class MutableRotation extends AbstractRotation {
 		private float angle;
-
-		private transient boolean dirty;
 		private transient Matrix matrix;
 
 		/**
 		 * Constructor.
-		 * @param axis		Rotation axis
-		 * @param angle		Angle (radians)
+		 * @param axis Rotation axis
 		 */
-		public MutableRotation(Vector axis, float angle) {
-			this.axis = notNull(axis);
-			angle(angle);
-		}
-
-		@Override
-		public Vector axis() {
-			return axis;
+		public MutableRotation(Vector axis) {
+			super(axis);
 		}
 
 		@Override
@@ -76,29 +96,20 @@ public interface Rotation {
 		 */
 		public void angle(float angle) {
 			this.angle = angle;
-			this.matrix = Quaternion.of(this).matrix();
-			this.dirty = true;
+			matrix = null;
 		}
 
 		@Override
 		public Matrix matrix() {
-			dirty = false;
+			if(matrix == null) {
+				matrix = super.matrix();
+			}
 			return matrix;
 		}
 
 		@Override
 		public boolean isDirty() {
-			return dirty;
-		}
-
-		/**
-		 * @return This rotation as an animation
-		 */
-		public Animation animation() {
-			return animator -> {
-				final float angle = animator.position() * MathsUtil.TWO_PI;
-				angle(angle);
-			};
+			return matrix == null;
 		}
 	}
 }

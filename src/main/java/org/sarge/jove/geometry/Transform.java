@@ -16,7 +16,7 @@ public interface Transform {
 	Matrix matrix();
 
 	/**
-	 * @return Whether this transform has changed (default is <tt>false</tt>)
+	 * @return Whether this transform has changed (default is {@code false})
 	 */
 	default boolean isDirty() {
 		return false;

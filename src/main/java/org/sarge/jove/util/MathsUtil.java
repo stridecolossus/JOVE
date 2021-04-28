@@ -162,46 +162,25 @@ public final class MathsUtil {
 
 	/**
 	 * @param f Value
-	 * @return Square-root
+	 * @return Square root
 	 */
 	public static float sqrt(float f) {
 		return (float) Math.sqrt(f);
 	}
 
-//	/**
-//	 * Ensures the given angle is within the safe range on x86 processors.
-//	 * @param angle Angle (radians)
-//	 * @return Constrained angle
-//	 */
-//	private static float constrain(float angle) {
-//		// Clamp angle to two-PI space
-//		float result = angle % TWO_PI;
-//
-//		// Clamp to PI space
-//		if(Math.abs(result) > PI) {
-//			result = result - TWO_PI;
-//		}
-//
-//		// Clamp to half-PI space
-//		if(Math.abs(result) > HALF_PI) {
-//			result = PI - result;
-//		}
-//
-//		return result;
-//	}
+	/**
+	 * @param f Value
+	 * @return Inverse square root
+	 */
+	public static float inverseRoot(float f) {
+		return 1 / sqrt(f);
+	}
 
 	/**
 	 * @param angle Angle (radians)
 	 * @return Sine of the given angle
 	 */
 	public static float sin(float angle) {
-//		final float reduced = constrain(angle);
-//		if(Math.abs(reduced) <= HALF_PI / 2f) {
-//			return (float) Math.sin(reduced);
-//		}
-//		else {
-//			return (float) Math.cos(HALF_PI - reduced);
-//		}
 		return (float) Math.sin(angle);
 	}
 
@@ -210,7 +189,7 @@ public final class MathsUtil {
 	 * @return Cosine of the given angle
 	 */
 	public static float cos(float angle) {
-		//return sin(angle + HALF_PI);
+		// TODO - return sin(angle + HALF_PI); ???
 		return (float) Math.cos(angle);
 	}
 
@@ -227,8 +206,8 @@ public final class MathsUtil {
 	 * @return Arc-sine of the given angle
 	 */
 	public static float asin(float angle) {
-		if(-1.0f < angle) {
-			if(angle < 1.0f) {
+		if(angle > -1f) {
+			if(angle < 1f) {
 				return (float) Math.asin(angle);
 			}
 			else {
@@ -245,12 +224,12 @@ public final class MathsUtil {
 	 * @return Arc-cosine of the given angle
 	 */
 	public static float acos(float angle) {
-		if(-1.0f < angle) {
-			if(angle < 1.0f) {
+		if(angle > -1f) {
+			if(angle < 1f) {
 				return (float) Math.acos(angle);
 			}
 			else {
-				return 0.0f;
+				return 0f;
 			}
 		}
 		else {

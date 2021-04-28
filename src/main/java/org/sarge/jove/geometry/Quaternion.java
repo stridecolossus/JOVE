@@ -53,7 +53,7 @@ public final class Quaternion implements Transform {
 	 * @return Rotation
 	 */
 	public Rotation toRotation() {
-		final float scale = 1f / MathsUtil.sqrt(1 - w * w);
+		final float scale = MathsUtil.inverseRoot(1 - w * w);
 		final Vector axis = new Vector(x, y, z).scale(scale);
 		final float angle = 2 * MathsUtil.acos(w);
 		return Rotation.of(axis, angle);
@@ -69,7 +69,7 @@ public final class Quaternion implements Transform {
 			return this;
 		}
 		else {
-			final float mag = 1 / MathsUtil.sqrt(magnitude);
+			final float mag = MathsUtil.inverseRoot(magnitude);
 			return new Quaternion(w * mag, x * mag, y * mag, z * mag);
 		}
 	}
@@ -107,6 +107,7 @@ public final class Quaternion implements Transform {
 	}
 
 	// TODO - slerp
+	// https://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/index.htm
 
 	@Override
 	public Matrix matrix() {

@@ -101,7 +101,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 			return this;
 		}
 		else {
-			final float f = 1 / MathsUtil.sqrt(len);
+			final float f = MathsUtil.inverseRoot(len);
 			return scale(f);
 		}
 	}
