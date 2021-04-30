@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collector;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
@@ -131,11 +132,16 @@ public class Extents {
 	 * Builder for extents.
 	 */
 	public static class Builder {
+		/**
+		 * Helper - Creates a collector that constructs extents from a stream of points.
+		 * @return New extents collector
+		 */
+		public static Collector<Point, ?, Extents> collector() {
+			return Collector.of(Builder::new, Builder::add, Builder::combine, Builder::build);
+		}
+
 		private final float[] min, max;
 
-		/**
-		 * Constructor.
-		 */
 		public Builder() {
 			min = init(Float.MAX_VALUE);
 			max = init(Float.MIN_VALUE);
@@ -147,7 +153,7 @@ public class Extents {
 		 * @return Min/max bounds array
 		 */
 		private static float[] init(float value) {
-			final float[] array = new float[3];
+			final float[] array = new float[Point.SIZE];
 			Arrays.fill(array, value);
 			return array;
 		}
@@ -157,7 +163,7 @@ public class Extents {
 		 * @param pt Point to add
 		 */
 		public Builder add(Point pt) {
-			for(int n = 0; n < 3; ++n) {
+			for(int n = 0; n < Point.SIZE; ++n) {
 				update(pt.get(n), n);
 			}
 			return this;
@@ -169,20 +175,24 @@ public class Extents {
 		 * @param index Array index
 		 */
 		private void update(float value, int index) {
-			if(value < min[index]) {
-				min[index] = value;
+			min[index] = Math.min(value, min[index]);
+			max[index] = Math.max(value, max[index]);
+		}
+
+		/**
+		 * Combiner function for this builder when used as a collector.
+		 */
+		protected static Builder combine(Builder left, Builder right) {
+			for(int n = 0; n < Point.SIZE; ++n) {
+				left.update(right.min[n], n);
+				left.update(right.max[n], n);
 			}
-			else
-			if(value > max[index]) {
-				max[index] = value;
-			}
+			return left;
 		}
 
 		/**
 		 * Constructs this extents.
-		 * The behaviour of an extents builder without any points is undefined.
 		 * @return New extents
-		 * @see #add(Point)
 		 */
 		public Extents build() {
 			return new Extents(new Point(min), new Point(max));

@@ -4,9 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
+import java.util.stream.Collector;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.Extents.Builder;
 
 class ExtentsTest {
 	private Extents extents;
@@ -92,23 +96,55 @@ class ExtentsTest {
 	}
 
 	@Test
-	void build() {
-		final Extents result = new Extents.Builder().add(min).add(max).build();
-		assertEquals(extents, result);
-	}
-
-	@Test
-	void buildEmpty() {
-		extents = new Extents.Builder().build();
-		assertNotNull(extents);
-		assertEquals(Float.MAX_VALUE, Math.abs(extents.largest()));
-	}
-
-	@Test
 	void equals() {
 		assertEquals(true, extents.equals(extents));
 		assertEquals(true, extents.equals(new Extents(min, max)));
 		assertEquals(false, extents.equals(null));
 		assertEquals(false, extents.equals(mock(Extents.class)));
+	}
+
+	@Nested
+	class BuilderTests {
+		@Test
+		void build() {
+			final Extents result = new Builder().add(min).add(max).build();
+			assertEquals(extents, result);
+		}
+
+		@Test
+		void buildEmpty() {
+			extents = new Builder().build();
+			assertNotNull(extents);
+			assertEquals(Float.MAX_VALUE, Math.abs(extents.largest()));
+		}
+	}
+
+	@Nested
+	class CollectorTests {
+		private Collector<Point, ?, Extents> collector;
+
+		@BeforeEach
+		void before() {
+			collector = Builder.collector();
+		}
+
+		@Test
+		void constructor() {
+			assertNotNull(collector);
+		}
+
+		@Test
+		void collect() {
+			assertEquals(extents, Stream.of(min, max).collect(Builder.collector()));
+		}
+
+		@Test
+		void combiner() {
+			final Builder left = new Builder().add(min);
+			final Builder right = new Builder().add(max);
+			final Builder combined = Builder.combine(left, right);
+			assertNotNull(combined);
+			assertEquals(extents, combined.build());
+		}
 	}
 }

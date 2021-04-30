@@ -15,3 +15,6 @@ demo
 
 other
 - layouts of components as annotations? does this buy us anything?
+- component-wise bi/operator support for tuple/vector/point, e.g. matrix set row/column, AABB-Ray intersect, extents operators
+- Dimension.exceeds() rotten name
+- extents builder -> collector?

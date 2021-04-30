@@ -69,9 +69,9 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v", new ArrayParser<>(3, Point::new, ObjectModel::vertices));
+		add("v", new ArrayParser<>(Point.SIZE, Point::new, ObjectModel::vertices));
 		add("vt", new ArrayParser<>(2, FLIP, ObjectModel::coordinates));
-		add("vn", new ArrayParser<>(3, Vector::new, ObjectModel::normals));
+		add("vn", new ArrayParser<>(Vector.SIZE, Vector::new, ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

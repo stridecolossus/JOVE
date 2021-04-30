@@ -101,6 +101,7 @@ public class StructureCollector <T, R extends Structure> implements Collector<T,
 		this.populate = notNull(populate);
 		this.chars = Set.copyOf(Arrays.asList(chars));
 	}
+	// TODO - refactor to factory using Collector.of() since we don't have any local members!
 
 	@Override
 	public Supplier<List<T>> supplier() {

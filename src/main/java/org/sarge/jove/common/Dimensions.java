@@ -44,9 +44,9 @@ public record Dimensions(int width, int height) {
 	/**
 	 * Tests whether these dimensions are larger than the given dimensions.
 	 * @param dim Dimensions
-	 * @return Whether exceeded
+	 * @return Whether larger than the given dimensions
 	 */
-	public boolean exceeds(Dimensions dim) {
+	public boolean isLargerThan(Dimensions dim) {
 		return (width > dim.width) || (height > dim.height);
 	}
 

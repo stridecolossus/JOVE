@@ -8,13 +8,21 @@ import static org.sarge.jove.util.MathsUtil.TWO_PI;
 
 import org.junit.jupiter.api.Test;
 
-public class MathsUtilTest {
+class MathsUtilTest {
 	@Test
 	void isEqual() {
 		assertEquals(true, MathsUtil.isEqual(42, 42));
 		assertEquals(true, MathsUtil.isEqual(42, 42.0001f));
 		assertEquals(false, MathsUtil.isEqual(42, 999));
 		assertEquals(false, MathsUtil.isEqual(42, 42.01f));
+	}
+
+	@Test
+	void isEqualInfinite() {
+		assertEquals(true, MathsUtil.isEqual(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY));
+		assertEquals(true, MathsUtil.isEqual(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY));
+		assertEquals(true, MathsUtil.isEqual(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY));
+		assertEquals(true, MathsUtil.isEqual(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY));
 	}
 
 	@Test
