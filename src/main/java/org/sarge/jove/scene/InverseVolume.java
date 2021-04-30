@@ -11,7 +11,7 @@ import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
- * An <i>inverse volume</i> is the inverse of a given bounding volume, i.e. everything outside.
+ * An <i>inverse volume</i> is the space <i>outside</i> of a given volume.
  * @author Sarge
  */
 public class InverseVolume implements Volume {

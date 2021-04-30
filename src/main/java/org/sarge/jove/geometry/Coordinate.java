@@ -95,7 +95,7 @@ public interface Coordinate extends Bufferable, Component {
 
 		@Override
 		public Layout layout() {
-			return Layout.TUPLE;
+			return Layout.of(3);
 		}
 
 		@Override

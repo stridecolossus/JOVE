@@ -9,3 +9,9 @@ volumes
 - integrate Sphere helper and UnitCircle and Matrix.rotation()?
 - Frustum should have a builder!
 - Frustum remove reflection tostring
+
+demo
+- skybox, cube map
+
+other
+- layouts of components as annotations? does this buy us anything?

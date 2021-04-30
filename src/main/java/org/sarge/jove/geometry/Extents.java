@@ -44,7 +44,7 @@ public class Extents {
 	 */
 	public Point centre() {
 		final Vector vec = Vector.between(min, max);
-		return min.add(vec.scale(MathsUtil.HALF));
+		return min.add(vec.multiply(MathsUtil.HALF));
 	}
 
 	/**
@@ -52,7 +52,7 @@ public class Extents {
 	 */
 	public float largest() {
 		final Vector vec = Vector.between(min, max);
-		return Math.max(vec.x(), Math.max(vec.y(), vec.z()));
+		return Math.max(vec.x, Math.max(vec.y, vec.z));
 	}
 
 	/**
@@ -61,9 +61,9 @@ public class Extents {
 	 * @return Nearest point
 	 */
 	public Point nearest(Point pt) {
-		final float x = nearest(pt.x(), min.x(), max.x());
-		final float y = nearest(pt.y(), min.y(), max.y());
-		final float z = nearest(pt.z(), min.z(), max.z());
+		final float x = nearest(pt.x, min.x, max.x);
+		final float y = nearest(pt.y, min.y, max.y);
+		final float z = nearest(pt.z, min.z, max.z);
 		return new Point(x, y, z);
 	}
 
@@ -78,9 +78,9 @@ public class Extents {
 	 */
 	public boolean contains(Point pt) {
 		return
-				contains(pt.x(), min.x(), max.y()) &&
-				contains(pt.y(), min.y(), max.y()) &&
-				contains(pt.z(), min.z(), max.z());
+				contains(pt.x, min.x, max.y) &&
+				contains(pt.y, min.y, max.y) &&
+				contains(pt.z, min.z, max.z);
 	}
 
 	private static boolean contains(float f, float min, float max) {
@@ -94,9 +94,9 @@ public class Extents {
 	 */
 	public boolean intersects(Extents extents) {
 		return
-				(min.x() <= extents.max.x()) && (max.x() >= extents.min.x()) &&
-				(min.y() <= extents.max.y()) && (max.y() >= extents.min.y()) &&
-				(min.z() <= extents.max.z()) && (max.z() >= extents.min.z());
+				(min.x <= extents.max.x) && (max.x >= extents.min.x) &&
+				(min.y <= extents.max.y) && (max.y >= extents.min.y) &&
+				(min.z <= extents.max.z) && (max.z >= extents.min.z);
 	}
 
 	/**
@@ -157,9 +157,9 @@ public class Extents {
 		 * @param pt Point to add
 		 */
 		public Builder add(Point pt) {
-			update(pt.x(), 0);
-			update(pt.y(), 1);
-			update(pt.z(), 2);
+			for(int n = 0; n < 3; ++n) {
+				update(pt.get(n), n);
+			}
 			return this;
 		}
 
@@ -185,7 +185,7 @@ public class Extents {
 		 * @see #add(Point)
 		 */
 		public Extents build() {
-			return new Extents(Point.of(min), Point.of(max));
+			return new Extents(new Point(min), new Point(max));
 		}
 	}
 }

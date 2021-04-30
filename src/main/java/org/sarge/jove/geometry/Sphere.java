@@ -34,7 +34,7 @@ public record Sphere(float radius) {
 	 * @return Sphere surface point
 	 * @see #point(float, float, float)
 	 */
-	public Vector point(float phi, float theta) {
+	public Point point(float phi, float theta) {
 		return point(phi, theta, radius);
 	}
 
@@ -53,12 +53,12 @@ public record Sphere(float radius) {
 	 * @return Sphere surface point
 	 * @see MathsUtil#PI
 	 */
-	public static Vector point(float phi, float theta, float radius) {
+	public static Point point(float phi, float theta, float radius) {
 		final float cos = MathsUtil.cos(theta);
 		final float x = radius * cos * MathsUtil.cos(phi);
 		final float y = radius * MathsUtil.sin(theta);
 		final float z = radius * cos * MathsUtil.sin(phi);
-		return new Vector(x, y, z);
+		return new Point(x, y, z);
 	}
 	// TODO - better to factor out scale(radius)
 }

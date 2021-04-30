@@ -59,7 +59,7 @@ public class SphereVolume implements Volume {
 	@Override
 	public Extents extents() {
 		final Vector vec = new Vector(radius, radius, radius);
-		final Point min = centre.add(vec.invert());
+		final Point min = centre.add(vec.negate());
 		final Point max = centre.add(vec);
 		return new Extents(min, max);
 	}

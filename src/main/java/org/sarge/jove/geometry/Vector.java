@@ -1,16 +1,12 @@
 package org.sarge.jove.geometry;
 
-import java.nio.ByteBuffer;
-
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
-public record Vector(float x, float y, float z) implements Bufferable, Component {
+public final class Vector extends Tuple {
 	/**
 	 * X-axis vector.
 	 */
@@ -33,45 +29,60 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 * @return Vector between the given points
 	 */
 	public static Vector between(Point start, Point end) {
-		final float dx = end.x() - start.x();
-		final float dy = end.y() - start.y();
-		final float dz = end.z() - start.z();
+		final float dx = end.x - start.x;
+		final float dy = end.y - start.y;
+		final float dz = end.z - start.z;
 		return new Vector(dx, dy, dz);
 	}
 
 	/**
-	 * Creates a vector from the given array.
-	 * @param array Vector array
-	 * @return New vector
-	 * @throws IllegalArgumentException if the array is not comprised of three elements
+	 * Constructor.
+	 * @param x
+	 * @param y
+	 * @param z
 	 */
-	public static Vector of(float[] array) {
-		if(array.length != 3) throw new IllegalArgumentException("Invalid array length: " + array.length);
-		final float x = array[0];
-		final float y = array[1];
-		final float z = array[2];
-		return new Vector(x, y, z);
+	public Vector(float x, float y, float z) {
+		super(x, y, z);
 	}
 
 	/**
-	 * @return Magnitude (or length <b>squared</b>) of this vector
+	 * Copy constructor.
+	 * @param tuple Tuple to copy
+	 */
+	public Vector(Tuple tuple) {
+		super(tuple);
+	}
+
+	/**
+	 * Array constructor.
+	 * @param array Vector array
+	 * @throws IllegalArgumentException if the array is not comprised of three elements
+	 */
+	public Vector(float[] array) {
+		super(array);
+	}
+
+	/**
+	 * @return Magnitude (or length) <b>squared</b> of this vector
 	 */
 	public float magnitude() {
 		return dot(this);
 	}
 
 	/**
-	 * @return This vector as a point relative to the origin
+	 * @return Negative vector
 	 */
-	public Point toPoint() {
-		return new Point(x, y, z);
+	public Vector negate() {
+		return new Vector(-x, -y, -z);
 	}
 
 	/**
-	 * @return Inverse of this vector
+	 * Inverts this vector, i.e. one over each component.
+	 * Note that division-by-zero results in components with {@link Float#isInfinite()} values.
+	 * @return Inverted vector
 	 */
 	public Vector invert() {
-		return new Vector(-x, -y, -z);
+		return new Vector(1 / x, 1 / y, 1 / z);
 	}
 
 	/**
@@ -84,11 +95,11 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	}
 
 	/**
-	 * Scales this vector.
+	 * Multiplies this vector by the given scalar.
 	 * @param f Scalar
-	 * @return Scaled vector
+	 * @return Multiplied vector
 	 */
-	public Vector scale(float f) {
+	public Vector multiply(float f) {
 		return new Vector(x * f, y * f, z * f);
 	}
 
@@ -102,32 +113,8 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 		}
 		else {
 			final float f = MathsUtil.inverseRoot(len);
-			return scale(f);
+			return multiply(f);
 		}
-	}
-
-	/**
-	 * Calculates the <i>dot</i> (or inner, scalar) product of this and the given vector.
-	 * <p>
-	 * The dot product is a scalar value that expresses the angular relationship between two vectors and is calculated as follows:
-	 * <p>
-	 * <pre>A.B = |A| |B| cos(angle)</pre>
-	 * <p>
-	 * Some properties of the dot product:
-	 * <ul>
-	 * <li>zero if the vectors are orthogonal (i.e. perpendicular, or at right angles)</li>
-	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
-	 * <li>negative if the angle is greater than 90 degrees</li>
-	 * <li>commutative {@code a.b = b.a}</li>
-	 * <li>equivalent to the cosine of the angle between two unit-vectors</li>
-	 * </ul>
-	 * <p>
-	 * @param vec Vector
-	 * @return Dot product
-	 * @see <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia</a>
-	 */
-	public float dot(Vector vec) {
-		return x * vec.x + y * vec.y + z * vec.z;
 	}
 
 	/**
@@ -187,7 +174,7 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 * @return Projected vector
 	 */
 	public Vector project(Vector vec) {
-		return scale(dot(vec));
+		return multiply(dot(vec));
 	}
 
 	/**
@@ -197,25 +184,11 @@ public record Vector(float x, float y, float z) implements Bufferable, Component
 	 */
 	public Vector reflect(Vector normal) {
 		final float f = dot(normal) * -2f;
-		return normal.scale(f).add(this);
-	}
-
-	@Override
-	public Layout layout() {
-		return Layout.TUPLE;
-	}
-
-	@Override
-	public void buffer(ByteBuffer buffer) {
-		buffer.putFloat(x).putFloat(y).putFloat(z);
+		return normal.multiply(f).add(this);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return
-				(obj instanceof Vector that) &&
-				MathsUtil.isEqual(this.x, that.x) &&
-				MathsUtil.isEqual(this.y, that.y) &&
-				MathsUtil.isEqual(this.z, that.z);
+		return (obj instanceof Vector vec) && super.isEqual(vec);
 	}
 }

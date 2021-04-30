@@ -36,6 +36,7 @@ class RayTest {
 		@Test
 		void none() {
 			assertEquals(List.of(), Intersection.NONE.distances());
+			assertEquals(true, Intersection.NONE.equals(Intersection.NONE));
 		}
 
 		@Test

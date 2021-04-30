@@ -24,21 +24,21 @@ public class SphereTest {
 	class PointTests {
 		@Test
 		void point() {
-			assertEquals(new Vector(1, 0, 0), sphere.point(0, 0));
+			assertEquals(new Point(1, 0, 0), sphere.point(0, 0));
 		}
 
 		@Test
 		void pointHorizontal() {
-			assertEquals(new Vector(0, 0, 1), sphere.point(MathsUtil.HALF_PI, 0));
-			assertEquals(new Vector(-1, 0, 0), sphere.point(MathsUtil.PI, 0));
-			assertEquals(new Vector(0, 0, -1), sphere.point(MathsUtil.PI + MathsUtil.HALF_PI, 0));
-			assertEquals(new Vector(1, 0, 0), sphere.point(MathsUtil.TWO_PI, 0));
+			assertEquals(new Point(0, 0, 1), sphere.point(MathsUtil.HALF_PI, 0));
+			assertEquals(new Point(-1, 0, 0), sphere.point(MathsUtil.PI, 0));
+			assertEquals(new Point(0, 0, -1), sphere.point(MathsUtil.PI + MathsUtil.HALF_PI, 0));
+			assertEquals(new Point(1, 0, 0), sphere.point(MathsUtil.TWO_PI, 0));
 		}
 
 		@Test
 		void pointVertical() {
-			assertEquals(new Vector(0, -1, 0), sphere.point(0, -MathsUtil.HALF_PI));
-			assertEquals(new Vector(0, +1, 0), sphere.point(0, MathsUtil.HALF_PI));
+			assertEquals(new Point(0, -1, 0), sphere.point(0, -MathsUtil.HALF_PI));
+			assertEquals(new Point(0, +1, 0), sphere.point(0, MathsUtil.HALF_PI));
 		}
 	}
 }

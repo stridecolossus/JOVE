@@ -25,6 +25,7 @@ import com.sun.jna.TypeMapper;
 
 /**
  * Vulkan API.
+ * @author Sarge
  */
 public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraphics, VulkanLibraryUtility {
 	/**

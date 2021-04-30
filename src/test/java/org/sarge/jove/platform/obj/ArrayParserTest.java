@@ -19,7 +19,7 @@ public class ArrayParserTest {
 	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		parser = new ArrayParser<>(3, Point::of, ObjectModel::vertices);
+		parser = new ArrayParser<>(3, Point::new, ObjectModel::vertices);
 		model = mock(ObjectModel.class);
 		when(model.vertices()).thenReturn(mock(List.class));
 	}

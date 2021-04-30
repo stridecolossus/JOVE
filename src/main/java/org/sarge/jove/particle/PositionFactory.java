@@ -43,7 +43,7 @@ public interface PositionFactory {
 		return () -> {
 			final float phi = random.nextFloat() * MathsUtil.TWO_PI; // TODO - fiddle by 90 degrees?
 			final float theta = random.nextFloat() * MathsUtil.PI - MathsUtil.HALF_PI;
-			return Sphere.point(phi, theta, radius).toPoint();
+			return Sphere.point(phi, theta, radius);
 		};
 
 //		return () -> new Point(random.nextFloat(), random.nextFloat(), random.nextFloat()).scale(radius);
@@ -59,10 +59,11 @@ public interface PositionFactory {
 		return () -> {
 			final Point min = extents.min();
 			final Vector range = Vector.between(min, extents.max());
+			// TODO - use component/indices?
 			return new Point(
-					random(min.x(), range.x(), random),
-					random(min.y(), range.y(), random),
-					random(min.z(), range.z(), random)
+					random(min.x, range.x, random),
+					random(min.y, range.y, random),
+					random(min.z, range.z, random)
 			);
 		};
 	}

@@ -51,12 +51,18 @@ public final class MathsUtil {
 
 	/**
 	 * Tests whether two floating-point values are approximately equal.
+	 * TODO - infinity
 	 * @param a
 	 * @param b
 	 * @return Whether the given values are approximately equal
 	 */
 	public static boolean isEqual(float a, float b) {
-		return Math.abs(a - b) < ACCURACY;
+		if(Float.isInfinite(a)) {
+			return Float.isInfinite(b);
+		}
+		else {
+			return Math.abs(a - b) < ACCURACY;
+		}
 	}
 
 	/**

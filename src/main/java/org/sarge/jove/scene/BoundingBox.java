@@ -9,12 +9,13 @@ import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>bounding box</i> is an axis-aligned rectangular volume implemented as an adapter of an {@link Extents}.
  * @author Sarge
  */
-public final class BoundingBox implements Volume {
+public class BoundingBox implements Volume {
 	private final Extents extents;
 
 	/**
@@ -36,12 +37,6 @@ public final class BoundingBox implements Volume {
 	}
 
 	@Override
-	public Intersection intersect(Ray ray) {
-		// TODO
-		return null;
-	}
-
-	@Override
 	public boolean intersects(Volume vol) {
 		if(vol instanceof SphereVolume sphere) {
 			return sphere.intersects(extents);
@@ -53,6 +48,51 @@ public final class BoundingBox implements Volume {
 		else {
 			return extents.intersects(vol.extents());
 		}
+	}
+
+	@Override
+	public Intersection intersect(Ray ray) {
+		// Init intersections
+		float near = Float.NEGATIVE_INFINITY;
+		float far = Float.POSITIVE_INFINITY;
+
+		// Test intersection on each pair of planes
+		for(int n = 0; n < 3; ++n) {
+			// Tests are performed component-wise
+			final float origin = ray.origin().get(n);
+			final float dir = ray.direction().get(n);
+			final float min = extents.min().get(n);
+			final float max = extents.max().get(n);
+
+			if(MathsUtil.isZero(dir)) {
+				// Stop if parallel ray misses the box
+				if((origin < min) || (origin > max)) {
+					return Intersection.NONE;
+				}
+			}
+			else {
+				// Calc intersection points
+				final float a = (min - origin) / dir;
+				final float b = (max - origin) / dir;
+
+				// Update near/far distances
+				near = Math.max(near, Math.min(a, b));
+				far = Math.min(far, Math.max(a, b));
+
+				// Ray does not intersect
+				if(near > far) {
+					return Intersection.NONE;
+				}
+
+				// Volume is behind the ray
+				if(far < 0) {
+					return Intersection.NONE;
+				}
+			}
+		}
+
+		// Ray intersects twice
+		return Intersection.of(near, far);
 	}
 
 	@Override

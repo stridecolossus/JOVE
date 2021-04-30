@@ -7,7 +7,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Sphere;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.Interpolator;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
@@ -51,7 +50,7 @@ public class OrbitalCameraController {
 	 * Initialises the camera position.
 	 */
 	private void init() {
-		final var pos = cam.direction().invert().scale(radius);
+		final var pos = cam.direction().negate().multiply(radius);
 		cam.move(target.add(pos));
 	}
 
@@ -137,8 +136,8 @@ public class OrbitalCameraController {
 	public void update(float x, float y) {
 		final float phi = horizontal.interpolate(x / dim.width());
 		final float theta = vertical.interpolate(y / dim.height());
-		final Vector vec = Sphere.point(phi - MathsUtil.HALF_PI, theta, radius);
-		cam.move(target.add(vec));
+		final Point pt = Sphere.point(phi - MathsUtil.HALF_PI, theta, radius);
+		cam.move(target.add(pt));
 		cam.look(target);
 	}
 

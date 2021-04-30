@@ -26,7 +26,7 @@ public record Ray(Point origin, Vector direction) {
 	 * @return Point on this ray
 	 */
 	public Point point(float dist) {
-		return origin.add(direction.scale(dist));
+		return origin.add(direction.multiply(dist));
 	}
 
 	/**

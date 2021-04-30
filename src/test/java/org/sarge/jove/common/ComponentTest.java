@@ -62,10 +62,5 @@ class ComponentTest {
 		void of() {
 			assertEquals(layout, Layout.of(3));
 		}
-
-		@Test
-		void tuple() {
-			assertEquals(new Layout(3, 4, Float.class), Layout.TUPLE);
-		}
 	}
 }

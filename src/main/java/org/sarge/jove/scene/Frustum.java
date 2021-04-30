@@ -38,6 +38,16 @@ public class Frustum {
 		return true;
 	}
 
+	// TODO
+	// - intersects(vol) = sphere then planes?
+	// - builder given near/far, ratio, etc
+	// - ctor protected
+	// - planes() pointless?
+	// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
+	// https://antongerdelan.net/opengl/raycasting.html
+
+}
+
 //	@Override
 //	public Extents extents() {
 //		throw new UnsupportedOperationException();
@@ -75,5 +85,3 @@ public class Frustum {
 //		return ToStringBuilder.reflectionToString(this);
 //	}
 
-// TODO - builder?
-}

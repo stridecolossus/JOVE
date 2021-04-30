@@ -64,7 +64,7 @@ public class Camera {
 	 * @see #direction()
 	 */
 	public void move(float dist) {
-		move(dir.scale(dist));
+		move(dir.multiply(dist));
 	}
 
 	/**
@@ -73,14 +73,14 @@ public class Camera {
 	 * @see #right()
 	 */
 	public void strafe(float dist) {
-		move(right.scale(dist));
+		move(right.multiply(dist));
 	}
 
 	/**
 	 * @return Camera view direction
 	 */
 	public Vector direction() {
-		return dir.invert();
+		return dir.negate();
 	}
 
 	/**
@@ -88,7 +88,7 @@ public class Camera {
 	 * @param dir View direction (assumes normalized)
 	 */
 	public void direction(Vector dir) {
-		this.dir = dir.invert();
+		this.dir = dir.negate();
 		dirty();
 	}
 
@@ -166,7 +166,7 @@ public class Camera {
 		final Vector y = dir.cross(right).normalize();
 
 		// Calculate translation component
-		final Matrix trans = Matrix.translation(pos.toVector().invert());
+		final Matrix trans = Matrix.translation(new Vector(pos).negate());
 
 		// Build rotation matrix
 		final Matrix rot = new Matrix.Builder()

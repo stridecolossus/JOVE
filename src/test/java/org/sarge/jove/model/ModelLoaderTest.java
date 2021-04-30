@@ -13,7 +13,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
 
@@ -25,7 +24,7 @@ class ModelLoaderTest {
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		final Model.Header header = new Header(List.of(Layout.TUPLE), Primitive.TRIANGLES, 3, false);
+		final Model.Header header = new Header(List.of(Point.LAYOUT), Primitive.TRIANGLES, 3, false);
 		final Vertex vertex = Vertex.of(Point.ORIGIN);
 		model = new DefaultModel(header, List.of(vertex), List.of(0, 0, 0));
 

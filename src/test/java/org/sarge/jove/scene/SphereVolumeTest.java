@@ -148,7 +148,7 @@ class SphereVolumeTest {
 		 */
 		private void test(Point origin, Float... expected) {
 			// Calc expected distances relative to ray origin
-			final var list = Arrays.stream(expected).map(n -> n - origin.x()).collect(toList());
+			final var list = Arrays.stream(expected).map(n -> n - origin.x).collect(toList());
 
 			// Check intersection results
 			final Intersection result = sphere.intersect(new Ray(origin, Vector.X_AXIS));

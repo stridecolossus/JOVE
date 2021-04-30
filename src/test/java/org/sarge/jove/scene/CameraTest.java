@@ -21,7 +21,7 @@ class CameraTest {
 	@Test
 	void constructor() {
 		assertEquals(Point.ORIGIN, cam.position());
-		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
+		assertEquals(Vector.Z_AXIS.negate(), cam.direction());
 		assertEquals(Vector.Y_AXIS, cam.up());
 		assertEquals(Vector.X_AXIS, cam.right());
 		assertNotNull(cam.matrix());
@@ -38,8 +38,7 @@ class CameraTest {
 	void moveVector() {
 		final Vector vec = new Vector(1, 2, 3);
 		cam.move(vec);
-		cam.move(vec);
-		assertEquals(vec.scale(2).toPoint(), cam.position());
+		assertEquals(new Point(vec), cam.position());
 	}
 
 	@Test
@@ -71,7 +70,7 @@ class CameraTest {
 	void look() {
 		cam.move(new Point(0, 0, 1));
 		cam.look(Point.ORIGIN);
-		assertEquals(Vector.Z_AXIS.invert(), cam.direction());
+		assertEquals(Vector.Z_AXIS.negate(), cam.direction());
 	}
 
 	@Test
@@ -96,11 +95,10 @@ class CameraTest {
 				.build();
 
 		// Create camera translation one unit out of the screen
-		final Point pos = new Point(0, 0, 1);
-		final Matrix trans = Matrix.translation(pos.toVector().invert());
+		final Matrix trans = Matrix.translation(Vector.Z_AXIS.negate());
 
 		// Init camera and check matrix
-		cam.move(pos);
+		cam.move(new Point(0, 0, 1));
 		cam.look(Point.ORIGIN);
 		assertEquals(rot.multiply(trans), cam.matrix());
 	}

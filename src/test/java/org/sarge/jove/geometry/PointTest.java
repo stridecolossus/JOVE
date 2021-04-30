@@ -1,13 +1,9 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Component.Layout;
 
 class PointTest {
 	private Point pos;
@@ -19,30 +15,24 @@ class PointTest {
 
 	@Test
 	void constructor() {
-		assertEquals(1, pos.x());
-		assertEquals(2, pos.y());
-		assertEquals(3, pos.z());
+		assertEquals(1, pos.x);
+		assertEquals(2, pos.y);
+		assertEquals(3, pos.z);
+	}
+
+	@Test
+	void copy() {
+		assertEquals(pos, new Point(pos));
+	}
+
+	@Test
+	void array() {
+		assertEquals(pos, new Point(new float[]{1, 2, 3}));
 	}
 
 	@Test
 	void origin() {
 		assertEquals(new Point(0, 0, 0), Point.ORIGIN);
-	}
-
-	@Test
-	void array() {
-		assertEquals(pos, Point.of(new float[]{1, 2, 3}));
-	}
-
-	@Test
-	void arrayInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> Point.of(new float[]{1, 2}));
-		assertThrows(IllegalArgumentException.class, () -> Point.of(new float[]{1, 2, 3, 4}));
-	}
-
-	@Test
-	void toVector() {
-		assertEquals(new Vector(1, 2, 3), pos.toVector());
 	}
 
 	@Test
@@ -54,23 +44,7 @@ class PointTest {
 
 	@Test
 	void add() {
-		assertEquals(new Point(5, 7, 9), pos.add(new Vector(4, 5, 6)));
-	}
-
-	@Test
-	void buffer() {
-		final ByteBuffer buffer = ByteBuffer.allocate(3 * Float.BYTES);
-		pos.buffer(buffer);
-		buffer.flip();
-		assertEquals(1, buffer.getFloat());
-		assertEquals(2, buffer.getFloat());
-		assertEquals(3, buffer.getFloat());
-	}
-
-	@Test
-	void layout() {
-		assertEquals(Layout.of(3, Float.class), pos.layout());
-		assertEquals(3 * Float.BYTES, pos.length());
+		assertEquals(new Point(5, 7, 9), pos.add(new Tuple(4, 5, 6)));
 	}
 
 	@Test
@@ -79,5 +53,6 @@ class PointTest {
 		assertEquals(true, pos.equals(new Point(1, 2, 3)));
 		assertEquals(false, pos.equals(null));
 		assertEquals(false, pos.equals(Point.ORIGIN));
+		assertEquals(false, pos.equals(new Vector(1, 2, 3)));
 	}
 }

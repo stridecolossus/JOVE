@@ -87,7 +87,7 @@ public class CubeBuilder {
 	}
 
 	// TODO - helper on point?
-	private Point scale(Point v) {
-		return new Point(v.x() * size, v.y() * size, v.z() * size);
+	private Point scale(Point p) {
+		return new Point(p.x * size, p.y * size, p.z * size);
 	}
 }

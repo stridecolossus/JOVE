@@ -39,6 +39,8 @@ public interface Transform {
 		return new Transform() {
 			private transient Matrix matrix = update();
 
+			// TODO - we do not want to enforce the matrices to be evaluated => need transient dirty flag as well?
+
 			/**
 			 * @return Compound matrix
 			 */

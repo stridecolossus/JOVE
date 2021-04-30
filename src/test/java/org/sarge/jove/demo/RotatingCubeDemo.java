@@ -289,7 +289,7 @@ public class RotatingCubeDemo {
 		final Matrix pos = new Matrix.Builder()
 				.identity()
 				.row(0, Vector.X_AXIS)
-				.row(1, Vector.Y_AXIS.invert())
+				.row(1, Vector.Y_AXIS.negate())
 				.row(2, Vector.Z_AXIS)
 				.build();
 

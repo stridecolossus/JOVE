@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>component</i> is a compound bufferable type with a defined structure (generally used to model inter-leaved vertex data).
+ * A <i>component</i> is a compound bufferable type with a defined structure (generally used to model interleaved vertex data).
  * @author Sarge
  */
 public interface Component extends Bufferable {
@@ -35,11 +35,6 @@ public interface Component extends Bufferable {
 	 * In addition the convenience {@link #TUPLE} constant defines the layout for a floating-point 3-tuple.
 	 */
 	record Layout(int size, int bytes, Class<?> type) {
-		/**
-		 * Convenience layout for a 3-component floating-point tuple.
-		 */
-		public static final Layout TUPLE = Layout.of(3);
-
 		/**
 		 * Creates a component layout of the given type.
 		 * <p>

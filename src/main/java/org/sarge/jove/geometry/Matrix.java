@@ -251,7 +251,7 @@ public final class Matrix implements Transform, Bufferable {
 	public Point multiply(Point pt) {
 		// Convert to homogeneous array
 		if(order != DEFAULT_ORDER) throw new IllegalArgumentException("Can only multiply a vector by a matrix with order of 4");
-		final float[] array = {pt.x(), pt.y(), pt.z(), 1};
+		final float[] array = {pt.x, pt.y, pt.z, 1};
 //		final float[] array = new float[4];
 //		array[0] = pt.x;
 //		array[1] = pt.y;
@@ -348,9 +348,9 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the row is out-of-bounds
 		 */
 		public Builder row(int row, Vector vec) {
-			set(row, 0, vec.x());
-			set(row, 1, vec.y());
-			set(row, 2, vec.z());
+			set(row, 0, vec.x);
+			set(row, 1, vec.y);
+			set(row, 2, vec.z);
 			return this;
 		}
 
@@ -361,9 +361,9 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the column is out-of-bounds
 		 */
 		public Builder column(int col, Vector vec) {
-			set(0, col, vec.x());
-			set(1, col, vec.y());
-			set(2, col, vec.z());
+			set(0, col, vec.x);
+			set(1, col, vec.y);
+			set(2, col, vec.z);
 			return this;
 		}
 

@@ -55,7 +55,7 @@ public class QuaternionTest {
 	@Test
 	public void toRotation() {
 		final Rotation rot = Rotation.of(Vector.Y_AXIS, MathsUtil.PI);
-		assertEquals(rot, quaternion.toRotation());
+		assertEquals(rot, quaternion.rotation());
 	}
 
 	@Test

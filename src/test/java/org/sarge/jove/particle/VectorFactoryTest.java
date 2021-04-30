@@ -9,12 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
-@SuppressWarnings("static-method")
 public class VectorFactoryTest {
 	@Test
 	public void position() {
 		final Point pos = new Point(1, 2, 3);
-		assertEquals(pos.toVector(), VectorFactory.POSITION.vector(pos));
+		assertEquals(new Vector(pos), VectorFactory.POSITION.vector(pos));
 	}
 
 	@Test

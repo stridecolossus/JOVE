@@ -2,16 +2,12 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.sarge.jove.geometry.Vector.X_AXIS;
 import static org.sarge.jove.geometry.Vector.Y_AXIS;
 import static org.sarge.jove.geometry.Vector.Z_AXIS;
 
-import java.nio.ByteBuffer;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.util.MathsUtil;
 
 class VectorTest {
@@ -24,9 +20,19 @@ class VectorTest {
 
 	@Test
 	void constructor() {
-		assertEquals(1, vec.x());
-		assertEquals(2, vec.y());
-		assertEquals(3, vec.z());
+		assertEquals(1, vec.x);
+		assertEquals(2, vec.y);
+		assertEquals(3, vec.z);
+	}
+
+	@Test
+	void copy() {
+		assertEquals(vec, new Vector(vec));
+	}
+
+	@Test
+	void array() {
+		assertEquals(vec, new Vector(new float[]{1, 2, 3}));
 	}
 
 	@Test
@@ -37,24 +43,8 @@ class VectorTest {
 	}
 
 	@Test
-	void array() {
-		assertEquals(vec, Vector.of(new float[]{1, 2, 3}));
-	}
-
-	@Test
-	void arrayInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> Vector.of(new float[]{1, 2}));
-		assertThrows(IllegalArgumentException.class, () -> Vector.of(new float[]{1, 2, 3, 4}));
-	}
-
-	@Test
 	void between() {
-		assertEquals(vec, Vector.between(Point.ORIGIN, vec.toPoint()));
-	}
-
-	@Test
-	void toPoint() {
-		assertEquals(new Point(1, 2, 3), vec.toPoint());
+		assertEquals(vec, Vector.between(new Point(1, 2, 3), new Point(2, 4, 6)));
 	}
 
 	@Test
@@ -63,14 +53,30 @@ class VectorTest {
 	}
 
 	@Test
+	void negate() {
+		assertEquals(new Vector(-1, -2, -3), vec.negate());
+	}
+
+	@Test
 	void invert() {
-		assertEquals(new Vector(-1, -2, -3), vec.invert());
+		assertEquals(new Vector(1, 1 /2f, 1 / 3f), vec.invert());
+		assertEquals(new Vector(1, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY), X_AXIS.invert());
+	}
+
+	@Test
+	void add() {
+		assertEquals(new Vector(2, 4, 6), vec.add(vec));
+	}
+
+	@Test
+	void multiply() {
+		assertEquals(new Vector(2, 4, 6), vec.multiply(2));
 	}
 
 	@Test
 	void normalize() {
-		final float scale = 1 / (float) Math.sqrt(vec.magnitude());
-		assertEquals(new Vector(1 * scale, 2 * scale, 3 * scale), vec.normalize());
+		final float f = 1 / (float) Math.sqrt(vec.magnitude());
+		assertEquals(new Vector(1 * f, 2 * f, 3 * f), vec.normalize());
 	}
 
 	@Test
@@ -81,13 +87,8 @@ class VectorTest {
 
 	@Test
 	void dot() {
-		assertEquals(1 * 1 + 2 * 2 + 3 * 3, vec.dot(vec));
-	}
-
-	@Test
-	void dotAxes() {
 		assertEquals(1f, X_AXIS.dot(X_AXIS));
-		assertEquals(-1f, X_AXIS.dot(X_AXIS.invert()));
+		assertEquals(-1f, X_AXIS.dot(X_AXIS.negate()));
 		assertEquals(0f, X_AXIS.dot(Y_AXIS));
 		assertEquals(0f, X_AXIS.dot(Z_AXIS));
 	}
@@ -95,7 +96,7 @@ class VectorTest {
 	@Test
 	void angle() {
 		assertEquals(0f, X_AXIS.angle(X_AXIS));
-		assertEquals(MathsUtil.PI, X_AXIS.angle(X_AXIS.invert()));
+		assertEquals(MathsUtil.PI, X_AXIS.angle(X_AXIS.negate()));
 		assertEquals(MathsUtil.HALF_PI, X_AXIS.angle(Y_AXIS));
 		assertEquals(MathsUtil.HALF_PI, X_AXIS.angle(Z_AXIS));
 	}
@@ -103,7 +104,7 @@ class VectorTest {
 	@Test
 	void cross() {
 		assertEquals(Z_AXIS, X_AXIS.cross(Y_AXIS));
-		assertEquals(Z_AXIS.invert(), Y_AXIS.cross(X_AXIS));
+		assertEquals(Z_AXIS.negate(), Y_AXIS.cross(X_AXIS));
 	}
 
 	@Test
@@ -129,23 +130,7 @@ class VectorTest {
 
 	@Test
 	void reflectSelf() {
-		assertEquals(vec.invert(), vec.reflect(vec.normalize()));
-	}
-
-	@Test
-	void buffer() {
-		final ByteBuffer buffer = ByteBuffer.allocate(3 * Float.BYTES);
-		vec.buffer(buffer);
-		buffer.flip();
-		assertEquals(1, buffer.getFloat());
-		assertEquals(2, buffer.getFloat());
-		assertEquals(3, buffer.getFloat());
-	}
-
-	@Test
-	void layout() {
-		assertEquals(Layout.of(3, Float.class), vec.layout());
-		assertEquals(3 * Float.BYTES, vec.length());
+		assertEquals(vec.negate(), vec.reflect(vec.normalize()));
 	}
 
 	@Test
@@ -154,5 +139,6 @@ class VectorTest {
 		assertEquals(true, vec.equals(new Vector(1, 2, 3)));
 		assertEquals(false, vec.equals(null));
 		assertEquals(false, vec.equals(new Vector(4, 5, 6)));
+		assertEquals(false, vec.equals(new Point(1, 2, 3)));
 	}
 }
