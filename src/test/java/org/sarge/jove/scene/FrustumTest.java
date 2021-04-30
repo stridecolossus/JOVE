@@ -14,7 +14,7 @@ public class FrustumTest {
 
 	@BeforeEach
 	public void before() {
-		frustum = new Frustum(new Plane[]{new Plane(Vector.X_AXIS, -1)});
+		frustum = new Frustum(new Plane[]{new Plane(Vector.X_AXIS, 1)});
 	}
 
 	@Test

@@ -129,17 +129,17 @@ public class Extents {
 	}
 
 	/**
+	 * Helper - Creates a collector that constructs extents from a stream of points.
+	 * @return New extents collector
+	 */
+	public static Collector<Point, ?, Extents> collector() {
+		return Collector.of(Builder::new, Builder::add, Builder::combine, Builder::build);
+	}
+
+	/**
 	 * Builder for extents.
 	 */
 	public static class Builder {
-		/**
-		 * Helper - Creates a collector that constructs extents from a stream of points.
-		 * @return New extents collector
-		 */
-		public static Collector<Point, ?, Extents> collector() {
-			return Collector.of(Builder::new, Builder::add, Builder::combine, Builder::build);
-		}
-
 		private final float[] min, max;
 
 		public Builder() {

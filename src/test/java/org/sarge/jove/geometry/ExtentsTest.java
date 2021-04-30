@@ -125,7 +125,7 @@ class ExtentsTest {
 
 		@BeforeEach
 		void before() {
-			collector = Builder.collector();
+			collector = Extents.collector();
 		}
 
 		@Test
@@ -135,7 +135,7 @@ class ExtentsTest {
 
 		@Test
 		void collect() {
-			assertEquals(extents, Stream.of(min, max).collect(Builder.collector()));
+			assertEquals(extents, Stream.of(min, max).collect(Extents.collector()));
 		}
 
 		@Test

@@ -50,8 +50,22 @@ public record Ray(Point origin, Vector direction) {
 		 * @return Literal intersection
 		 */
 		static Intersection of(Float... dist) {
-			final List<Float> list = Arrays.asList(dist);
-			return () -> list;
+			return new Intersection() {
+				@Override
+				public List<Float> distances() {
+					return Arrays.asList(dist);
+				}
+
+				@Override
+				public boolean equals(Object obj) {
+					return (obj instanceof Intersection that) && this.distances().equals(that.distances());
+				}
+
+				@Override
+				public String toString() {
+					return Arrays.toString(dist);
+				}
+			};
 		}
 	}
 }

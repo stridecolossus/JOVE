@@ -16,5 +16,9 @@ demo
 other
 - layouts of components as annotations? does this buy us anything?
 - component-wise bi/operator support for tuple/vector/point, e.g. matrix set row/column, AABB-Ray intersect, extents operators
-- Dimension.exceeds() rotten name
-- extents builder -> collector?
+
+matrix
+- private implementations for 2/3/4 order matrices? move order to constant? => ABC, but can remove order field (accessor is never used)
+
+blog
+- back to front? should start with desired outcome (demo, tests) and then describe implementation? e.g. render pass builder THEN the sub builders, etc.

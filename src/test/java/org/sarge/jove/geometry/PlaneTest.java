@@ -1,46 +1,75 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.sarge.jove.geometry.Point.ORIGIN;
+import static org.sarge.jove.geometry.Vector.X_AXIS;
+import static org.sarge.jove.geometry.Vector.Y_AXIS;
+import static org.sarge.jove.geometry.Vector.Z_AXIS;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.Plane.Side;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 class PlaneTest {
+	private static final int DIST = 3; // Plane lies at (3,0,0) but note distance is -3
+
 	private Plane plane;
 
 	@BeforeEach
 	void before() {
-		plane = new Plane(Vector.X_AXIS, 3);
+		plane = new Plane(X_AXIS, -DIST);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(Vector.X_AXIS, plane.normal());
-		assertEquals(3, plane.distance());
+		assertEquals(X_AXIS, plane.normal());
+		assertEquals(-DIST, plane.distance());
 	}
 
 	@Test
 	void distance() {
-		assertEquals(-3f, plane.distance(Point.ORIGIN));
-		assertEquals(0f, plane.distance(new Point(3, 0, 0)));
+		assertEquals(-DIST, plane.distance(ORIGIN));
+		assertEquals(0, plane.distance(new Point(DIST, 0, 0)));
 	}
 
 	@Test
 	void side() {
-		assertEquals(Plane.Side.FRONT, plane.side(new Point(4, 0, 0)));
-		assertEquals(Plane.Side.BACK, plane.side(Point.ORIGIN));
-		assertEquals(Plane.Side.INTERSECT, plane.side(new Point(3, 0, 0)));
+		assertEquals(Side.FRONT, plane.side(new Point(4, 0, 0)));
+		assertEquals(Side.BACK, plane.side(ORIGIN));
+		assertEquals(Side.INTERSECT, plane.side(new Point(DIST, 0, 0)));
 	}
 
 	@Test
 	void triangle() {
-		final Plane result = Plane.of(new Point(-3, 0, 0), new Point(-3, 1, 0), new Point(-3, 0, 1));
+		final Plane result = Plane.of(new Point(DIST, 0, 0), new Point(DIST, 1, 0), new Point(DIST, 0, 1));
 		assertEquals(plane, result);
 	}
 
 	@Test
 	void of() {
-		final Plane result = Plane.of(Vector.X_AXIS, new Point(-3, 0, 0));
-		assertEquals(plane, result);
+		assertEquals(plane, Plane.of(X_AXIS, new Point(DIST, 0, 0)));
+	}
+
+	@Nested
+	class PlaneRayIntersectionTests {
+		@Test
+		void intersect() {
+			assertEquals(Intersection.of(3f),  plane.intersect(new Ray(ORIGIN, X_AXIS)));
+			assertEquals(Intersection.of(-0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X_AXIS)));
+			assertEquals(Intersection.of(+0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X_AXIS.negate())));
+		}
+
+		@Test
+		void miss() {
+			assertEquals(Intersection.NONE, plane.intersect(new Ray(ORIGIN, Y_AXIS)));
+			assertEquals(Intersection.NONE, plane.intersect(new Ray(ORIGIN, Z_AXIS)));
+		}
+
+		@Test
+		void behind() {
+			assertEquals(Intersection.NONE, plane.intersect(new Ray(new Point(4, 0, 0), X_AXIS)));
+		}
 	}
 }

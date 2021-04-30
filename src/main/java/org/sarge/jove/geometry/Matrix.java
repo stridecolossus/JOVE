@@ -180,7 +180,7 @@ public final class Matrix implements Transform, Bufferable {
 
 	@Override
 	public int length() {
-		return order * order * Float.BYTES;
+		return matrix.length * Float.BYTES;
 	}
 
 	/**

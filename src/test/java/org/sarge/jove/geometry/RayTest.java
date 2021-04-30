@@ -45,6 +45,7 @@ class RayTest {
 			final Intersection intersection = Intersection.of(result);
 			assertNotNull(intersection);
 			assertEquals(List.of(result), intersection.distances());
+			assertEquals(true, intersection.equals(intersection));
 		}
 	}
 }
