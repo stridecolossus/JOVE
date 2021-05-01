@@ -9,6 +9,7 @@ volumes
 - integrate Sphere helper and UnitCircle and Matrix.rotation()?
 - Frustum should have a builder!
 - Frustum remove reflection tostring
+- is Ray.Intersection what we actually need? would need ray + volume in intersection record to be useful in stream processing?
 
 demo
 - skybox, cube map
@@ -19,6 +20,7 @@ other
 
 matrix
 - private implementations for 2/3/4 order matrices? move order to constant? => ABC, but can remove order field (accessor is never used)
+[done] - rotation - should have separate dirty flag => transform assumes matrix() is only called when isDirty()
 
 blog
 - back to front? should start with desired outcome (demo, tests) and then describe implementation? e.g. render pass builder THEN the sub builders, etc.

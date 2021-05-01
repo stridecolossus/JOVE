@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 class VolumeTest {
@@ -21,12 +20,6 @@ class VolumeTest {
 
 	@Nested
 	class NullVolumeTests {
-		@Test
-		void extents() {
-			assertNotNull(Volume.NULL.extents());
-			assertEquals(true, Volume.NULL.extents().contains(Point.ORIGIN));
-		}
-
 		@Test
 		void contains() {
 			assertEquals(false, Volume.NULL.contains(null));

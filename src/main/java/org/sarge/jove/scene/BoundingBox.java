@@ -27,7 +27,9 @@ public class BoundingBox implements Volume {
 		this.extents = notNull(extents);
 	}
 
-	@Override
+	/**
+	 * @return Extents of this bounding box
+	 */
 	public Extents extents() {
 		return extents;
 	}
@@ -47,7 +49,7 @@ public class BoundingBox implements Volume {
 			return extents.intersects(box.extents);
 		}
 		else {
-			return extents.intersects(vol.extents());
+			return vol.intersects(this);
 		}
 	}
 

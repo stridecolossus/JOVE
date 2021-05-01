@@ -75,7 +75,7 @@ public interface Rotation extends Transform {
 	 */
 	class MutableRotation extends AbstractRotation {
 		private float angle;
-		private transient Matrix matrix;
+		private boolean dirty = true;
 
 		/**
 		 * Constructor.
@@ -96,20 +96,18 @@ public interface Rotation extends Transform {
 		 */
 		public void angle(float angle) {
 			this.angle = angle;
-			matrix = null;
+			dirty = true;
 		}
 
 		@Override
 		public Matrix matrix() {
-			if(matrix == null) {
-				matrix = super.matrix();
-			}
-			return matrix;
+			dirty = false;
+			return super.matrix();
 		}
 
 		@Override
 		public boolean isDirty() {
-			return matrix == null;
+			return dirty;
 		}
 	}
 }

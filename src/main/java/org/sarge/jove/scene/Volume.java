@@ -1,6 +1,5 @@
 package org.sarge.jove.scene;
 
-import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -11,11 +10,6 @@ import org.sarge.jove.geometry.Ray.Intersection;
  */
 public interface Volume {
 	/**
-	 * @return Extents of this volume
-	 */
-	Extents extents();
-
-	/**
 	 * @param pt Point
 	 * @return Whether this volume contains the given point
 	 */
@@ -23,9 +17,29 @@ public interface Volume {
 
 	/**
 	 * Determines whether this volume intersects the given volume.
+	 * <p>
+	 * In general a bounding volume intersection test is assumed to ultimately degenerate to a test against a sphere or a {@link Extents}.
+	 * <br>
+	 * An implementation should perform class-specific intersection tests or delegate to the supplied volume.
+	 * <br>
+	 * Note that {@link #intersects(Volume)} throws an exception by default.
+	 * <p>
+	 * Example implementation:
+	 * <pre>
+	 * class CustomVolume implements Volume {
+	 *     public boolean intersects(Volume vol) {
+	 *         if(obj instanceof SphereVolume sphere) {
+	 *             return ...
+	 *         }
+	 *         else {
+	 *             return vol.intersects(this);
+	 *         }
+	 *     }
+	 * }
+	 * </pre>
 	 * @param vol Volume
-	 * @return Whether the volumes intersects
-	 * @throws UnsupportedOperationException by default
+	 * @return Whether the volumes intersect
+	 * @throws UnsupportedOperationException
 	 */
 	default boolean intersects(Volume vol) {
 		throw new UnsupportedOperationException(String.format("Unsupported volumes: this=%s that=%s", this, vol));
@@ -45,11 +59,6 @@ public interface Volume {
 		@Override
 		public boolean contains(Point pt) {
 			return false;
-		}
-
-		@Override
-		public Extents extents() {
-			return new Extents(Point.ORIGIN, Point.ORIGIN);
 		}
 
 		@Override

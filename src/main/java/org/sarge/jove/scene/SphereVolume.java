@@ -25,8 +25,7 @@ public class SphereVolume implements Volume {
 	 * @return Sphere volume
 	 */
 	public static SphereVolume of(Extents extents) {
-		final float radius = extents.largest() * MathsUtil.HALF;
-		return new SphereVolume(extents.centre(), radius);
+		return new SphereVolume(extents.centre(), extents.largest() * MathsUtil.HALF);
 	}
 
 	private final Point centre;
@@ -57,46 +56,36 @@ public class SphereVolume implements Volume {
 	}
 
 	@Override
-	public Extents extents() {
-		final Vector vec = new Vector(radius, radius, radius);
-		final Point min = centre.add(vec.negate());
-		final Point max = centre.add(vec);
-		return new Extents(min, max);
-	}
-
-	@Override
 	public boolean contains(Point pt) {
-		return within(centre.distance(pt), radius);
+		return intersects(pt, radius);
 	}
 
 	@Override
 	public boolean intersects(Volume vol) {
 		if(vol instanceof SphereVolume sphere) {
 			// Intersects if the distance between the centres is within their combined radius
-			final float dist = centre.distance(sphere.centre);
-			return within(dist, radius + sphere.radius);
+			return intersects(sphere.centre, radius + sphere.radius);
 		}
 		else {
-			return intersects(vol.extents());
+			return vol.intersects(this);
 		}
 	}
 
 	/**
-	 * Tests whether this sphere is intersected by the given extents.
+	 * Helper - Tests whether this sphere is intersected by the given extents.
 	 * @param extents Extents
 	 * @return Whether intersected
 	 */
 	public boolean intersects(Extents extents) {
-		final float dist = extents.nearest(centre).distance(centre);
-		return within(dist, radius);
+		return intersects(extents.nearest(centre), radius);
 	}
 
 	/**
-	 * @param dist Distance squared
-	 * @return Whether the squared distance is less-than-or-equal to the given sphere radius
+	 * @param pt Point
+	 * @return Whether the distance between this sphere and a point intersects the given radius
 	 */
-	protected static final boolean within(float dist, float radius) {
-		return dist <= radius * radius;
+	private boolean intersects(Point pt, float radius) {
+		return centre.distance(pt) <= radius * radius;
 	}
 
 	@Override

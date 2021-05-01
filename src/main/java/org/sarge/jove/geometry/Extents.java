@@ -57,7 +57,7 @@ public class Extents {
 	}
 
 	/**
-	 * Determines the nearest point of this extents to the given point.
+	 * Determines the nearest point (or corner) of this extents to the given point.
 	 * @param pt Point
 	 * @return Nearest point
 	 */

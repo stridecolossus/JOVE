@@ -36,30 +36,18 @@ public interface Transform {
 	 * @return Compound transform
 	 */
 	static Transform of(List<Transform> transforms) {
-		return new Transform() {
-			private transient Matrix matrix = update();
-
-			// TODO - we do not want to enforce the matrices to be evaluated => need transient dirty flag as well?
-
-			/**
-			 * @return Compound matrix
-			 */
-			private Matrix update() {
-				return transforms.stream().map(Transform::matrix).reduce(Matrix.IDENTITY, Matrix::multiply);
+		record Compound(List<Transform> list) implements Transform {
+			@Override
+			public boolean isDirty() {
+				return list.stream().anyMatch(Transform::isDirty);
 			}
 
 			@Override
 			public Matrix matrix() {
-				if(isDirty()) {
-					matrix = update();
-				}
-				return matrix;
+				return list.stream().map(Transform::matrix).reduce(Matrix.IDENTITY, Matrix::multiply);
 			}
+		}
 
-			@Override
-			public boolean isDirty() {
-				return transforms.stream().anyMatch(Transform::isDirty);
-			}
-		};
+		return new Compound(List.copyOf(transforms));
 	}
 }

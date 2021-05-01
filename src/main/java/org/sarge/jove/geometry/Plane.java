@@ -9,11 +9,9 @@ import org.sarge.lib.util.Check;
  * <p>
  * Mathematically the <i>general form</i> of a plane is:
  * <pre>ax + by + cz + d = 0</pre>
- * where:
- * <br><code>n = (a, b, c)</code> is the plane normal
- * <br>and <i>d</i> is the distance of the plane from the origin
+ * where <i>n</i> is the plane normal <code>n = (a, b, c)</code> and <i>d</i> is the distance of the plane from the origin.
  * <p>
- * Note that the distance <i>d</i> therefore increases in the <i>opposite</i> direction to the normal vector.
+ * Note that the distance increases in the <i>opposite</i> direction to the normal vector.
  * <br>
  * For example <code>new Plane(Vector.Y_AXIS), 1)</code> creates the plane in X-Z at Y = <b>minus</b> one.
  * <p>
@@ -103,7 +101,7 @@ public record Plane(Vector normal, float distance) {
 
 		// Stop if parallel
 		if(MathsUtil.isZero(denom)) {
-			return Intersection.NONE;
+			return Intersection.NONE; // TODO - should this be zero?
 		}
 
 		// Calc intersection (note negative sign in equation)

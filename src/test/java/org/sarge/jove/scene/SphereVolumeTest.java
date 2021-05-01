@@ -37,11 +37,6 @@ class SphereVolumeTest {
 	}
 
 	@Test
-	void extents() {
-		assertEquals(new Extents(new Point(-RADIUS, -RADIUS, -RADIUS), new Point(RADIUS, RADIUS, RADIUS)), sphere.extents());
-	}
-
-	@Test
 	@DisplayName("Create a sphere containing the given extents")
 	void of() {
 		sphere = SphereVolume.of(new Extents(new Point(1, 2, 3), new Point(5, 6, 7)));
@@ -58,16 +53,14 @@ class SphereVolumeTest {
 	}
 
 	@Test
-	void within() {
-		assertEquals(true, sphere.within(0, RADIUS));
-		assertEquals(true, sphere.within(RADIUS * RADIUS, RADIUS));
-		assertEquals(false, sphere.within(OUTSIDE * OUTSIDE, RADIUS));
+	void intersects() {
+		assertEquals(false, sphere.intersects(mock(Volume.class)));
 	}
 
 	@Test
-	void intersects() {
+	void intersectsDelegate() {
 		final Volume vol = mock(Volume.class);
-		when(vol.extents()).thenReturn(new Extents(Point.ORIGIN, Point.ORIGIN));
+		when(vol.intersects(sphere)).thenReturn(true);
 		assertEquals(true, sphere.intersects(vol));
 	}
 

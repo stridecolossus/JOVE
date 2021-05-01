@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -44,9 +43,7 @@ class BoundingBoxTest {
 
 	@Test
 	void intersects() {
-		final Volume vol = mock(Volume.class);
-		when(vol.extents()).thenReturn(extents);
-		assertEquals(true, box.intersects(vol));
+		assertEquals(false, box.intersects(mock(Volume.class)));
 	}
 
 	@Nested

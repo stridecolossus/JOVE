@@ -60,6 +60,6 @@ public final class Point extends Tuple {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Point pt) && super.equals(pt);
+		return (obj instanceof Point pt) && super.isEqual(pt);
 	}
 }

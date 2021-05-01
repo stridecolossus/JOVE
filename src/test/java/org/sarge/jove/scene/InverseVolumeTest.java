@@ -3,7 +3,6 @@ package org.sarge.jove.scene;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,21 +15,8 @@ class InverseVolumeTest {
 
 	@BeforeEach
 	void before() {
-		// Define extents
-		extents = mock(Extents.class);
-		when(extents.invert()).thenReturn(extents);
-
-		// Create underlying volume
 		vol = mock(Volume.class);
-		when(vol.extents()).thenReturn(extents);
-
-		// Create inverse volume
 		inverse = new InverseVolume(vol);
-	}
-
-	@Test
-	void constructor() {
-		assertEquals(extents, inverse.extents());
 	}
 
 	@Test

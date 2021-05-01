@@ -5,18 +5,16 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
- * An <i>inverse volume</i> is the space <i>outside</i> of a given volume.
+ * An <i>inverse volume</i> is the space <i>outside</i> a given volume.
  * @author Sarge
  */
 public class InverseVolume implements Volume {
 	private final Volume vol;
-	private final transient Extents extents;
 
 	/**
 	 * Constructor.
@@ -24,7 +22,6 @@ public class InverseVolume implements Volume {
 	 */
 	public InverseVolume(Volume vol) {
 		this.vol = notNull(vol);
-		this.extents = vol.extents().invert();
 	}
 
 	@Override
@@ -33,14 +30,8 @@ public class InverseVolume implements Volume {
 	}
 
 	@Override
-	public Extents extents() {
-		return extents;
-	}
-
-	@Override
 	public Intersection intersect(Ray ray) {
-		// TODO
-		return vol.intersect(ray);
+		return vol.intersect(ray); // TODO - is this correct?
 	}
 
 	@Override
@@ -50,7 +41,7 @@ public class InverseVolume implements Volume {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(vol, extents);
+		return -Objects.hash(vol);
 	}
 
 	@Override

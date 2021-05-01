@@ -8,7 +8,7 @@ import org.sarge.jove.common.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>tuple</i> is a base-class for a 3-component floating-point value.
+ * A <i>tuple</i> is the base-class for 3-component floating-point values.
  * @author Sarge
  */
 public sealed class Tuple implements Bufferable, Component permits Point, Vector {
@@ -69,6 +69,7 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 			case 2 -> z;
 			default -> throw new IndexOutOfBoundsException("Invalid component index: " + index);
 		};
+		// TODO - enum instead of index?
 	}
 
 	/**
@@ -116,6 +117,10 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 	}
 
 	protected final boolean isEqual(Tuple that) {
+		if(this == that) {
+			return true;
+		}
+
 		return
 				MathsUtil.isEqual(this.x, that.x) &&
 				MathsUtil.isEqual(this.y, that.y) &&

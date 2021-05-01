@@ -122,7 +122,7 @@ public final class Vector extends Tuple {
 	 * Assumes both vectors have been normalized.
 	 * @param vec Vector
 	 * @return Angle between vectors (radians)
-	 * @see #dot(Vector)
+	 * @see #dot(Tuple)
 	 */
 	public float angle(Vector vec) {
 		final float dot = dot(vec);
@@ -159,7 +159,7 @@ public final class Vector extends Tuple {
 	 * <p>
 	 * @param vec Vector
 	 * @return Cross product
-	 * @see <a href="https://en.wikipedia.org/wiki/Cross_product#:~:text=by%20the%20symbol-,.,%2C%20engineering%2C%20and%20computer%20programming">Wikipedia</a>
+	 * @see <a href="https://en.wikipedia.org/wiki/Cross_product">Wikipedia</a>
 	 */
 	public Vector cross(Vector vec) {
 		final float x = this.y * vec.z - this.z * vec.y;

@@ -2,9 +2,10 @@ package org.sarge.jove.scene;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -13,12 +14,14 @@ import org.sarge.jove.geometry.Ray.Intersection;
  * A <i>compound volume</i> is comprised of a list of bounding volumes.
  * <p>
  * Note that this implementation does not make any assumptions or apply any constraints on the relationship between the list of volumes (other than their order).
- * For example it is possible to create an illogical but valid compound volume where the bounding volumes do not overlap.
  * <p>
- * Notes:
+ * This class can therefore model an irregular shape (e.g. a volume comprised of a cylinder and a cone to bound a rocket model)
+ * or a <i>recursive</i> or <i>russian doll</i> volume (e.g. a simple sphere followed by a smaller but more accurate volume).
+ * <p>
+ * Intersection tests:
  * <ul>
- * <li>The {@link #contains(Point)} and {@link #intersects(Volume)} methods pass if <b>all</b> volumes pass</li>
- * <li>{@link #extents()} assumes at least one volume is present</li>
+ * <li>The {@link #contains(Point)} and {@link #intersects(Volume)} methods pass when <b>all</b> the volumes pass</li>
+ * <li>{@link #intersect(Ray)} returns the <b>first</b> intersection found</li>
  * </ul>
  * <p>
  * @author Sarge
@@ -43,14 +46,6 @@ public class CompoundVolume implements Volume {
 		this.volumes = List.copyOf(volumes);
 	}
 
-	/**
-	 * @throws IndexOutOfBoundsException if this compound volume is empty
-	 */
-	@Override
-	public Extents extents() {
-		return volumes.get(0).extents();
-	}
-
 	@Override
 	public boolean contains(Point pt) {
 		return volumes.stream().allMatch(v -> v.contains(pt));
@@ -59,6 +54,12 @@ public class CompoundVolume implements Volume {
 	@Override
 	public Intersection intersect(Ray ray) {
 		// TODO
+		final Optional<Intersection> intersection = volumes
+				.stream()
+				.map(v -> v.intersect(ray))
+				.filter(Predicate.not(Intersection.NONE::equals))
+				.findAny();
+
 		return null;
 	}
 

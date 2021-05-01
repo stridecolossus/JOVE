@@ -53,6 +53,7 @@ class RotationTest {
 		@Test
 		void constructor() {
 			assertEquals(Vector.X_AXIS, rot.axis());
+			assertEquals(0, rot.angle());
 			assertEquals(true, rot.isDirty());
 		}
 
@@ -66,9 +67,8 @@ class RotationTest {
 		void angle() {
 			rot.matrix();
 			rot.angle(MathsUtil.PI);
+			assertEquals(MathsUtil.PI, rot.angle());
 			assertEquals(true, rot.isDirty());
-			assertEquals(Rotation.of(Vector.X_AXIS, MathsUtil.PI).matrix(), rot.matrix());
-			assertEquals(false, rot.isDirty());
 		}
 	}
 }

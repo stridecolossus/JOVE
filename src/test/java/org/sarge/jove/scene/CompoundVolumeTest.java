@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Point;
 
 class CompoundVolumeTest {
@@ -27,13 +26,6 @@ class CompoundVolumeTest {
 	}
 
 	@Test
-	void extents() {
-		final Extents extents = mock(Extents.class);
-		when(vol.extents()).thenReturn(extents);
-		assertEquals(extents, compound.extents());
-	}
-
-	@Test
 	void contains() {
 		when(vol.contains(Point.ORIGIN)).thenReturn(true);
 		assertEquals(true, compound.contains(Point.ORIGIN));
@@ -41,6 +33,11 @@ class CompoundVolumeTest {
 
 	@Test
 	void intersects() {
+		assertEquals(false, compound.intersects(mock(Volume.class)));
+	}
+
+	@Test
+	void intersectsDelegate() {
 		final Volume other = mock(Volume.class);
 		when(vol.intersects(other)).thenReturn(true);
 		assertEquals(true, compound.intersects(other));
