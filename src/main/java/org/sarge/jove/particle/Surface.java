@@ -44,10 +44,10 @@ public interface Surface {
 	 * Particles that are not in <i>front</i> of the plane are considered as intersecting.
 	 * @param plane Plane
 	 * @return Plane collision surface
-	 * @see Plane#side(Point)
+	 * @see Plane#space(Point)
 	 */
 	static Surface plane(Plane plane) {
-		return pos -> plane.side(pos) != Plane.Side.FRONT;
+		return pos -> plane.space(pos) != Plane.HalfSpace.POSITIVE;
 	}
 
 	/**

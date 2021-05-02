@@ -14,6 +14,7 @@ public interface Transform {
 	 * @return Transformation matrix
 	 */
 	Matrix matrix();
+	// TODO - enforce Matrix4 for this accessor?
 
 	/**
 	 * @return Whether this transform has changed (default is {@code false})
@@ -28,7 +29,7 @@ public interface Transform {
 	 * TODO - billboard
 	 * TODO - factor out flip by axis
 	 */
-	Transform BILLBOARD = Matrix.rotation(Vector.Y_AXIS, MathsUtil.PI);
+	Transform BILLBOARD = Matrix4.rotation(Vector.Y_AXIS, MathsUtil.PI);
 
 	/**
 	 * Creates a compound transform.
@@ -44,7 +45,7 @@ public interface Transform {
 
 			@Override
 			public Matrix matrix() {
-				return list.stream().map(Transform::matrix).reduce(Matrix.IDENTITY, Matrix::multiply);
+				return list.stream().map(Transform::matrix).reduce(Matrix4.IDENTITY, Matrix::multiply);
 			}
 		}
 

@@ -36,7 +36,7 @@ public class QuaternionTest {
 
 	@Test
 	public void matrix() {
-		final Matrix expected = Matrix.rotation(Vector.Y_AXIS, MathsUtil.PI);
+		final Matrix expected = Matrix4.rotation(Vector.Y_AXIS, MathsUtil.PI);
 		assertEquals(expected, quaternion.matrix());
 	}
 

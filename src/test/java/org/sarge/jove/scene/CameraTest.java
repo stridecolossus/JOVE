@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.geometry.Matrix4;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
@@ -87,7 +88,8 @@ class CameraTest {
 	@Test
 	void matrix() {
 		// Create camera rotation
-		final Matrix rot = new Matrix.Builder()
+		final Matrix rot = Matrix4
+				.builder()
 				.identity()
 				.row(0, Vector.X_AXIS)
 				.row(1, Vector.Y_AXIS)
@@ -95,7 +97,7 @@ class CameraTest {
 				.build();
 
 		// Create camera translation one unit out of the screen
-		final Matrix trans = Matrix.translation(Vector.Z_AXIS.negate());
+		final Matrix trans = Matrix4.translation(Vector.Z_AXIS.negate());
 
 		// Init camera and check matrix
 		cam.move(new Point(0, 0, 1));

@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.sarge.jove.geometry.Point.ORIGIN;
 import static org.sarge.jove.geometry.Vector.X_AXIS;
 import static org.sarge.jove.geometry.Vector.Y_AXIS;
@@ -9,7 +10,7 @@ import static org.sarge.jove.geometry.Vector.Z_AXIS;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Plane.Side;
+import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 class PlaneTest {
@@ -35,10 +36,10 @@ class PlaneTest {
 	}
 
 	@Test
-	void side() {
-		assertEquals(Side.FRONT, plane.side(new Point(4, 0, 0)));
-		assertEquals(Side.BACK, plane.side(ORIGIN));
-		assertEquals(Side.INTERSECT, plane.side(new Point(DIST, 0, 0)));
+	void space() {
+		assertEquals(HalfSpace.POSITIVE, plane.space(new Point(4, 0, 0)));
+		assertEquals(HalfSpace.NEGATIVE, plane.space(ORIGIN));
+		assertEquals(HalfSpace.INTERSECT, plane.space(new Point(DIST, 0, 0)));
 	}
 
 	@Test
@@ -50,6 +51,16 @@ class PlaneTest {
 	@Test
 	void of() {
 		assertEquals(plane, Plane.of(X_AXIS, new Point(DIST, 0, 0)));
+	}
+
+	@Test
+	void normalize() {
+		assertEquals(plane, new Plane(new Vector(DIST, 0, 0), -DIST * DIST).normalize());
+	}
+
+	@Test
+	void normalizeSelf() {
+		assertSame(plane, plane.normalize());
 	}
 
 	@Nested

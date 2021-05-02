@@ -1,26 +1,51 @@
-indexed model
-- can we use some sort of bulk collections operation rather than iteratively testing each vertex? would we want to?
-
 pipeline
 - nasty base-classes, initialisation, result() method, etc. Can we make these just builders somehow?
 - caching
+- re-build after viewport/focus change
+- factor out attachment class? no index, create from render pass and link to sub-pass
+- add sub-pass domain object? ditto dependencies?
+- selector for depth format, using getPhysicalDeviceFormatProperties
+- check for depth attachment in pipeline? frame buffers?
+- frame buffer created from swapchain?
 
-volumes
-- integrate Sphere helper and UnitCircle and Matrix.rotation()?
-- Frustum should have a builder!
-- Frustum remove reflection tostring
-- is Ray.Intersection what we actually need? would need ray + volume in intersection record to be useful in stream processing?
-
-demo
-- skybox, cube map
-
-other
+geometry
 - layouts of components as annotations? does this buy us anything?
 - component-wise bi/operator support for tuple/vector/point, e.g. matrix set row/column, AABB-Ray intersect, extents operators
-
-matrix
 - private implementations for 2/3/4 order matrices? move order to constant? => ABC, but can remove order field (accessor is never used)
-[done] - rotation - should have separate dirty flag => transform assumes matrix() is only called when isDirty()
+
+model
+- can we use some sort of bulk collections operation rather than iteratively testing each vertex? would we want to?
+- integrate Sphere helper and UnitCircle and Matrix.rotation()?
+- sphere/conic builder, uses unit circle, add pole, add ring with N points / segment
+- extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
+
+demo
+- skybox, cube map, skydome?
+- instancing, cubes then tree model, multiple models per OBJ? names? => materials?
+- render loop throttle? FPS, elapsed, etc
+- lighting, materials
+- solar system, scene graph
+- terrain rendering, tiled, LOD, tesselation shader, loader from gray-scale, oct-tree?
+- geometry shader, normals, bounding volumes (spheres as x2 circles)
 
 blog
 - back to front? should start with desired outcome (demo, tests) and then describe implementation? e.g. render pass builder THEN the sub builders, etc.
+- add instance + ref factory (?)
+
+core
+- allocator merge released blocks
+- add format to image data? no of channels, bits per channel, alpha channel, type (float, int, etc) or always byte (or whatever it is now)? === vertex.layout?
+- swizzle & buffer image in one go?
+- create subresource from image?
+- tests/annotations for required features?
+- techniques -> materials?
+
+scene
+- is Ray.Intersection what we actually need? would need ray + volume in intersection record to be useful in stream processing?
+- composite object for near/far plane distances, FOV, projection matrix, i.e. stuff used in scene? or Scene object?
+- scene = n/f, FOV, root node, projection, viewport, camera
+- scene nodes - tree, node = transform, renderable object, material (shader) + properties (UBO, push constants)
+- how do descriptor sets fit here? part of material?
+- visitor, generates nodes to render (occlusion, volumes), opaque/translucent/skybox render queues
+- world and local transforms? visitor to update
+- node inheritance? e.g. transform change propagates up, volume change down, etc?

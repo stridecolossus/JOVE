@@ -121,7 +121,8 @@ public final class Quaternion implements Transform {
 		final float zz = z * z;
 		final float zw = z * w;
 
-		return new Matrix.Builder()
+		return Matrix4
+			.builder()
 			.identity()
 			.set(0, 0, 1 - 2 * (yy + zz))
 			.set(1, 0, 2 * (xy + zw))

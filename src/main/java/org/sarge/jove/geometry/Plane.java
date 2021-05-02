@@ -20,11 +20,11 @@ import org.sarge.lib.util.Check;
  */
 public record Plane(Vector normal, float distance) {
 	/**
-	 * Sides of a plane.
+	 * Half-space defines the <i>sides</i> of the plane, the plane normal points to the <i>positive</i> half-space.
 	 */
-	public enum Side {
-		FRONT,
-		BACK,
+	public enum HalfSpace {
+		POSITIVE,
+		NEGATIVE,
 		INTERSECT
 	}
 
@@ -63,6 +63,22 @@ public record Plane(Vector normal, float distance) {
 	}
 
 	/**
+	 * Normalizes this plane.
+	 * @return Normalized plane
+	 * @see Vector#normalize()
+	 */
+	public Plane normalize() {
+		final float len = MathsUtil.sqrt(normal.magnitude());
+		if(MathsUtil.isEqual(len, 1)) {
+			return this;
+		}
+		else {
+			final float inv = 1 / len;
+			return new Plane(normal.multiply(inv), distance * inv);
+		}
+	}
+
+	/**
 	 * Determines the distance of the given point from this plane.
 	 * @param pt Point
 	 * @return Distance to the given point
@@ -72,21 +88,21 @@ public record Plane(Vector normal, float distance) {
 	}
 
 	/**
-	 * Determines which side of the plane the given point lies.
+	 * Determines the half-space of the given point with respect to this plane.
 	 * @param pt Point
-	 * @return Side
+	 * @return Half-space
 	 */
-	public Side side(Point pt) {
+	public HalfSpace space(Point pt) {
 		final float d = distance(pt);
 		if(MathsUtil.isZero(d)) {
-			return Side.INTERSECT;
+			return HalfSpace.INTERSECT;
 		}
 		else
 		if(d < 0) {
-			return Side.BACK;
+			return HalfSpace.NEGATIVE;
 		}
 		else {
-			return Side.FRONT;
+			return HalfSpace.POSITIVE;
 		}
 	}
 

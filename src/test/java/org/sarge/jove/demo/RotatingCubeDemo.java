@@ -15,6 +15,7 @@ import org.sarge.jove.common.ImageData;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.geometry.Matrix4;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.CubeBuilder;
 import org.sarge.jove.model.Model;
@@ -262,7 +263,7 @@ public class RotatingCubeDemo {
 		final Sampler sampler = new Sampler.Builder(dev).build();
 
 		// Create uniform buffer for projection, view and 4 models
-		final long uniformLength = (2 + 4) * Matrix.IDENTITY.length();
+		final long uniformLength = (2 + 4) * Matrix4.IDENTITY.length();
 		final VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
 				.length(uniformLength)
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
@@ -286,14 +287,16 @@ public class RotatingCubeDemo {
 		final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.dimensions());
 		uniform.load(proj, 0);
 
-		final Matrix pos = new Matrix.Builder()
+		final Matrix pos = Matrix4
+				.builder()
 				.identity()
 				.row(0, Vector.X_AXIS)
 				.row(1, Vector.Y_AXIS.negate())
 				.row(2, Vector.Z_AXIS)
 				.build();
 
-		final Matrix trans = new Matrix.Builder()
+		final Matrix trans = Matrix4
+				.builder()
 				.identity()
 				.column(3, new Vector(0, 0, -3.5f))
 				.build();
@@ -386,7 +389,7 @@ public class RotatingCubeDemo {
 
 				// Update rotation matrices
 				final float time = System.currentTimeMillis() % PERIOD / (float) PERIOD;
-				uniform.load(Matrix.rotation(Vector.X_AXIS, linear.interpolate(time)), 2 * Matrix.IDENTITY.length());
+				uniform.load(Matrix4.rotation(Vector.X_AXIS, linear.interpolate(time)), 2 * Matrix4.IDENTITY.length());
 //				uniform.load(Matrix.rotation(Vector.Y_AXIS, cosine.interpolate(time)), LENGTH, OFFSET + LENGTH);
 //				uniform.load(Matrix.rotation(Vector.Z_AXIS, squared.interpolate(time)), LENGTH, OFFSET + 2 * LENGTH);
 //

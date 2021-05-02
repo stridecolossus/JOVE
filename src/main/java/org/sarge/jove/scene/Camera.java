@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.geometry.Matrix4;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
@@ -166,15 +167,16 @@ public class Camera {
 		final Vector y = dir.cross(right).normalize();
 
 		// Calculate translation component
-		final Matrix trans = Matrix.translation(new Vector(pos).negate());
+		final Matrix trans = Matrix4.translation(new Vector(pos).negate());
 
 		// Build rotation matrix
-		final Matrix rot = new Matrix.Builder()
-			.identity()
-			.row(0, right)
-			.row(1, y)
-			.row(2, dir)
-			.build();
+		final Matrix rot = Matrix4
+				.builder()
+				.identity()
+				.row(0, right)
+				.row(1, y)
+				.row(2, dir)
+				.build();
 
 		// Create camera matrix
 		matrix = rot.multiply(trans);

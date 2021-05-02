@@ -20,6 +20,7 @@ import org.sarge.jove.control.Action.ValueAction;
 import org.sarge.jove.control.Bindings;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.geometry.Matrix4;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.ModelLoader;
@@ -310,7 +311,7 @@ public class ModelDemo {
 
 		// Create uniform buffer for the projection matrix
 		final VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
-				.length(Matrix.IDENTITY.length())
+				.length(Matrix4.IDENTITY.length())
 				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -394,9 +395,9 @@ public class ModelDemo {
 		final Camera cam = new Camera();
 
 		// Init local model transform
-		final Matrix rot = Matrix.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
-		final Matrix trans = Matrix.translation(new Vector(0, 0.5f, 0));
-		final Matrix scale = Matrix.scale(1);
+		final Matrix rot = Matrix4.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
+		final Matrix trans = Matrix4.translation(new Vector(0, 0.5f, 0));
+		final Matrix scale = Matrix4.scale(1);
 		final Matrix modelMatrix = trans.multiply(rot).multiply(scale);
 
 		/////////////////
