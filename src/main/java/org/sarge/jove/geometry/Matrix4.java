@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>Matrix4</i> is a 4-by-4 matrix implementation that also provides additional factory methods for common cases such as creating rotation matrices.
+ * A <i>Matrix4</i> is a 4-by-4 matrix implementation that provides additional factory methods for common cases such as creating rotation matrices.
  * @author Sarge
  */
 public final class Matrix4 extends DefaultMatrix {
@@ -39,11 +39,11 @@ public final class Matrix4 extends DefaultMatrix {
 	 */
 	public static Matrix scale(float x, float y, float z) {
 		return builder()
-			.identity()
-			.set(0, 0, x)
-			.set(1, 1, y)
-			.set(2, 2, z)
-			.build();
+				.identity()
+				.set(0, 0, x)
+				.set(1, 1, y)
+				.set(2, 2, z)
+				.build();
 	}
 
 	/**
@@ -96,11 +96,11 @@ public final class Matrix4 extends DefaultMatrix {
 	/**
 	 * Constructor.
 	 * @param matrix Column-major matrix elements
-	 * @throws IllegalArgumentException if the matrix is not square or the array length does not match the matrix order
 	 */
-	public Matrix4(float[] matrix) {
+	protected Matrix4(float[] matrix) {
 		super(matrix);
 	}
+	// TODO - public constructor? needed?
 
 	@Override
 	public int order() {
@@ -108,8 +108,7 @@ public final class Matrix4 extends DefaultMatrix {
 	}
 
 	@Override
-	protected Matrix create(float[] matrix) {
-		assert matrix.length == SIZE * SIZE;
+	protected Matrix instance(float[] matrix) {
 		return new Matrix4(matrix);
 	}
 }

@@ -101,7 +101,9 @@ public class Frustum implements Volume {
 
 	public static Frustum of(Point pos, Vector dir, float near, float far, float height, float w) {
 
-
+		// TODO
+		// - Scene class?
+		// - test compare this with of()
 
 
 		return null;

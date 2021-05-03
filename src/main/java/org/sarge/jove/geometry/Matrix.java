@@ -7,10 +7,22 @@ import org.sarge.jove.common.Bufferable;
 /**
  * A <i>matrix</i> is a 2-dimensional square array used for geometry transformation and projection.
  * <p>
- * Notes:
+ * Matrix properties:
  * <ul>
- * <li>the matrix is stored <i>column major</i> for buffering convenience</li>
+ * <li>A matrix has an <i>order</i> that specifies the dimensions of the matrix</li>
+ * <li>Matrix data is assumed to be <i>column major</i> (this is the Vulkan default)</li>
+ * <li>Matrices are {@link Bufferable}</li>
  * </ul>
+ * <p>
+ * Matrices can be created via public constructors but in general a matrix is constructed using a builder:
+ * <p>
+ * <pre>
+ * Matrix matrix = new Matrix.Builder()
+ * 	.identity()
+ * 	.set(row, col, value)
+ * 	.build();
+ * </pre>
+ * <p>
  * @author Sarge
  */
 public interface Matrix extends Transform, Bufferable {
@@ -21,19 +33,6 @@ public interface Matrix extends Transform, Bufferable {
 	 */
 	static Matrix identity(int order) {
 		return new Builder(order).identity().build();
-	}
-
-	/**
-	 * Helper - Calculates the column-major matrix index for the given row and column.
-	 * @param row			Row
-	 * @param col			Column
-	 * @param order			Matrix order
-	 * @return Matrix index
-	 * @throws IllegalArgumentException for an invalid row or column index
-	 */
-	static int index(int row, int col, int order) {
-		if((row >= order) || (col >= order)) throw new IllegalArgumentException(String.format("Invalid row/column: row=%d col=%d order=%d", row, col, order));
-		return row + col * order;
 	}
 
 	/**
@@ -49,6 +48,19 @@ public interface Matrix extends Transform, Bufferable {
 	@Override
 	default Matrix matrix() {
 		return this;
+	}
+
+	/**
+	 * Helper - Calculates the column-major matrix index for the given row and column.
+	 * @param row			Row
+	 * @param col			Column
+	 * @param order			Matrix order
+	 * @return Matrix index
+	 * @throws IllegalArgumentException for an invalid row or column index
+	 */
+	static int index(int row, int col, int order) {
+		if((row >= order) || (col >= order)) throw new IllegalArgumentException(String.format("Invalid row/column: row=%d col=%d order=%d", row, col, order));
+		return row + col * order;
 	}
 
 	/**

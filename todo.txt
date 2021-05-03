@@ -1,17 +1,16 @@
 pipeline
 - nasty base-classes, initialisation, result() method, etc. Can we make these just builders somehow?
-- caching
 - re-build after viewport/focus change
 - factor out attachment class? no index, create from render pass and link to sub-pass
 - add sub-pass domain object? ditto dependencies?
 - selector for depth format, using getPhysicalDeviceFormatProperties
 - check for depth attachment in pipeline? frame buffers?
 - frame buffer created from swapchain?
+- caching, https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/pipeline_cache/pipeline_cache_tutorial.md
 
 geometry
 - layouts of components as annotations? does this buy us anything?
 - component-wise bi/operator support for tuple/vector/point, e.g. matrix set row/column, AABB-Ray intersect, extents operators
-- private implementations for 2/3/4 order matrices? move order to constant? => ABC, but can remove order field (accessor is never used)
 
 model
 - can we use some sort of bulk collections operation rather than iteratively testing each vertex? would we want to?

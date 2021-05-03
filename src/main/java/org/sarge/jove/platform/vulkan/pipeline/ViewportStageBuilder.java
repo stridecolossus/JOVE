@@ -24,7 +24,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	 * Transient viewport descriptor.
 	 */
 	private record Viewport(Rectangle rect, Percentile min, Percentile max) {
-		public Viewport {
+		private Viewport {
 			Check.notNull(rect);
 			Check.notNull(min);
 			Check.notNull(max);

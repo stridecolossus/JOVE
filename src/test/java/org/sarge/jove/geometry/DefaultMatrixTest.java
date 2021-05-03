@@ -24,7 +24,7 @@ class DefaultMatrixTest {
 		for(int n = 0; n < array.length; ++n) {
 			array[n] = n;
 		}
-		matrix = new DefaultMatrix(array);
+		matrix = new DefaultMatrix(ORDER, array);
 	}
 
 	@Test
@@ -35,7 +35,7 @@ class DefaultMatrixTest {
 
 	@Test
 	void constructorInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> new DefaultMatrix(new float[2]));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultMatrix(1, new float[2]));
 	}
 
 	@Test

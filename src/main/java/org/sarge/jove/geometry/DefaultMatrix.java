@@ -1,12 +1,22 @@
 package org.sarge.jove.geometry;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * TODO
+ * A <i>default matrix</i> is a general implementation for an arbitrarily sized matrix.
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>The matrix is represented as a one-dimensional <i>column major</i> array</li>
+ * <li>The matrix {@link #order()} is determined at run-time on <b>every</i> invocation</li>
+ * <li>Sub-classes should override the {@link #instance(float[])} method which is used to create new instances for matrix mutators, e.g. {@link #transpose()}</li>
+ * <li>The {@link #DefaultMatrix(float[])} copy constructor is intended for sub-class implementations and does <b>not</b> perform a defensive copy or validate the matrix order</li>
+ * </ul>
  * @author Sarge
  */
 public class DefaultMatrix implements Matrix {
@@ -14,12 +24,22 @@ public class DefaultMatrix implements Matrix {
 
 	/**
 	 * Constructor.
-	 * @param matrix Column-major matrix elements
-	 * @throws IllegalArgumentException if the matrix is not square or the array length does not match the matrix order
+	 * @param order			Matrix order
+	 * @param matrix		Matrix elements (column-major)
+	 * @throws IllegalArgumentException if the length of the matrix array does not match the specified order
+	 */
+	public DefaultMatrix(int order, float[] matrix) {
+		this(matrix);
+		if(matrix.length != order * order) throw new IllegalArgumentException(String.format("Invalid matrix length: order=%d len=%d", order, matrix.length));
+	}
+	// TODO - public? should be factory? used? i.e. only if creating matrix from persisting matrix?
+
+	/**
+	 * Copy constructor.
+	 * @param matrix Matrix elements
 	 */
 	protected DefaultMatrix(float[] matrix) {
-		this.matrix = Arrays.copyOf(matrix, matrix.length);
-		if(matrix.length != order() * order()) throw new IllegalArgumentException(String.format("Invalid matrix size: len=%d order=%d", matrix.length, order()));
+		this.matrix = notNull(matrix);
 	}
 
 	@Override
@@ -71,12 +91,13 @@ public class DefaultMatrix implements Matrix {
 	}
 
 	/**
-	 * Creates an new instance with the given matrix elements.
+	 * Creates an new instance with the given matrix.
+	 * This method should be overridden by sub-classes to support mutator methods.
 	 * @param matrix Matrix
 	 * @return New instance
 	 */
-	protected Matrix create(float[] matrix) {
-		assert matrix.length == order() * order();
+	@SuppressWarnings("static-method")
+	protected Matrix instance(float[] matrix) {
 		return new DefaultMatrix(matrix);
 	}
 
@@ -91,7 +112,7 @@ public class DefaultMatrix implements Matrix {
 				++index;
 			}
 		}
-		return create(trans);
+		return instance(trans);
 	}
 
 	@Override
@@ -118,7 +139,7 @@ public class DefaultMatrix implements Matrix {
 		}
 
 		// Create resultant matrix
-		return create(result);
+		return instance(result);
 	}
 
 	@Override
