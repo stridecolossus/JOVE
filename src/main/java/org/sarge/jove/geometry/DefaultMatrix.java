@@ -13,9 +13,9 @@ import org.sarge.jove.util.MathsUtil;
  * Notes:
  * <ul>
  * <li>The matrix is represented as a one-dimensional <i>column major</i> array</li>
- * <li>The matrix {@link #order()} is determined at run-time on <b>every</i> invocation</li>
+ * <li>The matrix {@link #order()} is determined at run-time on <b>every</b> invocation</li>
  * <li>Sub-classes should override the {@link #instance(float[])} method which is used to create new instances for matrix mutators, e.g. {@link #transpose()}</li>
- * <li>The {@link #DefaultMatrix(float[])} copy constructor is intended for sub-class implementations and does <b>not</b> perform a defensive copy or validate the matrix order</li>
+ * <li>The copy constructor supports sub-class implementations and does <b>not</b> perform a defensive copy or validate the matrix order</li>
  * </ul>
  * @author Sarge
  */

@@ -59,23 +59,23 @@ class ExtentsTest {
 
 	@Test
 	void positive() {
-		assertEquals(max, extents.positive(Vector.X_AXIS));
-		assertEquals(max, extents.positive(Vector.Y_AXIS));
-		assertEquals(max, extents.positive(Vector.Z_AXIS));
-		assertEquals(new Point(1, 6, 7), extents.positive(Vector.X_AXIS.negate()));
-		assertEquals(new Point(5, 2, 7), extents.positive(Vector.Y_AXIS.negate()));
-		assertEquals(new Point(5, 6, 3), extents.positive(Vector.Z_AXIS.negate()));
+		assertEquals(max, extents.positive(Vector.X));
+		assertEquals(max, extents.positive(Vector.Y));
+		assertEquals(max, extents.positive(Vector.Z));
+		assertEquals(new Point(1, 6, 7), extents.positive(Vector.X.negate()));
+		assertEquals(new Point(5, 2, 7), extents.positive(Vector.Y.negate()));
+		assertEquals(new Point(5, 6, 3), extents.positive(Vector.Z.negate()));
 
 	}
 
 	@Test
 	void negative() {
-		assertEquals(new Point(1, 6, 7), extents.negative(Vector.X_AXIS));
-		assertEquals(new Point(5, 2, 7), extents.negative(Vector.Y_AXIS));
-		assertEquals(new Point(5, 6, 3), extents.negative(Vector.Z_AXIS));
-		assertEquals(max, extents.negative(Vector.X_AXIS.negate()));
-		assertEquals(max, extents.negative(Vector.Y_AXIS.negate()));
-		assertEquals(max, extents.negative(Vector.Z_AXIS.negate()));
+		assertEquals(new Point(1, 6, 7), extents.negative(Vector.X));
+		assertEquals(new Point(5, 2, 7), extents.negative(Vector.Y));
+		assertEquals(new Point(5, 6, 3), extents.negative(Vector.Z));
+		assertEquals(max, extents.negative(Vector.X.negate()));
+		assertEquals(max, extents.negative(Vector.Y.negate()));
+		assertEquals(max, extents.negative(Vector.Z.negate()));
 	}
 
 	@Test

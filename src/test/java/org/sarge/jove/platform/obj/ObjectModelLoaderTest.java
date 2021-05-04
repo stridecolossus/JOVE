@@ -11,8 +11,8 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Coordinate;
-import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DefaultModel;

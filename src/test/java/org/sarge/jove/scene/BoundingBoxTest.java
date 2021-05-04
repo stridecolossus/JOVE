@@ -134,7 +134,7 @@ class BoundingBoxTest {
 		@DisplayName("Direction is parallel to the box")
 		@Test
 		void parallel() {
-			final Intersection intersection = box.intersect(new Ray(new Point(2, 2, 0), Vector.X_AXIS));
+			final Intersection intersection = box.intersect(new Ray(new Point(2, 2, 0), Vector.X));
 			assertNotNull(intersection);
 			assertEquals(List.of(1f, 3f), intersection.distances());
 		}
@@ -142,7 +142,7 @@ class BoundingBoxTest {
 		@DisplayName("Direction is parallel but does not intersect")
 		@Test
 		void parallelMiss() {
-			assertEquals(Intersection.NONE, box.intersect(new Ray(new Point(1, 1, 0), Vector.X_AXIS)));
+			assertEquals(Intersection.NONE, box.intersect(new Ray(new Point(1, 1, 0), Vector.X)));
 		}
 	}
 }

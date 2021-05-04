@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sarge.jove.geometry.Vector.X_AXIS;
-import static org.sarge.jove.geometry.Vector.Y_AXIS;
-import static org.sarge.jove.geometry.Vector.Z_AXIS;
+import static org.sarge.jove.geometry.Vector.X;
+import static org.sarge.jove.geometry.Vector.Y;
+import static org.sarge.jove.geometry.Vector.Z;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ class FrustumTest {
 
 	@BeforeEach
 	void before() {
-		plane = new Plane(X_AXIS, -1);
+		plane = new Plane(X, -1);
 		frustum = new Frustum(new Plane[]{plane});
 	}
 
@@ -54,7 +54,7 @@ class FrustumTest {
 		assertEquals(true, frustum.equals(frustum));
 		assertEquals(true, frustum.equals(new Frustum(new Plane[]{plane})));
 		assertEquals(false, frustum.equals(null));
-		assertEquals(false, frustum.equals(new Frustum(new Plane[]{new Plane(Y_AXIS, 1)})));
+		assertEquals(false, frustum.equals(new Frustum(new Plane[]{new Plane(Y, 1)})));
 	}
 
 	@Test
@@ -63,9 +63,9 @@ class FrustumTest {
 		final Matrix m = Matrix4
 				.builder()
 				.identity()
-				.row(0, X_AXIS)
-				.row(1, Y_AXIS)		// Note this test does not invert the Y axis
-				.row(2, Z_AXIS)
+				.row(0, X)
+				.row(1, Y)		// Note this test does not invert the Y axis
+				.row(2, Z)
 				.build();
 
 		// Create frustum
@@ -74,12 +74,12 @@ class FrustumTest {
 
 		// Check planes
 		final var expected = List.of(
-				new Plane(Z_AXIS.negate(), 1),			// Near
-				new Plane(Z_AXIS, 1),					// Far
-				new Plane(X_AXIS, 1),					// Left
-				new Plane(X_AXIS.negate(), 1),			// Right
-				new Plane(Y_AXIS, 1),					// Top
-				new Plane(Y_AXIS.negate(), 1)			// Bottom
+				new Plane(Z.negate(), 1),			// Near
+				new Plane(Z, 1),					// Far
+				new Plane(X, 1),					// Left
+				new Plane(X.negate(), 1),			// Right
+				new Plane(Y, 1),					// Top
+				new Plane(Y.negate(), 1)			// Bottom
 		);
 		assertEquals(expected, frustum.planes());
 

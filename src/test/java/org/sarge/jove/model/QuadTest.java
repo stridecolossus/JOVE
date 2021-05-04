@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 
 public class QuadTest {
 	@Test

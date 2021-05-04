@@ -66,21 +66,21 @@ public final class Matrix4 extends DefaultMatrix {
 		final Builder rot = builder().identity();
 		final float sin = MathsUtil.sin(angle);
 		final float cos = MathsUtil.cos(angle);
-		if(Vector.X_AXIS.equals(axis)) {
+		if(Vector.X.equals(axis)) {
 			rot.set(1, 1, cos);
 			rot.set(1, 2, sin);
 			rot.set(2, 1, -sin);
 			rot.set(2, 2, cos);
 		}
 		else
-		if(Vector.Y_AXIS.equals(axis)) {
+		if(Vector.Y.equals(axis)) {
 			rot.set(0, 0, cos);
 			rot.set(0, 2, -sin);
 			rot.set(2, 0, sin);
 			rot.set(2, 2, cos);
 		}
 		else
-		if(Vector.Z_AXIS.equals(axis)) {
+		if(Vector.Z.equals(axis)) {
 			rot.set(0, 0, cos);
 			rot.set(0, 1, -sin);
 			rot.set(1, 0, sin);
@@ -100,7 +100,7 @@ public final class Matrix4 extends DefaultMatrix {
 	protected Matrix4(float[] matrix) {
 		super(matrix);
 	}
-	// TODO - public constructor? needed?
+	// TODO - make constructor package private? expose factory method?
 
 	@Override
 	public int order() {

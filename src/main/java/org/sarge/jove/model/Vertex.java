@@ -13,8 +13,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Component.Layout;
-import org.sarge.jove.geometry.Coordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 

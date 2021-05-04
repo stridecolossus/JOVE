@@ -15,12 +15,12 @@ public class RotationAnimationTest {
 
 	@BeforeEach
 	void before() {
-		animation = new RotationAnimation(Vector.X_AXIS);
+		animation = new RotationAnimation(Vector.X);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(Rotation.of(Vector.X_AXIS, 0), animation.rotation());
+		assertEquals(Rotation.of(Vector.X, 0), animation.rotation());
 	}
 
 	@Test
@@ -28,6 +28,6 @@ public class RotationAnimationTest {
 		final Animator animator = mock(Animator.class);
 		when(animator.position()).thenReturn(MathsUtil.HALF);
 		animation.update(animator);
-		assertEquals(Rotation.of(Vector.X_AXIS, MathsUtil.PI), animation.rotation());
+		assertEquals(Rotation.of(Vector.X, MathsUtil.PI), animation.rotation());
 	}
 }

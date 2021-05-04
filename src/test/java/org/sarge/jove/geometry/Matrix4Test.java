@@ -42,8 +42,8 @@ class Matrix4Test {
 
 	@Test
 	void translation() {
-		final Matrix expected = Matrix4.builder().identity().column(3, Vector.X_AXIS).build();
-		assertEquals(expected, Matrix4.translation(Vector.X_AXIS));
+		final Matrix expected = Matrix4.builder().identity().column(3, Vector.X).build();
+		assertEquals(expected, Matrix4.translation(Vector.X));
 	}
 
 	@Test
@@ -62,7 +62,7 @@ class Matrix4Test {
 				.set(2, 1, -MathsUtil.sin(MathsUtil.HALF))
 				.set(2, 2, MathsUtil.cos(MathsUtil.HALF))
 				.build();
-		assertEquals(expected, Matrix4.rotation(Vector.X_AXIS, MathsUtil.HALF));
+		assertEquals(expected, Matrix4.rotation(Vector.X, MathsUtil.HALF));
 	}
 
 	@Test

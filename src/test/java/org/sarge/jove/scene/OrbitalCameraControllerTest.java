@@ -25,7 +25,7 @@ public class OrbitalCameraControllerTest {
 		assertEquals(1, controller.radius());
 		assertEquals(Point.ORIGIN, controller.target());
 		assertEquals(new Point(0, 0, 1), cam.position());
-		assertEquals(Vector.Z_AXIS.negate(), cam.direction());
+		assertEquals(Vector.Z.negate(), cam.direction());
 	}
 
 	@Test
@@ -33,7 +33,7 @@ public class OrbitalCameraControllerTest {
 		controller.radius(2);
 		assertEquals(2, controller.radius());
 		assertEquals(new Point(0, 0, 2), cam.position());
-		assertEquals(Vector.Z_AXIS.negate(), cam.direction());
+		assertEquals(Vector.Z.negate(), cam.direction());
 	}
 
 	@Test
@@ -52,7 +52,7 @@ public class OrbitalCameraControllerTest {
 		final Point target = new Point(0, 0, -42);
 		controller.target(target);
 		assertEquals(target, controller.target());
-		assertEquals(Vector.Z_AXIS.negate(), cam.direction());
+		assertEquals(Vector.Z.negate(), cam.direction());
 	}
 
 	@Test
@@ -60,7 +60,7 @@ public class OrbitalCameraControllerTest {
 		controller.update(1, 1);
 		assertEquals(1, controller.radius());
 		assertEquals(new Point(0, 0, 1), cam.position());
-		assertEquals(Vector.Z_AXIS.negate(), cam.direction());
+		assertEquals(Vector.Z.negate(), cam.direction());
 	}
 
 	@Nested
@@ -75,7 +75,7 @@ public class OrbitalCameraControllerTest {
 			controller.zoom(-1);
 			assertEquals(2, controller.radius());
 			assertEquals(new Point(0, 0, 2), cam.position());
-			assertEquals(Vector.Z_AXIS.negate(), cam.direction());
+			assertEquals(Vector.Z.negate(), cam.direction());
 		}
 
 		@Test
@@ -90,7 +90,7 @@ public class OrbitalCameraControllerTest {
 			controller.zoom(1);
 			assertEquals(1, controller.radius());
 			assertEquals(new Point(0, 0, 1), cam.position());
-			assertEquals(Vector.Z_AXIS.negate(), cam.direction());
+			assertEquals(Vector.Z.negate(), cam.direction());
 		}
 
 		@Test
@@ -98,7 +98,7 @@ public class OrbitalCameraControllerTest {
 			controller.zoom(-999);
 			assertEquals(3, controller.radius());
 			assertEquals(new Point(0, 0, 3), cam.position());
-			assertEquals(Vector.Z_AXIS.negate(), cam.direction());
+			assertEquals(Vector.Z.negate(), cam.direction());
 		}
 	}
 }

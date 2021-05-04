@@ -10,7 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * An <i>extents</i> defines an axis-aligned rectangular area of 3D space specified by min/max points.
+ * An <i>extents</i> defines an axis-aligned rectangular volume specified by min/max points.
  * @author Sarge
  */
 public class Extents {
@@ -18,8 +18,8 @@ public class Extents {
 
 	/**
 	 * Constructor.
-	 * @param min Minimum extents
-	 * @param max Maximum extents
+	 * @param min Minimum extent
+	 * @param max Maximum extent
 	 */
 	public Extents(Point min, Point max) {
 		this.min = notNull(min);
@@ -75,7 +75,7 @@ public class Extents {
 	}
 
 	/**
-	 * Determines the nearest point (or corner) of this extents to the given point.
+	 * Determines the nearest vertex of this extents to the given point.
 	 * @param pt Point
 	 * @return Nearest point
 	 */
@@ -90,17 +90,26 @@ public class Extents {
 		return Math.max(min, Math.min(value, max));
 	}
 
-	// TODO
-
+	/**
+	 * Calculates the <i>positive</i> vertex of this extents (farthest vertex in the direction of the normal).
+	 * @param normal Normal
+	 * @return Positive vertex
+	 */
 	public Point positive(Vector normal) {
 		return new Point(
 				normal.x < 0 ? min.x : max.x,
 				normal.y < 0 ? min.y : max.y,
 				normal.z < 0 ? min.z : max.z
 		);
-		// TODO - signum
+		// TODO - signum?
+		// TODO - nasty duplication in n/p cases?
 	}
 
+	/**
+	 * Calculates the <i>negative</i> vertex of this extents (nearest vertex in the direction of the normal).
+	 * @param normal Normal
+	 * @return Positive vertex
+	 */
 	public Point negative(Vector normal) {
 		return new Point(
 				normal.x > 0 ? min.x : max.x,
@@ -150,7 +159,7 @@ public class Extents {
 	}
 
 	/**
-	 * Helper - Creates a collector that constructs extents from a stream of points.
+	 * Helper - Creates a collector that constructs an extents from a stream of points.
 	 * @return New extents collector
 	 */
 	public static Collector<Point, ?, Extents> collector() {

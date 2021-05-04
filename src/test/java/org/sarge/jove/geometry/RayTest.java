@@ -15,13 +15,13 @@ class RayTest {
 
 	@BeforeEach
 	void before() {
-		ray = new Ray(Point.ORIGIN, Vector.X_AXIS);
+		ray = new Ray(Point.ORIGIN, Vector.X);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(Point.ORIGIN, ray.origin());
-		assertEquals(Vector.X_AXIS, ray.direction());
+		assertEquals(Vector.X, ray.direction());
 	}
 
 	@Test

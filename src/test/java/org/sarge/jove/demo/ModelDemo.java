@@ -395,7 +395,7 @@ public class ModelDemo {
 		final Camera cam = new Camera();
 
 		// Init local model transform
-		final Matrix rot = Matrix4.rotation(Vector.X_AXIS, -MathsUtil.HALF_PI);
+		final Matrix rot = Matrix4.rotation(Vector.X, -MathsUtil.HALF_PI);
 		final Matrix trans = Matrix4.translation(new Vector(0, 0.5f, 0));
 		final Matrix scale = Matrix4.scale(1);
 		final Matrix modelMatrix = trans.multiply(rot).multiply(scale);

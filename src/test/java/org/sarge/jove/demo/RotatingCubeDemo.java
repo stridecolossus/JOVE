@@ -290,9 +290,9 @@ public class RotatingCubeDemo {
 		final Matrix pos = Matrix4
 				.builder()
 				.identity()
-				.row(0, Vector.X_AXIS)
-				.row(1, Vector.Y_AXIS.negate())
-				.row(2, Vector.Z_AXIS)
+				.row(0, Vector.X)
+				.row(1, Vector.Y.negate())
+				.row(2, Vector.Z)
 				.build();
 
 		final Matrix trans = Matrix4
@@ -389,7 +389,7 @@ public class RotatingCubeDemo {
 
 				// Update rotation matrices
 				final float time = System.currentTimeMillis() % PERIOD / (float) PERIOD;
-				uniform.load(Matrix4.rotation(Vector.X_AXIS, linear.interpolate(time)), 2 * Matrix4.IDENTITY.length());
+				uniform.load(Matrix4.rotation(Vector.X, linear.interpolate(time)), 2 * Matrix4.IDENTITY.length());
 //				uniform.load(Matrix.rotation(Vector.Y_AXIS, cosine.interpolate(time)), LENGTH, OFFSET + LENGTH);
 //				uniform.load(Matrix.rotation(Vector.Z_AXIS, squared.interpolate(time)), LENGTH, OFFSET + 2 * LENGTH);
 //

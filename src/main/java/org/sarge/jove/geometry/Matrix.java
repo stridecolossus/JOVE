@@ -5,13 +5,14 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import org.sarge.jove.common.Bufferable;
 
 /**
- * A <i>matrix</i> is a 2-dimensional square array used for geometry transformation and projection.
+ * A <i>matrix</i> is a 2-dimensional floating-point array used for geometry transformation and projection.
  * <p>
  * Matrix properties:
  * <ul>
- * <li>A matrix has an <i>order</i> that specifies the dimensions of the matrix</li>
+ * <li>Matrices are constrained to be <i>square</i>, i.e. same width and height</li>
+ * <li>The <i>order</i> specifies the dimensions of the matrix</li>
  * <li>Matrix data is assumed to be <i>column major</i> (this is the Vulkan default)</li>
- * <li>Matrices are {@link Bufferable}</li>
+ * <li>Matrices are also {@link Bufferable}</li>
  * </ul>
  * <p>
  * Matrices can be created via public constructors but in general a matrix is constructed using a builder:
@@ -113,7 +114,7 @@ public interface Matrix extends Transform, Bufferable {
 		private final float[] matrix;
 
 		/**
-		 * Constructor for a matrix of the given order.
+		 * Constructor for a matrix builder of the given order.
 		 * @param order Matrix order
 		 */
 		public Builder(int order) {
@@ -122,7 +123,7 @@ public interface Matrix extends Transform, Bufferable {
 		}
 
 		/**
-		 * Initialises this matrix to identity (only affects the diagonal elements).
+		 * Initialises this matrix to identity (only affecting the diagonal elements).
 		 */
 		public Builder identity() {
 			for(int n = 0; n < order; ++n) {

@@ -9,16 +9,16 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
 /**
- * A <i>camera</i> represents the viewers position and orientation.
+ * A <i>camera</i> is a model of the viewers position and orientation.
  * @author Sarge
  */
 public class Camera {
 	// Camera state
 	private Point pos = Point.ORIGIN;
-	private Vector dir = Vector.Z_AXIS;			// Note this is actually the inverse of the view direction
+	private Vector dir = Vector.Z;			// Note this is actually the inverse of the view direction
 
 	// Axes
-	private Vector up = Vector.Y_AXIS;
+	private Vector up = Vector.Y;
 	private Vector right;
 
 	// Matrix
@@ -27,9 +27,6 @@ public class Camera {
 
 	// https://learnopengl.com/Getting-started/Camera
 
-	/**
-	 * Constructor.
-	 */
 	public Camera() {
 		update();
 	}
@@ -105,7 +102,7 @@ public class Camera {
 	}
 
 	/**
-	 * Sets the up axis of this camera (default is {@link Vector#Y_AXIS}).
+	 * Sets the up axis of this camera (default is {@link Vector#Y}).
 	 * @param up Camera up axis (assumes normalized)
 	 */
 	public void up(Vector up) {

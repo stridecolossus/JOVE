@@ -75,7 +75,7 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 	/**
 	 * Calculates the <i>dot</i> (or inner, scalar) product of this and the given tuple.
 	 * <p>
-	 * The dot product is a scalar value that expresses the angular relationship between two vectors and is calculated as follows:
+	 * The dot product is a scalar value that expresses the angular relationship between two vectors and is represented mathematically as:
 	 * <p>
 	 * <pre>A.B = |A| |B| cos(angle)</pre>
 	 * <p>

@@ -77,7 +77,7 @@ public class ParticleSystem {
 	 */
 	public static class Builder {
 		private PositionFactory pos = PositionFactory.ORIGIN;
-		private VectorFactory vec = VectorFactory.literal(Vector.Y_AXIS);
+		private VectorFactory vec = VectorFactory.literal(Vector.Y);
 		private float rate = 1;
 		private int num;
 		private int max = Integer.MAX_VALUE;

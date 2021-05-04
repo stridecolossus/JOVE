@@ -29,7 +29,7 @@ public interface Transform {
 	 * TODO - billboard
 	 * TODO - factor out flip by axis
 	 */
-	Transform BILLBOARD = Matrix4.rotation(Vector.Y_AXIS, MathsUtil.PI);
+	Transform BILLBOARD = Matrix4.rotation(Vector.Y, MathsUtil.PI);
 
 	/**
 	 * Creates a compound transform.

@@ -13,9 +13,9 @@ import org.sarge.jove.util.MathsUtil;
 class RotationTest {
 	@Test
 	void of() {
-		final Rotation rot = Rotation.of(Vector.X_AXIS, MathsUtil.PI);
+		final Rotation rot = Rotation.of(Vector.X, MathsUtil.PI);
 		assertNotNull(rot);
-		assertEquals(Vector.X_AXIS, rot.axis());
+		assertEquals(Vector.X, rot.axis());
 		assertEquals(MathsUtil.PI, rot.angle());
 	}
 
@@ -25,7 +25,7 @@ class RotationTest {
 
 		@BeforeEach
 		void before() {
-			rot = new AbstractRotation(Vector.X_AXIS) {
+			rot = new AbstractRotation(Vector.X) {
 				@Override
 				public float angle() {
 					return 0;
@@ -35,7 +35,7 @@ class RotationTest {
 
 		@Test
 		void constructor() {
-			assertEquals(Vector.X_AXIS, rot.axis());
+			assertEquals(Vector.X, rot.axis());
 			assertEquals(false, rot.isDirty());
 			assertEquals(Quaternion.of(rot).matrix(), rot.matrix());
 		}
@@ -47,19 +47,19 @@ class RotationTest {
 
 		@BeforeEach
 		void before() {
-			rot = new MutableRotation(Vector.X_AXIS);
+			rot = new MutableRotation(Vector.X);
 		}
 
 		@Test
 		void constructor() {
-			assertEquals(Vector.X_AXIS, rot.axis());
+			assertEquals(Vector.X, rot.axis());
 			assertEquals(0, rot.angle());
 			assertEquals(true, rot.isDirty());
 		}
 
 		@Test
 		void matrix() {
-			assertEquals(Rotation.of(Vector.X_AXIS, 0).matrix(), rot.matrix());
+			assertEquals(Rotation.of(Vector.X, 0).matrix(), rot.matrix());
 			assertEquals(false, rot.isDirty());
 		}
 

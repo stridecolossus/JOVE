@@ -22,9 +22,9 @@ class CameraTest {
 	@Test
 	void constructor() {
 		assertEquals(Point.ORIGIN, cam.position());
-		assertEquals(Vector.Z_AXIS.negate(), cam.direction());
-		assertEquals(Vector.Y_AXIS, cam.up());
-		assertEquals(Vector.X_AXIS, cam.right());
+		assertEquals(Vector.Z.negate(), cam.direction());
+		assertEquals(Vector.Y, cam.up());
+		assertEquals(Vector.X, cam.right());
 		assertNotNull(cam.matrix());
 	}
 
@@ -56,22 +56,22 @@ class CameraTest {
 
 	@Test
 	void direction() {
-		cam.direction(Vector.X_AXIS);
-		assertEquals(Vector.X_AXIS, cam.direction());
+		cam.direction(Vector.X);
+		assertEquals(Vector.X, cam.direction());
 	}
 
 	@Test
 	void right() {
-		cam.direction(Vector.X_AXIS);
+		cam.direction(Vector.X);
 		cam.matrix();
-		assertEquals(Vector.Z_AXIS, cam.right());
+		assertEquals(Vector.Z, cam.right());
 	}
 
 	@Test
 	void look() {
 		cam.move(new Point(0, 0, 1));
 		cam.look(Point.ORIGIN);
-		assertEquals(Vector.Z_AXIS.negate(), cam.direction());
+		assertEquals(Vector.Z.negate(), cam.direction());
 	}
 
 	@Test
@@ -81,8 +81,8 @@ class CameraTest {
 
 	@Test
 	void up() {
-		cam.up(Vector.X_AXIS);
-		assertEquals(Vector.X_AXIS, cam.up());
+		cam.up(Vector.X);
+		assertEquals(Vector.X, cam.up());
 	}
 
 	@Test
@@ -91,13 +91,13 @@ class CameraTest {
 		final Matrix rot = Matrix4
 				.builder()
 				.identity()
-				.row(0, Vector.X_AXIS)
-				.row(1, Vector.Y_AXIS)
-				.row(2, Vector.Z_AXIS)
+				.row(0, Vector.X)
+				.row(1, Vector.Y)
+				.row(2, Vector.Z)
 				.build();
 
 		// Create camera translation one unit out of the screen
-		final Matrix trans = Matrix4.translation(Vector.Z_AXIS.negate());
+		final Matrix trans = Matrix4.translation(Vector.Z.negate());
 
 		// Init camera and check matrix
 		cam.move(new Point(0, 0, 1));

@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.sarge.jove.geometry.Point.ORIGIN;
-import static org.sarge.jove.geometry.Vector.X_AXIS;
-import static org.sarge.jove.geometry.Vector.Y_AXIS;
-import static org.sarge.jove.geometry.Vector.Z_AXIS;
+import static org.sarge.jove.geometry.Vector.X;
+import static org.sarge.jove.geometry.Vector.Y;
+import static org.sarge.jove.geometry.Vector.Z;
 
 import java.util.Arrays;
 
@@ -68,27 +68,27 @@ class SphereVolumeTest {
 	class SpherePlaneIntersectionTests {
 		@Test
 		void axes() {
-			assertEquals(true, sphere.intersects(new Plane(X_AXIS, 0)));
-			assertEquals(true, sphere.intersects(new Plane(Y_AXIS, 0)));
-			assertEquals(true, sphere.intersects(new Plane(Z_AXIS, 0)));
+			assertEquals(true, sphere.intersects(new Plane(X, 0)));
+			assertEquals(true, sphere.intersects(new Plane(Y, 0)));
+			assertEquals(true, sphere.intersects(new Plane(Z, 0)));
 		}
 
 		@Test
 		void inside() {
-			assertEquals(true, sphere.intersects(new Plane(X_AXIS, 1)));
-			assertEquals(true, sphere.intersects(new Plane(X_AXIS, -1)));
+			assertEquals(true, sphere.intersects(new Plane(X, 1)));
+			assertEquals(true, sphere.intersects(new Plane(X, -1)));
 		}
 
 		@Test
 		void touching() {
-			assertEquals(true, sphere.intersects(new Plane(X_AXIS, RADIUS)));
-			assertEquals(true, sphere.intersects(new Plane(X_AXIS, -RADIUS)));
+			assertEquals(true, sphere.intersects(new Plane(X, RADIUS)));
+			assertEquals(true, sphere.intersects(new Plane(X, -RADIUS)));
 		}
 
 		@Test
 		void outside() {
-			assertEquals(false, sphere.intersects(new Plane(X_AXIS, OUTSIDE)));
-			assertEquals(false, sphere.intersects(new Plane(X_AXIS, -OUTSIDE)));
+			assertEquals(false, sphere.intersects(new Plane(X, OUTSIDE)));
+			assertEquals(false, sphere.intersects(new Plane(X, -OUTSIDE)));
 		}
 	}
 
@@ -172,7 +172,7 @@ class SphereVolumeTest {
 			final var list = Arrays.stream(expected).map(n -> n - origin.x).collect(toList());
 
 			// Check intersection results
-			final Intersection result = sphere.intersect(new Ray(origin, X_AXIS));
+			final Intersection result = sphere.intersect(new Ray(origin, X));
 			assertNotNull(result);
 			assertEquals(list, result.distances());
 		}

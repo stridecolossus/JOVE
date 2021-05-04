@@ -10,20 +10,20 @@ public final class Vector extends Tuple {
 	/**
 	 * X-axis vector.
 	 */
-	public static final Vector X_AXIS = new Vector(1, 0, 0);
+	public static final Vector X = new Vector(1, 0, 0);
 
 	/**
 	 * Y-axis vector (note Vulkan positive Y axis is <b>down</b>).
 	 */
-	public static final Vector Y_AXIS = new Vector(0, 1, 0);
+	public static final Vector Y = new Vector(0, 1, 0);
 
 	/**
 	 * Z-axis vector (negative Z is <i>into</i> the screen).
 	 */
-	public static final Vector Z_AXIS = new Vector(0, 0, 1);
+	public static final Vector Z = new Vector(0, 0, 1);
 
 	/**
-	 * Creates the vector between the given points.
+	 * Creates the vector between the given points, i.e. <code>end - start</code>.
 	 * @param start		Starting point
 	 * @param end		End point
 	 * @return Vector between the given points

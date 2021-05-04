@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
@@ -50,9 +50,9 @@ public class ObjectModelTest {
 	@Test
 	void normals() {
 		final var normals = model.normals();
-		normals.add(Vector.X_AXIS);
+		normals.add(Vector.X);
 		assertEquals(1, normals.size());
-		assertEquals(Vector.X_AXIS, normals.get(1));
+		assertEquals(Vector.X, normals.get(1));
 	}
 
 	@Test
@@ -68,7 +68,7 @@ public class ObjectModelTest {
 		@BeforeEach
 		void before() {
 			model.vertices().add(Point.ORIGIN);
-			model.normals().add(Vector.X_AXIS);
+			model.normals().add(Vector.X);
 			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 		}
 
@@ -158,7 +158,7 @@ public class ObjectModelTest {
 	class BuildTests {
 		private void triangle() {
 			model.vertices().add(Point.ORIGIN);
-			model.normals().add(Vector.X_AXIS);
+			model.normals().add(Vector.X);
 			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 			for(int n = 0; n < 3; ++n) {
 				model.vertex(1, 1, 1);

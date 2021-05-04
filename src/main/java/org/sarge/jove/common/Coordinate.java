@@ -1,10 +1,8 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**

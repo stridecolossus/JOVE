@@ -25,7 +25,7 @@ public class QuaternionTest {
 
 	@Test
 	public void rotation() {
-		final Rotation rot = Rotation.of(Vector.Y_AXIS, MathsUtil.PI);
+		final Rotation rot = Rotation.of(Vector.Y, MathsUtil.PI);
 		assertEquals(quaternion, Quaternion.of(rot));
 	}
 
@@ -36,7 +36,7 @@ public class QuaternionTest {
 
 	@Test
 	public void matrix() {
-		final Matrix expected = Matrix4.rotation(Vector.Y_AXIS, MathsUtil.PI);
+		final Matrix expected = Matrix4.rotation(Vector.Y, MathsUtil.PI);
 		assertEquals(expected, quaternion.matrix());
 	}
 
@@ -54,7 +54,7 @@ public class QuaternionTest {
 	@Disabled
 	@Test
 	public void toRotation() {
-		final Rotation rot = Rotation.of(Vector.Y_AXIS, MathsUtil.PI);
+		final Rotation rot = Rotation.of(Vector.Y, MathsUtil.PI);
 		assertEquals(rot, quaternion.rotation());
 	}
 
@@ -72,8 +72,8 @@ public class QuaternionTest {
 	@Test
 	public void equals() {
 		assertEquals(true, quaternion.equals(quaternion));
-		assertEquals(true, quaternion.equals(Quaternion.of(Rotation.of(Vector.Y_AXIS, MathsUtil.PI))));
+		assertEquals(true, quaternion.equals(Quaternion.of(Rotation.of(Vector.Y, MathsUtil.PI))));
 		assertEquals(false, quaternion.equals(null));
-		assertEquals(false, quaternion.equals(Quaternion.of(Rotation.of(Vector.X_AXIS, MathsUtil.PI))));
+		assertEquals(false, quaternion.equals(Quaternion.of(Rotation.of(Vector.X, MathsUtil.PI))));
 	}
 }

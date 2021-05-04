@@ -3,9 +3,9 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.sarge.jove.geometry.Point.ORIGIN;
-import static org.sarge.jove.geometry.Vector.X_AXIS;
-import static org.sarge.jove.geometry.Vector.Y_AXIS;
-import static org.sarge.jove.geometry.Vector.Z_AXIS;
+import static org.sarge.jove.geometry.Vector.X;
+import static org.sarge.jove.geometry.Vector.Y;
+import static org.sarge.jove.geometry.Vector.Z;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -20,18 +20,18 @@ class PlaneTest {
 
 	@BeforeEach
 	void before() {
-		plane = new Plane(X_AXIS, -DIST);
+		plane = new Plane(X, -DIST);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(X_AXIS, plane.normal());
+		assertEquals(X, plane.normal());
 		assertEquals(-DIST, plane.distance());
 	}
 
 	@Test
 	void of() {
-		assertEquals(plane, Plane.of(X_AXIS, new Point(DIST, 0, 0)));
+		assertEquals(plane, Plane.of(X, new Point(DIST, 0, 0)));
 	}
 
 	@Test
@@ -80,20 +80,20 @@ class PlaneTest {
 	class PlaneRayIntersectionTests {
 		@Test
 		void intersect() {
-			assertEquals(Intersection.of(3f),  plane.intersect(new Ray(ORIGIN, X_AXIS)));
-			assertEquals(Intersection.of(-0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X_AXIS)));
-			assertEquals(Intersection.of(+0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X_AXIS.negate())));
+			assertEquals(Intersection.of(3f),  plane.intersect(new Ray(ORIGIN, X)));
+			assertEquals(Intersection.of(-0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X)));
+			assertEquals(Intersection.of(+0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X.negate())));
 		}
 
 		@Test
 		void miss() {
-			assertEquals(Intersection.NONE, plane.intersect(new Ray(ORIGIN, Y_AXIS)));
-			assertEquals(Intersection.NONE, plane.intersect(new Ray(ORIGIN, Z_AXIS)));
+			assertEquals(Intersection.NONE, plane.intersect(new Ray(ORIGIN, Y)));
+			assertEquals(Intersection.NONE, plane.intersect(new Ray(ORIGIN, Z)));
 		}
 
 		@Test
 		void behind() {
-			assertEquals(Intersection.NONE, plane.intersect(new Ray(new Point(4, 0, 0), X_AXIS)));
+			assertEquals(Intersection.NONE, plane.intersect(new Ray(new Point(4, 0, 0), X)));
 		}
 	}
 }

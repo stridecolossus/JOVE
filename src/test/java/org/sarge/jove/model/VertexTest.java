@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Vertex.Builder;
@@ -80,7 +80,7 @@ class VertexTest {
 			// Build a vertex
 			vertex = builder
 					.position(Point.ORIGIN)
-					.normal(Vector.X_AXIS)
+					.normal(Vector.X)
 					.coordinate(Coordinate2D.BOTTOM_LEFT)
 					.colour(Colour.BLACK)
 					.build();

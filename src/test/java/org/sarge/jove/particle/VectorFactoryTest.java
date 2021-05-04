@@ -18,8 +18,8 @@ public class VectorFactoryTest {
 
 	@Test
 	public void literal() {
-		final VectorFactory factory = VectorFactory.literal(Vector.X_AXIS);
-		assertEquals(Vector.X_AXIS, factory.vector(null));
+		final VectorFactory factory = VectorFactory.literal(Vector.X);
+		assertEquals(Vector.X, factory.vector(null));
 	}
 
 	@Test
@@ -31,7 +31,7 @@ public class VectorFactoryTest {
 
 	@Test
 	public void scaled() {
-		final VectorFactory factory = VectorFactory.literal(Vector.X_AXIS);
+		final VectorFactory factory = VectorFactory.literal(Vector.X);
 		final VectorFactory scaled = VectorFactory.scaled(factory, 3);
 		assertEquals(new Vector(3, 0, 0), scaled.vector(null));
 	}

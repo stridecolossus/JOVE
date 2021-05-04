@@ -1,13 +1,13 @@
 package org.sarge.jove.model;
 
-import static org.sarge.jove.geometry.Coordinate.Coordinate2D.BOTTOM_LEFT;
-import static org.sarge.jove.geometry.Coordinate.Coordinate2D.BOTTOM_RIGHT;
-import static org.sarge.jove.geometry.Coordinate.Coordinate2D.TOP_LEFT;
-import static org.sarge.jove.geometry.Coordinate.Coordinate2D.TOP_RIGHT;
+import static org.sarge.jove.common.Coordinate.Coordinate2D.BOTTOM_LEFT;
+import static org.sarge.jove.common.Coordinate.Coordinate2D.BOTTOM_RIGHT;
+import static org.sarge.jove.common.Coordinate.Coordinate2D.TOP_LEFT;
+import static org.sarge.jove.common.Coordinate.Coordinate2D.TOP_RIGHT;
 
 import java.util.List;
 
-import org.sarge.jove.geometry.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 
 /**
  * Quad utility class.

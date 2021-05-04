@@ -63,9 +63,9 @@ public class ParticleSystemTest {
 
 		@Test
 		public void vector() {
-			builder.vector(VectorFactory.literal(Vector.X_AXIS));
+			builder.vector(VectorFactory.literal(Vector.X));
 			create();
-			assertEquals(Vector.X_AXIS, particle.vector());
+			assertEquals(Vector.X, particle.vector());
 		}
 	}
 }
