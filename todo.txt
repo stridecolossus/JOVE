@@ -48,3 +48,4 @@ scene
 - visitor, generates nodes to render (occlusion, volumes), opaque/translucent/skybox render queues
 - world and local transforms? visitor to update
 - node inheritance? e.g. transform change propagates up, volume change down, etc?
+- should volumes enforce intersect(sphere) and intersect(extents)? or ABC? or leave as-is? should frustum really be a volume?

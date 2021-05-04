@@ -6,10 +6,13 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
+import org.sarge.jove.geometry.Plane;
+import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.geometry.Tuple;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -51,6 +54,22 @@ public class BoundingBox implements Volume {
 		else {
 			return vol.intersects(this);
 		}
+	}
+
+	@Override
+	public boolean intersects(Plane plane) {
+		final Vector normal = plane.normal();
+		final Point neg = extents.negative(normal);
+		if(plane.halfspace(neg) == HalfSpace.NEGATIVE) {
+			return false;
+		}
+
+		final Point pos = extents.positive(normal);
+		if(plane.halfspace(pos) == HalfSpace.NEGATIVE) {
+			return false;
+		}
+
+		return true;
 	}
 
 	@Override

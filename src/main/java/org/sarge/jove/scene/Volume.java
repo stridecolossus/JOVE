@@ -1,15 +1,17 @@
 package org.sarge.jove.scene;
 
+import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
- * A <i>bounding volume</i> defines an abstract volume of space used for frustum clipping and intersection tests.
+ * A <i>bounding volume</i> defines an abstract volume of space used for frustum culling, intersection tests and ray-picking.
  * @author Sarge
  */
 public interface Volume {
 	/**
+	 * Tests whether the given point lies within this volume.
 	 * @param pt Point
 	 * @return Whether this volume contains the given point
 	 */
@@ -46,6 +48,13 @@ public interface Volume {
 	}
 
 	/**
+	 * Determines whether this volume is intersected by the given plane.
+	 * @param plane Plane
+	 * @return Whether intersected
+	 */
+	boolean intersects(Plane plane);
+
+	/**
 	 * Determines the intersection(s) of this volume and the given ray.
 	 * @param ray Ray
 	 * @return Intersections
@@ -62,13 +71,18 @@ public interface Volume {
 		}
 
 		@Override
-		public Intersection intersect(Ray ray) {
-			return Intersection.NONE;
+		public boolean intersects(Volume vol) {
+			return false;
 		}
 
 		@Override
-		public boolean intersects(Volume vol) {
+		public boolean intersects(Plane plane) {
 			return false;
+		}
+
+		@Override
+		public Intersection intersect(Ray ray) {
+			return Intersection.NONE;
 		}
 
 		@Override

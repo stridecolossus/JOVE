@@ -24,6 +24,7 @@ public class Extents {
 	public Extents(Point min, Point max) {
 		this.min = notNull(min);
 		this.max = notNull(max);
+		// TODO - enforce min is actually < max?
 	}
 
 	/**
@@ -46,6 +47,7 @@ public class Extents {
 	public Point centre() {
 		final Vector vec = Vector.between(min, max);
 		return min.add(vec.multiply(MathsUtil.HALF));
+		// TODO - more intuitive -> (min + max) / 2? but => point.multiply()
 	}
 
 	/**
@@ -54,6 +56,22 @@ public class Extents {
 	public float largest() {
 		final Vector vec = Vector.between(min, max);
 		return Math.max(vec.x, Math.max(vec.y, vec.z));
+	}
+
+	/**
+	 * Tests whether this extents contains the given point.
+	 * @param pt Point
+	 * @return Whether contained
+	 */
+	public boolean contains(Point pt) {
+		return
+				contains(pt.x, min.x, max.y) &&
+				contains(pt.y, min.y, max.y) &&
+				contains(pt.z, min.z, max.z);
+	}
+
+	private static boolean contains(float f, float min, float max) {
+		return (f >= min) && (f <= max);
 	}
 
 	/**
@@ -72,20 +90,23 @@ public class Extents {
 		return Math.max(min, Math.min(value, max));
 	}
 
-	/**
-	 * Tests whether this extents contains the given point.
-	 * @param pt Point
-	 * @return Whether contained
-	 */
-	public boolean contains(Point pt) {
-		return
-				contains(pt.x, min.x, max.y) &&
-				contains(pt.y, min.y, max.y) &&
-				contains(pt.z, min.z, max.z);
+	// TODO
+
+	public Point positive(Vector normal) {
+		return new Point(
+				normal.x < 0 ? min.x : max.x,
+				normal.y < 0 ? min.y : max.y,
+				normal.z < 0 ? min.z : max.z
+		);
+		// TODO - signum
 	}
 
-	private static boolean contains(float f, float min, float max) {
-		return (f >= min) && (f <= max);
+	public Point negative(Vector normal) {
+		return new Point(
+				normal.x > 0 ? min.x : max.x,
+				normal.y > 0 ? min.y : max.y,
+				normal.z > 0 ? min.z : max.z
+		);
 	}
 
 	/**

@@ -7,15 +7,23 @@ import static org.mockito.Mockito.spy;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 class VolumeTest {
+	private Volume vol;
+
+	@BeforeEach
+	void before() {
+		vol = spy(Volume.class);
+	}
+
 	@Test
 	void intersectsDefault() {
-		final Volume vol = spy(Volume.class);
-		assertThrows(UnsupportedOperationException.class, () -> vol.intersects(null));
+		assertThrows(UnsupportedOperationException.class, () -> vol.intersects((Volume) null));
 	}
 
 	@Nested
@@ -26,8 +34,13 @@ class VolumeTest {
 		}
 
 		@Test
-		void intersects() {
-			assertEquals(false, Volume.NULL.intersects(null));
+		void intersectsVolume() {
+			assertEquals(false, Volume.NULL.intersects((Volume) null));
+		}
+
+		@Test
+		void intersectsPlane() {
+			assertEquals(false, Volume.NULL.intersects((Plane) null));
 		}
 
 		@Test
@@ -41,6 +54,7 @@ class VolumeTest {
 		void equals() {
 			assertEquals(true, Volume.NULL.equals(Volume.NULL));
 			assertEquals(false, Volume.NULL.equals(null));
+			assertEquals(false, Volume.NULL.equals(vol));
 		}
 	}
 }

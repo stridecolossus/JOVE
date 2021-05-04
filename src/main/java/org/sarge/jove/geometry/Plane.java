@@ -20,12 +20,30 @@ import org.sarge.lib.util.Check;
  */
 public record Plane(Vector normal, float distance) {
 	/**
-	 * Half-space defines the <i>sides</i> of the plane, the plane normal points to the <i>positive</i> half-space.
+	 * The half-space defines the <i>sides</i> of the plane, the plane normal points to the <i>positive</i> half-space.
 	 */
 	public enum HalfSpace {
 		POSITIVE,
 		NEGATIVE,
-		INTERSECT
+		INTERSECT;
+
+		/**
+		 * Determines the half-space of the given distance relative to this plane.
+		 * @param d Distance to plane
+		 * @return Half-space
+		 */
+		public static HalfSpace of(float d) {
+			if(MathsUtil.isZero(d)) {
+				return INTERSECT;
+			}
+			else
+			if(d < 0) {
+				return NEGATIVE;
+			}
+			else {
+				return POSITIVE;
+			}
+		}
 	}
 
 	/**
@@ -39,8 +57,7 @@ public record Plane(Vector normal, float distance) {
 		final Vector u = Vector.between(a, b);
 		final Vector v = Vector.between(b, c);
 		final Vector normal = u.cross(v).normalize();
-		final float dist = -a.dot(normal);
-		return new Plane(normal, dist);
+		return of(normal, a);
 	}
 
 	/**
@@ -88,22 +105,13 @@ public record Plane(Vector normal, float distance) {
 	}
 
 	/**
-	 * Determines the half-space of the given point with respect to this plane.
+	 * Helper - Determines the half-space of the given point with respect to this plane.
 	 * @param pt Point
 	 * @return Half-space
+	 * @see HalfSpace#of(float)
 	 */
-	public HalfSpace space(Point pt) {
-		final float d = distance(pt);
-		if(MathsUtil.isZero(d)) {
-			return HalfSpace.INTERSECT;
-		}
-		else
-		if(d < 0) {
-			return HalfSpace.NEGATIVE;
-		}
-		else {
-			return HalfSpace.POSITIVE;
-		}
+	public HalfSpace halfspace(Point pt) {
+		return HalfSpace.of(distance(pt));
 	}
 
 	/**
@@ -130,4 +138,3 @@ public record Plane(Vector normal, float distance) {
 		return Intersection.of(t);
 	}
 }
-

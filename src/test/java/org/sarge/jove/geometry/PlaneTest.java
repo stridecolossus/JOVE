@@ -30,16 +30,8 @@ class PlaneTest {
 	}
 
 	@Test
-	void distance() {
-		assertEquals(-DIST, plane.distance(ORIGIN));
-		assertEquals(0, plane.distance(new Point(DIST, 0, 0)));
-	}
-
-	@Test
-	void space() {
-		assertEquals(HalfSpace.POSITIVE, plane.space(new Point(4, 0, 0)));
-		assertEquals(HalfSpace.NEGATIVE, plane.space(ORIGIN));
-		assertEquals(HalfSpace.INTERSECT, plane.space(new Point(DIST, 0, 0)));
+	void of() {
+		assertEquals(plane, Plane.of(X_AXIS, new Point(DIST, 0, 0)));
 	}
 
 	@Test
@@ -49,8 +41,11 @@ class PlaneTest {
 	}
 
 	@Test
-	void of() {
-		assertEquals(plane, Plane.of(X_AXIS, new Point(DIST, 0, 0)));
+	void distance() {
+		assertEquals(-DIST, plane.distance(ORIGIN));
+		assertEquals(0, plane.distance(new Point(DIST, 0, 0)));
+		assertEquals(2 * -DIST, plane.distance(new Point(-DIST, 0, 0)));
+		assertEquals(DIST, plane.distance(new Point(2 * DIST, 0, 0)));
 	}
 
 	@Test
@@ -61,6 +56,24 @@ class PlaneTest {
 	@Test
 	void normalizeSelf() {
 		assertSame(plane, plane.normalize());
+	}
+
+	@Nested
+	class HalfSpaceTests {
+		@Test
+		void of() {
+			assertEquals(HalfSpace.INTERSECT, HalfSpace.of(0));
+			assertEquals(HalfSpace.INTERSECT, HalfSpace.of(-0));
+			assertEquals(HalfSpace.POSITIVE, HalfSpace.of(+1));
+			assertEquals(HalfSpace.NEGATIVE, HalfSpace.of(-1));
+		}
+
+		@Test
+		void halfspace() {
+			assertEquals(HalfSpace.POSITIVE, plane.halfspace(new Point(4, 0, 0)));
+			assertEquals(HalfSpace.NEGATIVE, plane.halfspace(ORIGIN));
+			assertEquals(HalfSpace.INTERSECT, plane.halfspace(new Point(DIST, 0, 0)));
+		}
 	}
 
 	@Nested

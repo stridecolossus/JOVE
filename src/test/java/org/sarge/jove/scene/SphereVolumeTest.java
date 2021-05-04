@@ -4,7 +4,11 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.sarge.jove.geometry.Point.ORIGIN;
+import static org.sarge.jove.geometry.Vector.X_AXIS;
+import static org.sarge.jove.geometry.Vector.Y_AXIS;
+import static org.sarge.jove.geometry.Vector.Z_AXIS;
 
 import java.util.Arrays;
 
@@ -13,10 +17,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Extents;
+import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
 class SphereVolumeTest {
@@ -27,12 +31,12 @@ class SphereVolumeTest {
 
 	@BeforeEach
 	void before() {
-		sphere = new SphereVolume(Point.ORIGIN, RADIUS);
+		sphere = new SphereVolume(ORIGIN, RADIUS);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(Point.ORIGIN, sphere.centre());
+		assertEquals(ORIGIN, sphere.centre());
 		assertEquals(3f, sphere.radius());
 	}
 
@@ -47,21 +51,45 @@ class SphereVolumeTest {
 
 	@Test
 	void contains() {
-		assertEquals(true, sphere.contains(Point.ORIGIN));
+		assertEquals(true, sphere.contains(ORIGIN));
 		assertEquals(true, sphere.contains(new Point(RADIUS, 0, 0)));
 		assertEquals(false, sphere.contains(new Point(OUTSIDE, 0, 0)));
 	}
 
+	@DisplayName("Intersection test should delegate to sphere-specific method")
 	@Test
-	void intersects() {
-		assertEquals(false, sphere.intersects(mock(Volume.class)));
+	void intersectDelegate() {
+		final Volume vol = mock(Volume.class);
+		assertEquals(false, sphere.intersects(vol));
+		verify(vol).intersects(sphere);
 	}
 
-	@Test
-	void intersectsDelegate() {
-		final Volume vol = mock(Volume.class);
-		when(vol.intersects(sphere)).thenReturn(true);
-		assertEquals(true, sphere.intersects(vol));
+	@Nested
+	class SpherePlaneIntersectionTests {
+		@Test
+		void axes() {
+			assertEquals(true, sphere.intersects(new Plane(X_AXIS, 0)));
+			assertEquals(true, sphere.intersects(new Plane(Y_AXIS, 0)));
+			assertEquals(true, sphere.intersects(new Plane(Z_AXIS, 0)));
+		}
+
+		@Test
+		void inside() {
+			assertEquals(true, sphere.intersects(new Plane(X_AXIS, 1)));
+			assertEquals(true, sphere.intersects(new Plane(X_AXIS, -1)));
+		}
+
+		@Test
+		void touching() {
+			assertEquals(true, sphere.intersects(new Plane(X_AXIS, RADIUS)));
+			assertEquals(true, sphere.intersects(new Plane(X_AXIS, -RADIUS)));
+		}
+
+		@Test
+		void outside() {
+			assertEquals(false, sphere.intersects(new Plane(X_AXIS, OUTSIDE)));
+			assertEquals(false, sphere.intersects(new Plane(X_AXIS, -OUTSIDE)));
+		}
 	}
 
 	@Nested
@@ -82,7 +110,7 @@ class SphereVolumeTest {
 		@DisplayName("Contained sphere intersects")
 		@Test
 		void inside() {
-			assertEquals(true, sphere.intersects(new SphereVolume(Point.ORIGIN, 1)));
+			assertEquals(true, sphere.intersects(new SphereVolume(ORIGIN, 1)));
 		}
 
 		@DisplayName("Overlapping spheres should intersect")
@@ -109,13 +137,13 @@ class SphereVolumeTest {
 		@DisplayName("Extents contained by sphere intersects")
 		@Test
 		void inside() {
-			assertEquals(true, sphere.intersects(new Extents(Point.ORIGIN, Point.ORIGIN)));
+			assertEquals(true, sphere.intersects(new Extents(ORIGIN, ORIGIN)));
 		}
 
 		@DisplayName("Oberlapping extents and sphere intersects")
 		@Test
 		void intersects() {
-			assertEquals(true, sphere.intersects(new Extents(Point.ORIGIN, new Point(RADIUS, 0, 0))));
+			assertEquals(true, sphere.intersects(new Extents(ORIGIN, new Point(RADIUS, 0, 0))));
 		}
 
 		@DisplayName("Sphere touching a corner intersects")
@@ -144,7 +172,7 @@ class SphereVolumeTest {
 			final var list = Arrays.stream(expected).map(n -> n - origin.x).collect(toList());
 
 			// Check intersection results
-			final Intersection result = sphere.intersect(new Ray(origin, Vector.X_AXIS));
+			final Intersection result = sphere.intersect(new Ray(origin, X_AXIS));
 			assertNotNull(result);
 			assertEquals(list, result.distances());
 		}
@@ -196,8 +224,8 @@ class SphereVolumeTest {
 	@Test
 	void equals() {
 		assertEquals(true, sphere.equals(sphere));
-		assertEquals(true, sphere.equals(new SphereVolume(Point.ORIGIN, RADIUS)));
+		assertEquals(true, sphere.equals(new SphereVolume(ORIGIN, RADIUS)));
 		assertEquals(false, sphere.equals(null));
-		assertEquals(false, sphere.equals(new SphereVolume(Point.ORIGIN, 42)));
+		assertEquals(false, sphere.equals(new SphereVolume(ORIGIN, 42)));
 	}
 }

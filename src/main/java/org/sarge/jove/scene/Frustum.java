@@ -5,32 +5,29 @@ import java.util.List;
 
 import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.geometry.Plane;
+import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
-import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.geometry.Vector;
 
 /**
- * A <i>frustum</i> is a camera clipping space specified as an array of planes.
+ * A <i>frustum</i> is a clipping space specified as an array of planes.
  * <p>
  * Generally a frustum is visualised as a truncated pyramid with the top/bottom at the near/far viewing planes.
- * Note that the normals of each plane are assumed to point <i>inside</i> the frustum, i.e. a frustum is the {@link Plane.HalfSpace#POSITIVE} half-space of its planes.
+ * Note that the normals of each plane point to the <i>inside</i> the frustum, i.e. a frustum is the {@link HalfSpace#POSITIVE} half-space of its planes.
  * <p>
- * For convenience a frustum is also defined as a bounding {@link Volume} to allow volume implementations to perform custom intersection tests.
- * However note that {@link #intersect(Ray)} is not implemented.
+ * A frustum can be extracted from a projection or modelview matrix using the {@link #of(Matrix)} factory method.
  * <p>
- * A frustum can be created
- * TODO
+ * Alternatively TODO constructs a frustum from TODO
  * <p>
  * @author Sarge
  */
-public class Frustum implements Volume {
+public class Frustum {
 	private final Plane[] planes;
 
 	/**
 	 * Constructor.
-	 * Generally a frustum is comprised of six planes (one for each side of the truncated pyramid) but this is not enforced by this constructor.
-	 * @param planes Frustum planes
+	 * Generally a frustum is comprised of six planes (one for each side of the truncated pyramid) but note this is <b>not</b> enforced by this constructor.
+	 * @param planes Frustum clipping planes
 	 */
 	public Frustum(Plane[] planes) {
 		this.planes = Arrays.copyOf(planes, planes.length);
@@ -43,36 +40,15 @@ public class Frustum implements Volume {
 		return Arrays.asList(planes);
 	}
 
-	@Override
+	/**
+	 * Tests whether this volume contains the given point.
+	 * @param pt Point
+	 * @return Whether contained
+	 * @see Plane#halfspace(Point)
+	 */
 	public boolean contains(Point pt) {
 		for(Plane p : planes) {
-			if(p.space(pt) == Plane.HalfSpace.NEGATIVE) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	@Override
-	public boolean intersects(Volume vol) {
-		if(vol instanceof SphereVolume sphere) {
-			return intersects(sphere);
-		}
-		else
-		if(vol instanceof BoundingBox box) {
-			// TODO
-			return false;
-		}
-		else {
-			return vol.intersects(this);
-		}
-	}
-
-	private boolean intersects(SphereVolume sphere) {
-		final float r = sphere.radius() * sphere.radius();
-		final Point centre = sphere.centre();
-		for(Plane p : planes) {
-			if(p.distance(centre) > r) {
+			if(p.halfspace(pt) == HalfSpace.NEGATIVE) {
 				return false;
 			}
 		}
@@ -80,11 +56,18 @@ public class Frustum implements Volume {
 	}
 
 	/**
-	 * @throws UnsupportedOperationException
+	 * Tests whether this frustum is intersected by the given bounding volume.
+	 * @param vol Bounding volume
+	 * @return Whether intersects
+	 * @see Volume#intersects(Plane)
 	 */
-	@Override
-	public Intersection intersect(Ray ray) {
-		throw new UnsupportedOperationException();
+	public boolean intersects(Volume vol) {
+		for(Plane p : planes) {
+			if(!vol.intersects(p)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override

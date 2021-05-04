@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Extents;
+import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -25,7 +26,7 @@ public class SphereVolume implements Volume {
 	 * @return Sphere volume
 	 */
 	public static SphereVolume of(Extents extents) {
-		return new SphereVolume(extents.centre(), extents.largest() * MathsUtil.HALF);
+		return new SphereVolume(extents.centre(), extents.largest() / 2);
 	}
 
 	private final Point centre;
@@ -57,18 +58,23 @@ public class SphereVolume implements Volume {
 
 	@Override
 	public boolean contains(Point pt) {
-		return intersects(pt, radius);
+		return centre.distance(pt) <= radius * radius;
 	}
 
 	@Override
 	public boolean intersects(Volume vol) {
 		if(vol instanceof SphereVolume sphere) {
-			// Intersects if the distance between the centres is within their combined radius
-			return intersects(sphere.centre, radius + sphere.radius);
+			final float r = radius + sphere.radius;
+			return centre.distance(sphere.centre) <= r * r;
 		}
 		else {
 			return vol.intersects(this);
 		}
+	}
+
+	@Override
+	public boolean intersects(Plane plane) {
+		return Math.abs(plane.distance(centre)) <= radius;
 	}
 
 	/**
@@ -77,15 +83,8 @@ public class SphereVolume implements Volume {
 	 * @return Whether intersected
 	 */
 	public boolean intersects(Extents extents) {
-		return intersects(extents.nearest(centre), radius);
-	}
-
-	/**
-	 * @param pt Point
-	 * @return Whether the distance between this sphere and a point intersects the given radius
-	 */
-	private boolean intersects(Point pt, float radius) {
-		return centre.distance(pt) <= radius * radius;
+		final Point pt = extents.nearest(centre);
+		return contains(pt);
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -52,6 +53,16 @@ public class CompoundVolume implements Volume {
 	}
 
 	@Override
+	public boolean intersects(Volume vol) {
+		return volumes.stream().allMatch(v -> v.intersects(vol));
+	}
+
+	@Override
+	public boolean intersects(Plane plane) {
+		return volumes.stream().allMatch(v -> v.intersects(plane));
+	}
+
+	@Override
 	public Intersection intersect(Ray ray) {
 		// TODO
 		final Optional<Intersection> intersection = volumes
@@ -61,11 +72,6 @@ public class CompoundVolume implements Volume {
 				.findAny();
 
 		return null;
-	}
-
-	@Override
-	public boolean intersects(Volume vol) {
-		return volumes.stream().allMatch(v -> v.intersects(vol));
 	}
 
 	@Override

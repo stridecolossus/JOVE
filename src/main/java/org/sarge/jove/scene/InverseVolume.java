@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -30,13 +31,18 @@ public class InverseVolume implements Volume {
 	}
 
 	@Override
-	public Intersection intersect(Ray ray) {
-		return vol.intersect(ray); // TODO - is this correct?
+	public boolean intersects(Volume vol) {
+		return !this.vol.intersects(vol);
 	}
 
 	@Override
-	public boolean intersects(Volume vol) {
-		return !this.vol.intersects(vol);
+	public boolean intersects(Plane plane) {
+		return !vol.intersects(plane);
+	}
+
+	@Override
+	public Intersection intersect(Ray ray) {
+		return vol.intersect(ray); // TODO - is this correct?
 	}
 
 	@Override

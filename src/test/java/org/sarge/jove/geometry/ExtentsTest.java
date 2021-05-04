@@ -44,6 +44,61 @@ class ExtentsTest {
 		assertEquals(false, extents.contains(Point.ORIGIN));
 	}
 
+	@Test
+	void largest() {
+		assertEquals(4, extents.largest());
+	}
+
+	@Test
+	void nearest() {
+		assertEquals(min, extents.nearest(min));
+		assertEquals(max, extents.nearest(max));
+		assertEquals(min, extents.nearest(Point.ORIGIN));
+		assertEquals(new Point(5, 2, 3), extents.nearest(new Point(999, 0, 0)));
+	}
+
+	@Test
+	void positive() {
+		assertEquals(max, extents.positive(Vector.X_AXIS));
+		assertEquals(max, extents.positive(Vector.Y_AXIS));
+		assertEquals(max, extents.positive(Vector.Z_AXIS));
+		assertEquals(new Point(1, 6, 7), extents.positive(Vector.X_AXIS.negate()));
+		assertEquals(new Point(5, 2, 7), extents.positive(Vector.Y_AXIS.negate()));
+		assertEquals(new Point(5, 6, 3), extents.positive(Vector.Z_AXIS.negate()));
+
+	}
+
+	@Test
+	void negative() {
+		assertEquals(new Point(1, 6, 7), extents.negative(Vector.X_AXIS));
+		assertEquals(new Point(5, 2, 7), extents.negative(Vector.Y_AXIS));
+		assertEquals(new Point(5, 6, 3), extents.negative(Vector.Z_AXIS));
+		assertEquals(max, extents.negative(Vector.X_AXIS.negate()));
+		assertEquals(max, extents.negative(Vector.Y_AXIS.negate()));
+		assertEquals(max, extents.negative(Vector.Z_AXIS.negate()));
+	}
+
+	@Test
+	void invert() {
+		final Extents inverse = extents.invert();
+		assertNotNull(inverse);
+		assertEquals(min, inverse.min());
+		assertEquals(max, inverse.max());
+		assertEquals(centre, inverse.centre());
+		assertEquals(false, inverse.contains(min));
+		assertEquals(false, inverse.contains(max));
+		assertEquals(false, inverse.contains(centre));
+		assertEquals(true, inverse.contains(Point.ORIGIN));
+	}
+
+	@Test
+	void equals() {
+		assertEquals(true, extents.equals(extents));
+		assertEquals(true, extents.equals(new Extents(min, max)));
+		assertEquals(false, extents.equals(null));
+		assertEquals(false, extents.equals(mock(Extents.class)));
+	}
+
 	@Nested
 	class IntersectionTests {
 		@Test
@@ -67,40 +122,6 @@ class ExtentsTest {
 		void outside() {
 			assertEquals(false, extents.intersects(new Extents(Point.ORIGIN, Point.ORIGIN)));
 		}
-	}
-
-	@Test
-	void largest() {
-		assertEquals(4, extents.largest());
-	}
-
-	@Test
-	void nearest() {
-		assertEquals(min, extents.nearest(min));
-		assertEquals(max, extents.nearest(max));
-		assertEquals(min, extents.nearest(Point.ORIGIN));
-		assertEquals(new Point(5, 2, 3), extents.nearest(new Point(999, 0, 0)));
-	}
-
-	@Test
-	void invert() {
-		final Extents inverse = extents.invert();
-		assertNotNull(inverse);
-		assertEquals(min, inverse.min());
-		assertEquals(max, inverse.max());
-		assertEquals(centre, inverse.centre());
-		assertEquals(false, inverse.contains(min));
-		assertEquals(false, inverse.contains(max));
-		assertEquals(false, inverse.contains(centre));
-		assertEquals(true, inverse.contains(Point.ORIGIN));
-	}
-
-	@Test
-	void equals() {
-		assertEquals(true, extents.equals(extents));
-		assertEquals(true, extents.equals(new Extents(min, max)));
-		assertEquals(false, extents.equals(null));
-		assertEquals(false, extents.equals(mock(Extents.class)));
 	}
 
 	@Nested
