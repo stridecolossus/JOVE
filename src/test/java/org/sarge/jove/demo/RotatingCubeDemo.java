@@ -27,17 +27,10 @@ import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
-import org.sarge.jove.platform.vulkan.pipeline.Barrier;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
+import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
-import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
-import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
-import org.sarge.jove.platform.vulkan.pipeline.Runner;
 import org.sarge.jove.platform.vulkan.pipeline.Runner.Frame;
 import org.sarge.jove.platform.vulkan.pipeline.Runner.FrameState;
-import org.sarge.jove.platform.vulkan.pipeline.Sampler;
-import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.scene.Projection;
 import org.sarge.jove.util.DataSource;
@@ -308,7 +301,7 @@ public class RotatingCubeDemo {
 		//////////////////
 
 		// Create pipeline layout
-		final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
+		final PipelineLayout pipelineLayout = new PipelineLayout.Builder(dev)
 				.add(setLayout)
 				.build();
 

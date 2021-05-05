@@ -332,7 +332,7 @@ public class ModelDemo {
 		//////////////////
 
 		// Create pipeline layout
-		final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
+		final PipelineLayout pipelineLayout = new PipelineLayout.Builder(dev)
 				.add(layout)
 				.build();
 

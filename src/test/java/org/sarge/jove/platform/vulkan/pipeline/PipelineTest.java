@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,15 +18,12 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Shader;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Layout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class PipelineTest extends AbstractVulkanTest {
 	private Pipeline pipeline;
@@ -59,13 +55,13 @@ public class PipelineTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private Pipeline.Builder builder;
-		private Pipeline.Layout layout;
+		private PipelineLayout layout;
 		private RenderPass pass;
 
 		@BeforeEach
 		void before() {
 			builder = new Pipeline.Builder(dev);
-			layout = mock(Pipeline.Layout.class);
+			layout = mock(PipelineLayout.class);
 			pass = mock(RenderPass.class);
 		}
 
@@ -161,57 +157,6 @@ public class PipelineTest extends AbstractVulkanTest {
 		void duplicateShaderStage() {
 			addVertexShaderStage();
 			assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage());
-		}
-	}
-
-	@Nested
-	class LayoutTests {
-		private Layout.Builder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new Layout.Builder(dev);
-		}
-
-		@Test
-		void build() {
-			// Create descriptor set layout
-			final DescriptorSet.Layout set = mock(DescriptorSet.Layout.class);
-			when(set.handle()).thenReturn(new Handle(new Pointer(42)));
-
-			// Create layout
-			final Layout layout = builder
-					.add(set)
-					.build();
-
-			// Check layout
-			assertNotNull(layout);
-			assertNotNull(layout.handle());
-
-			// Check pipeline allocation
-			final ArgumentCaptor<VkPipelineLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineLayoutCreateInfo.class);
-			verify(lib).vkCreatePipelineLayout(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
-
-			// Check descriptor
-			final VkPipelineLayoutCreateInfo info = captor.getValue();
-			assertNotNull(info);
-
-			// Check descriptor-set layouts
-			assertEquals(1, info.setLayoutCount);
-			assertNotNull(info.pSetLayouts);
-		}
-
-		@Test
-		void buildEmpty() {
-			assertNotNull(builder.build());
-		}
-
-		@Test
-		void destroy() {
-			final Layout layout = builder.build();
-			final Handle handle = layout.handle();
-			layout.destroy();
-			verify(lib).vkDestroyPipelineLayout(dev.handle(), handle, null);
 		}
 	}
 }

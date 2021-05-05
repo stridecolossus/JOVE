@@ -32,6 +32,7 @@ import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.Work;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
@@ -130,7 +131,7 @@ public class TriangleDemo {
 		final Shader frag = loader.load("spv.triangle.frag");
 
 		// Create pipeline
-		final var layout = new Pipeline.Layout.Builder(dev).build();
+		final var layout = new PipelineLayout.Builder(dev).build();
 		final Pipeline pipeline = new Pipeline.Builder(dev)
 				.layout(layout)
 				.pass(pass)

@@ -241,7 +241,7 @@ public class DescriptorSet implements NativeObject {
 	 * @param layout Pipeline layout
 	 * @return New bind command
 	 */
-	public Command bind(Pipeline.Layout layout) {
+	public Command bind(PipelineLayout layout) {
 		return bind(layout, List.of(this));
 	}
 
@@ -251,7 +251,7 @@ public class DescriptorSet implements NativeObject {
 	 * @param sets			Descriptor sets
 	 * @return New bind command
 	 */
-	public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
+	public static Command bind(PipelineLayout layout, Collection<DescriptorSet> sets) {
 		return (api, cmd) -> api.vkCmdBindDescriptorSets(
 				cmd,
 				VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,

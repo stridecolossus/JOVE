@@ -29,6 +29,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
@@ -265,7 +266,7 @@ public class TextureQuadDemo {
 		//////////////////
 
 		// Create pipeline layout
-		final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
+		final PipelineLayout pipelineLayout = new PipelineLayout.Builder(dev)
 				.add(setLayout)
 				.build();
 

@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -15,10 +14,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"size"
 })
 public class VkPushConstantRange extends VulkanStructure {
-	public static class ByValue extends VkPushConstantRange implements Structure.ByValue { }
-	public static class ByReference extends VkPushConstantRange implements Structure.ByReference { }
-
-	public VkShaderStageFlag stageFlags;
+	public int stageFlags;
 	public int offset;
 	public int size;
 }

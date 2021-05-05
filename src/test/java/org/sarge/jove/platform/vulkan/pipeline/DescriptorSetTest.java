@@ -102,7 +102,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@Test
 		void bind() {
 			// Create bind command
-			final Pipeline.Layout pipelineLayout = mock(Pipeline.Layout.class);
+			final PipelineLayout pipelineLayout = mock(PipelineLayout.class);
 			final Command bind = descriptor.bind(pipelineLayout);
 			assertNotNull(bind);
 

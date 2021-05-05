@@ -25,5 +25,5 @@ public class VkPipelineLayoutCreateInfo extends VulkanStructure {
 	public int setLayoutCount;
 	public Pointer pSetLayouts;
 	public int pushConstantRangeCount;
-	public Pointer pPushConstantRanges;
+	public VkPushConstantRange pPushConstantRanges;
 }

@@ -3,24 +3,18 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>pipeline</i> specifies the sequence of operations for graphics rendering.
@@ -50,7 +44,7 @@ public class Pipeline extends AbstractVulkanObject {
 	public static class Builder {
 		// Properties
 		private final LogicalDevice dev;
-		private Layout layout;
+		private PipelineLayout layout;
 		private RenderPass pass;
 		private final ShaderStageBuilder shaders = new ShaderStageBuilder();
 
@@ -89,9 +83,9 @@ public class Pipeline extends AbstractVulkanObject {
 
 		/**
 		 * Sets the layout for this pipeline.
-		 * @param layout Pipeline layout (default is {@link Pipeline.Layout#IDENTITY})
+		 * @param layout Pipeline layout (default is {@link PipelineLayout#IDENTITY})
 		 */
-		public Builder layout(Layout layout) {
+		public Builder layout(PipelineLayout layout) {
 			this.layout = notNull(layout);
 			return this;
 		}
@@ -170,7 +164,7 @@ public class Pipeline extends AbstractVulkanObject {
 		/**
 		 * Constructs this pipeline.
 		 * @return New pipeline
-		 * @throws IllegalArgumentException if any of the following stages are not configured: pipeline layout, vertex shader, viewport
+		 * @throws IllegalArgumentException if the pipeline layout or render pass has not been specified
 		 */
 		public Pipeline build() {
 			// Create descriptor
@@ -214,73 +208,6 @@ public class Pipeline extends AbstractVulkanObject {
 
 			// Create pipeline
 			return new Pipeline(pipelines[0], dev);
-		}
-	}
-
-	/**
-	 * A <i>pipeline layout</i> specifies the resources used by a pipeline.
-	 */
-	public static class Layout extends AbstractVulkanObject {
-		/**
-		 * Constructor.
-		 * @param handle		Pipeline handle
-		 * @param dev			Logical device
-		 */
-		private Layout(Pointer handle, LogicalDevice dev) {
-			super(handle, dev, dev.library()::vkDestroyPipelineLayout);
-		}
-
-		/**
-		 * Builder for a pipeline layout.
-		 */
-		public static class Builder {
-			private final LogicalDevice dev;
-			private final List<DescriptorSet.Layout> sets = new ArrayList<>();
-			// TODO - push constant layouts
-
-			/**
-			 * Constructor.
-			 * @param dev			Logical device
-			 * @param parent		Parent builder
-			 * @param consumer		Consumer
-			 */
-			public Builder(LogicalDevice dev) {
-				this.dev = notNull(dev);
-			}
-
-			/**
-			 * Adds a descriptor-set to this layout.
-			 * @param layout Descriptor-set layout
-			 */
-			public Builder add(DescriptorSet.Layout layout) {
-				Check.notNull(layout);
-				sets.add(layout);
-				return this;
-			}
-
-			/**
-			 * Constructs this pipeline layout.
-			 * @return New pipeline layout
-			 */
-			public Layout build() {
-				// Init pipeline layout descriptor
-				final VkPipelineLayoutCreateInfo info = new VkPipelineLayoutCreateInfo();
-
-				// Add descriptor set layouts
-				info.setLayoutCount = sets.size();
-				info.pSetLayouts = Handle.toArray(sets);
-
-				// Add push constants
-				// TODO
-
-				// Allocate layout
-				final VulkanLibrary lib = dev.library();
-				final PointerByReference layout = lib.factory().pointer();
-				check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));
-
-				// Create layout
-				return new Layout(layout.getValue(), dev);
-			}
 		}
 	}
 }
