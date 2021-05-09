@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.IntFunction;
 
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.ByteData;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
@@ -111,10 +111,10 @@ public class ModelDemo {
 //		mapping.b = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_G;
 //		mapping.a = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_R;
 //		return new View.Builder(dev, texture).mapping(mapping).build();
-		return new View.Builder(dev, texture).build();
+		return texture.view().build();
 	}
 
-	private static VulkanBuffer loadBuffer(LogicalDevice dev, Bufferable obj, VkBufferUsageFlag usage, Command.Pool pool) {
+	private static VulkanBuffer loadBuffer(LogicalDevice dev, ByteData.Source obj, VkBufferUsageFlag usage, Command.Pool pool) {
 		// Create staging VBO
 		final VulkanBuffer staging = VulkanBuffer.staging(dev, obj.length());
 
@@ -139,18 +139,15 @@ public class ModelDemo {
 	}
 
 	private static View depth(LogicalDevice dev, Image.Extents extents) {
-		// Create depth buffer image
-		final Image depth = new Image.Builder(dev)
+		return new Image.Builder(dev)
 			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
 			.extents(extents)
 			.format(VkFormat.VK_FORMAT_D32_SFLOAT)
 			.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
 			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 			.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-			.build();
-
-		// Create view
-		return new View.Builder(dev, depth).build();
+			.build()
+			.view();
 	}
 
 	public static void main(String[] args) throws Exception {

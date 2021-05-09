@@ -9,7 +9,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.ByteData.Source;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.model.Model.Header;
@@ -68,7 +68,7 @@ class ModelTest {
 		void before() {
 			model = new AbstractModel(header) {
 				@Override
-				public Bufferable vertexBuffer() {
+				public Source vertexBuffer() {
 					return null;
 				}
 
@@ -78,7 +78,7 @@ class ModelTest {
 				}
 
 				@Override
-				public Optional<Bufferable> indexBuffer() {
+				public Optional<Source> indexBuffer() {
 					return null;
 				}
 			};

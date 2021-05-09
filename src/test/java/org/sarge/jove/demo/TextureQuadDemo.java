@@ -11,9 +11,9 @@ import java.util.Set;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.ImageData;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.platform.desktop.Desktop;
@@ -51,7 +51,7 @@ public class TextureQuadDemo {
 		//System.out.println(format);
 
 		// Copy image to staging buffer
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().length());
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().length);
 		staging.load(image.data());
 
 		// Create texture
@@ -100,7 +100,7 @@ public class TextureQuadDemo {
 				.build()
 				.submit(pool);
 
-		return new View.Builder(dev, texture).build();
+		return texture.view();
 	}
 
 	public static void main(String[] args) throws Exception {

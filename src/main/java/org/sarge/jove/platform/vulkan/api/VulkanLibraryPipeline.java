@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import java.nio.ByteBuffer;
-
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
@@ -85,8 +83,7 @@ interface VulkanLibraryPipeline {
 	 * @param stageFlags			Stage flags (mask)
 	 * @param offset				Start of the range (bytes)
 	 * @param size					Size of the push constants (bytes)
-	 * @param pValues				Push constants
+	 * @param pValues				Push constants as an array of bytes
 	 */
-	void vkCmdPushConstants(Handle commandBuffer, Handle layout, int stageFlags, int offset, int size, ByteBuffer pValues);
-	// TODO - or pValues is byte[]? simpler?
+	void vkCmdPushConstants(Handle commandBuffer, Handle layout, int stageFlags, int offset, int size, byte[] pValues);
 }

@@ -35,7 +35,8 @@ public interface ImageData {
 	/**
 	 * @return Image data
 	 */
-	Bufferable data();
+	byte[] data();
+	// TODO - not happy with this as an array, wrap with some sort of byte stream?
 
 	/**
 	 * Default implementation.
@@ -43,7 +44,7 @@ public interface ImageData {
 	class DefaultImageData implements ImageData {
 		private final Dimensions size;
 		private final List<Integer> components;
-		private final Bufferable data;
+		private final byte[] data;
 
 		/**
 		 * Constructor.
@@ -51,10 +52,10 @@ public interface ImageData {
 		 * @param components		Component sizes
 		 * @param bytes				Image data
 		 */
-		public DefaultImageData(Dimensions size, List<Integer> components, Bufferable data) {
+		public DefaultImageData(Dimensions size, List<Integer> components, byte[] data) {
 			Check.notEmpty(components);
 			final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
-			if(expected != data.length()) throw new IllegalArgumentException("Buffer length does not match image dimensions");
+			if(expected != data.length) throw new IllegalArgumentException("Buffer length does not match image dimensions");
 
 			this.size = notNull(size);
 			this.components = List.copyOf(components);
@@ -72,7 +73,7 @@ public interface ImageData {
 		}
 
 		@Override
-		public Bufferable data() {
+		public byte[] data() {
 			return data;
 		}
 
@@ -139,7 +140,6 @@ public interface ImageData {
 			// Buffer image data
 			// TODO - duplicate code here and in swizzle()
 			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
-			final Bufferable data = Bufferable.of(buffer.getData());
 
 			// Enumerate image components
 			final int[] components = result.getColorModel().getComponentSize();
@@ -147,7 +147,7 @@ public interface ImageData {
 
 			// Create image wrapper
 			final Dimensions dim = new Dimensions(result.getWidth(), result.getHeight());
-			return new DefaultImageData(dim, list, data);
+			return new DefaultImageData(dim, list, buffer.getData());
 		}
 
 		/**

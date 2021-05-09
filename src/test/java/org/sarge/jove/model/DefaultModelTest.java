@@ -10,7 +10,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.ByteData.Source.BufferSource;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DefaultModel.Builder;
@@ -62,14 +62,14 @@ class DefaultModelTest {
 
 	@Test
 	void vertexBuffer() {
-		final Bufferable vbo = model.vertexBuffer();
+		final BufferSource vbo = model.vertexBuffer();
 		assertNotNull(vbo);
 		assertEquals(3 * 3 * Float.BYTES, vbo.length());
 	}
 
 	@Test
 	void indexBuffer() {
-		final Bufferable indices = model.indexBuffer().orElseThrow();
+		final BufferSource indices = model.indexBuffer().orElseThrow();
 		assertNotNull(indices);
 		assertEquals(3 * Integer.BYTES, indices.length());
 	}

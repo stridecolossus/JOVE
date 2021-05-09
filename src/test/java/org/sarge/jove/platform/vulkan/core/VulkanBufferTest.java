@@ -12,26 +12,27 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer.Writable;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class VulkanBufferTest extends AbstractVulkanTest {
 	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	private static final int LENGTH = 3;
 
 	private VulkanBuffer buffer;
 	private DeviceMemory mem;
@@ -43,14 +44,14 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
 
 		// Create buffer
-		buffer = new VulkanBuffer(new Pointer(2), dev, FLAGS, 3, mem);
+		buffer = new VulkanBuffer(new Pointer(2), dev, FLAGS, LENGTH, mem);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(new Handle(new Pointer(2)), buffer.handle());
 		assertEquals(dev, buffer.device());
-		assertEquals(3, buffer.length());
+		assertEquals(LENGTH, buffer.length());
 		assertEquals(FLAGS, buffer.usage());
 	}
 
@@ -63,8 +64,8 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			final var flags = Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-			dest = new VulkanBuffer(new Pointer(2), dev, flags, 3, mem);
-			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT), 3, mem);
+			dest = new VulkanBuffer(new Pointer(2), dev, flags, LENGTH, mem);
+			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT), LENGTH, mem);
 			cmdHandle = new Handle(new Pointer(42));
 		}
 
@@ -124,52 +125,129 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		}
 	}
 
-	@Test
-	void load() {
-		// Over-ride factory
-		final ReferenceFactory factory = mock(ReferenceFactory.class);
-		when(lib.factory()).thenReturn(factory);
+	@Nested
+	class WritableTests {
+		private Writable writable;
 
-		// Init buffer memory
-		final PointerByReference ref = mock(PointerByReference.class);
-		final Pointer data = mock(Pointer.class);
-		when(factory.pointer()).thenReturn(ref);
-		when(ref.getValue()).thenReturn(data);
+		@BeforeEach
+		void before() {
+			writable = buffer.map(1, 0);
+		}
 
-//		// Init internal buffer
-//		final ByteBuffer bb = mock(ByteBuffer.class);
-//		when(data.getByteBuffer(0, 3)).thenReturn(bb);
+		@Test
+		void constructor() {
+			assertNotNull(writable);
+			assertEquals(false, writable.isReleased());
+		}
 
-		// Load buffer
-		final Bufferable obj = mock(Bufferable.class);
-		when(obj.length()).thenReturn(3);
-		buffer.load(obj);
+		@Test
+		void map() {
+			// TODO - check map API
+		}
 
-		// Check memory is mapped
-		verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, 3L, 0, ref);
-		verify(lib).vkUnmapMemory(dev.handle(), mem.handle());
+		@Test
+		void mapWholeBuffer() {
+			assertNotNull(buffer.map());
+		}
 
-		// TODO
-//		// Load bufferable at offset
+		@Test
+		void mapInvalidLength() {
+			assertThrows(IllegalArgumentException.class, () -> buffer.map(999, 0));
+			assertThrows(IllegalArgumentException.class, () -> buffer.map(0, 0));
+		}
+
+		@Test
+		void mapInvalidOffset() {
+			assertThrows(IllegalArgumentException.class, () -> buffer.map(LENGTH, 1));
+			assertThrows(IllegalArgumentException.class, () -> buffer.map(1, LENGTH));
+		}
+
+		@Test
+		void writeArray() {
+			writable.write(new byte[1]);
+			// TODO - check API
+		}
+
+		@Test
+		void writeByteBuffer() {
+			final ByteBuffer bb = ByteBuffer.wrap(new byte[1]);
+			writable.write(bb);
+			// TODO
+		}
+
+		@Test
+		void writeInvalidLength() {
+			final byte[] array = new byte[2];
+			assertThrows(IllegalArgumentException.class, () -> writable.write(array));
+			assertThrows(IllegalArgumentException.class, () -> writable.write(ByteBuffer.wrap(array)));
+		}
+
+		@Test
+		void writeReleased() {
+			writable.release();
+			assertThrows(IllegalStateException.class, () -> writable.write(new byte[1]));
+		}
+
+		@Test
+		void release() {
+			writable.release();
+			assertEquals(true, writable.isReleased());
+			// TODO
+		}
+
+		@Test
+		void releaseAlreadyReleased() {
+			writable.release();
+			assertThrows(IllegalStateException.class, () -> writable.release());
+		}
+	}
+
+//	@Test
+//	void load() {
+//		// Over-ride factory
+//		final ReferenceFactory factory = mock(ReferenceFactory.class);
+//		when(lib.factory()).thenReturn(factory);
+//
+//		// Init buffer memory
+//		final PointerByReference ref = mock(PointerByReference.class);
+//		final Pointer data = mock(Pointer.class);
+//		when(factory.pointer()).thenReturn(ref);
+//		when(ref.getValue()).thenReturn(data);
+//
+////		// Init internal buffer
+////		final ByteBuffer bb = mock(ByteBuffer.class);
+////		when(data.getByteBuffer(0, 3)).thenReturn(bb);
+//
+//		// Load buffer
 //		final Bufferable obj = mock(Bufferable.class);
-//		when(data.getByteBuffer(0, 1)).thenReturn(bb);
-//		buffer.load(obj, 2);
-//		verify(obj).buffer(bb);
-	}
-
-	@Test
-	void loadBufferTooLarge() {
-		final Bufferable obj = mock(Bufferable.class);
-		when(obj.length()).thenReturn(999);
-		assertThrows(IllegalStateException.class, () -> buffer.load(obj));
-	}
-
-	@Test
-	void loadInvalidOffset() {
-		final Bufferable obj = mock(Bufferable.class);
-		when(obj.length()).thenReturn(1);
-		assertThrows(IllegalStateException.class, () -> buffer.load(obj, 3));
-	}
+//		when(obj.length()).thenReturn(3);
+//		buffer.load(obj);
+//
+//		// Check memory is mapped
+//		verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, 3L, 0, ref);
+//		verify(lib).vkUnmapMemory(dev.handle(), mem.handle());
+//
+//		// TODO
+////		// Load bufferable at offset
+////		final Bufferable obj = mock(Bufferable.class);
+////		when(data.getByteBuffer(0, 1)).thenReturn(bb);
+////		buffer.load(obj, 2);
+////		verify(obj).buffer(bb);
+//	}
+//
+//	@Test
+//	void loadBufferTooLarge() {
+//		final Bufferable obj = mock(Bufferable.class);
+//		when(obj.length()).thenReturn(999);
+//		assertThrows(IllegalStateException.class, () -> buffer.load(obj));
+//	}
+//
+//	@Test
+//	void loadInvalidOffset() {
+//		final Bufferable obj = mock(Bufferable.class);
+//		when(obj.length()).thenReturn(1);
+//		assertThrows(IllegalStateException.class, () -> buffer.load(obj, 3));
+//	}
 
 	@Test
 	void destroy() {

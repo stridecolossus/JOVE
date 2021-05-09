@@ -28,7 +28,7 @@ public class View extends AbstractVulkanObject {
 	 * @param type Image type
 	 * @return View type
 	 */
-	public static VkImageViewType type(VkImageType type) {
+	static VkImageViewType type(VkImageType type) {
 		return switch(type) {
 			case VK_IMAGE_TYPE_1D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_1D;
 			case VK_IMAGE_TYPE_2D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D;
@@ -38,7 +38,7 @@ public class View extends AbstractVulkanObject {
 
 	private final Image image;
 
-	private ClearValue clear = ClearValue.NONE;
+	private ClearValue clear;
 
 	/**
 	 * Constructor.
@@ -49,6 +49,19 @@ public class View extends AbstractVulkanObject {
 	View(Pointer handle, Image image, LogicalDevice dev) {
 		super(handle, dev, dev.library()::vkDestroyImageView);
 		this.image = notNull(image);
+		this.clear = clear(image);
+	}
+
+	/**
+	 * @return Default clear value for the given image
+	 */
+	private static ClearValue clear(Image image) {
+		if(image.descriptor().aspects().contains(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)) {
+			return ClearValue.DEPTH;
+		}
+		else {
+			return ClearValue.NONE;
+		}
 	}
 
 	/**
@@ -124,35 +137,19 @@ public class View extends AbstractVulkanObject {
 			return mapping;
 		}
 
-		private final LogicalDevice dev;
 		private final Image image;
 		private final SubResourceBuilder<Builder> subresource;
 
 		private VkImageViewType type;
 		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
-		private ClearValue clear;
 
 		/**
 		 * Constructor.
-		 * @param dev Logical device
+		 * @param image Image
 		 */
-		public Builder(LogicalDevice dev, Image image) {
-			this.dev = notNull(dev);
+		Builder(Image image) {
 			this.image = notNull(image);
 			this.subresource = image.descriptor().builder(this);
-			this.clear = clear(image.descriptor());
-		}
-
-		/**
-		 * @return Default clear value for the given image
-		 */
-		private static ClearValue clear(Image.Descriptor descriptor) {
-			if(descriptor.aspects().contains(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)) {
-				return ClearValue.DEPTH;
-			}
-			else {
-				return ClearValue.NONE;
-			}
 		}
 
 		/**
@@ -161,15 +158,6 @@ public class View extends AbstractVulkanObject {
 		 */
 		public Builder type(VkImageViewType type) {
 			this.type = notNull(type);
-			return this;
-		}
-
-		/**
-		 * Sets the clear value for this view.
-		 * @param clear Clear value
-		 */
-		public Builder clear(ClearValue clear) {
-			this.clear = notNull(clear);
 			return this;
 		}
 
@@ -214,17 +202,13 @@ public class View extends AbstractVulkanObject {
 			subresource.populate(info.subresourceRange);
 
 			// Allocate image view
+			final LogicalDevice dev = image.device();
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference handle = lib.factory().pointer();
 			check(lib.vkCreateImageView(dev.handle(), info, null, handle));
 
 			// Create image view
-			final View view = new View(handle.getValue(), image, dev);
-
-			// Init clear value
-			view.clear(clear);
-
-			return view;
+			return new View(handle.getValue(), image, dev);
 		}
 	}
 }

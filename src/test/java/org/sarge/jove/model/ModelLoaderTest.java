@@ -1,6 +1,5 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -55,8 +54,8 @@ class ModelLoaderTest {
 		assertEquals(true, result.isIndexed());
 
 		// Check buffers
-		assertArrayEquals(model.vertexBuffer().toByteArray(), result.vertexBuffer().toByteArray());
-		assertArrayEquals(model.indexBuffer().get().toByteArray(), result.indexBuffer().get().toByteArray());
+		assertEquals(model.vertexBuffer(), result.vertexBuffer());
+		assertEquals(model.indexBuffer().get(), result.indexBuffer().get());
 	}
 
 	@Test

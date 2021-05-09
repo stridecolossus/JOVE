@@ -34,6 +34,19 @@ public interface Image extends NativeObject {
 	Descriptor descriptor();
 
 	/**
+	 * @return Logical device
+	 */
+	LogicalDevice device();
+
+	/**
+	 * Creates a view for this image with default configuration.
+	 * @return New image view
+	 */
+	default View view() {
+		return new View.Builder(this).build();
+	}
+
+	/**
 	 * Image extents.
 	 */
 	record Extents(int width, int height, int depth) {

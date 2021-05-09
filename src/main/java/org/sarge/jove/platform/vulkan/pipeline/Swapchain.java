@@ -392,11 +392,14 @@ public class Swapchain extends AbstractVulkanObject {
 			final var views = Arrays
 					.stream(handles)
 					.map(Handle::new)
-					.map(image -> new SwapChainImage(image, descriptor))
-					.map(image -> new View.Builder(dev, image))
-					.map(builder -> builder.clear(clear))
-					.map(View.Builder::build)
+					.map(image -> new SwapChainImage(image, dev, descriptor))
+					.map(Image::view)
 					.collect(toList());
+
+			// Init clear value
+			for(View view : views) {
+				view.clear(clear);
+			}
 
 			// Create domain object
 			return new Swapchain(chain.getValue(), dev, info.imageFormat, views);
@@ -407,15 +410,18 @@ public class Swapchain extends AbstractVulkanObject {
 		 */
 		private static class SwapChainImage implements Image {
 			private final Handle handle;
+			private final LogicalDevice dev;
 			private final Image.Descriptor descriptor;
 
 			/**
 			 * Constructor.
 			 * @param handle			Swapchain image
+			 * @param dev				Logical device
 			 * @param descriptor		Descriptor
 			 */
-			private SwapChainImage(Handle handle, Descriptor descriptor) {
+			private SwapChainImage(Handle handle, LogicalDevice dev, Descriptor descriptor) {
 				this.handle = notNull(handle);
+				this.dev = notNull(dev);
 				this.descriptor = notNull(descriptor);
 			}
 
@@ -427,6 +433,11 @@ public class Swapchain extends AbstractVulkanObject {
 			@Override
 			public Image.Descriptor descriptor() {
 				return descriptor;
+			}
+
+			@Override
+			public LogicalDevice device() {
+				return dev;
 			}
 		}
 	}

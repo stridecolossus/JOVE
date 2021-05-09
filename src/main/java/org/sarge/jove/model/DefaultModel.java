@@ -3,15 +3,17 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.ByteData.Source.BufferSource;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
+import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 
 /**
  * A <i>default model</i> is comprised of a collection of vertices.
@@ -63,43 +65,42 @@ public class DefaultModel extends AbstractModel {
 	}
 
 	@Override
-	public Bufferable vertexBuffer() {
-		return new Bufferable() {
-			@Override
-			public int length() {
-				return header().length();
-			}
+	public byte[] vertexBuffer() {
+		// Allocate buffer
+		final int len = vertices.size() * header().length();
+		final ByteBuffer buffer = VulkanHelper.buffer(len);
 
-			@Override
-			public void buffer(ByteBuffer buffer) {
-				for(Vertex v : vertices) {
-					v.buffer(buffer);
-				}
-			}
-		};
+		// Buffer vertices
+		for(Vertex v : vertices) {
+			v.buffer(buffer);
+		}
+
+		// Create byte source wrapper
+		return new BufferSource(buffer);
 	}
 
 	@Override
-	public Optional<Bufferable> indexBuffer() {
+	public Optional<byte[]> indexBuffer() {
 		return index.map(DefaultModel::index);
 	}
 
 	/**
 	 * Creates the index buffer.
 	 */
-	private static Bufferable index(List<Integer> index) {
-		return new Bufferable() {
-			@Override
-			public int length() {
-				return index.size() * Integer.BYTES;
-			}
+	private static byte[] index(List<Integer> index) {
+		// Allocate index buffer
+		final int len = index.size() * Integer.BYTES;
+		final ByteBuffer bb = VulkanHelper.buffer(len);
 
-			@Override
-			public void buffer(ByteBuffer buffer) {
-				final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
-				buffer.asIntBuffer().put(array);
-			}
-		};
+		// Buffer index
+		// TODO - convert to array first? or change arg to array?
+		final IntBuffer buffer = bb.asIntBuffer();
+		for(int n : index) {
+			buffer.put(n);
+		}
+
+		// Create byte source wrapper
+		return new BufferSource(bb);
 	}
 
 	/**

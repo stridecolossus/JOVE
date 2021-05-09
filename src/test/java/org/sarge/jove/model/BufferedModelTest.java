@@ -8,20 +8,20 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.ByteData.Source;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.model.Model.Header;
 
 public class BufferedModelTest {
 	private BufferedModel model;
 	private Header header;
-	private Bufferable vertices, index;
+	private Source vertices, index;
 
 	@BeforeEach
 	void before() {
 		header = new Header(List.of(Layout.of(2)), Primitive.TRIANGLES, 3, true);
-		vertices = mock(Bufferable.class);
-		index = mock(Bufferable.class);
+		vertices = mock(Source.class);
+		index = mock(Source.class);
 		model = new BufferedModel(header, vertices, index);
 	}
 

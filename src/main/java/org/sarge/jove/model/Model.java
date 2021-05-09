@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.lib.util.Check;
 
@@ -65,7 +64,7 @@ public interface Model {
 	/**
 	 * @return Vertex buffer
 	 */
-	Bufferable vertexBuffer();
+	byte[] vertexBuffer();
 
 	/**
 	 * @return Whether this is an indexed model
@@ -75,7 +74,9 @@ public interface Model {
 	/**
 	 * @return Index buffer
 	 */
-	Optional<Bufferable> indexBuffer();
+	Optional<byte[]> indexBuffer();
+
+	// TODO - VBO and index should be byte stream wrapper of some sort
 
 	/**
 	 * Skeleton implementation.

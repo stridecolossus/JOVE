@@ -4,6 +4,7 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle.HandleArray;
@@ -77,28 +77,110 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Loads the given bufferable object to this buffer.
-	 * @param buffer Data buffer
-	 * @throws IllegalStateException if the size of the object exceeds the length of this vertex buffer
+	 * A <i>writable</i> is a segment of this buffer that can be written to.
 	 */
-	public void load(Bufferable obj) {
-		load(obj, 0);
+	public final class Writable {
+		private final Pointer ptr;
+		private final long segment;
+		private final long offset;
+
+		private boolean released;
+
+		/**
+		 * Constructor.
+		 * @param ptr			Mapped memory pointer
+		 * @param segment		Length of this writable segment
+		 * @param offset		Offset
+		 */
+		private Writable(Pointer ptr, long segment, long offset) {
+			this.ptr = notNull(ptr);
+			this.segment = oneOrMore(segment);
+			this.offset = zeroOrMore(offset);
+		}
+
+		/**
+		 * Writes the given array to this buffer.
+		 * @param data Data array
+		 * @throws IllegalArgumentException if the given data array is larger than this segment
+		 * @throws IllegalStateException if this writable has been released
+		 */
+		public void write(byte[] data) {
+			check();
+			check(data.length);
+			ptr.write(offset, data, 0, data.length);
+		}
+
+		/**
+		 * Writes the given byte-buffer to this buffer.
+		 * @param data Byte-buffer
+		 * @throws IllegalArgumentException if the given buffer is larger than this segment
+		 * @throws IllegalStateException if this writable has been released
+		 */
+		public void write(ByteBuffer data) {
+			check();
+//			check(data.length);
+//			ptr.getByteBuffer(offset, offset);
+			// TODO
+		}
+
+		/**
+		 * @throws IllegalStateException if this writable has been released
+		 */
+		private void check() {
+			if(released) throw new IllegalStateException("Writable has been released");
+		}
+
+		/**
+		 * @throws IllegalArgumentException if the data is larger than this segment
+		 */
+		private void check(int len) {
+			if(len > segment) throw new IllegalArgumentException(String.format("Data is large than the writable segment: len=%d data=%d", segment, len));
+		}
+
+		/**
+		 * @return Whether this writable has been released
+		 */
+		public boolean isReleased() {
+			return released;
+		}
+
+		/**
+		 * Releases (i.e. unmaps) this writable segment.
+		 * @throws IllegalStateException if this segment has already been released
+		 */
+		public void release() {
+			check();
+			final LogicalDevice dev = device();
+			final VulkanLibrary lib = dev.library();
+			lib.vkUnmapMemory(dev.handle(), mem.handle());
+			released = true;
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append(VulkanBuffer.this)
+					.append("length", segment)
+					.append("offset", offset)
+					.build();
+		}
 	}
 
 	/**
-	 * Loads the given bufferable object to this buffer at the specified offset.
-	 * @param buffer 		Bufferable object
-	 * @param offset		Offset into this vertex buffer (bytes)
-	 * @throws IllegalStateException if the size of the given object exceeds the length of this vertex buffer
+	 * Maps a segment of this buffer ready for writing.
+	 * <p>
+	 * TODO - release
+	 * <p>
+	 * @param len			Segment length (bytes)
+	 * @param offset		Offset
+	 * @return Writable segment of this buffer
+	 * @throws IllegalArgumentException if the combined segment length and offset is larger than this buffer
 	 */
-	public void load(Bufferable obj, long offset) {
+	public Writable map(long len, long offset) {
+		// Validate
+		Check.oneOrMore(len);
 		Check.zeroOrMore(offset);
-
-		// Check buffer
-		final int len = obj.length();
-		if(offset + len > this.len) {
-			throw new IllegalStateException(String.format("Buffer exceeds size of this VBO: length=%d offset=%d this=%s", len, offset, this));
-		}
+		if(len + offset > this.len) throw new IllegalArgumentException(String.format("Writable length exceeds buffer: length=%d offset=%d this=%s", len, offset, this));
 
 		// Map buffer memory
 		final LogicalDevice dev = this.device();
@@ -106,15 +188,17 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		final PointerByReference data = lib.factory().pointer();
 		check(lib.vkMapMemory(dev.handle(), mem.handle(), offset, len, 0, data));
 
-		try {
-			// Copy to memory
-			final ByteBuffer bb = data.getValue().getByteBuffer(0, len);
-			obj.buffer(bb);
-		}
-		finally {
-			// Cleanup
-			lib.vkUnmapMemory(dev.handle(), mem.handle());
-		}
+		// Create writable segment
+		return new Writable(data.getValue(), len, offset);
+	}
+
+	/**
+	 * Helper - Maps the entire buffer.
+	 * @return Writable buffer
+	 * @see #map(long, long)
+	 */
+	public Writable map() {
+		return map(len, 0);
 	}
 
 	/**
@@ -141,7 +225,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
+	 * Creates a command to bind this buffer as a vertex buffer (VBO).
 	 * @return Command to bind this buffer
+	 * @throws IllegalStateException if this buffer cannot be used as a VBO
+	 * @see VkBufferUsageFlag#VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
 	 */
 	public Command bindVertexBuffer() {
 		require(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
@@ -151,7 +238,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
+	 * Creates a command to bind this buffer as an index buffer.
 	 * @return Command to bind this index buffer
+	 * @throws IllegalStateException if this buffer cannot be used as an index
+	 * @see VkBufferUsageFlag#VK_BUFFER_USAGE_INDEX_BUFFER_BIT
 	 */
 	public Command bindIndexBuffer() {
 		require(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT);

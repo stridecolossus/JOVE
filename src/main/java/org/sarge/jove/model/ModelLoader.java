@@ -5,10 +5,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.ByteData.Sink;
+import org.sarge.jove.common.ByteData.Source;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.util.ResourceLoader;
@@ -53,13 +55,37 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 			out.writeUTF(c.type().getName());
 		}
 
-		// Write VBO
-		write(model.vertexBuffer(), out);
+		// TODO - very messy, wrapper for DOS?
+		final Sink sink = new Sink() {
+			@Override
+			public void write(byte[] array, int offset) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void write(ByteBuffer src, int offset) {
+				// TODO - very messy
+				try {
+					final int len = src.remaining();
+					out.write(len);
+					// TODO
+					while(src.remaining() > 0) {
+						out.write(src.get());
+					}
+				}
+				catch(IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		};
+
+		// WRite VBO
+		model.vertexBuffer().write(sink, 0);
 
 		// Write index
 		final var index = model.indexBuffer();
 		if(index.isPresent()) {
-			write(index.get(), out);
+			index.get().write(sink, 0);
 		}
 		else {
 			out.writeInt(0);
@@ -67,15 +93,6 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 
 		// Done
 		out.flush();
-	}
-
-	/**
-	 * Writes the given buffer.
-	 */
-	private static void write(Bufferable data, DataOutputStream out) throws IOException {
-		final byte[] bytes = data.toByteArray();
-		out.writeInt(bytes.length);
-		out.write(bytes);
 	}
 
 	@Override
@@ -121,8 +138,8 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		}
 
 		// Load data
-		final Bufferable vertices = loadBuffer(in);
-		final Bufferable index = loadBuffer(in);
+		final Source vertices = loadBuffer(in);
+		final Source index = loadBuffer(in);
 
 		// Create model
 		return new BufferedModel(new Header(layout, primitive, count, clockwise), vertices, index);
@@ -134,7 +151,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 	 * @return New buffer or {@code null} if empty
 	 * @throws IOException if the buffer cannot be loaded
 	 */
-	private static Bufferable loadBuffer(DataInputStream in) throws IOException {
+	private static Source loadBuffer(DataInputStream in) throws IOException {
 		// Read buffer size
 		final int len = in.readInt();
 		if(len == 0) {
@@ -146,7 +163,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		final int actual = in.read(bytes);
 		if(actual != len) throw new IOException(String.format("Error loading buffer: expected=%d actual=%d", len, actual));
 
-		// Convert to bufferable object
-		return Bufferable.of(bytes);
+		// Convert to data wrapper
+		return Source.of(bytes);
 	}
 }

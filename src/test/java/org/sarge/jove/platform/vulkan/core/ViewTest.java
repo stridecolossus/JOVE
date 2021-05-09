@@ -18,7 +18,6 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
-import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
 import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
@@ -106,20 +105,19 @@ public class ViewTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			builder = new View.Builder(dev, image);
+			builder = new View.Builder(image);
 		}
 
 		@Test
 		void build() {
 			// Build view
-			final ClearValue clear = new ColourClearValue(Colour.WHITE);
-			view = builder.clear(clear).build();
+			view = builder.build();
 
 			// Check view
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertEquals(image, view.image());
-			assertEquals(clear, view.clear());
+			assertEquals(ClearValue.NONE, view.clear());
 
 			// Check API
 			final ArgumentCaptor<VkImageViewCreateInfo> captor = ArgumentCaptor.forClass(VkImageViewCreateInfo.class);
@@ -150,25 +148,6 @@ public class ViewTest extends AbstractVulkanTest {
 			assertEquals(0, info.subresourceRange.baseArrayLayer);
 //			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.layerCount);
 			assertEquals(1, info.subresourceRange.layerCount);
-		}
-
-		@Test
-		void buildDefaultDepthClearValue() {
-			// Create descriptor for depth buffer
-			final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-					.format(VkFormat.VK_FORMAT_D32_SFLOAT)
-					.extents(new Image.Extents(3, 4))
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
-					.build();
-
-			// Create depth buffer
-			final Image depth = mock(Image.class);
-			when(depth.descriptor()).thenReturn(descriptor);
-
-			// Create view and check default clear value
-			final View view = new View.Builder(dev, depth).build();
-			assertNotNull(view);
-			assertEquals(ClearValue.DEPTH, view.clear());
 		}
 	}
 }

@@ -98,7 +98,7 @@ public class RotatingCubeDemo {
 				.build()
 				.submit(pool);
 
-		return new View.Builder(dev, texture).build();
+		return texture.view();
 	}
 
 	public static void main(String[] args) throws Exception {

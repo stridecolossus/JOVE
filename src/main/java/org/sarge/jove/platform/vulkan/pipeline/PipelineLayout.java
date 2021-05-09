@@ -6,12 +6,10 @@ import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
@@ -21,7 +19,6 @@ import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
-import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -80,32 +77,40 @@ public class PipelineLayout extends AbstractVulkanObject {
 		}
 	}
 
+	/**
+	 * TODO
+	 */
 	public class UpdateCommand implements Command {
 		private final int mask;
-		private final ByteBuffer buffer;
 		private final int offset;
+
+		private byte[] data;
 
 		/**
 		 * Constructor.
-		 * @param mask
-		 * @param buffer
+		 * @param stages
 		 * @param offset
 		 */
-		public UpdateCommand(Set<VkPipelineStageFlag> stages, int size, int offset) {
+		public UpdateCommand(Set<VkPipelineStageFlag> stages, int offset) {
 			this.mask = IntegerEnumeration.mask(stages);
-			this.buffer = VulkanHelper.buffer(size);
-			this.offset = offset;
+			this.offset = zeroOrMore(offset);
 		}
 
-		public void write(Bufferable data) {
-			data.buffer(buffer);
+		/**
+		 * Sets the push constant data for this update.
+		 * @param data Push constant data
+		 */
+		public void write(byte[] data) {
+			this.data = notNull(data);
 		}
 
 		@Override
 		public void execute(VulkanLibrary lib, Handle handle) {
-			lib.vkCmdPushConstants(handle, PipelineLayout.this.handle(), mask, buffer.limit(), offset, buffer);
+			if(data == null) throw new IllegalStateException("Push constant data has not been populated");
+			lib.vkCmdPushConstants(handle, PipelineLayout.this.handle(), mask, data.length, offset, data);
 		}
 	}
+	// TODO - is a command created from a range (or a subset of a range)?
 
 	/**
 	 * Builder for a pipeline layout.

@@ -1,6 +1,8 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
 import java.util.List;
