@@ -21,6 +21,7 @@ import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.MappedRegion;
+import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.memory.PoolAllocator.Pool;
 
 import com.sun.jna.Pointer;
@@ -38,7 +39,8 @@ public class PoolAllocatorTest {
 	@BeforeEach
 	void before() {
 		// Create a memory type
-		type = new MemoryType(1, Set.of());
+		final Heap heap = new Heap(0, 0, Set.of());
+		type = new MemoryType(1, heap, Set.of());
 
 		// Create delegate allocator
 		final Answer answer = inv -> {

@@ -7,13 +7,13 @@ import org.sarge.jove.common.TransientNativeObject;
 /**
  * A <i>device memory</i> is a region of memory allocated by Vulkan.
  * <p>
- * A <i>region</i> of the memory must be <i>mapped</i> in order to perform read or write access.
+ * A <i>region</i> of the memory must be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write access.
  * <p>
  * Notes:
  * <ul>
  * <li>Only <b>one</b> active mapping is permitted on a given device memory instance at any one time</li>
  * <li>Memory mappings can be <i>persistent</i>, i.e. it is not required to explicitly un-map memory after a read/write access</li>
- * <li>Memory is assumed to be automatically un-mapped when it is released</li>
+ * <li>Memory can be assumed to be automatically un-mapped when it is released</li>
  * </ul>
  * <p>
  * Usage:
@@ -35,7 +35,7 @@ import org.sarge.jove.common.TransientNativeObject;
  */
 public interface DeviceMemory extends TransientNativeObject {
 	/**
-	 * @return Size of this memory
+	 * @return Size of this memory (bytes)
 	 */
 	long size();
 

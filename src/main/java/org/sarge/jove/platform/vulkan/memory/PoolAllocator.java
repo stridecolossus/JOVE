@@ -16,8 +16,18 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>pool allocator</i>
- * TODO
+ * A <i>pool allocator</i> maintains a <i>pool</i> of memory in order to reduce the total number of active allocations.
+ * <p>
+ * This implementation creates a pool for <b>each</b> memory type on demand which grows as required.
+ * <br>
+ * Memory can also be pre-allocated using the {@link Pool#init(long)} method.
+ * <p>
+ * Note that each pool contains a number of memory <i>blocks</i> from which individual instances are allocated.
+ * <br>
+ * Therefore a region mapping on <b>any</b> memory instance within a given block implicitly maps the whole block.
+ * <br>
+ * See {@link DeviceMemory#map(long, long)}.
+ * <p>
  * Usage:
  * <pre>
  *  // Create allocator
@@ -40,6 +50,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  *  // Cleanup
  *  allocator.destroy();
  * </pre>
+ * <p>
+ * @see Allocator#paged(Allocator, long)
  * @author Sarge
  */
 public class PoolAllocator implements Allocator {
@@ -150,6 +162,9 @@ public class PoolAllocator implements Allocator {
 			return mem.size() - total;
 		}
 
+		/**
+		 * @return Remaining free memory in this block
+		 */
 		private long remaining() {
 			return mem.size() - free;
 		}

@@ -2,31 +2,83 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.platform.vulkan.VkMemoryHeap;
+import org.sarge.jove.platform.vulkan.VkMemoryHeapFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
+import org.sarge.jove.platform.vulkan.VkMemoryType;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
+import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 public class MemoryTypeTest {
 	private MemoryType type;
+	private Heap heap;
 
 	@BeforeEach
 	void before() {
-		type = new MemoryType(1, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
+		heap = new Heap(0, 1, Set.of(VkMemoryHeapFlag.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT));
+		type = new MemoryType(0, heap, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(1, type.index());
+		assertEquals(0, type.index());
+		assertEquals(heap, type.heap());
 		assertEquals(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT), type.properties());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, type.equals(type));
-		assertEquals(true, type.equals(new MemoryType(1, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))));
+		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))));
 		assertEquals(false, type.equals(null));
-		assertEquals(false, type.equals(new MemoryType(1, Set.of())));
+		assertEquals(false, type.equals(new MemoryType(0, heap, Set.of())));
+	}
+
+	@Nested
+	class HeapTests {
+		@Test
+		void heap() {
+			assertEquals(0, heap.index());
+			assertEquals(1, heap.size());
+			assertEquals(Set.of(VkMemoryHeapFlag.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT), heap.flags());
+			assertEquals(List.of(type), heap.types());
+		}
+
+		@Test
+		void equals() {
+			assertEquals(true, heap.equals(heap));
+			assertEquals(false, heap.equals(null));
+			assertEquals(false, heap.equals(new Heap(0, 1, Set.of())));
+		}
+	}
+
+	@Test
+	void extract() {
+		// Create heap
+		final var heap = new VkMemoryHeap();
+		heap.size = 1;
+		heap.flags = IntegerEnumeration.mask(VkMemoryHeapFlag.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+
+		// Create memory type
+		final var info = new VkMemoryType();
+		info.heapIndex = 0;
+		info.propertyFlags = IntegerEnumeration.mask(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		// Create memory properties
+		final var props = new VkPhysicalDeviceMemoryProperties();
+		props.memoryHeapCount = 1;
+		props.memoryHeaps = new VkMemoryHeap[]{heap};
+		props.memoryTypeCount = 1;
+		props.memoryTypes = new VkMemoryType[]{info};
+
+		// Extract from properties
+		assertEquals(List.of(type), MemoryType.types(props));
 	}
 }

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
+import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.memory.Request.Builder;
 
 public class RequestTest {
@@ -23,10 +24,12 @@ public class RequestTest {
 	private static final Set<VkMemoryPropertyFlag> OPTIMAL = Set.of(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
 
 	private Request req;
+	private Heap heap;
 
 	@BeforeEach
 	void before() {
 		req = new Request(SIZE, FILTER, REQUIRED, OPTIMAL);
+		heap = new Heap(0, 0,Set.of());
 	}
 
 	@Test
@@ -53,8 +56,8 @@ public class RequestTest {
 
 		@BeforeEach
 		void before() {
-			required = new MemoryType(0, REQUIRED);
-			optimal = new MemoryType(1, OPTIMAL);
+			required = new MemoryType(0, heap, REQUIRED);
+			optimal = new MemoryType(1, heap, OPTIMAL);
 		}
 
 		@Test
@@ -74,7 +77,7 @@ public class RequestTest {
 
 		@Test
 		void noneMatched() {
-			final MemoryType other = new MemoryType(2, Set.of(VK_MEMORY_PROPERTY_PROTECTED_BIT));
+			final MemoryType other = new MemoryType(2, heap, Set.of(VK_MEMORY_PROPERTY_PROTECTED_BIT));
 			assertEquals(Optional.empty(), req.select(Set.of(other)));
 		}
 

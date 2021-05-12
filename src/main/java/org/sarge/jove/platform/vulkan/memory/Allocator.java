@@ -12,7 +12,8 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>memory allocator</i> is a strategy for allocation of device memory.
+ * A <i>memory allocator</i> defines a strategy for allocation of device memory.
+ * @see DeviceMemory
  * @author Sarge
  */
 public interface Allocator {
@@ -30,7 +31,7 @@ public interface Allocator {
 	}
 
 	/**
-	 * Allocate device memory.
+	 * Allocates device memory.
 	 * @param type Type of memory to allocate
 	 * @param size Size of the memory (bytes)
 	 * @return New device memory
@@ -39,7 +40,7 @@ public interface Allocator {
 	DeviceMemory allocate(MemoryType type, long size) throws AllocationException;
 
 	/**
-	 * Implementation that allocates a new region of memory on <b>every</b> invocation.
+	 * Default implementation that allocates a new region of memory on <b>every</b> invocation.
 	 */
 	class SimpleAllocator implements Allocator {
 		private final LogicalDevice dev;

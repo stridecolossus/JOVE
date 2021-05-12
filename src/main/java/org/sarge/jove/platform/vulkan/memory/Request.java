@@ -15,7 +15,36 @@ import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>memory request</i> specifies application requirements for device memory and used to select an appropriate memory type.
+ * A <i>memory request</i> specifies application requirements for memory allocated by Vulkan and is used to select an appropriate memory type.
+ * <p>
+ * The request is comprised of:
+ * <ul>
+ * <li>the <i>size</i> of the requested memory</li>
+ * <li>a bit-mask <i>filter</i> specifying the supported memory type(s) for this request (by index)</li>
+ * <li>an <i>optimal</i> and a <i>required</i> set of memory properties</li>
+ * </ul>
+ * <p>
+ * In general a consumer of this request will allocate memory that matches the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
+ * <br>
+ * Note that this implementation does not apply any assumptions or constraints on the relationship between the optimal and required memory property sets.
+ * <p>
+ * Example:
+ * <pre>
+ *  // Specify host memory of types 0 or 1 and optimally a coherent heap
+ *  Request req = new Request.Builder()
+ *  	.size(42)
+ *  	.filter(0b11)
+ *  	.optimal(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+ *  	.build()
+ *
+ *  // Select matching memory type for this request
+ *  Collection<MemoryType> types = ...
+ *  MemoryType selected = req.select(types);
+ * </pre>
+ * <p>
+ * The builder also provides the convenience {@link Builder#init(VkMemoryRequirements)} mutator to configure a request given memory requirements returned from Vulkan.
+ * <p>
+ * @see MemoryType
  * @author Sarge
  */
 public record Request(long size, int filter, Set<VkMemoryPropertyFlag> required, Set<VkMemoryPropertyFlag> optimal) {

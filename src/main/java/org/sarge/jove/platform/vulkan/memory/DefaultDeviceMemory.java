@@ -11,13 +11,15 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.memory.Allocator.SimpleAllocator;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- *
+ * A <i>default device memory</i> is the default implementation for memory allocated by the Vulkan API.
+ * @see SimpleAllocator
  * @author Sarge
  */
 class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {

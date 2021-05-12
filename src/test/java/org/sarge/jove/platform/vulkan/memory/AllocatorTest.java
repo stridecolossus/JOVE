@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.memory.Allocator.SimpleAllocator;
+import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.ptr.PointerByReference;
@@ -24,7 +25,8 @@ public class AllocatorTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		type = new MemoryType(1, Set.of());
+		final Heap heap = new Heap(0, 0, Set.of());
+		type = new MemoryType(1, heap, Set.of());
 	}
 
 	@Nested
