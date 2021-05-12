@@ -37,6 +37,7 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 		release();
 		destroyed = true;
 	}
+	// TODO - final?
 
 	/**
 	 * Releases this object.

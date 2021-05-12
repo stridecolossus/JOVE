@@ -1,0 +1,190 @@
+package org.sarge.jove.platform.vulkan.memory;
+
+import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
+
+import java.nio.ByteBuffer;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.lib.util.Check;
+
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
+
+/**
+ *
+ * @author Sarge
+ */
+class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
+	private final long size;
+
+	private volatile MappedRegion mapping;
+
+	/**
+	 * Constructor.
+	 * @param handle		Memory pointer
+	 * @param dev			Logical device
+	 * @param size			Size of this memory (bytes)
+	 */
+	protected DefaultDeviceMemory(Pointer handle, LogicalDevice dev, long size) {
+		super(handle, dev, dev.library()::vkFreeMemory);
+		this.size = oneOrMore(size);
+	}
+
+	@Override
+	public long size() {
+		return size;
+	}
+
+	@Override
+	public boolean isMapped() {
+		return mapping != null;
+	}
+
+	/**
+	 * Default region implementation.
+	 */
+	private class DefaultMappedRegion implements MappedRegion {
+		private final Pointer ptr;
+		private final long region;
+		private final long offset;
+
+		/**
+		 * Constructor.
+		 * @param ptr				Region memory pointer
+		 * @param region			Size of this region
+		 * @param offset			Offset
+		 */
+		private DefaultMappedRegion(Pointer ptr, long region, long offset) {
+			this.ptr = notNull(ptr);
+			this.region = oneOrMore(region);
+			this.offset = zeroOrMore(offset);
+		}
+
+		private DefaultDeviceMemory memory() {
+			return DefaultDeviceMemory.this;
+		}
+
+		@Override
+		public void write(byte[] array) {
+			validate(array.length);
+			ptr.write(0, array, 0, array.length);
+		}
+
+		@Override
+		public void write(ByteBuffer buffer) {
+			final long len = buffer.remaining();
+			final ByteBuffer bb = ptr.getByteBuffer(0, len);
+			validate(len);
+			bb.put(buffer);
+		}
+
+		@Override
+		public synchronized void unmap() {
+			// Validate mapping is active
+			validate();
+
+			// Release mapping
+			final LogicalDevice dev = device();
+			final VulkanLibrary lib = dev.library();
+			final DefaultDeviceMemory mem = memory();
+			lib.vkUnmapMemory(dev.handle(), mem.handle());
+
+			// Clear state
+			mapping = null;
+		}
+
+		/**
+		 * @throws IllegalStateException if this region has not been destroyed or invalidated
+		 */
+		private void validate() {
+			checkAlive();
+			if(mapping == null) throw new IllegalStateException("Memory region has been invalidated: " + this);
+		}
+
+		/**
+		 * @throws IllegalArgumentException if the given size is larger than this memory
+		 */
+		private void validate(long size) {
+			validate();
+			if(size > this.region) {
+				throw new IllegalArgumentException(String.format("Data is larger than this region: size=%d mem=%s", size, this));
+			}
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof DefaultMappedRegion that) &&
+					this.memory().equals(that.memory()) &&
+					(this.region == that.region) &&
+					(this.offset == that.offset);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append("size", region)
+					.append("offset", offset)
+					.append("mem", memory())
+					.build();
+		}
+	}
+
+	@Override
+	public synchronized MappedRegion map(long size, long offset) {
+		// Validate
+		Check.oneOrMore(size);
+		Check.zeroOrMore(offset);
+		checkAlive();
+		if(isMapped()) {
+			throw new IllegalStateException("Device memory has already been mapped: " + this);
+		}
+		if(size + offset > this.size) {
+			throw new IllegalArgumentException(String.format("Mapped region is larger than this device memory: size=%d offset=%d mem=%s", size, offset, this));
+		}
+
+		// Map memory
+		final LogicalDevice dev = this.device();
+		final VulkanLibrary lib = dev.library();
+		final PointerByReference ref = lib.factory().pointer();
+		check(lib.vkMapMemory(dev.handle(), this.handle(), offset, size, 0, ref));
+
+		// Create mapped region
+		mapping = new DefaultMappedRegion(ref.getValue(), size, offset);
+		return mapping;
+	}
+
+	/**
+	 * @throws IllegalStateException if this memory has been released
+	 */
+	private void checkAlive() {
+		if(isDestroyed()) {
+			throw new IllegalStateException("Device memory has been released: " + this);
+		}
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof DefaultDeviceMemory that) &&
+				(this.size == that.size) &&
+				this.handle.equals(that.handle);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("handle", super.handle())
+				.append("size", size)
+				.append("mapped", mapping)
+				.build();
+	}
+}

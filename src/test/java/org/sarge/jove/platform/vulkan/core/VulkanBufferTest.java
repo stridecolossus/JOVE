@@ -128,10 +128,16 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	@Nested
 	class WritableTests {
 		private Writable writable;
+		private byte[] array;
+		private PointerByReference ptr;
 
 		@BeforeEach
 		void before() {
-			writable = buffer.map(1, 0);
+			ptr = mock(PointerByReference.class);
+			when(ptr.getValue()).thenReturn(mock(Pointer.class));
+			when(lib.factory().pointer()).thenReturn(ptr);
+			writable = buffer.map(LENGTH, 0);
+			array = new byte[LENGTH];
 		}
 
 		@Test
@@ -142,7 +148,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void map() {
-			// TODO - check map API
+			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, LENGTH, 0, ptr);
 		}
 
 		@Test
@@ -164,35 +170,38 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void writeArray() {
-			writable.write(new byte[1]);
-			// TODO - check API
+			writable.write(array);
+			verify(ptr.getValue()).write(0, array, 0, LENGTH);
 		}
 
 		@Test
 		void writeByteBuffer() {
-			final ByteBuffer bb = ByteBuffer.wrap(new byte[1]);
+			// Create destination buffer
+			final ByteBuffer dest = mock(ByteBuffer.class);
+			when(ptr.getValue().getByteBuffer(0, LENGTH)).thenReturn(dest);
+
+			// Write buffer and check copied to destination
+			final ByteBuffer bb = ByteBuffer.wrap(array);
 			writable.write(bb);
-			// TODO
+			verify(dest).put(bb);
 		}
 
 		@Test
 		void writeInvalidLength() {
-			final byte[] array = new byte[2];
-			assertThrows(IllegalArgumentException.class, () -> writable.write(array));
-			assertThrows(IllegalArgumentException.class, () -> writable.write(ByteBuffer.wrap(array)));
+			assertThrows(IllegalArgumentException.class, () -> writable.write(ByteBuffer.wrap(new byte[4])));
 		}
 
 		@Test
 		void writeReleased() {
 			writable.release();
-			assertThrows(IllegalStateException.class, () -> writable.write(new byte[1]));
+			assertThrows(IllegalStateException.class, () -> writable.write(array));
 		}
 
 		@Test
 		void release() {
 			writable.release();
 			assertEquals(true, writable.isReleased());
-			// TODO
+			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, LENGTH, 0, ptr);
 		}
 
 		@Test
@@ -201,53 +210,6 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			assertThrows(IllegalStateException.class, () -> writable.release());
 		}
 	}
-
-//	@Test
-//	void load() {
-//		// Over-ride factory
-//		final ReferenceFactory factory = mock(ReferenceFactory.class);
-//		when(lib.factory()).thenReturn(factory);
-//
-//		// Init buffer memory
-//		final PointerByReference ref = mock(PointerByReference.class);
-//		final Pointer data = mock(Pointer.class);
-//		when(factory.pointer()).thenReturn(ref);
-//		when(ref.getValue()).thenReturn(data);
-//
-////		// Init internal buffer
-////		final ByteBuffer bb = mock(ByteBuffer.class);
-////		when(data.getByteBuffer(0, 3)).thenReturn(bb);
-//
-//		// Load buffer
-//		final Bufferable obj = mock(Bufferable.class);
-//		when(obj.length()).thenReturn(3);
-//		buffer.load(obj);
-//
-//		// Check memory is mapped
-//		verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, 3L, 0, ref);
-//		verify(lib).vkUnmapMemory(dev.handle(), mem.handle());
-//
-//		// TODO
-////		// Load bufferable at offset
-////		final Bufferable obj = mock(Bufferable.class);
-////		when(data.getByteBuffer(0, 1)).thenReturn(bb);
-////		buffer.load(obj, 2);
-////		verify(obj).buffer(bb);
-//	}
-//
-//	@Test
-//	void loadBufferTooLarge() {
-//		final Bufferable obj = mock(Bufferable.class);
-//		when(obj.length()).thenReturn(999);
-//		assertThrows(IllegalStateException.class, () -> buffer.load(obj));
-//	}
-//
-//	@Test
-//	void loadInvalidOffset() {
-//		final Bufferable obj = mock(Bufferable.class);
-//		when(obj.length()).thenReturn(1);
-//		assertThrows(IllegalStateException.class, () -> buffer.load(obj, 3));
-//	}
 
 	@Test
 	void destroy() {

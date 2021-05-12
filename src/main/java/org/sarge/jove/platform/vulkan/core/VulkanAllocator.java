@@ -144,7 +144,7 @@ public class VulkanAllocator {
 		private final int index;
 		private final Heap heap;
 		private final int props;
-		private final Pool pool; // = new DeviceMemory.Pool(this::allocate);
+		private final PoolAllocator pool; // = new DeviceMemory.Pool(this::allocate);
 
 		/**
 		 * Constructor.
@@ -156,7 +156,7 @@ public class VulkanAllocator {
 			this.index = zeroOrMore(index);
 			this.heap = notNull(heap);
 			this.props = props;
-			this.pool = new Pool(allocator);
+			this.pool = new PoolAllocator(allocator);
 			heap.types.add(this);
 
 			//System.out.println(index+ " "+IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, props)+" "+heap);
@@ -186,7 +186,7 @@ public class VulkanAllocator {
 		/**
 		 * @return Memory pool for this type
 		 */
-		public Pool pool() {
+		public PoolAllocator pool() {
 			return pool;
 		}
 

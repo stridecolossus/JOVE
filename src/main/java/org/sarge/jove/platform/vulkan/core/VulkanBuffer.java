@@ -3,20 +3,18 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
+import org.sarge.jove.platform.vulkan.memory.Request;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.lib.util.Check;
 
@@ -44,7 +42,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	private final Set<VkBufferUsageFlag> usage;
-	private final long len;
+//	private final long len;
 	private final DeviceMemory mem;
 
 	/**
@@ -52,13 +50,13 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param handle		Buffer handle
 	 * @param dev			Logical device
 	 * @param usage			Usage flags
-	 * @param len			Length (bytes)
-	 * @param mem			Memory handle
+//	 * @param len			Length (bytes)
+	 * @param mem			Buffer memory
 	 */
-	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsageFlag> usage, long len, DeviceMemory mem) {
+	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsageFlag> usage, /*long len,*/ DeviceMemory mem) {
 		super(handle, dev, dev.library()::vkDestroyBuffer);
 		this.usage = Set.copyOf(notEmpty(usage));
-		this.len = oneOrMore(len);
+//		this.len = oneOrMore(len);
 		this.mem = notNull(mem);
 	}
 
@@ -69,137 +67,148 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		return usage;
 	}
 
+//	/**
+//	 * @return Length of this buffer (bytes)
+//	 */
+//	public long length() {
+//		return len;
+//	}
+
 	/**
-	 * @return Length of this buffer (bytes)
+	 * @return Buffer memory
 	 */
-	public long length() {
-		return len;
+	public DeviceMemory memory() {
+		return mem;
 	}
 
-	/**
-	 * A <i>writable</i> is a segment of this buffer that can be written to.
-	 */
-	public final class Writable {
-		private final Pointer ptr;
-		private final long segment;
-		private final long offset;
-
-		private boolean released;
-
-		/**
-		 * Constructor.
-		 * @param ptr			Mapped memory pointer
-		 * @param segment		Length of this writable segment
-		 * @param offset		Offset
-		 */
-		private Writable(Pointer ptr, long segment, long offset) {
-			this.ptr = notNull(ptr);
-			this.segment = oneOrMore(segment);
-			this.offset = zeroOrMore(offset);
-		}
-
-		/**
-		 * Writes the given array to this buffer.
-		 * @param data Data array
-		 * @throws IllegalArgumentException if the given data array is larger than this segment
-		 * @throws IllegalStateException if this writable has been released
-		 */
-		public void write(byte[] data) {
-			check();
-			check(data.length);
-			ptr.write(offset, data, 0, data.length);
-		}
-
-		/**
-		 * Writes the given byte-buffer to this buffer.
-		 * @param data Byte-buffer
-		 * @throws IllegalArgumentException if the given buffer is larger than this segment
-		 * @throws IllegalStateException if this writable has been released
-		 */
-		public void write(ByteBuffer data) {
-			check();
+//	/**
+//	 * A <i>writable</i> is a segment of this buffer that can be written to.
+//	 */
+//	public final class Writable {
+//		private final Pointer ptr;
+//		private final long segment;
+//		private final long offset;
+//
+//		private boolean released;
+//
+//		/**
+//		 * Constructor.
+//		 * @param ptr			Mapped memory pointer
+//		 * @param segment		Length of this writable segment
+//		 * @param offset		Offset
+//		 */
+//		private Writable(Pointer ptr, long segment, long offset) {
+//			this.ptr = notNull(ptr);
+//			this.segment = oneOrMore(segment);
+//			this.offset = zeroOrMore(offset);
+//		}
+//
+//		/**
+//		 * Writes the given array to this buffer.
+//		 * @param data Data array
+//		 * @throws IllegalArgumentException if the given data array is larger than this segment
+//		 * @throws IllegalStateException if this writable has been released
+//		 */
+//		public void write(byte[] data) {
+//			check();
 //			check(data.length);
-//			ptr.getByteBuffer(offset, offset);
-			// TODO
-		}
-
-		/**
-		 * @throws IllegalStateException if this writable has been released
-		 */
-		private void check() {
-			if(released) throw new IllegalStateException("Writable has been released");
-		}
-
-		/**
-		 * @throws IllegalArgumentException if the data is larger than this segment
-		 */
-		private void check(int len) {
-			if(len > segment) throw new IllegalArgumentException(String.format("Data is large than the writable segment: len=%d data=%d", segment, len));
-		}
-
-		/**
-		 * @return Whether this writable has been released
-		 */
-		public boolean isReleased() {
-			return released;
-		}
-
-		/**
-		 * Releases (i.e. unmaps) this writable segment.
-		 * @throws IllegalStateException if this segment has already been released
-		 */
-		public void release() {
-			check();
-			final LogicalDevice dev = device();
-			final VulkanLibrary lib = dev.library();
-			lib.vkUnmapMemory(dev.handle(), mem.handle());
-			released = true;
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append(VulkanBuffer.this)
-					.append("length", segment)
-					.append("offset", offset)
-					.build();
-		}
-	}
-
-	/**
-	 * Maps a segment of this buffer ready for writing.
-	 * <p>
-	 * TODO - release
-	 * <p>
-	 * @param len			Segment length (bytes)
-	 * @param offset		Offset
-	 * @return Writable segment of this buffer
-	 * @throws IllegalArgumentException if the combined segment length and offset is larger than this buffer
-	 */
-	public Writable map(long len, long offset) {
-		// Validate
-		Check.oneOrMore(len);
-		Check.zeroOrMore(offset);
-		if(len + offset > this.len) throw new IllegalArgumentException(String.format("Writable length exceeds buffer: length=%d offset=%d this=%s", len, offset, this));
-
-		// Map buffer memory
-		final LogicalDevice dev = this.device();
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference data = lib.factory().pointer();
-		check(lib.vkMapMemory(dev.handle(), mem.handle(), offset, len, 0, data));
-
-		// Create writable segment
-		return new Writable(data.getValue(), len, offset);
-	}
-
-	/**
-	 * Helper - Maps the entire buffer.
-	 * @return Writable buffer
-	 * @see #map(long, long)
-	 */
-	public Writable map() {
-		return map(len, 0);
-	}
+//			ptr.write(offset, data, 0, data.length);
+//		}
+//
+//		/**
+//		 * Writes the given byte-buffer to this buffer.
+//		 * @param data Byte-buffer
+//		 * @throws IllegalArgumentException if the remaining data in the given buffer is larger than this segment
+//		 * @throws IllegalStateException if this writable has been released
+//		 */
+//		public void write(ByteBuffer data) {
+//			// Validate
+//			final int len = data.remaining();
+//			check();
+//			check(len);
+//
+//			// Copy buffer
+//			final ByteBuffer dest = ptr.getByteBuffer(offset, len);
+//			dest.put(data);
+//		}
+//
+//		/**
+//		 * @throws IllegalStateException if this writable has been released
+//		 */
+//		private void check() {
+//			if(released) throw new IllegalStateException("Writable has been released");
+//		}
+//
+//		/**
+//		 * @throws IllegalArgumentException if the data is larger than this segment
+//		 */
+//		private void check(int len) {
+//			if(len > segment) throw new IllegalArgumentException(String.format("Data is large than the writable segment: len=%d data=%d", segment, len));
+//		}
+//
+//		/**
+//		 * @return Whether this writable has been released
+//		 */
+//		public boolean isReleased() {
+//			return released;
+//		}
+//
+//		/**
+//		 * Releases (i.e. unmaps) this writable segment.
+//		 * @throws IllegalStateException if this segment has already been released
+//		 */
+//		public void release() {
+//			check();
+//			final LogicalDevice dev = device();
+//			final VulkanLibrary lib = dev.library();
+//			lib.vkUnmapMemory(dev.handle(), mem.handle());
+//			released = true;
+//		}
+//
+//		@Override
+//		public String toString() {
+//			return new ToStringBuilder(this)
+//					.append(VulkanBuffer.this)
+//					.append("length", segment)
+//					.append("offset", offset)
+//					.build();
+//		}
+//	}
+//
+//	/**
+//	 * Maps a segment of this buffer ready for writing.
+//	 * <p>
+//	 * TODO - release
+//	 * <p>
+//	 * @param len			Segment length (bytes)
+//	 * @param offset		Offset
+//	 * @return Writable segment of this buffer
+//	 * @throws IllegalArgumentException if the combined segment length and offset is larger than this buffer
+//	 */
+//	public Writable map(long len, long offset) {
+//		// Validate
+//		Check.oneOrMore(len);
+//		Check.zeroOrMore(offset);
+//		if(len + offset > this.len) throw new IllegalArgumentException(String.format("Writable length exceeds buffer: length=%d offset=%d this=%s", len, offset, this));
+//
+//		// Map buffer memory
+//		final LogicalDevice dev = this.device();
+//		final VulkanLibrary lib = dev.library();
+//		final PointerByReference data = lib.factory().pointer();
+//		check(lib.vkMapMemory(dev.handle(), mem.handle(), offset, len, 0, data));
+//
+//		// Create writable segment
+//		return new Writable(data.getValue(), len, offset);
+//	}
+//
+//	/**
+//	 * Helper - Maps the entire buffer.
+//	 * @return Writable buffer
+//	 * @see #map(long, long)
+//	 */
+//	public Writable map() {
+//		return map(len, 0);
+//	}
 
 	/**
 	 * @return This buffer as a uniform buffer resource
@@ -218,7 +227,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 				final var info = new VkDescriptorBufferInfo();
 				info.buffer = handle();
 				info.offset = 0;
-				info.range = len;
+				info.range = mem.size();
 				write.pBufferInfo = info;
 			}
 		};
@@ -258,13 +267,14 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public Command copy(VulkanBuffer dest) {
 		// Validate
-		if(len > dest.length()) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
+//		if(len > dest.length()) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
+		if(mem.size() > dest.memory().size()) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
 		require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 		dest.require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
 		// Build copy descriptor
 		final VkBufferCopy region = new VkBufferCopy();
-		region.size = len;
+		region.size = mem.size();
 
 		// Create copy command
 		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, VulkanBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
@@ -292,8 +302,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("handle", this.handle())
-				.append("len", len)
-				.append("mem", mem.handle())
+				.append("mem", mem)
 				.append("usage", usage)
 				.build();
 	}
@@ -303,10 +312,11 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public static class Builder {
 		private final LogicalDevice dev;
-		private long len;
+//		private long len;
 		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
 		private final Set<VkBufferUsageFlag> usage = new HashSet<>();
-		private final VulkanAllocator.Request request;
+//		private final Request.Builder request = new Request.Builder();
+		private Request req;
 
 		/**
 		 * Constructor.
@@ -314,7 +324,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
-			this.request = dev.allocator().request();
+//			this.request = dev.allocator().request();
 		}
 
 		/**
@@ -327,23 +337,23 @@ public class VulkanBuffer extends AbstractVulkanObject {
 			return this;
 		}
 
-		/**
-		 * Adds an <i>optimal</i> memory property.
-		 * @param prop Optimal memory property
-		 */
-		public Builder optimal(VkMemoryPropertyFlag prop) {
-			request.optimal(prop);
-			return this;
-		}
-
-		/**
-		 * Adds a <i>required</i> memory property.
-		 * @param prop Required memory property
-		 */
-		public Builder required(VkMemoryPropertyFlag prop) {
-			request.required(prop);
-			return this;
-		}
+//		/**
+//		 * Adds an <i>optimal</i> memory property.
+//		 * @param prop Optimal memory property
+//		 */
+//		public Builder optimal(VkMemoryPropertyFlag prop) {
+//			request.optimal(prop);
+//			return this;
+//		}
+//
+//		/**
+//		 * Adds a <i>required</i> memory property.
+//		 * @param prop Required memory property
+//		 */
+//		public Builder required(VkMemoryPropertyFlag prop) {
+//			request.required(prop);
+//			return this;
+//		}
 
 		/**
 		 * Sets the sharing mode.
@@ -355,12 +365,17 @@ public class VulkanBuffer extends AbstractVulkanObject {
 			return this;
 		}
 
-		/**
-		 * Sets the length of this buffer.
-		 * @param len Buffer length (bytes)
-		 */
-		public Builder length(long len) {
-			this.len = oneOrMore(len);
+//		/**
+//		 * Sets the length of this buffer.
+//		 * @param len Buffer length (bytes)
+//		 */
+//		public Builder length(long len) {
+//			this.len = oneOrMore(len);
+//			return this;
+//		}
+
+		public Builder memory(Request req) {
+			this.req = notNull(req);
 			return this;
 		}
 
@@ -372,7 +387,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		public VulkanBuffer build() {
 			// Validate
 			if(usage.isEmpty()) throw new IllegalArgumentException("No buffer usage flags specified");
-			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
+//			if(len == 0) throw new IllegalArgumentException("Cannot create an empty buffer");
+			if(req == null) throw new IllegalArgumentException("Cannot create an empty buffer"); // TODO
 
 			// TODO
 			if(mode == VkSharingMode.VK_SHARING_MODE_CONCURRENT) throw new UnsupportedOperationException();
@@ -384,7 +400,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 			final VkBufferCreateInfo info = new VkBufferCreateInfo();
 			info.usage = IntegerEnumeration.mask(usage);
 			info.sharingMode = mode;
-			info.size = len;
+			info.size = req.size();
 			// TODO - queue families
 
 			// Allocate buffer
@@ -397,13 +413,16 @@ public class VulkanBuffer extends AbstractVulkanObject {
 			lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate buffer memory
-			final DeviceMemory mem = request.init(reqs).allocate();
+
+			// TODO
+			final DeviceMemory mem = new DeviceMemory(null, dev, 0);
+//			final DeviceMemory mem = request.init(reqs).allocate();
 
 			// Bind memory
 			check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L));
 
 			// Create buffer
-			return new VulkanBuffer(handle.getValue(), dev, usage, len, mem);
+			return new VulkanBuffer(handle.getValue(), dev, usage, mem);
 		}
 	}
 }

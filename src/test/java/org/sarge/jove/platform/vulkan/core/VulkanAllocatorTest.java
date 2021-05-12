@@ -136,7 +136,7 @@ public class VulkanAllocatorTest extends AbstractVulkanTest {
 		assertEquals(heap, type.heap());
 
 		// Check pool
-		final Pool pool = type.pool();
+		final PoolAllocator pool = type.pool();
 		assertNotNull(pool);
 		assertEquals(0, pool.count());
 		assertEquals(0, pool.free());
@@ -168,7 +168,7 @@ public class VulkanAllocatorTest extends AbstractVulkanTest {
 			assertEquals(false, mem.isDestroyed());
 
 			// Check pool
-			final Pool pool = allocator.types().get(0).pool();
+			final PoolAllocator pool = allocator.types().get(0).pool();
 			assertEquals(1, pool.count());
 			assertEquals(2, pool.free());
 			assertEquals(3, pool.size());
