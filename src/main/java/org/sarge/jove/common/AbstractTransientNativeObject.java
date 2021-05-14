@@ -37,22 +37,12 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 		release();
 		destroyed = true;
 	}
-	// TODO - final?
 
 	/**
 	 * Releases this object.
 	 * @see #destroy()
 	 */
 	protected abstract void release();
-
-	/**
-	 * Restores this object.
-	 * @throws IllegalStateException if this object has not been destroyed
-	 */
-	protected synchronized void restore() {
-		if(!destroyed) throw new IllegalStateException("Object has not been destroyed: " + this);
-		destroyed = false;
-	}
 
 	@Override
 	public String toString() {

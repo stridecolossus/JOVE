@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
@@ -27,7 +27,7 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @param dev			Device
 	 */
 	Pipeline(Pointer handle, LogicalDevice dev) {
-		super(handle, dev, dev.library()::vkDestroyPipeline);
+		super(handle, dev);
 	}
 
 	/**
@@ -36,6 +36,11 @@ public class Pipeline extends AbstractVulkanObject {
 	 */
 	public Command bind() {
 		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.handle());
+	}
+
+	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkDestroyPipeline;
 	}
 
 	/**

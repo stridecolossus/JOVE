@@ -8,6 +8,7 @@ import java.io.InputStream;
 
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.ResourceLoader;
 
@@ -46,7 +47,12 @@ public class Shader extends AbstractVulkanObject {
 	 * @param dev			Device
 	 */
 	private Shader(Pointer handle, LogicalDevice dev) {
-		super(handle, dev, dev.library()::vkDestroyShaderModule);
+		super(handle, dev);
+	}
+
+	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkDestroyShaderModule;
 	}
 
 	/**

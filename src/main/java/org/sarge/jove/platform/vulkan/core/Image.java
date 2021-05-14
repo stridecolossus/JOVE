@@ -11,12 +11,15 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.DeviceMemory;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
+import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.lib.util.Check;
 
@@ -34,9 +37,9 @@ public interface Image extends NativeObject {
 	Descriptor descriptor();
 
 	/**
-	 * @return Logical device
+	 * @return Device context for this image
 	 */
-	LogicalDevice device();
+	DeviceContext device();
 
 	/**
 	 * Creates a view for this image with default configuration.
@@ -363,7 +366,7 @@ public interface Image extends NativeObject {
 		 * @param dev			Logical device
 		 */
 		protected DefaultImage(Pointer handle, Descriptor descriptor, DeviceMemory mem, LogicalDevice dev) {
-			super(handle, dev, dev.library()::vkDestroyImage);
+			super(handle, dev);
 			this.descriptor = notNull(descriptor);
 			this.mem = notNull(mem);
 		}
@@ -374,11 +377,15 @@ public interface Image extends NativeObject {
 		}
 
 		@Override
+		protected Destructor destructor(VulkanLibrary lib) {
+			return lib::vkDestroyImage;
+		}
+
+		@Override
 		protected void release() {
 			if(!mem.isDestroyed()) {
 				mem.destroy();
 			}
-			super.release();
 		}
 
 		@Override
@@ -395,33 +402,17 @@ public interface Image extends NativeObject {
 	 * Builder for a {@link DefaultImage}.
 	 */
 	class Builder {
-		private final LogicalDevice dev;
 		private final VkImageCreateInfo info = new VkImageCreateInfo();
-		private final Set<VkImageUsageFlag> usage = new HashSet<>();
 		private final Set<VkImageAspectFlag> aspects = new HashSet<>();
-		private final VulkanAllocator.Request request;
+		private MemoryProperties<VkImageUsageFlag> props;
 		private Extents extents;
 
-		/**
-		 * Constructor.
-		 * @param dev Logical device
-		 */
-		public Builder(LogicalDevice dev) {
-			this.dev = notNull(dev);
-			this.request = dev.allocator().request();
-			init();
-		}
-
-		/**
-		 * Initialises the image descriptor.
-		 */
-		private void init() {
+		public Builder() {
 			type(VkImageType.VK_IMAGE_TYPE_2D);
 			mipLevels(1);
 			arrayLayers(1);
 			samples(VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT);
 			tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL);
-			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
 			initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
 		}
 
@@ -489,50 +480,12 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Adds an usage flag.
-		 * @param usage Usage flag
-		 */
-		public Builder usage(VkImageUsageFlag usage) {
-			Check.notNull(usage);
-			this.usage.add(usage);
-			return this;
-		}
-
-		/**
-		 * Sets the sharing mode of the image.
-		 * @param mode Sharing mode (default is {@link VkSharingMode#VK_SHARING_MODE_EXCLUSIVE})
-		 */
-		public Builder mode(VkSharingMode mode) {
-			info.sharingMode = notNull(mode);
-			return this;
-		}
-		// TODO - queue families/count if concurrent
-
-		/**
 		 * Sets the initial image layout.
 		 * @param initialLayout Initial layout (default is undefined)
 		 */
 		public Builder initialLayout(VkImageLayout initialLayout) {
 			info.initialLayout = notNull(initialLayout);
 			// TODO - undefined or pre-init only
-			return this;
-		}
-
-		/**
-		 * Adds an <i>optimal</i> memory property.
-		 * @param prop Optimal memory property
-		 */
-		public Builder optimal(VkMemoryPropertyFlag prop) {
-			request.optimal(prop);
-			return this;
-		}
-
-		/**
-		 * Adds a <i>required</i> memory property.
-		 * @param prop Required memory property
-		 */
-		public Builder required(VkMemoryPropertyFlag prop) {
-			request.required(prop);
 			return this;
 		}
 
@@ -547,24 +500,36 @@ public interface Image extends NativeObject {
 		}
 
 		/**
+		 * Sets the memory properties for this image.
+		 * @param props Memory properties
+		 */
+		public Builder properties(MemoryProperties<VkImageUsageFlag> props) {
+			this.props = notNull(props);
+			return this;
+		}
+
+		/**
 		 * Constructs this image.
+		 * @param dev Logical device
 		 * @return New image
 		 * @throws VulkanException if the image cannot be created
 		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#VK_IMAGE_TYPE_3D} image
 		 * @throws VulkanException if the image cannot be created
 		 */
-		public Image build() {
+		public Image build(LogicalDevice dev) {
 			// Validate
-			if(info.format == null) throw new IllegalArgumentException("No image format specified");
 			if(extents == null) throw new IllegalArgumentException("No image extents specified");
+			if(props == null) throw new IllegalArgumentException("No memory properties specified");
+			if(info.format == null) throw new IllegalArgumentException("No image format specified");
 			if((info.imageType == VkImageType.VK_IMAGE_TYPE_3D) && (info.arrayLayers != 1)) throw new IllegalArgumentException("Array layers must be one for a 3D image");
 
 			// Create image descriptor
+			// TODO - if we used descriptor.builder would we actually need this builder? i.e. descriptor + props = image?
 			final Descriptor descriptor = new Descriptor(info.imageType, info.format, extents, aspects, info.mipLevels, info.arrayLayers);
 
 			// Complete create descriptor
-			extents.populate(info.extent);
-			info.usage = IntegerEnumeration.mask(usage);
+			extents.populate(info.extent); // TODO
+			info.usage = IntegerEnumeration.mask(props.usage());
 
 			// Allocate image
 			final VulkanLibrary lib = dev.library();
@@ -576,11 +541,12 @@ public interface Image extends NativeObject {
 			lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
 
 			// Allocate image memory
-			final DeviceMemory mem = request.init(reqs).allocate();
+			final DeviceMemory mem = dev.allocate(reqs, props);
+
+			// Bind memory to image
 			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.handle(), 0));
 
 			// Create image
-			// TODO - use memory object
 			return new DefaultImage(handle.getValue(), descriptor, mem, dev);
 		}
 	}

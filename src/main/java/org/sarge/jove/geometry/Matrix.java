@@ -11,7 +11,7 @@ import org.sarge.jove.common.Bufferable;
  * <ul>
  * <li>Matrices are constrained to be <i>square</i>, i.e. same width and height</li>
  * <li>The <i>order</i> specifies the dimensions of the matrix</li>
- * <li>Matrix data is assumed to be <i>column major</i> (this is the Vulkan default)</li>
+ * <li>Matrix data is in <i>column major</i> order (the Vulkan default)</li>
  * <li>Matrices are also {@link Bufferable}</li>
  * </ul>
  * <p>
@@ -176,7 +176,7 @@ public interface Matrix extends Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			if(order == Matrix4.SIZE) {
+			if(order == Matrix4.ORDER) {
 				return new Matrix4(matrix);
 			}
 			else {

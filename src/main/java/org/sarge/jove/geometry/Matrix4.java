@@ -3,25 +3,25 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>Matrix4</i> is a 4-by-4 matrix implementation that provides additional factory methods for common cases such as creating rotation matrices.
+ * A <i>Matrix4</i> is a 4-by-4 matrix implementation that provides additional factory methods for common use-cases such as rotation matrices.
  * @author Sarge
  */
 public final class Matrix4 extends DefaultMatrix {
 	/**
-	 * Order for for a 4x4 matrix.
+	 * Order for a 4x4 matrix.
 	 */
-	public static final int SIZE = 4;
+	public static final int ORDER = 4;
 
 	/**
 	 * Identity matrix.
 	 */
-	public static final Matrix IDENTITY = Matrix.identity(SIZE);
+	public static final Matrix IDENTITY = Matrix.identity(ORDER);
 
 	/**
 	 * @return New builder for a 4x4 matrix
 	 */
 	public static Builder builder() {
-		return new Builder(SIZE);
+		return new Builder(ORDER);
 	}
 
 	/**
@@ -104,7 +104,7 @@ public final class Matrix4 extends DefaultMatrix {
 
 	@Override
 	public int order() {
-		return SIZE;
+		return ORDER;
 	}
 
 	@Override

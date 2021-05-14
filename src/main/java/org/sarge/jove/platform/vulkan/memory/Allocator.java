@@ -1,15 +1,6 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>memory allocator</i> defines a strategy for allocation of device memory.
@@ -21,7 +12,11 @@ public interface Allocator {
 	 * An <i>allocation exception</i> is thrown when this allocator cannot allocate memory.
 	 */
 	class AllocationException extends RuntimeException {
-		protected AllocationException(String message) {
+		/**
+		 * Constructor.
+		 * @param message Message
+		 */
+		public AllocationException(String message) {
 			super(message);
 		}
 
@@ -38,38 +33,6 @@ public interface Allocator {
 	 * @throws AllocationException if the memory cannot be allocated
 	 */
 	DeviceMemory allocate(MemoryType type, long size) throws AllocationException;
-
-	/**
-	 * Default implementation that allocates a new region of memory on <b>every</b> invocation.
-	 */
-	class SimpleAllocator implements Allocator {
-		private final LogicalDevice dev;
-
-		/**
-		 * Constructor.
-		 * @param dev Logical device
-		 */
-		public SimpleAllocator(LogicalDevice dev) {
-			this.dev = notNull(dev);
-			// TODO - cyclic with core, factor out device handle & library maybe? or revert to singletons for lib/factory?
-		}
-
-		@Override
-		public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
-			// Init memory descriptor
-			final var info = new VkMemoryAllocateInfo();
-			info.allocationSize = oneOrMore(size);
-			info.memoryTypeIndex = type.index();
-
-			// Allocate memory
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = lib.factory().pointer();
-			check(dev.library().vkAllocateMemory(dev.handle(), info, null, ref));
-
-			// Create memory wrapper
-			return new DefaultDeviceMemory(ref.getValue(), dev, size);
-		}
-	}
 
 	/**
 	 * Creates an adapter that allocates memory of the given page size.

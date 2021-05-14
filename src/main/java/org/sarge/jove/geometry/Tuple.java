@@ -73,9 +73,9 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 	}
 
 	/**
-	 * Calculates the <i>dot</i> (or inner, scalar) product of this and the given tuple.
+	 * Calculates the <i>dot</i> (or inner/scalar) product of this and the given tuple.
 	 * <p>
-	 * The dot product is a scalar value that expresses the angular relationship between two vectors and is represented mathematically as:
+	 * The dot product is a scalar that expresses the angular relationship between two values and is represented mathematically as:
 	 * <p>
 	 * <pre>A.B = |A| |B| cos(angle)</pre>
 	 * <p>
@@ -113,14 +113,10 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Tuple that) && isEqual(that);
+		return (obj == this) || ((obj instanceof Tuple that) && isEqual(that));
 	}
 
 	protected final boolean isEqual(Tuple that) {
-		if(this == that) {
-			return true;
-		}
-
 		return
 				MathsUtil.isEqual(this.x, that.x) &&
 				MathsUtil.isEqual(this.y, that.y) &&

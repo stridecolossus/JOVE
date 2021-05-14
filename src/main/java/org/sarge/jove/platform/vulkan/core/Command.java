@@ -25,6 +25,8 @@ import org.sarge.jove.platform.vulkan.VkCommandPoolCreateFlag;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandPoolResetFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -99,11 +101,14 @@ public interface Command {
 			// Check buffer can be recorded
 			if(state != State.INITIAL) throw new IllegalStateException("Buffer is not ready for recording: " + this);
 
-			// Start buffer
+			// Init descriptor
 			final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
 			info.flags = IntegerEnumeration.mask(flags);
 			info.pInheritanceInfo = null;
-			check(library().vkBeginCommandBuffer(handle, info));
+
+			// Start buffer recording
+			final VulkanLibrary lib = pool.device().library();
+			check(lib.vkBeginCommandBuffer(handle, info));
 
 			// Start recording
 			state = State.RECORDING;
@@ -117,7 +122,7 @@ public interface Command {
 		 */
 		public Buffer add(Command cmd) {
 			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
-			cmd.execute(library(), handle);
+			cmd.execute(pool.device().library(), handle);
 			return this;
 		}
 
@@ -129,7 +134,8 @@ public interface Command {
 		public Buffer end() {
 			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
 			// TODO - count?
-			check(library().vkEndCommandBuffer(handle));
+			final VulkanLibrary lib = pool.device().library();
+			check(lib.vkEndCommandBuffer(handle));
 			state = State.EXECUTABLE;
 			return this;
 		}
@@ -142,7 +148,8 @@ public interface Command {
 		public void reset(VkCommandBufferResetFlag... flags) {
 			if(state != State.EXECUTABLE) throw new IllegalStateException("Buffer has not been recorded: " + this);
 			final int mask = IntegerEnumeration.mask(flags);
-			check(library().vkResetCommandBuffer(handle, mask));
+			final VulkanLibrary lib = pool.device().library();
+			check(lib.vkResetCommandBuffer(handle, mask));
 			state = State.INITIAL;
 		}
 
@@ -152,13 +159,6 @@ public interface Command {
 		public synchronized void free() {
 			pool.free(Set.of(this));
 			pool.buffers.remove(this);
-		}
-
-		/**
-		 * @return Vulkan API
-		 */
-		private VulkanLibrary library() {
-			return pool.queue.device().library();
 		}
 
 		@Override
@@ -187,7 +187,7 @@ public interface Command {
 			info.flags = IntegerEnumeration.mask(flags);
 
 			// Create pool
-			final LogicalDevice dev = queue.device();
+			final DeviceContext dev = queue.device();
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference pool = lib.factory().pointer();
 			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
@@ -205,7 +205,7 @@ public interface Command {
 		 * @param queue			Work queue
 		 */
 		private Pool(Pointer handle, Queue queue) {
-			super(handle, queue.device(), queue.device().library()::vkDestroyCommandPool);
+			super(handle, queue.device());
 			this.queue = notNull(queue);
 		}
 
@@ -237,7 +237,7 @@ public interface Command {
 			info.commandPool = this.handle();
 
 			// Allocate buffers
-			final LogicalDevice dev = queue.device();
+			final DeviceContext dev = queue.device();
 			final VulkanLibrary lib = dev.library();
 			final Pointer[] handles = lib.factory().pointers(num);
 			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
@@ -276,8 +276,8 @@ public interface Command {
 		 * @param flags Reset flags
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
-			final LogicalDevice dev = super.device();
 			final int mask = IntegerEnumeration.mask(flags);
+			final DeviceContext dev = super.device();
 			check(dev.library().vkResetCommandPool(dev.handle(), this.handle(), mask));
 		}
 
@@ -294,14 +294,18 @@ public interface Command {
 		 * @param buffers Buffers to release
 		 */
 		private void free(Collection<Buffer> buffers) {
-			final LogicalDevice dev = super.device();
+			final DeviceContext dev = super.device();
 			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers));
+		}
+
+		@Override
+		protected Destructor destructor(VulkanLibrary lib) {
+			return lib::vkDestroyCommandPool;
 		}
 
 		@Override
 		protected void release() {
 			buffers.clear();
-			super.release();
 		}
 
 		@Override

@@ -112,11 +112,12 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryPropertyFlag> propert
 	}
 
 	/**
-	 * Extracts the memory types from the given descriptor.
-	 * @param props Memory properties
+	 * Extracts the memory types supported by the hardware from the given descriptor.
+	 * @param props Memory properties descriptor
 	 * @return Memory types
+	 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html">Vulkan documentation</a>
 	 */
-	public static List<MemoryType> types(VkPhysicalDeviceMemoryProperties props) {
+	public static List<MemoryType> enumerate(VkPhysicalDeviceMemoryProperties props) {
 		// Enumerate memory heaps
 		final IntFunction<Heap> heapMapper = index -> {
 			final VkMemoryHeap heap = props.memoryHeaps[index];

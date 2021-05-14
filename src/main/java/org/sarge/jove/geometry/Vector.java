@@ -189,6 +189,6 @@ public final class Vector extends Tuple {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Vector vec) && super.isEqual(vec);
+		return (obj == this) || ((obj instanceof Vector vec) && super.isEqual(vec));
 	}
 }

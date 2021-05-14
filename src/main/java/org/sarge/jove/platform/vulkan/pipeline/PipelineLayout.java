@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
@@ -35,7 +35,12 @@ public class PipelineLayout extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 */
 	private PipelineLayout(Pointer handle, LogicalDevice dev) {
-		super(handle, dev, dev.library()::vkDestroyPipelineLayout);
+		super(handle, dev);
+	}
+
+	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkDestroyPipelineLayout;
 	}
 
 	/**

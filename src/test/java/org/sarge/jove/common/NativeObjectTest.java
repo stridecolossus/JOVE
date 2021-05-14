@@ -58,6 +58,12 @@ public class NativeObjectTest {
 	}
 
 	@Test
+	void ofNullable() {
+		assertEquals(handle, Handle.ofNullable(() -> handle));
+		assertEquals(null, Handle.ofNullable(null));
+	}
+
+	@Test
 	void toArray() {
 		// Convert native objects to handle array
 		final NativeObject obj = () -> handle;

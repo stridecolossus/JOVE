@@ -19,11 +19,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
+import org.sarge.jove.platform.vulkan.memory.Allocator;
+import org.sarge.jove.platform.vulkan.memory.MemoryType;
+import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
@@ -52,7 +54,9 @@ public class LogicalDeviceTest {
 		when(instance.library()).thenReturn(lib);
 
 		// Create parent device
+//		final Handle handle = new Handle(new Pointer(1));
 		parent = mock(PhysicalDevice.class);
+//		when(parent.handle()).thenReturn(handle);
 		when(parent.instance()).thenReturn(instance);
 
 		// Init supported features
@@ -68,6 +72,8 @@ public class LogicalDeviceTest {
 		final var features = new VkPhysicalDeviceFeatures();
 		features.samplerAnisotropy = VulkanBoolean.TRUE;
 
+		//when(lib.vkGetPhysicalDeviceMemoryProperties(parent.handle(), props))
+
 		// Create logical device
 		device = new LogicalDevice.Builder(parent)
 				.queues(family, List.of(Percentile.HALF, Percentile.ONE))
@@ -81,6 +87,8 @@ public class LogicalDeviceTest {
 	void constructor() {
 		assertNotNull(device.handle());
 		assertEquals(parent, device.parent());
+		assertEquals(lib, device.library());
+		assertEquals(false, device.isDestroyed());
 	}
 
 	@DisplayName("Query device for all available queues")
@@ -125,16 +133,53 @@ public class LogicalDeviceTest {
 		assertEquals(true, features.isSupported(FEATURE));
 	}
 
-	@DisplayName("Create a memory allocator for this device")
-	@Test
-	void allocator() {
-		final var props = mock(PhysicalDevice.Properties.class);
-		when(props.limits()).thenReturn(new VkPhysicalDeviceLimits());
-		when(parent.properties()).thenReturn(props);
-		assertNotNull(device.allocator());
+	@Nested
+	class AllocationTests {
+		private MemoryType type;
+
+		@BeforeEach
+		void before() {
+			type = new MemoryType(0, new Heap(0, 1, Set.of()), Set.of());
+		}
+
+		@Test
+		void allocate() {
+//			final DeviceMemory mem = device.allocate(type, 2);
+		}
+
+		@Test
+		void select() {
+//			// Allocate memory
+//			final DeviceMemory mem = device.allocate(reqs, props);
+//			assertNotNull(mem);
+//
+//			// Check memory block
+//			assertEquals(2, mem.size());
+//			assertEquals(false, mem.isMapped());
+//			assertEquals(false, mem.isDestroyed());
+//
+//			// Check API
+//			final ArgumentCaptor<VkMemoryAllocateInfo> captor = ArgumentCaptor.forClass(VkMemoryAllocateInfo.class);
+//			final PointerByReference ref = lib.factory().pointer();
+//			verify(lib).vkAllocateMemory(eq(dev.handle()), captor.capture(), isNull(), eq(ref));
+//
+//			// Check memory descriptor
+//			final VkMemoryAllocateInfo info = captor.getValue();
+//			assertNotNull(info);
+//			assertEquals(1, info.memoryTypeIndex);
+//			assertEquals(2L, info.allocationSize);
+		}
+
+		@Test
+		void allocator() {
+			final Allocator allocator = mock(Allocator.class);
+			device.allocator(allocator);
+//			device.allocate(type, 1);
+//			verify(allocator).allocate(type, 1);
+		}
 	}
 
-	@DisplayName("Create a sempahore for this device")
+	@DisplayName("Create a semaphore for this device")
 	@Test
 	void semaphore() {
 		// Create semaphore

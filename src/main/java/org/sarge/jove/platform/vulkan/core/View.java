@@ -12,7 +12,9 @@ import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 
 import com.sun.jna.Pointer;
@@ -46,8 +48,8 @@ public class View extends AbstractVulkanObject {
 	 * @param image		Image
 	 * @param dev		Logical device
 	 */
-	View(Pointer handle, Image image, LogicalDevice dev) {
-		super(handle, dev, dev.library()::vkDestroyImageView);
+	View(Pointer handle, Image image, DeviceContext dev) {
+		super(handle, dev);
 		this.image = notNull(image);
 		this.clear = clear(image);
 	}
@@ -105,11 +107,15 @@ public class View extends AbstractVulkanObject {
 	}
 
 	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkDestroyImageView;
+	}
+
+	@Override
 	protected void release() {
 		if(image instanceof AbstractTransientNativeObject obj) {
 			obj.destroy();
 		}
-		super.release();
 	}
 
 	@Override
@@ -137,6 +143,7 @@ public class View extends AbstractVulkanObject {
 			return mapping;
 		}
 
+		// TODO - this seems a bit arse-backwards, also image should be passed into build(), messy having to pass in ctor and keep ref just for the sub-resource
 		private final Image image;
 		private final SubResourceBuilder<Builder> subresource;
 
@@ -202,7 +209,7 @@ public class View extends AbstractVulkanObject {
 			subresource.populate(info.subresourceRange);
 
 			// Allocate image view
-			final LogicalDevice dev = image.device();
+			final DeviceContext dev = image.device();
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference handle = lib.factory().pointer();
 			check(lib.vkCreateImageView(dev.handle(), info, null, handle));

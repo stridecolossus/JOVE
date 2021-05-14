@@ -145,6 +145,7 @@ public class DefaultMatrix implements Matrix {
 	@Override
 	public boolean equals(Object obj) {
 		return
+				(obj == this) ||
 				(obj instanceof DefaultMatrix that) &&
 				(this.order() == that.order()) &&
 				MathsUtil.isEqual(this.matrix, that.matrix);

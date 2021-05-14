@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -19,14 +19,23 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
+import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
+import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
+import org.sarge.jove.platform.vulkan.memory.Allocator;
+import org.sarge.jove.platform.vulkan.memory.DefaultDeviceMemory;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
+import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.memory.MemoryType;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
 import org.sarge.lib.util.Check;
-import org.sarge.lib.util.LazySupplier;
 import org.sarge.lib.util.Percentile;
 
 import com.sun.jna.Memory;
@@ -35,15 +44,16 @@ import com.sun.jna.StringArray;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>logical device</i> is an instance of a {@link PhysicalDevice} that can be used to perform work.
+ * A <i>logical device</i> is an instance of a {@link PhysicalDevice}.
  * @author Sarge
  */
-public class LogicalDevice extends AbstractTransientNativeObject {
+public class LogicalDevice extends AbstractTransientNativeObject implements DeviceContext, Allocator {
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
 	private final DeviceFeatures features;
 	private final Map<Queue.Family, List<Queue>> queues;
-	private final Supplier<VulkanAllocator> allocator;
+	private final List<MemoryType> types;
+	private Allocator allocator;
 
 	/**
 	 * Constructor.
@@ -51,14 +61,16 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	 * @param parent 		Parent physical device
 	 * @param features		Features supported by this device
 	 * @param queues 		Work queues
+	 * @param types			Supported memory types
 	 */
-	private LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Set<RequiredQueue> queues) {
+	private LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Set<RequiredQueue> queues, List<MemoryType> types) {
 		super(new Handle(handle));
-		this.parent = notNull(parent);
+		this.parent = parent;
 		this.lib = parent.instance().library();
-		this.features = notNull(features);
+		this.features = features;
 		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
-		this.allocator = new LazySupplier<>(() -> new VulkanAllocator(this));
+		this.types = types;
+		this.allocator = this;
 	}
 
 	/**
@@ -92,6 +104,7 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	/**
 	 * @return Vulkan library
 	 */
+	@Override
 	public VulkanLibrary library() {
 		return parent.instance().library();
 	}
@@ -111,10 +124,44 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * @return Memory allocator for this device
+	 * Sets the memory allocator used by this device.
+	 * @param allocator Memory allocator
 	 */
-	public VulkanAllocator allocator() {
-		return allocator.get();
+	public void allocator(Allocator allocator) {
+		this.allocator = notNull(allocator);
+	}
+
+	/**
+	 * Selects and allocates memory.
+	 * @param reqs			Memory requirements
+	 * @param props			Memory properties
+	 * @return New device memory
+	 * @throws AllocationException if the memory cannot be allocated
+	 * @see #allocate(MemoryType, long)
+	 */
+	public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
+		// Select memory type for this request
+		final MemoryType type = props
+				.select(reqs.memoryTypeBits, types)
+				.orElseThrow(() -> new AllocationException(String.format("No available memory type: requirements=%s properties=%s", reqs, props)));
+
+		// Delegate to allocator
+		return allocator.allocate(type, reqs.size);
+	}
+
+	@Override
+	public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
+		// Init memory descriptor
+		final var info = new VkMemoryAllocateInfo();
+		info.allocationSize = oneOrMore(size);
+		info.memoryTypeIndex = type.index();
+
+		// Allocate memory
+		final PointerByReference ref = lib.factory().pointer();
+		check(lib.vkAllocateMemory(this.handle(), info, null, ref));
+
+		// Create memory wrapper
+		return new DefaultDeviceMemory(ref.getValue(), this, size); // TODO - cyclic!
 	}
 
 	/**
@@ -122,7 +169,12 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 	 */
 	public class Semaphore extends AbstractVulkanObject {
 		private Semaphore(Pointer handle) {
-			super(handle, LogicalDevice.this, lib::vkDestroySemaphore);
+			super(handle, LogicalDevice.this);
+		}
+
+		@Override
+		protected Destructor destructor(VulkanLibrary lib) {
+			return lib::vkDestroySemaphore;
 		}
 	}
 
@@ -317,8 +369,13 @@ public class LogicalDevice extends AbstractTransientNativeObject {
 			final PointerByReference logical = lib.factory().pointer();
 			check(lib.vkCreateDevice(parent.handle(), info, null, logical));
 
+			// Enumerate supported memory types
+			final var props = new VkPhysicalDeviceMemoryProperties();
+			lib.vkGetPhysicalDeviceMemoryProperties(parent.handle(), props);
+			final var types = MemoryType.enumerate(props);
+
 			// Create logical device
-			return new LogicalDevice(logical.getValue(), parent, new DeviceFeatures(features), queues);
+			return new LogicalDevice(logical.getValue(), parent, new DeviceFeatures(features), queues, types);
 		}
 	}
 }

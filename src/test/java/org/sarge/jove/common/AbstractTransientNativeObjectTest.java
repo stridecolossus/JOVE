@@ -45,16 +45,4 @@ public class AbstractTransientNativeObjectTest {
 		obj.destroy();
 		assertThrows(IllegalStateException.class, () -> obj.destroy());
 	}
-
-	@Test
-	void restore() {
-		obj.destroy();
-		obj.restore();
-		assertEquals(false, obj.isDestroyed());
-	}
-
-	@Test
-	void restoreNotDestroyed() {
-		assertThrows(IllegalStateException.class, () -> obj.restore());
-	}
 }

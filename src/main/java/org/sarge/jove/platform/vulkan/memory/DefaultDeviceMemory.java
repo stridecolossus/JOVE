@@ -6,12 +6,12 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.memory.Allocator.SimpleAllocator;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -19,10 +19,9 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>default device memory</i> is the default implementation for memory allocated by the Vulkan API.
- * @see SimpleAllocator
  * @author Sarge
  */
-class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
+public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 	private final long size;
 
 	private volatile MappedRegion mapping;
@@ -30,11 +29,11 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 	/**
 	 * Constructor.
 	 * @param handle		Memory pointer
-	 * @param dev			Logical device
+	 * @param dev			Logical device context
 	 * @param size			Size of this memory (bytes)
 	 */
-	protected DefaultDeviceMemory(Pointer handle, LogicalDevice dev, long size) {
-		super(handle, dev, dev.library()::vkFreeMemory);
+	public DefaultDeviceMemory(Pointer handle, DeviceContext dev, long size) {
+		super(handle, dev);
 		this.size = oneOrMore(size);
 	}
 
@@ -47,6 +46,8 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 	public boolean isMapped() {
 		return mapping != null;
 	}
+
+	// TODO - check memory has VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT when map()
 
 	/**
 	 * Default region implementation.
@@ -92,7 +93,7 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 			validate();
 
 			// Release mapping
-			final LogicalDevice dev = device();
+			final DeviceContext dev = device();
 			final VulkanLibrary lib = dev.library();
 			final DefaultDeviceMemory mem = memory();
 			lib.vkUnmapMemory(dev.handle(), mem.handle());
@@ -153,7 +154,7 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 		}
 
 		// Map memory
-		final LogicalDevice dev = this.device();
+		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference ref = lib.factory().pointer();
 		check(lib.vkMapMemory(dev.handle(), this.handle(), offset, size, 0, ref));
@@ -170,6 +171,16 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 		if(isDestroyed()) {
 			throw new IllegalStateException("Device memory has been released: " + this);
 		}
+	}
+
+	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkFreeMemory;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(handle, size);
 	}
 
 	@Override

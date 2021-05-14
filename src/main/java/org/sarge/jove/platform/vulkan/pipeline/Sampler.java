@@ -9,7 +9,7 @@ import java.util.Arrays;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
@@ -41,7 +41,12 @@ public class Sampler extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 */
 	Sampler(Pointer handle, LogicalDevice dev) {
-		super(handle, dev, dev.library()::vkDestroySampler);
+		super(handle, dev);
+	}
+
+	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkDestroySampler;
 	}
 
 	/**

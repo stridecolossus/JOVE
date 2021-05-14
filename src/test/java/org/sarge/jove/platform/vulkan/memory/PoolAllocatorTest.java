@@ -79,6 +79,7 @@ public class PoolAllocatorTest {
 			assertEquals(Map.of(type, pool), allocator.pools());
 		}
 
+		@DisplayName("Memory can be pre-allocated to the pool")
 		@Test
 		void init() {
 			pool.init(SIZE);
@@ -90,6 +91,7 @@ public class PoolAllocatorTest {
 			assertEquals(SIZE, allocator.free());
 		}
 
+		@DisplayName("A memory instance can be allocated from the pool")
 		@Test
 		void allocate() {
 			// Allocate memory
@@ -105,6 +107,7 @@ public class PoolAllocatorTest {
 			assertArrayEquals(new DeviceMemory[]{mem}, pool.allocations().toArray());
 		}
 
+		@DisplayName("Allocated memory should be restored to the pool when it is released")
 		@Test
 		void release() {
 			final DeviceMemory mem = allocator.allocate(type, SIZE);
@@ -116,6 +119,7 @@ public class PoolAllocatorTest {
 			assertEquals(1, allocator.count());
 		}
 
+		@DisplayName("Allocated memory should also be destroyed when the pool is destroyed")
 		@Test
 		void destroy() {
 			final DeviceMemory mem = allocator.allocate(type, SIZE);
@@ -221,6 +225,7 @@ public class PoolAllocatorTest {
 
 	@Nested
 	class ReleaseTests {
+		@DisplayName("A destroyed memory instance is restored to the pool")
 		@Test
 		void destroy() {
 			final DeviceMemory mem = allocator.allocate(type, SIZE);
@@ -231,18 +236,19 @@ public class PoolAllocatorTest {
 			assertEquals(0, pool.allocations().count());
 		}
 
-		@Test
-		void destroyAlreadyDestroyed() {
-			final DeviceMemory mem = allocator.allocate(type, SIZE);
-			mem.destroy();
-			assertThrows(IllegalStateException.class, () -> mem.destroy());
-		}
-
+		@DisplayName("A memory instance is destroyed if the associated block has been destroyed")
 		@Test
 		void destroyBlock() {
 			final DeviceMemory mem = allocator.allocate(type, SIZE);
 			when(block.isDestroyed()).thenReturn(true);
 			assertEquals(true, mem.isDestroyed());
+		}
+
+		@Test
+		void destroyAlreadyDestroyed() {
+			final DeviceMemory mem = allocator.allocate(type, SIZE);
+			mem.destroy();
+			assertThrows(IllegalStateException.class, () -> mem.destroy());
 		}
 	}
 
@@ -255,7 +261,7 @@ public class PoolAllocatorTest {
 			verify(block).map(SIZE, 0);
 		}
 
-		@DisplayName("Memory allocated from the same block should all be mapped if any one region is mapped")
+		@DisplayName("All memory allocated from the same block should be mapped if any one is mapped")
 		@Test
 		void mapBlockMapped() {
 			pool.init(2);
@@ -276,6 +282,7 @@ public class PoolAllocatorTest {
 			mem = allocator.allocate(type, SIZE);
 		}
 
+		@DisplayName("Relasing the allocator should restore all allocated memory to the pool")
 		@Test
 		void release() {
 			allocator.release();
@@ -286,6 +293,7 @@ public class PoolAllocatorTest {
 			assertEquals(SIZE, pool.free());
 		}
 
+		@DisplayName("Destroying the allocator should destroy all memory")
 		@Test
 		void destroy() {
 			allocator.destroy();

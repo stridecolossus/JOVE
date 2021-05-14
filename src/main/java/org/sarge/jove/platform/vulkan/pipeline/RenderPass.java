@@ -15,8 +15,8 @@ import java.util.Set;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
@@ -49,7 +49,7 @@ public class RenderPass extends AbstractVulkanObject {
 	 * @param count			Number of attachments
 	 */
 	RenderPass(Pointer handle, LogicalDevice dev, int count) {
-		super(handle, dev, dev.library()::vkDestroyRenderPass);
+		super(handle, dev);
 		this.count = oneOrMore(count);
 	}
 
@@ -85,6 +85,11 @@ public class RenderPass extends AbstractVulkanObject {
 
 		// Create command
 		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkDestroyRenderPass;
 	}
 
 	/**

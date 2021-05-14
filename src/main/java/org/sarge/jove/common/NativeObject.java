@@ -48,6 +48,20 @@ public interface NativeObject {
 			return new HandleArray(array);
 		}
 
+		/**
+		 * Helper - Extracts the handle from a potentially {@code null} native object.
+		 * @param obj Native object
+		 * @return Handle or {@code null} if the object is null
+		 */
+		public static Handle ofNullable(NativeObject obj) {
+			if(obj == null) {
+				return null;
+			}
+			else {
+				return obj.handle();
+			}
+		}
+
 		private final Pointer handle;
 
 		/**
@@ -73,7 +87,7 @@ public interface NativeObject {
 
 		@Override
 		public boolean equals(Object obj) {
-			return (obj instanceof Handle that) && this.handle.equals(that.handle);
+			return (obj == this) || ((obj instanceof Handle that) && this.handle.equals(that.handle));
 		}
 
 		@Override

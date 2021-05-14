@@ -169,7 +169,7 @@ public class ImageTest extends AbstractVulkanTest {
 
 			// Init image memory
 //			final Pointer mem = new Pointer(1);
-			final VulkanAllocator.Request allocation = mock(VulkanAllocator.Request.class);
+			final VulkanAllocator.MemoryProperties allocation = mock(VulkanAllocator.MemoryProperties.class);
 			when(allocator.request()).thenReturn(allocation);
 			when(allocation.allocate()).thenReturn(mem);
 			when(allocation.init(any())).thenReturn(allocation);

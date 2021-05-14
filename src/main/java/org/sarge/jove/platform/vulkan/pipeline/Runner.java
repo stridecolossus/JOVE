@@ -228,7 +228,8 @@ public class Runner {
 		this.swapchain = notNull(swapchain);
 		this.queue = notNull(queue);
 		this.frames = IntStream.range(0, swapchain.views().size()).mapToObj(factory::apply).toArray(Frame[]::new);
-		this.states = Stream.generate(() -> new FrameState(swapchain.device())).limit(size).toArray(FrameState[]::new);
+		this.states = Stream.generate(() -> new FrameState((LogicalDevice) swapchain.device())).limit(size).toArray(FrameState[]::new);
+		// TODO - cast! maybe pass in a factory?
 	}
 
 	/**

@@ -41,7 +41,7 @@ public interface Coordinate extends Bufferable, Component {
 
 		@Override
 		public boolean equals(Object obj) {
-			return (obj instanceof Coordinate1D that) && MathsUtil.isEqual(this.u, that.u);
+			return (obj == this) || ((obj instanceof Coordinate1D that) && MathsUtil.isEqual(this.u, that.u));
 		}
 	}
 
@@ -76,6 +76,7 @@ public interface Coordinate extends Bufferable, Component {
 		@Override
 		public boolean equals(Object obj) {
 			return
+					(obj == this) ||
 					(obj instanceof Coordinate2D that) &&
 					MathsUtil.isEqual(this.u, that.u) &&
 					MathsUtil.isEqual(this.v, that.v);
@@ -99,6 +100,7 @@ public interface Coordinate extends Bufferable, Component {
 		@Override
 		public boolean equals(Object obj) {
 			return
+					(obj == this) ||
 					(obj instanceof Coordinate3D that) &&
 					MathsUtil.isEqual(this.u, that.u) &&
 					MathsUtil.isEqual(this.v, that.v) &&

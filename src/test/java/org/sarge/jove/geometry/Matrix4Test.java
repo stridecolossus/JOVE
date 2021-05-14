@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.sarge.jove.geometry.Matrix4.SIZE;
+import static org.sarge.jove.geometry.Matrix4.ORDER;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,20 +16,20 @@ class Matrix4Test {
 
 	@BeforeEach
 	void before() {
-		matrix = new Matrix4(new float[SIZE * SIZE]);
+		matrix = new Matrix4(new float[ORDER * ORDER]);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(SIZE, matrix.order());
-		assertArrayEquals(new float[SIZE * SIZE], matrix.array());
-		assertEquals(SIZE * SIZE * Float.BYTES, matrix.length());
+		assertEquals(ORDER, matrix.order());
+		assertArrayEquals(new float[ORDER * ORDER], matrix.array());
+		assertEquals(ORDER * ORDER * Float.BYTES, matrix.length());
 		assertEquals(matrix, matrix.matrix());
 	}
 
 	@Test
 	void identity() {
-		assertEquals(Matrix.identity(SIZE), Matrix4.IDENTITY);
+		assertEquals(Matrix.identity(ORDER), Matrix4.IDENTITY);
 	}
 
 	@Test
@@ -37,7 +37,7 @@ class Matrix4Test {
 		final Builder builder = Matrix4.builder();
 		assertNotNull(builder);
 		assertNotNull(builder.build());
-		assertEquals(SIZE, builder.build().order());
+		assertEquals(ORDER, builder.build().order());
 	}
 
 	@Test

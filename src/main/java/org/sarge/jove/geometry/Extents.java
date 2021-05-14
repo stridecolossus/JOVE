@@ -91,7 +91,7 @@ public class Extents {
 	}
 
 	/**
-	 * Calculates the <i>positive</i> vertex of this extents (farthest vertex in the direction of the normal).
+	 * Calculates the <i>positive</i> vertex of this extents (<b>farthest</b> vertex in the direction of the normal).
 	 * @param normal Normal
 	 * @return Positive vertex
 	 */
@@ -106,7 +106,7 @@ public class Extents {
 	}
 
 	/**
-	 * Calculates the <i>negative</i> vertex of this extents (nearest vertex in the direction of the normal).
+	 * Calculates the <i>negative</i> vertex of this extents (<b>nearest</b> vertex in the direction of the normal).
 	 * @param normal Normal
 	 * @return Positive vertex
 	 */
@@ -119,7 +119,7 @@ public class Extents {
 	}
 
 	/**
-	 * Tests whether this extents intersects the given extents.
+	 * Tests whether two extents intersect.
 	 * @param extents Extents
 	 * @return Whether the extents intersect
 	 */
@@ -150,7 +150,7 @@ public class Extents {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Extents that) && min.equals(that.min) && max.equals(that.max);
+		return (obj == this) || ((obj instanceof Extents that) && min.equals(that.min) && max.equals(that.max));
 	}
 
 	@Override

@@ -79,6 +79,6 @@ public class MemoryTypeTest {
 		props.memoryTypes = new VkMemoryType[]{info};
 
 		// Extract from properties
-		assertEquals(List.of(type), MemoryType.types(props));
+		assertEquals(List.of(type), MemoryType.enumerate(props));
 	}
 }

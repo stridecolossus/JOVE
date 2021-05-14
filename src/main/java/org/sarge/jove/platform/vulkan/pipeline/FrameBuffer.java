@@ -10,9 +10,9 @@ import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
 
 import com.sun.jna.Pointer;
@@ -59,7 +59,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		info.layers = 1; // TODO
 
 		// Allocate frame buffer
-		final LogicalDevice dev = pass.device();
+		final DeviceContext dev = pass.device();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference buffer = lib.factory().pointer();
 		check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
@@ -78,8 +78,8 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @param extents			Image extents
 	 * @param attachments		Image attachments
 	 */
-	private FrameBuffer(Pointer handle, LogicalDevice dev, Image.Extents extents, List<View> attachments) {
-		super(handle, dev, dev.library()::vkDestroyFramebuffer);
+	private FrameBuffer(Pointer handle, DeviceContext dev, Image.Extents extents, List<View> attachments) {
+		super(handle, dev);
 		this.extents = notNull(extents);
 		this.attachments = List.copyOf(notEmpty(attachments));
 	}
@@ -96,6 +96,11 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 */
 	public List<View> attachments() {
 		return attachments;
+	}
+
+	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkDestroyFramebuffer;
 	}
 
 	@Override

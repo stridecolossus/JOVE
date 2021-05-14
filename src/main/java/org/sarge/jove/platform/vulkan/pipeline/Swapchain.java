@@ -14,9 +14,10 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
@@ -67,8 +68,9 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param views			Image views
 	 */
 	Swapchain(Pointer handle, LogicalDevice dev, VkFormat format, List<View> views) {
-		super(handle, dev, dev.library()::vkDestroySwapchainKHR);
+		super(handle, dev);
 
+		// TODO - nasty
 		final View first = views.get(0);
 		final Image.Extents dim = first.image().descriptor().extents();
 		assert first.image().descriptor().aspects().contains(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT);
@@ -108,7 +110,9 @@ public class Swapchain extends AbstractVulkanObject {
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) {
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
-		check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, handle(semaphore), handle(fence), index));
+		final DeviceContext dev = device();
+		final VulkanLibrary lib = dev.library();
+		check(lib.vkAcquireNextImageKHR(dev.handle(), this.handle(), Long.MAX_VALUE, Handle.ofNullable(semaphore), Handle.ofNullable(fence), index));
 		return index.getValue();
 	}
 
@@ -142,9 +146,13 @@ public class Swapchain extends AbstractVulkanObject {
 	// TODO - cache descriptor -> factory -> work submit?
 
 	@Override
+	protected Destructor destructor(VulkanLibrary lib) {
+		return lib::vkDestroySwapchainKHR;
+	}
+
+	@Override
 	protected void release() {
 		views.forEach(View::destroy);
-		super.release();
 	}
 
 	/**

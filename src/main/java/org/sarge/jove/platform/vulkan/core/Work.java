@@ -49,7 +49,7 @@ public class Work {
 
 		// Submit work
 		final VulkanLibrary lib = queue.device().library();
-		check(lib.vkQueueSubmit(queue.handle(), array.length, array, AbstractVulkanObject.handle(fence)));
+		check(lib.vkQueueSubmit(queue.handle(), array.length, array, Handle.ofNullable(fence)));
 	}
 
 	/**

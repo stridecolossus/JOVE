@@ -25,7 +25,8 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.util.StructureCollector;
@@ -286,7 +287,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param max			Maximum number of descriptor sets that <b>can</b> be allocated by this pool
 		 */
 		Pool(Pointer handle, LogicalDevice dev, int max) {
-			super(handle, dev, dev.library()::vkDestroyDescriptorPool);
+			super(handle, dev);
 			this.max = oneOrMore(max);
 		}
 
@@ -329,7 +330,7 @@ public class DescriptorSet implements NativeObject {
 			info.pSetLayouts = Handle.toArray(layouts);
 
 			// Allocate descriptors sets
-			final LogicalDevice dev = this.device();
+			final DeviceContext dev = this.device();
 			final VulkanLibrary lib = dev.library();
 			final Pointer[] handles = lib.factory().pointers(layouts.size());
 			check(lib.vkAllocateDescriptorSets(dev.handle(), info, handles));
@@ -369,7 +370,7 @@ public class DescriptorSet implements NativeObject {
 			this.sets.removeAll(sets);
 
 			// Release sets
-			final LogicalDevice dev = this.device();
+			final DeviceContext dev = this.device();
 			check(dev.library().vkFreeDescriptorSets(dev.handle(), this.handle(), sets.size(), Handle.toArray(sets)));
 		}
 
@@ -379,15 +380,19 @@ public class DescriptorSet implements NativeObject {
 		 */
 		public synchronized void free() {
 			if(sets.isEmpty()) throw new IllegalArgumentException("Pool is already empty");
-			final LogicalDevice dev = this.device();
+			final DeviceContext dev = this.device();
 			check(dev.library().vkResetDescriptorPool(dev.handle(), this.handle(), 0));
 			sets.clear();
 		}
 
 		@Override
+		protected Destructor destructor(VulkanLibrary lib) {
+			return lib::vkDestroyDescriptorPool;
+		}
+
+		@Override
 		protected void release() {
 			sets.clear();
-			super.release();
 		}
 
 		@Override
@@ -619,7 +624,7 @@ public class DescriptorSet implements NativeObject {
 		 * @throws IllegalStateException for a duplicate binding index
 		 */
 		Layout(Pointer handle, LogicalDevice dev, List<Binding> bindings) {
-			super(handle, dev, dev.library()::vkDestroyDescriptorSetLayout);
+			super(handle, dev);
 			Check.notEmpty(bindings);
 			this.bindings = bindings.stream().collect(toMap(Binding::index, Function.identity()));
 		}
@@ -631,6 +636,11 @@ public class DescriptorSet implements NativeObject {
 		 */
 		public Binding binding(int index) {
 			return bindings.get(index);
+		}
+
+		@Override
+		protected Destructor destructor(VulkanLibrary lib) {
+			return lib::vkDestroyDescriptorSetLayout;
 		}
 
 		@Override
