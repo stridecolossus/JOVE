@@ -35,7 +35,7 @@ public interface Allocator {
 	DeviceMemory allocate(MemoryType type, long size) throws AllocationException;
 
 	/**
-	 * Creates an adapter that allocates memory of the given page size.
+	 * Creates an adapter that allocates memory in multiples of the given page size.
 	 * @param allocator		Delegate allocator
 	 * @param page			Page size (bytes)
 	 * @return Paged allocator

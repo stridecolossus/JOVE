@@ -16,7 +16,7 @@ import org.sarge.jove.util.MathsUtil;
 /**
  * A <i>memory properties</i> is a descriptor for the usage and requirements of a memory request.
  * <p>
- * In general a consumer of this request will allocate memory that matches the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
+ * In general a consumer will allocate memory that matches the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
  * <br>
  * Note that this implementation does not apply any assumptions or constraints on the relationship between the optimal and required memory property sets.
  * <p>
@@ -89,15 +89,6 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 				.filter(type -> type.properties().containsAll(props))
 				.findAny();
 	}
-
-	/**
-	 *
-	 * TODO
-	 * - should select() be in a separate Selector?
-	 * - would we ever want a different strategy
-	 * - combined with Allocator in device?
-	 *
-	 */
 
 	/**
 	 * Builder for memory properties.

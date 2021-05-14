@@ -10,23 +10,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sarge.jove.common.ByteData.Source.BufferSource;
+import org.sarge.jove.common.ByteSource;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 
 /**
- * A <i>default model</i> is comprised of a collection of vertices.
+ * A <i>default model</i> is comprised of vertices and an optional index buffer.
  * <p>
  * Notes:
  * <ul>
- * <li>The vertex and index buffers are generated on-demand</li>
- * <li>The {@link #vertexBuffer()} method generates an interleaved VBO</li>
+ * <li>Buffers are generated on-demand</li>
+ * <li>The vertex buffer is interleaved</li>
+ * <li>Generated buffers are implemented as direct NIO buffers</li>
  * </ul>
  * <p>
- * TODO - doc indexed
- * <p>
- * @see Vertex#buffer(ByteBuffer)
  * @author Sarge
  */
 public class DefaultModel extends AbstractModel {
@@ -65,7 +63,7 @@ public class DefaultModel extends AbstractModel {
 	}
 
 	@Override
-	public byte[] vertexBuffer() {
+	public ByteSource vertexBuffer() {
 		// Allocate buffer
 		final int len = vertices.size() * header().length();
 		final ByteBuffer buffer = VulkanHelper.buffer(len);
@@ -75,19 +73,19 @@ public class DefaultModel extends AbstractModel {
 			v.buffer(buffer);
 		}
 
-		// Create byte source wrapper
-		return new BufferSource(buffer);
+		// Create wrapper
+		return ByteSource.of(buffer);
 	}
 
 	@Override
-	public Optional<byte[]> indexBuffer() {
+	public Optional<ByteSource> indexBuffer() {
 		return index.map(DefaultModel::index);
 	}
 
 	/**
 	 * Creates the index buffer.
 	 */
-	private static byte[] index(List<Integer> index) {
+	private static ByteSource index(List<Integer> index) {
 		// Allocate index buffer
 		final int len = index.size() * Integer.BYTES;
 		final ByteBuffer bb = VulkanHelper.buffer(len);
@@ -99,16 +97,12 @@ public class DefaultModel extends AbstractModel {
 			buffer.put(n);
 		}
 
-		// Create byte source wrapper
-		return new BufferSource(bb);
+		// Create wrapper
+		return ByteSource.of(bb);
 	}
 
-	/**
-	 * Converts this model to a buffered implementation.
-	 * @return Buffered model
-	 */
 	public BufferedModel buffer() {
-		return new BufferedModel(header(), vertexBuffer(), indexBuffer().orElse(null));
+		return new BufferedModel(header, vertexBuffer(), indexBuffer());
 	}
 
 	/**

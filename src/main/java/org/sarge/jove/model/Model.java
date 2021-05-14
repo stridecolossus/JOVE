@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.ByteSource;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.lib.util.Check;
 
@@ -64,7 +65,7 @@ public interface Model {
 	/**
 	 * @return Vertex buffer
 	 */
-	byte[] vertexBuffer();
+	ByteSource vertexBuffer();
 
 	/**
 	 * @return Whether this is an indexed model
@@ -74,7 +75,7 @@ public interface Model {
 	/**
 	 * @return Index buffer
 	 */
-	Optional<byte[]> indexBuffer();
+	Optional<ByteSource> indexBuffer();
 
 	// TODO - VBO and index should be byte stream wrapper of some sort
 
@@ -82,7 +83,7 @@ public interface Model {
 	 * Skeleton implementation.
 	 */
 	abstract class AbstractModel implements Model {
-		private final Header header;
+		protected final Header header;
 
 		/**
 		 * Constructor.

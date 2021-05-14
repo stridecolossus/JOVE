@@ -1,5 +1,6 @@
 package org.sarge.jove.model;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -10,7 +11,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.ByteData.Source.BufferSource;
+import org.sarge.jove.common.ByteSource;
 import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DefaultModel.Builder;
@@ -62,16 +63,18 @@ class DefaultModelTest {
 
 	@Test
 	void vertexBuffer() {
-		final BufferSource vbo = model.vertexBuffer();
+		final ByteSource vbo = model.vertexBuffer();
 		assertNotNull(vbo);
-		assertEquals(3 * 3 * Float.BYTES, vbo.length());
+		assertNotNull(vbo.toByteArray());
+		assertEquals(3 * 3 * Float.BYTES, vbo.toByteArray().length);
 	}
 
 	@Test
 	void indexBuffer() {
-		final BufferSource indices = model.indexBuffer().orElseThrow();
+		final ByteSource indices = model.indexBuffer().orElseThrow();
 		assertNotNull(indices);
-		assertEquals(3 * Integer.BYTES, indices.length());
+		assertNotNull(indices.toByteArray());
+		assertEquals(3 * Integer.BYTES, indices.toByteArray().length);
 	}
 
 	@Test
@@ -79,7 +82,8 @@ class DefaultModelTest {
 		final BufferedModel buffered = model.buffer();
 		assertNotNull(buffered);
 		assertEquals(header, buffered.header());
-		// TODO - compare buffers (and in above tests)
+		assertArrayEquals(model.vertexBuffer().toByteArray(), buffered.vertexBuffer().toByteArray());
+		assertArrayEquals(model.indexBuffer().get().toByteArray(), buffered.indexBuffer().get().toByteArray());
 	}
 
 	@Nested

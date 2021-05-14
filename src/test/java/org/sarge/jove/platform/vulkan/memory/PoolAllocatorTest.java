@@ -18,9 +18,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
+import org.sarge.jove.common.ByteSource.Sink;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory.MappedRegion;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.memory.PoolAllocator.Pool;
 
@@ -48,7 +48,7 @@ public class PoolAllocatorTest {
 			block = mock(DeviceMemory.class);
 			when(block.size()).thenReturn(size);
 			when(block.handle()).thenReturn(new Handle(new Pointer(size)));
-			when(block.map(anyLong(), anyLong())).thenReturn(mock(MappedRegion.class));
+			when(block.map(anyLong(), anyLong())).thenReturn(mock(Sink.class));
 			return block;
 		};
 		block = null;

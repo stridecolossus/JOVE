@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.ByteSource.Sink;
 
 /**
  * A <i>pool allocator</i> maintains a <i>pool</i> of memory in order to reduce the total number of active allocations.
@@ -24,7 +25,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * <p>
  * Note that each pool contains a number of memory <i>blocks</i> from which individual instances are allocated.
  * <br>
- * Therefore a region mapping on <b>any</b> memory instance within a given block implicitly maps the whole block.
+ * Therefore a region mapping on <b>any</b> memory instance within a given block implicitly maps the <b>whole</b> block.
  * <br>
  * See {@link DeviceMemory#map(long, long)}.
  * <p>
@@ -228,8 +229,13 @@ public class PoolAllocator implements Allocator {
 			}
 
 			@Override
-			public MappedRegion map(long size, long offset) {
+			public Sink map(long size, long offset) {
 				return mem.map(size, this.offset + offset);
+			}
+
+			@Override
+			public void unmap() {
+				mem.unmap();
 			}
 
 			@Override

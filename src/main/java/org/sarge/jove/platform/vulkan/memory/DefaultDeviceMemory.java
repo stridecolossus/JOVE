@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.ByteSource.Sink;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -18,13 +19,13 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>default device memory</i> is the default implementation for memory allocated by the Vulkan API.
+ * A <i>default device memory</i> is the default implementation for memory allocated by the hardware.
  * @author Sarge
  */
 public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 	private final long size;
 
-	private volatile MappedRegion mapping;
+	private volatile Sink mapping;
 
 	/**
 	 * Constructor.
@@ -50,9 +51,9 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	// TODO - check memory has VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT when map()
 
 	/**
-	 * Default region implementation.
+	 * Mapped region implementation.
 	 */
-	private class DefaultMappedRegion implements MappedRegion {
+	private class MappedRegion implements Sink {
 		private final Pointer ptr;
 		private final long region;
 		private final long offset;
@@ -63,14 +64,10 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		 * @param region			Size of this region
 		 * @param offset			Offset
 		 */
-		private DefaultMappedRegion(Pointer ptr, long region, long offset) {
+		private MappedRegion(Pointer ptr, long region, long offset) {
 			this.ptr = notNull(ptr);
 			this.region = oneOrMore(region);
 			this.offset = zeroOrMore(offset);
-		}
-
-		private DefaultDeviceMemory memory() {
-			return DefaultDeviceMemory.this;
 		}
 
 		@Override
@@ -87,34 +84,11 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 			bb.put(buffer);
 		}
 
-		@Override
-		public synchronized void unmap() {
-			// Validate mapping is active
-			validate();
-
-			// Release mapping
-			final DeviceContext dev = device();
-			final VulkanLibrary lib = dev.library();
-			final DefaultDeviceMemory mem = memory();
-			lib.vkUnmapMemory(dev.handle(), mem.handle());
-
-			// Clear state
-			mapping = null;
-		}
-
-		/**
-		 * @throws IllegalStateException if this region has not been destroyed or invalidated
-		 */
-		private void validate() {
-			checkAlive();
-			if(mapping == null) throw new IllegalStateException("Memory region has been invalidated: " + this);
-		}
-
 		/**
 		 * @throws IllegalArgumentException if the given size is larger than this memory
 		 */
 		private void validate(long size) {
-			validate();
+			checkMapped();
 			if(size > this.region) {
 				throw new IllegalArgumentException(String.format("Data is larger than this region: size=%d mem=%s", size, this));
 			}
@@ -124,10 +98,10 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		public boolean equals(Object obj) {
 			return
 					(obj == this) ||
-					(obj instanceof DefaultMappedRegion that) &&
-					this.memory().equals(that.memory()) &&
+					(obj instanceof MappedRegion that) &&
 					(this.region == that.region) &&
-					(this.offset == that.offset);
+					(this.offset == that.offset) &&
+					this.ptr.equals(that.ptr);
 		}
 
 		@Override
@@ -135,13 +109,13 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 			return new ToStringBuilder(this)
 					.append("size", region)
 					.append("offset", offset)
-					.append("mem", memory())
+					.append("mem", DefaultDeviceMemory.this)
 					.build();
 		}
 	}
 
 	@Override
-	public synchronized MappedRegion map(long size, long offset) {
+	public synchronized Sink map(long size, long offset) {
 		// Validate
 		Check.oneOrMore(size);
 		Check.zeroOrMore(offset);
@@ -160,8 +134,23 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		check(lib.vkMapMemory(dev.handle(), this.handle(), offset, size, 0, ref));
 
 		// Create mapped region
-		mapping = new DefaultMappedRegion(ref.getValue(), size, offset);
+		mapping = new MappedRegion(ref.getValue(), size, offset);
+
 		return mapping;
+	}
+
+	@Override
+	public synchronized void unmap() {
+		// Validate mapping is active
+		checkMapped();
+
+		// Release mapping
+		final DeviceContext dev = device();
+		final VulkanLibrary lib = dev.library();
+		lib.vkUnmapMemory(dev.handle(), this.handle());
+
+		// Clear mapping
+		mapping = null;
 	}
 
 	/**
@@ -171,6 +160,14 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		if(isDestroyed()) {
 			throw new IllegalStateException("Device memory has been released: " + this);
 		}
+	}
+
+	/**
+	 * @throws IllegalStateException if this region has not been destroyed or invalidated
+	 */
+	private void checkMapped() {
+		checkAlive();
+		if(mapping == null) throw new IllegalStateException("Memory region has been invalidated: " + this);
 	}
 
 	@Override

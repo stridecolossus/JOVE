@@ -59,7 +59,7 @@ public class Queue implements NativeObject {
 	/**
 	 * @return Logical device
 	 */
-	DeviceContext device() {
+	public DeviceContext device() {
 		return dev;
 	}
 

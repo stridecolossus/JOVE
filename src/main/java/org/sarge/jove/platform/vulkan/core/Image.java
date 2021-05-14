@@ -129,10 +129,15 @@ public interface Image extends NativeObject {
 			final boolean valid = switch(type) {
 				case VK_IMAGE_TYPE_1D -> (extents.height == 1) && (extents.depth == 1);
 				case VK_IMAGE_TYPE_2D -> extents.depth == 1;
-				case VK_IMAGE_TYPE_3D -> true; // TODO - layers = 1
+				case VK_IMAGE_TYPE_3D -> true;
 			};
 			if(!valid) {
 				throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
+			}
+
+			// Validate array layers
+			if((type == VkImageType.VK_IMAGE_TYPE_3D) && (layers != 1)) {
+				throw new IllegalArgumentException("Array layers must be one for a 3D image");
 			}
 
 			// Validate image aspects
@@ -361,11 +366,11 @@ public interface Image extends NativeObject {
 		/**
 		 * Constructor.
 		 * @param handle		Handle
+		 * @param dev			Logical device
 		 * @param descriptor	Image descriptor
 		 * @param mem			Device memory
-		 * @param dev			Logical device
 		 */
-		protected DefaultImage(Pointer handle, Descriptor descriptor, DeviceMemory mem, LogicalDevice dev) {
+		protected DefaultImage(Pointer handle, LogicalDevice dev, Descriptor descriptor, DeviceMemory mem) {
 			super(handle, dev);
 			this.descriptor = notNull(descriptor);
 			this.mem = notNull(mem);
@@ -402,100 +407,18 @@ public interface Image extends NativeObject {
 	 * Builder for a {@link DefaultImage}.
 	 */
 	class Builder {
-		private final VkImageCreateInfo info = new VkImageCreateInfo();
-		private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+		private Descriptor descriptor;
 		private MemoryProperties<VkImageUsageFlag> props;
-		private Extents extents;
-
-		public Builder() {
-			type(VkImageType.VK_IMAGE_TYPE_2D);
-			mipLevels(1);
-			arrayLayers(1);
-			samples(VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT);
-			tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL);
-			initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
-		}
+		private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT;
+		private VkImageTiling tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL;
+		private VkImageLayout layout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
 
 		/**
-		 * Sets the image type.
-		 * @param type Image type
+		 * Sets the descriptor for this image.
+		 * @param descriptor Image descriptor
 		 */
-		public Builder type(VkImageType type) {
-			info.imageType = notNull(type);
-			return this;
-		}
-
-		/**
-		 * Sets the image format.
-		 * @param format Image format
-		 */
-		public Builder format(VkFormat format) {
-			info.format = notNull(format);
-			return this;
-		}
-
-		/**
-		 * Sets the image extents.
-		 * @param extents Image extents
-		 */
-		public Builder extents(Extents extents) {
-			this.extents = notNull(extents);
-			return this;
-		}
-
-		/**
-		 * Sets the number of mip levels.
-		 * @param mipLevels Mip-levels (default is {@code 1})
-		 */
-		public Builder mipLevels(int mipLevels) {
-			info.mipLevels = oneOrMore(mipLevels);
-			return this;
-		}
-
-		/**
-		 * Sets the number of array layers.
-		 * @param arrayLayers Number of array layers (default is {@code 1})
-		 */
-		public Builder arrayLayers(int arrayLayers) {
-			info.arrayLayers = oneOrMore(arrayLayers);
-			return this;
-		}
-
-		/**
-		 * Sets the number of samples.
-		 * @param samples Samples-per-texel (default is {@code 1})
-		 */
-		public Builder samples(VkSampleCountFlag samples) {
-			info.samples = notNull(samples);
-			return this;
-		}
-
-		/**
-		 * Sets the image tiling arrangement.
-		 * @param tiling Tiling arrangement (default is {@link VkImageTiling#VK_IMAGE_TILING_OPTIMAL})
-		 */
-		public Builder tiling(VkImageTiling tiling) {
-			info.tiling = notNull(tiling);
-			return this;
-		}
-
-		/**
-		 * Sets the initial image layout.
-		 * @param initialLayout Initial layout (default is undefined)
-		 */
-		public Builder initialLayout(VkImageLayout initialLayout) {
-			info.initialLayout = notNull(initialLayout);
-			// TODO - undefined or pre-init only
-			return this;
-		}
-
-		/**
-		 * Adds an image aspect.
-		 * @param aspect Image aspect
-		 */
-		public Builder aspect(VkImageAspectFlag aspect) {
-			Check.notNull(aspect);
-			aspects.add(aspect);
+		public Builder descriptor(Descriptor descriptor) {
+			this.descriptor = notNull(descriptor);
 			return this;
 		}
 
@@ -509,6 +432,34 @@ public interface Image extends NativeObject {
 		}
 
 		/**
+		 * Sets the number of samples.
+		 * @param samples Samples-per-texel (default is {@code 1})
+		 */
+		public Builder samples(VkSampleCountFlag samples) {
+			this.samples = notNull(samples);
+			return this;
+		}
+
+		/**
+		 * Sets the image tiling arrangement.
+		 * @param tiling Tiling arrangement (default is {@link VkImageTiling#VK_IMAGE_TILING_OPTIMAL})
+		 */
+		public Builder tiling(VkImageTiling tiling) {
+			this.tiling = notNull(tiling);
+			return this;
+		}
+
+		/**
+		 * Sets the initial image layout.
+		 * @param lLayout Initial layout (default is undefined)
+		 */
+		public Builder initialLayout(VkImageLayout layout) {
+			this.layout = notNull(layout);
+			// TODO - undefined or pre-init only
+			return this;
+		}
+
+		/**
 		 * Constructs this image.
 		 * @param dev Logical device
 		 * @return New image
@@ -516,20 +467,26 @@ public interface Image extends NativeObject {
 		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#VK_IMAGE_TYPE_3D} image
 		 * @throws VulkanException if the image cannot be created
 		 */
-		public Image build(LogicalDevice dev) {
+		public DefaultImage build(LogicalDevice dev) {
 			// Validate
-			if(extents == null) throw new IllegalArgumentException("No image extents specified");
+			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
 			if(props == null) throw new IllegalArgumentException("No memory properties specified");
-			if(info.format == null) throw new IllegalArgumentException("No image format specified");
-			if((info.imageType == VkImageType.VK_IMAGE_TYPE_3D) && (info.arrayLayers != 1)) throw new IllegalArgumentException("Array layers must be one for a 3D image");
 
-			// Create image descriptor
-			// TODO - if we used descriptor.builder would we actually need this builder? i.e. descriptor + props = image?
-			final Descriptor descriptor = new Descriptor(info.imageType, info.format, extents, aspects, info.mipLevels, info.arrayLayers);
-
-			// Complete create descriptor
-			extents.populate(info.extent); // TODO
+			// Populate image structure
+			final VkImageCreateInfo info = new VkImageCreateInfo();
+			info.imageType = descriptor.type;
+			info.format = descriptor.format;
+			info.mipLevels = descriptor.levels;
+			info.arrayLayers = descriptor.layers;
+			info.samples = samples;
+			info.tiling = tiling;
+			info.initialLayout = layout;
 			info.usage = IntegerEnumeration.mask(props.usage());
+			info.sharingMode = props.mode();
+			descriptor.extents.populate(info.extent);
+			// TODO
+			//queueFamilyIndexCount;
+			// pQueueFamilyIndices;
 
 			// Allocate image
 			final VulkanLibrary lib = dev.library();
@@ -547,7 +504,7 @@ public interface Image extends NativeObject {
 			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.handle(), 0));
 
 			// Create image
-			return new DefaultImage(handle.getValue(), descriptor, mem, dev);
+			return new DefaultImage(handle.getValue(), dev, descriptor, mem);
 		}
 	}
 }

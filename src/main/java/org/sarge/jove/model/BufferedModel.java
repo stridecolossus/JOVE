@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.ByteData.Source;
+import org.sarge.jove.common.ByteSource;
 import org.sarge.jove.model.Model.AbstractModel;
 
 /**
@@ -13,8 +13,8 @@ import org.sarge.jove.model.Model.AbstractModel;
  * @author Sarge
  */
 public class BufferedModel extends AbstractModel {
-	private final Source vertices;
-	private final Optional<Source> index;
+	private final ByteSource vertices;
+	private final Optional<ByteSource> index;
 
 	/**
 	 * Constructor.
@@ -22,10 +22,10 @@ public class BufferedModel extends AbstractModel {
 	 * @param vertices		Vertex buffer
 	 * @param index			Optional index buffer
 	 */
-	public BufferedModel(Header header, Source vertices, Source index) {
+	public BufferedModel(Header header, ByteSource vertices, Optional<ByteSource> index) {
 		super(header);
 		this.vertices = notNull(vertices);
-		this.index = Optional.ofNullable(index);
+		this.index = notNull(index);
 	}
 
 	@Override
@@ -34,12 +34,12 @@ public class BufferedModel extends AbstractModel {
 	}
 
 	@Override
-	public Source vertexBuffer() {
+	public ByteSource vertexBuffer() {
 		return vertices;
 	}
 
 	@Override
-	public Optional<Source> indexBuffer() {
+	public Optional<ByteSource> indexBuffer() {
 		return index;
 	}
 }

@@ -27,7 +27,7 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 	}
 
 	@Override
-	public boolean isDestroyed() {
+	public final boolean isDestroyed() {
 		return destroyed;
 	}
 

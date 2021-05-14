@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory.MappedRegion;
+import org.sarge.jove.common.ByteSource.Sink;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -44,42 +44,45 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		assertEquals(false, mem.isDestroyed());
 	}
 
-	@Test
-	void map() {
-		final MappedRegion region = mem.map();
-		assertNotNull(region);
-		assertEquals(true, mem.isMapped());
-		verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, SIZE, 0, ref);
-	}
+	@Nested
+	class MappingTests {
+		@Test
+		void map() {
+			final Sink region = mem.map();
+			assertNotNull(region);
+			assertEquals(true, mem.isMapped());
+			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, SIZE, 0, ref);
+		}
 
-	@Test
-	void mapSegment() {
-		final MappedRegion region = mem.map(2, 1);
-		assertNotNull(region);
-		assertEquals(true, mem.isMapped());
-		verify(lib).vkMapMemory(dev.handle(), mem.handle(), 1, 2, 0, ref);
-	}
+		@Test
+		void mapSegment() {
+			final Sink region = mem.map(2, 1);
+			assertNotNull(region);
+			assertEquals(true, mem.isMapped());
+			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 1, 2, 0, ref);
+		}
 
-	@Test
-	void mapAlreadyMapped() {
-		mem.map();
-		assertThrows(IllegalStateException.class, () -> mem.map());
-	}
+		@Test
+		void mapAlreadyMapped() {
+			mem.map();
+			assertThrows(IllegalStateException.class, () -> mem.map());
+		}
 
-	@Test
-	void mapInvalidSize() {
-		assertThrows(IllegalArgumentException.class, () -> mem.map(0, 0));
-		assertThrows(IllegalArgumentException.class, () -> mem.map(4, 0));
-	}
+		@Test
+		void mapInvalidSize() {
+			assertThrows(IllegalArgumentException.class, () -> mem.map(0, 0));
+			assertThrows(IllegalArgumentException.class, () -> mem.map(4, 0));
+		}
 
-	@Test
-	void mapInvalidOffset() {
-		assertThrows(IllegalArgumentException.class, () -> mem.map(SIZE, 1));
+		@Test
+		void mapInvalidOffset() {
+			assertThrows(IllegalArgumentException.class, () -> mem.map(SIZE, 1));
+		}
 	}
 
 	@Nested
 	class MappedRegionTests {
-		private MappedRegion region;
+		private Sink region;
 
 		@BeforeEach
 		void before() {
@@ -94,7 +97,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 
 		@Test
 		void arrayNotMapped() {
-			region.unmap();
+			mem.unmap();
 			assertThrows(IllegalStateException.class, () -> region.write(array));
 		}
 
@@ -123,7 +126,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 
 		@Test
 		void bufferNotMapped() {
-			region.unmap();
+			mem.unmap();
 			assertThrows(IllegalStateException.class, () -> region.write(ByteBuffer.wrap(array)));
 		}
 
@@ -133,23 +136,33 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		}
 
 		@Test
+		void equals() {
+			assertEquals(true, region.equals(region));
+			assertEquals(false, region.equals(null));
+			assertEquals(false, region.equals(mock(Sink.class)));
+		}
+	}
+
+	@Nested
+	class ReleaseMappingTests {
+		@Test
 		void unmap() {
-			region.unmap();
+			mem.map();
+			mem.unmap();
 			assertEquals(false, mem.isMapped());
 			verify(lib).vkUnmapMemory(dev.handle(), mem.handle());
 		}
 
 		@Test
-		void alreadyUnmapped() {
-			region.unmap();
-			assertThrows(IllegalStateException.class, () -> region.unmap());
+		void unmapNotMapped() {
+			assertThrows(IllegalStateException.class, () -> mem.unmap());
 		}
 
 		@Test
-		void equals() {
-			assertEquals(true, region.equals(region));
-			assertEquals(false, region.equals(null));
-			assertEquals(false, region.equals(mock(MappedRegion.class)));
+		void unmapAlreadyUnmapped() {
+			mem.map();
+			mem.unmap();
+			assertThrows(IllegalStateException.class, () -> mem.unmap());
 		}
 	}
 
