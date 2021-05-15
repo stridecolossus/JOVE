@@ -36,7 +36,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
-import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.platform.vulkan.util.FormatHelper;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.ResourceLoader;
 
@@ -95,11 +95,11 @@ public class TriangleDemo {
 		final Surface surface = new Surface(surfaceHandle, gpu);
 
 		// Specify required image format
-		final VkFormat format = new FormatBuilder()
-				.components(FormatBuilder.BGRA)
+		final VkFormat format = new FormatHelper()
+				.template(FormatHelper.BGRA)
 				.bytes(1)
 				.signed(false)
-				.type(FormatBuilder.Type.NORMALIZED)
+				.type(FormatHelper.Type.NORMALIZED)
 				.build();
 
 		// Create swap-chain

@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Component.Layout;
 import org.sarge.jove.common.Coordinate.Coordinate1D;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Coordinate.Coordinate3D;

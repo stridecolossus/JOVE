@@ -9,7 +9,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.ByteSource;
-import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.Header;
 
 public class BufferedModelTest {

@@ -29,7 +29,7 @@ class ColourTest {
 
 	@Test
 	void layout() {
-		assertEquals(Component.Layout.of(4, Float.class), col.layout());
+		assertEquals(Layout.of(4, Float.class), col.layout());
 	}
 
 	@Test

@@ -7,7 +7,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.ByteSource;
-import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.lib.util.Check;
 
 /**

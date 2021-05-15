@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.sarge.jove.common.ByteSource;
-import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.util.ResourceLoader;
 

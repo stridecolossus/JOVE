@@ -9,7 +9,7 @@ import org.sarge.lib.util.Check;
  * RGBA colour.
  * @author Sarge
  */
-public record Colour(float red, float green, float blue, float alpha) implements Component {
+public record Colour(float red, float green, float blue, float alpha) implements VertexComponent, Bufferable {
 	/**
 	 * Material colour types.
 	 */
@@ -92,6 +92,11 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	@Override
 	public Layout layout() {
 		return LAYOUT;
+	}
+
+	@Override
+	public int length() {
+		return LAYOUT.length();
 	}
 
 	/**

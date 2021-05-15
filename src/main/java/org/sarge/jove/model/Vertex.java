@@ -12,16 +12,16 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.VertexComponent;
 import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
 /**
  * A <i>vertex</i> is a compound element of a <i>vertex buffer</i> (or VBO).
  * <p>
- * A vertex is essentially a wrapper for an array of {@link Component} bufferable objects.
+ * A vertex is essentially a wrapper for an array of {@link VertexComponent} bufferable objects.
  * <p>
  * A {@link Builder} can be used to create a vertex comprised of the common built-in primitives, e.g.
  * <pre>
@@ -43,7 +43,7 @@ public class Vertex implements Bufferable {
 	 * @param components Vertex components
 	 * @return New vertex
 	 */
-	public static Vertex of(Component... components) {
+	public static Vertex of(VertexComponent... components) {
 		return new Vertex(components);
 	}
 
@@ -52,24 +52,24 @@ public class Vertex implements Bufferable {
 	 * @param components Vertex components
 	 * @return New vertex
 	 */
-	public static Vertex of(List<Component> components) {
-		return new Vertex(components.toArray(Component[]::new));
+	public static Vertex of(List<VertexComponent> components) {
+		return new Vertex(components.toArray(VertexComponent[]::new));
 	}
 
-	private final Component[] components;
+	private final VertexComponent[] components;
 
 	/**
 	 * Constructor.
 	 * @param components Vertex components
 	 */
-	protected Vertex(Component[] components) {
+	protected Vertex(VertexComponent[] components) {
 		this.components = notNull(components);
 	}
 
 	/**
 	 * @return Components of this vertex
 	 */
-	public List<Component> components() {
+	public List<VertexComponent> components() {
 		return Arrays.asList(components);
 	}
 
@@ -89,17 +89,17 @@ public class Vertex implements Bufferable {
 	 * @return Layout of this vertex
 	 */
 	public List<Layout> layout() {
-		return Arrays.stream(components).map(Component::layout).collect(toList());
+		return Arrays.stream(components).map(VertexComponent::layout).collect(toList());
 	}
 
 	@Override
 	public int length() {
-		return Arrays.stream(components).mapToInt(Component::length).sum();
+		return Arrays.stream(components).mapToInt(VertexComponent::length).sum();
 	}
 
 	@Override
 	public void buffer(ByteBuffer buffer) {
-		for(Component obj : components) {
+		for(VertexComponent obj : components) {
 			obj.buffer(buffer);
 		}
 	}
@@ -169,10 +169,10 @@ public class Vertex implements Bufferable {
 		 * @return New vertex
 		 */
 		public Vertex build() {
-			final Component[] components = Stream
+			final VertexComponent[] components = Stream
 					.of(pos, normal, coord, col)
 					.filter(Objects::nonNull)
-					.toArray(Component[]::new);
+					.toArray(VertexComponent[]::new);
 
 			return new Vertex(components);
 		}

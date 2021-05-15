@@ -69,9 +69,9 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v", new ComponentParser<>(Point.SIZE, Point::new, ObjectModel::vertices));
-		add("vt", new ComponentParser<>(2, FLIP, ObjectModel::coordinates));
-		add("vn", new ComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normals));
+		add("v", new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::vertices));
+		add("vt", new VertexComponentParser<>(2, FLIP, ObjectModel::coordinates));
+		add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

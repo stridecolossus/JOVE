@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.ByteSource;
-import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DefaultModel.Builder;
 import org.sarge.jove.model.DefaultModel.IndexedBuilder;

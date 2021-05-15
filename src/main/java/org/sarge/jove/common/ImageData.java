@@ -1,6 +1,5 @@
 package org.sarge.jove.common;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.awt.Graphics;
@@ -8,88 +7,78 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.ResourceLoader;
-import org.sarge.lib.util.Check;
 
 /**
- * Wrapper for general image data.
+ * An <i>image data</i> is a wrapper for an RGBA image texture.
  * @author Sarge
  */
-public interface ImageData {
+public class ImageData {
+	private final Dimensions size;
+	private final Layout layout;
+	private final ByteSource data;
+
+	/**
+	 * Constructor.
+	 * @param size				Size of this image
+	 * @param components		Component sizes
+	 * @param bytes				Image data
+	 */
+	public ImageData(Dimensions size, Layout layout, ByteSource data) {
+		// TODO - validate
+//		Check.notEmpty(components);
+//		final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
+//		if(expected != data.length) throw new IllegalArgumentException("Buffer length does not match image dimensions");
+
+		this.size = notNull(size);
+		this.layout = notNull(layout);
+		this.data = notNull(data);
+	}
+
 	/**
 	 * @return Image dimensions
 	 */
-	Dimensions size();
+	public Dimensions size() {
+		return size;
+	}
 
 	/**
-	 * @return Component sizes
+	 * @return Layout of this image
 	 */
-	List<Integer> components();
+	public Layout layout() {
+		return layout;
+	}
+
+	/**
+	 * @return Length of this image (bytes)
+	 */
+	public int length() {
+		return layout.length() * size.width() * size.height();
+	}
 
 	/**
 	 * @return Image data
 	 */
-	byte[] data();
-	// TODO - not happy with this as an array, wrap with some sort of byte stream?
+	public ByteSource data() {
+		return data;
+	}
 
-	/**
-	 * Default implementation.
-	 */
-	class DefaultImageData implements ImageData {
-		private final Dimensions size;
-		private final List<Integer> components;
-		private final byte[] data;
-
-		/**
-		 * Constructor.
-		 * @param size				Size of this image
-		 * @param components		Component sizes
-		 * @param bytes				Image data
-		 */
-		public DefaultImageData(Dimensions size, List<Integer> components, byte[] data) {
-			Check.notEmpty(components);
-			final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
-			if(expected != data.length) throw new IllegalArgumentException("Buffer length does not match image dimensions");
-
-			this.size = notNull(size);
-			this.components = List.copyOf(components);
-			this.data = notNull(data);
-		}
-
-		@Override
-		public Dimensions size() {
-			return size;
-		}
-
-		@Override
-		public List<Integer> components() {
-			return components;
-		}
-
-		@Override
-		public byte[] data() {
-			return data;
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("size", size)
-					.append("components", components)
-					.build();
-		}
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("size", size)
+				.append("layout", layout)
+				.build();
 	}
 
 	/**
 	 * Loader for an image.
 	 */
-	class Loader extends ResourceLoader.Adapter<BufferedImage, ImageData> {
+	public static class Loader extends ResourceLoader.Adapter<BufferedImage, ImageData> {
 		private boolean add = true;
 
 		/**
@@ -137,17 +126,32 @@ public interface ImageData {
 				default -> throw new RuntimeException("Unsupported image format: " + image);
 			};
 
-			// Buffer image data
-			// TODO - duplicate code here and in swizzle()
-			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
+			// TODO - assumes:
+			// - bytes
+			// - all same size
 
-			// Enumerate image components
-			final int[] components = result.getColorModel().getComponentSize();
-			final var list = Arrays.stream(components).boxed().collect(toList());
+//			// Determine data type
+//			final Class<?> type = switch(buffer.getDataType()) {
+//				case DataBuffer.TYPE_BYTE -> Byte.class;
+//				case DataBuffer.TYPE_USHORT -> Short.class;
+//				default -> throw new RuntimeException("Unsupported image data type: " + 42);
+//			};
+
+			// Extract image data
+			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
+			final ByteSource bytes = ByteSource.of(buffer.getData());
+
+			// Create image layout
+			final Layout layout = Layout.of(result.getColorModel().getNumComponents(), Byte.class);
+
+//			// Enumerate image components
+//			final int[] components = result.getColorModel().getComponentSize();
+//			final var list = Arrays.stream(components).boxed().collect(toList());
+			//result.getRaster().getDataBuffer().getDataType();
 
 			// Create image wrapper
 			final Dimensions dim = new Dimensions(result.getWidth(), result.getHeight());
-			return new DefaultImageData(dim, list, buffer.getData());
+			return new ImageData(dim, layout, bytes);
 		}
 
 		/**

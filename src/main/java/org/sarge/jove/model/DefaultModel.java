@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.sarge.jove.common.ByteSource;
-import org.sarge.jove.common.Component.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 

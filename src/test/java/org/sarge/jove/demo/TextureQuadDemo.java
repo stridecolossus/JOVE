@@ -35,27 +35,24 @@ import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
-import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.platform.vulkan.util.FormatHelper;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.ResourceLoader;
 
 public class TextureQuadDemo {
-
-
 	public static View texture(LogicalDevice dev, Command.Pool pool) throws IOException {
 		// Load image
-		final Path dir = Paths.get("./src/test/resources"); // /thiswayup.jpg");
+		final Path dir = Paths.get("./src/test/resources");
 		final var src = DataSource.of(dir);
 		final var loader = ResourceLoader.of(src, new ImageData.Loader());
-//		final ImageData image = loader.load("heightmap.gif"); // "thiswayup.jpg");
 		final ImageData image = loader.load("thiswayup.png");
-		final VkFormat format = FormatBuilder.format(image);
-//		System.out.println(format);
+		final VkFormat format = FormatHelper.format(image.layout());		// R8G8B8A8_SRGB
 
 		// Copy image to staging buffer
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().length);
-		staging.memory().map().write(image.data());
+		final int len = 4 * image.size().width() * image.size().height() * image.layout().bytes(); // TODO - property of image
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, len);
+		image.data().write(staging.memory().map()); // TODO - ugly
 
 		// Init image descriptor
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
@@ -174,11 +171,11 @@ public class TextureQuadDemo {
 
 		// Specify required image format
 		// TODO - do we introduce format builder here or later?
-		final VkFormat format = new FormatBuilder()
-				.components(FormatBuilder.BGRA)
+		final VkFormat format = new FormatHelper()
+				.template(FormatHelper.BGRA)
 				.bytes(1)
 				.signed(false)
-				.type(FormatBuilder.Type.NORMALIZED)
+				.type(FormatHelper.Type.NORMALIZED)
 				.build();
 
 		// Create swap-chain

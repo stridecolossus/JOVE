@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -18,37 +17,46 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.sarge.jove.common.ImageData.DefaultImageData;
 import org.sarge.jove.common.ImageData.Loader;
 
 public class ImageDataTest {
+	private static final int LENGTH = 4 * (3 * 4);
+
+	private ImageData image;
+	private Layout layout;
 	private Dimensions size;
-	private List<Integer> components;
 
 	@BeforeEach
 	void before() {
 		size = new Dimensions(3, 4);
-		components = List.of(8, 8, 8);
+		layout = Layout.of(4, Byte.class);
+		image = new ImageData(size, layout, ByteSource.of(new byte[LENGTH]));
 	}
 
 	@Test
-	void constructor() {
-		final int len = 3 * size.width() * size.height();
-		final ImageData image = new DefaultImageData(size, components, new byte[len]);
+	void header() {
 		assertEquals(size, image.size());
-		assertEquals(components, image.components());
+		assertEquals(layout, image.layout());
+		assertEquals(LENGTH, image.length());
 	}
 
 	@Test
-	void constructorInvalidArrayLength() {
-		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, new byte[0]));
-		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, new byte[42]));
+	void data() {
+		assertNotNull(image.data());
+		assertNotNull(image.data().toByteArray());
+		assertEquals(LENGTH, image.data().toByteArray().length);
 	}
 
-	@Test
-	void constructorEmptyComponents() {
-		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, List.of(), new byte[3 * 3 * 4]));
-	}
+//	@Test
+//	void constructorInvalidArrayLength() {
+//		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, new byte[0]));
+//		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, new byte[42]));
+//	}
+//
+//	@Test
+//	void constructorEmptyComponents() {
+//		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, List.of(), new byte[3 * 3 * 4]));
+//	}
 
 	@Nested
 	class LoaderTests {
@@ -75,9 +83,9 @@ public class ImageDataTest {
 			final ImageData image = loader.load(buffered);
 			assertNotNull(image);
 			assertEquals(new Dimensions(w, h), image.size());
-			assertNotNull(image.components());
-			assertEquals(components, image.components().size());
-			assertNotNull(image.data());
+//			assertNotNull(image.components());
+//			assertEquals(components, image.components().size());
+//			assertNotNull(image.data());
 		}
 
 		@Test
