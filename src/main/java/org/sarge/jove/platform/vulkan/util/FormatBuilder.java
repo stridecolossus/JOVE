@@ -2,8 +2,6 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.StringJoiner;
-
 import org.sarge.jove.common.Component;
 import org.sarge.jove.common.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
@@ -180,11 +178,8 @@ public class FormatBuilder {
 		}
 
 		// Build format string
-		final String format = new StringJoiner("_")
-			.add("VK_FORMAT")
-			.add(layout.toString())
-			.add((signed ? "S" : "U") + type.token)
-			.toString();
+		final char ch = signed ? 'S' : 'U';
+		final String format = String.format("%s_%c%s", layout, ch, type.token);
 
 		// Lookup format
 		return VkFormat.valueOf(format);

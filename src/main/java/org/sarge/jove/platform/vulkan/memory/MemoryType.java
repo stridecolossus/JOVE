@@ -37,8 +37,17 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryPropertyFlag> propert
 		heap.types.add(this);
 	}
 
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("index", index)
+				.append("heap", heap.index)
+				.append(properties)
+				.build();
+	}
+
 	/**
-	 * A <i>memory heap</i> specifies the properties of a group of device memory types.
+	 * A <i>memory heap</i> specifies the properties of a group of memory types.
 	 */
 	public static class Heap {
 		private final int index;

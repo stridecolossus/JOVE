@@ -47,7 +47,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(mem.size()).thenReturn(SIZE);
 
 		// Create buffer
-		buffer = new VulkanBuffer(new Pointer(2), dev, FLAGS, mem);
+		buffer = new VulkanBuffer(new Pointer(2), dev, FLAGS, mem, SIZE);
 	}
 
 	@Test
@@ -56,6 +56,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		assertEquals(dev, buffer.device());
 		assertEquals(FLAGS, buffer.usage());
 		assertEquals(mem, buffer.memory());
+		assertEquals(SIZE, buffer.length());
 	}
 
 	@Nested
@@ -67,8 +68,8 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			final var flags = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_DST);
-			dest = new VulkanBuffer(new Pointer(2), dev, flags, mem);
-			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.INDEX_BUFFER), mem);
+			dest = new VulkanBuffer(new Pointer(2), dev, flags, mem, SIZE);
+			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.INDEX_BUFFER), mem, SIZE);
 			cmdHandle = new Handle(new Pointer(42));
 		}
 
@@ -144,7 +145,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			final VulkanBuffer vbo = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.UNIFORM_BUFFER), mem);
+			final VulkanBuffer vbo = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.UNIFORM_BUFFER), mem, SIZE);
 			uniform = vbo.uniform();
 		}
 

@@ -39,7 +39,7 @@ public class QueueTest extends AbstractVulkanTest {
 		when(dev.parent()).thenReturn(parent);
 
 		// Create queue
-		family = new Family(parent, 1, 2, Set.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT));
+		family = new Family(parent, 1, 2, Set.of(VkQueueFlag.GRAPHICS));
 		queue = new Queue(new Pointer(1), dev, family);
 
 		// Add to devices
@@ -68,7 +68,7 @@ public class QueueTest extends AbstractVulkanTest {
 		assertEquals(1, family.index());
 		assertEquals(2, family.count());
 		assertEquals(parent, family.device());
-		assertEquals(Set.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT), family.flags());
+		assertEquals(Set.of(VkQueueFlag.GRAPHICS), family.flags());
 	}
 
 	@Test

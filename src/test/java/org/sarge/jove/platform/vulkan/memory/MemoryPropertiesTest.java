@@ -23,21 +23,21 @@ public class MemoryPropertiesTest {
 	private static final Set<VkMemoryPropertyFlag> REQUIRED = Set.of(HOST_VISIBLE);
 	private static final Set<VkMemoryPropertyFlag> OPTIMAL = Set.of(HOST_VISIBLE, HOST_CACHED);
 
-	private MemoryProperties req;
+	private MemoryProperties props;
 	private Heap heap;
 
 	@BeforeEach
 	void before() {
-		req = new MemoryProperties<>(USAGE, CONCURRENT, REQUIRED, OPTIMAL);
+		props = new MemoryProperties<>(USAGE, CONCURRENT, REQUIRED, OPTIMAL);
 		heap = new Heap(0, 0,Set.of());
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(USAGE, req.usage());
-		assertEquals(CONCURRENT, req.mode());
-		assertEquals(REQUIRED, req.required());
-		assertEquals(OPTIMAL, req.optimal());
+		assertEquals(USAGE, props.usage());
+		assertEquals(CONCURRENT, props.mode());
+		assertEquals(REQUIRED, props.required());
+		assertEquals(OPTIMAL, props.optimal());
 	}
 
 	@Test
@@ -47,38 +47,45 @@ public class MemoryPropertiesTest {
 
 	@Nested
 	class SelectTests {
-		private MemoryType required, optimal, other;
+		private MemoryType required, optimal, empty;
 
 		@BeforeEach
 		void before() {
 			required = new MemoryType(0, heap, REQUIRED);
 			optimal = new MemoryType(1, heap, OPTIMAL);
-			other = new MemoryType(2, heap, Set.of());
+			empty = new MemoryType(2, heap, Set.of());
 		}
 
 		@DisplayName("Required memory properties should be selected if the optimal set is not available")
 		@Test
 		void select() {
-			assertEquals(Optional.of(required), req.select(Integer.MAX_VALUE, Set.of(required, other)));
+			assertEquals(Optional.of(required), props.select(Integer.MAX_VALUE, Set.of(required, empty)));
 		}
 
 		@DisplayName("Optimal memory properties should be selected when available")
 		@Test
 		void optimal() {
-			assertEquals(Optional.of(optimal), req.select(Integer.MAX_VALUE, Set.of(required, optimal, other)));
+			assertEquals(Optional.of(optimal), props.select(Integer.MAX_VALUE, Set.of(required, optimal, empty)));
 		}
 
-		@DisplayName("No memory type should be selected where the required properties are not available")
+		@DisplayName("No memory type should be selected if no matching properties are available")
 		@Test
 		void none() {
-			assertEquals(Optional.empty(), req.select(Integer.MAX_VALUE, Set.of()));
-			assertEquals(Optional.empty(), req.select(Integer.MAX_VALUE, Set.of(other)));
+			assertEquals(Optional.empty(), props.select(Integer.MAX_VALUE, Set.of()));
+			assertEquals(Optional.empty(), props.select(Integer.MAX_VALUE, Set.of(empty)));
 		}
 
 		@DisplayName("Memory types should be filtered by the request bit-mask")
 		@Test
 		void filter() {
-			assertEquals(Optional.of(required), req.select(0b01, Set.of(required, optimal, other)));
+			assertEquals(Optional.of(required), props.select(0b01, Set.of(required, optimal, empty)));
+		}
+
+		@DisplayName("A memory type with no properties should never be selected")
+		@Test
+		void empty() {
+			props = new MemoryProperties<>(USAGE, CONCURRENT, Set.of(), Set.of());
+			assertEquals(Optional.empty(), props.select(Integer.MAX_VALUE, Set.of(empty)));
 		}
 	}
 
@@ -101,7 +108,7 @@ public class MemoryPropertiesTest {
 					.optimal(HOST_CACHED)
 					.build();
 
-			assertEquals(req, result);
+			assertEquals(props, result);
 		}
 	}
 }

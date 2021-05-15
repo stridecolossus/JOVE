@@ -30,8 +30,8 @@ public class VkSubpassDependency2KHR extends VulkanStructure {
 	public Pointer pNext;
 	public int srcSubpass;
 	public int dstSubpass;
-	public VkPipelineStageFlag srcStageMask;
-	public VkPipelineStageFlag dstStageMask;
+	public VkPipelineStage srcStageMask;
+	public VkPipelineStage dstStageMask;
 	public VkAccess srcAccessMask;
 	public VkAccess dstAccessMask;
 	public VkDependencyFlag dependencyFlags;

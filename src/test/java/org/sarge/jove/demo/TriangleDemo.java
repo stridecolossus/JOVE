@@ -13,6 +13,7 @@ import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
 import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
 import org.sarge.jove.platform.vulkan.VkColorSpaceKHR;
+import org.sarge.jove.platform.vulkan.VkCullMode;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
@@ -71,7 +72,7 @@ public class TriangleDemo {
 		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphics = Queue.Selector.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+		final var graphics = Queue.Selector.of(VkQueueFlag.GRAPHICS);
 		final var present = Queue.Selector.of(surfaceHandle);
 
 		// Find GPU
@@ -136,6 +137,9 @@ public class TriangleDemo {
 				.layout(layout)
 				.pass(pass)
 				.viewport(chain.extents())
+				.rasterizer()
+					.cull(VkCullMode.NONE) // TODO
+					.build()
 				.shader()
 					.stage(VkShaderStageFlag.VERTEX)
 					.shader(vert)

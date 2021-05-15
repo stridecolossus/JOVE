@@ -17,7 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.PushConstantRange;
@@ -71,7 +71,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 	@Test
 	void range() {
-		final var stages = Set.of(VkPipelineStageFlag.VERTEX_SHADER);
+		final var stages = Set.of(VkPipelineStage.VERTEX_SHADER);
 		final PushConstantRange range = new PushConstantRange(stages, 1, 2);
 		final VkPushConstantRange struct = new VkPushConstantRange();
 		range.populate(struct);

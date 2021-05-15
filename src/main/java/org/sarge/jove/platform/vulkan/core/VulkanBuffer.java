@@ -64,7 +64,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L));
 
 		// Create buffer
-		return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem);
+		return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem, len);
 	}
 
 	/**
@@ -87,6 +87,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 	private final Set<VkBufferUsage> usage;
 	private final DeviceMemory mem;
+	private final long len;
 
 	/**
 	 * Constructor.
@@ -94,11 +95,13 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 * @param usage			Usage flags
 	 * @param mem			Buffer memory
+	 * @param len			Length of this buffer (bytes)
 	 */
-	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsage> usage, DeviceMemory mem) {
+	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsage> usage, DeviceMemory mem, long len) {
 		super(handle, dev);
 		this.usage = Set.copyOf(notEmpty(usage));
 		this.mem = notNull(mem);
+		this.len = oneOrMore(len);
 	}
 
 	/**
@@ -113,6 +116,13 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public DeviceMemory memory() {
 		return mem;
+	}
+
+	/**
+	 * @return Length of this buffer
+	 */
+	public long length() {
+		return len;
 	}
 
 	/**
@@ -132,7 +142,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 				final var info = new VkDescriptorBufferInfo();
 				info.buffer = handle();
 				info.offset = 0;
-				info.range = mem.size();
+				info.range = len;
 				write.pBufferInfo = info;
 			}
 		};
@@ -172,13 +182,13 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public Command copy(VulkanBuffer dest) {
 		// Validate
-		if(mem.size() > dest.memory().size()) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
+		if(len > dest.len) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
 		require(VkBufferUsage.TRANSFER_SRC);
 		dest.require(VkBufferUsage.TRANSFER_DST);
 
 		// Build copy descriptor
 		final VkBufferCopy region = new VkBufferCopy();
-		region.size = mem.size();
+		region.size = len;
 
 		// Create copy command
 		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, VulkanBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
@@ -209,8 +219,9 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("handle", this.handle())
-				.append("mem", mem)
+				.append("len", len)
 				.append("usage", usage)
+				.append("mem", mem)
 				.build();
 	}
 }

@@ -12,7 +12,7 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkAccess;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
@@ -35,7 +35,7 @@ public class Barrier extends ImmediateCommand {
 	 * @param dest			Destination pipeline stages
 	 * @param images		Image memory barriers
 	 */
-	private Barrier(Set<VkPipelineStageFlag> src, Set<VkPipelineStageFlag> dest, VkImageMemoryBarrier[] images) {
+	private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, VkImageMemoryBarrier[] images) {
 		this.src = IntegerEnumeration.mask(src);
 		this.dest = IntegerEnumeration.mask(dest);
 		this.images = notNull(images);
@@ -51,8 +51,8 @@ public class Barrier extends ImmediateCommand {
 	 * Builder for a pipeline barrier.
 	 */
 	public static class Builder {
-		private final Set<VkPipelineStageFlag> srcStages = new HashSet<>();
-		private final Set<VkPipelineStageFlag> destStages = new HashSet<>();
+		private final Set<VkPipelineStage> srcStages = new HashSet<>();
+		private final Set<VkPipelineStage> destStages = new HashSet<>();
 		private final List<ImageBarrierBuilder> images = new ArrayList<>();
 		// TODO
 		// - buffer memory barriers
@@ -62,7 +62,7 @@ public class Barrier extends ImmediateCommand {
 		 * Adds a source pipeline stage for this barrier.
 		 * @param stage Source pipeline stage
 		 */
-		public Builder source(VkPipelineStageFlag stage) {
+		public Builder source(VkPipelineStage stage) {
 			Check.notNull(stage);
 			srcStages.add(stage);
 			return this;
@@ -72,7 +72,7 @@ public class Barrier extends ImmediateCommand {
 		 * Adds a destination pipeline stage for this barrier.
 		 * @param stage Destination pipeline stage
 		 */
-		public Builder destination(VkPipelineStageFlag stage) {
+		public Builder destination(VkPipelineStage stage) {
 			Check.notNull(stage);
 			destStages.add(stage);
 			return this;

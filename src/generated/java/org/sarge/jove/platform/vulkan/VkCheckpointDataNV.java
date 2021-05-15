@@ -22,6 +22,6 @@ public class VkCheckpointDataNV extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_CHECKPOINT_DATA_NV;
 	public Pointer pNext;
-	public VkPipelineStageFlag stage;
+	public VkPipelineStage stage;
 	public Pointer pCheckpointMarker;
 }

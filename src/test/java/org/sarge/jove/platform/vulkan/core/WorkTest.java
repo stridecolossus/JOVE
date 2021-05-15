@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
@@ -151,7 +151,7 @@ public class WorkTest extends AbstractVulkanTest {
 			// Build work
 			final Work work = builder
 					.add(buffer)
-					.wait(semaphore, VkPipelineStageFlag.COLOR_ATTACHMENT_OUTPUT)
+					.wait(semaphore, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
 					.signal(semaphore)
 					.build();
 

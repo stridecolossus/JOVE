@@ -12,14 +12,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
 
-public class ArrayParserTest {
+public class ComponentParserTest {
 	private Parser parser;
 	private ObjectModel model;
 
 	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		parser = new ArrayParser<>(3, Point::new, ObjectModel::vertices);
+		parser = new ComponentParser<>(3, Point::new, ObjectModel::vertices);
 		model = mock(ObjectModel.class);
 		when(model.vertices()).thenReturn(mock(List.class));
 	}

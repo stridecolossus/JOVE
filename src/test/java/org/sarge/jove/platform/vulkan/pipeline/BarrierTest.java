@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.VkAccess;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.Queue;
@@ -27,7 +27,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class BarrierTest {
-	private static final VkPipelineStageFlag STAGE = VkPipelineStageFlag.TOP_OF_PIPE;
+	private static final VkPipelineStage STAGE = VkPipelineStage.TOP_OF_PIPE;
 
 	private Barrier barrier;
 	private VulkanLibrary lib;

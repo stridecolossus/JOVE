@@ -161,8 +161,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 					.colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
 					.build()
 				.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
-					.source().stage(VkPipelineStageFlag.COLOR_ATTACHMENT_OUTPUT)
-					.destination().stage(VkPipelineStageFlag.COLOR_ATTACHMENT_OUTPUT)
+					.source().stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+					.destination().stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
 					.destination().access(VkAccess.COLOR_ATTACHMENT_WRITE)
 					.build()
 				.build();
@@ -401,9 +401,9 @@ public class RenderPassTest extends AbstractVulkanTest {
 		void build() {
 			// Configure dependency
 			dependencyBuilder
-				.source().stage(VkPipelineStageFlag.VERTEX_INPUT)
+				.source().stage(VkPipelineStage.VERTEX_INPUT)
 				.source().access(VkAccess.DEPTH_STENCIL_ATTACHMENT_READ)
-				.destination().stage(VkPipelineStageFlag.FRAGMENT_SHADER)
+				.destination().stage(VkPipelineStage.FRAGMENT_SHADER)
 				.destination().access(VkAccess.DEPTH_STENCIL_ATTACHMENT_WRITE);
 
 			// Populate descriptor
@@ -413,12 +413,12 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 			// Check source dependency
 			assertEquals(RenderPass.VK_SUBPASS_EXTERNAL, info.srcSubpass);
-			assertEquals(VkPipelineStageFlag.VERTEX_INPUT.value(), info.srcStageMask);
+			assertEquals(VkPipelineStage.VERTEX_INPUT.value(), info.srcStageMask);
 			assertEquals(VkAccess.DEPTH_STENCIL_ATTACHMENT_READ.value(), info.srcAccessMask);
 
 			// Check destination dependency
 			assertEquals(0, info.dstSubpass);
-			assertEquals(VkPipelineStageFlag.FRAGMENT_SHADER.value(), info.dstStageMask);
+			assertEquals(VkPipelineStage.FRAGMENT_SHADER.value(), info.dstStageMask);
 			assertEquals(VkAccess.DEPTH_STENCIL_ATTACHMENT_WRITE.value(), info.dstAccessMask);
 
 			// Build dependency

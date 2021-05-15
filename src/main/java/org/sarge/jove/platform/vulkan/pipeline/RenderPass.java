@@ -383,7 +383,7 @@ public class RenderPass extends AbstractVulkanObject {
 			 */
 			public class Dependency {
 				private final int index;
-				private final Set<VkPipelineStageFlag> stages = new HashSet<>();
+				private final Set<VkPipelineStage> stages = new HashSet<>();
 				private final Set<VkAccess> access = new HashSet<>();
 
 				/**
@@ -400,7 +400,7 @@ public class RenderPass extends AbstractVulkanObject {
 				 * Adds a pipeline stage.
 				 * @param stage Pipeline stage
 				 */
-				public DependencyBuilder stage(VkPipelineStageFlag stage) {
+				public DependencyBuilder stage(VkPipelineStage stage) {
 					stages.add(notNull(stage));
 					return DependencyBuilder.this;
 				}

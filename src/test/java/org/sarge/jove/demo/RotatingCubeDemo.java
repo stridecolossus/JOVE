@@ -65,8 +65,8 @@ public class RotatingCubeDemo {
 
 		// Transition texture ready for copying
 		new Barrier.Builder()
-				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
-				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
+				.source(VkPipelineStage.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+				.destination(VkPipelineStage.VK_PIPELINE_STAGE_TRANSFER_BIT)
 				.barrier(texture)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 					.destination(VkAccess.VK_ACCESS_TRANSFER_WRITE_BIT)
@@ -87,8 +87,8 @@ public class RotatingCubeDemo {
 
 		// Transition texture ready for sampling
 		new Barrier.Builder()
-				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
-				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+				.source(VkPipelineStage.VK_PIPELINE_STAGE_TRANSFER_BIT)
+				.destination(VkPipelineStage.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
 				.barrier(texture)
 					.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -187,8 +187,8 @@ public class RotatingCubeDemo {
 					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 					.build()
 				.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
-					.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-					.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.source().stage(VkPipelineStage.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.destination().stage(VkPipelineStage.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 					.destination().access(VkAccess.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 					.build()
 				.build();

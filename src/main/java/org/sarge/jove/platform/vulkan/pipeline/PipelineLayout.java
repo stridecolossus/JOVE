@@ -12,13 +12,12 @@ import java.util.Set;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -48,7 +47,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 	 * TODO
 	 */
 	public static class PushConstantRange {
-		private final Set<VkPipelineStageFlag> stages;
+		private final Set<VkPipelineStage> stages;
 		private final int size;
 		private final int offset;
 
@@ -58,7 +57,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 * @param size			Size of the data (bytes)
 		 * @param offset		Offset (bytes)
 		 */
-		public PushConstantRange(Set<VkPipelineStageFlag> stages, int size, int offset) {
+		public PushConstantRange(Set<VkPipelineStage> stages, int size, int offset) {
 			this.stages = Set.copyOf(notEmpty(stages));
 			this.size = oneOrMore(size);
 			this.offset = zeroOrMore(offset);
@@ -96,7 +95,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 * @param stages
 		 * @param offset
 		 */
-		public UpdateCommand(Set<VkPipelineStageFlag> stages, int offset) {
+		public UpdateCommand(Set<VkPipelineStage> stages, int offset) {
 			this.mask = IntegerEnumeration.mask(stages);
 			this.offset = zeroOrMore(offset);
 		}
@@ -168,7 +167,8 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 			// Add push constant ranges
 			info.pushConstantRangeCount = ranges.size();
-			info.pPushConstantRanges = StructureCollector.toPointer(ranges, VkPushConstantRange::new, PushConstantRange::populate);
+// TODO - memory error!!!
+//			info.pPushConstantRanges = StructureCollector.toPointer(ranges, VkPushConstantRange::new, PushConstantRange::populate);
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();

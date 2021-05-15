@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
+import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet;
 import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
@@ -34,6 +36,7 @@ import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
 import org.sarge.jove.platform.vulkan.pipeline.Sampler;
 import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.ResourceLoader;
 
@@ -48,29 +51,39 @@ public class TextureQuadDemo {
 //		final ImageData image = loader.load("heightmap.gif"); // "thiswayup.jpg");
 		final ImageData image = loader.load("thiswayup.png");
 		final VkFormat format = FormatBuilder.format(image);
-		//System.out.println(format);
+//		System.out.println(format);
 
 		// Copy image to staging buffer
 		final VulkanBuffer staging = VulkanBuffer.staging(dev, image.data().length);
-		staging.load(image.data());
+		staging.memory().map().write(image.data());
+
+		// Init image descriptor
+		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+				.format(format)
+				.extents(Image.Extents.of(image.size()))		// TODO - helper
+				.aspect(VkImageAspect.COLOR)
+				.build();
+
+		// Init image memory properties
+		final MemoryProperties<VkImageUsage> props = new MemoryProperties.Builder()
+				.required(VkMemoryPropertyFlag.DEVICE_LOCAL)
+				.usage(VkImageUsage.TRANSFER_DST)
+				.usage(VkImageUsage.SAMPLED)
+				.build();
 
 		// Create texture
-		final Image texture = new Image.Builder(dev)
-				.extents(Image.Extents.of(image.size()))
-				.format(format)
-				.aspect(VkImageAspect.VK_IMAGE_ASPECT_COLOR_BIT)
-				.usage(VkImageUsage.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-				.usage(VkImageUsage.VK_IMAGE_USAGE_SAMPLED_BIT)
-				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-				.build();
+		final Image texture = new Image.Builder()
+				.descriptor(descriptor)
+				.properties(props)
+				.build(dev);
 
 		// Transition texture ready for copying
 		new Barrier.Builder()
-				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
-				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
+				.source(VkPipelineStage.TOP_OF_PIPE)
+				.destination(VkPipelineStage.TRANSFER)
 				.barrier(texture)
-					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-					.destination(VkAccess.VK_ACCESS_TRANSFER_WRITE_BIT)
+					.newLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+					.destination(VkAccess.TRANSFER_WRITE)
 					.build()
 				.build()
 				.submit(pool);
@@ -79,7 +92,7 @@ public class TextureQuadDemo {
 		new ImageCopyCommand.Builder()
 				.image(texture)
 				.buffer(staging)
-				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+				.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
 				.build()
 				.submit(pool);
 
@@ -89,13 +102,13 @@ public class TextureQuadDemo {
 		// Transition texture ready for sampling
 		// TODO - source flag & access flag and old-layout could be initialised from previous barrier?
 		new Barrier.Builder()
-				.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
-				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+				.source(VkPipelineStage.TRANSFER)
+				.destination(VkPipelineStage.FRAGMENT_SHADER)
 				.barrier(texture)
-					.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-					.source(VkAccess.VK_ACCESS_TRANSFER_WRITE_BIT)
-					.destination(VkAccess.VK_ACCESS_SHADER_READ_BIT)
+					.oldLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+					.newLayout(VkImageLayout.SHADER_READ_ONLY_OPTIMAL)
+					.source(VkAccess.TRANSFER_WRITE)
+					.destination(VkAccess.SHADER_READ)
 					.build()
 				.build()
 				.submit(pool);
@@ -134,8 +147,8 @@ public class TextureQuadDemo {
 		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphics = Queue.Selector.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
-		final var transfer = Queue.Selector.of(VkQueueFlag.VK_QUEUE_TRANSFER_BIT);
+		final var graphics = Queue.Selector.of(VkQueueFlag.GRAPHICS);
+		final var transfer = Queue.Selector.of(VkQueueFlag.TRANSFER);
 		final var present  = Queue.Selector.of(surfaceHandle);
 
 		// Find GPU
@@ -172,7 +185,7 @@ public class TextureQuadDemo {
 		final Swapchain chain = new Swapchain.Builder(dev, surface)
 				.count(2)
 				.format(format)
-				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				.space(VkColorSpaceKHR.SRGB_NONLINEAR_KHR)
 				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
 
@@ -180,12 +193,12 @@ public class TextureQuadDemo {
 		final RenderPass pass = new RenderPass.Builder(dev)
 				.attachment()
 					.format(format)
-					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+					.load(VkAttachmentLoadOp.CLEAR)
+					.store(VkAttachmentStoreOp.STORE)
+					.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 					.build()
 				.subpass()
-					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+					.colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
 					.build()
 //				.dependency()
 //					.source(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
@@ -213,18 +226,24 @@ public class TextureQuadDemo {
 				new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT
 		);
 
-		// Load to staging
+		// Convert to buffer
 		final int len = vertices.length();
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, len);
-		staging.load(vertices);
+		final ByteBuffer bb = VulkanHelper.buffer(len);		// TODO - blog: note native order
+		vertices.buffer(bb);
+		bb.rewind(); // TODO - should do this for us?
 
-		// Create device VBO
-		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
-				.length(len)
-				.usage(VkBufferUsage.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-				.usage(VkBufferUsage.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		// Load to staging
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, len);
+		staging.memory().map().write(bb);
+
+		// Create VBO
+		final MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder()
+				.required(VkMemoryPropertyFlag.DEVICE_LOCAL)
+				.usage(VkBufferUsage.TRANSFER_DST)
+				.usage(VkBufferUsage.VERTEX_BUFFER)
 				.build();
+
+		final VulkanBuffer dest = VulkanBuffer.create(dev, len, props);
 
 		// Copy
 		final Command.Pool copyPool = Command.Pool.create(transfer.queue(dev));
@@ -240,15 +259,15 @@ public class TextureQuadDemo {
 
 		// Create descriptor layout
 		final var binding = new DescriptorSet.Binding.Builder()
-				.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-				.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+				.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
+				.stage(VkShaderStageFlag.FRAGMENT)
 				.build();
 
 		final DescriptorSet.Layout setLayout = DescriptorSet.Layout.create(dev, List.of(binding));
 
 		// Create pool
 		final DescriptorSet.Pool setPool = new DescriptorSet.Pool.Builder(dev)
-				.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
+				.add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 3)
 				.max(3)
 				.build();
 
@@ -280,11 +299,11 @@ public class TextureQuadDemo {
 						.build()
 					.attribute()
 						.location(0)
-						.format(VkFormat.VK_FORMAT_R32G32B32_SFLOAT)
+						.format(VkFormat.R32G32B32_SFLOAT)
 						.build()
 					.attribute()
 						.location(1)
-						.format(VkFormat.VK_FORMAT_R32G32_SFLOAT)
+						.format(VkFormat.R32G32_SFLOAT)
 						.offset(3 * Float.BYTES)
 						.build()
 					.build()
@@ -293,11 +312,11 @@ public class TextureQuadDemo {
 					.build()
 				.viewport(chain.extents())
 				.shader()
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+					.stage(VkShaderStageFlag.VERTEX)
 					.shader(vert)
 					.build()
 				.shader()
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+					.stage(VkShaderStageFlag.FRAGMENT)
 					.shader(frag)
 					.build()
 				.build();

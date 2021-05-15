@@ -16,7 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
@@ -169,7 +169,7 @@ public class Work {
 		 * @param semaphore 	Wait semaphore
 		 * @param stages		Pipeline stage(s) at which this semaphore will occur
 		 */
-		public Builder wait(Semaphore semaphore, Set<VkPipelineStageFlag> stages) {
+		public Builder wait(Semaphore semaphore, Set<VkPipelineStage> stages) {
 			// TODO - not VK_PIPELINE_STAGE_HOST_BIT
 			// TODO - check duplicates?
 			Check.notNull(semaphore);
@@ -184,7 +184,7 @@ public class Work {
 		 * @param semaphore 	Wait semaphore
 		 * @param stage			Pipeline stage at which this semaphore will occur
 		 */
-		public Builder wait(Semaphore semaphore, VkPipelineStageFlag stage) {
+		public Builder wait(Semaphore semaphore, VkPipelineStage stage) {
 			return wait(semaphore, Set.of(stage));
 		}
 

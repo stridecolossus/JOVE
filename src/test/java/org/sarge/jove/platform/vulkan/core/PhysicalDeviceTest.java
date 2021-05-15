@@ -45,7 +45,7 @@ public class PhysicalDeviceTest {
 		// Create a queue family
 		final VkQueueFamilyProperties family = new VkQueueFamilyProperties();
 		family.queueCount = 1;
-		family.queueFlags = IntegerEnumeration.mask(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT, VkQueueFlag.VK_QUEUE_COMPUTE_BIT);
+		family.queueFlags = IntegerEnumeration.mask(VkQueueFlag.GRAPHICS, VkQueueFlag.COMPUTE);
 
 		// Create device
 		dev = new PhysicalDevice(new Pointer(42), instance, new VkQueueFamilyProperties[]{family});

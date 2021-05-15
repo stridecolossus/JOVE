@@ -21,5 +21,5 @@ public class VkQueueFamilyCheckpointPropertiesNV extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV;
 	public Pointer pNext;
-	public VkPipelineStageFlag checkpointExecutionStageMask;
+	public VkPipelineStage checkpointExecutionStageMask;
 }

@@ -88,6 +88,10 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * Finds a memory type with the given properties.
 	 */
 	private static Optional<MemoryType> find(List<MemoryType> types, Set<VkMemoryPropertyFlag> props) {
+		if(props.isEmpty()) {
+			return Optional.empty();
+		}
+
 		return types
 				.stream()
 				.filter(type -> type.properties().containsAll(props))

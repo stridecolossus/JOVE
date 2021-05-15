@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
-import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
+import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
@@ -160,7 +160,7 @@ public class Runner {
 		public Work create(Command.Buffer buffer) {
 			return new Work.Builder()
 					.add(buffer)
-					.wait(ready, VkPipelineStageFlag.COLOR_ATTACHMENT_OUTPUT)
+					.wait(ready, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
 					.signal(finished)
 					.build();
 		}
