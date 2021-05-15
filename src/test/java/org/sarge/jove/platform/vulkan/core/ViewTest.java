@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageType;
@@ -24,15 +25,17 @@ import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.core.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class ViewTest extends AbstractVulkanTest {
+	private interface MockImage extends Image, TransientNativeObject {
+	}
+
 	private View view;
-	private Image image;
+	private MockImage image;
 
 	@BeforeEach
 	void before() {
@@ -44,7 +47,7 @@ public class ViewTest extends AbstractVulkanTest {
 				.build();
 
 		// Create image
-		image = mock(Image.class);
+		image = mock(MockImage.class);
 		when(image.descriptor()).thenReturn(descriptor);
 
 		// Create image view
@@ -88,15 +91,8 @@ public class ViewTest extends AbstractVulkanTest {
 	void destroy() {
 		view.destroy();
 		verify(lib).vkDestroyImageView(dev.handle(), view.handle(), null);
+		verify(image).destroy();
 		verifyNoMoreInteractions(lib);
-	}
-
-	@Test
-	void destroyImage() {
-		final DefaultImage def = mock(DefaultImage.class);
-		view = new View(new Pointer(1), def, dev);
-		view.destroy();
-		verify(def).destroy();
 	}
 
 	@Nested
@@ -105,6 +101,7 @@ public class ViewTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
+			when(image.device()).thenReturn(dev);
 			builder = new View.Builder(image);
 		}
 

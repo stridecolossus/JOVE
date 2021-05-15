@@ -55,12 +55,12 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		}
 
 		// Write VBO
-		out.write(model.vertexBuffer().toByteArray());
+		write(model.vertexBuffer(), out);
 
 		// Write index
 		final var index = model.indexBuffer();
 		if(index.isPresent()) {
-			out.write(index.get().toByteArray());
+			write(model.indexBuffer().get(), out);
 		}
 		else {
 			out.writeInt(0);
@@ -68,6 +68,12 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 
 		// Done
 		out.flush();
+	}
+
+	private static void write(ByteSource src, DataOutputStream out) throws IOException {
+		final byte[] array = src.toByteArray();
+		out.writeInt(array.length);
+		out.write(array);
 	}
 
 	@Override
