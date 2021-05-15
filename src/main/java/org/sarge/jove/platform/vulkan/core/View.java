@@ -32,9 +32,9 @@ public class View extends AbstractVulkanObject {
 	 */
 	static VkImageViewType type(VkImageType type) {
 		return switch(type) {
-			case VK_IMAGE_TYPE_1D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_1D;
-			case VK_IMAGE_TYPE_2D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D;
-			case VK_IMAGE_TYPE_3D -> VkImageViewType.VK_IMAGE_VIEW_TYPE_3D;
+			case IMAGE_TYPE_1D -> VkImageViewType.VIEW_TYPE_1D;
+			case IMAGE_TYPE_2D -> VkImageViewType.VIEW_TYPE_2D;
+			case IMAGE_TYPE_3D -> VkImageViewType.VIEW_TYPE_3D;
 		};
 	}
 

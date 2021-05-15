@@ -26,11 +26,11 @@ public class ColourBlendStageBuilderTest {
 	void create() {
 		// Build descriptor
 		final var info = builder
-				.logic(VkLogicOp.VK_LOGIC_OP_COPY)
+				.logic(VkLogicOp.COPY)
 				.constants(CONSTANTS)
 				.attachment()
 					.colour().source(VkBlendFactor.CONSTANT_COLOR)
-					.alpha().operation(VkBlendOp.VK_BLEND_OP_BLUE_EXT)
+					.alpha().operation(VkBlendOp.BLUE_EXT)
 					.mask("RGBA")
 					.build()
 				.attachment()
@@ -41,7 +41,7 @@ public class ColourBlendStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(VulkanBoolean.TRUE, info.logicOpEnable);
-		assertEquals(VkLogicOp.VK_LOGIC_OP_COPY, info.logicOp);
+		assertEquals(VkLogicOp.COPY, info.logicOp);
 		assertArrayEquals(CONSTANTS, info.blendConstants);
 		assertEquals(2, info.attachmentCount);
 		assertNotNull(info.pAttachments);
@@ -54,7 +54,7 @@ public class ColourBlendStageBuilderTest {
 		final var info = builder.result();
 		assertNotNull(info);
 		assertEquals(VulkanBoolean.FALSE, info.logicOpEnable);
-		assertEquals(VkLogicOp.VK_LOGIC_OP_NO_OP, info.logicOp);
+		assertEquals(VkLogicOp.NO_OP, info.logicOp);
 		assertArrayEquals(new float[]{0, 0, 0, 0}, info.blendConstants);
 		assertEquals(1, info.attachmentCount);
 		assertNotNull(info.pAttachments);

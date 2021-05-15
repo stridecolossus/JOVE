@@ -1,8 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.joining;
-import static org.apache.commons.lang3.StringUtils.removeEnd;
-import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Collection;
@@ -26,40 +24,6 @@ import com.sun.jna.Pointer;
  * @author Sarge
  */
 public record Message(VkDebugUtilsMessageSeverityFlagEXT severity, Collection<VkDebugUtilsMessageTypeFlagEXT> types, VkDebugUtilsMessengerCallbackDataEXT data) {
-	/**
-	 * Helper - Converts the given severity flag to a human-readable string.
-	 * @param severity Message severity
-	 * @return Severity string
-	 */
-	public static String toString(VkDebugUtilsMessageSeverityFlagEXT severity) {
-		return clean(severity.name(), "SEVERITY");
-	}
-
-	/**
-	 * Helper - Converts the given message type to a human-readable string.
-	 * @param type Message type
-	 * @return Message type string
-	 */
-	public static String toString(VkDebugUtilsMessageTypeFlagEXT type) {
-		return clean(type.name(), "TYPE");
-	}
-
-	/**
-	 * Helper - Strips the surrounding text from the given enumeration constant name.
-	 * @param name Enumeration constant name
-	 * @param type Type name
-	 * @return Cleaned name
-	 */
-	private static String clean(String name, String type) {
-		final String prefix = new StringBuilder()
-				.append("VK_DEBUG_UTILS_MESSAGE_")
-				.append(type)
-				.append("_")
-				.toString();
-
-		return removeEnd(removeStart(name, prefix), "_BIT_EXT");
-	}
-
 	/**
 	 * Constructor.
 	 * @param severity		Severity
@@ -89,9 +53,9 @@ public record Message(VkDebugUtilsMessageSeverityFlagEXT severity, Collection<Vk
 	 */
 	@Override
 	public String toString() {
-		final String compoundTypes = types.stream().map(Message::toString).collect(joining("-"));
+		final String compoundTypes = types.stream().map(Enum::name).collect(joining("-"));
 		final StringJoiner str = new StringJoiner(":");
-		str.add(toString(severity));
+		str.add(severity.name());
 		str.add(compoundTypes);
 		if(!data.pMessage.contains(data.pMessageIdName)) {
 			str.add(data.pMessageIdName);
@@ -151,10 +115,10 @@ public record Message(VkDebugUtilsMessageSeverityFlagEXT severity, Collection<Vk
 		 * </ul>
 		 */
 		public HandlerBuilder init() {
-			severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT);
-			severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
-			type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT);
-			type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT);
+			severity(VkDebugUtilsMessageSeverityFlagEXT.WARNING);
+			severity(VkDebugUtilsMessageSeverityFlagEXT.ERROR);
+			type(VkDebugUtilsMessageTypeFlagEXT.GENERAL);
+			type(VkDebugUtilsMessageTypeFlagEXT.VALIDATION);
 			return this;
 		}
 

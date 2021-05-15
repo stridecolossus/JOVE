@@ -79,9 +79,9 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void type() {
-		assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_1D, View.type(VkImageType.VK_IMAGE_TYPE_1D));
-		assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_2D, View.type(VkImageType.VK_IMAGE_TYPE_2D));
-		assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_3D, View.type(VkImageType.VK_IMAGE_TYPE_3D));
+		assertEquals(VkImageViewType.VIEW_TYPE_1D, View.type(VkImageType.IMAGE_TYPE_1D));
+		assertEquals(VkImageViewType.VIEW_TYPE_2D, View.type(VkImageType.IMAGE_TYPE_2D));
+		assertEquals(VkImageViewType.VIEW_TYPE_3D, View.type(VkImageType.IMAGE_TYPE_3D));
 	}
 
 	@Test
@@ -127,7 +127,7 @@ public class ViewTest extends AbstractVulkanTest {
 			final VkImageViewCreateInfo info = captor.getValue();
 			assertNotNull(info);
 			assertEquals(image.handle(), info.image);
-			assertEquals(VkImageViewType.VK_IMAGE_VIEW_TYPE_2D, info.viewType);
+			assertEquals(VkImageViewType.VIEW_TYPE_2D, info.viewType);
 			assertEquals(0, info.flags);
 			assertEquals(FORMAT, info.format);
 

@@ -127,16 +127,16 @@ public interface Image extends NativeObject {
 
 			// Validate extents
 			final boolean valid = switch(type) {
-				case VK_IMAGE_TYPE_1D -> (extents.height == 1) && (extents.depth == 1);
-				case VK_IMAGE_TYPE_2D -> extents.depth == 1;
-				case VK_IMAGE_TYPE_3D -> true;
+				case IMAGE_TYPE_1D -> (extents.height == 1) && (extents.depth == 1);
+				case IMAGE_TYPE_2D -> extents.depth == 1;
+				case IMAGE_TYPE_3D -> true;
 			};
 			if(!valid) {
 				throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
 			}
 
 			// Validate array layers
-			if((type == VkImageType.VK_IMAGE_TYPE_3D) && (layers != 1)) {
+			if((type == VkImageType.IMAGE_TYPE_3D) && (layers != 1)) {
 				throw new IllegalArgumentException("Array layers must be one for a 3D image");
 			}
 
@@ -160,7 +160,7 @@ public interface Image extends NativeObject {
 		 * Builder for an image descriptor.
 		 */
 		public static class Builder {
-			private VkImageType type = VkImageType.VK_IMAGE_TYPE_2D;
+			private VkImageType type = VkImageType.IMAGE_TYPE_2D;
 			private VkFormat format;
 			private Extents extents;
 			private final Set<VkImageAspect> aspects = new HashSet<>();
@@ -168,7 +168,7 @@ public interface Image extends NativeObject {
 			private int layers = 1;
 
 			/**
-			 * Sets the image type (default is {@link VkImageType#VK_IMAGE_TYPE_2D}).
+			 * Sets the image type (default is {@link VkImageType#IMAGE_TYPE_2D}).
 			 * @param type Image type
 			 */
 			public Builder type(VkImageType type) {
@@ -409,9 +409,13 @@ public interface Image extends NativeObject {
 	class Builder {
 		private Descriptor descriptor;
 		private MemoryProperties<VkImageUsage> props;
-		private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1;
+		private VkSampleCountFlag samples;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
 		private VkImageLayout layout = VkImageLayout.UNDEFINED;
+
+		public Builder() {
+			samples(1);
+		}
 
 		/**
 		 * Sets the descriptor for this image.
@@ -435,14 +439,14 @@ public interface Image extends NativeObject {
 		 * Sets the number of samples.
 		 * @param samples Samples-per-texel (default is {@code 1})
 		 */
-		public Builder samples(VkSampleCountFlag samples) {
-			this.samples = notNull(samples);
+		public Builder samples(int samples) {
+			this.samples = IntegerEnumeration.map(VkSampleCountFlag.class, samples);
 			return this;
 		}
 
 		/**
 		 * Sets the image tiling arrangement.
-		 * @param tiling Tiling arrangement (default is {@link VkImageTiling#VK_IMAGE_TILING_OPTIMAL})
+		 * @param tiling Tiling arrangement (default is {@link VkImageTiling#TILING_OPTIMAL})
 		 */
 		public Builder tiling(VkImageTiling tiling) {
 			this.tiling = notNull(tiling);
@@ -464,7 +468,7 @@ public interface Image extends NativeObject {
 		 * @param dev Logical device
 		 * @return New image
 		 * @throws VulkanException if the image cannot be created
-		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#VK_IMAGE_TYPE_3D} image
+		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#TYPE_3D} image
 		 * @throws VulkanException if the image cannot be created
 		 */
 		public DefaultImage build(LogicalDevice dev) {

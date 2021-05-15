@@ -11,7 +11,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.platform.vulkan.VkImageAspect.COLOR;
-import static org.sarge.jove.platform.vulkan.VkImageType.VK_IMAGE_TYPE_2D;
+import static org.sarge.jove.platform.vulkan.VkImageType.IMAGE_TYPE_2D;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.Set;
@@ -74,7 +74,7 @@ public class ImageTest extends AbstractVulkanTest {
 	class DescriptorTests {
 		@Test
 		void constructor() {
-			assertEquals(VK_IMAGE_TYPE_2D, descriptor.type());
+			assertEquals(IMAGE_TYPE_2D, descriptor.type());
 			assertEquals(FORMAT, descriptor.format());
 			assertEquals(new Extents(3, 4), descriptor.extents());
 			assertEquals(COLOUR, descriptor.aspects());
@@ -83,32 +83,32 @@ public class ImageTest extends AbstractVulkanTest {
 		@DisplayName("Image must have at least one aspect")
 		@Test
 		void emptyAspects() {
-			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), Set.of(), 1, 1));
+			assertThrows(IllegalArgumentException.class, () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), Set.of(), 1, 1));
 		}
 
 		@DisplayName("Image aspects must be a valid combination")
 		@Test
 		void invalidAspects() {
 			final var aspects = Set.of(COLOR, VkImageAspect.DEPTH);
-			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), aspects, 1, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), aspects, 1, 1));
 		}
 
 		@DisplayName("2D image must have depth of one")
 		@Test
 		void invalidExtentsDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 1));
 		}
 
 		@DisplayName("2D image must have height and depth of one")
 		@Test
 		void invalidExtentsHeightDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_1D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.IMAGE_TYPE_1D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 1));
 		}
 
 		@DisplayName("3D image can only have one array layer")
 		@Test
 		void invalidArrayLayers() {
-			assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new Descriptor(VkImageType.VK_IMAGE_TYPE_3D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 2));
+			assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new Descriptor(VkImageType.IMAGE_TYPE_3D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 2));
 		}
 	}
 
@@ -173,7 +173,7 @@ public class ImageTest extends AbstractVulkanTest {
 			image = builder
 					.descriptor(descriptor)
 					.properties(props)
-					.samples(VkSampleCountFlag.VK_SAMPLE_COUNT_4)
+					.samples(4)
 					.tiling(VkImageTiling.LINEAR)
 					.initialLayout(VkImageLayout.PREINITIALIZED)
 					.build(dev);
@@ -195,7 +195,7 @@ public class ImageTest extends AbstractVulkanTest {
 			// Check create descriptor
 			final VkImageCreateInfo info = captor.getValue();
 			assertNotNull(info);
-			assertEquals(VK_IMAGE_TYPE_2D, info.imageType);
+			assertEquals(IMAGE_TYPE_2D, info.imageType);
 			assertEquals(FORMAT, info.format);
 			assertEquals(2, info.mipLevels);
 			assertEquals(3, info.arrayLayers);

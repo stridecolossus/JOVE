@@ -7,10 +7,10 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkColorComponentFlag implements IntegerEnumeration {
- 	VK_COLOR_COMPONENT_R_BIT(1),
- 	VK_COLOR_COMPONENT_G_BIT(2),
- 	VK_COLOR_COMPONENT_B_BIT(4),
- 	VK_COLOR_COMPONENT_A_BIT(8);
+ 	R(1),
+ 	G(2),
+ 	B(4),
+ 	A(8);
 
 	private final int value;
 

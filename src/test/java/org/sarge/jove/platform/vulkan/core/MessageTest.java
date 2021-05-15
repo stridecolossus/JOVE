@@ -5,6 +5,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT.ERROR;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT.INFO;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT.GENERAL;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT.VALIDATION;
 
 import java.io.StringWriter;
 import java.util.Collection;
@@ -14,12 +18,10 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
 import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 
-@SuppressWarnings("static-method")
 public class MessageTest {
 	private Message message;
 	private Collection<VkDebugUtilsMessageTypeFlagEXT> types;
@@ -29,25 +31,15 @@ public class MessageTest {
 		final var data = new VkDebugUtilsMessengerCallbackDataEXT();
 		data.pMessage = "message";
 		data.pMessageIdName = "name";
-		types = List.of(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT, VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT);
-		message = new Message(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT, types, data);
+		types = List.of(VALIDATION, GENERAL);
+		message = new Message(INFO, types, data);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT, message.severity());
+		assertEquals(INFO, message.severity());
 		assertEquals(types, message.types());
 		assertNotNull(message.data());
-	}
-
-	@Test
-	void toStringSeverity() {
-		assertEquals("INFO", Message.toString(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT));
-	}
-
-	@Test
-	void toStringType() {
-		assertEquals("VALIDATION", Message.toString(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT));
 	}
 
 	@Test
@@ -78,16 +70,16 @@ public class MessageTest {
 		void build() {
 			// Build handler descriptor
 			final var handler = builder
-					.severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-					.type(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+					.severity(ERROR)
+					.type(GENERAL)
 					.consumer(mock(Consumer.class))
 					.build();
 
 			// Verify handler
 			assertNotNull(handler);
 			assertEquals(0, handler.flags);
-			assertEquals(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT.value(), handler.messageSeverity);
-			assertEquals(VkDebugUtilsMessageTypeFlagEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT.value(), handler.messageType);
+			assertEquals(ERROR.value(), handler.messageSeverity);
+			assertEquals(GENERAL.value(), handler.messageType);
 			assertNotNull(handler.pfnUserCallback);
 			assertEquals(null, handler.pUserData);
 		}
@@ -106,7 +98,7 @@ public class MessageTest {
 
 		@Test
 		void buildEmptyTypes() {
-			builder.severity(VkDebugUtilsMessageSeverityFlagEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
+			builder.severity(ERROR);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 

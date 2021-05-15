@@ -17,23 +17,9 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
  * Builder for the colour-blend pipeline stage.
- * @see VkPipelineColorBlendStateCreateInfo
  * @author Sarge
  */
 public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineColorBlendStateCreateInfo> {
-	/**
-	 * Maps a colour component character.
-	 */
-	private static VkColorComponentFlag component(int ch) {
-		return switch(ch) {
-			case 'R' -> VkColorComponentFlag.VK_COLOR_COMPONENT_R_BIT;
-			case 'G' -> VkColorComponentFlag.VK_COLOR_COMPONENT_G_BIT;
-			case 'B' -> VkColorComponentFlag.VK_COLOR_COMPONENT_B_BIT;
-			case 'A' -> VkColorComponentFlag.VK_COLOR_COMPONENT_A_BIT;
-			default -> throw new IllegalArgumentException("Invalid colour component: " + String.valueOf((char) ch));
-		};
-	}
-
 	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponentFlag.values());
 
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
@@ -89,7 +75,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		// Init global colour blending settings
 		if(logic == null) {
 			info.logicOpEnable = VulkanBoolean.FALSE;
-			info.logicOp = VkLogicOp.VK_LOGIC_OP_NO_OP;
+			info.logicOp = VkLogicOp.NO_OP;
 		}
 		else {
 			info.logicOpEnable = VulkanBoolean.TRUE;
@@ -110,7 +96,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		public class BlendOperationBuilder {
 			private VkBlendFactor src;
 			private VkBlendFactor dest;
-			private VkBlendOp op = VkBlendOp.VK_BLEND_OP_ADD;
+			private VkBlendOp op = VkBlendOp.ADD;
 
 			private BlendOperationBuilder() {
 			}
@@ -173,7 +159,8 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		public AttachmentBuilder mask(String mask) {
 			this.mask = mask
 					.chars()
-					.mapToObj(ColourBlendStageBuilder::component)
+					.mapToObj(Character::toString)
+					.map(VkColorComponentFlag::valueOf)
 					.mapToInt(IntegerEnumeration::value)
 					.reduce(0, IntegerEnumeration.MASK);
 

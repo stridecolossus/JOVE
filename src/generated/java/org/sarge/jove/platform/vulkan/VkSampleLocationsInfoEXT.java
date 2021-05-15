@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -19,9 +18,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pSampleLocations"
 })
 public class VkSampleLocationsInfoEXT extends VulkanStructure {
-	public static class ByValue extends VkSampleLocationsInfoEXT implements Structure.ByValue { }
-	public static class ByReference extends VkSampleLocationsInfoEXT implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
 	public Pointer pNext;
 	public VkSampleCountFlag sampleLocationsPerPixel;
