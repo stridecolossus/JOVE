@@ -7,9 +7,9 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkImageTiling implements IntegerEnumeration {
- 	VK_IMAGE_TILING_OPTIMAL(0),
- 	VK_IMAGE_TILING_LINEAR(1),
- 	VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT(1000158000);
+ 	OPTIMAL(0),
+ 	LINEAR(1),
+ 	DRM_FORMAT_MODIFIER_EXT(1000158000);
 
 	private final int value;
 

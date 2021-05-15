@@ -11,32 +11,32 @@ public enum Primitive {
 	/**
 	 * Triangles.
 	 */
-	TRIANGLES(3, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
+	TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST),
 
 	/**
 	 * Strip of triangles.
 	 */
-	TRIANGLE_STRIP(3, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP),
+	TRIANGLE_STRIP(3, VkPrimitiveTopology.TRIANGLE_STRIP),
 
 	/**
 	 * Triangle fan.
 	 */
-	TRIANGLE_FAN(3, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN),
+	TRIANGLE_FAN(3, VkPrimitiveTopology.TRIANGLE_FAN),
 
 	/**
 	 * Points.
 	 */
-	POINTS(1, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_POINT_LIST),
+	POINTS(1, VkPrimitiveTopology.POINT_LIST),
 
 	/**
 	 * Lines.
 	 */
-	LINES(2, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST),
+	LINES(2, VkPrimitiveTopology.LINE_LIST),
 
 	/**
 	 * Strip of lines.
 	 */
-	LINE_STRIP(2, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_STRIP);
+	LINE_STRIP(2, VkPrimitiveTopology.LINE_STRIP);
 
 	private final int size;
 	private final VkPrimitiveTopology topology;

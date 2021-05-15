@@ -39,7 +39,7 @@ public class ShaderStageBuilderTest {
 	void build() {
 		// Create a shader stage
 		builder
-				.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+				.stage(VkShaderStageFlag.VERTEX)
 				.name("name")
 				.shader(shader)
 				.build();
@@ -52,7 +52,7 @@ public class ShaderStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals("name", info.pName);
-		assertEquals(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT, info.stage);
+		assertEquals(VkShaderStageFlag.VERTEX, info.stage);
 		assertEquals(shader.handle(), info.module);
 	}
 
@@ -69,21 +69,21 @@ public class ShaderStageBuilderTest {
 
 	@Test
 	void buildShaderModuleNotSpecified() {
-		builder.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.stage(VkShaderStageFlag.FRAGMENT);
 		assertThrows(IllegalArgumentException.class, () -> builder.build());
 	}
 
 	@Test
 	void buildVertexShaderNotSpecified() {
-		builder.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT).shader(shader).build();
+		builder.stage(VkShaderStageFlag.FRAGMENT).shader(shader).build();
 		assertThrows(IllegalStateException.class, () -> builder.result());
 	}
 
 	@Test
 	void buildDuplicateStage() {
-		builder.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT).shader(shader).build();
+		builder.stage(VkShaderStageFlag.FRAGMENT).shader(shader).build();
 		builder.init();
-		builder.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT).shader(shader);
+		builder.stage(VkShaderStageFlag.FRAGMENT).shader(shader);
 		assertThrows(IllegalArgumentException.class, () -> builder.build());
 	}
 }

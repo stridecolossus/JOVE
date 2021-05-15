@@ -7,8 +7,8 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkFrontFace implements IntegerEnumeration {
- 	VK_FRONT_FACE_COUNTER_CLOCKWISE(0),
- 	VK_FRONT_FACE_CLOCKWISE(1);
+ 	COUNTER_CLOCKWISE(0),
+ 	CLOCKWISE(1);
 
 	private final int value;
 

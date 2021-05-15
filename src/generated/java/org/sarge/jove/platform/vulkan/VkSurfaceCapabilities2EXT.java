@@ -40,6 +40,6 @@ public class VkSurfaceCapabilities2EXT extends VulkanStructure {
 	public VkSurfaceTransformFlagKHR supportedTransforms;
 	public VkSurfaceTransformFlagKHR currentTransform;
 	public VkCompositeAlphaFlagKHR supportedCompositeAlpha;
-	public VkImageUsageFlag supportedUsageFlags;
+	public VkImageUsage supportedUsageFlags;
 	public VkSurfaceCounterFlagEXT supportedSurfaceCounters;
 }

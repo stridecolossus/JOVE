@@ -112,7 +112,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	@Override
 	protected VkPipelineShaderStageCreateInfo result() {
 		assert entry == null;
-		if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalStateException("No vertex shader specified");
+		if(!shaders.containsKey(VkShaderStageFlag.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 		return StructureCollector.toPointer(shaders.values(), VkPipelineShaderStageCreateInfo::new, Entry::populate);
 	}
 }

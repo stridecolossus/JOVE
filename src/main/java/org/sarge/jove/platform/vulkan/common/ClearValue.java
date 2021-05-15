@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.VkClearValue;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Percentile;
 
@@ -22,7 +22,7 @@ public sealed interface ClearValue {
 	/**
 	 * @return Expected image aspect for this clear value
 	 */
-	VkImageAspectFlag aspect();
+	VkImageAspect aspect();
 
 	/**
 	 * Default clear colour.
@@ -39,7 +39,7 @@ public sealed interface ClearValue {
 		}
 
 		@Override
-		public VkImageAspectFlag aspect() {
+		public VkImageAspect aspect() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -92,8 +92,8 @@ public sealed interface ClearValue {
 		}
 
 		@Override
-		public VkImageAspectFlag aspect() {
-			return VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT;
+		public VkImageAspect aspect() {
+			return VkImageAspect.COLOR;
 		}
 
 		@Override
@@ -125,8 +125,8 @@ public sealed interface ClearValue {
 		}
 
 		@Override
-		public VkImageAspectFlag aspect() {
-			return VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT;
+		public VkImageAspect aspect() {
+			return VkImageAspect.DEPTH;
 		}
 
 		@Override

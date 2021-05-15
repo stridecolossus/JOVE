@@ -7,10 +7,10 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkCompositeAlphaFlagKHR implements IntegerEnumeration {
- 	VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR(1),
- 	VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR(2),
- 	VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR(4),
- 	VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR(8);
+ 	OPAQUE(1),
+ 	PRE_MULTIPLIED(2),
+ 	POST_MULTIPLIED(4),
+ 	INHERIT(8);
 
 	private final int value;
 

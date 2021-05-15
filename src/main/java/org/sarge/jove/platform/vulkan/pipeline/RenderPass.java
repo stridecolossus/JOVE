@@ -84,7 +84,7 @@ public class RenderPass extends AbstractVulkanObject {
 		info.pClearValues = StructureCollector.toPointer(values, VkClearValue::new, ClearValue::populate);
 
 		// Create command
-		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.INLINE);
 	}
 
 	@Override
@@ -173,12 +173,12 @@ public class RenderPass extends AbstractVulkanObject {
 		 */
 		public class AttachmentBuilder {
 			private VkFormat format;
-			private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT;
-			private VkAttachmentLoadOp loadOp = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			private VkAttachmentStoreOp storeOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			private VkAttachmentLoadOp stencilLoadOp = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			private VkAttachmentStoreOp stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			private VkImageLayout initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+			private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1;
+			private VkAttachmentLoadOp loadOp = VkAttachmentLoadOp.DONT_CARE;
+			private VkAttachmentStoreOp storeOp = VkAttachmentStoreOp.DONT_CARE;
+			private VkAttachmentLoadOp stencilLoadOp = VkAttachmentLoadOp.DONT_CARE;
+			private VkAttachmentStoreOp stencilStoreOp = VkAttachmentStoreOp.DONT_CARE;
+			private VkImageLayout initialLayout = VkImageLayout.UNDEFINED;
 			private VkImageLayout finalLayout;
 
 			/**
@@ -232,7 +232,7 @@ public class RenderPass extends AbstractVulkanObject {
 			 * @param layout final image layout
 			 */
 			public AttachmentBuilder finalLayout(VkImageLayout layout) {
-				if((layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) || (layout == VkImageLayout.VK_IMAGE_LAYOUT_PREINITIALIZED)) {
+				if((layout == VkImageLayout.UNDEFINED) || (layout == VkImageLayout.PREINITIALIZED)) {
 					throw new IllegalArgumentException("Invalid final layout: " + layout);
 				}
 				this.finalLayout = notNull(layout);
@@ -289,7 +289,7 @@ public class RenderPass extends AbstractVulkanObject {
 					this.index = zeroOrMore(index);
 					this.layout = notNull(layout);
 					if(index >= attachments.size()) throw new IllegalArgumentException("Invalid attachment index: " + index);
-					if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) throw new IllegalArgumentException("Invalid attachment layout: " + layout);
+					if(layout == VkImageLayout.UNDEFINED) throw new IllegalArgumentException("Invalid attachment layout: " + layout);
 				}
 
 				/**
@@ -304,13 +304,13 @@ public class RenderPass extends AbstractVulkanObject {
 			// TODO - unused attachment VK_ATTACHMENT_UNUSED
 			// TODO - is there some cunning way we can avoid having to use index?
 
-			private VkPipelineBindPoint bind = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS;
+			private VkPipelineBindPoint bind = VkPipelineBindPoint.GRAPHICS;
 			private final List<Reference> colour = new ArrayList<>();
 			private Reference depth;
 
 			/**
 			 * Sets the bind point of this sub-pass.
-			 * @param bind Bind point (default is {@link VkPipelineBindPoint#VK_PIPELINE_BIND_POINT_GRAPHICS})
+			 * @param bind Bind point (default is {@link VkPipelineBindPoint#GRAPHICS})
 			 */
 			public SubPassBuilder bind(VkPipelineBindPoint bind) {
 				this.bind = notNull(bind);
@@ -334,7 +334,7 @@ public class RenderPass extends AbstractVulkanObject {
 			 */
 			public SubPassBuilder depth(int index) {
 				if(depth != null) throw new IllegalArgumentException("Depth buffer already configured");
-				depth = new Reference(index, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+				depth = new Reference(index, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 				return this;
 			}
 
@@ -384,7 +384,7 @@ public class RenderPass extends AbstractVulkanObject {
 			public class Dependency {
 				private final int index;
 				private final Set<VkPipelineStageFlag> stages = new HashSet<>();
-				private final Set<VkAccessFlag> access = new HashSet<>();
+				private final Set<VkAccess> access = new HashSet<>();
 
 				/**
 				 * Constructor.
@@ -409,7 +409,7 @@ public class RenderPass extends AbstractVulkanObject {
 				 * Adds an access flag.
 				 * @param access Access flag
 				 */
-				public DependencyBuilder access(VkAccessFlag access) {
+				public DependencyBuilder access(VkAccess access) {
 					this.access.add(notNull(access));
 					return DependencyBuilder.this;
 				}

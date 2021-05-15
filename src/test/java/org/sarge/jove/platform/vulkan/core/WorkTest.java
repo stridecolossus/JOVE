@@ -151,7 +151,7 @@ public class WorkTest extends AbstractVulkanTest {
 			// Build work
 			final Work work = builder
 					.add(buffer)
-					.wait(semaphore, VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.wait(semaphore, VkPipelineStageFlag.COLOR_ATTACHMENT_OUTPUT)
 					.signal(semaphore)
 					.build();
 

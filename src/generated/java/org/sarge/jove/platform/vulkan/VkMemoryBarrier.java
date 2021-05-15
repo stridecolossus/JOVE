@@ -22,6 +22,6 @@ public class VkMemoryBarrier extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 	public Pointer pNext;
-	public VkAccessFlag srcAccessMask;
-	public VkAccessFlag dstAccessMask;
+	public VkAccess srcAccessMask;
+	public VkAccess dstAccessMask;
 }

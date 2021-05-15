@@ -28,14 +28,14 @@ public class InputAssemblyStageBuilderTest {
 		// Check descriptor
 		assertNotNull(info);
 		assertEquals(0, info.flags);
-		assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_LINE_LIST, info.topology);
+		assertEquals(VkPrimitiveTopology.LINE_LIST, info.topology);
 		assertEquals(VulkanBoolean.TRUE, info.primitiveRestartEnable);
 	}
 
 	@Test
 	void buildDefault() {
 		final var info = builder.result();
-		assertEquals(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, info.topology);
+		assertEquals(VkPrimitiveTopology.TRIANGLE_STRIP, info.topology);
 		assertEquals(VulkanBoolean.FALSE, info.primitiveRestartEnable);
 	}
 }

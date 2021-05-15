@@ -126,6 +126,7 @@ public class PhysicalDevice implements NativeObject {
 	public class Properties {
 		@SuppressWarnings("hiding")
 		private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
+		// TODO https://stackoverflow.com/questions/67519579/can-a-jna-structure-support-immutability
 
 		private Properties() {
 			instance.library().vkGetPhysicalDeviceProperties(handle, props);

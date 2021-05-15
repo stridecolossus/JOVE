@@ -97,12 +97,12 @@ public interface Image extends NativeObject {
 	/**
 	 * Descriptor for an image.
 	 */
-	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects, int levels, int layers) {
+	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levels, int layers) {
 		// Valid image aspect combinations
-		private static final Collection<Set<VkImageAspectFlag>> VALID_ASPECTS = List.of(
-				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT),
-				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT),
-				Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_STENCIL_BIT)
+		private static final Collection<Set<VkImageAspect>> VALID_ASPECTS = List.of(
+				Set.of(VkImageAspect.COLOR),
+				Set.of(VkImageAspect.DEPTH),
+				Set.of(VkImageAspect.DEPTH, VkImageAspect.STENCIL)
 		);
 
 		/**
@@ -163,7 +163,7 @@ public interface Image extends NativeObject {
 			private VkImageType type = VkImageType.VK_IMAGE_TYPE_2D;
 			private VkFormat format;
 			private Extents extents;
-			private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+			private final Set<VkImageAspect> aspects = new HashSet<>();
 			private int levels = 1;
 			private int layers = 1;
 
@@ -198,7 +198,7 @@ public interface Image extends NativeObject {
 			 * Adds an image aspect.
 			 * @param aspect Image aspect
 			 */
-			public Builder aspect(VkImageAspectFlag aspect) {
+			public Builder aspect(VkImageAspect aspect) {
 				aspects.add(notNull(aspect));
 				return this;
 			}
@@ -245,7 +245,7 @@ public interface Image extends NativeObject {
 
 			// TODO - remaining levels/layers
 			private final T parent;
-			private final Set<VkImageAspectFlag> aspectMask = new HashSet<>();
+			private final Set<VkImageAspect> aspectMask = new HashSet<>();
 			private int mipLevel;
 			private int levelCount = 1; // REMAINING;
 			private int baseArrayLayer;
@@ -259,7 +259,7 @@ public interface Image extends NativeObject {
 			 * Adds an image aspect to this range.
 			 * @param aspect Image aspect
 			 */
-			public SubResourceBuilder<T> aspect(VkImageAspectFlag aspect) {
+			public SubResourceBuilder<T> aspect(VkImageAspect aspect) {
 				aspectMask.add(notNull(aspect));
 				return this;
 			}
@@ -408,10 +408,10 @@ public interface Image extends NativeObject {
 	 */
 	class Builder {
 		private Descriptor descriptor;
-		private MemoryProperties<VkImageUsageFlag> props;
-		private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT;
-		private VkImageTiling tiling = VkImageTiling.VK_IMAGE_TILING_OPTIMAL;
-		private VkImageLayout layout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+		private MemoryProperties<VkImageUsage> props;
+		private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1;
+		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
+		private VkImageLayout layout = VkImageLayout.UNDEFINED;
 
 		/**
 		 * Sets the descriptor for this image.
@@ -426,7 +426,7 @@ public interface Image extends NativeObject {
 		 * Sets the memory properties for this image.
 		 * @param props Memory properties
 		 */
-		public Builder properties(MemoryProperties<VkImageUsageFlag> props) {
+		public Builder properties(MemoryProperties<VkImageUsage> props) {
 			this.props = notNull(props);
 			return this;
 		}

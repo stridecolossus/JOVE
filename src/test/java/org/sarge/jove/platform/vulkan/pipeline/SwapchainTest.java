@@ -48,7 +48,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.extents(new Image.Extents(3, 4))
 				.format(FORMAT)
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.aspect(VkImageAspect.COLOR)
 				.build();
 
 		// Create swapchain image
@@ -149,7 +149,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			// Create surface
 			surface = mock(Surface.class);
 			when(surface.handle()).thenReturn(new Handle(new Pointer(2)));
-			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR));
+			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
 
 			// Init supported formats
 			final VkSurfaceFormatKHR format = new VkSurfaceFormatKHR();
@@ -159,13 +159,13 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 			// Init surface capabilities descriptor
 			caps = new VkSurfaceCapabilitiesKHR();
-			caps.currentTransform = VkSurfaceTransformFlagKHR.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+			caps.currentTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 			caps.minImageCount = 1;
 			caps.maxImageCount = 1;
-			caps.supportedTransforms = IntegerEnumeration.mask(VkSurfaceTransformFlagKHR.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR);
+			caps.supportedTransforms = IntegerEnumeration.mask(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
 			caps.maxImageArrayLayers = 1;
-			caps.supportedUsageFlags = IntegerEnumeration.mask(VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-			caps.supportedCompositeAlpha = IntegerEnumeration.mask(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+			caps.supportedUsageFlags = IntegerEnumeration.mask(VkImageUsage.COLOR_ATTACHMENT);
+			caps.supportedCompositeAlpha = IntegerEnumeration.mask(VkCompositeAlphaFlagKHR.OPAQUE);
 			when(surface.capabilities()).thenReturn(caps);
 
 			// Init surface extents
@@ -188,7 +188,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			// Check swapchain
 			assertNotNull(swapchain);
 			assertNotNull(swapchain.handle());
-			assertEquals(VkFormat.VK_FORMAT_B8G8R8A8_SRGB, swapchain.format());
+			assertEquals(VkFormat.B8G8R8A8_SRGB, swapchain.format());
 			assertNotNull(swapchain.views());
 			assertEquals(1, swapchain.views().size());
 
@@ -201,21 +201,21 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertNotNull(info);
 			assertEquals(surface.handle(), info.surface);
 			assertEquals(1, info.minImageCount);
-			assertEquals(VkFormat.VK_FORMAT_B8G8R8A8_SRGB, info.imageFormat);
-			assertEquals(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, info.imageColorSpace);
+			assertEquals(VkFormat.B8G8R8A8_SRGB, info.imageFormat);
+			assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, info.imageColorSpace);
 
 			assertNotNull(info.imageExtent);
 			assertEquals(2, info.imageExtent.width);
 			assertEquals(3, info.imageExtent.height);
 
 			assertEquals(1, info.imageArrayLayers);
-			assertEquals(VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, info.imageUsage);
-			assertEquals(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, info.imageSharingMode);
+			assertEquals(VkImageUsage.COLOR_ATTACHMENT, info.imageUsage);
+			assertEquals(VkSharingMode.EXCLUSIVE, info.imageSharingMode);
 			assertEquals(0, info.queueFamilyIndexCount);
 			assertEquals(null, info.pQueueFamilyIndices);
-			assertEquals(VkSurfaceTransformFlagKHR.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, info.preTransform);
-			assertEquals(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, info.compositeAlpha);
-			assertEquals(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR, info.presentMode);
+			assertEquals(VkSurfaceTransformFlagKHR.IDENTITY_KHR, info.preTransform);
+			assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, info.compositeAlpha);
+			assertEquals(VkPresentModeKHR.FIFO_KHR, info.presentMode);
 			assertEquals(VulkanBoolean.TRUE, info.clipped);
 			assertEquals(null, info.oldSwapchain);
 
@@ -244,13 +244,13 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 		@Test
 		void invalidFormat() {
-			assertThrows(IllegalArgumentException.class, "Unsupported swapchain format", () -> builder.format(VkFormat.VK_FORMAT_UNDEFINED).build());
+			assertThrows(IllegalArgumentException.class, "Unsupported swapchain format", () -> builder.format(VkFormat.UNDEFINED).build());
 		}
 
 		@Test
 		void invalidColourSpace() {
 			builder.format(Swapchain.DEFAULT_FORMAT);
-			assertThrows(IllegalArgumentException.class, "Unsupported swapchain format", () -> builder.space(VkColorSpaceKHR.VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT).build());
+			assertThrows(IllegalArgumentException.class, "Unsupported swapchain format", () -> builder.space(VkColorSpaceKHR.ADOBERGB_LINEAR_EXT).build());
 		}
 
 		@Test
@@ -261,22 +261,22 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 		@Test
 		void invalidImageUsage() {
-			assertThrows(IllegalArgumentException.class, () -> builder.usage(VkImageUsageFlag.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+			assertThrows(IllegalArgumentException.class, () -> builder.usage(VkImageUsage.DEPTH_STENCIL_ATTACHMENT));
 		}
 
 		@Test
 		void invalidTransform() {
-			assertThrows(IllegalArgumentException.class, () -> builder.transform(VkSurfaceTransformFlagKHR.VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR));
+			assertThrows(IllegalArgumentException.class, () -> builder.transform(VkSurfaceTransformFlagKHR.HORIZONTAL_MIRROR_KHR));
 		}
 
 		@Test
 		void invalidAlphaComposite() {
-			assertThrows(IllegalArgumentException.class, () -> builder.alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR));
+			assertThrows(IllegalArgumentException.class, () -> builder.alpha(VkCompositeAlphaFlagKHR.POST_MULTIPLIED));
 		}
 
 		@Test
 		void invalidPresentationMode() {
-			assertThrows(IllegalArgumentException.class, () -> builder.mode(VkPresentModeKHR.VK_PRESENT_MODE_IMMEDIATE_KHR));
+			assertThrows(IllegalArgumentException.class, () -> builder.mode(VkPresentModeKHR.IMMEDIATE_KHR));
 		}
 	}
 }

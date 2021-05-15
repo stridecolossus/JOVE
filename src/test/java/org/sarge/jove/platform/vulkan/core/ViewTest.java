@@ -18,7 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
@@ -40,7 +40,7 @@ public class ViewTest extends AbstractVulkanTest {
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.format(FORMAT)
 				.extents(new Image.Extents(3, 4))
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.aspect(VkImageAspect.COLOR)
 				.build();
 
 		// Create image
@@ -133,14 +133,14 @@ public class ViewTest extends AbstractVulkanTest {
 
 			// Check component mapping
 			assertNotNull(info.components);
-			assertEquals(VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY, info.components.r);
-			assertEquals(VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY, info.components.g);
-			assertEquals(VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY, info.components.b);
-			assertEquals(VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY, info.components.a);
+			assertEquals(VkComponentSwizzle.IDENTITY, info.components.r);
+			assertEquals(VkComponentSwizzle.IDENTITY, info.components.g);
+			assertEquals(VkComponentSwizzle.IDENTITY, info.components.b);
+			assertEquals(VkComponentSwizzle.IDENTITY, info.components.a);
 
 			// Check resource range
 			assertNotNull(info.subresourceRange);
-			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), info.subresourceRange.aspectMask);
+			assertEquals(VkImageAspect.COLOR.value(), info.subresourceRange.aspectMask);
 			assertEquals(0, info.subresourceRange.baseMipLevel);
 // TODO - remaining levels/layers
 //			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.levelCount);

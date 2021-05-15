@@ -76,9 +76,9 @@ public class Sampler extends AbstractVulkanObject {
 		 */
 		public VkSamplerAddressMode mode(boolean mirror) {
 			return switch(this) {
-				case REPEAT -> mirror ? VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT : VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT;
-				case EDGE -> mirror ? VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE : VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-				case BORDER -> VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+				case REPEAT -> mirror ? VkSamplerAddressMode.MIRRORED_REPEAT : VkSamplerAddressMode.REPEAT;
+				case EDGE -> mirror ? VkSamplerAddressMode.MIRROR_CLAMP_TO_EDGE : VkSamplerAddressMode.CLAMP_TO_EDGE;
+				case BORDER -> VkSamplerAddressMode.CLAMP_TO_BORDER;
 			};
 		}
 	}
@@ -92,14 +92,14 @@ public class Sampler extends AbstractVulkanObject {
 		return new Resource() {
 			@Override
 			public VkDescriptorType type() {
-				return VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
 			}
 
 			@Override
 			public void populate(VkWriteDescriptorSet write) {
 				// Create sampler descriptor
 				final var info = new VkDescriptorImageInfo();
-				info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
 				info.sampler = Sampler.this.handle();
 				info.imageView = texture.handle();
 
@@ -116,11 +116,11 @@ public class Sampler extends AbstractVulkanObject {
 		private final LogicalDevice dev;
 
 		// Filters
-		private VkFilter magFilter = VkFilter.VK_FILTER_LINEAR;
-		private VkFilter minFilter = VkFilter.VK_FILTER_LINEAR;
+		private VkFilter magFilter = VkFilter.LINEAR;
+		private VkFilter minFilter = VkFilter.LINEAR;
 
 		// Mipmap settings
-		private VkSamplerMipmapMode mipmapMode = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		private VkSamplerMipmapMode mipmapMode = VkSamplerMipmapMode.LINEAR;
 		private float minLod;
 		private float maxLod;
 		private float mipLodBias; // = 1;
@@ -144,12 +144,12 @@ public class Sampler extends AbstractVulkanObject {
 		 */
 		public Builder(LogicalDevice dev) {
 			this.dev = notNull(dev);
-			Arrays.fill(addressMode, VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT);
+			Arrays.fill(addressMode, VkSamplerAddressMode.REPEAT);
 		}
 
 		/**
 		 * Sets the magnification filter.
-		 * @param min Magnification filter (default is {@link VkFilter#VK_FILTER_LINEAR})
+		 * @param min Magnification filter (default is {@link VkFilter#LINEAR})
 		 */
 		public Builder mag(VkFilter mag) {
 			this.magFilter = notNull(mag);
@@ -158,7 +158,7 @@ public class Sampler extends AbstractVulkanObject {
 
 		/**
 		 * Sets the minification filter.
-		 * @param min Minification filter (default is {@link VkFilter#VK_FILTER_LINEAR})
+		 * @param min Minification filter (default is {@link VkFilter#LINEAR})
 		 */
 		public Builder min(VkFilter min) {
 			this.minFilter = notNull(min);
@@ -167,7 +167,7 @@ public class Sampler extends AbstractVulkanObject {
 
 		/**
 		 * Sets the mipmap mode.
-		 * @param mode Mipmap mode (default is {@link VkSamplerMipmapMode#VK_SAMPLER_MIPMAP_MODE_LINEAR})
+		 * @param mode Mipmap mode (default is {@link VkSamplerMipmapMode#LINEAR})
 		 */
 		public Builder mipmap(VkSamplerMipmapMode mode) {
 			this.mipmapMode = notNull(mode);
@@ -251,7 +251,7 @@ public class Sampler extends AbstractVulkanObject {
 			// Init addressing modes
 			if(border == null) {
 				for(VkSamplerAddressMode mode : addressMode) {
-					if(mode == VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER) {
+					if(mode == VkSamplerAddressMode.CLAMP_TO_BORDER) {
 						throw new IllegalArgumentException("Border colour must be specified for clamp-to-border address mode");
 					}
 				}
@@ -278,7 +278,7 @@ public class Sampler extends AbstractVulkanObject {
 			// Init comparison operation
 			// TODO
 //			info.compareEnable = VulkanBoolean.FALSE;
-			info.compareOp = VkCompareOp.VK_COMPARE_OP_ALWAYS;
+			info.compareOp = VkCompareOp.ALWAYS;
 
 			// Init other properties
 			// TODO

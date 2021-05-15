@@ -42,7 +42,7 @@ public class PipelineTest extends AbstractVulkanTest {
 		// Check bind pipeline
 		final Handle buffer = new Handle(new Pointer(2));
 		cmd.execute(lib, buffer);
-		verify(lib).vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.handle());
+		verify(lib).vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, pipeline.handle());
 	}
 
 	@Test
@@ -83,7 +83,7 @@ public class PipelineTest extends AbstractVulkanTest {
 					.pass(pass)
 					.viewport(new Dimensions(3, 4))
 					.shader()
-						.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+						.stage(VkShaderStageFlag.VERTEX)
 						.shader(mock(Shader.class))
 						.build()
 					.build();
@@ -126,7 +126,7 @@ public class PipelineTest extends AbstractVulkanTest {
 		private void addVertexShaderStage() {
 			builder
 				.shader()
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+					.stage(VkShaderStageFlag.VERTEX)
 					.shader(mock(Shader.class))
 				.build();
 		}

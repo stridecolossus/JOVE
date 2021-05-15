@@ -22,21 +22,21 @@ public class MemoryTypeTest {
 
 	@BeforeEach
 	void before() {
-		heap = new Heap(0, 1, Set.of(VkMemoryHeapFlag.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT));
-		type = new MemoryType(0, heap, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
+		heap = new Heap(0, 1, Set.of(VkMemoryHeapFlag.DEVICE_LOCAL));
+		type = new MemoryType(0, heap, Set.of(VkMemoryPropertyFlag.DEVICE_LOCAL));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(0, type.index());
 		assertEquals(heap, type.heap());
-		assertEquals(Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT), type.properties());
+		assertEquals(Set.of(VkMemoryPropertyFlag.DEVICE_LOCAL), type.properties());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, type.equals(type));
-		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))));
+		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(VkMemoryPropertyFlag.DEVICE_LOCAL))));
 		assertEquals(false, type.equals(null));
 		assertEquals(false, type.equals(new MemoryType(0, heap, Set.of())));
 	}
@@ -47,7 +47,7 @@ public class MemoryTypeTest {
 		void heap() {
 			assertEquals(0, heap.index());
 			assertEquals(1, heap.size());
-			assertEquals(Set.of(VkMemoryHeapFlag.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT), heap.flags());
+			assertEquals(Set.of(VkMemoryHeapFlag.DEVICE_LOCAL), heap.flags());
 			assertEquals(List.of(type), heap.types());
 		}
 
@@ -64,12 +64,12 @@ public class MemoryTypeTest {
 		// Create heap
 		final var heap = new VkMemoryHeap();
 		heap.size = 1;
-		heap.flags = IntegerEnumeration.mask(VkMemoryHeapFlag.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+		heap.flags = IntegerEnumeration.mask(VkMemoryHeapFlag.DEVICE_LOCAL);
 
 		// Create memory type
 		final var info = new VkMemoryType();
 		info.heapIndex = 0;
-		info.propertyFlags = IntegerEnumeration.mask(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		info.propertyFlags = IntegerEnumeration.mask(VkMemoryPropertyFlag.DEVICE_LOCAL);
 
 		// Create memory properties
 		final var props = new VkPhysicalDeviceMemoryProperties();

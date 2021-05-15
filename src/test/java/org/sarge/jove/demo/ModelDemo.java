@@ -62,9 +62,9 @@ public class ModelDemo {
 		final Image texture = new Image.Builder(dev)
 				.extents(Image.Extents.of(image.size()))
 				.format(format)
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
-				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
+				.aspect(VkImageAspect.VK_IMAGE_ASPECT_COLOR_BIT)
+				.usage(VkImageUsage.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+				.usage(VkImageUsage.VK_IMAGE_USAGE_SAMPLED_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
@@ -74,7 +74,7 @@ public class ModelDemo {
 				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
 				.barrier(texture)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+					.destination(VkAccess.VK_ACCESS_TRANSFER_WRITE_BIT)
 					.build()
 				.build()
 				.submit(pool);
@@ -97,8 +97,8 @@ public class ModelDemo {
 				.barrier(texture)
 					.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-					.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
-					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
+					.source(VkAccess.VK_ACCESS_TRANSFER_WRITE_BIT)
+					.destination(VkAccess.VK_ACCESS_SHADER_READ_BIT)
 					.build()
 				.build()
 				.submit(pool);
@@ -113,7 +113,7 @@ public class ModelDemo {
 		return texture.view().build();
 	}
 
-	private static VulkanBuffer loadBuffer(LogicalDevice dev, ByteData.Source obj, VkBufferUsageFlag usage, Command.Pool pool) {
+	private static VulkanBuffer loadBuffer(LogicalDevice dev, ByteData.Source obj, VkBufferUsage usage, Command.Pool pool) {
 		// Create staging VBO
 		final VulkanBuffer staging = VulkanBuffer.staging(dev, obj.length());
 
@@ -123,7 +123,7 @@ public class ModelDemo {
 		// Create device VBO
 		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
 				.length(obj.length())
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+				.usage(VkBufferUsage.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 				.usage(usage)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
@@ -139,11 +139,11 @@ public class ModelDemo {
 
 	private static View depth(LogicalDevice dev, Image.Extents extents) {
 		return new Image.Builder(dev)
-			.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)
+			.aspect(VkImageAspect.VK_IMAGE_ASPECT_DEPTH_BIT)
 			.extents(extents)
 			.format(VkFormat.VK_FORMAT_D32_SFLOAT)
 			.tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL)
-			.usage(VkImageUsageFlag.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			.usage(VkImageUsage.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 			.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.build()
 			.view();
@@ -243,7 +243,7 @@ public class ModelDemo {
 				.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
 					.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 					.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-					.destination().access(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+					.destination().access(VkAccess.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 					.build()
 				.build();
 
@@ -265,10 +265,10 @@ public class ModelDemo {
 
 		// Load VBO
 		final Command.Pool copyPool = Command.Pool.create(transfer.queue(dev)); //dev.queue(transfer));
-		final VulkanBuffer vbo = loadBuffer(dev, model.vertexBuffer(), VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
+		final VulkanBuffer vbo = loadBuffer(dev, model.vertexBuffer(), VkBufferUsage.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, copyPool);
 
 		// Load IBO
-		final VulkanBuffer index = loadBuffer(dev, model.indexBuffer().get(), VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
+		final VulkanBuffer index = loadBuffer(dev, model.indexBuffer().get(), VkBufferUsage.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, copyPool);
 
 		//////////////////
 
@@ -308,7 +308,7 @@ public class ModelDemo {
 		// Create uniform buffer for the projection matrix
 		final VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
 				.length(Matrix4.IDENTITY.length())
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+				.usage(VkBufferUsage.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 				.build();

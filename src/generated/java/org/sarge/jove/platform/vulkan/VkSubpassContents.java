@@ -7,8 +7,8 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkSubpassContents implements IntegerEnumeration {
- 	VK_SUBPASS_CONTENTS_INLINE(0),
- 	VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS(1);
+ 	INLINE(0),
+ 	SECONDARY_COMMAND_BUFFERS(1);
 
 	private final int value;
 

@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
-import org.sarge.jove.platform.vulkan.VkCullModeFlag;
+import org.sarge.jove.platform.vulkan.VkCullMode;
 import org.sarge.jove.platform.vulkan.VkFrontFace;
 import org.sarge.jove.platform.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPolygonMode;
@@ -17,9 +17,9 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
 	private boolean depthClampEnable;
 	private boolean rasterizerDiscardEnable;
-	private VkPolygonMode polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL;
-	private VkCullModeFlag cullMode = VkCullModeFlag.VK_CULL_MODE_BACK_BIT;
-	private VkFrontFace frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	private VkPolygonMode polygonMode = VkPolygonMode.FILL;
+	private VkCullMode cullMode = VkCullMode.BACK;
+	private VkFrontFace frontFace = VkFrontFace.COUNTER_CLOCKWISE;
 	private float lineWidth = 1;
 	private boolean depthBiasEnable;
 //	private float depthBiasConstantFactor;
@@ -47,7 +47,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 
 	/**
 	 * Sets the polygon fill mode.
-	 * @param polygonMode Polygon mode (default is {@link VkPolygonMode#VK_POLYGON_MODE_FILL})
+	 * @param polygonMode Polygon mode (default is {@link VkPolygonMode#FILL})
 	 * TODO - check feature if not fill, line, point
 	 */
 	public RasterizerStageBuilder polygon(VkPolygonMode polygonMode) {
@@ -57,16 +57,16 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 
 	/**
 	 * Sets the face culling mode.
-	 * @param cullMode Face culling mode (default is {@link VkCullModeFlag#VK_CULL_MODE_BACK_BIT})
+	 * @param cullMode Face culling mode (default is {@link VkCullMode#BACK})
 	 */
-	public RasterizerStageBuilder cull(VkCullModeFlag cullMode) {
+	public RasterizerStageBuilder cull(VkCullMode cullMode) {
 		this.cullMode = notNull(cullMode);
 		return this;
 	}
 
 	/**
 	 * Sets the vertex winding order for front-facing faces.
-	 * @param frontFace Winding order (default is {@link VkFrontFace#VK_FRONT_FACE_COUNTER_CLOCKWISE})
+	 * @param frontFace Winding order (default is {@link VkFrontFace#COUNTER_CLOCKWISE})
 	 * @see #clockwise(boolean)
 	 */
 	public RasterizerStageBuilder winding(VkFrontFace frontFace) {
@@ -80,7 +80,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	 * @see #winding(VkFrontFace)
 	 */
 	public RasterizerStageBuilder clockwise(boolean clockwise) {
-		return winding(clockwise ? VkFrontFace.VK_FRONT_FACE_CLOCKWISE : VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE);
+		return winding(clockwise ? VkFrontFace.CLOCKWISE : VkFrontFace.COUNTER_CLOCKWISE);
 	}
 
 	/**

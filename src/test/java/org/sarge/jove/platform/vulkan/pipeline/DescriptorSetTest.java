@@ -53,12 +53,12 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create layout with a sampler binding
-		binding = new Binding(BINDING, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT));
+		binding = new Binding(BINDING, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStageFlag.FRAGMENT));
 		layout = new Layout(new Pointer(1), dev, List.of(binding));
 
 		// Create sampler resource
 		res = mock(Resource.class);
-		when(res.type()).thenReturn(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+		when(res.type()).thenReturn(VkDescriptorType.COMBINED_IMAGE_SAMPLER);
 
 		// Create descriptor set
 		descriptor = new DescriptorSet(new Handle(new Pointer(2)), layout);
@@ -81,7 +81,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void entryInvalidBinding() {
-			final Binding other = new Binding(999, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT));
+			final Binding other = new Binding(999, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStageFlag.FRAGMENT));
 			assertThrows(IllegalArgumentException.class, () -> descriptor.entry(other));
 		}
 
@@ -95,7 +95,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void setInvalidResource() {
-			when(res.type()).thenReturn(VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+			when(res.type()).thenReturn(VkDescriptorType.STORAGE_BUFFER);
 			assertThrows(IllegalArgumentException.class, () -> descriptor.entry(binding).set(res));
 		}
 
@@ -109,7 +109,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			// Check API
 			final Handle handle = new Handle(new Pointer(3));
 			bind.execute(lib, handle);
-			verify(lib).vkCmdBindDescriptorSets(handle, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.handle(), 0, 1, Handle.toArray(List.of(descriptor)), 0, null);
+			verify(lib).vkCmdBindDescriptorSets(handle, VkPipelineBindPoint.GRAPHICS, pipelineLayout.handle(), 0, 1, Handle.toArray(List.of(descriptor)), 0, null);
 		}
 	}
 
@@ -118,22 +118,22 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@Test
 		void constructor() {
 			assertEquals(BINDING, binding.index());
-			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, binding.type());
+			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, binding.type());
 			assertEquals(1, binding.count());
-			assertEquals(Set.of(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT), binding.stages());
+			assertEquals(Set.of(VkShaderStageFlag.FRAGMENT), binding.stages());
 		}
 
 		@Test
 		void constructorEmptyStages() {
-			assertThrows(IllegalArgumentException.class, () -> new Binding(BINDING, VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, Set.of()));
+			assertThrows(IllegalArgumentException.class, () -> new Binding(BINDING, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of()));
 		}
 
 		@Test
 		void build() {
 			final Binding result = new Binding.Builder()
 					.binding(BINDING)
-					.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+					.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
+					.stage(VkShaderStageFlag.FRAGMENT)
 					.build();
 			assertEquals(binding, result);
 		}
@@ -286,7 +286,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			void build() {
 				// Build pool
 				pool = builder
-						.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, 3)
+						.add(VkDescriptorType.SAMPLER, 3)
 						.flag(VkDescriptorPoolCreateFlag.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
 						.build();
 
@@ -313,8 +313,8 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			void max() {
 				pool = builder
 						.max(1)
-						.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, 1)
-						.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+						.add(VkDescriptorType.SAMPLER, 1)
+						.add(VkDescriptorType.UNIFORM_BUFFER, 1)
 						.build();
 
 				assertEquals(1, pool.maximum());
@@ -328,7 +328,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 			@Test
 			void buildInvalidTotalPoolSize() {
-				builder.max(1).add(VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, 2);
+				builder.max(1).add(VkDescriptorType.SAMPLER, 2);
 				assertThrows(IllegalArgumentException.class, () -> builder.build());
 			}
 		}
@@ -354,7 +354,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			// Check write descriptor
 			final VkWriteDescriptorSet write = array[0];
 			assertEquals(BINDING, write.dstBinding);
-			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, write.descriptorType);
+			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, write.descriptorType);
 			assertEquals(descriptor.handle(), write.dstSet);
 			assertEquals(1, write.descriptorCount);
 			assertEquals(0, write.dstArrayElement);

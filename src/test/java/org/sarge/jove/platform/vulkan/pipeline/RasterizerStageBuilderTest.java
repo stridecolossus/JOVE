@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkCullModeFlag;
+import org.sarge.jove.platform.vulkan.VkCullMode;
 import org.sarge.jove.platform.vulkan.VkFrontFace;
 import org.sarge.jove.platform.vulkan.VkPolygonMode;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
@@ -24,9 +24,9 @@ public class RasterizerStageBuilderTest {
 		final var info = builder
 				.depthClamp(true)
 				.discard(true)
-				.polygon(VkPolygonMode.VK_POLYGON_MODE_LINE)
-				.cull(VkCullModeFlag.VK_CULL_MODE_FRONT_AND_BACK)
-				.winding(VkFrontFace.VK_FRONT_FACE_CLOCKWISE)
+				.polygon(VkPolygonMode.LINE)
+				.cull(VkCullMode.FRONT_AND_BACK)
+				.winding(VkFrontFace.CLOCKWISE)
 				.lineWidth(2)
 				.result();
 
@@ -35,9 +35,9 @@ public class RasterizerStageBuilderTest {
 		assertEquals(0, info.flags);
 		assertEquals(VulkanBoolean.TRUE, info.depthClampEnable);
 		assertEquals(VulkanBoolean.TRUE, info.rasterizerDiscardEnable);
-		assertEquals(VkPolygonMode.VK_POLYGON_MODE_LINE, info.polygonMode);
-		assertEquals(VkCullModeFlag.VK_CULL_MODE_FRONT_AND_BACK, info.cullMode);
-		assertEquals(VkFrontFace.VK_FRONT_FACE_CLOCKWISE, info.frontFace);
+		assertEquals(VkPolygonMode.LINE, info.polygonMode);
+		assertEquals(VkCullMode.FRONT_AND_BACK, info.cullMode);
+		assertEquals(VkFrontFace.CLOCKWISE, info.frontFace);
 		assertEquals(2, info.lineWidth);
 
 //		// Check depth bias
@@ -54,9 +54,9 @@ public class RasterizerStageBuilderTest {
 		assertEquals(0, info.flags);
 		assertEquals(VulkanBoolean.FALSE, info.depthClampEnable);
 		assertEquals(VulkanBoolean.FALSE, info.rasterizerDiscardEnable);
-		assertEquals(VkPolygonMode.VK_POLYGON_MODE_FILL, info.polygonMode);
-		assertEquals(VkCullModeFlag.VK_CULL_MODE_BACK_BIT, info.cullMode);
-		assertEquals(VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE, info.frontFace);
+		assertEquals(VkPolygonMode.FILL, info.polygonMode);
+		assertEquals(VkCullMode.BACK, info.cullMode);
+		assertEquals(VkFrontFace.COUNTER_CLOCKWISE, info.frontFace);
 		assertEquals(1, info.lineWidth);
 //		assertEquals(VulkanBoolean.FALSE, info.depthBiasEnable);
 //		assertEquals(0, info.depthBiasConstantFactor);

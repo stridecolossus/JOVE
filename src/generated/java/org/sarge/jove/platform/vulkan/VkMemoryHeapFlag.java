@@ -7,9 +7,9 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkMemoryHeapFlag implements IntegerEnumeration {
- 	VK_MEMORY_HEAP_DEVICE_LOCAL_BIT(1),
- 	VK_MEMORY_HEAP_MULTI_INSTANCE_BIT(2),
- 	VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR(2);
+ 	DEVICE_LOCAL(1),
+ 	MULTI_INSTANCE(2),
+ 	MULTI_INSTANCE_KHR(2);
 
 	private final int value;
 

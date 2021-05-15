@@ -160,7 +160,7 @@ public class Runner {
 		public Work create(Command.Buffer buffer) {
 			return new Work.Builder()
 					.add(buffer)
-					.wait(ready, VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+					.wait(ready, VkPipelineStageFlag.COLOR_ATTACHMENT_OUTPUT)
 					.signal(finished)
 					.build();
 		}

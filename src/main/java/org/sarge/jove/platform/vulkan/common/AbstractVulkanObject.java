@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import com.sun.jna.Pointer;
 
 /**
- * An <i>abstract Vulkan object</i> is a template base-class for an object derived from a {@link DeviceContext}.
+ * An <i>abstract Vulkan object</i> is a template base-class for an object derived from the {@link DeviceContext}.
  * @author Sarge
  */
 public abstract class AbstractVulkanObject extends AbstractTransientNativeObject {
@@ -47,6 +47,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	}
 
 	/**
+	 * Provides the <i>destructor</i> API method for this object.
 	 * @param lib Vulkan API
 	 * @return Destructor method
 	 */
@@ -54,8 +55,11 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 
 	@Override
 	public final void destroy() {
+		// Destroy this object
 		final Destructor destructor = destructor(dev.library());
 		destructor.destroy(dev.handle(), this.handle(), null);
+
+		// Delegate
 		super.destroy();
 	}
 

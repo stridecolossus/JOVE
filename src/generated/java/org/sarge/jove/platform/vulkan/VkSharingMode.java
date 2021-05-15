@@ -7,8 +7,8 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkSharingMode implements IntegerEnumeration {
- 	VK_SHARING_MODE_EXCLUSIVE(0),
- 	VK_SHARING_MODE_CONCURRENT(1);
+ 	EXCLUSIVE(0),
+ 	CONCURRENT(1);
 
 	private final int value;
 

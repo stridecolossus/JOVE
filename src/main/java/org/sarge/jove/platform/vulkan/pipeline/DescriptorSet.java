@@ -44,8 +44,8 @@ import com.sun.jna.ptr.PointerByReference;
  *
  *  // Define binding for a sampler at binding zero
  *  Binding binding = new Binding.Builder()
- * 		.type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
- * 		.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+ * 		.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
+ * 		.stage(VkShaderStageFlag.FRAGMENT)
  * 		.build()
  *
  *  // Create layout for a sampler at binding zero
@@ -53,7 +53,7 @@ import com.sun.jna.ptr.PointerByReference;
  *
  *  // Create descriptor pool for 3 swapchain images
  *  Pool pool = new Pool.Builder(dev)
- *  	.add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
+ *  	.add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 3)
  *  	.max(3)
  *  	.build();
  *
@@ -255,7 +255,7 @@ public class DescriptorSet implements NativeObject {
 	public static Command bind(PipelineLayout layout, Collection<DescriptorSet> sets) {
 		return (api, cmd) -> api.vkCmdBindDescriptorSets(
 				cmd,
-				VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+				VkPipelineBindPoint.GRAPHICS,
 				layout.handle(),
 				0,					// First set
 				sets.size(),

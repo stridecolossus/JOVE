@@ -20,5 +20,5 @@ public class VkInputAttachmentAspectReference extends VulkanStructure {
 
 	public int subpass;
 	public int inputAttachmentIndex;
-	public VkImageAspectFlag aspectMask;
+	public VkImageAspect aspectMask;
 }

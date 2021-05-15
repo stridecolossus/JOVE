@@ -27,7 +27,7 @@ public abstract class AbstractVulkanTest {
 	/**
 	 * Arbitrary Vulkan format.
 	 */
-	public static final VkFormat FORMAT = VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT;
+	public static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
 
 	protected LogicalDevice dev;
 	protected VulkanLibrary lib;

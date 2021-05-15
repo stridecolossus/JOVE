@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.VkClearValue;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
 import org.sarge.lib.util.Percentile;
@@ -26,7 +26,7 @@ public class ClearValueTest {
 	void colour() {
 		// Create colour clear value
 		final ClearValue clear = new ColourClearValue(Colour.WHITE);
-		assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT, clear.aspect());
+		assertEquals(VkImageAspect.COLOR, clear.aspect());
 
 		// Apply clear
 		clear.populate(value);
@@ -47,7 +47,7 @@ public class ClearValueTest {
 	void depth() {
 		// Create depth clear value
 		final ClearValue clear = new DepthClearValue(Percentile.HALF);
-		assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT, clear.aspect());
+		assertEquals(VkImageAspect.DEPTH, clear.aspect());
 
 		// Apply clear
 		clear.populate(value);

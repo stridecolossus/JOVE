@@ -27,8 +27,8 @@ public class VkBufferMemoryBarrier extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
 	public Pointer pNext;
-	public VkAccessFlag srcAccessMask;
-	public VkAccessFlag dstAccessMask;
+	public VkAccess srcAccessMask;
+	public VkAccess dstAccessMask;
 	public int srcQueueFamilyIndex;
 	public int dstQueueFamilyIndex;
 	public Pointer buffer;

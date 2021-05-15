@@ -71,7 +71,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 	@Test
 	void range() {
-		final var stages = Set.of(VkPipelineStageFlag.VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);
+		final var stages = Set.of(VkPipelineStageFlag.VERTEX_SHADER);
 		final PushConstantRange range = new PushConstantRange(stages, 1, 2);
 		final VkPushConstantRange struct = new VkPushConstantRange();
 		range.populate(struct);

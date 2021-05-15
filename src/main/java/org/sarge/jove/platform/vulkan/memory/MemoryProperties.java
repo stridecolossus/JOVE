@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
+import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.util.MathsUtil;
 
@@ -50,7 +51,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @throws IllegalArgumentException if the memory {@link #usage} flags are empty
 	 */
 	public MemoryProperties(Set<T> usage, VkSharingMode mode, Set<VkMemoryPropertyFlag> required, Set<VkMemoryPropertyFlag> optimal) {
-		if(usage.isEmpty()) throw new IllegalArgumentException("At least one memory usage flags must be specified");
+		if(usage.isEmpty()) throw new IllegalArgumentException("At least one memory usage must be specified");
 		this.usage = Set.copyOf(usage);
 		this.mode = notNull(mode);
 		this.required = Set.copyOf(required);
@@ -58,7 +59,10 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	}
 
 	/**
-	 * Selects the memory type matching for this request from the given list.
+	 * Selects the memory type matching this request from the given list.
+	 * <p>
+	 * The <i>filter</i> argument is a bit-mask of the memory types appropriate for this request, see {@link VkMemoryRequirements}.
+	 * <p>
 	 * @param filter		Memory types filter
 	 * @param types 		Available memory types
 	 * @return Selected memory type
@@ -98,7 +102,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		private final Set<VkMemoryPropertyFlag> required = new HashSet<>();
 		private final Set<VkMemoryPropertyFlag> optimal = new HashSet<>();
 		private final Set<T> usage = new HashSet<>();
-		private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+		private VkSharingMode mode = VkSharingMode.EXCLUSIVE;
 
 		/**
 		 * Adds a <i>required</i> memory property.
@@ -128,7 +132,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		}
 
 		/**
-		 * Sets the sharing mode for this memory (default is {@link VkSharingMode#VK_SHARING_MODE_EXCLUSIVE}).
+		 * Sets the sharing mode for this memory (default is {@link VkSharingMode#EXCLUSIVE}).
 		 * @param mode Sharing mode
 		 */
 		public Builder<T> mode(VkSharingMode mode) {

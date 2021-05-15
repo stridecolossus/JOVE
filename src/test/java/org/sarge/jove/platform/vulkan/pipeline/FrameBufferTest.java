@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -42,7 +42,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.extents(new Image.Extents(3, 4))
 				.format(FORMAT)
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.aspect(VkImageAspect.COLOR)
 				.build();
 
 		// Create image
@@ -97,7 +97,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 				.extents(new Image.Extents(5, 6))
 				.format(FORMAT)
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.aspect(VkImageAspect.COLOR)
 				.build();
 
 		// Create second attachment

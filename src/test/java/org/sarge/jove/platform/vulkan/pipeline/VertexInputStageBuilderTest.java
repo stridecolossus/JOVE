@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
 
 public class VertexInputStageBuilderTest {
-	private static final VkFormat FORMAT = VkFormat.VK_FORMAT_B8G8R8_SINT;
+	private static final VkFormat FORMAT = VkFormat.B8G8R8_SINT;
 
 	private VertexInputStageBuilder builder;
 
@@ -64,7 +64,7 @@ public class VertexInputStageBuilderTest {
 		assertNotNull(binding);
 		assertEquals(1, binding.binding);
 		assertEquals(2, binding.stride);
-		assertEquals(VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX, binding.inputRate);
+		assertEquals(VkVertexInputRate.VERTEX, binding.inputRate);
 
 		// Check attribute
 		final var attr = descriptor.pVertexAttributeDescriptions;

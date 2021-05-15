@@ -43,17 +43,17 @@ public class Swapchain extends AbstractVulkanObject {
 	/**
 	 * Default swapchain image format.
 	 */
-	public static final VkFormat DEFAULT_FORMAT = VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
+	public static final VkFormat DEFAULT_FORMAT = VkFormat.B8G8R8A8_SRGB;
 
 	/**
 	 * Default swapchain colour-space.
 	 */
-	public static final VkColorSpaceKHR DEFAULT_COLOUR_SPACE = VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+	public static final VkColorSpaceKHR DEFAULT_COLOUR_SPACE = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
 
 	/**
 	 * Default presentation mode (guaranteed on all Vulkan implementations).
 	 */
-	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
+	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
 
 	private final VkFormat format;
 	private final Dimensions extents;
@@ -73,7 +73,7 @@ public class Swapchain extends AbstractVulkanObject {
 		// TODO - nasty
 		final View first = views.get(0);
 		final Image.Extents dim = first.image().descriptor().extents();
-		assert first.image().descriptor().aspects().contains(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT);
+		assert first.image().descriptor().aspects().contains(VkImageAspect.COLOR);
 
 		this.format = notNull(format);
 		this.extents = new Dimensions(dim.width(), dim.height());
@@ -201,9 +201,9 @@ public class Swapchain extends AbstractVulkanObject {
 			format(DEFAULT_FORMAT);
 			space(DEFAULT_COLOUR_SPACE);
 			arrays(1);
-			mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
-			usage(VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-			alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+			mode(VkSharingMode.EXCLUSIVE);
+			usage(VkImageUsage.COLOR_ATTACHMENT);
+			alpha(VkCompositeAlphaFlagKHR.OPAQUE);
 			mode(DEFAULT_PRESENTATION_MODE);
 			clipped(true);
 		}
@@ -293,7 +293,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param usage Image usage
 		 * @throws IllegalArgumentException if the usage flag is not supported by the surface
 		 */
-		public Builder usage(VkImageUsageFlag usage) {
+		public Builder usage(VkImageUsage usage) {
 			if(!contains(caps.supportedUsageFlags, usage)) throw new IllegalArgumentException("Usage not supported: " + usage);
 			info.imageUsage = notNull(usage);
 			return this;
@@ -393,7 +393,7 @@ public class Swapchain extends AbstractVulkanObject {
 			final Image.Descriptor descriptor = new Image.Descriptor.Builder()
 					.format(info.imageFormat)
 					.extents(new Image.Extents(info.imageExtent.width, info.imageExtent.height))
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+					.aspect(VkImageAspect.COLOR)
 					.build();
 
 			// Create image views

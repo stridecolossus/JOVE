@@ -22,7 +22,7 @@ public class DepthStencilStageBuilderTest {
 		final var result = builder
 				.enable(true)
 				.write(false)
-				.compare(VkCompareOp.VK_COMPARE_OP_GREATER)
+				.compare(VkCompareOp.GREATER)
 				.result();
 
 		// Check descriptor
@@ -30,7 +30,7 @@ public class DepthStencilStageBuilderTest {
 		assertEquals(0, result.flags);
 		assertEquals(VulkanBoolean.TRUE, result.depthTestEnable);
 		assertEquals(VulkanBoolean.FALSE, result.depthWriteEnable);
-		assertEquals(VkCompareOp.VK_COMPARE_OP_GREATER, result.depthCompareOp);
+		assertEquals(VkCompareOp.GREATER, result.depthCompareOp);
 		assertEquals(VulkanBoolean.FALSE, result.stencilTestEnable);
 	}
 
@@ -41,7 +41,7 @@ public class DepthStencilStageBuilderTest {
 		assertEquals(0, result.flags);
 		assertEquals(VulkanBoolean.FALSE, result.depthTestEnable);
 		assertEquals(VulkanBoolean.TRUE, result.depthWriteEnable);
-		assertEquals(VkCompareOp.VK_COMPARE_OP_LESS, result.depthCompareOp);
+		assertEquals(VkCompareOp.LESS, result.depthCompareOp);
 		assertEquals(VulkanBoolean.FALSE, result.stencilTestEnable);
 	}
 }

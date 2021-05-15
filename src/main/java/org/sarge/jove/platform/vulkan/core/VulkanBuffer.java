@@ -34,9 +34,9 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @return New vertex buffer
 	 * @throws IllegalArgumentException if the buffer length is zero
 	 */
-	public static VulkanBuffer create(LogicalDevice dev, long len, MemoryProperties<VkBufferUsageFlag> props) {
+	public static VulkanBuffer create(LogicalDevice dev, long len, MemoryProperties<VkBufferUsage> props) {
 		// TODO
-		if(props.mode() == VkSharingMode.VK_SHARING_MODE_CONCURRENT) throw new UnsupportedOperationException();
+		if(props.mode() == VkSharingMode.CONCURRENT) throw new UnsupportedOperationException();
 		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
 		// - queue families (unique, < vkGetPhysicalDeviceQueueFamilyProperties)
 		// - queueFamilyIndexCount
@@ -75,17 +75,17 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public static VulkanBuffer staging(LogicalDevice dev, long len) {
 		// Init memory properties
-		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+		final var props = new MemoryProperties.Builder<VkBufferUsage>()
+				.usage(VkBufferUsage.TRANSFER_SRC)
+				.required(VkMemoryPropertyFlag.HOST_VISIBLE)
+				.required(VkMemoryPropertyFlag.HOST_COHERENT)
 				.build();
 
 		// Create staging buffer
 		return create(dev, len, props);
 	}
 
-	private final Set<VkBufferUsageFlag> usage;
+	private final Set<VkBufferUsage> usage;
 	private final DeviceMemory mem;
 
 	/**
@@ -95,7 +95,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param usage			Usage flags
 	 * @param mem			Buffer memory
 	 */
-	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsageFlag> usage, DeviceMemory mem) {
+	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsage> usage, DeviceMemory mem) {
 		super(handle, dev);
 		this.usage = Set.copyOf(notEmpty(usage));
 		this.mem = notNull(mem);
@@ -104,7 +104,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Usage flags for this buffer
 	 */
-	public Set<VkBufferUsageFlag> usage() {
+	public Set<VkBufferUsage> usage() {
 		return usage;
 	}
 
@@ -119,12 +119,12 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @return This buffer as a uniform buffer resource
 	 */
 	public DescriptorSet.Resource uniform() {
-		require(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+		require(VkBufferUsage.UNIFORM_BUFFER);
 
 		return new DescriptorSet.Resource() {
 			@Override
 			public VkDescriptorType type() {
-				return VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				return VkDescriptorType.UNIFORM_BUFFER;
 			}
 
 			@Override
@@ -142,10 +142,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * Creates a command to bind this buffer as a vertex buffer (VBO).
 	 * @return Command to bind this buffer
 	 * @throws IllegalStateException if this buffer cannot be used as a VBO
-	 * @see VkBufferUsageFlag#VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+	 * @see VkBufferUsage#VERTEX_BUFFER
 	 */
 	public Command bindVertexBuffer() {
-		require(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		require(VkBufferUsage.VERTEX_BUFFER);
 		// TODO - support binding multiple VBO
 		final HandleArray array = Handle.toArray(List.of(this));
 		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
@@ -155,11 +155,11 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * Creates a command to bind this buffer as an index buffer.
 	 * @return Command to bind this index buffer
 	 * @throws IllegalStateException if this buffer cannot be used as an index
-	 * @see VkBufferUsageFlag#VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+	 * @see VkBufferUsage#INDEX_BUFFER
 	 */
 	public Command bindIndexBuffer() {
-		require(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
+		require(VkBufferUsage.INDEX_BUFFER);
+		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.UINT32);
 		// TODO - 16/32 depending on size
 	}
 
@@ -173,8 +173,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	public Command copy(VulkanBuffer dest) {
 		// Validate
 		if(mem.size() > dest.memory().size()) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
-		require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-		dest.require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+		require(VkBufferUsage.TRANSFER_SRC);
+		dest.require(VkBufferUsage.TRANSFER_DST);
 
 		// Build copy descriptor
 		final VkBufferCopy region = new VkBufferCopy();
@@ -187,7 +187,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @throws IllegalStateException if this buffer does not support the given usage flag
 	 */
-	void require(VkBufferUsageFlag flag) {
+	void require(VkBufferUsage flag) {
 		if(!usage.contains(flag)) {
 			throw new IllegalStateException(String.format("Invalid usage for buffer: usage=%s buffer=%s", flag, this));
 		}

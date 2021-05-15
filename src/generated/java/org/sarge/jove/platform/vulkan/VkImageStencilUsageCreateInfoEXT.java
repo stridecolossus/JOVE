@@ -21,5 +21,5 @@ public class VkImageStencilUsageCreateInfoEXT extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO_EXT;
 	public Pointer pNext;
-	public VkImageUsageFlag stencilUsage;
+	public VkImageUsage stencilUsage;
 }

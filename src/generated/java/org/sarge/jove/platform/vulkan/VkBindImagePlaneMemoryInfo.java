@@ -21,5 +21,5 @@ public class VkBindImagePlaneMemoryInfo extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BIND_IMAGE_PLANE_MEMORY_INFO;
 	public Pointer pNext;
-	public VkImageAspectFlag planeAspect;
+	public VkImageAspect planeAspect;
 }

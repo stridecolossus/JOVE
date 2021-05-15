@@ -48,10 +48,10 @@ public class RenderPassTest extends AbstractVulkanTest {
 		renderPassBuilder
 				.attachment()
 					.format(FORMAT)
-					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-					.initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED)
-					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+					.load(VkAttachmentLoadOp.CLEAR)
+					.store(VkAttachmentStoreOp.STORE)
+					.initialLayout(VkImageLayout.UNDEFINED)
+					.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 				.build();
 	}
 
@@ -61,9 +61,9 @@ public class RenderPassTest extends AbstractVulkanTest {
 	private void depth() {
 		renderPassBuilder
 				.attachment()
-					.format(VkFormat.VK_FORMAT_D32_SFLOAT)
-					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+					.format(VkFormat.D32_SFLOAT)
+					.load(VkAttachmentLoadOp.CLEAR)
+					.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 				.build();
 	}
 
@@ -108,7 +108,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 			// Check API
 			final ArgumentCaptor<VkRenderPassBeginInfo> captor = ArgumentCaptor.forClass(VkRenderPassBeginInfo.class);
-			verify(lib).vkCmdBeginRenderPass(eq(handle), captor.capture(), eq(VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE));
+			verify(lib).vkCmdBeginRenderPass(eq(handle), captor.capture(), eq(VkSubpassContents.INLINE));
 
 			// Check descriptor
 			final VkRenderPassBeginInfo info = captor.getValue();
@@ -152,18 +152,18 @@ public class RenderPassTest extends AbstractVulkanTest {
 			final RenderPass pass = renderPassBuilder
 				.attachment()
 					.format(FORMAT)
-					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-					.initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED)
-					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+					.load(VkAttachmentLoadOp.CLEAR)
+					.store(VkAttachmentStoreOp.STORE)
+					.initialLayout(VkImageLayout.UNDEFINED)
+					.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 					.build()
 				.subpass()
-					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+					.colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
 					.build()
 				.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
-					.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-					.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-					.destination().access(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+					.source().stage(VkPipelineStageFlag.COLOR_ATTACHMENT_OUTPUT)
+					.destination().stage(VkPipelineStageFlag.COLOR_ATTACHMENT_OUTPUT)
+					.destination().access(VkAccess.COLOR_ATTACHMENT_WRITE)
 					.build()
 				.build();
 
@@ -210,14 +210,14 @@ public class RenderPassTest extends AbstractVulkanTest {
 		@DisplayName("No final layout specified for attachment")
 		@Test
 		void attachmentRequiresFinalLayout() {
-			assertThrows(IllegalArgumentException.class, "No final layout specified", () -> renderPassBuilder.attachment().format(VkFormat.VK_FORMAT_D32_SFLOAT).build());
+			assertThrows(IllegalArgumentException.class, "No final layout specified", () -> renderPassBuilder.attachment().format(VkFormat.D32_SFLOAT).build());
 		}
 
 		@DisplayName("Invalid final layout specified for attachment")
 		@Test
 		void attachmentInvalidFinalLayout() {
-			final var attachment = renderPassBuilder.attachment().format(VkFormat.VK_FORMAT_D32_SFLOAT);
-			assertThrows(IllegalArgumentException.class, "Invalid final layout", () -> attachment.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PREINITIALIZED));
+			final var attachment = renderPassBuilder.attachment().format(VkFormat.D32_SFLOAT);
+			assertThrows(IllegalArgumentException.class, "Invalid final layout", () -> attachment.finalLayout(VkImageLayout.PREINITIALIZED));
 		}
 	}
 
@@ -237,8 +237,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 		@Test
 		void invalidFinalLayout() {
-			assertThrows(IllegalArgumentException.class, () -> attachmentBuilder.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED));
-			assertThrows(IllegalArgumentException.class, () -> attachmentBuilder.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PREINITIALIZED));
+			assertThrows(IllegalArgumentException.class, () -> attachmentBuilder.finalLayout(VkImageLayout.UNDEFINED));
+			assertThrows(IllegalArgumentException.class, () -> attachmentBuilder.finalLayout(VkImageLayout.PREINITIALIZED));
 		}
 
 		@Test
@@ -246,11 +246,11 @@ public class RenderPassTest extends AbstractVulkanTest {
 			// Configure attachment
 			attachmentBuilder
 					.format(FORMAT)
-					.samples(VkSampleCountFlag.VK_SAMPLE_COUNT_16_BIT)
-					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-					.initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED)
-					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+					.samples(VkSampleCountFlag.VK_SAMPLE_COUNT_16)
+					.load(VkAttachmentLoadOp.CLEAR)
+					.store(VkAttachmentStoreOp.STORE)
+					.initialLayout(VkImageLayout.UNDEFINED)
+					.finalLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
 
 			// Populate descriptor
 			final var desc = new VkAttachmentDescription();
@@ -259,11 +259,11 @@ public class RenderPassTest extends AbstractVulkanTest {
 			// Check descriptor
 			assertEquals(0, desc.flags);
 			assertEquals(FORMAT, desc.format);
-			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_16_BIT, desc.samples);
-			assertEquals(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR, desc.loadOp);
-			assertEquals(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE, desc.storeOp);
-			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, desc.initialLayout);
-			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, desc.finalLayout);
+			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_16, desc.samples);
+			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);
+			assertEquals(VkAttachmentStoreOp.STORE, desc.storeOp);
+			assertEquals(VkImageLayout.UNDEFINED, desc.initialLayout);
+			assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, desc.finalLayout);
 
 			// Build attachment
 			assertEquals(renderPassBuilder, attachmentBuilder.build());
@@ -313,7 +313,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 		@Test
 		void subpassInvalidLayout() {
 			colour();
-			assertThrows(IllegalArgumentException.class, "Invalid attachment layout", () -> subPassBuilder.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED));
+			assertThrows(IllegalArgumentException.class, "Invalid attachment layout", () -> subPassBuilder.colour(0, VkImageLayout.UNDEFINED));
 		}
 
 		@DisplayName("Duplicate depth attachment reference")
@@ -333,23 +333,23 @@ public class RenderPassTest extends AbstractVulkanTest {
 			// Populate descriptor
 			final var desc = new VkSubpassDescription();
 			subPassBuilder
-					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+					.colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
 					.depth(1)
 					.populate(desc);
 
 			// Check descriptor
-			assertEquals(VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, desc.pipelineBindPoint);
+			assertEquals(VkPipelineBindPoint.GRAPHICS, desc.pipelineBindPoint);
 
 			// Check colour attachment reference
 			assertNotNull(desc.pColorAttachments);
 			assertEquals(1, desc.colorAttachmentCount);
 			assertEquals(0, desc.pColorAttachments.attachment);
-			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, desc.pColorAttachments.layout);
+			assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, desc.pColorAttachments.layout);
 
 			// Check depth attachment reference
 			assertNotNull(desc.pDepthStencilAttachment);
 			assertEquals(1, desc.pDepthStencilAttachment.attachment);
-			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, desc.pDepthStencilAttachment.layout);
+			assertEquals(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL, desc.pDepthStencilAttachment.layout);
 
 			// Build sub-pass
 			assertEquals(renderPassBuilder, subPassBuilder.build());
@@ -363,7 +363,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			colour();
-			renderPassBuilder.subpass().colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL).build();
+			renderPassBuilder.subpass().colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL).build();
 			dependencyBuilder = renderPassBuilder.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0);
 		}
 
@@ -401,10 +401,10 @@ public class RenderPassTest extends AbstractVulkanTest {
 		void build() {
 			// Configure dependency
 			dependencyBuilder
-				.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT)
-				.source().access(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
-				.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
-				.destination().access(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+				.source().stage(VkPipelineStageFlag.VERTEX_INPUT)
+				.source().access(VkAccess.DEPTH_STENCIL_ATTACHMENT_READ)
+				.destination().stage(VkPipelineStageFlag.FRAGMENT_SHADER)
+				.destination().access(VkAccess.DEPTH_STENCIL_ATTACHMENT_WRITE);
 
 			// Populate descriptor
 			final var info = new VkSubpassDependency();
@@ -413,13 +413,13 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 			// Check source dependency
 			assertEquals(RenderPass.VK_SUBPASS_EXTERNAL, info.srcSubpass);
-			assertEquals(VkPipelineStageFlag.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT.value(), info.srcStageMask);
-			assertEquals(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT.value(), info.srcAccessMask);
+			assertEquals(VkPipelineStageFlag.VERTEX_INPUT.value(), info.srcStageMask);
+			assertEquals(VkAccess.DEPTH_STENCIL_ATTACHMENT_READ.value(), info.srcAccessMask);
 
 			// Check destination dependency
 			assertEquals(0, info.dstSubpass);
-			assertEquals(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.value(), info.dstStageMask);
-			assertEquals(VkAccessFlag.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value(), info.dstAccessMask);
+			assertEquals(VkPipelineStageFlag.FRAGMENT_SHADER.value(), info.dstStageMask);
+			assertEquals(VkAccess.DEPTH_STENCIL_ATTACHMENT_WRITE.value(), info.dstAccessMask);
 
 			// Build dependency
 			assertEquals(renderPassBuilder, dependencyBuilder.build());

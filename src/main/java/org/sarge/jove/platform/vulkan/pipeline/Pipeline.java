@@ -35,7 +35,7 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @return New bind pipeline command
 	 */
 	public Command bind() {
-		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.handle());
+		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, this.handle());
 	}
 
 	@Override

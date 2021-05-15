@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkIndexType;
@@ -33,7 +33,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class VulkanBufferTest extends AbstractVulkanTest {
-	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	private static final Set<VkBufferUsage> FLAGS = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_SRC);
 	private static final long SIZE = 3;
 
 	private VulkanBuffer buffer;
@@ -66,9 +66,9 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			final var flags = Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+			final var flags = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_DST);
 			dest = new VulkanBuffer(new Pointer(2), dev, flags, mem);
-			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_INDEX_BUFFER_BIT), mem);
+			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.INDEX_BUFFER), mem);
 			cmdHandle = new Handle(new Pointer(42));
 		}
 
@@ -85,7 +85,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			final Command cmd = index.bindIndexBuffer();
 			assertNotNull(cmd);
 			cmd.execute(lib, cmdHandle);
-			verify(lib).vkCmdBindIndexBuffer(cmdHandle, index.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
+			verify(lib).vkCmdBindIndexBuffer(cmdHandle, index.handle(), 0, VkIndexType.UINT32);
 		}
 
 		@Test
@@ -144,14 +144,14 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			final VulkanBuffer vbo = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT), mem);
+			final VulkanBuffer vbo = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.UNIFORM_BUFFER), mem);
 			uniform = vbo.uniform();
 		}
 
 		@Test
 		void constructor() {
 			assertNotNull(uniform);
-			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniform.type());
+			assertEquals(VkDescriptorType.UNIFORM_BUFFER, uniform.type());
 		}
 
 		@Test
@@ -176,7 +176,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void create() {
-		final MemoryProperties<VkBufferUsageFlag> props = new MemoryProperties<>(FLAGS, VkSharingMode.VK_SHARING_MODE_EXCLUSIVE, Set.of(), Set.of());
+		final MemoryProperties<VkBufferUsage> props = new MemoryProperties<>(FLAGS, VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
 		when(dev.allocate(any(VkMemoryRequirements.class), eq(props))).thenReturn(mem);
 		buffer = VulkanBuffer.create(dev, SIZE, props);
 		assertNotNull(buffer);
@@ -188,6 +188,6 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(dev.allocate(any(VkMemoryRequirements.class), any(MemoryProperties.class))).thenReturn(mem);
 		final VulkanBuffer staging = VulkanBuffer.staging(dev, SIZE);
 		assertNotNull(staging);
-		assertEquals(Set.of(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT), staging.usage());
+		assertEquals(Set.of(VkBufferUsage.TRANSFER_SRC), staging.usage());
 	}
 }

@@ -57,9 +57,9 @@ public class RotatingCubeDemo {
 		final Image texture = new Image.Builder(dev)
 				.extents(Image.Extents.of(image.size()))
 				.format(format)
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
-				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-				.usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
+				.aspect(VkImageAspect.VK_IMAGE_ASPECT_COLOR_BIT)
+				.usage(VkImageUsage.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+				.usage(VkImageUsage.VK_IMAGE_USAGE_SAMPLED_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
@@ -69,7 +69,7 @@ public class RotatingCubeDemo {
 				.destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
 				.barrier(texture)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-					.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+					.destination(VkAccess.VK_ACCESS_TRANSFER_WRITE_BIT)
 					.build()
 				.build()
 				.submit(pool);
@@ -92,8 +92,8 @@ public class RotatingCubeDemo {
 				.barrier(texture)
 					.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-					.source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
-					.destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
+					.source(VkAccess.VK_ACCESS_TRANSFER_WRITE_BIT)
+					.destination(VkAccess.VK_ACCESS_SHADER_READ_BIT)
 					.build()
 				.build()
 				.submit(pool);
@@ -189,7 +189,7 @@ public class RotatingCubeDemo {
 				.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
 					.source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
 					.destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-					.destination().access(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+					.destination().access(VkAccess.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 					.build()
 				.build();
 
@@ -213,8 +213,8 @@ public class RotatingCubeDemo {
 		// Create device VBO
 		final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
 				.length(vertices.length())
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+				.usage(VkBufferUsage.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+				.usage(VkBufferUsage.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 				.build();
 
@@ -259,7 +259,7 @@ public class RotatingCubeDemo {
 		final long uniformLength = (2 + 4) * Matrix4.IDENTITY.length();
 		final VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
 				.length(uniformLength)
-				.usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+				.usage(VkBufferUsage.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 				.required(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 				.build();

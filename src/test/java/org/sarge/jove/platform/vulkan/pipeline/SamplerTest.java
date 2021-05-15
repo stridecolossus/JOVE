@@ -63,7 +63,7 @@ public class SamplerTest extends AbstractVulkanTest {
 
 		@Test
 		void constructor() {
-			assertEquals(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, res.type());
+			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, res.type());
 		}
 
 		@Test
@@ -77,7 +77,7 @@ public class SamplerTest extends AbstractVulkanTest {
 			assertNotNull(info);
 			assertEquals(sampler.handle(), info.sampler);
 			assertEquals(view.handle(), info.imageView);
-			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, info.imageLayout);
+			assertEquals(VkImageLayout.SHADER_READ_ONLY_OPTIMAL, info.imageLayout);
 		}
 	}
 
@@ -100,9 +100,9 @@ public class SamplerTest extends AbstractVulkanTest {
 
 			// Create sampler
 			final Sampler sampler = builder
-					.min(VkFilter.VK_FILTER_LINEAR)
-					.mag(VkFilter.VK_FILTER_NEAREST)
-					.mipmap(VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_NEAREST)
+					.min(VkFilter.LINEAR)
+					.mag(VkFilter.NEAREST)
+					.mipmap(VkSamplerMipmapMode.NEAREST)
 					.wrap(Wrap.BORDER, false)
 					.border(VkBorderColor.VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK)
 					.minLod(2)
@@ -120,19 +120,19 @@ public class SamplerTest extends AbstractVulkanTest {
 			// Check descriptor
 			final VkSamplerCreateInfo info = captor.getValue();
 			assertNotNull(info);
-			assertEquals(VkFilter.VK_FILTER_LINEAR, info.minFilter);
-			assertEquals(VkFilter.VK_FILTER_NEAREST, info.magFilter);
+			assertEquals(VkFilter.LINEAR, info.minFilter);
+			assertEquals(VkFilter.NEAREST, info.magFilter);
 
 			// Check mipmap settings
-			assertEquals(VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_NEAREST, info.mipmapMode);
+			assertEquals(VkSamplerMipmapMode.NEAREST, info.mipmapMode);
 	//		assertEquals(1, info.mipLodBias);
 			assertEquals(2, info.minLod);
 			assertEquals(3, info.maxLod);
 
 			// Check address modes
-			assertEquals(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, info.addressModeU);
-			assertEquals(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, info.addressModeV);
-			assertEquals(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, info.addressModeW);
+			assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeU);
+			assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeV);
+			assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeW);
 			assertEquals(VkBorderColor.VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, info.borderColor);
 
 			// Check anisotropy settings

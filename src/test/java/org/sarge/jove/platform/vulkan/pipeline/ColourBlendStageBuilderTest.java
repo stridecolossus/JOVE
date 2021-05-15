@@ -29,7 +29,7 @@ public class ColourBlendStageBuilderTest {
 				.logic(VkLogicOp.VK_LOGIC_OP_COPY)
 				.constants(CONSTANTS)
 				.attachment()
-					.colour().source(VkBlendFactor.VK_BLEND_FACTOR_CONSTANT_COLOR)
+					.colour().source(VkBlendFactor.CONSTANT_COLOR)
 					.alpha().operation(VkBlendOp.VK_BLEND_OP_BLUE_EXT)
 					.mask("RGBA")
 					.build()

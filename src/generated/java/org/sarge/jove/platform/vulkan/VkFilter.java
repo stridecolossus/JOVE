@@ -7,10 +7,10 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkFilter implements IntegerEnumeration {
- 	VK_FILTER_NEAREST(0),
- 	VK_FILTER_LINEAR(1),
- 	VK_FILTER_CUBIC_IMG(1000015000),
- 	VK_FILTER_CUBIC_EXT(1000015000);
+ 	NEAREST(0),
+ 	LINEAR(1),
+ 	CUBIC_IMG(1000015000),
+ 	CUBIC_EXT(1000015000);
 
 	private final int value;
 

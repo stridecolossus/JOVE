@@ -105,7 +105,7 @@ public class TriangleDemo {
 		final Swapchain chain = new Swapchain.Builder(dev, surface)
 				.count(2)
 				.format(format)
-				.space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				.space(VkColorSpaceKHR.SRGB_NONLINEAR_KHR)
 				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
 
@@ -113,12 +113,12 @@ public class TriangleDemo {
 		final RenderPass pass = new RenderPass.Builder(dev)
 				.attachment()
 					.format(format)
-					.load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-					.store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-					.finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+					.load(VkAttachmentLoadOp.CLEAR)
+					.store(VkAttachmentStoreOp.STORE)
+					.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 					.build()
 				.subpass()
-					.colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+					.colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
 					.build()
 				.build();
 
@@ -137,11 +137,11 @@ public class TriangleDemo {
 				.pass(pass)
 				.viewport(chain.extents())
 				.shader()
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+					.stage(VkShaderStageFlag.VERTEX)
 					.shader(vert)
 					.build()
 				.shader()
-					.stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+					.stage(VkShaderStageFlag.FRAGMENT)
 					.shader(frag)
 					.build()
 				.build();

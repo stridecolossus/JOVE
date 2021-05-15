@@ -10,9 +10,8 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sarge.jove.platform.vulkan.VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT;
+import static org.sarge.jove.platform.vulkan.VkImageAspect.COLOR;
 import static org.sarge.jove.platform.vulkan.VkImageType.VK_IMAGE_TYPE_2D;
-import static org.sarge.jove.platform.vulkan.VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.Set;
@@ -37,7 +36,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class ImageTest extends AbstractVulkanTest {
-	private static final Set<VkImageAspectFlag> COLOUR = Set.of(VK_IMAGE_ASPECT_COLOR_BIT);
+	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
 
 	private DefaultImage image;
 	private Pointer handle;
@@ -50,7 +49,7 @@ public class ImageTest extends AbstractVulkanTest {
 		descriptor = new Descriptor.Builder()
 				.format(FORMAT)
 				.extents(new Image.Extents(3, 4))
-				.aspect(VK_IMAGE_ASPECT_COLOR_BIT)
+				.aspect(COLOR)
 				.mipLevels(2)
 				.arrayLayers(3)
 				.build();
@@ -90,7 +89,7 @@ public class ImageTest extends AbstractVulkanTest {
 		@DisplayName("Image aspects must be a valid combination")
 		@Test
 		void invalidAspects() {
-			final var aspects = Set.of(VK_IMAGE_ASPECT_COLOR_BIT, VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT);
+			final var aspects = Set.of(COLOR, VkImageAspect.DEPTH);
 			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(VK_IMAGE_TYPE_2D, FORMAT, new Extents(3, 4), aspects, 1, 1));
 		}
 
@@ -156,15 +155,15 @@ public class ImageTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private Image.Builder builder;
-		private MemoryProperties<VkImageUsageFlag> props;
+		private MemoryProperties<VkImageUsage> props;
 
 		@BeforeEach
 		void before() {
 			when(dev.allocate(any(VkMemoryRequirements.class), any(MemoryProperties.class))).thenReturn(mem);
 			builder = new Image.Builder();
 			props = new MemoryProperties.Builder()
-					.mode(VkSharingMode.VK_SHARING_MODE_CONCURRENT)
-					.usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+					.mode(VkSharingMode.CONCURRENT)
+					.usage(VkImageUsage.COLOR_ATTACHMENT)
 					.build();
 		}
 
@@ -174,9 +173,9 @@ public class ImageTest extends AbstractVulkanTest {
 			image = builder
 					.descriptor(descriptor)
 					.properties(props)
-					.samples(VkSampleCountFlag.VK_SAMPLE_COUNT_4_BIT)
-					.tiling(VkImageTiling.VK_IMAGE_TILING_LINEAR)
-					.initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_PREINITIALIZED)
+					.samples(VkSampleCountFlag.VK_SAMPLE_COUNT_4)
+					.tiling(VkImageTiling.LINEAR)
+					.initialLayout(VkImageLayout.PREINITIALIZED)
 					.build(dev);
 
 			// Check image
@@ -200,11 +199,11 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(FORMAT, info.format);
 			assertEquals(2, info.mipLevels);
 			assertEquals(3, info.arrayLayers);
-			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_4_BIT, info.samples);
-			assertEquals(VkImageTiling.VK_IMAGE_TILING_LINEAR, info.tiling);
-			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_PREINITIALIZED, info.initialLayout);
-			assertEquals(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT.value(), info.usage);
-			assertEquals(VkSharingMode.VK_SHARING_MODE_CONCURRENT, info.sharingMode);
+			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_4, info.samples);
+			assertEquals(VkImageTiling.LINEAR, info.tiling);
+			assertEquals(VkImageLayout.PREINITIALIZED, info.initialLayout);
+			assertEquals(VkImageUsage.COLOR_ATTACHMENT.value(), info.usage);
+			assertEquals(VkSharingMode.CONCURRENT, info.sharingMode);
 
 			// Check extents
 			assertNotNull(info.extent);
@@ -271,7 +270,7 @@ public class ImageTest extends AbstractVulkanTest {
 //			assertEquals(SubResourceBuilder.REMAINING, range.layerCount);
 			assertEquals(1, range.levelCount);
 			assertEquals(1, range.layerCount);
-			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), range.aspectMask);
+			assertEquals(VkImageAspect.COLOR.value(), range.aspectMask);
 
 			// Populate layers
 			final var layers = new VkImageSubresourceLayers();
@@ -280,7 +279,7 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(2, layers.baseArrayLayer);
 //			assertEquals(SubResourceBuilder.REMAINING, range.layerCount);
 			assertEquals(1, range.layerCount);
-			assertEquals(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT.value(), layers.aspectMask);
+			assertEquals(VkImageAspect.COLOR.value(), layers.aspectMask);
 		}
 	}
 }

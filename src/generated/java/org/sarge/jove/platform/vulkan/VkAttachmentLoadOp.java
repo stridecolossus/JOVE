@@ -7,9 +7,9 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkAttachmentLoadOp implements IntegerEnumeration {
- 	VK_ATTACHMENT_LOAD_OP_LOAD(0),
- 	VK_ATTACHMENT_LOAD_OP_CLEAR(1),
- 	VK_ATTACHMENT_LOAD_OP_DONT_CARE(2);
+ 	LOAD(0),
+ 	CLEAR(1),
+ 	DONT_CARE(2);
 
 	private final int value;
 

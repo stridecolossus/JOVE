@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 
 /**
- * A <i>byte source</i> is a wrapper for byte array.
+ * A <i>byte source</i> is a wrapper for a byte array.
  * @author Sarge
  */
 public interface ByteSource {
@@ -34,6 +34,7 @@ public interface ByteSource {
 		 */
 		void write(ByteBuffer buffer);
 	}
+	// TODO - write(OutputStream) => no need for toByteArray()
 
 	/**
 	 * Creates a byte source for the given array.

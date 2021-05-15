@@ -10,8 +10,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkBufferUsage;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -37,7 +37,7 @@ public class ImageCopyCommandTest {
 		final var descriptor = new Image.Descriptor.Builder()
 				.extents(new Image.Extents(1, 1))
 				.format(AbstractVulkanTest.FORMAT)
-				.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+				.aspect(VkImageAspect.COLOR)
 				.build();
 
 		// Create image
@@ -59,13 +59,13 @@ public class ImageCopyCommandTest {
 		final ImageCopyCommand copy = builder
 				.image(image)
 				.buffer(buffer)
-				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+				.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
 				.build();
 
 		// Perform copy operation
 		copy.execute(lib, cmd);
-		verify(buffer).require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-		verify(lib).vkCmdCopyBufferToImage(cmd, buffer.handle(), image.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, copy.regions());
+		verify(buffer).require(VkBufferUsage.TRANSFER_SRC);
+		verify(lib).vkCmdCopyBufferToImage(cmd, buffer.handle(), image.handle(), VkImageLayout.TRANSFER_DST_OPTIMAL, 1, copy.regions());
 	}
 
 	@Test
@@ -74,14 +74,14 @@ public class ImageCopyCommandTest {
 		final ImageCopyCommand copy = builder
 				.image(image)
 				.buffer(buffer)
-				.layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+				.layout(VkImageLayout.TRANSFER_SRC_OPTIMAL)
 				.invert()
 				.build();
 
 		// Perform copy operation
 		copy.execute(lib, cmd);
-		verify(buffer).require(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-		verify(lib).vkCmdCopyImageToBuffer(cmd, image.handle(), VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer.handle(), 1, copy.regions());
+		verify(buffer).require(VkBufferUsage.TRANSFER_DST);
+		verify(lib).vkCmdCopyImageToBuffer(cmd, image.handle(), VkImageLayout.TRANSFER_SRC_OPTIMAL, buffer.handle(), 1, copy.regions());
 	}
 
 	@Test
@@ -106,14 +106,14 @@ public class ImageCopyCommandTest {
 
 	@Test
 	void buildInvalidImageLayout() {
-		builder.image(image).buffer(buffer).layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		builder.image(image).buffer(buffer).layout(VkImageLayout.TRANSFER_SRC_OPTIMAL);
 		assertThrows(IllegalStateException.class, () -> builder.build());
 	}
 
 	@Test
 	void buildInvalidBuffer() {
 		doThrow(IllegalStateException.class).when(buffer).require(any());
-		builder.image(image).buffer(buffer).layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		builder.image(image).buffer(buffer).layout(VkImageLayout.TRANSFER_DST_OPTIMAL);
 		assertThrows(IllegalStateException.class, () -> builder.build());
 	}
 }

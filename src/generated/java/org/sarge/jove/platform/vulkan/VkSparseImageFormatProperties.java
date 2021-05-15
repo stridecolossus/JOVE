@@ -18,7 +18,7 @@ public class VkSparseImageFormatProperties extends VulkanStructure {
 	public static class ByValue extends VkSparseImageFormatProperties implements Structure.ByValue { }
 	public static class ByReference extends VkSparseImageFormatProperties implements Structure.ByReference { }
 
-	public VkImageAspectFlag aspectMask;
+	public VkImageAspect aspectMask;
 	public VkExtent3D imageGranularity;
 	public int flags;
 }

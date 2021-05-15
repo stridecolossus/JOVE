@@ -18,7 +18,7 @@ public class VkImageSubresource extends VulkanStructure {
 	public static class ByValue extends VkImageSubresource implements Structure.ByValue { }
 	public static class ByReference extends VkImageSubresource implements Structure.ByReference { }
 
-	public VkImageAspectFlag aspectMask;
+	public VkImageAspect aspectMask;
 	public int mipLevel;
 	public int arrayLayer;
 }

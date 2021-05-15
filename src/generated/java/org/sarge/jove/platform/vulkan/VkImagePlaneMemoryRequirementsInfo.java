@@ -21,5 +21,5 @@ public class VkImagePlaneMemoryRequirementsInfo extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_PLANE_MEMORY_REQUIREMENTS_INFO;
 	public Pointer pNext;
-	public VkImageAspectFlag planeAspect;
+	public VkImageAspect planeAspect;
 }

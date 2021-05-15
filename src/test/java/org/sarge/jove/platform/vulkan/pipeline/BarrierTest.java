@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.vulkan.VkAccessFlag;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkAccess;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
@@ -27,7 +27,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class BarrierTest {
-	private static final VkPipelineStageFlag STAGE = VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	private static final VkPipelineStageFlag STAGE = VkPipelineStageFlag.TOP_OF_PIPE;
 
 	private Barrier barrier;
 	private VulkanLibrary lib;
@@ -52,7 +52,7 @@ public class BarrierTest {
 			descriptor = new Image.Descriptor.Builder()
 					.format(AbstractVulkanTest.FORMAT)
 					.extents(new Image.Extents(3, 4))
-					.aspect(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT)
+					.aspect(VkImageAspect.COLOR)
 					.build();
 
 			// Create image
@@ -78,8 +78,8 @@ public class BarrierTest {
 		void buildSameLayout() {
 			final var nested = builder
 					.barrier(image)
-					.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-					.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+					.oldLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+					.newLayout(VkImageLayout.TRANSFER_DST_OPTIMAL);
 
 			assertThrows(IllegalArgumentException.class, () -> nested.build());
 		}
@@ -91,9 +91,9 @@ public class BarrierTest {
 					.source(STAGE)
 					.destination(STAGE)
 					.barrier(image)
-						.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-						.source(VkAccessFlag.VK_ACCESS_MEMORY_READ_BIT)
-						.destination(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
+						.newLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+						.source(VkAccess.MEMORY_READ)
+						.destination(VkAccess.TRANSFER_WRITE)
 						.subresource()
 							.levelCount(42)
 							.build()
@@ -116,10 +116,10 @@ public class BarrierTest {
 			final VkImageMemoryBarrier info = captor.getValue()[0];
 			assertNotNull(info);
 			assertEquals(image.handle(), info.image);
-			assertEquals(VkAccessFlag.VK_ACCESS_MEMORY_READ_BIT.value(), info.srcAccessMask);
-			assertEquals(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT.value(), info.dstAccessMask);
-			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED, info.oldLayout);
-			assertEquals(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, info.newLayout);
+			assertEquals(VkAccess.MEMORY_READ.value(), info.srcAccessMask);
+			assertEquals(VkAccess.TRANSFER_WRITE.value(), info.dstAccessMask);
+			assertEquals(VkImageLayout.UNDEFINED, info.oldLayout);
+			assertEquals(VkImageLayout.TRANSFER_DST_OPTIMAL, info.newLayout);
 			assertEquals(Queue.Family.IGNORED, info.srcQueueFamilyIndex);
 			assertEquals(Queue.Family.IGNORED, info.dstQueueFamilyIndex);
 			assertNotNull(info.subresourceRange);

@@ -7,7 +7,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
-import org.sarge.jove.platform.vulkan.VkImageAspectFlag;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
@@ -58,7 +58,7 @@ public class View extends AbstractVulkanObject {
 	 * @return Default clear value for the given image
 	 */
 	private static ClearValue clear(Image image) {
-		if(image.descriptor().aspects().contains(VkImageAspectFlag.VK_IMAGE_ASPECT_DEPTH_BIT)) {
+		if(image.descriptor().aspects().contains(VkImageAspect.DEPTH)) {
 			return ClearValue.DEPTH;
 		}
 		else {
@@ -134,7 +134,7 @@ public class View extends AbstractVulkanObject {
 		private static final VkComponentMapping DEFAULT_COMPONENT_MAPPING = create();
 
 		private static VkComponentMapping create() {
-			final VkComponentSwizzle identity = VkComponentSwizzle.VK_COMPONENT_SWIZZLE_IDENTITY;
+			final VkComponentSwizzle identity = VkComponentSwizzle.IDENTITY;
 			final var mapping = new VkComponentMapping();
 			mapping.r = identity;
 			mapping.g = identity;

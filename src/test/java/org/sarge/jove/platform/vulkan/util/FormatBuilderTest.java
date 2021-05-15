@@ -30,17 +30,17 @@ class FormatBuilderTest {
 			.bytes(2)
 			.signed(false)
 			.build();
-		assertEquals(VkFormat.VK_FORMAT_R16G16B16A16_UINT, format);
+		assertEquals(VkFormat.R16G16B16A16_UINT, format);
 	}
 
 	@Test
 	void buildDefaults() {
-		assertEquals(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, builder.build());
+		assertEquals(VkFormat.R32G32B32A32_SFLOAT, builder.build());
 	}
 
 	@Test
 	void buildComponents() {
-		assertEquals(VkFormat.VK_FORMAT_R32G32_SFLOAT, builder.components(2).build());
+		assertEquals(VkFormat.R32G32_SFLOAT, builder.components(2).build());
 	}
 
 	@Test
@@ -65,13 +65,13 @@ class FormatBuilderTest {
 	void image() {
 		final ImageData image = mock(ImageData.class);
 		when(image.components()).thenReturn(List.of(8, 8, 8, 8));
-		assertEquals(VkFormat.VK_FORMAT_R8G8B8A8_SRGB, FormatBuilder.format(image));
+		assertEquals(VkFormat.R8G8B8A8_SRGB, FormatBuilder.format(image));
 	}
 
 	@Test
 	void layout() {
 		final var layout = Layout.of(3, Float.class);
-		assertEquals(VkFormat.VK_FORMAT_R32G32B32_SFLOAT, FormatBuilder.format(layout));
+		assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(layout));
 	}
 
 	@Test

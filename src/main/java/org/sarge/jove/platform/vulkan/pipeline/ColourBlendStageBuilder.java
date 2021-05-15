@@ -149,10 +149,10 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		private final BlendOperationBuilder alpha = new BlendOperationBuilder();
 
 		private AttachmentBuilder() {
-			colour.source(VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA);
-			colour.destination(VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
-			alpha.source(VkBlendFactor.VK_BLEND_FACTOR_ONE);
-			alpha.destination(VkBlendFactor.VK_BLEND_FACTOR_ZERO);
+			colour.source(VkBlendFactor.SRC_ALPHA);
+			colour.destination(VkBlendFactor.ONE_MINUS_SRC_ALPHA);
+			alpha.source(VkBlendFactor.ONE);
+			alpha.destination(VkBlendFactor.ZERO);
 			attachments.add(this);
 		}
 

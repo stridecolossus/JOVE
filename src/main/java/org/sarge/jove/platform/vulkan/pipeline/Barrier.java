@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.platform.vulkan.VkAccessFlag;
+import org.sarge.jove.platform.vulkan.VkAccess;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStageFlag;
@@ -102,9 +102,9 @@ public class Barrier extends ImmediateCommand {
 		public class ImageBarrierBuilder {
 			private final Image image;
 			private final SubResourceBuilder<ImageBarrierBuilder> subresource;
-			private final Set<VkAccessFlag> src = new HashSet<>();
-			private final Set<VkAccessFlag> dest = new HashSet<>();
-			private VkImageLayout oldLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+			private final Set<VkAccess> src = new HashSet<>();
+			private final Set<VkAccess> dest = new HashSet<>();
+			private VkImageLayout oldLayout = VkImageLayout.UNDEFINED;
 			private VkImageLayout newLayout;
 
 			/**
@@ -120,7 +120,7 @@ public class Barrier extends ImmediateCommand {
 			 * Adds a source access flag.
 			 * @param access Source access flag
 			 */
-			public ImageBarrierBuilder source(VkAccessFlag flag) {
+			public ImageBarrierBuilder source(VkAccess flag) {
 				src.add(flag);
 				return this;
 			}
@@ -129,7 +129,7 @@ public class Barrier extends ImmediateCommand {
 			 * Adds a destination access flag.
 			 * @param destStages Destination access flag
 			 */
-			public ImageBarrierBuilder destination(VkAccessFlag flag) {
+			public ImageBarrierBuilder destination(VkAccess flag) {
 				dest.add(flag);
 				return this;
 			}

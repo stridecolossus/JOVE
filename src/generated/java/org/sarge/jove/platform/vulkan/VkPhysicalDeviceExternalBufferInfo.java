@@ -24,6 +24,6 @@ public class VkPhysicalDeviceExternalBufferInfo extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO;
 	public Pointer pNext;
 	public int flags;
-	public VkBufferUsageFlag usage;
+	public VkBufferUsage usage;
 	public VkExternalMemoryHandleTypeFlag handleType;
 }

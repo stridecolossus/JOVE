@@ -370,6 +370,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			check(lib.vkCreateDevice(parent.handle(), info, null, logical));
 
 			// Enumerate supported memory types
+			// TODO - should props be cached locally somewhere?
 			final var props = new VkPhysicalDeviceMemoryProperties();
 			lib.vkGetPhysicalDeviceMemoryProperties(parent.handle(), props);
 			final var types = MemoryType.enumerate(props);

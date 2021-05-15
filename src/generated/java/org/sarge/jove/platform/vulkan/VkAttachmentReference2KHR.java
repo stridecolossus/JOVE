@@ -25,5 +25,5 @@ public class VkAttachmentReference2KHR extends VulkanStructure {
 	public Pointer pNext;
 	public int attachment;
 	public VkImageLayout layout;
-	public VkImageAspectFlag aspectMask;
+	public VkImageAspect aspectMask;
 }

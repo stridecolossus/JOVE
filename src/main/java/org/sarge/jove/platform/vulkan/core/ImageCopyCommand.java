@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkOffset3D;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -33,7 +33,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 * @param layout		Image layout
 	 * @param toImage		Whether copying <i>to</i> or <i>from</i> the image
 	 * @throws IllegalStateException if the image or buffer is not a valid source/destination for this operation
-	 * @see VulkanBuffer#require(VkBufferUsageFlag)
+	 * @see VulkanBuffer#require(VkBufferUsage)
 	 */
 	private ImageCopyCommand(Image image, VulkanBuffer buffer, VkBufferImageCopy[] regions, VkImageLayout layout, boolean toImage) {
 		Check.notEmpty(regions);
@@ -49,8 +49,8 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 * @throws IllegalStateException for an invalid source/destination configuration.
 	 */
 	private void validate() {
-		final VkBufferUsageFlag flag = toImage ? VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT : VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-		final VkImageLayout expected = toImage ? VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL : VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		final VkBufferUsage flag = toImage ? VkBufferUsage.TRANSFER_SRC : VkBufferUsage.TRANSFER_DST;
+		final VkImageLayout expected = toImage ? VkImageLayout.TRANSFER_DST_OPTIMAL : VkImageLayout.TRANSFER_SRC_OPTIMAL;
 		buffer.require(flag);
 		if(this.layout != expected) throw new IllegalStateException(String.format("Invalid image layout: expected=%s actual=%s", expected, layout));
 	}

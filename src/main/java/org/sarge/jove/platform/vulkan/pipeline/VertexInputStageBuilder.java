@@ -165,7 +165,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	public class BindingBuilder {
 		private int binding;
 		private int stride;
-		private VkVertexInputRate rate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX; // TODO - instancing
+		private VkVertexInputRate rate = VkVertexInputRate.VERTEX; // TODO - instancing
 		private final Set<Integer> locations = new HashSet<>();
 
 		private BindingBuilder() {
@@ -191,7 +191,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 
 		/**
 		 * Sets the input rate.
-		 * @param rate Input rate (default is {@link VkVertexInputRate#VK_VERTEX_INPUT_RATE_VERTEX})
+		 * @param rate Input rate (default is {@link VkVertexInputRate#VERTEX})
 		 */
 		public BindingBuilder rate(VkVertexInputRate rate) {
 			this.rate = notNull(rate);
