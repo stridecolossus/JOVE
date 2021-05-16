@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.pipeline;
+package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -26,10 +26,11 @@ import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Resource;
-import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 

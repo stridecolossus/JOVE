@@ -27,7 +27,10 @@ import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.memory.Allocator;
 import org.sarge.jove.platform.vulkan.memory.DefaultDeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
@@ -91,7 +94,9 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	private Queue create(int index, Queue.Family family) {
 		final PointerByReference queue = lib.factory().pointer();
 		lib.vkGetDeviceQueue(handle, family.index(), index, queue);
-		return new Queue(queue.getValue(), this, family);
+
+		final Handle handle = new Handle(queue.getValue());
+		return new Queue(handle, this, family);
 	}
 
 	/**
@@ -121,6 +126,12 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 */
 	public Map<Queue.Family, List<Queue>> queues() {
 		return queues;
+	}
+
+	public Queue queue(Selector selector) {
+		final var list = queues.get(selector.family());
+		if(list == null) throw new IllegalArgumentException("TODO");
+		return list.iterator().next();
 	}
 
 	/**
@@ -297,38 +308,37 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 
 		/**
 		 * Adds a <b>single</b> queue of the given family to this device.
-		 * @param ref Queue reference
+		 * @param family Queue family
 		 * @throws NoSuchElementException if the queue reference is invalid
 		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
 		 */
-		public Builder queue(Queue.Reference ref) {
-			return queues(ref, 1);
+		public Builder queue(Family family) {
+			return queues(family, 1);
 		}
 
 		/**
 		 * Adds the specified number of queues of the given family to this device.
-		 * @param ref		Queue reference
-		 * @param num		Number of queues
+		 * @param family 		Queue family
+		 * @param num			Number of queues
 		 * @throws NoSuchElementException if the queue reference is invalid
 		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
-		public Builder queues(Queue.Reference ref, int num) {
-			return queues(ref, Collections.nCopies(num, Percentile.ONE));
+		public Builder queues(Family family, int num) {
+			return queues(family, Collections.nCopies(num, Percentile.ONE));
 		}
 
 		/**
 		 * Adds multiple queues of the given family with the specified work priorities to this device.
-		 * @param ref			Queue reference
+		 * @param family 		Queue family
 		 * @param priorities	Queue priorities
 		 * @throws NoSuchElementException if the queue reference is invalid
 		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 * @throws IllegalArgumentException if the priorities array is empty or any value is not a valid 0..1 percentile
 		 */
-		public Builder queues(Queue.Reference ref, List<Percentile> priorities) {
+		public Builder queues(Family family, List<Percentile> priorities) {
 			// Validate family for this device
-			final Queue.Family family = ref.family();
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}

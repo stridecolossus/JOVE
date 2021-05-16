@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.pipeline;
+package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,6 +20,8 @@ import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.render.FrameBuffer;
+import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;

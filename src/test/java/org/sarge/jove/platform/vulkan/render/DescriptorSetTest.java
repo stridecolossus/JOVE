@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.pipeline;
+package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,12 +31,14 @@ import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Resource;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Binding;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Entry;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Layout;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Pool;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet.Binding;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet.Entry;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet.Pool;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;

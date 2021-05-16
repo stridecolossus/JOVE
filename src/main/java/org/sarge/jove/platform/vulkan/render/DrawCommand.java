@@ -1,7 +1,7 @@
-package org.sarge.jove.platform.vulkan.pipeline;
+package org.sarge.jove.platform.vulkan.render;
 
 import org.sarge.jove.model.Model;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.common.Command;
 
 /**
  * A <i>draw command</i> is used to render a model.

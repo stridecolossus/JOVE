@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.pipeline;
+package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -22,12 +22,14 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.pipeline.RenderPass.Builder.AttachmentBuilder;
-import org.sarge.jove.platform.vulkan.pipeline.RenderPass.Builder.DependencyBuilder;
-import org.sarge.jove.platform.vulkan.pipeline.RenderPass.Builder.SubPassBuilder;
+import org.sarge.jove.platform.vulkan.render.FrameBuffer;
+import org.sarge.jove.platform.vulkan.render.RenderPass;
+import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.AttachmentBuilder;
+import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.DependencyBuilder;
+import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.SubPassBuilder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;

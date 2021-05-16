@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.pipeline;
+package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -15,7 +15,8 @@ import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.render.DrawCommand;
 
 import com.sun.jna.Pointer;
 

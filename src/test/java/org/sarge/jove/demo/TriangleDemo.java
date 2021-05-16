@@ -19,23 +19,24 @@ import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Instance;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.platform.vulkan.core.Queue;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.Work;
-import org.sarge.jove.platform.vulkan.pipeline.FrameBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
-import org.sarge.jove.platform.vulkan.pipeline.RenderPass;
-import org.sarge.jove.platform.vulkan.pipeline.Swapchain;
+import org.sarge.jove.platform.vulkan.render.FrameBuffer;
+import org.sarge.jove.platform.vulkan.render.RenderPass;
+import org.sarge.jove.platform.vulkan.render.Swapchain;
 import org.sarge.jove.platform.vulkan.util.FormatHelper;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.ResourceLoader;
@@ -72,8 +73,8 @@ public class TriangleDemo {
 		final Handle surfaceHandle = window.surface(instance.handle());
 
 		// Create queue family predicates
-		final var graphics = Queue.Selector.of(VkQueueFlag.GRAPHICS);
-		final var present = Queue.Selector.of(surfaceHandle);
+		final Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
+		final Selector present = Selector.of(surfaceHandle);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
@@ -87,8 +88,8 @@ public class TriangleDemo {
 		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.queue(graphics)
-				.queue(present)
+				.queue(graphics.family())
+				.queue(present.family())
 				.build();
 
 		// Create rendering surface
@@ -158,7 +159,7 @@ public class TriangleDemo {
 				.collect(toList());
 
 		// Create command pool
-		final Queue queue = present.queue(dev);
+		final Queue queue = dev.queue(present);
 		final Command.Pool pool = Command.Pool.create(queue);
 		final List<Command.Buffer> commands = pool.allocate(buffers.size());
 

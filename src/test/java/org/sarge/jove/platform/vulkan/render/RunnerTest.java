@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.pipeline;
+package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,12 +24,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
-import org.sarge.jove.platform.vulkan.core.Queue;
+import org.sarge.jove.platform.vulkan.render.Runner;
+import org.sarge.jove.platform.vulkan.render.Swapchain;
+import org.sarge.jove.platform.vulkan.render.Runner.Frame;
+import org.sarge.jove.platform.vulkan.render.Runner.FrameState;
 import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.pipeline.Runner.Frame;
-import org.sarge.jove.platform.vulkan.pipeline.Runner.FrameState;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;

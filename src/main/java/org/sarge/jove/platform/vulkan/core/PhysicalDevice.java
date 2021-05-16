@@ -1,11 +1,13 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.toList;
+import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -23,12 +25,16 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.Supported;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>physical device</i> represents a Vulkan system component such as a GPU.
@@ -96,9 +102,9 @@ public class PhysicalDevice implements NativeObject {
 	 * @param props Properties
 	 * @return New queue family
 	 */
-	private Queue.Family family(int index, VkQueueFamilyProperties props) {
+	private static Family family(int index, VkQueueFamilyProperties props) {
 		final var flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
-		return new Queue.Family(this, index, props.queueCount, new HashSet<>(flags));
+		return new Family(index, props.queueCount, new HashSet<>(flags));
 	}
 
 	@Override
@@ -116,8 +122,71 @@ public class PhysicalDevice implements NativeObject {
 	/**
 	 * @return Queue families for this device
 	 */
-	public List<Queue.Family> families() {
+	public List<Family> families() {
 		return families;
+	}
+
+	// TODO - to device?
+//	/**
+//	 * @param surface Rendering surface
+//	 * @return Whether this family supports presentation to the given surface
+//	 */
+//	public boolean isPresentationSupported(Handle surface) {
+//		final VulkanLibrary lib = dev.instance().library();
+//		final IntByReference supported = lib.factory().integer();
+//		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
+//		return VulkanBoolean.of(supported.getValue()).toBoolean();
+//	}
+
+	/**
+	 *
+	 * @param family
+	 * @param surface
+	 * @return
+	 */
+	public boolean isPresentationSupported(Family family, Handle surface) {
+		final VulkanLibrary lib = instance.library();
+		final IntByReference supported = lib.factory().integer();
+		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this.handle(), family.index(), surface, supported));
+		return VulkanBoolean.of(supported.getValue()).toBoolean();
+	}
+
+	/**
+	 *
+	 */
+	public static class Selector implements Predicate<PhysicalDevice> {
+
+		public static Selector of(VkQueueFlag... flags) {
+			final var set = Arrays.asList(flags);
+			return new Selector(family -> family.flags().containsAll(set));
+		}
+
+		public static Selector presentation(Handle surface) {
+
+			return new Selector(null) {
+				@Override
+				public boolean test(PhysicalDevice dev) {
+					return super.test(dev);
+				}
+			};
+		}
+
+		private final Predicate<Family> predicate;
+		private Optional<Family> family;
+
+		public Selector(Predicate<Family> predicate) {
+			this.predicate = notNull(predicate);
+		}
+
+		public Family family() {
+			return family.orElseThrow();
+		}
+
+		@Override
+		public boolean test(PhysicalDevice dev) {
+			family = dev.families().stream().filter(predicate).findAny();
+			return family.isPresent();
+		}
 	}
 
 	/**

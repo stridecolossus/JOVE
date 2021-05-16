@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.common;
 
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
@@ -25,8 +25,6 @@ import org.sarge.jove.platform.vulkan.VkCommandPoolCreateFlag;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandPoolResetFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

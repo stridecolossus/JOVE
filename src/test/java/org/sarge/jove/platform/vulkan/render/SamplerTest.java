@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.pipeline;
+package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +19,8 @@ import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Resource;
 import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.pipeline.Sampler.Wrap;
+import org.sarge.jove.platform.vulkan.render.Sampler;
+import org.sarge.jove.platform.vulkan.render.Sampler.Wrap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
