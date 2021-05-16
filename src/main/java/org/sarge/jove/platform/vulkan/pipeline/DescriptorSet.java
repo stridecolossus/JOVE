@@ -27,9 +27,10 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.Resource;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.util.StructureCollector;
+import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -60,9 +61,13 @@ import com.sun.jna.ptr.PointerByReference;
  *  // Create descriptors
  *  List<DescriptorSet> descriptors = pool.allocate(layout, 3);
  *
+ *  // Create a descriptor set resource
+ *  View view = ...
+ *  Resource res = sampler.resource(view);
+ *  ...
+ *
  *  // Update descriptor sets
- *  Resource sampler = ...
- *  descriptor.entry(binding).set(sampler);
+ *  descriptor.entry(binding).set(res);
  *  ...
  *
  *  // Apply updates
@@ -71,22 +76,6 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class DescriptorSet implements NativeObject {
-	/**
-	 * A <i>descriptor set resource</i> defines an object that can be applied to this descriptor set.
-	 */
-	public interface Resource {
-		/**
-		 * @return Descriptor type
-		 */
-		VkDescriptorType type();
-
-		/**
-		 * Populates the write descriptor for this resource.
-		 * @param write Write descriptor
-		 */
-		void populate(VkWriteDescriptorSet write);
-	}
-
 	/**
 	 * An <i>entry</i> holds the resource for a given binding in this descriptor set.
 	 */
@@ -224,7 +213,7 @@ public class DescriptorSet implements NativeObject {
 				.stream()
 				.flatMap(set -> set.entries.values().stream())
 				.filter(Entry::isDirty)
-				.collect(new StructureCollector<>(VkWriteDescriptorSet::new, Entry::populate));
+				.collect(StructureHelper.collector(VkWriteDescriptorSet::new, Entry::populate));
 
 		// Ignore if nothing to update
 		if(writes == null) {
@@ -479,7 +468,7 @@ public class DescriptorSet implements NativeObject {
 				final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
 				info.flags = IntegerEnumeration.mask(flags);
 				info.poolSizeCount = pool.size();
-				info.pPoolSizes = StructureCollector.toPointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
+				info.pPoolSizes = StructureHelper.first(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 				info.maxSets = max;
 
 				// Allocate pool
@@ -603,7 +592,7 @@ public class DescriptorSet implements NativeObject {
 			// Init layout descriptor
 			final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
 			info.bindingCount = bindings.size();
-			info.pBindings = StructureCollector.toPointer(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
+			info.pBindings = StructureHelper.first(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();

@@ -10,9 +10,9 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.Resource;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.pipeline.DescriptorSet.Resource;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
@@ -84,11 +84,11 @@ public class Sampler extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Creates a descriptor set resource for this sampler with the given texture image-view.
-	 * @param texture Texture
+	 * Creates a descriptor set resource for this sampler on the given view.
+	 * @param view View
 	 * @return Sampler resource
 	 */
-	public Resource resource(View texture) {
+	public Resource resource(View view) {
 		return new Resource() {
 			@Override
 			public VkDescriptorType type() {
@@ -97,13 +97,10 @@ public class Sampler extends AbstractVulkanObject {
 
 			@Override
 			public void populate(VkWriteDescriptorSet write) {
-				// Create sampler descriptor
 				final var info = new VkDescriptorImageInfo();
 				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
 				info.sampler = Sampler.this.handle();
-				info.imageView = texture.handle();
-
-				// Add to write descriptor
+				info.imageView = view.handle();
 				write.pImageInfo = info;
 			}
 		};

@@ -34,7 +34,7 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.memory.MemoryType;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
-import org.sarge.jove.platform.vulkan.util.StructureCollector;
+import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
 
@@ -362,7 +362,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 
 			// Add queue descriptors
 			info.queueCreateInfoCount = queues.size();
-			info.pQueueCreateInfos = StructureCollector.toPointer(queues, VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
+			info.pQueueCreateInfos = StructureHelper.first(queues, VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
 
 			// Allocate device
 			final VulkanLibrary lib = parent.instance().library();

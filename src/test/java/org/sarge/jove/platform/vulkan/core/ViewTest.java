@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
+import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -77,7 +78,7 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void clearInvalidAspect() {
-		assertThrows(IllegalArgumentException.class, () -> view.clear(ClearValue.DEPTH));
+		assertThrows(IllegalArgumentException.class, () -> view.clear(DepthClearValue.DEFAULT));
 	}
 
 	@Test

@@ -1,6 +1,6 @@
 pipeline
 - nasty base-classes, initialisation, result() method, etc. Can we make these just builders somehow?
-- re-build after viewport/focus change
+- re-build pipeline after window viewport/focus change
 - factor out attachment class? no index, create from render pass and link to sub-pass
 - add sub-pass domain object? ditto dependencies?
 - selector for depth format, using getPhysicalDeviceFormatProperties
@@ -8,12 +8,7 @@ pipeline
 - frame buffer created from swapchain?
 - caching, https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/pipeline_cache/pipeline_cache_tutorial.md
 
-geometry
-- layouts of components as annotations? does this buy us anything?
-- component-wise bi/operator support for tuple/vector/point, e.g. matrix set row/column, AABB-Ray intersect, extents operators
-
 model
-- can we use some sort of bulk collections operation rather than iteratively testing each vertex? would we want to?
 - integrate Sphere helper and UnitCircle and Matrix.rotation()?
 - sphere/conic builder, uses unit circle, add pole, add ring with N points / segment
 - extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
@@ -32,14 +27,19 @@ blog
 - add instance + ref factory (?)
 
 core
-- allocator merge released blocks
-- add format to image data? no of channels, bits per channel, alpha channel, type (float, int, etc) or always byte (or whatever it is now)? === vertex.layout?
+- allocator merge released blocks (de-fragmentation)
 - swizzle & buffer image in one go?
-- create subresource from image?
 - tests/annotations for required features?
 - techniques -> materials?
 
+util
+- StructureCollector bit complex/pointless? only the finisher actually does anything? though note HAS to populate() rather than allocate the structure[]
+- move StructureCollector to JOVE utils (from VK) 
+- HandleArray - should be Pointer[]? JNA handles this? no need for intermediate class based on Memory?
+- Handle::toPointer - only used in Instance?
+
 scene
+- Sphere helper class, plus Sphere & centre point? integrate with SphereVolume
 - is Ray.Intersection what we actually need? would need ray + volume in intersection record to be useful in stream processing?
 - composite object for near/far plane distances, FOV, projection matrix, i.e. stuff used in scene? or Scene object?
 - scene = n/f, FOV, root node, projection, viewport, camera
@@ -49,3 +49,8 @@ scene
 - world and local transforms? visitor to update
 - node inheritance? e.g. transform change propagates up, volume change down, etc?
 - should volumes enforce intersect(sphere) and intersect(extents)? or ABC? or leave as-is? should frustum really be a volume?
+
+project
+- render package: view, clear value, swapchain, render-pass, frame-buffer, etc
+- pipeline -> core + render
+- separate demo tree using Spring?

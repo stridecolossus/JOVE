@@ -12,7 +12,7 @@ import org.sarge.lib.util.Percentile;
  * A <i>clear value</i> specifies the clear operation for an attachment.
  * @author Sarge
  */
-public sealed interface ClearValue {
+public interface ClearValue {
 	/**
 	 * Populates the given clear value descriptor.
 	 * @param value Descriptor
@@ -25,19 +25,10 @@ public sealed interface ClearValue {
 	VkImageAspect aspect();
 
 	/**
-	 * Default clear colour.
+	 * Empty clear value for an attachment that is not cleared.
+	 * @throws UnsupportedOperationException for all operations
 	 */
-	ClearValue COLOUR = new ColourClearValue(Colour.BLACK);
-
-	/**
-	 * Default clear value for a depth attachment.
-	 */
-	ClearValue DEPTH = new DepthClearValue(Percentile.ONE);
-
-	final class EmptyClearValue implements ClearValue {
-		private EmptyClearValue() {
-		}
-
+	ClearValue NONE = new ClearValue() {
 		@Override
 		public VkImageAspect aspect() {
 			throw new UnsupportedOperationException();
@@ -45,29 +36,7 @@ public sealed interface ClearValue {
 
 		@Override
 		public void populate(VkClearValue value) {
-			// Does nowt
-		}
-
-		@Override
-		public String toString() {
-			return "none";
-		}
-	}
-
-	/**
-	 * Empty clear value.
-	 */
-	ClearValue NONE = new EmptyClearValue();
-	/*
-	ClearValue NONE = new ClearValue() {
-		@Override
-		public VkImageAspectFlag aspect() {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void populate(VkClearValue value) {
-			// Does nowt
 		}
 
 		@Override
@@ -75,12 +44,11 @@ public sealed interface ClearValue {
 			return "none";
 		}
 	};
-	*/
 
 	/**
 	 * Clear value for a colour attachment.
 	 */
-	final class ColourClearValue implements ClearValue {
+	class ColourClearValue implements ClearValue {
 		private final Colour col;
 
 		/**
@@ -105,7 +73,7 @@ public sealed interface ClearValue {
 
 		@Override
 		public boolean equals(Object obj) {
-			return (obj instanceof ColourClearValue that) && this.col.equals(that.col);
+			return (obj == this) || (obj instanceof ColourClearValue that) && this.col.equals(that.col);
 		}
 
 		@Override
@@ -117,7 +85,12 @@ public sealed interface ClearValue {
 	/**
 	 * Clear value for a depth attachment.
 	 */
-	final class DepthClearValue implements ClearValue {
+	class DepthClearValue implements ClearValue {
+		/**
+		 * Default clear value for a depth attachment.
+		 */
+		public static final ClearValue DEFAULT = new DepthClearValue(Percentile.ONE);
+
 		private final float depth;
 
 		public DepthClearValue(Percentile depth) {
@@ -138,12 +111,12 @@ public sealed interface ClearValue {
 
 		@Override
 		public boolean equals(Object obj) {
-			return (obj instanceof DepthClearValue that) && MathsUtil.isEqual(this.depth, that.depth);
+			return (obj == this) || (obj instanceof DepthClearValue that) && MathsUtil.isEqual(this.depth, that.depth);
 		}
 
 		@Override
 		public String toString() {
-			return String.format("depth(%d)", depth);
+			return String.format("depth(%f)", depth);
 		}
 	}
 }

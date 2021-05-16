@@ -9,8 +9,8 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
-import org.sarge.jove.platform.vulkan.util.StructureCollector;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
+import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
 
@@ -110,11 +110,11 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		// Add viewports
 		final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
 		info.viewportCount = count;
-		info.pViewports = StructureCollector.toPointer(viewports, VkViewport::new, (rec, viewport) -> rec.populate(viewport, flip));
+		info.pViewports = StructureHelper.first(viewports, VkViewport::new, (rec, viewport) -> rec.populate(viewport, flip));
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = StructureCollector.toPointer(scissors, VkRect2D.ByReference::new, VulkanHelper::populate);
+		info.pScissors = StructureHelper.first(scissors, VkRect2D.ByReference::new, VulkanHelper::populate);
 
 		return info;
 	}

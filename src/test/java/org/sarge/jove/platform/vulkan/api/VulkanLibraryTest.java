@@ -15,15 +15,16 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.VkStructureType;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.common.Supported;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.MockStructure;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
+import com.sun.jna.Structure.FieldOrder;
 import com.sun.jna.ptr.IntByReference;
 
-@SuppressWarnings("static-method")
 public class VulkanLibraryTest {
 	@Test
 	void version() {
@@ -73,6 +74,12 @@ public class VulkanLibraryTest {
 		assertNotNull(api);
 	}
 
+	// Note has to be public
+	@FieldOrder("sType")
+	public static class MockStructure extends VulkanStructure {
+		public VkStructureType sType;
+	}
+
 	@Nested
 	class StructureTests {
 		private MockStructure struct;
@@ -93,7 +100,6 @@ public class VulkanLibraryTest {
 			assertNotNull(array);
 			assertEquals(2, array.length);
 			assertEquals(struct.sType, array[0].sType);
-			assertEquals(struct.sType, array[1].sType);
 		}
 	}
 }

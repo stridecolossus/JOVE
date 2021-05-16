@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 import org.sarge.jove.platform.vulkan.core.Queue;
 import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
-import org.sarge.jove.platform.vulkan.util.StructureCollector;
+import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
 /**
@@ -92,7 +92,7 @@ public class Barrier extends ImmediateCommand {
 		 */
 		public Barrier build() {
 			if(images.isEmpty()) throw new IllegalArgumentException("Barrier is empty");
-			final var array = images.stream().collect(new StructureCollector<>(VkImageMemoryBarrier::new, ImageBarrierBuilder::populate));
+			final var array = StructureHelper.array(images, VkImageMemoryBarrier::new, ImageBarrierBuilder::populate);
 			return new Barrier(srcStages, destStages, array);
 		}
 

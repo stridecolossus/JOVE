@@ -38,9 +38,6 @@ public class ClearValueTest {
 		assertEquals(true, clear.equals(new ColourClearValue(Colour.WHITE)));
 		assertEquals(false, clear.equals(null));
 		assertEquals(false, clear.equals(new ColourClearValue(Colour.BLACK)));
-
-		// Check default
-		assertEquals(ClearValue.COLOUR, new ColourClearValue(Colour.BLACK));
 	}
 
 	@Test
@@ -60,14 +57,16 @@ public class ClearValueTest {
 		assertEquals(true, clear.equals(new DepthClearValue(Percentile.HALF)));
 		assertEquals(false, clear.equals(null));
 		assertEquals(false, clear.equals(new DepthClearValue(Percentile.ONE)));
+	}
 
-		// Check default
-		assertEquals(ClearValue.DEPTH, new DepthClearValue(Percentile.ONE));
+	@Test
+	void defaultDepth() {
+		assertEquals(new DepthClearValue(Percentile.ONE), DepthClearValue.DEFAULT);
 	}
 
 	@Test
 	void none() {
-		ClearValue.NONE.populate(null);
 		assertThrows(UnsupportedOperationException.class, () -> ClearValue.NONE.aspect());
+		assertThrows(UnsupportedOperationException.class, () -> ClearValue.NONE.populate(null));
 	}
 }

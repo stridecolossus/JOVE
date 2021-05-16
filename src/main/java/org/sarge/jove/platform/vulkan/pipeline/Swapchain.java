@@ -162,7 +162,7 @@ public class Swapchain extends AbstractVulkanObject {
 		// Properties
 		private final LogicalDevice dev;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
-		private ClearValue clear = ClearValue.COLOUR;
+		private ClearValue clear = ClearValue.NONE;
 
 		// Surface constraints
 		private final VkSurfaceCapabilitiesKHR caps;

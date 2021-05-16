@@ -1,10 +1,10 @@
-package org.sarge.jove.platform.vulkan.api;
+package org.sarge.jove.platform.vulkan.common;
 
 import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 /**
- * Vulkan version.
+ * Vulkan version number.
  * @author Sarge
  */
 public record Version(int major, int minor, int patch) implements Comparable<Version> {

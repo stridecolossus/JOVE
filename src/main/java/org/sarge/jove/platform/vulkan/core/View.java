@@ -14,6 +14,7 @@ import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
+import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
 
@@ -59,7 +60,7 @@ public class View extends AbstractVulkanObject {
 	 */
 	private static ClearValue clear(Image image) {
 		if(image.descriptor().aspects().contains(VkImageAspect.DEPTH)) {
-			return ClearValue.DEPTH;
+			return DepthClearValue.DEFAULT;
 		}
 		else {
 			return ClearValue.NONE;

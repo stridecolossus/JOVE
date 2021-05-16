@@ -19,7 +19,7 @@ import org.sarge.jove.platform.vulkan.VkVertexInputAttributeDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputBindingDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
 import org.sarge.jove.platform.vulkan.util.FormatHelper;
-import org.sarge.jove.platform.vulkan.util.StructureCollector;
+import org.sarge.jove.util.StructureHelper;
 
 /**
  * Builder for the vertex input pipeline stage descriptor.
@@ -149,11 +149,11 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		// Add binding descriptions
 		if(!bindings.isEmpty()) {
 			info.vertexBindingDescriptionCount = bindings.size();
-			info.pVertexBindingDescriptions = StructureCollector.toPointer(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
+			info.pVertexBindingDescriptions = StructureHelper.first(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
 
 			// Add attributes
 			info.vertexAttributeDescriptionCount = attributes.size();
-			info.pVertexAttributeDescriptions = StructureCollector.toPointer(attributes, VkVertexInputAttributeDescription::new, AttributeBuilder::populate);
+			info.pVertexAttributeDescriptions = StructureHelper.first(attributes, VkVertexInputAttributeDescription::new, AttributeBuilder::populate);
 		}
 
 		return info;

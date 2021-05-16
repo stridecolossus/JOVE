@@ -92,12 +92,16 @@ public class RenderPassTest extends AbstractVulkanTest {
 		void begin() {
 			// Create frame-buffer attachment
 			final View view = mock(View.class);
-			when(view.clear()).thenReturn(ClearValue.DEPTH);
+			when(view.clear()).thenReturn(mock(ClearValue.class));
+
+			// Create attachment with no clear value
+			final View none = mock(View.class);
+			when(none.clear()).thenReturn(ClearValue.NONE);
 
 			// Create frame-buffer
 			final FrameBuffer buffer = mock(FrameBuffer.class);
 			when(buffer.extents()).thenReturn(new Image.Extents(3, 4));
-			when(buffer.attachments()).thenReturn(List.of(view));
+			when(buffer.attachments()).thenReturn(List.of(view, none));
 
 			// Create begin command
 			final Command cmd = pass.begin(buffer);

@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
@@ -20,7 +21,7 @@ import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.util.StructureCollector;
+import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -77,11 +78,16 @@ public class RenderPass extends AbstractVulkanObject {
 		info.renderArea.extent.height = extents.height();
 
 		// Map attachments to clear values
-		final Collection<ClearValue> values = buffer.attachments().stream().map(View::clear).collect(toList());
+		final Collection<ClearValue> clear = buffer
+				.attachments()
+				.stream()
+				.map(View::clear)
+				.filter(Predicate.not(ClearValue.NONE::equals))
+				.collect(toList());
 
 		// Init clear values
-		info.clearValueCount = values.size();
-		info.pClearValues = StructureCollector.toPointer(values, VkClearValue::new, ClearValue::populate);
+		info.clearValueCount = clear.size();
+		info.pClearValues = StructureHelper.first(clear, VkClearValue::new, ClearValue::populate);
 
 		// Create command
 		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.INLINE);
@@ -147,16 +153,16 @@ public class RenderPass extends AbstractVulkanObject {
 			// Add attachments
 			if(attachments.isEmpty()) throw new IllegalArgumentException("At least one attachment must be specified");
 			info.attachmentCount = attachments.size();
-			info.pAttachments = StructureCollector.toPointer(attachments, VkAttachmentDescription::new, AttachmentBuilder::populate);
+			info.pAttachments = StructureHelper.first(attachments, VkAttachmentDescription::new, AttachmentBuilder::populate);
 
 			// Add sub-passes
 			if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
 			info.subpassCount = subpasses.size();
-			info.pSubpasses = StructureCollector.toPointer(subpasses, VkSubpassDescription::new, SubPassBuilder::populate);
+			info.pSubpasses = StructureHelper.first(subpasses, VkSubpassDescription::new, SubPassBuilder::populate);
 
 			// Add dependencies
 			info.dependencyCount = dependencies.size();
-			info.pDependencies = StructureCollector.toPointer(dependencies, VkSubpassDependency::new, DependencyBuilder::populate);
+			info.pDependencies = StructureHelper.first(dependencies, VkSubpassDependency::new, DependencyBuilder::populate);
 			// TODO - enforce number of dependencies = subpass + before + after?
 
 			// Allocate render pass
@@ -348,7 +354,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 				// Populate colour attachments
 				desc.colorAttachmentCount = colour.size();
-				desc.pColorAttachments = StructureCollector.toPointer(colour, VkAttachmentReference::new, Reference::populate);
+				desc.pColorAttachments = StructureHelper.first(colour, VkAttachmentReference::new, Reference::populate);
 
 				// Populate depth attachment
 				if(depth != null) {
