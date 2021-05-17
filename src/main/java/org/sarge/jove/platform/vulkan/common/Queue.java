@@ -11,8 +11,12 @@ import java.util.function.Predicate;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.lib.util.Check;
+
+import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>queue</i> is used to submit work to the hardware.
@@ -57,7 +61,6 @@ public record Queue(Handle handle, DeviceContext device, Family family) implemen
 			final var list = Arrays.asList(flags);
 			return family -> family.flags().containsAll(list);
 		}
-		// TODO - needed?
 
 		/**
 		 * Constructor.
@@ -69,6 +72,19 @@ public record Queue(Handle handle, DeviceContext device, Family family) implemen
 			this.index = zeroOrMore(index);
 			this.count = oneOrMore(count);
 			this.flags = Set.copyOf(flags);
+		}
+
+		/**
+		 * Tests whether this queue supports presentation to the given surface.
+		 * @param dev			Device
+		 * @param surface		Surface handle
+		 * @return Whether supports presentation
+		 */
+		public boolean isPresentationSupport(DeviceContext dev, Handle surface) {
+			final VulkanLibrary lib = dev.library();
+			final IntByReference supported = lib.factory().integer();
+			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
+			return VulkanBoolean.of(supported.getValue()).toBoolean();
 		}
 	}
 }

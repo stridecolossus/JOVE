@@ -1,8 +1,9 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
@@ -14,39 +15,20 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 
 public class QueueTest extends AbstractVulkanTest {
 	private Queue queue;
 	private Family family;
-//	private PhysicalDevice parent;
-//	private Handle surface;
 
 	@BeforeEach
 	void before() {
-//		// Create physical device
-//		parent = mock(PhysicalDevice.class);
-//		when(parent.instance()).thenReturn(mock(Instance.class));
-//		when(parent.instance().library()).thenReturn(lib);
-//		when(dev.parent()).thenReturn(parent);
-//
-//		// Create queue
-//		family = new Family(parent, 1, 2, Set.of(VkQueueFlag.GRAPHICS));
-//		queue = new Queue(new Pointer(1), dev, family);
-//
-//		// Add to devices
-//		when(parent.families()).thenReturn(List.of(family));
-//		when(dev.queues()).thenReturn(Map.of(family, List.of(queue)));
-//
-//		// Create a Vulkan surface
-//		surface = new Handle(new Pointer(2));
-
 		family = new Family(1, 2, Set.of(VkQueueFlag.GRAPHICS));
 		queue = new Queue(new Handle(new Pointer(3)), dev, family);
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(queue.handle());
 		assertEquals(family, queue.family());
 		assertEquals(dev, queue.device());
 	}
@@ -64,68 +46,20 @@ public class QueueTest extends AbstractVulkanTest {
 		verify(lib).vkQueueWaitIdle(queue.handle());
 	}
 
-//	@Test
-//	void isPresentationSupported() {
-//		assertEquals(true, family.isPresentationSupported(surface));
-//	}
-//
-//	@Test
-//	void isPresentationSupportedNotSupported() {
-//		assertEquals(true, family.isPresentationSupported(surface));
-//	}
-}
+	@Test
+	void isPresentationSupported() {
+		// Mock physical device
+		final DeviceContext ctx = mock(DeviceContext.class);
+		when(ctx.handle()).thenReturn(new Handle(new Pointer(4)));
+		when(ctx.library()).thenReturn(lib);
 
-//
-//	@Nested
-//	class SelectorTests {
-//		private Predicate<Family> predicate;
-//		private Selector selector;
-//
-//		@SuppressWarnings("unchecked")
-//		@BeforeEach
-//		void before() {
-//			predicate = mock(Predicate.class);
-//			selector = new Selector(predicate);
-//		}
-//
-//		private void init() {
-//			when(predicate.test(family)).thenReturn(true);
-//		}
-//
-//		@DisplayName("Selector should match a supported queue family")
-//		@Test
-//		void predicate() {
-//			init();
-//			assertEquals(true, selector.test(parent));
-//			assertEquals(family, selector.family());
-//		}
-//
-//		@DisplayName("Selector should not match a queue family not supported by the device")
-//		@Test
-//		void predicateNotMatched() {
-//			assertEquals(false, selector.test(parent));
-//			assertThrows(NoSuchElementException.class, () -> selector.family());
-//		}
-//
-//		@DisplayName("Queue family is unavailable until the selector has been initialised")
-//		@Test
-//		void familyNotInitialised() {
-//			assertThrows(NoSuchElementException.class, () -> selector.family());
-//		}
-//
-//		@DisplayName("Selector should retrieve matched queues from the logical device")
-//		@Test
-//		void list() {
-//			init();
-//			selector.test(parent);
-//			assertEquals(List.of(queue), selector.list(dev));
-//			assertEquals(queue, selector.queue(dev));
-//		}
-//
-//		@DisplayName("Selector should fail when the queue has not been configured")
-//		@Test
-//		void listInvalidFamily() {
-//			assertThrows(NoSuchElementException.class, () -> selector.list(dev));
-//		}
-//	}
-//}
+		// Init supported by-return flag
+		final IntByReference ref = new IntByReference(1);
+		when(lib.factory().integer()).thenReturn(ref);
+
+		// Check API
+		final Handle surface = new Handle(new Pointer(5));
+		assertEquals(true, family.isPresentationSupport(dev, surface));
+		verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(ctx.handle(), 1, surface, ref);
+	}
+}

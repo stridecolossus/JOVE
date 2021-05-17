@@ -12,22 +12,20 @@ import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
 import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
-import org.sarge.jove.platform.vulkan.VkColorSpaceKHR;
 import org.sarge.jove.platform.vulkan.VkCullMode;
-import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.Instance;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.core.Surface;
@@ -37,7 +35,6 @@ import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.render.FrameBuffer;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.render.Swapchain;
-import org.sarge.jove.platform.vulkan.util.FormatHelper;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.ResourceLoader;
 
@@ -72,49 +69,65 @@ public class TriangleDemo {
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());
 
-		// Create queue family predicates
-		final Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
-		final Selector present = Selector.of(surfaceHandle);
+		/**
+		 *
+		 * Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
+		 * Selector present = Selector.presentation(surface);
+		 *
+		 * SelectedDevice selected = PhysicalDevice
+		 * 		.enumerate(...)
+		 * 		.map(SelectedDevice.of(graphics, present))
+		 * 		.findAny();
+		 *
+		 * LogicalDevice dev = new Builder()
+		 * 		.queue(selected.family(graphics))
+		 * 		.queue(selected.family(present))
+		 * 		.build();
+		 *
+		 * Queue graphicsQueue = dev.queue(selected.family(graphics));
+		 * ...
+		 *
+		 */
+
+//		// Create queue family predicates
+//		final Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
+//		final Selector present = Selector.of(surfaceHandle);
+// OR somehow map(dev) -> selected-device + mapped queues?
+
+		final var predicate = Family.predicate(VkQueueFlag.GRAPHICS);
 
 		// Find GPU
 		final PhysicalDevice gpu = PhysicalDevice
 				.devices(instance)
-				.filter(graphics)
-				.filter(present)
+				.filter(PhysicalDevice.filter(predicate))
+				.filter(dev -> dev.presentation(surfaceHandle).isPresent())
 				.findAny()
 				.orElseThrow(() -> new RuntimeException("No GPU available"));
+
+		Family graphics = gpu.families().stream().filter(predicate).findAny().orElseThrow();
+		Family present = graphics; // gpu.presentation(surfaceHandle).orElseThrow();
 
 		// Create device
 		final LogicalDevice dev = new LogicalDevice.Builder(gpu)
 				.extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.queue(graphics.family())
-				.queue(present.family())
+				.queue(graphics)
+				.queue(present)
 				.build();
 
 		// Create rendering surface
 		final Surface surface = new Surface(surfaceHandle, gpu);
 
-		// Specify required image format
-		final VkFormat format = new FormatHelper()
-				.template(FormatHelper.BGRA)
-				.bytes(1)
-				.signed(false)
-				.type(FormatHelper.Type.NORMALIZED)
-				.build();
-
 		// Create swap-chain
 		final Swapchain chain = new Swapchain.Builder(dev, surface)
 				.count(2)
-				.format(format)
-				.space(VkColorSpaceKHR.SRGB_NONLINEAR_KHR)
 				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
 
 		// Create render pass
 		final RenderPass pass = new RenderPass.Builder(dev)
 				.attachment()
-					.format(format)
+					.format(Swapchain.DEFAULT_FORMAT)
 					.load(VkAttachmentLoadOp.CLEAR)
 					.store(VkAttachmentStoreOp.STORE)
 					.finalLayout(VkImageLayout.PRESENT_SRC_KHR)

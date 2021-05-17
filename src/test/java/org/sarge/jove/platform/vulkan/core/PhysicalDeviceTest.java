@@ -11,17 +11,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
-import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
-import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.Supported;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
@@ -32,31 +36,59 @@ public class PhysicalDeviceTest {
 	private PhysicalDevice dev;
 	private VulkanLibrary lib;
 	private Instance instance;
+	private Family family;
 
 	@BeforeEach
 	void before() {
 		// Create Vulkan
 		lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
 
 		// Create an instance
 		instance = mock(Instance.class);
 		when(instance.library()).thenReturn(lib);
 
 		// Create a queue family
-		final VkQueueFamilyProperties family = new VkQueueFamilyProperties();
-		family.queueCount = 1;
-		family.queueFlags = IntegerEnumeration.mask(VkQueueFlag.GRAPHICS, VkQueueFlag.COMPUTE);
+		family = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
 
 		// Create device
-		dev = new PhysicalDevice(new Pointer(42), instance, new VkQueueFamilyProperties[]{family});
+		dev = new PhysicalDevice(new Pointer(42), instance, List.of(family));
 	}
+
+	// TODO - test enumerate, queues, etc
 
 	@Test
 	void constructor() {
 		assertNotNull(dev.handle());
 		assertEquals(instance, dev.instance());
-		assertNotNull(dev.families());
-		assertEquals(1, dev.families().size());
+		assertEquals(lib, dev.library());
+		assertEquals(List.of(family), dev.families());
+	}
+
+	@Nested
+	class PresentationFamilyTests {
+		private IntByReference supported;
+		private Handle surface;
+
+		@BeforeEach
+		void before() {
+			surface = new Handle(new Pointer(42));
+			supported = new IntByReference();
+			when(lib.factory().integer()).thenReturn(supported);
+		}
+
+		@DisplayName("Find the queue family that supports presentation")
+		@Test
+		void presentation() {
+			supported.setValue(1);
+			assertEquals(Optional.of(family), dev.presentation(surface));
+		}
+
+		@DisplayName("Queue family should be empty if the device does not support presentation")
+		@Test
+		void invalid() {
+			assertEquals(Optional.empty(), dev.presentation(surface));
+		}
 	}
 
 	@Test

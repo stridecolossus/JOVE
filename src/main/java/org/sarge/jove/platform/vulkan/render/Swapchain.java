@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.util.FormatHelper;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
@@ -43,7 +44,13 @@ public class Swapchain extends AbstractVulkanObject {
 	/**
 	 * Default swapchain image format.
 	 */
-	public static final VkFormat DEFAULT_FORMAT = VkFormat.B8G8R8A8_SRGB;
+	public static final VkFormat DEFAULT_FORMAT = new FormatHelper()
+			.template(FormatHelper.BGRA)
+			.bytes(1)
+			.signed(false)
+			.type(FormatHelper.Type.NORMALIZED)
+			.build();
+	// TODO - should be VkFormat.B8G8R8A8_SRGB; i.e. is it SRBG or UNORM?
 
 	/**
 	 * Default swapchain colour-space.

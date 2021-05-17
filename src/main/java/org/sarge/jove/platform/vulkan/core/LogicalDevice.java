@@ -30,7 +30,6 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.memory.Allocator;
 import org.sarge.jove.platform.vulkan.memory.DefaultDeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
@@ -128,10 +127,18 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		return queues;
 	}
 
-	public Queue queue(Selector selector) {
-		final var list = queues.get(selector.family());
-		if(list == null) throw new IllegalArgumentException("TODO");
-		return list.iterator().next();
+	/**
+	 * Helper - Retrieves the <i>first</i> queue of the given family.
+	 * @param family Queue family
+	 * @return Queue
+	 * @throws IllegalArgumentException if the queue is not present
+	 */
+	public Queue queue(Family family) {
+		final var list = queues.get(family);
+		if((list == null) || list.isEmpty()) {
+			throw new IllegalArgumentException(String.format("Queue not present: required=%s available=%s", family, queues.keySet()));
+		}
+		return list.get(0);
 	}
 
 	/**

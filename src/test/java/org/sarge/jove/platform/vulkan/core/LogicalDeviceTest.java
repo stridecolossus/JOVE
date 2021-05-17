@@ -22,6 +22,7 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.memory.Allocator;
@@ -55,25 +56,18 @@ public class LogicalDeviceTest {
 		when(instance.library()).thenReturn(lib);
 
 		// Create parent device
-//		final Handle handle = new Handle(new Pointer(1));
 		parent = mock(PhysicalDevice.class);
-//		when(parent.handle()).thenReturn(handle);
 		when(parent.instance()).thenReturn(instance);
 
-		// Init supported features
-		when(parent.features()).thenReturn(DeviceFeatures.of(Set.of(FEATURE)));
-
 		// Create queue family
-		family = mock(Queue.Family.class);
-		when(family.count()).thenReturn(2);
-		when(family.device()).thenReturn(parent);
+		family = new Family(1, 2, Set.of());
 		when(parent.families()).thenReturn(List.of(family));
 
 		// Init supported features
+		// TODO - this looks odd
 		final var features = new VkPhysicalDeviceFeatures();
 		features.samplerAnisotropy = VulkanBoolean.TRUE;
-
-		//when(lib.vkGetPhysicalDeviceMemoryProperties(parent.handle(), props))
+		when(parent.features()).thenReturn(DeviceFeatures.of(Set.of(FEATURE)));
 
 		// Create logical device
 		device = new LogicalDevice.Builder(parent)
@@ -86,29 +80,35 @@ public class LogicalDeviceTest {
 
 	@Test
 	void constructor() {
-		assertNotNull(device.handle());
 		assertEquals(parent, device.parent());
 		assertEquals(lib, device.library());
 		assertEquals(false, device.isDestroyed());
 	}
 
-	@DisplayName("Query device for all available queues")
+	@DisplayName("Query device for available queues")
 	@Test
 	void queues() {
-		// Check queues
-		assertNotNull(device.queues());
-		assertEquals(1, device.queues().size());
-		assertEquals(true, device.queues().containsKey(family));
+		// Check queues map
+		final var map = device.queues();
+		assertNotNull(map);
+		assertEquals(Set.of(family), map.keySet());
 
-		// Check queues for family
-		final var list = device.queues().get(family);
-		assertNotNull(list);
-		assertEquals(2, list.size());
+		// Check allocated queues
+		final var queues = map.get(family);
+		assertEquals(2, queues.size());
 
-		final Queue queue = list.get(0);
+		// Check queue
+		final Queue queue = queues.get(0);
 		assertNotNull(queue);
 		assertEquals(family, queue.family());
-		assertNotNull(queue.handle());
+	}
+
+	@DisplayName("Query device for the first queue of the given family")
+	@Test
+	void queue() {
+		final Queue queue = device.queue(family);
+		assertNotNull(queue);
+		assertEquals(family, queue.family());
 	}
 
 	@DisplayName("Wait for queue to complete execution")
@@ -230,7 +230,7 @@ public class LogicalDeviceTest {
 		@DisplayName("Cannot request a queue from a different device")
 		@Test
 		void invalidQueueFamily() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(Queue.Family.class)));
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(new Family(3, 4, Set.of())));
 		}
 
 		@DisplayName("Cannot request an extension that is not available")
