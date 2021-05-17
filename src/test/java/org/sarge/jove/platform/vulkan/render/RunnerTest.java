@@ -27,11 +27,9 @@ import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
-import org.sarge.jove.platform.vulkan.render.Runner;
-import org.sarge.jove.platform.vulkan.render.Swapchain;
+import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.render.Runner.Frame;
 import org.sarge.jove.platform.vulkan.render.Runner.FrameState;
-import org.sarge.jove.platform.vulkan.core.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -63,8 +61,7 @@ public class RunnerTest extends AbstractVulkanTest {
 		when(swapchain.views()).thenReturn(List.of(view));
 
 		// Create presentation queue
-		queue = mock(Queue.class);
-		when(queue.device()).thenReturn(dev);
+		queue = new Queue(new Handle(new Pointer(1)), dev, new Queue.Family(0, 1, Set.of()));
 
 		// Create frame
 		frame = mock(Frame.class);

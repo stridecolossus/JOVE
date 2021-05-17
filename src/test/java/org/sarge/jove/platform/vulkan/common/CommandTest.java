@@ -9,9 +9,9 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -22,10 +22,9 @@ import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.common.Command;
-import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.Command.Pool;
+import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -37,16 +36,8 @@ class CommandTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		// Create queue family
-		final Queue.Family family = mock(Queue.Family.class);
-		when(family.index()).thenReturn(0);
-
-		// Create queue
-		queue = mock(Queue.class);
-		when(queue.family()).thenReturn(family);
-		when(queue.device()).thenReturn(dev);
-
-		// Create command
+		final Family family = new Family(0, 1, Set.of());
+		queue = new Queue(new Handle(new Pointer(1)), dev, family);
 		cmd = mock(Command.class);
 	}
 
