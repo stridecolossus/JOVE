@@ -17,7 +17,7 @@ import com.sun.jna.Structure;
  * Helper for JNA structure arrays.
  * <p>
  * JNA auto-magically marshals structure arrays to/from the native layer.
- * However these array <b>must</b> be a contiguous block of memory allocated via one of the {@link Structure#toArray(int)} methods.
+ * However these arrays <b>must</b> be a contiguous block of memory allocated via one of the {@link Structure#toArray(int)} methods.
  * <p>
  * This imposes the following restrictions on how the application makes use of structure arrays:
  * <ul>
@@ -30,7 +30,7 @@ import com.sun.jna.Structure;
  * This helper provides methods to transform a collection to a contiguous structure array (or the first element of that array)
  * and the convenience {@link #collector(Supplier, BiConsumer, Characteristics...)} where a stream is more appropriate.
  * <p>
- * Note that the various transform methods return {@code null} for an empty collection as this is generally the value expected by the native layer for the empty this case.
+ * Note that the various transform methods return {@code null} for an empty collection as this is generally the value expected by the native layer for the empty case.
  * <p>
  * Examples:
  * <pre>
@@ -52,25 +52,6 @@ import com.sun.jna.Structure;
  */
 public final class StructureHelper {
 	private StructureHelper() {
-	}
-
-	/**
-	 * Converts the given collection to a contiguous array referenced by the <b>first</b> element.
-	 * @param <T> Data type
-	 * @param <R> Resultant JNA structure type
-	 * @param data			Data collection
-	 * @param identity		Identity constructor
-	 * @param populate		Population function
-	 * @return <b>First</b> element of the array or {@code null} if the data is empty
-	 */
-	public static <T, R extends Structure> R first(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
-		final R[] array = array(data, identity, populate);
-		if(array == null) {
-			return null;
-		}
-		else {
-			return array[0];
-		}
 	}
 
 	/**
@@ -100,6 +81,25 @@ public final class StructureHelper {
 		assert !itr.hasNext();
 
 		return array;
+	}
+
+	/**
+	 * Converts the given collection to a contiguous array referenced by the <b>first</b> element.
+	 * @param <T> Data type
+	 * @param <R> Resultant JNA structure type
+	 * @param data			Data collection
+	 * @param identity		Identity constructor
+	 * @param populate		Population function
+	 * @return <b>First</b> element of the array or {@code null} if the data is empty
+	 */
+	public static <T, R extends Structure> R first(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+		final R[] array = array(data, identity, populate);
+		if(array == null) {
+			return null;
+		}
+		else {
+			return array[0];
+		}
 	}
 
 	/**

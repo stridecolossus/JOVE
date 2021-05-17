@@ -42,7 +42,7 @@ public record Message(VkDebugUtilsMessageSeverityFlagEXT severity, Collection<Vk
 	 * The message text is a colon-delimited string comprised of the following elements:
 	 * <ul>
 	 * <li>severity</li>
-	 * <li>type(s)</li>
+	 * <li>type(s) separated by the hyphen character</li>
 	 * <li>message identifier</li>
 	 * <li>message text</li>
 	 * </ul>

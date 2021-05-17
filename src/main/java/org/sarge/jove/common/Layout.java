@@ -11,7 +11,6 @@ import org.sarge.lib.util.Check;
  * <li>the {@link #size} which specifies the number of <i>elements</i> that comprise the component, e.g. 3 for a 3D point</li>
  * <li>the number of {@link #bytes} per element, e.g. {@link Float#BYTES}</li>
  * </ul>
- * Examples:
  * <p>
  * The following are synonymous for a floating-point 3-tuple:
  * <pre>

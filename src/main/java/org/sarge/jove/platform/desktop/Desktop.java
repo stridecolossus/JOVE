@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
 
 import com.sun.jna.DefaultTypeMapper;

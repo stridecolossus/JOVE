@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;

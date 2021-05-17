@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.common.NativeObject.Handle.HandleArray;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;

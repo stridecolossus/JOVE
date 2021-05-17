@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.ByteSource.Sink;
+import org.sarge.jove.common.Handle;
 
 /**
  * A <i>pool allocator</i> maintains a <i>pool</i> of memory in order to reduce the total number of active allocations.

@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.Handle.HandleArray;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.common.NativeObject.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;

@@ -16,7 +16,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>shader</i> is a reference to a Vulkan shader module.
+ * A <i>shader</i> is a Vulkan shader module.
  * @author Sarge
  */
 public class Shader extends AbstractVulkanObject {

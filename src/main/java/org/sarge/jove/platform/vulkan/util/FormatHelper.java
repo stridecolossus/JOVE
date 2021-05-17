@@ -8,12 +8,12 @@ import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
- * The <i>format builder</i> is a helper used to programatically select a Vulkan format.
+ * The <i>format helper</i> is used to programatically select a Vulkan format.
  * <p>
- * Finding a format in {@link VkFormat} can be difficult given the size of the enumeration.
+ * Finding a format in the {@link VkFormat} enumeration can be difficult given the number of values.
  * However the naming convention is highly consistent and it is often easier to specify the format in code.
  * <p>
- * The {@link #format(Layout)} convenience method determines the format from a component layout.
+ * The {@link #format(Layout)} convenience method can also be used to determine the format from a component {@link Layout}.
  * <p>
  * Examples:
  * <pre>
@@ -64,9 +64,9 @@ public class FormatHelper {
 		 */
 		public static Type of(Class<?> type) {
 			return switch(type.getSimpleName().toLowerCase()) {
-				case "float" -> Type.FLOAT;
-				case "int", "integer" -> Type.INTEGER;
-				case "byte" -> Type.RGB;
+				case "float"				-> Type.FLOAT;
+				case "int", "integer"		-> Type.INTEGER;
+				case "byte"					-> Type.RGB;
 				default -> throw new IllegalArgumentException("Unsupported component type: " + type);
 			};
 		}

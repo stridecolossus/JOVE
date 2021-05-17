@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.VkClearValue;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
 
 /**
@@ -40,23 +40,26 @@ public interface ClearValue {
 		}
 
 		@Override
+		public boolean equals(Object obj) {
+			return obj == this;
+		}
+
+		@Override
 		public String toString() {
-			return "none";
+			return "None";
 		}
 	};
 
 	/**
 	 * Clear value for a colour attachment.
 	 */
-	class ColourClearValue implements ClearValue {
-		private final Colour col;
-
+	record ColourClearValue(Colour col) implements ClearValue {
 		/**
 		 * Constructor.
 		 * @param col Clear colour
 		 */
-		public ColourClearValue(Colour col) {
-			this.col = notNull(col);
+		public ColourClearValue {
+			Check.notNull(col);
 		}
 
 		@Override
@@ -70,31 +73,23 @@ public interface ClearValue {
 			value.color.setType("float32");
 			value.color.float32 = col.toArray();
 		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return (obj == this) || (obj instanceof ColourClearValue that) && this.col.equals(that.col);
-		}
-
-		@Override
-		public String toString() {
-			return String.format("colour(%s)", col);
-		}
 	}
 
 	/**
 	 * Clear value for a depth attachment.
 	 */
-	class DepthClearValue implements ClearValue {
+	record DepthClearValue(Percentile depth) implements ClearValue {
 		/**
 		 * Default clear value for a depth attachment.
 		 */
 		public static final ClearValue DEFAULT = new DepthClearValue(Percentile.ONE);
 
-		private final float depth;
-
+		/**
+		 * Constructor.
+		 * @param depth Depth value
+		 */
 		public DepthClearValue(Percentile depth) {
-			this.depth = depth.floatValue();
+			this.depth = notNull(depth);
 		}
 
 		@Override
@@ -105,18 +100,8 @@ public interface ClearValue {
 		@Override
 		public void populate(VkClearValue value) {
 			value.setType("depthStencil");
-			value.depthStencil.depth = depth;
+			value.depthStencil.depth = depth.floatValue();
 			value.depthStencil.stencil = 0;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return (obj == this) || (obj instanceof DepthClearValue that) && MathsUtil.isEqual(this.depth, that.depth);
-		}
-
-		@Override
-		public String toString() {
-			return String.format("depth(%f)", depth);
 		}
 	}
 }

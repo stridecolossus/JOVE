@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;

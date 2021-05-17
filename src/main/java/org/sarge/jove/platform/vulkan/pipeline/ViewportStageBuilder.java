@@ -50,7 +50,6 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 			viewport.maxDepth = max.floatValue();
 		}
 	}
-	// TODO - expose?
 
 	private final List<Viewport> viewports = new ArrayList<>();
 	private final List<Rectangle> scissors = new ArrayList<>();
@@ -71,7 +70,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	}
 
 	/**
-	 * Adds a viewport.
+	 * Adds a viewport rectangle.
 	 * @param viewport 		Viewport rectangle
 	 * @param min			Minimum depth
 	 * @param max			Maximum depth
@@ -82,7 +81,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	}
 
 	/**
-	 * Adds a viewport with default min/max depth.
+	 * Adds a viewport rectangle with default min/max depth.
 	 * @param viewport Viewport rectangle
 	 */
 	public ViewportStageBuilder viewport(Rectangle viewport) {

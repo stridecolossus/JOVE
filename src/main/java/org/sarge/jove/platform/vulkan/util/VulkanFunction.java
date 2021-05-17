@@ -13,12 +13,23 @@ import com.sun.jna.ptr.IntByReference;
 /**
  * A <i>vulkan function</i> abstracts an API method used to retrieve a Vulkan array via the <i>two-stage invocation</i> approach.
  * <p>
- * The API method is invoked <b>twice</b>:
+ * The function is of the following form:
+ * <p>
+ * <code>int function(VulkanLibrary lib, IntByReference count, T[] array)</code>
+ * <p>
+ * where:
+ * <ul>
+ * <li><i>count</i> is a return-by-reference integer to retrieve/provide the length of the array</li>
+ * <li><i>array</i> is a pre-allocated array to be populated by the function ({@code null} to retrieve the length of the array)</li>
+ * <li>the return value is a Vulkan success code</li>
+ * </ul>
+ * <p>
+ * The method is invoked <b>twice</b> to retrieve the array from the native API method:
  * <ol>
- * <li>retrieve the size of the array (array parameter is ignored)</li>
- * <li>retrieve the actual array</li>
+ * <li>retrieve the length of the array (array parameter is ignored)</li>
+ * <li>populate the array (passing back the length)</li>
  * </ol>
- * @param <T> Vulkan type
+ * @param <T> Array component type
  * @author Sarge
  */
 @FunctionalInterface
@@ -62,7 +73,7 @@ public interface VulkanFunction<T> {
 	 * <p>
 	 * Usage:
 	 * <pre>
-	 *  VulkanFunction<SomeStructure> func = (api, count, array) -> api.someFunction(count, array, ...);
+	 *  VulkanFunction&gt;SomeStructure&lt; func = (api, count, array) -> api.someFunction(count, array, ...);
 	 *  SomeStructure[] array = VulkanFunction.enumerate(func, vulkan, SomeStructure::new);
 	 * </pre>
 	 * The adapter is equivalent to the following:

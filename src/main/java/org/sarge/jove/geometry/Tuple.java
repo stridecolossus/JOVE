@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.VertexComponent;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.VertexComponent;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -27,9 +27,6 @@ public sealed class Tuple implements Bufferable, VertexComponent permits Point, 
 
 	/**
 	 * Constructor.
-	 * @param x
-	 * @param y
-	 * @param z
 	 */
 	protected Tuple(float x, float y, float z) {
 		this.x = x;

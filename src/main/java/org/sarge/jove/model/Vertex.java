@@ -12,16 +12,16 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.VertexComponent;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.VertexComponent;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
 /**
- * A <i>vertex</i> is a compound element of a <i>vertex buffer</i> (or VBO).
+ * A <i>vertex</i> is an element of a <i>vertex buffer</i> (or VBO).
  * <p>
- * A vertex is essentially a wrapper for an array of {@link VertexComponent} bufferable objects.
+ * A vertex is essentially an array of {@link VertexComponent} bufferable objects.
  * <p>
  * A {@link Builder} can be used to create a vertex comprised of the common built-in primitives, e.g.
  * <pre>
@@ -33,7 +33,7 @@ import org.sarge.jove.geometry.Vector;
  * 		.build();
  * </pre>
  * <p>
- * @see Component
+ * @see VertexComponent
  * @see DefaultModel
  * @author Sarge
  */

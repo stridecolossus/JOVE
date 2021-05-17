@@ -24,7 +24,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 	private final float[] constants = new float[4];
-	private VkLogicOp logic; // NULL indicates no global colour blending (see build method)
+	private VkLogicOp op;
 
 	/**
 	 * Starts a new attachment.
@@ -36,10 +36,10 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 	/**
 	 * Sets the global colour blending operation.
-	 * @param logic Colour-blending operation
+	 * @param op Colour-blending operation
 	 */
-	public ColourBlendStageBuilder logic(VkLogicOp logic) {
-		this.logic = notNull(logic);
+	public ColourBlendStageBuilder operation(VkLogicOp op) {
+		this.op = notNull(op);
 		return this;
 	}
 
@@ -73,13 +73,13 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		info.pAttachments = StructureHelper.first(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
 
 		// Init global colour blending settings
-		if(logic == null) {
+		if(op == null) {
 			info.logicOpEnable = VulkanBoolean.FALSE;
 			info.logicOp = VkLogicOp.NO_OP;
 		}
 		else {
 			info.logicOpEnable = VulkanBoolean.TRUE;
-			info.logicOp = logic;
+			info.logicOp = op;
 			info.blendConstants = constants;
 		}
 
@@ -96,7 +96,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		public class BlendOperationBuilder {
 			private VkBlendFactor src;
 			private VkBlendFactor dest;
-			private VkBlendOp op = VkBlendOp.ADD;
+			private VkBlendOp blend = VkBlendOp.ADD;
 
 			private BlendOperationBuilder() {
 			}
@@ -121,12 +121,14 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 
 			/**
 			 * Sets the colour blend operation.
-			 * @param op Colour blend operation
+			 * @param blend Colour blend operation
 			 */
-			public AttachmentBuilder operation(VkBlendOp op) {
-				this.op = notNull(op);
+			public AttachmentBuilder operation(VkBlendOp blend) {
+				this.blend = notNull(blend);
 				return AttachmentBuilder.this;
 			}
+
+			// TODO - build() to return to AttachmentBuilder.this? i.e. not really a builder?
 		}
 
 		private boolean enabled;
@@ -191,12 +193,12 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 			// Init colour blending operation
 			info.srcColorBlendFactor = colour.src;
 			info.dstColorBlendFactor = colour.dest;
-			info.colorBlendOp = colour.op;
+			info.colorBlendOp = colour.blend;
 
 			// Init alpha blending operation
 			info.srcAlphaBlendFactor = alpha.src;
 			info.dstAlphaBlendFactor = alpha.dest;
-			info.alphaBlendOp = alpha.op;
+			info.alphaBlendOp = alpha.blend;
 
 			// Init colour write mask
 			info.colorWriteMask = mask;

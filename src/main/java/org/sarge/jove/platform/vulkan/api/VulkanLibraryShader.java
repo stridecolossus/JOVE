@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 
 import com.sun.jna.ptr.PointerByReference;

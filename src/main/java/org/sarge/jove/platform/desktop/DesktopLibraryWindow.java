@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.Handle;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

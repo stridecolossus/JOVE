@@ -26,7 +26,7 @@ public class ColourBlendStageBuilderTest {
 	void create() {
 		// Build descriptor
 		final var info = builder
-				.logic(VkLogicOp.COPY)
+				.operation(VkLogicOp.COPY)
 				.constants(CONSTANTS)
 				.attachment()
 					.colour().source(VkBlendFactor.CONSTANT_COLOR)

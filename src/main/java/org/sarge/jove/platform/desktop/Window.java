@@ -8,6 +8,7 @@ import java.util.WeakHashMap;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Handle;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;

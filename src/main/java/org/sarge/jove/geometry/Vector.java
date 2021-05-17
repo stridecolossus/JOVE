@@ -37,9 +37,6 @@ public final class Vector extends Tuple {
 
 	/**
 	 * Constructor.
-	 * @param x
-	 * @param y
-	 * @param z
 	 */
 	public Vector(float x, float y, float z) {
 		super(x, y, z);

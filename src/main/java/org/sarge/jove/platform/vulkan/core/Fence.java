@@ -5,8 +5,9 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import java.util.Collection;
 import java.util.Set;
 
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.Handle.HandleArray;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.common.NativeObject.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;

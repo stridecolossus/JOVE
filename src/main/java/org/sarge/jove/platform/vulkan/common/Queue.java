@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.common.NativeObject.Handle;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;

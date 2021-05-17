@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.common.NativeObject.Handle.HandleArray;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.VkCopyDescriptorSet;
 import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;

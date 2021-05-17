@@ -8,13 +8,12 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.NativeObject.Handle;
-import org.sarge.jove.common.NativeObject.Handle.HandleArray;
+import org.sarge.jove.common.Handle.HandleArray;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
-public class NativeObjectTest {
+public class HandleTest {
 	private Handle handle;
 	private Pointer ptr;
 

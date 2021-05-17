@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 
-import org.sarge.jove.common.NativeObject.Handle;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.lib.util.Check;
 
 /**
- * An <i>image copy command</i> is used to copy and image to/from a vertex buffer.
+ * An <i>image copy command</i> is used to copy an image to/from a vertex buffer.
  * @author Sarge
  */
 public class ImageCopyCommand extends ImmediateCommand {

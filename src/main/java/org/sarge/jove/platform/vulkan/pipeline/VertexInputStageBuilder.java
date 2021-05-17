@@ -277,7 +277,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 
 		/**
 		 * Constructs this attribute description.
-		 * @throws IllegalArgumentException for a duplicate location, if the attribute format is not specified, the binding is not present, or the offset exceeds the vertex stride
+		 * @throws IllegalArgumentException if the location is a duplicate, the attribute format is not specified, the binding is not present, or the offset exceeds the vertex stride
 		 */
 		public VertexInputStageBuilder build() {
 			// Validate attribute
