@@ -6,6 +6,10 @@ import java.nio.ByteOrder;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 
+/**
+ * Vulkan helper and utility methods.
+ * @author Sarge
+ */
 public final class VulkanHelper {
 	private static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
 

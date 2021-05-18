@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 
-@SuppressWarnings("static-method")
 public class VulkanHelperTest {
 	@Test
 	void populate() {

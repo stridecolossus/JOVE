@@ -7,15 +7,11 @@ import java.util.Map;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.platform.vulkan.VkExtensionProperties;
-import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.jove.platform.vulkan.common.Supported;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
 import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
@@ -81,20 +77,13 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	}
 
 	/**
-	 * @param lib Vulkan API
-	 * @return Extensions and validation layers supported by this implementation
-	 */
-	static Supported supported(VulkanLibrary lib) {
-		final VulkanFunction<VkExtensionProperties> extensions = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
-		final VulkanFunction<VkLayerProperties> layers = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
-		return new Supported(lib, extensions, layers);
-	}
-
-	/**
 	 * Base-class Vulkan JNA structure.
 	 * Note that this class <b>must</b> be defined as a member of the associated API in order for the type mapper to work correctly.
 	 */
 	abstract class VulkanStructure extends Structure {
+		/**
+		 * Constructor.
+		 */
 		protected VulkanStructure() {
 			super(MAPPER);
 		}

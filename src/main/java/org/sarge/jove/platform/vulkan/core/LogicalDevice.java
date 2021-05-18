@@ -71,7 +71,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		this.parent = parent;
 		this.lib = parent.instance().library();
 		this.features = features;
-		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
+		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family)); // TODO - should be done outside ctor?
 		this.types = types;
 		this.allocator = this;
 	}

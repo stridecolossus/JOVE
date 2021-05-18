@@ -28,11 +28,10 @@ blog
 core
 - allocator merge released blocks (de-fragmentation)
 - swizzle & buffer image in one go?
-- tests/annotations for required features?
-- techniques -> materials?
+- DeviceFeatures - tidy up, tests/annotations for required features? techniques -> materials ~ available features
 
 util
-- HandleArray can be Pointer[]? (see Command::free) 
+- HandleArray can be Pointer[]? (tested in Command::free) however would like to explicitly have API methods with array signatures in this case 
 - Handle::toPointer dodgy
 
 scene
@@ -49,3 +48,4 @@ scene
 
 project
 - separate demo tree using Spring?
+- complete review -> more TODOs

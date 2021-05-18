@@ -63,7 +63,7 @@ public class DeviceFeatures {
 	 * Tests whether the given required features are supported by this set of features.
 	 * @param required Required features
 	 */
-	public void check(VkPhysicalDeviceFeatures required) {
+	public void check(VkPhysicalDeviceFeatures required) {		// TODO - should be compare(DeviceFeatures):missing
 		// Init required features
 		required.write();
 

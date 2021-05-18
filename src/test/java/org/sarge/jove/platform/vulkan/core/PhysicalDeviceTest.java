@@ -26,7 +26,6 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.common.Supported;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -125,15 +124,14 @@ public class PhysicalDeviceTest {
 	}
 
 	@Test
-	void supported() {
-		// Init library
-		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
+	void extensions() {
 		when(lib.factory().integer()).thenReturn(new IntByReference());
+		assertEquals(Set.of(), dev.extensions());
+	}
 
-		// Check supported
-		final Supported supported = dev.supported();
-		assertNotNull(supported);
-		assertEquals(Set.of(), supported.extensions());
-		assertEquals(Set.of(), supported.layers());
+	@Test
+	void layers() {
+		when(lib.factory().integer()).thenReturn(new IntByReference());
+		assertEquals(Set.of(), dev.layers());
 	}
 }

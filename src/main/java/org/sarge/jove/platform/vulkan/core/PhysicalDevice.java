@@ -27,7 +27,7 @@ import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.common.Supported;
+import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.lib.util.LazySupplier;
@@ -207,12 +207,19 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	}
 
 	/**
-	 * @return Extensions and validation layers supported by this device
+	 * @return Extensions supported by this device
 	 */
-	public Supported supported() {
-		final VulkanFunction<VkExtensionProperties> extensions = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, array);
-		final VulkanFunction<VkLayerProperties> layers = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(handle, count, array);
-		return new Supported(instance.library(), extensions, layers);
+	public Set<String> extensions() {
+		final VulkanFunction<VkExtensionProperties> func = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, array);
+		return Support.extensions(library(), func);
+	}
+
+	/**
+	 * @return Validation layers supported by this device
+	 */
+	public Set<ValidationLayer> layers() {
+		final VulkanFunction<VkLayerProperties> func = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(handle, count, array);
+		return ValidationLayer.enumerate(library(), func);
 	}
 
 	@Override

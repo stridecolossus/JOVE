@@ -1,46 +1,109 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
+import org.sarge.jove.platform.vulkan.VkLayerProperties;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.ValidationLayer.ValidationLayerSet;
+import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+
+import com.sun.jna.ptr.IntByReference;
 
 public class ValidationLayerTest {
+	private static final String NAME = "layer";
+	private static final int VERSION = 2;
+
 	private ValidationLayer layer;
 
 	@BeforeEach
 	void before() {
-		layer = new ValidationLayer("layer", 42);
+		layer = new ValidationLayer(NAME, VERSION);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("layer", layer.name());
-		assertEquals(42, layer.version());
+		assertEquals(NAME, layer.name());
+		assertEquals(VERSION, layer.version());
 	}
 
 	@Test
-	void isPresentSelf() {
-		assertEquals(true, layer.isPresent(Set.of(layer)));
+	void of() {
+		final var props = new VkLayerProperties();
+		props.layerName = NAME.getBytes();
+		props.implementationVersion = VERSION;
+		assertEquals(layer, ValidationLayer.of(props));
+	}
+
+	@Nested
+	class ValidationLayerSetTests {
+		private Set<ValidationLayer> set;
+
+		@BeforeEach
+		void before() {
+			set = new ValidationLayerSet();
+			set.add(layer);
+		}
+
+		@Test
+		void enumerate() {
+			assertEquals(Set.of(layer), set);
+		}
+
+		@Test
+		void contains() {
+			assertEquals(true, set.contains(layer));
+			assertEquals(true, set.contains(new ValidationLayer(NAME, 2)));
+		}
+
+		@Test
+		void containsLowerVersion() {
+			assertEquals(true, set.contains(new ValidationLayer(NAME, 1)));
+		}
+
+		@Test
+		void containsHigherVersion() {
+			assertEquals(false, set.contains(new ValidationLayer(NAME, 3)));
+		}
+
+		@Test
+		void containsOtherLayer() {
+			assertEquals(false, set.contains(new ValidationLayer("other", 2)));
+		}
 	}
 
 	@Test
-	void isPresentOther() {
-		final ValidationLayer other = new ValidationLayer("other");
-		assertEquals(false, layer.isPresent(Set.of(other)));
-	}
+	void enumerate() {
+		// Create library
+		final var lib = mock(VulkanLibrary.class);
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
 
-	@Test
-	void isPresentLower() {
-		final ValidationLayer lower = new ValidationLayer("layer", 1);
-		assertEquals(true, layer.isPresent(Set.of(lower)));
-	}
+		// Init array length
+		final var count = new IntByReference(1);
+		when(lib.factory().integer()).thenReturn(count);
 
-	@Test
-	void isPresentHigher() {
-		final ValidationLayer higher = new ValidationLayer("layer", 999);
-		assertEquals(false, layer.isPresent(Set.of(higher)));
+		// Mock enumerate function
+		final VulkanFunction<VkLayerProperties> func = mock(VulkanFunction.class);
+		final Answer<Integer> answer = inv -> {
+			final VkLayerProperties props = inv.getArgument(2);
+			props.layerName = NAME.getBytes();
+			props.implementationVersion = VERSION;
+			return VulkanLibrary.SUCCESS;
+		};
+		when(func.enumerate(eq(lib), eq(count), isA(VkLayerProperties.class))).thenAnswer(answer);
+
+		// Enumerate layers
+		final Set<ValidationLayer> layers = ValidationLayer.enumerate(lib, func);
+		assertEquals(Set.of(layer), layers);
 	}
 }
