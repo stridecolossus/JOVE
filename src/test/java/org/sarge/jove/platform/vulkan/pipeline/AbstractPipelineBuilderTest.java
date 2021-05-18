@@ -11,7 +11,7 @@ public class AbstractPipelineBuilderTest {
 		// Create builder
 		final AbstractPipelineBuilder<Object> builder = new AbstractPipelineBuilder<>() {
 			@Override
-			protected Object result() {
+			protected Object get() {
 				return null;
 			}
 		};

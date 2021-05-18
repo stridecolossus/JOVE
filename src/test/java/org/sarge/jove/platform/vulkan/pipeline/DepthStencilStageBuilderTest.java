@@ -23,7 +23,7 @@ public class DepthStencilStageBuilderTest {
 				.enable(true)
 				.write(false)
 				.compare(VkCompareOp.GREATER)
-				.result();
+				.get();
 
 		// Check descriptor
 		assertNotNull(result);
@@ -36,7 +36,7 @@ public class DepthStencilStageBuilderTest {
 
 	@Test
 	void buildDefaults() {
-		final var result = builder.result();
+		final var result = builder.get();
 		assertNotNull(result);
 		assertEquals(0, result.flags);
 		assertEquals(VulkanBoolean.FALSE, result.depthTestEnable);

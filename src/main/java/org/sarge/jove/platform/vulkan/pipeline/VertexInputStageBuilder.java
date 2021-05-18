@@ -135,7 +135,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * @throws IllegalArgumentException for any binding without attributes
 	 */
 	@Override
-	protected VkPipelineVertexInputStateCreateInfo result() {
+	VkPipelineVertexInputStateCreateInfo get() {
 		// Validate bindings
 		for(final var b : bindings.values()) {
 			if(b.locations.isEmpty()) {

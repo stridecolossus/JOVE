@@ -59,7 +59,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 	 * @return New descriptor
 	 */
 	@Override
-	protected VkPipelineColorBlendStateCreateInfo result() {
+	VkPipelineColorBlendStateCreateInfo get() {
 		// Create descriptor
 		final var info = new VkPipelineColorBlendStateCreateInfo();
 

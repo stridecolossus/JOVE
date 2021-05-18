@@ -61,7 +61,7 @@ public class PipelineTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Pipeline.Builder(dev);
+			builder = new Pipeline.Builder();
 			layout = mock(PipelineLayout.class);
 			pass = mock(RenderPass.class);
 		}
@@ -87,7 +87,7 @@ public class PipelineTest extends AbstractVulkanTest {
 						.stage(VkShaderStageFlag.VERTEX)
 						.shader(mock(Shader.class))
 						.build()
-					.build();
+					.build(dev);
 
 			// Check pipeline
 			assertNotNull(pipeline);
@@ -135,23 +135,23 @@ public class PipelineTest extends AbstractVulkanTest {
 		@Test
 		void buildIncomplete() {
 			// Check empty builder
-			assertThrows(IllegalArgumentException.class, "pipeline layout", () -> builder.build());
+			assertThrows(IllegalArgumentException.class, "pipeline layout", () -> builder.build(dev));
 
 			// Add layout
 			builder.layout(layout);
-			assertThrows(IllegalArgumentException.class, "render pass", () -> builder.build());
+			assertThrows(IllegalArgumentException.class, "render pass", () -> builder.build(dev));
 
 			// Add render-pass
 			builder.pass(pass);
-			assertThrows(IllegalStateException.class, "vertex shader", () -> builder.build());
+			assertThrows(IllegalStateException.class, "vertex shader", () -> builder.build(dev));
 
 			// Add shader
 			addVertexShaderStage();
-			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build());
+			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build(dev));
 
 			// Add viewport stage, should now build successfully
 			builder.viewport(new Dimensions(3, 4));
-			builder.build();
+			builder.build(dev);
 		}
 
 		@Test

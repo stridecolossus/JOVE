@@ -33,7 +33,7 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
 	}
 
 	@Override
-	protected VkPipelineInputAssemblyStateCreateInfo result() {
+	VkPipelineInputAssemblyStateCreateInfo get() {
 		final var info = new VkPipelineInputAssemblyStateCreateInfo();
 		info.topology = topology;
 		info.primitiveRestartEnable = VulkanBoolean.of(restart);

@@ -35,7 +35,7 @@ public class ColourBlendStageBuilderTest {
 					.build()
 				.attachment()
 					.build()
-				.result();
+				.get();
 
 		// Check descriptor
 		assertNotNull(info);
@@ -51,7 +51,7 @@ public class ColourBlendStageBuilderTest {
 
 	@Test
 	void createDefaults() {
-		final var info = builder.result();
+		final var info = builder.get();
 		assertNotNull(info);
 		assertEquals(VulkanBoolean.FALSE, info.logicOpEnable);
 		assertEquals(VkLogicOp.NO_OP, info.logicOp);

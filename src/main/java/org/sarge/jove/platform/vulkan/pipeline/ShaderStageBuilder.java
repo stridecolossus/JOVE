@@ -53,9 +53,10 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	/**
 	 * Starts a new shader stage.
 	 */
-	void init() {
+	ShaderStageBuilder init() {
 		if(entry != null) throw new IllegalStateException("Previous shader stage has not been completed");
 		entry = new Entry();
+		return this;
 	}
 
 	/**
@@ -110,7 +111,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	 * @throws IllegalStateException if no vertex shader has been configured
 	 */
 	@Override
-	protected VkPipelineShaderStageCreateInfo result() {
+	VkPipelineShaderStageCreateInfo get() {
 		assert entry == null;
 		if(!shaders.containsKey(VkShaderStageFlag.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 		return StructureHelper.first(shaders.values(), VkPipelineShaderStageCreateInfo::new, Entry::populate);

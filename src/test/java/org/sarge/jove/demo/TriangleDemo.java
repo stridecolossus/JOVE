@@ -147,7 +147,7 @@ public class TriangleDemo {
 
 		// Create pipeline
 		final var layout = new PipelineLayout.Builder(dev).build();
-		final Pipeline pipeline = new Pipeline.Builder(dev)
+		final Pipeline pipeline = new Pipeline.Builder()
 				.layout(layout)
 				.pass(pass)
 				.viewport(chain.extents())
@@ -162,7 +162,7 @@ public class TriangleDemo {
 					.stage(VkShaderStageFlag.FRAGMENT)
 					.shader(frag)
 					.build()
-				.build();
+				.build(dev);
 
 		// Create frame buffers
 		final var buffers = chain

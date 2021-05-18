@@ -111,7 +111,7 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	}
 
 	@Override
-	protected VkPipelineRasterizationStateCreateInfo result() {
+	VkPipelineRasterizationStateCreateInfo get() {
 		final VkPipelineRasterizationStateCreateInfo info = new VkPipelineRasterizationStateCreateInfo();
 		info.depthClampEnable = VulkanBoolean.of(depthClampEnable);
 		info.rasterizerDiscardEnable = VulkanBoolean.of(rasterizerDiscardEnable);

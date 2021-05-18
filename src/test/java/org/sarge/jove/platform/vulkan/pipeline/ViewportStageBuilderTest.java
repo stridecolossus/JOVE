@@ -25,7 +25,7 @@ public class ViewportStageBuilderTest {
 		final var descriptor = builder
 				.viewport(rect, new Percentile(0.1f), new Percentile(0.2f))
 				.scissor(rect)
-				.result();
+				.get();
 
 		// Check descriptor
 		assertNotNull(descriptor);
@@ -56,7 +56,7 @@ public class ViewportStageBuilderTest {
 				.flip(true)
 				.viewport(rect)
 				.scissor(rect)
-				.result();
+				.get();
 		assertEquals(1, descriptor.pViewports.x);
 		assertEquals(2 + 4, descriptor.pViewports.y);
 		assertEquals(3, descriptor.pViewports.width);
@@ -65,12 +65,12 @@ public class ViewportStageBuilderTest {
 
 	@Test
 	void createRequiresViewport() {
-		assertThrows(IllegalArgumentException.class, () -> builder.result());
+		assertThrows(IllegalArgumentException.class, () -> builder.get());
 	}
 
 	@Test
 	void createRequiresScissor() {
 		builder.viewport(rect);
-		assertThrows(IllegalArgumentException.class, () -> builder.result());
+		assertThrows(IllegalArgumentException.class, () -> builder.get());
 	}
 }

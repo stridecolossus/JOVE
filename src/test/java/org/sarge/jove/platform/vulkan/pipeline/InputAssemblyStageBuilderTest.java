@@ -23,7 +23,7 @@ public class InputAssemblyStageBuilderTest {
 		final var info = builder
 				.topology(Primitive.LINES)
 				.restart(true)
-				.result();
+				.get();
 
 		// Check descriptor
 		assertNotNull(info);
@@ -34,7 +34,7 @@ public class InputAssemblyStageBuilderTest {
 
 	@Test
 	void buildDefault() {
-		final var info = builder.result();
+		final var info = builder.get();
 		assertEquals(VkPrimitiveTopology.TRIANGLE_STRIP, info.topology);
 		assertEquals(VulkanBoolean.FALSE, info.primitiveRestartEnable);
 	}

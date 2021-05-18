@@ -48,7 +48,7 @@ public class ShaderStageBuilderTest {
 		assertEquals(1, builder.size());
 
 		// Check descriptor
-		final VkPipelineShaderStageCreateInfo info = builder.result();
+		final VkPipelineShaderStageCreateInfo info = builder.get();
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals("name", info.pName);
@@ -76,7 +76,7 @@ public class ShaderStageBuilderTest {
 	@Test
 	void buildVertexShaderNotSpecified() {
 		builder.stage(VkShaderStageFlag.FRAGMENT).shader(shader).build();
-		assertThrows(IllegalStateException.class, () -> builder.result());
+		assertThrows(IllegalStateException.class, () -> builder.get());
 	}
 
 	@Test

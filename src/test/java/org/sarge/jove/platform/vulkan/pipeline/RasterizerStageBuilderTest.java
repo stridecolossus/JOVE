@@ -28,7 +28,7 @@ public class RasterizerStageBuilderTest {
 				.cull(VkCullMode.FRONT_AND_BACK)
 				.winding(VkFrontFace.CLOCKWISE)
 				.lineWidth(2)
-				.result();
+				.get();
 
 		// Check descriptor
 		assertNotNull(info);
@@ -49,7 +49,7 @@ public class RasterizerStageBuilderTest {
 
 	@Test
 	void buildDefaults() {
-		final var info = builder.result();
+		final var info = builder.get();
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(VulkanBoolean.FALSE, info.depthClampEnable);

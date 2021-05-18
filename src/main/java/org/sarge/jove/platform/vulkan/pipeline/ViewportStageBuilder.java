@@ -98,7 +98,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	}
 
 	@Override
-	protected VkPipelineViewportStateCreateInfo result() {
+	VkPipelineViewportStateCreateInfo get() {
 		// Validate
 		final int count = viewports.size();
 		if(count == 0) throw new IllegalArgumentException("No viewports specified");

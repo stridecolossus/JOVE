@@ -49,7 +49,6 @@ public class Pipeline extends AbstractVulkanObject {
 	 */
 	public static class Builder {
 		// Properties
-		private final LogicalDevice dev;
 		private PipelineLayout layout;
 		private RenderPass pass;
 		private final ShaderStageBuilder shaders = new ShaderStageBuilder();
@@ -65,19 +64,8 @@ public class Pipeline extends AbstractVulkanObject {
 		private final ColourBlendStageBuilder blend = new ColourBlendStageBuilder();
 		// TODO - dynamic
 
-		/**
-		 * Constructor.
-		 * @param dev Logical device
-		 */
-		public Builder(LogicalDevice dev) {
-			this.dev = notNull(dev);
-			init();
-		}
-
-		/**
-		 * Initialises the nested builders.
-		 */
-		private void init() {
+		public Builder() {
+			// TODO - could use dynamic proxy for the parent but seems overkill?
 			input.parent(this);
 			assembly.parent(this);
 			viewport.parent(this);
@@ -163,16 +151,16 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @return Builder for a shader stage
 		 */
 		public ShaderStageBuilder shader() {
-			shaders.init();
-			return shaders;
+			return shaders.init();
 		}
 
 		/**
 		 * Constructs this pipeline.
+		 * @param dev Logical device
 		 * @return New pipeline
 		 * @throws IllegalArgumentException if the pipeline layout or render pass has not been specified
 		 */
-		public Pipeline build() {
+		public Pipeline build(LogicalDevice dev) {
 			// Create descriptor
 			final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
 
@@ -187,15 +175,15 @@ public class Pipeline extends AbstractVulkanObject {
 
 			// Init shader pipeline stages
 			pipeline.stageCount = shaders.size();
-			pipeline.pStages = shaders.result();
+			pipeline.pStages = shaders.get();
 
 			// Init fixed function pipeline stages
-			pipeline.pVertexInputState = input.result();
-			pipeline.pInputAssemblyState = assembly.result();
-			pipeline.pViewportState = viewport.result();
-			pipeline.pRasterizationState = raster.result();
-			pipeline.pDepthStencilState = depth.result();
-			pipeline.pColorBlendState = blend.result();
+			pipeline.pVertexInputState = input.get();
+			pipeline.pInputAssemblyState = assembly.get();
+			pipeline.pViewportState = viewport.get();
+			pipeline.pRasterizationState = raster.get();
+			pipeline.pDepthStencilState = depth.get();
+			pipeline.pColorBlendState = blend.get();
 			// TODO - check number of blend attachments = framebuffers
 
 			// TODO

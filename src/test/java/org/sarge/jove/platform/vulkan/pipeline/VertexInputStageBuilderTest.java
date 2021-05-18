@@ -30,7 +30,7 @@ public class VertexInputStageBuilderTest {
 
 	@Test
 	void buildEmpty() {
-		final var descriptor = builder.result();
+		final var descriptor = builder.get();
 		assertNotNull(descriptor);
 		assertEquals(0, descriptor.vertexBindingDescriptionCount);
 		assertEquals(0, descriptor.vertexAttributeDescriptionCount);
@@ -51,7 +51,7 @@ public class VertexInputStageBuilderTest {
 					.format(FORMAT)
 					.offset(1)
 					.build()
-				.result();
+				.get();
 
 		// Check descriptor
 		assertNotNull(descriptor);
@@ -79,7 +79,7 @@ public class VertexInputStageBuilderTest {
 	void buildBindingFromVertexLayout() {
 		final var layout = List.of(Layout.of(1), Layout.of(2));
 		final var header = new Model.Header(layout, Primitive.TRIANGLES, 3, false);
-		final var descriptor = builder.binding(header).result();
+		final var descriptor = builder.binding(header).get();
 		assertNotNull(descriptor);
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);
 		assertEquals(2, descriptor.vertexAttributeDescriptionCount);
@@ -88,7 +88,7 @@ public class VertexInputStageBuilderTest {
 	@Test
 	void buildEmptyBinding() {
 		addBinding();
-		assertThrows(IllegalArgumentException.class, "No attributes specified", () -> builder.result());
+		assertThrows(IllegalArgumentException.class, "No attributes specified", () -> builder.get());
 	}
 
 	// TODO - how to test the descriptors for bindings/attributes?

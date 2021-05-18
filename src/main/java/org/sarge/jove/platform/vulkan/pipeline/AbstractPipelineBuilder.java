@@ -12,21 +12,20 @@ abstract class AbstractPipelineBuilder<T> {
 
 	/**
 	 * Sets the parent builder.
-	 * @param parent Parent builder
+	 * @param parent Parent
 	 */
-	protected void parent(Pipeline.Builder parent) {
+	void parent(Pipeline.Builder parent) {
 		this.parent = notNull(parent);
 	}
-	// TODO - can we get rid of this without enforcing all the derived builders to have a ctor for the parent? proxy is too nasty
 
 	/**
 	 * @return Result of this builder
 	 */
-	protected abstract T result();
+	abstract T get();
 
 	/**
-	 * Completes construction.
-	 * @return Parent builder
+	 * Constructs this object.
+	 * @return Pipeline builder
 	 */
 	public Pipeline.Builder build() {
 		return parent;
