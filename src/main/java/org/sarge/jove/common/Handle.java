@@ -22,6 +22,7 @@ public final class Handle {
 	 * @param objects Native objects
 	 * @return Handle array
 	 */
+	@Deprecated // TODO - remove
 	public static HandleArray toArray(Collection<? extends NativeObject> objects) {
 		// Check for empty data
 		if(objects.isEmpty()) {
@@ -38,21 +39,8 @@ public final class Handle {
 		// Create JNA wrapper
 		return new HandleArray(array);
 	}
-
-	/**
-	 * Helper - Extracts the handle from a potentially {@code null} native object.
-	 * @param obj Native object
-	 * @return Handle or {@code null} if the object is null
-	 */
-	public static Handle ofNullable(NativeObject obj) {
-		if(obj == null) {
-			return null;
-		}
-		else {
-			return obj.handle();
-		}
-	}
-	// TODO - move to native object
+	// TODO
+	// - JNA already deals with Pointer[], no need for additional wrapper?
 
 	private final Pointer handle;
 
@@ -68,6 +56,7 @@ public final class Handle {
 	/**
 	 * @return Copy of the underlying JNA pointer
 	 */
+	@Deprecated // TODO - remove
 	public Pointer toPointer() {
 		return new Pointer(Pointer.nativeValue(handle));
 	}
@@ -123,6 +112,7 @@ public final class Handle {
 	/**
 	 * Array of handles.
 	 */
+	@Deprecated // TODO - remove
 	public static class HandleArray extends Memory {
 		private final Pointer[] array;
 

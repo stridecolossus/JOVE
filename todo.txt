@@ -1,5 +1,4 @@
 pipeline
-- nasty base-classes, initialisation, result() method, etc. Can we make these just builders somehow?
 - re-build pipeline after window viewport/focus change
 - factor out attachment class? no index, create from render pass and link to sub-pass
 - add sub-pass domain object? ditto dependencies?
@@ -33,10 +32,8 @@ core
 - techniques -> materials?
 
 util
-- StructureCollector bit complex/pointless? only the finisher actually does anything? though note HAS to populate() rather than allocate the structure[]
-- move StructureCollector to JOVE utils (from VK) 
-- HandleArray - should be Pointer[]? JNA handles this? no need for intermediate class based on Memory?
-- Handle::toPointer - only used in Instance?
+- HandleArray can be Pointer[]? (see Command::free) 
+- Handle::toPointer dodgy
 
 scene
 - Sphere helper class, plus Sphere & centre point? integrate with SphereVolume
@@ -51,6 +48,4 @@ scene
 - should volumes enforce intersect(sphere) and intersect(extents)? or ABC? or leave as-is? should frustum really be a volume?
 
 project
-- render package: view, clear value, swapchain, render-pass, frame-buffer, etc
-- pipeline -> core + render
 - separate demo tree using Spring?

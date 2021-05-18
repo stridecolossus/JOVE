@@ -13,6 +13,7 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -120,7 +121,7 @@ public class Swapchain extends AbstractVulkanObject {
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
 		final DeviceContext dev = device();
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkAcquireNextImageKHR(dev.handle(), this.handle(), Long.MAX_VALUE, Handle.ofNullable(semaphore), Handle.ofNullable(fence), index));
+		check(lib.vkAcquireNextImageKHR(dev.handle(), this.handle(), Long.MAX_VALUE, NativeObject.ofNullable(semaphore), NativeObject.ofNullable(fence), index));
 		return index.getValue();
 	}
 

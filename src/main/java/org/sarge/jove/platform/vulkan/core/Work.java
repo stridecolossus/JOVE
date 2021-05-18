@@ -15,6 +15,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
@@ -51,7 +52,7 @@ public class Work {
 
 		// Submit work
 		final VulkanLibrary lib = queue.device().library();
-		check(lib.vkQueueSubmit(queue.handle(), array.length, array, Handle.ofNullable(fence)));
+		check(lib.vkQueueSubmit(queue.handle(), array.length, array, NativeObject.ofNullable(fence)));
 	}
 
 	/**

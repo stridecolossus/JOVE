@@ -293,7 +293,11 @@ public interface Command {
 		 */
 		private void free(Collection<Buffer> buffers) {
 			final DeviceContext dev = super.device();
-			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers));
+//			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers));
+
+			final Pointer[] array = buffers.stream().map(Buffer::handle).map(Handle::toPointer).toArray(Pointer[]::new);
+
+			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), array); // Handle.toArray(buffers));
 		}
 
 		@Override
@@ -303,6 +307,7 @@ public interface Command {
 
 		@Override
 		protected void release() {
+			// Note buffers are released automatically by the pool
 			buffers.clear();
 		}
 

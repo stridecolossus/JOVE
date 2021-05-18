@@ -58,10 +58,11 @@ public class HandleTest {
 
 	@Test
 	void ofNullable() {
-		assertEquals(handle, Handle.ofNullable(() -> handle));
-		assertEquals(null, Handle.ofNullable(null));
+		assertEquals(handle, NativeObject.ofNullable(() -> handle));
+		assertEquals(null, NativeObject.ofNullable(null));
 	}
 
+	@Deprecated
 	@Test
 	void toArray() {
 		// Convert native objects to handle array

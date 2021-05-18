@@ -217,6 +217,9 @@ public class TriangleDemo {
 
 		// Destroy render pass
 		buffers.forEach(FrameBuffer::destroy);
+
+		pool.free();
+
 		pool.destroy();
 		pass.destroy();
 		semaphore.destroy();
