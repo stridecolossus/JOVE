@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.lib.util.Check.notNull;
 
@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkOffset3D;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Command;
-import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.lib.util.Check;
 
 /**
@@ -81,8 +81,8 @@ public class ImageCopyCommand implements Command {
 	public static class Builder {
 		private Image image;
 		private VkImageLayout layout;
-		private final VkBufferImageCopy copy = new VkBufferImageCopy();
-		private SubResourceBuilder<Builder> subresource;
+		private VkOffset3D offset = new VkOffset3D();
+		private SubResource subresource;
 		private VulkanBuffer buffer;
 		private boolean bufferToImage = true;
 
@@ -92,7 +92,6 @@ public class ImageCopyCommand implements Command {
 		 */
 		public Builder image(Image image) {
 			this.image = notNull(image);
-			this.subresource = image.descriptor().builder(this);
 			return this;
 		}
 
@@ -106,21 +105,21 @@ public class ImageCopyCommand implements Command {
 		}
 
 		/**
-		 * Sets the image offset.
+		 * Sets the image offset (default is no offset).
 		 * @param offset Image offset
 		 */
 		public Builder offset(VkOffset3D offset) {
-			copy.imageOffset = notNull(offset);
+			this.offset = notNull(offset);
 			return this;
 		}
 
 		/**
-		 * @return Builder for the image sub-resource
-		 * @throws IllegalStateException if the image has not been specified
+		 * Sets the sub-resource for this copy.
+		 * @param subresource Sub-resource
 		 */
-		public SubResourceBuilder<Builder> subresource() {
-			if(subresource == null) throw new IllegalStateException("Image has not been specified");
-			return subresource;
+		public Builder subresource(SubResource subresource) {
+			this.subresource = notNull(subresource);
+			return this;
 		}
 
 		/**
@@ -147,15 +146,15 @@ public class ImageCopyCommand implements Command {
 		 */
 		public ImageCopyCommand build() {
 			// Validate
-			if(image == null) throw new IllegalArgumentException("Image not specified");
-			if(buffer == null) throw new IllegalArgumentException("Data buffer not specified");
-			if(layout == null) throw new IllegalArgumentException("Image layout not specified");
+			Check.notNull(image);
+			Check.notNull(buffer);
+			Check.notNull(layout);
 
 			// Populate descriptor
-			subresource.populate(copy.imageSubresource);
-			image.descriptor().extents().populate(copy.imageExtent);
-			copy.imageOffset = new VkOffset3D();
-
+			final VkBufferImageCopy copy = new VkBufferImageCopy();
+			copy.imageSubresource = SubResource.of(image.descriptor(), subresource).toLayers();
+			copy.imageExtent = image.descriptor().extents().toExtent3D();
+			copy.imageOffset = offset;
 			// TODO
 //			public long bufferOffset;
 //			public int bufferRowLength;			// 0 or >= imageExtent.width

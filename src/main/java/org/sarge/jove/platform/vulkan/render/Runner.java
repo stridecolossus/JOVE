@@ -17,7 +17,7 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
-import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.core.Work;
 import org.sarge.lib.util.Check;
 

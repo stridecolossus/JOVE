@@ -20,7 +20,7 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;

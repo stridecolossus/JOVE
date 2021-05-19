@@ -22,11 +22,12 @@ import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
-import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.image.Descriptor;
+import org.sarge.jove.platform.vulkan.image.Image;
+import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.FormatHelper;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
@@ -81,7 +82,7 @@ public class Swapchain extends AbstractVulkanObject {
 
 		// TODO - nasty
 		final View first = views.get(0);
-		final Image.Extents dim = first.image().descriptor().extents();
+		final Descriptor.Extents dim = first.image().descriptor().extents();
 		assert first.image().descriptor().aspects().contains(VkImageAspect.COLOR);
 
 		this.format = notNull(format);
@@ -399,9 +400,9 @@ public class Swapchain extends AbstractVulkanObject {
 			final var handles = VulkanFunction.enumerate(func, lib, factory::pointers);
 
 			// Init swapchain image descriptor
-			final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+			final Descriptor descriptor = new Descriptor.Builder()
 					.format(info.imageFormat)
-					.extents(new Image.Extents(info.imageExtent.width, info.imageExtent.height))
+					.extents(new Descriptor.Extents(info.imageExtent.width, info.imageExtent.height, 1))
 					.aspect(VkImageAspect.COLOR)
 					.build();
 
@@ -428,7 +429,7 @@ public class Swapchain extends AbstractVulkanObject {
 		private static class SwapChainImage implements Image {
 			private final Handle handle;
 			private final LogicalDevice dev;
-			private final Image.Descriptor descriptor;
+			private final Descriptor descriptor;
 
 			/**
 			 * Constructor.
@@ -448,7 +449,7 @@ public class Swapchain extends AbstractVulkanObject {
 			}
 
 			@Override
-			public Image.Descriptor descriptor() {
+			public Descriptor descriptor() {
 				return descriptor;
 			}
 

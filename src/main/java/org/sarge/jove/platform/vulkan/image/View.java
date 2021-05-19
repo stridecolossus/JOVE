@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
@@ -16,7 +16,7 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
+import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -75,11 +75,10 @@ public class View extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Helper.
+	 * Convenience accessor.
 	 * @return Image extents
-	 * @see Image.Descriptor#extents()
 	 */
-	public final Image.Extents extents() {
+	public final Extents extents() {
 		return image().descriptor().extents();
 	}
 
@@ -144,21 +143,9 @@ public class View extends AbstractVulkanObject {
 			return mapping;
 		}
 
-		// TODO - this seems a bit arse-backwards, also image should be passed into build(), messy having to pass in ctor and keep ref just for the sub-resource
-		private final Image image;
-		private final SubResourceBuilder<Builder> subresource;
-
 		private VkImageViewType type;
 		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
-
-		/**
-		 * Constructor.
-		 * @param image Image
-		 */
-		Builder(Image image) {
-			this.image = notNull(image);
-			this.subresource = image.descriptor().builder(this);
-		}
+		private SubResource subresource;
 
 		/**
 		 * Sets the view type of this image.
@@ -177,25 +164,22 @@ public class View extends AbstractVulkanObject {
 			this.mapping = notNull(mapping);
 			return this;
 		}
-		// TODO - use this and remove swizzle in image
-		// TODO - no need to init since all zeroes?
+		// TODO - use this and remove swizzle in image loader?
 
 		/**
-		 * @return Sub-resource builder for this view
+		 * Sets the image sub-resource for this view.
+		 * @param subresource Image sub-resource
 		 */
-		public SubResourceBuilder<Builder> subresource() {
-			return subresource;
+		public Builder subresource(SubResource subresource) {
+			this.subresource = notNull(subresource);
+			return this;
 		}
 
 		/**
 		 * Constructs this image view.
 		 * @return New image view
-		 * @throws IllegalArgumentException if the image descriptor has not been specified
 		 */
-		public View build() {
-			// Validate
-			if(image == null) throw new IllegalArgumentException("Image descriptor not specified");
-
+		public View build(Image image) {
 			// Init view type if not explicitly specified
 			if(type == null) {
 				type = View.type(image.descriptor().type());
@@ -207,7 +191,7 @@ public class View extends AbstractVulkanObject {
 			info.format = image.descriptor().format();
 			info.image = image.handle();
 			info.components = mapping;
-			subresource.populate(info.subresourceRange);
+			info.subresourceRange = SubResource.of(image.descriptor(), subresource).toRange();
 
 			// Allocate image view
 			final DeviceContext dev = image.device();

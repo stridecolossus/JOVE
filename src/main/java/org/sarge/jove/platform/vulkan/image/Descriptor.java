@@ -1,0 +1,186 @@
+package org.sarge.jove.platform.vulkan.image;
+
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.platform.vulkan.VkExtent3D;
+import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
+import org.sarge.jove.platform.vulkan.VkImageType;
+import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
+import org.sarge.lib.util.Check;
+
+/**
+ * An <i>image descriptor</i> specifies the properties of an image.
+ * @author Sarge
+ */
+public record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levels, int layers) {
+	// Valid image aspect combinations
+	private static final Collection<Set<VkImageAspect>> VALID_ASPECTS = List.of(
+			Set.of(VkImageAspect.COLOR),
+			Set.of(VkImageAspect.DEPTH),
+			Set.of(VkImageAspect.DEPTH, VkImageAspect.STENCIL)
+	);
+
+	/**
+	 * Immutable image extents.
+	 */
+	public static record Extents(int width, int height, int depth) {
+		/**
+		 * Creates a 2D image extents for the given dimensions.
+		 * @param dim Image dimensions
+		 */
+		public static Extents of(Dimensions dim) {
+			return new Extents(dim.width(), dim.height());
+		}
+
+		/**
+		 * Constructor.
+		 */
+		public Extents {
+			Check.oneOrMore(width);
+			Check.oneOrMore(height);
+			Check.oneOrMore(depth);
+		}
+
+		/**
+		 * Convenience constructor for a 2D image.
+		 */
+		public Extents(int width, int height) {
+			this(width, height, 1);
+		}
+
+		/**
+		 * @return Vulkan image extents descriptor
+		 */
+		public VkExtent3D toExtent3D() {
+			final VkExtent3D extent = new VkExtent3D();
+			extent.width = width;
+			extent.height = height;
+			extent.depth = depth;
+			return extent;
+		}
+	}
+
+	/**
+	 * Constructor.
+	 * @param type			Image type
+	 * @param format		Format
+	 * @param extents		Extents
+	 * @param aspects		Image aspect(s)
+	 * @param levels		Number of mip levels
+	 * @param layers		Number of array layers
+	 * @throws IllegalArgumentException if the image aspects is empty or is an invalid combination
+	 * @throws IllegalArgumentException if the extents are invalid for the given image type
+	 */
+	public Descriptor {
+		// Validate
+		Check.notNull(type);
+		Check.notNull(format);
+		Check.notNull(extents);
+		aspects = Set.copyOf(notEmpty(aspects));
+		Check.oneOrMore(levels);
+		Check.oneOrMore(layers);
+
+		// Validate extents
+		final boolean valid = switch(type) {
+			case IMAGE_TYPE_1D -> (extents.height == 1) && (extents.depth == 1);
+			case IMAGE_TYPE_2D -> extents.depth == 1;
+			case IMAGE_TYPE_3D -> true;
+		};
+		if(!valid) {
+			throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
+		}
+
+		// Validate array layers
+		if((type == VkImageType.IMAGE_TYPE_3D) && (layers != 1)) {
+			throw new IllegalArgumentException("Array layers must be one for a 3D image");
+		}
+
+		// Validate image aspects
+		if(!VALID_ASPECTS.contains(aspects)) throw new IllegalArgumentException("Invalid image aspects: " + aspects);
+
+		// TODO - validate format against aspects, e.g. D32_FLOAT is not stencil, D32_FLOAT_S8_UINT has stencil
+	}
+
+	/**
+	 * Builder for an image descriptor.
+	 */
+	public static class Builder {
+		private VkImageType type = VkImageType.IMAGE_TYPE_2D;
+		private VkFormat format;
+		private Extents extents;
+		private final Set<VkImageAspect> aspects = new HashSet<>();
+		private int levels = 1;
+		private int layers = 1;
+
+		/**
+		 * Sets the image type (default is {@link VkImageType#IMAGE_TYPE_2D}).
+		 * @param type Image type
+		 */
+		public Builder type(VkImageType type) {
+			this.type = notNull(type);
+			return this;
+		}
+
+		/**
+		 * Sets the image format.
+		 * @param format Image format
+		 */
+		public Builder format(VkFormat format) {
+			this.format = notNull(format);
+			return this;
+		}
+
+		/**
+		 * Sets the image extents.
+		 * @param extents Image extents
+		 */
+		public Builder extents(Extents extents) {
+			this.extents = notNull(extents);
+			return this;
+		}
+
+		/**
+		 * Adds an image aspect.
+		 * @param aspect Image aspect
+		 */
+		public Builder aspect(VkImageAspect aspect) {
+			aspects.add(notNull(aspect));
+			return this;
+		}
+
+		/**
+		 * Sets the number of mip levels (default is one).
+		 * @param levels Number of mip levels
+		 */
+		public Builder mipLevels(int levels) {
+			this.levels = oneOrMore(levels);
+			return this;
+		}
+
+		/**
+		 * Sets the number of array levels (default is one).
+		 * @param levels Number of array levels
+		 */
+		public Builder arrayLayers(int layers) {
+			this.layers = oneOrMore(layers);
+			return this;
+		}
+
+		/**
+		 * Constructs this descriptor.
+		 * @return New image descriptor
+		 */
+		public Descriptor build() {
+			return new Descriptor(type, format, extents, aspects, levels, layers);
+		}
+	}
+}

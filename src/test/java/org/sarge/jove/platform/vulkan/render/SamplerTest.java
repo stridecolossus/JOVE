@@ -18,7 +18,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Resource;
-import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.render.Sampler;
 import org.sarge.jove.platform.vulkan.render.Sampler.Wrap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;

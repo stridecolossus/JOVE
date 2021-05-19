@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,6 +14,8 @@ import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -34,8 +36,8 @@ public class ImageCopyCommandTest {
 		cmd = new Handle(new Pointer(1));
 
 		// Define image
-		final var descriptor = new Image.Descriptor.Builder()
-				.extents(new Image.Extents(1, 1))
+		final var descriptor = new Descriptor.Builder()
+				.extents(new Extents(2, 3))
 				.format(AbstractVulkanTest.FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();
@@ -51,6 +53,7 @@ public class ImageCopyCommandTest {
 
 		// Create copy command builder
 		builder = new ImageCopyCommand.Builder();
+		builder.subresource(SubResource.of(descriptor));
 	}
 
 	@Test
@@ -95,20 +98,9 @@ public class ImageCopyCommandTest {
 	}
 
 	@Test
-	void buildSubresourceEmptyImage() {
-		assertThrows(IllegalStateException.class, () -> builder.buffer(buffer).subresource());
-	}
-
-	@Test
 	void buildEmptyBuffer() {
 		assertThrows(IllegalArgumentException.class, () -> builder.image(image).build());
 	}
-
-//	@Test
-//	void buildInvalidImageLayout() {
-//		builder.image(image).buffer(buffer).layout(VkImageLayout.TRANSFER_SRC_OPTIMAL);
-//		assertThrows(IllegalStateException.class, () -> builder.build());
-//	}
 
 	@Test
 	void buildInvalidBuffer() {

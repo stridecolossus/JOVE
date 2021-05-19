@@ -27,7 +27,7 @@ import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
-import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.render.Runner.Frame;
 import org.sarge.jove.platform.vulkan.render.Runner.FrameState;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;

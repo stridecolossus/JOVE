@@ -13,8 +13,8 @@ import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.View;
+import org.sarge.jove.platform.vulkan.image.Descriptor;
+import org.sarge.jove.platform.vulkan.image.View;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -40,7 +40,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 
 		// Use extents of first attachment
 		final Iterator<View> itr = attachments.iterator();
-		final Image.Extents extents = itr.next().extents();
+		final Descriptor.Extents extents = itr.next().extents();
 
 		// Check all attachments have the same extents
 		while(itr.hasNext()) {
@@ -70,7 +70,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	}
 
 	private final List<View> attachments;
-	private final Image.Extents extents;
+	private final Descriptor.Extents extents;
 
 	/**
 	 * Constructor.
@@ -79,7 +79,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @param extents			Image extents
 	 * @param attachments		Image attachments
 	 */
-	private FrameBuffer(Pointer handle, DeviceContext dev, Image.Extents extents, List<View> attachments) {
+	private FrameBuffer(Pointer handle, DeviceContext dev, Descriptor.Extents extents, List<View> attachments) {
 		super(handle, dev);
 		this.extents = notNull(extents);
 		this.attachments = List.copyOf(notEmpty(attachments));
@@ -88,7 +88,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Extents of the frame-buffer attachments
 	 */
-	public Image.Extents extents() {
+	public Descriptor.Extents extents() {
 		return extents;
 	}
 

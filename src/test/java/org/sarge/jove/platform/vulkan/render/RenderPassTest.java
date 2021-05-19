@@ -23,10 +23,8 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.Command;
-import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.render.FrameBuffer;
-import org.sarge.jove.platform.vulkan.render.RenderPass;
+import org.sarge.jove.platform.vulkan.image.Descriptor;
+import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.AttachmentBuilder;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.DependencyBuilder;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.SubPassBuilder;
@@ -102,7 +100,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 			// Create frame-buffer
 			final FrameBuffer buffer = mock(FrameBuffer.class);
-			when(buffer.extents()).thenReturn(new Image.Extents(3, 4));
+			when(buffer.extents()).thenReturn(new Descriptor.Extents(3, 4));
 			when(buffer.attachments()).thenReturn(List.of(view, none));
 
 			// Create begin command

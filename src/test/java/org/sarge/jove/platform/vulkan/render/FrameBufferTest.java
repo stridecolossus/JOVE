@@ -18,10 +18,10 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.View;
-import org.sarge.jove.platform.vulkan.render.FrameBuffer;
-import org.sarge.jove.platform.vulkan.render.RenderPass;
+import org.sarge.jove.platform.vulkan.image.Descriptor;
+import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
+import org.sarge.jove.platform.vulkan.image.Image;
+import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -41,8 +41,8 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		when(pass.count()).thenReturn(1);
 
 		// Init image descriptor
-		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-				.extents(new Image.Extents(3, 4))
+		final Descriptor descriptor = new Descriptor.Builder()
+				.extents(new Extents(3, 4))
 				.format(FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();
@@ -96,8 +96,8 @@ public class FrameBufferTest extends AbstractVulkanTest {
 	@Test
 	void createInvalidExtents() {
 		// Create image with different extents
-		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-				.extents(new Image.Extents(5, 6))
+		final Descriptor descriptor = new Descriptor.Builder()
+				.extents(new Extents(5, 6))
 				.format(FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();

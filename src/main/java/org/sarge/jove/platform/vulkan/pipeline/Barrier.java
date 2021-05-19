@@ -16,8 +16,8 @@ import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.core.Image;
-import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
+import org.sarge.jove.platform.vulkan.image.Image;
+import org.sarge.jove.platform.vulkan.image.SubResource;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -101,19 +101,15 @@ public class Barrier implements Command {
 		 */
 		public class ImageBarrierBuilder {
 			private final Image image;
-			private final SubResourceBuilder<ImageBarrierBuilder> subresource;
 			private final Set<VkAccess> src = new HashSet<>();
 			private final Set<VkAccess> dest = new HashSet<>();
 			private VkImageLayout oldLayout = VkImageLayout.UNDEFINED;
 			private VkImageLayout newLayout;
+			private SubResource subresource;
 
-			/**
-			 * Constructor.
-			 * @param image Image
-			 */
-			ImageBarrierBuilder(Image image) {
+			private ImageBarrierBuilder(Image image) {
 				this.image = notNull(image);
-				this.subresource = image.descriptor().builder(this);
+				this.subresource = SubResource.of(image.descriptor());
 			}
 
 			/**
@@ -153,26 +149,24 @@ public class Barrier implements Command {
 			}
 
 			/**
-			 * @return Image sub-resource builder for this barrier
+			 * Sets the image sub-resource.
+			 * @param subresource Sub-resource
 			 */
-			public SubResourceBuilder<ImageBarrierBuilder> subresource() {
-				return subresource;
+			public ImageBarrierBuilder subresource(SubResource subresource) {
+				this.subresource = notNull(subresource);
+				return this;
 			}
 
 			/**
 			 * Populates an image barrier descriptor.
 			 */
 			private void populate(VkImageMemoryBarrier barrier) {
-				// Populate image barrier descriptor
 				barrier.image = image.handle();
 				barrier.srcAccessMask = IntegerEnumeration.mask(src);
 				barrier.dstAccessMask = IntegerEnumeration.mask(dest);
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
-
-				// Populate sub-resource range descriptor
-				subresource.populate(barrier.subresourceRange);
-
+				barrier.subresourceRange = SubResource.of(image.descriptor(), subresource).toRange();
 				// TODO
 				barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
 				barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;
@@ -183,13 +177,9 @@ public class Barrier implements Command {
 			 * @return New image memory barrier
 			 */
 			public Builder build() {
-				// Validate
 				if(newLayout == null) throw new IllegalArgumentException("New layout not specified");
 				if(newLayout == oldLayout) throw new IllegalArgumentException("Previous and next layouts cannot be the same");
-
-				// Add barrier
 				images.add(this);
-
 				return Builder.this;
 			}
 		}

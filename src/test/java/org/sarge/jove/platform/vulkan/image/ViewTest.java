@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,6 +26,7 @@ import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
+import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -41,9 +42,9 @@ public class ViewTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create image descriptor
-		final Image.Descriptor descriptor = new Image.Descriptor.Builder()
+		final Descriptor descriptor = new Descriptor.Builder()
 				.format(FORMAT)
-				.extents(new Image.Extents(3, 4))
+				.extents(new Extents(3, 4))
 				.aspect(VkImageAspect.COLOR)
 				.build();
 
@@ -61,7 +62,7 @@ public class ViewTest extends AbstractVulkanTest {
 		assertEquals(dev, view.device());
 		assertEquals(image, view.image());
 		assertEquals(ClearValue.NONE, view.clear());
-		assertEquals(new Image.Extents(3, 4), view.extents());
+		assertEquals(new Extents(3, 4), view.extents());
 	}
 
 	@Test
@@ -103,13 +104,13 @@ public class ViewTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			when(image.device()).thenReturn(dev);
-			builder = new View.Builder(image);
+			builder = new View.Builder();
 		}
 
 		@Test
 		void build() {
 			// Build view
-			view = builder.build();
+			view = builder.build(image);
 
 			// Check view
 			assertNotNull(view);
