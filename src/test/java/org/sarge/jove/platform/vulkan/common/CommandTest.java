@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
@@ -39,6 +40,14 @@ class CommandTest extends AbstractVulkanTest {
 		final Family family = new Family(0, 1, Set.of());
 		queue = new Queue(new Handle(new Pointer(1)), dev, family);
 		cmd = mock(Command.class);
+	}
+
+	@Test
+	void submit() {
+		final Pool pool = Pool.create(queue);
+		cmd = spy(Command.class);
+		cmd.submit(pool);
+		verify(cmd).execute(eq(lib), any(Handle.class));
 	}
 
 	@Nested

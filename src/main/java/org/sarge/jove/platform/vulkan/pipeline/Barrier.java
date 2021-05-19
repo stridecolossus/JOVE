@@ -14,18 +14,18 @@ import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Image;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
-import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>pipeline barrier</i> is used to synchronize access to resources within a pipeline or to perform image layout transitions.
+ * A <i>pipeline barrier</i> is a command used to synchronize access to resources within a pipeline or to perform image layout transitions.
  * @author Sarge
  */
-public class Barrier extends ImmediateCommand {
+public class Barrier implements Command {
 	private final int src, dest;
 	private final VkImageMemoryBarrier[] images;
 

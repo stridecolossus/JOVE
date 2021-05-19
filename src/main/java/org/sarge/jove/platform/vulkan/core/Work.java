@@ -48,6 +48,7 @@ public class Work {
 		if(!work.stream().map(e -> e.queue).allMatch(queue::equals)) throw new IllegalArgumentException("All work batches must submit to the same queue");
 
 		// Convert descriptors to array
+		// TODO - JNA marshals this correctly?
 		final var array = work.stream().map(e -> e.info).toArray(VkSubmitInfo[]::new);
 
 		// Submit work
@@ -115,20 +116,6 @@ public class Work {
 				.append("waits", info.waitSemaphoreCount)
 				.append("signals", info.signalSemaphoreCount)
 				.build();
-	}
-
-	/**
-	 * An <i>immediate command</i> is a convenience adapter for a command that can be submitted immediately.
-	 */
-	public static abstract class ImmediateCommand implements Command {
-		/**
-		 * Submits this as a <i>one time</i> command to the given pool and waits for completion.
-		 * @param pool Command pool
-		 * @see Work#submit(Command, Command.Pool)
-		 */
-		public void submit(Command.Pool pool) {
-			Work.submit(this, pool);
-		}
 	}
 
 	/**

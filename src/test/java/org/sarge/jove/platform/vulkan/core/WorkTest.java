@@ -19,11 +19,9 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
-import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -117,20 +115,6 @@ public class WorkTest extends AbstractVulkanTest {
 			final Command cmd = mock(Command.class);
 			when(buffer.add(cmd)).thenReturn(buffer);
 			Work.submit(cmd, pool);
-		}
-
-		@Test
-		void immediate() {
-			final ImmediateCommand cmd = new ImmediateCommand() {
-				@Override
-				public void execute(VulkanLibrary lib, Handle buffer) {
-					// Unused
-				}
-			};
-			when(buffer.add(cmd)).thenReturn(buffer);
-			cmd.submit(pool);
-			//verify(queue).waitIdle();
-			verify(buffer).free();
 		}
 	}
 

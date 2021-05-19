@@ -10,38 +10,38 @@ import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkOffset3D;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.Image.Descriptor.SubResourceBuilder;
-import org.sarge.jove.platform.vulkan.core.Work.ImmediateCommand;
 import org.sarge.lib.util.Check;
 
 /**
  * An <i>image copy command</i> is used to copy an image to/from a vertex buffer.
  * @author Sarge
  */
-public class ImageCopyCommand extends ImmediateCommand {
+public class ImageCopyCommand implements Command {
 	private final Image image;
 	private final VulkanBuffer buffer;
 	private final VkBufferImageCopy[] regions;
 	private final VkImageLayout layout;
-	private final boolean toImage;
+	private final boolean bufferToImage;
 
 	/**
 	 * Constructor.
-	 * @param image			Image
-	 * @param buffer		Buffer
-	 * @param regions		Copy region(s)
-	 * @param layout		Image layout
-	 * @param toImage		Whether copying <i>to</i> or <i>from</i> the image
+	 * @param image				Image
+	 * @param buffer			Buffer
+	 * @param regions			Copy region(s)
+	 * @param layout			Image layout
+	 * @param bufferToImage		Whether copying <i>to</i> or <i>from</i> the image
 	 * @throws IllegalStateException if the image or buffer is not a valid source/destination for this operation
 	 * @see VulkanBuffer#require(VkBufferUsage)
 	 */
-	private ImageCopyCommand(Image image, VulkanBuffer buffer, VkBufferImageCopy[] regions, VkImageLayout layout, boolean toImage) {
+	private ImageCopyCommand(Image image, VulkanBuffer buffer, VkBufferImageCopy[] regions, VkImageLayout layout, boolean bufferToImage) {
 		Check.notEmpty(regions);
 		this.image = notNull(image);
 		this.buffer = notNull(buffer);
 		this.regions = Arrays.copyOf(regions, regions.length);
 		this.layout = notNull(layout);
-		this.toImage = toImage;
+		this.bufferToImage = bufferToImage;
 		validate();
 	}
 
@@ -49,11 +49,13 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 * @throws IllegalStateException for an invalid source/destination configuration.
 	 */
 	private void validate() {
-		final VkBufferUsage flag = toImage ? VkBufferUsage.TRANSFER_SRC : VkBufferUsage.TRANSFER_DST;
-		final VkImageLayout expected = toImage ? VkImageLayout.TRANSFER_DST_OPTIMAL : VkImageLayout.TRANSFER_SRC_OPTIMAL;
+		final VkBufferUsage flag = bufferToImage ? VkBufferUsage.TRANSFER_SRC : VkBufferUsage.TRANSFER_DST;
 		buffer.require(flag);
-		if(this.layout != expected) throw new IllegalStateException(String.format("Invalid image layout: expected=%s actual=%s", expected, layout));
 	}
+
+	// TODO
+	// dstImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
+	// srcImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
 
 	/**
 	 * Test helper.
@@ -65,7 +67,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 
 	@Override
 	public void execute(VulkanLibrary lib, Handle handle) {
-		if(toImage) {
+		if(bufferToImage) {
 			lib.vkCmdCopyBufferToImage(handle, buffer.handle(), image.handle(), layout, regions.length, regions);
 		}
 		else {
@@ -74,7 +76,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	}
 
 	/**
-	 * Builder for an image copy command.
+	 * Builder for an image copy.
 	 */
 	public static class Builder {
 		private Image image;
@@ -82,7 +84,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 		private final VkBufferImageCopy copy = new VkBufferImageCopy();
 		private SubResourceBuilder<Builder> subresource;
 		private VulkanBuffer buffer;
-		private boolean toImage = true;
+		private boolean bufferToImage = true;
 
 		/**
 		 * Sets the image to be copied.
@@ -134,7 +136,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 * Inverts the direction of this copy operation (default is <b>to</b> the image).
 		 */
 		public Builder invert() {
-			toImage = !toImage;
+			bufferToImage = !bufferToImage;
 			return this;
 		}
 
@@ -160,7 +162,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 //			public int bufferImageHeight;		// 0 or >= imageExtent.height
 
 			// Create copy command
-			return new ImageCopyCommand(image, buffer, new VkBufferImageCopy[]{copy}, layout, toImage);
+			return new ImageCopyCommand(image, buffer, new VkBufferImageCopy[]{copy}, layout, bufferToImage);
 		}
 	}
 }

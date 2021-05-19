@@ -104,11 +104,11 @@ public class ImageCopyCommandTest {
 		assertThrows(IllegalArgumentException.class, () -> builder.image(image).build());
 	}
 
-	@Test
-	void buildInvalidImageLayout() {
-		builder.image(image).buffer(buffer).layout(VkImageLayout.TRANSFER_SRC_OPTIMAL);
-		assertThrows(IllegalStateException.class, () -> builder.build());
-	}
+//	@Test
+//	void buildInvalidImageLayout() {
+//		builder.image(image).buffer(buffer).layout(VkImageLayout.TRANSFER_SRC_OPTIMAL);
+//		assertThrows(IllegalStateException.class, () -> builder.build());
+//	}
 
 	@Test
 	void buildInvalidBuffer() {

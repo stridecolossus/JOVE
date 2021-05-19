@@ -15,6 +15,7 @@ import org.sarge.jove.platform.vulkan.VkStructureType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanException;
 
 import com.sun.jna.Structure.FieldOrder;
 
@@ -31,12 +32,12 @@ public class VulkanLibraryTest {
 
 	@Test
 	void checkThrows() {
-		assertThrows(RuntimeException.class, () -> VulkanLibrary.check(VkResult.VK_ERROR_DEVICE_LOST.value()));
+		assertThrows(VulkanException.class, () -> VulkanLibrary.check(VkResult.VK_ERROR_DEVICE_LOST.value()));
 	}
 
 	@Test
 	void checkThrowsUnknownErrorCode() {
-		assertThrows(RuntimeException.class, () -> VulkanLibrary.check(-1));
+		assertThrows(VulkanException.class, () -> VulkanLibrary.check(-1));
 	}
 
 	@Test

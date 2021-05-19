@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.VkCommandPoolCreateFlag;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandPoolResetFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.Work;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -41,6 +42,15 @@ public interface Command {
 	 * @param buffer 	Command buffer handle
 	 */
 	void execute(VulkanLibrary lib, Handle buffer);
+
+	/**
+	 * Helper - Submits this as a <i>one time</i> command to the given pool and waits for completion.
+	 * @param pool Command pool
+	 * @see Work#submit(Command, Command.Pool)
+	 */
+	default void submit(Command.Pool pool) {
+		Work.submit(this, pool);
+	}
 
 	/**
 	 * A <i>command buffer</i> is allocated by a {@link Pool} and used to record commands.
