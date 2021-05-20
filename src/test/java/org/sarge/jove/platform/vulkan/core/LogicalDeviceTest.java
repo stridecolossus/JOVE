@@ -18,7 +18,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue;
@@ -28,17 +27,13 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.memory.Allocator;
 import org.sarge.jove.platform.vulkan.memory.MemoryType;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
-import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.lib.util.Percentile;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class LogicalDeviceTest {
-	private static final String FEATURE = "samplerAnisotropy";
-
 	private LogicalDevice device;
 	private PhysicalDevice parent;
 	private Queue.Family family;
@@ -63,18 +58,11 @@ public class LogicalDeviceTest {
 		family = new Family(1, 2, Set.of());
 		when(parent.families()).thenReturn(List.of(family));
 
-		// Init supported features
-		// TODO - this looks odd
-		final var features = new VkPhysicalDeviceFeatures();
-		features.samplerAnisotropy = VulkanBoolean.TRUE;
-		when(parent.features()).thenReturn(DeviceFeatures.of(Set.of(FEATURE)));
-
 		// Create logical device
 		device = new LogicalDevice.Builder(parent)
 				.queues(family, List.of(Percentile.HALF, Percentile.ONE))
 				.extension("ext")
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.features(features)
 				.build();
 	}
 
@@ -124,14 +112,6 @@ public class LogicalDeviceTest {
 	void waitIdle() {
 		device.waitIdle();
 		verify(lib).vkDeviceWaitIdle(device.handle());
-	}
-
-	@DisplayName("Check features supported by the device")
-	@Test
-	void features() {
-		final DeviceFeatures features = device.features();
-		assertNotNull(features);
-		assertEquals(true, features.isSupported(FEATURE));
 	}
 
 	@Nested

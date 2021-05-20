@@ -11,52 +11,48 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 public class DeviceFeaturesTest {
 	private static final String SUPPORTED = "samplerAnisotropy";
-	private static final String NOT_SUPPORTED = "wideLines";
+	private static final String OTHER = "wideLines";
 
 	private DeviceFeatures features;
+	private VkPhysicalDeviceFeatures struct;
 
 	@BeforeEach
 	void before() {
-		final var struct = new VkPhysicalDeviceFeatures();
+		struct = new VkPhysicalDeviceFeatures();
 		struct.samplerAnisotropy = VulkanBoolean.TRUE;
 		features = new DeviceFeatures(struct);
 	}
 
 	@Test
-	void isSupported() {
-		assertEquals(true, features.isSupported(SUPPORTED));
-		assertEquals(false, features.isSupported(NOT_SUPPORTED));
+	void contains() {
+		assertEquals(true, features.contains(SUPPORTED));
+		assertEquals(false, features.contains(OTHER));
 	}
 
 	@Test
-	void isSupportedInvalidField() {
-		assertThrows(IllegalArgumentException.class, () -> features.isSupported("cobblers"));
+	void containsInvalidField() {
+		assertThrows(IllegalArgumentException.class, () -> features.contains("cobblers"));
 	}
 
 	@Test
-	void check() {
-		final var required = new VkPhysicalDeviceFeatures();
-		required.samplerAnisotropy = VulkanBoolean.TRUE;
-		features.check(required);
+	void containSet() {
+		assertEquals(true, features.contains(Set.of(SUPPORTED)));
+		assertEquals(false, features.contains(Set.of(OTHER)));
+		assertEquals(false, features.contains(Set.of(SUPPORTED, OTHER)));
 	}
 
 	@Test
-	void checkEmpty() {
-		features.check(new VkPhysicalDeviceFeatures());
+	void missing() {
+		assertEquals(Set.of(), features.missing(Set.of(SUPPORTED)));
+		assertEquals(Set.of(OTHER), features.missing(Set.of(OTHER)));
+		assertEquals(Set.of(OTHER), features.missing(Set.of(SUPPORTED, OTHER)));
 	}
 
 	@Test
-	void checkNotSupported() {
-		final var required = new VkPhysicalDeviceFeatures();
-		required.wideLines = VulkanBoolean.TRUE;
-		assertThrows(IllegalArgumentException.class, () -> features.check(required));
-	}
-
-	@SuppressWarnings("static-method")
-	@Test
-	void of() {
-		final DeviceFeatures other = DeviceFeatures.of(Set.of(SUPPORTED));
-		assertEquals(true, other.isSupported(SUPPORTED));
-		assertEquals(false, other.isSupported(NOT_SUPPORTED));
+	void equals() {
+		assertEquals(true, features.equals(features));
+		assertEquals(true, features.equals(new DeviceFeatures(struct)));
+		assertEquals(false, features.equals(null));
+		assertEquals(false, features.equals(new DeviceFeatures(new VkPhysicalDeviceFeatures())));
 	}
 }

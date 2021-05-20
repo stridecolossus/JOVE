@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
@@ -19,11 +20,15 @@ import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 
 public class ImageCopyCommandTest {
+	private static final Handle IMAGE = new Handle(new Pointer(1));
+	private static final Handle BUFFER = new Handle(new Pointer(2));
+	private static final Handle COMMAND = new Handle(new Pointer(2));
+
 	private Image image;
 	private VulkanBuffer buffer;
-	private Handle cmd;
 	private VulkanLibrary lib;
 	private ImageCopyCommand.Builder builder;
 
@@ -31,9 +36,6 @@ public class ImageCopyCommandTest {
 	void before() {
 		// Create API
 		lib = mock(VulkanLibrary.class);
-
-		// Create command buffer
-		cmd = new Handle(new Pointer(1));
 
 		// Define image
 		final var descriptor = new Descriptor.Builder()
@@ -44,12 +46,12 @@ public class ImageCopyCommandTest {
 
 		// Create image
 		image = mock(Image.class);
-		when(image.handle()).thenReturn(new Handle(new Pointer(2)));
+		when(image.handle()).thenReturn(IMAGE);
 		when(image.descriptor()).thenReturn(descriptor);
 
 		// Create data buffer
 		buffer = mock(VulkanBuffer.class);
-		when(buffer.handle()).thenReturn(new Handle(new Pointer(3)));
+		when(buffer.handle()).thenReturn(BUFFER);
 
 		// Create copy command builder
 		builder = new ImageCopyCommand.Builder();
@@ -65,10 +67,25 @@ public class ImageCopyCommandTest {
 				.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
 				.build();
 
+		// Init expected copy descriptor
+		final var expected = new VkBufferImageCopy() {
+			@Override
+			public boolean equals(Object obj) {
+				return dataEquals((Structure) obj);
+			}
+		};
+		expected.imageSubresource.aspectMask = VkImageAspect.COLOR.value();
+		expected.imageSubresource.layerCount = 1;
+		expected.imageExtent.depth = 1;
+		expected.imageExtent.width = 2;
+		expected.imageExtent.height = 3;
+
 		// Perform copy operation
-		copy.execute(lib, cmd);
+		copy.execute(lib, COMMAND);
 		verify(buffer).require(VkBufferUsage.TRANSFER_SRC);
-		verify(lib).vkCmdCopyBufferToImage(cmd, buffer.handle(), image.handle(), VkImageLayout.TRANSFER_DST_OPTIMAL, 1, copy.regions());
+
+		// Check API
+		verify(lib).vkCmdCopyBufferToImage(COMMAND, BUFFER, IMAGE, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
 	}
 
 	@Test
@@ -82,9 +99,8 @@ public class ImageCopyCommandTest {
 				.build();
 
 		// Perform copy operation
-		copy.execute(lib, cmd);
+		copy.execute(lib, COMMAND);
 		verify(buffer).require(VkBufferUsage.TRANSFER_DST);
-		verify(lib).vkCmdCopyImageToBuffer(cmd, image.handle(), VkImageLayout.TRANSFER_SRC_OPTIMAL, buffer.handle(), 1, copy.regions());
 	}
 
 	@Test

@@ -19,10 +19,8 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Resource;
 import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.render.Sampler;
 import org.sarge.jove.platform.vulkan.render.Sampler.Wrap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
@@ -93,12 +91,6 @@ public class SamplerTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
-			// Init required features
-			// TODO - messy
-			final DeviceFeatures features = mock(DeviceFeatures.class);
-			when(features.isSupported("samplerAnisotropy")).thenReturn(true);
-			when(dev.features()).thenReturn(features);
-
 			// Create sampler
 			final Sampler sampler = builder
 					.min(VkFilter.LINEAR)

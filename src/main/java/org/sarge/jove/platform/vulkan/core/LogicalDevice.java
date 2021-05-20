@@ -36,7 +36,6 @@ import org.sarge.jove.platform.vulkan.memory.DefaultDeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.memory.MemoryType;
-import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
@@ -53,7 +52,6 @@ import com.sun.jna.ptr.PointerByReference;
 public class LogicalDevice extends AbstractTransientNativeObject implements DeviceContext, Allocator {
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
-	private final DeviceFeatures features;
 	private final Map<Queue.Family, List<Queue>> queues;
 	private final List<MemoryType> types;
 	private Allocator allocator;
@@ -62,15 +60,13 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * Constructor.
 	 * @param handle 		Device handle
 	 * @param parent 		Parent physical device
-	 * @param features		Features supported by this device
 	 * @param queues 		Work queues
 	 * @param types			Supported memory types
 	 */
-	private LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Set<RequiredQueue> queues, List<MemoryType> types) {
+	private LogicalDevice(Pointer handle, PhysicalDevice parent, Set<RequiredQueue> queues, List<MemoryType> types) {
 		super(new Handle(handle));
 		this.parent = parent;
 		this.lib = parent.instance().library();
-		this.features = features;
 		this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family)); // TODO - should be done outside ctor?
 		this.types = types;
 		this.allocator = this;
@@ -112,13 +108,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	@Override
 	public VulkanLibrary library() {
 		return parent.instance().library();
-	}
-
-	/**
-	 * @return Features supported by this device
-	 */
-	public DeviceFeatures features() {
-		return features;
 	}
 
 	/**
@@ -394,7 +383,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			final var types = MemoryType.enumerate(props);
 
 			// Create logical device
-			return new LogicalDevice(logical.getValue(), parent, new DeviceFeatures(features), queues, types);
+			return new LogicalDevice(logical.getValue(), parent, queues, types);
 		}
 	}
 }

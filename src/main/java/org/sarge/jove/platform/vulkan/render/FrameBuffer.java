@@ -36,7 +36,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		if(pass.count() != attachments.size()) {
 			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: attachments=%d pass=%s", attachments.size(), pass));
 		}
-		// TODO - check matching type and formats?
+		// TODO - for each view/attachment check matches pass[n], attachment type (aspects), and format?
 
 		// Use extents of first attachment
 		final Iterator<View> itr = attachments.iterator();

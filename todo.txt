@@ -2,8 +2,7 @@ pipeline
 - re-build pipeline after window viewport/focus change
 - factor out attachment class? no index, create from render pass and link to sub-pass
 - add sub-pass domain object? ditto dependencies?
-- selector for depth format, using getPhysicalDeviceFormatProperties
-- check for depth attachment in pipeline? frame buffers?
+- check for depth attachment in frame-buffer::create
 - frame buffer created from swapchain?
 - caching, https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/pipeline_cache/pipeline_cache_tutorial.md
 
@@ -28,7 +27,7 @@ blog
 core
 - allocator merge released blocks (de-fragmentation)
 - swizzle & buffer image in one go?
-- DeviceFeatures - tidy up, tests/annotations for required features? techniques -> materials ~ available features
+- DeviceFeatures - tests/annotations for required features? techniques -> materials ~ available features
 
 util
 - HandleArray can be Pointer[]? (tested in Command::free) however would like to explicitly have API methods with array signatures in this case 
