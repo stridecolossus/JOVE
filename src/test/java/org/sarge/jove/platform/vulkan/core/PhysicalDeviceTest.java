@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkFormatProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
@@ -133,5 +135,11 @@ public class PhysicalDeviceTest {
 	void layers() {
 		when(lib.factory().integer()).thenReturn(new IntByReference());
 		assertEquals(Set.of(), dev.layers());
+	}
+
+	@Test
+	void formatProperties() {
+		final VkFormatProperties props = dev.properties(VkFormat.D32_SFLOAT);
+		verify(lib).vkGetPhysicalDeviceFormatProperties(dev.handle(), VkFormat.D32_SFLOAT, props);
 	}
 }

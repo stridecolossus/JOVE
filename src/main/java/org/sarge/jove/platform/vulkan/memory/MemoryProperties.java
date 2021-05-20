@@ -13,6 +13,7 @@ import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>memory properties</i> is a descriptor for the usage and requirements of a memory request.
@@ -50,12 +51,12 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @param optimal		Optimal properties
 	 * @throws IllegalArgumentException if the memory {@link #usage} flags are empty
 	 */
-	public MemoryProperties(Set<T> usage, VkSharingMode mode, Set<VkMemoryPropertyFlag> required, Set<VkMemoryPropertyFlag> optimal) {
+	public MemoryProperties {
 		if(usage.isEmpty()) throw new IllegalArgumentException("At least one memory usage must be specified");
-		this.usage = Set.copyOf(usage);
-		this.mode = notNull(mode);
-		this.required = Set.copyOf(required);
-		this.optimal = Set.copyOf(optimal);
+		usage = Set.copyOf(usage);
+		mode = Check.notNull(mode);
+		required = Set.copyOf(required);
+		optimal = Set.copyOf(optimal);
 	}
 
 	/**

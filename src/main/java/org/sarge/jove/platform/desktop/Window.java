@@ -77,7 +77,7 @@ public class Window extends AbstractTransientNativeObject {
 		public Descriptor {
 			Check.notEmpty(title);
 			Check.notNull(size);
-			Check.notNull(properties);
+			properties = Check.notNull(properties);
 		}
 	}
 

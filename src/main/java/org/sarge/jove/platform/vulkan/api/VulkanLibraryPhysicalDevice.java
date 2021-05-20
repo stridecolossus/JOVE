@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.api;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
+import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkFormatProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
@@ -71,4 +73,12 @@ interface VulkanLibraryPhysicalDevice {
 	 * @return Result
 	 */
 	int vkEnumerateDeviceLayerProperties(Handle device, IntByReference count, VkLayerProperties layers);
+
+	/**
+	 * Retrieves supported properties of the given format.
+	 * @param device		Physical device handle
+	 * @param format		Format
+	 * @param props			Format properties
+	 */
+	void vkGetPhysicalDeviceFormatProperties(Handle device, VkFormat format, VkFormatProperties props);
 }

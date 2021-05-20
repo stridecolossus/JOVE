@@ -33,7 +33,7 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryPropertyFlag> propert
 	 */
 	public MemoryType {
 		Check.zeroOrMore(index);
-		Check.notNull(properties);
+		properties = Check.notNull(properties);
 		heap.types.add(this);
 	}
 

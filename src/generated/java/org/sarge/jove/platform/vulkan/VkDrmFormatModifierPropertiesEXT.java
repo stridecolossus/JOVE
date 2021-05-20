@@ -20,5 +20,5 @@ public class VkDrmFormatModifierPropertiesEXT extends VulkanStructure {
 
 	public long drmFormatModifier;
 	public int drmFormatModifierPlaneCount;
-	public VkFormatFeatureFlag drmFormatModifierTilingFeatures;
+	public VkFormatFeature drmFormatModifierTilingFeatures;
 }

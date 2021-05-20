@@ -1,8 +1,6 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -68,10 +66,10 @@ public record Queue(Handle handle, DeviceContext device, Family family) implemen
 		 * @param count		Number of queues in this family
 		 * @param flags		Queue flags
 		 */
-		public Family(int index, int count, Set<VkQueueFlag> flags) {
-			this.index = zeroOrMore(index);
-			this.count = oneOrMore(count);
-			this.flags = Set.copyOf(flags);
+		public Family {
+			Check.zeroOrMore(index);
+			Check.oneOrMore(count);
+			flags = Set.copyOf(flags);
 		}
 
 		/**

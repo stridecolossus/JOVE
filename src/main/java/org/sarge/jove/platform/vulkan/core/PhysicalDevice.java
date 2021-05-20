@@ -16,14 +16,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkExtensionProperties;
-import org.sarge.jove.platform.vulkan.VkLayerProperties;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
-import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
-import org.sarge.jove.platform.vulkan.VkQueueFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
@@ -220,6 +213,17 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	public Set<ValidationLayer> layers() {
 		final VulkanFunction<VkLayerProperties> func = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(handle, count, array);
 		return ValidationLayer.enumerate(library(), func);
+	}
+
+	/**
+	 * Retrieves the supported properties of the given format.
+	 * @param format Format
+	 * @return Format properties
+	 */
+	public VkFormatProperties properties(VkFormat format) {
+		final var props = new VkFormatProperties();
+		library().vkGetPhysicalDeviceFormatProperties(handle, format, props);
+		return props;
 	}
 
 	@Override
