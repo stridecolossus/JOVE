@@ -29,10 +29,6 @@ core
 - swizzle & buffer image in one go?
 - DeviceFeatures - tests/annotations for required features? techniques -> materials ~ available features
 
-util
-- HandleArray can be Pointer[]? (tested in Command::free) however would like to explicitly have API methods with array signatures in this case 
-- Handle::toPointer dodgy
-
 scene
 - Sphere helper class, plus Sphere & centre point? integrate with SphereVolume
 - is Ray.Intersection what we actually need? would need ray + volume in intersection record to be useful in stream processing?

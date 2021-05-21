@@ -78,88 +78,6 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class DescriptorSet implements NativeObject {
-	/**
-	 * An <i>entry</i> holds the resource for a given binding in this descriptor set.
-	 */
-	public class Entry {
-		private final Binding binding;
-		private Resource res;
-		private boolean dirty = true;
-
-		/**
-		 * Constructor.
-		 * @param binding Resource binding
-		 */
-		private Entry(Binding binding) {
-			this.binding = notNull(binding);
-		}
-
-		/**
-		 * @return Whether this entry has been updated
-		 */
-		private boolean isDirty() {
-			if(dirty) {
-				dirty = false;
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-
-		/**
-		 * @return Resource for this binding entry
-		 */
-		public Optional<Resource> resource() {
-			return Optional.ofNullable(res);
-		}
-
-		/**
-		 * Sets the resource for this entry.
-		 * @param res Resource
-		 * @throws IllegalArgumentException if the type of resource does not match the binding
-		 */
-		public void set(Resource res) {
-			// Validate resource for this entry
-			if(res.type() != binding.type()) {
-				throw new IllegalArgumentException(String.format("Invalid resource type: expected=%s actual=%s", binding.type(), res.type()));
-			}
-
-			// Set resource and mark as updated
-			this.res = notNull(res);
-			this.dirty = true;
-		}
-
-		/**
-		 * Populates the write descriptor for this entry.
-		 * @param write Write descriptor
-		 */
-		private void populate(VkWriteDescriptorSet write) {
-			// Validate
-			if(res == null) {
-				throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%d", DescriptorSet.this, binding.index));
-			}
-
-			// Init write descriptor
-			write.dstBinding = binding.index();
-			write.descriptorType = binding.type();
-			write.dstSet = handle();
-			write.descriptorCount = 1; // TODO - res.size()
-			write.dstArrayElement = 0; // TODO
-
-			// Populate resource
-			res.populate(write);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("binding", binding.index())
-					.append("resource", res)
-					.build();
-		}
-	}
-
 	private final Handle handle;
 	private final Layout layout;
 	private final Map<Binding, Entry> entries;
@@ -262,6 +180,88 @@ public class DescriptorSet implements NativeObject {
 				.append("handle", handle)
 				.append("resources", entries.values())
 				.build();
+	}
+
+	/**
+	 * An <i>entry</i> holds the resource for a given binding in this descriptor set.
+	 */
+	public class Entry {
+		private final Binding binding;
+		private Resource res;
+		private boolean dirty = true;
+
+		/**
+		 * Constructor.
+		 * @param binding Resource binding
+		 */
+		private Entry(Binding binding) {
+			this.binding = notNull(binding);
+		}
+
+		/**
+		 * @return Whether this entry has been updated
+		 */
+		private boolean isDirty() {
+			if(dirty) {
+				dirty = false;
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+
+		/**
+		 * @return Resource for this binding entry
+		 */
+		public Optional<Resource> resource() {
+			return Optional.ofNullable(res);
+		}
+
+		/**
+		 * Sets the resource for this entry.
+		 * @param res Resource
+		 * @throws IllegalArgumentException if the type of resource does not match the binding
+		 */
+		public void set(Resource res) {
+			// Validate resource for this entry
+			if(res.type() != binding.type()) {
+				throw new IllegalArgumentException(String.format("Invalid resource type: expected=%s actual=%s", binding.type(), res.type()));
+			}
+
+			// Set resource and mark as updated
+			this.res = notNull(res);
+			this.dirty = true;
+		}
+
+		/**
+		 * Populates the write descriptor for this entry.
+		 * @param write Write descriptor
+		 */
+		private void populate(VkWriteDescriptorSet write) {
+			// Validate
+			if(res == null) {
+				throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%d", DescriptorSet.this, binding.index));
+			}
+
+			// Init write descriptor
+			write.dstBinding = binding.index();
+			write.descriptorType = binding.type();
+			write.dstSet = handle();
+			write.descriptorCount = 1; // TODO - res.size()
+			write.dstArrayElement = 0; // TODO
+
+			// Populate resource
+			res.populate(write);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append("binding", binding.index())
+					.append("resource", res)
+					.build();
+		}
 	}
 
 	/**
