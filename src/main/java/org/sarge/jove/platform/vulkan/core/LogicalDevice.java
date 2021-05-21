@@ -90,9 +90,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	private Queue create(int index, Queue.Family family) {
 		final PointerByReference queue = lib.factory().pointer();
 		lib.vkGetDeviceQueue(handle, family.index(), index, queue);
-
-		final Handle handle = new Handle(queue.getValue());
-		return new Queue(handle, this, family);
+		return new Queue(new Handle(queue.getValue()), this, family);
 	}
 
 	/**

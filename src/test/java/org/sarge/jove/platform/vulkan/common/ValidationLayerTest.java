@@ -84,12 +84,10 @@ public class ValidationLayerTest {
 
 	@Test
 	void enumerate() {
-		// Create library
+		// Init library
 		final var lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
-
-		// Init array length
 		final var count = new IntByReference(1);
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
 		when(lib.factory().integer()).thenReturn(count);
 
 		// Mock enumerate function

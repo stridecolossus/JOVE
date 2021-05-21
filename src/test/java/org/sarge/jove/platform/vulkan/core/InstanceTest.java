@@ -35,9 +35,9 @@ public class InstanceTest {
 	void before() {
 		// Init API
 		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
 
 		final Pointer ptr = new Pointer(1);
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
 		when(lib.factory().pointer()).thenReturn(new PointerByReference(ptr));
 		handle = new Handle(ptr);
 

@@ -23,7 +23,6 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 
 	private DeviceMemory mem;
 	private Pointer handle;
-	private PointerByReference ref;
 	private byte[] array;
 
 	@BeforeEach
@@ -31,10 +30,6 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		handle = mock(Pointer.class);
 		mem = new DefaultDeviceMemory(handle, dev, SIZE);
 		array = new byte[SIZE];
-		// TODO...
-		ref = mock(PointerByReference.class);
-		when(lib.factory().pointer()).thenReturn(ref);
-		when(ref.getValue()).thenReturn(mock(Pointer.class));
 	}
 
 	@Test
@@ -51,7 +46,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			final Sink region = mem.map();
 			assertNotNull(region);
 			assertEquals(true, mem.isMapped());
-			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, SIZE, 0, ref);
+			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, SIZE, 0, POINTER);
 		}
 
 		@Test
@@ -59,7 +54,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			final Sink region = mem.map(2, 1);
 			assertNotNull(region);
 			assertEquals(true, mem.isMapped());
-			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 1, 2, 0, ref);
+			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 1, 2, 0, POINTER);
 		}
 
 		@Test
@@ -83,16 +78,23 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	@Nested
 	class MappedRegionTests {
 		private Sink region;
+		private Pointer ptr;
 
 		@BeforeEach
 		void before() {
+			final PointerByReference ref = mock(PointerByReference.class);
+			when(lib.factory().pointer()).thenReturn(ref);
+
+			ptr = mock(Pointer.class);
+			when(ref.getValue()).thenReturn(ptr);
+
 			region = mem.map();
 		}
 
 		@Test
 		void array() {
 			region.write(array);
-			verify(ref.getValue()).write(0, array, 0, array.length);
+			verify(ptr).write(0, array, 0, array.length);
 		}
 
 		@Test
@@ -116,7 +118,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		void buffer() {
 			// Create destination buffer
 			final ByteBuffer dest = mock(ByteBuffer.class);
-			when(ref.getValue().getByteBuffer(0, SIZE)).thenReturn(dest);
+			when(ptr.getByteBuffer(0, SIZE)).thenReturn(dest);
 
 			// Write buffer
 			final ByteBuffer src = ByteBuffer.wrap(array);

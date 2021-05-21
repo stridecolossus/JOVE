@@ -15,7 +15,6 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 
 public class QueueTest extends AbstractVulkanTest {
 	private Queue queue;
@@ -50,16 +49,12 @@ public class QueueTest extends AbstractVulkanTest {
 	void isPresentationSupported() {
 		// Mock physical device
 		final DeviceContext ctx = mock(DeviceContext.class);
-		when(ctx.handle()).thenReturn(new Handle(new Pointer(4)));
+		when(ctx.handle()).thenReturn(DEVICE);
 		when(ctx.library()).thenReturn(lib);
-
-		// Init supported by-return flag
-		final IntByReference ref = new IntByReference(1);
-		when(lib.factory().integer()).thenReturn(ref);
 
 		// Check API
 		final Handle surface = new Handle(new Pointer(5));
 		assertEquals(true, family.isPresentationSupport(dev, surface));
-		verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(ctx.handle(), 1, surface, ref);
+		verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(DEVICE, 1, surface, INTEGER);
 	}
 }

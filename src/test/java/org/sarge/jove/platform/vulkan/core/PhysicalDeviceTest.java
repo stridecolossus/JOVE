@@ -44,6 +44,7 @@ public class PhysicalDeviceTest {
 		// Create Vulkan
 		lib = mock(VulkanLibrary.class);
 		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
+		when(lib.factory().integer()).thenReturn(new IntByReference());
 
 		// Create an instance
 		instance = mock(Instance.class);
@@ -127,13 +128,11 @@ public class PhysicalDeviceTest {
 
 	@Test
 	void extensions() {
-		when(lib.factory().integer()).thenReturn(new IntByReference());
 		assertEquals(Set.of(), dev.extensions());
 	}
 
 	@Test
 	void layers() {
-		when(lib.factory().integer()).thenReturn(new IntByReference());
 		assertEquals(Set.of(), dev.layers());
 	}
 

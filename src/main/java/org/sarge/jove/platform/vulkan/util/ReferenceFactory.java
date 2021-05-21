@@ -23,7 +23,7 @@ public interface ReferenceFactory {
 	 * @param num Array size
 	 * @return New pointer array
 	 */
-	Pointer[] pointers(int num);
+	Pointer[] array(int num);
 
 	/**
 	 * Default implementation.
@@ -40,7 +40,7 @@ public interface ReferenceFactory {
 		}
 
 		@Override
-		public Pointer[] pointers(int num) {
+		public Pointer[] array(int num) {
 			return new Pointer[num];
 		}
 	};

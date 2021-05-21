@@ -30,7 +30,6 @@ import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class DescriptorTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
@@ -182,10 +181,9 @@ public class DescriptorTest extends AbstractVulkanTest {
 
 			// Check API
 			final ArgumentCaptor<VkImageCreateInfo> captor = ArgumentCaptor.forClass(VkImageCreateInfo.class);
-			final PointerByReference ref = lib.factory().pointer();
-			verify(lib).vkCreateImage(eq(dev.handle()), captor.capture(), isNull(), eq(ref));
-			verify(lib).vkGetImageMemoryRequirements(eq(dev.handle()), eq(ref.getValue()), any(VkMemoryRequirements.class));
-			verify(lib).vkBindImageMemory(eq(dev.handle()), eq(ref.getValue()), any(Handle.class), eq(0L));
+			verify(lib).vkCreateImage(eq(dev.handle()), captor.capture(), isNull(), eq(POINTER));
+			verify(lib).vkGetImageMemoryRequirements(eq(dev.handle()), eq(POINTER.getValue()), any(VkMemoryRequirements.class));
+			verify(lib).vkBindImageMemory(eq(dev.handle()), eq(POINTER.getValue()), any(Handle.class), eq(0L));
 
 			// Check create descriptor
 			final VkImageCreateInfo info = captor.getValue();

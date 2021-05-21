@@ -247,7 +247,7 @@ public interface Command {
 			// Allocate buffers
 			final DeviceContext dev = queue.device();
 			final VulkanLibrary lib = dev.library();
-			final Pointer[] handles = lib.factory().pointers(num);
+			final Pointer[] handles = lib.factory().array(num);
 			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
 
 			// Create buffers

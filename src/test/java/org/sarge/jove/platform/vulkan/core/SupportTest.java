@@ -20,16 +20,10 @@ public class SupportTest {
 
 	@BeforeEach
 	void before() {
-		// Init Vulkan
 		lib = mock(VulkanLibrary.class);
-
-		// Init reference factory
-		final var factory = mock(ReferenceFactory.class);
-		when(lib.factory()).thenReturn(factory);
-
-		// Create array length
 		count = new IntByReference();
-		when(factory.integer()).thenReturn(count);
+		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
+		when(lib.factory().integer()).thenReturn(count);
 	}
 
 	@Test

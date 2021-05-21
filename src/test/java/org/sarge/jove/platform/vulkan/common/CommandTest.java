@@ -29,7 +29,6 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 class CommandTest extends AbstractVulkanTest {
 	private Command cmd;
@@ -164,8 +163,7 @@ class CommandTest extends AbstractVulkanTest {
 		void descriptor() {
 			// Check allocator
 			final ArgumentCaptor<VkCommandPoolCreateInfo> captor = ArgumentCaptor.forClass(VkCommandPoolCreateInfo.class);
-			final PointerByReference handle = lib.factory().pointer();
-			verify(lib).vkCreateCommandPool(eq(dev.handle()), captor.capture(), isNull(), eq(handle));
+			verify(lib).vkCreateCommandPool(eq(dev.handle()), captor.capture(), isNull(), eq(POINTER));
 
 			// Check descriptor
 			final VkCommandPoolCreateInfo info = captor.getValue();

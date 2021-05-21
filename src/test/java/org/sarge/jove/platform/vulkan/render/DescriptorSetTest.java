@@ -34,7 +34,6 @@ import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Resource;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
-import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Binding;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Entry;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
@@ -213,9 +212,6 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void allocate() {
-			// Mock returned sets
-			when(lib.factory().pointers(2)).thenReturn(new Pointer[]{new Pointer(3)});
-
 			// Allocate some sets
 			final var sets = pool.allocate(List.of(layout));
 			assertNotNull(sets);

@@ -197,7 +197,7 @@ public class Pipeline extends AbstractVulkanObject {
 
 			// Allocate pipeline
 			final VulkanLibrary lib = dev.library();
-			final Pointer[] pipelines = lib.factory().pointers(1);
+			final Pointer[] pipelines = lib.factory().array(1);
 			check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 			// Create pipeline

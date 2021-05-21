@@ -310,20 +310,21 @@ public class DescriptorSet implements NativeObject {
 		 */
 		public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
 			// Check pool size
-			if(sets.size() + layouts.size() > max) {
+			final int size = layouts.size();
+			if(sets.size() + size > max) {
 				throw new IllegalArgumentException("Number of descriptor sets exceeds the maximum for this pool");
 			}
 
 			// Build allocation descriptor
 			final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
 			info.descriptorPool = this.handle();
-			info.descriptorSetCount = layouts.size();
+			info.descriptorSetCount = size;
 			info.pSetLayouts = Handle.toArray(layouts);
 
 			// Allocate descriptors sets
 			final DeviceContext dev = this.device();
 			final VulkanLibrary lib = dev.library();
-			final Pointer[] handles = lib.factory().pointers(layouts.size());
+			final Pointer[] handles = lib.factory().array(size);
 			check(lib.vkAllocateDescriptorSets(dev.handle(), info, handles));
 
 			// Create descriptor sets

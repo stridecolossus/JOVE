@@ -4,8 +4,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,8 +17,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
@@ -29,7 +27,7 @@ import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.Structure;
 
 public class ImageTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
@@ -144,36 +142,35 @@ public class ImageTest extends AbstractVulkanTest {
 
 			// Check image
 			assertNotNull(image);
-			assertNotNull(image.handle());
+			assertEquals(new Handle(POINTER.getValue()), image.handle());
 			assertEquals(descriptor, image.descriptor());
 			assertEquals(dev, image.device());
 			assertEquals(false, image.isDestroyed());
 
-			// Check API
-			final ArgumentCaptor<VkImageCreateInfo> captor = ArgumentCaptor.forClass(VkImageCreateInfo.class);
-			final PointerByReference ref = lib.factory().pointer();
-			verify(lib).vkCreateImage(eq(dev.handle()), captor.capture(), isNull(), eq(ref));
-			verify(lib).vkGetImageMemoryRequirements(eq(dev.handle()), eq(ref.getValue()), any(VkMemoryRequirements.class));
-			verify(lib).vkBindImageMemory(eq(dev.handle()), eq(ref.getValue()), any(Handle.class), eq(0L));
+			// Check create image API
+			final VkImageCreateInfo info = new VkImageCreateInfo() {
+				@Override
+				public boolean equals(Object o) {
+					return dataEquals((Structure) o);
+				}
+			};
+			info.imageType = descriptor.type();
+			info.format = descriptor.format();
+			info.extent = descriptor.extents().toExtent3D();
+			info.mipLevels = descriptor.levels();
+			info.arrayLayers = descriptor.layers();
+			info.samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1;
+			info.tiling = VkImageTiling.LINEAR;
+			info.initialLayout = VkImageLayout.PREINITIALIZED;
+			info.usage = IntegerEnumeration.mask(props.usage());
+			info.sharingMode = props.mode();
+			verify(lib).vkCreateImage(DEVICE, info, null, POINTER);
 
-			// Check create descriptor
-			final VkImageCreateInfo info = captor.getValue();
-			assertNotNull(info);
-			assertEquals(IMAGE_TYPE_2D, info.imageType);
-			assertEquals(FORMAT, info.format);
-			assertEquals(2, info.mipLevels);
-			assertEquals(3, info.arrayLayers);
-			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_4, info.samples);
-			assertEquals(VkImageTiling.LINEAR, info.tiling);
-			assertEquals(VkImageLayout.PREINITIALIZED, info.initialLayout);
-			assertEquals(VkImageUsage.COLOR_ATTACHMENT.value(), info.usage);
-			assertEquals(VkSharingMode.CONCURRENT, info.sharingMode);
+			// TODO
+			//verify(lib).vkGetImageMemoryRequirements(DEVICE, POINTER.getValue(), new VkMemoryRequirements());
 
-			// Check extents
-			assertNotNull(info.extent);
-			assertEquals(3, info.extent.width);
-			assertEquals(4, info.extent.height);
-			assertEquals(1, info.extent.depth);
+			// Check bind memory API
+			verify(lib).vkBindImageMemory(DEVICE, POINTER.getValue(), mem.handle(), 0L);
 		}
 
 		@Test
