@@ -1,9 +1,9 @@
 package org.sarge.jove.common;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.util.Arrays;
 import java.util.Collection;
-
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.Memory;
@@ -22,8 +22,7 @@ public final class Handle {
 	 * @param objects Native objects
 	 * @return Handle array
 	 */
-	@Deprecated // TODO - remove
-	public static HandleArray toArray(Collection<? extends NativeObject> objects) {
+	public static Handle toArray(Collection<? extends NativeObject> objects) {
 		// Check for empty data
 		if(objects.isEmpty()) {
 			return null;
@@ -36,11 +35,9 @@ public final class Handle {
 				.map(handle -> handle.handle)
 				.toArray(Pointer[]::new);
 
-		// Create JNA wrapper
-		return new HandleArray(array);
+		// Create handle
+		return new Handle(new PointerArray(array));
 	}
-	// TODO
-	// - JNA already deals with Pointer[], no need for additional wrapper?
 
 	private final Pointer handle;
 
@@ -49,16 +46,7 @@ public final class Handle {
 	 * @param handle Pointer handle
 	 */
 	public Handle(Pointer handle) {
-		Check.notNull(handle);
-		this.handle = new Pointer(Pointer.nativeValue(handle));
-	}
-
-	/**
-	 * @return Copy of the underlying JNA pointer
-	 */
-	@Deprecated // TODO - remove
-	public Pointer toPointer() {
-		return new Pointer(Pointer.nativeValue(handle));
+		this.handle = notNull(handle);
 	}
 
 	@Override
@@ -110,13 +98,12 @@ public final class Handle {
 	};
 
 	/**
-	 * Array of handles.
+	 * Array wrapper.
 	 */
-	@Deprecated // TODO - remove
-	public static class HandleArray extends Memory {
+	private static class PointerArray extends Memory {
 		private final Pointer[] array;
 
-		private HandleArray(Pointer[] array) {
+		private PointerArray(Pointer[] array) {
 			super(Native.POINTER_SIZE * array.length);
 			for(int n = 0; n < array.length; ++n) {
 				setPointer(n * Native.POINTER_SIZE, array[n]);
@@ -126,7 +113,7 @@ public final class Handle {
 
 		@Override
 		public boolean equals(Object obj) {
-			return (obj instanceof HandleArray that) && Arrays.equals(array, that.array);
+			return (obj == this) || (obj instanceof PointerArray that) && Arrays.equals(this.array, that.array);
 		}
 	}
 }

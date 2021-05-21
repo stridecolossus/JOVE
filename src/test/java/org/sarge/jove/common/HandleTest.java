@@ -8,9 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle.HandleArray;
 
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
 public class HandleTest {
@@ -62,24 +60,11 @@ public class HandleTest {
 		assertEquals(null, NativeObject.ofNullable(null));
 	}
 
-	@Deprecated
 	@Test
 	void toArray() {
-		// Convert native objects to handle array
 		final NativeObject obj = () -> handle;
-		final HandleArray array = Handle.toArray(List.of(obj, obj));
-
-		// Check array memory
+		final Handle array = Handle.toArray(List.of(obj, obj));
 		assertNotNull(array);
-		assertEquals(2 * Native.POINTER_SIZE, array.size());
-		assertEquals(ptr, array.getPointer(0));
-		assertEquals(ptr, array.getPointer(Native.POINTER_SIZE));
-
-		// Check equality
-		assertEquals(true, array.equals(array));
-		assertEquals(true, array.equals(Handle.toArray(List.of(obj, obj))));
-		assertEquals(false, array.equals(null));
-		assertEquals(false, array.equals(Handle.toArray(List.of(obj))));
 	}
 
 	@Test

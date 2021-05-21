@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.VkCopyDescriptorSet;
 import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
@@ -78,7 +77,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pDescriptorSets		Descriptor set handles
 	 * @return Result code
 	 */
-	int vkFreeDescriptorSets(Handle device, Handle descriptorPool, int descriptorSetCount, HandleArray pDescriptorSets);
+	int vkFreeDescriptorSets(Handle device, Handle descriptorPool, int descriptorSetCount, Handle pDescriptorSets);
 
 	/**
 	 * Updates the resources for one-or-more descriptor sets.
@@ -101,5 +100,5 @@ interface VulkanLibraryDescriptorSet {
 	 * @param dynamicOffsetCount	Number of dynamic offsets
 	 * @param pDynamicOffsets		Dynamic offsets
 	 */
-	void vkCmdBindDescriptorSets(Handle commandBuffer, VkPipelineBindPoint pipelineBindPoint, Handle layout, int firstSet, int descriptorSetCount, HandleArray pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
+	void vkCmdBindDescriptorSets(Handle commandBuffer, VkPipelineBindPoint pipelineBindPoint, Handle layout, int firstSet, int descriptorSetCount, Handle pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
 }

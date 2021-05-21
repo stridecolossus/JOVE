@@ -22,5 +22,5 @@ public class VkDescriptorSetAllocateInfo extends VulkanStructure {
 	public Pointer pNext;
 	public Handle descriptorPool;
 	public int descriptorSetCount;
-	public Pointer pSetLayouts;
+	public Handle pSetLayouts;
 }

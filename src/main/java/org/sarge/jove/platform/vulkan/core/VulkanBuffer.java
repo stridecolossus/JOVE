@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.Handle.HandleArray;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -159,7 +158,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	public Command bindVertexBuffer() {
 		require(VkBufferUsage.VERTEX_BUFFER);
 		// TODO - support binding multiple VBO
-		final HandleArray array = Handle.toArray(List.of(this));
+		final Handle array = Handle.toArray(List.of(this));
 		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
 	}
 

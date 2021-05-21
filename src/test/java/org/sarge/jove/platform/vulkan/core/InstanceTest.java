@@ -27,6 +27,8 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class InstanceTest {
+	private static final Pointer POINTER = new Pointer(1);
+
 	private VulkanLibrary lib;
 	private Instance instance;
 	private Handle handle;
@@ -36,10 +38,9 @@ public class InstanceTest {
 		// Init API
 		lib = mock(VulkanLibrary.class);
 
-		final Pointer ptr = new Pointer(1);
 		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
-		when(lib.factory().pointer()).thenReturn(new PointerByReference(ptr));
-		handle = new Handle(ptr);
+		when(lib.factory().pointer()).thenReturn(new PointerByReference(POINTER));
+		handle = new Handle(POINTER);
 
 		// Create instance
 		instance = new Instance.Builder()
@@ -108,12 +109,12 @@ public class InstanceTest {
 		// Attach a handler
 		final VkDebugUtilsMessengerCreateInfoEXT handler = new VkDebugUtilsMessengerCreateInfoEXT();
 		instance.attach(handler);
-		verify(func).invokeInt(new Object[]{handle.toPointer(), handler, null, lib.factory().pointer()});
+		verify(func).invokeInt(new Object[]{POINTER, handler, null, lib.factory().pointer()});
 
 		// Destroy instance and check handler is also destroyed
 		when(lib.vkGetInstanceProcAddr(handle, "vkDestroyDebugUtilsMessengerEXT")).thenReturn(func);
 		instance.destroy();
-		verify(func).invoke(new Object[]{handle.toPointer(), lib.factory().pointer().getValue(), null});
+		verify(func).invoke(new Object[]{POINTER, lib.factory().pointer().getValue(), null});
 	}
 
 	@Tag(AbstractVulkanTest.INTEGRATION_TEST)

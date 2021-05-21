@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.Handle.HandleArray;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
@@ -70,7 +69,7 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the API method fails
 	 */
 	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
-		final HandleArray array = Handle.toArray(fences);
+		final Handle array = Handle.toArray(fences);
 		final VulkanLibrary lib = dev.library();
 		check(lib.vkWaitForFences(dev.handle(), fences.size(), array, VulkanBoolean.of(all), timeout));
 	}

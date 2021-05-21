@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
@@ -24,9 +25,9 @@ public class VkPresentInfoKHR extends VulkanStructure implements ByReference {
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	public Pointer pNext;
 	public int waitSemaphoreCount;
-	public Pointer pWaitSemaphores;
+	public Handle pWaitSemaphores;
 	public int swapchainCount;
-	public Pointer pSwapchains;
+	public Handle pSwapchains;
 	public Pointer pImageIndices;
 	public Pointer pResults;
 }

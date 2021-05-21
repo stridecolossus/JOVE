@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.api;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.Handle.HandleArray;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
@@ -56,7 +55,7 @@ interface VulkanLibrarySynchronize {
 	 * @param pFences			Fences
 	 * @return Result code
 	 */
-	int vkResetFences(Handle device, int fenceCount, HandleArray pFences);
+	int vkResetFences(Handle device, int fenceCount, Handle pFences);
 
 	/**
 	 * Retrieves the status of a given fence.
@@ -76,5 +75,5 @@ interface VulkanLibrarySynchronize {
 	 * @param timeout			Timeout or {@link Long#MAX_VALUE}
 	 * @return Result code
 	 */
-	int vkWaitForFences(Handle device, int fenceCount, HandleArray pFences, VulkanBoolean waitAll, long timeout);
+	int vkWaitForFences(Handle device, int fenceCount, Handle pFences, VulkanBoolean waitAll, long timeout);
 }

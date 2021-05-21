@@ -34,6 +34,7 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
+	private final Pointer ptr;
 	private final Supplier<Function> create = new LazySupplier<>(() -> function("vkCreateDebugUtilsMessengerEXT"));
 	private final Collection<Pointer> handlers = new ArrayList<>();
 
@@ -45,6 +46,7 @@ public class Instance extends AbstractTransientNativeObject {
 	private Instance(VulkanLibrary lib, Pointer handle) {
 		super(new Handle(handle));
 		this.lib = notNull(lib);
+		this.ptr = notNull(handle);
 	}
 
 	/**
@@ -81,7 +83,7 @@ public class Instance extends AbstractTransientNativeObject {
 	 */
 	public void attach(VkDebugUtilsMessengerCreateInfoEXT handler) {
 		final PointerByReference handle = lib.factory().pointer();
-		final Object[] args = {super.handle.toPointer(), handler, null, handle};
+		final Object[] args = {ptr, handler, null, handle};
 		check(create.get().invokeInt(args));
 		handlers.add(handle.getValue());
 	}
@@ -89,7 +91,6 @@ public class Instance extends AbstractTransientNativeObject {
 	@Override
 	protected void release() {
 		if(!handlers.isEmpty()) {
-			final Pointer ptr = super.handle.toPointer();
 			final Function destroy = function("vkDestroyDebugUtilsMessengerEXT");
 			for(Pointer handle : handlers) {
 				final Object[] args = {ptr, handle, null};

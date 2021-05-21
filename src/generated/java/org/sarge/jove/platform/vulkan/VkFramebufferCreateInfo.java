@@ -4,7 +4,6 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,15 +22,12 @@ import com.sun.jna.Structure.FieldOrder;
 	"layers"
 })
 public class VkFramebufferCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkFramebufferCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkFramebufferCreateInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public Handle renderPass;
 	public int attachmentCount;
-	public Pointer pAttachments;
+	public Handle pAttachments;
 	public int width;
 	public int height;
 	public int layers;
