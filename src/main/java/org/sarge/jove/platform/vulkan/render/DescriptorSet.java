@@ -41,10 +41,8 @@ import com.sun.jna.ptr.PointerByReference;
 /**
  * A <i>descriptor set</i> specifies resources used during rendering, such as samplers and uniform buffers.
  * <p>
- * Example for a fragment shader texture sampler:
+ * Example for a texture sampler:
  * <pre>
- * 	LogicalDevice dev = ...
- *
  *  // Define binding for a sampler at binding zero
  *  Binding binding = new Binding.Builder()
  * 		.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
@@ -61,7 +59,7 @@ import com.sun.jna.ptr.PointerByReference;
  *  	.build();
  *
  *  // Create descriptors
- *  List<DescriptorSet> descriptors = pool.allocate(layout, 3);
+ *  List descriptors = pool.allocate(layout, 3);
  *
  *  // Create a descriptor set resource
  *  View view = ...
@@ -78,6 +76,91 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class DescriptorSet implements NativeObject {
+	/**
+	 * A <i>descriptor set binding</i> defines a binding for a descriptor set {@link Layout}.
+	 */
+	public static record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
+		/**
+		 * Constructor.
+		 * @param index			Binding index
+		 * @param type			Descriptor type
+		 * @param count			Array size
+		 * @param stages		Pipeline stage flags
+		 * @throws IllegalArgumentException if the pipeline {@link #stages} is empty
+		 */
+		public Binding {
+			if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stages specified for binding");
+			Check.zeroOrMore(index);
+			Check.notNull(type);
+			Check.oneOrMore(count);
+			stages = Set.copyOf(stages);
+		}
+
+		/**
+		 * Populates a layout binding descriptor.
+		 */
+		private void populate(VkDescriptorSetLayoutBinding info) {
+			info.binding = index;
+			info.descriptorType = type;
+			info.descriptorCount = count;
+			info.stageFlags = IntegerEnumeration.mask(stages);
+		}
+
+		/**
+		 * Builder for a layout binding.
+		 */
+		public static class Builder {
+			private int binding;
+			private VkDescriptorType type;
+			private int count = 1;
+			private final Set<VkShaderStageFlag> stages = new HashSet<>();
+
+			/**
+			 * Sets the index of this binding.
+			 * @param binding Binding index
+			 */
+			public Builder binding(int binding) {
+				this.binding = zeroOrMore(binding);
+				return this;
+			}
+
+			/**
+			 * Sets the descriptor type for this binding.
+			 * @param type Descriptor type
+			 */
+			public Builder type(VkDescriptorType type) {
+				this.type = notNull(type);
+				return this;
+			}
+
+			/**
+			 * Sets the array count of this binding.
+			 * @param count Array count
+			 */
+			public Builder count(int count) {
+				this.count = oneOrMore(count);
+				return this;
+			}
+
+			/**
+			 * Adds a shader stage to this binding.
+			 * @param stage Shader stage
+			 */
+			public Builder stage(VkShaderStageFlag stage) {
+				stages.add(notNull(stage));
+				return this;
+			}
+
+			/**
+			 * Constructs this binding.
+			 * @return New layout binding
+			 */
+			public Binding build() {
+				return new Binding(binding, type, count, stages);
+			}
+		}
+	}
+
 	private final Handle handle;
 	private final Layout layout;
 	private final Map<Binding, Entry> entries;
@@ -489,91 +572,6 @@ public class DescriptorSet implements NativeObject {
 			private static void populate(Map.Entry<VkDescriptorType, Integer> entry, VkDescriptorPoolSize size) {
 				size.type = entry.getKey();
 				size.descriptorCount = entry.getValue();
-			}
-		}
-	}
-
-	/**
-	 * A <i>descriptor set binding</i> defines a binding for a descriptor set {@link Layout}.
-	 */
-	public static record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
-		/**
-		 * Constructor.
-		 * @param index			Binding index
-		 * @param type			Descriptor type
-		 * @param count			Array size
-		 * @param stages		Pipeline stage flags
-		 * @throws IllegalArgumentException if the pipeline {@link #stages} is empty
-		 */
-		public Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
-			if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stages specified for binding");
-			this.index = zeroOrMore(index);
-			this.type = notNull(type);
-			this.count = oneOrMore(count);
-			this.stages = Set.copyOf(stages);
-		}
-
-		/**
-		 * Populates a layout binding descriptor.
-		 */
-		private void populate(VkDescriptorSetLayoutBinding info) {
-			info.binding = index;
-			info.descriptorType = type;
-			info.descriptorCount = count;
-			info.stageFlags = IntegerEnumeration.mask(stages);
-		}
-
-		/**
-		 * Builder for a layout binding.
-		 */
-		public static class Builder {
-			private int binding;
-			private VkDescriptorType type;
-			private int count = 1;
-			private final Set<VkShaderStageFlag> stages = new HashSet<>();
-
-			/**
-			 * Sets the index of this binding.
-			 * @param binding Binding index
-			 */
-			public Builder binding(int binding) {
-				this.binding = zeroOrMore(binding);
-				return this;
-			}
-
-			/**
-			 * Sets the descriptor type for this binding.
-			 * @param type Descriptor type
-			 */
-			public Builder type(VkDescriptorType type) {
-				this.type = notNull(type);
-				return this;
-			}
-
-			/**
-			 * Sets the array count of this binding.
-			 * @param count Array count
-			 */
-			public Builder count(int count) {
-				this.count = oneOrMore(count);
-				return this;
-			}
-
-			/**
-			 * Adds a shader stage to this binding.
-			 * @param stage Shader stage
-			 */
-			public Builder stage(VkShaderStageFlag stage) {
-				stages.add(notNull(stage));
-				return this;
-			}
-
-			/**
-			 * Constructs this binding.
-			 * @return New layout binding
-			 */
-			public Binding build() {
-				return new Binding(binding, type, count, stages);
 			}
 		}
 	}

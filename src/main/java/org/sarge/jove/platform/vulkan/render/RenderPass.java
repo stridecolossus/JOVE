@@ -3,13 +3,13 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -22,12 +22,14 @@ import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.util.StructureHelper;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>render pass</i> specifies how attachments are managed during rendering.
+ * TODO
  * @author Sarge
  */
 public class RenderPass extends AbstractVulkanObject {
@@ -41,24 +43,24 @@ public class RenderPass extends AbstractVulkanObject {
 	 */
 	public static final Command END_COMMAND = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 
-	private final int count;
+	private final List<Attachment> attachments;
 
 	/**
 	 * Constructor.
-	 * @param handle		Render pass handle
-	 * @param dev			Logical device
-	 * @param count			Number of attachments
+	 * @param handle			Render pass handle
+	 * @param dev				Logical device
+	 * @param attachments		Attachments
 	 */
-	RenderPass(Pointer handle, LogicalDevice dev, int count) {
+	private RenderPass(Pointer handle, LogicalDevice dev, List<Attachment> attachments) {
 		super(handle, dev);
-		this.count = oneOrMore(count);
+		this.attachments = List.copyOf(attachments);
 	}
 
 	/**
 	 * @return Number of attachments
 	 */
-	public int count() {
-		return count;
+	public List<Attachment> attachments() {
+		return attachments;
 	}
 
 	/**
@@ -102,27 +104,12 @@ public class RenderPass extends AbstractVulkanObject {
 	 * Builder for a render pass.
 	 */
 	public static class Builder {
-		private final LogicalDevice dev;
-		private final List<AttachmentBuilder> attachments = new ArrayList<>();
+		private final List<Attachment> attachments = new ArrayList<>();
 		private final List<SubPassBuilder> subpasses = new ArrayList<>();
 		private final List<DependencyBuilder> dependencies = new ArrayList<>();
 
 		/**
-		 * Constructor.
-		 * @param dev Logical device
-		 */
-		public Builder(LogicalDevice dev) {
-			this.dev = notNull(dev);
-		}
-
-		/**
-		 * @return New attachment builder
-		 */
-		public AttachmentBuilder attachment() {
-			return new AttachmentBuilder();
-		}
-
-		/**
+		 * Starts a sub-pass.
 		 * @return New sub-pass builder
 		 */
 		public SubPassBuilder subpass() {
@@ -133,37 +120,59 @@ public class RenderPass extends AbstractVulkanObject {
 		 * Starts a new sub-pass dependency.
 		 * <p>
 		 * The special case {@link RenderPass#VK_SUBPASS_EXTERNAL} index is used for the implicit sub-pass before or after the render pass.
+		 * <p>
 		 * @param src		Source index
 		 * @param dest		Destination index
 		 * @return New dependency builder
 		 * @throws IllegalArgumentException if the source index is greater-than the destination
 		 */
 		public DependencyBuilder dependency(int src, int dest) {
-			return new DependencyBuilder(src, dest);
+			final var dep = new DependencyBuilder(src, dest);
+			dependencies.add(dep);
+			return dep;
+		}
+
+		/**
+		 * Populates (actually clones) an attachment descriptor.
+		 * @param attachment		Attachment
+		 * @param desc 				Attachment descriptor
+		 */
+		private static void populate(Attachment attachment, VkAttachmentDescription desc) {
+			final VkAttachmentDescription copy = attachment.descriptor();
+			desc.format = copy.format;
+			desc.samples = copy.samples;
+			desc.loadOp = copy.loadOp;
+			desc.storeOp = copy.storeOp;
+			desc.stencilLoadOp = copy.stencilLoadOp;
+			desc.stencilStoreOp = copy.stencilStoreOp;
+			desc.initialLayout = copy.initialLayout;
+			desc.finalLayout = copy.finalLayout;
 		}
 
 		/**
 		 * Constructs this render pass.
+		 * @param dev Logical device
 		 * @return New render pass
 		 */
-		public RenderPass build() {
+		public RenderPass build(LogicalDevice dev) {
+			// Validate
+			if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
+			assert !attachments.isEmpty();
+
 			// Create render pass descriptor
 			final VkRenderPassCreateInfo info = new VkRenderPassCreateInfo();
 
 			// Add attachments
-			if(attachments.isEmpty()) throw new IllegalArgumentException("At least one attachment must be specified");
 			info.attachmentCount = attachments.size();
-			info.pAttachments = StructureHelper.first(attachments, VkAttachmentDescription::new, AttachmentBuilder::populate);
+			info.pAttachments = StructureHelper.first(attachments, VkAttachmentDescription::new, Builder::populate);
 
 			// Add sub-passes
-			if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
 			info.subpassCount = subpasses.size();
 			info.pSubpasses = StructureHelper.first(subpasses, VkSubpassDescription::new, SubPassBuilder::populate);
 
 			// Add dependencies
 			info.dependencyCount = dependencies.size();
 			info.pDependencies = StructureHelper.first(dependencies, VkSubpassDependency::new, DependencyBuilder::populate);
-			// TODO - enforce number of dependencies = subpass + before + after?
 
 			// Allocate render pass
 			final VulkanLibrary lib = dev.library();
@@ -171,165 +180,25 @@ public class RenderPass extends AbstractVulkanObject {
 			check(lib.vkCreateRenderPass(dev.handle(), info, null, pass));
 
 			// Create render pass
-			return new RenderPass(pass.getValue(), dev, attachments.size());
-		}
-
-		/**
-		 * Builder for a render pass attachment.
-		 */
-		public class AttachmentBuilder {
-			private VkFormat format;
-			private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1;
-			private VkAttachmentLoadOp loadOp = VkAttachmentLoadOp.DONT_CARE;
-			private VkAttachmentStoreOp storeOp = VkAttachmentStoreOp.DONT_CARE;
-			private VkAttachmentLoadOp stencilLoadOp = VkAttachmentLoadOp.DONT_CARE;
-			private VkAttachmentStoreOp stencilStoreOp = VkAttachmentStoreOp.DONT_CARE;
-			private VkImageLayout initialLayout = VkImageLayout.UNDEFINED;
-			private VkImageLayout finalLayout;
-
-			/**
-			 * Sets the attachment format (usually the same as the swap-chain).
-			 * @param format Attachment format
-			 */
-			public AttachmentBuilder format(VkFormat format) {
-				// TODO - check undefined? or is that valid?
-				this.format = notNull(format);
-				return this;
-			}
-
-			/**
-			 * Sets the number of samples.
-			 * @param samples Number of samples
-			 */
-			public AttachmentBuilder samples(VkSampleCountFlag samples) {
-				this.samples = notNull(samples);
-				return this;
-			}
-
-			/**
-			 * Sets the attachment load operation (before rendering).
-			 * @param op Load operation
-			 */
-			public AttachmentBuilder load(VkAttachmentLoadOp op) {
-				this.loadOp = notNull(op);
-				return this;
-			}
-
-			/**
-			 * Sets the attachment store operation (after rendering).
-			 * @param op Store operation
-			 */
-			public AttachmentBuilder store(VkAttachmentStoreOp op) {
-				this.storeOp = notNull(op);
-				return this;
-			}
-
-			/**
-			 * Sets the initial image layout.
-			 * @param layout Initial image layout
-			 */
-			public AttachmentBuilder initialLayout(VkImageLayout layout) {
-				this.initialLayout = notNull(layout);
-				return this;
-			}
-
-			/**
-			 * Sets the final image layout.
-			 * @param layout final image layout
-			 */
-			public AttachmentBuilder finalLayout(VkImageLayout layout) {
-				if((layout == VkImageLayout.UNDEFINED) || (layout == VkImageLayout.PREINITIALIZED)) {
-					throw new IllegalArgumentException("Invalid final layout: " + layout);
-				}
-				this.finalLayout = notNull(layout);
-				return this;
-			}
-
-			/**
-			 * Populates the descriptor for this attachment.
-			 * @param Attachment descriptor
-			 */
-			void populate(VkAttachmentDescription desc) {
-				desc.format = format;
-				desc.samples = samples;
-				desc.loadOp = loadOp;
-				desc.storeOp = storeOp;
-				desc.stencilLoadOp = stencilLoadOp;
-				desc.stencilStoreOp = stencilStoreOp;
-				desc.initialLayout = initialLayout;
-				desc.finalLayout = finalLayout;
-			}
-
-			/**
-			 * Constructs this attachment.
-			 * @throws IllegalArgumentException if the attachment format or final layout has not been specified
-			 * @throws IllegalArgumentException if the format is invalid for the final layout
-			 */
-			public Builder build() {
-				if(format == null) throw new IllegalArgumentException("No format specified for attachment");
-				if(finalLayout == null) throw new IllegalArgumentException("No final layout specified");
-				// TODO - validation https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkAttachmentDescription.html
-				attachments.add(this);
-				return Builder.this;
-			}
+			return new RenderPass(pass.getValue(), dev, attachments);
 		}
 
 		/**
 		 * Builder for a sub-pass.
 		 */
 		public class SubPassBuilder {
-			/**
-			 * Attachment reference.
-			 */
-			private class Reference {
-				private final int index;
-				private final VkImageLayout layout;
-
-				/**
-				 * Constructor.
-				 * @param index			Attachment index
-				 * @param layout		Image layout
-				 * @throws IllegalArgumentException if the index is invalid for this render pass or the layout is undefined
-				 */
-				private Reference(int index, VkImageLayout layout) {
-					this.index = zeroOrMore(index);
-					this.layout = notNull(layout);
-					if(index >= attachments.size()) throw new IllegalArgumentException("Invalid attachment index: " + index);
-					if(layout == VkImageLayout.UNDEFINED) throw new IllegalArgumentException("Invalid attachment layout: " + layout);
-				}
-
-				/**
-				 * Populates the descriptor for this attachment reference.
-				 * @param ref Attachment reference descriptor
-				 */
-				private void populate(VkAttachmentReference ref) {
-					ref.attachment = index;
-					ref.layout = layout;
-				}
-			}
-			// TODO - unused attachment VK_ATTACHMENT_UNUSED
-			// TODO - is there some cunning way we can avoid having to use index?
-
-			private VkPipelineBindPoint bind = VkPipelineBindPoint.GRAPHICS;
-			private final List<Reference> colour = new ArrayList<>();
-			private Reference depth;
-
-			/**
-			 * Sets the bind point of this sub-pass.
-			 * @param bind Bind point (default is {@link VkPipelineBindPoint#GRAPHICS})
-			 */
-			public SubPassBuilder bind(VkPipelineBindPoint bind) {
-				this.bind = notNull(bind);
-				return this;
-			}
+			private final Map<Integer, VkImageLayout> colour = new HashMap<>();
+			private Map.Entry<Integer, VkImageLayout> depth;
 
 			/**
 			 * Adds a colour attachment.
 			 * @param index			Attachment index
 			 * @param layout		Attachment layout
 			 */
-			public SubPassBuilder colour(int index, VkImageLayout layout) {
-				colour.add(new Reference(index, layout));
+			public SubPassBuilder colour(Attachment attachment, VkImageLayout layout) {
+				final int index = add(attachment);
+				if(colour.containsKey(index)) throw new IllegalArgumentException("Duplicate colour attachment: " + attachment);
+				colour.put(index, layout);
 				return this;
 			}
 
@@ -338,10 +207,24 @@ public class RenderPass extends AbstractVulkanObject {
 			 * @param index Attachment index
 			 * @throws IllegalArgumentException if the depth buffer has already been configured
 			 */
-			public SubPassBuilder depth(int index) {
-				if(depth != null) throw new IllegalArgumentException("Depth buffer already configured");
-				depth = new Reference(index, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			public SubPassBuilder depth(Attachment depth, VkImageLayout layout) {
+				if(this.depth != null) throw new IllegalArgumentException("Depth attachment already configured");
+				final int index = add(depth);
+				this.depth = Map.entry(index, layout);
 				return this;
+			}
+
+			/**
+			 * Adds an attachment to this sub-pass.
+			 * @param attachment Attachment to add
+			 * @return Attachment index
+			 */
+			private int add(Attachment attachment) {
+				Check.notNull(attachment);
+				if(!attachments.contains(attachment)) {
+					attachments.add(attachment);
+				}
+				return attachments.indexOf(attachment);
 			}
 
 			/**
@@ -350,16 +233,17 @@ public class RenderPass extends AbstractVulkanObject {
 			 */
 			void populate(VkSubpassDescription desc) {
 				// Init descriptor
-				desc.pipelineBindPoint = bind;
+				desc.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
 
 				// Populate colour attachments
 				desc.colorAttachmentCount = colour.size();
-				desc.pColorAttachments = StructureHelper.first(colour, VkAttachmentReference::new, Reference::populate);
+				desc.pColorAttachments = StructureHelper.first(colour.entrySet(), VkAttachmentReference::new, Builder::reference);
 
 				// Populate depth attachment
 				if(depth != null) {
-					desc.pDepthStencilAttachment = new VkAttachmentReference();
-					depth.populate(desc.pDepthStencilAttachment);
+					final var ref = new VkAttachmentReference();
+					reference(depth, ref);
+					desc.pDepthStencilAttachment = ref;
 				}
 			}
 
@@ -372,6 +256,16 @@ public class RenderPass extends AbstractVulkanObject {
 				subpasses.add(this);
 				return Builder.this;
 			}
+		}
+
+		/**
+		 * Populates an attachment reference descriptor.
+		 * @param entry		Attachment entry
+		 * @param ref		Attachment reference descriptor
+		 */
+		private static void reference(Map.Entry<Integer, VkImageLayout> entry, VkAttachmentReference ref) {
+			ref.attachment = entry.getKey();
+			ref.layout = entry.getValue();
 		}
 
 		/**
@@ -398,7 +292,9 @@ public class RenderPass extends AbstractVulkanObject {
 				 * @throws IllegalArgumentException for an invalid index
 				 */
 				private Dependency(int index) {
-					if((index != VK_SUBPASS_EXTERNAL) && (index >= subpasses.size())) throw new IllegalArgumentException("Invalid sub-pass index: " + index);
+					if((index != VK_SUBPASS_EXTERNAL) && ((index < 0) || (index >= subpasses.size()))) {
+						throw new IllegalArgumentException("Invalid sub-pass index: " + index);
+					}
 					this.index = index;
 				}
 
@@ -406,27 +302,26 @@ public class RenderPass extends AbstractVulkanObject {
 				 * Adds a pipeline stage.
 				 * @param stage Pipeline stage
 				 */
-				public DependencyBuilder stage(VkPipelineStage stage) {
+				public Dependency stage(VkPipelineStage stage) {
 					stages.add(notNull(stage));
-					return DependencyBuilder.this;
+					return this;
 				}
 
 				/**
 				 * Adds an access flag.
 				 * @param access Access flag
 				 */
-				public DependencyBuilder access(VkAccess access) {
+				public Dependency access(VkAccess access) {
 					this.access.add(notNull(access));
-					return DependencyBuilder.this;
+					return this;
 				}
 
 				/**
 				 * @return Pipeline stages mask
 				 */
 				private int stages() {
-					final int mask = IntegerEnumeration.mask(stages);
-					if(mask == 0) throw new IllegalArgumentException("No pipeline stage(s) specified for sub-pass dependency: subpass=" + index);
-					return mask;
+					check();
+					return IntegerEnumeration.mask(stages);
 				}
 
 				/**
@@ -434,6 +329,18 @@ public class RenderPass extends AbstractVulkanObject {
 				 */
 				private int access() {
 					return IntegerEnumeration.mask(access);
+				}
+
+				/**
+				 * Constructs this dependency.
+				 */
+				public DependencyBuilder build() {
+					check();
+					return DependencyBuilder.this;
+				}
+
+				private void check() {
+					if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stage(s) specified for sub-pass dependency: subpass=" + index);
 				}
 			}
 
@@ -443,11 +350,15 @@ public class RenderPass extends AbstractVulkanObject {
 			 * Constructor.
 			 * @param src		Source index
 			 * @param dest		Destination index
-			 * @throws IllegalArgumentException if the source index is greater-than the destination
+			 * @throws IllegalArgumentException if the source index is greater-than-or-equal to the destination
 			 */
 			private DependencyBuilder(int src, int dest) {
-				if((src > dest) && (src != VK_SUBPASS_EXTERNAL) && (dest != VK_SUBPASS_EXTERNAL)) {
-					throw new IllegalArgumentException(String.format("Source subpass %d cannot be greater-than destination %d", src, dest));
+				if(dest == VK_SUBPASS_EXTERNAL) {
+					if(src == VK_SUBPASS_EXTERNAL) throw new IllegalArgumentException("Invalid implicit indices");
+				}
+				else
+				if(src >= dest) {
+					throw new IllegalArgumentException(String.format("Invalid dependency indices: src=%d dest=%d", src, dest));
 				}
 				this.src = new Dependency(src);
 				this.dest = new Dependency(dest);
@@ -487,8 +398,8 @@ public class RenderPass extends AbstractVulkanObject {
 			 * Constructs this dependency.
 			 */
 			public Builder build() {
-				// TODO - src = dest = external invalid?
-				dependencies.add(this);
+				src.check();
+				dest.check();
 				return Builder.this;
 			}
 		}

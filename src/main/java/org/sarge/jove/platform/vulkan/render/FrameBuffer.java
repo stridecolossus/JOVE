@@ -33,10 +33,11 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 */
 	public static FrameBuffer create(List<View> attachments, RenderPass pass) {
 		// Check correct number of attachments
-		if(pass.count() != attachments.size()) {
-			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: attachments=%d pass=%s", attachments.size(), pass));
-		}
-		// TODO - for each view/attachment check matches pass[n], attachment type (aspects), and format?
+// TODO
+//		if(pass.count() != attachments.size()) {
+//			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: attachments=%d pass=%s", attachments.size(), pass));
+//		}
+// TODO - for each view/attachment check matches pass[n], attachment type (aspects), and format?
 
 		// Use extents of first attachment
 		final Iterator<View> itr = attachments.iterator();

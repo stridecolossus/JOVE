@@ -32,6 +32,7 @@ import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.Work;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
+import org.sarge.jove.platform.vulkan.render.Attachment;
 import org.sarge.jove.platform.vulkan.render.FrameBuffer;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.render.Swapchain;
@@ -124,18 +125,20 @@ public class TriangleDemo {
 				.clear(new Colour(0.3f, 0.3f, 0.3f, 1))
 				.build();
 
-		// Create render pass
-		final RenderPass pass = new RenderPass.Builder(dev)
-				.attachment()
-					.format(Swapchain.DEFAULT_FORMAT)
-					.load(VkAttachmentLoadOp.CLEAR)
-					.store(VkAttachmentStoreOp.STORE)
-					.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
-					.build()
-				.subpass()
-					.colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-					.build()
+		// Create colour attachment
+		final Attachment attachment = new Attachment.Builder()
+				.format(Swapchain.DEFAULT_FORMAT)
+				.load(VkAttachmentLoadOp.CLEAR)
+				.store(VkAttachmentStoreOp.STORE)
+				.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 				.build();
+
+		// Create render pass
+		final RenderPass pass = new RenderPass.Builder()
+				.subpass()
+					.colour(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
+					.build()
+				.build(dev);
 
 		// TODO - need to re-generate the shader to get correct triangle winding order???
 

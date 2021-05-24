@@ -38,7 +38,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		pass = mock(RenderPass.class);
 		when(pass.handle()).thenReturn(new Handle(new Pointer(1)));
 		when(pass.device()).thenReturn(dev);
-		when(pass.count()).thenReturn(1);
+//		when(pass.count()).thenReturn(1);
 
 		// Init image descriptor
 		final Descriptor descriptor = new Descriptor.Builder()
@@ -108,7 +108,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		when(other.image().descriptor()).thenReturn(descriptor);
 
 		// Check different extents
-		when(pass.count()).thenReturn(2);
+//		when(pass.count()).thenReturn(2);
 		assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(List.of(view, other), pass));
 	}
 
