@@ -171,7 +171,7 @@ public class TriangleDemo {
 		final var buffers = chain
 				.views()
 				.stream()
-				.map(view -> FrameBuffer.create(List.of(view), pass))
+				.map(view -> FrameBuffer.create(pass, chain.extents(), List.of(view)))
 				.collect(toList());
 
 		// Create command pool
@@ -185,10 +185,10 @@ public class TriangleDemo {
 			final Command.Buffer cb = commands.get(n);
 			cb
 				.begin()
-					.add(pass.begin(buffers.get(n)))
+					.add(buffers.get(n).begin())
 					.add(pipeline.bind())
 					.add(draw)
-					.add(RenderPass.END_COMMAND)
+					.add(FrameBuffer.END_RENDER_PASS)
 				.end();
 		}
 

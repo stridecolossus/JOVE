@@ -9,12 +9,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.vulkan.VkExtent3D;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageType;
-import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
 import org.sarge.lib.util.Check;
 
 /**
@@ -28,46 +25,6 @@ public record Descriptor(VkImageType type, VkFormat format, Extents extents, Set
 			Set.of(VkImageAspect.DEPTH),
 			Set.of(VkImageAspect.DEPTH, VkImageAspect.STENCIL)
 	);
-
-	/**
-	 * Immutable image extents.
-	 */
-	public static record Extents(int width, int height, int depth) {
-		/**
-		 * Creates a 2D image extents for the given dimensions.
-		 * @param dim Image dimensions
-		 */
-		public static Extents of(Dimensions dim) {
-			return new Extents(dim.width(), dim.height());
-		}
-
-		/**
-		 * Constructor.
-		 */
-		public Extents {
-			Check.oneOrMore(width);
-			Check.oneOrMore(height);
-			Check.oneOrMore(depth);
-		}
-
-		/**
-		 * Convenience constructor for a 2D image.
-		 */
-		public Extents(int width, int height) {
-			this(width, height, 1);
-		}
-
-		/**
-		 * @return Vulkan image extents descriptor
-		 */
-		public VkExtent3D toExtent3D() {
-			final VkExtent3D extent = new VkExtent3D();
-			extent.width = width;
-			extent.height = height;
-			extent.depth = depth;
-			return extent;
-		}
-	}
 
 	/**
 	 * Constructor.
@@ -91,8 +48,8 @@ public record Descriptor(VkImageType type, VkFormat format, Extents extents, Set
 
 		// Validate extents
 		final boolean valid = switch(type) {
-			case IMAGE_TYPE_1D -> (extents.height == 1) && (extents.depth == 1);
-			case IMAGE_TYPE_2D -> extents.depth == 1;
+			case IMAGE_TYPE_1D -> (extents.dimensions().height() == 1) && (extents.depth() == 1);
+			case IMAGE_TYPE_2D -> extents.depth() == 1;
 			case IMAGE_TYPE_3D -> true;
 		};
 		if(!valid) {

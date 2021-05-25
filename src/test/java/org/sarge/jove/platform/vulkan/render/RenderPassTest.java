@@ -17,13 +17,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.DependencyBuilder;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.SubPassBuilder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-
-import com.sun.jna.Pointer;
 
 public class RenderPassTest extends AbstractVulkanTest {
 	private static final VkFormat COLOUR = VkFormat.R32G32B32A32_SFLOAT;
@@ -81,13 +78,6 @@ public class RenderPassTest extends AbstractVulkanTest {
 		assertEquals(0, info.flags);
 
 		return info;
-	}
-
-	@Test
-	void end() {
-		final Handle handle = new Handle(new Pointer(1));
-		RenderPass.END_COMMAND.execute(lib, handle);
-		verify(lib).vkCmdEndRenderPass(handle);
 	}
 
 	@Nested

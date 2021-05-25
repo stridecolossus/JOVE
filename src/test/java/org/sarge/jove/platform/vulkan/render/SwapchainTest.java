@@ -28,7 +28,7 @@ import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Descriptor;
-import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
+import org.sarge.jove.platform.vulkan.image.Extents;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -47,8 +47,9 @@ public class SwapchainTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Specify image swapchain descriptor
+		final Dimensions extents = new Dimensions(3, 4);
 		final Descriptor descriptor = new Descriptor.Builder()
-				.extents(new Extents(3, 4))
+				.extents(new Extents(extents))
 				.format(FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();
@@ -63,7 +64,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		when(view.image()).thenReturn(image);
 
 		// Create swapchain
-		swapchain = new Swapchain(new Pointer(2), dev, Swapchain.DEFAULT_FORMAT, List.of(view));
+		swapchain = new Swapchain(new Pointer(2), dev, Swapchain.DEFAULT_FORMAT, extents, List.of(view));
 
 		// Create semaphore
 		semaphore = mock(Semaphore.class);

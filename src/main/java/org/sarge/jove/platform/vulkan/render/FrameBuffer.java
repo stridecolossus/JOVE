@@ -1,55 +1,75 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkClearValue;
+import org.sarge.jove.platform.vulkan.VkExtent2D;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
+import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
+import org.sarge.jove.platform.vulkan.VkSubpassContents;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.ClearValue;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.image.Descriptor;
 import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>frame buffer</i> is the target for a {@link RenderPass} and is comprised of a number of image attachments.
+ * A <i>frame buffer</i> is the target for a {@link RenderPass}.
  * @author Sarge
  */
 public class FrameBuffer extends AbstractVulkanObject {
 	/**
-	 * Creates a frame buffer for the given view.
+	 * End render pass command.
+	 * @see #begin()
+	 */
+	public static final Command END_RENDER_PASS = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
+
+	/**
+	 * Creates a frame buffer for the given attachments.
 	 * @param attachments		Image attachments
 	 * @param pass				Render pass
 	 * @return New frame buffer
-	 * @throws IllegalArgumentException if the number of attachments does not match the render pass
+	 * @throws IllegalArgumentException
 	 */
-	public static FrameBuffer create(List<View> attachments, RenderPass pass) {
-		// Check correct number of attachments
-// TODO
-//		if(pass.count() != attachments.size()) {
-//			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: attachments=%d pass=%s", attachments.size(), pass));
-//		}
-// TODO - for each view/attachment check matches pass[n], attachment type (aspects), and format?
+	public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View> attachments) {
+		// Validate attachments
+		final List<Attachment> expected = pass.attachments();
+		final int size = expected.size();
+		if(attachments.size() != size) {
+			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", attachments.size(), expected.size()));
+		}
+		for(int n = 0; n < size; ++n) {
+			// Validate matching format
+			final Attachment attachment = expected.get(n);
+			final View view = attachments.get(n);
+			final Descriptor descriptor = view.image().descriptor();
+			if(attachment.format() != descriptor.format()) {
+				throw new IllegalArgumentException(String.format("Invalid attachment %d format: expected=%s actual=%s", n, attachment.format(), descriptor.format()));
+			}
 
-		// Use extents of first attachment
-		final Iterator<View> itr = attachments.iterator();
-		final Descriptor.Extents extents = itr.next().extents();
-
-		// Check all attachments have the same extents
-		while(itr.hasNext()) {
-			final View attachment = itr.next();
-			if(!extents.equals(attachment.extents())) {
-				throw new IllegalArgumentException(String.format("Attachments extents mismatch: expected=%s attachment=%s", extents, attachment));
+			// Validate attachment contains frame-buffer extents
+			final Dimensions dim = descriptor.extents().dimensions();
+			if(extents.isLargerThan(dim)) {
+				throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dim, extents));
 			}
 		}
+		// TODO - samples, aspects(?), layers
 
 		// Build descriptor
 		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
@@ -67,30 +87,26 @@ public class FrameBuffer extends AbstractVulkanObject {
 		check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
 
 		// Create frame buffer
-		return new FrameBuffer(buffer.getValue(), dev, extents, attachments);
+		return new FrameBuffer(buffer.getValue(), dev, pass, attachments, extents);
 	}
 
+	private final RenderPass pass;
 	private final List<View> attachments;
-	private final Descriptor.Extents extents;
+	private final Dimensions extents;
 
 	/**
 	 * Constructor.
 	 * @param handle 			Handle
 	 * @param dev				Logical device
-	 * @param extents			Image extents
+	 * @param pass				Render pass
 	 * @param attachments		Image attachments
+	 * @param extents			Image extents
 	 */
-	private FrameBuffer(Pointer handle, DeviceContext dev, Descriptor.Extents extents, List<View> attachments) {
+	private FrameBuffer(Pointer handle, DeviceContext dev, RenderPass pass, List<View> attachments, Dimensions extents) {
 		super(handle, dev);
 		this.extents = notNull(extents);
 		this.attachments = List.copyOf(notEmpty(attachments));
-	}
-
-	/**
-	 * @return Extents of the frame-buffer attachments
-	 */
-	public Descriptor.Extents extents() {
-		return extents;
+		this.pass = notNull(pass);
 	}
 
 	/**
@@ -98,6 +114,38 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 */
 	public List<View> attachments() {
 		return attachments;
+	}
+
+	/**
+	 * Creates a command to begin rendering.
+	 * @return Begin rendering command
+	 * @see #END_RENDER_PASS
+	 */
+	public Command begin() {
+		// Create descriptor
+		final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
+		info.renderPass = pass.handle();
+		info.framebuffer = this.handle();
+
+		// Populate rendering area
+		final VkExtent2D ext = info.renderArea.extent;
+		ext.width = extents.width();
+		ext.height = extents.height();
+		// TODO - offset
+
+		// Map attachments to clear values
+		final Collection<ClearValue> clear = attachments
+				.stream()
+				.map(View::clear)
+				.filter(Predicate.not(ClearValue.NONE::equals))
+				.collect(toList());
+
+		// Init clear values
+		info.clearValueCount = clear.size();
+		info.pClearValues = StructureHelper.first(clear, VkClearValue::new, ClearValue::populate);
+
+		// Create command
+		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.INLINE);
 	}
 
 	@Override
@@ -108,8 +156,9 @@ public class FrameBuffer extends AbstractVulkanObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("extents", extents)
+				.append("pass", pass)
 				.append("attachments", attachments)
+				.append("extents", extents)
 				.build();
 	}
 }

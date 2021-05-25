@@ -16,7 +16,6 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

@@ -23,7 +23,6 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
@@ -33,7 +32,7 @@ import com.sun.jna.Pointer;
 
 public class DescriptorTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
-	private static final Extents EXTENTS = new Extents(3, 4, 1);
+	private static final Extents EXTENTS = new Extents(3, 4);
 
 	private DefaultImage image;
 	private Pointer handle;
@@ -93,7 +92,7 @@ public class DescriptorTest extends AbstractVulkanTest {
 		@DisplayName("2D image must have depth of one")
 		@Test
 		void invalidExtentsDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new Extents(2, 3, 4), COLOUR, 1, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new Extents(new Dimensions(2, 3), 4), COLOUR, 1, 1));
 		}
 
 		@DisplayName("2D image must have height and depth of one")
@@ -114,36 +113,6 @@ public class DescriptorTest extends AbstractVulkanTest {
 		image.destroy();
 		verify(lib).vkDestroyImage(dev.handle(), image.handle(), null);
 		verify(mem).destroy();
-	}
-
-	@Nested
-	class ExtentsTest {
-		private Extents extents;
-
-		@BeforeEach
-		void before() {
-			extents = new Extents(2, 3);
-		}
-
-		@Test
-		void constructor() {
-			assertEquals(1, extents.depth());
-			assertEquals(2, extents.width());
-			assertEquals(3, extents.height());
-		}
-
-		@Test
-		void toExtents3D() {
-			final VkExtent3D result = extents.toExtent3D();
-			assertEquals(1, result.depth);
-			assertEquals(2, result.width);
-			assertEquals(3, result.height);
-		}
-
-		@Test
-		void of() {
-			assertEquals(extents, Extents.of(new Dimensions(2, 3)));
-		}
 	}
 
 	@Nested

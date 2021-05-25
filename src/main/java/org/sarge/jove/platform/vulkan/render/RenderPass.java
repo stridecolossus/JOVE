@@ -1,26 +1,20 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -37,11 +31,6 @@ public class RenderPass extends AbstractVulkanObject {
 	 * Index of the implicit sub-pass before or after the render pass.
 	 */
 	public static final int VK_SUBPASS_EXTERNAL = (~0);
-
-	/**
-	 * End render pass command.
-	 */
-	public static final Command END_COMMAND = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 
 	private final List<Attachment> attachments;
 
@@ -61,38 +50,6 @@ public class RenderPass extends AbstractVulkanObject {
 	 */
 	public List<Attachment> attachments() {
 		return attachments;
-	}
-
-	/**
-	 * Creates a command to begin rendering.
-	 * @param buffer Frame buffer
-	 * @return Begin rendering command
-	 */
-	public Command begin(FrameBuffer buffer) {
-		// Create descriptor
-		final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
-		info.renderPass = this.handle();
-		info.framebuffer = buffer.handle();
-
-		// Populate rendering area
-		final var extents = buffer.extents();
-		info.renderArea.extent.width = extents.width();
-		info.renderArea.extent.height = extents.height();
-
-		// Map attachments to clear values
-		final Collection<ClearValue> clear = buffer
-				.attachments()
-				.stream()
-				.map(View::clear)
-				.filter(Predicate.not(ClearValue.NONE::equals))
-				.collect(toList());
-
-		// Init clear values
-		info.clearValueCount = clear.size();
-		info.pClearValues = StructureHelper.first(clear, VkClearValue::new, ClearValue::populate);
-
-		// Create command
-		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.INLINE);
 	}
 
 	@Override

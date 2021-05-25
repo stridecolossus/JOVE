@@ -26,6 +26,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Descriptor;
+import org.sarge.jove.platform.vulkan.image.Extents;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.FormatHelper;
@@ -77,16 +78,10 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param format		Image format
 	 * @param views			Image views
 	 */
-	Swapchain(Pointer handle, LogicalDevice dev, VkFormat format, List<View> views) {
+	Swapchain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extents, List<View> views) {
 		super(handle, dev);
-
-		// TODO - nasty
-		final View first = views.get(0);
-		final Descriptor.Extents dim = first.image().descriptor().extents();
-		assert first.image().descriptor().aspects().contains(VkImageAspect.COLOR);
-
 		this.format = notNull(format);
-		this.extents = new Dimensions(dim.width(), dim.height());
+		this.extents = notNull(extents);
 		this.views = List.copyOf(views);
 	}
 
@@ -400,9 +395,10 @@ public class Swapchain extends AbstractVulkanObject {
 			final var handles = VulkanFunction.enumerate(func, lib, factory::array);
 
 			// Init swapchain image descriptor
+			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
 			final Descriptor descriptor = new Descriptor.Builder()
 					.format(info.imageFormat)
-					.extents(new Descriptor.Extents(info.imageExtent.width, info.imageExtent.height, 1))
+					.extents(new Extents(extents))
 					.aspect(VkImageAspect.COLOR)
 					.build();
 
@@ -420,7 +416,7 @@ public class Swapchain extends AbstractVulkanObject {
 			}
 
 			// Create domain object
-			return new Swapchain(chain.getValue(), dev, info.imageFormat, views);
+			return new Swapchain(chain.getValue(), dev, info.imageFormat, extents, views);
 		}
 
 		/**

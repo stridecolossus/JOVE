@@ -38,8 +38,6 @@ public class Attachment {
 		return desc.format;
 	}
 
-	// https://developer.samsung.com/galaxy-gamedev/resources/articles/renderpasses.html
-
 	@Override
 	public int hashCode() {
 		return desc.hashCode();

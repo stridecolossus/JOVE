@@ -128,8 +128,8 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Sets the number of samples.
-		 * @param samples Samples-per-texel (default is {@code 1})
+		 * Sets the number of samples (default is {@code 1}).
+		 * @param samples Samples-per-texel
 		 */
 		public Builder samples(int samples) {
 			this.samples = IntegerEnumeration.map(VkSampleCountFlag.class, samples);
@@ -137,8 +137,8 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Sets the image tiling arrangement.
-		 * @param tiling Tiling arrangement (default is {@link VkImageTiling#TILING_OPTIMAL})
+		 * Sets the image tiling arrangement (default is {@link VkImageTiling#TILING_OPTIMAL}).
+		 * @param tiling Tiling arrangement
 		 */
 		public Builder tiling(VkImageTiling tiling) {
 			this.tiling = notNull(tiling);
@@ -146,12 +146,14 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Sets the initial image layout.
-		 * @param lLayout Initial layout (default is undefined)
+		 * Sets the initial image layout (default is {@link VkImageLayout#UNDEFINED}).
+		 * @param layout Initial layout
 		 */
 		public Builder initialLayout(VkImageLayout layout) {
+			if((layout != VkImageLayout.UNDEFINED) && (layout != VkImageLayout.PREINITIALIZED)) {
+				throw new IllegalArgumentException("Invalid initial layout: " + layout);
+			}
 			this.layout = notNull(layout);
-			// TODO - undefined or pre-init only
 			return this;
 		}
 
@@ -159,7 +161,6 @@ public interface Image extends NativeObject {
 		 * Constructs this image.
 		 * @param dev Logical device
 		 * @return New image
-		 * @throws VulkanException if the image cannot be created
 		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#TYPE_3D} image
 		 * @throws VulkanException if the image cannot be created
 		 */

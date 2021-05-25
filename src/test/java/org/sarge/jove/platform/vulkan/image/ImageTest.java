@@ -8,19 +8,22 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.platform.vulkan.VkImageAspect.COLOR;
-import static org.sarge.jove.platform.vulkan.VkImageType.IMAGE_TYPE_2D;
-import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.image.Descriptor.Extents;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
+import org.sarge.jove.platform.vulkan.VkImageCreateInfo;
+import org.sarge.jove.platform.vulkan.VkImageLayout;
+import org.sarge.jove.platform.vulkan.VkImageTiling;
+import org.sarge.jove.platform.vulkan.VkImageUsage;
+import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
+import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
+import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
@@ -63,48 +66,6 @@ public class ImageTest extends AbstractVulkanTest {
 		assertEquals(new Handle(handle), image.handle());
 		assertEquals(dev, image.device());
 		assertEquals(descriptor, image.descriptor());
-	}
-
-	@Nested
-	class DescriptorTests {
-		@Test
-		void constructor() {
-			assertEquals(IMAGE_TYPE_2D, descriptor.type());
-			assertEquals(FORMAT, descriptor.format());
-			assertEquals(new Extents(3, 4), descriptor.extents());
-			assertEquals(COLOUR, descriptor.aspects());
-		}
-
-		@DisplayName("Image must have at least one aspect")
-		@Test
-		void emptyAspects() {
-			assertThrows(IllegalArgumentException.class, () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, EXTENTS, Set.of(), 1, 1));
-		}
-
-		@DisplayName("Image aspects must be a valid combination")
-		@Test
-		void invalidAspects() {
-			final var aspects = Set.of(COLOR, VkImageAspect.DEPTH);
-			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, EXTENTS, aspects, 1, 1));
-		}
-
-		@DisplayName("2D image must have depth of one")
-		@Test
-		void invalidExtentsDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 1));
-		}
-
-		@DisplayName("2D image must have height and depth of one")
-		@Test
-		void invalidExtentsHeightDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.IMAGE_TYPE_1D, FORMAT, new Extents(3, 4, 5), COLOUR, 1, 1));
-		}
-
-		@DisplayName("3D image can only have one array layer")
-		@Test
-		void invalidArrayLayers() {
-			assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new Descriptor(VkImageType.IMAGE_TYPE_3D, FORMAT, EXTENTS, COLOUR, 1, 2));
-		}
 	}
 
 	@Test
@@ -183,6 +144,11 @@ public class ImageTest extends AbstractVulkanTest {
 		void buildEmptyImageDescriptor() {
 			builder.properties(props);
 			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
+		}
+
+		@Test
+		void buildInvalidLayout() {
+			assertThrows(IllegalArgumentException.class, () -> builder.initialLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL));
 		}
 	}
 }
