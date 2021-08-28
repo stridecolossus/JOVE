@@ -100,9 +100,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		return parent;
 	}
 
-	/**
-	 * @return Vulkan library
-	 */
 	@Override
 	public VulkanLibrary library() {
 		return parent.instance().library();

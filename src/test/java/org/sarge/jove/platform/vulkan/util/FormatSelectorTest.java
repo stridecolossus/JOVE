@@ -35,6 +35,13 @@ public class FormatSelectorTest {
 	}
 
 	@Test
+	void matches() {
+		props.linearTilingFeatures = DEPTH_STENCIL_ATTACHMENT.value();
+		assertEquals(true, selector.matches(FORMAT, false, FEATURES));
+		assertEquals(false, selector.matches(FORMAT, true, FEATURES));
+	}
+
+	@Test
 	void select() {
 		props.linearTilingFeatures = DEPTH_STENCIL_ATTACHMENT.value();
 		assertEquals(Optional.of(FORMAT), selector.select(false, FEATURES, List.of(FORMAT)));

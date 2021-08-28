@@ -42,7 +42,7 @@ public class Surface extends AbstractTransientNativeObject {
 	 * @return Capabilities of this surface
 	 */
 	public VkSurfaceCapabilitiesKHR capabilities() {
-		final VulkanLibrary lib = dev.instance().library();
+		final VulkanLibrary lib = dev.library();
 		final VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR();
 		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.handle(), handle, caps));
 		return caps;
@@ -53,7 +53,7 @@ public class Surface extends AbstractTransientNativeObject {
 	 */
 	public Collection<VkSurfaceFormatKHR> formats() {
 		final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.handle(), handle, count, array);
-		final var formats = VulkanFunction.enumerate(func, dev.instance().library(), VkSurfaceFormatKHR::new);
+		final var formats = VulkanFunction.enumerate(func, dev.library(), VkSurfaceFormatKHR::new);
 		return Arrays.stream(formats).collect(toList());
 	}
 
@@ -63,7 +63,7 @@ public class Surface extends AbstractTransientNativeObject {
 	public Set<VkPresentModeKHR> modes() {
 		// Count number of supported modes
 		// TODO - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
-		final VulkanLibrary lib = dev.instance().library();
+		final VulkanLibrary lib = dev.library();
 		final IntByReference count = lib.factory().integer();
 		check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev.handle(), this.handle, count, null));
 

@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
+import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
@@ -202,7 +203,7 @@ public class Window extends AbstractTransientNativeObject {
 		 * @param title Title
 		 */
 		public Builder title(String title) {
-			this.title = title;
+			this.title = notEmpty(title);
 			return this;
 		}
 
@@ -211,7 +212,7 @@ public class Window extends AbstractTransientNativeObject {
 		 * @param size Window size
 		 */
 		public Builder size(Dimensions size) {
-			this.size = size;
+			this.size = notNull(size);
 			return this;
 		}
 
@@ -220,7 +221,7 @@ public class Window extends AbstractTransientNativeObject {
 		 * @param p Property
 		 */
 		public Builder property(Property p) {
-			props.add(p);
+			props.add(notNull(p));
 			return this;
 		}
 

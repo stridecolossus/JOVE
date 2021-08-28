@@ -61,10 +61,9 @@ public class FormatSelector {
 	 * @return Selected format
 	 */
 	public Optional<VkFormat> select(boolean optimal, Set<VkFormatFeature> features, List<VkFormat> candidates) {
-		final int mask = IntegerEnumeration.mask(features);
 		return candidates
 				.stream()
-				.filter(f -> matches(f, optimal, mask))
+				.filter(f -> matches(f, optimal, features))
 				.findAny();
 	}
 
@@ -75,9 +74,10 @@ public class FormatSelector {
 	 * @param features			Required format feature(s)
 	 * @return
 	 */
-	private boolean matches(VkFormat format, boolean optimal, int features) {
+	public boolean matches(VkFormat format, boolean optimal, Set<VkFormatFeature> features) {
 		final VkFormatProperties props = cache.computeIfAbsent(format, ignored -> func.apply(format));
+		final int required = IntegerEnumeration.mask(features);
 		final int mask = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-		return MathsUtil.isMask(mask, features);
+		return MathsUtil.isMask(mask, required);
 	}
 }

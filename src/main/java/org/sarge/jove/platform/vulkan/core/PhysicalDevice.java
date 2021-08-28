@@ -56,6 +56,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 		};
 		final VkQueueFamilyProperties[] props = VulkanFunction.enumerate(func, instance.library(), VkQueueFamilyProperties::new);
 
+		// Create queue families
 		final List<Family> families = IntStream
 				.range(0, props.length)
 				.mapToObj(n -> family(n, props[n]))
@@ -100,16 +101,16 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 		return handle;
 	}
 
-	/**
-	 * @return Parent instance
-	 */
-	public Instance instance() {
-		return instance;
-	}
-
 	@Override
 	public VulkanLibrary library() {
 		return instance.library();
+	}
+
+	/**
+	 * @return Vulkan instance
+	 */
+	public Instance instance() {
+		return instance;
 	}
 
 	/**
@@ -146,7 +147,8 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 		// TODO https://stackoverflow.com/questions/67519579/can-a-jna-structure-support-immutability
 
 		private Properties() {
-			instance.library().vkGetPhysicalDeviceProperties(handle, props);
+			final VulkanLibrary lib = PhysicalDevice.this.library();
+			lib.vkGetPhysicalDeviceProperties(handle, props);
 		}
 
 		/**
@@ -194,8 +196,9 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	 * Retrieves the features supported by this device.
 	 */
 	private DeviceFeatures loadFeatures() {
+		final VulkanLibrary lib = this.library();
 		final VkPhysicalDeviceFeatures struct = new VkPhysicalDeviceFeatures();
-		instance.library().vkGetPhysicalDeviceFeatures(handle, struct);
+		lib.vkGetPhysicalDeviceFeatures(handle, struct);
 		return new DeviceFeatures(struct);
 	}
 
