@@ -20,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"ppEnabledExtensionNames"
 })
 public class VkInstanceCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.INSTANCE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public VkApplicationInfo pApplicationInfo;

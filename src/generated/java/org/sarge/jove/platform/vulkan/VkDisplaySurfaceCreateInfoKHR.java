@@ -25,8 +25,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDisplaySurfaceCreateInfoKHR extends VulkanStructure {
 	public static class ByValue extends VkDisplaySurfaceCreateInfoKHR implements Structure.ByValue { }
 	public static class ByReference extends VkDisplaySurfaceCreateInfoKHR implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DISPLAY_SURFACE_CREATE_INFO_KHR;
+
+	public VkStructureType sType = VkStructureType.DISPLAY_SURFACE_CREATE_INFO_KHR;
 	public Pointer pNext;
 	public int flags;
 	public long displayMode;

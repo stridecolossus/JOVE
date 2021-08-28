@@ -17,7 +17,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pBindings"
 })
 public class VkDescriptorSetLayoutCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int bindingCount;

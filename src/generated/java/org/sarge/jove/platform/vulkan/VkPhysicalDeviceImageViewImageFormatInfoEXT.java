@@ -19,7 +19,7 @@ public class VkPhysicalDeviceImageViewImageFormatInfoEXT extends VulkanStructure
 	public static class ByValue extends VkPhysicalDeviceImageViewImageFormatInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceImageViewImageFormatInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_IMAGE_FORMAT_INFO_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_IMAGE_VIEW_IMAGE_FORMAT_INFO_EXT;
 	public Pointer pNext;
 	public VkImageViewType imageViewType;
 }

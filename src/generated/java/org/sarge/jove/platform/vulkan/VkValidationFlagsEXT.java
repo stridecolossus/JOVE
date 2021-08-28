@@ -20,7 +20,7 @@ public class VkValidationFlagsEXT extends VulkanStructure {
 	public static class ByValue extends VkValidationFlagsEXT implements Structure.ByValue { }
 	public static class ByReference extends VkValidationFlagsEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_VALIDATION_FLAGS_EXT;
+	public VkStructureType sType = VkStructureType.VALIDATION_FLAGS_EXT;
 	public Pointer pNext;
 	public int disabledValidationCheckCount;
 	public Pointer pDisabledValidationChecks;

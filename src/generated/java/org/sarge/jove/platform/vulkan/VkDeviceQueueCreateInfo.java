@@ -19,7 +19,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pQueuePriorities"
 })
 public class VkDeviceQueueCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.DEVICE_QUEUE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int queueFamilyIndex;

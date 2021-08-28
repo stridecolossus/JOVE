@@ -19,7 +19,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"primitiveRestartEnable"
 })
 public class VkPipelineInputAssemblyStateCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public VkPrimitiveTopology topology;

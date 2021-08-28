@@ -19,7 +19,7 @@ public class VkPipelineRasterizationStateRasterizationOrderAMD extends VulkanStr
 	public static class ByValue extends VkPipelineRasterizationStateRasterizationOrderAMD implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineRasterizationStateRasterizationOrderAMD implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD;
+	public VkStructureType sType = VkStructureType.PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD;
 	public Pointer pNext;
 	public VkRasterizationOrderAMD rasterizationOrder;
 }

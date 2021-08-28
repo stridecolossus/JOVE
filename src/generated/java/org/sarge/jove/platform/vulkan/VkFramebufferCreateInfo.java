@@ -22,7 +22,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"layers"
 })
 public class VkFramebufferCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.FRAMEBUFFER_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public Handle renderPass;

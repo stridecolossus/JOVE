@@ -19,7 +19,7 @@ public class VkSamplerYcbcrConversionInfo extends VulkanStructure {
 	public static class ByValue extends VkSamplerYcbcrConversionInfo implements Structure.ByValue { }
 	public static class ByReference extends VkSamplerYcbcrConversionInfo implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO;
+	public VkStructureType sType = VkStructureType.SAMPLER_YCBCR_CONVERSION_INFO;
 	public Pointer pNext;
 	public long conversion;
 }

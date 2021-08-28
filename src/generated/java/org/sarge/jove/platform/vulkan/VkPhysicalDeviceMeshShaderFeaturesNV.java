@@ -21,7 +21,7 @@ public class VkPhysicalDeviceMeshShaderFeaturesNV extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceMeshShaderFeaturesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceMeshShaderFeaturesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
 	public Pointer pNext;
 	public VulkanBoolean taskShader;
 	public VulkanBoolean meshShader;

@@ -19,7 +19,7 @@ public class VkSubpassBeginInfoKHR extends VulkanStructure {
 	public static class ByValue extends VkSubpassBeginInfoKHR implements Structure.ByValue { }
 	public static class ByReference extends VkSubpassBeginInfoKHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SUBPASS_BEGIN_INFO_KHR;
+	public VkStructureType sType = VkStructureType.SUBPASS_BEGIN_INFO_KHR;
 	public Pointer pNext;
 	public VkSubpassContents contents;
 }

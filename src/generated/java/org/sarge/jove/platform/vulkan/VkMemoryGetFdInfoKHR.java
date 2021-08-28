@@ -20,7 +20,7 @@ public class VkMemoryGetFdInfoKHR extends VulkanStructure {
 	public static class ByValue extends VkMemoryGetFdInfoKHR implements Structure.ByValue { }
 	public static class ByReference extends VkMemoryGetFdInfoKHR implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
+	public VkStructureType sType = VkStructureType.MEMORY_GET_FD_INFO_KHR;
 	public Pointer pNext;
 	public Pointer memory;
 	public VkExternalMemoryHandleTypeFlag handleType;

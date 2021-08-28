@@ -20,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pVertexAttributeDescriptions"
 })
 public class VkPipelineVertexInputStateCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int vertexBindingDescriptionCount;

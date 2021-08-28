@@ -19,7 +19,7 @@ public class VkExternalMemoryImageCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkExternalMemoryImageCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkExternalMemoryImageCreateInfo implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
 	public Pointer pNext;
 	public VkExternalMemoryHandleTypeFlag handleTypes;
 }

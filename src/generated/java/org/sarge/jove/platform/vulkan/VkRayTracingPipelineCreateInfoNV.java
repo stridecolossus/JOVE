@@ -27,7 +27,7 @@ public class VkRayTracingPipelineCreateInfoNV extends VulkanStructure {
 	public static class ByValue extends VkRayTracingPipelineCreateInfoNV implements Structure.ByValue { }
 	public static class ByReference extends VkRayTracingPipelineCreateInfoNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;
+	public VkStructureType sType = VkStructureType.RAY_TRACING_PIPELINE_CREATE_INFO_NV;
 	public Pointer pNext;
 	public int flags;
 	public int stageCount;

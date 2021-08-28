@@ -23,7 +23,7 @@ public class VkPhysicalDeviceSubgroupProperties extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceSubgroupProperties implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceSubgroupProperties implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
 	public Pointer pNext;
 	public int subgroupSize;
 	public VkShaderStageFlag supportedStages;

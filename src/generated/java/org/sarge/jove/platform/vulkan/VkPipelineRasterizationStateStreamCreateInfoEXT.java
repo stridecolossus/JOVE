@@ -20,7 +20,7 @@ public class VkPipelineRasterizationStateStreamCreateInfoEXT extends VulkanStruc
 	public static class ByValue extends VkPipelineRasterizationStateStreamCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineRasterizationStateStreamCreateInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_STREAM_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.PIPELINE_RASTERIZATION_STATE_STREAM_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;
 	public int rasterizationStream;

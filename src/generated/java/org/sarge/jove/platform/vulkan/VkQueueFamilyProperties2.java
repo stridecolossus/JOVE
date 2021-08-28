@@ -19,7 +19,7 @@ public class VkQueueFamilyProperties2 extends VulkanStructure {
 	public static class ByValue extends VkQueueFamilyProperties2 implements Structure.ByValue { }
 	public static class ByReference extends VkQueueFamilyProperties2 implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2;
+	public VkStructureType sType = VkStructureType.QUEUE_FAMILY_PROPERTIES_2;
 	public Pointer pNext;
 	public VkQueueFamilyProperties queueFamilyProperties;
 }

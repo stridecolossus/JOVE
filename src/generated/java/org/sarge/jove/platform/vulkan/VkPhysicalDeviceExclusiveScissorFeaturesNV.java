@@ -20,7 +20,7 @@ public class VkPhysicalDeviceExclusiveScissorFeaturesNV extends VulkanStructure 
 	public static class ByValue extends VkPhysicalDeviceExclusiveScissorFeaturesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceExclusiveScissorFeaturesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXCLUSIVE_SCISSOR_FEATURES_NV;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_EXCLUSIVE_SCISSOR_FEATURES_NV;
 	public Pointer pNext;
 	public VulkanBoolean exclusiveScissor;
 }

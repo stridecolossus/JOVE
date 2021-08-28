@@ -18,6 +18,6 @@ public class VkBaseOutStructure extends VulkanStructure {
 	public static class ByValue extends VkBaseOutStructure implements Structure.ByValue { }
 	public static class ByReference extends VkBaseOutStructure implements Structure.ByReference { }
 
-	//public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BASE_OUT_STRUCTURE;
+	//public VkStructureType sType = VkStructureType.BASE_OUT_STRUCTURE;
 	public Pointer pNext;
 }

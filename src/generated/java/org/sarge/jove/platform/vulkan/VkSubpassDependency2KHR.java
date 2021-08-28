@@ -26,7 +26,7 @@ public class VkSubpassDependency2KHR extends VulkanStructure {
 	public static class ByValue extends VkSubpassDependency2KHR implements Structure.ByValue { }
 	public static class ByReference extends VkSubpassDependency2KHR implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2_KHR;
+	public VkStructureType sType = VkStructureType.SUBPASS_DEPENDENCY_2_KHR;
 	public Pointer pNext;
 	public int srcSubpass;
 	public int dstSubpass;

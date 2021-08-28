@@ -21,7 +21,7 @@ public class VkMemoryDedicatedRequirements extends VulkanStructure {
 	public static class ByValue extends VkMemoryDedicatedRequirements implements Structure.ByValue { }
 	public static class ByReference extends VkMemoryDedicatedRequirements implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS;
+	public VkStructureType sType = VkStructureType.MEMORY_DEDICATED_REQUIREMENTS;
 	public Pointer pNext;
 	public VulkanBoolean prefersDedicatedAllocation;
 	public VulkanBoolean requiresDedicatedAllocation;

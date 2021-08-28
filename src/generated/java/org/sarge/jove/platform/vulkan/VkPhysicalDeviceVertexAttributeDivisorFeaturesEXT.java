@@ -21,7 +21,7 @@ public class VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT extends VulkanStr
 	public static class ByValue extends VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
 	public Pointer pNext;
 	public VulkanBoolean vertexAttributeInstanceRateDivisor;
 	public VulkanBoolean vertexAttributeInstanceRateZeroDivisor;

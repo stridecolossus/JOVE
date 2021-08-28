@@ -23,7 +23,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"alphaToOneEnable"
 })
 public class VkPipelineMultisampleStateCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int rasterizationSamples = VkSampleCountFlag.VK_SAMPLE_COUNT_1.value();

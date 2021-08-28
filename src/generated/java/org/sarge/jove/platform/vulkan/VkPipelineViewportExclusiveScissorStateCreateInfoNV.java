@@ -20,7 +20,7 @@ public class VkPipelineViewportExclusiveScissorStateCreateInfoNV extends VulkanS
 	public static class ByValue extends VkPipelineViewportExclusiveScissorStateCreateInfoNV implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineViewportExclusiveScissorStateCreateInfoNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_EXCLUSIVE_SCISSOR_STATE_CREATE_INFO_NV;
+	public VkStructureType sType = VkStructureType.PIPELINE_VIEWPORT_EXCLUSIVE_SCISSOR_STATE_CREATE_INFO_NV;
 	public Pointer pNext;
 	public int exclusiveScissorCount;
 	public Pointer pExclusiveScissors;

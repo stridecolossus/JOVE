@@ -20,7 +20,7 @@ public class VkPhysicalDeviceProtectedMemoryFeatures extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceProtectedMemoryFeatures implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceProtectedMemoryFeatures implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES;
 	public Pointer pNext;
 	public VulkanBoolean protectedMemory;
 }

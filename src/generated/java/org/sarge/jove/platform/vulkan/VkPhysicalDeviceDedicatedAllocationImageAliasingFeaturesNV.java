@@ -20,7 +20,7 @@ public class VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV extends 
 	public static class ByValue extends VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEDICATED_ALLOCATION_IMAGE_ALIASING_FEATURES_NV;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_DEDICATED_ALLOCATION_IMAGE_ALIASING_FEATURES_NV;
 	public Pointer pNext;
 	public VulkanBoolean dedicatedAllocationImageAliasing;
 }

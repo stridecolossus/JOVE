@@ -19,7 +19,7 @@ public class VkExternalBufferProperties extends VulkanStructure {
 	public static class ByValue extends VkExternalBufferProperties implements Structure.ByValue { }
 	public static class ByReference extends VkExternalBufferProperties implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES;
+	public VkStructureType sType = VkStructureType.EXTERNAL_BUFFER_PROPERTIES;
 	public Pointer pNext;
 	public VkExternalMemoryProperties externalMemoryProperties;
 }

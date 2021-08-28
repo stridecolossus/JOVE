@@ -25,7 +25,7 @@ public class VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT extends VulkanS
 	public static class ByValue extends VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT;
 	public Pointer pNext;
 	public int advancedBlendMaxColorAttachments;
 	public VulkanBoolean advancedBlendIndependentBlend;

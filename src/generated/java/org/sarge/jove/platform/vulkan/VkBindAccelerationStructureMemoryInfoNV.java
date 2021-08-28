@@ -22,8 +22,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkBindAccelerationStructureMemoryInfoNV extends VulkanStructure {
 	public static class ByValue extends VkBindAccelerationStructureMemoryInfoNV implements Structure.ByValue { }
 	public static class ByReference extends VkBindAccelerationStructureMemoryInfoNV implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
+
+	public VkStructureType sType = VkStructureType.BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
 	public Pointer pNext;
 	public long accelerationStructure;
 	public Pointer memory;

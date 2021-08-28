@@ -32,7 +32,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"oldSwapchain"
 })
 public class VkSwapchainCreateInfoKHR extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	public VkStructureType sType = VkStructureType.SWAPCHAIN_CREATE_INFO_KHR;
 	public Pointer pNext;
 	public int flags;
 	public Handle surface;

@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDeviceMemoryOverallocationCreateInfoAMD extends VulkanStructure {
 	public static class ByValue extends VkDeviceMemoryOverallocationCreateInfoAMD implements Structure.ByValue { }
 	public static class ByReference extends VkDeviceMemoryOverallocationCreateInfoAMD implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_MEMORY_OVERALLOCATION_CREATE_INFO_AMD;
+
+	public VkStructureType sType = VkStructureType.DEVICE_MEMORY_OVERALLOCATION_CREATE_INFO_AMD;
 	public Pointer pNext;
 	public VkMemoryOverallocationBehaviorAMD overallocationBehavior;
 }

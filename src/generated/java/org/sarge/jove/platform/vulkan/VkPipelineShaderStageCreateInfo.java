@@ -21,7 +21,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pSpecializationInfo"
 })
 public class VkPipelineShaderStageCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public VkShaderStageFlag stage;

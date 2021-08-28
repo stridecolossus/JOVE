@@ -19,7 +19,7 @@ public class VkMemoryFdPropertiesKHR extends VulkanStructure {
 	public static class ByValue extends VkMemoryFdPropertiesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkMemoryFdPropertiesKHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR;
+	public VkStructureType sType = VkStructureType.MEMORY_FD_PROPERTIES_KHR;
 	public Pointer pNext;
 	public int memoryTypeBits;
 }

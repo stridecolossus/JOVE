@@ -19,7 +19,7 @@ public class VkImageViewASTCDecodeModeEXT extends VulkanStructure {
 	public static class ByValue extends VkImageViewASTCDecodeModeEXT implements Structure.ByValue { }
 	public static class ByReference extends VkImageViewASTCDecodeModeEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_VIEW_ASTC_DECODE_MODE_EXT;
+	public VkStructureType sType = VkStructureType.IMAGE_VIEW_ASTC_DECODE_MODE_EXT;
 	public Pointer pNext;
 	public VkFormat decodeMode;
 }

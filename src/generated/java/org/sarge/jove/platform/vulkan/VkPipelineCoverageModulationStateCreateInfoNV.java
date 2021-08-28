@@ -24,7 +24,7 @@ public class VkPipelineCoverageModulationStateCreateInfoNV extends VulkanStructu
 	public static class ByValue extends VkPipelineCoverageModulationStateCreateInfoNV implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineCoverageModulationStateCreateInfoNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_COVERAGE_MODULATION_STATE_CREATE_INFO_NV;
+	public VkStructureType sType = VkStructureType.PIPELINE_COVERAGE_MODULATION_STATE_CREATE_INFO_NV;
 	public Pointer pNext;
 	public int flags;
 	public VkCoverageModulationModeNV coverageModulationMode;

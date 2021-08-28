@@ -21,7 +21,7 @@ public class VkPhysicalDeviceShadingRateImagePropertiesNV extends VulkanStructur
 	public static class ByValue extends VkPhysicalDeviceShadingRateImagePropertiesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceShadingRateImagePropertiesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV;
 	public Pointer pNext;
 	public VkExtent2D shadingRateTexelSize;
 	public int shadingRatePaletteSize;

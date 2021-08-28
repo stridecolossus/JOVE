@@ -20,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pPushConstantRanges"
 })
 public class VkPipelineLayoutCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_LAYOUT_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int setLayoutCount;

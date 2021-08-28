@@ -22,7 +22,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"blendConstants"
 })
 public class VkPipelineColorBlendStateCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public VulkanBoolean logicOpEnable;

@@ -22,7 +22,7 @@ public class VkPipelineDiscardRectangleStateCreateInfoEXT extends VulkanStructur
 	public static class ByValue extends VkPipelineDiscardRectangleStateCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineDiscardRectangleStateCreateInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;
 	public VkDiscardRectangleModeEXT discardRectangleMode;

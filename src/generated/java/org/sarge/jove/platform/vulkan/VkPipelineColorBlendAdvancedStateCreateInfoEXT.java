@@ -22,7 +22,7 @@ public class VkPipelineColorBlendAdvancedStateCreateInfoEXT extends VulkanStruct
 	public static class ByValue extends VkPipelineColorBlendAdvancedStateCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineColorBlendAdvancedStateCreateInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_ADVANCED_STATE_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.PIPELINE_COLOR_BLEND_ADVANCED_STATE_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public VulkanBoolean srcPremultiplied;
 	public VulkanBoolean dstPremultiplied;

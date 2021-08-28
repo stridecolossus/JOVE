@@ -21,7 +21,7 @@ public class VkPhysicalDeviceVariablePointerFeatures extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceVariablePointerFeatures implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceVariablePointerFeatures implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES;
 	public Pointer pNext;
 	public VulkanBoolean variablePointersStorageBuffer;
 	public VulkanBoolean variablePointers;

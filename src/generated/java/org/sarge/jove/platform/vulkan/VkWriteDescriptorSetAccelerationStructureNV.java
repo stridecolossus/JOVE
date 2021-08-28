@@ -20,7 +20,7 @@ public class VkWriteDescriptorSetAccelerationStructureNV extends VulkanStructure
 	public static class ByValue extends VkWriteDescriptorSetAccelerationStructureNV implements Structure.ByValue { }
 	public static class ByReference extends VkWriteDescriptorSetAccelerationStructureNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
+	public VkStructureType sType = VkStructureType.WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
 	public Pointer pNext;
 	public int accelerationStructureCount;
 	public Pointer pAccelerationStructures;

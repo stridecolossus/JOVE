@@ -24,8 +24,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkCopyDescriptorSet extends VulkanStructure {
 	public static class ByValue extends VkCopyDescriptorSet implements Structure.ByValue { }
 	public static class ByReference extends VkCopyDescriptorSet implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
+
+	public VkStructureType sType = VkStructureType.COPY_DESCRIPTOR_SET;
 	public Pointer pNext;
 	public Pointer srcSet;
 	public int srcBinding;

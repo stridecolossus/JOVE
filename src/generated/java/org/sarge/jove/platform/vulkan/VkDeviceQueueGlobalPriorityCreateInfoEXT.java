@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDeviceQueueGlobalPriorityCreateInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkDeviceQueueGlobalPriorityCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkDeviceQueueGlobalPriorityCreateInfoEXT implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_EXT;
+
+	public VkStructureType sType = VkStructureType.DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public VkQueueGlobalPriorityEXT globalPriority;
 }

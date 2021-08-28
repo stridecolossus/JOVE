@@ -20,8 +20,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDebugUtilsObjectNameInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkDebugUtilsObjectNameInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkDebugUtilsObjectNameInfoEXT implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+
+	public VkStructureType sType = VkStructureType.DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
 	public Pointer pNext;
 	public VkObjectType objectType;
 	public long objectHandle;

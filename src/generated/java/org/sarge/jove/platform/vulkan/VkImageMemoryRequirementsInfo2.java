@@ -19,7 +19,7 @@ public class VkImageMemoryRequirementsInfo2 extends VulkanStructure {
 	public static class ByValue extends VkImageMemoryRequirementsInfo2 implements Structure.ByValue { }
 	public static class ByReference extends VkImageMemoryRequirementsInfo2 implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
+	public VkStructureType sType = VkStructureType.IMAGE_MEMORY_REQUIREMENTS_INFO_2;
 	public Pointer pNext;
 	public Pointer image;
 }

@@ -22,7 +22,7 @@ public class VkPhysicalDeviceVulkanMemoryModelFeaturesKHR extends VulkanStructur
 	public static class ByValue extends VkPhysicalDeviceVulkanMemoryModelFeaturesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceVulkanMemoryModelFeaturesKHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES_KHR;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES_KHR;
 	public Pointer pNext;
 	public VulkanBoolean vulkanMemoryModel;
 	public VulkanBoolean vulkanMemoryModelDeviceScope;

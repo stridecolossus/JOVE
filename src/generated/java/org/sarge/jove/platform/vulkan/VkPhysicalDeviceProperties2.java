@@ -19,7 +19,7 @@ public class VkPhysicalDeviceProperties2 extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceProperties2 implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceProperties2 implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_PROPERTIES_2;
 	public Pointer pNext;
 	public VkPhysicalDeviceProperties properties;
 }

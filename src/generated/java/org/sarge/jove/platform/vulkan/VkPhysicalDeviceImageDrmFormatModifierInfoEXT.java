@@ -22,7 +22,7 @@ public class VkPhysicalDeviceImageDrmFormatModifierInfoEXT extends VulkanStructu
 	public static class ByValue extends VkPhysicalDeviceImageDrmFormatModifierInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceImageDrmFormatModifierInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT;
 	public Pointer pNext;
 	public long drmFormatModifier;
 	public VkSharingMode sharingMode;

@@ -20,7 +20,7 @@ public class VkPhysicalDeviceDepthClipEnableFeaturesEXT extends VulkanStructure 
 	public static class ByValue extends VkPhysicalDeviceDepthClipEnableFeaturesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceDepthClipEnableFeaturesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
 	public Pointer pNext;
 	public VulkanBoolean depthClipEnable;
 }

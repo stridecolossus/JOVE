@@ -21,7 +21,7 @@ public class VkPipelineViewportCoarseSampleOrderStateCreateInfoNV extends Vulkan
 	public static class ByValue extends VkPipelineViewportCoarseSampleOrderStateCreateInfoNV implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineViewportCoarseSampleOrderStateCreateInfoNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_COARSE_SAMPLE_ORDER_STATE_CREATE_INFO_NV;
+	public VkStructureType sType = VkStructureType.PIPELINE_VIEWPORT_COARSE_SAMPLE_ORDER_STATE_CREATE_INFO_NV;
 	public Pointer pNext;
 	public VkCoarseSampleOrderTypeNV sampleOrderType;
 	public int customSampleOrderCount;

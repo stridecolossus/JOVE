@@ -20,7 +20,7 @@ public class VkPipelineRepresentativeFragmentTestStateCreateInfoNV extends Vulka
 	public static class ByValue extends VkPipelineRepresentativeFragmentTestStateCreateInfoNV implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineRepresentativeFragmentTestStateCreateInfoNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_REPRESENTATIVE_FRAGMENT_TEST_STATE_CREATE_INFO_NV;
+	public VkStructureType sType = VkStructureType.PIPELINE_REPRESENTATIVE_FRAGMENT_TEST_STATE_CREATE_INFO_NV;
 	public Pointer pNext;
 	public VulkanBoolean representativeFragmentTestEnable;
 }

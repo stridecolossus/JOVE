@@ -20,7 +20,7 @@ public class VkPhysicalDeviceSamplerYcbcrConversionFeatures extends VulkanStruct
 	public static class ByValue extends VkPhysicalDeviceSamplerYcbcrConversionFeatures implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceSamplerYcbcrConversionFeatures implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES;
 	public Pointer pNext;
 	public VulkanBoolean samplerYcbcrConversion;
 }

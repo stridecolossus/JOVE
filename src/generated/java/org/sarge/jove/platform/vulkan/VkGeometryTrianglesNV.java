@@ -29,7 +29,7 @@ public class VkGeometryTrianglesNV extends VulkanStructure {
 	public static class ByValue extends VkGeometryTrianglesNV implements Structure.ByValue { }
 	public static class ByReference extends VkGeometryTrianglesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
+	public VkStructureType sType = VkStructureType.GEOMETRY_TRIANGLES_NV;
 	public Pointer pNext;
 	public Pointer vertexData;
 	public long vertexOffset;

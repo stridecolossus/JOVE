@@ -27,7 +27,7 @@ public class VkObjectTableCreateInfoNVX extends VulkanStructure {
 	public static class ByValue extends VkObjectTableCreateInfoNVX implements Structure.ByValue { }
 	public static class ByReference extends VkObjectTableCreateInfoNVX implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_OBJECT_TABLE_CREATE_INFO_NVX;
+	public VkStructureType sType = VkStructureType.OBJECT_TABLE_CREATE_INFO_NVX;
 	public Pointer pNext;
 	public int objectCount;
 	public Pointer pObjectEntryTypes;

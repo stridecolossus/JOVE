@@ -20,8 +20,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkBindImageMemoryInfo extends VulkanStructure {
 	public static class ByValue extends VkBindImageMemoryInfo implements Structure.ByValue { }
 	public static class ByReference extends VkBindImageMemoryInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO;
+
+	public VkStructureType sType = VkStructureType.BIND_IMAGE_MEMORY_INFO;
 	public Pointer pNext;
 	public Pointer image;
 	public Pointer memory;

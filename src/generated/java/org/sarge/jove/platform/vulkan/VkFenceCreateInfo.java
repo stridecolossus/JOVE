@@ -15,7 +15,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"flags"
 })
 public class VkFenceCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.FENCE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 }

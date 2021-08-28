@@ -19,7 +19,7 @@ public class VkPhysicalDevicePushDescriptorPropertiesKHR extends VulkanStructure
 	public static class ByValue extends VkPhysicalDevicePushDescriptorPropertiesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDevicePushDescriptorPropertiesKHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR;
 	public Pointer pNext;
 	public int maxPushDescriptors;
 }

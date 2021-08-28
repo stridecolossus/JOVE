@@ -22,8 +22,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkComputePipelineCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkComputePipelineCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkComputePipelineCreateInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+
+	public VkStructureType sType = VkStructureType.COMPUTE_PIPELINE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public VkPipelineShaderStageCreateInfo stage;

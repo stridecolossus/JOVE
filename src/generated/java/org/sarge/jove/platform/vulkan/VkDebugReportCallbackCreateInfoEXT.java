@@ -22,7 +22,7 @@ public class VkDebugReportCallbackCreateInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkDebugReportCallbackCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkDebugReportCallbackCreateInfoEXT implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;
 	public Callback pfnCallback;

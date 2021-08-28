@@ -18,7 +18,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pDynamicStates"
 })
 public class VkPipelineDynamicStateCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int dynamicStateCount;

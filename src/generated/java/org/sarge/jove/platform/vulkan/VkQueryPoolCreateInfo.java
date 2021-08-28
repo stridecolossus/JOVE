@@ -22,7 +22,7 @@ public class VkQueryPoolCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkQueryPoolCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkQueryPoolCreateInfo implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.QUERY_POOL_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public VkQueryType queryType;

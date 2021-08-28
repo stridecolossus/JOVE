@@ -22,8 +22,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkAcquireNextImageInfoKHR extends VulkanStructure {
 	public static class ByValue extends VkAcquireNextImageInfoKHR implements Structure.ByValue { }
 	public static class ByReference extends VkAcquireNextImageInfoKHR implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_ACQUIRE_NEXT_IMAGE_INFO_KHR;
+
+	public VkStructureType sType = VkStructureType.ACQUIRE_NEXT_IMAGE_INFO_KHR;
 	public Pointer pNext;
 	public long swapchain;
 	public long timeout;

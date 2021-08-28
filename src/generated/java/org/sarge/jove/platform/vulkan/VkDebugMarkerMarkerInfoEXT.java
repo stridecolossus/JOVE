@@ -19,8 +19,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDebugMarkerMarkerInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkDebugMarkerMarkerInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkDebugMarkerMarkerInfoEXT implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+
+	public VkStructureType sType = VkStructureType.DEBUG_MARKER_MARKER_INFO_EXT;
 	public Pointer pNext;
 	public String pMarkerName;
 	public float[] color = new float[4];

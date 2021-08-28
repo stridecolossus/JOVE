@@ -19,7 +19,7 @@ public class VkSamplerYcbcrConversionImageFormatProperties extends VulkanStructu
 	public static class ByValue extends VkSamplerYcbcrConversionImageFormatProperties implements Structure.ByValue { }
 	public static class ByReference extends VkSamplerYcbcrConversionImageFormatProperties implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES;
+	public VkStructureType sType = VkStructureType.SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES;
 	public Pointer pNext;
 	public int combinedImageSamplerDescriptorCount;
 }

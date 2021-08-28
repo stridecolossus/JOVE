@@ -21,7 +21,7 @@ public class VkPipelineRasterizationConservativeStateCreateInfoEXT extends Vulka
 	public static class ByValue extends VkPipelineRasterizationConservativeStateCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineRasterizationConservativeStateCreateInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;
 	public VkConservativeRasterizationModeEXT conservativeRasterizationMode;

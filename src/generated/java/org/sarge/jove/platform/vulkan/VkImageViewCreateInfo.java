@@ -21,7 +21,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"subresourceRange"
 })
 public class VkImageViewCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.IMAGE_VIEW_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public Handle image;

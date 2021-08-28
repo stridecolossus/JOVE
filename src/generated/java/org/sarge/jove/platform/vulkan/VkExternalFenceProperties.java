@@ -21,7 +21,7 @@ public class VkExternalFenceProperties extends VulkanStructure {
 	public static class ByValue extends VkExternalFenceProperties implements Structure.ByValue { }
 	public static class ByReference extends VkExternalFenceProperties implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES;
+	public VkStructureType sType = VkStructureType.EXTERNAL_FENCE_PROPERTIES;
 	public Pointer pNext;
 	public VkExternalFenceHandleTypeFlag exportFromImportedHandleTypes;
 	public VkExternalFenceHandleTypeFlag compatibleHandleTypes;

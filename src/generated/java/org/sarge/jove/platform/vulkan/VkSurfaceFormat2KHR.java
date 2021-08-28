@@ -19,7 +19,7 @@ public class VkSurfaceFormat2KHR extends VulkanStructure {
 	public static class ByValue extends VkSurfaceFormat2KHR implements Structure.ByValue { }
 	public static class ByReference extends VkSurfaceFormat2KHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR;
+	public VkStructureType sType = VkStructureType.SURFACE_FORMAT_2_KHR;
 	public Pointer pNext;
 	public VkSurfaceFormatKHR surfaceFormat;
 }

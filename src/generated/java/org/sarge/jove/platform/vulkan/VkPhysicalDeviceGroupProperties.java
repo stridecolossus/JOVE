@@ -22,7 +22,7 @@ public class VkPhysicalDeviceGroupProperties extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceGroupProperties implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceGroupProperties implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_GROUP_PROPERTIES;
 	public Pointer pNext;
 	public int physicalDeviceCount;
 	public Pointer[] physicalDevices = new Pointer[32];

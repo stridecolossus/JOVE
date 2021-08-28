@@ -20,7 +20,7 @@ public class VkPresentRegionsKHR extends VulkanStructure {
 	public static class ByValue extends VkPresentRegionsKHR implements Structure.ByValue { }
 	public static class ByReference extends VkPresentRegionsKHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PRESENT_REGIONS_KHR;
+	public VkStructureType sType = VkStructureType.PRESENT_REGIONS_KHR;
 	public Pointer pNext;
 	public int swapchainCount;
 	public Pointer pRegions;

@@ -21,7 +21,7 @@ public class VkPhysicalDeviceSamplerFilterMinmaxPropertiesEXT extends VulkanStru
 	public static class ByValue extends VkPhysicalDeviceSamplerFilterMinmaxPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceSamplerFilterMinmaxPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES_EXT;
 	public Pointer pNext;
 	public VulkanBoolean filterMinmaxSingleComponentFormats;
 	public VulkanBoolean filterMinmaxImageComponentMapping;

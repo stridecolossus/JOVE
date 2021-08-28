@@ -29,7 +29,7 @@ public class VkSurfaceCapabilities2EXT extends VulkanStructure {
 	public static class ByValue extends VkSurfaceCapabilities2EXT implements Structure.ByValue { }
 	public static class ByReference extends VkSurfaceCapabilities2EXT implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_EXT;
+	public VkStructureType sType = VkStructureType.SURFACE_CAPABILITIES_2_EXT;
 	public Pointer pNext;
 	public int minImageCount;
 	public int maxImageCount;

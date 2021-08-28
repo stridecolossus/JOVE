@@ -19,7 +19,7 @@ public class VkImageDrmFormatModifierPropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkImageDrmFormatModifierPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkImageDrmFormatModifierPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.IMAGE_DRM_FORMAT_MODIFIER_PROPERTIES_EXT;
 	public Pointer pNext;
 	public long drmFormatModifier;
 }

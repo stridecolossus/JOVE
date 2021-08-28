@@ -19,7 +19,7 @@ public class VkSwapchainCounterCreateInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkSwapchainCounterCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkSwapchainCounterCreateInfoEXT implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SWAPCHAIN_COUNTER_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.SWAPCHAIN_COUNTER_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public VkSurfaceCounterFlagEXT surfaceCounters;
 }

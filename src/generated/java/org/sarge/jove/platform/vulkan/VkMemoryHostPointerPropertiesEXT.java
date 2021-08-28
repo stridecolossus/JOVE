@@ -19,7 +19,7 @@ public class VkMemoryHostPointerPropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkMemoryHostPointerPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkMemoryHostPointerPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_HOST_POINTER_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.MEMORY_HOST_POINTER_PROPERTIES_EXT;
 	public Pointer pNext;
 	public int memoryTypeBits;
 }

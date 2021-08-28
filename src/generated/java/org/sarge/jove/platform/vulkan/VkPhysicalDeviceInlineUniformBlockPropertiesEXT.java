@@ -23,7 +23,7 @@ public class VkPhysicalDeviceInlineUniformBlockPropertiesEXT extends VulkanStruc
 	public static class ByValue extends VkPhysicalDeviceInlineUniformBlockPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceInlineUniformBlockPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES_EXT;
 	public Pointer pNext;
 	public int maxInlineUniformBlockSize;
 	public int maxPerStageDescriptorInlineUniformBlocks;

@@ -22,7 +22,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pSignalSemaphores"
 })
 public class VkSubmitInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	public VkStructureType sType = VkStructureType.SUBMIT_INFO;
 	public Pointer pNext;
 	public int waitSemaphoreCount;
 	public Handle pWaitSemaphores;

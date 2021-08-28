@@ -20,7 +20,7 @@ public class VkMemoryBarrier extends VulkanStructure {
 	public static class ByValue extends VkMemoryBarrier implements Structure.ByValue { }
 	public static class ByReference extends VkMemoryBarrier implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+	public VkStructureType sType = VkStructureType.MEMORY_BARRIER;
 	public Pointer pNext;
 	public VkAccess srcAccessMask;
 	public VkAccess dstAccessMask;

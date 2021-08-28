@@ -20,7 +20,7 @@ public class VkPhysicalDeviceCornerSampledImageFeaturesNV extends VulkanStructur
 	public static class ByValue extends VkPhysicalDeviceCornerSampledImageFeaturesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceCornerSampledImageFeaturesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CORNER_SAMPLED_IMAGE_FEATURES_NV;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_CORNER_SAMPLED_IMAGE_FEATURES_NV;
 	public Pointer pNext;
 	public VulkanBoolean cornerSampledImage;
 }

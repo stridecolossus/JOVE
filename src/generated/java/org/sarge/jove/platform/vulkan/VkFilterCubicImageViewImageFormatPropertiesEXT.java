@@ -21,7 +21,7 @@ public class VkFilterCubicImageViewImageFormatPropertiesEXT extends VulkanStruct
 	public static class ByValue extends VkFilterCubicImageViewImageFormatPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkFilterCubicImageViewImageFormatPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT;
 	public Pointer pNext;
 	public VulkanBoolean filterCubic;
 	public VulkanBoolean filterCubicMinmax;

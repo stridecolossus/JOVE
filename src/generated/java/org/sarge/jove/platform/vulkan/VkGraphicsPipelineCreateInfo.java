@@ -32,7 +32,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"basePipelineIndex"
 })
 public class VkGraphicsPipelineCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.GRAPHICS_PIPELINE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int stageCount;

@@ -20,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pClearValues"
 })
 public class VkRenderPassBeginInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	public VkStructureType sType = VkStructureType.RENDER_PASS_BEGIN_INFO;
 	public Pointer pNext;
 	public Handle renderPass;
 	public Handle framebuffer;

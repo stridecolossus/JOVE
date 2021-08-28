@@ -20,7 +20,7 @@ public class VkTextureLODGatherFormatPropertiesAMD extends VulkanStructure {
 	public static class ByValue extends VkTextureLODGatherFormatPropertiesAMD implements Structure.ByValue { }
 	public static class ByReference extends VkTextureLODGatherFormatPropertiesAMD implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD;
+	public VkStructureType sType = VkStructureType.TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD;
 	public Pointer pNext;
 	public VulkanBoolean supportsTextureGatherLODBiasAMD;
 }

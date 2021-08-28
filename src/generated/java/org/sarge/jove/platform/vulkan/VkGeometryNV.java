@@ -21,7 +21,7 @@ public class VkGeometryNV extends VulkanStructure {
 	public static class ByValue extends VkGeometryNV implements Structure.ByValue { }
 	public static class ByReference extends VkGeometryNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_GEOMETRY_NV;
+	public VkStructureType sType = VkStructureType.GEOMETRY_NV;
 	public Pointer pNext;
 	public VkGeometryTypeNV geometryType;
 	public VkGeometryDataNV geometry;

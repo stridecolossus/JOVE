@@ -18,7 +18,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pPoolSizes"
 })
 public class VkDescriptorPoolCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.DESCRIPTOR_POOL_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int maxSets;

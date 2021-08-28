@@ -22,7 +22,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pResults"
 })
 public class VkPresentInfoKHR extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	public VkStructureType sType = VkStructureType.PRESENT_INFO_KHR;
 	public Pointer pNext;
 	public int waitSemaphoreCount;
 	public Handle pWaitSemaphores;

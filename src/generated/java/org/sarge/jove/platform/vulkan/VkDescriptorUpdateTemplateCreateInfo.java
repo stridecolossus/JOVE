@@ -25,8 +25,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDescriptorUpdateTemplateCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkDescriptorUpdateTemplateCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkDescriptorUpdateTemplateCreateInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO;
+
+	public VkStructureType sType = VkStructureType.DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int descriptorUpdateEntryCount;

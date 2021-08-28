@@ -20,7 +20,7 @@ public class VkPhysicalDeviceMaintenance3Properties extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceMaintenance3Properties implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceMaintenance3Properties implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
 	public Pointer pNext;
 	public int maxPerSetDescriptors;
 	public long maxMemoryAllocationSize;

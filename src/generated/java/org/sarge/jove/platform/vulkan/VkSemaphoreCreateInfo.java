@@ -19,7 +19,7 @@ public class VkSemaphoreCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkSemaphoreCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkSemaphoreCreateInfo implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.SEMAPHORE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 }

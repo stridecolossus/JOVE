@@ -20,8 +20,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDeviceGroupRenderPassBeginInfo extends VulkanStructure {
 	public static class ByValue extends VkDeviceGroupRenderPassBeginInfo implements Structure.ByValue { }
 	public static class ByReference extends VkDeviceGroupRenderPassBeginInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_GROUP_RENDER_PASS_BEGIN_INFO;
+
+	public VkStructureType sType = VkStructureType.DEVICE_GROUP_RENDER_PASS_BEGIN_INFO;
 	public Pointer pNext;
 	public int deviceMask;
 	public int deviceRenderAreaCount;

@@ -22,8 +22,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkBufferViewCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkBufferViewCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkBufferViewCreateInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+
+	public VkStructureType sType = VkStructureType.BUFFER_VIEW_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public Pointer buffer;

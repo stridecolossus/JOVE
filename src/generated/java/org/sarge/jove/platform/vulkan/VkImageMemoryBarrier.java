@@ -23,7 +23,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"subresourceRange"
 })
 public class VkImageMemoryBarrier extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	public VkStructureType sType = VkStructureType.IMAGE_MEMORY_BARRIER;
 	public Pointer pNext;
 	public int srcAccessMask;
 	public int dstAccessMask;

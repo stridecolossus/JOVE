@@ -19,7 +19,7 @@ public class VkPhysicalDeviceExternalImageFormatInfo extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceExternalImageFormatInfo implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceExternalImageFormatInfo implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO;
 	public Pointer pNext;
 	public VkExternalMemoryHandleTypeFlag handleType;
 }

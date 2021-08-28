@@ -19,7 +19,7 @@ public class VkMemoryPriorityAllocateInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkMemoryPriorityAllocateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkMemoryPriorityAllocateInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_PRIORITY_ALLOCATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.MEMORY_PRIORITY_ALLOCATE_INFO_EXT;
 	public Pointer pNext;
 	public float priority;
 }

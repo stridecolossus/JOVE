@@ -24,11 +24,11 @@ import com.sun.jna.Structure.FieldOrder;
 	"objectCount",
 	"pObjects"
 })
-public class VkDebugUtilsMessengerCallbackDataEXT extends VulkanStructure {
-	public static class ByValue extends VkDebugUtilsMessengerCallbackDataEXT implements Structure.ByValue { }
-	public static class ByReference extends VkDebugUtilsMessengerCallbackDataEXT implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
+public class VkDebugUtilsMessengerCallbackData extends VulkanStructure {
+	public static class ByValue extends VkDebugUtilsMessengerCallbackData implements Structure.ByValue { }
+	public static class ByReference extends VkDebugUtilsMessengerCallbackData implements Structure.ByReference { }
+
+	public VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
 	public Pointer pNext;
 	public int flags;
 	public String pMessageIdName;

@@ -20,7 +20,7 @@ public class VkMemoryAllocateFlagsInfo extends VulkanStructure {
 	public static class ByValue extends VkMemoryAllocateFlagsInfo implements Structure.ByValue { }
 	public static class ByReference extends VkMemoryAllocateFlagsInfo implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+	public VkStructureType sType = VkStructureType.MEMORY_ALLOCATE_FLAGS_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int deviceMask;

@@ -19,7 +19,7 @@ public class VkPipelineTessellationDomainOriginStateCreateInfo extends VulkanStr
 	public static class ByValue extends VkPipelineTessellationDomainOriginStateCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineTessellationDomainOriginStateCreateInfo implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_DOMAIN_ORIGIN_STATE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_TESSELLATION_DOMAIN_ORIGIN_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public VkTessellationDomainOrigin domainOrigin;
 }

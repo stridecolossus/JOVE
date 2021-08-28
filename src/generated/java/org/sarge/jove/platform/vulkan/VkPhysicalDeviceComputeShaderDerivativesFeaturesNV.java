@@ -21,7 +21,7 @@ public class VkPhysicalDeviceComputeShaderDerivativesFeaturesNV extends VulkanSt
 	public static class ByValue extends VkPhysicalDeviceComputeShaderDerivativesFeaturesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceComputeShaderDerivativesFeaturesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV;
 	public Pointer pNext;
 	public VulkanBoolean computeDerivativeGroupQuads;
 	public VulkanBoolean computeDerivativeGroupLinear;

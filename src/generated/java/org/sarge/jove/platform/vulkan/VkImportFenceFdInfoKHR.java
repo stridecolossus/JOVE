@@ -22,7 +22,7 @@ public class VkImportFenceFdInfoKHR extends VulkanStructure {
 	public static class ByValue extends VkImportFenceFdInfoKHR implements Structure.ByValue { }
 	public static class ByReference extends VkImportFenceFdInfoKHR implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMPORT_FENCE_FD_INFO_KHR;
+	public VkStructureType sType = VkStructureType.IMPORT_FENCE_FD_INFO_KHR;
 	public Pointer pNext;
 	public Pointer fence;
 	public int flags;

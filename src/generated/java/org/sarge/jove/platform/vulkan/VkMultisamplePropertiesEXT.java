@@ -19,7 +19,7 @@ public class VkMultisamplePropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkMultisamplePropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkMultisamplePropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MULTISAMPLE_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.MULTISAMPLE_PROPERTIES_EXT;
 	public Pointer pNext;
 	public VkExtent2D maxSampleLocationGridSize;
 }

@@ -22,7 +22,7 @@ public class VkPipelineViewportShadingRateImageStateCreateInfoNV extends VulkanS
 	public static class ByValue extends VkPipelineViewportShadingRateImageStateCreateInfoNV implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineViewportShadingRateImageStateCreateInfoNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_SHADING_RATE_IMAGE_STATE_CREATE_INFO_NV;
+	public VkStructureType sType = VkStructureType.PIPELINE_VIEWPORT_SHADING_RATE_IMAGE_STATE_CREATE_INFO_NV;
 	public Pointer pNext;
 	public VulkanBoolean shadingRateImageEnable;
 	public int viewportCount;

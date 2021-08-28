@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDeviceGroupCommandBufferBeginInfo extends VulkanStructure {
 	public static class ByValue extends VkDeviceGroupCommandBufferBeginInfo implements Structure.ByValue { }
 	public static class ByReference extends VkDeviceGroupCommandBufferBeginInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_GROUP_COMMAND_BUFFER_BEGIN_INFO;
+
+	public VkStructureType sType = VkStructureType.DEVICE_GROUP_COMMAND_BUFFER_BEGIN_INFO;
 	public Pointer pNext;
 	public int deviceMask;
 }

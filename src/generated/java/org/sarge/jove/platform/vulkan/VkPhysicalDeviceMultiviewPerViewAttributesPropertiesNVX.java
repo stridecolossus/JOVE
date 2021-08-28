@@ -20,7 +20,7 @@ public class VkPhysicalDeviceMultiviewPerViewAttributesPropertiesNVX extends Vul
 	public static class ByValue extends VkPhysicalDeviceMultiviewPerViewAttributesPropertiesNVX implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceMultiviewPerViewAttributesPropertiesNVX implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_ATTRIBUTES_PROPERTIES_NVX;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_ATTRIBUTES_PROPERTIES_NVX;
 	public Pointer pNext;
 	public VulkanBoolean perViewPositionAllComponents;
 }

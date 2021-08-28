@@ -23,7 +23,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pTexelBufferView"
 })
 public class VkWriteDescriptorSet extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	public VkStructureType sType = VkStructureType.WRITE_DESCRIPTOR_SET;
 	public Pointer pNext;
 	public Handle dstSet;
 	public int dstBinding;

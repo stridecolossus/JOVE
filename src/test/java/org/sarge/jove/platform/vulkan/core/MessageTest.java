@@ -5,10 +5,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT.ERROR;
-import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagEXT.INFO;
-import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT.GENERAL;
-import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT.VALIDATION;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity.ERROR;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity.INFO;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType.GENERAL;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType.VALIDATION;
 
 import java.io.StringWriter;
 import java.util.Collection;
@@ -18,17 +18,17 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagEXT;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
+import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType;
+import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackData;
 import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 
 public class MessageTest {
 	private Message message;
-	private Collection<VkDebugUtilsMessageTypeFlagEXT> types;
+	private Collection<VkDebugUtilsMessageType> types;
 
 	@BeforeEach
 	void before() {
-		final var data = new VkDebugUtilsMessengerCallbackDataEXT();
+		final var data = new VkDebugUtilsMessengerCallbackData();
 		data.pMessage = "message";
 		data.pMessageIdName = "name";
 		types = List.of(VALIDATION, GENERAL);

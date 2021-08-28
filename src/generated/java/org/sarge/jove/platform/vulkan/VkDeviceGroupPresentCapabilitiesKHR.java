@@ -20,7 +20,7 @@ public class VkDeviceGroupPresentCapabilitiesKHR extends VulkanStructure {
 	public static class ByValue extends VkDeviceGroupPresentCapabilitiesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkDeviceGroupPresentCapabilitiesKHR implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_GROUP_PRESENT_CAPABILITIES_KHR;
+	public VkStructureType sType = VkStructureType.DEVICE_GROUP_PRESENT_CAPABILITIES_KHR;
 	public Pointer pNext;
 	public int[] presentMask = new int[32];
 	public VkDeviceGroupPresentModeFlagKHR modes;

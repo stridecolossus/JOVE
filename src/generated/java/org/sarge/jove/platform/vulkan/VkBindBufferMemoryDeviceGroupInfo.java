@@ -19,8 +19,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkBindBufferMemoryDeviceGroupInfo extends VulkanStructure {
 	public static class ByValue extends VkBindBufferMemoryDeviceGroupInfo implements Structure.ByValue { }
 	public static class ByReference extends VkBindBufferMemoryDeviceGroupInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_DEVICE_GROUP_INFO;
+
+	public VkStructureType sType = VkStructureType.BIND_BUFFER_MEMORY_DEVICE_GROUP_INFO;
 	public Pointer pNext;
 	public int deviceIndexCount;
 	public Pointer pDeviceIndices;

@@ -20,7 +20,7 @@ public class VkMemoryAllocateInfo extends VulkanStructure {
 	public static class ByValue extends VkMemoryAllocateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkMemoryAllocateInfo implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	public VkStructureType sType = VkStructureType.MEMORY_ALLOCATE_INFO;
 	public Pointer pNext;
 	public long allocationSize;
 	public int memoryTypeIndex;

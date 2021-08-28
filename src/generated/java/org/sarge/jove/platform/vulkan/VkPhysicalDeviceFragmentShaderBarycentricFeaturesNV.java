@@ -20,7 +20,7 @@ public class VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV extends VulkanS
 	public static class ByValue extends VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_NV;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_NV;
 	public Pointer pNext;
 	public VulkanBoolean fragmentShaderBarycentric;
 }

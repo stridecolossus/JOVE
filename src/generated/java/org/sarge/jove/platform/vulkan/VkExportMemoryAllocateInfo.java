@@ -19,7 +19,7 @@ public class VkExportMemoryAllocateInfo extends VulkanStructure {
 	public static class ByValue extends VkExportMemoryAllocateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkExportMemoryAllocateInfo implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
+	public VkStructureType sType = VkStructureType.EXPORT_MEMORY_ALLOCATE_INFO;
 	public Pointer pNext;
 	public VkExternalMemoryHandleTypeFlag handleTypes;
 }

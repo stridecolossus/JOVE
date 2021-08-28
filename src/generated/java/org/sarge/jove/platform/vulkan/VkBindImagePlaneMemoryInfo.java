@@ -19,7 +19,7 @@ public class VkBindImagePlaneMemoryInfo extends VulkanStructure {
 	public static class ByValue extends VkBindImagePlaneMemoryInfo implements Structure.ByValue { }
 	public static class ByReference extends VkBindImagePlaneMemoryInfo implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_BIND_IMAGE_PLANE_MEMORY_INFO;
+	public VkStructureType sType = VkStructureType.BIND_IMAGE_PLANE_MEMORY_INFO;
 	public Pointer pNext;
 	public VkImageAspect planeAspect;
 }

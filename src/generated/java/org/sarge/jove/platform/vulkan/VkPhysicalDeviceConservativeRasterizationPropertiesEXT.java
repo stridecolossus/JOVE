@@ -28,7 +28,7 @@ public class VkPhysicalDeviceConservativeRasterizationPropertiesEXT extends Vulk
 	public static class ByValue extends VkPhysicalDeviceConservativeRasterizationPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceConservativeRasterizationPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
 	public Pointer pNext;
 	public float primitiveOverestimationSize;
 	public float maxExtraPrimitiveOverestimationSize;

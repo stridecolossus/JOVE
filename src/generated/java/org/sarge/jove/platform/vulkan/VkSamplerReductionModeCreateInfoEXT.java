@@ -19,7 +19,7 @@ public class VkSamplerReductionModeCreateInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkSamplerReductionModeCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkSamplerReductionModeCreateInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.SAMPLER_REDUCTION_MODE_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public VkSamplerReductionModeEXT reductionMode;
 }

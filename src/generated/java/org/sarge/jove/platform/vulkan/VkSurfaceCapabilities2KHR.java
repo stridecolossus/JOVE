@@ -19,7 +19,7 @@ public class VkSurfaceCapabilities2KHR extends VulkanStructure {
 	public static class ByValue extends VkSurfaceCapabilities2KHR implements Structure.ByValue { }
 	public static class ByReference extends VkSurfaceCapabilities2KHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR;
+	public VkStructureType sType = VkStructureType.SURFACE_CAPABILITIES_2_KHR;
 	public Pointer pNext;
 	public VkSurfaceCapabilitiesKHR surfaceCapabilities;
 }

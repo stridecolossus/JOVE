@@ -21,8 +21,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDisplayPresentInfoKHR extends VulkanStructure {
 	public static class ByValue extends VkDisplayPresentInfoKHR implements Structure.ByValue { }
 	public static class ByReference extends VkDisplayPresentInfoKHR implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DISPLAY_PRESENT_INFO_KHR;
+
+	public VkStructureType sType = VkStructureType.DISPLAY_PRESENT_INFO_KHR;
 	public Pointer pNext;
 	public VkRect2D srcRect;
 	public VkRect2D dstRect;

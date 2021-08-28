@@ -20,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pUserData"
 })
 public class VkDebugUtilsMessengerCreateInfoEXT extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;
 	public int messageSeverity;

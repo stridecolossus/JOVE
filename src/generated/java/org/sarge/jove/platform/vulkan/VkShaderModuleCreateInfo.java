@@ -19,7 +19,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pCode"
 })
 public class VkShaderModuleCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.SHADER_MODULE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public long codeSize;

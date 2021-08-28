@@ -29,7 +29,7 @@ public class VkPhysicalDeviceTransformFeedbackPropertiesEXT extends VulkanStruct
 	public static class ByValue extends VkPhysicalDeviceTransformFeedbackPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceTransformFeedbackPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
 	public Pointer pNext;
 	public int maxTransformFeedbackStreams;
 	public int maxTransformFeedbackBuffers;

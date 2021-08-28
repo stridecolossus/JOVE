@@ -21,7 +21,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pDependencies"
 })
 public class VkRenderPassCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.RENDER_PASS_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int attachmentCount;

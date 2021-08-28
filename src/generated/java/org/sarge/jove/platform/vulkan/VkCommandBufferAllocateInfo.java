@@ -22,7 +22,7 @@ public class VkCommandBufferAllocateInfo extends VulkanStructure {
 	public static class ByValue extends VkCommandBufferAllocateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkCommandBufferAllocateInfo implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	public VkStructureType sType = VkStructureType.COMMAND_BUFFER_ALLOCATE_INFO;
 	public Pointer pNext;
 	public Handle commandPool;
 	public VkCommandBufferLevel level;

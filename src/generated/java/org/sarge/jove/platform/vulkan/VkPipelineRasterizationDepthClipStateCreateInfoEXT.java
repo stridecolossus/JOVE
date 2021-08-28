@@ -21,7 +21,7 @@ public class VkPipelineRasterizationDepthClipStateCreateInfoEXT extends VulkanSt
 	public static class ByValue extends VkPipelineRasterizationDepthClipStateCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineRasterizationDepthClipStateCreateInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;
 	public VulkanBoolean depthClipEnable;

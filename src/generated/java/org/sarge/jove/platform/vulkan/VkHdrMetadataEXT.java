@@ -26,7 +26,7 @@ public class VkHdrMetadataEXT extends VulkanStructure {
 	public static class ByValue extends VkHdrMetadataEXT implements Structure.ByValue { }
 	public static class ByReference extends VkHdrMetadataEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_HDR_METADATA_EXT;
+	public VkStructureType sType = VkStructureType.HDR_METADATA_EXT;
 	public Pointer pNext;
 	public VkXYColorEXT displayPrimaryRed;
 	public VkXYColorEXT displayPrimaryGreen;

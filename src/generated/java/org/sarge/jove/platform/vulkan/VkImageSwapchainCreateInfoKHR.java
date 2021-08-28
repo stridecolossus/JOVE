@@ -19,7 +19,7 @@ public class VkImageSwapchainCreateInfoKHR extends VulkanStructure {
 	public static class ByValue extends VkImageSwapchainCreateInfoKHR implements Structure.ByValue { }
 	public static class ByReference extends VkImageSwapchainCreateInfoKHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR;
+	public VkStructureType sType = VkStructureType.IMAGE_SWAPCHAIN_CREATE_INFO_KHR;
 	public Pointer pNext;
 	public long swapchain;
 }

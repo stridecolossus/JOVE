@@ -19,8 +19,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkCommandBufferInheritanceConditionalRenderingInfoEXT extends VulkanStructure {
 	public static class ByValue extends VkCommandBufferInheritanceConditionalRenderingInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkCommandBufferInheritanceConditionalRenderingInfoEXT implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT;
+
+	public VkStructureType sType = VkStructureType.COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT;
 	public Pointer pNext;
 	public VulkanBoolean conditionalRenderingEnable;
 }

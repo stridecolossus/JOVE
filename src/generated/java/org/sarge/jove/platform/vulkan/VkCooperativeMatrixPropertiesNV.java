@@ -25,8 +25,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkCooperativeMatrixPropertiesNV extends VulkanStructure {
 	public static class ByValue extends VkCooperativeMatrixPropertiesNV implements Structure.ByValue { }
 	public static class ByReference extends VkCooperativeMatrixPropertiesNV implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_COOPERATIVE_MATRIX_PROPERTIES_NV;
+
+	public VkStructureType sType = VkStructureType.COOPERATIVE_MATRIX_PROPERTIES_NV;
 	public Pointer pNext;
 	public int MSize;
 	public int NSize;

@@ -19,8 +19,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDeviceGroupDeviceCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkDeviceGroupDeviceCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkDeviceGroupDeviceCreateInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
+
+	public VkStructureType sType = VkStructureType.DEVICE_GROUP_DEVICE_CREATE_INFO;
 	public Pointer pNext;
 	public int physicalDeviceCount;
 	public Pointer pPhysicalDevices;

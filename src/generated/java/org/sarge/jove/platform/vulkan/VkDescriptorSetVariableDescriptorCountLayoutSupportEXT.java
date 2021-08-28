@@ -18,8 +18,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDescriptorSetVariableDescriptorCountLayoutSupportEXT extends VulkanStructure {
 	public static class ByValue extends VkDescriptorSetVariableDescriptorCountLayoutSupportEXT implements Structure.ByValue { }
 	public static class ByReference extends VkDescriptorSetVariableDescriptorCountLayoutSupportEXT implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_LAYOUT_SUPPORT_EXT;
+
+	public VkStructureType sType = VkStructureType.DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_LAYOUT_SUPPORT_EXT;
 	public Pointer pNext;
 	public int maxVariableDescriptorCount;
 }

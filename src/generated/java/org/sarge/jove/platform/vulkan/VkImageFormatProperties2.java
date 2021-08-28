@@ -19,7 +19,7 @@ public class VkImageFormatProperties2 extends VulkanStructure {
 	public static class ByValue extends VkImageFormatProperties2 implements Structure.ByValue { }
 	public static class ByReference extends VkImageFormatProperties2 implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
+	public VkStructureType sType = VkStructureType.IMAGE_FORMAT_PROPERTIES_2;
 	public Pointer pNext;
 	public VkImageFormatProperties imageFormatProperties;
 }

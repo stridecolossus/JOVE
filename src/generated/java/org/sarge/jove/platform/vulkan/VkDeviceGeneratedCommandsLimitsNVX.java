@@ -22,8 +22,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkDeviceGeneratedCommandsLimitsNVX extends VulkanStructure {
 	public static class ByValue extends VkDeviceGeneratedCommandsLimitsNVX implements Structure.ByValue { }
 	public static class ByReference extends VkDeviceGeneratedCommandsLimitsNVX implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_GENERATED_COMMANDS_LIMITS_NVX;
+
+	public VkStructureType sType = VkStructureType.DEVICE_GENERATED_COMMANDS_LIMITS_NVX;
 	public Pointer pNext;
 	public int maxIndirectCommandsLayoutTokenCount;
 	public int maxObjectEntryCounts;

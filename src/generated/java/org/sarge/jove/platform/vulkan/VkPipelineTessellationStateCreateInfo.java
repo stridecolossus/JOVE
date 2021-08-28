@@ -17,7 +17,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"patchControlPoints"
 })
 public class VkPipelineTessellationStateCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int patchControlPoints;

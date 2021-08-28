@@ -24,7 +24,7 @@ public class VkPhysicalDeviceSampleLocationsPropertiesEXT extends VulkanStructur
 	public static class ByValue extends VkPhysicalDeviceSampleLocationsPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceSampleLocationsPropertiesEXT implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
 	public Pointer pNext;
 	public VkSampleCountFlag sampleLocationSampleCounts;
 	public VkExtent2D maxSampleLocationGridSize;

@@ -20,7 +20,7 @@ public class VkPhysicalDeviceShaderDrawParameterFeatures extends VulkanStructure
 	public static class ByValue extends VkPhysicalDeviceShaderDrawParameterFeatures implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceShaderDrawParameterFeatures implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES;
 	public Pointer pNext;
 	public VulkanBoolean shaderDrawParameters;
 }

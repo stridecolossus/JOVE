@@ -19,7 +19,7 @@ public class VkQueueFamilyCheckpointPropertiesNV extends VulkanStructure {
 	public static class ByValue extends VkQueueFamilyCheckpointPropertiesNV implements Structure.ByValue { }
 	public static class ByReference extends VkQueueFamilyCheckpointPropertiesNV implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV;
+	public VkStructureType sType = VkStructureType.QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV;
 	public Pointer pNext;
 	public VkPipelineStage checkpointExecutionStageMask;
 }

@@ -20,7 +20,7 @@ public class VkPipelineVertexInputDivisorStateCreateInfoEXT extends VulkanStruct
 	public static class ByValue extends VkPipelineVertexInputDivisorStateCreateInfoEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPipelineVertexInputDivisorStateCreateInfoEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO_EXT;
+	public VkStructureType sType = VkStructureType.PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int vertexBindingDivisorCount;
 	public Pointer pVertexBindingDivisors;

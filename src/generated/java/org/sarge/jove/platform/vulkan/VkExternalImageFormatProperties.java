@@ -19,7 +19,7 @@ public class VkExternalImageFormatProperties extends VulkanStructure {
 	public static class ByValue extends VkExternalImageFormatProperties implements Structure.ByValue { }
 	public static class ByReference extends VkExternalImageFormatProperties implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES;
+	public VkStructureType sType = VkStructureType.EXTERNAL_IMAGE_FORMAT_PROPERTIES;
 	public Pointer pNext;
 	public VkExternalMemoryProperties externalMemoryProperties;
 }

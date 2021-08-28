@@ -19,7 +19,7 @@ public class VkPhysicalDevicePointClippingProperties extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDevicePointClippingProperties implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDevicePointClippingProperties implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES;
 	public Pointer pNext;
 	public VkPointClippingBehavior pointClippingBehavior;
 }

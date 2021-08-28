@@ -27,7 +27,7 @@ public class VkRenderPassCreateInfo2KHR extends VulkanStructure {
 	public static class ByValue extends VkRenderPassCreateInfo2KHR implements Structure.ByValue { }
 	public static class ByReference extends VkRenderPassCreateInfo2KHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2_KHR;
+	public VkStructureType sType = VkStructureType.RENDER_PASS_CREATE_INFO_2_KHR;
 	public Pointer pNext;
 	public int flags;
 	public int attachmentCount;

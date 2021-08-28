@@ -39,7 +39,7 @@ public class VkPhysicalDeviceDescriptorIndexingFeaturesEXT extends VulkanStructu
 	public static class ByValue extends VkPhysicalDeviceDescriptorIndexingFeaturesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceDescriptorIndexingFeaturesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 	public Pointer pNext;
 	public VulkanBoolean shaderInputAttachmentArrayDynamicIndexing;
 	public VulkanBoolean shaderUniformTexelBufferArrayDynamicIndexing;

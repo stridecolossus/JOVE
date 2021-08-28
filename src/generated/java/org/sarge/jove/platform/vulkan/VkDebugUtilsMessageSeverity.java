@@ -6,14 +6,15 @@ import org.sarge.jove.common.IntegerEnumeration;
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkDebugUtilsMessageTypeFlagEXT implements IntegerEnumeration {
- 	GENERAL(1),
- 	VALIDATION(2),
- 	PERFORMANCE(4);
+public enum VkDebugUtilsMessageSeverity implements IntegerEnumeration {
+ 	VERBOSE(1),
+ 	INFO(16),
+ 	WARNING(256),
+ 	ERROR(4096);
 
 	private final int value;
 
-	private VkDebugUtilsMessageTypeFlagEXT(int value) {
+	private VkDebugUtilsMessageSeverity(int value) {
 		this.value = value;
 	}
 

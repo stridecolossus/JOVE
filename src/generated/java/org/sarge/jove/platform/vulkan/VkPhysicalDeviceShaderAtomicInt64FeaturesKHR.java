@@ -21,7 +21,7 @@ public class VkPhysicalDeviceShaderAtomicInt64FeaturesKHR extends VulkanStructur
 	public static class ByValue extends VkPhysicalDeviceShaderAtomicInt64FeaturesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceShaderAtomicInt64FeaturesKHR implements Structure.ByReference { }
 
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR;
 	public Pointer pNext;
 	public VulkanBoolean shaderBufferInt64Atomics;
 	public VulkanBoolean shaderSharedInt64Atomics;

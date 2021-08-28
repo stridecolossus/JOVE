@@ -24,7 +24,7 @@ public class VkRenderPassMultiviewCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkRenderPassMultiviewCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkRenderPassMultiviewCreateInfo implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.RENDER_PASS_MULTIVIEW_CREATE_INFO;
 	public Pointer pNext;
 	public int subpassCount;
 	public Pointer pViewMasks;

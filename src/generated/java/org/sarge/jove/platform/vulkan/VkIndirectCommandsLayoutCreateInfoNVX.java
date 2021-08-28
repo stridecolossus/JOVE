@@ -22,7 +22,7 @@ public class VkIndirectCommandsLayoutCreateInfoNVX extends VulkanStructure {
 	public static class ByValue extends VkIndirectCommandsLayoutCreateInfoNVX implements Structure.ByValue { }
 	public static class ByReference extends VkIndirectCommandsLayoutCreateInfoNVX implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_INDIRECT_COMMANDS_LAYOUT_CREATE_INFO_NVX;
+	public VkStructureType sType = VkStructureType.INDIRECT_COMMANDS_LAYOUT_CREATE_INFO_NVX;
 	public Pointer pNext;
 	public VkPipelineBindPoint pipelineBindPoint;
 	public int flags;

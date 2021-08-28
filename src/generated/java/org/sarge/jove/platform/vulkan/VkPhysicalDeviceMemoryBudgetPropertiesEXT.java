@@ -20,7 +20,7 @@ public class VkPhysicalDeviceMemoryBudgetPropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceMemoryBudgetPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceMemoryBudgetPropertiesEXT implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
 	public Pointer pNext;
 	public long[] heapBudget = new long[16];
 	public long[] heapUsage = new long[16];

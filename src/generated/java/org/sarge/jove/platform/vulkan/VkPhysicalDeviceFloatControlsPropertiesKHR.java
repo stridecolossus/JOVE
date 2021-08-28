@@ -36,7 +36,7 @@ public class VkPhysicalDeviceFloatControlsPropertiesKHR extends VulkanStructure 
 	public static class ByValue extends VkPhysicalDeviceFloatControlsPropertiesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceFloatControlsPropertiesKHR implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES_KHR;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES_KHR;
 	public Pointer pNext;
 	public VulkanBoolean separateDenormSettings;
 	public VulkanBoolean separateRoundingModeSettings;

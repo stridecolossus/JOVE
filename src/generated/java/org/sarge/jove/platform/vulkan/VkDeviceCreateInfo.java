@@ -22,7 +22,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pEnabledFeatures"
 })
 public class VkDeviceCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.DEVICE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public int queueCreateInfoCount;

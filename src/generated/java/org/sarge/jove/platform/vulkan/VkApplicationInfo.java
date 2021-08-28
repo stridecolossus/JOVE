@@ -20,7 +20,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"apiVersion"
 })
 public class VkApplicationInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	public VkStructureType sType = VkStructureType.APPLICATION_INFO;
 	public Pointer pNext;
 	public String pApplicationName;
 	public int applicationVersion;

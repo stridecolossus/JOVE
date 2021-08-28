@@ -31,7 +31,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"unnormalizedCoordinates"
 })
 public class VkSamplerCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	public VkStructureType sType = VkStructureType.SAMPLER_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
 	public VkFilter magFilter;

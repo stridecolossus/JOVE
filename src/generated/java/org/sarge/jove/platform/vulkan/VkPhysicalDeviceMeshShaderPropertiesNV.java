@@ -31,7 +31,7 @@ public class VkPhysicalDeviceMeshShaderPropertiesNV extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceMeshShaderPropertiesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceMeshShaderPropertiesNV implements Structure.ByReference { }
 	
-	public VkStructureType sType = VkStructureType.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
+	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
 	public Pointer pNext;
 	public int maxDrawMeshTasksCount;
 	public int maxTaskWorkGroupInvocations;
