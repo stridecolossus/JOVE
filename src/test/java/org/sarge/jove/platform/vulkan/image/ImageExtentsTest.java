@@ -6,12 +6,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkExtent3D;
 
-class ExtentsTest {
-	private Extents extents;
+class ImageExtentsTest {
+	private ImageExtents extents;
 
 	@BeforeEach
 	void before() {
-		extents = new Extents(2, 3);
+		extents = new ImageExtents(2, 3);
 	}
 
 	@Test

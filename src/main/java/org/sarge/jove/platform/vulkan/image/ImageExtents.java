@@ -8,13 +8,13 @@ import org.sarge.lib.util.Check;
  * An <i>image extents</i> defines the extents of a Vulkan image.
  * @author Sarge
  */
-public record Extents(Dimensions dimensions, int depth) {
+public record ImageExtents(Dimensions dimensions, int depth) {
 	/**
 	 * Constructor.
 	 * @param dim		Image dimensions
 	 * @param depth		Depth
 	 */
-	public Extents {
+	public ImageExtents {
 		Check.notNull(dimensions);
 		Check.oneOrMore(depth);
 	}
@@ -22,14 +22,14 @@ public record Extents(Dimensions dimensions, int depth) {
 	/**
 	 * Convenience constructor for a 2D image.
 	 */
-	public Extents(int width, int height) {
+	public ImageExtents(int width, int height) {
 		this(new Dimensions(width, height));
 	}
 
 	/**
 	 * Convenience constructor for a 2D image.
 	 */
-	public Extents(Dimensions dim) {
+	public ImageExtents(Dimensions dim) {
 		this(dim, 1);
 	}
 

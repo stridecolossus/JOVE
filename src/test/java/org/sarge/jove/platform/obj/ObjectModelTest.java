@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -183,7 +184,7 @@ public class ObjectModelTest {
 			assertEquals(Primitive.TRIANGLES, header.primitive());
 			assertEquals(3, header.count());
 			assertEquals(true, header.clockwise());
-			assertEquals(List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT), header.layout());
+			assertEquals(List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate.layout(2)), header.layout());
 		}
 
 		@Test

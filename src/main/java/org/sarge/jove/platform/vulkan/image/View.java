@@ -77,7 +77,7 @@ public class View extends AbstractVulkanObject {
 	 * Convenience accessor.
 	 * @return Image extents
 	 */
-	public final Extents extents() {
+	public final ImageExtents extents() {
 		return image().descriptor().extents();
 	}
 

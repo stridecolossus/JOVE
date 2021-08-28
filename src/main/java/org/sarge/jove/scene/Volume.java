@@ -20,7 +20,7 @@ public interface Volume {
 	/**
 	 * Determines whether this volume intersects the given volume.
 	 * <p>
-	 * In general a bounding volume intersection test is assumed to ultimately degenerate to a test against a sphere or a {@link Extents}.
+	 * In general a bounding volume intersection test is assumed to ultimately degenerate to a test against a sphere or a {@link ImageExtents}.
 	 * <br>
 	 * An implementation should perform class-specific intersection tests or delegate to the supplied volume.
 	 * <br>

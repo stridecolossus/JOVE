@@ -34,7 +34,7 @@ import com.sun.jna.Structure;
 
 public class ImageTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
-	private static final Extents EXTENTS = new Extents(3, 4);
+	private static final ImageExtents EXTENTS = new ImageExtents(3, 4);
 
 	private DefaultImage image;
 	private Pointer handle;

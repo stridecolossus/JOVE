@@ -68,4 +68,17 @@ class CoordinateTest {
 		assertEquals(new Coordinate2D(1, 0), Coordinate2D.TOP_RIGHT);
 		assertEquals(new Coordinate2D(1, 1), Coordinate2D.BOTTOM_RIGHT);
 	}
+
+	@Test
+	void layout() {
+		assertEquals(Layout.of(1), Coordinate.layout(1));
+		assertEquals(Layout.of(2), Coordinate.layout(2));
+		assertEquals(Layout.of(3), Coordinate.layout(3));
+	}
+
+	@Test
+	void layoutInvalidSize() {
+		assertThrows(IllegalArgumentException.class, () -> Coordinate.layout(0));
+		assertThrows(IllegalArgumentException.class, () -> Coordinate.layout(4));
+	}
 }

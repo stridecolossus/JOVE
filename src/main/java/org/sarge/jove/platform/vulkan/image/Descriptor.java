@@ -18,7 +18,7 @@ import org.sarge.lib.util.Check;
  * An <i>image descriptor</i> specifies the properties of an image.
  * @author Sarge
  */
-public record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levels, int layers) {
+public record Descriptor(VkImageType type, VkFormat format, ImageExtents extents, Set<VkImageAspect> aspects, int levels, int layers) {
 	// Valid image aspect combinations
 	private static final Collection<Set<VkImageAspect>> VALID_ASPECTS = List.of(
 			Set.of(VkImageAspect.COLOR),
@@ -73,7 +73,7 @@ public record Descriptor(VkImageType type, VkFormat format, Extents extents, Set
 	public static class Builder {
 		private VkImageType type = VkImageType.IMAGE_TYPE_2D;
 		private VkFormat format;
-		private Extents extents;
+		private ImageExtents extents;
 		private final Set<VkImageAspect> aspects = new HashSet<>();
 		private int levels = 1;
 		private int layers = 1;
@@ -100,7 +100,7 @@ public record Descriptor(VkImageType type, VkFormat format, Extents extents, Set
 		 * Sets the image extents.
 		 * @param extents Image extents
 		 */
-		public Builder extents(Extents extents) {
+		public Builder extents(ImageExtents extents) {
 			this.extents = notNull(extents);
 			return this;
 		}

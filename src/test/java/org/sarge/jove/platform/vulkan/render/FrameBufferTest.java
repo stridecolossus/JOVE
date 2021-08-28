@@ -28,7 +28,7 @@ import org.sarge.jove.platform.vulkan.VkSubpassContents;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.image.Descriptor;
-import org.sarge.jove.platform.vulkan.image.Extents;
+import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -59,7 +59,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		// Init image descriptor
 		extents = new Dimensions(3, 4);
 		final Descriptor descriptor = new Descriptor.Builder()
-				.extents(new Extents(extents))
+				.extents(new ImageExtents(extents))
 				.format(FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();
@@ -171,7 +171,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		@Test
 		void createInvalidAttachmentFormat() {
 			final Descriptor invalid = new Descriptor.Builder()
-					.extents(new Extents(extents))
+					.extents(new ImageExtents(extents))
 					.format(VkFormat.UNDEFINED)
 					.aspect(VkImageAspect.COLOR)
 					.build();
@@ -182,7 +182,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		@Test
 		void createInvalidAttachmentExtents() {
 			final Descriptor invalid = new Descriptor.Builder()
-					.extents(new Extents(1, 2))
+					.extents(new ImageExtents(1, 2))
 					.format(FORMAT)
 					.aspect(VkImageAspect.COLOR)
 					.build();

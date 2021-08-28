@@ -2,8 +2,10 @@ package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
@@ -26,12 +28,24 @@ public interface Coordinate extends VertexComponent {
 	}
 
 	/**
+	 * @param size Number of texture coordinates (1..3)
+	 * @return Texture coordinate layout
+	 * @throws IllegalArgumentException if the given size is invalid
+	 */
+	static Layout layout(int size) {
+		Check.range(size, 1, 3);
+		return Coordinate1D.LAYOUTS[size - 1];
+	}
+
+	/**
 	 * One-dimensional texture coordinate.
 	 */
 	record Coordinate1D(float u) implements Coordinate {
+		private static final Layout[] LAYOUTS = IntStream.range(1, 4).mapToObj(Layout::of).toArray(Layout[]::new);
+
 		@Override
 		public Layout layout() {
-			return Layout.of(1);
+			return LAYOUTS[0];
 		}
 
 		@Override
@@ -58,11 +72,6 @@ public interface Coordinate extends VertexComponent {
 			TOP_RIGHT 		= new Coordinate2D(1, 0),
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
 
-		/**
-		 * Layout for a 2D coordinate.
-		 */
-		public static final Layout LAYOUT = Layout.of(2);
-
 		@Override
 		public void buffer(ByteBuffer buffer) {
 			buffer.putFloat(u).putFloat(v);
@@ -70,7 +79,7 @@ public interface Coordinate extends VertexComponent {
 
 		@Override
 		public Layout layout() {
-			return LAYOUT;
+			return Coordinate1D.LAYOUTS[1];
 		}
 
 		@Override
@@ -94,7 +103,7 @@ public interface Coordinate extends VertexComponent {
 
 		@Override
 		public Layout layout() {
-			return Layout.of(3);
+			return Coordinate1D.LAYOUTS[2];
 		}
 
 		@Override

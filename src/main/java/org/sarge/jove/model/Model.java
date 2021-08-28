@@ -18,7 +18,7 @@ public interface Model {
 	/**
 	 * Descriptor for this model.
 	 */
-	record Header(List<Layout> layout, Primitive primitive, int count, boolean clockwise) {
+	public record Header(List<Layout> layout, Primitive primitive, int count, boolean clockwise) {
 		/**
 		 * Constructor.
 		 * @param layout			Vertex layout

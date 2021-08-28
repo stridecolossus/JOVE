@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
 
@@ -21,7 +21,7 @@ public class CubeBuilderTest {
 
 	@Test
 	void build() {
-		final var layout = List.of(Point.LAYOUT, Coordinate2D.LAYOUT);
+		final var layout = List.of(Point.LAYOUT, Layout.of(2));
 		final Model cube = builder.build();
 		assertNotNull(cube);
 		assertEquals(new Header(layout, Primitive.TRIANGLES, (2 * 3) * 6, false), cube.header());

@@ -26,7 +26,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Descriptor;
-import org.sarge.jove.platform.vulkan.image.Extents;
+import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.FormatHelper;
@@ -398,7 +398,7 @@ public class Swapchain extends AbstractVulkanObject {
 			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
 			final Descriptor descriptor = new Descriptor.Builder()
 					.format(info.imageFormat)
-					.extents(new Extents(extents))
+					.extents(new ImageExtents(extents))
 					.aspect(VkImageAspect.COLOR)
 					.build();
 

@@ -38,7 +38,7 @@ public class ImageCopyCommandTest {
 
 		// Define image
 		final var descriptor = new Descriptor.Builder()
-				.extents(new Extents(2, 3))
+				.extents(new ImageExtents(2, 3))
 				.format(AbstractVulkanTest.FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();

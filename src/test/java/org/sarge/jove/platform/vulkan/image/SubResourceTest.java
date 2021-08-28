@@ -22,7 +22,7 @@ public class SubResourceTest {
 				.aspect(VkImageAspect.DEPTH)
 				.aspect(VkImageAspect.STENCIL)
 				.format(AbstractVulkanTest.FORMAT)
-				.extents(new Extents(4, 5))
+				.extents(new ImageExtents(4, 5))
 				.mipLevels(2)
 				.arrayLayers(3)
 				.build();
@@ -77,7 +77,7 @@ public class SubResourceTest {
 		final Descriptor other = new Descriptor.Builder()
 				.aspect(VkImageAspect.COLOR)
 				.format(AbstractVulkanTest.FORMAT)
-				.extents(new Extents(4, 5))
+				.extents(new ImageExtents(4, 5))
 				.build();
 
 		assertThrows(IllegalStateException.class, () -> SubResource.of(other, SubResource.of(descriptor)));

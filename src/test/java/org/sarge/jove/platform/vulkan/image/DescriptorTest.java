@@ -32,7 +32,7 @@ import com.sun.jna.Pointer;
 
 public class DescriptorTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
-	private static final Extents EXTENTS = new Extents(3, 4);
+	private static final ImageExtents EXTENTS = new ImageExtents(3, 4);
 
 	private DefaultImage image;
 	private Pointer handle;
@@ -92,7 +92,7 @@ public class DescriptorTest extends AbstractVulkanTest {
 		@DisplayName("2D image must have depth of one")
 		@Test
 		void invalidExtentsDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new Extents(new Dimensions(2, 3), 4), COLOUR, 1, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new ImageExtents(new Dimensions(2, 3), 4), COLOUR, 1, 1));
 		}
 
 		@DisplayName("2D image must have height and depth of one")
