@@ -6,7 +6,7 @@ import org.sarge.jove.common.IntegerEnumeration;
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkColorComponentFlag implements IntegerEnumeration {
+public enum VkColorComponent implements IntegerEnumeration {
  	R(1),
  	G(2),
  	B(4),
@@ -14,7 +14,7 @@ public enum VkColorComponentFlag implements IntegerEnumeration {
 
 	private final int value;
 
-	private VkColorComponentFlag(int value) {
+	private VkColorComponent(int value) {
 		this.value = value;
 	}
 

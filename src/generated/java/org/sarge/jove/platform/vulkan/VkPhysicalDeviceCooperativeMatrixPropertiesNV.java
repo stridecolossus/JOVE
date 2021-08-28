@@ -21,5 +21,5 @@ public class VkPhysicalDeviceCooperativeMatrixPropertiesNV extends VulkanStructu
 
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV;
 	public Pointer pNext;
-	public VkShaderStageFlag cooperativeMatrixSupportedStages;
+	public VkShaderStage cooperativeMatrixSupportedStages;
 }

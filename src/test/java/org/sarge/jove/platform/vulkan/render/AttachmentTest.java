@@ -69,7 +69,7 @@ public class AttachmentTest {
 			final VkAttachmentDescription desc = attachment.descriptor();
 			assertNotNull(desc);
 			assertEquals(COLOUR, desc.format);
-			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_1, desc.samples);
+			assertEquals(VkSampleCountFlag.COUNT_1, desc.samples);
 			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);
 			assertEquals(VkAttachmentStoreOp.STORE, desc.storeOp);
 			assertEquals(VkAttachmentLoadOp.DONT_CARE, desc.stencilLoadOp);
@@ -93,7 +93,7 @@ public class AttachmentTest {
 			final VkAttachmentDescription desc = attachment.descriptor();
 			assertNotNull(desc);
 			assertEquals(DEPTH, desc.format);
-			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_1, desc.samples);
+			assertEquals(VkSampleCountFlag.COUNT_1, desc.samples);
 			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);
 			assertEquals(VkAttachmentStoreOp.DONT_CARE, desc.storeOp);
 			assertEquals(VkAttachmentLoadOp.CLEAR, desc.stencilLoadOp);

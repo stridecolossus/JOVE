@@ -22,7 +22,7 @@ public class VkShaderStatisticsInfoAMD extends VulkanStructure {
 	public static class ByValue extends VkShaderStatisticsInfoAMD implements Structure.ByValue { }
 	public static class ByReference extends VkShaderStatisticsInfoAMD implements Structure.ByReference { }
 
-	public VkShaderStageFlag shaderStageMask;
+	public VkShaderStage shaderStageMask;
 	public VkShaderResourceUsageAMD resourceUsage;
 	public int numPhysicalVgprs;
 	public int numPhysicalSgprs;

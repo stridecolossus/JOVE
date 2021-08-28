@@ -13,10 +13,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.DefaultModel;
+import org.sarge.jove.model.DefaultModel.Builder;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
+import org.sarge.lib.util.Check;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing and maintains the list of generated models.
@@ -48,14 +49,14 @@ public class ObjectModel {
 	private final List<Coordinate> coords = new VertexComponentList<>();
 
 	// Models
-	private final Supplier<DefaultModel.Builder> factory;
-	private final Deque<DefaultModel.Builder> builders = new LinkedList<>();
+	private final Supplier<Builder> factory;
+	private final Deque<Builder> builders = new LinkedList<>();
 
 	/**
 	 * Constructor.
 	 * @param factory Factory for the model builder
 	 */
-	public ObjectModel(Supplier<DefaultModel.Builder> factory) {
+	public ObjectModel(Supplier<Builder> factory) {
 		this.factory = notNull(factory);
 		add();
 	}
@@ -64,27 +65,27 @@ public class ObjectModel {
 	 * Constructor using a default model builder.
 	 */
 	public ObjectModel() {
-		this(DefaultModel.Builder::new);
+		this(Builder::new);
 	}
 
 	/**
 	 * @return Vertices
 	 */
-	public List<Point> vertices() {
+	List<Point> vertices() {
 		return vertices;
 	}
 
 	/**
 	 * @return Normals
 	 */
-	public List<Vector> normals() {
+	List<Vector> normals() {
 		return normals;
 	}
 
 	/**
 	 * @return Texture coordinates
 	 */
-	public List<Coordinate> coordinates() {
+	List<Coordinate> coordinates() {
 		return coords;
 	}
 
@@ -98,7 +99,7 @@ public class ObjectModel {
 	/**
 	 * @return Builder for the current object group
 	 */
-	private DefaultModel.Builder current() {
+	private Builder current() {
 		return builders.getLast();
 	}
 
@@ -107,7 +108,7 @@ public class ObjectModel {
 	 */
 	private void add() {
 		assert isEmpty();
-		final DefaultModel.Builder next = notNull(factory.get());
+		final Builder next = notNull(factory.get());
 		next.primitive(Primitive.TRIANGLES);
 		next.clockwise(true);
 		builders.add(next);
@@ -132,30 +133,46 @@ public class ObjectModel {
 	}
 
 	/**
-	 * Adds a face vertex to the current model.
-	 * @param v			Vertex index
-	 * @param n			Optional normal index
-	 * @param tc		Optional texture coordinates index
-	 * @throws IndexOutOfBoundsException if any index is not valid for the current group
+	 * Adds a vertex to the current model.
+	 * <p>
+	 * The <i>indices</i> parameter specifies the following indices:
+	 * <ol>
+	 * <li>position</li>
+	 * <li>texture coordinate</li>
+	 * <li>normal</li>
+	 * </ol>
+	 * Notes:
+	 * <ul>
+	 * <li>the vertex position is mandatory</li>
+	 * <li>texture coordinate and normal are optional, i.e. can be {code null}</li>
+	 * <li>indices start at <b>one</b> and can be negative</li>
+	 * </ul>
+	 * @param indices Vertex indices
+	 * @throws IndexOutOfBoundsException for an invalid index
+	 * @throws IllegalArgumentException if the array is empty or does not contain at least the vertex position
 	 */
-	public void vertex(int v, Integer n, Integer tc) {
-		// Build vertex
-		final var vertex = new Vertex.Builder();
-		vertex.position(vertices.get(v));
+	public void vertex(Integer[] indices) {
+		// Validate
+		Check.notEmpty(indices);
+		if(indices[0] == null) throw new IllegalArgumentException("Indices must contain a vertex position");
 
-		// Add optional normal
-		if(n != null) {
-			vertex.normal(normals.get(n));
-		}
+		// Add vertex position
+		final var vb = new Vertex.Builder();
+		vb.position(vertices.get(indices[0]));
 
 		// Add optional texture coordinate
-		if(tc != null) {
-			vertex.coordinate(coords.get(tc));
+		if(indices[1] != null) {
+			vb.coordinate(coords.get(indices[1]));
 		}
 
-		// Add to model
-		final DefaultModel.Builder builder = current();
-		builder.add(vertex.build());
+		// Add optional normal
+		if(indices[2] != null) {
+			vb.normal(normals.get(indices[2]));
+		}
+
+		// Add vertex
+		final Builder builder = current();
+		builder.add(vb.build());
 	}
 
 	/**
@@ -164,7 +181,7 @@ public class ObjectModel {
 	 * @throws IllegalArgumentException if the models cannot be constructed
 	 */
 	public Stream<Model> build() {
-		return builders.stream().map(DefaultModel.Builder::build);
+		return builders.stream().map(Builder::build);
 	}
 	// TODO - assume one model at a time, factor out building per model, this class (or maybe loader?) should be meta-model that returns the resultant list
 

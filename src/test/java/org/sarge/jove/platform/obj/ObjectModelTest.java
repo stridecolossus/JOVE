@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,8 +67,11 @@ public class ObjectModelTest {
 
 	@Nested
 	class VertexTests {
+		private Integer[] indices;
+
 		@BeforeEach
 		void before() {
+			indices = new Integer[3];
 			model.vertices().add(Point.ORIGIN);
 			model.normals().add(Vector.X);
 			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
@@ -76,30 +80,37 @@ public class ObjectModelTest {
 		@DisplayName("Add a vertex with all 3 components")
 		@Test
 		void face() {
-			model.vertex(1, 1, 1);
+			Arrays.fill(indices, 1);
+			model.vertex(indices);
 		}
 
 		@DisplayName("Add a vertex with just the position")
 		@Test
 		void faceVertexOnly() {
-			model.vertex(1, null, null);
+			indices[0] = 1;
+			model.vertex(indices);
 		}
 
 		@DisplayName("Add a vertex with a normal")
 		@Test
 		void faceVertexNormal() {
-			model.vertex(1, 1, null);
+			indices[0] = 1;
+			indices[2] = 1;
+			model.vertex(indices);
 		}
 
 		@DisplayName("Add a vertex with a texture coordinate")
 		@Test
 		void faceVertexTexture() {
-			model.vertex(1, null, 1);
+			indices[0] = 1;
+			indices[1] = 1;
+			model.vertex(indices);
 		}
 
 		@Test
 		void vertexInvalidIndex() {
-			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(2, 1, 1));
+			indices[0] = 2;
+			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(indices));
 		}
 	}
 
@@ -158,11 +169,18 @@ public class ObjectModelTest {
 	@Nested
 	class BuildTests {
 		private void triangle() {
+			// Add vertex components
 			model.vertices().add(Point.ORIGIN);
 			model.normals().add(Vector.X);
 			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
+
+			// Populate vertex indices
+			final var indices = new Integer[3];
+			Arrays.fill(indices, 1);
+
+			// Add triangle
 			for(int n = 0; n < 3; ++n) {
-				model.vertex(1, 1, 1);
+				model.vertex(indices);
 			}
 		}
 

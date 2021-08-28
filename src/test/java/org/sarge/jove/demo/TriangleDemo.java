@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
 import org.sarge.jove.platform.vulkan.VkCullMode;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
-import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
@@ -158,11 +158,11 @@ public class TriangleDemo {
 					.cull(VkCullMode.NONE) // TODO
 					.build()
 				.shader()
-					.stage(VkShaderStageFlag.VERTEX)
+					.stage(VkShaderStage.VERTEX)
 					.shader(vert)
 					.build()
 				.shader()
-					.stage(VkShaderStageFlag.FRAGMENT)
+					.stage(VkShaderStage.FRAGMENT)
 					.shader(frag)
 					.build()
 				.build(dev);

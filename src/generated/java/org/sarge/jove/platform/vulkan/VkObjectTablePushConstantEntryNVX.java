@@ -23,5 +23,5 @@ public class VkObjectTablePushConstantEntryNVX extends VulkanStructure {
 	public VkObjectEntryTypeNVX type;
 	public int flags;
 	public Pointer pipelineLayout;
-	public VkShaderStageFlag stageFlags;
+	public VkShaderStage stageFlags;
 }

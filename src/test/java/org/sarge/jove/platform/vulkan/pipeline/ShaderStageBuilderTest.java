@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Shader;
 
 import com.sun.jna.Pointer;
@@ -39,7 +39,7 @@ public class ShaderStageBuilderTest {
 	void build() {
 		// Create a shader stage
 		builder
-				.stage(VkShaderStageFlag.VERTEX)
+				.stage(VkShaderStage.VERTEX)
 				.name("name")
 				.shader(shader)
 				.build();
@@ -52,7 +52,7 @@ public class ShaderStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals("name", info.pName);
-		assertEquals(VkShaderStageFlag.VERTEX, info.stage);
+		assertEquals(VkShaderStage.VERTEX, info.stage);
 		assertEquals(shader.handle(), info.module);
 	}
 
@@ -69,21 +69,21 @@ public class ShaderStageBuilderTest {
 
 	@Test
 	void buildShaderModuleNotSpecified() {
-		builder.stage(VkShaderStageFlag.FRAGMENT);
+		builder.stage(VkShaderStage.FRAGMENT);
 		assertThrows(IllegalArgumentException.class, () -> builder.build());
 	}
 
 	@Test
 	void buildVertexShaderNotSpecified() {
-		builder.stage(VkShaderStageFlag.FRAGMENT).shader(shader).build();
+		builder.stage(VkShaderStage.FRAGMENT).shader(shader).build();
 		assertThrows(IllegalStateException.class, () -> builder.get());
 	}
 
 	@Test
 	void buildDuplicateStage() {
-		builder.stage(VkShaderStageFlag.FRAGMENT).shader(shader).build();
+		builder.stage(VkShaderStage.FRAGMENT).shader(shader).build();
 		builder.init();
-		builder.stage(VkShaderStageFlag.FRAGMENT).shader(shader);
+		builder.stage(VkShaderStage.FRAGMENT).shader(shader);
 		assertThrows(IllegalArgumentException.class, () -> builder.build());
 	}
 }

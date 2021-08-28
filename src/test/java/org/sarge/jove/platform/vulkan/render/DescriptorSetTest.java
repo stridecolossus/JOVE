@@ -29,7 +29,7 @@ import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Resource;
@@ -54,7 +54,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create layout with a sampler binding
-		binding = new Binding(BINDING, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStageFlag.FRAGMENT));
+		binding = new Binding(BINDING, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
 		layout = new Layout(new Pointer(1), dev, List.of(binding));
 
 		// Create sampler resource
@@ -82,7 +82,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void entryInvalidBinding() {
-			final Binding other = new Binding(999, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStageFlag.FRAGMENT));
+			final Binding other = new Binding(999, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
 			assertThrows(IllegalArgumentException.class, () -> descriptor.entry(other));
 		}
 
@@ -121,7 +121,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			assertEquals(BINDING, binding.index());
 			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, binding.type());
 			assertEquals(1, binding.count());
-			assertEquals(Set.of(VkShaderStageFlag.FRAGMENT), binding.stages());
+			assertEquals(Set.of(VkShaderStage.FRAGMENT), binding.stages());
 		}
 
 		@Test
@@ -134,7 +134,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			final Binding result = new Binding.Builder()
 					.binding(BINDING)
 					.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
-					.stage(VkShaderStageFlag.FRAGMENT)
+					.stage(VkShaderStage.FRAGMENT)
 					.build();
 			assertEquals(binding, result);
 		}
@@ -285,7 +285,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 				// Build pool
 				pool = builder
 						.add(VkDescriptorType.SAMPLER, 3)
-						.flag(VkDescriptorPoolCreateFlag.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
+						.flag(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET)
 						.build();
 
 				// Check pool
@@ -302,7 +302,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 				final VkDescriptorPoolCreateInfo info = captor.getValue();
 				assertNotNull(info);
 				assertEquals(3, info.maxSets);
-				assertEquals(VkDescriptorPoolCreateFlag.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT.value(), info.flags);
+				assertEquals(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET.value(), info.flags);
 				assertEquals(1, info.poolSizeCount);
 				assertNotNull(info.pPoolSizes);
 			}

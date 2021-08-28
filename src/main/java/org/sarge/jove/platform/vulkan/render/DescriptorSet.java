@@ -79,7 +79,7 @@ public class DescriptorSet implements NativeObject {
 	/**
 	 * A <i>descriptor set binding</i> defines a binding for a descriptor set {@link Layout}.
 	 */
-	public static record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
+	public static record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
 		/**
 		 * Constructor.
 		 * @param index			Binding index
@@ -113,7 +113,7 @@ public class DescriptorSet implements NativeObject {
 			private int binding;
 			private VkDescriptorType type;
 			private int count = 1;
-			private final Set<VkShaderStageFlag> stages = new HashSet<>();
+			private final Set<VkShaderStage> stages = new HashSet<>();
 
 			/**
 			 * Sets the index of this binding.
@@ -146,7 +146,7 @@ public class DescriptorSet implements NativeObject {
 			 * Adds a shader stage to this binding.
 			 * @param stage Shader stage
 			 */
-			public Builder stage(VkShaderStageFlag stage) {
+			public Builder stage(VkShaderStage stage) {
 				stages.add(notNull(stage));
 				return this;
 			}

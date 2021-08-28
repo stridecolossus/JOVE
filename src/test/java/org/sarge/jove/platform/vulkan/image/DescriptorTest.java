@@ -161,7 +161,7 @@ public class DescriptorTest extends AbstractVulkanTest {
 			assertEquals(FORMAT, info.format);
 			assertEquals(2, info.mipLevels);
 			assertEquals(3, info.arrayLayers);
-			assertEquals(VkSampleCountFlag.VK_SAMPLE_COUNT_4, info.samples);
+			assertEquals(VkSampleCountFlag.COUNT_4, info.samples);
 			assertEquals(VkImageTiling.LINEAR, info.tiling);
 			assertEquals(VkImageLayout.PREINITIALIZED, info.initialLayout);
 			assertEquals(VkImageUsage.COLOR_ATTACHMENT.value(), info.usage);

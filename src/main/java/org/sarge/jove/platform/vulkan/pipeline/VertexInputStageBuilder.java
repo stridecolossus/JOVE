@@ -146,8 +146,8 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		// Create descriptor
 		final var info = new VkPipelineVertexInputStateCreateInfo();
 
-		// Add binding descriptions
 		if(!bindings.isEmpty()) {
+			// Add binding descriptions
 			info.vertexBindingDescriptionCount = bindings.size();
 			info.pVertexBindingDescriptions = StructureHelper.first(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
 

@@ -123,6 +123,9 @@ public class Animator implements Playable { //, Frame.Listener {
 
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		return new ToStringBuilder(this)
+				.append(state)
+				.append(String.format("%d/%d", time, duration))
+				.build();
 	}
 }

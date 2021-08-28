@@ -6,7 +6,7 @@ import org.sarge.jove.common.IntegerEnumeration;
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkShaderStageFlag implements IntegerEnumeration {
+public enum VkShaderStage implements IntegerEnumeration {
  	VERTEX(1),
  	TESSELLATION_CONTROL(2),
  	TESSELLATION_EVALUATION(4),
@@ -27,7 +27,7 @@ public enum VkShaderStageFlag implements IntegerEnumeration {
 
 	private final int value;
 
-	private VkShaderStageFlag(int value) {
+	private VkShaderStage(int value) {
 		this.value = value;
 	}
 

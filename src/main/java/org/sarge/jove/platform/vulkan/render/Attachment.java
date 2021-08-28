@@ -60,7 +60,7 @@ public class Attachment {
 		private VkAttachmentDescription desc = new VkAttachmentDescription();
 
 		public Builder() {
-			samples(VkSampleCountFlag.VK_SAMPLE_COUNT_1);
+			samples(VkSampleCountFlag.COUNT_1);
 			load(VkAttachmentLoadOp.DONT_CARE);
 			store(VkAttachmentStoreOp.DONT_CARE);
 			stencilLoad(VkAttachmentLoadOp.DONT_CARE);

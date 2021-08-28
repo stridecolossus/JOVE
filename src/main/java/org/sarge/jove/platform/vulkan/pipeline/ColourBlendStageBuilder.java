@@ -8,7 +8,7 @@ import java.util.List;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBlendFactor;
 import org.sarge.jove.platform.vulkan.VkBlendOp;
-import org.sarge.jove.platform.vulkan.VkColorComponentFlag;
+import org.sarge.jove.platform.vulkan.VkColorComponent;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
@@ -20,7 +20,7 @@ import org.sarge.jove.util.StructureHelper;
  * @author Sarge
  */
 public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineColorBlendStateCreateInfo> {
-	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponentFlag.values());
+	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponent.values());
 
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 	private final float[] constants = new float[4];
@@ -162,7 +162,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 			this.mask = mask
 					.chars()
 					.mapToObj(Character::toString)
-					.map(VkColorComponentFlag::valueOf)
+					.map(VkColorComponent::valueOf)
 					.mapToInt(IntegerEnumeration::value)
 					.reduce(0, IntegerEnumeration.MASK);
 

@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.obj;
 
+import java.util.Arrays;
+
 /**
  * The <i>face parser</i> parses an OBJ face command.
  * <p>
@@ -30,10 +32,12 @@ package org.sarge.jove.platform.obj;
  *  f 1/2/3		// Vertex, coordinate and normal
  *  f 1//3		// Vertex and normal
  * </pre>
- * @see ObjectModel#vertex(int, Integer, Integer)
+ * @see ObjectModel#vertex(Integer[])
  * @author Sarge
  */
 public class FaceParser implements Parser {
+	private final Integer[] indices = new Integer[3];
+
 	/**
 	 * @throws IllegalArgumentException for an invalid or non-triangular face
 	 */
@@ -50,28 +54,29 @@ public class FaceParser implements Parser {
 			final String[] parts = face.trim().split("/");
 			if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
 
-			// Clean
+			// Clear indices
+			Arrays.fill(indices, null);
+
+			// Clean values
 			for(int n = 0; n < parts.length; ++n) {
 				parts[n] = parts[n].trim();
 			}
 
-			// Parse mandatory vertex position index
-			final int v = Integer.parseInt(parts[0]);
+			// Parse mandatory vertex position
+			indices[0] = Integer.parseInt(parts[0]);
 
-			// Parse optional normal index
-			final Integer n = parts.length == 3 ? Integer.parseInt(parts[2]) : null;
-
-			// Parse optional texture coordinate index
-			final Integer tc;
+			// Parse optional texture coordinate
 			if((parts.length > 1) && !parts[1].isEmpty()) {
-				tc = Integer.parseInt(parts[1]);
-			}
-			else {
-				tc = null;
+				indices[1] = Integer.parseInt(parts[1]);
 			}
 
-			// Add vertex
-			model.vertex(v, n, tc);
+			// Parse optional normal
+			if(parts.length == 3) {
+				indices[2] = Integer.parseInt(parts[2]);
+			}
+
+			// Add vertex to model
+			model.vertex(indices);
 		}
 	}
 }

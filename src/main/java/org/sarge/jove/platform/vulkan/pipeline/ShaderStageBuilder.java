@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.util.StructureHelper;
@@ -23,7 +23,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	 * Entry for a shader stage.
 	 */
 	private static class Entry {
-		private VkShaderStageFlag stage;
+		private VkShaderStage stage;
 		private Shader shader;
 		private String name = "main";
 
@@ -46,7 +46,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 		}
 	}
 
-	private final Map<VkShaderStageFlag, Entry> shaders = new HashMap<>();
+	private final Map<VkShaderStage, Entry> shaders = new HashMap<>();
 
 	private Entry entry;
 
@@ -63,7 +63,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	 * Sets the shader stage.
 	 * @param stage Shader stage
 	 */
-	public ShaderStageBuilder stage(VkShaderStageFlag stage) {
+	public ShaderStageBuilder stage(VkShaderStage stage) {
 		entry.stage = notNull(stage);
 		return this;
 	}
@@ -113,7 +113,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
 	@Override
 	VkPipelineShaderStageCreateInfo get() {
 		assert entry == null;
-		if(!shaders.containsKey(VkShaderStageFlag.VERTEX)) throw new IllegalStateException("No vertex shader specified");
+		if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 		return StructureHelper.first(shaders.values(), VkPipelineShaderStageCreateInfo::new, Entry::populate);
 	}
 }

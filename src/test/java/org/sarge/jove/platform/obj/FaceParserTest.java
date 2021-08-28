@@ -21,25 +21,25 @@ public class FaceParserTest {
 	@Test
 	void parsePosition() {
 		parser.parse(new String[]{"1", "1", "1"}, model);
-		verify(model, times(3)).vertex(1, null, null);
+		verify(model, times(3)).vertex(new Integer[]{1, null, null});
 	}
 
 	@Test
 	void parsePositionTexture() {
 		parser.parse(new String[]{"1/1", "1/1", "1/1"}, model);
-		verify(model, times(3)).vertex(1, null, 1);
+		verify(model, times(3)).vertex(new Integer[]{1, 1, null});
 	}
 
 	@Test
 	void parsePositionTextureNormal() {
 		parser.parse(new String[]{"1/1/1", "1/1/1", "1/1/1"}, model);
-		verify(model, times(3)).vertex(1, 1, 1);
+		verify(model, times(3)).vertex(new Integer[]{1, 1, 1});
 	}
 
 	@Test
 	void parsePositionNormal() {
 		parser.parse(new String[]{"1//1", "1//1", "1//1"}, model);
-		verify(model, times(3)).vertex(1, 1, null);
+		verify(model, times(3)).vertex(new Integer[]{1, null, 1});
 	}
 
 	@Test

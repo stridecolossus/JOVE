@@ -7,8 +7,8 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkDescriptorPoolCreateFlag implements IntegerEnumeration {
- 	VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT(1),
- 	VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT(2);
+ 	FREE_DESCRIPTOR_SET(1),
+ 	UPDATE_AFTER_BIND(2);
 
 	private final int value;
 

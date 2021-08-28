@@ -18,7 +18,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkShaderStageFlag;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
@@ -84,7 +84,7 @@ public class PipelineTest extends AbstractVulkanTest {
 					.pass(pass)
 					.viewport(new Dimensions(3, 4))
 					.shader()
-						.stage(VkShaderStageFlag.VERTEX)
+						.stage(VkShaderStage.VERTEX)
 						.shader(mock(Shader.class))
 						.build()
 					.build(dev);
@@ -127,7 +127,7 @@ public class PipelineTest extends AbstractVulkanTest {
 		private void addVertexShaderStage() {
 			builder
 				.shader()
-					.stage(VkShaderStageFlag.VERTEX)
+					.stage(VkShaderStage.VERTEX)
 					.shader(mock(Shader.class))
 				.build();
 		}
