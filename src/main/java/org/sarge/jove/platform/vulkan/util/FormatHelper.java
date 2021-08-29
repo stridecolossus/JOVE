@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Vertex;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
@@ -83,7 +83,7 @@ public class FormatHelper {
 	 * @param layout component layout
 	 * @return Component format
 	 */
-	public static VkFormat format(Layout layout) {
+	public static VkFormat format(Vertex.Layout layout) {
 		return new FormatHelper()
 				.count(layout.size())
 				.bytes(layout.bytes())

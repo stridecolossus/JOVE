@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.List;
 import java.util.function.Function;
 
-import org.sarge.jove.common.VertexComponent;
+import org.sarge.jove.common.Vertex;
 import org.sarge.lib.util.Check;
 
 /**
@@ -13,7 +13,7 @@ import org.sarge.lib.util.Check;
  * @param <T> Vertex component
  * @author Sarge
  */
-public class VertexComponentParser<T extends VertexComponent> implements Parser {
+public class VertexComponentParser<T extends Vertex.Component> implements Parser {
 	private final float[] array;
 	private final Function<float[], T> ctor;
 	private final Function<ObjectModel, List<T>> mapper;

@@ -3,13 +3,14 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.lib.util.Check;
 
 /**
  * RGBA colour.
  * @author Sarge
  */
-public record Colour(float red, float green, float blue, float alpha) implements VertexComponent, Bufferable {
+public record Colour(float red, float green, float blue, float alpha) implements Vertex.Component {
 	/**
 	 * Material colour types.
 	 */

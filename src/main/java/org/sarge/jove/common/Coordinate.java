@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
+import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -11,7 +12,7 @@ import org.sarge.lib.util.Check;
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
  * @author Sarge
  */
-public interface Coordinate extends VertexComponent {
+public interface Coordinate extends Vertex.Component {
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array

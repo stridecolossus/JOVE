@@ -8,7 +8,7 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Vertex.Layout;
 
 public class TupleTest {
 	private Tuple tuple;

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Vertex;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
@@ -107,7 +107,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		// Add attribute for each layout component
 		int offset = 0;
 		int loc = 0;
-		for(Layout layout : header.layout()) {
+		for(Vertex.Layout layout : header.layout()) {
 			// Determine component format
 			final VkFormat format = FormatHelper.format(layout);
 

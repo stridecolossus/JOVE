@@ -19,16 +19,16 @@ import org.sarge.jove.util.ResourceLoader;
  */
 public class ImageData {
 	private final Dimensions size;
-	private final Layout layout;
+	private final Vertex.Layout layout;
 	private final ByteSource data;
 
 	/**
 	 * Constructor.
 	 * @param size				Size of this image
-	 * @param components		Component sizes
+	 * @param layout			Data layout
 	 * @param bytes				Image data
 	 */
-	public ImageData(Dimensions size, Layout layout, ByteSource data) {
+	public ImageData(Dimensions size, Vertex.Layout layout, ByteSource data) {
 		// TODO - validate
 //		Check.notEmpty(components);
 //		final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
@@ -49,7 +49,7 @@ public class ImageData {
 	/**
 	 * @return Layout of this image
 	 */
-	public Layout layout() {
+	public Vertex.Layout layout() {
 		return layout;
 	}
 
@@ -142,7 +142,7 @@ public class ImageData {
 			final ByteSource bytes = ByteSource.of(buffer.getData());
 
 			// Create image layout
-			final Layout layout = Layout.of(result.getColorModel().getNumComponents(), Byte.class);
+			final var layout = Vertex.Layout.of(result.getColorModel().getNumComponents(), Byte.class);
 
 //			// Enumerate image components
 //			final int[] components = result.getColorModel().getComponentSize();

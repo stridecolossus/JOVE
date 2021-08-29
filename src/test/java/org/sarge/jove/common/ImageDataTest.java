@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.sarge.jove.common.ImageData.Loader;
+import org.sarge.jove.common.Vertex.Layout;
 
 public class ImageDataTest {
 	private static final int LENGTH = 4 * (3 * 4);

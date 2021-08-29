@@ -3,6 +3,7 @@ package org.sarge.jove.model;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.sarge.jove.common.Vertex;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.MathsUtil;

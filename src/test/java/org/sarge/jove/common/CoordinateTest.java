@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate1D;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Coordinate.Coordinate3D;
+import org.sarge.jove.common.Vertex.Layout;
 
 class CoordinateTest {
 	@Test

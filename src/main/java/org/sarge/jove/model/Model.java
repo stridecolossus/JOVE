@@ -7,7 +7,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.ByteSource;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Vertex;
 import org.sarge.lib.util.Check;
 
 /**
@@ -18,7 +18,7 @@ public interface Model {
 	/**
 	 * Descriptor for this model.
 	 */
-	public record Header(List<Layout> layout, Primitive primitive, int count, boolean clockwise) {
+	public record Header(List<Vertex.Layout> layout, Primitive primitive, int count, boolean clockwise) {
 		/**
 		 * Constructor.
 		 * @param layout			Vertex layout
@@ -46,7 +46,7 @@ public interface Model {
 		 * @return Vertex stride (bytes)
 		 */
 		public int stride() {
-			return layout.stream().mapToInt(Layout::length).sum();
+			return layout.stream().mapToInt(Vertex.Layout::length).sum();
 		}
 
 		/**
