@@ -11,9 +11,7 @@ import org.sarge.lib.util.Check;
  * The <i>format helper</i> is used to programatically select a Vulkan format.
  * <p>
  * Finding a format in the {@link VkFormat} enumeration can be difficult given the number of values.
- * However the naming convention is highly consistent and it is often easier to specify the format in code.
- * <p>
- * The {@link #format(Layout)} convenience method can also be used to determine the format from a component {@link Layout}.
+ * However the naming convention is highly consistent therefore it is easier to specify the format programatically.
  * <p>
  * Examples:
  * <pre>
@@ -28,7 +26,11 @@ import org.sarge.lib.util.Check;
  * // Determine format from a component layout: <code>R32G32B32_SFLOAT</code>
  * VkFormat point = FormatHelper.format(Point.LAYOUT);
  * </pre>
+ * <p>
+ * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex {@link Layout}.
+ * <p>
  * @see VkFormat
+ * @author Sarge
  */
 public class FormatHelper {
 	/**
@@ -79,9 +81,9 @@ public class FormatHelper {
 	}
 
 	/**
-	 * Helper - Determines the format for the given component layout.
-	 * @param layout component layout
-	 * @return Component format
+	 * Helper - Determines the format for the given vertex layout.
+	 * @param layout Vertex layout
+	 * @return Format for the given vertex layout
 	 */
 	public static VkFormat format(Vertex.Layout layout) {
 		return new FormatHelper()

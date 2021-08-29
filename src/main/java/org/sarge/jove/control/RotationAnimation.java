@@ -9,7 +9,6 @@ import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>rotation animation</i> animates a rotation angle about an axis.
- * @see Rotation
  * @author Sarge
  */
 public class RotationAnimation implements Animation {

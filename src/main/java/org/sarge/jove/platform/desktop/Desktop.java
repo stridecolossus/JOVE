@@ -17,9 +17,9 @@ import com.sun.jna.ptr.IntByReference;
 
 /**
  * The <i>desktop</i> provides services for managing windows and monitors implemented using GLFW.
- * @author Sarge
  * @see <a href="https://www.glfw.org/docs/latest/index.html">GLFW documentation</a>
  * @see <a href="https://github.com/badlogic/jglfw/blob/master/jglfw/jni/glfw-3.0/include/GL/glfw3.h">C header</a>
+ * @author Sarge
  */
 public class Desktop {
 	/**

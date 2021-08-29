@@ -51,7 +51,7 @@ public class Axis implements InputEvent.Type {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("name", name).build();
+		return new ToStringBuilder(this).append(name).build();
 	}
 
 	/**

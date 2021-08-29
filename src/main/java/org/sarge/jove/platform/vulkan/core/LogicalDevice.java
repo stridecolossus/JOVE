@@ -216,7 +216,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	/**
 	 * A <i>required queue</i> is a transient descriptor for a queue required by this device.
 	 */
-	private record RequiredQueue(Queue.Family family, List<Percentile> priorities) {
+	private record RequiredQueue(Family family, List<Percentile> priorities) {
 		/**
 		 * Constructor.
 		 * @param family			Queue family
@@ -251,7 +251,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	/**
 	 * Builder for a logical device.
 	 * <p>
-	 * Note that the various {@link #queue(Queue.Family)} methods silently omit duplicates since the physical device may return the same family for a given queue specification.
+	 * Note that the various {@link #queue(Family)} methods silently omit duplicates since the physical device may return the same family for a given queue specification.
 	 */
 	public static class Builder {
 		private final PhysicalDevice parent;

@@ -45,9 +45,7 @@ public class Extents {
 	 * @return Centre point of this extents
 	 */
 	public Point centre() {
-		final Vector vec = Vector.between(min, max);
-		return min.add(vec.multiply(MathsUtil.HALF));
-		// TODO - more intuitive -> (min + max) / 2? but => point.multiply()
+		return new Point(new Vector(min.add(max)).multiply(MathsUtil.HALF));
 	}
 
 	/**

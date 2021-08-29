@@ -55,7 +55,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	protected abstract Destructor destructor(VulkanLibrary lib);
 
 	@Override
-	public void destroy() {
+	public synchronized void destroy() {
 		// Destroy this object
 		final Destructor destructor = destructor(dev.library());
 		destructor.destroy(dev.handle(), this.handle(), null);

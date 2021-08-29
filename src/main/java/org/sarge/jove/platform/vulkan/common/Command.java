@@ -46,9 +46,9 @@ public interface Command {
 	/**
 	 * Helper - Submits this as a <i>one time</i> command to the given pool and waits for completion.
 	 * @param pool Command pool
-	 * @see Work#submit(Command, Command.Pool)
+	 * @see Work#submit(Command, Pool)
 	 */
-	default void submit(Command.Pool pool) {
+	default void submit(Pool pool) {
 		Work.submit(this, pool);
 	}
 

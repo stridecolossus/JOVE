@@ -21,6 +21,8 @@ import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.common.Command.Buffer;
+import org.sarge.jove.platform.vulkan.common.Command.Pool;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
@@ -29,7 +31,7 @@ import org.sarge.lib.util.Check;
 import com.sun.jna.Memory;
 
 /**
- * The <i>work</i> class is comprised of a <i>batch</i> of commands to be submitted to a {@link Queue}.
+ * The <i>work</i> class comprises a <i>batch</i> of commands to be submitted to a {@link Queue}.
  * @see Command
  * @author Sarge
  */
@@ -61,9 +63,9 @@ public class Work {
 	 * @param cmd		Command
 	 * @param pool 		Command pool
 	 */
-	public static void submit(Command cmd, Command.Pool pool) {
+	public static void submit(Command cmd, Pool pool) {
 		// Allocate and record command
-		final Command.Buffer buffer = pool
+		final Buffer buffer = pool
 				.allocate()
 				.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
 				.add(cmd)

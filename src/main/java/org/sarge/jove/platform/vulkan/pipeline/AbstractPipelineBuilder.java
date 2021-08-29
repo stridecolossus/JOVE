@@ -2,19 +2,21 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
+
 /**
  * Base-class for a nested builder.
  * @param <T> Return type
  * @author Sarge
  */
 abstract class AbstractPipelineBuilder<T> {
-	private Pipeline.Builder parent;
+	private Builder parent;
 
 	/**
 	 * Sets the parent builder.
 	 * @param parent Parent
 	 */
-	void parent(Pipeline.Builder parent) {
+	void parent(Builder parent) {
 		this.parent = notNull(parent);
 	}
 
@@ -25,9 +27,9 @@ abstract class AbstractPipelineBuilder<T> {
 
 	/**
 	 * Constructs this object.
-	 * @return Pipeline builder
+	 * @return Parent pipeline builder
 	 */
-	public Pipeline.Builder build() {
+	public Builder build() {
 		return parent;
 	}
 }

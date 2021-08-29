@@ -124,7 +124,13 @@ public record Message(VkDebugUtilsMessageSeverity severity, Collection<VkDebugUt
 
 		/**
 		 * Message callback.
-		 * TODO - has to be class? lambda?
+		 * <p>
+		 * Notes:
+		 * <ul>
+		 * <li>a JNA callback <b>must</b> implement a single method</li>
+		 * <li>the signature of the {@link #message(int, int, VkDebugUtilsMessengerCallbackData, Pointer)} callback is not part of the public Vulkan API</li>
+		 * <li>TODO - link to VK doc</li>
+		 * </ul>
 		 */
 		private static class HandlerCallback implements Callback {
 			private final Consumer<Message> consumer;
@@ -133,6 +139,14 @@ public record Message(VkDebugUtilsMessageSeverity severity, Collection<VkDebugUt
 				this.consumer = consumer;
 			}
 
+			/**
+			 * Callback handler method.
+			 * @param severity			Severity
+			 * @param type				Message type(s) mask
+			 * @param pCallbackData		Data
+			 * @param pUserData			Optional user data (generally redundant for an OO approach)
+			 * @return Whether to continue execution (always {@code false})
+			 */
 			@SuppressWarnings("unused")
 			public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackData pCallbackData, Pointer pUserData) {
 				// Transform bit-masks to enumerations

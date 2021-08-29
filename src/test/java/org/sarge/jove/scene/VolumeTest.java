@@ -30,31 +30,31 @@ class VolumeTest {
 	class NullVolumeTests {
 		@Test
 		void contains() {
-			assertEquals(false, Volume.NULL.contains(null));
+			assertEquals(false, Volume.EMPTY.contains(null));
 		}
 
 		@Test
 		void intersectsVolume() {
-			assertEquals(false, Volume.NULL.intersects((Volume) null));
+			assertEquals(false, Volume.EMPTY.intersects((Volume) null));
 		}
 
 		@Test
 		void intersectsPlane() {
-			assertEquals(false, Volume.NULL.intersects((Plane) null));
+			assertEquals(false, Volume.EMPTY.intersects((Plane) null));
 		}
 
 		@Test
 		void intersectsRay() {
-			final Intersection intersection = Volume.NULL.intersect(null);
+			final Intersection intersection = Volume.EMPTY.intersect(null);
 			assertNotNull(intersection);
 			assertEquals(List.of(), intersection.distances());
 		}
 
 		@Test
 		void equals() {
-			assertEquals(true, Volume.NULL.equals(Volume.NULL));
-			assertEquals(false, Volume.NULL.equals(null));
-			assertEquals(false, Volume.NULL.equals(vol));
+			assertEquals(true, Volume.EMPTY.equals(Volume.EMPTY));
+			assertEquals(false, Volume.EMPTY.equals(null));
+			assertEquals(false, Volume.EMPTY.equals(vol));
 		}
 	}
 }

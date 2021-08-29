@@ -34,7 +34,7 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
-	private final Pointer ptr;
+	private final Pointer ptr; // TODO - nasty
 	private final Supplier<Function> create = new LazySupplier<>(() -> function("vkCreateDebugUtilsMessengerEXT"));
 	private final Collection<Pointer> handlers = new ArrayList<>();
 

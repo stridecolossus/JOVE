@@ -1,5 +1,6 @@
 package org.sarge.jove.scene;
 
+import org.sarge.jove.geometry.Extents;
 import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
@@ -20,7 +21,7 @@ public interface Volume {
 	/**
 	 * Determines whether this volume intersects the given volume.
 	 * <p>
-	 * In general a bounding volume intersection test is assumed to ultimately degenerate to a test against a sphere or a {@link ImageExtents}.
+	 * In general a bounding volume intersection test is assumed to ultimately degenerate to a test against a sphere or an {@link Extents}.
 	 * <br>
 	 * An implementation should perform class-specific intersection tests or delegate to the supplied volume.
 	 * <br>
@@ -41,7 +42,7 @@ public interface Volume {
 	 * </pre>
 	 * @param vol Volume
 	 * @return Whether the volumes intersect
-	 * @throws UnsupportedOperationException
+	 * @throws UnsupportedOperationException by default
 	 */
 	default boolean intersects(Volume vol) {
 		throw new UnsupportedOperationException(String.format("Unsupported volumes: this=%s that=%s", this, vol));
@@ -64,7 +65,7 @@ public interface Volume {
 	/**
 	 * Empty bounding volume.
 	 */
-	Volume NULL = new Volume() {
+	Volume EMPTY = new Volume() {
 		@Override
 		public boolean contains(Point pt) {
 			return false;

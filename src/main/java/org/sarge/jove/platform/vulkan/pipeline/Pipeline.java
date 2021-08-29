@@ -36,7 +36,7 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @return New bind pipeline command
 	 */
 	public Command bind() {
-		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, this.handle());
+		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, handle);
 	}
 
 	@Override
@@ -65,7 +65,6 @@ public class Pipeline extends AbstractVulkanObject {
 		// TODO - dynamic
 
 		public Builder() {
-			// TODO - could use dynamic proxy for the parent but seems overkill?
 			input.parent(this);
 			assembly.parent(this);
 			viewport.parent(this);
