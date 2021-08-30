@@ -12,11 +12,11 @@ import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.util.MathsUtil;
 
 class Matrix4Test {
-	private Matrix4 matrix;
+	private Matrix matrix;
 
 	@BeforeEach
 	void before() {
-		matrix = new Matrix4(new float[ORDER * ORDER]);
+		matrix = Matrix4.builder().build();
 	}
 
 	@Test

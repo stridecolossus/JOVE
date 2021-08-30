@@ -2,7 +2,11 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.oneOrMore;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>matrix</i> is a 2-dimensional floating-point array used for geometry transformation and projection.
@@ -26,28 +30,43 @@ import org.sarge.jove.common.Bufferable;
  * <p>
  * @author Sarge
  */
-public interface Matrix extends Transform, Bufferable {
+public class Matrix implements Transform, Bufferable {
+	private static final String LINE_SEPARATOR = System.lineSeparator();
+
 	/**
 	 * Creates an identity matrix.
 	 * @param order Matrix order
 	 * @return Identity matrix
 	 */
-	static Matrix identity(int order) {
+	public static Matrix identity(int order) {
 		return new Builder(order).identity().build();
+	}
+
+	private final float[] matrix;
+
+	/**
+	 * Constructor.
+	 * @param matrix Matrix array in column-major order
+	 */
+	protected Matrix(float[] matrix) {
+		this.matrix = matrix;
 	}
 
 	/**
 	 * @return Order (or size) of this matrix
 	 */
-	int order();
-
-	/**
-	 * @return Matrix as a one-dimensional column-major array
-	 */
-	float[] array();
+	public int order() {
+		return switch(matrix.length) {
+			case 1 -> 1;
+			case 4 -> 2;
+			case 9 -> 3;
+			case 16 -> 4;
+			default -> (int) MathsUtil.sqrt(matrix.length);
+		};
+	}
 
 	@Override
-	default Matrix matrix() {
+	public final Matrix matrix() {
 		return this;
 	}
 
@@ -57,11 +76,15 @@ public interface Matrix extends Transform, Bufferable {
 	 * @param col			Column
 	 * @param order			Matrix order
 	 * @return Matrix index
-	 * @throws IllegalArgumentException for an invalid row or column index
 	 */
-	static int index(int row, int col, int order) {
-		if((row >= order) || (col >= order)) throw new IllegalArgumentException(String.format("Invalid row/column: row=%d col=%d order=%d", row, col, order));
+	protected static int index(int row, int col, int order) {
+		assert validate(row, order);
+		assert validate(col, order);
 		return row + col * order;
+	}
+
+	private static boolean validate(int index, int order) {
+		return (index >= 0) && (index < order);
 	}
 
 	/**
@@ -71,7 +94,17 @@ public interface Matrix extends Transform, Bufferable {
 	 * @return Matrix element
 	 * @throws ArrayIndexOutOfBoundsException if the row or column are out-of-bounds
 	 */
-	float get(int row, int col);
+	public float get(int row, int col) {
+		final int index = index(row, col, order());
+		return matrix[index];
+	}
+
+	/**
+	 * @return Matrix as a 1D column-major array
+	 */
+	public float[] array() {
+		return Arrays.copyOf(matrix, matrix.length);
+	}
 
 	/**
 	 * Extracts a matrix row as a vector.
@@ -79,7 +112,14 @@ public interface Matrix extends Transform, Bufferable {
 	 * @return Matrix row
 	 * @throws ArrayIndexOutOfBoundsException if the row index is invalid or the matrix is too small
 	 */
-	Vector row(int row);
+	public Vector row(int row) {
+		final int order = order();
+		final int index = index(row, 0, order);
+		final float x = matrix[index];
+		final float y = matrix[index + order];
+		final float z = matrix[index + 2 * order];
+		return new Vector(x, y, z);
+	}
 
 	/**
 	 * Extracts a matrix column as a vector.
@@ -87,12 +127,43 @@ public interface Matrix extends Transform, Bufferable {
 	 * @return Matrix column
 	 * @throws ArrayIndexOutOfBoundsException if the column index is invalid or the matrix is too small
 	 */
-	Vector column(int col);
+	public Vector column(int col) {
+		final int index = Matrix.index(0, col, order());
+		final float x = matrix[index];
+		final float y = matrix[index + 1];
+		final float z = matrix[index + 2];
+		return new Vector(x, y, z);
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		for(float f : matrix) {
+			buffer.putFloat(f);
+		}
+	}
+
+	@Override
+	public int length() {
+		return matrix.length * Float.BYTES;
+	}
 
 	/**
 	 * @return Transpose of this matrix
 	 */
-	Matrix transpose();
+	public Matrix transpose() {
+		final int order = order();
+		final Builder trans = new Builder(order);
+		int dest = 0;
+		for(int r = 0; r < order; ++r) {
+			int src = r;
+			for(int c = 0; c < order; ++c) {
+				trans.matrix[dest] = matrix[src];
+				++dest;
+				src += order;
+			}
+		}
+		return trans.build();
+	}
 
 	/**
 	 * Multiplies this and the given matrix.
@@ -100,22 +171,68 @@ public interface Matrix extends Transform, Bufferable {
 	 * @return New matrix
 	 * @throws IllegalArgumentException if the given matrix is not of the same order as this matrix
 	 */
-	Matrix multiply(Matrix m);
+	public Matrix multiply(Matrix m) {
+		// Check same sized matrices
+		final int order = order();
+		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
+
+		// Multiply matrices
+		final Builder result = new Builder(order);
+// TODO - avoid get() and calc indices once and increment, otherwise this will be slow
+		int dest = 0;
+		for(int c = 0; c < order; ++c) {
+			for(int r = 0; r < order; ++r) {
+				// Sum this row by the corresponding column
+				float total = 0;
+				for(int n = 0; n < order; ++n) {
+					total += get(r, n) * m.get(n, c);
+				}
+
+				// Set result element
+				result.matrix[dest] = total;
+				++dest;
+			}
+		}
+		return result.build();
+	}
 
 	// TODO
 	// - determinant, invert, etc
 	// - SIMD/vector operations?
 
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Matrix that) &&
+				(this.order() == that.order()) &&
+				MathsUtil.isEqual(this.matrix, that.matrix);
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		final int order = this.order();
+		for(int r = 0; r < order; ++r) {
+			for(int c = 0; c < order; ++c) {
+				sb.append(String.format("%10.5f ", get(r, c)));
+			}
+			sb.append(LINE_SEPARATOR);
+		}
+		return sb.toString();
+	}
+
 	/**
 	 * Builder for a matrix.
 	 */
-	class Builder {
+	public static class Builder {
 		private final int order;
 		private final float[] matrix;
 
 		/**
 		 * Constructor for a matrix builder of the given order.
 		 * @param order Matrix order
+		 * @throws IllegalArgumentException for an illogical matrix order
 		 */
 		public Builder(int order) {
 			this.order = oneOrMore(order);
@@ -144,6 +261,8 @@ public interface Matrix extends Transform, Bufferable {
 			matrix[index] = value;
 			return this;
 		}
+
+		// TODO - bulk setter to create matrix from array?
 
 		/**
 		 * Sets a matrix row to the given vector.
@@ -180,7 +299,7 @@ public interface Matrix extends Transform, Bufferable {
 				return new Matrix4(matrix);
 			}
 			else {
-				return new DefaultMatrix(matrix);
+				return new Matrix(matrix);
 			}
 		}
 	}

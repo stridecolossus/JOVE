@@ -3,10 +3,10 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>Matrix4</i> is a 4-by-4 matrix implementation that provides additional factory methods for common use-cases such as rotation matrices.
+ * A <i>Matrix4</i> is a 4-by-4 matrix implementation that also provides additional factory methods for common use-cases such as rotation matrices.
  * @author Sarge
  */
-public final class Matrix4 extends DefaultMatrix {
+public final class Matrix4 extends Matrix {
 	/**
 	 * Order for a 4x4 matrix.
 	 */
@@ -30,7 +30,10 @@ public final class Matrix4 extends DefaultMatrix {
 	 * @return Translation matrix
 	 */
 	public static Matrix translation(Vector vec) {
-		return builder().identity().column(3, vec).build();
+		return builder()
+				.identity()
+				.column(3, vec)
+				.build();
 	}
 
 	/**
@@ -93,22 +96,12 @@ public final class Matrix4 extends DefaultMatrix {
 		return rot.build();
 	}
 
-	/**
-	 * Constructor.
-	 * @param matrix Column-major matrix elements
-	 */
-	protected Matrix4(float[] matrix) {
-		super(matrix);
-	}
-	// TODO - make constructor package private? expose factory method?
-
 	@Override
 	public int order() {
 		return ORDER;
 	}
 
-	@Override
-	protected Matrix instance(float[] matrix) {
-		return new Matrix4(matrix);
+	protected Matrix4(float[] matrix) {
+		super(matrix);
 	}
 }

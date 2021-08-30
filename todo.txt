@@ -53,3 +53,17 @@ other features
 - texture fonts?
 - terrain grid from height-map
 - OpenAL audio
+
+August 2021
+- format domain class incorporating builder?
+- surface class really needs to be dependant on logical dev? or physical? just instance?
+- selector init when selecting physical device and then used to create logical? still side effects but simpler?
+- instead of handle can type mapper be for i/f so can then pass domain objects rather than handle?
+- component should be vertex attribute to match VK terminology?
+- image class wrapper for buffered image, no need for ctor since just replicates
+- descriptor set bindings created from layout and not other way round, prevents binding reuse, less steps? more logical? 
+- ditto render pass attachments
+- why specify same info to descriptor set pool, shouldn't it know what sets it will be allocating?
+
+
+
