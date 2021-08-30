@@ -23,6 +23,7 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;
@@ -207,7 +208,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	 */
 	public Set<String> extensions() {
 		final VulkanFunction<VkExtensionProperties> func = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, array);
-		return Support.extensions(library(), func);
+		return VulkanHelper.extensions(library(), func);
 	}
 
 	/**

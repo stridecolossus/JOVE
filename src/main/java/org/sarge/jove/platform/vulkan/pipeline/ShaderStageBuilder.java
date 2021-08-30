@@ -14,7 +14,6 @@ import org.sarge.jove.util.StructureHelper;
 
 /**
  * Builder for a shader stage.
- * @see VkPipelineShaderStageCreateInfo
  * @see Shader
  * @author Sarge
  */

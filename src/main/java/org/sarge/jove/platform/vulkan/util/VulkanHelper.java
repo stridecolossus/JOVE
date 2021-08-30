@@ -1,10 +1,16 @@
 package org.sarge.jove.platform.vulkan.util;
 
+import static java.util.stream.Collectors.toSet;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
+import java.util.Set;
 
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkRect2D;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 
 /**
  * Vulkan helper and utility methods.
@@ -35,5 +41,19 @@ public final class VulkanHelper {
 	 */
 	public static ByteBuffer buffer(int len) {
 		return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
+	}
+
+	/**
+	 * Enumerates supported extensions.
+	 * @param lib		Vulkan
+	 * @param func 		Extensions function
+	 * @return Supported extensions
+	 */
+	public static Set<String> extensions(VulkanLibrary lib, VulkanFunction<VkExtensionProperties> func) {
+		return Arrays
+				.stream(VulkanFunction.enumerate(func, lib, VkExtensionProperties::new))
+				.map(e -> e.extensionName)
+				.map(String::new)
+				.collect(toSet());
 	}
 }

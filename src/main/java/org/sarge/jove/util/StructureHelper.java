@@ -17,15 +17,15 @@ import com.sun.jna.Structure;
  * Helper for JNA structure arrays.
  * <p>
  * JNA auto-magically marshals structure arrays to/from the native layer.
- * However these arrays <b>must</b> be a contiguous block of memory allocated via one of the {@link Structure#toArray(int)} methods.
+ * However the array elements <b>must</b> be comprised of a contiguous block of memory allocated via one of the {@link Structure#toArray(int)} methods.
  * <p>
  * This imposes the following restrictions on how the application makes use of structure arrays:
  * <ul>
  * <li>the array can obviously only be allocated once the size of the resultant data is known</li>
- * <li>the elements of the array must therefore be <i>populated</i> rather than mapped individually from some source data (as is the case with a Java stream)</li>
+ * <li>the elements of the array must be <i>populated</i> (or filled) rather than mapped individually as a stream)</li>
  * </ul>
  * <p>
- * In addition the native layer often requires a pointer-to-array type, i.e. the <i>first</i> element of a structure array.
+ * In addition the native layer often requires a pointer-to-array type, i.e. the <i>first</i> element of an array.
  * <p>
  * This helper provides methods to transform a collection to a contiguous structure array (or the first element of that array)
  * and the convenience {@link #collector(Supplier, BiConsumer, Characteristics...)} where a stream is more appropriate.

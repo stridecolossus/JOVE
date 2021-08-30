@@ -46,7 +46,7 @@ import com.sun.jna.ptr.PointerByReference;
  *  // Define binding for a sampler at binding zero
  *  Binding binding = new Binding.Builder()
  * 		.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
- * 		.stage(VkShaderStageFlag.FRAGMENT)
+ * 		.stage(VkShaderStage.FRAGMENT)
  * 		.build()
  *
  *  // Create layout for a sampler at binding zero

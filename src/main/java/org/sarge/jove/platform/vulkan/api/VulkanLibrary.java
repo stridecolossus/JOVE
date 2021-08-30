@@ -4,14 +4,20 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.platform.vulkan.VkExtensionProperties;
+import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 
 import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
@@ -74,6 +80,24 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		};
 
 		return Native.load(name, VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
+	}
+
+	/**
+	 * @param lib Vulkan
+	 * @return Extensions supported by this platform
+	 */
+	static Set<String> extensions(VulkanLibrary lib) {
+		final VulkanFunction<VkExtensionProperties> func = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
+		return VulkanHelper.extensions(lib, func);
+	}
+
+	/**
+	 * @param lib Vulkan library
+	 * @return Validation layers supported by this platform
+	 */
+	static Set<ValidationLayer> layers(VulkanLibrary lib) {
+		final VulkanFunction<VkLayerProperties> func = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
+		return ValidationLayer.enumerate(lib, func);
 	}
 
 	/**

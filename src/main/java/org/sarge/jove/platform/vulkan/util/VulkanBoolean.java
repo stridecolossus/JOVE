@@ -5,7 +5,7 @@ import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
 
 /**
- * A <i>Vulkan boolean</i> is a custom JNA type wrapper for boolean values.
+ * A <i>Vulkan boolean</i> is a custom JNA type wrapper for boolean values used in the Vulkan API.
  * <p>
  * An instance of this class is mapped to a native {@code int} with a value that is <i>explicitly</i> 1 for {@code true} and 0 for {@code false}.
  * This circumvents the default JNA mapping which is an <i>arbitrary non-zero</i> value for {@code true}.
@@ -14,14 +14,14 @@ import com.sun.jna.TypeConverter;
  */
 public final class VulkanBoolean {
 	/**
-	 * Boolean {@code true}.
+	 * Boolean {@code true} represented by integer one.
 	 */
-	public static final VulkanBoolean TRUE = new VulkanBoolean(true);
+	public static final VulkanBoolean TRUE = new VulkanBoolean(1);
 
 	/**
-	 * Boolean {@code false}.
+	 * Boolean {@code false} represented by integer zero.
 	 */
-	public static final VulkanBoolean FALSE = new VulkanBoolean(false);
+	public static final VulkanBoolean FALSE = new VulkanBoolean(0);
 
 	/**
 	 * JNA type converter.
@@ -35,18 +35,18 @@ public final class VulkanBoolean {
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
 			if(value == null) {
-				return 0;
+				return FALSE.value;
 			}
 			else {
 				final VulkanBoolean bool = (VulkanBoolean) value;
-				return bool.toInteger();
+				return bool.value;
 			}
 		}
 
 		@Override
 		public Object fromNative(Object nativeValue, FromNativeContext context) {
 			if(nativeValue == null) {
-				return VulkanBoolean.FALSE;
+				return FALSE;
 			}
 			else {
 				return of((int) nativeValue);
@@ -55,12 +55,12 @@ public final class VulkanBoolean {
 	};
 
 	/**
-	 * Converts a native integer value to a Vulkan boolean (non-zero is {@code true}).
+	 * Converts a native integer value to a Vulkan boolean.
 	 * @param value Native value
 	 * @return Vulkan boolean
 	 */
 	public static VulkanBoolean of(int value) {
-		return value == 0 ? VulkanBoolean.FALSE : VulkanBoolean.TRUE;
+		return value == TRUE.value ? TRUE : FALSE;
 	}
 
 	/**
@@ -69,36 +69,29 @@ public final class VulkanBoolean {
 	 * @return Vulkan boolean
 	 */
 	public static VulkanBoolean of(boolean bool) {
-		return bool ? VulkanBoolean.TRUE : VulkanBoolean.FALSE;
+		return bool ? TRUE : FALSE;
 	}
 
-	private final boolean value;
+	private final int value;
 
 	/**
 	 * Constructor.
 	 * @param value Underlying boolean value
 	 */
-	private VulkanBoolean(boolean value) {
+	private VulkanBoolean(int value) {
 		this.value = value;
-	}
-
-	/**
-	 * @return Native integer representation of this boolean (1 for {@code true} or 0 for {@code false})
-	 */
-	private int toInteger() {
-		return value ? 1 : 0;
 	}
 
 	/**
 	 * @return Value of this boolean wrapper
 	 */
 	public boolean toBoolean() {
-		return value;
+		return this == TRUE;
 	}
 
 	@Override
 	public int hashCode() {
-		return Boolean.hashCode(value);
+		return value;
 	}
 
 	@Override
