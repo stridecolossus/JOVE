@@ -46,7 +46,7 @@ sphere builder
 - http://in4k.untergrund.net/html_articles/hugi_27_-_coding_corner_polaris_sphere_tessellation_101.htm
 - https://lindenreid.wordpress.com/2017/12/03/simple-mesh-tessellation-triangulation-tutorial/
 - mesh builder?
-- strip builder?
+- strip builder? should be some sort of collector that operates on a collection of vertices -> strip (?) + index? or factory method that generates vertices from triangle/index?
 - add degenerate triangle
 
 other features
@@ -54,16 +54,22 @@ other features
 - terrain grid from height-map
 - OpenAL audio
 
-August 2021
-- format domain class incorporating builder?
+Thoughts
 - surface class really needs to be dependant on logical dev? or physical? just instance?
 - selector init when selecting physical device and then used to create logical? still side effects but simpler?
 - instead of handle can type mapper be for i/f so can then pass domain objects rather than handle?
-- component should be vertex attribute to match VK terminology?
+- [NO] component should be vertex attribute to match VK terminology?
 - image class wrapper for buffered image, no need for ctor since just replicates
-- descriptor set bindings created from layout and not other way round, prevents binding reuse, less steps? more logical? 
+- [NO] descriptor set bindings created from layout and not other way round, prevents binding reuse, less steps? more logical? 
 - ditto render pass attachments
 - why specify same info to descriptor set pool, shouldn't it know what sets it will be allocating?
-
-
-
+- [DONE] extents builder should be a collector?
+- [NO] separate enum for vector axes?
+- [DONE] descriptor sets setter should be set(binding, resource), do we actually ever need the getter?
+- [DONE] also handy to have bulk setter method
+- some sort of triangle builder? used in demo and to create x2 triangles for a quad
+- acquire should create a frame object of some sort (swap chain is immutable), i.e. don't care about index
+- [DONE] native object is a functional interface 
+- blog: mention that Handle is essentially equivalent to JNA pointer but immutable
+- [DONE] draw command, builder to set the various fields, less error prone to transposition
+- blog: render chapter talks about load/store but there are none?

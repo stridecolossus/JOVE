@@ -19,7 +19,7 @@ import org.sarge.jove.util.MathsUtil;
  * <li>Matrices are also {@link Bufferable}</li>
  * </ul>
  * <p>
- * Matrices can be created via public constructors but in general a matrix is constructed using a builder:
+ * In general matrices are constructed using the builder:
  * <p>
  * <pre>
  * Matrix matrix = new Matrix.Builder()
@@ -27,7 +27,6 @@ import org.sarge.jove.util.MathsUtil;
  * 	.set(row, col, value)
  * 	.build();
  * </pre>
- * <p>
  * @author Sarge
  */
 public class Matrix implements Transform, Bufferable {
@@ -240,7 +239,7 @@ public class Matrix implements Transform, Bufferable {
 		}
 
 		/**
-		 * Initialises this matrix to identity (only affecting the diagonal elements).
+		 * Initialises this matrix to identity.
 		 */
 		public Builder identity() {
 			for(int n = 0; n < order; ++n) {

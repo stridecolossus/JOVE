@@ -37,7 +37,7 @@ public class VulkanLibraryTest {
 
 	@Test
 	void checkThrows() {
-		assertThrows(VulkanException.class, () -> VulkanLibrary.check(VkResult.VK_ERROR_DEVICE_LOST.value()));
+		assertThrows(VulkanException.class, () -> VulkanLibrary.check(VkResult.ERROR_DEVICE_LOST.value()));
 	}
 
 	@Test

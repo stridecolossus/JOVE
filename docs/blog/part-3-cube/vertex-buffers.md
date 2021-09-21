@@ -311,7 +311,7 @@ As normal a vertex buffer is created via a builder:
 public static class Builder {
     private final LogicalDevice dev;
     private long len;
-    private VkSharingMode mode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+    private VkSharingMode mode = VkSharingMode.EXCLUSIVE;
     private final Set<VkBufferUsageFlag> usage = new HashSet<>();
     private final VulkanAllocator.Request request;
 
@@ -448,9 +448,9 @@ We bring all this together in the demo to copy the triangle vertex data to the h
 // Create staging VBO
 final VulkanBuffer staging = new VulkanBuffer.Builder(dev)
     .length(bb.limit())
-    .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-    .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-    .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+    .usage(VkBufferUsageFlag.TRANSFER_SRC)
+    .property(VkMemoryPropertyFlag.HOST_VISIBLE)
+    .property(VkMemoryPropertyFlag.HOST_COHERENT)
     .build();
 
 // Load to staging
@@ -459,9 +459,9 @@ staging.load(bb);
 // Create device VBO
 final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
     .length(bb.limit())
-    .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-    .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-    .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+    .usage(VkBufferUsageFlag.TRANSFER_DST)
+    .usage(VkBufferUsageFlag.VERTEX_BUFFER)
+    .property(VkMemoryPropertyFlag.DEVICE_LOCAL)
     .build();
 
 // Create command to copy from staging to device
@@ -469,7 +469,7 @@ final Queue queue = dev.queue(transferFamily);
 final Command.Pool pool = Command.Pool.create(queue);
 final Command.Buffer copy = pool
     .allocate()
-    .begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+    .begin(VkCommandBufferUsageFlag.ONE_TIME_SUBMIT)
     .add(staging.copy(dest))
     .end();
     
@@ -521,7 +521,7 @@ The nested builder for the bindings is relatively simple:
 public class BindingBuilder {
     private int binding;
     private int stride;
-    private VkVertexInputRate rate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX; // TODO - instancing
+    private VkVertexInputRate rate = VkVertexInputRate.VERTEX; // TODO - instancing
 
     private BindingBuilder() {
     }
@@ -546,7 +546,7 @@ public class BindingBuilder {
 
     /**
      * Sets the input rate.
-     * @param rate Input rate (default is {@link VkVertexInputRate#VK_VERTEX_INPUT_RATE_VERTEX})
+     * @param rate Input rate (default is {@link VkVertexInputRate#VERTEX})
      */
     public BindingBuilder rate(VkVertexInputRate rate) {
         this.rate = notNull(rate);
@@ -737,12 +737,12 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
         .attribute()            // Position
             .binding(0)
             .location(0)
-            .format(VkFormat.VK_FORMAT_R32G32B32_SFLOAT)
+            .format(VkFormat.R32G32B32_SFLOAT)
             .offset(0)
         .attribute()            // Colour
             .binding(0)
             .location(1)
-            .format(VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT)            
+            .format(VkFormat.R32G32B32A32_SFLOAT)            
             .offset(Point.SIZE * Float.BYTES)
         .build()
     ...

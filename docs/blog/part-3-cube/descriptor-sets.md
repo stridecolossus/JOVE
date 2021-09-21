@@ -72,7 +72,7 @@ public static class Layout extends AbstractVulkanObject {
 A layout is comprised of a number of resource bindings defined as follows:
 
 ```java
-public static record Binding(int binding, VkDescriptorType type, int count, Set<VkShaderStageFlag> stages) {
+public static record Binding(int binding, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
 }
 ```
 
@@ -208,7 +208,7 @@ To construct a pool we provide a builder:
 public static class Builder {
     private final LogicalDevice dev;
     private final Map<VkDescriptorType, Integer> pool = new HashMap<>();
-    private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
+    private final Set<VkDescriptorPoolCreate> flags = new HashSet<>();
     private Integer max;
 }
 ```
@@ -431,7 +431,7 @@ Finally we implement the following method to bind a number of descriptor sets to
 public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
     return (api, cmd) -> api.vkCmdBindDescriptorSets(
             cmd,
-            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+            VkPipelineBindPoint.GRAPHICS,
             layout.handle(),
             0,                  // First set
             sets.size(),
@@ -457,14 +457,14 @@ public Resource resource(View texture) {
     return new Resource() {
         @Override
         public VkDescriptorType type() {
-            return VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
         }
 
         @Override
         public void populate(VkWriteDescriptorSet write) {
             // Create sampler descriptor
             final var info = new VkDescriptorImageInfo();
-            info.imageLayout = VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
             info.sampler = Sampler.this.handle();
             info.imageView = texture.handle();
 
@@ -485,8 +485,8 @@ First we create a descriptor set layout for a sampler that will be used in the f
 
 ```java
 final var binding = new DescriptorSet.Binding.Builder()
-    .type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-    .stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+    .type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
+    .stage(VkShaderStageFlag.FRAGMENT)
     .build();
 
 final var layout = DescriptorSet.Layout.create(dev, List.of(binding));
@@ -504,7 +504,7 @@ Next we create a descriptor set pool (sized to the number of swapchain images):
 
 ```java
 final var pool = new DescriptorSet.Pool.Builder(dev)
-    .add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
+    .add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
     .max(2)
     .build();
 ```
@@ -569,7 +569,7 @@ If all goes well we should finally see the textured quad:
 
 There are a lot of steps in this chapter and therefore plenty that can go wrong.  Vulkan will generally throw a hissy fit if we attempt any invalid operations, e.g. forgetting to provide the target layout when performing an image transition.  However it is quite easy to specify a 'correct' pipeline and still end up with a black rectangle!  With so much going on behind the scenes this can be very difficult to diagnose - here are some possible failure cases:
 
-- Verify that the image contains RGBA data once it is loaded and that it matches the expected Vulkan format which is `VK_FORMAT_R8G8B8A8_UNORM` in this example.
+- Verify that the image contains RGBA data once it is loaded and that it matches the expected Vulkan format which is `R8G8B8A8_UNORM` in this example.
 
 - Ensure the texture alpha channel has a non-zero value.
 
@@ -577,7 +577,7 @@ There are a lot of steps in this chapter and therefore plenty that can go wrong.
 
 - Also check that the drawing primitive is a triangle strip.
 
-- Walk through the process of loading and transitioning the image and ensure that the previous/next layouts are correct and that image has the `VK_IMAGE_ASPECT_COLOR_BIT` aspect.
+- Walk through the process of loading and transitioning the image and ensure that the previous/next layouts are correct and that image has the `COLOR` aspect.
 
 - Check that the image data is being copied to the vertex buffer and not the other way round (yes we really did this!)
 

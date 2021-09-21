@@ -206,12 +206,12 @@ public interface VulkanLibrary {
     /**
      * Successful result code.
      */
-    int SUCCESS = VkResult.VK_SUCCESS.value();
+    int SUCCESS = VkResult.SUCCESS.value();
     
     /**
      * Checks the result of a Vulkan operation.
      * @param result Result code
-     * @throws VulkanException if the given result is not {@link VkResult#VK_SUCCESS}
+     * @throws VulkanException if the given result is not {@link VkResult#SUCCESS}
      */
     static void check(int result) {
         if(result != SUCCESS) {
@@ -446,10 +446,10 @@ Note that JNA requires a callback implementation to contain a single method (the
 The callback implementation transforms the bit-masks to the relevant enumerations and wraps the message in the new `Message` object:
 
 ```java
-public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackDataEXT pCallbackData, Pointer pUserData) {
+public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackData pCallbackData, Pointer pUserData) {
     // Transform bit-masks to enumerations
-    final VkDebugUtilsMessageSeverityFlagEXT severityEnum = IntegerEnumeration.map(VkDebugUtilsMessageSeverityFlagEXT.class, severity);
-    final Collection<VkDebugUtilsMessageTypeFlagEXT> typesEnum = IntegerEnumeration.enumerate(VkDebugUtilsMessageTypeFlagEXT.class, type);
+    final VkDebugUtilsMessageSeverity severityEnum = IntegerEnumeration.map(VkDebugUtilsMessageSeverity.class, severity);
+    final Collection<VkDebugUtilsMessageType> typesEnum = IntegerEnumeration.enumerate(VkDebugUtilsMessageType.class, type);
 
     // Create message wrapper
     final Message message = new Message(severityEnum, typesEnum, pCallbackData);
@@ -466,9 +466,9 @@ The `Message` class is a simple POJO that composes the message details:
 
 ```java
 public record Message(
-    VkDebugUtilsMessageSeverityFlagEXT severity,
-    Collection<VkDebugUtilsMessageTypeFlagEXT> types,
-    VkDebugUtilsMessengerCallbackDataEXT data
+    VkDebugUtilsMessageSeverity severity,
+    Collection<VkDebugUtilsMessage> types,
+    VkDebugUtilsMessengerCallbackData data
 )
 ```
 
@@ -479,8 +479,8 @@ We next implement the handler class itself which is a builder used to configure 
 ```java
 public static class Handler {
     private final Manager manager;
-    private final Set<VkDebugUtilsMessageSeverityFlagEXT> severity = new HashSet<>();
-    private final Set<VkDebugUtilsMessageTypeFlagEXT> types = new HashSet<>();
+    private final Set<VkDebugUtilsMessageSeverity> severity = new HashSet<>();
+    private final Set<VkDebugUtilsMessageType> types = new HashSet<>();
     private Consumer<Message> handler = ...
 
     private Handler(Manager manager) {
@@ -492,12 +492,12 @@ public static class Handler {
         return this;
     }
 
-    public Handler severity(VkDebugUtilsMessageSeverityFlagEXT severity) {
+    public Handler severity(VkDebugUtilsMessageSeverity severity) {
         this.severity.add(notNull(severity));
         return this;
     }
 
-    public Handler type(VkDebugUtilsMessageTypeFlagEXT type) {
+    public Handler type(VkDebugUtilsMessageType type) {
         types.add(notNull(type));
         return this;
     }
@@ -511,7 +511,7 @@ The `attach` method populates the creation descriptor and attaches the handler t
 ```java
 public void attach() {
     // Create handler descriptor
-    final VkDebugUtilsMessengerCreateInfoEXT info = new VkDebugUtilsMessengerCreateInfoEXT();
+    final var info = new VkDebugUtilsMessengerCreateInfo();
     info.messageSeverity = IntegerEnumeration.mask(severity);
     info.messageType = IntegerEnumeration.mask(types);
     info.pfnUserCallback = new MessageCallback(handler);
@@ -534,7 +534,7 @@ private class Manager {
         this.dev = dev;
     }
 
-    private void create(VkDebugUtilsMessengerCreateInfoEXT info) {
+    private void create(VkDebugUtilsMessengerCreateInfo info) {
         ...
     }
 }
@@ -660,11 +660,11 @@ public String toString() {
 Which uses the following helpers to convert the enumeration values to human-readable tokens:
 
 ```java
-public static String toString(VkDebugUtilsMessageSeverityFlagEXT severity) {
+public static String toString(VkDebugUtilsMessageSeverity severity) {
     return clean(severity.name(), "SEVERITY");
 }
 
-public static String toString(VkDebugUtilsMessageTypeFlagEXT type) {
+public static String toString(VkDebugUtilsMessageType type) {
     return clean(type.name(), "TYPE");
 }
 
@@ -680,7 +680,7 @@ private static String clean(String name, String type) {
 ```
 
 The `clean` method is possibly slightly confusing but it basically just strips the prefix and suffix of an enumeration constant,
-for example `VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT` becomes `VERBOSE`.
+for example `SEVERITY_VERBOSE` becomes `VERBOSE`.
 
 Example formatted message (excluding the message text):
 

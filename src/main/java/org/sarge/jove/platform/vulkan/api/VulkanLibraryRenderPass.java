@@ -65,9 +65,9 @@ interface VulkanLibraryRenderPass {
 	 * @param commandBuffer			Command buffer
 	 * @param indexCount			Number of indices
 	 * @param instanceCount			Number of instances
-	 * @param vertexCount			First index
-	 * @param vertexCount			Vertex offset
+	 * @param firstIndex			First index
+	 * @param firstVertex			First vertex index
 	 * @param firstInstance			First instance
 	 */
-	void vkCmdDrawIndexed(Handle commandBuffer, int indexCount, int instanceCount, int firstIndex, int vertexOffset, int firstInstance);
+	void vkCmdDrawIndexed(Handle commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance);
 }

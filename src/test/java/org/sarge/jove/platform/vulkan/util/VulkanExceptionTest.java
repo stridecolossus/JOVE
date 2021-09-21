@@ -9,9 +9,9 @@ public class VulkanExceptionTest {
 	@SuppressWarnings("static-method")
 	@Test
 	void exception() {
-		final int code = VkResult.VK_ERROR_INCOMPATIBLE_DRIVER.value();
+		final int code = VkResult.ERROR_INCOMPATIBLE_DRIVER.value();
 		final VulkanException e = new VulkanException(code, "message");
 		assertEquals(code, e.result);
-		assertEquals("[-9]VK_ERROR_INCOMPATIBLE_DRIVER: message", e.getMessage());
+		assertEquals("[-9]ERROR_INCOMPATIBLE_DRIVER: message", e.getMessage());
 	}
 }

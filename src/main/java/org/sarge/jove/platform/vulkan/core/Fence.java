@@ -24,8 +24,8 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Fence extends AbstractVulkanObject {
-	private static final int SIGNALLED = VkResult.VK_SUCCESS.value();
-	private static final int NOT_SIGNALLED = VkResult.VK_NOT_READY.value();
+	private static final int SIGNALLED = VkResult.SUCCESS.value();
+	private static final int NOT_SIGNALLED = VkResult.NOT_READY.value();
 
 	/**
 	 * Creates a fence.

@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -66,9 +65,12 @@ import com.sun.jna.ptr.PointerByReference;
  *  Resource res = sampler.resource(view);
  *  ...
  *
- *  // Update descriptor sets
- *  descriptor.entry(binding).set(res);
- *  ...
+ *  // Set resource
+ *  DescriptorSet first = descriptors.get(0);
+ *  first.set(binding, res);
+ *
+ *  // Or bulk set resources
+ *  DescriptorSet.set(descriptors, binding, res);
  *
  *  // Apply updates
  *  DescriptorSet.update(dev, descriptors);
@@ -161,6 +163,56 @@ public class DescriptorSet implements NativeObject {
 		}
 	}
 
+	/**
+	 * An <i>entry</i> records the resource for each binding in this descriptor set.
+	 */
+	private class Entry {
+		private final Binding binding;
+		private boolean dirty = true;
+		private Resource res;
+
+		/**
+		 * Constructor.
+		 * @param binding Binding descriptor
+		 */
+		private Entry(Binding binding) {
+			this.binding = notNull(binding);
+		}
+
+		/**
+		 * @return Whether this entry has been modified
+		 */
+		boolean isDirty() {
+			return dirty;
+		}
+
+		/**
+		 * Populates the given descriptor set update record from this entry.
+		 * @param write Descriptor set update record
+		 */
+		void populate(VkWriteDescriptorSet write) {
+			// Validate
+			final DescriptorSet set = DescriptorSet.this;
+			if(res == null) {
+				throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%d", set, binding.index));
+			}
+
+			// Init write descriptor
+			write.dstBinding = binding.index();
+			write.descriptorType = binding.type();
+			write.dstSet = set.handle();
+			write.descriptorCount = 1; // TODO - res.size()
+			write.dstArrayElement = 0; // TODO
+
+			// Populate resource
+			res.populate(write);
+
+			// Update flag
+			assert dirty;
+			dirty = false;
+		}
+	}
+
 	private final Handle handle;
 	private final Layout layout;
 	private final Map<Binding, Entry> entries;
@@ -170,7 +222,7 @@ public class DescriptorSet implements NativeObject {
 	 * @param handle Descriptor set handle
 	 * @param layout Layout
 	 */
-	DescriptorSet(Handle handle, Layout layout) {
+	public DescriptorSet(Handle handle, Layout layout) {
 		this.handle = notNull(handle);
 		this.layout = notNull(layout);
 		this.entries = layout.bindings.values().stream().collect(toMap(Function.identity(), Entry::new));
@@ -189,37 +241,77 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * Retrieves the entry for the given binding.
-	 * @param binding Binding
-	 * @return Entry
-	 * @throws IllegalArgumentException if this descriptor set does not contain the given binding
+	 * @param binding Binding descriptor
+	 * @return Entry for this given binding
 	 */
-	public Entry entry(Binding binding) {
-		final Entry entry = entries.get(binding);
-		if(entry == null) throw new IllegalArgumentException("Invalid binding for descriptor: " + binding);
-		return entry;
+	private Entry entry(Binding binding) {
+		return entries.get(binding);
 	}
 
 	/**
-	 * Updates the resources for the given dirty descriptor sets.
+	 * @return Modified entries in this descriptor set
+	 */
+	private Stream<Entry> modified() {
+		return entries
+				.values()
+				.stream()
+				.filter(Entry::isDirty);
+	}
+
+	/**
+	 * Retrieves the resource in this descriptor set for the given binding.
+	 * @param binding Binding
+	 * @return Resource
+	 * @throws IllegalArgumentException if the binding does not belong to the layout of this descriptor set
+	 * @see #set(Binding, Resource)
+	 */
+	public Resource resource(Binding binding) {
+		final Entry entry = entry(binding);
+		if(entry == null) throw new IllegalArgumentException(String.format("Invalid binding for this descriptor set: binding=%s set=%s", binding, this));
+		return entry.res;
+	}
+
+	/**
+	 * Sets the resource in this descriptor set for the given binding.
+	 * @param binding 	Binding
+	 * @param res		Resource
+	 * @throws IllegalArgumentException if the binding does not belong to the layout of this descriptor set
+	 * @see #set(Collection, Binding, Resource)
+	 */
+	public void set(Binding binding, Resource res) {
+		final Entry entry = entry(binding);
+		entry.res = notNull(res);
+		entry.dirty = true;
+	}
+
+	/**
+	 * Helper - Bulk implementation of the {@link #set(Binding, Resource)} method.
+	 * @param sets			Descriptor sets
+	 * @param binding		Binding
+	 * @param res			Resource
+	 * @throws IllegalArgumentException if the binding does not belong to the layout of all descriptor sets
+	 */
+	public static void set(Collection<DescriptorSet> sets, Binding binding, Resource res) {
+		for(DescriptorSet ds : sets) {
+			ds.set(binding, res);
+		}
+	}
+
+	/**
+	 * Updates the resources for the given descriptor sets.
 	 * @param dev				Logical device
 	 * @param descriptors		Descriptor sets to update
 	 * @return Number of updated descriptor sets
-	 * @throws IllegalStateException if the descriptor sets are empty
-	 * @see Entry#isDirty()
 	 */
 	public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
-		if(descriptors.isEmpty()) throw new IllegalStateException("Cannot update empty descriptor sets");
-
 		// Enumerate dirty resources
 		final var writes = descriptors
 				.stream()
-				.flatMap(set -> set.entries.values().stream())
-				.filter(Entry::isDirty)
+				.flatMap(DescriptorSet::modified)
 				.collect(StructureHelper.collector(VkWriteDescriptorSet::new, Entry::populate));
 
 		// Ignore if nothing to update
-		if(writes == null) {
+		if((writes == null) || (writes.length == 0)) {
 			return 0;
 		}
 
@@ -263,88 +355,6 @@ public class DescriptorSet implements NativeObject {
 				.append("handle", handle)
 				.append("resources", entries.values())
 				.build();
-	}
-
-	/**
-	 * An <i>entry</i> holds the resource for a given binding in this descriptor set.
-	 */
-	public class Entry {
-		private final Binding binding;
-		private Resource res;
-		private boolean dirty = true;
-
-		/**
-		 * Constructor.
-		 * @param binding Resource binding
-		 */
-		private Entry(Binding binding) {
-			this.binding = notNull(binding);
-		}
-
-		/**
-		 * @return Whether this entry has been updated
-		 */
-		private boolean isDirty() {
-			if(dirty) {
-				dirty = false;
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-
-		/**
-		 * @return Resource for this binding entry
-		 */
-		public Optional<Resource> resource() {
-			return Optional.ofNullable(res);
-		}
-
-		/**
-		 * Sets the resource for this entry.
-		 * @param res Resource
-		 * @throws IllegalArgumentException if the type of resource does not match the binding
-		 */
-		public void set(Resource res) {
-			// Validate resource for this entry
-			if(res.type() != binding.type()) {
-				throw new IllegalArgumentException(String.format("Invalid resource type: expected=%s actual=%s", binding.type(), res.type()));
-			}
-
-			// Set resource and mark as updated
-			this.res = notNull(res);
-			this.dirty = true;
-		}
-
-		/**
-		 * Populates the write descriptor for this entry.
-		 * @param write Write descriptor
-		 */
-		private void populate(VkWriteDescriptorSet write) {
-			// Validate
-			if(res == null) {
-				throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%d", DescriptorSet.this, binding.index));
-			}
-
-			// Init write descriptor
-			write.dstBinding = binding.index();
-			write.descriptorType = binding.type();
-			write.dstSet = handle();
-			write.descriptorCount = 1; // TODO - res.size()
-			write.dstArrayElement = 0; // TODO
-
-			// Populate resource
-			res.populate(write);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("binding", binding.index())
-					.append("resource", res)
-					.build();
-		}
 	}
 
 	/**

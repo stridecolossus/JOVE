@@ -258,7 +258,7 @@ Note that a _wait_ semaphore also has an associated `VkPipelineStageFlag` bit-ma
 We add a new builder method to register a _wait_ semaphore:
 
 ```java
-public Builder wait(Semaphore semaphore, Set<VkPipelineStageFlag> stages) {
+public Builder wait(Semaphore semaphore, Set<VkPipelineStage> stages) {
     final var entry = ImmutablePair.of(semaphore, IntegerEnumeration.mask(stages));
     wait.add(entry);
     return this;
@@ -381,13 +381,13 @@ Lastly we modify `Frame` to accept the in-flight frame state so that the demo ca
 public void render(FrameState state, View view) {
     new Work.Builder()
         .add(commands.get(idx))
-        .wait(state.ready(), VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+        .wait(state.ready(), VkPipelineStage.TOP_OF_PIPE)
         .signal(state.finished())
         .build();
 }
 ```
 
-The `VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT` is a special-case pipeline stage that indicates that the semaphore should wait until the **entire** pipeline has completed execution.
+The `TOP_OF_PIPE` is a special-case pipeline stage that indicates that the semaphore should wait until the **entire** pipeline has completed execution.
 
 The semaphores are released after use:
 
@@ -465,8 +465,8 @@ The source and destination are essentially the same data so we create a single o
 ```java
 public class Dependency {
     private final int index;
-    private final Set<VkPipelineStageFlag> stages = new HashSet<>();
-    private final Set<VkAccessFlag> access = new HashSet<>();
+    private final Set<VkPipelineStage> stages = new HashSet<>();
+    private final Set<VkAccess> access = new HashSet<>();
 }
 ```
 
@@ -522,12 +522,12 @@ final RenderPass pass = new RenderPass.Builder(dev)
     .attachment()
         ....
     .subpass()
-        .colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        .colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
         .build()
     .dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
-        .source().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-        .destination().stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-        .destination().access(VkAccessFlag.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+        .source().stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+        .destination().stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+        .destination().access(VkAccess.COLOR_ATTACHMENT_WRITE)
         .build()
     .build();
 ```
@@ -536,7 +536,7 @@ Here we create a dependency between the implicit starting sub-pass and our singl
 1. The `source` clause tells the render pass to wait for the colour attachment of the swapchain image to be available.
 2. Our sub-pass (the `destination`) waits until the colour attachment is ready for writing (rendering) before it is executed.
 
-We also change the pipeline stage of the _wait_ semaphore in the `update` method to `VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT` rather than `VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT` meaning the render task waits on the swapchain image rather than the entire pipeline.
+We also change the pipeline stage of the _wait_ semaphore in the `update` method to `COLOR_ATTACHMENT_OUTPUT` rather than `TOP_OF_PIPE` meaning the render task waits on the swapchain image rather than the entire pipeline.
 
 ---
 
@@ -552,7 +552,7 @@ The _fence_ domain object is relatively simple:
 
 ```java
 public class Fence extends AbstractVulkanObject {
-    public static Fence create(LogicalDevice dev, VkFenceCreateFlag... flags) {
+    public static Fence create(LogicalDevice dev, VkFenceCreate... flags) {
         // Init descriptor
         final VkFenceCreateInfo info = new VkFenceCreateInfo();
         info.flags = IntegerEnumeration.mask(flags);
@@ -621,8 +621,8 @@ public void waitReady() {
 The application can also programatically query the state of a fence:
 
 ```java
-private static final int SIGNALLED = VkResult.VK_SUCCESS.value();
-private static final int NOT_SIGNALLED = VkResult.VK_NOT_READY.value();
+private static final int SIGNALLED = VkResult.SUCCESS.value();
+private static final int NOT_SIGNALLED = VkResult.NOT_READY.value();
 
 public boolean signalled() {
     final LogicalDevice dev = this.device();
@@ -651,7 +651,7 @@ public final class FrameState {
 
     FrameState(Frame frame) {
         ...
-        this.fence = Fence.create(dev, VkFenceCreateFlag.VK_FENCE_CREATE_SIGNALED_BIT);
+        this.fence = Fence.create(dev, VkFenceCreate.SIGNALED);
     }
 }
 ```

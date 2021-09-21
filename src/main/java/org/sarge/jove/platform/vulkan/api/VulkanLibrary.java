@@ -39,7 +39,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	/**
 	 * Successful result code.
 	 */
-	int SUCCESS = VkResult.VK_SUCCESS.value();
+	int SUCCESS = VkResult.SUCCESS.value();
 
 	/**
 	 * Debug utility extension.
@@ -164,7 +164,7 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 	/**
 	 * Checks the result of a Vulkan operation.
 	 * @param result Result code
-	 * @throws VulkanException if the given result is not {@link VkResult#VK_SUCCESS}
+	 * @throws VulkanException if the given result is not {@link VkResult#SUCCESS}
 	 */
 	static void check(int result) {
 		if(result != SUCCESS) {

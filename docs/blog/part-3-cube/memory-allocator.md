@@ -88,7 +88,7 @@ The nested request class is used by the application to specify the memory requir
 public class Request {
     private long size;
     private int filter = Integer.MAX_VALUE;
-    private final Set<VkMemoryPropertyFlag> flags = new HashSet<>();
+    private final Set<VkMemoryProperty> flags = new HashSet<>();
 
     private Request() {
     }
@@ -109,7 +109,7 @@ public class Request {
         return this;
     }
 
-    public Request property(VkMemoryPropertyFlag flag) {
+    public Request property(VkMemoryProperty flag) {
         flags.add(notNull(flag));
         return this;
     }
@@ -201,7 +201,7 @@ The application requests _optimal_ and _minimal_ properties for the memory with 
 We first refactor the `find` method to accept an arbitrary set of properties and return an optional result:
 
 ```java
-private Optional<Integer> find(Set<VkMemoryPropertyFlag> flags) {
+private Optional<Integer> find(Set<VkMemoryProperty> flags) {
     final int mask = IntegerEnumeration.mask(flags);
     for(int n = 0; n < props.memoryTypes.length; ++n) {
         if(MathsUtil.isBit(filter, n) && MathsUtil.isMask(props.memoryTypes[n].propertyFlags, mask)) {
@@ -216,8 +216,8 @@ This can then be used in `allocate` to match on the optimal memory properties or
 
 ```java
 public class Request {
-    private final Set<VkMemoryPropertyFlag> optimal = new HashSet<>();
-    private final Set<VkMemoryPropertyFlag> required = new HashSet<>();
+    private final Set<VkMemoryProperty> optimal = new HashSet<>();
+    private final Set<VkMemoryProperty> required = new HashSet<>();
     ...
 
     public DeviceMemory allocate() {
@@ -317,7 +317,7 @@ public class MemoryAllocator {
     public static final class Heap {
         private final int index;
         private final long size;
-        private final Set<VkMemoryPropertyFlag> props;
+        private final Set<VkMemoryProperty> props;
         private final List<Type> types = new ArrayList<>();
     }
 
@@ -349,7 +349,7 @@ public static MemoryAllocator create(LogicalDevice dev) {
         final List<Heap> heaps = new ArrayList<>();
         for(int n = 0; n < props.memoryHeapCount; ++n) {
             final VkMemoryHeap h = props.memoryHeaps[n];
-            final var flags = IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, h.flags);
+            final var flags = IntegerEnumeration.enumerate(VkMemoryProperty.class, h.flags);
             final Heap heap = new Heap(n, h.size, flags);
             heaps.add(heap);
         }

@@ -36,20 +36,20 @@ public class FenceTest extends AbstractVulkanTest {
 
 	@Test
 	void signalled() {
-		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.VK_SUCCESS.value());
+		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.SUCCESS.value());
 		assertEquals(true, fence.signalled());
 		verify(lib).vkGetFenceStatus(dev.handle(), fence.handle());
 	}
 
 	@Test
 	void notSignalled() {
-		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.VK_NOT_READY.value());
+		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.NOT_READY.value());
 		assertEquals(false, fence.signalled());
 	}
 
 	@Test
 	void signalledError() {
-		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.VK_ERROR_DEVICE_LOST.value());
+		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.ERROR_DEVICE_LOST.value());
 		assertThrows(VulkanException.class, () -> fence.signalled());
 	}
 

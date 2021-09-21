@@ -243,7 +243,7 @@ public interface Image extends NativeObject {
         ...
     }
     
-    record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspects) {
+    record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects) {
     }
     
     class DefaultImage extends AbstractVulkanObject implements Image {
@@ -279,8 +279,8 @@ Now we can add a builder to the image class to support textures:
 public static class Builder {
     private final LogicalDevice dev;
     private final VkImageCreateInfo info = new VkImageCreateInfo();
-    private final Set<VkImageUsageFlag> usage = new HashSet<>();
-    private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+    private final Set<VkImageUsage> usage = new HashSet<>();
+    private final Set<VkImageAspect> aspects = new HashSet<>();
     private final MemoryAllocator.Allocation allocation;
     private Extents extents;
 
@@ -291,13 +291,13 @@ public static class Builder {
     }
 
     private void init() {
-        type(VkImageType.VK_IMAGE_TYPE_2D);
+        type(VkImageType.TYPE_2D);
         mipLevels(1);
         arrayLayers(1);
-        samples(VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT);
-        tiling(VkImageTiling.VK_IMAGE_TILING_OPTIMAL);
-        mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
-        initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
+        samples(VkSampleCountFlag.COUNT_1);
+        tiling(VkImageTiling.OPTIMAL);
+        mode(VkSharingMode.EXCLUSIVE);
+        initialLayout(VkImageLayout.UNDEFINED);
     }
 
     ...
@@ -358,9 +358,9 @@ final VkFormat format = FormatBuilder.format(image);
 final Image texture = new Image.Builder(dev)
     .extents(Image.Extents.of(image.size()))
     .format(format)
-    .usage(VkImageUsageFlag.VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-    .usage(VkImageUsageFlag.VK_IMAGE_USAGE_SAMPLED_BIT)
-    .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+    .usage(VkImageUsage.TRANSFER_DST)
+    .usage(VkImageUsage.SAMPLED)
+    .property(VkMemoryProperty.DEVICE_LOCAL)
     .build();
 ```
 
@@ -370,7 +370,7 @@ Notes:
 
 - We also add a helper method to the format builder to determine the image format.
 
-- The image we are using is a `TYPE_3BYTE_BGR` buffered image which requires an alpha channel to be added and results in the `VK_FORMAT_R8G8B8A8_UNORM` Vulkan format.
+- The image we are using is a `TYPE_3BYTE_BGR` buffered image which requires an alpha channel to be added and results in the `R8G8B8A8_UNORM` Vulkan format.
 
 ---
 
@@ -391,8 +391,8 @@ public class Barrier implements ImmediateCommand {
     }
 
     public static class Builder {
-        private final Set<VkPipelineStageFlag> srcStages = new HashSet<>();
-        private final Set<VkPipelineStageFlag> destStages = new HashSet<>();
+        private final Set<VkPipelineStage> srcStages = new HashSet<>();
+        private final Set<VkPipelineStage> destStages = new HashSet<>();
         private final List<VkImageMemoryBarrier> images = new ArrayList<>();
 
         ...
@@ -427,7 +427,7 @@ public static void submit(Command cmd, Command.Pool pool) {
     // Allocate and record command
     final Command.Buffer buffer = pool
         .allocate()
-        .begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+        .begin(VkCommandBufferUsageFlag.ONE_TIME_SUBMIT)
         .add(cmd)
         .end();
 
@@ -454,9 +454,9 @@ For the current demo we only need the image barrier part which is implemented as
 ```java
 public class ImageBarrierBuilder {
     private final Image image;
-    private final Set<VkAccessFlag> src = new HashSet<>();
-    private final Set<VkAccessFlag> dest = new HashSet<>();
-    private VkImageLayout oldLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+    private final Set<VkAccess> src = new HashSet<>();
+    private final Set<VkAccess> dest = new HashSet<>();
+    private VkImageLayout oldLayout = VkImageLayout.UNDEFINED;
     private VkImageLayout newLayout;
     private final SubResourceBuilder<ImageBarrierBuilder> subresource;
 
@@ -503,7 +503,7 @@ The sub-resource range is implemented as another nested builder:
 ```java
 public class SubResourceBuilder<T> {
     private final T parent;
-    private final Set<VkImageAspectFlag> aspects = new HashSet<>();
+    private final Set<VkImageAspect> aspects = new HashSet<>();
     private int mipLevel;
     private int levelCount = 1;
     private int baseArrayLayer;
@@ -583,7 +583,7 @@ We can now copy the image to the texture on the hardware, transition it to a lay
 new ImageCopyCommand.Builder()
     .buffer(staging)
     .image(texture)
-    .layout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    .layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
     .build()
     .submit(pool, true);
 
@@ -592,13 +592,13 @@ staging.destroy();
 
 // Transition texture ready for sampling
 new Barrier.Builder()
-    .source(VkPipelineStageFlag.VK_PIPELINE_STAGE_TRANSFER_BIT)
-    .destination(VkPipelineStageFlag.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+    .source(VkPipelineStage.TRANSFER)
+    .destination(VkPipelineStage.FRAGMENT_SHADER)
     .barrier(texture)
-        .oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-        .newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-        .source(VkAccessFlag.VK_ACCESS_TRANSFER_WRITE_BIT)
-        .destination(VkAccessFlag.VK_ACCESS_SHADER_READ_BIT)
+        .oldLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+        .newLayout(VkImageLayout.SHADER_READ_ONLY_OPTIMAL)
+        .source(VkAccess.TRANSFER_WRITE)
+        .destination(VkAccess.SHADER_READ)
         .build()
     .build()
     .submit(pool, true);

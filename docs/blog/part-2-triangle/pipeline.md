@@ -148,16 +148,16 @@ We next implement a unit-test for the parent builder shown here to illustrate th
 
 ```java
 class BuilderTest {
-    private Pipeline.Builder builder;
+    private Builder builder;
     private Rectangle rect;
-    private Pipeline.Layout layout;
+    private Layout layout;
     private RenderPass pass;
 
     @BeforeEach
     void before() {
-        builder = new Pipeline.Builder(dev);
+        builder = new Builder(dev);
         rect = new Rectangle(new Dimensions(3, 4));
-        layout = mock(Pipeline.Layout.class);
+        layout = mock(Layout.class);
         pass = mock(RenderPass.class);
     }
 
@@ -171,7 +171,7 @@ class BuilderTest {
                 .scissor(rect)
                 .build()
             .shader()
-                .stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+                .stage(VkShaderStageFlag.VERTEX)
                 .shader(mock(Shader.class))
                 .build()
             .build();
@@ -403,7 +403,7 @@ public class Shader extends AbstractVulkanObject {
      */
     public static Shader create(LogicalDevice dev, byte[] code) {
         // Create descriptor
-        final VkShaderModuleCreateInfo info = new VkShaderModuleCreateInfo();
+        final var info = new VkShaderModuleCreateInfo();
         info.codeSize = code.length;
         info.pCode = Bufferable.allocate(code);
 
@@ -463,7 +463,7 @@ public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShader
      */
     @Override
     protected VkPipelineShaderStageCreateInfo result() {
-        if(!shaders.containsKey(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)) throw new IllegalStateException("No vertex shader specified");
+        if(!shaders.containsKey(VkShaderStageFlag.VERTEX)) throw new IllegalStateException(...);
         return VulkanStructure.array(VkPipelineShaderStageCreateInfo::new, shaders.values(), Entry::populate);
     }
 }
@@ -473,7 +473,7 @@ An `Entry` is a transient record that specifies a configured shader stage:
 
 ```java
 private static class Entry {
-    private VkShaderStageFlag stage;
+    private VkShaderStage stage;
     private Shader shader;
     private String name = "main";
 
@@ -499,7 +499,7 @@ private Entry entry;
  * Starts a new shader stage.
  */
 void init() {
-    if(entry != null) throw new IllegalStateException("Previous shader stage has not been completed");
+    if(entry != null) throw new IllegalStateException(...);
     entry = new Entry();
 }
 
@@ -507,7 +507,7 @@ void init() {
  * Sets the shader stage.
  * @param stage Shader stage
  */
-public ShaderStageBuilder stage(VkShaderStageFlag stage) {
+public ShaderStageBuilder stage(VkShaderStage stage) {
     entry.stage = notNull(stage);
     return this;
 }
@@ -519,7 +519,7 @@ We over-ride the public build method to validate the current entry and check for
 @Override
 public Builder build() {
     entry.validate();
-    if(shaders.containsKey(entry.stage)) throw new IllegalArgumentException("Duplicate shader stage: " + entry.stage);
+    if(shaders.containsKey(entry.stage)) throw new IllegalArgumentException(...);
     shaders.put(entry.stage, entry);
     entry = null;
     return super.build();
@@ -618,11 +618,11 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
         .viewport(new Rectangle(chain.extents()))
         .build()
     .shader()
-        .stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+        .stage(VkShaderStageFlag.VERTEX)
         .shader(vert)
         .build()
     .shader()
-        .stage(VkShaderStageFlag.VK_SHADER_STAGE_FRAGMENT_BIT)
+        .stage(VkShaderStageFlag.FRAGMENT)
         .shader(frag)
         .build()
     .build();

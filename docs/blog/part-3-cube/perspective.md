@@ -217,12 +217,12 @@ This just involves creating a descriptor set resource from a `VulkanBuffer`:
 
 ```java
 public DescriptorSet.Resource uniform() {
-    require(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    require(VkBufferUsage.UNIFORM_BUFFER);
 
     return new DescriptorSet.Resource() {
         @Override
         public VkDescriptorType type() {
-            return VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            return VkDescriptorType.UNIFORM_BUFFER;
         }
 
         @Override
@@ -268,9 +268,9 @@ Next we create a new uniform buffer and load the identity:
 ```java
 VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
     .length(Matrix.IDENTITY.length())
-    .usage(VkBufferUsageFlag.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-    .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-    .property(VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+    .usage(VkBufferUsageFlag.UNIFORM_BUFFER)
+    .property(VkMemoryProperty.HOST_VISIBLE)
+    .property(VkMemoryProperty.HOST_COHERENT)
     .build();
 
 uniform.load(Matrix.IDENTITY);
@@ -285,8 +285,8 @@ Binding samplerBinding = ...
 
 Binding uniformBinding = new Binding.Builder()
     .binding(1)
-    .type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-    .stage(VkShaderStageFlag.VK_SHADER_STAGE_VERTEX_BIT)
+    .type(VkDescriptorType.UNIFORM_BUFFER)
+    .stage(VkShaderStage.VERTEX)
     .build();
 
 Layout layout = Layout.create(dev, List.of(samplerBinding, uniformBinding));
@@ -296,8 +296,8 @@ Register the new resource type with the descriptor set pool:
 
 ```java
 Pool pool = new Pool.Builder(dev)
-    .add(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
-    .add(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2)
+    .add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
+    .add(VkDescriptorType.UNIFORM_BUFFER, 2)
     .max(2)
     .build();
 ```
@@ -515,7 +515,7 @@ public enum Primitive {
     /**
      * Triangles.
      */
-    TRIANGLES(3, VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
+    TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST),
     
     ...
     
@@ -710,7 +710,7 @@ Since the cube uses triangles (as opposed to the previous default of a _strip_ o
 
 ```java
 public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelineInputAssemblyStateCreateInfo> {
-    private VkPrimitiveTopology topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    private VkPrimitiveTopology topology = VkPrimitiveTopology.TRIANGLE_STRIP;
     private boolean restart;
     
     public InputAssemblyStageBuilder topology(Primitive primitive) {

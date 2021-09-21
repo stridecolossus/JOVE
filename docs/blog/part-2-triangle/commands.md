@@ -77,7 +77,7 @@ class Pool extends AbstractVulkanObject {
      * @param queue     Work queue
      * @param flags     Flags
      */
-    public static Pool create(Queue queue, VkCommandPoolCreateFlag... flags) {
+    public static Pool create(Queue queue, VkCommandPoolCreate... flags) {
         // Init pool descriptor
         final VkCommandPoolCreateInfo info = new VkCommandPoolCreateInfo();
         info.queueFamilyIndex = queue.family().index();
@@ -119,7 +119,7 @@ To allocate one-or-more command buffers we add the following factory:
 public List<Buffer> allocate(int num, boolean primary) {
     // Init descriptor
     final var info = new VkCommandBufferAllocateInfo();
-    info.level = primary ? VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY : VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+    info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
     info.commandBufferCount = num;
     info.commandPool = this.handle();
 
@@ -223,7 +223,7 @@ The `begin` method is used to start recording:
  * @param flags Flags
  * @throws IllegalStateException if this buffer is not ready for recording
  */
-public Buffer begin(VkCommandBufferUsageFlag... flags) {
+public Buffer begin(VkCommandBufferUsage... flags) {
     // Check buffer can be recorded
     if(state != State.INITIAL) throw new IllegalStateException(...);
 
@@ -301,7 +301,7 @@ public Command begin(FrameBuffer buffer) {
     // ...TODO
 
     // Create command
-    return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE);
+    return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.INLINE);
 }
 ```
 
@@ -320,7 +320,7 @@ To bind a pipeline in the render sequence we add the following factory method to
 
 ```java
 public Command bind() {
-    return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.handle());
+    return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, this.handle());
 }
 ```
 
@@ -468,7 +468,7 @@ final int index = chain.acquire();
 // Render frame
 new Work.Builder()
     .add(commands.get(index))
-    .stage(VkPipelineStageFlag.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT)
+    .stage(VkPipelineStageFlag.TOP_OF_PIPE)
     .build()
     .submit();
 

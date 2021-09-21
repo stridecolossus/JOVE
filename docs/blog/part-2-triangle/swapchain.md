@@ -115,9 +115,9 @@ public class Image extends NativeObject {
     private final LogicalDevice dev;
     private final VkFormat format;
     private final Extents extents;
-    private final Set<VkImageAspectFlag> aspect;
+    private final Set<VkImageAspect> aspect;
 
-    public Image(Pointer handle, LogicalDevice dev, VkFormat format, Extents extents, Set<VkImageAspectFlag> aspect) {
+    public Image(Pointer handle, LogicalDevice dev, VkFormat format, Extents extents, Set<VkImageAspect> aspect) {
     }
 }
 ```
@@ -205,7 +205,7 @@ The capabilities and presentation formats supported by the surface are used to v
  * @param usage Image usage
  * @throws IllegalArgumentException if the usage flag is not supported by the surface
  */
-public Builder usage(VkImageUsageFlag usage) {
+public Builder usage(VkImageUsage usage) {
     if(!IntegerEnumeration.contains(caps.supportedUsageFlags, usage)) {
         throw new IllegalArgumentException("Usage not supported: " + usage);
     }
@@ -219,12 +219,12 @@ The builder also initialises the descriptor in its constructor to sensible defau
 ```java
 count(caps.minImageCount);
 transform(caps.currentTransform);
-space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
+space(VkColorSpaceKHR.SRGB_NONLINEAR);
 arrays(1);
-mode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE); // or concurrent?
-usage(VkImageUsageFlag.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-alpha(VkCompositeAlphaFlagKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
-present(VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR);
+mode(VkSharingMode.EXCLUSIVE); // or concurrent?
+usage(VkImageUsageFlag.COLOR_ATTACHMENT);
+alpha(VkCompositeAlphaFlagKHR.ALPHA_OPAQUE);
+present(VkPresentModeKHR.FIFO);
 clipped(true);
 ```
 
@@ -258,7 +258,7 @@ The image views are created by the following helper:
 ```java
 private View view(Pointer handle) {
     final Image.Extents extents = new Image.Extents(info.imageExtent.width, info.imageExtent.height);
-    final Image image = new Image(handle, surface.device(), info.imageFormat, extents, Set.of(VkImageAspectFlag.VK_IMAGE_ASPECT_COLOR_BIT));
+    final Image image = new Image(handle, surface.device(), info.imageFormat, extents, Set.of(VkImageAspectFlag.COLOR));
     return new View(image);
 }
 ```
@@ -421,11 +421,11 @@ final VkFormat format = new FormatBuilder()
 final SwapChain chain = new SwapChain.Builder(surface)
     .format(format)
     .count(2)
-    .space(VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+    .space(VkColorSpaceKHR.SRGB_NONLINEAR)
     .build();
 ```
 
-In this example the image format is: `VK_FORMAT_B8G8R8A8_UNORM`
+In this example the image format is: `B8G8R8A8_UNORM`
 
 ---
 
@@ -497,12 +497,12 @@ The nested builder for an attachment is relatively straight-forward:
 ```java
 public class AttachmentBuilder {
     private VkFormat format;
-    private VkSampleCountFlag samples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT;
-    private VkAttachmentLoadOp loadOp = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    private VkAttachmentStoreOp storeOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    private VkAttachmentLoadOp stencilLoadOp = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    private VkAttachmentStoreOp stencilStoreOp = VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    private VkImageLayout initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;;
+    private VkSampleCountFlag samples = VkSampleCountFlag.COUNT_1;
+    private VkAttachmentLoadOp loadOp = VkAttachmentLoadOp.DONT_CARE;
+    private VkAttachmentStoreOp storeOp = VkAttachmentStoreOp.DONT_CARE;
+    private VkAttachmentLoadOp stencilLoadOp = VkAttachmentLoadOp.DONT_CARE;
+    private VkAttachmentStoreOp stencilStoreOp = VkAttachmentStoreOp.DONT_CARE;
+    private VkImageLayout initialLayout = VkImageLayout.UNDEFINED;;
     private VkImageLayout finalLayout;
 
     ...
@@ -542,13 +542,13 @@ public class SubPassBuilder {
         ...
     }
     
-    private VkPipelineBindPoint bind = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS;
+    private VkPipelineBindPoint bind = VkPipelineBindPoint.GRAPHICS;
     private final List<Reference> colour = new ArrayList<>();
     private Reference depth;
 
     /**
      * Sets the bind point of this sub-pass.
-     * @param bind Bind point (default is {@link VkPipelineBindPoint#VK_PIPELINE_BIND_POINT_GRAPHICS})
+     * @param bind Bind point (default is {@link VkPipelineBindPoint#GRAPHICS})
      */
     public SubPassBuilder bind(VkPipelineBindPoint bind) {
         this.bind = notNull(bind);
@@ -570,7 +570,7 @@ public class SubPassBuilder {
      * @param index Attachment index
      */
     public SubPassBuilder depth(int index) {
-        this.depth = new Reference(index, VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        this.depth = new Reference(index, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
         return this;
     }
 
@@ -617,7 +617,7 @@ private class Reference {
         this.index = zeroOrMore(index);
         this.layout = notNull(layout);
         if(index >= attachments.size()) throw new IllegalArgumentException(...);
-        if(layout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) throw new IllegalArgumentException(...);
+        if(layout == VkImageLayout.UNDEFINED) throw new IllegalArgumentException(...);
     }
 
     /**
@@ -671,12 +671,12 @@ We can now add the render pass to our triangle demo which consists of a single c
 final RenderPass pass = new RenderPass.Builder(dev)
     .attachment()
         .format(format)
-        .load(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR)
-        .store(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE)
-        .finalLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+        .load(VkAttachmentLoadOp.CLEAR)
+        .store(VkAttachmentStoreOp.STORE)
+        .finalLayout(VkImageLayout.PRESENT_SRC)
         .build()
     .subpass()
-        .colour(0, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        .colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
         .build()
     .build();
 ```

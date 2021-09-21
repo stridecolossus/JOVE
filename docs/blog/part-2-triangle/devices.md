@@ -171,7 +171,7 @@ The first step is an outline domain class for the physical device:
 public class PhysicalDevice {
     private final Pointer handle;
     private final Instance instance;
-    private final List<Queue.Family> families;
+    private final List<Family> families;
 
     /**
      * Constructor.
@@ -395,7 +395,7 @@ public boolean isPresentationSupported(Handle surface) {
 We can then walk the available devices and find one that matches our requirements:
 
 ```java
-var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.GRAPHICS);
 var presentationPredicate = Queue.Family.predicate(surfaceHandle);
 
 PhysicalDevice gpu = PhysicalDevice
@@ -409,7 +409,7 @@ PhysicalDevice gpu = PhysicalDevice
 Finally we add the following helper to the physical device to select a queue family:
 
 ```java
-public Queue.Family family(Predicate<Queue.Family> test) {
+public Family family(Predicate<Family> test) {
     return families.stream().filter(test).findAny().orElseThrow();
 }
 ```
@@ -417,8 +417,8 @@ public Queue.Family family(Predicate<Queue.Family> test) {
 And in the demo we extract the families from the selected device:
 
 ```java
-Queue.Family graphicsFamily = gpu.family(graphicsPredicate);
-Queue.Family presentFamily = gpu.family(presentationPredicate);
+Family graphicsFamily = gpu.family(graphicsPredicate);
+Family presentFamily = gpu.family(presentationPredicate);
 ```
 
 Note that these could actually be the same object depending on how the GPU implements its queues.
@@ -438,7 +438,7 @@ public class LogicalDevice {
     private final Pointer handle;
     private final PhysicalDevice parent;
     private final VulkanLibrary lib;
-    private final Map<Queue.Family, List<Queue>> queues;
+    private final Map<Family, List<Queue>> queues;
 
     /**
      * Constructor.
@@ -466,7 +466,7 @@ public class LogicalDevice {
 The local `RequiredQueue` class is a transient descriptor for a work queue that is required by the application:
 
 ```java
-private record RequiredQueue(Queue.Family family, List<Percentile> priorities) {
+private record RequiredQueue(Family family, List<Percentile> priorities) {
     /**
      * Populates a descriptor for a queue required by this device.
      */
@@ -528,15 +528,15 @@ Note more recent Vulkan implementations will ignore validation layers specified 
 The builder provides several over-loaded methods to specify one or more required work queues:
 
 ```java
-public Builder queue(Queue.Family family) {
+public Builder queue(Family family) {
     return queues(family, 1);
 }
 
-public Builder queues(Queue.Family family, int num) {
+public Builder queues(Family family, int num) {
     return queues(family, Collections.nCopies(num, 1f));
 }
 
-public Builder queues(Queue.Family family, List<Float> priorities) {
+public Builder queues(Family family, List<Float> priorities) {
     if(!parent.families().contains(family)) throw new IllegalArgumentException(...);
     queues.add(new RequiredQueue(family, priorities));
     return this;
@@ -607,7 +607,7 @@ private Stream<Queue> create(RequiredQueue queue) {
 Finally the handle for each queue is retrieved from Vulkan:
 
 ```java
-private Queue create(int index, Queue.Family family) {
+private Queue create(int index, Family family) {
     final PointerByReference queue = lib.factory().pointer();
     lib.vkGetDeviceQueue(handle, family.index(), index, queue);
     return new Queue(queue.getValue(), this, family);
@@ -769,7 +769,7 @@ We can now refactor the demo as follows:
 
 ```java
 // Create queue selectors
-var graphics = Queue.Selector.of(VkQueueFlag.VK_QUEUE_GRAPHICS_BIT);
+var graphics = Queue.Selector.of(VkQueueFlag.GRAPHICS);
 var present = Queue.Selector.of(surfaceHandle);
 
 // Find GPU
