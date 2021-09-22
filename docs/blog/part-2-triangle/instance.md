@@ -4,44 +4,46 @@ title: The Vulkan Instance
 
 ## Overview
 
-The first step in the development of our library is to create a Vulkan _instance_, the starting point for everything that follows.
+The first step in the development of JOVE is to create the Vulkan _instance_ - the starting point for everything that follows.
 
-This involves:
-1. Instantiating the Vulkan API using JNA
-2. Specifying any extensions we require for our application
-3. Populating a JNA structure descriptor for the instance
-4. Creating the instance given this descriptor
+Creating the instance involves the following steps:
 
-We will also enable a diagnostics extension to support logging and error reporting.
+1. Instantiate the Vulkan API using JNA.
 
-So let's get cracking.
+2. Specify the API extensions we require for our application.
+
+3. Population of a JNA structure descriptor outlining our requirements for the instance.
+
+4. Invoking the API to create the instance given this descriptor.
+
+For this we will require the following components:
+
+* Implementation of a JNA library to create/destroy the instance.
+
+* An instance domain object.
+
+* The relevant code generated structures used to specify the requirements of the instance.
+
+As already mentioned in the [code generation](/JOVE/blog/part-1-generation/code-generation) chapter we will employ the GLFW library which provides services for managing windows, input devices, etc. that we will use in future chapters.  However another compelling reason to use GLFW is that it also offers functionality to create a Vulkan rendering surface suitable for the platform on which the application is executed.  We _could_ use Vulkan extensions to do this from the ground up but it makes sense to take advantage of the platform-independant implementation making our code considerably simpler.  The disadvantage of this approach is that the logic becomes a little convoluted as the surface and Vulkan components are slightly inter-dependant, but this seems an acceptable compromise.
+
+To create an instance for a given platform we therefore also require:
+
+* A second JNA library for GLFW.
+
+* Additional domain objects for extensions and validation layers.
+
+Finally we will also implement the diagnostics extension to support logging and error reporting which will become _very_ helpful in subsequent chapters.
 
 ---
 
 ## Creating the Vulkan Instance
 
-### Instance API
+### Vulkan Library
 
-We start with an empty interface for the Vulkan API instantiated by JNA via a static factory method:
+We start by defining the Vulkan library for management of the instance:
 
 ```java
 interface VulkanLibrary extends Library {
-    static VulkanLibrary create() {
-        final String name = switch(Platform.getOSType()) {
-            case Platform.WINDOWS -> "vulkan-1";
-            case Platform.LINUX -> "libvulkan";
-            default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
-        }
-
-        return Native.load(name, VulkanLibrary.class);
-    }
-}
-```
-
-Next we extend the API by defining the methods to create and destroy an instance:
-
-```java
-interface VulkanLibraryInstance {
     /**
      * Creates a vulkan instance.
      * @param info             Instance descriptor
@@ -60,38 +62,51 @@ interface VulkanLibraryInstance {
 }
 ```
 
-This interface maps to the following methods defined in the `vulkan_core.h` header:
+This JNA interface maps to the following methods defined in the `vulkan_core.h` header:
 
 ```java
 typedef VkResult (VKAPI_PTR *PFN_vkCreateInstance)(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
 typedef void (VKAPI_PTR *PFN_vkDestroyInstance)(VkInstance instance, const VkAllocationCallbacks* pAllocator);
 ```
 
-Eventually there will be a large number of API methods (over a hundred) so we group logically related methods into their own interface and aggregate into the overall library:
+Notes:
+
+* As detailed in the previous chapter we have intentionally decided to hand-craft the native methods rather than attempt to code-generate the API.
+
+* Note that the handle to the newly created instance is returned as a `PointerByReference` object which maps to a native `VkInstance*` return-by-reference type.
+
+* The `allocator` parameter in the two methods is out-of-scope for our library and is always set to `null`.
+
+To instantiate the API itself we add the following factory method to the library:
 
 ```java
-interface VulkanLibrary extends Library, VulkanLibraryInstance, ... {
+static VulkanLibrary create() {
+    final String name = switch(Platform.getOSType()) {
+        case Platform.WINDOWS -> "vulkan-1";
+        case Platform.LINUX -> "libvulkan";
+        default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
+    }
+
+    return Native.load(name, VulkanLibrary.class);
 }
 ```
 
-As noted in the chapter on [code generation](/JOVE/blog/part-1-generation/code-generation) we have intentionally decided not to code-generate the API.
+### Instance
 
-### Vulkan Instance
-
-With that in place we can now create our first domain class:
+With the library in place we can implement our first domain object:
 
 ```java
 public class Instance {
-    private final VulkanLibrary api;
+    private final VulkanLibrary lib;
     private final Pointer handle;
 
-    private Instance(VulkanLibrary api, Pointer handle) {
-        this.api = notNull(api);
+    private Instance(VulkanLibrary lib, Pointer handle) {
+        this.api = notNull(lib);
         this.handle = notNull(handle);
     }
 
-    VulkanLibrary api() {
-        return api;
+    VulkanLibrary library() {
+        return lib;
     }
 
     public Pointer handle() {
@@ -108,39 +123,26 @@ Creating the instance involves populating a couple of JNA structures and invokin
 
 ```java
 public static class Builder {
-    private VulkanLibrary lib;
     private String name;
     private Version ver = new Version(1, 0, 0);
 
-    public Builder vulkan(VulkanLibrary api) {
-        this.lib = notNull(api);
-        return this;
-    }
-
-    /**
-     * Sets the application name.
-     * @param name Application name
-     */
     public Builder name(String name) {
         this.name = notEmpty(name);
         return this;
     }
 
-    /**
-     * Sets the application version.
-     * @param ver Application version
-     */
     public Builder version(Version ver) {
         this.ver = notNull(ver);
         return this;
     }
 
-    public Instance build() {
+    public Instance build(VulkanLibrary lib) {
+        ...
     }
 }
 ```
 
-The `Version` number is a simple POJO:
+The `Version` number is a simple Java object:
 
 ```java
 public record Version(int major, int minor, int patch) implements Comparable<Version> {
@@ -161,13 +163,14 @@ public record Version(int major, int minor, int patch) implements Comparable<Ver
 In the `build` method we use the code-generated structures for the first time to populate the application and engine details:
 
 ```java
-// Init application descriptor
-final VkApplicationInfo app = new VkApplicationInfo();
-app.pApplicationName = name;
-app.applicationVersion = ver.toInteger();
-app.pEngineName = "JOVE";
-app.engineVersion = new Version(1, 0, 0).toInteger();
-app.apiVersion = VulkanLibrary.VERSION.toInteger();
+public Instance build(VulkanLibrary lib) {
+    // Init application descriptor
+    final VkApplicationInfo app = new VkApplicationInfo();
+    app.pApplicationName = name;
+    app.applicationVersion = ver.toInteger();
+    app.pEngineName = "JOVE";
+    app.engineVersion = new Version(1, 0, 0).toInteger();
+    app.apiVersion = VulkanLibrary.VERSION.toInteger();
 ```
 
 The `apiVersion` field is the **maximum** version of the Vulkan API that the application can use - we add a new constant to the API for the version supported by the SDK:
@@ -178,41 +181,32 @@ public interface VulkanLibrary {
 }
 ```
 
-Next we populate the descriptor for the instance (just the application details for the moment):
+Next we populate the descriptor for the instance (which only consists of the application details for the moment):
 
 ```java
-// Init instance descriptor
-final VkInstanceCreateInfo info = new VkInstanceCreateInfo();
-info.pApplicationInfo = app;
+    // Init instance descriptor
+    final VkInstanceCreateInfo info = new VkInstanceCreateInfo();
+    info.pApplicationInfo = app;
 ```
 
 Finally we invoke the API method to create the instance given the descriptor:
 
 ```java
-// Create instance
-final PointerByReference handle = new PointerByReference();
-check(api.vkCreateInstance(info, null, handle));
-
-// Create instance wrapper
-return new Instance(api, handle.getValue());
+    // Create instance
+    final PointerByReference handle = new PointerByReference();
+    check(api.vkCreateInstance(info, null, handle));
+    
+    // Create instance wrapper
+    return new Instance(api, handle.getValue());
+}
 ```
-
-Note that the handle to the newly created instance is returned in the `PointerByReference` object which maps to a native `VkInstance*` return-by-reference type.
 
 The `check` method wraps an API call and validates the result code:
 
 ```java
 public interface VulkanLibrary {
-    /**
-     * Successful result code.
-     */
     int SUCCESS = VkResult.SUCCESS.value();
     
-    /**
-     * Checks the result of a Vulkan operation.
-     * @param result Result code
-     * @throws VulkanException if the given result is not {@link VkResult#SUCCESS}
-     */
     static void check(int result) {
         if(result != SUCCESS) {
             throw new VulkanException(result);
@@ -222,6 +216,10 @@ public interface VulkanLibrary {
 ```
 
 The `VulkanException` is a custom exception class that maps a Vulkan return code to the corresponding `VkResult` to build an informative error message.
+
+
+
+
 
 ### Extensions and Validation Layers
 
@@ -875,4 +873,16 @@ In this first chapter we:
 - Created the instance with the required extensions and layers.
 
 - And attached a diagnostics handler.
+
+
+
+
+Eventually there will be a large number of API methods (over a hundred) so we group logically related methods into their own interface and aggregate into the overall library:
+
+```java
+interface VulkanLibrary extends Library, VulkanLibraryInstance, ... {
+}
+```
+
+
 
