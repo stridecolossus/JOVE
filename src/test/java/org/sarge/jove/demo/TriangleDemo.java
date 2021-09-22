@@ -22,9 +22,9 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.Instance;
+import org.sarge.jove.platform.vulkan.core.Instance.Handler;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
-import org.sarge.jove.platform.vulkan.core.Message.HandlerBuilder;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
@@ -57,15 +57,14 @@ public class TriangleDemo {
 
 		// Create instance
 		final Instance instance = new Instance.Builder()
-				.vulkan(lib)
 				.name("test")
 				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
 				.extensions(desktop.extensions())
 				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.build();
+				.build(lib);
 
 		// Attach message handler
-		instance.attach(HandlerBuilder.create());
+		new Handler().init().attach(instance);
 
 		// Lookup surface
 		final Handle surfaceHandle = window.surface(instance.handle());

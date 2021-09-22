@@ -40,7 +40,7 @@ public class Vertex implements Bufferable {
 	 * A layout is comprised of:
 	 * <ul>
 	 * <li>the {@link #type} of each element, e.g. {@link Float}</li>
-	 * <li>the {@link #size} which specifies the number of <i>elements</i> that comprise the component, e.g. 3 for a 3D point</li>
+	 * <li>the {@link #size} which specifies the number of <i>elements</i> that comprise the component, e.g. 3 for a vertex normal</li>
 	 * <li>the number of {@link #bytes} per element, e.g. {@link Float#BYTES}</li>
 	 * </ul>
 	 * <p>
@@ -65,9 +65,9 @@ public class Vertex implements Bufferable {
 		 * <p>
 		 * Notes:
 		 * <ul>
-		 * <li>The {@link #type} parameter can be a wrapper or primitive type</li>
+		 * <li>The {@link #type} parameter can be either a wrapper or primitive type</li>
 		 * <li>The number of {@link #bytes} is specified by the corresponding constant, e.g. {@link Float#BYTES}</li>
-		 * <li>The type returned by {@link #type()} is the wrapper class, e.g. {@link Float}</li>
+		 * <li>The type returned by {@link #type()} is always the wrapper type, e.g. {@link Float}</li>
 		 * </ul>
 		 * <p>
 		 * The following types are supported:
@@ -94,7 +94,7 @@ public class Vertex implements Bufferable {
 		}
 
 		/**
-		 * Helper - Creates a layout with floating-point components.
+		 * Helper - Creates a layout with {@link #size} floating-point components.
 		 * @param size Size of this layout (number of components)
 		 * @return New floating-point layout
 		 */

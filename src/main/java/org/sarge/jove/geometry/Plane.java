@@ -20,7 +20,7 @@ import org.sarge.lib.util.Check;
  */
 public record Plane(Vector normal, float distance) {
 	/**
-	 * The half-space defines the <i>sides</i> of the plane with the plane normal pointing to the <i>positive</i> half-space.
+	 * The half-space defines the <i>sides</i> of this plane with respect to the normal (which points to the <i>positive</i> half-space).
 	 */
 	public enum HalfSpace {
 		POSITIVE,
@@ -48,9 +48,6 @@ public record Plane(Vector normal, float distance) {
 
 	/**
 	 * Creates a plane containing the given triangle of points.
-	 * @param a
-	 * @param b
-	 * @param c
 	 * @return New plane
 	 */
 	public static Plane of(Point a, Point b, Point c) {

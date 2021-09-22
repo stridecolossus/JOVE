@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>transient native object</i> is a template implementation for a native object managed by the application.
+ * Template implementation for a native object managed by the application.
  * @author Sarge
  */
 public abstract class AbstractTransientNativeObject implements TransientNativeObject {
@@ -45,6 +45,6 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("handle", handle).build();
+		return new ToStringBuilder(this).append(handle).build();
 	}
 }

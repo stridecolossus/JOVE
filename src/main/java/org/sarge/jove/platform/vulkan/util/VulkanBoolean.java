@@ -76,14 +76,14 @@ public final class VulkanBoolean {
 
 	/**
 	 * Constructor.
-	 * @param value Underlying boolean value
+	 * @param value Underlying native value
 	 */
 	private VulkanBoolean(int value) {
 		this.value = value;
 	}
 
 	/**
-	 * @return Value of this boolean wrapper
+	 * @return Value of this boolean
 	 */
 	public boolean toBoolean() {
 		return this == TRUE;

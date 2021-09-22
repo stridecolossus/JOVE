@@ -48,7 +48,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		final float alpha = switch(array.length) {
 			case 3 -> 1;
 			case 4 -> array[3];
-			default -> throw new IllegalArgumentException("Expected RGBA array components");
+			default -> throw new IllegalArgumentException("Expected RGB(A) array components");
 		};
 		return new Colour(array[0], array[1], array[2], alpha);
 	}
@@ -72,10 +72,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
 	/**
 	 * Constructor.
-	 * @param red
-	 * @param green
-	 * @param blue
-	 * @param alpha
 	 * @throws IllegalArgumentException if any argument is not a percentile value
 	 */
 	public Colour {
