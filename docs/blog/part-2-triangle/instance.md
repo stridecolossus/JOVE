@@ -75,9 +75,11 @@ Notes:
 
 * As detailed in the previous chapter we have intentionally decided to hand-craft the native methods rather than attempting to code-generate the API.
 
-* Note that the handle to the newly created instance is returned as a `PointerByReference` object which maps to a native `VkInstance*` return-by-reference type.
+* We only implement the two API methods we actually need at this stage.
 
-* The `pAllocator` parameter in the two methods is out-of-scope for our library and is always set to `null`.
+* Note that the handle to the newly created instance is returned as a JNA `PointerByReference` object which maps to a native `VkInstance*` return-by-reference type.
+
+* The `pAllocator` parameter in the API methods is out-of-scope for our library and is always set to `null`.
 
 To instantiate the API itself we add the following factory method to the library:
 
@@ -579,7 +581,7 @@ Notes:
 
 * The name of the function is specified in the [Vulkan documentation](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#vkCreateDebugUtilsMessengerEXT).
 
-* We maintain a list of the attached `handlers` in the instance (which will be released when we destroy the instance, see below).
+* We maintain a list of the attached `handlers` in the instance (which will be released when we destroy the instance below).
 
 Finally we add another helper to the instance to lookup a function pointer by name:
 
@@ -681,7 +683,7 @@ For example (excluding the message text):
 ERROR:VALIDATION:Validation Error: [ VUID-VkDeviceQueueCreateInfo-pQueuePriorities-00383 ] ...
 ```
 
-### Integration
+### Cleanup and Integration
 
 To attach a diagnostics handler we must first enable the extension and register the standard validation layer when creating the instance:
 
@@ -702,7 +704,7 @@ public interface VulkanLibrary {
 }
 ```
 
-Finally to properly clean up after ourselves we modify the `destroy` method of the instance to release attached handlers:
+Finally we modify the `destroy` method of the instance to properly cleanup after ourselves and release attached message handlers:
 
 ```java
 public void destroy() {
@@ -735,167 +737,130 @@ From now on when we screw things up we should receive error messages on the cons
 
 ---
 
+## Improvements and Issues
 
-
-
-
-TODO
-- factor out create method + lazy init
-- mention difficulty of testing? (ref factory)
-
-
-
-
-
-## Improvements
+In this section we briefly cover some improvements to the code developed so far and discuss any issues faced.
 
 ### Lazy Initialisation
 
-There will several cases throughout the Vulkan API where we will employ _lazy initialisation_ to defer instantiation of some object and/or invocation of an API method.
+There will be several cases throughout the Vulkan API where we would like to employ _lazy initialisation_ to defer the creation of some object and/or invocation of an API method.
 
-We create a custom supplier for lazy initialisation:
+For this we implement the [LazySupplier](TODO) which provides a relatively cheap, thread-safe means of lazily initialising some value.
+
+We can now refactor the code that looks up the message handler function pointer so that it is only executed once:
 
 ```java
-public class LazySupplier<T> implements Supplier<T> {
-    private final Supplier<T> supplier;
+public class Instance extends AbstractTransientNativeObject {
+    private final Supplier<Function> create = new LazySupplier<>(() -> function("vkCreateDebugUtilsMessengerEXT"));
 
-    private volatile T value;
-
-    public LazySupplier(Supplier<T> supplier) {
-        this.supplier = notNull(supplier);
-    }
-
-    @Override
-    public T get() {
-        final T result = value;
-
-        if(result == null) {
-            synchronized(this) {
-                if(value == null) {
-                    value = notNull(supplier.get());
-                }
-                return value;
-            }
-        }
-        else {
-            return result;
-        }
+    ...
+    
+    private void attach(VkDebugUtilsMessengerCreateInfoEXT info) {
+        final PointerByReference handle = lib.factory().pointer();
+        final Object[] args = {ptr, info, null, handle};
+        check(create.get().invokeInt(args));                    // <-- Lazy initialisation happens here
+        handlers.add(handle.getValue());
     }
 }
 ```
 
-The rationale for lazy initialisation is not performance reasons but mainly to ensure that API methods are invoked closer to the code where they are used
-(such as when we lookup the create method for the diagnostics handler). 
+### The Vulkan API
 
-However this implementation is also relatively cheaply thread-safe should that become a requirement:
-
-The first line of the `get` method may look odd or even pointless:
+Eventually there will be a large number of API methods (over a hundred) so we group logically related methods into separate interfaces and aggregate into the overall library, for example:
 
 ```java
-final T result = value;
+interface VulkanLibraryInstance {
+    int vkCreateInstance(VkInstanceCreateInfo info, Handle allocator, PointerByReference instance);
+    ...
+}
+
+interface VulkanLibrary extends Library, VulkanLibraryInstance, ... {
+    static VulkanLibrary create() { ... }
+}
 ```
 
-This is performing **one** read of the _volatile_ lazily instantiated object allowing the following code to avoid the `synchronized` block if the value has been populated.
+### Testing Problems
 
-Reference: [DZone article](https://dzone.com/articles/be-lazy-with-java-8)
+The Vulkan API (and most other native libraries) make extensive use of by-reference types to return data, with the actual return value of the method generally representing some sort of error code (since base C does not support the notion of exceptions).
 
-### Reference Factory
+For example the `vkCreateInstance` API method returns the `handle` of the newly created instance via a JNA `PointerByReference` as shown here:
+
+```java
+public Instance build(VulkanLibrary lib) {
+    ...
+    
+    // Create instance
+    final PointerByReference handle = new PointerByReference();
+    check(api.vkCreateInstance(info, null, handle));
+    
+    // Create instance wrapper
+    return new Instance(api, handle.getValue());
+}
+```
+
+Mercifully this approach is generally unknown in Java but it does pose an awkward problem when we come to testing - the usual Java unit-testing frameworks (JUnit, Mockito) are designed around the return value of a method generally being the important part and any error conditions modelled by exceptions.
+
+If we want to unit-test the above code we might try something like the following naive implementation:
+
+```java
+private VulkanLibrary lib;
+
+@BeforeEach
+void before() {
+    lib = mock(VulkanLibrary.class);
+}
+
+@Test
+void testBuild() {
+    // Init expected create descriptor
+    var info = new VkInstanceCreateInfo();
+    ...
+
+    // Init create method
+    var handle = new PointerByReference();
+    when(lib.vkCreateInstance(info, null, handle)).thenReturn(0);
+
+    // Build instance
+    Instance instance = new Instance.Builder()
+        .name("testBuild")
+        .build(lib);
+
+    // Check created instance        
+    assertNotNull(instance);
+    ...
+}
+```
+
+However there are several immediate problems with this test:
+
+1. Mocking by-reference parameters:
 
 TODO
 
-The Vulkan API (and many other native libraries) make extensive use of by-reference types to return data (with the return value generally being some sort of error code).
-For example the `vkCreateInstance` API method returns the handle of the newly instance created instance via a JNA `PointerByReference` from which the actual handle is extracted.
+What do we supply for the `handle` argument when we `verify` the API call?  We cannot simply pass a `PointerByReference` created in the test because it will be a different instance to the one created in the `build` method itself - the test would likely fail (since the underlying pointer would be zero) and we still wouldn't be able to validate the actual value in the test.
 
-Mercifully this approach is generally uncommon in Java but it poses an awkward problem for unit-testing - if the code allocates the by-reference internally we have no way of mocking it beforehand, the returned pointer will be un-initialised and subsequent code that depends on that value will fail.
+We _could_ mock the handle using a Mockito _answer_ but that would require tedious and convoluted code for _every_ unit-test that exercises methods with by-reference return values (which is pretty much all of them).
 
-We _could_ mock the reference using a Mockito _answer_ but that means tedious and convoluted code that we have to implement for _every_ unit-test that exercises a by-reference value.
+2. JNA structure equality
 
-Therefore we factor out the most common cases into a _reference factory_ helper that is responsible for creating any by-reference types in the API that we can then more easily mock.
-The factory is defined as follows with a concrete implementation for production code:
+In the above naive unit-test we would like to verify that the code constructs the expected `VkInstanceCreateInfo` descriptor.  However it turns out that two JNA structures that contain the same data are __not__ equal and the above test would fail (even if we resolved the by-reference issue).
 
-```java
-public interface ReferenceFactory {
-    /**
-     * @return New integer-by-reference
-     */
-    IntByReference integer();
+A review of the JNA source code shows that structures essentially violate the `equals` contract that is assumed by the testing frameworks, instead two structures are compared using the `dataEquals` method.
 
-    /**
-     * @return New pointer-by-reference
-     */
-    PointerByReference pointer();
+Again we _could_ get around this by bastardising a custom structure implementation that 'fixes' the equality problem or by creating a custom Mockito argument matcher based on `dataEquals`, but  both of these approaches would be fiddly, error prone and tediously repetitive to use.
 
-    /**
-     * Default implementation.
-     */
-    ReferenceFactory DEFAULT = new ReferenceFactory() {
-        @Override
-        public IntByReference integer() {
-            return new IntByReference();
-        }
+3. 
 
-        @Override
-        public PointerByReference pointer() {
-            return new PointerByReference();
-        }
-    };
-}
-```
+tests passes anyway cos returns zero!
+but luck!!!
 
-The factory is a property of the Vulkan API:
+...
+TODO
+...
 
-```java
-public interface VulkanLibrary {
-    /**
-     * @return Factory for pass-by-reference types used by this API
-     * @see ReferenceFactory#DEFAULT
-     */
-    default ReferenceFactory factory() {
-        return ReferenceFactory.DEFAULT;
-    }
-}
-```
+Note that the success return code for all Vulkan methods is zero which is nicely what is returned by mocked methods.
 
-Notes:
-
-- We provide a convenience `MockReferenceFactory` implementation to support testing.
-
-- The use of a default method in the Vulkan API is a little dodgy but it means the production implementation is returned by default.
-
-The factory allows us to mock the creation of any by-reference values as required, for example:
-
-```java
-// Init API
-lib = mock(VulkanLibrary.class);
-when(lib.factory()).thenReturn(new MockReferenceFactory());
-
-// Create instance
-verify(lib).vkCreateInstance(...);
-
-// Check handle
-final PointerByReference handle = lib.factory().pointer();
-assertEquals(handle.getValue(), instance.handle());
-```
-
-In general from now on we will not cover testing unless there is a specific point-of-interest and it can be assumed that tests are developed in-parallel with the main code.
-
-
-
-
-        // Create instance
-        final Instance instance = new Instance.Builder()
-                .name("InstanceDemo")
-                .extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
-                .extensions(desktop.extensions())
-                .layer(ValidationLayer.STANDARD_VALIDATION)
-                .build(lib);
-
-        // Attach message handler
-        new Handler().init().attach(instance);
-        System.out.println("instance=" + instance);
-
-
-
+In general from now on we will not cover testing unless there is a specific point-of-interest.  It can be assumed that unit-tests are developed in-parallel with the main code.
 
 ---
 
@@ -903,21 +868,9 @@ In general from now on we will not cover testing unless there is a specific poin
 
 In this first chapter we:
 
-- Instantiated the Vulkan API.
+- Instantiated the Vulkan API and GLFW library.
 
-- Created the instance with the required extensions and layers.
+- Created a Vulkan instance with the required extensions and layers.
 
-- And attached a diagnostics handler.
-
-
-
-
-Eventually there will be a large number of API methods (over a hundred) so we group logically related methods into their own interface and aggregate into the overall library:
-
-```java
-interface VulkanLibrary extends Library, VulkanLibraryInstance, ... {
-}
-```
-
-
+- Attached a diagnostics handler.
 
