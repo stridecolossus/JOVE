@@ -857,13 +857,13 @@ void before() {
 }
 ```
 
-But this is ugly and error-prone, a better approach would be to avoid this 'catch-all' and add a post-condition that validates the expected method invocation:
+But this is ugly and error-prone, a better approach would be to avoid this 'catch-all' and instead add a post-condition that validates the expected method invocation:
 
 ```java
 verify(lib).vkCreateInstance(info, null, handle);
 ```
 
-2. Mocking by-reference parameters:
+2. Mocking by-reference parameters
 
 But what do we supply for the `handle` argument?  We cannot simply pass a `PointerByReference` created in the test as it will be a different instance to the one created in the `build` method itself - the test would likely fail, or would only pass by 'luck'.
 
@@ -879,11 +879,11 @@ We could use a Mockito _answer_ for the handle to verify the actual returned val
 
 3. JNA structure equality
 
-We also want to validate that the code constructs the expected `VkInstanceCreateInfo` descriptor, unfortunately it turns out that two JNA structures that contain the same data are __not__ equal and the above `verify` test would fail (even if we resolved the by-reference issue).  A review of the JNA source code shows that structures essentially violate the Java `equals` contract that is assumed by the testing frameworks, instead two structures can only be compared using the `dataEquals` method.
+We also want to validate that the code constructs the expected `VkInstanceCreateInfo` descriptor, unfortunately it turns out that two JNA structures that contain the same data are __not__ equal and the above `verify` test would fail (even if we resolved the by-reference issue).  A review of the JNA source code shows that structures essentially violate the Java `equals` contract assumed by the testing frameworks, instead two structures can only be compared using the `dataEquals` method.
 
-Again we could get around this by bastardising a custom structure implementation that 'fixes' the equality problem or by creating a custom Mockito argument matcher based on `dataEquals`, but  both of these approaches would be fiddly, error prone and tediously repetitive to use.
+Again we could get around this by bastardising a custom structure implementation that 'fixes' the equality problem or by creating a custom Mockito argument matcher based on `dataEquals`, but either of these approaches would be fiddly, error prone and tediously repetitive to use.
 
-Alternatively we could create a Mockito `ArgumentCaptor` that allows use to query the actual argument that was passed to the method (we could use the same approach for the handle reference):
+Alternatively we could use a Mockito _argument captor_ which allows us to query the actual argument that was passed to the method (we could use the same approach for the handle reference):
 
 ```java
 // Check API invocation
@@ -899,11 +899,15 @@ This is a lot of unpleasant code just to get around the fact that JNA structures
 
 ### Mitigation
 
-There are several inter-related issues for which we have yet to come up with a viable solution.  We have suggested some workarounds that we _could_ use but none of them are particularly palatable.
+There are several inter-related issues here, we have some suggested workarounds that we _could_ use but none of them are particularly palatable.
+We have yet to come up with a satisfying viable solution, however we have managed to mitigate some of the problems.
 
 TODO
 TODO
 TODO
+
+reference factory, show usage but not implementation, except for default in VK lib
+should we just take the hit and use matchers, with custom dataEquals()?
 
 In general from now on we will not cover testing unless there is a specific point-of-interest.  It can be assumed that unit-tests are developed in-parallel with the main code.
 
