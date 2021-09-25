@@ -38,6 +38,17 @@ Finally we will also implement the diagnostics extension to support logging and 
 
 ---
 
+
+
+naive doesn't test method or any!
+numbering
+mention started to address testing to summary
+should write ??? by VK result (???)
+solutions mitigation after SO discussions
+
+
+
+
 ## Creating the Vulkan Instance
 
 ### Vulkan Library
@@ -764,9 +775,9 @@ public class Instance extends AbstractTransientNativeObject {
 }
 ```
 
-### The Vulkan API
+### Aggregated API
 
-Eventually there will be a large number of API methods (over a hundred) so we group logically related methods into separate interfaces and aggregate into the overall library, for example:
+Eventually there will be a large number of API methods (over a hundred) so we group logically related methods into separate interfaces and aggregate the overall library, for example:
 
 ```java
 interface VulkanLibraryInstance {

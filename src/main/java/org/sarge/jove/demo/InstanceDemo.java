@@ -8,7 +8,6 @@ import org.sarge.jove.platform.desktop.Desktop;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.Instance;
-import org.sarge.jove.platform.vulkan.core.Instance.Handler;
 
 /**
  * This demo illustrates creating a Vulkan instance, including retrieving the required extensions for the execution platform and attaching a debugging handler.
@@ -41,7 +40,7 @@ public class InstanceDemo {
 				.build(lib);
 
 		// Attach message handler
-		new Handler().init().attach(instance);
+		instance.handler().init().attach();
 		System.out.println("instance=" + instance);
 
 		// Cleanup
