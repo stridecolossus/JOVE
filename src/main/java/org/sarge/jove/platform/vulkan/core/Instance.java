@@ -366,7 +366,7 @@ public class Instance extends AbstractTransientNativeObject {
 		}
 
 		/**
-		 * Attaches this handler to the given instance.
+		 * Attaches this handler to the instance.
 		 * @throws IllegalArgumentException if the message severities or types is empty
 		 */
 		public void attach() {
@@ -378,14 +378,13 @@ public class Instance extends AbstractTransientNativeObject {
 			final MessageCallback callback = new MessageCallback(consumer);
 
 			// Build handler descriptor
-			final VkDebugUtilsMessengerCreateInfoEXT info = new VkDebugUtilsMessengerCreateInfoEXT();
+			final var info = new VkDebugUtilsMessengerCreateInfoEXT();
 			info.messageSeverity = IntegerEnumeration.mask(severity);
 			info.messageType = IntegerEnumeration.mask(types);
 			info.pfnUserCallback = callback;
 			info.pUserData = null;
 
 			// Attach to instance
-//			Instance.this.attach(info);
 			final PointerByReference ref = lib.factory().pointer();
 			final Object[] args = {handle.toPointer(), info, null, ref};
 			check(create.get().invokeInt(args));
