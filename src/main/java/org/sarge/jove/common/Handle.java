@@ -49,6 +49,13 @@ public final class Handle {
 		this.handle = notNull(handle);
 	}
 
+	/**
+	 * @return Copy of the underlying pointer
+	 */
+	public Pointer toPointer() {
+		return new Pointer(Pointer.nativeValue(handle));
+	}
+
 	@Override
 	public int hashCode() {
 		return handle.hashCode();

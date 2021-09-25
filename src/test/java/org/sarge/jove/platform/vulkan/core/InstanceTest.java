@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -28,9 +29,11 @@ import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
+import org.sarge.jove.platform.vulkan.common.Version;
+import org.sarge.jove.platform.vulkan.core.Instance.Builder;
 import org.sarge.jove.platform.vulkan.core.Instance.Handler;
-import org.sarge.jove.platform.vulkan.core.Instance.Handler.Message;
-import org.sarge.jove.platform.vulkan.core.Instance.Handler.MessageCallback;
+import org.sarge.jove.platform.vulkan.core.Instance.Message;
+import org.sarge.jove.platform.vulkan.core.Instance.MessageCallback;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
@@ -47,48 +50,24 @@ public class InstanceTest {
 
 	@BeforeEach
 	void before() {
-		// Init API
+		// Create Vulkan API
 		lib = mock(VulkanLibrary.class);
 
-		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
-		when(lib.factory().pointer()).thenReturn(new PointerByReference(POINTER));
-		handle = new Handle(POINTER);
+		// Init reference factory
+		final ReferenceFactory factory = mock(ReferenceFactory.class);
+		when(lib.factory()).thenReturn(factory);
+		when(factory.pointer()).thenReturn(new PointerByReference(POINTER));
 
 		// Create instance
-		instance = new Instance.Builder()
-				.extension("ext")
-				.layer(new ValidationLayer("layer"))
-				.build(lib);
+		handle = new Handle(POINTER);
+		instance = new Instance(lib, handle);
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(instance);
 		assertEquals(lib, instance.library());
 		assertEquals(handle, instance.handle());
-	}
-
-	@Test
-	void create() {
-		// Check API
-		final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
-		verify(lib).vkCreateInstance(captor.capture(), isNull(), isA(PointerByReference.class));
-
-		// Check instance descriptor
-		final VkInstanceCreateInfo info = captor.getValue();
-		assertEquals(1, info.enabledExtensionCount);
-		assertEquals(1, info.enabledLayerCount);
-		assertNotNull(info.ppEnabledExtensionNames);
-		assertNotNull(info.ppEnabledLayerNames);
-
-		// Check application descriptor
-		final VkApplicationInfo app = info.pApplicationInfo;
-		assertNotNull(app);
-		assertEquals("Unspecified", app.pApplicationName);
-		assertNotNull(app.applicationVersion);
-		assertEquals("JOVE", app.pEngineName);
-		assertNotNull(app.engineVersion);
-		assertEquals(VulkanLibrary.VERSION.toInteger(), app.apiVersion);
+		assertEquals(false, instance.isDestroyed());
 	}
 
 	@Test
@@ -108,6 +87,89 @@ public class InstanceTest {
 	@Test
 	void functionUnknown() {
 		assertThrows(RuntimeException.class, () -> instance.function("cobblers"));
+	}
+
+	@Nested
+	class BuilderTests {
+		private Builder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new Builder();
+		}
+
+		@Test
+		void build() {
+			// Init instance properties
+			final Version ver = new Version(1, 2, 3);
+			final ValidationLayer layer = new ValidationLayer("layer");
+
+			// Create instance
+			instance = builder
+				.name("name")
+				.version(ver)
+				.extension("ext")
+				.layer(layer)
+				.build(lib);
+
+			// Check instance
+			assertNotNull(instance);
+			assertEquals(handle, instance.handle());
+			assertEquals(lib, instance.library());
+			assertEquals(false, instance.isDestroyed());
+
+			// Check API
+			final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
+			verify(lib).vkCreateInstance(captor.capture(), isNull(), isA(PointerByReference.class));
+
+			// Check instance descriptor
+			final VkInstanceCreateInfo info = captor.getValue();
+			assertEquals(1, info.enabledExtensionCount);
+			assertEquals(1, info.enabledLayerCount);
+			assertNotNull(info.ppEnabledExtensionNames);
+			assertNotNull(info.ppEnabledLayerNames);
+
+			// Check application descriptor
+			final VkApplicationInfo app = info.pApplicationInfo;
+			assertNotNull(app);
+			assertEquals("name", app.pApplicationName);
+			assertEquals(ver.toInteger(), app.applicationVersion);
+			assertEquals("JOVE", app.pEngineName);
+			assertEquals(new Version(1, 0, 0).toInteger(), app.engineVersion);
+			assertEquals(VulkanLibrary.VERSION.toInteger(), app.apiVersion);
+		}
+
+		@Test
+		void buildDefaults() {
+			// Create instance with default properties
+			instance = builder.build(lib);
+
+			// Check instance
+			assertNotNull(instance);
+			assertEquals(handle, instance.handle());
+			assertEquals(lib, instance.library());
+			assertEquals(false, instance.isDestroyed());
+
+			// Check API
+			final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
+			verify(lib).vkCreateInstance(captor.capture(), isNull(), isA(PointerByReference.class));
+
+			// Check instance descriptor
+			final VkInstanceCreateInfo info = captor.getValue();
+			assertEquals(0, info.enabledExtensionCount);
+			assertEquals(0, info.enabledLayerCount);
+			assertNotNull(info.ppEnabledExtensionNames);
+			assertNotNull(info.ppEnabledLayerNames);
+
+			// Check application descriptor
+			final VkApplicationInfo app = info.pApplicationInfo;
+			assertNotNull(app);
+			assertEquals("Unspecified", app.pApplicationName);
+			assertEquals(new Version(1, 0, 0).toInteger(), app.applicationVersion);
+			assertEquals("JOVE", app.pEngineName);
+			assertEquals(new Version(1, 0, 0).toInteger(), app.engineVersion);
+			assertEquals(VulkanLibrary.VERSION.toInteger(), app.apiVersion);
+		}
 	}
 
 	@Nested
@@ -159,7 +221,7 @@ public class InstanceTest {
 
 		@BeforeEach
 		void before() {
-			handler = new Handler();
+			handler = instance.handler();
 			func = mock(Function.class);
 			when(lib.vkGetInstanceProcAddr(handle, "vkCreateDebugUtilsMessengerEXT")).thenReturn(func);
 		}
@@ -172,7 +234,7 @@ public class InstanceTest {
 		@Test
 		void attach() {
 			// Attach handler
-			handler.init().attach(instance);
+			handler.init().attach();
 
 			// Check API
 			final ArgumentCaptor<Object[]> captor = ArgumentCaptor.forClass(Object[].class);
@@ -182,7 +244,7 @@ public class InstanceTest {
 			final Object[] args = captor.getValue();
 			assertNotNull(args);
 			assertEquals(4, args.length);
-			assertEquals(POINTER, args[0]);
+			assertEquals(handle.toPointer(), args[0]);
 			assertEquals(null, args[2]);
 			assertEquals(lib.factory().pointer(), args[3]);
 
@@ -198,7 +260,7 @@ public class InstanceTest {
 		@Test
 		void destroy() {
 			// Attach handler
-			handler.init().attach(instance);
+			handler.init().attach();
 
 			// Destroy instance and handler
 			when(lib.vkGetInstanceProcAddr(handle, "vkDestroyDebugUtilsMessengerEXT")).thenReturn(func);
@@ -212,7 +274,7 @@ public class InstanceTest {
 			final Object[] args = captor.getValue();
 			assertNotNull(args);
 			assertEquals(3, args.length);
-			assertEquals(POINTER, args[0]);
+			assertEquals(handle.toPointer(), args[0]);
 			assertEquals(lib.factory().pointer().getValue(), args[1]);
 			assertEquals(null, args[2]);
 		}
@@ -220,18 +282,19 @@ public class InstanceTest {
 		@Test
 		void attachEmptySeverities() {
 			handler.type(VkDebugUtilsMessageType.GENERAL);
-			assertThrows(IllegalArgumentException.class, () -> handler.attach(instance));
+			assertThrows(IllegalArgumentException.class, () -> handler.attach());
 		}
 
 		@Test
 		void attachEmptyTypes() {
 			handler.severity(VkDebugUtilsMessageSeverity.WARNING);
-			assertThrows(IllegalArgumentException.class, () -> handler.attach(instance));
+			assertThrows(IllegalArgumentException.class, () -> handler.attach());
 		}
 	}
 
 	@Tag(AbstractVulkanTest.INTEGRATION_TEST)
 	@Test
+	@Disabled
 	void build() {
 		// Create real API
 		lib = VulkanLibrary.create();
