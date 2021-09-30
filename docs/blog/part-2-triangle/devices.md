@@ -317,86 +317,130 @@ Pointer surface = window.surface(instance.handle());
 
 ### Overview
 
+As previously mentioned the process of selecting the physical device is slightly messy due to the inter-dependencies between the Vulkan instance, the rendering surface and the presentation queue.
+This is exacerbated by the mechanism Vulkan uses to select the work queues - this essentially requires the same logic to be applied twice: once to select the physical device with the required queue capabilities, and again to retrieve each queue from the resultant logical device.
 
+After trying several approaches we settled on the design described below which determines each queue family as a _side-effect_ of selecting the physical device in one operation.
+Generally we would avoid a design that could lead to unpleasant surprises, but at least the nastier aspects are self-contained and the resultant API is at least relatively simple from the perspective of the user.
 
 ### Selector
 
-
-
-
-
-
-
-
-The final step for dealing with the physical devices is to select one that supports the requirements of an application.
-
-There are several properties that we can select on:
-1. The properties of a queue family provided by the device.
-2. Whether the device supports rendering to the Vulkan surface.
-3. The supported _features_ of the device (covered in later chapters).
-
-The properties of a queue family are defined by the `VkQueueFlag` enumeration and specify whether the queue supports graphics rendering, data transfer, etc.
-
-We add the following helper factory to the queue family class to create a predicate for a set of queue flags:
+The `Selector` combines a device predicate with an accessor for the selected queue family (the side effect):
 
 ```java
-public static Predicate<Family> predicate(VkQueueFlag... flags) {
-    final var list = Arrays.asList(flags);
-    return family -> family.flags().containsAll(list);
+public static class Selector implements Predicate<PhysicalDevice> {
+    private Optional<Family> family = Optional.empty();
+
+    /**
+     * @return Selected queue family
+     * @throws NoSuchElementException if no queue was selected
+     */
+    public Family family() {
+        return family.orElseThrow();
+    }
+
+    @Override
+    public boolean test(PhysicalDevice dev) {
+        ...
+    }
 }
 ```
 
-And another to test whether the family supports presentation to a given surface:
+Since the API method to test presentation is also dependant on the physical device the selector uses a bi-predicate that combines the device and family tests:
 
 ```java
-public static Predicate<Family> predicate(Handle surface) {
-    return family -> family.isPresentationSupported(surface);
+public static class Selector implements Predicate<PhysicalDevice> {
+    private final BiPredicate<PhysicalDevice, Family> predicate;
+
+    public Selector(BiPredicate<PhysicalDevice, Family> predicate) {
+        this.predicate = notNull(predicate);
+    }
 }
 ```
 
-Which delegates to the following method:
+The `test` method determines the queue predicate for the device and finds the matching family if present:
 
 ```java
-public boolean isPresentationSupported(Handle surface) {
-    final VulkanLibrary lib = dev.instance().library();
+public boolean test(PhysicalDevice dev) {
+    // Build filter for this device
+    final Predicate<Family> filter = family -> predicate.test(dev, family);
+
+    // Retrieve matching queue family
+    family = dev.families.stream().filter(filter).findAny();
+
+    // Selector passes if the queue is found
+    return family.isPresent();
+}
+```
+
+For the presentation case we implement a factory method that matches a given rendering surface:
+
+```java
+public static Selector of(Handle surface) {
+    final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
+    return new Selector(predicate);
+}
+```
+
+This delegates to the following helper on the physical device:
+
+```java
+public boolean isPresentationSupported(Handle surface, Family family) {
+    final VulkanLibrary lib = this.library();
     final IntByReference supported = lib.factory().integer();
-    check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
-    return VulkanBoolean.of(supported.getValue()).toBoolean();
+    check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this.handle(), family.index(), surface, supported));
+    return supported.getValue() == 1; // TODO
 }
 ```
 
-We can then walk the available devices and find one that matches our requirements:
+Note that the API uses an `IntByReference` for the test result which maps __one__ to boolean _true_ (there is no explicit boolean by-reference type).  We will introduce proper boolean support in a later chapter.
+
+Finally we add a second factory to create a selector based on general queue capabilities (the device aspect of the predicate is unused in this case):
 
 ```java
-var graphicsPredicate = Queue.Family.predicate(VkQueueFlag.GRAPHICS);
-var presentationPredicate = Queue.Family.predicate(surfaceHandle);
+public static Selector of(VkQueueFlag... flags) {
+    final var list = Arrays.asList(flags);
+    final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> family.flags().containsAll(list);
+    return new Selector(predicate);
+}
+```
 
-PhysicalDevice gpu = PhysicalDevice
+An application may also be required to select the device based on its properties or available features but we defer these cases until later.
+
+### Integration
+
+We can now enumerate the available physical devices and use selectors to find one that supports the requirements of the demo:
+
+```java
+// Select a device that supports rendering
+Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
+
+// Select a device that supports presentation
+Selector presentation = Selector.of(surface);
+
+// Find matching device
+PhysicalDevice physical = PhysicalDevice
     .devices(instance)
-    .filter(PhysicalDevice.predicate(graphicsPredicate))
-    .filter(PhysicalDevice.predicate(presentationPredicate))
+    .filter(graphics)
+    .filter(presentation)
     .findAny()
-    .orElseThrow(() -> new RuntimeException("No GPU available"));
+    .orElseThrow(() -> new RuntimeException("No suitable physical device available"));
 ```
 
-Finally we add the following helper to the physical device to select a queue family:
-
-```java
-public Family family(Predicate<Family> test) {
-    return families.stream().filter(test).findAny().orElseThrow();
-}
-```
-
-And in the demo we extract the families from the selected device:
-
-```java
-Family graphicsFamily = gpu.family(graphicsPredicate);
-Family presentFamily = gpu.family(presentationPredicate);
-```
-
-Note that these could actually be the same object depending on how the GPU implements its queues.
+Note that the selected families could actually be the same object depending on the hardware implementation but we allow for multiple return results.
 
 ---
+
+
+
+
+
+
+
+
+
+
+
 
 ## Logical Device
 

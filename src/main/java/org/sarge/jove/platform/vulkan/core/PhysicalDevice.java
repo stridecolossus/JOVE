@@ -126,7 +126,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	}
 
 	/**
-	 * Tests whether this device/family supports presentation to the given surface.
+	 * Tests whether this device supports presentation to the given surface.
 	 * @param surface		Rendering surface
 	 * @param family		Queue family
 	 * @return Whether presentation is supported by the given family
@@ -177,7 +177,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 
 		/**
 		 * Creates a selector for the queue that supports the given capabilities.
-		 * @param flags Queue capabilities
+		 * @param flags Required queue capabilities
 		 * @return Queue selector
 		 */
 		public static Selector of(VkQueueFlag... flags) {
@@ -207,8 +207,13 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 
 		@Override
 		public boolean test(PhysicalDevice dev) {
+			// Build filter for this device
 			final Predicate<Family> filter = family -> predicate.test(dev, family);
+
+			// Retrieve matching queue family
 			family = dev.families.stream().filter(filter).findAny();
+
+			// Selector passes if the queue is found
 			return family.isPresent();
 		}
 	}

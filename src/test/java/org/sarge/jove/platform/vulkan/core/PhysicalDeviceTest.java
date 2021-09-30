@@ -122,7 +122,7 @@ public class PhysicalDeviceTest {
 	class SelectorTests {
 		@Test
 		void selector() {
-			// Create family predicate
+			// Create simple family matcher
 			final BiPredicate<PhysicalDevice, Family> predicate = mock(BiPredicate.class);
 			when(predicate.test(dev, family)).thenReturn(true);
 
