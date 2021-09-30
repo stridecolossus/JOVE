@@ -65,7 +65,8 @@ public class MouseDevice implements Device {
 			}
 
 			private void apply(MousePositionListener listener) {
-				window.library().glfwSetCursorPosCallback(window.handle(), listener);
+				final var lib = window.desktop().library();
+				lib.glfwSetCursorPosCallback(window.handle(), listener);
 			}
 		};
 	}
@@ -110,7 +111,8 @@ public class MouseDevice implements Device {
 			}
 
 			private void apply(MouseButtonListener listener) {
-				window.library().glfwSetMouseButtonCallback(window.handle(), listener);
+				final var lib = window.desktop().library();
+				lib.glfwSetMouseButtonCallback(window.handle(), listener);
 			}
 		};
 	}
@@ -141,7 +143,8 @@ public class MouseDevice implements Device {
 			}
 
 			private void apply(MouseScrollListener listener) {
-				window.library().glfwSetScrollCallback(window.handle(), listener);
+				final var lib = window.desktop().library();
+				lib.glfwSetScrollCallback(window.handle(), listener);
 				//window.register(listener);
 			}
 		};

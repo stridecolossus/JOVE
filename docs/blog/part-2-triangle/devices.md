@@ -4,168 +4,29 @@ title: Vulkan Devices
 
 ## Overview
 
-Now we have a Vulkan instance we can use it to enumerate the _physical devices_ available on the local hardware and select one that satisfies the requirements of the application.
+Hardware components that support Vulkan are represented by a _physical device_ which defines the capabilities of that component (rendering, data transfer, etc).  In general there will be a single physical device (i.e. the GPU) or perhaps also an on-board graphics device for a laptop.
 
-We will then create a _logical device_ from the selected physical device and specify the _work queues_ we will use in subsequent chapters.
+A _logical device_ is an instance of a physical device and is central component for all subsequent Vulkan functionality.
 
-This will be partially dependant on having a Vulkan rendering surface so first we will extend the _desktop_ service to create a native GLFW window.
+The process of creating the logical device is:
 
-> Taking advantage of the GLFW support for Vulkan has pros and cons: Creating the Vulkan surface using GLFW will be _considerably_ simpler than implementing platform-specific Vulkan extensions.  On the other hand the resultant demo code is slightly convoluted due to the inter-dependencies between the various components, e.g. we need the instance to create the surface, before we can select a device that supports presentation, etc.
+1. Enumerate the physical devices available on the hardware.
 
----
+2. Select one that satisfies the requirements of the application.
 
-## The Rendering Surface
+3. Create a _logical device_ for the selected physical device.
 
-### Application Window
+4. Retrieve the necessary _work queues_ used to perform rendering and other graphics tasks.
 
-The obvious starting point is a _window_ class that encapsulates a GLFW window handle:
-
-```java
-public class Window {
-    private final Handle handle;
-    private final DesktopLibrary lib;
-    private final Descriptor descriptor;
-
-    /**
-     * Constructor.
-     * @param window            Window handle
-     * @param lib               GLFW API
-     * @param descriptor        Window descriptor
-     */
-    private Window(Pointer window, DesktopLibrary lib, Descriptor descriptor) {
-        this.handle = new Handle(window);
-        this.lib = notNull(lib);
-        this.descriptor = notNull(descriptor);
-    }
-
-    public void destroy() {
-        lib.glfwDestroyWindow(handle);
-    }
-}
-```
-
-The _window descriptor_ wraps up the details of the window in a simple class with a convenience builder:
-
-```java
-public record Descriptor(String title, Dimensions size, Set<Property> properties) {
-    public static class Builder {
-        private String title;
-        private Dimensions size;
-        private final Set<Property> props = new HashSet<>();
-        
-        ...
-        
-        public Builder property(Property p) {
-            props.add(p);
-            return this;
-        }
-
-        public Descriptor build() {
-            return new Descriptor(title, size, props);
-        }
-    }
-}
-```
-
-The properties is an enumeration that maps to the various GLFW window hints:
-
-```java
-public enum Property {
-    RESIZABLE(0x00020003),
-    DECORATED(0x00020005),
-    AUTO_ICONIFY(0x00020006),
-    MAXIMISED(0x00020008),
-    DISABLE_OPENGL(0x00022001),
-
-    private final int hint;
-
-    private Property(int hint) {
-        this.hint = hint;
-    }
-
-    /**
-     * Applies this property.
-     * @param lib Desktop library
-     */
-    void apply(DesktopLibrary lib) {
-        final int value = this == DISABLE_OPENGL ? 0 : 1; // TODO
-        lib.glfwWindowHint(hint, value);
-    }
-}
-```
-
-This is just the bare-bones we need for the forseeable future but we are likely to need to refactor the descriptor and properties to support other functionality, e.g. full-screen windows.
-
-Finally we add a factory method to create a window:
-
-```java
-/**
- * Creates a GLFW window.
- * @param lib                GLFW library
- * @param descriptor        Window descriptor
- * @return New window
- * @throws RuntimeException if the window cannot be created
- */
-public static Window create(DesktopLibrary lib, Descriptor descriptor) {
-    // Apply window hints
-    lib.glfwDefaultWindowHints();
-    descriptor.properties().forEach(p -> p.apply(lib));
-
-    // Create window
-    final Dimensions size = descriptor.size();
-    final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);
-    if(window == null) {
-        throw new RuntimeException(...);
-    }
-
-    // Create window wrapper
-    return new Window(window, lib, descriptor);
-}
-```
-
-### Vulkan Surface
-
-To create a Vulkan surface for a given window we add the following to the new class:
-
-```java
-public Handle surface(Handle instance) {
-    final PointerByReference ref = new PointerByReference();
-    final int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
-    if(result != 0) {
-        throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
-    }
-    return new Handle(ref.getValue());
-}
-```
-
-We can now create a window and retrieve the surface in the demo:
-
-```java
-// Create instance
-Instance instance = ...
-
-// Create window
-Window window = new Window.Builder(desktop)
-    .title("demo")
-    .size(new Dimensions(1280, 760))
-    .property(Window.Property.DISABLE_OPENGL)
-    .build();
-
-// Retrieve rendering surface
-Handle surface = window.surface(instance.handle());
-```
-
-The `DISABLE_OPENGL` property specifies that the new window should **not** create an OpenGL context (which GLFW does by default).
+For our demo we need to choose a device that supports rendering so we will also extend the _desktop_ library to create a window with a Vulkan rendering surface.
 
 ---
 
 ## Physical Devices
 
-### Domain Classes
+### Device and Queues
 
-A _physical device_ represents a hardware component that supports Vulkan, i.e. the GPU.
-
-The first step is an outline domain class for the physical device:
+We first implement new domain objects for the physical device and the supported work queues:
 
 ```java
 public class PhysicalDevice {
@@ -176,13 +37,13 @@ public class PhysicalDevice {
     /**
      * Constructor.
      * @param handle        Device handle
-     * @param instance        Parent instance
-     * @param families        Queue family descriptors
+     * @param instance      Parent instance
+     * @param families      Queue family descriptors
      */
-    PhysicalDevice(Pointer handle, Instance instance, VkQueueFamilyProperties[] families) {
+    PhysicalDevice(Pointer handle, Instance instance, List<Family> families) {
         this.handle = notNull(handle);
         this.instance = notNull(instance);
-        this.families = ...
+        this.families = List.copyOf(families);
     }
 
     public Pointer handle() {
@@ -193,105 +54,35 @@ public class PhysicalDevice {
         return instance;
     }
 
-    public List<Queue.Family> families() {
+    public List<Family> families() {
         return families;
     }
 }
 ```
 
-The device specifies a number of _queue families_ that define the capabilities of work that can be performed by that device (such as rendering, data transfer, etc).
-
-We create a new domain object for a _queue_ and its family:
+The physical device specifies a number of _queue families_ that define the capabilities of work that can be performed by that device:
 
 ```java
-public class Queue {
+public record Queue(Pointer handle, Family family) {
     /**
      * A <i>queue family</i> defines the properties of a group of queues.
      */
-    public static class Family {
-        private final PhysicalDevice dev;
-        private final int count;
-        private final int index;
-        private final Set<VkQueueFlag> flags;
-
-        /**
-         * Constructor.
-         * @param dev        Physical device
-         * @param index        Family index
-         * @param count        Number of queues
-         * @param flags        Queue flags
-         */
-        Family(PhysicalDevice dev, int index, int count, Set<VkQueueFlag> flags) {
-            this.dev = notNull(dev);
-            this.index = zeroOrMore(index);
-            this.count = oneOrMore(count);
-            this.flags = Set.copyOf(flags);
-        }
+    public record Family(int index, int count, Set<VkQueueFlag> flags) {
     }
 }
 ```
 
 The queue class itself will be fleshed out when we implement the logical device.
 
-The queue families can now be created in the constructor from a set of Vulkan descriptors:
-
-```java
-{
-    ...
-    this.families = IntStream.range(0, families.length).mapToObj(n -> family(n, families[n])).collect(toList());
-}
-
-private Queue.Family family(int index, VkQueueFamilyProperties props) {
-    final var flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
-    return new Queue.Family(this, index, props.queueCount, flags);
-}
-```
-
-We also implement a lazily instantiated accessor for the properties of the device:
-
-```java
-private final Supplier<Properties> props = new LazySupplier<>(Properties::new);
-
-public Properties properties() {
-    return props.get();
-}
-
-public class Properties {
-    @SuppressWarnings("hiding")
-    private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-
-    private Properties() {
-        instance.library().vkGetPhysicalDeviceProperties(handle, props);
-    }
-
-    public String name() {
-        return new String(props.deviceName);
-    }
-
-    public VkPhysicalDeviceType type() {
-        return props.deviceType;
-    }
-
-    public VkPhysicalDeviceLimits limits() {
-        return props.limits;
-    }
-
-    @Override
-    public String toString() {
-        return props.toString();
-    }
-}
-```
-
 ### Enumerating the Physical Devices
 
 To enumerate the available physical devices we invoke the `vkEnumeratePhysicalDevices` API method _twice_:
 
-1. Once to retrieve the number of devices via an integer-by-reference value (the array parameter is set to null).
+1. Once to retrieve the number of available devices via an integer-by-reference value (the array parameter is set to `null`).
 
-2. And then again to retrieve the array of device handles given this value.
+2. Again to retrieve the actual array of device handles.
 
-We wrap this code in a static factory:
+We wrap this code in the following factory method:
 
 ```java
 public static Stream<PhysicalDevice> devices(Instance instance) {
@@ -312,7 +103,7 @@ public static Stream<PhysicalDevice> devices(Instance instance) {
 }
 ```
 
-Which delegates to a local helper that retrieves the queue families for each device and creates the domain object:
+The `create` method is a helper that retrieves the array of queue families for each device:
 
 ```java
 private static PhysicalDevice create(Pointer handle, Instance instance) {
@@ -324,24 +115,71 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
     // Retrieve families
     final VkQueueFamilyProperties[] array;
     if(count.getValue() > 0) {
-        array = (T[]) new VkQueueFamilyProperties().toArray(count.getValue());
+        array = (VkQueueFamilyProperties[]) new VkQueueFamilyProperties().toArray(count.getValue());
         lib.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array[0]);
     }
     else {
-        array = (T[]) Array.newInstance(VkQueueFamilyProperties.class, 0);
+        array = Array.newInstance(VkQueueFamilyProperties.class, 0);
     }
+    
+    ...
+}
+```
+
+Note that again we invoke the same API method twice to retrieve the queue families.  However in this case we use the JNA `toArray` factory method on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method (i.e. our array is equivalent to a native pointer-to-structure).  We will abstract this common pattern at the end of the chapter.
+
+Finally we add another helper to create a queue family domain object:
+
+```java
+private static Family family(int index, VkQueueFamilyProperties props) {
+    final Set<VkQueueFlag> flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
+    return new Family(index, props.queueCount, flags);
+}
+```
+
+Which is used to transform the array of structures when we create the device domain object:
+
+```java
+    // Create queue families
+    final List<Family> families = IntStream
+        .range(0, props.length)
+        .mapToObj(n -> family(n, props[n]))
+        .collect(toList());
     
     // Create device
     return new PhysicalDevice(handle, instance, families);
 }
 ```
 
-Note that again we invoke the same API method twice to retrieve the queue families.
-However in this case we use `toArray` on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method
-(i.e. our array is equivalent to a native pointer-to-structure).
-This is the standard approach for an array of JNA structures, we will abstract this common pattern at the end of the chapter.
+### Device Properties
 
-We can now add some temporary code to the demo to dump the available physical devices:
+A physical device exposes properties that we wrap into the following lazily-instantiated accessor:
+
+```java
+private final Supplier<Properties> props = new LazySupplier<>(Properties::new);
+
+public Properties properties() {
+    return props.get();
+}
+
+public class Properties {
+    private final VkPhysicalDeviceProperties struct = new VkPhysicalDeviceProperties();
+
+    private Properties() {
+        instance.library().vkGetPhysicalDeviceProperties(handle, struct);
+    }
+
+    public String name() {
+        return new String(struct.deviceName);
+    }
+
+    public VkPhysicalDeviceType type() {
+        return struct.deviceType;
+    }
+}
+```
+
+We can now add the following temporary code to the demo to dump the available physical devices:
 
 ```java
 PhysicalDevice
@@ -351,9 +189,144 @@ PhysicalDevice
     .forEach(System.out::println);
 ```
 
-On a normal PC there will generally just be one or two devices (the GPU and maybe an on-board graphics card).
+---
 
-### Selecting a Device
+## Rendering Surface
+
+### Application Window
+
+To select the physical device that supports rendering we first need a suitable Vulkan surface.  Again we take advantage of the Vulkan support provided by the GLFW window library.
+
+We start with a _window_ class that encapsulates a GLFW window handle:
+
+```java
+public class Window {
+    private final Desktop desktop;
+    private final Pointer handle;
+    private final Descriptor descriptor;
+
+    Window(Desktop desktop, Pointer window, Descriptor descriptor) {
+        this.desktop = notNull(desktop);
+        this.handle = notNull(window);
+        this.descriptor = notNull(descriptor);
+    }
+
+    public void destroy() {
+        lib.glfwDestroyWindow(handle);
+    }
+}
+```
+
+The _window descriptor_ wraps up the details of the window in a simple record:
+
+```java
+public record Descriptor(String title, Dimensions size, Set<Property> properties) {
+}
+```
+
+The _properties_ is an enumeration of the various visual capabilities of a window (_hints_ in GLFW parlance):
+
+```java
+public enum Property {
+    RESIZABLE(0x00020003),
+    DECORATED(0x00020005),
+    AUTO_ICONIFY(0x00020006),
+    MAXIMISED(0x00020008),
+    DISABLE_OPENGL(0x00022001),
+
+    private final int hint;
+
+    private Property(int hint) {
+        this.hint = hint;
+    }
+
+    void apply(DesktopLibrary lib) {
+        final int value = this == DISABLE_OPENGL ? 0 : 1;
+        lib.glfwWindowHint(hint, value);
+    }
+}
+```
+
+(The constants are copied from the header file).
+
+Finally we add the following factory method to create a window given its descriptor:
+
+```java
+public class Desktop {
+    public Window window(Window.Descriptor descriptor) {
+        // Apply window hints
+        lib.glfwDefaultWindowHints();
+        descriptor.properties().forEach(p -> p.apply(lib));
+    
+        // Create window
+        final Dimensions size = descriptor.size();
+        final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);
+        if(window == null) {
+            throw new RuntimeException(...);
+        }
+    
+        // Create window wrapper
+        return new Window(this, window, descriptor);
+    }
+}
+```
+
+Notes:
+
+* This is a bare-bones implementation sufficient for the triangle demo, however we will almost certainly need to refactor this code to support richer functionality, e.g. full-screen windows.
+
+* We add a convenience builder for a window.
+
+* By default GLFW creates an OpenGL surface for a new window which is disabled using the `DISABLE_OPENGL` window hint.  (Also note the argument for this hint is annoyingly the opposite of what one would expect).
+
+* The above implementation ignores display monitors for the moment.
+
+### Vulkan Surface
+
+To create a Vulkan surface we add the following factory to the new class:
+
+```java
+public Pointer surface(Pointer instance) {
+    final DesktopLibrary lib = desktop.library();
+    final PointerByReference ref = new PointerByReference();
+    final int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
+    if(result != 0) {
+        throw new RuntimeException(...);
+    }
+    return ref.getValue();
+}
+```
+
+In the demo we can now create a window and retrieve the handle to the rendering surface:
+
+```java
+// Create window
+Window window = new Window.Builder()
+    .title("demo")
+    .size(new Dimensions(1280, 760))
+    .property(Window.Property.DISABLE_OPENGL)
+    .build(desktop);
+
+// Retrieve rendering surface
+Pointer surface = window.surface(instance.handle());
+```
+
+---
+
+## Device Selection
+
+### Overview
+
+
+
+### Selector
+
+
+
+
+
+
+
 
 The final step for dealing with the physical devices is to select one that supports the requirements of an application.
 

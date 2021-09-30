@@ -644,7 +644,7 @@ Notes:
 
 * The signature of the callback method is derived from the documentation (as an extension it is not part of the API).
 
-* A JNA callback as an interface that must contain a __single__ public method, but this is not enforced at compile-time.
+* A JNA callback is an interface that must contain a __single__ public method, but this is not enforced at compile-time.
 
 * The `pUserData` parameter is optional user data returned to the callback to correlate state, this is largely redundant for an OO implementation and is always `null` in our implementation.
 

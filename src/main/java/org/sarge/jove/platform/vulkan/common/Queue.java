@@ -2,19 +2,13 @@ package org.sarge.jove.platform.vulkan.common;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 
-import java.util.Arrays;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.lib.util.Check;
-
-import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>queue</i> is used to submit work to the hardware.
@@ -44,21 +38,11 @@ public record Queue(Handle handle, DeviceContext device, Family family) implemen
 	/**
 	 * A <i>queue family</i> defines the properties of a group of queues.
 	 */
-	public static record Family(int index, int count, Set<VkQueueFlag> flags) {
+	public record Family(int index, int count, Set<VkQueueFlag> flags) {
 		/**
 		 * Index for the <i>ignored</i> queue family.
 		 */
 		public static final int IGNORED = (~0);
-
-		/**
-		 * Helper - Creates a queue family predicate for the given flags.
-		 * @param flags Queue flags
-		 * @return Queue flags predicate
-		 */
-		public static Predicate<Family> predicate(VkQueueFlag... flags) {
-			final var list = Arrays.asList(flags);
-			return family -> family.flags().containsAll(list);
-		}
 
 		/**
 		 * Constructor.
@@ -70,19 +54,6 @@ public record Queue(Handle handle, DeviceContext device, Family family) implemen
 			Check.zeroOrMore(index);
 			Check.oneOrMore(count);
 			flags = Set.copyOf(flags);
-		}
-
-		/**
-		 * Tests whether this queue supports presentation to the given surface.
-		 * @param dev			Device
-		 * @param surface		Surface handle
-		 * @return Whether supports presentation
-		 */
-		public boolean isPresentationSupport(DeviceContext dev, Handle surface) {
-			final VulkanLibrary lib = dev.library();
-			final IntByReference supported = lib.factory().integer();
-			check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), index, surface, supported));
-			return VulkanBoolean.of(supported.getValue()).toBoolean();
 		}
 	}
 }

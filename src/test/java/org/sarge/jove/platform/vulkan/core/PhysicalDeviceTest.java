@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
@@ -12,11 +13,11 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -28,6 +29,7 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -65,32 +67,6 @@ public class PhysicalDeviceTest {
 		assertEquals(instance, dev.instance());
 		assertEquals(lib, dev.library());
 		assertEquals(List.of(family), dev.families());
-	}
-
-	@Nested
-	class PresentationFamilyTests {
-		private IntByReference supported;
-		private Handle surface;
-
-		@BeforeEach
-		void before() {
-			surface = new Handle(new Pointer(42));
-			supported = new IntByReference();
-			when(lib.factory().integer()).thenReturn(supported);
-		}
-
-		@DisplayName("Find the queue family that supports presentation")
-		@Test
-		void presentation() {
-			supported.setValue(1);
-			assertEquals(Optional.of(family), dev.presentation(surface));
-		}
-
-		@DisplayName("Queue family should be empty if the device does not support presentation")
-		@Test
-		void invalid() {
-			assertEquals(Optional.empty(), dev.presentation(surface));
-		}
 	}
 
 	@Test
@@ -140,5 +116,59 @@ public class PhysicalDeviceTest {
 	void formatProperties() {
 		final VkFormatProperties props = dev.properties(VkFormat.D32_SFLOAT);
 		verify(lib).vkGetPhysicalDeviceFormatProperties(dev.handle(), VkFormat.D32_SFLOAT, props);
+	}
+
+	@Nested
+	class SelectorTests {
+		@Test
+		void selector() {
+			// Create family predicate
+			final BiPredicate<PhysicalDevice, Family> predicate = mock(BiPredicate.class);
+			when(predicate.test(dev, family)).thenReturn(true);
+
+			// Create selector
+			final Selector selector = new Selector(predicate);
+			assertNotNull(selector);
+
+			// Check selector
+			assertEquals(true, selector.test(dev));
+			verify(predicate).test(dev, family);
+			assertEquals(family, selector.family());
+		}
+
+		@Test
+		void empty() {
+			final BiPredicate<PhysicalDevice, Family> predicate = mock(BiPredicate.class);
+			final Selector selector = new Selector(predicate);
+			assertEquals(false, selector.test(dev));
+			assertThrows(NoSuchElementException.class, () -> selector.family());
+		}
+
+		@Test
+		void flags() {
+			final Selector selector = Selector.of(VkQueueFlag.GRAPHICS);
+			assertNotNull(selector);
+			assertEquals(true, selector.test(dev));
+			assertEquals(family, selector.family());
+		}
+
+		@Test
+		void presentation() {
+			// Create presentation selector
+			final Handle surface = new Handle(new Pointer(42));
+			final Selector selector = Selector.of(surface);
+			assertNotNull(selector);
+
+			// Init supported boolean
+			final IntByReference supported = new IntByReference(1);
+			when(lib.factory().integer()).thenReturn(supported);
+
+			// Check presentation queue
+			assertEquals(true, selector.test(dev));
+			assertEquals(family, selector.family());
+
+			// Check API
+			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), family.index(), surface, supported);
+		}
 	}
 }
