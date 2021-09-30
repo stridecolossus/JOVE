@@ -1,12 +1,15 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.toList;
+import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -22,11 +25,13 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>physical device</i> represents a Vulkan system component such as a GPU.
@@ -83,7 +88,6 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	private final List<Family> families;
 	private final Supplier<Properties> props = new LazySupplier<>(Properties::new);
 	private final Supplier<DeviceFeatures> features = new LazySupplier<>(this::loadFeatures);
-	private Optional<Family> present;
 
 	/**
 	 * Constructor.
@@ -121,61 +125,129 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 		return families;
 	}
 
-	// TODO
-	public static Predicate<PhysicalDevice> filter(Predicate<Family> filter) {
-		return dev -> dev.families().stream().anyMatch(filter);
+	/**
+	 * Tests whether this device supports presentation to the given surface.
+	 * @param surface		Rendering surface
+	 * @param family		Queue family
+	 * @return Whether presentation is supported by the given family
+	 */
+	public boolean isPresentationSupported(Handle surface, Family family) {
+		final VulkanLibrary lib = this.library();
+		final IntByReference supported = lib.factory().integer();
+		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this.handle(), family.index(), surface, supported));
+		return VulkanBoolean.of(supported.getValue()).toBoolean();
 	}
 
 	/**
-	 * Helper - Finds the queue family that supports presentation to the given surface.
-	 * @param surface Surface handle
-	 * @return Queue family that supports presentation
-	 * @see Family#isPresentationSupport(DeviceContext, Handle)
+	 * A <i>selector</i> is used to select a physical device that supports some required queue capability (such as presentation or rendering).
+	 * <p>
+	 * Selectors are used in the following steps during initialisation of the devices:
+	 * <ol>
+	 * <li>as a predicate to test whether a physical device supports the required queue</li>
+	 * <li>to retrieve the relevant queue from the logical device</li>
+	 * </ol>
+	 * <p>
+	 * Note that the selected queue {@link #family()} is determined as a side-effect of using the selector as a predicate when choosing the physical device.
+	 * <p>
+	 * Example to select the presentation queue:
+	 * <pre>
+	 * 	// Create selector
+	 * 	Handle surface = ...
+	 * 	Selector selector = Selector.of(surface);
+	 *
+	 * 	// Select device that supports presentation
+	 * 	PhysicalDevice physical = devices.stream().filter(selector).findAny().orElseThrow();
+	 *
+	 * 	// Retrieve presentation queue
+	 * 	LogicalDevice dev = ...
+	 * 	Queue presentation = dev.queue(selector.family());
+	 * </pre>
+	 * <p>
 	 */
-	public Optional<Family> presentation(Handle surface) {
-		if(present == null) {
-			present = families.stream().filter(f -> f.isPresentationSupport(this, surface)).findAny();
+	public static class Selector implements Predicate<PhysicalDevice> {
+		/**
+		 * Creates a selector for the queue that supports presentation to the given surface.
+		 * @param surface Rendering surface
+		 * @return Presentation queue selector
+		 */
+		public static Selector of(Handle surface) {
+			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
+			return new Selector(predicate);
 		}
-		return present;
+
+		/**
+		 * Creates a selector for the queue that supports the given capabilities.
+		 * @param flags Required queue capabilities
+		 * @return Queue selector
+		 */
+		public static Selector of(VkQueueFlag... flags) {
+			final var list = Arrays.asList(flags);
+			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> family.flags().containsAll(list);
+			return new Selector(predicate);
+		}
+
+		private final BiPredicate<PhysicalDevice, Family> predicate;
+		private Optional<Family> family = Optional.empty();
+
+		/**
+		 * Constructor.
+		 * @param predicate Queue family predicate
+		 */
+		public Selector(BiPredicate<PhysicalDevice, Family> predicate) {
+			this.predicate = notNull(predicate);
+		}
+
+		/**
+		 * @return Selected queue family
+		 * @throws NoSuchElementException if no queue was selected
+		 */
+		public Family family() {
+			return family.orElseThrow();
+		}
+
+		@Override
+		public boolean test(PhysicalDevice dev) {
+			// Build filter for this device
+			final Predicate<Family> filter = family -> predicate.test(dev, family);
+
+			// Retrieve matching queue family
+			family = dev.families.stream().filter(filter).findAny();
+
+			// Selector passes if the queue is found
+			return family.isPresent();
+		}
 	}
 
 	/**
 	 * Device properties.
 	 */
 	public class Properties {
-		@SuppressWarnings("hiding")
-		private final VkPhysicalDeviceProperties props = new VkPhysicalDeviceProperties();
-		// TODO https://stackoverflow.com/questions/67519579/can-a-jna-structure-support-immutability
+		private final VkPhysicalDeviceProperties struct = new VkPhysicalDeviceProperties();
 
 		private Properties() {
 			final VulkanLibrary lib = PhysicalDevice.this.library();
-			lib.vkGetPhysicalDeviceProperties(handle, props);
+			lib.vkGetPhysicalDeviceProperties(handle, struct);
 		}
 
 		/**
 		 * @return Device name
 		 */
 		public String name() {
-			return new String(props.deviceName);
+			return new String(struct.deviceName);
 		}
 
 		/**
 		 * @return Device type
 		 */
 		public VkPhysicalDeviceType type() {
-			return props.deviceType;
+			return struct.deviceType;
 		}
 
 		/**
 		 * @return Device limits
 		 */
 		public VkPhysicalDeviceLimits limits() {
-			return props.limits;
-		}
-
-		@Override
-		public String toString() {
-			return props.toString();
+			return struct.limits;
 		}
 	}
 

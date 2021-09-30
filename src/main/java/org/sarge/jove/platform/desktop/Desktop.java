@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
 
@@ -162,24 +163,54 @@ public class Desktop {
 //		return new Monitor.DisplayMode(new Dimensions(mode.width, mode.height), depth, mode.refresh);
 //	}
 
+
+
+//	/**
+//	 * Creates a GLFW window.
+//	 * @param lib				GLFW library
+//	 * @param descriptor		Window descriptor
+//	 * @param monitor			Optional monitor
+//	 * @return New window
+//	 * @throws RuntimeException if the window cannot be created
+//	 */
+//	public static Window create(DesktopLibrary lib, Descriptor descriptor, Monitor monitor) {
+//		// TODO
+//		if(monitor != null) throw new UnsupportedOperationException();
+//
+//		// Apply window hints
+//		lib.glfwDefaultWindowHints();
+//		descriptor.properties().forEach(p -> p.apply(lib));
+//
+//		// Create window
+//		final Dimensions size = descriptor.size();
+//		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);	// TODO - monitor
+//		if(window == null) {
+//			throw new RuntimeException(String.format("Window cannot be created: descriptor=%s monitor=%s", descriptor, monitor));
+//		}
+//
+//		// Create window wrapper
+//		return new Window(window, lib, descriptor);
+//	}
+
 	/**
 	 * Creates a desktop window.
 	 * @param descriptor Window descriptor
 	 * @return New window
 	 */
-	public Window window(Window.Descriptor descriptor) {
-//		// Lookup monitor handle
-//		final Handle monitor;
-//		if(descriptor.monitor().isPresent()) {
-//			//monitor = (Pointer) descriptor.monitor().get().handle();
-//			// TODO
-//			monitor = null;
-//		}
-//		else {
-//			monitor = null;
-//		}
+	public Window window(Window.Descriptor descriptor, Monitor monitor) {
+		// Apply window hints
+		lib.glfwDefaultWindowHints();
+		descriptor.properties().forEach(p -> p.apply(lib));
 
-		return Window.create(lib, descriptor, null); // monitor);
+		// Create window
+		final Dimensions size = descriptor.size();
+		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);	// TODO - monitor
+		if(window == null) {
+			throw new RuntimeException(String.format("Window cannot be created: descriptor=%s monitor=%s", descriptor, monitor));
+		}
+
+		// Create window wrapper
+		return new Window(this, window, descriptor);
 	}
 
 	/**

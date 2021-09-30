@@ -1,9 +1,7 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
@@ -43,18 +41,5 @@ public class QueueTest extends AbstractVulkanTest {
 	void waitIdle() {
 		queue.waitIdle();
 		verify(lib).vkQueueWaitIdle(queue.handle());
-	}
-
-	@Test
-	void isPresentationSupported() {
-		// Mock physical device
-		final DeviceContext ctx = mock(DeviceContext.class);
-		when(ctx.handle()).thenReturn(DEVICE);
-		when(ctx.library()).thenReturn(lib);
-
-		// Check API
-		final Handle surface = new Handle(new Pointer(5));
-		assertEquals(true, family.isPresentationSupport(dev, surface));
-		verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(DEVICE, 1, surface, INTEGER);
 	}
 }

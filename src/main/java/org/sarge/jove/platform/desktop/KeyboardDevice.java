@@ -87,7 +87,8 @@ public class KeyboardDevice implements InputEvent.Device {
 			 * @param listener Keyboard listener
 			 */
 			private void apply(KeyListener listener) {
-				window.library().glfwSetKeyCallback(window.handle(), listener);
+				final var lib = window.desktop().library();
+				lib.glfwSetKeyCallback(window.handle(), listener);
 			}
 		};
 	}

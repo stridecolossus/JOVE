@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.core.Instance;
  * @author Sarge
  */
 public class InstanceDemo {
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		// Init
 		ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
 
@@ -35,7 +35,7 @@ public class InstanceDemo {
 		final Instance instance = new Instance.Builder()
 				.name("InstanceDemo")
 				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
-				.extensions(desktop.extensions())
+				.extensions(extensions)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build(lib);
 

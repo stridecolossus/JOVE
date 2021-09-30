@@ -5,6 +5,9 @@ import org.sarge.jove.platform.vulkan.VkResult;
 
 /**
  * A <i>Vulkan exception</i> wraps an error code returned by the Vulkan platform.
+ * <p>
+ * Note that Vulkan API methods return {@code int} rather than {@link VkResult} explicitly for forward-compatibility.
+ * <p>
  * @author Sarge
  */
 public class VulkanException extends RuntimeException {

@@ -36,7 +36,7 @@ public class MouseDeviceTest {
 
 		// Create window
 		window = mock(Window.class);
-		when(window.library()).thenReturn(lib);
+//		when(window.library()).thenReturn(lib);
 		when(window.handle()).thenReturn(new Handle(new Pointer(1)));
 
 		// Create device

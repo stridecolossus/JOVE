@@ -22,13 +22,24 @@ import com.sun.jna.Pointer;
  * @author Sarge
  */
 public class Pipeline extends AbstractVulkanObject {
+	private final PipelineLayout layout;
+
 	/**
 	 * Constructor.
 	 * @param handle		Pipeline handle
 	 * @param dev			Device
+	 * @param layout		Pipeline layout
 	 */
-	Pipeline(Pointer handle, LogicalDevice dev) {
+	Pipeline(Pointer handle, LogicalDevice dev, PipelineLayout layout) {
 		super(handle, dev);
+		this.layout = notNull(layout);
+	}
+
+	/**
+	 * @return Layout of this pipeline
+	 */
+	public PipelineLayout layout() {
+		return layout;
 	}
 
 	/**
@@ -200,7 +211,7 @@ public class Pipeline extends AbstractVulkanObject {
 			check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 			// Create pipeline
-			return new Pipeline(pipelines[0], dev);
+			return new Pipeline(pipelines[0], dev, layout);
 		}
 	}
 }

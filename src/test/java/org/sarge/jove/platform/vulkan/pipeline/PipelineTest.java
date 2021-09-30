@@ -28,10 +28,18 @@ import com.sun.jna.Pointer;
 
 public class PipelineTest extends AbstractVulkanTest {
 	private Pipeline pipeline;
+	private PipelineLayout layout;
 
 	@BeforeEach
 	void before() {
-		pipeline = new Pipeline(new Pointer(1), dev);
+		layout = mock(PipelineLayout.class);
+		pipeline = new Pipeline(new Pointer(1), dev, layout);
+	}
+
+	@Test
+	void constructor() {
+		assertEquals(layout, pipeline.layout());
+		assertEquals(false, pipeline.isDestroyed());
 	}
 
 	@Test
@@ -56,13 +64,11 @@ public class PipelineTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private Pipeline.Builder builder;
-		private PipelineLayout layout;
 		private RenderPass pass;
 
 		@BeforeEach
 		void before() {
 			builder = new Pipeline.Builder();
-			layout = mock(PipelineLayout.class);
 			pass = mock(RenderPass.class);
 		}
 

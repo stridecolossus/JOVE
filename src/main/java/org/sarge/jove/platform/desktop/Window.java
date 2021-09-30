@@ -82,34 +82,7 @@ public class Window extends AbstractTransientNativeObject {
 		}
 	}
 
-	/**
-	 * Creates a GLFW window.
-	 * @param lib				GLFW library
-	 * @param descriptor		Window descriptor
-	 * @param monitor			Optional monitor
-	 * @return New window
-	 * @throws RuntimeException if the window cannot be created
-	 */
-	public static Window create(DesktopLibrary lib, Descriptor descriptor, Monitor monitor) {
-		// TODO
-		if(monitor != null) throw new UnsupportedOperationException();
-
-		// Apply window hints
-		lib.glfwDefaultWindowHints();
-		descriptor.properties().forEach(p -> p.apply(lib));
-
-		// Create window
-		final Dimensions size = descriptor.size();
-		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);	// TODO - monitor
-		if(window == null) {
-			throw new RuntimeException(String.format("Window cannot be created: descriptor=%s monitor=%s", descriptor, monitor));
-		}
-
-		// Create window wrapper
-		return new Window(window, lib, descriptor);
-	}
-
-	private final DesktopLibrary lib;
+	private final Desktop desktop;
 	private final Descriptor descriptor;
 	private final WeakHashMap<Object, Object> registry = new WeakHashMap<>();
 
@@ -119,9 +92,9 @@ public class Window extends AbstractTransientNativeObject {
 	 * @param lib				GLFW API
 	 * @param descriptor		Window descriptor
 	 */
-	Window(Pointer window, DesktopLibrary lib, Descriptor descriptor) {
+	Window(Desktop desktop, Pointer window, Descriptor descriptor) {
 		super(new Handle(window));
-		this.lib = notNull(lib);
+		this.desktop = notNull(desktop);
 		this.descriptor = notNull(descriptor);
 	}
 
@@ -133,10 +106,10 @@ public class Window extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * @return GLFW
+	 * @return Desktop service
 	 */
-	DesktopLibrary library() {
-		return lib;
+	public Desktop desktop() {
+		return desktop;
 	}
 
 	/**
@@ -168,6 +141,7 @@ public class Window extends AbstractTransientNativeObject {
 	 * @return Vulkan surface
 	 */
 	public Handle surface(Handle instance) {
+		final DesktopLibrary lib = desktop.library();
 		final PointerByReference ref = new PointerByReference();
 		final int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
 		if(result != 0) {
@@ -178,6 +152,7 @@ public class Window extends AbstractTransientNativeObject {
 
 	@Override
 	protected void release() {
+		final DesktopLibrary lib = desktop.library();
 		lib.glfwDestroyWindow(this.handle());
 	}
 
@@ -185,18 +160,9 @@ public class Window extends AbstractTransientNativeObject {
 	 * Builder for a window.
 	 */
 	public static class Builder {
-		private final DesktopLibrary lib;
 		private String title;
 		private Dimensions size;
 		private final Set<Property> props = new HashSet<>();
-
-		/**
-		 * Constructor.
-		 * @param desktop Desktop service
-		 */
-		public Builder(Desktop desktop) {
-			this.lib = desktop.library();
-		}
 
 		/**
 		 * Sets the window title.
@@ -227,11 +193,12 @@ public class Window extends AbstractTransientNativeObject {
 
 		/**
 		 * Constructs this window.
+		 * @param desktop Desktop service
 		 * @param New window
 		 */
-		public Window build() {
-			final var desc = new Descriptor(title, size, props);
-			return Window.create(lib, desc, null);			// TODO - monitor
+		public Window build(Desktop desktop) {
+			final var descriptor = new Descriptor(title, size, props);
+			return desktop.window(descriptor, null); // TODO - monitor
 		}
 	}
 }

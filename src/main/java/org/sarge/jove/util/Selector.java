@@ -36,3 +36,4 @@ public class Selector<T> {
 		return list.stream().filter(predicate).findAny().or(() -> def).orElseThrow();
 	}
 }
+// TODO - unused?
