@@ -188,20 +188,19 @@ public interface Command {
 		 * @param queue		Work queue
 		 * @param flags		Flags
 		 */
-		public static Pool create(Queue queue, VkCommandPoolCreateFlag... flags) {
+		public static Pool create(DeviceContext dev, Queue queue, VkCommandPoolCreateFlag... flags) {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
 			info.flags = IntegerEnumeration.mask(flags);
 
 			// Create pool
-			final DeviceContext dev = queue.device();
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference pool = lib.factory().pointer();
 			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
 
 			// Create pool
-			return new Pool(pool.getValue(), queue);
+			return new Pool(pool.getValue(), dev, queue);
 		}
 
 		private final Queue queue;
@@ -212,8 +211,8 @@ public interface Command {
 		 * @param handle 		Command pool handle
 		 * @param queue			Work queue
 		 */
-		private Pool(Pointer handle, Queue queue) {
-			super(handle, queue.device());
+		private Pool(Pointer handle, DeviceContext dev, Queue queue) {
+			super(handle, dev);
 			this.queue = notNull(queue);
 		}
 
@@ -245,7 +244,7 @@ public interface Command {
 			info.commandPool = this.handle();
 
 			// Allocate buffers
-			final DeviceContext dev = queue.device();
+			final DeviceContext dev = super.device(); //queue.device();
 			final VulkanLibrary lib = dev.library();
 			final Pointer[] handles = lib.factory().array(num);
 			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
