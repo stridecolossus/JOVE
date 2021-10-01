@@ -5,6 +5,7 @@ import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPresentInfoKHR;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -43,7 +44,7 @@ interface VulkanLibraryLogicalDevice {
 	 * @param queueIndex			Queue index
 	 * @param pQueue				Returned queue handle
 	 */
-	void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, PointerByReference pQueue);
+	void vkGetDeviceQueue(Pointer device, int queueFamilyIndex, int queueIndex, PointerByReference pQueue);
 
 	/**
 	 * Submits work to a queue.

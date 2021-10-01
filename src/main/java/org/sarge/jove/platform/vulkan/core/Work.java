@@ -54,7 +54,7 @@ public class Work {
 		final var array = work.stream().map(e -> e.info).toArray(VkSubmitInfo[]::new);
 
 		// Submit work
-		final VulkanLibrary lib = queue.device().library();
+		final VulkanLibrary lib = fence.device().library();
 		check(lib.vkQueueSubmit(queue.handle(), array.length, array, NativeObject.ofNullable(fence)));
 	}
 
@@ -72,9 +72,10 @@ public class Work {
 				.end();
 
 		// Submit work and wait for completion
+		final VulkanLibrary lib = pool.device().library();
 		try {
 			new Builder().add(buffer).build().submit(null);
-			pool.queue().waitIdle();
+			pool.queue().waitIdle(lib);
 		}
 		finally {
 			buffer.free();

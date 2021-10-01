@@ -72,8 +72,6 @@ public record Queue(Pointer handle, Family family) {
 }
 ```
 
-The queue class itself will be fleshed out when we implement the logical device.
-
 ### Enumerating the Physical Devices
 
 To enumerate the available physical devices we invoke the `vkEnumeratePhysicalDevices` API method _twice_:
@@ -176,6 +174,16 @@ public class Properties {
     public VkPhysicalDeviceType type() {
         return struct.deviceType;
     }
+}
+```
+
+Finally we add a new interface to the Vulkan library for the various API methods used above:
+
+```java
+interface VulkanLibraryPhysicalDevice {
+    int vkEnumeratePhysicalDevices(Pointer instance, IntByReference count, Pointer[] devices);
+    void vkGetPhysicalDeviceProperties(Pointer device, VkPhysicalDeviceProperties props);
+    void vkGetPhysicalDeviceQueueFamilyProperties(Pointer device, IntByReference count, VkQueueFamilyProperties props);
 }
 ```
 
@@ -393,6 +401,22 @@ public boolean isPresentationSupported(Handle surface, Family family) {
 }
 ```
 
+Which invokes a new API interface:
+
+```java
+public interface VulkanLibrarySurface {
+    /**
+     * Queries whether a queue family supports presentation for the given surface.
+     * @param device                Physical device handle
+     * @param queueFamilyIndex      Queue family
+     * @param surface               Vulkan surface
+     * @param supported             Returned boolean flag
+     * @return Result
+     */
+    int vkGetPhysicalDeviceSurfaceSupportKHR(Pointer device, int queueFamilyIndex, Pointer surface, IntByReference supported);
+}
+```
+
 Note that the API uses an `IntByReference` for the test result which maps __one__ to boolean _true_ (there is no explicit boolean by-reference type).  We will introduce proper boolean support in a later chapter.
 
 Finally we add a second factory to create a selector based on general queue capabilities (the device aspect of the predicate is unused in this case):
@@ -419,7 +443,7 @@ Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
 Selector presentation = Selector.of(surface);
 
 // Find matching device
-PhysicalDevice physical = PhysicalDevice
+PhysicalDevice gpu = PhysicalDevice
     .devices(instance)
     .filter(graphics)
     .filter(presentation)
@@ -427,28 +451,15 @@ PhysicalDevice physical = PhysicalDevice
     .orElseThrow(() -> new RuntimeException("No suitable physical device available"));
 ```
 
-Note that the selected families could actually be the same object depending on the hardware implementation but we allow for multiple return results.
+Note that the selected queue families could actually refer to the same object (depending on the hardware implementation) but we allow for multiple return results.
 
 ---
 
-
-
-
-
-
-
-
-
-
-
-
 ## Logical Device
 
-### Domain Classes
+### Domain Object
 
-The _logical device_ is an instance of the physical device we have selected from those available on the hardware.
-
-Again we start with an outline for the logical device:
+The first cut domain object for the logical device is as follows:
 
 ```java
 public class LogicalDevice {
@@ -459,19 +470,15 @@ public class LogicalDevice {
 
     /**
      * Constructor.
-     * @param handle Device handle
-     * @param parent Parent physical device
-     * @param queues Work queues
+     * @param handle        Device handle
+     * @param parent        Parent physical device
+     * @param queues        Work queues
      */
-    private LogicalDevice(Pointer handle, PhysicalDevice parent, Set<RequiredQueue> queues) {
+    LogicalDevice(Pointer handle, PhysicalDevice parent, Map<Family, List<Queue>> queues) {
         this.handle = notNull(handle);
         this.parent = notNull(parent);
         this.lib = parent.instance().library();
-        this.queues = ...
-    }
-
-    public Map<Queue.Family, List<Queue>> queues() {
-        return queues;
+        this.queues = Map.copyOf(queues);
     }
 
     public void destroy() {
@@ -480,69 +487,63 @@ public class LogicalDevice {
 }
 ```
 
-The local `RequiredQueue` class is a transient descriptor for a work queue that is required by the application:
+We also provide accessors to retrieve the work queues:
 
 ```java
-private record RequiredQueue(Family family, List<Percentile> priorities) {
-    /**
-     * Populates a descriptor for a queue required by this device.
-     */
-    private void populate(VkDeviceQueueCreateInfo info) {
+/**
+ * @return Work queues for this device ordered by family
+ */
+public Map<Family, List<Queue>> queues() {
+    return queues;
+}
+
+/**
+ * Helper - Retrieves the <i>first</i> queue of the given family.
+ * @param family Queue family
+ * @return Queue
+ * @throws IllegalArgumentException if the queue is not present
+ */
+public Queue queue(Family family) {
+    final var list = queues.get(family);
+    if((list == null) || list.isEmpty()) throw new IllegalArgumentException(...);
+    return list.get(0);
+}
+```
+
+And a helper method to block execution until the device is idle:
+
+```java
+public void waitIdle() {
+    check(lib.vkDeviceWaitIdle(handle));
+}
+```
+
+Similarly for an individual queue:
+
+```java
+public record Queue {
+    ...
+    
+    public void waitIdle(VulkanLibrary lib) {
+        check(lib.vkQueueWaitIdle(handle));
     }
 }
 ```
 
-Notes:
+### Builder
 
-- The _family_ is a queue family selected from the parent physical device.
-
-- The _priorities_ is a list of percentile values that specifies the priority of each queue.
-
-- The `Percentile` class is a custom wrapper for a percentile represented as a 0..1 floating-point value (covered in the next chapter).
-
-- The constructor (not shown) validates the queue specification.
-
-The logical device is highly configurable so we create a builder:
+The logical device is another object that is highly configurable and is therefore constructed via a builder (setters omitted for brevity):
 
 ```java
 public static class Builder {
-    private PhysicalDevice parent;
+    private final PhysicalDevice parent;
     private final Set<String> extensions = new HashSet<>();
     private final Set<String> layers = new HashSet<>();
-    private final Set<RequiredQueue> queues = new ArrayList<>();
-
-    ...
-
-    public LogicalDevice build() {
-        // Create descriptor
-        final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
-
-        // Add required extensions
-        info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
-        info.enabledExtensionCount = extensions.size();
-
-        // Add validation layers
-        info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
-        info.enabledLayerCount = layers.size();
-
-        // Add queue descriptors
-        ...
-
-        // Allocate device
-        final VulkanLibrary lib = parent.instance().library();
-        final PointerByReference logical = lib.factory().pointer();
-        check(lib.vkCreateDevice(parent.handle(), info, null, logical));
-
-        // Create logical device
-        return new LogicalDevice(logical.getValue(), parent, queues);
-    }
+    private final Map<Family, List<Percentile>> queues = new HashMap<>();
 }
 ```
 
-We can specify extensions and validation layers at both the instance and device level, e.g. for the swap-chain.
-Note more recent Vulkan implementations will ignore validation layers specified at the device level (we retain both for backwards compatibility).
-
-The builder provides several over-loaded methods to specify one or more required work queues:
+The builder provides a number of over-loaded methods to specify _required_ work queues for the device (delegating to the final base implementation):
 
 ```java
 public Builder queue(Family family) {
@@ -550,269 +551,173 @@ public Builder queue(Family family) {
 }
 
 public Builder queues(Family family, int num) {
-    return queues(family, Collections.nCopies(num, 1f));
+    return queues(family, Collections.nCopies(num, Percentile.ONE));
 }
 
-public Builder queues(Family family, List<Float> priorities) {
-    if(!parent.families().contains(family)) throw new IllegalArgumentException(...);
-    queues.add(new RequiredQueue(family, priorities));
+public Builder queues(Family family, List<Percentile> priorities) {
+    queues.put(family, List.copyOf(priorities));
     return this;
 }
 ```
 
-Note that the required queues is a _set_ to avoid duplicates since the physical device may return the same family for different queue specifications (depending on the hardware implementation).
-
-The resultant list of required queues has two purposes:
-
-1. Specify the required queues for the device when we invoke the API.
-
-2. Construct the queue instances for the logical device
-
-We populate the array of required queues in the descriptor for the logical device:
-
-```java
-// Add queue descriptors
-info.queueCreateInfoCount = queues.size();
-info.pQueueCreateInfos = StructureCollector.toPointer(VkDeviceQueueCreateInfo::new, queues, RequiredQueue::populate);
-```
-
 Notes:
 
-- JNA requires a contiguous memory block for the array (which is actually a native pointer-to-array type).
+- The _family_ is a queue family selected from the parent physical device.
 
-- The `StructureCollector` is detailed at the end of this chapter.
+- The _priorities_ is a list of percentile values that specifies the priority of each required queue.
 
-The `populate` method generates the descriptor for each `RequiredQueue`:
+- The `Percentile` class is a custom type for a percentile represented as a 0..1 floating-point value.
+
+- We can specify extensions and validation layers at both the instance and device level, however more recent Vulkan implementations will ignore validation layers specified at the device level (we retain both for backwards compatibility).
+
+The `build` method populates a Vulkan descriptor for the logical device and invokes the API:
 
 ```java
-private void populate(VkDeviceQueueCreateInfo info) {
-    // Convert percentile priorities to array
-    final float[] array = ArrayUtils.toPrimitive(priorities.stream().map(Percentile::floatValue).toArray(Float[]::new));
+public LogicalDevice build() {
+    // Create descriptor
+    final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
+
+    // Add required extensions
+    info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
+    info.enabledExtensionCount = extensions.size();
+
+    // Add validation layers
+    info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
+    info.enabledLayerCount = layers.size();
+
+    // Add queue descriptors
+    info.queueCreateInfoCount = queues.size();
+    info.pQueueCreateInfos = StructureHelper.first(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
+
+    // Allocate device
+    final VulkanLibrary lib = parent.instance().library();
+    final PointerByReference handle = lib.factory().pointer();
+    check(lib.vkCreateDevice(parent.handle(), info, null, handle));
+    
+    ...
+}
+```
+
+JNA requires a native array to be a contiguous memory block (as opposed to a Java array where the memory address of the elements is arbitrary).
+Here we introduce the `StructureHelper` helper class (detailed at the end of the chapter) which handles the transformation of a Java collection to a JNA structure array.
+
+The `populate` method is invoked by the helper to 'fill' a JNA structure from a domain object (in this case a map entry representing a group of required queues):
+
+```java
+public static void populate(Entry<Family, List<Percentile>> queue, VkDeviceQueueCreateInfo info) {
+    // Convert priorities to array
+    final Float[] floats = queue.getValue().stream().map(Percentile::floatValue).toArray(Float[]::new);
+    final float[] array = ArrayUtils.toPrimitive(floats);
 
     // Allocate contiguous memory block for the priorities array
-    final Memory mem = new Memory(priorities.size() * Float.BYTES);
+    final Memory mem = new Memory(array.length * Float.BYTES);
     mem.write(0, array, 0, array.length);
 
     // Populate queue descriptor
     info.queueCount = array.length;
-    info.queueFamilyIndex = family.index();
+    info.queueFamilyIndex = queue.getKey().index();
     info.pQueuePriorities = mem;
 }
 ```
 
-Note that the `pQueuePriorities` field is a contiguous block of floating-point values mapped to a `const float*` type.
+Note that again we create a contiguous memory block for the array of queue priorities mapping to a `const float*` native type.
 
 ### Work Queues
 
-When the logical device domain object is instantiated the list of `RequiredQueue` is also passed as a constructor argument:
+To retrieve the work queues from the newly created device we transform the map of required queues to a number of instances of the `RequiredQueue` local class and finally create the logical device:
 
 ```java
-private LogicalDevice(Pointer handle, PhysicalDevice parent, List<RequiredQueue> queues) {
+public LogicalDevice build() {
     ...
-    this.queues = queues.stream().flatMap(this::create).collect(groupingBy(Queue::family));
+
+    // Retrieve work queues
+    class RequiredQueue {
+        ...
+    }
+    Map<Family, List<Queue>> map = queues
+        .entrySet()
+        .stream()
+        .map(RequiredQueue::new)
+        .flatMap(RequiredQueue::stream)
+        .collect(groupingBy(Queue::family));
+
+
+    // Create logical device
+    return new LogicalDevice(handle.getValue(), parent, map, types);
 }
 ```
 
-Each entry can generate one-or-more queue instances:
+This temporary data carrier is responsible for generating the requested number of work queues for each family:
 
 ```java
-private Stream<Queue> create(RequiredQueue queue) {
-    return IntStream.range(0, queue.priorities.length).mapToObj(n -> create(n, queue.family));
+class RequiredQueue {
+    private final Family family;
+    private final int count;
+
+    private RequiredQueue(Entry<Family, List<Percentile>> entry) {
+        this.family = entry.getKey();
+        this.count = entry.getValue().size();
+    }
+
+    private Stream<Queue> stream() {
+        return IntStream.range(0, count).mapToObj(this::create);
+    }
+
+    private Queue create(int index) {
+        final PointerByReference ref = lib.factory().pointer();
+        lib.vkGetDeviceQueue(handle.getValue(), family.index(), index, ref);
+        return new Queue(ref.getValue(), family);
+    }
 }
 ```
 
-Finally the handle for each queue is retrieved from Vulkan:
+Notes:
+
+* The `vkGetDeviceQueue` API method is invoked multiple times for each specified queue generated by the `stream` helper (the index is implicit).
+
+* We use a local class to centralise the queue logic whilst retaining access to the API dependencies (logical device handle and Vulkan library).
+
+Finally we implement a new Vulkan library for the various API methods to manage the logical device and work queues:
 
 ```java
-private Queue create(int index, Family family) {
-    final PointerByReference queue = lib.factory().pointer();
-    lib.vkGetDeviceQueue(handle, family.index(), index, queue);
-    return new Queue(queue.getValue(), this, family);
+interface VulkanLibraryLogicalDevice {
+    int vkCreateDevice(Pointer physicalDevice, VkDeviceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference device);
+    void vkDestroyDevice(Pointer device, Pointer pAllocator);
+    void vkGetDeviceQueue(Pointer device, int queueFamilyIndex, int queueIndex, PointerByReference pQueue);
+    int vkDeviceWaitIdle(Pointer device);
+    int vkQueueWaitIdle(Pointer queue);
 }
 ```
 
-The builder for the logical device is quite complex so the unit-test has a large number of failure cases (a selection are shown here):
+### Integration
 
-```java
-@Nested
-class BuilderTests {
-    private LogicalDevice.Builder builder;
-
-    @BeforeEach
-    void before() {
-        builder = new LogicalDevice.Builder().parent(parent);
-    }
-
-    @Test
-    void invalidPriority() {
-        assertThrows(IllegalArgumentException.class, () -> builder.queues(family, new float[]{2}).build());
-    }
-
-    @Test
-    void invalidQueueCount() {
-        assertThrows(IllegalArgumentException.class, () -> builder.queues(family, 3).build());
-    }
-
-    @Test
-    void invalidQueueFamily() {
-        assertThrows(IllegalArgumentException.class, () -> builder.queue(mock(QueueFamily.class)).build());
-    }
-    
-    ...
-}
-```
-
-We can now create a logical device in the demo and lookup the specified work queues:
+We can now create the logical device and retrieve the work queues:
 
 ```java
 // Create device
-final LogicalDevice dev = new LogicalDevice.Builder(gpu)
+LogicalDevice dev = new LogicalDevice.Builder(gpu)
     .extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
     .layer(ValidationLayer.STANDARD_VALIDATION)
-    .queue(graphicsFamily)
-    .queue(presentationFamily)
+    .queue(graphics.family())
+    .queue(presentation.family())
     .build();
     
 // Lookup work queues
-final Queue graphicsQueue = dev.queue().get(graphicsFamily).get(0);
-final Queue presentationQueue = dev.queues().get(presentationFamily).get(0);
+Queue graphicsQueue = dev.queue(graphics.family());
+Queue presentationQueue = dev.queue(presentation.family());
 ```
 
-### Queue Selector
 
-When reviewing the demo code as it stands we see that the process of specifying and retrieving the work queues is rather awkward.
 
-For each queue we currently have three objects:
 
-- A predicate used to select the physical device.
 
-- The queue family specifying the required queues when creating the logical device.
 
-- And finally the work queue itself.
 
-In addition the logic to retrieve the queues from the logical device is pretty ugly.
 
-Ideally we would like to compose these concerns into a single object that supports all the use-cases.
 
-We create a _selector_ that composes the queue predicate and a _reference_ to the family:
 
-```java
-public static class Selector extends Reference implements Predicate<PhysicalDevice> {
-    private final Predicate<Family> predicate;
 
-    public Selector(Predicate<Family> predicate) {
-        this.predicate = notNull(predicate);
-    }
 
-    @Override
-    public boolean test(PhysicalDevice dev) {
-        ...
-    }
-}
-```
-
-The `Reference` is basically a hidden accessor for the family:
-
-```java
-static abstract class Reference {
-    /**
-     * @return Queue family
-     */
-    abstract Family family();
-}
-```
-
-Which is implemented by the existing queue family:
-
-```java
-public static class Family extends Reference {
-    @Override
-    final Family family() {
-        return this;
-    }
-}
-```
-
-We can now refactor the various `queue` methods in the builder for the logical device to accept this new type (i.e. so we can pass either a queue family or a selector):
-
-The selector itself is implemented as follows:
-
-```java
-private Optional<Family> family = Optional.empty();
-
-@Override
-public boolean test(PhysicalDevice dev) {
-    family = dev.families().stream().filter(predicate).findAny();
-    return family.isPresent();
-}
-
-@Override
-public Family family() {
-    return family.orElseThrow();
-}
-```
-
-Note that we initialise the family as part of the predicate test (see below).
-
-We add convenience factory methods to create selectors:
-
-```java
-public static Selector of(VkQueueFlag... flags) {
-    final var set = Arrays.asList(flags);
-    return new Selector(family -> family.flags.containsAll(set));
-}
-
-public static Selector of(Handle surface) {
-    return new Selector(family -> family.isPresentationSupported(surface));
-}
-```
-
-And helper methods to retrieve the queue(s) from the logical device:
-
-```java
-public List<Queue> list(LogicalDevice dev) {
-    final var list = dev.queues().get(family());
-    if(list == null) throw new NoSuchElementException("Queue family is not available");
-    return list;
-}
-
-public Queue queue(LogicalDevice dev) {
-    final var list = list(dev);
-    return list.get(0);
-}
-```
-
-We can now refactor the demo as follows:
-
-```java
-// Create queue selectors
-var graphics = Queue.Selector.of(VkQueueFlag.GRAPHICS);
-var present = Queue.Selector.of(surfaceHandle);
-
-// Find GPU
-PhysicalDevice gpu = PhysicalDevice
-    .devices(instance)
-    .filter(graphics)
-    .filter(present)
-    .findAny()
-    .orElseThrow(() -> new RuntimeException("No GPU available"));
-
-// Create logical device
-LogicalDevice dev = new LogicalDevice.Builder(gpu)
-    ...
-    .queue(graphics)
-    .queue(present)
-    .build();
-
-// Retrieve work queues
-Queue graphicsQueue = graphics.queue();
-Queue presentationQueue = present.queue();
-```
-
-This refactoring reduces the number of objects we have to deal with and simplifies the code, with minimal impact on the existing classes (the previous approach can still be used if required).
-
-> A valid criticism of the selector is that fact that the queue family is initialised as a side-effect of the predicate. 
-Obviously we would prefer to avoid this approach (particularly if the code was intended to be thread-safe) but for this use-case it does the job.
 
 ---
 

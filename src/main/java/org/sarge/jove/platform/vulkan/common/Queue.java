@@ -7,6 +7,7 @@ import java.util.Set;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
+import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.lib.util.Check;
 
@@ -15,24 +16,23 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 @SuppressWarnings("unused")
-public record Queue(Handle handle, DeviceContext device, Family family) implements NativeObject {
+public record Queue(Handle handle, Family family) implements NativeObject {
 	/**
 	 * Constructor.
 	 * @param handle	Handle
-	 * @param device	Device
 	 * @param family	Family that this queue belongs to
 	 */
 	public Queue {
 		Check.notNull(handle);
-		Check.notNull(device);
 		Check.notNull(family);
 	}
 
 	/**
 	 * Waits for this queue to become idle.
+	 * @param lib Vulkan API
 	 */
-	public void waitIdle() {
-		check(device.library().vkQueueWaitIdle(handle));
+	public void waitIdle(VulkanLibrary lib) {
+		check(lib.vkQueueWaitIdle(handle));
 	}
 
 	/**
