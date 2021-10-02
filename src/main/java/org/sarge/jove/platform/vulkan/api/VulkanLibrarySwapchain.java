@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.api;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkPresentInfoKHR;
 import org.sarge.jove.platform.vulkan.VkSwapchainCreateInfoKHR;
 
 import com.sun.jna.Pointer;
@@ -10,7 +11,7 @@ import com.sun.jna.ptr.PointerByReference;
 /**
  * Swap-chain API.
  */
-interface VulkanLibrarySwapChain {
+interface VulkanLibrarySwapchain {
 	/**
 	 * Creates a swap-chain for the given device.
 	 * @param device			Logical device
@@ -50,4 +51,12 @@ interface VulkanLibrarySwapChain {
 	 * @return Result code
 	 */
 	int vkAcquireNextImageKHR(Handle device, Handle swapchain, long timeout, Handle semaphore, Handle fence, IntByReference pImageIndex);
+
+	/**
+	 * Presents to the swapchain.
+	 * @param queue					Presentation queue
+	 * @param pPresentInfo			Pointer to descriptor
+	 * @return Result code
+	 */
+	int vkQueuePresentKHR(Handle queue, VkPresentInfoKHR pPresentInfo);
 }
