@@ -36,7 +36,7 @@ public class WorkTest extends AbstractVulkanTest {
 	void before() {
 		// Create queue
 		final Queue.Family family = new Queue.Family(0, 1, Set.of());
-		queue = new Queue(new Handle(new Pointer(1)), dev, family);
+		queue = new Queue(new Handle(new Pointer(1)), family);
 
 		// Create pool
 		pool = mock(Command.Pool.class);
@@ -96,7 +96,7 @@ public class WorkTest extends AbstractVulkanTest {
 
 	@Test
 	void submitQueueMismatch() {
-		final Queue q = new Queue(new Handle(new Pointer(2)), dev, new Queue.Family(999, 1, Set.of()));
+		final Queue q = new Queue(new Handle(new Pointer(2)), new Queue.Family(999, 1, Set.of()));
 		final Work other = new Work(new VkSubmitInfo(), q);
 		assertThrows(IllegalArgumentException.class, () -> Work.submit(List.of(work, other), null));
 	}
@@ -158,7 +158,7 @@ public class WorkTest extends AbstractVulkanTest {
 
 		@Test
 		void buildBufferQueueMismatch() {
-			final Queue other = new Queue(new Handle(new Pointer(2)), dev, new Queue.Family(999, 1, Set.of()));
+			final Queue other = new Queue(new Handle(new Pointer(2)), new Queue.Family(999, 1, Set.of()));
 			builder.add(buffer);
 			when(buffer.pool().queue()).thenReturn(other);
 			assertThrows(IllegalArgumentException.class, () -> builder.add(buffer));

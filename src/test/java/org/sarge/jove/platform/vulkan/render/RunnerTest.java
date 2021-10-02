@@ -61,7 +61,7 @@ public class RunnerTest extends AbstractVulkanTest {
 		when(swapchain.views()).thenReturn(List.of(view));
 
 		// Create presentation queue
-		queue = new Queue(new Handle(new Pointer(1)), dev, new Queue.Family(0, 1, Set.of()));
+		queue = new Queue(new Handle(new Pointer(1)), new Queue.Family(0, 1, Set.of()));
 
 		// Create frame
 		frame = mock(Frame.class);

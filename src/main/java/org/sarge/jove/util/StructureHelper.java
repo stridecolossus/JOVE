@@ -22,7 +22,7 @@ import com.sun.jna.Structure;
  * This imposes the following restrictions on how the application makes use of structure arrays:
  * <ul>
  * <li>the array can obviously only be allocated once the size of the resultant data is known</li>
- * <li>the elements of the array must be <i>populated</i> (or filled) rather than mapped individually as a stream)</li>
+ * <li>the elements of the array must be <i>populated</i> (or filled) rather than mapped individually as is the case for a Java stream</li>
  * </ul>
  * <p>
  * In addition the native layer often requires a pointer-to-array type, i.e. the <i>first</i> element of an array.

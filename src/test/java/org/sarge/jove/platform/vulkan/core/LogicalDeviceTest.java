@@ -103,7 +103,7 @@ public class LogicalDeviceTest {
 	@Test
 	void queueWaitIdle() {
 		final Queue queue = device.queues().get(family).get(0);
-		queue.waitIdle();
+		queue.waitIdle(lib);
 		verify(lib).vkQueueWaitIdle(queue.handle());
 	}
 
