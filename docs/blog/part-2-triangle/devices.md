@@ -6,9 +6,11 @@ title: Vulkan Devices
 
 Hardware components that support Vulkan are represented by a _physical device_ which defines the capabilities of that component (rendering, data transfer, etc).  In general there will be a single physical device (i.e. the GPU) or perhaps also an on-board graphics device for a laptop.
 
-A _logical device_ is an instance of a physical device and is central component for all subsequent Vulkan functionality.
+A _logical device_ is an instance of a physical device and is the central component for all subsequent Vulkan functionality.
 
-The process of creating the logical device is:
+The logical device also exposes a number of asynchronous _work queues_ that are used for various tasks such as invoking rendering, transferring data to/from the hardware, etc.  The process of displaying a rendered frame is known as _presentation_ and is implemented by Vulkan as a task on the _presentation queue_.
+
+Creating the logical device consists of the following steps:
 
 1. Enumerate the physical devices available on the hardware.
 
@@ -16,9 +18,9 @@ The process of creating the logical device is:
 
 3. Create a _logical device_ for the selected physical device.
 
-4. Retrieve the necessary _work queues_ used to perform rendering and other graphics tasks.
+4. Retrieve the required work queues.
 
-For our demo we need to choose a device that supports rendering so we will also extend the _desktop_ library to create a window with a Vulkan rendering surface.
+For our demo we need to choose a device that supports presentation so we will also extend the _desktop_ library to create a window and a Vulkan rendering surface.
 
 ---
 
@@ -124,7 +126,7 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
 }
 ```
 
-Note that again we invoke the same API method twice to retrieve the queue families.  However in this case we use the JNA `toArray` factory method on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method (i.e. our array is equivalent to a native pointer-to-structure).  We will abstract this common pattern at the end of the chapter.
+Note that again we invoke the same API method twice to retrieve the queue families.  However in this case we use the JNA `toArray` factory method on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method (i.e. the array maps to a native pointer-to-structure).  We will abstract this common pattern at the end of the chapter.
 
 Finally we add another helper to create a queue family domain object:
 
@@ -285,7 +287,9 @@ Notes:
 
 * We add a convenience builder for a window.
 
-* By default GLFW creates an OpenGL surface for a new window which is disabled using the `DISABLE_OPENGL` window hint.  (Also note the argument for this hint is annoyingly the opposite of what one would expect).
+* By default GLFW creates an OpenGL surface for a new window which is disabled using the `DISABLE_OPENGL` window hint.
+
+* The argument for this hint is irritatingly the inverse to what one would expect (and to all the other hints).
 
 * The above implementation ignores display monitors for the moment.
 
@@ -328,8 +332,7 @@ Pointer surface = window.surface(instance.handle());
 As previously mentioned the process of selecting the physical device is slightly messy due to the inter-dependencies between the Vulkan instance, the rendering surface and the presentation queue.
 This is exacerbated by the mechanism Vulkan uses to select the work queues - this essentially requires the same logic to be applied twice: once to select the physical device with the required queue capabilities, and again to retrieve each queue from the resultant logical device.
 
-After trying several approaches we settled on the design described below which determines each queue family as a _side-effect_ of selecting the physical device in one operation.
-Generally we would avoid a design that could lead to unpleasant surprises, but at least the nastier aspects are self-contained and the resultant API is at least relatively simple from the perspective of the user.
+After trying several approaches we settled on the design described below which determines each queue family as a _side-effect_ of selecting the physical device in one operation (the same approach as that used in the tutorial).  Generally we would avoid such a design that could lead to unpleasant surprises, but at least the nastier aspects are self-contained and the resultant API is relatively simple from the perspective of the user.
 
 ### Selector
 
@@ -568,7 +571,7 @@ Notes:
 
 - The `Percentile` class is a custom type for a percentile represented as a 0..1 floating-point value.
 
-- We can specify extensions and validation layers at both the instance and device level, however more recent Vulkan implementations will ignore validation layers specified at the device level (we retain both for backwards compatibility).
+- We can specify extensions and validation layers at both the instance and device level, however more recent Vulkan implementations will ignore layers specified at the device level (we retain both for backwards compatibility).
 
 The `build` method populates a Vulkan descriptor for the logical device and invokes the API:
 
@@ -647,7 +650,7 @@ public LogicalDevice build() {
 }
 ```
 
-This temporary data carrier is responsible for generating the requested number of work queues for each family:
+This local class is responsible for generating the requested number of work queues for each family:
 
 ```java
 class RequiredQueue {
@@ -675,7 +678,7 @@ Notes:
 
 * The `vkGetDeviceQueue` API method is invoked multiple times for each specified queue generated by the `stream` helper (the index is implicit).
 
-* We use a local class to centralise the queue logic whilst retaining access to the API dependencies (logical device handle and Vulkan library).
+* We use a local class to centralise the queue logic whilst retaining access to the API dependencies (the logical device handle and Vulkan library).
 
 Finally we implement a new Vulkan library for the various API methods to manage the logical device and work queues:
 
@@ -707,55 +710,47 @@ Queue graphicsQueue = dev.queue(graphics.family());
 Queue presentationQueue = dev.queue(presentation.family());
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
 ---
 
 ## Improvements
 
 ### Two-Stage Invocation
 
-When enumerating the physical devices we first came across API methods that are invoked **twice** to retrieve an array from Vulkan.
+When enumerating the physical devices we first came across API methods that are invoked __twice__ to retrieve an array from Vulkan.
 
 The process is generally:
-1. Invoke an API method with an integer-by-reference value to determine the length of the array (the array itself is `null`).
+
+1. Invoke an API method with an integer-by-reference value to determine the length of the array (the array argument is `null`).
+
 2. Allocate the array accordingly.
-3. Invoke again to populate the array (passing the length value and the empty array).
+
+3. Invoke again to populate the empty array.
 
 This is a common pattern across the Vulkan API which we refer to as _two-stage invocation_.
 
-We define the following interface to abstract a Vulkan API method that employs two-stage invocation:
+The following interface abstracts an API method that employs two-stage invocation:
 
 ```java
+@FunctionalInterface
 public interface VulkanFunction<T> {
     /**
-     * Vulkan API method that retrieves an array of the given type.
+     * Vulkan API method that retrieves an array of the given type using the <i>two-stage invocation</i> approach.
      * @param lib       Vulkan library
      * @param count     Return-by-reference count of the number of array elements
-     * @param array     Array instance or <code>null</code> to retrieve size of the array
+     * @param array     Array instance or {@code null} to retrieve the size of the array
      * @return Vulkan result code
      */
     int enumerate(VulkanLibrary lib, IntByReference count, T array);
 }
 ```
 
-The API method can now be defined as follows:
+The API method to enumerate the physical devices can now be defined thus:
 
 ```java
 VulkanFunction<Pointer[]> func = (api, count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
 ```
 
-We next add a helper method encapsulating the process described above:
+Two-stage invocation of the function is encapsulated in the following helper:
 
 ```java
 static <T> T[] enumerate(VulkanFunction<T[]> func, VulkanLibrary lib, IntFunction<T[]> factory) {
@@ -775,19 +770,19 @@ static <T> T[] enumerate(VulkanFunction<T[]> func, VulkanLibrary lib, IntFunctio
 }
 ```
 
-and refactor the code to enumerate the devices:
+The process of enumerating the physical devices can now be refactored to the following more concise code:
 
 ```java
-public static Stream<PhysicalDevice> devices(Instance instance) {
-    final VulkanFunction<Pointer[]> func = (api, count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
-    final Pointer[] handles = VulkanFunction.enumerate(func, instance.library(), Pointer[]::new);
-    return Arrays.stream(handles).map(ptr -> create(ptr, instance));
+public class PhysicalDevice {
+    public static Stream<PhysicalDevice> devices(Instance instance) {
+        final VulkanFunction<Pointer[]> func = (api, count, devices) -> api.vkEnumeratePhysicalDevices(instance.handle(), count, devices);
+        final Pointer[] handles = VulkanFunction.enumerate(func, instance.library(), Pointer[]::new);
+        return Arrays.stream(handles).map(ptr -> create(ptr, instance));
+    }
 }
 ```
 
-This implementation is suitable for an array where the component type is automatically marshalled by JNA (such as the device pointers in the above example).
-
-However for an array of JNA structures we need a second, slightly different implementation since the result **must** be a contiguous block of memory allocated using the `toArray` helper:
+For an array of JNA structures we need a second, slightly different implementation since the array __must__ be a contiguous block of memory allocated using the `toArray` helper:
 
 ```java
 static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, Supplier<T> identity) {
@@ -805,126 +800,56 @@ static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary
 }
 ```
 
-The _identity_ supplies an instance of the structure used to allocate the resultant array.
-Note that in this case the API method accepts a pointer-to-structure which maps to the **first** element of the allocated array.
+Notes:
 
-The code to retrieve the queue families now becomes:
+* The _identity_ generates an instance of the structure used to allocate the resultant array.
+
+* Note that in this case the API method accepts a pointer-to-structure which maps to the __first__ element of the allocated array.
+
+As an example, the code to retrieve the queue families for a physical device now becomes:
 
 ```java
+VulkanFunction<VkQueueFamilyProperties> func = (api, count, array) -> api.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 VkQueueFamilyProperties[] families = VulkanFunction.enumerate(func, instance.library(), VkQueueFamilyProperties::new);
-```
-
-This abstraction centralises the process of two-stage invocation reducing code complexity, duplication and testing.
-
-### Supported Extensions and Layers
-
-Although our demos simply assume that the expected extensions and validation layers are available (e.g. the swapchain extension and diagnostics layers)
-a well-behaved application would adapt to those supported by the local Vulkan implementation.
-
-With the `VulkanFunction` in place we can take the opportunity now to implement functionality to retrieve the supported extensions and validation layers.
-
-The following new helper class encapsulated the logic for retrieval of the supported extensions and layers at either the device or instance level:
-
-```java
-public class Supported {
-    private final Set<String> extensions;
-    private final Set<ValidationLayer> layers;
-
-    public Supported(VulkanLibrary lib, VulkanFunction<VkExtensionProperties> extensionsFunction, VulkanFunction<VkLayerProperties> layersFunction) {
-        this.extensions = extensions(lib, extensionsFunction);
-        this.layers = layers(lib, layersFunction);
-    }
-
-    public Set<String> extensions() {
-        return extensions;
-    }
-
-    public Set<ValidationLayer> layers() {
-        return layers;
-    }
-}
-```
-
-The extensions are retrieved and converted to a set of strings using a local helper:
-
-```java
-private static Set<String> extensions(VulkanLibrary lib, VulkanFunction<VkExtensionProperties> extensions) {
-    return Arrays
-        .stream(VulkanFunction.enumerate(extensions, lib, VkExtensionProperties::new))
-        .map(e -> e.extensionName)
-        .map(String::new)
-        .collect(toSet());
-}
-```
-
-And similarly for the validation layers:
-
-```java
-private static Set<ValidationLayer> layers(VulkanLibrary lib, VulkanFunction<VkLayerProperties> layers) {
-    return Arrays
-        .stream(VulkanFunction.enumerate(layers, lib, VkLayerProperties::new))
-        .map(layer -> new ValidationLayer(new String(layer.layerName), layer.implementationVersion))
-        .collect(toSet());
-}
-```
-
-This new class is used to retrieve the extensions and layers for a `PhysicalDevice` via a new on-demand accessor:
-
-```java
-public Supported supported() {
-    VulkanFunction<VkExtensionProperties> extensions = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, array);
-    VulkanFunction<VkLayerProperties> layers = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(handle, count, array);
-    return new Supported(instance.library(), extensions, layers);
-}
-```
-
-And at the implementation level via the following static accessor method on the `VulkanLibrary` interface itself:
-
-```java
-static Supported supported(VulkanLibrary lib) {
-    VulkanFunction<VkExtensionProperties> extensions = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
-    VulkanFunction<VkLayerProperties> layers = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
-    return new Supported(lib, extensions, layers);
-}
 ```
 
 ### Structure Collector
 
-Vulkan makes heavy use of structures to configure a variety of objects and we are also often required to allocate and populate arrays of these structures.
+Vulkan makes heavy use of structures to configure a variety of objects.
 
 However an array of JNA structures poses a number of problems:
 
-- Unlike a standard POJO an array of JNA structures **must** be allocated using the JNA `toArray` helper method to create a contiguous memory block.
+- Unlike a standard POJO an array of JNA structures __must__ be allocated using the JNA `toArray` helper method to create a contiguous memory block.
 
-- This implies we must know the size of the data to allocate the array which imposes constrains on how we build the array (in particular whether we can employ Java streams).
+- Obviously we must know the size of the data to allocate the array which imposes constraints on how we process data, in particular whether we can employ Java streams.
 
-- Additionally there are edge cases where the data is empty (or even `null`).
+- Many API methods expect a pointer-to-array, i.e. the __first__ element of the array.
 
-- Finally many API methods expect a pointer-to-array value, i.e. the **first** element of the array.
+- Additionally there are edge cases where the data is empty or where `null` is a valid argument.
 
-Whilst none of this is particularly difficult to overcome it can be tedious, error-prone, and resulting in less testable code.
+None of these are particularly difficult to overcome but the number of situations where this occurs makes the code tedious to develop, error-prone, and less testable.
 
-To address the above issues we implement the following method that allocates and populates a JNA array from an arbitrary collection of domain objects:
+To address these issues we implement the following helper that allocates and populates a JNA array from an arbitrary collection of domain objects:
 
 ```java
-public class StructureCollector {
-    public static <T, R extends Structure> R[] toArray(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+public final class StructureHelper {
+    public static <T, R extends Structure> R[] array(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
         // Check for empty data
         if(data.isEmpty()) {
             return null;
         }
-    
+
         // Allocate contiguous array
         @SuppressWarnings("unchecked")
         final R[] array = (R[]) identity.get().toArray(data.size());
-    
+
         // Populate array
         final Iterator<T> itr = data.iterator();
         for(final R element : array) {
             populate.accept(itr.next(), element);
         }
         assert !itr.hasNext();
-    
+
         return array;
     }
 }
@@ -932,20 +857,19 @@ public class StructureCollector {
 
 Notes:
 
-- T is the domain type, e.g. `RequiredQueue`
+- _T_ is the domain type, e.g. a map entry for a required queue in the logical device.
 
-- R is the component type of the resultant JNA structure array, e.g. `VkDeviceQueueCreateInfo`
+- _R_ is the array component type, e.g. `VkDeviceQueueCreateInfo`.
 
-- The _identity_ is an instance of the structure used to allocate the array.
+- _identity_ generates an instance of the structure used to allocate the array.
 
-- The `populate` method 'fills' an array element from the corresponding domain object.
+- the _populate_ method 'fills' a JNA structure from the corresponding domain object (note that JNA structures do not support copying or cloning).
 
-The edge cases are handled by the following:
+For the case where the API method requires a pointer-to-array argument we provide the following alternative:
 
 ```java
-public static <T, R extends Structure> R toPointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
-    final R[] array = toArray(data, identity, populate);
-
+public static <T, R extends Structure> R first(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+    final R[] array = array(data, identity, populate);
     if(array == null) {
         return null;
     }
@@ -958,61 +882,33 @@ public static <T, R extends Structure> R toPointer(Collection<T> data, Supplier<
 In the logical device we use this helper to build the array of required queue descriptors:
 
 ```java
-info.pQueueCreateInfos = StructureCollector.toPointer(queues, VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
+info.pQueueCreateInfos = StructureHelper.first(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
 ```
 
-We also provide a more generalised custom stream collector:
+Finally we also provide a generalised custom stream collector:
 
 ```java
-public class StructureCollector <T, R extends Structure> implements Collector<T, List<T>, R[]> {
-    private final Supplier<R> identity;
-    private final BiConsumer<T, R> populate;
-    private final Set<Characteristics> chars;
-
-    /**
-     * Constructor.
-     * @param identity      Identity structure
-     * @param populate      Population function
-     * @param chars         Stream characteristics
-     */
-    public StructureCollector(Supplier<R> identity, BiConsumer<T, R> populate, Characteristics... chars) {
-        this.identity = notNull(identity);
-        this.populate = notNull(populate);
-        this.chars = Set.copyOf(Arrays.asList(chars));
-    }
-
-    @Override
-    public Supplier<List<T>> supplier() {
-        return ArrayList::new;
-    }
-
-    @Override
-    public BiConsumer<List<T>, T> accumulator() {
-        return List::add;
-    }
-
-    @Override
-    public BinaryOperator<List<T>> combiner() {
-        return (left, right) -> {
-            left.addAll(right);
-            return left;
-        };
-    }
-
-    @Override
-    public Function<List<T>, R[]> finisher() {
-        return list -> toArray(list, identity, populate);
-    }
+/**
+ * Helper - Creates a collector that constructs a contiguous array of JNA structures.
+ * @param <T> Data type
+ * @param <R> Resultant structure type
+ * @param identity      Identity constructor
+ * @param populate      Population function
+ * @param chars         Collector characteristics
+ * @return Structure collector
+ * @see #array(Collection, Supplier, BiConsumer)
+ */
+public static <T, R extends Structure> Collector<T, ?, R[]> collector(Supplier<R> identity, BiConsumer<T, R> populate, Characteristics... chars) {
+    final BinaryOperator<List<T>> combiner = (left, right) -> {
+        left.addAll(right);
+        return left;
+    };
+    final Function<List<T>, R[]> finisher = list -> array(list, identity, populate);
+    return Collector.of(ArrayList::new, List::add, combiner, finisher, chars);
 }
 ```
 
-Conclusions:
-
-- The helper methods encapsulates the logic for allocation and population of the resultant array (reducing code duplication).
-
-- Separating the iteration from the population logic simplifies application code.
-
-- We _could_ have used JNA structures directly (instead of custom domain objects) but we would still need to perform a field-by-field copy to the contiguous block.
+These helpers centralise the logic of allocating and populating a structure array using internal iteration.
 
 ---
 
@@ -1022,13 +918,8 @@ In this chapter we:
 
 - Created a GLFW window and Vulkan surface
 
-- Enumerated the physical devices available on the local hardware and selected one appropriate to our application
+- Enumerated the physical devices available on the local hardware and selected one appropriate for the demo application.
 
-- Created a logical device and the work queues we will need in subsequent chapters
+- Created the logical device and work queues used in subsequent chapters
 
 - Added supporting functionality for _two stage invocation_ and population of structure arrays.
-
-The API methods in this chapter are defined in the following JNA interfaces:
-- `VulkanLibraryPhysicalDevice`
-- `VulkanLibraryLogicalDevice`
-- `VulkanLibrarySurface`

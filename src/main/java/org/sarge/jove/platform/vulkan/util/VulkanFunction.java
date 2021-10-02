@@ -96,14 +96,16 @@ public interface VulkanFunction<T> {
 	 * @throws VulkanException if the underlying API method fails
 	 * @see #enumerate(VulkanLibrary, IntByReference, Object)
 	 */
-	@SuppressWarnings("unchecked")
 	static <T extends Structure> T[] enumerate(VulkanFunction<T> func, VulkanLibrary lib, Supplier<T> identity) {
-		// Count number of values
+		// Determine array length
 		final IntByReference count = lib.factory().integer();
 		check(func.enumerate(lib, count, null));
 
-		// Retrieve values
+		// Allocate array
+		@SuppressWarnings("unchecked")
 		final T[] array = (T[]) identity.get().toArray(count.getValue());
+
+		// Retrieve array
 		if(array.length > 0) {
 			check(func.enumerate(lib, count, array[0]));
 		}

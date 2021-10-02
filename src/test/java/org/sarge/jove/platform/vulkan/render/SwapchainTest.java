@@ -28,8 +28,8 @@ import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Descriptor;
-import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.Image;
+import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
@@ -110,7 +110,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 	@Test
 	void present() {
 		// Present to queue
-		final Queue queue = new Queue(new Handle(new Pointer(42)), dev, new Queue.Family(0, 1, Set.of()));
+		final Queue queue = new Queue(new Handle(new Pointer(42)), new Queue.Family(0, 1, Set.of()));
 //
 //				mock(Queue.class);
 //		when(queue.handle()).thenReturn(new Handle(new Pointer(42)));

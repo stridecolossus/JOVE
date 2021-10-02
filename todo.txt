@@ -73,3 +73,5 @@ Thoughts
 - blog: mention that Handle is essentially equivalent to JNA pointer but immutable
 - [DONE] draw command, builder to set the various fields, less error prone to transposition
 - blog: render chapter talks about load/store but there are none?
+- add supporting extensions/layers stuff somewhere else
+

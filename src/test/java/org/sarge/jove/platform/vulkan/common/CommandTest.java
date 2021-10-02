@@ -37,13 +37,13 @@ class CommandTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		final Family family = new Family(0, 1, Set.of());
-		queue = new Queue(new Handle(new Pointer(1)), dev, family);
+		queue = new Queue(new Handle(new Pointer(1)), family);
 		cmd = mock(Command.class);
 	}
 
 	@Test
 	void submit() {
-		final Pool pool = Pool.create(queue);
+		final Pool pool = Pool.create(dev, queue);
 		cmd = spy(Command.class);
 		cmd.submit(pool);
 		verify(cmd).execute(eq(lib), any(Handle.class));
@@ -56,7 +56,7 @@ class CommandTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			pool = Pool.create(queue);
+			pool = Pool.create(dev, queue);
 			buffer = pool.allocate(1, true).iterator().next();
 		}
 
@@ -149,7 +149,7 @@ class CommandTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			pool = Pool.create(queue);
+			pool = Pool.create(dev, queue);
 		}
 
 		@Test
