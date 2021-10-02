@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.api;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPresentInfoKHR;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 
 import com.sun.jna.Pointer;
@@ -62,12 +61,4 @@ interface VulkanLibraryLogicalDevice {
 	 * @return Result code
 	 */
 	int vkQueueWaitIdle(Handle queue);
-
-	/**
-	 * Presents to the swap-chain.
-	 * @param queue					Presentation queue
-	 * @param pPresentInfo			Pointer to descriptor
-	 * @return Result code
-	 */
-	int vkQueuePresentKHR(Handle queue, VkPresentInfoKHR pPresentInfo);
 }

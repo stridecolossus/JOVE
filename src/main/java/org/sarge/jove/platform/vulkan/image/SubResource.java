@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.HashSet;
@@ -17,7 +16,8 @@ import org.sarge.lib.util.Check;
  * An <i>image sub-resource</i> defines a subset of the image aspects, mip levels and array layers of an image.
  * @author Sarge
  */
-public record SubResource(Descriptor descriptor, Set<VkImageAspect> mask, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) {
+public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) {
+//public record SubResource(Descriptor descriptor, Set<VkImageAspect> mask, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) {
 	/**
 	 * Special case identifier indicating the <i>remaining</i> number of mip levels or array layers.
 	 */
@@ -29,7 +29,9 @@ public record SubResource(Descriptor descriptor, Set<VkImageAspect> mask, int mi
 	 * @return New sub-resource
 	 */
 	public static SubResource of(Descriptor descriptor) {
-		return new Builder(descriptor).build();
+		//return new Builder(descriptor).build();
+
+		return null;
 	}
 
 	/**
@@ -51,7 +53,7 @@ public record SubResource(Descriptor descriptor, Set<VkImageAspect> mask, int mi
 			return of(descriptor);
 		}
 		else {
-			if(subresource.descriptor != descriptor) throw new IllegalStateException("Invalid sub-resource for image descriptor");
+//			if(subresource.descriptor != descriptor) throw new IllegalStateException("Invalid sub-resource for image descriptor");
 			return subresource;
 		}
 	}
@@ -68,19 +70,19 @@ public record SubResource(Descriptor descriptor, Set<VkImageAspect> mask, int mi
 	 */
 	public SubResource {
 		// Validate
-		Check.notNull(descriptor);
+//		Check.notNull(descriptor);
 		mask = Set.copyOf(notEmpty(mask));
 		Check.zeroOrMore(mipLevel);
 		Check.oneOrMore(levelCount);
 		Check.zeroOrMore(baseArrayLayer);
 		Check.oneOrMore(layerCount);
 
-		// Check aspects is a subset
-		if(!descriptor.aspects().containsAll(mask)) throw new IllegalArgumentException("Aspect mask must be a subset of the descriptor");
-
-		// Check mip levels / layers is subset
-		Check.range(mipLevel + levelCount, 0, descriptor.levels());
-		Check.range(baseArrayLayer + layerCount, 0, descriptor.layers());
+//		// Check aspects is a subset
+//		if(!descriptor.aspects().containsAll(mask)) throw new IllegalArgumentException("Aspect mask must be a subset of the descriptor");
+//
+//		// Check mip levels / layers is subset
+//		Check.range(mipLevel + levelCount, 0, descriptor.levels());
+//		Check.range(baseArrayLayer + layerCount, 0, descriptor.layers());
 	}
 
 	/**
@@ -112,23 +114,23 @@ public record SubResource(Descriptor descriptor, Set<VkImageAspect> mask, int mi
 	 * Builder for an image sub-resource.
 	 */
 	public static class Builder {
-		private final Descriptor descriptor;
+//		private final Descriptor descriptor;
 		private Set<VkImageAspect> mask;
 		private int mipLevel;
 		private int levelCount;
 		private int baseArrayLayer;
 		private int layerCount;
 
-		/**
-		 * Constructor.
-		 * @param descriptor Image descriptor
-		 */
-		public Builder(Descriptor descriptor) {
-			this.descriptor = notNull(descriptor);
-			this.levelCount = descriptor.levels();
-			this.layerCount = descriptor.layers();
-			mask(descriptor.aspects());
-		}
+//		/**
+//		 * Constructor.
+//		 * @param descriptor Image descriptor
+//		 */
+//		public Builder(Descriptor descriptor) {
+//			this.descriptor = notNull(descriptor);
+//			this.levelCount = descriptor.levels();
+//			this.layerCount = descriptor.layers();
+//			mask(descriptor.aspects());
+//		}
 
 		/**
 		 * Sets the aspect mask.
@@ -193,7 +195,8 @@ public record SubResource(Descriptor descriptor, Set<VkImageAspect> mask, int mi
 		 * @see SubResource#SubResource(Descriptor, Set, int, int, int, int)
 		 */
 		public SubResource build() {
-			return new SubResource(descriptor, mask, mipLevel, levelCount, baseArrayLayer, layerCount);
+//			return new SubResource(descriptor, mask, mipLevel, levelCount, baseArrayLayer, layerCount);
+			return new SubResource(mask, mipLevel, levelCount, baseArrayLayer, layerCount);
 		}
 	}
 }

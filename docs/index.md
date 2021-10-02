@@ -43,7 +43,7 @@ what is Vulkan
 - Part 2 - Rendering a Triangle
     - [Vulkan Instance](blog/part-2-triangle/instance)
     - [Devices](blog/part-2-triangle/devices)
-    - [Swapchain and Render Pass](blog/part-2-triangle/swapchain)
+    - [Presentation](blog/part-2-triangle/presentation)
     - [Pipelines](blog/part-2-triangle/pipeline)
     - [Rendering Commands](blog/part-2-triangle/commands)
 
