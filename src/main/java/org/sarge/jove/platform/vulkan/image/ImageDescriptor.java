@@ -18,7 +18,7 @@ import org.sarge.lib.util.Check;
  * An <i>image descriptor</i> specifies the properties of an image.
  * @author Sarge
  */
-public record Descriptor(VkImageType type, VkFormat format, ImageExtents extents, Set<VkImageAspect> aspects, int levels, int layers) {
+public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents extents, Set<VkImageAspect> aspects, int levels, int layers) {
 	// Valid image aspect combinations
 	private static final Collection<Set<VkImageAspect>> VALID_ASPECTS = List.of(
 			Set.of(VkImageAspect.COLOR),
@@ -37,7 +37,7 @@ public record Descriptor(VkImageType type, VkFormat format, ImageExtents extents
 	 * @throws IllegalArgumentException if the image aspects is empty or is an invalid combination
 	 * @throws IllegalArgumentException if the extents are invalid for the given image type
 	 */
-	public Descriptor {
+	public ImageDescriptor {
 		// Validate
 		Check.notNull(type);
 		Check.notNull(format);
@@ -136,8 +136,8 @@ public record Descriptor(VkImageType type, VkFormat format, ImageExtents extents
 		 * Constructs this descriptor.
 		 * @return New image descriptor
 		 */
-		public Descriptor build() {
-			return new Descriptor(type, format, extents, aspects, levels, layers);
+		public ImageDescriptor build() {
+			return new ImageDescriptor(type, format, extents, aspects, levels, layers);
 		}
 	}
 }

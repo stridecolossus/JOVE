@@ -14,11 +14,11 @@ import org.sarge.jove.platform.vulkan.image.SubResource.Builder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class SubResourceTest {
-	private Descriptor descriptor;
+	private ImageDescriptor descriptor;
 
 	@BeforeEach
 	void before() {
-		descriptor = new Descriptor.Builder()
+		descriptor = new ImageDescriptor.Builder()
 				.aspect(VkImageAspect.DEPTH)
 				.aspect(VkImageAspect.STENCIL)
 				.format(AbstractVulkanTest.FORMAT)
@@ -30,8 +30,7 @@ public class SubResourceTest {
 
 	@Test
 	void constructor() {
-		final SubResource res = new SubResource(descriptor, Set.of(VkImageAspect.DEPTH), 0, 1, 1, 2);
-		assertEquals(descriptor, res.descriptor());
+		final SubResource res = new SubResource(Set.of(VkImageAspect.DEPTH), 0, 1, 1, 2);
 		assertEquals(Set.of(VkImageAspect.DEPTH), res.mask());
 		assertEquals(0, res.mipLevel());
 		assertEquals(1, res.levelCount());
@@ -41,23 +40,22 @@ public class SubResourceTest {
 
 	@Test
 	void constructorInvalidAspect() {
-		assertThrows(IllegalArgumentException.class, () -> new SubResource(descriptor, Set.of(VkImageAspect.COLOR), 0, 1, 0, 1));
+		assertThrows(IllegalArgumentException.class, () -> new SubResource(Set.of(VkImageAspect.COLOR), 0, 1, 0, 1));
 	}
 
 	@Test
 	void constructorInvalidMipLevels() {
-		assertThrows(IllegalArgumentException.class, () -> new SubResource(descriptor, Set.of(VkImageAspect.DEPTH), 0, 3, 0, 1));
+		assertThrows(IllegalArgumentException.class, () -> new SubResource(Set.of(VkImageAspect.DEPTH), 0, 3, 0, 1));
 	}
 
 	@Test
 	void constructorInvalidArrayLayers() {
-		assertThrows(IllegalArgumentException.class, () -> new SubResource(descriptor, Set.of(VkImageAspect.DEPTH), 0, 1, 0, 4));
+		assertThrows(IllegalArgumentException.class, () -> new SubResource(Set.of(VkImageAspect.DEPTH), 0, 1, 0, 4));
 	}
 
 	@Test
 	void of() {
 		final SubResource res = SubResource.of(descriptor);
-		assertEquals(descriptor, res.descriptor());
 		assertEquals(Set.of(VkImageAspect.DEPTH, VkImageAspect.STENCIL), res.mask());
 		assertEquals(0, res.mipLevel());
 		assertEquals(2, res.levelCount());
@@ -74,7 +72,7 @@ public class SubResourceTest {
 
 	@Test
 	void ofResourceInvalid() {
-		final Descriptor other = new Descriptor.Builder()
+		final ImageDescriptor other = new ImageDescriptor.Builder()
 				.aspect(VkImageAspect.COLOR)
 				.format(AbstractVulkanTest.FORMAT)
 				.extents(new ImageExtents(4, 5))
@@ -96,31 +94,18 @@ public class SubResourceTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Builder(descriptor);
+			builder = new Builder();
 		}
 
 		@Test
 		void build() {
 			final SubResource res = builder.build();
 			assertNotNull(res);
-			assertEquals(descriptor, res.descriptor());
 			assertEquals(Set.of(VkImageAspect.DEPTH, VkImageAspect.STENCIL), res.mask());
 			assertEquals(0, res.mipLevel());
 			assertEquals(2, res.levelCount());
 			assertEquals(0, res.baseArrayLayer());
 			assertEquals(3, res.layerCount());
-		}
-
-		@Test
-		void removeAspect() {
-			final SubResource res = builder.remove(VkImageAspect.STENCIL).build();
-			assertNotNull(res);
-			assertEquals(Set.of(VkImageAspect.DEPTH), res.mask());
-		}
-
-		@Test
-		void removeAspectNotPresent() {
-			assertThrows(IllegalArgumentException.class, () -> builder.remove(VkImageAspect.COLOR));
 		}
 	}
 }

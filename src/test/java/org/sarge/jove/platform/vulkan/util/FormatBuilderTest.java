@@ -7,14 +7,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.util.FormatHelper.Type;
+import org.sarge.jove.platform.vulkan.util.FormatBuilder.Type;
 
-class FormatHelperTest {
-	private FormatHelper helper;
+class FormatBuilderTest {
+	private FormatBuilder helper;
 
 	@BeforeEach
 	void before() {
-		helper = new FormatHelper();
+		helper = new FormatBuilder();
 	}
 
 	@Test
@@ -58,8 +58,8 @@ class FormatHelperTest {
 
 	@Test
 	void layout() {
-		assertEquals(VkFormat.R32G32B32_SFLOAT, FormatHelper.format(Layout.of(3, Float.class)));
-		assertEquals(VkFormat.R8G8_SRGB, FormatHelper.format(Layout.of(2, Byte.class)));
+		assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(Layout.of(3, Float.class)));
+		assertEquals(VkFormat.R8G8_SRGB, FormatBuilder.format(Layout.of(2, Byte.class)));
 	}
 
 	@Test

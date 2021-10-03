@@ -44,8 +44,9 @@ what is Vulkan
     - [Vulkan Instance](blog/part-2-triangle/instance)
     - [Devices](blog/part-2-triangle/devices)
     - [Presentation](blog/part-2-triangle/presentation)
-    - [Pipelines](blog/part-2-triangle/pipeline)
-    - [Rendering Commands](blog/part-2-triangle/commands)
+    - [Render Pass](blog/part-2-triangle/render-pass)
+    - [Pipeline](blog/part-2-triangle/pipeline)
+    - [Rendering](blog/part-2-triangle/rendering)
 
 - Part 3 - Textured Cube
     - [Vertex Buffers](blog/part-3-cube/vertex-buffers)

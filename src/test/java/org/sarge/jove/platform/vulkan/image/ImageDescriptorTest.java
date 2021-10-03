@@ -30,19 +30,19 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
-public class DescriptorTest extends AbstractVulkanTest {
+public class ImageDescriptorTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
 	private static final ImageExtents EXTENTS = new ImageExtents(3, 4);
 
 	private DefaultImage image;
 	private Pointer handle;
-	private Descriptor descriptor;
+	private ImageDescriptor descriptor;
 	private DeviceMemory mem;
 
 	@BeforeEach
 	void before() {
 		// Create descriptor
-		descriptor = new Descriptor.Builder()
+		descriptor = new ImageDescriptor.Builder()
 				.format(FORMAT)
 				.extents(EXTENTS)
 				.aspect(COLOR)
@@ -79,32 +79,32 @@ public class DescriptorTest extends AbstractVulkanTest {
 		@DisplayName("Image must have at least one aspect")
 		@Test
 		void emptyAspects() {
-			assertThrows(IllegalArgumentException.class, () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, EXTENTS, Set.of(), 1, 1));
+			assertThrows(IllegalArgumentException.class, () -> new ImageDescriptor(IMAGE_TYPE_2D, FORMAT, EXTENTS, Set.of(), 1, 1));
 		}
 
 		@DisplayName("Image aspects must be a valid combination")
 		@Test
 		void invalidAspects() {
 			final var aspects = Set.of(COLOR, VkImageAspect.DEPTH);
-			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, EXTENTS, aspects, 1, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new ImageDescriptor(IMAGE_TYPE_2D, FORMAT, EXTENTS, aspects, 1, 1));
 		}
 
 		@DisplayName("2D image must have depth of one")
 		@Test
 		void invalidExtentsDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(IMAGE_TYPE_2D, FORMAT, new ImageExtents(new Dimensions(2, 3), 4), COLOUR, 1, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(IMAGE_TYPE_2D, FORMAT, new ImageExtents(new Dimensions(2, 3), 4), COLOUR, 1, 1));
 		}
 
 		@DisplayName("2D image must have height and depth of one")
 		@Test
 		void invalidExtentsHeightDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.IMAGE_TYPE_1D, FORMAT, EXTENTS, COLOUR, 1, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(VkImageType.IMAGE_TYPE_1D, FORMAT, EXTENTS, COLOUR, 1, 1));
 		}
 
 		@DisplayName("3D image can only have one array layer")
 		@Test
 		void invalidArrayLayers() {
-			assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new Descriptor(VkImageType.IMAGE_TYPE_3D, FORMAT, EXTENTS, COLOUR, 1, 2));
+			assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new ImageDescriptor(VkImageType.IMAGE_TYPE_3D, FORMAT, EXTENTS, COLOUR, 1, 2));
 		}
 	}
 

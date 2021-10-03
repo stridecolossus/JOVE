@@ -37,7 +37,7 @@ public class ImageCopyCommandTest {
 		lib = mock(VulkanLibrary.class);
 
 		// Define image
-		final var descriptor = new Descriptor.Builder()
+		final var descriptor = new ImageDescriptor.Builder()
 				.extents(new ImageExtents(2, 3))
 				.format(AbstractVulkanTest.FORMAT)
 				.aspect(VkImageAspect.COLOR)

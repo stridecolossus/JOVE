@@ -41,7 +41,7 @@ public class ViewTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create image descriptor
-		final Descriptor descriptor = new Descriptor.Builder()
+		final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 				.format(FORMAT)
 				.extents(new ImageExtents(3, 4))
 				.aspect(VkImageAspect.COLOR)

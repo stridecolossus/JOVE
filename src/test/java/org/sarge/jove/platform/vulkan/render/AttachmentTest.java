@@ -35,12 +35,11 @@ public class AttachmentTest {
 	@Test
 	void constructor() {
 		assertEquals(COLOUR, attachment.format());
-		assertNotNull(attachment.descriptor());
 	}
 
 	@Test
 	void equals() {
-		attachment.descriptor().write();
+//		attachment.descriptor().write();
 		assertEquals(true, attachment.equals(attachment));
 		assertEquals(false, attachment.equals(null));
 	}
@@ -64,10 +63,10 @@ public class AttachmentTest {
 					.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 					.build();
 
+			final var desc = new VkAttachmentDescription();
 			assertNotNull(attachment);
+			attachment.populate(desc);
 
-			final VkAttachmentDescription desc = attachment.descriptor();
-			assertNotNull(desc);
 			assertEquals(COLOUR, desc.format);
 			assertEquals(VkSampleCountFlag.COUNT_1, desc.samples);
 			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);
@@ -88,10 +87,10 @@ public class AttachmentTest {
 					.finalLayout(VkImageLayout.DEPTH_STENCIL_READ_ONLY_OPTIMAL)
 					.build();
 
+			final var desc = new VkAttachmentDescription();
 			assertNotNull(attachment);
+			attachment.populate(desc);
 
-			final VkAttachmentDescription desc = attachment.descriptor();
-			assertNotNull(desc);
 			assertEquals(DEPTH, desc.format);
 			assertEquals(VkSampleCountFlag.COUNT_1, desc.samples);
 			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);

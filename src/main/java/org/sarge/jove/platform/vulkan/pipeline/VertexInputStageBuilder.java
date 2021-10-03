@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkVertexInputAttributeDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputBindingDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
-import org.sarge.jove.platform.vulkan.util.FormatHelper;
+import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.StructureHelper;
 
 /**
@@ -109,7 +109,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		int loc = 0;
 		for(Vertex.Layout layout : header.layout()) {
 			// Determine component format
-			final VkFormat format = FormatHelper.format(layout);
+			final VkFormat format = FormatBuilder.format(layout);
 
 			// Add attribute for component
 			new AttributeBuilder()
