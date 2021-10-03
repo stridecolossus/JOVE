@@ -32,7 +32,7 @@ public interface Image extends NativeObject {
 	/**
 	 * @return Descriptor for this image
 	 */
-	Descriptor descriptor();
+	ImageDescriptor descriptor();
 
 	/**
 	 * @return Device context for this image
@@ -52,7 +52,7 @@ public interface Image extends NativeObject {
 	 * Default implementation managed by the application.
 	 */
 	class DefaultImage extends AbstractVulkanObject implements Image {
-		private final Descriptor descriptor;
+		private final ImageDescriptor descriptor;
 		private final DeviceMemory mem;
 
 		/**
@@ -62,14 +62,14 @@ public interface Image extends NativeObject {
 		 * @param descriptor	Image descriptor
 		 * @param mem			Device memory
 		 */
-		protected DefaultImage(Pointer handle, LogicalDevice dev, Descriptor descriptor, DeviceMemory mem) {
+		protected DefaultImage(Pointer handle, LogicalDevice dev, ImageDescriptor descriptor, DeviceMemory mem) {
 			super(handle, dev);
 			this.descriptor = notNull(descriptor);
 			this.mem = notNull(mem);
 		}
 
 		@Override
-		public Descriptor descriptor() {
+		public ImageDescriptor descriptor() {
 			return descriptor;
 		}
 
@@ -99,7 +99,7 @@ public interface Image extends NativeObject {
 	 * Builder for a {@link DefaultImage}.
 	 */
 	class Builder {
-		private Descriptor descriptor;
+		private ImageDescriptor descriptor;
 		private MemoryProperties<VkImageUsage> props;
 		private VkSampleCountFlag samples;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
@@ -113,7 +113,7 @@ public interface Image extends NativeObject {
 		 * Sets the descriptor for this image.
 		 * @param descriptor Image descriptor
 		 */
-		public Builder descriptor(Descriptor descriptor) {
+		public Builder descriptor(ImageDescriptor descriptor) {
 			this.descriptor = notNull(descriptor);
 			return this;
 		}

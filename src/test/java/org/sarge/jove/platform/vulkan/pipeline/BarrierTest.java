@@ -21,7 +21,7 @@ import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.image.Descriptor;
+import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.SubResource;
@@ -47,12 +47,12 @@ public class BarrierTest {
 	class BuilderTests {
 		private Barrier.Builder builder;
 		private Image image;
-		private Descriptor descriptor;
+		private ImageDescriptor descriptor;
 
 		@BeforeEach
 		void before() {
 			// Create image descriptor
-			descriptor = new Descriptor.Builder()
+			descriptor = new ImageDescriptor.Builder()
 					.format(AbstractVulkanTest.FORMAT)
 					.extents(new ImageExtents(3, 4))
 					.aspect(VkImageAspect.COLOR)

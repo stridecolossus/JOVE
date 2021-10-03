@@ -8,15 +8,15 @@ import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
- * The <i>format helper</i> is used to programatically select a Vulkan format.
+ * The <i>format builder</i> is used to programatically select a Vulkan format.
  * <p>
  * Finding a format in the {@link VkFormat} enumeration can be difficult given the number of values.
- * However the naming convention is highly consistent therefore it is easier to specify the format programatically.
+ * However the naming convention is highly consistent and it is therefore often easier to specify the format programatically.
  * <p>
  * Examples:
  * <pre>
  * // Construct a format: <code>B16G16R16A16_UNORM</code>
- * VkFormat format = new FormatHelper()
+ * VkFormat format = new FormatBuilder()
  *      .template("BGRA")			// BGRA
  *      .bytes(2)					// 16
  *      .signed(false)				// U
@@ -24,7 +24,7 @@ import org.sarge.lib.util.Check;
  *      .build();
  *
  * // Determine format from a component layout: <code>R32G32B32_SFLOAT</code>
- * VkFormat point = FormatHelper.format(Point.LAYOUT);
+ * VkFormat point = FormatBuilder.format(Point.LAYOUT);
  * </pre>
  * <p>
  * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex {@link Layout}.
@@ -32,7 +32,7 @@ import org.sarge.lib.util.Check;
  * @see VkFormat
  * @author Sarge
  */
-public class FormatHelper {
+public class FormatBuilder {
 	/**
 	 * Default component layout.
 	 */
@@ -86,7 +86,7 @@ public class FormatHelper {
 	 * @return Format for the given vertex layout
 	 */
 	public static VkFormat format(Vertex.Layout layout) {
-		return new FormatHelper()
+		return new FormatBuilder()
 				.count(layout.size())
 				.bytes(layout.bytes())
 				.type(Type.of(layout.type()))
@@ -104,7 +104,7 @@ public class FormatHelper {
 	 * @param template Colour component template string
 	 * @throws IllegalArgumentException if the given template is empty, contains an invalid character, or is longer than 4 components
 	 */
-	public FormatHelper template(String template) {
+	public FormatBuilder template(String template) {
 		Check.range(template.length(), 1, 4);
 		if(template.chars().anyMatch(ch -> RGBA.indexOf(ch) == -1)) throw new IllegalArgumentException("Invalid components specifier: " + template);
 		this.template = template;
@@ -115,7 +115,7 @@ public class FormatHelper {
 	 * Sets the number of components.
 	 * @param count Number of components 1..4
 	 */
-	public FormatHelper count(int count) {
+	public FormatBuilder count(int count) {
 		this.count = Check.range(count, 1, 4);
 		return this;
 	}
@@ -125,7 +125,7 @@ public class FormatHelper {
 	 * @param bytes Number of bytes per component (default is <code>4</code>)
 	 * @throws IllegalArgumentException if the number of bytes is invalid
 	 */
-	public FormatHelper bytes(int bytes) {
+	public FormatBuilder bytes(int bytes) {
 		if((bytes < 1) || (bytes > 8) || !MathsUtil.isPowerOfTwo(bytes)) {
 			throw new IllegalArgumentException("Unsupported number of component bytes: " + bytes);
 		}
@@ -137,7 +137,7 @@ public class FormatHelper {
 	 * Sets whether the data type is signed.
 	 * @param signed Whether signed type (default is {@code true})
 	 */
-	public FormatHelper signed(boolean signed) {
+	public FormatBuilder signed(boolean signed) {
 		this.signed = signed;
 		return this;
 	}
@@ -147,7 +147,7 @@ public class FormatHelper {
 	 * @param type Data type (default is {@link Type#FLOAT})
 	 * @see Type#of(Class)
 	 */
-	public FormatHelper type(Type type) {
+	public FormatBuilder type(Type type) {
 		this.type = notNull(type);
 		return this;
 	}

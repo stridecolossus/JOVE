@@ -38,13 +38,13 @@ public class ImageTest extends AbstractVulkanTest {
 
 	private DefaultImage image;
 	private Pointer handle;
-	private Descriptor descriptor;
+	private ImageDescriptor descriptor;
 	private DeviceMemory mem;
 
 	@BeforeEach
 	void before() {
 		// Create descriptor
-		descriptor = new Descriptor.Builder()
+		descriptor = new ImageDescriptor.Builder()
 				.format(FORMAT)
 				.extents(EXTENTS)
 				.aspect(COLOR)

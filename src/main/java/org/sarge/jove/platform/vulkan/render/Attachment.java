@@ -25,17 +25,25 @@ public class Attachment {
 	}
 
 	/**
-	 * @return Attachment description
-	 */
-	VkAttachmentDescription descriptor() {
-		return desc;
-	}
-
-	/**
 	 * @return Attachment format
 	 */
 	public VkFormat format() {
 		return desc.format;
+	}
+
+	/**
+	 * Populates a descriptor for this descriptor.
+	 * @param desc Attachment descriptor
+	 */
+	public void populate(VkAttachmentDescription attachment) {
+		attachment.format = desc.format;
+		attachment.samples = desc.samples;
+		attachment.loadOp = desc.loadOp;
+		attachment.storeOp = desc.storeOp;
+		attachment.stencilLoadOp = desc.stencilLoadOp;
+		attachment.stencilStoreOp = desc.stencilStoreOp;
+		attachment.initialLayout = desc.initialLayout;
+		attachment.finalLayout = desc.finalLayout;
 	}
 
 	@Override
@@ -146,7 +154,7 @@ public class Attachment {
 
 		/**
 		 * Constructs this attachment.
-		 * @throws IllegalArgumentException if the attachment format or final layout has not been specified
+		 * @throws IllegalArgumentException if the attachment format or final layout have not been specified
 		 * @return New attachment
 		 */
 		public Attachment build() {
@@ -154,11 +162,11 @@ public class Attachment {
 			if(desc.format == null) throw new IllegalArgumentException("No format specified for attachment");
 			if(desc.finalLayout == null) throw new IllegalArgumentException("No final layout specified");
 
-			// Create attachment wrapper
+			// Create attachment
 			final Attachment attachment = new Attachment(desc);
 
 			// Prevent fiddling
-			desc = new VkAttachmentDescription();
+			desc = null;
 
 			return attachment;
 		}

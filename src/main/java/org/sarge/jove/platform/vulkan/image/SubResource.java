@@ -1,8 +1,10 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,7 +19,6 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) {
-//public record SubResource(Descriptor descriptor, Set<VkImageAspect> mask, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) {
 	/**
 	 * Special case identifier indicating the <i>remaining</i> number of mip levels or array layers.
 	 */
@@ -28,10 +29,12 @@ public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount,
 	 * @param descriptor Image descriptor
 	 * @return New sub-resource
 	 */
-	public static SubResource of(Descriptor descriptor) {
-		//return new Builder(descriptor).build();
-
-		return null;
+	public static SubResource of(ImageDescriptor descriptor) {
+		return new Builder()
+				.aspects(descriptor.aspects())
+				.levelCount(descriptor.levels())
+				.layerCount(descriptor.layers())
+				.build();
 	}
 
 	/**
@@ -40,7 +43,7 @@ public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount,
 	 * This helper is intended for cases where a sub-resource is required by the API which can also be configured by the application.
 	 * For example {@link View.Builder#subresource(SubResource)}.
 	 * <p>
-	 * If <i>subresource</i> is {@code null} this method delegates to {@link #of(Descriptor)} to create a new top-level sub-resource.
+	 * If <i>subresource</i> is {@code null} this method delegates to {@link #of(ImageDescriptor)} to create a new top-level sub-resource.
 	 * Otherwise the sub-resource is validated by checking that it was created from the given descriptor.
 	 * <p>
 	 * @param descriptor		Image descriptor
@@ -48,19 +51,17 @@ public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount,
 	 * @return Sub-resource
 	 * @throws IllegalStateException if the sub-resource was not created from the given image descriptor
 	 */
- 	public static SubResource of(Descriptor descriptor, SubResource subresource) {
+	public static SubResource of(ImageDescriptor descriptor, SubResource subresource) {
 		if(subresource == null) {
 			return of(descriptor);
 		}
 		else {
-//			if(subresource.descriptor != descriptor) throw new IllegalStateException("Invalid sub-resource for image descriptor");
 			return subresource;
 		}
 	}
 
 	/**
 	 * Constructor.
-	 * @param descriptor			Image descriptor
 	 * @param mask					Aspect mask
 	 * @param mipLevel				Starting mip level
 	 * @param levelCount			Number of mip levels
@@ -70,7 +71,6 @@ public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount,
 	 */
 	public SubResource {
 		// Validate
-//		Check.notNull(descriptor);
 		mask = Set.copyOf(notEmpty(mask));
 		Check.zeroOrMore(mipLevel);
 		Check.oneOrMore(levelCount);
@@ -114,41 +114,27 @@ public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount,
 	 * Builder for an image sub-resource.
 	 */
 	public static class Builder {
-//		private final Descriptor descriptor;
-		private Set<VkImageAspect> mask;
+		private final Set<VkImageAspect> mask = new HashSet<>();
 		private int mipLevel;
-		private int levelCount;
+		private int levelCount = 1;
 		private int baseArrayLayer;
-		private int layerCount;
-
-//		/**
-//		 * Constructor.
-//		 * @param descriptor Image descriptor
-//		 */
-//		public Builder(Descriptor descriptor) {
-//			this.descriptor = notNull(descriptor);
-//			this.levelCount = descriptor.levels();
-//			this.layerCount = descriptor.layers();
-//			mask(descriptor.aspects());
-//		}
+		private int layerCount = 1;
 
 		/**
-		 * Sets the aspect mask.
-		 * @param aspect Aspect mask
+		 * Adds an image aspect.
+		 * @param aspect Image aspect
 		 */
-		public Builder mask(Set<VkImageAspect> mask) {
-			this.mask = new HashSet<>(mask);
+		public Builder aspect(VkImageAspect aspect) {
+			this.mask.add(notNull(aspect));
 			return this;
 		}
 
 		/**
-		 * Helper - <b>Removes</b> the specified image aspect from this sub-resource mask.
-		 * @param aspect Aspect to remove
-		 * @throws IllegalArgumentException if the aspect is not present in the descriptor
+		 * Adds a collection of image aspects.
+		 * @param aspects Image aspects
 		 */
-		public Builder remove(VkImageAspect aspect) {
-			final boolean removed = mask.remove(aspect);
-			if(!removed) throw new IllegalArgumentException("Image does not contain aspect: " + aspect);
+		public Builder aspects(Collection<VkImageAspect> aspects) {
+			this.mask.addAll(aspects);
 			return this;
 		}
 
@@ -191,11 +177,10 @@ public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount,
 		/**
 		 * Constructs this sub-resource.
 		 * @return New sub-resource
-		 * @throws IllegalArgumentException if the sub-resource is invalid
-		 * @see SubResource#SubResource(Descriptor, Set, int, int, int, int)
+		 * @throws IllegalArgumentException if the aspect mask is empty
 		 */
 		public SubResource build() {
-//			return new SubResource(descriptor, mask, mipLevel, levelCount, baseArrayLayer, layerCount);
+			if(mask.isEmpty()) throw new IllegalArgumentException("Empty aspect mask");
 			return new SubResource(mask, mipLevel, levelCount, baseArrayLayer, layerCount);
 		}
 	}

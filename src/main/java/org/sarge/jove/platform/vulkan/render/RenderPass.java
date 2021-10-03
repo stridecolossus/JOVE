@@ -4,10 +4,8 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.sarge.jove.common.IntegerEnumeration;
@@ -46,7 +44,7 @@ public class RenderPass extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Number of attachments
+	 * @return Attachments
 	 */
 	public List<Attachment> attachments() {
 		return attachments;
@@ -64,6 +62,19 @@ public class RenderPass extends AbstractVulkanObject {
 		private final List<Attachment> attachments = new ArrayList<>();
 		private final List<SubPassBuilder> subpasses = new ArrayList<>();
 		private final List<DependencyBuilder> dependencies = new ArrayList<>();
+
+		/**
+		 * Adds an attachment to this render pass.
+		 * @param attachment Attachment to add
+		 * @return Attachment index
+		 */
+		private int add(Attachment attachment) {
+			Check.notNull(attachment);
+			if(!attachments.contains(attachment)) {
+				attachments.add(attachment);
+			}
+			return attachments.indexOf(attachment);
+		}
 
 		/**
 		 * Starts a sub-pass.
@@ -90,23 +101,6 @@ public class RenderPass extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Populates (actually clones) an attachment descriptor.
-		 * @param attachment		Attachment
-		 * @param desc 				Attachment descriptor
-		 */
-		private static void populate(Attachment attachment, VkAttachmentDescription desc) {
-			final VkAttachmentDescription copy = attachment.descriptor();
-			desc.format = copy.format;
-			desc.samples = copy.samples;
-			desc.loadOp = copy.loadOp;
-			desc.storeOp = copy.storeOp;
-			desc.stencilLoadOp = copy.stencilLoadOp;
-			desc.stencilStoreOp = copy.stencilStoreOp;
-			desc.initialLayout = copy.initialLayout;
-			desc.finalLayout = copy.finalLayout;
-		}
-
-		/**
 		 * Constructs this render pass.
 		 * @param dev Logical device
 		 * @return New render pass
@@ -121,7 +115,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 			// Add attachments
 			info.attachmentCount = attachments.size();
-			info.pAttachments = StructureHelper.first(attachments, VkAttachmentDescription::new, Builder::populate);
+			info.pAttachments = StructureHelper.first(attachments, VkAttachmentDescription::new, Attachment::populate);
 
 			// Add sub-passes
 			info.subpassCount = subpasses.size();
@@ -141,47 +135,47 @@ public class RenderPass extends AbstractVulkanObject {
 		}
 
 		/**
+		 * An <i>attachment reference</i> refers to the attachment used in this sub-pass.
+		 */
+		private record Reference(int index, VkImageLayout layout) {
+			private void populate(VkAttachmentReference ref) {
+				ref.attachment = index;
+				ref.layout = layout;
+			}
+		}
+
+		/**
 		 * Builder for a sub-pass.
 		 */
 		public class SubPassBuilder {
-			private final Map<Integer, VkImageLayout> colour = new HashMap<>();
-			private Map.Entry<Integer, VkImageLayout> depth;
+			private final List<Reference> colours = new ArrayList<>();
+			private Reference depth;
 
 			/**
 			 * Adds a colour attachment.
-			 * @param index			Attachment index
+			 * @param attachment	Colour attachment
 			 * @param layout		Attachment layout
 			 */
 			public SubPassBuilder colour(Attachment attachment, VkImageLayout layout) {
 				final int index = add(attachment);
-				if(colour.containsKey(index)) throw new IllegalArgumentException("Duplicate colour attachment: " + attachment);
-				colour.put(index, layout);
+				if(colours.stream().mapToInt(Reference::index).anyMatch(idx -> index == idx)) {
+					throw new IllegalArgumentException("Duplicate colour attachment: " + attachment);
+				}
+				colours.add(new Reference(index, layout));
 				return this;
 			}
 
 			/**
 			 * Adds the depth-buffer attachment.
-			 * @param index Attachment index
-			 * @throws IllegalArgumentException if the depth buffer has already been configured
+			 * @param depth		Depth-buffer attachment
+			 * @param layout	Image layout
+			 * @throws IllegalArgumentException if a depth buffer has already been configured
 			 */
 			public SubPassBuilder depth(Attachment depth, VkImageLayout layout) {
 				if(this.depth != null) throw new IllegalArgumentException("Depth attachment already configured");
 				final int index = add(depth);
-				this.depth = Map.entry(index, layout);
+				this.depth = new Reference(index, layout);
 				return this;
-			}
-
-			/**
-			 * Adds an attachment to this sub-pass.
-			 * @param attachment Attachment to add
-			 * @return Attachment index
-			 */
-			private int add(Attachment attachment) {
-				Check.notNull(attachment);
-				if(!attachments.contains(attachment)) {
-					attachments.add(attachment);
-				}
-				return attachments.indexOf(attachment);
 			}
 
 			/**
@@ -193,14 +187,13 @@ public class RenderPass extends AbstractVulkanObject {
 				desc.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
 
 				// Populate colour attachments
-				desc.colorAttachmentCount = colour.size();
-				desc.pColorAttachments = StructureHelper.first(colour.entrySet(), VkAttachmentReference::new, Builder::reference);
+				desc.colorAttachmentCount = colours.size();
+				desc.pColorAttachments = StructureHelper.first(colours, VkAttachmentReference::new, Reference::populate);
 
 				// Populate depth attachment
 				if(depth != null) {
-					final var ref = new VkAttachmentReference();
-					reference(depth, ref);
-					desc.pDepthStencilAttachment = ref;
+					desc.pDepthStencilAttachment = new VkAttachmentReference();
+					depth.populate(desc.pDepthStencilAttachment);
 				}
 			}
 
@@ -209,20 +202,10 @@ public class RenderPass extends AbstractVulkanObject {
 			 * @throws IllegalArgumentException if no attachment references were specified
 			 */
 			public Builder build() {
-				if((depth == null) && colour.isEmpty()) throw new IllegalArgumentException("No attachments specified in sub-pass");
+				if((depth == null) && colours.isEmpty()) throw new IllegalArgumentException("No attachments specified in sub-pass");
 				subpasses.add(this);
 				return Builder.this;
 			}
-		}
-
-		/**
-		 * Populates an attachment reference descriptor.
-		 * @param entry		Attachment entry
-		 * @param ref		Attachment reference descriptor
-		 */
-		private static void reference(Map.Entry<Integer, VkImageLayout> entry, VkAttachmentReference ref) {
-			ref.attachment = entry.getKey();
-			ref.layout = entry.getValue();
 		}
 
 		/**

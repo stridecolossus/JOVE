@@ -27,7 +27,7 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.image.Descriptor;
+import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.View;
@@ -48,7 +48,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 	void before() {
 		// Specify image swapchain descriptor
 		final Dimensions extents = new Dimensions(3, 4);
-		final Descriptor descriptor = new Descriptor.Builder()
+		final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 				.extents(new ImageExtents(extents))
 				.format(FORMAT)
 				.aspect(VkImageAspect.COLOR)
