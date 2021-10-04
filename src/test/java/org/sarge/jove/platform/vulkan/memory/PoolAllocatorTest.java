@@ -124,7 +124,7 @@ public class PoolAllocatorTest {
 		void destroy() {
 			final DeviceMemory mem = allocator.allocate(type, SIZE);
 			pool.destroy();
-			verify(block).destroy();
+			verify(block).close();
 			assertEquals(0, pool.free());
 			assertEquals(0, pool.size());
 			assertEquals(0, allocator.count());
@@ -168,7 +168,7 @@ public class PoolAllocatorTest {
 		@Test
 		void allocateReallocate() {
 			final DeviceMemory prev = allocator.allocate(type, SIZE);
-			prev.destroy();
+			prev.close();
 			assertEquals(prev, allocator.allocate(type, SIZE));
 			assertEquals(1, allocator.count());
 		}
@@ -229,7 +229,7 @@ public class PoolAllocatorTest {
 		@Test
 		void destroy() {
 			final DeviceMemory mem = allocator.allocate(type, SIZE);
-			mem.destroy();
+			mem.close();
 			assertEquals(true, mem.isDestroyed());
 			assertEquals(SIZE, pool.size());
 			assertEquals(SIZE, pool.free());
@@ -247,8 +247,8 @@ public class PoolAllocatorTest {
 		@Test
 		void destroyAlreadyDestroyed() {
 			final DeviceMemory mem = allocator.allocate(type, SIZE);
-			mem.destroy();
-			assertThrows(IllegalStateException.class, () -> mem.destroy());
+			mem.close();
+			assertThrows(IllegalStateException.class, () -> mem.close());
 		}
 	}
 
@@ -299,7 +299,7 @@ public class PoolAllocatorTest {
 			allocator.destroy();
 			assertEquals(0, allocator.count());
 			assertEquals(Map.of(type, pool), allocator.pools());
-			verify(block).destroy();
+			verify(block).close();
 			assertEquals(0, pool.size());
 			assertEquals(0, pool.free());
 		}

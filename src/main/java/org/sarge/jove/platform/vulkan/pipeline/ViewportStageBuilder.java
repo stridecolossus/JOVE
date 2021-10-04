@@ -107,7 +107,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		// TODO - count = 1 unless multiple viewports feature
 
 		// Add viewports
-		final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
+		final var info = new VkPipelineViewportStateCreateInfo();
 		info.viewportCount = count;
 		info.pViewports = StructureHelper.first(viewports, VkViewport::new, (rec, viewport) -> rec.populate(viewport, flip));
 

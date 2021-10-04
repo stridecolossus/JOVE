@@ -9,7 +9,7 @@ public interface TransientNativeObject extends NativeObject {
 	 * Destroys this object.
 	 * @throws IllegalStateException if this object has already been destroyed
 	 */
-	void destroy();
+	void close();
 
 	/**
 	 * @return Whether this object has been destroyed

@@ -90,9 +90,9 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		view.destroy();
+		view.close();
 		verify(lib).vkDestroyImageView(dev.handle(), view.handle(), null);
-		verify(image).destroy();
+		verify(image).close();
 		verifyNoMoreInteractions(lib);
 	}
 

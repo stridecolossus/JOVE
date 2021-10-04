@@ -1,19 +1,27 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
+import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.Shader;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
 
@@ -59,10 +67,65 @@ public class Pipeline extends AbstractVulkanObject {
 	 * Builder for a pipeline.
 	 */
 	public static class Builder {
+		/**
+		 * A <i>shader stage builder</i> configures a programmable shader stage for this pipeline.
+		 */
+		public class ShaderStageBuilder {
+			private final VkShaderStage stage;
+			private Shader shader;
+			private String name = "main";
+
+			private ShaderStageBuilder(VkShaderStage stage) {
+				this.stage = stage;
+			}
+
+			/**
+			 * Sets the shader module.
+			 * @param shader Shader module
+			 */
+			public ShaderStageBuilder shader(Shader shader) {
+				this.shader = notNull(shader);
+				return this;
+			}
+
+			/**
+			 * Sets the method name of this shader stage (default is {@code main}).
+			 * @param name Shader method name
+			 */
+			public ShaderStageBuilder name(String name) {
+				this.name = notEmpty(name);
+				return this;
+			}
+
+			/**
+			 * Constructs this shader pipeline stage.
+			 * @return Parent pipeline builder
+			 * @throws IllegalArgumentException if the shader module has not been configured
+			 */
+			public Builder build() {
+				validate();
+				return Builder.this;
+			}
+
+			/**
+			 * Populates the shader stage descriptor.
+			 */
+			void populate(VkPipelineShaderStageCreateInfo info) {
+				validate();
+				info.stage = stage;
+				info.module = shader.handle();
+				info.pName = name;
+			}
+
+			private void validate() {
+				if(shader == null) throw new IllegalArgumentException("Shader module not populated");
+			}
+		}
+
 		// Properties
 		private PipelineLayout layout;
 		private RenderPass pass;
-		private final ShaderStageBuilder shaders = new ShaderStageBuilder();
+		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
 
 		// Fixed function builders
 		private final VertexInputStageBuilder input = new VertexInputStageBuilder();
@@ -82,7 +145,6 @@ public class Pipeline extends AbstractVulkanObject {
 			raster.parent(this);
 			depth.parent(this);
 			blend.parent(this);
-			shaders.parent(this);
 		}
 
 		/**
@@ -158,10 +220,15 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
+		 * @param stage Programmable shader stage
 		 * @return Builder for a shader stage
+		 * @throws IllegalArgumentException for a duplicate shader stage
 		 */
-		public ShaderStageBuilder shader() {
-			return shaders.init();
+		public ShaderStageBuilder shader(VkShaderStage stage) {
+			final var shader = new ShaderStageBuilder(stage);
+			if(shaders.containsKey(stage)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
+			shaders.put(stage, shader);
+			return shader;
 		}
 
 		/**
@@ -169,10 +236,11 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @param dev Logical device
 		 * @return New pipeline
 		 * @throws IllegalArgumentException if the pipeline layout or render pass has not been specified
+		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader has been specified
 		 */
 		public Pipeline build(LogicalDevice dev) {
 			// Create descriptor
-			final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
+			final var pipeline = new VkGraphicsPipelineCreateInfo();
 
 			// Init layout
 			if(layout == null) throw new IllegalArgumentException("No pipeline layout specified");
@@ -184,8 +252,10 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.subpass = 0;		// TODO
 
 			// Init shader pipeline stages
+			if(shaders.isEmpty()) throw new IllegalArgumentException("No programmable shader stages specified");
+			if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 			pipeline.stageCount = shaders.size();
-			pipeline.pStages = shaders.get();
+			pipeline.pStages = StructureHelper.first(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
 
 			// Init fixed function pipeline stages
 			pipeline.pVertexInputState = input.get();

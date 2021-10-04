@@ -245,7 +245,7 @@ public class PoolAllocator implements Allocator {
 			}
 
 			@Override
-			public synchronized void destroy() {
+			public synchronized void close() {
 				if(isDestroyed()) throw new IllegalStateException("Device memory has already been destroyed: " + this);
 				destroyed = true;
 			}
@@ -410,7 +410,7 @@ public class PoolAllocator implements Allocator {
 		 */
 		public synchronized void release() {
 			final var allocations = allocations().collect(toList());
-			allocations.forEach(DeviceMemory::destroy);
+			allocations.forEach(DeviceMemory::close);
 			assert free() == total;
 		}
 
@@ -424,7 +424,7 @@ public class PoolAllocator implements Allocator {
 
 			// Destroy allocated blocks
 			for(Block b : blocks) {
-				b.mem.destroy();
+				b.mem.close();
 			}
 			blocks.clear();
 			total = 0;

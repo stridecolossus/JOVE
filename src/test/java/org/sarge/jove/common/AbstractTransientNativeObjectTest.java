@@ -33,15 +33,15 @@ public class AbstractTransientNativeObjectTest {
 	}
 
 	@Test
-	void destroy() {
-		obj.destroy();
+	void close() {
+		obj.close();
 		assertEquals(true, obj.isDestroyed());
 		assertEquals(true, destroyed);
 	}
 
 	@Test
-	void destroyAlreadyDestroyed() {
-		obj.destroy();
-		assertThrows(IllegalStateException.class, () -> obj.destroy());
+	void closeAlreadyDestroyed() {
+		obj.close();
+		assertThrows(IllegalStateException.class, () -> obj.close());
 	}
 }

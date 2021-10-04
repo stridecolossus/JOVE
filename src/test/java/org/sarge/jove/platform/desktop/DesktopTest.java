@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -80,15 +81,16 @@ public class DesktopTest {
 	}
 
 	@Test
-	void destroy() {
-		desktop.destroy();
+	void close() {
+		desktop.close();
 		verify(lib).glfwTerminate();
 	}
 
+	@Disabled
 	@Tag("GLFW")
 	@Test
 	void create() {
 		final Desktop desktop = Desktop.create();
-		desktop.destroy();
+		desktop.close();
 	}
 }

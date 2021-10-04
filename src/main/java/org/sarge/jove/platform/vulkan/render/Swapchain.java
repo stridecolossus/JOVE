@@ -157,7 +157,7 @@ public class Swapchain extends AbstractVulkanObject {
 
 	@Override
 	protected void release() {
-		views.forEach(View::destroy);
+		views.forEach(View::close);
 	}
 
 	/**

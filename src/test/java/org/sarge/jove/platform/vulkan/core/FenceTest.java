@@ -67,7 +67,7 @@ public class FenceTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		fence.destroy();
+		fence.close();
 		verify(lib).vkDestroyFence(dev.handle(), fence.handle(), null);
 	}
 

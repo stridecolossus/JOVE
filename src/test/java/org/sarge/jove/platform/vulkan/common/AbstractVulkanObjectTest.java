@@ -60,8 +60,8 @@ public class AbstractVulkanObjectTest {
 	}
 
 	@Test
-	void destroy() {
-		obj.destroy();
+	void close() {
+		obj.close();
 		assertEquals(true, obj.isDestroyed());
 		verify(destructor).destroy(dev.handle(), obj.handle(), null);
 		assertTrue(released);

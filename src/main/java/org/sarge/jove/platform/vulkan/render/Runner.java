@@ -179,9 +179,9 @@ public class Runner {
 		 * Releases the synchronisation resources of this frame.
 		 */
 		private void destroy() {
-			ready.destroy();
-			finished.destroy();
-			fence.destroy();
+			ready.close();
+			finished.close();
+			fence.close();
 		}
 	}
 

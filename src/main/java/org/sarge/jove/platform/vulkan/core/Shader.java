@@ -28,7 +28,7 @@ public class Shader extends AbstractVulkanObject {
 	 */
 	public static Shader create(LogicalDevice dev, byte[] code) {
 		// Create descriptor
-		final VkShaderModuleCreateInfo info = new VkShaderModuleCreateInfo();
+		final var info = new VkShaderModuleCreateInfo();
 		info.codeSize = code.length;
 		info.pCode = VulkanHelper.buffer(code.length).put(code).flip();
 

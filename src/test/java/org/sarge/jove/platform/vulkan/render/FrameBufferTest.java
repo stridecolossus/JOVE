@@ -138,7 +138,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		final Handle handle = buffer.handle();
-		buffer.destroy();
+		buffer.close();
 		verify(lib).vkDestroyFramebuffer(DEVICE, handle, null);
 	}
 

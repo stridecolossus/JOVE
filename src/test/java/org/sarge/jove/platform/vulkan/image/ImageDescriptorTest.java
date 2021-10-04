@@ -110,9 +110,9 @@ public class ImageDescriptorTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		image.destroy();
+		image.close();
 		verify(lib).vkDestroyImage(dev.handle(), image.handle(), null);
-		verify(mem).destroy();
+		verify(mem).close();
 	}
 
 	@Nested

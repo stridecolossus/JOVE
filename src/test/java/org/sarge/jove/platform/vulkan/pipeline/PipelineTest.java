@@ -57,7 +57,7 @@ public class PipelineTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		final Handle handle = pipeline.handle();
-		pipeline.destroy();
+		pipeline.close();
 		verify(lib).vkDestroyPipeline(dev.handle(), handle, null);
 	}
 
@@ -77,7 +77,6 @@ public class PipelineTest extends AbstractVulkanTest {
 			assertNotNull(builder.input());
 			assertNotNull(builder.assembly());
 			assertNotNull(builder.viewport());
-			assertNotNull(builder.shader());
 			assertNotNull(builder.rasterizer());
 			assertNotNull(builder.blend());
 		}
@@ -89,8 +88,7 @@ public class PipelineTest extends AbstractVulkanTest {
 					.layout(layout)
 					.pass(pass)
 					.viewport(new Dimensions(3, 4))
-					.shader()
-						.stage(VkShaderStage.VERTEX)
+					.shader(VkShaderStage.VERTEX)
 						.shader(mock(Shader.class))
 						.build()
 					.build(dev);
@@ -132,10 +130,9 @@ public class PipelineTest extends AbstractVulkanTest {
 
 		private void addVertexShaderStage() {
 			builder
-				.shader()
-					.stage(VkShaderStage.VERTEX)
+				.shader(VkShaderStage.VERTEX)
 					.shader(mock(Shader.class))
-				.build();
+					.build();
 		}
 
 		@Test
@@ -165,5 +162,10 @@ public class PipelineTest extends AbstractVulkanTest {
 			addVertexShaderStage();
 			assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage());
 		}
+	}
+
+	@Nested
+	class ShaderStageBuilderTests {
+		// TODO
 	}
 }

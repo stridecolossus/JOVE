@@ -155,7 +155,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@Test
 		void destroy() {
 			final Handle handle = layout.handle();
-			layout.destroy();
+			layout.close();
 			verify(lib).vkDestroyDescriptorSetLayout(dev.handle(), handle, null);
 		}
 
@@ -199,7 +199,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		@Test
 		void destroy() {
 			final Handle handle = pool.handle();
-			pool.destroy();
+			pool.close();
 			verify(lib).vkDestroyDescriptorPool(dev.handle(), handle, null);
 			assertEquals(0, pool.sets().count());
 		}

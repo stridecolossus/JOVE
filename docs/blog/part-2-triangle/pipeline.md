@@ -6,101 +6,85 @@ title: The Graphics Pipeline
 
 The _graphics pipeline_ configures the various _stages_ executed by the hardware to render a fragment.
 
-A pipeline stage is either a configurable _fixed function_ or a programmable stage implemented by a _shader_ module.
+A pipeline stage is either a configurable _fixed function_ or a _programmable stage_ implemented by a _shader module_.
 
-Configuring the pipeline requires a large amount of information for even the simplest case (though much of this is often default information or empty structures).
+Configuring the pipeline requires a large amount of information for even the simplest case (though much of this is often default data or empty structures).
 
 In this chapter we will implement the mandatory fixed-function pipeline stages and the _vertex shader_ stage required for the triangle demo:
 
 ---
 
-## Building a Pipeline
+## Building the Pipeline
 
-### Pipeline Class
+### Pipeline
 
 The pipeline domain class itself is relatively trivial:
 
 ```java
 public class Pipeline extends AbstractVulkanObject {
-    /**
-     * Constructor.
-     * @param handle        Pipeline handle
-     * @param dev           Device
-     */
-    Pipeline(Pointer handle, LogicalDevice dev) {
-        super(handle, dev, dev.library()::vkDestroyPipeline);
+    private final PipelineLayout layout;
+
+    Pipeline(Pointer handle, LogicalDevice dev, PipelineLayout layout) {
+        super(handle, dev);
+        this.layout = notNull(layout);
     }
 
-    public static class Builder {
-    }
-
-    /**
-     * A <i>pipeline layout</i> specifies the resources used by a pipeline.
-     */
-    public static class Layout extends AbstractVulkanObject {
+    @Override
+    protected Destructor destructor(VulkanLibrary lib) {
+        return lib::vkDestroyPipeline;
     }
 }
 ```
 
-The API methods to create and manage the pipeline are defined in the `VulkanLibraryPipeline` JNA interface.
+The _pipeline layout_ specifies the _resources_ (texture samplers, uniform buffers and _push constants_) used by the pipeline.  None of these are needed for the triangle demo but we are still required to specify a layout for the pipeline.
 
-### Pipeline Layout
-
-The _pipeline layout_ specifies the _resources_ (texture samplers, uniform buffers, etc) and _push constants_ used by the pipeline.
-
-None of these are needed for the triangle demo but we are still required to specify a layout for the pipeline.
-
-We create a bare-bones implementation this this stage of development:
+We create a bare-bones implementation for this stage of development:
 
 ```java
-public static class Layout extends AbstractVulkanObject {
-    private Layout(Pointer handle, LogicalDevice dev) {
-        super(handle, dev, dev.library()::vkDestroyPipelineLayout);
+public class PipelineLayout extends AbstractVulkanObject {
+    private PipelineLayout(Pointer handle, LogicalDevice dev) {
+        super(handle, dev);
     }
 
-    public static class Builder {
-        private final LogicalDevice dev;
-
-        public Builder(LogicalDevice dev) {
-            this.dev = notNull(dev);
-        }
-
-        public Layout build() {
-            final VkPipelineLayoutCreateInfo info = new VkPipelineLayoutCreateInfo();
-            // TODO
-            final VulkanLibrary lib = dev.library();
-            final PointerByReference layout = lib.factory().pointer();
-            check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));
-            return new Layout(layout.getValue(), dev);
-        }
+    @Override
+    protected Destructor destructor(VulkanLibrary lib) {
+        return lib::vkDestroyPipelineLayout;
     }
 }
 ```
 
-### Pipeline Builder
+And a builder to create the layout:
+
+```java
+public PipelineLayout build() {
+    final var info = new VkPipelineLayoutCreateInfo();
+    final VulkanLibrary lib = dev.library();
+    final PointerByReference layout = lib.factory().pointer();
+    check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));
+    return new PipelineLayout(layout.getValue(), dev);
+}
+```
+
+### Builder
 
 Configuration of the pipeline is probably the largest and most complex aspect of creating a Vulkan application (in terms of the amount of supporting functionality that is required).
 
 Our goals for configuration of the pipeline are:
 
-1. Apply sensible defaults for the optional pipeline stages to reduce the amount of boiler-plate for a given application.
+1. Implement a fluid interface for pipeline construction.
 
-2. Implement a fluid interface for pipeline construction.
+2. Apply sensible defaults for the optional pipeline stages to reduce the amount of boiler-plate for a given application.
 
-Obviously we start with a builder:
+3. Factor out the code for configuration of the pipeline stages into separate classes (for maintainability and testability reasons).
+
+We start with an outline builder for the pipeline:
 
 ```java
 public static class Builder {
-    private final LogicalDevice dev;
-    private Layout layout;
+    private PipelineLayout layout;
     private RenderPass pass;
 
-    public Builder(LogicalDevice dev) {
-        this.dev = notNull(dev);
-        init();
-    }
-
-    public Builder layout(Layout layout) {
+    public Builder layout(PipelineLayout layout) {
         this.layout = notNull(layout);
         return this;
     }
@@ -109,143 +93,296 @@ public static class Builder {
         this.pass = notNull(pass);
         return this;
     }
-    
-    public Pipeline build() {
-    }
 }
 ```
 
-We create outline nested builders for the mandatory fixed function stages:
+Next we create outline builders for the mandatory fixed-function pipeline stages:
 
 ```java
 private final VertexInputStageBuilder input = new VertexInputStageBuilder();
 private final InputAssemblyStageBuilder assembly = new InputAssemblyStageBuilder();
-// TODO - tessellation
 private final ViewportStageBuilder viewport = new ViewportStageBuilder();
 private final RasterizerStageBuilder raster = new RasterizerStageBuilder();
-// TODO - depth/stencil
-// TODO - multi sample
 private final ColourBlendStageBuilder blend = new ColourBlendStageBuilder();
-// TODO - dynamic
+```
 
+Which can be requested from the parent builder via an accessor, for example:
+
+```java
 /**
  * @return Builder for the vertex input stage
  */
 public VertexInputStageBuilder input() {
     return input;
 }
-
-// etc...
 ```
 
-And another that builds the **array** of shader stages:
+If the number and complexity of these nested builders was relatively small we would implement them as _local classes_ of the pipeline (as we did for the render pass in the previous chapter).  This is clearly not viable for the pipeline - the parent class would become unwieldy and difficult to maintain or test.
 
-```java
-private final ShaderStageBuilder shader = new ShaderStageBuilder();
-```
+Therefore we need to factor out the nested builders into their own source files whilst maintaining the fluid interface.  After some research we failed to find a decent strategy or pattern for this approach (though we did find some absolutely hideous solutions using reflection and other shenanigans).
 
-We next implement a unit-test for the parent builder shown here to illustrate the fluid configuration approach:
-
-```java
-class BuilderTest {
-    private Builder builder;
-    private Rectangle rect;
-    private Layout layout;
-    private RenderPass pass;
-
-    @BeforeEach
-    void before() {
-        builder = new Builder(dev);
-        rect = new Rectangle(new Dimensions(3, 4));
-        layout = mock(Layout.class);
-        pass = mock(RenderPass.class);
-    }
-
-    @Test
-    void build() {
-        pipeline = builder
-            .layout(layout)
-            .pass(pass)
-            .viewport()
-                .viewport(rect)
-                .scissor(rect)
-                .build()
-            .shader()
-                .stage(VkShaderStageFlag.VERTEX)
-                .shader(mock(Shader.class))
-                .build()
-            .build();
-
-        ...
-    }
-}
-```
-
-### Nested Builders
-
-If the number and complexity of the nested builders was relatively small we would implement them as _local classes_ of the pipeline (as we did for the render pass in the previous chapter).
-This is clearly not viable for the pipeline - the parent class would become unwieldy, error-prone and difficult to maintain or test.
-
-Therefore we need to factor out the nested builders into their own source files whilst maintaining the fluid interface.
-After some research we failed to find a decent strategy or pattern for this approach (though we did find some absolutely hideous solutions using reflection and other shenanigans).
-
-Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its `build` method) and a protected `result` method that constructs the resultant object.  We wrap this up in an abstract base-class:
+Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its `build` method) and a package-private `get` method that constructs the resultant object.  We wrap this up in the following template class:
 
 ```java
 abstract class AbstractPipelineBuilder<T> {
-    private Pipeline.Builder parent;
+    private Builder parent;
 
     /**
      * Sets the parent builder.
-     * @param parent Parent builder
+     * @param parent Parent
      */
-    protected void parent(Pipeline.Builder parent) {
+    void parent(Builder parent) {
         this.parent = notNull(parent);
     }
 
     /**
      * @return Result of this builder
      */
-    protected abstract T result();
+    abstract T get();
 
     /**
-     * Completes construction.
-     * @return Parent builder
+     * Constructs this object.
+     * @return Parent pipeline builder
      */
-    public Pipeline.Builder build() {
+    public Builder build() {
         return parent;
     }
 }
 ```
 
-For example here is the viewport stage builder (which we will complete below):
+For example the viewport stage builder (which we complete below) is declared as follows:
 
 ```java
 public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
-    ...
-
     @Override
-    protected VkPipelineViewportStateCreateInfo result() {
-        final var info = new VkPipelineViewportStateCreateInfo();
+    VkPipelineViewportStateCreateInfo get() {
         ...
-        return info;
     }
 }
 ```
 
-Finally the pipeline builder initialises the `parent` of each nested builder in its constructor.
+The pipeline builder initialises the parent of each nested pipeline stage in the constructor:
 
-This is a slightly shonky implementation but it is relatively simple and achieves our goal of a fluid nested builder. 
-The resultant classes are relatively self-contained and are therefore more manageable and testable (and the nastier details are at least package-private).
+```java
+public Builder() {
+    viewport.parent(this);
+    ...
+}
+```
+
+This is a slightly ropey implementation but it is relatively simple and achieves our goal of a fluid nested builder.  The resultant classes are relatively self-contained in terms of maintenance and testing and the nastier details are at least package-private.
+
+### Viewport
+
+To avoid making this chapter overly long we only cover the implementation of the mandatory pipeline stages required for the triangle demo and introduce other stages as they are needed.
+
+The only fixed-function that we __must__ configure is the _viewport pipeline stage_ that defines the drawing regions of the frame buffers and rasterizer:
+
+```java
+public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
+    private final List<Viewport> viewports = new ArrayList<>();
+    private final List<Rectangle> scissors = new ArrayList<>();
+}
+```
+
+A `Viewport` is a local type that aggregates the viewport rectangle and near/far rendering depths:
+
+```java
+private record Viewport(Rectangle rect, Percentile min, Percentile max) {
+    private Viewport {
+        Check.notNull(rect);
+        Check.notNull(min);
+        Check.notNull(max);
+    }
+}
+```
+
+Where `Rectangle` is another trivial record type:
+
+```java
+public record Rectangle(int x, int y, int width, int height) { ... }
+```
+
+We add the following setters to specify the viewport(s) for the pipeline:
+
+```java
+public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
+    viewports.add(new Viewport(rect, min, max));
+    return this;
+}
+
+public ViewportStageBuilder viewport(Rectangle viewport) {
+    return viewport(viewport, Percentile.ZERO, Percentile.ONE);
+}
+
+public ViewportStageBuilder scissor(Rectangle rect) {
+    scissors.add(notNull(rect));
+    return this;
+}
+```
+
+Finally the builder populates the Vulkan descriptor for the viewport stage:
+
+```java
+@Override
+VkPipelineViewportStateCreateInfo get() {
+    // Validate
+    final int count = viewports.size();
+    if(count == 0) throw new IllegalArgumentException("No viewports specified");
+    if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
+
+    // Add viewports
+    final var info = new VkPipelineViewportStateCreateInfo();
+    info.viewportCount = count;
+    info.pViewports = StructureHelper.first(viewports, VkViewport::new, Viewport::populate);
+
+    // Add scissors
+    info.scissorCount = count;
+    info.pScissors = StructureHelper.first(scissors, VkRect2D.ByReference::new, VulkanHelper::populate);
+
+    return info;
+}
+```
+
+Which uses the following population method on the `Viewport` type:
+
+```java
+private void populate(VkViewport viewport) {
+    viewport.x = rect.x();
+    viewport.y = rect.y();
+    viewport.width = rect.width();
+    viewport.height = rect.height();
+    viewport.minDepth = min.floatValue();
+    viewport.maxDepth = max.floatValue();
+}
+```
+
+---
+
+## Shaders
+
+The other component that we must implement is the programmable pipeline stage to support a _vertex shader_ to render the triangle.
+
+### Shader Module
+
+We first create the a _shader module_ domain object:
+
+```java
+public class Shader extends AbstractVulkanObject {
+    private Shader(Pointer handle, LogicalDevice dev) {
+        super(handle, dev);
+    }
+
+    @Override
+    protected Destructor destructor(VulkanLibrary lib) {
+        return lib::vkDestroyShaderModule;
+    }
+}
+```
+
+Shaders are created via a factory that first converts the SPIV code to a byte-buffer:
+
+```java
+public static Shader create(LogicalDevice dev, byte[] code) {
+    // Convert code to buffer
+    ByteBuffer bb = ByteBuffer
+        .allocateDirect(code.length)
+        .order(ByteOrder.nativeOrder())
+        .put(code)
+        .flip();
+}
+```
+
+And as usual we populate a Vulkan descriptor for the shader and invoke the relevant API method:
+
+```java
+// Create descriptor
+var info = new VkShaderModuleCreateInfo();
+info.codeSize = code.length;
+info.pCode = bb;
+
+// Allocate shader
+VulkanLibrary lib = dev.library();
+PointerByReference shader = lib.factory().pointer();
+check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));
+
+// Create shader
+return new Shader(shader.getValue(), dev);
+```
+
+The API for shader modules consists of two methods:
+
+```java
+interface VulkanLibraryShader {
+    int vkCreateShaderModule(Handle device, VkShaderModuleCreateInfo info, Handle pAllocator, PointerByReference shader);
+    void vkDestroyShaderModule(Handle device, Handle shader, Handle pAllocator);
+}
+```
+
+We also add the following helper to load a shader from the file system:
+
+```java
+public static Shader load(LogicalDevice dev, InputStream in) throws IOException {
+    byte[] code = in.readAllBytes();
+    return create(dev, code);
+}
+```
+
+### Shader Pipeline Stage
+
+A pipeline can be comprised of multiple programmable shader stages, therefore in this case we implement the nested builder for shaders as a local class of the pipeline builder:
+
+```java
+public static class Builder {
+    public class ShaderStageBuilder {
+        private final VkShaderStage stage;
+        private Shader shader;
+        private String name = "main";
+    }
+}
+```
+
+The build method returns control to the parent pipeline builder:
+
+```java
+public Builder build() {
+    validate();
+    return Builder.this;
+}
+```
+
+We add a map of shader stages to the pipeline builder and a factory method to start a new shader stage (checking for duplicates):
+
+```java
+private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
+
+public ShaderStageBuilder shader(VkShaderStage stage) {
+    final var shader = new ShaderStageBuilder(stage);
+    if(shaders.containsKey(stage)) throw new IllegalArgumentException(...);
+    shaders.put(stage, shader);
+    return shader;
+}
+```
+
+And the following helper to populate the resultant JNA descriptor array:
+
+```java
+void populate(VkPipelineShaderStageCreateInfo info) {
+    validate();
+    info.stage = stage;
+    info.module = shader.handle();
+    info.pName = name;
+}
+```
 
 ### Conclusion
 
-We can now finish the pipeline builder:
+We can now complete the parent builder which first populates the Vulkan descriptor for the pipeline:
 
 ```java
-public Pipeline build() {
+public Pipeline build(LogicalDevice dev) {
     // Create descriptor
-    final VkGraphicsPipelineCreateInfo pipeline = new VkGraphicsPipelineCreateInfo();
+    final var pipeline = new VkGraphicsPipelineCreateInfo();
 
     // Init layout
     if(layout == null) throw new IllegalArgumentException("No pipeline layout specified");
@@ -254,29 +391,27 @@ public Pipeline build() {
     // Init render pass
     if(pass == null) throw new IllegalArgumentException("No render pass specified");
     pipeline.renderPass = pass.handle();
-    pipeline.subpass = 0;       // TODO
-    
     ...
 }
 ```
 
-The configuration for the fixed-function stages is populated by retrieving the result() of each nested builder:
+Next the fixed-function stages are retrieved from the various nested builders and added to the descriptor:
 
 ```java
-// Init fixed function pipeline stages
-pipeline.pVertexInputState = input.result();
-pipeline.pInputAssemblyState = assembly.result();
-pipeline.pViewportState = viewport.result();
-pipeline.pRasterizationState = raster.result();
-pipeline.pColorBlendState = blend.result();
+pipeline.pVertexInputState = input.get();
+pipeline.pInputAssemblyState = assembly.get();
+pipeline.pViewportState = viewport.get();
+pipeline.pRasterizationState = raster.get();
+pipeline.pDepthStencilState = depth.get();
+pipeline.pColorBlendState = blend.get();
 ```
 
-Next we populate the shader stages:
+We then populate the array of programmable shader stages:
 
 ```java
-// Init shader pipeline stages
+if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 pipeline.stageCount = shaders.size();
-pipeline.pStages = shaders.result();
+pipeline.pStages = StructureHelper.first(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
 ```
 
 Finally we invoke the API to instantiate the pipeline:
@@ -284,266 +419,34 @@ Finally we invoke the API to instantiate the pipeline:
 ```java
 // Allocate pipeline
 final VulkanLibrary lib = dev.library();
-final Pointer[] pipelines = lib.factory().pointers(1);
+final Pointer[] pipelines = lib.factory().array(1);
 check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 // Create pipeline
-return new Pipeline(pipelines[0], dev);
+return new Pipeline(pipelines[0], dev, layout);
 ```
 
-### Viewport Pipeline Stage
-
-Rather than clog this chapter up by covering the design and development of every nested builder we will introduce them as they are needed.
-
-The only fixed-function stage builder that we **must** configure for any application is the viewport which specifies:
-- The viewport rectangle(s) that define the regions of the framebuffer that will be rendered to.
-- The scissor rectangles that define the drawing regions for the rasterizer.
-
-The builder for the viewport stage is relatively simple:
+The pipeline API looks like this:
 
 ```java
-public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
-    /**
-     * Transient viewport descriptor.
-     */
-    private record Viewport(Rectangle rect, Percentile min, Percentile max) {
-    }
+interface VulkanLibraryPipeline {
+    int vkCreatePipelineLayout(Handle device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pPipelineLayout);
+    void vkDestroyPipelineLayout(Handle device, Handle pipelineLayout, Handle pAllocator);
 
-    private final List<Viewport> viewports = new ArrayList<>();
-    private final List<Rectangle> scissors = new ArrayList<>();
-    
-    public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
-        viewports.add(new Viewport(rect, min, max));
-        return this;
-    }
-
-    public ViewportStageBuilder viewport(Rectangle viewport) {
-        return viewport(viewport, Percentile.ZERO, Percentile.ONE);
-    }
-
-    public ViewportStageBuilder scissor(Rectangle rect) {
-        scissors.add(notNull(rect));
-        return this;
-    }
+    int vkCreateGraphicsPipelines(Handle device, Handle pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, Pointer[] pPipelines);
+    void vkDestroyPipeline(Handle device, Handle pipeline, Handle pAllocator);
 }
 ```
 
-The percentile type is described at the end of this chapter.
-
-The builder creates the viewport and scissor rectangle arrays:
-
-```java
-protected VkPipelineViewportStateCreateInfo result() {
-    // Validate
-    final int count = viewports.size();
-    if(count == 0) throw new IllegalArgumentException("No viewports specified");
-    if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
-
-    // Add viewports
-    final VkPipelineViewportStateCreateInfo info = new VkPipelineViewportStateCreateInfo();
-    info.viewportCount = count;
-    info.pViewports = StructureCollector.toPointer(viewports, VkViewport::new, Viewport::populate);
-
-    // Add scissors
-    if(scissors.isEmpty()) throw new IllegalArgumentException("No scissor rectangles specified");
-    info.scissorCount = count;
-    info.pScissors = StructureCollector.toPointer(scissors, VkRect2D.ByReference::new, ViewportStageBuilder::rectangle);
-
-    return info;
-}
-```
-
-The descriptors are populated by the following helper methods:
-
-```java
-private record Viewport ... {
-    private void populate(VkViewport viewport) {
-        rectangle(rect, viewport);
-        viewport.minDepth = min.floatValue();
-        viewport.maxDepth = max.floatValue();
-    }
-}
-
-private static void rectangle(Rectangle rect, VkRect2D out) {
-    out.offset.x = rect.x();
-    out.offset.y = rect.y();
-    out.extent.width = rect.width();
-    out.extent.height = rect.height();
-}
-```
-
-The most common case is a single viewport with a corresponding scissor rectangle, so we add a helper that copies the most recent viewport rectangle:
-
-```java
-public ViewportStageBuilder copyScissor() {
-    if(viewports.isEmpty()) throw new IllegalStateException("No viewports have been specified");
-    final Viewport prev = viewports.get(viewports.size() - 1);
-    scissor(prev.rect);
-    return this;
-}
-```
-
----
-
-## Shader Pipeline Stage
-
-The final element of the pipeline that we **must** configure is the vertex shader.
-
-### Shaders
-
-First we create a new domain object for a shader module:
-
-```java
-public class Shader extends AbstractVulkanObject {
-    /**
-     * Creates a shader module.
-     * @param dev       Parent device
-     * @param code      Shader SPIV code
-     * @return New shader
-     */
-    public static Shader create(LogicalDevice dev, byte[] code) {
-        // Create descriptor
-        final var info = new VkShaderModuleCreateInfo();
-        info.codeSize = code.length;
-        info.pCode = Bufferable.allocate(code);
-
-        // Allocate shader
-        final VulkanLibrary lib = dev.library();
-        final PointerByReference shader = lib.factory().pointer();
-        check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));
-
-        // Create shader
-        return new Shader(shader.getValue(), dev);
-    }
-
-    /**
-     * Constructor.
-     * @param handle        Shader module handle
-     * @param dev           Device
-     */
-    private Shader(Pointer handle, LogicalDevice dev) {
-        super(handle, dev, dev.library()::vkDestroyShaderModule);
-    }
-}
-```
-
-The `Bufferable` helper class (covered in a later chapter) allocates an NIO buffer that wraps the given byte-array.
-
-A shader is loaded from an input stream using a static factory method:
-
-```java
-public static Shader load(LogicalDevice dev, InputStream in) throws IOException {
-    final byte[] code = in.readAllBytes();
-    return create(dev, code);
-}
-```
-
-The API methods to create and destroy the shader are defined in the `VulkanLibraryShader` JNA interface.
-
-### Builder
-
-The shader stage pipeline builder creates an **array** of `VkPipelineShaderStageCreateInfo` descriptors:
-
-```java
-public class ShaderStageBuilder extends AbstractPipelineBuilder<VkPipelineShaderStageCreateInfo> {
-    /**
-     * Entry for a shader stage.
-     */
-    private static class Entry {
-        ...
-    }
-
-    private final Map<VkShaderStageFlag, Entry> shaders = new HashMap<>();
-    
-    ...
-
-    /**
-     * {@inheritDoc}
-     * @throws IllegalStateException if no vertex shader has been configured
-     */
-    @Override
-    protected VkPipelineShaderStageCreateInfo result() {
-        if(!shaders.containsKey(VkShaderStageFlag.VERTEX)) throw new IllegalStateException(...);
-        return VulkanStructure.array(VkPipelineShaderStageCreateInfo::new, shaders.values(), Entry::populate);
-    }
-}
-```
-
-An `Entry` is a transient record that specifies a configured shader stage:
-
-```java
-private static class Entry {
-    private VkShaderStage stage;
-    private Shader shader;
-    private String name = "main";
-
-    private void validate() {
-        if(stage == null) throw new IllegalArgumentException("Shader stage not specified");
-        if(shader == null) throw new IllegalArgumentException("No shader specified: " + stage);
-    }
-
-    private void populate(VkPipelineShaderStageCreateInfo info) {
-        info.stage = stage;
-        info.module = shader.handle();
-        info.pName = name;
-    }
-}
-```
-
-The builder has a reference to the _current_ entry which is populated in the various setter methods:
-
-```java
-private Entry entry;
-
-/**
- * Starts a new shader stage.
- */
-void init() {
-    if(entry != null) throw new IllegalStateException(...);
-    entry = new Entry();
-}
-
-/**
- * Sets the shader stage.
- * @param stage Shader stage
- */
-public ShaderStageBuilder stage(VkShaderStage stage) {
-    entry.stage = notNull(stage);
-    return this;
-}
-```
-
-We over-ride the public build method to validate the current entry and check for duplicates:
-
-```java
-@Override
-public Builder build() {
-    entry.validate();
-    if(shaders.containsKey(entry.stage)) throw new IllegalArgumentException(...);
-    shaders.put(entry.stage, entry);
-    entry = null;
-    return super.build();
-}
-```
-
-Finally we modify the pipeline builder to initialise a new shader stage:
-
-```java
-public ShaderStageBuilder shader() {
-    shaders.init();
-    return shaders;
-}
-```
+Note that Vulkan supports creation of multiple pipelines in one operation but we restrict the code to a single instance for the moment.
 
 ---
 
 ## Integration
 
-We can now load the shaders and configure the rendering pipeline for the triangle demo.
+### Vertex Shader
 
-### Shaders
-
-The vertex shader hard-codes the triangle vertices and passes a colour for each vertex through to the fragment shader:
+The vertex shader hard-codes the triangle vertices and passes the colour for each vertex through to the fragment shader:
 
 ```glsl
 #version 450
@@ -586,7 +489,7 @@ void main() {
 }
 ```
 
-We will also need to compile the shaders to SPIV using the `GLSLC` utility application provided as part of the JDK:
+We also need to compile the shaders to SPIV using the `GLSLC` utility application provided as part of the Vulkan SDK:
 
 ```
 cd JOVE/src/test/resources/demo/triangle
@@ -594,157 +497,54 @@ glslc triangle.frag -o spv.triangle.frag
 glslc triangle.vert -o spv.triangle.vert
 ```
 
-### Demo
+### Configuration
 
-We can now load the shader modules:
-
-```java
-// Load shaders
-final Shader vert = Shader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.vert"));
-final Shader frag = Shader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.frag"));
-```
-
-And finally configure the pipeline:
+We implement a new configuration class to load the shaders:
 
 ```java
-// Create pipeline layout
-final Pipeline.Layout layout = new Pipeline.Layout.Builder().build();
+@Configuration
+class PipelineConfiguration {
+    @AutoWired private LogicalDevice dev;
 
-// Create pipeline
-final Pipeline pipeline = new Pipeline.Builder(dev)
-    .layout(layout)
-    .pass(pass)
-    .viewport()
-        .viewport(new Rectangle(chain.extents()))
-        .build()
-    .shader()
-        .stage(VkShaderStageFlag.VERTEX)
-        .shader(vert)
-        .build()
-    .shader()
-        .stage(VkShaderStageFlag.FRAGMENT)
-        .shader(frag)
-        .build()
-    .build();
+    @Bean
+    public Shader vertex() throws IOException {
+        return Shader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.vert"));
+    }
+
+    @Bean
+    public Shader fragment() throws IOException {
+        return Shader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.frag"));
+    }
+}
 ```
+
+And we can finally configure the graphics pipeline:
+
+```java
+@Bean
+PipelineLayout pipelineLayout() {
+    return new PipelineLayout.Builder(dev).build();
+}
+
+@Bean
+public Pipeline pipeline(RenderPass pass, Swapchain swapchain, Shader vertex, Shader fragment, PipelineLayout layout) {
+    return new Pipeline.Builder()
+        .layout(layout)
+        .pass(pass)
+        .viewport(swapchain.extents())
+        .shader(VkShaderStage.VERTEX)
+            .shader(vertex)
+            .build()
+        .shader(VkShaderStage.FRAGMENT)
+            .shader(fragment)
+            .build()
+        .build(dev);
+}
+```
+
+We also add a convenience factory method to the pipeline that creates a single viewport and scissor with the same rectangle (the most common case).
 
 Phew!
-
----
-
-## Improvements
-
-### Percentile Values
-
-For the min/max depth of the viewport we introduced the `Percentile` class that represents a percentile value as a 0..1 floating-point number:
-
-```java
-public final class Percentile extends Number implements Comparable<Percentile> {
-    private final float value;
-
-    /**
-     * Constructor.
-     * @param value Percentile as a 0..1 floating-point value
-     */
-    public Percentile(float value) {
-        Check.isPercentile(value);
-        this.value = value;
-    }
-
-    @Override
-    public float floatValue() {
-        return value;
-    }
-
-    ...
-}
-```
-
-We also add convenience constants:
-
-```java
-/**
- * Maximum value of a percentile expressed as an integer.
- */
-public static final int MAX = 100;
-
-/**
- * Zero percentile.
- */
-public static final Percentile ZERO = new Percentile(0);
-
-/**
- * 50% percentile.
- */
-public static final Percentile HALF = new Percentile(0.5f);
-
-/**
- * 100% percentile.
- */
-public static final Percentile ONE = new Percentile(1);
-```
-
-Finally we add support for percentiles specified by a 0..100 integer:
-
-```java
-private static final Percentile[] INTEGERS = new Percentile[MAX + 1];
-
-static {
-    for(int n = 0; n <= MAX; ++n) {
-        INTEGERS[n] = new Percentile(n / (float) MAX);
-    }
-}
-
-/**
- * Creates an integer percentile.
- * @param value Percentile as a 0..100 integer
- * @return Percentile
- * @throws ArrayIndexOutOfBoundsException if the given value is not in the range 0...100
- */
-public static Percentile of(int value) {
-    return INTEGERS[value];
-}
-
-...
-
-@Override
-public String toString() {
-    return (int) (value * MAX) + "%";
-}
-```
-
-We can now refactor the queue priorities in the `RequiredQueue` class using this new type.
-
-### Testing Support
-
-Any unit-test that is dependant on the logical device (which is the majority of them) generally require the same test setup.
-
-We introduce the following test base-class and refactor all existing test cases accordingly:
-
-```java
-public abstract class AbstractVulkanTest {
-    protected MockReferenceFactory factory;
-    protected LogicalDevice dev;
-    protected VulkanLibrary lib;
-
-    @BeforeEach
-    private final void beforeVulkanTest() {
-        // Create API
-        lib = mock(VulkanLibrary.class);
-
-        // Init reference factory
-        factory = new MockReferenceFactory();
-        when(lib.factory()).thenReturn(factory);
-
-        // Create logical device
-        dev = mock(LogicalDevice.class);
-        when(dev.handle()).thenReturn(new Handle(new Pointer(42)));
-        when(dev.library()).thenReturn(lib);
-    }
-}
-```
-
-Note that we give the setup method a relatively unique name (and make it private and final) to avoid potentially conflicting with the sub-class.
 
 ---
 

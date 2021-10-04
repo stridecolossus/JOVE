@@ -59,7 +59,7 @@ public class ShaderTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		shader.destroy();
+		shader.close();
 		verify(lib).vkDestroyShaderModule(dev.handle(), shader.handle(), null);
 	}
 

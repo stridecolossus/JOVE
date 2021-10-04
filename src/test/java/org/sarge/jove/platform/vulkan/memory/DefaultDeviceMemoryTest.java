@@ -110,7 +110,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 
 		@Test
 		void destroyed() {
-			mem.destroy();
+			mem.close();
 			assertThrows(IllegalStateException.class, () -> region.write(array));
 		}
 
@@ -171,7 +171,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		mem.map();
-		mem.destroy();
+		mem.close();
 		assertEquals(true, mem.isDestroyed());
 	}
 

@@ -169,7 +169,7 @@ public class RunnerTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		runner.destroy();
-		verify(semaphore, times(2 * 2)).destroy();
+		verify(semaphore, times(2 * 2)).close();
 		// TODO - fence
 	}
 

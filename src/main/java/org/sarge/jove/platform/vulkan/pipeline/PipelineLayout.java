@@ -161,7 +161,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 */
 		public PipelineLayout build() {
 			// Init pipeline layout descriptor
-			final VkPipelineLayoutCreateInfo info = new VkPipelineLayoutCreateInfo();
+			final var info = new VkPipelineLayoutCreateInfo();
 
 			// Add descriptor set layouts
 			info.setLayoutCount = sets.size();

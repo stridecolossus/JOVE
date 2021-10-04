@@ -179,7 +179,7 @@ public class LogicalDeviceTest {
 
 	@Test
 	void destroy() {
-		device.destroy();
+		device.close();
 		verify(lib).vkDestroyDevice(device.handle(), null);
 	}
 
