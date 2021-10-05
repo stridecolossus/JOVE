@@ -65,7 +65,6 @@ public class PhysicalDeviceTest {
 	void constructor() {
 		assertNotNull(dev.handle());
 		assertEquals(instance, dev.instance());
-		assertEquals(lib, dev.library());
 		assertEquals(List.of(family), dev.families());
 	}
 

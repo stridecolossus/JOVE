@@ -59,7 +59,7 @@ public class WorkTest extends AbstractVulkanTest {
 
 	@Test
 	void submit() {
-		work.submit(null);
+		work.submit(null, lib);
 		check(null);
 	}
 
@@ -67,7 +67,7 @@ public class WorkTest extends AbstractVulkanTest {
 	void submitFence() {
 		final Fence fence = mock(Fence.class);
 		when(fence.handle()).thenReturn(new Handle(new Pointer(2)));
-		work.submit(fence);
+		work.submit(fence, lib);
 		check(fence.handle());
 	}
 
@@ -98,7 +98,7 @@ public class WorkTest extends AbstractVulkanTest {
 	void submitQueueMismatch() {
 		final Queue q = new Queue(new Handle(new Pointer(2)), new Queue.Family(999, 1, Set.of()));
 		final Work other = new Work(new VkSubmitInfo(), q);
-		assertThrows(IllegalArgumentException.class, () -> Work.submit(List.of(work, other), null));
+		assertThrows(IllegalArgumentException.class, () -> Work.submit(List.of(work, other), null, lib));
 	}
 
 	@Nested
