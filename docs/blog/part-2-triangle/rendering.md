@@ -66,9 +66,9 @@ public interface Command {
 }
 ```
 
-The `Command` interface abstracts the signature of a Vulkan command whose arguments are always comprised of the API and a handle to the command buffer.
+The `Command` interface abstracts the signature of a Vulkan command where the arguments are always comprised of the Vulkan API and the command buffer.
 
-We also create a new API to support commands:
+We also create a new API to support the new domain objects:
 
 ```java
 interface VulkanLibraryCommandBuffer {
@@ -87,7 +87,7 @@ interface VulkanLibraryCommandBuffer {
 
 ### Command Pool
 
-We start with a domain object for the command pool:
+We start with the command pool:
 
 ```java
 class Pool extends AbstractVulkanObject {
@@ -124,7 +124,7 @@ public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFla
 }
 ```
 
-To allocate command buffers we add the following factory method to the pool:
+To allocate command buffers we add the following factory method:
 
 ```java
 public List<Buffer> allocate(int num, boolean primary) {
@@ -144,7 +144,7 @@ public List<Buffer> allocate(int num, boolean primary) {
 }
 ```
 
-The handles of the newly allocated buffers are then transformed to domain objects:
+The handles of the newly allocated buffers are then transformed to the domain object:
 
 ```java
 // Create buffers
@@ -225,9 +225,9 @@ class Buffer implements NativeObject {
 }
 ```
 
-The _state_ member track whether the buffer has been recorded and is ready for execution (the enumeration names are based on the Vulkan documentation).
+The _state_ member track whether the buffer has been recorded or is ready for execution (the enumeration names are based on the Vulkan documentation).
 
-The `begin` method starts recording of a command sequence:
+The `begin` method starts the recording of a command sequence:
 
 ```java
 public Buffer begin(VkCommandBufferUsageFlag... flags) {
@@ -252,7 +252,7 @@ The sequence is then recorded by adding commands:
 
 ```java
 public Buffer add(Command cmd) {
-    if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
+    if(state != State.RECORDING) throw new IllegalStateException(...);
     cmd.execute(pool.device().library(), handle);
     return this;
 }
@@ -262,7 +262,7 @@ Finally the `end` method completes recording:
 
 ```java
 public Buffer end() {
-    if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
+    if(state != State.RECORDING) throw new IllegalStateException(...);
     final VulkanLibrary lib = pool.device().library();
     check(lib.vkEndCommandBuffer(handle));
     state = State.EXECUTABLE;
@@ -270,31 +270,22 @@ public Buffer end() {
 }
 ```
 
-We also convenience mutators to reset or release a buffer back to the pool.
+We also add convenience mutators to reset or release a buffer back to the pool.
 
 ### Submission
 
-Executing a command buffer involves populating a Vulkan descriptor comprising a _batch_ of buffers to be submitted to a work queue along with relevant synchronisation declarations.  We will ignore synchronisation until later as it is not needed for the triangle demo.
+Submitting tasks to a work queue involves populating a Vulkan descriptor comprising one-or-more command buffers with a synchronisation specification.  We defer synchronisation until later as it is not needed for the triangle demo.
 
-We create the `Work` class that wraps the submission descriptor and work queue:
+We implement a new `Work` class that composes a work submission:
 
 ```java
 public class Work {
-    private final VkSubmitInfo info;
-    private final Queue queue;
-}
-```
-
-To create a work instance we add the obligatory builder:
-
-```java
-public static class Builder {
+    private final Pool pool;
     private final List<Buffer> buffers = new ArrayList<>();
-    private final Queue queue;
 }
 ```
 
-The `add` method adds a command buffer to the work submission:
+And the obligatory builder to add command buffers:
 
 ```java
 public Builder add(Buffer buffer) {
@@ -302,44 +293,71 @@ public Builder add(Buffer buffer) {
     if(!buffer.isReady()) throw new IllegalStateException(...);
 
     // Check all work is submitted to the same queue family
-    if(!buffer.pool().queue().family().equals(queue.family())) {
-        throw new IllegalArgumentException(...);
-    }
+    if(!matches(work, buffer.pool())) throw new IllegalArgumentException(...);
 
     // Add buffer to this work
-    buffers.add(buffer);
+    work.buffers.add(buffer);
 
     return this;
 }
 ```
 
-Note that all command buffers __must__ be submitted to the same queue family which is validated in the above method.
+Although the work domain object is not necessarily dependant on the command pool it is more convenient for the code to have access to the pool (and the logical device).
 
-The `build` method populates the descriptor for the submission and allocates the new work object:
+All command buffers __must__ be submitted to the same queue family which is validated by the `matches` helper:
 
 ```java
-public Work build() {
-    // Init batch descriptor
-    final VkSubmitInfo info = new VkSubmitInfo();
-
-    // Populate command buffers
-    info.commandBufferCount = buffers.size();
-    info.pCommandBuffers = Handle.toArray(buffers);
-
-    // Create work
-    return new Work(info, queue);
+private static boolean matches(Work work, Pool pool) {
+    final Family left = work.pool.queue().family();
+    final Family right = pool.queue().family();
+    return left.equals(right);
 }
 ```
 
-TODO
+We also add a convenience factory to create a work submission for a single command buffer:
+
+```java
+public static Work of(Buffer buffer) {
+    final Pool pool = buffer.pool();
+    return new Builder(pool).add(buffer).build();
+}
+```
+
+Work is submitted to the queue as a _batch_ of submissions (which again must all use the same queue family):
+
+```java
+public static void submit(List<Work> work) {
+    // Validate
+    Check.notEmpty(work);
+    final Pool pool = work.get(0).pool;
+    if(!work.stream().allMatch(e -> matches(e, pool))) throw new IllegalArgumentException(...);
+
+    // Populate array of submission descriptors
+    final VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
+
+    // Submit work
+    final VulkanLibrary lib = pool.device().library();
+    check(lib.vkQueueSubmit(pool.queue().handle(), array.length, array, null));
+}
+```
+
+Where the Vulkan descriptor for each work submission is populated by the following helper on the `Work` class:
+
+```java
+private void populate(VkSubmitInfo info) {
+    info.commandBufferCount = buffers.size();
+    info.pCommandBuffers = Handle.toArray(buffers);
+}
+```
+
+Finally we add the API method to the existing device library:
 
 ```java
 interface VulkanLibraryLogicalDevice {
+    ...
     int vkQueueSubmit(Handle queue, int submitCount, VkSubmitInfo[] pSubmits, Handle fence);
 }
 ```
-
-TODO
 
 ---
 
@@ -349,7 +367,7 @@ TODO
 
 We can now implement the specific commands required for the triangle demo.
 
-We add the following factory method on the `FrameBuffer` class to begin rendering:
+We add the following factory method on the `FrameBuffer` class to begin rendering to that buffer:
 
 ```java
 public Command begin() {
@@ -371,7 +389,7 @@ public Command begin() {
 }
 ```
 
-The code to initialise the clear value for the colour attachment is temporarily hard-coded to a grey colour:
+For the moment we bodge a grey clear value for the colour attachment:
 
 ```java
 // Init clear values
@@ -385,14 +403,12 @@ info.pClearValues = clear;
 // ...TODO
 ```
 
-We explain the purpose of `setType` when we fully implement clear values in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
+We will explain the purpose of the JNA `setType` method when clear values are fully implemented in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
 
 Ending the render pass is defined as a constant since the command does not require any additional arguments:
 
 ```java
-class RenderPass {
-    public static final Command END = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
-}
+public static final Command END = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 ```
 
 To bind the pipeline in the render sequence we add the following factory to the `Pipeline` class:
@@ -409,7 +425,7 @@ Finally we hard-code the draw command to render the triangle vertices:
 Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
 ```
 
-This specifies the three triangles vertices, in a single instance, both starting at index zero.  We will implement a proper builder for the the draw command in a later chapter.
+This specifies the three triangles vertices, in a single instance, both starting at index zero.  We will implement a proper builder for draw commands in a later chapter.
 
 Finally we add the API methods for the new commands:
 
@@ -436,7 +452,7 @@ public class RenderConfiguration {
 }
 ```
 
-Note the use of `@Qualifier` which disambiguates the work queue to be injected by _name_ (since there is more than one queue).
+Note the use of `@Qualifier` which disambiguates the work queue to be injected by _name_ (since there are multiple queue instances).
 
 The following bean allocates a command buffer and records the rendering sequence (based on the pseudo-code from the introduction):
 
@@ -450,15 +466,46 @@ public static Buffer sequence(Pool pool, FrameBuffer frame, Pipeline pipeline) {
             .add(frame.begin())
             .add(pipeline.bind())
             .add(draw)
-            .add(RenderPass.END)
+            .add(FrameBuffer.END)
         .end();
 }
 ```
 
 ### Rendering
 
-TODO
+To finally display the triangle we need to invoke presentation and rendering.
 
+We firstly add the following bean declaration which will invoke a Spring `ApplicationRunner` once the container has been initialised:
+
+```java
+@Bean
+public static ApplicationRunner render(Swapchain swapchain, Buffer render) {
+    return args -> { ... }
+}
+```
+
+Although we have a double-buffer swapchain and many of the components required to implement a fully threaded render loop, for the moment we bodge a single frame:
+
+```java
+// Start next frame
+final int index = swapchain.acquire(null, null);
+
+// Render frame
+Work.of(render).submit(null);
+
+// Wait for frame
+final Pool pool = render.pool();
+pool.waitIdle();
+
+// Present frame
+swapchain.present(pool.queue(), Set.of());
+
+// Wait...
+Thread.sleep(1000);
+```
+
+Note we briefly block execution at the end of the lambda to have a chance of seeing the results (if there are any).
+ 
 Obviously this is temporary code just sufficient to test this first demo - we will be implementing a proper render loop in future chapters.
 
 ### Conclusion
@@ -471,15 +518,11 @@ Viola!
 
 All that for a triangle?
 
-There are a few gotchas that could result in staring at a blank screen:
+There are a couple of gotchas that could result in staring at a blank screen:
 
-- Although not covered in this demo the rasterizer pipeline stage specifies culling of back-facing polygons by default.  The triangle vertices are counter-clockwise (which _should_ be the default winding order) but changing the culling mode (or disabling culling altogether) is worth checking.
+- The triangle vertices in the vertex shader are ordered counter-clockwise which _should_ be the default winding order - although not covered in this part of the demo the _rasterizer_ pipeline stage may need to be configured explicitly (or culling switched off altogether).
 
-- Double-check that the format of the swapchain images is as expected.
-
-- Walk through the configuration of the render pass and ensure that the correct load/store operations and image layouts are specified.
-
-- Check the arguments for the hard-coded drawing command (they are all integers and could easily be accidentally transposed).
+- The arguments for the hard-coded drawing command are all integers and can easily be accidentally transposed.
 
 ---
 
@@ -489,7 +532,7 @@ In the final chapter for this phase of development we implemented:
 
 * The command pool and buffer.
 
-* The work submission mechanism.
+* A mechanism for submitting work to the hardware.
 
 * Specific commands to support rendering.
 

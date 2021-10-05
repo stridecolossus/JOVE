@@ -7,15 +7,11 @@ import org.sarge.jove.common.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkCommandBufferLevel implements IntegerEnumeration {
- 	VK_COMMAND_BUFFER_LEVEL_PRIMARY(0), 	
- 	VK_COMMAND_BUFFER_LEVEL_SECONDARY(1), 	
- 	VK_COMMAND_BUFFER_LEVEL_BEGIN_RANGE(0), 	
- 	VK_COMMAND_BUFFER_LEVEL_END_RANGE(1), 	
- 	VK_COMMAND_BUFFER_LEVEL_RANGE_SIZE(2), 	
- 	VK_COMMAND_BUFFER_LEVEL_MAX_ENUM(2147483647); 	
+ 	PRIMARY(0),
+ 	SECONDARY(1);
 
 	private final int value;
-	
+
 	private VkCommandBufferLevel(int value) {
 		this.value = value;
 	}

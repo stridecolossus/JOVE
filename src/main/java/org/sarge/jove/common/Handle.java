@@ -49,6 +49,11 @@ public final class Handle {
 		this.handle = notNull(handle);
 	}
 
+	// TODO
+	public Handle(long peer) {
+		this(new Pointer(peer));
+	}
+
 	/**
 	 * @return Copy of the underlying pointer
 	 */

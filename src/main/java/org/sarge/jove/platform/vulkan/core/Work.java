@@ -5,6 +5,7 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -24,140 +25,209 @@ import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.Command.Pool;
 import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Memory;
 
 /**
- * The <i>work</i> class comprises a <i>batch</i> of commands to be submitted to a {@link Queue}.
+ * A <i>work</i> instance represents a group of tasks to be submitted to a {@link Queue}.
+ * <p>
+ * A work submission is comprised of:
+ * <ul>
+ * <li>the queue to submit the work</li>
+ * <li>one-or-more command buffers</li>
+ * <li>a set of <i>wait</i> semaphores specifying when the work can begin</li>
+ * <li>a set of <i>signal</i> semaphores that are signalled when <b>all</b> the buffers have been executed</li>
+ * </ul>
+ * <p>
+ * Note that <b>all</b> command buffers in a work submission <b>must</b> have been allocated from a pool created for the same queue family.
+ * <p>
+ * Usage:
+ * <pre>
+ * 	// Record a command buffer
+ * 	Command.Pool pool = ...
+ * 	Command.Buffer buffer = ...
+ *
+ * 	// Init synchronisation
+ * 	Semaphore wait = ...
+ * 	Semaphore signal = ...
+ * 	Fence fence = ...
+ *
+ *	// Create work submission
+ * 	Work work = new Builder(pool)
+ * 		.add(buffer)
+ * 		.wait(wait, VkPipelineStage.TOP_OF_PIPE)
+ * 		.signal(signal)
+ * 		.build();
+ *
+ *	// Submit work
+ * 	work.submit(null);
+ *
+ *	// Submit a work batch with a synchronisation fence
+ * 	Work.submit(List.of(buffer, ...), fence);
+ * </pre>
  * @see Command
  * @author Sarge
  */
 public class Work {
 	/**
-	 * Submits multiple work batches.
-	 * @param work			Work batches
-	 * @param fence			Optional fence
-	 * @throws IllegalArgumentException if all batches do not have the same queue
-	 * @throws VulkanException if the submit fails
+	 * Helper - Creates a work submission for the given command buffer.
+	 * @param buffer Command buffer
+	 * @return New work
 	 */
-	public static void submit(List<Work> work, Fence fence, VulkanLibrary lib) {
-		// Determine submission queue and check all batches have the same queue
-		Check.notEmpty(work);
-		final Work first = work.get(0);
-		final Queue queue = first.queue;
-		if(!work.stream().map(e -> e.queue).allMatch(queue::equals)) throw new IllegalArgumentException("All work batches must submit to the same queue");
-
-		// Convert descriptors to array
-		// TODO - JNA marshals this correctly?
-		final var array = work.stream().map(e -> e.info).toArray(VkSubmitInfo[]::new);
-
-		// Submit work
-//		final VulkanLibrary lib = dev.library();
-		check(lib.vkQueueSubmit(queue.handle(), array.length, array, NativeObject.ofNullable(fence)));
+	public static Work of(Buffer buffer) {
+		final Pool pool = buffer.pool();
+		return new Builder(pool).add(buffer).build();
 	}
 
-//	Each element of the pCommandBuffers member of each element of pSubmits must have been allocated from a VkCommandPool that was created for the same queue family queue belongs to
+	private final Pool pool;
+	private final List<Buffer> buffers = new ArrayList<>();
+	private final Collection<Pair<Semaphore, Integer>> wait = new ArrayList<>();
+	private final Set<Semaphore> signal = new HashSet<>();
 
 	/**
-	 * Helper - Submits a <i>one time</i> command to the given pool and waits for completion.
-	 * @param cmd		Command
-	 * @param pool 		Command pool
+	 * Constructor.
+	 * @param pool Command pool
 	 */
-	public static void submit(Command cmd, Pool pool) {
-		// Allocate and record command
+	private Work(Pool pool) {
+		this.pool = notNull(pool);
+	}
+
+	/**
+	 * @param info Submission descriptor for this work.
+	 */
+	private void populate(VkSubmitInfo info) {
+		// Populate command buffers
+		info.commandBufferCount = buffers.size();
+		info.pCommandBuffers = Handle.toArray(buffers);
+
+		if(!wait.isEmpty()) {
+			// Populate wait semaphores
+			final var semaphores = wait.stream().map(Pair::getLeft).collect(toList());
+			info.waitSemaphoreCount = wait.size();
+			info.pWaitSemaphores = Handle.toArray(semaphores);
+
+			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
+			final int[] stages = wait.stream().map(Pair::getRight).mapToInt(Integer::intValue).toArray();
+			final Memory mem = new Memory(stages.length * Integer.BYTES);
+			mem.write(0, stages, 0, stages.length);
+			info.pWaitDstStageMask = mem;
+		}
+
+		// Populate signal semaphores
+		info.signalSemaphoreCount = signal.size();
+		info.pSignalSemaphores = Handle.toArray(signal);
+	}
+
+	/**
+	 * Submits this work.
+	 * @param fence Optional fence
+	 * @see #submit(List, Fence)
+	 */
+	public void submit(Fence fence) {
+		Work.submit(List.of(this), fence);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("pool", pool)
+				.append("buffers", buffers.size())
+				.append("wait", wait.size())
+				.append("signal", signal.size())
+				.build();
+	}
+
+	/**
+	 * Submits a <i>batch</i> of work.
+	 * @param work			One-or-more work batches
+	 * @param fence			Optional fence
+	 * @throws IllegalArgumentException if all batches do not submit to the same queue family
+	 */
+	public static void submit(List<Work> work, Fence fence) {
+		// Validate
+		Check.notEmpty(work);
+		final Pool pool = work.get(0).pool;
+		if(!work.stream().allMatch(e -> matches(e, pool))) throw new IllegalArgumentException("All work batches must submit to the same queue");
+
+		// Populate array of submission descriptors
+		final VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
+
+		// Submit work
+		final VulkanLibrary lib = pool.device().library();
+		check(lib.vkQueueSubmit(pool.queue().handle(), array.length, array, NativeObject.ofNullable(fence)));
+	}
+
+	/**
+	 * @return Whether the work submission has the same queue family as the given pool
+	 */
+	private static boolean matches(Work work, Pool pool) {
+		final Family left = work.pool.queue().family();
+		final Family right = pool.queue().family();
+		return left.equals(right);
+	}
+
+	/**
+	 * Helper - Submits the given <i>one time</i> command to the given pool.
+	 * @param cmd		Command
+	 * @param pool		Pool
+	 * @return Command pool
+	 * @see VkCommandBufferUsage#ONE_TIME_SUBMIT
+	 */
+	public static Pool submit(Command cmd, Pool pool) {
+		// Allocate and record one-time command
 		final Buffer buffer = pool
 				.allocate()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 				.add(cmd)
 				.end();
 
-		// Submit work and wait for completion
+		// Submit work
 		try {
-			final VulkanLibrary lib = pool.device().library();
-			final Queue queue = pool.queue();
-			new Builder(queue).add(buffer).build().submit(null, lib);
-			queue.waitIdle(lib);
+			final Work work = new Builder(pool).add(buffer).build();
+			work.submit(null);
 		}
 		finally {
 			buffer.free();
 		}
-	}
 
-	private final VkSubmitInfo info;
-	private final Queue queue;
-
-	/**
-	 * Constructor.
-	 * @param info 			Descriptor for this work batch
-	 * @param queue			Work queue
-	 */
-	Work(VkSubmitInfo info, Queue queue) {
-		this.info = notNull(info);
-		this.queue = notNull(queue);
+		return pool;
 	}
 
 	/**
-	 * @return Work queue for this batch
-	 */
-	public Queue queue() {
-		return queue;
-	}
-
-	/**
-	 * Submits this work batch.
-	 * @param fence Optional fence
-	 */
-	public void submit(Fence fence, VulkanLibrary lib) {
-		submit(List.of(this), fence, lib);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("queue", queue)
-				.append("commands", info.commandBufferCount)
-				.append("waits", info.waitSemaphoreCount)
-				.append("signals", info.signalSemaphoreCount)
-				.build();
-	}
-
-	/**
-	 * Builder for a work batch.
+	 * Builder for a work submission.
 	 */
 	public static class Builder {
-		private final Queue queue;
-		private final List<Buffer> buffers = new ArrayList<>();
-		private final Collection<Pair<Semaphore, Integer>> wait = new ArrayList<>();
-		private final Set<Semaphore> signal = new HashSet<>();
+		private Work work;
 
 		/**
 		 * Constructor.
-		 * @param queue Work queue for this submission
+		 * @param pool Command pool for this work
 		 */
-		public Builder(Queue queue) {
-			this.queue = notNull(queue);
+		public Builder(Pool pool) {
+			this.work = new Work(pool);
 		}
 
 		/**
 		 * Adds a command buffer to be submitted.
 		 * @param buffer Command buffer
 		 * @throws IllegalStateException if the command buffer has not been recorded
-		 * @throws IllegalArgumentException if any buffer does not match the queue family
+		 * @throws IllegalArgumentException if any buffer does not match the queue family for this work
 		 */
 		public Builder add(Buffer buffer) {
 			// Check buffer has been recorded
 			if(!buffer.isReady()) throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
 
 			// Check all work is submitted to the same queue family
-			if(!buffer.pool().queue().family().equals(queue.family())) {
-				throw new IllegalArgumentException("Command buffers must all have the same queue: " + buffer);
+			if(!matches(work, buffer.pool())) {
+				throw new IllegalArgumentException("Command buffers must all submit to the same queue family: " + buffer);
 			}
 
 			// Add buffer to this work
-			buffers.add(buffer);
+			work.buffers.add(buffer);
 
 			return this;
 		}
@@ -167,23 +237,23 @@ public class Work {
 		 * @param semaphore 	Wait semaphore
 		 * @param stages		Pipeline stage(s) at which this semaphore will occur
 		 */
-		public Builder wait(Semaphore semaphore, Set<VkPipelineStage> stages) {
+		public Builder wait(Semaphore semaphore, Collection<VkPipelineStage> stages) {
 			// TODO - not VK_PIPELINE_STAGE_HOST_BIT
 			// TODO - check duplicates?
 			Check.notNull(semaphore);
 			Check.notEmpty(stages);
 			final var entry = ImmutablePair.of(semaphore, IntegerEnumeration.mask(stages));
-			wait.add(entry);
+			work.wait.add(entry);
 			return this;
 		}
 
 		/**
 		 * Adds a semaphore upon which to wait before executing this batch.
 		 * @param semaphore 	Wait semaphore
-		 * @param stage			Pipeline stage at which this semaphore will occur
+		 * @param stages		Pipeline stage(s) at which this semaphore will occur
 		 */
-		public Builder wait(Semaphore semaphore, VkPipelineStage stage) {
-			return wait(semaphore, Set.of(stage));
+		public Builder wait(Semaphore semaphore, VkPipelineStage... stages) {
+			return wait(semaphore, Arrays.asList(stages));
 		}
 
 		/**
@@ -192,7 +262,7 @@ public class Work {
 		 */
 		public Builder signal(Semaphore semaphore) {
 			Check.notNull(semaphore);
-			signal.add(semaphore);
+			work.signal.add(semaphore);
 			return this;
 		}
 
@@ -202,35 +272,13 @@ public class Work {
 		 * @throws IllegalArgumentException if the command buffers is empty
 		 */
 		public Work build() {
-			// Validate
-			if(buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
-
-			// Init batch descriptor
-			final VkSubmitInfo info = new VkSubmitInfo();
-
-			// Populate command buffers
-			info.commandBufferCount = buffers.size();
-			info.pCommandBuffers = Handle.toArray(buffers);
-
-			if(!wait.isEmpty()) {
-				// Populate wait semaphores
-				final var semaphores = wait.stream().map(Pair::getLeft).collect(toList());
-				info.waitSemaphoreCount = wait.size();
-				info.pWaitSemaphores = Handle.toArray(semaphores);
-
-				// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
-				final int[] stages = wait.stream().map(Pair::getRight).mapToInt(Integer::intValue).toArray();
-				final Memory mem = new Memory(stages.length * Integer.BYTES);
-				mem.write(0, stages, 0, stages.length);
-				info.pWaitDstStageMask = mem;
+			if(work.buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
+			try {
+				return work;
 			}
-
-			// Populate signal semaphores
-			info.signalSemaphoreCount = signal.size();
-			info.pSignalSemaphores = Handle.toArray(signal);
-
-			// Create work
-			return new Work(info, queue);
+			finally {
+				work = null;
+			}
 		}
 	}
 }

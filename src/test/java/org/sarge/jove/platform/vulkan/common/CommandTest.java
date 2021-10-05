@@ -184,7 +184,7 @@ class CommandTest extends AbstractVulkanTest {
 
 			// Check descriptor
 			final VkCommandBufferAllocateInfo info = captor.getValue();
-			assertEquals(VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY, info.level);
+			assertEquals(VkCommandBufferLevel.SECONDARY, info.level);
 			assertEquals(1, info.commandBufferCount);
 			assertEquals(pool.handle(), info.commandPool);
 		}

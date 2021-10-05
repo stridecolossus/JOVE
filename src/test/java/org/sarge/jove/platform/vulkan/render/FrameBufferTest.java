@@ -124,6 +124,13 @@ public class FrameBufferTest extends AbstractVulkanTest {
 	}
 
 	@Test
+	void end() {
+		final Handle handle = new Handle(new Pointer(1));
+		FrameBuffer.END.execute(lib, handle);
+		verify(lib).vkCmdEndRenderPass(handle);
+	}
+
+	@Test
 	void destructor() {
 		assertNotNull(buffer.destructor(lib));
 	}

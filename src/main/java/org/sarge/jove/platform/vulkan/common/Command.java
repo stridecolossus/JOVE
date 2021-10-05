@@ -231,6 +231,15 @@ public interface Command {
 		}
 
 		/**
+		 * Helper - Waits for the work queue to become idle.
+		 * @see Queue#waitIdle(VulkanLibrary)
+		 */
+		public void waitIdle() {
+			final VulkanLibrary lib = super.device().library();
+			queue.waitIdle(lib);
+		}
+
+		/**
 		 * Allocates a number of command buffers from this pool.
 		 * @param num			Number of buffers to allocate
 		 * @param primary		Whether primary or secondary
@@ -239,7 +248,7 @@ public interface Command {
 		public List<Buffer> allocate(int num, boolean primary) {
 			// Init descriptor
 			final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
-			info.level = primary ? VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY : VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+			info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
 			info.commandBufferCount = oneOrMore(num);
 			info.commandPool = this.handle();
 
@@ -312,7 +321,6 @@ public interface Command {
 
 		@Override
 		protected void release() {
-			// Note buffers are released automatically by the pool
 			buffers.clear();
 		}
 

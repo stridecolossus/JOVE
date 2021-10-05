@@ -158,7 +158,7 @@ public class Runner {
 		 * @see Work#submit(Fence)
 		 */
 		public Work create(Command.Buffer buffer) {
-			return new Work.Builder(buffer.pool().queue()) //TODO
+			return new Work.Builder(buffer.pool()) //TODO
 					.add(buffer)
 					.wait(ready, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
 					.signal(finished)
@@ -172,7 +172,7 @@ public class Runner {
 		 */
 		public void render(Command.Buffer buffer) {
 			final Work work = create(buffer);
-			work.submit(fence, null); // TODO - lib!!!
+			work.submit(fence);
 		}
 
 		/**
