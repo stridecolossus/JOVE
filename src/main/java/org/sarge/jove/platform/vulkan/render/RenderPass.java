@@ -12,6 +12,7 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
@@ -29,6 +30,11 @@ public class RenderPass extends AbstractVulkanObject {
 	 * Index of the implicit sub-pass before or after the render pass.
 	 */
 	public static final int VK_SUBPASS_EXTERNAL = (~0);
+
+	/**
+	 * Command to end a render pass.
+	 */
+	public static final Command END = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 
 	private final List<Attachment> attachments;
 

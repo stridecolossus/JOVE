@@ -16,7 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -43,10 +43,11 @@ public class Work {
 	 * @throws IllegalArgumentException if all batches do not have the same queue
 	 * @throws VulkanException if the submit fails
 	 */
-	public static void submit(List<Work> work, Fence fence) {
+	public static void submit(List<Work> work, Fence fence, VulkanLibrary lib) {
 		// Determine submission queue and check all batches have the same queue
 		Check.notEmpty(work);
-		final Queue queue = work.get(0).queue;
+		final Work first = work.get(0);
+		final Queue queue = first.queue;
 		if(!work.stream().map(e -> e.queue).allMatch(queue::equals)) throw new IllegalArgumentException("All work batches must submit to the same queue");
 
 		// Convert descriptors to array
@@ -54,7 +55,7 @@ public class Work {
 		final var array = work.stream().map(e -> e.info).toArray(VkSubmitInfo[]::new);
 
 		// Submit work
-		final VulkanLibrary lib = fence.device().library();
+//		final VulkanLibrary lib = dev.library();
 		check(lib.vkQueueSubmit(queue.handle(), array.length, array, NativeObject.ofNullable(fence)));
 	}
 
@@ -67,14 +68,14 @@ public class Work {
 		// Allocate and record command
 		final Buffer buffer = pool
 				.allocate()
-				.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 				.add(cmd)
 				.end();
 
 		// Submit work and wait for completion
 		final VulkanLibrary lib = pool.device().library();
 		try {
-			new Builder().add(buffer).build().submit(null);
+			new Builder().add(buffer).build().submit(null, lib);
 			pool.queue().waitIdle(lib);
 		}
 		finally {
@@ -105,10 +106,9 @@ public class Work {
 	/**
 	 * Submits this work batch.
 	 * @param fence Optional fence
-	 * @see #submit(List, Fence)
 	 */
-	public void submit(Fence fence) {
-		submit(List.of(this), fence);
+	public void submit(Fence fence, VulkanLibrary lib) {
+		submit(List.of(this), fence, lib);
 	}
 
 	@Override
@@ -125,7 +125,7 @@ public class Work {
 	 * Builder for a work batch.
 	 */
 	public static class Builder {
-		private final List<Command.Buffer> buffers = new ArrayList<>();
+		private final List<Buffer> buffers = new ArrayList<>();
 		private final Collection<Pair<Semaphore, Integer>> wait = new ArrayList<>();
 		private final Set<Semaphore> signal = new HashSet<>();
 		private Queue queue;
@@ -136,7 +136,7 @@ public class Work {
 		 * @throws IllegalStateException if the command buffer has not been recorded
 		 * @throws IllegalArgumentException if any buffer does not match the queue family
 		 */
-		public Builder add(Command.Buffer buffer) {
+		public Builder add(Buffer buffer) {
 			// Check buffer has been recorded
 			if(!buffer.isReady()) throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
 
@@ -146,7 +146,7 @@ public class Work {
 				queue = q;
 			}
 			else {
-				if(queue.family() != q.family()) {
+				if(!queue.family().equals(q.family())) {
 					throw new IllegalArgumentException("Command buffers must all have the same queue: " + buffer);
 				}
 			}

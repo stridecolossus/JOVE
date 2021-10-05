@@ -27,9 +27,9 @@ import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
 import org.sarge.jove.platform.vulkan.VkSubpassContents;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.ImageExtents;
-import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -121,13 +121,6 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		assertNotNull(info.pClearValues.depthStencil);
 		assertEquals(0, info.pClearValues.depthStencil.depth);
 		assertEquals(0, info.pClearValues.depthStencil.stencil);
-	}
-
-	@Test
-	void end() {
-		final Handle handle = new Handle(new Pointer(1));
-		FrameBuffer.END_RENDER_PASS.execute(lib, handle);
-		verify(lib).vkCmdEndRenderPass(handle);
 	}
 
 	@Test

@@ -17,10 +17,6 @@ demo
 - terrain rendering, tiled, LOD, tesselation shader, loader from gray-scale, oct-tree?
 - geometry shader, normals, bounding volumes (spheres as x2 circles)
 
-blog
-- back to front? should start with desired outcome (demo, tests) and then describe implementation? e.g. render pass builder THEN the sub builders, etc.
-- add instance + ref factory (?)
-
 core
 - allocator merge released blocks (de-fragmentation)
 - swizzle & buffer image in one go?
@@ -38,9 +34,6 @@ scene
 - node inheritance? e.g. transform change propagates up, volume change down, etc?
 - should volumes enforce intersect(sphere) and intersect(extents)? or ABC? or leave as-is? should frustum really be a volume?
 
-project
-- separate demo tree using Spring?
-
 sphere builder
 - https://www.mbsoftworks.sk/tutorials/opengl4/022-cylinder-and-sphere/
 - http://in4k.untergrund.net/html_articles/hugi_27_-_coding_corner_polaris_sphere_tessellation_101.htm
@@ -56,22 +49,13 @@ other features
 
 Thoughts
 - surface class really needs to be dependant on logical dev? or physical? just instance?
-- selector init when selecting physical device and then used to create logical? still side effects but simpler?
+- why does surface extend (???)
+- do we really need device context?
 - instead of handle can type mapper be for i/f so can then pass domain objects rather than handle?
-- [NO] component should be vertex attribute to match VK terminology?
 - image class wrapper for buffered image, no need for ctor since just replicates
-- [NO] descriptor set bindings created from layout and not other way round, prevents binding reuse, less steps? more logical? 
-- ditto render pass attachments
-- why specify same info to descriptor set pool, shouldn't it know what sets it will be allocating?
-- [DONE] extents builder should be a collector?
-- [NO] separate enum for vector axes?
-- [DONE] descriptor sets setter should be set(binding, resource), do we actually ever need the getter?
-- [DONE] also handy to have bulk setter method
 - some sort of triangle builder? used in demo and to create x2 triangles for a quad
 - acquire should create a frame object of some sort (swap chain is immutable), i.e. don't care about index
-- [DONE] native object is a functional interface 
-- blog: mention that Handle is essentially equivalent to JNA pointer but immutable
-- [DONE] draw command, builder to set the various fields, less error prone to transposition
-- blog: render chapter talks about load/store but there are none?
-- add supporting extensions/layers stuff somewhere else
-
+- move supporting extensions/layers stuff somewhere else [DONE-ish]
+- can presentation extend selector, avoiding nasty bi-predicate?
+- can modes return a JNA Memory object so we can use enumerate() helper?
+- does surface depend on instance, device, both? break dependency so no need for handle? inject as needed?
