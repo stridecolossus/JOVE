@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.Command;
@@ -106,7 +106,7 @@ public class WorkTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			when(pool.allocate()).thenReturn(buffer);
-			when(buffer.begin(VkCommandBufferUsageFlag.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)).thenReturn(buffer);
+			when(buffer.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)).thenReturn(buffer);
 			when(buffer.end()).thenReturn(buffer);
 		}
 

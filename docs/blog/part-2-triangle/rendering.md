@@ -17,10 +17,14 @@ The final components we need to complete the demo are the command sequence for d
 Vulkan implements work to performed on a queue by recording a sequence of _commands_ to a _command buffer_, which is allocated and managed by a _command pool_.
 
 For the triangle demo the command sequence is:
+
 1. start the render pass
+
 2. bind the pipeline
+
 3. draw the triangle
-3. end the render pass
+
+4. end the render pass
 
 To specify this chain of commands we would again like to design a fluid API as illustrated by the following pseudo-code:
 
@@ -35,8 +39,6 @@ buffer
     .add(pass.end());
     .end();
 ```
-
-### Command Interface
 
 We start with an outline class for commands, buffers and pools:
 
@@ -66,130 +68,142 @@ public interface Command {
 
 The `Command` interface abstracts the signature of a Vulkan command whose arguments are always comprised of the API and a handle to the command buffer.
 
+We also create a new API to support commands:
+
+```java
+interface VulkanLibraryCommandBuffer {
+    int vkCreateCommandPool(Handle device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pCommandPool);
+    int vkResetCommandPool(Handle device, Handle commandPool, int flags);
+    void vkDestroyCommandPool(Handle device, Handle commandPool, Handle pAllocator);
+
+    int vkAllocateCommandBuffers(Handle device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
+    int vkResetCommandBuffer(Handle commandBuffer, int flags);
+    void vkFreeCommandBuffers(Handle device, Handle commandPool, int commandBufferCount, Handle pCommandBuffers);
+
+    int vkBeginCommandBuffer(Handle commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
+    int vkEndCommandBuffer(Handle commandBuffer);
+}
+```
+
 ### Command Pool
 
-We start with the command pool which is created using a static factory:
+We start with a domain object for the command pool:
 
 ```java
 class Pool extends AbstractVulkanObject {
-    /**
-     * Creates a command pool for the given queue.
-     * @param queue     Work queue
-     * @param flags     Flags
-     */
-    public static Pool create(Queue queue, VkCommandPoolCreate... flags) {
-        // Init pool descriptor
-        final VkCommandPoolCreateInfo info = new VkCommandPoolCreateInfo();
-        info.queueFamilyIndex = queue.family().index();
-        info.flags = IntegerEnumeration.mask(flags);
-
-        // Create pool
-        final LogicalDevice dev = queue.device();
-        final VulkanLibrary lib = dev.library();
-        final PointerByReference pool = lib.factory().pointer();
-        check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
-
-        // Create pool
-        return new Pool(pool.getValue(), queue);
-    }
-
     private final Queue queue;
 
-    /**
-     * Constructor.
-     * @param handle        Command pool handle
-     * @param queue         Work queue
-     */
-    private Pool(Pointer handle, Queue queue) {
-        super(handle, queue.device(), queue.device().library()::vkDestroyCommandPool);
+    private Pool(Pointer handle, LogicalDevice dev, Queue queue) {
+        super(handle, dev);
         this.queue = notNull(queue);
+    }
+
+    @Override
+    protected Destructor destructor(VulkanLibrary lib) {
+        return lib::vkDestroyCommandPool;
     }
 }
 ```
 
-To allocate one-or-more command buffers we add the following factory:
+A pool is created via a factory method:
 
 ```java
-/**
- * Allocates a number of command buffers from this pool.
- * @param num           Number of buffers to allocate
- * @param primary       Whether primary or secondary
- * @return Allocated buffers
- */
+public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFlag... flags) {
+    // Init pool descriptor
+    final var info = new VkCommandPoolCreateInfo();
+    info.queueFamilyIndex = queue.family().index();
+    info.flags = IntegerEnumeration.mask(flags);
+
+    // Create pool
+    final VulkanLibrary lib = dev.library();
+    final PointerByReference pool = lib.factory().pointer();
+    check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
+
+    // Create pool
+    return new Pool(pool.getValue(), dev, queue);
+}
+```
+
+To allocate command buffers we add the following factory method to the pool:
+
+```java
 public List<Buffer> allocate(int num, boolean primary) {
     // Init descriptor
-    final var info = new VkCommandBufferAllocateInfo();
-    info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
-    info.commandBufferCount = num;
+    final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
+    info.level = primary ? VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY : VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+    info.commandBufferCount = oneOrMore(num);
     info.commandPool = this.handle();
 
     // Allocate buffers
-    final LogicalDevice dev = queue.device();
+    final DeviceContext dev = super.device();
     final VulkanLibrary lib = dev.library();
-    final Pointer[] handles = lib.factory().pointers(num);
+    final Pointer[] handles = lib.factory().array(num);
     check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
-
-    // Create buffers
-    final var list = Arrays
-            .stream(handles)
-            .map(ptr -> new Buffer(ptr, this))
-            .collect(toList());
-
-    // Register buffers
-    buffers.addAll(list);
-
-    return list;
+    
+    ...
 }
 ```
 
-Note that the pool tracks the buffers that have been allocated:
+The handles of the newly allocated buffers are then transformed to domain objects:
+
+```java
+// Create buffers
+final var list = Arrays
+    .stream(handles)
+    .map(ptr -> new Buffer(ptr, this))
+    .collect(toList());
+
+// Register buffers
+buffers.addAll(list);
+
+return list;
+```
+
+Note that command buffers are automatically released by the pool when it is destroyed, however we also track the allocated buffers:
 
 ```java
 class Pool {
     private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
-
+    
     ...
 
     @Override
-    public synchronized void destroy() {
+    protected void release() {
         buffers.clear();
-        super.destroy();
     }
 }
 ```
 
-We also add the following methods to release some or all of the allocated buffers:
+Buffers can also be explicitly released back to the pool by the application:
 
 ```java
-/**
- * Frees <b>all</b> command buffers in this pool.
- */
 public synchronized void free() {
     free(buffers);
     buffers.clear();
 }
 
-/**
- * Releases a set of command buffers back to this pool.
- * @param buffers Buffers to release
- */
 private void free(Collection<Buffer> buffers) {
     final LogicalDevice dev = super.device();
     dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers));
 }
 ```
 
-### Command Buffer
+Finally the pool can also be reset which recycles resources and restores all allocated buffers to their initial state:
 
-A command buffer is used to **record** a sequence of commands, i.e. the commands are not executed immediately but are submitted to a work queue for execution by the hardware.
+```java
+public void reset(VkCommandPoolResetFlag... flags) {
+    final int mask = IntegerEnumeration.mask(flags);
+    final LogicalDevice dev = super.device();
+    check(dev.library().vkResetCommandPool(dev.handle(), this.handle(), mask));
+}
+```
 
-We define a command buffer as follows:
+### Command Buffers
+
+A command buffer is used to __record__ a sequence of commands which can then be submitted to a work queue for execution:
 
 ```java
 class Buffer implements NativeObject {
-    /**
-     * Buffer state.
-     */
     private enum State {
         INITIAL,
         RECORDING,
@@ -198,39 +212,34 @@ class Buffer implements NativeObject {
 
     private final Handle handle;
     private final Pool pool;
-
     private State state = State.INITIAL;
 
-    /**
-     * Constructor.
-     * @param handle        Command buffer handle
-     * @param pool          Parent pool
-     */
     private Buffer(Pointer handle, Pool pool) {
         this.handle = new Handle(handle);
         this.pool = notNull(pool);
     }
+
+    public boolean isReady() {
+        return state == State.EXECUTABLE;
+    }
 }
 ```
 
-The _state_ is used to track whether the buffer has been recorded (with the enumeration names being based on the Vulkan documentation).
+The _state_ member track whether the buffer has been recorded and is ready for execution (the enumeration names are based on the Vulkan documentation).
 
-The `begin` method is used to start recording:
+The `begin` method starts recording of a command sequence:
 
 ```java
-/**
- * Starts command buffer recording.
- * @param flags Flags
- * @throws IllegalStateException if this buffer is not ready for recording
- */
-public Buffer begin(VkCommandBufferUsage... flags) {
+public Buffer begin(VkCommandBufferUsageFlag... flags) {
     // Check buffer can be recorded
     if(state != State.INITIAL) throw new IllegalStateException(...);
 
-    // Start buffer
+    // Init descriptor
     final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
     info.flags = IntegerEnumeration.mask(flags);
-    info.pInheritanceInfo = null;
+
+    // Start buffer recording
+    final VulkanLibrary lib = pool.device().library();
     check(lib.vkBeginCommandBuffer(handle, info));
 
     // Start recording
@@ -239,44 +248,105 @@ public Buffer begin(VkCommandBufferUsage... flags) {
 }
 ```
 
-Specific commands can then be added to the sequence:
+The sequence is then recorded by adding commands:
 
 ```java
-/**
- * Adds a command.
- * @param cmd Command
- * @throws IllegalStateException if this buffer is not recording
- */
 public Buffer add(Command cmd) {
-    if(state != State.RECORDING) throw new IllegalStateException(...);
-    cmd.execute(lib, handle);
+    if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
+    cmd.execute(pool.device().library(), handle);
     return this;
 }
 ```
 
-Finally the `end` method finishes recording:
+Finally the `end` method completes recording:
 
 ```java
-/**
- * Ends recording.
- * @throws IllegalStateException if this buffer is not recording
- * @throws IllegalArgumentException if no commands have been recorded
- */
 public Buffer end() {
-    if(state != State.RECORDING) throw new IllegalStateException(...);
+    if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
+    final VulkanLibrary lib = pool.device().library();
     check(lib.vkEndCommandBuffer(handle));
     state = State.EXECUTABLE;
     return this;
 }
 ```
 
-Notes:
-- We could have introduced a further recorder class but it hardly seems worthwhile.
-- Command buffers are managed by the pool and are not explicitly destroyed.
+We also convenience mutators to reset or release a buffer back to the pool.
+
+### Work Submission
+
+Executing a command buffer involves populating a Vulkan descriptor comprising a _batch_ of buffers to be submitted to a work queue along with relevant synchronisation declarations.  We will ignore synchronisation until later as it is not needed for the triangle demo.
+
+We create the `Work` class that wraps the submission descriptor and work queue:
+
+```java
+public class Work {
+    private final VkSubmitInfo info;
+    private final Queue queue;
+}
+```
+
+To create a work instance we add the obligatory builder:
+
+```java
+public static class Builder {
+    private final List<Buffer> buffers = new ArrayList<>();
+    private Queue queue;
+}
+```
+
+The `add` method adds a command buffer to the work submission:
+
+```java
+public Builder add(Buffer buffer) {
+    // Check buffer has been recorded
+    if(!buffer.isReady()) throw new IllegalStateException(...);
+    
+    ...
+    
+    // Add buffer to this work
+    buffers.add(buffer);
+
+    return this;
+}
+```
+
+Note that all command buffers __must__ be submitted to the same queue family, which is validated in the `add` method:
+
+```
+Queue q = buffer.pool().queue();
+if(queue == null) {
+    this.queue = q;
+}
+else {
+    if(!queue.family().equals(q.family())) {
+        throw new IllegalArgumentException(...);
+    }
+}
+```
+
+The build method populates the descriptor for the work submission and allocates the new domain object instance:
+
+```java
+public Work build() {
+    // Init batch descriptor
+    final VkSubmitInfo info = new VkSubmitInfo();
+
+    // Populate command buffers
+    info.commandBufferCount = buffers.size();
+    info.pCommandBuffers = Handle.toArray(buffers);
+
+    // Create work
+    return new Work(info, queue);
+}
+```
+
+
 
 ---
 
-## Command Implementation
+## Integration
+
+### Command Implementation
 
 We can now implement the specific commands required for the triangle demo (based on the pseudo-code above).
 
@@ -333,102 +403,6 @@ Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
 This specifies the three triangles vertices, in a single instance, both starting at index zero.
 Later we will factor this out to a factory when we address vertex buffers and models.
 
-## Submitting Work
-
-Submitting a command buffer to a work queue involves populating a descriptor of the work to be performed comprising a _batch_ of command buffers and synchronisation declarations.
-We will ignore synchronisation until a future chapter as it is not needed for the triangle demo.
-
-We define a _work_ class with the obligatory builder:
-
-```java
-public class Work {
-    private final VkSubmitInfo info;
-    private final Queue queue;
-
-    /**
-     * Constructor.
-     * @param info          Descriptor for this work batch
-     * @param queue         Work queue
-     */
-    public Work(VkSubmitInfo info, Queue queue) {
-        this.info = notNull(info);
-        this.queue = notNull(queue);
-    }
-
-    /**
-     * @return Work queue for this batch
-     */
-    public Queue queue() {
-        return queue;
-    }
-
-    public static class Builder {
-        private final List<Command.Buffer> buffers = new ArrayList<>();
-        private Queue queue;
-        
-        ...
-
-        public Work build() {
-            if(buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
-            final VkSubmitInfo info = new VkSubmitInfo();
-            info.commandBufferCount = buffers.size();
-            info.pCommandBuffers = Handle.toArray(buffers);
-            return new Work(info, queue);
-        }
-    }
-}
-```
-
-The target queue for the work is determined from the command buffer when it is added to the batch:
-
-```java
-public Builder add(Command.Buffer buffer) {
-    // Check buffer has been recorded
-    if(!buffer.isReady()) throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
-
-    // Initialise queue
-    final Queue q = buffer.pool().queue();
-    if(queue == null) {
-        queue = q;
-    }
-    else
-    if(queue.family() != q.family()) {
-        throw new IllegalArgumentException("Command buffers must all have the same queue: " + buffer);
-    }
-
-    // Add buffer to this work
-    buffers.add(buffer);
-
-    return this;
-}
-```
-
-Note that each work submission must be allocated from the same queue family.
-
-Finally a collection of work batches is submitted for execution to the queue as follows:
-
-```java
-public static void submit(List<Work> work, Fence fence) {
-    // Determine submission queue and check all batches have the same queue
-    Check.notEmpty(work);
-    final Queue queue = work.get(0).queue;
-    if(!work.stream().map(e -> e.queue).allMatch(queue::equals)) {
-        throw new IllegalArgumentException(...);
-    }
-
-    // Convert descriptors to array
-    final var array = work.stream().map(e -> e.info).toArray(VkSubmitInfo[]::new);
-
-    // Submit work
-    final VulkanLibrary lib = queue.device().library();
-    check(lib.vkQueueSubmit(queue.handle(), array.length, array, null));
-}
-```
-
----
-
-## Integration
-
 ### Rendering Sequence
 
 We can now integrate all of the above to create and record the rendering sequence.
@@ -484,34 +458,10 @@ Thread.sleep(1000);
 
 Obviously this is temporary code just sufficient to test this first demo - we will be implementing a proper render loop in future chapters.
 
-We also release the various Vulkan objects after the 'loop' has terminated:
 
-```java
-// Wait for pending work to complete
-present.waitIdle();
 
-// Release render pass
-buffers.forEach(FrameBuffer::destroy);
-pass.destroy();
 
-// Release pipeline
-vert.destroy();
-frag.destroy();
-pipeline.destroy();
 
-// Release swapchain
-chain.destroy();
-
-// Destroy window
-surface.destroy();
-window.destroy();
-desktop.destroy();
-
-// Destroy device
-pool.destroy();
-dev.destroy();
-instance.destroy();
-```
 
 ### All that for a triangle?
 

@@ -20,7 +20,7 @@ import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
 import org.sarge.jove.platform.vulkan.VkCommandBufferResetFlag;
-import org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateFlag;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandPoolResetFlag;
@@ -105,7 +105,7 @@ public interface Command {
 		 * @param flags Flags
 		 * @throws IllegalStateException if this buffer is not ready for recording
 		 */
-		public Buffer begin(VkCommandBufferUsageFlag... flags) {
+		public Buffer begin(VkCommandBufferUsage... flags) {
 			// Check buffer can be recorded
 			if(state != State.INITIAL) throw new IllegalStateException("Buffer is not ready for recording: " + this);
 

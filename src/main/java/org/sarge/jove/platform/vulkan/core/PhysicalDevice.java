@@ -21,7 +21,6 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
@@ -37,7 +36,7 @@ import com.sun.jna.ptr.IntByReference;
  * A <i>physical device</i> represents a Vulkan system component such as a GPU.
  * @author Sarge
  */
-public class PhysicalDevice implements NativeObject, DeviceContext {
+public class PhysicalDevice implements NativeObject {
 	/**
 	 * Enumerates the physical devices for the given instance.
 	 * @param instance Vulkan instance
@@ -106,11 +105,6 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 		return handle;
 	}
 
-	@Override
-	public VulkanLibrary library() {
-		return instance.library();
-	}
-
 	/**
 	 * @return Vulkan instance
 	 */
@@ -132,7 +126,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	 * @return Whether presentation is supported by the given family
 	 */
 	public boolean isPresentationSupported(Handle surface, Family family) {
-		final VulkanLibrary lib = this.library();
+		final VulkanLibrary lib = instance.library();
 		final IntByReference supported = lib.factory().integer();
 		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this.handle(), family.index(), surface, supported));
 		return VulkanBoolean.of(supported.getValue()).toBoolean();
@@ -225,7 +219,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 		private final VkPhysicalDeviceProperties struct = new VkPhysicalDeviceProperties();
 
 		private Properties() {
-			final VulkanLibrary lib = PhysicalDevice.this.library();
+			final VulkanLibrary lib = instance.library();
 			lib.vkGetPhysicalDeviceProperties(handle, struct);
 		}
 
@@ -269,7 +263,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	 * Retrieves the features supported by this device.
 	 */
 	private DeviceFeatures loadFeatures() {
-		final VulkanLibrary lib = this.library();
+		final VulkanLibrary lib = instance.library();
 		final VkPhysicalDeviceFeatures struct = new VkPhysicalDeviceFeatures();
 		lib.vkGetPhysicalDeviceFeatures(handle, struct);
 		return new DeviceFeatures(struct);
@@ -280,7 +274,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	 */
 	public Set<String> extensions() {
 		final VulkanFunction<VkExtensionProperties> func = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(handle, null, count, array);
-		return VulkanHelper.extensions(library(), func);
+		return VulkanHelper.extensions(instance.library(), func);
 	}
 
 	/**
@@ -288,7 +282,7 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	 */
 	public Set<ValidationLayer> layers() {
 		final VulkanFunction<VkLayerProperties> func = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(handle, count, array);
-		return ValidationLayer.enumerate(library(), func);
+		return ValidationLayer.enumerate(instance.library(), func);
 	}
 
 	/**
@@ -298,7 +292,8 @@ public class PhysicalDevice implements NativeObject, DeviceContext {
 	 */
 	public VkFormatProperties properties(VkFormat format) {
 		final var props = new VkFormatProperties();
-		library().vkGetPhysicalDeviceFormatProperties(handle, format, props);
+		final VulkanLibrary lib = instance.library();
+		lib.vkGetPhysicalDeviceFormatProperties(handle, format, props);
 		return props;
 	}
 

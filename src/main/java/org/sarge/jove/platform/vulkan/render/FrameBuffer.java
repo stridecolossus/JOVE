@@ -35,12 +35,6 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class FrameBuffer extends AbstractVulkanObject {
 	/**
-	 * End render pass command.
-	 * @see #begin()
-	 */
-	public static final Command END_RENDER_PASS = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
-
-	/**
 	 * Creates a frame buffer for the given attachments.
 	 * @param attachments		Image attachments
 	 * @param pass				Render pass
@@ -119,7 +113,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	/**
 	 * Creates a command to begin rendering.
 	 * @return Begin rendering command
-	 * @see #END_RENDER_PASS
+	 * @see RenderPass#END_RENDER_PASS
 	 */
 	public Command begin() {
 		// Create descriptor
