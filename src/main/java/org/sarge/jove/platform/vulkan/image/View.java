@@ -40,7 +40,7 @@ public class View extends AbstractVulkanObject {
 
 	private final Image image;
 
-	private ClearValue clear;
+	private ClearValue clear = ClearValue.NONE;
 
 	/**
 	 * Constructor.

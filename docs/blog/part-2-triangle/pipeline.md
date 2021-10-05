@@ -228,8 +228,8 @@ Finally the builder populates the Vulkan descriptor for the viewport stage:
 VkPipelineViewportStateCreateInfo get() {
     // Validate
     final int count = viewports.size();
-    if(count == 0) throw new IllegalArgumentException("No viewports specified");
-    if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
+    if(count == 0) throw new IllegalArgumentException(...);
+    if(scissors.size() != count) throw new IllegalArgumentException(...);
 
     // Add viewports
     final var info = new VkPipelineViewportStateCreateInfo();
@@ -256,6 +256,10 @@ private void populate(VkViewport viewport) {
     viewport.maxDepth = max.floatValue();
 }
 ```
+
+Note there are separate fields for the number of viewports and scissors but they __must__ be the same value.
+
+We also add a convenience factory method on the parent pipeline builder that configures a single viewport and scissor with the same rectangle (the most common case).
 
 ---
 
@@ -472,7 +476,11 @@ void main() {
 }
 ```
 
-Note the use of the built-in `gl_VertexIndex` variable which is used to index into the two arrays.
+Notes:
+
+* The built-in `gl_VertexIndex` variable is used to index into the two arrays.
+
+* All shader code is copied as-is from the tutorial.
 
 The colour for each vertex is simply passed through to the next stage by the fragment shader:
 
@@ -508,17 +516,19 @@ class PipelineConfiguration {
 
     @Bean
     public Shader vertex() throws IOException {
-        return Shader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.vert"));
+        return Shader.load(dev, new FileInputStream("./src/main/resources/spv.triangle.vert"));
     }
 
     @Bean
     public Shader fragment() throws IOException {
-        return Shader.load(dev, new FileInputStream("./src/test/resources/demo/triangle/spv.triangle.frag"));
+        return Shader.load(dev, new FileInputStream("./src/main/resources/spv.triangle.frag"));
     }
 }
 ```
 
-And we can finally configure the graphics pipeline:
+Note that in general we prefer construction injection but the `@AutoWired` member is more convenient in this case.
+
+Finally we configure the graphics pipeline:
 
 ```java
 @Bean
@@ -541,10 +551,6 @@ public Pipeline pipeline(RenderPass pass, Swapchain swapchain, Shader vertex, Sh
         .build(dev);
 }
 ```
-
-We also add a convenience factory method to the pipeline that creates a single viewport and scissor with the same rectangle (the most common case).
-
-Phew!
 
 ---
 

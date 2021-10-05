@@ -755,46 +755,52 @@ We created the [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/maste
 
 ```java
 public final class VulkanBoolean {
-    public static final VulkanBoolean TRUE = new VulkanBoolean(true);
-    public static final VulkanBoolean FALSE = new VulkanBoolean(false);
-    
-    /**
-     * Converts a native integer value to a Vulkan boolean (non-zero is {@code true}).
-     * @param value Native value
-     * @return Vulkan boolean
-     */
-    public static VulkanBoolean of(int value) {
-        return value == 0 ? VulkanBoolean.FALSE : VulkanBoolean.TRUE;
-    }
+    public static final VulkanBoolean TRUE = new VulkanBoolean(1);
+    public static final VulkanBoolean FALSE = new VulkanBoolean(0);
 
-    public static VulkanBoolean of(boolean bool) {
-        return bool ? VulkanBoolean.TRUE : VulkanBoolean.FALSE;
-    }
+    private final int value;
 
-    private final boolean value;
-
-    private VulkanBoolean(boolean value) {
+    private VulkanBoolean(int value) {
         this.value = value;
     }
 
-    /**
-     * @return Native integer representation of this boolean (1 for {@code true} or 0 for {@code false})
-     */
-    private int toInteger() {
-        return value ? 1 : 0;
+    public boolean toBoolean() {
+        return this == TRUE;
+    }
+
+    @Override
+    public int hashCode() {
+        return value;
     }
 
     @Override
     public boolean equals(Object obj) {
         return obj == this;
     }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
 }
 ```
 
-Again we used a JNA type converter to map the new type to/from its native representation:
+We also add convenience converters for a native value or a Java boolean:
 
 ```java
-static final TypeConverter CONVERTER = new TypeConverter() {
+public static VulkanBoolean of(int value) {
+    return value == TRUE.value ? TRUE : FALSE;
+}
+
+public static VulkanBoolean of(boolean bool) {
+    return bool ? TRUE : FALSE;
+}
+```
+
+Again we used a JNA type converter to map the new type to/from its native representation in API methods and JNA structures:
+
+```java
+public static final TypeConverter CONVERTER = new TypeConverter() {
     @Override
     public Class<?> nativeType() {
         return Integer.class;
@@ -803,18 +809,18 @@ static final TypeConverter CONVERTER = new TypeConverter() {
     @Override
     public Object toNative(Object value, ToNativeContext context) {
         if(value == null) {
-            return 0;
+            return FALSE.value;
         }
         else {
             final VulkanBoolean bool = (VulkanBoolean) value;
-            return bool.toInteger();
+            return bool.value;
         }
     }
 
     @Override
     public Object fromNative(Object nativeValue, FromNativeContext context) {
         if(nativeValue == null) {
-            return VulkanBoolean.FALSE;
+            return FALSE;
         }
         else {
             return of((int) nativeValue);

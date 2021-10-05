@@ -16,7 +16,7 @@ abstract class AbstractPipelineBuilder<T> {
 	 * Sets the parent builder.
 	 * @param parent Parent
 	 */
-	void parent(Builder parent) {
+	final void parent(Builder parent) {
 		this.parent = notNull(parent);
 	}
 
@@ -29,7 +29,7 @@ abstract class AbstractPipelineBuilder<T> {
 	 * Constructs this object.
 	 * @return Parent pipeline builder
 	 */
-	public Builder build() {
+	public final Builder build() {
 		return parent;
 	}
 }

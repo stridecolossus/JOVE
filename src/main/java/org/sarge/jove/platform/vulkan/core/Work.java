@@ -7,13 +7,14 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
@@ -24,7 +25,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.Command.Pool;
-import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.util.StructureHelper;
@@ -85,7 +85,7 @@ public class Work {
 
 	private final Pool pool;
 	private final List<Buffer> buffers = new ArrayList<>();
-	private final Collection<Pair<Semaphore, Integer>> wait = new ArrayList<>();
+	private final Map<Semaphore, Integer> wait = new HashMap<>();
 	private final Set<Semaphore> signal = new HashSet<>();
 
 	/**
@@ -105,13 +105,16 @@ public class Work {
 		info.pCommandBuffers = Handle.toArray(buffers);
 
 		if(!wait.isEmpty()) {
+			// Convert map to list (to ensure the two fields in the descriptor have the same order)
+			final var list = new ArrayList<>(wait.entrySet());
+
 			// Populate wait semaphores
-			final var semaphores = wait.stream().map(Pair::getLeft).collect(toList());
+			final var semaphores = list.stream().map(Entry::getKey).collect(toList());
 			info.waitSemaphoreCount = wait.size();
 			info.pWaitSemaphores = Handle.toArray(semaphores);
 
 			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
-			final int[] stages = wait.stream().map(Pair::getRight).mapToInt(Integer::intValue).toArray();
+			final int[] stages = list.stream().map(Entry::getValue).mapToInt(Integer::intValue).toArray();
 			final Memory mem = new Memory(stages.length * Integer.BYTES);
 			mem.write(0, stages, 0, stages.length);
 			info.pWaitDstStageMask = mem;
@@ -236,14 +239,15 @@ public class Work {
 		 * Adds a semaphore upon which to wait before executing this batch.
 		 * @param semaphore 	Wait semaphore
 		 * @param stages		Pipeline stage(s) at which this semaphore will occur
+		 * @throws IllegalArgumentException if {@code stages} is empty
+		 * @throws IllegalArgumentException for a duplicate semaphore
 		 */
 		public Builder wait(Semaphore semaphore, Collection<VkPipelineStage> stages) {
 			// TODO - not VK_PIPELINE_STAGE_HOST_BIT
-			// TODO - check duplicates?
 			Check.notNull(semaphore);
 			Check.notEmpty(stages);
-			final var entry = ImmutablePair.of(semaphore, IntegerEnumeration.mask(stages));
-			work.wait.add(entry);
+			if(work.wait.containsKey(semaphore)) throw new IllegalArgumentException(String.format("Duplicate wait semaphore: %s (%s)", semaphore, stages));
+			work.wait.put(semaphore, IntegerEnumeration.mask(stages));
 			return this;
 		}
 

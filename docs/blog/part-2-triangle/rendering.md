@@ -164,7 +164,6 @@ Note that command buffers are automatically released by the pool when it is dest
 ```java
 class Pool {
     private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
-    
     ...
 
     @Override
@@ -330,7 +329,9 @@ public static void submit(List<Work> work) {
     // Validate
     Check.notEmpty(work);
     final Pool pool = work.get(0).pool;
-    if(!work.stream().allMatch(e -> matches(e, pool))) throw new IllegalArgumentException(...);
+    if(!work.stream().allMatch(e -> matches(e, pool))) {
+        throw new IllegalArgumentException(...);
+    }
 
     // Populate array of submission descriptors
     final VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
@@ -341,7 +342,7 @@ public static void submit(List<Work> work) {
 }
 ```
 
-Where the Vulkan descriptor for each work submission is populated by the following helper on the `Work` class:
+Where the Vulkan descriptor for each work submission in the batch is populated by the following helper on the `Work` class:
 
 ```java
 private void populate(VkSubmitInfo info) {
@@ -475,7 +476,7 @@ public static Buffer sequence(Pool pool, FrameBuffer frame, Pipeline pipeline) {
 
 To finally display the triangle we need to invoke presentation and rendering.
 
-We firstly add the following bean declaration which will invoke a Spring `ApplicationRunner` once the container has been initialised:
+We add the following bean which invokes a Spring `ApplicationRunner` once the container has been initialised:
 
 ```java
 @Bean

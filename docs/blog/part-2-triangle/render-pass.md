@@ -349,7 +349,6 @@ Attachment attachment = new Attachment.Builder()
 We next create the render pass consisting of a single sub-pass that renders the colour attachment:
 
 ```java
-// Create render pass
 RenderPass pass = new RenderPass.Builder()
     .subpass()
         .colour(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
@@ -360,9 +359,12 @@ RenderPass pass = new RenderPass.Builder()
 Finally we create the frame buffers:
 
 ```java
+FrameBuffer[] buffers = swapchain
+    .views()
+    .stream()
+    .map(view -> FrameBuffer.create(pass, swapchain.extents(), List.of(view))
+    .toArray(FrameBuffer[]::new);
 ```
-
-TODO
 
 ---
 
@@ -612,32 +614,30 @@ public static RenderPass pass(LogicalDevice dev) {
 And the frame buffers:
 
 ```java
-// TODO - destroy
 @Bean
-public static List<FrameBuffer> buffers(Swapchain swapchain, RenderPass pass) {
-    return swapchain
-        .views()
-        .stream()
-        .map(view -> FrameBuffer.create(pass, swapchain.extents(), List.of(view)))
-        .collect(toList());
+public static FrameBuffer frame(Swapchain swapchain, RenderPass pass) {
+    final View view = swapchain.views().iterator().next();
+    return FrameBuffer.create(pass, swapchain.extents(), List.of(view));
 }
 ```
 
-We may want to factor out the colour attachment as a separate bean later.
+Notes:
+
+* We may choose to factor out the colour attachment as a separate bean at some point.
+
+* The above creates a _single_ frame buffer to make things easier for this first demo (see the next chapter).
 
 ### Cleanup
 
 Spring provides another bonus when we address cleanup of the various Vulkan components.  By default, on application shutdown, the container will invoke an _inferred_ public method named `close` or `shutdown` on a bean when it is destroyed.
 
-We rename the destroy method in `TransientNativeObject` to `close` to take advantage of this functionality.  The container also ensures that components are destroyed in the correct order (inferred from the dependencies) removing another responsibility on the developer.
+We rename the destroy method in `TransientNativeObject` to `close` to take advantage of this functionality.  The container also ensures that components are destroyed in the correct order (inferred from the dependencies) removing another responsibility from the developer.
 
 Notes:
 
 * An alternative could have been to specify an explicit `destroyMethod` in each bean declaration but the inferred approach is obviously easier (if a little bit of black-magic).
 
 * The `@DependsOn` annotation can also be used to implement more explicit dependencies between components.
-
-* As a collection the frame-buffers are __not__ auto-magically destroyed by the container resulting in Vulkan errors - we will address this problem later in development.
 
 ---
 
