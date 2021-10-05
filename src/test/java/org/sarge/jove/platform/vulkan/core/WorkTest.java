@@ -49,7 +49,7 @@ public class WorkTest extends AbstractVulkanTest {
 		when(buffer.isReady()).thenReturn(true);
 
 		// Create work
-		work = new Work.Builder().add(buffer).build();
+		work = new Work.Builder(queue).add(buffer).build();
 	}
 
 	@Test
@@ -124,7 +124,7 @@ public class WorkTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Work.Builder();
+			builder = new Work.Builder(queue);
 		}
 
 		@Test

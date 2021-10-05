@@ -59,6 +59,8 @@ public class Work {
 		check(lib.vkQueueSubmit(queue.handle(), array.length, array, NativeObject.ofNullable(fence)));
 	}
 
+//	Each element of the pCommandBuffers member of each element of pSubmits must have been allocated from a VkCommandPool that was created for the same queue family queue belongs to
+
 	/**
 	 * Helper - Submits a <i>one time</i> command to the given pool and waits for completion.
 	 * @param cmd		Command
@@ -73,10 +75,11 @@ public class Work {
 				.end();
 
 		// Submit work and wait for completion
-		final VulkanLibrary lib = pool.device().library();
 		try {
-			new Builder().add(buffer).build().submit(null, lib);
-			pool.queue().waitIdle(lib);
+			final VulkanLibrary lib = pool.device().library();
+			final Queue queue = pool.queue();
+			new Builder(queue).add(buffer).build().submit(null, lib);
+			queue.waitIdle(lib);
 		}
 		finally {
 			buffer.free();
@@ -125,10 +128,18 @@ public class Work {
 	 * Builder for a work batch.
 	 */
 	public static class Builder {
+		private final Queue queue;
 		private final List<Buffer> buffers = new ArrayList<>();
 		private final Collection<Pair<Semaphore, Integer>> wait = new ArrayList<>();
 		private final Set<Semaphore> signal = new HashSet<>();
-		private Queue queue;
+
+		/**
+		 * Constructor.
+		 * @param queue Work queue for this submission
+		 */
+		public Builder(Queue queue) {
+			this.queue = notNull(queue);
+		}
 
 		/**
 		 * Adds a command buffer to be submitted.
@@ -140,15 +151,9 @@ public class Work {
 			// Check buffer has been recorded
 			if(!buffer.isReady()) throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
 
-			// Initialise queue
-			final Queue q = buffer.pool().queue();
-			if(queue == null) {
-				queue = q;
-			}
-			else {
-				if(!queue.family().equals(q.family())) {
-					throw new IllegalArgumentException("Command buffers must all have the same queue: " + buffer);
-				}
+			// Check all work is submitted to the same queue family
+			if(!buffer.pool().queue().family().equals(queue.family())) {
+				throw new IllegalArgumentException("Command buffers must all have the same queue: " + buffer);
 			}
 
 			// Add buffer to this work

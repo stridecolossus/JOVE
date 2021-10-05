@@ -272,7 +272,7 @@ public Buffer end() {
 
 We also convenience mutators to reset or release a buffer back to the pool.
 
-### Work Submission
+### Submission
 
 Executing a command buffer involves populating a Vulkan descriptor comprising a _batch_ of buffers to be submitted to a work queue along with relevant synchronisation declarations.  We will ignore synchronisation until later as it is not needed for the triangle demo.
 
@@ -290,7 +290,7 @@ To create a work instance we add the obligatory builder:
 ```java
 public static class Builder {
     private final List<Buffer> buffers = new ArrayList<>();
-    private Queue queue;
+    private final Queue queue;
 }
 ```
 
@@ -300,9 +300,12 @@ The `add` method adds a command buffer to the work submission:
 public Builder add(Buffer buffer) {
     // Check buffer has been recorded
     if(!buffer.isReady()) throw new IllegalStateException(...);
-    
-    ...
-    
+
+    // Check all work is submitted to the same queue family
+    if(!buffer.pool().queue().family().equals(queue.family())) {
+        throw new IllegalArgumentException(...);
+    }
+
     // Add buffer to this work
     buffers.add(buffer);
 
@@ -310,21 +313,9 @@ public Builder add(Buffer buffer) {
 }
 ```
 
-Note that all command buffers __must__ be submitted to the same queue family, which is validated in the `add` method:
+Note that all command buffers __must__ be submitted to the same queue family which is validated in the above method.
 
-```
-Queue q = buffer.pool().queue();
-if(queue == null) {
-    this.queue = q;
-}
-else {
-    if(!queue.family().equals(q.family())) {
-        throw new IllegalArgumentException(...);
-    }
-}
-```
-
-The build method populates the descriptor for the work submission and allocates the new domain object instance:
+The `build` method populates the descriptor for the submission and allocates the new work object:
 
 ```java
 public Work build() {
@@ -340,136 +331,145 @@ public Work build() {
 }
 ```
 
+TODO
 
+```java
+interface VulkanLibraryLogicalDevice {
+    int vkQueueSubmit(Handle queue, int submitCount, VkSubmitInfo[] pSubmits, Handle fence);
+}
+```
+
+TODO
 
 ---
 
 ## Integration
 
-### Command Implementation
+### Commands
 
-We can now implement the specific commands required for the triangle demo (based on the pseudo-code above).
+We can now implement the specific commands required for the triangle demo.
 
-We add the following factory method to the `RenderPass` class to start rendering:
+We add the following factory method on the `FrameBuffer` class to begin rendering:
 
 ```java
-public Command begin(FrameBuffer buffer) {
+public Command begin() {
     // Create descriptor
     final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
-    info.renderPass = this.handle();
-    info.framebuffer = buffer.handle();
-    info.renderArea = buffer.extents().toRect2D();
+    info.renderPass = pass.handle();
+    info.framebuffer = this.handle();
+
+    // Populate rendering area
+    final VkExtent2D ext = info.renderArea.extent;
+    ext.width = extents.width();
+    ext.height = extents.height();
 
     // Init clear values
-    // TODO...
-    final VkClearValue clear = new VkClearValue();
-    clear.setType("color");
-    clear.color.setType("float32");
-    clear.color.float32 = new float[]{0.3f, 0.3f, 0.3f, 1};
-    info.clearValueCount = 1;
-    info.pClearValues = clear;
-    // ...TODO
+    ...
 
     // Create command
     return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.INLINE);
 }
 ```
 
-The command also initialises the clear values for the frame buffer attachments - we have hard-coded a grey colour for our single colour attachment.  
-In a future chapter we will replace this temporary code with a proper implementation for both colour and depth attachments.
-
-> We explain the purpose of the various `setType` calls when we address depth buffers in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
-
-Ending the render pass can be defined as a constant since there are no additional arguments:
+The code to initialise the clear value for the colour attachment is temporarily hard-coded to a grey colour:
 
 ```java
-public static final Command END_COMMAND = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
+// Init clear values
+// TODO...
+final VkClearValue clear = new VkClearValue();
+clear.setType("color");
+clear.color.setType("float32");
+clear.color.float32 = new float[]{0.3f, 0.3f, 0.3f, 1};
+info.clearValueCount = 1;
+info.pClearValues = clear;
+// ...TODO
 ```
 
-To bind a pipeline in the render sequence we add the following factory method to the `Pipeline` class:
+We explain the purpose of `setType` when we fully implement clear values in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
+
+Ending the render pass is defined as a constant since the command does not require any additional arguments:
 
 ```java
-public Command bind() {
-    return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, this.handle());
+class RenderPass {
+    public static final Command END = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 }
 ```
 
-Finally for the moment we hard-code the drawing command in the demo:
+To bind the pipeline in the render sequence we add the following factory to the `Pipeline` class:
+
+```java
+public Command bind() {
+    return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, handle);
+}
+```
+
+Finally we hard-code the draw command to render the triangle vertices:
 
 ```java
 Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
 ```
 
-This specifies the three triangles vertices, in a single instance, both starting at index zero.
-Later we will factor this out to a factory when we address vertex buffers and models.
+This specifies the three triangles vertices, in a single instance, both starting at index zero.  We will implement a proper builder for the the draw command in a later chapter.
 
-### Rendering Sequence
-
-We can now integrate all of the above to create and record the rendering sequence.
-
-First we create a command buffer for each swapchain image:
+Finally we add the API methods for the new commands:
 
 ```java
-final Command.Pool pool = Command.Pool.create(presentationQueue);
-final List<Command.Buffer> commands = pool.allocate(buffers.size());
-```
-
-Next we record the rendering sequence for each frame-buffer:
-
-```java
-for(int n = 0; n < buffers.size(); ++n) {
-    final Command.Buffer cmd = commands.get(n);
-    final FrameBuffer fb = buffers.get(n);
-    cmd.begin()
-        .add(pass.begin(fb))
-        .add(pipeline.bind())
-        .add(draw)
-        .add(RenderPass.END_COMMAND)
-    .end();
+interface VulkanLibraryRenderPass {
+    ...
+    void vkCmdBeginRenderPass(Handle commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
+    void vkCmdEndRenderPass(Handle commandBuffer);
+    void vkCmdDraw(Handle commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
 }
 ```
 
-We have several parallel lists here sized by the swapchain buffering strategy (the swapchain image/views, the frame buffers and the commands) which we will eventually want to compose into an actual object but the above is fine for the moment.
+### Rendering Sequence
+
+In the demo application we add a new configuration class for the rendering sequence:
+
+```java
+@Configuration
+public class RenderConfiguration {
+    @Bean
+    public static Pool pool(LogicalDevice dev, @Qualifier("presentation") Queue presentation) {
+        return Pool.create(dev, presentation);
+    }
+}
+```
+
+Note the use of `@Qualifier` which disambiguates the work queue to be injected by _name_ (since there is more than one queue).
+
+The following bean allocates a command buffer and records the rendering sequence (based on the pseudo-code from the introduction):
+
+```java
+@Bean
+public static Buffer sequence(Pool pool, FrameBuffer frame, Pipeline pipeline) {
+    Command draw = ...
+    return pool
+        .allocate()
+        .begin()
+            .add(frame.begin())
+            .add(pipeline.bind())
+            .add(draw)
+            .add(RenderPass.END)
+        .end();
+}
+```
 
 ### Rendering
 
-To render the triangle we emulate a single frame:
-
-```java
-// Start next frame
-final int index = chain.acquire();
-
-// Render frame
-new Work.Builder()
-    .add(commands.get(index))
-    .stage(VkPipelineStageFlag.TOP_OF_PIPE)
-    .build()
-    .submit();
-
-// TODO
-present.waitIdle();
-
-// Present frame
-chain.present(present);
-
-// TODO
-Thread.sleep(1000);
-```
+TODO
 
 Obviously this is temporary code just sufficient to test this first demo - we will be implementing a proper render loop in future chapters.
 
-
-
-
-
-
-### All that for a triangle?
+### Conclusion
 
 If all goes well when we run the demo we should see the following:
 
 ![Triangle](triangle.png)
 
 Viola!
+
+All that for a triangle?
 
 There are a few gotchas that could result in staring at a blank screen:
 
@@ -485,6 +485,13 @@ There are a few gotchas that could result in staring at a blank screen:
 
 ## Summary
 
-In this final chapter for this phase of development we implemented commands and a crude render loop to display a triangle.
+In the final chapter for this phase of development we implemented:
 
-The API methods introduced in this chapter are defined in the `VulkanLibraryCommandBuffer` JNA interface.
+* The command pool and buffer.
+
+* The work submission mechanism.
+
+* Specific commands to support rendering.
+
+* A crude render 'loop' to display the triangle.
+
