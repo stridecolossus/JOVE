@@ -2,7 +2,7 @@
 title: Introduction
 ---
 
-## Introduction
+## Overview
 
 In this first section we set the scene for the project:
 
@@ -22,7 +22,7 @@ If the reader has no interest in the _why_ and wants to get straight to the nitt
 
 ## Background
 
-For several years as a personal project we had developed a Java-based OpenGL library and suite of demo applications.  With the advent of Vulkan we decided to archive the OpenGL project and start afresh with a Vulkan implementation which we named __JOVE__.
+For several years as a personal project we had developed a Java-based OpenGL library and suite of demo applications.  With the advent of Vulkan we decided to archive this project and start afresh with a Vulkan implementation which we named __JOVE__.
 
 This is not a small amount of effort, our rationale for such an undertaking is:
 
@@ -80,7 +80,7 @@ Each chapter generally consists of:
 
 * A summary of the software developed in that chapter.
 
-Development of JOVE will be inherently complex with Vulkan requiring many inter-dependant components.  To adhere to the minimal functionality principle we will often develop temporary or skeleton implementations that are refactored later on.  For example, the graphics pipeline _requires_ a pipeline layout object (which has no relevance at that point) so the initial implementation is an empty skeleton sufficient to progress the project.
+Development of JOVE will be inherently complex with Vulkan requiring many inter-dependant components.  To adhere to the minimal functionality principle we will often develop temporary or skeleton implementations that are refactored later on.  For example, the graphics pipeline _requires_ a pipeline layout object (which initially has no relevance) so the implementation is an empty skeleton sufficient to progress the project.
 
 ---
 
@@ -96,14 +96,16 @@ The JOVE library and associated demo applications are implemented as Maven proje
 
 Besides Vulkan itself the JOVE project also uses the following supporting libraries:
 
-| dependency            | purpose |
-| Apache Commons        | General helpful utilities and supporting classes |
-| Library               | Argument validation (another personal project) |
-| JUnit                 | Unit-testing framework |
-| Mockito               | Mocking and stubbing |
-| JNA                   | Interaction with native libraries |
-| GLFW                  | Management of native windows and input-devices |
-| Spring Boot           | Dependency injection for demo applications |
+| __dependency__ | __purpose__ |  __scope__ |
+| Apache Commons        | General helpful utilities and supporting classes | all |
+| Library               | Argument validation (another personal project) | all |
+| JUnit                 | Unit-testing framework | testing |
+| Mockito               | Mocking and stubbing | testing |
+| JNA                   | Interaction with native libraries | JOVE |
+| GLFW                  | Management of native windows and input-devices | JOVE |
+| Spring Boot           | Dependency injection | demos only |
+
+Where _scope_ indicates whether the library is used to support JOVE, unit-testing or demo applications.
 
 It can be assumed that all libraries use the latest stable release versions.
 
