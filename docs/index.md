@@ -4,41 +4,20 @@ title: A Java implementation of the Vulkan API
 
 ## Introduction
 
-TODO
+This tutorial/blog documents the design and development of a Java-based implementation of the Vulkan API.  Following the excellent [Vulkan tutorial](https://vulkan-tutorial.com/) we start from first principles and cover the challenges faced and decisions made as the project progresses.
 
-why
-what 
-how
+The content is organised into chapters that cover a specific piece of Vulkan functionality, e.g. texture sampling.  Chapters are grouped into sections that work towards a specific goal such as rendering a triangle.
 
-- challenge of why not
-- difficulty of adapting native library to OO design
-
-goals
-- clarity/simplicity
-- maintainability
-- testability
-- well documented third party libraries
-
-approach
-- minimal work to achieve goal
-- but aggressive refactoring
-- aim to build as we would for professional contract
-- on other hand per project so can reinvent any wheels we choose
-
-overview
-- note about part 1 optional
-- incremental approach building on each chapter
-- list of upcoming planned features
-
-what is Vulkan
+The [introduction](blog/part-1-intro/introduction) in the first section outlines the goals and aims of the project, the development approach, the rationale for the various technology choices, etc.
 
 ---
 
 ## Contents
 
-- Part 1 - Code Generation
-    - [Code Generation](blog/part-1-generation/generation)
-
+- Part 1 - Background
+    - [Introduction](blog/part-1-intro/introduction)
+    - [Code Generation](blog/part-1-intro/generation)
+    - [Enumerations](blog/part-1-intro/enumerations)
 
 - Part 2 - Rendering a Triangle
     - [Vulkan Instance](blog/part-2-triangle/instance)
