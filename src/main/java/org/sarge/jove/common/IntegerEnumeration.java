@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.function.IntBinaryOperator;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.ToNativeContext;
@@ -24,11 +23,6 @@ public interface IntegerEnumeration {
 	 * @return Enum literal
 	 */
 	int value();
-
-	/**
-	 * Integer <i>or</i> binary operator used to reduce a stream of masked integer values.
-	 */
-	IntBinaryOperator MASK = (a, b) -> a | b;
 
 	/**
 	 * Converts an integer enumeration to/from a native {@code int}.
@@ -105,9 +99,11 @@ public interface IntegerEnumeration {
 	 * @return Mask
 	 */
 	static <E extends IntegerEnumeration> int mask(Collection<E> values) {
-		return values.stream().distinct().mapToInt(IntegerEnumeration::value).reduce(0, MASK);
+		return values
+				.stream()
+				.mapToInt(IntegerEnumeration::value)
+				.reduce(0, (a, b) -> a | b);
 	}
-	// TODO - set? therefore can assume distinct
 
 	/**
 	 * Builds an integer mask from the given enumeration constants.
@@ -131,7 +127,7 @@ public interface IntegerEnumeration {
 		/**
 		 * Cache entry.
 		 */
-		private class Entry {
+		private static class Entry {
 			private final Map<Integer, ? extends IntegerEnumeration> map;
 			private final Object zero;
 

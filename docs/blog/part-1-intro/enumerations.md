@@ -2,23 +2,23 @@
 title: Enumerations
 ---
 
-
-### Background
+## Background
 
 When we first started using the code generated enumerations we realised there were a couple of flaws in our thinking:
 
-1. Many of the Vulkan enumerations are not a set of contiguous values and/or are actually bit-fields (as in the examples above). 
-We needed some mechanism to map _from_ a native value to the relevant enumeration constant that worked for _all_ generated enumerations.
+1. Many of the Vulkan enumerations are not a set of contiguous values and/or are actually bit-fields.  What we really needed was some mechanism to map _from_ a native value to the relevant enumeration constant that worked for _all_ generated enumerations.
 
-2. A native enumeration is implemented as an integer value and was being mapped to `int` in the code generated structures and API methods - this is error prone and not self-documenting.
+2. For bit-field enumerations in particular we also require some means of building a bit-field _mask_ from a collection of constants and performing the reverse operation.
 
-For a library with a handful of enumerations this would be a minor issue that we could work around but we needed something more practical for the large number of Vulkan enumerations!
+3. A native enumeration is implemented as an integer value and was mapped to `int` in the code generated structures and API methods - this is error prone and not self-documenting.
 
-### Solution
+For a library with a handful of enumerations this would be a minor issue that could be worked around, but something more practical was required for the large number of Vulkan enumerations.
 
-Although it is not common practice a Java enumeration **can** implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).  We leverage this technique to define a sort of base interface for the generated enumerations such that we can implement common helpers to handle the mapping issue.
+## Solution
 
-The [interface](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/IntegerEnumeration.java) itself is trivial (already seen in the Velocity template above):
+Although it is not common practice a Java enumeration __can__ implement an interface.  Indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java.  We leverage this technique to define a sort of base class for the code-generated enumerations such that we can implement helper methods to handle the mapping issues.
+
+The [interface](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/IntegerEnumeration.java) itself is trivial:
 
 ```java
 public interface IntegerEnumeration {
@@ -29,22 +29,31 @@ public interface IntegerEnumeration {
 }
 ```
 
-We add the following static method that maps a native value to the corresponding enumeration constant:
+We can now add a static helper to the new interface to map a native value to the corresponding enumeration constant:
 
 ```java
-/**
- * Maps an enumeration literal to the corresponding enumeration constant.
- * @param clazz Enumeration class
- * @param value Literal
- * @return Constant
- * @throws IllegalArgumentException if the enumeration does not contain the given value
- */
-static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
-    return Cache.CACHE.get(clazz).get(value);
-}
+static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) { ... }
 ```
 
-The cache generates an _entry_ for each integer enumeration on request:
+And methods to transform a bit-field mask to the enumeration:
+
+```java
+static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) { ... }
+```
+
+Or to build a mask from a collection of constants:
+
+```java
+static <E extends IntegerEnumeration> int mask(Collection<E> values) { ... }
+```
+
+Note that we probably _could_ have implemented these helpers as `default` methods on the interface, which would have simplified the method signatures and implementation, but that seemed an abuse of the default method mechanic.
+
+## Implementation
+
+To implement the helper methods we need the reverse mapping from the native values to the enumeration constants.
+
+We first implement a cache indexed by the enumeration class itself:
 
 ```java
 final class Cache {
@@ -53,84 +62,81 @@ final class Cache {
      */
     private static final Cache CACHE = new Cache();
 
-    /**
-     * Cache entry.
-     */
-    private class Entry {
-        /**
-         * Looks up the enumeration constant for the given value.
-         * @param <E> Enumeration
-         * @param value Constant value
-         * @return Enumeration constant
-         * @throws IllegalArgumentException for an unknown value
-         */
-        private <E extends IntegerEnumeration> E get(int value) {
-            ...
-        }
-    }
-
     private final Map<Class<? extends IntegerEnumeration>, Entry> cache = new ConcurrentHashMap<>();
-
-    private Cache() {
-    }
-
-    private Entry get(Class<? extends IntegerEnumeration> clazz) {
-        return cache.computeIfAbsent(clazz, Entry::new);
-    }
 }
 ```
 
-Each entry generates the reverse mapping:
+Each `Entry` in the cache is an instance of a local class containing the reverse mappings for that enumeration:
 
 ```java
-private class Entry {
+private static class Entry {
     private final Map<Integer, ? extends IntegerEnumeration> map;
-    private final Object zero;
+}
+```
 
-    private Entry(Class<? extends IntegerEnumeration> clazz) {
-        // Build reverse mapping
-        final IntegerEnumeration[] array = clazz.getEnumConstants();
-        this.map = Arrays.stream(array).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
+The mappings are built in the constructor:
 
-        // Determine zero value
-        final Object def = map.get(0);
-        this.zero = def == null ? array[0] : def;
-    }
+```java
+private Entry(Class<? extends IntegerEnumeration> clazz) {
+    final IntegerEnumeration[] array = clazz.getEnumConstants();
+    this.map = Arrays.stream(array).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
+}
+```
 
-    private <E extends IntegerEnumeration> E get(int value) {
-        final E result = (E) map.get(value);
-        if(result == null) {
-            throw new IllegalArgumentException(...);
-        }
-        return result;
-    }
+Which is initialised on-demand by the following accessor in the cache:
 
-    private <E extends IntegerEnumeration> E zero() {
-        return (E) zero;
-    }
+```java
+private Entry get(Class<? extends IntegerEnumeration> clazz) {
+    return cache.computeIfAbsent(clazz, Entry::new);
+}
+```
+
+The enumeration constant for a given native value can now be looked up from a cache entry:
+
+```java
+private <E extends IntegerEnumeration> E get(int value) {
+    final E result = (E) map.get(value);
+    if(result == null) throw new IllegalArgumentException(...);
+    return result;
+}
+```
+
+The public helper methods in the integer enumeration interface are implemented using the cache, for example to map a native value to the corresponding constant:
+
+```java
+static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
+    return Cache.CACHE.get(clazz).get(value);
 }
 ```
 
 Notes:
 
-- The _zero_ field is the _default_ constant used to instantiate an integer enumeration field in a JNA structure (since not all enumerations contain a zero value).
+* The reverse mapping silently ignores constants with duplicate native values (this should not be a problem).
 
-- Unfortunately the cache class is publicly visible but cannot be instantiated.
+* The `CACHE` is a singleton instance.
 
-Finally we also add helpers to transform to/from a bit-field mask:
+* Unfortunately the cache class is publicly visible but cannot be instantiated or invoked outside of the package.
+
+## Bit-Fields
+
+Building a bit-field mask from a collection of constants is relatively trivial:
 
 ```java
-IntBinaryOperator MASK = (a, b) -> a | b;
+static <E extends IntegerEnumeration> int mask(Collection<E> values) {
+    return values
+        .stream()
+        .distinct()
+        .mapToInt(IntegerEnumeration::value)
+        .reduce(0, (a, b) -> a | b);
+}
+```
 
-/**
- * Converts an integer mask to a set of enumeration constants.
- * @param clazz        Enumeration class
- * @param mask        Mask
- * @return Constants
- */
-static <E extends IntegerEnumeration> Collection<E> enumerate(Class<E> clazz, int mask) {
+However the reverse operation is slightly more complex:
+
+```java
+static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
     final var entry = Cache.CACHE.get(clazz);
-    final List<E> values = new ArrayList<>();
+    final Set<E> values = new TreeSet<>();
     final int max = Integer.highestOneBit(mask);
     for(int n = 0; n < max; ++n) {
         final int value = 1 << n;
@@ -140,20 +146,13 @@ static <E extends IntegerEnumeration> Collection<E> enumerate(Class<E> clazz, in
     }
     return values;
 }
-
-/**
- * Builds an integer mask from the given enumeration constants.
- * @param values Enumeration constants
- * @return Mask
- */
-static <E extends IntegerEnumeration> int mask(Collection<E> values) {
-    return values.stream().distinct().mapToInt(IntegerEnumeration::value).reduce(0, MASK);
-}
 ```
 
-### Type Converter
+Note the use of a `TreeSet` to ensure the resultant collection is in ascending value order (which simplifies some test cases).
 
-For the second problem we employed the JNA _type converter_ mechanism that maps a Java type to/from a native type:
+## Type Converter
+
+To refer to integer enumerations by type (rather than an anonymous `int`) we implement a JNA _type converter_ that maps a Java type to/from its native equivalent:
 
 ```java
 TypeConverter CONVERTER = new TypeConverter() {
@@ -175,26 +174,41 @@ TypeConverter CONVERTER = new TypeConverter() {
 
     @Override
     public Object fromNative(Object nativeValue, FromNativeContext context) {
-        // Lookup enumeration
         final Class<?> type = context.getTargetType();
         if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new IllegalStateException(...);
         final var entry = Cache.CACHE.get((Class<? extends IntegerEnumeration>) type);
+        return entry.get((int) nativeValue);
+    }
+};
+```
 
-        // Map native value
-        final int value = (int) nativeValue;
-        if(value == 0) {
-            return entry.zero();
-        }
-        else {
-            return entry.get(value);
-        }
+The converter is registered with a global JNA _type mapper_ in the Vulkan library:
+
+```java
+public interface VulkanLibrary ... {
+    TypeMapper MAPPER = mapper();
+
+    private static TypeMapper mapper() {
+        final DefaultTypeMapper mapper = new DefaultTypeMapper();
+        mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
+        ...
+        return mapper;
     }
 }
 ```
 
-Note that `fromNative` handles the case of a zero native value.
+The JNA library is configured with this type mapper at instantiation-time so that the new enumerations can be used in Vulkan API methods:
 
-The only fly in the ointment is that we need to apply this converter to **every** JNA structure in its constructor, hence we introduce a base-class for all Vulkan structures:
+```java
+static VulkanLibrary create() {
+    ...
+    return Native.load(name, VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
+}
+```
+
+The only fly in the ointment is that this mapper also needs to be applied to __every__ JNA structure in its constructor.
+
+We introduce an intermediate base-class for Vulkan structures:
 
 ```java
 abstract class VulkanStructure extends Structure {
@@ -204,32 +218,46 @@ abstract class VulkanStructure extends Structure {
 }
 ```
 
-The mapper is also created as a member of the Vulkan API:
+Note that this new base-class __must__ be defined as a member of the JNA library for the mapper to work correctly.
+
+Finally we modify the structure template accordingly and re-generate the code.
+
+## Default Value
+
+The final complication when mapping from a native enumeration value is that a default or unspecified value (i.e. zero) may not be a valid enumeration constant.
+
+We introduce a _zero_ value to the cache entry which is initialised in the constructor:
 
 ```java
-public interface VulkanLibrary {
-    TypeMapper MAPPER = mapper();
-    
-    private static TypeMapper mapper() {
-        final DefaultTypeMapper mapper = new DefaultTypeMapper();
-        mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
-        ...
-        return mapper;
-    }
-    
-    static VulkanLibrary create() {
-        return Native.load(library(), VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
-    }
+private static class Entry {
+    private final Object zero;
 
-    abstract class VulkanStructure extends Structure {
+    private Entry(Class<? extends IntegerEnumeration> clazz) {
         ...
+        
+        // Determine zero value
+        final Object def = map.get(0);
+        this.zero = def == null ? array[0] : def;
     }
 }
 ```
 
-Notes:
+This default value is mapped from the zero enumeration constant if present or arbitrarily selected as the first constant.
 
-- The new structure base-class **must** be defined as a member of the API for the mapper to work correctly.
+In the type converter we can now safely handle invalid or unspecified native values:
 
-- We use the the same mapper when instantiating the library so that the converter also applies to all API methods.
+```java
+public Object fromNative(Object nativeValue, FromNativeContext context) {
+    // Lookup enumeration
+    final var entry = ...
 
+    // Map native value
+    final int value = (int) nativeValue;
+    if(value == 0) {
+        return entry.zero();
+    }
+    else {
+        return entry.get(value);
+    }
+}
+```
