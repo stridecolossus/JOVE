@@ -30,16 +30,15 @@ We start with a new domain class that wraps the rendering surface previously ret
 
 ```java
 public class Surface extends AbstractTransientNativeObject {
-    private final PhysicalDevice dev;
+    private final Instance instance;
 
-    public Surface(Handle handle, PhysicalDevice dev) {
+    public Surface(Handle handle, Instance instance) {
         super(handle);
-        this.dev = notNull(dev);
+        this.instance = notNull(instance);
     }
 
     @Override
     protected void release() {
-        final Instance instance = dev.instance();
         final VulkanLibrarySurface lib = instance.library();
         lib.vkDestroySurfaceKHR(instance.handle(), handle, null);
     }
@@ -50,13 +49,19 @@ Notes:
 
 * A `Handle` is an opaque and immutable wrapper for a JNA pointer.
 
-* The `AbstractTransientNativeObject` is the base-class for Vulkan domain objects managed by the application.
+* The `AbstractTransientNativeObject` is the template base-class for Vulkan domain objects managed by the application.
 
 * Both of these new framework components are detailed towards the end of the chapter.
 
-The surface provides a number of accessors that will be used to configure the swapchain.
+The new surface class provides a factory for the surface properties for the selected physical device:
 
-The _surface capabilities_ specify minimum and maximum constraints on various aspects of the hardware, such as the number of frame buffers, the maximum dimensions of the image views, etc:
+```java
+public Properties properties(PhysicalDevice dev) {
+    return new Properties(dev.handle());
+}
+```
+
+The surface properties provides a number of accessors that are used to configure the swapchain.  The _surface capabilities_ specify minimum and maximum constraints on various aspects of the hardware, such as the number of frame buffers, the maximum dimensions of the image views, etc:
 
 ```java
 public VkSurfaceCapabilitiesKHR capabilities() {
@@ -292,10 +297,11 @@ The available capabilities, formats and presentation modes are queried (once) fr
 
 ```java
 public Builder(LogicalDevice dev, Surface surface) {
+    final Surface.Properties props = surface.properties(dev.parent());
+    this.caps = props.capabilities();
+    this.formats = props.formats();
+    this.modes = props.modes();
     this.dev = notNull(dev);
-    this.caps = surface.capabilities();
-    this.formats = surface.formats();
-    this.modes = surface.modes();
     info.surface = surface.handle();
     init();
 }

@@ -463,8 +463,9 @@ class DesktopConfiguration {
     }
 
     @Bean
-    public static Handle surface(Instance instance, Window window) {
-        return window.surface(instance.handle());
+    public static Surface surface(Instance instance, Window window) {
+        final Handle handle = window.surface(instance.handle());
+        return new Surface(handle, instance);
     }
 }
 ```
@@ -526,8 +527,8 @@ class DeviceConfiguration {
     private final Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
     private final Selector presentation;
 
-    public DeviceConfiguration(Handle surface) {
-        presentation = Selector.of(surface);
+    public DeviceConfiguration(Surface surface) {
+        presentation = Selector.of(surface.handle());
     }
 }
 ```
