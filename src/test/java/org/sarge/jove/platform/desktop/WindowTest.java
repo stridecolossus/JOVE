@@ -89,7 +89,7 @@ public class WindowTest {
 			ref.setValue(ptr);
 			return 0;
 		};
-		doAnswer(answer).when(lib).glfwCreateWindowSurface(eq(vulkan), eq(window.handle()), isNull(), isA(PointerByReference.class));
+		doAnswer(answer).when(lib).glfwCreateWindowSurface(eq(vulkan), eq(window), isNull(), isA(PointerByReference.class));
 
 		// Create surface
 		final Handle surface = window.surface(vulkan);
@@ -99,6 +99,6 @@ public class WindowTest {
 	@Test
 	void destroy() {
 		window.close();
-		verify(lib).glfwDestroyWindow(window.handle());
+		verify(lib).glfwDestroyWindow(window);
 	}
 }

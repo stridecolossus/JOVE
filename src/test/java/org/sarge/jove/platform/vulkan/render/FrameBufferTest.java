@@ -94,12 +94,12 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		assertNotNull(begin);
 
 		// Start rendering
-		final Handle handle = new Handle(new Pointer(1));
-		begin.execute(lib, handle);
+		final Command.Buffer cb = mock(Command.Buffer.class);
+		begin.execute(lib, cb);
 
 		// Check API
 		final ArgumentCaptor<VkRenderPassBeginInfo> captor = ArgumentCaptor.forClass(VkRenderPassBeginInfo.class);
-		verify(lib).vkCmdBeginRenderPass(eq(handle), captor.capture(), eq(VkSubpassContents.INLINE));
+		verify(lib).vkCmdBeginRenderPass(eq(cb), captor.capture(), eq(VkSubpassContents.INLINE));
 
 		// Check descriptor
 		final VkRenderPassBeginInfo info = captor.getValue();
@@ -125,9 +125,9 @@ public class FrameBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void end() {
-		final Handle handle = new Handle(new Pointer(1));
-		FrameBuffer.END.execute(lib, handle);
-		verify(lib).vkCmdEndRenderPass(handle);
+		final Command.Buffer cb = mock(Command.Buffer.class);
+		FrameBuffer.END.execute(lib, cb);
+		verify(lib).vkCmdEndRenderPass(cb);
 	}
 
 	@Test
@@ -137,9 +137,8 @@ public class FrameBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		final Handle handle = buffer.handle();
 		buffer.close();
-		verify(lib).vkDestroyFramebuffer(DEVICE, handle, null);
+		verify(lib).vkDestroyFramebuffer(dev, buffer, null);
 	}
 
 	@Nested
@@ -148,7 +147,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		void create() {
 			// Check allocation
 			final ArgumentCaptor<VkFramebufferCreateInfo> captor = ArgumentCaptor.forClass(VkFramebufferCreateInfo.class);
-			verify(lib).vkCreateFramebuffer(eq(DEVICE), captor.capture(), isNull(), eq(POINTER));
+			verify(lib).vkCreateFramebuffer(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
 			// Check descriptor
 			final VkFramebufferCreateInfo info = captor.getValue();

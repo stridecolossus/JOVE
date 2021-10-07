@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -64,9 +65,9 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 		mapper.addTypeConverter(VulkanBoolean.class, VulkanBoolean.CONVERTER);
 		mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
 		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
+		mapper.addTypeConverter(NativeObject.class, NativeObject.CONVERTER);
 		return mapper;
 	}
-	// TODO - or expose and allow public mutable? i.e. less inter-dependencies?
 
 	/**
 	 * Instantiates the Vulkan API.

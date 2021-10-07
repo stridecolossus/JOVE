@@ -70,7 +70,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 		// Check API
 		final ArgumentCaptor<VkRenderPassCreateInfo> captor = ArgumentCaptor.forClass(VkRenderPassCreateInfo.class);
-		verify(lib).vkCreateRenderPass(eq(DEVICE), captor.capture(), isNull(), eq(POINTER));
+		verify(lib).vkCreateRenderPass(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
 		// Check create descriptor
 		final VkRenderPassCreateInfo info = captor.getValue();
@@ -102,7 +102,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 		@Test
 		void close() {
 			pass.close();
-			verify(lib).vkDestroyRenderPass(DEVICE, pass.handle(), null);
+			verify(lib).vkDestroyRenderPass(dev, pass, null);
 		}
 	}
 

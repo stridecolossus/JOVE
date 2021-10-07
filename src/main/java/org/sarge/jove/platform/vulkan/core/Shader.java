@@ -35,7 +35,7 @@ public class Shader extends AbstractVulkanObject {
 		// Allocate shader
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference shader = lib.factory().pointer();
-		check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));
+		check(lib.vkCreateShaderModule(dev, info, null, shader));
 
 		// Create shader
 		return new Shader(shader.getValue(), dev);
@@ -51,7 +51,7 @@ public class Shader extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<Shader> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyShaderModule;
 	}
 

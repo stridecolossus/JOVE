@@ -9,27 +9,23 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 
 public class ImageCopyCommandTest {
-	private static final Handle IMAGE = new Handle(new Pointer(1));
-	private static final Handle BUFFER = new Handle(new Pointer(2));
-	private static final Handle COMMAND = new Handle(new Pointer(2));
-
 	private Image image;
 	private VulkanBuffer buffer;
 	private VulkanLibrary lib;
 	private ImageCopyCommand.Builder builder;
+	private Command.Buffer cb;
 
 	@BeforeEach
 	void before() {
@@ -45,16 +41,17 @@ public class ImageCopyCommandTest {
 
 		// Create image
 		image = mock(Image.class);
-		when(image.handle()).thenReturn(IMAGE);
 		when(image.descriptor()).thenReturn(descriptor);
 
 		// Create data buffer
 		buffer = mock(VulkanBuffer.class);
-		when(buffer.handle()).thenReturn(BUFFER);
 
 		// Create copy command builder
 		builder = new ImageCopyCommand.Builder();
 		builder.subresource(SubResource.of(descriptor));
+
+		// Create command buffer
+		cb = mock(Command.Buffer.class);
 	}
 
 	@Test
@@ -80,11 +77,11 @@ public class ImageCopyCommandTest {
 		expected.imageExtent.height = 3;
 
 		// Perform copy operation
-		copy.execute(lib, COMMAND);
+		copy.execute(lib, cb);
 		verify(buffer).require(VkBufferUsage.TRANSFER_SRC);
 
 		// Check API
-		verify(lib).vkCmdCopyBufferToImage(COMMAND, BUFFER, IMAGE, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
+		verify(lib).vkCmdCopyBufferToImage(cb, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
 	}
 
 	@Test
@@ -98,7 +95,7 @@ public class ImageCopyCommandTest {
 				.build();
 
 		// Perform copy operation
-		copy.execute(lib, COMMAND);
+		copy.execute(lib, cb);
 		verify(buffer).require(VkBufferUsage.TRANSFER_DST);
 	}
 

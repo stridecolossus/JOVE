@@ -119,10 +119,10 @@ public interface DrawCommand extends Command {
 		public DrawCommand build() {
 			// TODO - verification
 			if(indexed) {
-				return (api, handle) -> api.vkCmdDrawIndexed(handle, count, instanceCount, firstIndex, firstVertex, firstInstance);
+				return (api, buffer) -> api.vkCmdDrawIndexed(buffer, count, instanceCount, firstIndex, firstVertex, firstInstance);
 			}
 			else {
-				return (api, handle) -> api.vkCmdDraw(handle, count, instanceCount, firstVertex, firstInstance);
+				return (api, buffer) -> api.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
 			}
 		}
 	}

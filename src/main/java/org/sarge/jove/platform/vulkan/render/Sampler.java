@@ -45,7 +45,7 @@ public class Sampler extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<Sampler> destructor(VulkanLibrary lib) {
 		return lib::vkDestroySampler;
 	}
 
@@ -284,7 +284,7 @@ public class Sampler extends AbstractVulkanObject {
 			// Allocate sampler
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference handle = lib.factory().pointer();
-			check(lib.vkCreateSampler(dev.handle(), info, null, handle));
+			check(lib.vkCreateSampler(dev, info, null, handle));
 
 			// Create sampler
 			return new Sampler(handle.getValue(), dev);

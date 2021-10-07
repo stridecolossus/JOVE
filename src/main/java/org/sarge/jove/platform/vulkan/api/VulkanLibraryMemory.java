@@ -1,8 +1,11 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.memory.DefaultDeviceMemory;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -17,7 +20,7 @@ interface VulkanLibraryMemory {
 	 * @param pMemory			Returned memory handle
 	 * @return Result code
 	 */
-	int vkAllocateMemory(Handle device, VkMemoryAllocateInfo pAllocateInfo, Handle pAllocator, PointerByReference pMemory);
+	int vkAllocateMemory(LogicalDevice device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
 
 	/**
 	 * Releases memory.
@@ -25,7 +28,7 @@ interface VulkanLibraryMemory {
 	 * @param memory			Memory
 	 * @param pAllocator		Allocator
 	 */
-	void vkFreeMemory(Handle device, Handle memory, Handle pAllocator);
+	void vkFreeMemory(DeviceContext device, DefaultDeviceMemory memory, Pointer pAllocator);
 
 	/**
 	 * Maps buffer memory.
@@ -37,12 +40,12 @@ interface VulkanLibraryMemory {
 	 * @param ppData			Returned pointer to the memory buffer
 	 * @return Result code
 	 */
-	int vkMapMemory(Handle device, Handle memory, long offset, long size, int flags, PointerByReference ppData);
+	int vkMapMemory(DeviceContext device, DefaultDeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
 
 	/**
 	 * Un-maps buffer memory.
 	 * @param device			Logical device
 	 * @param memory			Buffer memory
 	 */
-	void vkUnmapMemory(Handle device, Handle memory);
+	void vkUnmapMemory(DeviceContext device, DefaultDeviceMemory memory);
 }

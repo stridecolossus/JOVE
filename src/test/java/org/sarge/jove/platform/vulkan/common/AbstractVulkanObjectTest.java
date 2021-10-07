@@ -30,7 +30,7 @@ public class AbstractVulkanObjectTest {
 
 		// Create context
 		dev = mock(LogicalDevice.class);
-		when(dev.handle()).thenReturn(new Handle(new Pointer(2)));
+		when(dev.handle()).thenReturn(new Handle(2));
 
 		// Create destructor
 		destructor = mock(Destructor.class);
@@ -63,7 +63,7 @@ public class AbstractVulkanObjectTest {
 	void close() {
 		obj.close();
 		assertEquals(true, obj.isDestroyed());
-		verify(destructor).destroy(dev.handle(), obj.handle(), null);
+		verify(destructor).destroy(dev, obj, null);
 		assertTrue(released);
 	}
 }

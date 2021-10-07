@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkAccess;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
@@ -42,9 +41,9 @@ public class Barrier implements Command {
 	}
 
 	@Override
-	public void execute(VulkanLibrary lib, Handle handle) {
+	public void execute(VulkanLibrary lib, Buffer buffer) {
 		// TODO - others
-		lib.vkCmdPipelineBarrier(handle, src, dest, 0, 0, null, 0, null, images.length, images);
+		lib.vkCmdPipelineBarrier(buffer, src, dest, 0, 0, null, 0, null, images.length, images);
 	}
 
 	/**

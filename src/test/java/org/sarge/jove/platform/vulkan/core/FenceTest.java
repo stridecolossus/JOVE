@@ -9,12 +9,9 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -36,46 +33,46 @@ public class FenceTest extends AbstractVulkanTest {
 
 	@Test
 	void signalled() {
-		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.SUCCESS.value());
+		when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.SUCCESS.value());
 		assertEquals(true, fence.signalled());
-		verify(lib).vkGetFenceStatus(dev.handle(), fence.handle());
+		verify(lib).vkGetFenceStatus(dev, fence);
 	}
 
 	@Test
 	void notSignalled() {
-		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.NOT_READY.value());
+		when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.NOT_READY.value());
 		assertEquals(false, fence.signalled());
 	}
 
 	@Test
 	void signalledError() {
-		when(lib.vkGetFenceStatus(dev.handle(), fence.handle())).thenReturn(VkResult.ERROR_DEVICE_LOST.value());
+		when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.ERROR_DEVICE_LOST.value());
 		assertThrows(VulkanException.class, () -> fence.signalled());
 	}
 
 	@Test
 	void reset() {
 		fence.reset();
-		verify(lib).vkResetFences(dev.handle(), 1, Handle.toArray(List.of(fence)));
+		verify(lib).vkResetFences(dev, 1, new Fence[]{fence});
 	}
 
 	@Test
 	void waitReady() {
 		fence.waitReady();
-		verify(lib).vkWaitForFences(dev.handle(), 1, Handle.toArray(List.of(fence)), VulkanBoolean.TRUE, Long.MAX_VALUE);
+		verify(lib).vkWaitForFences(dev, 1, new Fence[]{fence}, VulkanBoolean.TRUE, Long.MAX_VALUE);
 	}
 
 	@Test
 	void destroy() {
 		fence.close();
-		verify(lib).vkDestroyFence(dev.handle(), fence.handle(), null);
+		verify(lib).vkDestroyFence(dev, fence, null);
 	}
 
 	@Test
 	void create() {
 		// Mock API
 		final ArgumentCaptor<VkFenceCreateInfo> captor = ArgumentCaptor.forClass(VkFenceCreateInfo.class);
-		when(lib.vkCreateFence(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class))).thenReturn(VulkanLibrary.SUCCESS);
+		when(lib.vkCreateFence(eq(dev), captor.capture(), isNull(), isA(PointerByReference.class))).thenReturn(VulkanLibrary.SUCCESS);
 
 		// Create fence
 		fence = Fence.create(dev, VkFenceCreateFlag.VK_FENCE_CREATE_SIGNALED_BIT);

@@ -13,34 +13,30 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkAccess;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.ImageExtents;
-import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.SubResource;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-
-import com.sun.jna.Pointer;
 
 public class BarrierTest {
 	private static final VkPipelineStage STAGE = VkPipelineStage.TOP_OF_PIPE;
 
 	private Barrier barrier;
 	private VulkanLibrary lib;
-	private Handle handle;
 
 	@BeforeEach
 	void before() {
 		barrier = null;
 		lib = mock(VulkanLibrary.class);
-		handle = new Handle(new Pointer(1));
 	}
 
 	@Nested
@@ -102,12 +98,13 @@ public class BarrierTest {
 					.build();
 
 			// Execute barrier
+			final Command.Buffer cb = mock(Command.Buffer.class);
 			assertNotNull(barrier);
-			barrier.execute(lib, handle);
+			barrier.execute(lib, cb);
 
 			// Check API
 			final ArgumentCaptor<VkImageMemoryBarrier[]> captor = ArgumentCaptor.forClass(VkImageMemoryBarrier[].class);
-			verify(lib).vkCmdPipelineBarrier(eq(handle), eq(STAGE.value()), eq(STAGE.value()), eq(0), eq(0), isNull(), eq(0), isNull(), eq(1), captor.capture());
+			verify(lib).vkCmdPipelineBarrier(eq(cb), eq(STAGE.value()), eq(STAGE.value()), eq(0), eq(0), isNull(), eq(0), isNull(), eq(1), captor.capture());
 
 			// Check image barriers
 			assertNotNull(captor.getValue());

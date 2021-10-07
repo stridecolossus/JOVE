@@ -15,7 +15,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
@@ -102,7 +101,7 @@ public class Work {
 	private void populate(VkSubmitInfo info) {
 		// Populate command buffers
 		info.commandBufferCount = buffers.size();
-		info.pCommandBuffers = Handle.toArray(buffers);
+		info.pCommandBuffers = NativeObject.toArray(buffers);
 
 		if(!wait.isEmpty()) {
 			// Convert map to list (to ensure the two fields in the descriptor have the same order)
@@ -111,7 +110,7 @@ public class Work {
 			// Populate wait semaphores
 			final var semaphores = list.stream().map(Entry::getKey).collect(toList());
 			info.waitSemaphoreCount = wait.size();
-			info.pWaitSemaphores = Handle.toArray(semaphores);
+			info.pWaitSemaphores = NativeObject.toArray(semaphores);
 
 			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
 			final int[] stages = list.stream().map(Entry::getValue).mapToInt(Integer::intValue).toArray();
@@ -122,7 +121,7 @@ public class Work {
 
 		// Populate signal semaphores
 		info.signalSemaphoreCount = signal.size();
-		info.pSignalSemaphores = Handle.toArray(signal);
+		info.pSignalSemaphores = NativeObject.toArray(signal);
 	}
 
 	/**
@@ -161,7 +160,7 @@ public class Work {
 
 		// Submit work
 		final VulkanLibrary lib = pool.device().library();
-		check(lib.vkQueueSubmit(pool.queue().handle(), array.length, array, NativeObject.ofNullable(fence)));
+		check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
 	}
 
 	/**

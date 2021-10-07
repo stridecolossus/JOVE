@@ -1,8 +1,11 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.Shader;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -17,7 +20,7 @@ interface VulkanLibraryShader {
 	 * @param shader			Returned shader handle
 	 * @return Result code
 	 */
-	int vkCreateShaderModule(Handle device, VkShaderModuleCreateInfo info, Handle pAllocator, PointerByReference shader);
+	int vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Pointer pAllocator, PointerByReference shader);
 
 	/**
 	 * Destroys a shader.
@@ -25,5 +28,5 @@ interface VulkanLibraryShader {
 	 * @param shader			Shader
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyShaderModule(Handle device, Handle shader, Handle pAllocator);
+	void vkDestroyShaderModule(DeviceContext device, Shader shader, Pointer pAllocator);
 }

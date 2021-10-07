@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class ImageDescriptorTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
@@ -111,7 +113,7 @@ public class ImageDescriptorTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		image.close();
-		verify(lib).vkDestroyImage(dev.handle(), image.handle(), null);
+		verify(lib).vkDestroyImage(dev, image, null);
 		verify(mem).close();
 	}
 
@@ -149,10 +151,11 @@ public class ImageDescriptorTest extends AbstractVulkanTest {
 			assertEquals(false, image.isDestroyed());
 
 			// Check API
+			final Pointer ptr = image.handle().toPointer();
 			final ArgumentCaptor<VkImageCreateInfo> captor = ArgumentCaptor.forClass(VkImageCreateInfo.class);
-			verify(lib).vkCreateImage(eq(dev.handle()), captor.capture(), isNull(), eq(POINTER));
-			verify(lib).vkGetImageMemoryRequirements(eq(dev.handle()), eq(POINTER.getValue()), any(VkMemoryRequirements.class));
-			verify(lib).vkBindImageMemory(eq(dev.handle()), eq(POINTER.getValue()), any(Handle.class), eq(0L));
+			verify(lib).vkCreateImage(eq(dev), captor.capture(), isNull(), isA(PointerByReference.class));
+			verify(lib).vkGetImageMemoryRequirements(eq(dev), eq(ptr), any(VkMemoryRequirements.class));
+			verify(lib).vkBindImageMemory(dev, ptr, image.memory(), 0);
 
 			// Check create descriptor
 			final VkImageCreateInfo info = captor.getValue();

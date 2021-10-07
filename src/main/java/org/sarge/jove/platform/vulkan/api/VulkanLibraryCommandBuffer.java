@@ -1,9 +1,11 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
+import org.sarge.jove.platform.vulkan.common.Command.Buffer;
+import org.sarge.jove.platform.vulkan.common.Command.Pool;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -20,7 +22,7 @@ interface VulkanLibraryCommandBuffer {
 	 * @param pCommandPool		Returned command pool
 	 * @return Result code
 	 */
-	int vkCreateCommandPool(Handle device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pCommandPool);
+	int vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pCommandPool);
 
 	/**
 	 * Destroys a command pool (and its buffers).
@@ -28,7 +30,7 @@ interface VulkanLibraryCommandBuffer {
 	 * @param commandPool		Command pool
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyCommandPool(Handle device, Handle commandPool, Handle pAllocator);
+	void vkDestroyCommandPool(DeviceContext device, Pool commandPool, Pointer pAllocator);
 
 	/**
 	 * Resets a command pool.
@@ -37,7 +39,7 @@ interface VulkanLibraryCommandBuffer {
 	 * @param flags				Flags
 	 * @return Result code
 	 */
-	int vkResetCommandPool(Handle device, Handle commandPool, int flags);
+	int vkResetCommandPool(DeviceContext device, Pool commandPool, int flags);
 
 	/**
 	 * Allocates a number of command buffers.
@@ -46,7 +48,7 @@ interface VulkanLibraryCommandBuffer {
 	 * @param pCommandBuffers	Returned buffer handles
 	 * @return Result code
 	 */
-	int vkAllocateCommandBuffers(Handle device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
+	int vkAllocateCommandBuffers(DeviceContext device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
 
 	/**
 	 * Releases a set of command buffers back to the pool.
@@ -55,7 +57,7 @@ interface VulkanLibraryCommandBuffer {
 	 * @param commandBufferCount	Number of buffers
 	 * @param pCommandBuffers		Buffer handles
 	 */
-	void vkFreeCommandBuffers(Handle device, Handle commandPool, int commandBufferCount, Handle pCommandBuffers);
+	void vkFreeCommandBuffers(DeviceContext device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
 
 	/**
 	 * Starts recording.
@@ -63,14 +65,14 @@ interface VulkanLibraryCommandBuffer {
 	 * @param pBeginInfo			Descriptor
 	 * @return Result code
 	 */
-	int vkBeginCommandBuffer(Handle commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
+	int vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
 
 	/**
 	 * Stops recording.
 	 * @param commandBuffer Command buffer
 	 * @return Result code
 	 */
-	int vkEndCommandBuffer(Handle commandBuffer);
+	int vkEndCommandBuffer(Buffer commandBuffer);
 
 	/**
 	 * Resets a command buffer.
@@ -78,5 +80,5 @@ interface VulkanLibraryCommandBuffer {
 	 * @param flags					Flags
 	 * @return Result code
 	 */
-	int vkResetCommandBuffer(Handle commandBuffer, int flags);
+	int vkResetCommandBuffer(Buffer commandBuffer, int flags);
 }

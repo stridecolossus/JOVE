@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
 
 import com.sun.jna.DefaultTypeMapper;
@@ -47,6 +48,7 @@ public class Desktop {
 		// Init type mapper
 		final var mapper = new DefaultTypeMapper();
 		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
+		mapper.addTypeConverter(Window.class, NativeObject.CONVERTER);
 
 		// Load native library
 		final DesktopLibrary lib = Native.load(name, DesktopLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));

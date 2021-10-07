@@ -1,12 +1,19 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkImageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSamplerCreateInfo;
+import org.sarge.jove.platform.vulkan.common.Command.Buffer;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.image.Image;
+import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
+import org.sarge.jove.platform.vulkan.render.Sampler;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -23,7 +30,7 @@ interface VulkanLibraryImage {
 	 * @param pImage			Returned image
 	 * @return Result code
 	 */
-	int vkCreateImage(Handle device, VkImageCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pImage);
+	int vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pImage);
 
 	/**
 	 * Destroys an image.
@@ -31,7 +38,7 @@ interface VulkanLibraryImage {
 	 * @param image				Image
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyImage(Handle device, Handle image, Handle pAllocator);
+	void vkDestroyImage(DeviceContext device, Image image, Pointer pAllocator);
 
 	/**
 	 * Retrieves the memory requirements for the given image.
@@ -39,7 +46,7 @@ interface VulkanLibraryImage {
 	 * @param image					Image
 	 * @param pMemoryRequirements	Returned memory requirements
 	 */
-	void vkGetImageMemoryRequirements(Handle device, Pointer image, VkMemoryRequirements pMemoryRequirements);
+	void vkGetImageMemoryRequirements(LogicalDevice device, Pointer image, VkMemoryRequirements pMemoryRequirements);
 
 	/**
 	 * Binds image memory.
@@ -49,7 +56,7 @@ interface VulkanLibraryImage {
 	 * @param memoryOffset		Offset
 	 * @return Result code
 	 */
-	int vkBindImageMemory(Handle device, Pointer image, Handle memory, long memoryOffset);
+	int vkBindImageMemory(LogicalDevice device, Pointer image, DeviceMemory memory, long memoryOffset);
 
 	/**
 	 * Copies a buffer to an image.
@@ -60,7 +67,7 @@ interface VulkanLibraryImage {
 	 * @param regionCount		Number of regions
 	 * @param pRegions			Regions
 	 */
-	void vkCmdCopyBufferToImage(Handle commandBuffer, Handle srcBuffer, Handle dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
+	void vkCmdCopyBufferToImage(Buffer commandBuffer, VulkanBuffer srcBuffer, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
 
 	/**
 	 * Copies an image to a buffer.
@@ -71,7 +78,7 @@ interface VulkanLibraryImage {
 	 * @param regionCount		Number of regions
 	 * @param pRegions			Regions
 	 */
-	void vkCmdCopyImageToBuffer(Handle commandBuffer, Handle srcImage, VkImageLayout srcImageLayout, Handle dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
+	void vkCmdCopyImageToBuffer(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, VulkanBuffer dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
 
 	/**
 	 * Creates an image view.
@@ -81,7 +88,7 @@ interface VulkanLibraryImage {
 	 * @param pView				Returned image view handle
 	 * @return Result code
 	 */
-	int vkCreateImageView(Handle device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pView);
+	int vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
 
 	/**
 	 * Destroys an image view.
@@ -89,7 +96,7 @@ interface VulkanLibraryImage {
 	 * @param imageView			Image view
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyImageView(Handle device, Handle imageView, Handle pAllocator);
+	void vkDestroyImageView(DeviceContext device, View imageView, Pointer pAllocator);
 
 	/**
 	 * Creates an image sampler.
@@ -99,7 +106,7 @@ interface VulkanLibraryImage {
 	 * @param pSampler			Returned sampler handle
 	 * @return Result code
 	 */
-	int vkCreateSampler(Handle device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pSampler);
+	int vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
 
 	/**
 	 * Destroys a sampler.
@@ -107,5 +114,5 @@ interface VulkanLibraryImage {
 	 * @param sampler			Sampler
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroySampler(Handle device, Handle sampler, Handle pAllocator);
+	void vkDestroySampler(DeviceContext device, Sampler sampler, Pointer pAllocator);
 }

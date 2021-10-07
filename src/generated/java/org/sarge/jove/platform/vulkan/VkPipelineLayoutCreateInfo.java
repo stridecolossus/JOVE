@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
@@ -24,7 +23,7 @@ public class VkPipelineLayoutCreateInfo extends VulkanStructure {
 	public Pointer pNext;
 	public int flags;
 	public int setLayoutCount;
-	public Handle pSetLayouts;
+	public Pointer pSetLayouts;
 	public int pushConstantRangeCount;
 	public VkPushConstantRange pPushConstantRanges;
 }

@@ -5,11 +5,9 @@ import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
-import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -52,17 +50,17 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		// Allocate buffer
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference handle = lib.factory().pointer();
-		check(lib.vkCreateBuffer(dev.handle(), info, null, handle));
+		check(lib.vkCreateBuffer(dev, info, null, handle));
 
 		// Query memory requirements
 		final var reqs = new VkMemoryRequirements();
-		lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
+		lib.vkGetBufferMemoryRequirements(dev, handle.getValue(), reqs);
 
 		// Allocate buffer memory
 		final DeviceMemory mem = dev.allocate(reqs, props);
 
 		// Bind memory
-		check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L));
+		check(lib.vkBindBufferMemory(dev, handle.getValue(), mem.handle(), 0L));
 
 		// Create buffer
 		return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem, len);
@@ -158,7 +156,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	public Command bindVertexBuffer() {
 		require(VkBufferUsage.VERTEX_BUFFER);
 		// TODO - support binding multiple VBO
-		final Handle array = Handle.toArray(List.of(this));
+//		final Handle array = Handle.toArray(List.of(this));
+		final VulkanBuffer[] array = new VulkanBuffer[]{this};
 		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
 	}
 
@@ -170,7 +169,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public Command bindIndexBuffer() {
 		require(VkBufferUsage.INDEX_BUFFER);
-		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.UINT32);
+		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this, 0, VkIndexType.UINT32);
 		// TODO - 16/32 depending on size
 	}
 
@@ -192,7 +191,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		region.size = len;
 
 		// Create copy command
-		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, VulkanBuffer.this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
+		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, this, dest, 1, new VkBufferCopy[]{region});
 	}
 
 	/**
@@ -205,7 +204,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<VulkanBuffer> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyBuffer;
 	}
 

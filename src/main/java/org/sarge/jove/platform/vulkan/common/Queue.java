@@ -32,7 +32,7 @@ public record Queue(Handle handle, Family family) implements NativeObject {
 	 * @param lib Vulkan API
 	 */
 	public void waitIdle(VulkanLibrary lib) {
-		check(lib.vkQueueWaitIdle(handle));
+		check(lib.vkQueueWaitIdle(this));
 	}
 
 	/**

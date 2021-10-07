@@ -118,7 +118,7 @@ public class Swapchain extends AbstractVulkanObject {
 //		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
 		final DeviceContext dev = device();
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkAcquireNextImageKHR(dev.handle(), this.handle(), Long.MAX_VALUE, NativeObject.ofNullable(semaphore), NativeObject.ofNullable(fence), index));
+		check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
 		return index.getValue();
 	}
 
@@ -133,11 +133,11 @@ public class Swapchain extends AbstractVulkanObject {
 
 		// Populate wait semaphores
 		info.waitSemaphoreCount = semaphores.size();
-		info.pWaitSemaphores = Handle.toArray(semaphores);
+		info.pWaitSemaphores = NativeObject.toArray(semaphores);
 
 		// Populate swap-chain
 		info.swapchainCount = 1;
-		info.pSwapchains = Handle.toArray(List.of(this));
+		info.pSwapchains = NativeObject.toArray(List.of(this));
 
 		// Set image indices
 		final int[] array = new int[]{index.getValue()};
@@ -147,12 +147,12 @@ public class Swapchain extends AbstractVulkanObject {
 
 		// Present frame
 		final VulkanLibrary lib = device().library();
-		check(lib.vkQueuePresentKHR(queue.handle(), info));
+		check(lib.vkQueuePresentKHR(queue, info));
 	}
 	// TODO - cache descriptor -> factory -> work submit?
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<Swapchain> destructor(VulkanLibrary lib) {
 		return lib::vkDestroySwapchainKHR;
 	}
 
@@ -383,10 +383,10 @@ public class Swapchain extends AbstractVulkanObject {
 			final VulkanLibrary lib = dev.library();
 			final ReferenceFactory factory = lib.factory();
 			final PointerByReference chain = factory.pointer();
-			check(lib.vkCreateSwapchainKHR(dev.handle(), info, null, chain));
+			check(lib.vkCreateSwapchainKHR(dev, info, null, chain));
 
 			// Retrieve swapchain images
-			final VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
+			final VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
 			final var handles = VulkanFunction.enumerate(func, lib, factory::array);
 
 			// Init swapchain image descriptor

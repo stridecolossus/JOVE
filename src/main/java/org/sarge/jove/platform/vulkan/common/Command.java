@@ -39,9 +39,9 @@ public interface Command {
 	/**
 	 * Executes this command.
 	 * @param lib		Vulkan library
-	 * @param buffer 	Command buffer handle
+	 * @param buffer 	Command buffer
 	 */
-	void execute(VulkanLibrary lib, Handle buffer);
+	void execute(VulkanLibrary lib, Buffer buffer);
 
 	/**
 	 * Helper - Submits this as a <i>one time</i> command to the given pool and waits for completion.
@@ -116,7 +116,7 @@ public interface Command {
 
 			// Start buffer recording
 			final VulkanLibrary lib = pool.device().library();
-			check(lib.vkBeginCommandBuffer(handle, info));
+			check(lib.vkBeginCommandBuffer(this, info));
 
 			// Start recording
 			state = State.RECORDING;
@@ -130,7 +130,7 @@ public interface Command {
 		 */
 		public Buffer add(Command cmd) {
 			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
-			cmd.execute(pool.device().library(), handle);
+			cmd.execute(pool.device().library(), this);
 			return this;
 		}
 
@@ -143,7 +143,7 @@ public interface Command {
 			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
 			// TODO - count?
 			final VulkanLibrary lib = pool.device().library();
-			check(lib.vkEndCommandBuffer(handle));
+			check(lib.vkEndCommandBuffer(this));
 			state = State.EXECUTABLE;
 			return this;
 		}
@@ -157,7 +157,7 @@ public interface Command {
 			if(state != State.EXECUTABLE) throw new IllegalStateException("Buffer has not been recorded: " + this);
 			final int mask = IntegerEnumeration.mask(flags);
 			final VulkanLibrary lib = pool.device().library();
-			check(lib.vkResetCommandBuffer(handle, mask));
+			check(lib.vkResetCommandBuffer(this, mask));
 			state = State.INITIAL;
 		}
 
@@ -197,7 +197,7 @@ public interface Command {
 			// Create pool
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference pool = lib.factory().pointer();
-			check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
+			check(lib.vkCreateCommandPool(dev, info, null, pool));
 
 			// Create pool
 			return new Pool(pool.getValue(), dev, queue);
@@ -256,7 +256,7 @@ public interface Command {
 			final DeviceContext dev = super.device(); //queue.device();
 			final VulkanLibrary lib = dev.library();
 			final Pointer[] handles = lib.factory().array(num);
-			check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
+			check(lib.vkAllocateCommandBuffers(dev, info, handles));
 
 			// Create buffers
 			final var list = Arrays
@@ -294,7 +294,7 @@ public interface Command {
 		public void reset(VkCommandPoolResetFlag... flags) {
 			final int mask = IntegerEnumeration.mask(flags);
 			final DeviceContext dev = super.device();
-			check(dev.library().vkResetCommandPool(dev.handle(), this.handle(), mask));
+			check(dev.library().vkResetCommandPool(dev, this, mask));
 		}
 
 		/**
@@ -311,11 +311,11 @@ public interface Command {
 		 */
 		private void free(Collection<Buffer> buffers) {
 			final DeviceContext dev = super.device();
-			dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers));
+			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), buffers.toArray(Buffer[]::new));
 		}
 
 		@Override
-		protected Destructor destructor(VulkanLibrary lib) {
+		protected Destructor<Pool> destructor(VulkanLibrary lib) {
 			return lib::vkDestroyCommandPool;
 		}
 

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
@@ -40,7 +39,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<PipelineLayout> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyPipelineLayout;
 	}
 
@@ -111,9 +110,9 @@ public class PipelineLayout extends AbstractVulkanObject {
 		}
 
 		@Override
-		public void execute(VulkanLibrary lib, Handle handle) {
+		public void execute(VulkanLibrary lib, Buffer buffer) {
 			if(data == null) throw new IllegalStateException("Push constant data has not been populated");
-			lib.vkCmdPushConstants(handle, PipelineLayout.this.handle(), mask, data.length, offset, data);
+			lib.vkCmdPushConstants(buffer, PipelineLayout.this, mask, data.length, offset, data);
 		}
 	}
 	// TODO - is a command created from a range (or a subset of a range)?
@@ -165,7 +164,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 			// Add descriptor set layouts
 			info.setLayoutCount = sets.size();
-			info.pSetLayouts = Handle.toArray(sets);
+			info.pSetLayouts = null; // Handle.toArray(sets);
 
 			// Add push constant ranges
 			info.pushConstantRangeCount = ranges.size();
@@ -175,7 +174,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference layout = lib.factory().pointer();
-			check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));
+			check(lib.vkCreatePipelineLayout(dev, info, null, layout));
 
 			// Create layout
 			return new PipelineLayout(layout.getValue(), dev);

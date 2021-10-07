@@ -37,7 +37,6 @@ import org.sarge.jove.platform.vulkan.render.DescriptorSet.Pool;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class DescriptorSetTest extends AbstractVulkanTest {
 	private static final int BINDING = 42;
@@ -103,9 +102,9 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		assertNotNull(bind);
 
 		// Check API
-		final Handle handle = new Handle(new Pointer(3));
-		bind.execute(lib, handle);
-		verify(lib).vkCmdBindDescriptorSets(handle, VkPipelineBindPoint.GRAPHICS, pipelineLayout.handle(), 0, 1, Handle.toArray(List.of(descriptor)), 0, null);
+		final Command.Buffer cb = mock(Command.Buffer.class);
+		bind.execute(lib, cb);
+		verify(lib).vkCmdBindDescriptorSets(cb, VkPipelineBindPoint.GRAPHICS, pipelineLayout, 0, 1, new DescriptorSet[]{descriptor}, 0, null);
 	}
 
 	@Nested
@@ -154,9 +153,8 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void destroy() {
-			final Handle handle = layout.handle();
 			layout.close();
-			verify(lib).vkDestroyDescriptorSetLayout(dev.handle(), handle, null);
+			verify(lib).vkDestroyDescriptorSetLayout(dev, layout, null);
 		}
 
 		@Test
@@ -167,7 +165,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 			// Check API
 			final ArgumentCaptor<VkDescriptorSetLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkDescriptorSetLayoutCreateInfo.class);
-			verify(lib).vkCreateDescriptorSetLayout(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+			verify(lib).vkCreateDescriptorSetLayout(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
 			// Check create descriptor
 			final VkDescriptorSetLayoutCreateInfo info = captor.getValue();
@@ -198,9 +196,8 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void destroy() {
-			final Handle handle = pool.handle();
 			pool.close();
-			verify(lib).vkDestroyDescriptorPool(dev.handle(), handle, null);
+			verify(lib).vkDestroyDescriptorPool(dev, pool, null);
 			assertEquals(0, pool.sets().count());
 		}
 
@@ -219,7 +216,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 			// Check API
 			final ArgumentCaptor<VkDescriptorSetAllocateInfo> captor = ArgumentCaptor.forClass(VkDescriptorSetAllocateInfo.class);
-			verify(lib).vkAllocateDescriptorSets(eq(dev.handle()), captor.capture(), isA(Pointer[].class));
+			verify(lib).vkAllocateDescriptorSets(eq(dev), captor.capture(), isA(Pointer[].class));
 
 			// Check descriptor
 			final VkDescriptorSetAllocateInfo info = captor.getValue();
@@ -239,7 +236,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		void free() {
 			final var sets = pool.allocate(List.of(layout));
 			pool.free(sets);
-			verify(lib).vkFreeDescriptorSets(dev.handle(), pool.handle(), 1, Handle.toArray(sets));
+			verify(lib).vkFreeDescriptorSets(dev, pool, 1, sets.toArray(DescriptorSet[]::new));
 			assertEquals(1, pool.maximum());
 			assertEquals(1, pool.available());
 			assertEquals(0, pool.sets().count());
@@ -259,7 +256,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		void freeAll() {
 			pool.allocate(List.of(layout));
 			pool.free();
-			verify(lib).vkResetDescriptorPool(dev.handle(), pool.handle(), 0);
+			verify(lib).vkResetDescriptorPool(dev, pool, 0);
 			assertEquals(1, pool.maximum());
 			assertEquals(1, pool.available());
 			assertEquals(0, pool.sets().count());
@@ -290,7 +287,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 				// Check API
 				final ArgumentCaptor<VkDescriptorPoolCreateInfo> captor = ArgumentCaptor.forClass(VkDescriptorPoolCreateInfo.class);
-				verify(lib).vkCreateDescriptorPool(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+				verify(lib).vkCreateDescriptorPool(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
 				// Check create descriptor
 				final VkDescriptorPoolCreateInfo info = captor.getValue();

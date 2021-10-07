@@ -27,7 +27,7 @@ public class VkFramebufferCreateInfo extends VulkanStructure {
 	public int flags;
 	public Handle renderPass;
 	public int attachmentCount;
-	public Handle pAttachments;
+	public Pointer pAttachments;
 	public int width;
 	public int height;
 	public int layers;

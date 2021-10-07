@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
@@ -49,16 +48,15 @@ public class PipelineTest extends AbstractVulkanTest {
 		assertNotNull(cmd);
 
 		// Check bind pipeline
-		final Handle buffer = new Handle(new Pointer(2));
-		cmd.execute(lib, buffer);
-		verify(lib).vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, pipeline.handle());
+		final Command.Buffer cb = mock(Command.Buffer.class);
+		cmd.execute(lib, cb);
+		verify(lib).vkCmdBindPipeline(cb, VkPipelineBindPoint.GRAPHICS, pipeline);
 	}
 
 	@Test
-	void destroy() {
-		final Handle handle = pipeline.handle();
+	void close() {
 		pipeline.close();
-		verify(lib).vkDestroyPipeline(dev.handle(), handle, null);
+		verify(lib).vkDestroyPipeline(dev, pipeline, null);
 	}
 
 	@Nested
@@ -98,7 +96,7 @@ public class PipelineTest extends AbstractVulkanTest {
 
 			// Check allocation
 			final ArgumentCaptor<VkGraphicsPipelineCreateInfo[]> captor = ArgumentCaptor.forClass(VkGraphicsPipelineCreateInfo[].class);
-			verify(lib).vkCreateGraphicsPipelines(eq(dev.handle()), isNull(), eq(1), captor.capture(), isNull(), isA(Pointer[].class));
+			verify(lib).vkCreateGraphicsPipelines(eq(dev), isNull(), eq(1), captor.capture(), isNull(), isA(Pointer[].class));
 			assertEquals(1, captor.getValue().length);
 
 			// Check descriptor

@@ -18,14 +18,14 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	 * @see AbstractVulkanObject#destructor(VulkanLibrary)
 	 */
 	@FunctionalInterface
-	public interface Destructor {
+	public interface Destructor<T extends AbstractVulkanObject> {
 		/**
 		 * Destroys this object.
 		 * @param dev			Logical device
 		 * @param handle		Handle
 		 * @param allocator		Vulkan memory allocator (always {@code null})
 		 */
-		void destroy(Handle dev, Handle handle, Handle allocator);
+		void destroy(DeviceContext dev, T obj, Pointer allocator);
 	}
 
 	private final DeviceContext dev;
@@ -52,13 +52,15 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	 * @param lib Vulkan API
 	 * @return Destructor method
 	 */
-	protected abstract Destructor destructor(VulkanLibrary lib);
+	protected abstract Destructor<?> destructor(VulkanLibrary lib);
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public synchronized void close() {
 		// Destroy this object
+		@SuppressWarnings("rawtypes")
 		final Destructor destructor = destructor(dev.library());
-		destructor.destroy(dev.handle(), this.handle(), null);
+		destructor.destroy(dev, this, null);
 
 		// Delegate
 		super.close();

@@ -62,27 +62,27 @@ public class SurfaceTest extends AbstractVulkanTest {
 		void capabilities() {
 			final var caps = props.capabilities();
 			assertNotNull(caps);
-			verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical.handle(), surface.handle(), caps);
+			verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical, surface, caps);
 		}
 
 		@Test
 		void formats() {
 			final var formats = props.formats();
 			assertNotNull(formats);
-			verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(eq(physical.handle()), eq(surface.handle()), isA(IntByReference.class), isA(VkSurfaceFormatKHR.class));
+			verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(eq(physical), eq(surface), isA(IntByReference.class), isA(VkSurfaceFormatKHR.class));
 		}
 
 		@Test
 		void modes() {
 			final var modes = props.modes();
 			assertNotNull(modes);
-			verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(eq(physical.handle()), eq(surface.handle()), isA(IntByReference.class), isA(int[].class));
+			verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(eq(physical), eq(surface), isA(IntByReference.class), isA(int[].class));
 		}
 	}
 
 	@Test
 	void close() {
 		surface.close();
-		verify(lib).vkDestroySurfaceKHR(instance.handle(), surface.handle(), null);
+		verify(lib).vkDestroySurfaceKHR(instance, surface, null);
 	}
 }

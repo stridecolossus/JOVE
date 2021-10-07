@@ -4,6 +4,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
+import org.sarge.jove.platform.vulkan.core.Instance;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -20,14 +21,14 @@ interface VulkanLibraryInstance {
 	 * @param instance		Returned instance
 	 * @return Result
 	 */
-	int vkCreateInstance(VkInstanceCreateInfo info, Handle allocator, PointerByReference instance);
+	int vkCreateInstance(VkInstanceCreateInfo info, Pointer allocator, PointerByReference instance);
 
 	/**
 	 * Destroys the vulkan instance.
 	 * @param instance		Instance handle
 	 * @param allocator		Allocator
 	 */
-	void vkDestroyInstance(Handle instance, Handle allocator);
+	void vkDestroyInstance(Handle instance, Pointer allocator);
 
 	/**
 	 * Enumerates extension properties.
@@ -52,5 +53,5 @@ interface VulkanLibraryInstance {
 	 * @param name			Function name
 	 * @return Function pointer
 	 */
-	Pointer vkGetInstanceProcAddr(Handle instance, String name);
+	Pointer vkGetInstanceProcAddr(Instance instance, String name);
 }

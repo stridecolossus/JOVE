@@ -1,11 +1,15 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkClearDepthStencilValue;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
+import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.image.Image;
+import org.sarge.jove.platform.vulkan.render.FrameBuffer;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -20,7 +24,7 @@ interface VulkanLibraryFrameBuffer {
 	 * @param pFramebuffer		Returned frame buffer
 	 * @return Result code
 	 */
-	int vkCreateFramebuffer(Handle device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pFramebuffer);
+	int vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
 
 	/**
 	 * Destroys a frame buffer.
@@ -28,7 +32,7 @@ interface VulkanLibraryFrameBuffer {
 	 * @param framebuffer		Frame buffer
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyFramebuffer(Handle device, Handle framebuffer, Handle pAllocator);
+	void vkDestroyFramebuffer(DeviceContext device, FrameBuffer framebuffer, Pointer pAllocator);
 
-	void vkCmdClearDepthStencilImage(Handle commandBuffer, Handle image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
+	void vkCmdClearDepthStencilImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
 }

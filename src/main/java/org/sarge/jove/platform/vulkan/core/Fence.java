@@ -5,7 +5,6 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import java.util.Collection;
 import java.util.Set;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
@@ -42,7 +41,7 @@ public class Fence extends AbstractVulkanObject {
 		// Create fence
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference handle = lib.factory().pointer();
-		check(lib.vkCreateFence(dev.handle(), info, null, handle));
+		check(lib.vkCreateFence(dev, info, null, handle));
 
 		// Create domain object
 		return new Fence(handle.getValue(), dev);
@@ -55,9 +54,9 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the fences cannot be reset
 	 */
 	public static void reset(DeviceContext dev, Collection<Fence> fences) {
-		final var array = Handle.toArray(fences);
+		final Fence[] array = fences.toArray(Fence[]::new);
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkResetFences(dev.handle(), fences.size(), array));
+		check(lib.vkResetFences(dev, array.length, array));
 	}
 
 	/**
@@ -69,9 +68,10 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the API method fails
 	 */
 	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
-		final Handle array = Handle.toArray(fences);
+//		final Handle array = Handle.toArray(fences);
+		final Fence[] array = fences.toArray(Fence[]::new);
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkWaitForFences(dev.handle(), fences.size(), array, VulkanBoolean.of(all), timeout));
+		check(lib.vkWaitForFences(dev, array.length, array, VulkanBoolean.of(all), timeout));
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class Fence extends AbstractVulkanObject {
 	public boolean signalled() {
 		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
-		final int result = lib.vkGetFenceStatus(dev.handle(), this.handle());
+		final int result = lib.vkGetFenceStatus(dev, this);
 		if(result == SIGNALLED) {
 			return true;
 		}
@@ -121,7 +121,7 @@ public class Fence extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<Fence> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyFence;
 	}
 }

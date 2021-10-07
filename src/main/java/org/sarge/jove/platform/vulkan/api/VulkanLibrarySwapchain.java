@@ -1,8 +1,13 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPresentInfoKHR;
 import org.sarge.jove.platform.vulkan.VkSwapchainCreateInfoKHR;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.core.Fence;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
+import org.sarge.jove.platform.vulkan.render.Swapchain;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -20,7 +25,7 @@ interface VulkanLibrarySwapchain {
 	 * @param pSwapchain		Returned swap-chain handle
 	 * @return Result code
 	 */
-	int vkCreateSwapchainKHR(Handle device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, PointerByReference pSwapchain);
+	int vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
 
 	/**
 	 * Destroys a swap-chain.
@@ -28,7 +33,7 @@ interface VulkanLibrarySwapchain {
 	 * @param swapchain			Swap-chain
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroySwapchainKHR(Handle device, Handle swapchain, Handle pAllocator);
+	void vkDestroySwapchainKHR(DeviceContext device, Swapchain swapchain, Pointer pAllocator);
 
 	/**
 	 * Retrieves swap-chain image handles.
@@ -38,7 +43,7 @@ interface VulkanLibrarySwapchain {
 	 * @param pSwapchainImages			Image handles
 	 * @return Result code
 	 */
-	int vkGetSwapchainImagesKHR(Handle device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+	int vkGetSwapchainImagesKHR(LogicalDevice device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
 
 	/**
 	 * Acquires the next image in the swap-chain.
@@ -50,7 +55,7 @@ interface VulkanLibrarySwapchain {
 	 * @param pImageIndex			Returned image index
 	 * @return Result code
 	 */
-	int vkAcquireNextImageKHR(Handle device, Handle swapchain, long timeout, Handle semaphore, Handle fence, IntByReference pImageIndex);
+	int vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
 
 	/**
 	 * Presents to the swapchain.
@@ -58,5 +63,5 @@ interface VulkanLibrarySwapchain {
 	 * @param pPresentInfo			Pointer to descriptor
 	 * @return Result code
 	 */
-	int vkQueuePresentKHR(Handle queue, VkPresentInfoKHR pPresentInfo);
+	int vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
 }

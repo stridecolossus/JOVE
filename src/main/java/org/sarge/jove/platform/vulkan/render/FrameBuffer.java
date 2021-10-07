@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkClearValue;
 import org.sarge.jove.platform.vulkan.VkExtent2D;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
@@ -74,7 +74,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
 		info.attachmentCount = attachments.size();
-		info.pAttachments = Handle.toArray(attachments);
+		info.pAttachments = NativeObject.toArray(attachments);
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO
@@ -83,7 +83,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		final DeviceContext dev = pass.device();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference buffer = lib.factory().pointer();
-		check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
+		check(lib.vkCreateFramebuffer(dev, info, null, buffer));
 
 		// Create frame buffer
 		return new FrameBuffer(buffer.getValue(), dev, pass, attachments, extents);
@@ -148,7 +148,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<FrameBuffer> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyFramebuffer;
 	}
 

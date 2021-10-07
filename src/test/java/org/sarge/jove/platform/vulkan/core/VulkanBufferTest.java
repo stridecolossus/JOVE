@@ -4,7 +4,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,7 +61,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Nested
 	class CommandTests {
-		private Handle cmdHandle;
+		private Command.Buffer cb;
 		private VulkanBuffer dest;
 		private VulkanBuffer index;
 
@@ -71,23 +70,23 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			final var flags = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_DST);
 			dest = new VulkanBuffer(new Pointer(2), dev, flags, mem, SIZE);
 			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.INDEX_BUFFER), mem, SIZE);
-			cmdHandle = new Handle(new Pointer(42));
+			cb = mock(Command.Buffer.class);
 		}
 
 		@Test
 		void bind() {
 			final Command cmd = buffer.bindVertexBuffer();
 			assertNotNull(cmd);
-			cmd.execute(lib, cmdHandle);
-			verify(lib).vkCmdBindVertexBuffers(eq(cmdHandle), eq(0), eq(1), isA(Handle.class), eq(new long[]{0}));
+			cmd.execute(lib, cb);
+			verify(lib).vkCmdBindVertexBuffers(cb, 0, 1, new VulkanBuffer[]{buffer}, new long[]{0});
 		}
 
 		@Test
 		void bindIndexBuffer() {
 			final Command cmd = index.bindIndexBuffer();
 			assertNotNull(cmd);
-			cmd.execute(lib, cmdHandle);
-			verify(lib).vkCmdBindIndexBuffer(cmdHandle, index.handle(), 0, VkIndexType.UINT32);
+			cmd.execute(lib, cb);
+			verify(lib).vkCmdBindIndexBuffer(cb, index, 0, VkIndexType.UINT32);
 		}
 
 		@Test
@@ -95,11 +94,11 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			// Execute copy command
 			final Command cmd = buffer.copy(dest);
 			assertNotNull(cmd);
-			cmd.execute(lib, cmdHandle);
+			cmd.execute(lib, cb);
 
 			// Check API
 			final ArgumentCaptor<VkBufferCopy[]> captor = ArgumentCaptor.forClass(VkBufferCopy[].class);
-			verify(lib).vkCmdCopyBuffer(eq(cmdHandle), eq(buffer.handle()), eq(dest.handle()), eq(1), captor.capture());
+			verify(lib).vkCmdCopyBuffer(eq(cb), eq(buffer), eq(dest), eq(1), captor.capture());
 
 			// Check region
 			final VkBufferCopy[] array = captor.getValue();
@@ -136,7 +135,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		buffer.close();
-		verify(lib).vkDestroyBuffer(dev.handle(), buffer.handle(), null);
+		verify(lib).vkDestroyBuffer(dev, buffer, null);
 		verify(mem).close();
 	}
 

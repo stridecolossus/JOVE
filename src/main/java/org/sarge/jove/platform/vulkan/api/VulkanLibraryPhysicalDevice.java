@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkFormatProperties;
@@ -9,6 +8,8 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
+import org.sarge.jove.platform.vulkan.core.Instance;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -24,28 +25,28 @@ interface VulkanLibraryPhysicalDevice {
 	 * @param devices		Device handles
 	 * @return Result
 	 */
-	int vkEnumeratePhysicalDevices(Handle instance, IntByReference count, Pointer[] devices);
+	int vkEnumeratePhysicalDevices(Instance instance, IntByReference count, Pointer[] devices);
 
 	/**
 	 * Retrieves the properties of the given physical device.
 	 * @param device		Device handle
 	 * @param props			Properties
 	 */
-	void vkGetPhysicalDeviceProperties(Handle device, VkPhysicalDeviceProperties props);
+	void vkGetPhysicalDeviceProperties(PhysicalDevice device, VkPhysicalDeviceProperties props);
 
 	/**
 	 * Retrieves the memory properties of the given physical device.
 	 * @param device				Device
 	 * @param pMemoryProperties		Returned memory properties
 	 */
-	void vkGetPhysicalDeviceMemoryProperties(Handle device, VkPhysicalDeviceMemoryProperties pMemoryProperties);
+	void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, VkPhysicalDeviceMemoryProperties pMemoryProperties);
 
 	/**
 	 * Retrieves the features of the given physical device.
 	 * @param device		Device handle
 	 * @param features		Features
 	 */
-	void vkGetPhysicalDeviceFeatures(Handle device, VkPhysicalDeviceFeatures features);
+	void vkGetPhysicalDeviceFeatures(PhysicalDevice device, VkPhysicalDeviceFeatures features);
 
 	/**
 	 * Enumerates the queue families of a device.
@@ -63,7 +64,7 @@ interface VulkanLibraryPhysicalDevice {
 	 * @param extensions	Returned extensions
 	 * @return Result
 	 */
-	int vkEnumerateDeviceExtensionProperties(Handle device, String layer, IntByReference count, VkExtensionProperties extensions);
+	int vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, IntByReference count, VkExtensionProperties extensions);
 
 	/**
 	 * Enumerates device-specific validation layers.
@@ -72,7 +73,7 @@ interface VulkanLibraryPhysicalDevice {
 	 * @param extensions	Returned layers
 	 * @return Result
 	 */
-	int vkEnumerateDeviceLayerProperties(Handle device, IntByReference count, VkLayerProperties layers);
+	int vkEnumerateDeviceLayerProperties(PhysicalDevice device, IntByReference count, VkLayerProperties layers);
 
 	/**
 	 * Retrieves supported properties of the given format.
@@ -80,5 +81,5 @@ interface VulkanLibraryPhysicalDevice {
 	 * @param format		Format
 	 * @param props			Format properties
 	 */
-	void vkGetPhysicalDeviceFormatProperties(Handle device, VkFormat format, VkFormatProperties props);
+	void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, VkFormatProperties props);
 }

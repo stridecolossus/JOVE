@@ -46,7 +46,7 @@ class CommandTest extends AbstractVulkanTest {
 		final Pool pool = Pool.create(dev, queue);
 		cmd = spy(Command.class);
 		cmd.submit(pool);
-		verify(cmd).execute(eq(lib), any(Handle.class));
+		verify(cmd).execute(eq(lib), isA(Buffer.class));
 	}
 
 	@Nested
@@ -70,7 +70,7 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void begin() {
 			buffer.begin();
-			verify(lib).vkBeginCommandBuffer(eq(buffer.handle()), any(VkCommandBufferBeginInfo.class));
+			verify(lib).vkBeginCommandBuffer(eq(buffer), any(VkCommandBufferBeginInfo.class));
 			assertEquals(false, buffer.isReady());
 		}
 
@@ -91,7 +91,7 @@ class CommandTest extends AbstractVulkanTest {
 		void end() {
 			buffer.begin();
 			buffer.end();
-			verify(lib).vkEndCommandBuffer(buffer.handle());
+			verify(lib).vkEndCommandBuffer(buffer);
 			assertEquals(true, buffer.isReady());
 		}
 
@@ -104,7 +104,7 @@ class CommandTest extends AbstractVulkanTest {
 		void add() {
 			buffer.begin();
 			buffer.add(cmd);
-			verify(cmd).execute(lib, buffer.handle());
+			verify(cmd).execute(lib, buffer);
 			assertEquals(false, buffer.isReady());
 		}
 
@@ -119,7 +119,7 @@ class CommandTest extends AbstractVulkanTest {
 			buffer.end();
 			buffer.reset();
 			assertEquals(false, buffer.isReady());
-			verify(lib).vkResetCommandBuffer(buffer.handle(), 0);
+			verify(lib).vkResetCommandBuffer(buffer, 0);
 		}
 
 		@Test
@@ -163,7 +163,7 @@ class CommandTest extends AbstractVulkanTest {
 		void descriptor() {
 			// Check allocator
 			final ArgumentCaptor<VkCommandPoolCreateInfo> captor = ArgumentCaptor.forClass(VkCommandPoolCreateInfo.class);
-			verify(lib).vkCreateCommandPool(eq(dev.handle()), captor.capture(), isNull(), eq(POINTER));
+			verify(lib).vkCreateCommandPool(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
 			// Check descriptor
 			final VkCommandPoolCreateInfo info = captor.getValue();
@@ -180,7 +180,7 @@ class CommandTest extends AbstractVulkanTest {
 
 			// Check allocator
 			final ArgumentCaptor<VkCommandBufferAllocateInfo> captor = ArgumentCaptor.forClass(VkCommandBufferAllocateInfo.class);
-			verify(lib).vkAllocateCommandBuffers(eq(dev.handle()), captor.capture(), isA(Pointer[].class));
+			verify(lib).vkAllocateCommandBuffers(eq(dev), captor.capture(), isA(Pointer[].class));
 
 			// Check descriptor
 			final VkCommandBufferAllocateInfo info = captor.getValue();
@@ -192,7 +192,7 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void reset() {
 			pool.reset();
-			verify(lib).vkResetCommandPool(dev.handle(), pool.handle(), 0);
+			verify(lib).vkResetCommandPool(dev, pool, 0);
 		}
 
 		@Test
@@ -200,14 +200,13 @@ class CommandTest extends AbstractVulkanTest {
 			final Buffer buffer = pool.allocate();
 			pool.free();
 			assertEquals(0, pool.buffers().count());
-			verify(lib).vkFreeCommandBuffers(dev.handle(), pool.handle(), 1, Handle.toArray(List.of(buffer)));
+			verify(lib).vkFreeCommandBuffers(dev, pool, 1, new Buffer[]{buffer});
 		}
 
 		@Test
 		void destroy() {
-			final Handle handle = pool.handle();
 			pool.close();
-			verify(lib).vkDestroyCommandPool(dev.handle(), handle, null);
+			verify(lib).vkDestroyCommandPool(dev, pool, null);
 		}
 	}
 }

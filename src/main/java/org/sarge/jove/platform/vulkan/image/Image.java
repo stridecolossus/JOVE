@@ -47,7 +47,6 @@ public interface Image extends NativeObject {
 		return new View.Builder().build(this);
 	}
 
-
 	/**
 	 * Default implementation managed by the application.
 	 */
@@ -73,8 +72,12 @@ public interface Image extends NativeObject {
 			return descriptor;
 		}
 
+		DeviceMemory memory() {
+			return mem;
+		}
+
 		@Override
-		protected Destructor destructor(VulkanLibrary lib) {
+		protected Destructor<DefaultImage> destructor(VulkanLibrary lib) {
 			return lib::vkDestroyImage;
 		}
 
@@ -188,17 +191,17 @@ public interface Image extends NativeObject {
 			// Allocate image
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference handle = lib.factory().pointer();
-			check(lib.vkCreateImage(dev.handle(), info, null, handle));
+			check(lib.vkCreateImage(dev, info, null, handle));
 
 			// Retrieve image memory requirements
 			final var reqs = new VkMemoryRequirements();
-			lib.vkGetImageMemoryRequirements(dev.handle(), handle.getValue(), reqs);
+			lib.vkGetImageMemoryRequirements(dev, handle.getValue(), reqs);
 
 			// Allocate image memory
 			final DeviceMemory mem = dev.allocate(reqs, props);
 
 			// Bind memory to image
-			check(lib.vkBindImageMemory(dev.handle(), handle.getValue(), mem.handle(), 0));
+			check(lib.vkBindImageMemory(dev, handle.getValue(), mem, 0));
 
 			// Create image
 			return new DefaultImage(handle.getValue(), dev, descriptor, mem);

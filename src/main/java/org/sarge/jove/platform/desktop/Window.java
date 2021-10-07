@@ -143,7 +143,7 @@ public class Window extends AbstractTransientNativeObject {
 	public Handle surface(Handle instance) {
 		final DesktopLibrary lib = desktop.library();
 		final PointerByReference ref = new PointerByReference();
-		final int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
+		final int result = lib.glfwCreateWindowSurface(instance, this, null, ref);
 		if(result != 0) {
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
@@ -153,7 +153,7 @@ public class Window extends AbstractTransientNativeObject {
 	@Override
 	protected void release() {
 		final DesktopLibrary lib = desktop.library();
-		lib.glfwDestroyWindow(this.handle());
+		lib.glfwDestroyWindow(this);
 	}
 
 	/**

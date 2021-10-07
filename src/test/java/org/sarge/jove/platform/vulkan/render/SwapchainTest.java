@@ -36,7 +36,6 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
 
 public class SwapchainTest extends AbstractVulkanTest {
 	private Swapchain swapchain;
@@ -85,16 +84,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 	@Test
 	void acquireSemaphore() {
-		final Handle handle = semaphore.handle();
 		assertEquals(0, swapchain.acquire(semaphore, null));
-		verify(lib).vkAcquireNextImageKHR(eq(dev.handle()), eq(swapchain.handle()), eq(Long.MAX_VALUE), eq(handle), isNull(), isA(IntByReference.class));
+		verify(lib).vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, INTEGER);
 	}
 
 	@Test
 	void acquireFence() {
-		final Handle handle = fence.handle();
 		swapchain.acquire(null, fence);
-		verify(lib).vkAcquireNextImageKHR(eq(dev.handle()), eq(swapchain.handle()), eq(Long.MAX_VALUE), isNull(), eq(handle), isA(IntByReference.class));
+		verify(lib).vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, INTEGER);
 	}
 
 	@Test
@@ -118,7 +115,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 		// Check API
 		final ArgumentCaptor<VkPresentInfoKHR> captor = ArgumentCaptor.forClass(VkPresentInfoKHR.class);
-		verify(lib).vkQueuePresentKHR(eq(queue.handle()), captor.capture());
+		verify(lib).vkQueuePresentKHR(eq(queue), captor.capture());
 
 		// Check descriptor
 		final VkPresentInfoKHR info = captor.getValue();
@@ -135,10 +132,9 @@ public class SwapchainTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void destroy() {
-		final Handle handle = swapchain.handle();
+	void close() {
 		swapchain.close();
-		verify(lib).vkDestroySwapchainKHR(dev.handle(), handle, null);
+		verify(lib).vkDestroySwapchainKHR(dev, swapchain, null);
 		verify(view).close();
 	}
 
@@ -208,7 +204,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 			// Check allocation
 			final ArgumentCaptor<VkSwapchainCreateInfoKHR> captor = ArgumentCaptor.forClass(VkSwapchainCreateInfoKHR.class);
-			verify(lib).vkCreateSwapchainKHR(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+			verify(lib).vkCreateSwapchainKHR(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
 			// Check descriptor
 			final VkSwapchainCreateInfoKHR info = captor.getValue();
@@ -234,7 +230,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertEquals(null, info.oldSwapchain);
 
 			// Check view allocation
-			verify(lib).vkGetSwapchainImagesKHR(eq(dev.handle()), isA(Pointer.class), isA(IntByReference.class), isA(Pointer[].class));
+			verify(lib).vkGetSwapchainImagesKHR(eq(dev), isA(Pointer.class), isA(IntByReference.class), isA(Pointer[].class));
 
 			// Check view
 			final View view = swapchain.views().get(0);

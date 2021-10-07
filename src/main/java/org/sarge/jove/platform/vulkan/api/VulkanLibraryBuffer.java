@@ -5,6 +5,10 @@ import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
 import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
+import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -21,7 +25,7 @@ interface VulkanLibraryBuffer {
 	 * @param pBuffer			Returned buffer
 	 * @return Result code
 	 */
-	int vkCreateBuffer(Handle device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pBuffer);
+	int vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
 
 	/**
 	 * Destroys a buffer.
@@ -30,7 +34,7 @@ interface VulkanLibraryBuffer {
 	 * @param pAllocator		Allocator
 	 * @return Result code
 	 */
-	void vkDestroyBuffer(Handle device, Handle buffer, Handle pAllocator);
+	void vkDestroyBuffer(DeviceContext device, VulkanBuffer buffer, Pointer pAllocator);
 
 	/**
 	 * Queries the memory requirements of the given buffer.
@@ -39,7 +43,7 @@ interface VulkanLibraryBuffer {
 	 * @param pMemoryRequirements		Returned memory requirements
 	 * @return Result code
 	 */
-	void vkGetBufferMemoryRequirements(Handle device, Pointer buffer, VkMemoryRequirements pMemoryRequirements);
+	void vkGetBufferMemoryRequirements(LogicalDevice device, Pointer buffer, VkMemoryRequirements pMemoryRequirements);
 
 	/**
 	 * Binds the memory for the given buffer.
@@ -49,7 +53,7 @@ interface VulkanLibraryBuffer {
 	 * @param memoryOffset		Offset
 	 * @return Result code
 	 */
-	int vkBindBufferMemory(Handle device, Pointer buffer, Handle memory, long memoryOffset);
+	int vkBindBufferMemory(LogicalDevice device, Pointer buffer, Handle memory, long memoryOffset);
 
 	/**
 	 * Binds a vertex buffer.
@@ -59,7 +63,7 @@ interface VulkanLibraryBuffer {
 	 * @param pBuffers			Buffer(s)
 	 * @param pOffsets			Buffer offset(s)
 	 */
-	void vkCmdBindVertexBuffers(Handle commandBuffer, int firstBinding, int bindingCount, Handle pBuffers, long[] pOffsets);
+	void vkCmdBindVertexBuffers(Command.Buffer commandBuffer, int firstBinding, int bindingCount, VulkanBuffer[] pBuffers, long[] pOffsets);
 
 	/**
 	 * Binds an index buffer.
@@ -68,7 +72,7 @@ interface VulkanLibraryBuffer {
 	 * @param offset			Offset
 	 * @param indexType			Index data-type
 	 */
-	void vkCmdBindIndexBuffer(Handle commandBuffer, Handle buffer, long offset, VkIndexType indexType);
+	void vkCmdBindIndexBuffer(Command.Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType);
 
 	/**
 	 * Command to copy a buffer.
@@ -78,5 +82,5 @@ interface VulkanLibraryBuffer {
 	 * @param regionCount		Number of regions
 	 * @param pRegions			Region descriptor(s)
 	 */
-	void vkCmdCopyBuffer(Handle commandBuffer, Handle srcBuffer, Handle dstBuffer, int regionCount, VkBufferCopy[] pRegions);
+	void vkCmdCopyBuffer(Command.Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions);
 }

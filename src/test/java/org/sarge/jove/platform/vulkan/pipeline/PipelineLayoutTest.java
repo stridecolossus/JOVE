@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -25,7 +24,6 @@ import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 class PipelineLayoutTest extends AbstractVulkanTest {
 	private Builder builder;
@@ -54,7 +52,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 		// Check pipeline allocation
 		final ArgumentCaptor<VkPipelineLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineLayoutCreateInfo.class);
-		verify(lib).vkCreatePipelineLayout(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+		verify(lib).vkCreatePipelineLayout(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
 		// Check descriptor
 		final VkPipelineLayoutCreateInfo info = captor.getValue();
@@ -82,10 +80,9 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void destroy() {
+	void close() {
 		final PipelineLayout layout = builder.build();
-		final Handle handle = layout.handle();
 		layout.close();
-		verify(lib).vkDestroyPipelineLayout(dev.handle(), handle, null);
+		verify(lib).vkDestroyPipelineLayout(dev, layout, null);
 	}
 }

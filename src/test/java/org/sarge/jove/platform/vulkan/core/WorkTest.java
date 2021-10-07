@@ -25,8 +25,6 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
-
 public class WorkTest extends AbstractVulkanTest {
 	private Queue queue;
 	private Pool pool;
@@ -95,24 +93,21 @@ public class WorkTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
-			// Create fence
-			final Fence fence = mock(Fence.class);
-			when(fence.handle()).thenReturn(new Handle(new Pointer(4)));
-
 			// Construct work submission
 			final Work work = builder
 					.add(buffer)
 					.wait(semaphore, Set.of(VkPipelineStage.TOP_OF_PIPE))
 					.signal(semaphore)
 					.build();
+			assertNotNull(work);
 
 			// Submit work
-			assertNotNull(work);
+			final Fence fence = mock(Fence.class);
 			work.submit(fence);
 
 			// Check API
 			final ArgumentCaptor<VkSubmitInfo[]> captor = ArgumentCaptor.forClass(VkSubmitInfo[].class);
-			verify(lib).vkQueueSubmit(eq(new Handle(1)), eq(1), captor.capture(), eq(new Handle(4)));
+			verify(lib).vkQueueSubmit(eq(queue), eq(1), captor.capture(), eq(fence));
 
 			// Extract submission descriptor
 			final VkSubmitInfo[] array = captor.getValue();

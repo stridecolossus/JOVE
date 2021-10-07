@@ -41,6 +41,6 @@ public class QueueTest {
 	void waitIdle() {
 		final VulkanLibrary lib = mock(VulkanLibrary.class);
 		queue.waitIdle(lib);
-		verify(lib).vkQueueWaitIdle(queue.handle());
+		verify(lib).vkQueueWaitIdle(queue);
 	}
 }

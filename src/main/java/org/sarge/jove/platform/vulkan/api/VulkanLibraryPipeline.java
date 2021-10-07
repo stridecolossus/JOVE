@@ -1,12 +1,16 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
+import org.sarge.jove.platform.vulkan.common.Command.Buffer;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -23,7 +27,7 @@ interface VulkanLibraryPipeline {
 	 * @param pPipelineLayout	Returned pipeline layout handle
 	 * @return Result code
 	 */
-	int vkCreatePipelineLayout(Handle device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pPipelineLayout);
+	int vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
 
 	/**
 	 * Destroys a pipeline layout.
@@ -31,7 +35,7 @@ interface VulkanLibraryPipeline {
 	 * @param pPipelineLayout	Pipeline layout
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyPipelineLayout(Handle device, Handle pipelineLayout, Handle pAllocator);
+	void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Pointer pAllocator);
 
 	/**
 	 * Creates a graphics pipeline.
@@ -43,7 +47,7 @@ interface VulkanLibraryPipeline {
 	 * @param pPipelines		Returned pipeline handle(s)
 	 * @return Result code
 	 */
-	int vkCreateGraphicsPipelines(Handle device, Handle pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, Pointer[] pPipelines);
+	int vkCreateGraphicsPipelines(LogicalDevice device, Pointer pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
 
 	/**
 	 * Destroys a pipeline.
@@ -51,7 +55,7 @@ interface VulkanLibraryPipeline {
 	 * @param pipeline			Pipeline
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyPipeline(Handle device, Handle pipeline, Handle pAllocator);
+	void vkDestroyPipeline(DeviceContext device, Pipeline pipeline, Pointer pAllocator);
 
 	/**
 	 * Command to bind a pipeline.
@@ -59,7 +63,7 @@ interface VulkanLibraryPipeline {
 	 * @param pipelineBindPoint		Bind-point
 	 * @param pipeline				Pipeline to bind
 	 */
-	void vkCmdBindPipeline(Handle commandBuffer, VkPipelineBindPoint pipelineBindPoint, Handle pipeline);
+	void vkCmdBindPipeline(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pipeline pipeline);
 
 	/**
 	 * Command to apply a pipeline barrier.
@@ -74,7 +78,7 @@ interface VulkanLibraryPipeline {
 	 * @param imageMemoryBarrierCount
 	 * @param pImageMemoryBarriers
 	 */
-	void vkCmdPipelineBarrier(Handle commandBuffer, int srcStageMask, int dstStageMask, int dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
+	void vkCmdPipelineBarrier(Buffer commandBuffer, int srcStageMask, int dstStageMask, int dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 
 	/**
 	 * Updates pipeline push constants.
@@ -85,5 +89,5 @@ interface VulkanLibraryPipeline {
 	 * @param size					Size of the push constants (bytes)
 	 * @param pValues				Push constants as an array of bytes
 	 */
-	void vkCmdPushConstants(Handle commandBuffer, Handle layout, int stageFlags, int offset, int size, byte[] pValues);
+	void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, byte[] pValues);
 }

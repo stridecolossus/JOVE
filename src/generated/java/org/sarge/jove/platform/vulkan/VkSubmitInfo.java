@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 
 import com.sun.jna.Pointer;
@@ -25,10 +24,10 @@ public class VkSubmitInfo extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.SUBMIT_INFO;
 	public Pointer pNext;
 	public int waitSemaphoreCount;
-	public Handle pWaitSemaphores;
+	public Pointer pWaitSemaphores;
 	public Pointer pWaitDstStageMask;
 	public int commandBufferCount;
-	public Handle pCommandBuffers;
+	public Pointer pCommandBuffers;
 	public int signalSemaphoreCount;
-	public Handle pSignalSemaphores;
+	public Pointer pSignalSemaphores;
 }

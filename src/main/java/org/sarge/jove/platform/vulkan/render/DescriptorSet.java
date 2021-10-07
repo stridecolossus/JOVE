@@ -316,7 +316,7 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		// Apply update
-		dev.library().vkUpdateDescriptorSets(dev.handle(), writes.length, writes, 0, null);
+		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
 		return writes.length;
 	}
 	// TODO - test return value
@@ -340,10 +340,10 @@ public class DescriptorSet implements NativeObject {
 		return (api, cmd) -> api.vkCmdBindDescriptorSets(
 				cmd,
 				VkPipelineBindPoint.GRAPHICS,
-				layout.handle(),
+				layout,
 				0,					// First set
 				sets.size(),
-				Handle.toArray(sets),
+				sets.toArray(DescriptorSet[]::new),
 				0,					// Dynamic offset count
 				null				// Dynamic offsets
 		);
@@ -412,13 +412,13 @@ public class DescriptorSet implements NativeObject {
 			final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
 			info.descriptorPool = this.handle();
 			info.descriptorSetCount = size;
-			info.pSetLayouts = Handle.toArray(layouts);
+			info.pSetLayouts = NativeObject.toArray(layouts);
 
 			// Allocate descriptors sets
 			final DeviceContext dev = this.device();
 			final VulkanLibrary lib = dev.library();
 			final Pointer[] handles = lib.factory().array(size);
-			check(lib.vkAllocateDescriptorSets(dev.handle(), info, handles));
+			check(lib.vkAllocateDescriptorSets(dev, info, handles));
 
 			// Create descriptor sets
 			final IntFunction<DescriptorSet> ctor = index -> {
@@ -456,7 +456,7 @@ public class DescriptorSet implements NativeObject {
 
 			// Release sets
 			final DeviceContext dev = this.device();
-			check(dev.library().vkFreeDescriptorSets(dev.handle(), this.handle(), sets.size(), Handle.toArray(sets)));
+			check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), sets.toArray(DescriptorSet[]::new)));
 		}
 
 		/**
@@ -466,12 +466,12 @@ public class DescriptorSet implements NativeObject {
 		public synchronized void free() {
 			if(sets.isEmpty()) throw new IllegalArgumentException("Pool is already empty");
 			final DeviceContext dev = this.device();
-			check(dev.library().vkResetDescriptorPool(dev.handle(), this.handle(), 0));
+			check(dev.library().vkResetDescriptorPool(dev, this, 0));
 			sets.clear();
 		}
 
 		@Override
-		protected Destructor destructor(VulkanLibrary lib) {
+		protected Destructor<Pool> destructor(VulkanLibrary lib) {
 			return lib::vkDestroyDescriptorPool;
 		}
 
@@ -570,7 +570,7 @@ public class DescriptorSet implements NativeObject {
 				// Allocate pool
 				final VulkanLibrary lib = dev.library();
 				final PointerByReference handle = lib.factory().pointer();
-				check(lib.vkCreateDescriptorPool(dev.handle(), info, null, handle));
+				check(lib.vkCreateDescriptorPool(dev, info, null, handle));
 
 				// Create pool
 				return new Pool(handle.getValue(), dev, max);
@@ -608,7 +608,7 @@ public class DescriptorSet implements NativeObject {
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference handle = lib.factory().pointer();
-			check(lib.vkCreateDescriptorSetLayout(dev.handle(), info, null, handle));
+			check(lib.vkCreateDescriptorSetLayout(dev, info, null, handle));
 
 			// Create layout
 			return new Layout(handle.getValue(), dev, bindings);
@@ -639,7 +639,7 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		@Override
-		protected Destructor destructor(VulkanLibrary lib) {
+		protected Destructor<Layout> destructor(VulkanLibrary lib) {
 			return lib::vkDestroyDescriptorSetLayout;
 		}
 

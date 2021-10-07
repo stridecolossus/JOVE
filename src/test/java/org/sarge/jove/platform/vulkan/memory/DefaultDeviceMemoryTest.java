@@ -21,7 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	private static final int SIZE = 3;
 
-	private DeviceMemory mem;
+	private DefaultDeviceMemory mem;
 	private Pointer handle;
 	private byte[] array;
 
@@ -46,7 +46,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			final Sink region = mem.map();
 			assertNotNull(region);
 			assertEquals(true, mem.isMapped());
-			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 0, SIZE, 0, POINTER);
+			verify(lib).vkMapMemory(dev, mem, 0, SIZE, 0, POINTER);
 		}
 
 		@Test
@@ -54,7 +54,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			final Sink region = mem.map(2, 1);
 			assertNotNull(region);
 			assertEquals(true, mem.isMapped());
-			verify(lib).vkMapMemory(dev.handle(), mem.handle(), 1, 2, 0, POINTER);
+			verify(lib).vkMapMemory(dev, mem, 1, 2, 0, POINTER);
 		}
 
 		@Test
@@ -152,7 +152,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			mem.map();
 			mem.unmap();
 			assertEquals(false, mem.isMapped());
-			verify(lib).vkUnmapMemory(dev.handle(), mem.handle());
+			verify(lib).vkUnmapMemory(dev, mem);
 		}
 
 		@Test

@@ -51,7 +51,7 @@ public class RenderPass extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<RenderPass> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyRenderPass;
 	}
 
@@ -128,7 +128,7 @@ public class RenderPass extends AbstractVulkanObject {
 			// Allocate render pass
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference pass = lib.factory().pointer();
-			check(lib.vkCreateRenderPass(dev.handle(), info, null, pass));
+			check(lib.vkCreateRenderPass(dev, info, null, pass));
 
 			// Create render pass
 			return new RenderPass(pass.getValue(), dev, attachments);

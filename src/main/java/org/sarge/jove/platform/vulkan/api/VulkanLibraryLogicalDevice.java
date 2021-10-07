@@ -1,8 +1,11 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
+import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.core.Fence;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -19,7 +22,7 @@ interface VulkanLibraryLogicalDevice {
 	 * @param device				Returned logical device handle
 	 * @return Result
 	 */
-	int vkCreateDevice(Handle physicalDevice, VkDeviceCreateInfo pCreateInfo, Handle pAllocator, PointerByReference device);
+	int vkCreateDevice(PhysicalDevice physicalDevice, VkDeviceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference device);
 
 	/**
 	 * Destroys a logical device.
@@ -27,14 +30,14 @@ interface VulkanLibraryLogicalDevice {
 	 * @param pAllocator			Allocator
 	 * @return Result
 	 */
-	void vkDestroyDevice(Handle device, Handle pAllocator);
+	void vkDestroyDevice(LogicalDevice device, Pointer pAllocator);
 
 	/**
 	 * Waits for the given device to become idle.
 	 * @param device Logical device
 	 * @return Result code
 	 */
-	int vkDeviceWaitIdle(Handle device);
+	int vkDeviceWaitIdle(LogicalDevice device);
 
 	/**
 	 * Retrieves logical device queue handle(s).
@@ -53,12 +56,12 @@ interface VulkanLibraryLogicalDevice {
 	 * @param fence					Optional fence
 	 * @return Result code
 	 */
-	int vkQueueSubmit(Handle queue, int submitCount, VkSubmitInfo[] pSubmits, Handle fence);
+	int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 
 	/**
 	 * Waits for the given queue to become idle.
 	 * @param queue Queue
 	 * @return Result code
 	 */
-	int vkQueueWaitIdle(Handle queue);
+	int vkQueueWaitIdle(Queue queue);
 }

@@ -1,12 +1,18 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkCopyDescriptorSet;
 import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
+import org.sarge.jove.platform.vulkan.common.Command.Buffer;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet.Pool;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -23,7 +29,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pSetLayout			Returned layout handle
 	 * @return Result code
 	 */
-	int vkCreateDescriptorSetLayout(Handle device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pSetLayout);
+	int vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
 
 	/**
 	 * Destroys a descriptor set layout.
@@ -31,7 +37,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param descriptorSetLayout	Layout
 	 * @param pAllocator			Allocator
 	 */
-	void vkDestroyDescriptorSetLayout(Handle device, Handle descriptorSetLayout, Handle pAllocator);
+	void vkDestroyDescriptorSetLayout(DeviceContext device, Layout descriptorSetLayout, Pointer pAllocator);
 
 	/**
 	 * Creates a descriptor-set pool.
@@ -41,7 +47,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pDescriptorPool		Returned pool
 	 * @return Result code
 	 */
-	int vkCreateDescriptorPool(Handle device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
+	int vkCreateDescriptorPool(LogicalDevice device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
 
 	/**
 	 * Destroys a descriptor-set pool.
@@ -49,7 +55,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param descriptorPool		Pool
 	 * @param pAllocator			Allocator
 	 */
-	void vkDestroyDescriptorPool(Handle device, Handle descriptorPool, Handle pAllocator);
+	void vkDestroyDescriptorPool(DeviceContext device, Pool descriptorPool, Pointer pAllocator);
 
 	/**
 	 * Allocates a number of descriptor sets from a given pool.
@@ -58,7 +64,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pDescriptorSets		Returned descriptor set handles
 	 * @return Result code
 	 */
-	int vkAllocateDescriptorSets(Handle device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
+	int vkAllocateDescriptorSets(DeviceContext device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
 
 	/**
 	 * Resets all descriptor sets in the given pool, i.e. recycles the resources back to the pool and releases the descriptor sets.
@@ -67,7 +73,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param flags					Unused
 	 * @return Result code
 	 */
-	int vkResetDescriptorPool(Handle device, Handle descriptorPool, int flags);
+	int vkResetDescriptorPool(DeviceContext device, Pool descriptorPool, int flags);
 
 	/**
 	 * Releases allocated descriptor sets.
@@ -77,7 +83,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pDescriptorSets		Descriptor set handles
 	 * @return Result code
 	 */
-	int vkFreeDescriptorSets(Handle device, Handle descriptorPool, int descriptorSetCount, Handle pDescriptorSets);
+	int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, DescriptorSet[] pDescriptorSets);
 
 	/**
 	 * Updates the resources for one-or-more descriptor sets.
@@ -87,7 +93,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param descriptorCopyCount	Number of copies
 	 * @param pDescriptorCopies		Copy descriptors
 	 */
-	void vkUpdateDescriptorSets(Handle device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
+	void vkUpdateDescriptorSets(DeviceContext device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
 
 	/**
 	 * Binds one-or-more descriptor sets to the given pipeline.
@@ -100,5 +106,5 @@ interface VulkanLibraryDescriptorSet {
 	 * @param dynamicOffsetCount	Number of dynamic offsets
 	 * @param pDynamicOffsets		Dynamic offsets
 	 */
-	void vkCmdBindDescriptorSets(Handle commandBuffer, VkPipelineBindPoint pipelineBindPoint, Handle layout, int firstSet, int descriptorSetCount, Handle pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
+	void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, DescriptorSet[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
 }

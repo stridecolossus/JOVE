@@ -104,14 +104,14 @@ public class LogicalDeviceTest {
 	void queueWaitIdle() {
 		final Queue queue = device.queues().get(family).get(0);
 		queue.waitIdle(lib);
-		verify(lib).vkQueueWaitIdle(queue.handle());
+		verify(lib).vkQueueWaitIdle(queue);
 	}
 
 	@DisplayName("Wait for all queues to complete execution")
 	@Test
 	void waitIdle() {
 		device.waitIdle();
-		verify(lib).vkDeviceWaitIdle(device.handle());
+		verify(lib).vkDeviceWaitIdle(device);
 	}
 
 	@Nested
@@ -169,7 +169,7 @@ public class LogicalDeviceTest {
 
 		// Check API
 		final ArgumentCaptor<VkSemaphoreCreateInfo> captor = ArgumentCaptor.forClass(VkSemaphoreCreateInfo.class);
-		verify(lib).vkCreateSemaphore(eq(device.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+		verify(lib).vkCreateSemaphore(eq(device), captor.capture(), isNull(), isA(PointerByReference.class));
 
 		// Check create descriptor
 		final VkSemaphoreCreateInfo info = captor.getValue();
@@ -180,7 +180,7 @@ public class LogicalDeviceTest {
 	@Test
 	void destroy() {
 		device.close();
-		verify(lib).vkDestroyDevice(device.handle(), null);
+		verify(lib).vkDestroyDevice(device, null);
 	}
 
 	@Nested

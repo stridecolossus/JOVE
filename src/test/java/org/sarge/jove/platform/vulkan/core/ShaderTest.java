@@ -37,7 +37,7 @@ public class ShaderTest extends AbstractVulkanTest {
 	void create() {
 		// Check API
 		final var captor = ArgumentCaptor.forClass(VkShaderModuleCreateInfo.class);
-		verify(lib).vkCreateShaderModule(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+		verify(lib).vkCreateShaderModule(eq(dev), captor.capture(), isNull(), isA(PointerByReference.class));
 
 		// Create shader
 		final Shader shader = Shader.create(dev, CODE);
@@ -60,7 +60,7 @@ public class ShaderTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		shader.close();
-		verify(lib).vkDestroyShaderModule(dev.handle(), shader.handle(), null);
+		verify(lib).vkDestroyShaderModule(dev, shader, null);
 	}
 
 	@Nested

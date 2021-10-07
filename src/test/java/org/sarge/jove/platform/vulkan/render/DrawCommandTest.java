@@ -7,22 +7,20 @@ import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.render.DrawCommand.Builder;
-
-import com.sun.jna.Pointer;
 
 public class DrawCommandTest {
 	private static final int COUNT = 42;
 
 	private VulkanLibrary lib;
-	private Handle buffer;
+	private Command.Buffer buffer;
 
 	@BeforeEach
 	void before() {
 		lib = mock(VulkanLibrary.class);
-		buffer = new Handle(new Pointer(1));
+		buffer = mock(Command.Buffer.class);
 	}
 
 	@Test

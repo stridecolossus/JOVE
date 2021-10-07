@@ -106,7 +106,7 @@ public class View extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<View> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyImageView;
 	}
 
@@ -196,7 +196,7 @@ public class View extends AbstractVulkanObject {
 			final DeviceContext dev = image.device();
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference handle = lib.factory().pointer();
-			check(lib.vkCreateImageView(dev.handle(), info, null, handle));
+			check(lib.vkCreateImageView(dev, info, null, handle));
 
 			// Create image view
 			return new View(handle.getValue(), image, dev);

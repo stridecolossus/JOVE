@@ -25,7 +25,7 @@ interface DesktopLibraryWindow {
 	 * Destroys a window.
 	 * @param window Window handle
 	 */
-	void glfwDestroyWindow(Handle window);
+	void glfwDestroyWindow(Window window);
 
 	/**
 	 * Resets all window hints to their default values.
@@ -47,7 +47,7 @@ interface DesktopLibraryWindow {
 	 * @param surface			Returned surface handle
 	 * @return Result
 	 */
-	int glfwCreateWindowSurface(Handle instance, Handle window, Handle allocator, PointerByReference surface);
+	int glfwCreateWindowSurface(Handle instance, Window window, Pointer allocator, PointerByReference surface);
 
 	// glfwWindowShouldClose(window)
 	// glfwSetWindowCloseCallback(window, window_close_callback);

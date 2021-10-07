@@ -80,7 +80,7 @@ public class InstanceTest {
 	void function() {
 		final Pointer func = new Pointer(2);
 		final String name = "name";
-		when(lib.vkGetInstanceProcAddr(handle, name)).thenReturn(func);
+		when(lib.vkGetInstanceProcAddr(instance, name)).thenReturn(func);
 		assertEquals(func, instance.function(name));
 	}
 
@@ -223,7 +223,7 @@ public class InstanceTest {
 		void before() {
 			handler = instance.handler();
 			func = mock(Function.class);
-			when(lib.vkGetInstanceProcAddr(handle, "vkCreateDebugUtilsMessengerEXT")).thenReturn(func);
+			when(lib.vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT")).thenReturn(func);
 		}
 
 		@Test
@@ -263,7 +263,7 @@ public class InstanceTest {
 			handler.init().attach();
 
 			// Destroy instance and handler
-			when(lib.vkGetInstanceProcAddr(handle, "vkDestroyDebugUtilsMessengerEXT")).thenReturn(func);
+			when(lib.vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT")).thenReturn(func);
 			instance.close();
 
 			// Check API

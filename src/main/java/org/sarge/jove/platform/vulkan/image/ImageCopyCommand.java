@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
@@ -66,12 +65,12 @@ public class ImageCopyCommand implements Command {
 	// TODO
 
 	@Override
-	public void execute(VulkanLibrary lib, Handle handle) {
+	public void execute(VulkanLibrary lib, Command.Buffer cb) {
 		if(bufferToImage) {
-			lib.vkCmdCopyBufferToImage(handle, buffer.handle(), image.handle(), layout, regions.length, regions);
+			lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
 		}
 		else {
-			lib.vkCmdCopyImageToBuffer(handle, image.handle(), layout, buffer.handle(), regions.length, regions);
+			lib.vkCmdCopyImageToBuffer(cb, image, layout, buffer, regions.length, regions);
 		}
 	}
 

@@ -1,10 +1,13 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
+import org.sarge.jove.platform.vulkan.core.Instance;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
+import org.sarge.jove.platform.vulkan.core.Surface;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
 /**
@@ -19,7 +22,7 @@ public interface VulkanLibrarySurface {
 	 * @param supported				Returned boolean flag
 	 * @return Result
 	 */
-	int vkGetPhysicalDeviceSurfaceSupportKHR(Handle device, int queueFamilyIndex, Handle surface, IntByReference supported);
+	int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Surface surface, IntByReference supported);
 
 	/**
 	 * Retrieves the capabilities of a surface.
@@ -28,7 +31,7 @@ public interface VulkanLibrarySurface {
 	 * @param caps				Returned capabilities
 	 * @return Result
 	 */
-	int vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Handle device, Handle surface, VkSurfaceCapabilitiesKHR caps);
+	int vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, Surface surface, VkSurfaceCapabilitiesKHR caps);
 
 	/**
 	 * Queries the supported surface formats.
@@ -38,7 +41,7 @@ public interface VulkanLibrarySurface {
 	 * @param formats			Supported formats
 	 * @return Result
 	 */
-	int vkGetPhysicalDeviceSurfaceFormatsKHR(Handle device, Handle surface, IntByReference count, VkSurfaceFormatKHR formats);
+	int vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntByReference count, VkSurfaceFormatKHR formats);
 
 	/**
 	 * Queries the supported presentation modes.
@@ -49,7 +52,7 @@ public interface VulkanLibrarySurface {
 	 * @return Result
 	 * @see VkPresentModeKHR
 	 */
-	int vkGetPhysicalDeviceSurfacePresentModesKHR(Handle device, Handle surface, IntByReference count, int[] modes);
+	int vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, IntByReference count, int[] modes);
 
 	/**
 	 * Destroys a surface.
@@ -57,5 +60,5 @@ public interface VulkanLibrarySurface {
 	 * @param surface			Surface
 	 * @param allocator			Allocator
 	 */
-	void vkDestroySurfaceKHR(Handle instance, Handle surface, Handle allocator);
+	void vkDestroySurfaceKHR(Instance instance, Surface surface, Pointer allocator);
 }

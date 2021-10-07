@@ -141,7 +141,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 
 		// Allocate memory
 		final PointerByReference ref = lib.factory().pointer();
-		check(lib.vkAllocateMemory(this.handle(), info, null, ref));
+		check(lib.vkAllocateMemory(this, info, null, ref));
 
 		// Create memory wrapper
 		return new DefaultDeviceMemory(ref.getValue(), this, size); // TODO - cyclic!
@@ -156,7 +156,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		}
 
 		@Override
-		protected Destructor destructor(VulkanLibrary lib) {
+		protected Destructor<Semaphore> destructor(VulkanLibrary lib) {
 			return lib::vkDestroySemaphore;
 		}
 	}
@@ -168,7 +168,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	public Semaphore semaphore() {
 		final VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
 		final PointerByReference handle = lib.factory().pointer();
-		VulkanLibrary.check(lib.vkCreateSemaphore(this.handle(), info, null, handle));
+		VulkanLibrary.check(lib.vkCreateSemaphore(this, info, null, handle));
 		return new Semaphore(handle.getValue());
 	}
 
@@ -176,12 +176,12 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * Waits for this device to become idle.
 	 */
 	public void waitIdle() {
-		check(lib.vkDeviceWaitIdle(handle));
+		check(lib.vkDeviceWaitIdle(this));
 	}
 
  	@Override
 	protected void release() {
-		lib.vkDestroyDevice(handle, null);
+		lib.vkDestroyDevice(this, null);
 	}
 
 	@Override
@@ -346,7 +346,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			// Allocate device
 			final VulkanLibrary lib = parent.instance().library();
 			final PointerByReference handle = lib.factory().pointer();
-			check(lib.vkCreateDevice(parent.handle(), info, null, handle));
+			check(lib.vkCreateDevice(parent, info, null, handle));
 
 			// Retrieve required queues
 			class RequiredQueue {
@@ -387,7 +387,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			// Enumerate supported memory types
 			// TODO - should props be cached locally somewhere?
 			final var props = new VkPhysicalDeviceMemoryProperties();
-			lib.vkGetPhysicalDeviceMemoryProperties(parent.handle(), props);
+			lib.vkGetPhysicalDeviceMemoryProperties(parent, props);
 			final var types = MemoryType.enumerate(props);
 
 			// Create logical device

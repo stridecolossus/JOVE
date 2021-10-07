@@ -71,7 +71,7 @@ public class ImageTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		image.close();
-		verify(lib).vkDestroyImage(dev.handle(), image.handle(), null);
+		verify(lib).vkDestroyImage(dev, image, null);
 		verify(mem).close();
 	}
 
@@ -125,13 +125,13 @@ public class ImageTest extends AbstractVulkanTest {
 			info.initialLayout = VkImageLayout.PREINITIALIZED;
 			info.usage = IntegerEnumeration.mask(props.usage());
 			info.sharingMode = props.mode();
-			verify(lib).vkCreateImage(DEVICE, info, null, POINTER);
+			verify(lib).vkCreateImage(dev, info, null, POINTER);
 
 			// TODO
 			//verify(lib).vkGetImageMemoryRequirements(DEVICE, POINTER.getValue(), new VkMemoryRequirements());
 
 			// Check bind memory API
-			verify(lib).vkBindImageMemory(DEVICE, POINTER.getValue(), mem.handle(), 0L);
+			verify(lib).vkBindImageMemory(dev, POINTER.getValue(), mem, 0L);
 		}
 
 		@Test

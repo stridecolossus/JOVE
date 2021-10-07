@@ -1,11 +1,15 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.Fence;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -20,7 +24,7 @@ interface VulkanLibrarySynchronize {
 	 * @param pSemaphore		Returned semaphore
 	 * @return Result code
 	 */
-	int vkCreateSemaphore(Handle device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pSemaphore);
+	int vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSemaphore);
 
 	/**
 	 * Destroys a semaphore.
@@ -28,7 +32,7 @@ interface VulkanLibrarySynchronize {
 	 * @param semaphore			Semaphore
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroySemaphore(Handle device, Handle semaphore, Handle pAllocator);
+	void vkDestroySemaphore(DeviceContext device, Semaphore semaphore, Pointer pAllocator);
 
 	/**
 	 * Creates a fence.
@@ -38,7 +42,7 @@ interface VulkanLibrarySynchronize {
 	 * @param pSemaphore		Returned fence
 	 * @return Result code
 	 */
-	int vkCreateFence(Handle device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pFence);
+	int vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFence);
 
 	/**
 	 * Destroys a fence.
@@ -46,7 +50,7 @@ interface VulkanLibrarySynchronize {
 	 * @param fence				Fence
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyFence(Handle device, Handle fence, Handle pAllocator);
+	void vkDestroyFence(DeviceContext device, Fence fence, Pointer pAllocator);
 
 	/**
 	 * Resets a number of fences.
@@ -55,7 +59,7 @@ interface VulkanLibrarySynchronize {
 	 * @param pFences			Fences
 	 * @return Result code
 	 */
-	int vkResetFences(Handle device, int fenceCount, Handle pFences);
+	int vkResetFences(DeviceContext device, int fenceCount, Fence[] pFences);
 
 	/**
 	 * Retrieves the status of a given fence.
@@ -64,7 +68,7 @@ interface VulkanLibrarySynchronize {
 	 * @return Fence status flag
 	 * @see VkResult
 	 */
-	int vkGetFenceStatus(Handle device, Handle fence);
+	int vkGetFenceStatus(DeviceContext device, Fence fence);
 
 	/**
 	 * Waits for a number of fences.
@@ -75,5 +79,6 @@ interface VulkanLibrarySynchronize {
 	 * @param timeout			Timeout or {@link Long#MAX_VALUE}
 	 * @return Result code
 	 */
-	int vkWaitForFences(Handle device, int fenceCount, Handle pFences, VulkanBoolean waitAll, long timeout);
+	int vkWaitForFences(DeviceContext device, int fenceCount, Fence[] pFences, VulkanBoolean waitAll, long timeout);
 }
+

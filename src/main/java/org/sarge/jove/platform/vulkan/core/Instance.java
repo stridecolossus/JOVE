@@ -71,7 +71,7 @@ public class Instance extends AbstractTransientNativeObject {
 	 */
 	public Function function(String name) {
 		// Lookup function pointer
-		final Pointer ptr = lib.vkGetInstanceProcAddr(handle, name);
+		final Pointer ptr = lib.vkGetInstanceProcAddr(this, name);
 		if(ptr == null) throw new RuntimeException("Cannot find function pointer: " + name);
 
 		// Convert to function (first case supports unit-tests)

@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkFormatProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
@@ -72,7 +71,7 @@ public class PhysicalDeviceTest {
 	void features() {
 		final var features = dev.features();
 		assertNotNull(features);
-		verify(lib).vkGetPhysicalDeviceFeatures(eq(dev.handle()), any());
+		verify(lib).vkGetPhysicalDeviceFeatures(eq(dev), any());
 	}
 
 	@Test
@@ -84,7 +83,7 @@ public class PhysicalDeviceTest {
 			props.deviceType = VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 			return null;
 		};
-		doAnswer(answer).when(lib).vkGetPhysicalDeviceProperties(eq(dev.handle()), any());
+		doAnswer(answer).when(lib).vkGetPhysicalDeviceProperties(eq(dev), any());
 
 		// Retrieve properties
 		final var props = dev.properties();
@@ -114,7 +113,7 @@ public class PhysicalDeviceTest {
 	@Test
 	void formatProperties() {
 		final VkFormatProperties props = dev.properties(VkFormat.D32_SFLOAT);
-		verify(lib).vkGetPhysicalDeviceFormatProperties(dev.handle(), VkFormat.D32_SFLOAT, props);
+		verify(lib).vkGetPhysicalDeviceFormatProperties(dev, VkFormat.D32_SFLOAT, props);
 	}
 
 	@Nested
@@ -166,7 +165,7 @@ public class PhysicalDeviceTest {
 		@Test
 		void presentation() {
 			// Create presentation selector
-			final Handle surface = new Handle(42);
+			final Surface surface = mock(Surface.class);
 			final Selector selector = Selector.of(surface);
 			assertNotNull(selector);
 
@@ -179,7 +178,7 @@ public class PhysicalDeviceTest {
 			assertEquals(family, selector.family());
 
 			// Check API
-			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev.handle(), family.index(), surface, supported);
+			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev, family.index(), surface, supported);
 		}
 	}
 }

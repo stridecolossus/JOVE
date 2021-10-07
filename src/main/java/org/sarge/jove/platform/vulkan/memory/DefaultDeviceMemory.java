@@ -131,7 +131,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference ref = lib.factory().pointer();
-		check(lib.vkMapMemory(dev.handle(), this.handle(), offset, size, 0, ref));
+		check(lib.vkMapMemory(dev, this, offset, size, 0, ref));
 
 		// Create mapped region
 		mapping = new MappedRegion(ref.getValue(), size, offset);
@@ -147,7 +147,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		// Release mapping
 		final DeviceContext dev = device();
 		final VulkanLibrary lib = dev.library();
-		lib.vkUnmapMemory(dev.handle(), this.handle());
+		lib.vkUnmapMemory(dev, this);
 
 		// Clear mapping
 		mapping = null;
@@ -171,7 +171,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<DefaultDeviceMemory> destructor(VulkanLibrary lib) {
 		return lib::vkFreeMemory;
 	}
 

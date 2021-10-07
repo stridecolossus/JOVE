@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -29,7 +28,6 @@ import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class ViewTest extends AbstractVulkanTest {
 	private interface MockImage extends Image, TransientNativeObject {
@@ -91,7 +89,7 @@ public class ViewTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		view.close();
-		verify(lib).vkDestroyImageView(dev.handle(), view.handle(), null);
+		verify(lib).vkDestroyImageView(dev, view, null);
 		verify(image).close();
 		verifyNoMoreInteractions(lib);
 	}
@@ -119,7 +117,7 @@ public class ViewTest extends AbstractVulkanTest {
 
 			// Check API
 			final ArgumentCaptor<VkImageViewCreateInfo> captor = ArgumentCaptor.forClass(VkImageViewCreateInfo.class);
-			verify(lib).vkCreateImageView(eq(dev.handle()), captor.capture(), isNull(), isA(PointerByReference.class));
+			verify(lib).vkCreateImageView(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
 			// Check create descriptor
 			final VkImageViewCreateInfo info = captor.getValue();

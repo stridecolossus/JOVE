@@ -55,11 +55,11 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @return New bind pipeline command
 	 */
 	public Command bind() {
-		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, handle);
+		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, Pipeline.this);
 	}
 
 	@Override
-	protected Destructor destructor(VulkanLibrary lib) {
+	protected Destructor<Pipeline> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyPipeline;
 	}
 
@@ -278,7 +278,7 @@ public class Pipeline extends AbstractVulkanObject {
 			// Allocate pipeline
 			final VulkanLibrary lib = dev.library();
 			final Pointer[] pipelines = lib.factory().array(1);
-			check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
+			check(lib.vkCreateGraphicsPipelines(dev, null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 			// Create pipeline
 			return new Pipeline(pipelines[0], dev, layout);
