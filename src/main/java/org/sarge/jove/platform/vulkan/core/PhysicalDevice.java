@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -157,16 +156,28 @@ public class PhysicalDevice implements NativeObject {
 	 * 	Queue presentation = dev.queue(selector.family());
 	 * </pre>
 	 * <p>
+	 * The selector is a template implementation, sub-classes must implement {@link #predicate(PhysicalDevice)} to generate a queue family predicate for a given device:
+	 * <pre>
+	 * 	Selector selector = new Selector() {
+	 * 		protected Predicate<Family> predicate(PhysicalDevice dev) {
+	 * 			return family -> ...
+	 * 		}
+	 * 	};
+	 * </pre>
 	 */
-	public static class Selector implements Predicate<PhysicalDevice> {
+	public static abstract class Selector implements Predicate<PhysicalDevice> {
 		/**
 		 * Creates a selector for the queue that supports presentation to the given surface.
 		 * @param surface Rendering surface
 		 * @return Presentation queue selector
 		 */
 		public static Selector of(Handle surface) {
-			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
-			return new Selector(predicate);
+			return new Selector() {
+				@Override
+				protected Predicate<Family> predicate(PhysicalDevice dev) {
+					return family -> dev.isPresentationSupported(surface, family);
+				}
+			};
 		}
 
 		/**
@@ -176,20 +187,15 @@ public class PhysicalDevice implements NativeObject {
 		 */
 		public static Selector of(VkQueueFlag... flags) {
 			final var list = Arrays.asList(flags);
-			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> family.flags().containsAll(list);
-			return new Selector(predicate);
+			return new Selector() {
+				@Override
+				protected Predicate<Family> predicate(PhysicalDevice dev) {
+					return family -> family.flags().containsAll(list);
+				}
+			};
 		}
 
-		private final BiPredicate<PhysicalDevice, Family> predicate;
 		private Optional<Family> family = Optional.empty();
-
-		/**
-		 * Constructor.
-		 * @param predicate Queue family predicate
-		 */
-		public Selector(BiPredicate<PhysicalDevice, Family> predicate) {
-			this.predicate = notNull(predicate);
-		}
 
 		/**
 		 * @return Selected queue family
@@ -199,13 +205,20 @@ public class PhysicalDevice implements NativeObject {
 			return family.orElseThrow();
 		}
 
+		/**
+		 * Constructs the queue family filter for the given physical device.
+		 * @param dev Physical device
+		 * @return Queue family predicate
+		 */
+		protected abstract Predicate<Family> predicate(PhysicalDevice dev);
+
 		@Override
 		public boolean test(PhysicalDevice dev) {
 			// Build filter for this device
-			final Predicate<Family> filter = family -> predicate.test(dev, family);
+			final Predicate<Family> predicate = predicate(dev);
 
 			// Retrieve matching queue family
-			family = dev.families.stream().filter(filter).findAny();
+			family = dev.families.stream().filter(predicate).findAny();
 
 			// Selector passes if the queue is found
 			return family.isPresent();

@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -119,26 +119,38 @@ public class PhysicalDeviceTest {
 
 	@Nested
 	class SelectorTests {
+		private Predicate<Family> predicate;
+
+		@BeforeEach
+		void before() {
+			predicate = mock(Predicate.class);
+		}
+
 		@Test
 		void selector() {
-			// Create simple family matcher
-			final BiPredicate<PhysicalDevice, Family> predicate = mock(BiPredicate.class);
-			when(predicate.test(dev, family)).thenReturn(true);
-
 			// Create selector
-			final Selector selector = new Selector(predicate);
+			final Selector selector = new Selector() {
+				@Override
+				protected Predicate<Family> predicate(PhysicalDevice dev) {
+					return predicate;
+				}
+			};
 			assertNotNull(selector);
+			when(predicate.test(family)).thenReturn(true);
 
 			// Check selector
 			assertEquals(true, selector.test(dev));
-			verify(predicate).test(dev, family);
 			assertEquals(family, selector.family());
 		}
 
 		@Test
 		void empty() {
-			final BiPredicate<PhysicalDevice, Family> predicate = mock(BiPredicate.class);
-			final Selector selector = new Selector(predicate);
+			final Selector selector = new Selector() {
+				@Override
+				protected Predicate<Family> predicate(PhysicalDevice dev) {
+					return predicate;
+				}
+			};
 			assertEquals(false, selector.test(dev));
 			assertThrows(NoSuchElementException.class, () -> selector.family());
 		}
@@ -154,7 +166,7 @@ public class PhysicalDeviceTest {
 		@Test
 		void presentation() {
 			// Create presentation selector
-			final Handle surface = new Handle(new Pointer(42));
+			final Handle surface = new Handle(42);
 			final Selector selector = Selector.of(surface);
 			assertNotNull(selector);
 

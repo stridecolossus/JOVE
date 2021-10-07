@@ -336,10 +336,10 @@ After trying several approaches we settled on the design described below which d
 
 ### Selector
 
-The `Selector` combines a device predicate with an accessor for the selected queue family (the side effect):
+The `Selector` is a device predicate with an accessor for the selected queue family (the side effect):
 
 ```java
-public static class Selector implements Predicate<PhysicalDevice> {
+public static abstract class Selector implements Predicate<PhysicalDevice> {
     private Optional<Family> family = Optional.empty();
 
     /**
@@ -357,39 +357,42 @@ public static class Selector implements Predicate<PhysicalDevice> {
 }
 ```
 
-Since the API method to test presentation is also dependant on the physical device the selector uses a bi-predicate that combines the device and family tests:
+This new helper class is a template implementation, the following method generates the queue family predicate for a device:
 
 ```java
-public static class Selector implements Predicate<PhysicalDevice> {
-    private final BiPredicate<PhysicalDevice, Family> predicate;
-
-    public Selector(BiPredicate<PhysicalDevice, Family> predicate) {
-        this.predicate = notNull(predicate);
-    }
-}
+/**
+ * Constructs the queue family filter for the given physical device.
+ * @param dev Physical device
+ * @return Queue family predicate
+ */
+protected abstract Predicate<Family> predicate(PhysicalDevice dev);
 ```
 
-The `test` method determines the queue predicate for the device and finds the matching family if present:
+The `test` method retrieves the queue predicate and finds the matching family if present:
 
 ```java
 public boolean test(PhysicalDevice dev) {
     // Build filter for this device
-    final Predicate<Family> filter = family -> predicate.test(dev, family);
+    final Predicate<Family> predicate = predicate(dev);
 
     // Retrieve matching queue family
-    family = dev.families.stream().filter(filter).findAny();
+    family = dev.families.stream().filter(predicate).findAny();
 
     // Selector passes if the queue is found
     return family.isPresent();
 }
 ```
 
-For the presentation case we implement a factory method that matches a given rendering surface:
+For the presentation case we implement a factory method that matches the rendering surface:
 
 ```java
 public static Selector of(Handle surface) {
-    final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
-    return new Selector(predicate);
+    return new Selector() {
+        @Override
+        protected Predicate<Family> predicate(PhysicalDevice dev) {
+            return family -> dev.isPresentationSupported(surface, family);
+        }
+    };
 }
 ```
 
@@ -422,13 +425,17 @@ public interface VulkanLibrarySurface {
 
 Note that the API uses an `IntByReference` for the test result which maps __one__ to boolean _true_ (there is no explicit boolean by-reference type).  We will introduce proper boolean support in a later chapter.
 
-Finally we add a second factory to create a selector based on general queue capabilities (the device aspect of the predicate is unused in this case):
+Finally we add a second factory to create a selector based on general queue capabilities (the device is unused):
 
 ```java
 public static Selector of(VkQueueFlag... flags) {
     final var list = Arrays.asList(flags);
-    final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> family.flags().containsAll(list);
-    return new Selector(predicate);
+    return new Selector() {
+        @Override
+        protected Predicate<Family> predicate(PhysicalDevice dev) {
+            return family -> family.flags().containsAll(list);
+        }
+    };
 }
 ```
 
