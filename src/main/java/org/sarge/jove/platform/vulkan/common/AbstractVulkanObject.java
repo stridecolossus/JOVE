@@ -22,7 +22,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 		/**
 		 * Destroys this object.
 		 * @param dev			Logical device
-		 * @param handle		Handle
+		 * @param obj			Native object to destroy
 		 * @param allocator		Vulkan memory allocator (always {@code null})
 		 */
 		void destroy(DeviceContext dev, T obj, Pointer allocator);

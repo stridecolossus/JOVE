@@ -259,25 +259,21 @@ public enum Property {
 
 (The constants are copied from the header file).
 
-Finally we add the following factory method to create a window given its descriptor:
+Finally we add the following factory method on the `Desktop` service to create a window given its descriptor:
 
 ```java
-public class Desktop {
-    public Window window(Window.Descriptor descriptor) {
-        // Apply window hints
-        lib.glfwDefaultWindowHints();
-        descriptor.properties().forEach(p -> p.apply(lib));
-    
-        // Create window
-        final Dimensions size = descriptor.size();
-        final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);
-        if(window == null) {
-            throw new RuntimeException(...);
-        }
-    
-        // Create window wrapper
-        return new Window(this, window, descriptor);
-    }
+public Window window(Window.Descriptor descriptor) {
+    // Apply window hints
+    lib.glfwDefaultWindowHints();
+    descriptor.properties().forEach(p -> p.apply(lib));
+
+    // Create window
+    final Dimensions size = descriptor.size();
+    final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);
+    if(window == null) throw new RuntimeException(...);
+
+    // Create window wrapper
+    return new Window(this, window, descriptor);
 }
 ```
 
@@ -478,12 +474,6 @@ public class LogicalDevice {
     private final VulkanLibrary lib;
     private final Map<Family, List<Queue>> queues;
 
-    /**
-     * Constructor.
-     * @param handle        Device handle
-     * @param parent        Parent physical device
-     * @param queues        Work queues
-     */
     LogicalDevice(Pointer handle, PhysicalDevice parent, Map<Family, List<Queue>> queues) {
         this.handle = notNull(handle);
         this.parent = notNull(parent);
@@ -500,9 +490,6 @@ public class LogicalDevice {
 We also provide accessors to retrieve the work queues:
 
 ```java
-/**
- * @return Work queues for this device ordered by family
- */
 public Map<Family, List<Queue>> queues() {
     return queues;
 }

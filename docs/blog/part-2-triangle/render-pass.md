@@ -96,7 +96,7 @@ public class RenderPass extends AbstractVulkanObject {
     }
 
     @Override
-    protected Destructor destructor(VulkanLibrary lib) {
+    protected Destructor<RenderPass> destructor(VulkanLibrary lib) {
         return lib::vkDestroyRenderPass;
     }
 }
@@ -160,7 +160,7 @@ And then invoking the API to create the render pass and domain object:
 // Allocate render pass
 final VulkanLibrary lib = dev.library();
 final PointerByReference pass = lib.factory().pointer();
-check(lib.vkCreateRenderPass(dev.handle(), info, null, pass));
+check(lib.vkCreateRenderPass(dev, info, null, pass));
 
 // Create render pass
 return new RenderPass(pass.getValue(), dev, attachments);
@@ -170,8 +170,8 @@ Finally we create a new API for the render pass:
 
 ```java
 interface VulkanLibraryRenderPass {
-    int vkCreateRenderPass(Handle device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pRenderPass);
-    void vkDestroyRenderPass(Handle device, Handle renderPass, Handle pAllocator);
+    int vkCreateRenderPass(LogicalDevice device, VkRenderPassCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pRenderPass);
+    void vkDestroyRenderPass(LogicalDevice device, RenderPass renderPass, Pointer pAllocator);
 }
 ```
 
@@ -268,7 +268,7 @@ public class FrameBuffer extends AbstractVulkanObject {
     private final Dimensions extents;
 
     @Override
-    protected Destructor destructor(VulkanLibrary lib) {
+    protected Destructor<FrameBuffer> destructor(VulkanLibrary lib) {
         return lib::vkDestroyFramebuffer;
     }
 }
@@ -297,7 +297,7 @@ The frame buffer is then created via the API and wrapped by a new domain object 
 final DeviceContext dev = pass.device();
 final VulkanLibrary lib = dev.library();
 final PointerByReference buffer = lib.factory().pointer();
-check(lib.vkCreateFramebuffer(dev.handle(), info, null, buffer));
+check(lib.vkCreateFramebuffer(dev, info, null, buffer));
 
 // Create frame buffer
 return new FrameBuffer(buffer.getValue(), dev, pass, attachments, extents);
@@ -309,8 +309,8 @@ The API for frame buffers is simple:
 
 ```java
 interface VulkanLibraryFrameBuffer {
-    int vkCreateFramebuffer(Handle device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pFramebuffer);
-    void vkDestroyFramebuffer(Handle device, Handle framebuffer, Handle pAllocator);
+    int vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
+    void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Pointer pAllocator);
 }
 ```
 
@@ -528,7 +528,7 @@ class DeviceConfiguration {
     private final Selector presentation;
 
     public DeviceConfiguration(Surface surface) {
-        presentation = Selector.of(surface.handle());
+        presentation = Selector.of(surface);
     }
 }
 ```
@@ -617,6 +617,7 @@ And the frame buffers:
 ```java
 @Bean
 public static FrameBuffer frame(Swapchain swapchain, RenderPass pass) {
+    // TODO - only one!
     final View view = swapchain.views().iterator().next();
     return FrameBuffer.create(pass, swapchain.extents(), List.of(view));
 }

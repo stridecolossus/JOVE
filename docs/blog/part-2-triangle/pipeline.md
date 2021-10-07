@@ -30,7 +30,7 @@ public class Pipeline extends AbstractVulkanObject {
     }
 
     @Override
-    protected Destructor destructor(VulkanLibrary lib) {
+    protected Destructor<Pipeline> destructor(VulkanLibrary lib) {
         return lib::vkDestroyPipeline;
     }
 }
@@ -47,7 +47,7 @@ public class PipelineLayout extends AbstractVulkanObject {
     }
 
     @Override
-    protected Destructor destructor(VulkanLibrary lib) {
+    protected Destructor<PipelineLayout> destructor(VulkanLibrary lib) {
         return lib::vkDestroyPipelineLayout;
     }
 }
@@ -60,7 +60,7 @@ public PipelineLayout build() {
     final var info = new VkPipelineLayoutCreateInfo();
     final VulkanLibrary lib = dev.library();
     final PointerByReference layout = lib.factory().pointer();
-    check(lib.vkCreatePipelineLayout(dev.handle(), info, null, layout));
+    check(lib.vkCreatePipelineLayout(dev, info, null, layout));
     return new PipelineLayout(layout.getValue(), dev);
 }
 ```
@@ -278,7 +278,7 @@ public class Shader extends AbstractVulkanObject {
     }
 
     @Override
-    protected Destructor destructor(VulkanLibrary lib) {
+    protected Destructor<Shader> destructor(VulkanLibrary lib) {
         return lib::vkDestroyShaderModule;
     }
 }
@@ -308,7 +308,7 @@ info.pCode = bb;
 // Allocate shader
 VulkanLibrary lib = dev.library();
 PointerByReference shader = lib.factory().pointer();
-check(lib.vkCreateShaderModule(dev.handle(), info, null, shader));
+check(lib.vkCreateShaderModule(dev, info, null, shader));
 
 // Create shader
 return new Shader(shader.getValue(), dev);
@@ -318,8 +318,8 @@ The API for shader modules consists of two methods:
 
 ```java
 interface VulkanLibraryShader {
-    int vkCreateShaderModule(Handle device, VkShaderModuleCreateInfo info, Handle pAllocator, PointerByReference shader);
-    void vkDestroyShaderModule(Handle device, Handle shader, Handle pAllocator);
+    int vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Pointer pAllocator, PointerByReference shader);
+    void vkDestroyShaderModule(LogicalDevice device, Shader shader, Pointer pAllocator);
 }
 ```
 
@@ -424,7 +424,7 @@ Finally we invoke the API to instantiate the pipeline:
 // Allocate pipeline
 final VulkanLibrary lib = dev.library();
 final Pointer[] pipelines = lib.factory().array(1);
-check(lib.vkCreateGraphicsPipelines(dev.handle(), null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
+check(lib.vkCreateGraphicsPipelines(dev, null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 // Create pipeline
 return new Pipeline(pipelines[0], dev, layout);
@@ -434,11 +434,11 @@ The pipeline API looks like this:
 
 ```java
 interface VulkanLibraryPipeline {
-    int vkCreatePipelineLayout(Handle device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pPipelineLayout);
-    void vkDestroyPipelineLayout(Handle device, Handle pipelineLayout, Handle pAllocator);
+    int vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
+    void vkDestroyPipelineLayout(LogicalDevice device, PipelineLayout pipelineLayout, Pointer pAllocator);
 
-    int vkCreateGraphicsPipelines(Handle device, Handle pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, Pointer[] pPipelines);
-    void vkDestroyPipeline(Handle device, Handle pipeline, Handle pAllocator);
+    int vkCreateGraphicsPipelines(LogicalDevice device, Pointer pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
+    void vkDestroyPipeline(LogicalDevice device, Pipeline pipeline, Pointer pAllocator);
 }
 ```
 

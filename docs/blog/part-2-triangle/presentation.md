@@ -40,7 +40,7 @@ public class Surface extends AbstractTransientNativeObject {
     @Override
     protected void release() {
         final VulkanLibrarySurface lib = instance.library();
-        lib.vkDestroySurfaceKHR(instance.handle(), handle, null);
+        lib.vkDestroySurfaceKHR(instance, this, null);
     }
 }
 ```
@@ -57,7 +57,7 @@ The new surface class provides a factory for the surface properties for the sele
 
 ```java
 public Properties properties(PhysicalDevice dev) {
-    return new Properties(dev.handle());
+    return new Properties(dev);
 }
 ```
 
@@ -67,7 +67,7 @@ The surface properties provides a number of accessors that are used to configure
 public VkSurfaceCapabilitiesKHR capabilities() {
     final VulkanLibrary lib = dev.library();
     final VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR();
-    check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev.handle(), handle, caps));
+    check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, Surface.this, caps));
     return caps;
 }
 ```
@@ -76,7 +76,7 @@ The supported _image formats_ are retrieved using the two-stage approach:
 
 ```java
 public Collection<VkSurfaceFormatKHR> formats() {
-    final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev.handle(), handle, count, array);
+    final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface.this, count, array);
     final var formats = VulkanFunction.enumerate(func, dev.library(), VkSurfaceFormatKHR::new);
     return Arrays.stream(formats).collect(toList());
 }
@@ -90,11 +90,11 @@ public Set<VkPresentModeKHR> modes() {
     // TODO - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
     final VulkanLibrary lib = dev.library();
     final IntByReference count = lib.factory().integer();
-    check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev.handle(), this.handle, count, null));
+    check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, null));
 
     // Retrieve modes
     final int[] array = new int[count.getValue()];
-    check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev.handle(), this.handle, count, array));
+    check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array));
 
     // Convert to enumeration
     return Arrays
@@ -109,10 +109,10 @@ The new API methods are added to the surface library:
 ```java
 public interface VulkanLibrarySurface {
     ...
-    int vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Handle device, Handle surface, VkSurfaceCapabilitiesKHR caps);
-    int vkGetPhysicalDeviceSurfaceFormatsKHR(Handle device, Handle surface, IntByReference count, VkSurfaceFormatKHR formats);
-    int vkGetPhysicalDeviceSurfacePresentModesKHR(Handle device, Handle surface, IntByReference count, int[] modes);
-    void vkDestroySurfaceKHR(Handle instance, Handle surface, Handle allocator);
+    int vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, Surface surface, VkSurfaceCapabilitiesKHR caps);
+    int vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntByReference count, VkSurfaceFormatKHR formats);
+    int vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, IntByReference count, int[] modes);
+    void vkDestroySurfaceKHR(Instance instance, Surface surface, Pointer allocator);
 }
 ```
 
@@ -165,7 +165,7 @@ public class View extends AbstractVulkanObject {
     }
 
     @Override
-    protected Destructor destructor(VulkanLibrary lib) {
+    protected Destructor<View> destructor(VulkanLibrary lib) {
         return lib::vkDestroyImageView;
     }
 }
@@ -207,7 +207,7 @@ public View build(Image image) {
     final LogicalDevice dev = image.device();
     final VulkanLibrary lib = dev.library();
     final PointerByReference handle = lib.factory().pointer();
-    check(lib.vkCreateImageView(dev.handle(), info, null, handle));
+    check(lib.vkCreateImageView(dev, info, null, handle));
 
     // Create image view
     return new View(handle.getValue(), dev, image);
@@ -251,8 +251,8 @@ Finally we add a new JNA library for images and views:
 
 ```java
 interface VulkanLibraryImage {
-    int vkCreateImageView(Handle device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pView);
-    void vkDestroyImageView(Handle device, Handle imageView, Handle pAllocator);
+    int vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
+    void vkDestroyImageView(LogicalDevice device, View imageView, Pointer pAllocator);
 ```
 
 ### Swapchain
@@ -270,7 +270,7 @@ public class Swapchain extends AbstractVulkanObject {
     private final List<View> views;
 
     @Override
-    protected Destructor destructor(VulkanLibrary lib) {
+    protected Destructor<Swapchain> destructor(VulkanLibrary lib) {
         return lib::vkDestroySwapchainKHR;
     }
 
@@ -338,7 +338,7 @@ public Swapchain build() {
     VulkanLibrary lib = dev.library();
     ReferenceFactory factory = lib.factory();
     PointerByReference chain = factory.pointer();
-    check(lib.vkCreateSwapchainKHR(dev.handle(), info, null, chain));
+    check(lib.vkCreateSwapchainKHR(dev, info, null, chain));
     ...
 }
 ```
@@ -347,7 +347,7 @@ Next we retrieve the handles to the swapchain images created by Vulkan:
 
 ```java
 // Retrieve swapchain images
-VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev.handle(), chain.getValue(), count, array);
+VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
 Pointer[] handles = VulkanFunction.enumerate(func, lib, factory::array);
 ```
 
@@ -398,9 +398,9 @@ And add a new API:
 
 ```java
 interface VulkanLibrarySwapchain {
-    int vkCreateSwapchainKHR(Handle device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, PointerByReference pSwapchain);
-    void vkDestroySwapchainKHR(Handle device, Handle swapchain, Handle pAllocator);
-    int vkGetSwapchainImagesKHR(Handle device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+    int vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
+    void vkDestroySwapchainKHR(LogicalDevice device, Swapchain swapchain, Pointer pAllocator);
+    int vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
 }
 ```
 
@@ -411,8 +411,8 @@ To support presentation we extend the new API with the following methods:
 ```java
 interface VulkanLibrarySwapchain {
     ...
-    int vkAcquireNextImageKHR(Handle device, Handle swapchain, long timeout, Handle semaphore, Handle fence, IntByReference pImageIndex);
-    int vkQueuePresentKHR(Handle queue, VkPresentInfoKHR pPresentInfo);
+    int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
+    int vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
 }
 ```
 
@@ -426,7 +426,7 @@ public class Swapchain ... {
         if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
         final DeviceContext dev = device();
         final VulkanLibrary lib = dev.library();
-        check(lib.vkAcquireNextImageKHR(dev.handle(), this.handle(), Long.MAX_VALUE, NativeObject.ofNullable(semaphore), NativeObject.ofNullable(fence), index));
+        check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
         return index.getValue();
     }
 }
@@ -443,11 +443,11 @@ public void present(Queue queue, Set<Semaphore> semaphores) {
 
     // Populate wait semaphores
     info.waitSemaphoreCount = semaphores.size();
-    info.pWaitSemaphores = Handle.toArray(semaphores);
+    info.pWaitSemaphores = NativeObject.toArray(semaphores);
 
     // Populate swap-chain
     info.swapchainCount = 1;
-    info.pSwapchains = Handle.toArray(List.of(this));
+    info.pSwapchains = NativeObject.toArray(List.of(this));
     
     ...
 }
@@ -467,7 +467,7 @@ And finally we invoke the API method that adds the presentation task to the rele
 
 ```java
 // Present frame
-check(lib.vkQueuePresentKHR(queue.handle(), info));
+check(lib.vkQueuePresentKHR(queue, info));
 ```
 
 Notes:
@@ -548,28 +548,32 @@ Which maps to the `B8G8R8A8_UNORM` format used by the colour attachment.
 
 ## Framework Enhancements
 
-In this section we cover the new supporting classes used in this chapter.
+In this section we cover the new supporting classes introduced in this chapter.
 
 ### Native Handles
 
-Most of the Vulkan domain objects developed thus far have a _handle_ which is the JNA pointer returned by the various API methods.  However a JNA pointer is mutable which essentially breaks the class if we expose the handle.
+Most of the Vulkan domain objects developed thus far have a _handle_ which is the JNA native pointer for that object.
 
-To resolve this mutability issue we first define a native object that contains a handle:
+There are a couple of issues with this approach:
 
-```java
-public interface NativeObject {
-    Handle handle();
-}
-```
+* A JNA pointer is mutable which essentially breaks the class if we expose the handle.
 
-The `Handle` is an opaque wrapper for a JNA pointer:
+* Currently our API methods are defined in terms of pointers which is not type-safe and requires additional code to convert to/from the handle.
+
+We will introduce another abstraction for native objects to resolve (or at least mitigate) these problems.
+
+The `Handle` class is an immutable, opaque wrapper for a JNA pointer:
 
 ```java
 public final class Handle {
     private final Pointer ptr;
 
     public Handle(Pointer ptr) {
-        this.ptr = notNull(ptr);
+        this.ptr = new Pointer(Pointer.nativeValue(ptr));
+    }
+
+    public Pointer toPointer() {
+        return new Pointer(Pointer.nativeValue(ptr));
     }
 
     @Override
@@ -589,10 +593,20 @@ public final class Handle {
 }
 ```
 
-To use this new type in Vulkan API methods and structures we implement a custom JNA type converter:
+Note we clone the underlying pointer in the constructor and accessor using a JNA helper function (the pointer class does not have a copy constructor).
+
+We next introduce a new base-class for domain objects that contain a handle:
 
 ```java
-public static final TypeConverter CONVERTER = new TypeConverter() {
+public interface NativeObject {
+    Handle handle();
+}
+```
+
+And a JNA type converter to convert a native object to its underlying JNA pointer:
+
+```java
+TypeConverter CONVERTER = new TypeConverter() {
     @Override
     public Class<?> nativeType() {
         return Pointer.class;
@@ -600,28 +614,30 @@ public static final TypeConverter CONVERTER = new TypeConverter() {
 
     @Override
     public Object toNative(Object value, ToNativeContext context) {
-        if(value == null) {
-            return null;
+        if(value instanceof NativeObject obj) {
+            return obj.handle().toPointer();
         }
         else {
-            final Handle handle = (Handle) value;
-            return handle.ptr;
+            return null;
         }
     }
 
     @Override
-    public Object fromNative(Object value, FromNativeContext context) {
-        if(value == null) {
-            return null;
-        }
-        else {
-            return new Handle((Pointer) value);
-        }
+    public Object fromNative(Object nativeValue, FromNativeContext context) {
+        throw new UnsupportedOperationException();
     }
 };
 ```
 
-The new converter is registered with the type mapper of the Vulkan JNA library and we refactor all the existing domain classes accordingly.
+Registering this converter allows all domain objects to be used directly in API methods which is more type-safe, better documented, and requires less code.
+
+Notes:
+
+* The `fromNative` method is disallowed since we will never be creating a domain object via a native method.
+
+* We also register another type converter for the `Handle` class which is more convenient for Vulkan structure fields (and some API methods).
+
+* The `toArray` helper on the new interface converts a collection of objects to a native pointer-to-array type as a contiguous memory block.
 
 ### Transient Objects
 
@@ -693,11 +709,6 @@ This seems a valid case for a further intermediate base-class that abstracts thi
 public abstract class AbstractVulkanObject extends AbstractTransientNativeObject {
     private final LogicalDevice dev;
 
-    /**
-     * Constructor.
-     * @param handle        Object handle
-     * @param dev           Logical device
-     */
     protected AbstractVulkanObject(Pointer handle, LogicalDevice dev) {
         super(new Handle(handle));
         this.dev = notNull(dev);
@@ -709,14 +720,14 @@ To destroy this object we introduce the following abstraction for a _destructor_
 
 ```java
 @FunctionalInterface
-public interface Destructor {
+public interface Destructor<T extends AbstractVulkanObject> {
     /**
      * Destroys this object.
      * @param dev           Logical device
-     * @param handle        Handle
+     * @param obj           Native object to destroy
      * @param allocator     Vulkan memory allocator (always {@code null})
      */
-    void destroy(Handle dev, Handle handle, Handle allocator);
+    void destroy(DeviceContext dev, T obj, Pointer allocator);
 }
 ```
 
@@ -728,7 +739,7 @@ We add the following to return the API method used to destroy the object:
  * @param lib Vulkan API
  * @return Destructor method
  */
-protected abstract Destructor destructor(VulkanLibrary lib);
+protected abstract Destructor<?> destructor(VulkanLibrary lib);
 ```
 
 Which is used in the overridden `destroy` method:
@@ -738,7 +749,7 @@ Which is used in the overridden `destroy` method:
 public synchronized void destroy() {
     // Destroy this object
     final Destructor destructor = destructor(dev.library());
-    destructor.destroy(dev.handle(), this.handle(), null);
+    destructor.destroy(dev, this, null);
 
     // Delegate
     super.destroy();
@@ -803,7 +814,7 @@ public static VulkanBoolean of(boolean bool) {
 }
 ```
 
-Again we used a JNA type converter to map the new type to/from its native representation in API methods and JNA structures:
+Again we used a JNA type converter to map the new type to/from its native representation in API methods and structures:
 
 ```java
 public static final TypeConverter CONVERTER = new TypeConverter() {

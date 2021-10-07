@@ -50,7 +50,7 @@ public interface Command {
      * @param lib       Vulkan library
      * @param buffer    Command buffer handle
      */
-    void execute(VulkanLibrary lib, Handle buffer);
+    void execute(VulkanLibrary lib, Buffer buffer);
 
     /**
      * A <i>command buffer</i> is allocated by a {@link Pool} and used to record commands.
@@ -72,16 +72,16 @@ We also create a new API to support the new domain objects:
 
 ```java
 interface VulkanLibraryCommandBuffer {
-    int vkCreateCommandPool(Handle device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, PointerByReference pCommandPool);
-    int vkResetCommandPool(Handle device, Handle commandPool, int flags);
-    void vkDestroyCommandPool(Handle device, Handle commandPool, Handle pAllocator);
+    int vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pCommandPool);
+    int vkResetCommandPool(LogicalDevice device, Pool commandPool, int flags);
+    void vkDestroyCommandPool(LogicalDevice device, Pool commandPool, Pointer pAllocator);
 
-    int vkAllocateCommandBuffers(Handle device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
-    int vkResetCommandBuffer(Handle commandBuffer, int flags);
-    void vkFreeCommandBuffers(Handle device, Handle commandPool, int commandBufferCount, Handle pCommandBuffers);
+    int vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
+    int vkResetCommandBuffer(Buffer commandBuffer, int flags);
+    void vkFreeCommandBuffers(LogicalDevice device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
 
-    int vkBeginCommandBuffer(Handle commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
-    int vkEndCommandBuffer(Handle commandBuffer);
+    int vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
+    int vkEndCommandBuffer(Buffer commandBuffer);
 }
 ```
 
@@ -99,7 +99,7 @@ class Pool extends AbstractVulkanObject {
     }
 
     @Override
-    protected Destructor destructor(VulkanLibrary lib) {
+    protected Destructor<Pool> destructor(VulkanLibrary lib) {
         return lib::vkDestroyCommandPool;
     }
 }
@@ -117,7 +117,7 @@ public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFla
     // Create pool
     final VulkanLibrary lib = dev.library();
     final PointerByReference pool = lib.factory().pointer();
-    check(lib.vkCreateCommandPool(dev.handle(), info, null, pool));
+    check(lib.vkCreateCommandPool(dev, info, null, pool));
 
     // Create pool
     return new Pool(pool.getValue(), dev, queue);
@@ -138,7 +138,7 @@ public List<Buffer> allocate(int num, boolean primary) {
     final DeviceContext dev = super.device();
     final VulkanLibrary lib = dev.library();
     final Pointer[] handles = lib.factory().array(num);
-    check(lib.vkAllocateCommandBuffers(dev.handle(), info, handles));
+    check(lib.vkAllocateCommandBuffers(dev, info, handles));
     
     ...
 }
@@ -183,7 +183,7 @@ public synchronized void free() {
 
 private void free(Collection<Buffer> buffers) {
     final LogicalDevice dev = super.device();
-    dev.library().vkFreeCommandBuffers(dev.handle(), this.handle(), buffers.size(), Handle.toArray(buffers));
+    dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), buffers.toArray(Buffer[]::new));
 }
 ```
 
@@ -193,7 +193,7 @@ Finally the pool can also be reset which recycles resources and restores all all
 public void reset(VkCommandPoolResetFlag... flags) {
     final int mask = IntegerEnumeration.mask(flags);
     final LogicalDevice dev = super.device();
-    check(dev.library().vkResetCommandPool(dev.handle(), this.handle(), mask));
+    check(dev.library().vkResetCommandPool(dev, this, mask));
 }
 ```
 
@@ -239,7 +239,7 @@ public Buffer begin(VkCommandBufferUsageFlag... flags) {
 
     // Start buffer recording
     final VulkanLibrary lib = pool.device().library();
-    check(lib.vkBeginCommandBuffer(handle, info));
+    check(lib.vkBeginCommandBuffer(this, info));
 
     // Start recording
     state = State.RECORDING;
@@ -252,7 +252,7 @@ The sequence is then recorded by adding commands:
 ```java
 public Buffer add(Command cmd) {
     if(state != State.RECORDING) throw new IllegalStateException(...);
-    cmd.execute(pool.device().library(), handle);
+    cmd.execute(pool.device().library(), this);
     return this;
 }
 ```
@@ -263,7 +263,7 @@ Finally the `end` method completes recording:
 public Buffer end() {
     if(state != State.RECORDING) throw new IllegalStateException(...);
     final VulkanLibrary lib = pool.device().library();
-    check(lib.vkEndCommandBuffer(handle));
+    check(lib.vkEndCommandBuffer(this));
     state = State.EXECUTABLE;
     return this;
 }
@@ -338,7 +338,7 @@ public static void submit(List<Work> work) {
 
     // Submit work
     final VulkanLibrary lib = pool.device().library();
-    check(lib.vkQueueSubmit(pool.queue().handle(), array.length, array, null));
+    check(lib.vkQueueSubmit(pool.queue(), array.length, array, null));
 }
 ```
 
@@ -347,7 +347,7 @@ Where the Vulkan descriptor for each work submission in the batch is populated b
 ```java
 private void populate(VkSubmitInfo info) {
     info.commandBufferCount = buffers.size();
-    info.pCommandBuffers = Handle.toArray(buffers);
+    info.pCommandBuffers = NativeObject.toArray(buffers);
 }
 ```
 
@@ -356,7 +356,7 @@ Finally we add the API method to the existing device library:
 ```java
 interface VulkanLibraryLogicalDevice {
     ...
-    int vkQueueSubmit(Handle queue, int submitCount, VkSubmitInfo[] pSubmits, Handle fence);
+    int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Handle fence);
 }
 ```
 
@@ -386,7 +386,7 @@ public Command begin() {
     ...
 
     // Create command
-    return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.INLINE);
+    return (lib, buffer) -> lib.vkCmdBeginRenderPass(buffer, info, VkSubpassContents.INLINE);
 }
 ```
 
@@ -416,7 +416,7 @@ To bind the pipeline in the render sequence we add the following factory to the 
 
 ```java
 public Command bind() {
-    return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, handle);
+    return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, this);
 }
 ```
 
@@ -433,9 +433,9 @@ Finally we add the API methods for the new commands:
 ```java
 interface VulkanLibraryRenderPass {
     ...
-    void vkCmdBeginRenderPass(Handle commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
-    void vkCmdEndRenderPass(Handle commandBuffer);
-    void vkCmdDraw(Handle commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
+    void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
+    void vkCmdEndRenderPass(Buffer commandBuffer);
+    void vkCmdDraw(Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
 }
 ```
 
