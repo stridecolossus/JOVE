@@ -27,8 +27,8 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.Image;
+import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -160,13 +160,16 @@ public class SwapchainTest extends AbstractVulkanTest {
 			// Create surface
 			surface = mock(Surface.class);
 			when(surface.handle()).thenReturn(new Handle(new Pointer(2)));
-			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
+
+			// Init supported presentation modes
+			final Surface.Properties props = mock(Surface.Properties.class);
+			when(props.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
 
 			// Init supported formats
 			final VkSurfaceFormatKHR format = new VkSurfaceFormatKHR();
 			format.format = Swapchain.DEFAULT_FORMAT;
 			format.colorSpace = Swapchain.DEFAULT_COLOUR_SPACE;
-			when(surface.formats()).thenReturn(Set.of(format));
+			when(props.formats()).thenReturn(Set.of(format));
 
 			// Init surface capabilities descriptor
 			caps = new VkSurfaceCapabilitiesKHR();
@@ -177,7 +180,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			caps.maxImageArrayLayers = 1;
 			caps.supportedUsageFlags = IntegerEnumeration.mask(VkImageUsage.COLOR_ATTACHMENT);
 			caps.supportedCompositeAlpha = IntegerEnumeration.mask(VkCompositeAlphaFlagKHR.OPAQUE);
-			when(surface.capabilities()).thenReturn(caps);
+			when(props.capabilities()).thenReturn(caps);
 
 			// Init surface extents
 			extent = new VkExtent2D();

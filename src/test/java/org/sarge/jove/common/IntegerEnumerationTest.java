@@ -68,11 +68,6 @@ public class IntegerEnumerationTest {
 		assertEquals(0b111, IntegerEnumeration.mask(Set.of(MockEnum.A, MockEnum.B, MockEnum.C)));
 	}
 
-	@Test
-	public void maskOperator() {
-		assertEquals(1 | 2, IntegerEnumeration.MASK.applyAsInt(1, 2));
-	}
-
 	@Nested
 	class ConverterTests {
 		private FromNativeContext context;

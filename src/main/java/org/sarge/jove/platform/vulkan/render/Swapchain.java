@@ -24,6 +24,7 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
@@ -178,22 +179,16 @@ public class Swapchain extends AbstractVulkanObject {
 		 * Constructor.
 		 * @param dev			Logical device
 		 * @param surface		Rendering surface
-		 * <p>
-		 * The following swap-chain descriptor fields are initialised from the surface capabilities:
-		 * <ul>
-		 * <li>minimum number of swap-chain images</li>
-		 * <li>extent</li>
-		 * <li>transform</li>
-		 * </ul>
-		 * @see Surface#capabilities()
+		 * @see Surface#capabilities(PhysicalDevice)
 		 */
 		public Builder(LogicalDevice dev, Surface surface) {
+			final Surface.Properties props = surface.properties(dev.parent());
+			this.caps = props.capabilities();
+			this.formats = props.formats();
+			this.modes = props.modes();
 			this.dev = notNull(dev);
-			this.caps = surface.capabilities();
-			this.formats = surface.formats();
-			this.modes = surface.modes();
-			init();
 			info.surface = surface.handle();
+			init();
 		}
 
 		/**

@@ -1,8 +1,10 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.sarge.jove.common.IntegerEnumeration;
@@ -159,12 +161,15 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		 * @throws IllegalArgumentException if the mask contains an invalid colour component character
 		 */
 		public AttachmentBuilder mask(String mask) {
-			this.mask = mask
+			// Convert mask to enumeration
+			final Collection<VkColorComponent> components = mask
 					.chars()
 					.mapToObj(Character::toString)
 					.map(VkColorComponent::valueOf)
-					.mapToInt(IntegerEnumeration::value)
-					.reduce(0, IntegerEnumeration.MASK);
+					.collect(toList());
+
+			// Convert to bit-field mask
+			this.mask = IntegerEnumeration.mask(components);
 
 			return this;
 		}
