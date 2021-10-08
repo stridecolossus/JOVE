@@ -4,7 +4,7 @@ title: Vertex Buffers
 
 ## Overview
 
-In this chapter we will replace the hard-coded triangle data in the shader with a _vertex buffer_ (sometimes referred to as a _vertex buffer object_ or VBO).
+In this chapter we will replace the hard-coded triangle data in the shader with a _vertex buffer_, sometimes referred to as a _vertex buffer object_ or VBO.
 
 We will then transfer the vertex data to a _device local_ buffer (i.e. memory on the GPU) for optimal performance.
 
@@ -26,32 +26,125 @@ This process involves the following steps:
 
 We will need to implement the following:
 
-- New domain classes to specify the vertex data.
+* New domain classes to specify the vertex data.
 
-- The vertex buffer object itself.
+* The vertex buffer object itself.
 
-- A command to copy between buffers.
+* A command to copy between buffers.
 
-- The _vertex input stage_ of the pipeline to configure the structure of the vertex data.
+* The _vertex input stage_ of the pipeline to configure the structure of the vertex data.
+
+Device memory allocation and management is integral to the vertex buffer implementation - this topic is covered in the next chapter.
 
 ---
 
 ## Vertex Data
 
-### Vertex Components
+### Framework
 
-We will define a _vertex_ as a compound object consisting of the following components:
-
-- position
-- normal
-- texture coordinates
-- colour
-
-Positions and normals are roughly the same so we will create a small class hierarchy with the following base-class:
+We start with a definition for an object that can be written to an NIO buffer:
 
 ```java
-public class Tuple implements Bufferable {
+public interface Bufferable {
+    /**
+     * Writes this object to the given buffer.
+     * @param buffer Buffer
+     */
+    void buffer(ByteBuffer buffer);
+    
+    /**
+     * @return Length of this object (bytes)
+     */
+    long length();
+}
+```
+
+A _vertex_ is a compound object comprised of an arbitrary collection of bufferable _components_:
+
+```java
+public class Vertex implements Bufferable {
+    /**
+     * A <i>vertex component</i> is a bufferable object that can be comprised in a vertex.
+     */
+    public interface Component extends Bufferable {
+        ...
+    }
+
+    private final List<Component> components;
+}
+```
+
+The structure of a _vertex component_ is specified by a _layout_ declaration:
+
+```java
+public interface Component extends Bufferable {
+    /**
+     * @return Layout of this component
+     */
+    Layout layout();
+}
+```
+
+Which is a simple record type specifying the type and number of the elements that make up that component:
+
+```java
+public record Layout(int size, int bytes, Class<?> type) {
+    public int length() {
+        return size * bytes;
+    }
+}
+```
+
+For example a point or vector is comprised of three floating-point values:
+
+```java
+new Layout(3, Float.BYTES, Float.class);
+```
+
+Finally a compound vertex can be written to an NIO buffer:
+
+```java
+public class Vertex implements Bufferable {
+    ...
+    
+    @Override
+    public int length() {
+        return components.stream().mapToInt(Component::length).sum();
+    }
+
+    @Override
+    public void buffer(ByteBuffer buffer) {
+        for(Component obj : components) {
+            obj.buffer(buffer);
+        }
+    }
+}
+```
+
+Notes:
+
+* The component layout is used to configure the structure of the vertex data to be passed to the shader (see below).
+
+* This implementation assumes that vertex data is _interleaved_.
+
+* The design may be slightly over-engineered at the expense of supporting flexibility and a framework for custom implementations.
+
+### Implementation
+
+We can now implement vertex components to support the triangle demo.
+
+In general a vertex is comprised of the following components:
+- position
+- normal
+- texture coordinate
+- colour
+
+Positions and normal vectors are both floating-point tuples with common functionality, we implement a small hierarchy with the following base-class:
+
+```java
+public sealed class Tuple implements Bufferable, Component permits Point, Vector {
     public static final int SIZE = 3;
+    public static final Layout LAYOUT = Layout.of(SIZE);
 
     public final float x, y, z;
 
@@ -70,27 +163,15 @@ public class Tuple implements Bufferable {
     public void buffer(ByteBuffer buffer) {
         buffer.putFloat(x).putFloat(y).putFloat(z);
     }
+
+    @Override
+    public final Layout layout() {
+        return LAYOUT;
+    }
 }
 ```
 
-The bufferable interface is implemented by domain classes that can be written to an NIO buffer:
-
-```java
-public interface Bufferable {
-    /**
-     * Writes this object to the given buffer.
-     * @param buffer Buffer
-     */
-    void buffer(ByteBuffer buffer);
-    
-    /**
-     * @return Length of this object (bytes)
-     */
-    long length();
-}
-```
-
-The vertex position can now be represented by the following simple domain object:
+A vertex position is implemented as a point in 3D space:
 
 ```java
 public final class Point extends Tuple {
@@ -105,19 +186,13 @@ public final class Point extends Tuple {
 }
 ```
 
-Finally we add an RGBA colour:
+A colour is defined as an RGBA tuple:
 
 ```java
-public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
+public record Colour(float red, float green, float blue, float alpha) implements Bufferable, Component {
+    public static final Layout LAYOUT = Layout.of(4);
     public static final Colour WHITE = new Colour(1, 1, 1, 1);
     public static final Colour BLACK = new Colour(0, 0, 0, 1);
-
-    public Colour {
-        Check.isPercentile(red);
-        Check.isPercentile(green);
-        Check.isPercentile(blue);
-        Check.isPercentile(alpha);
-    }
 
     @Override
     public void buffer(ByteBuffer buffer) {
@@ -125,120 +200,35 @@ public record Colour(float red, float green, float blue, float alpha) implements
     }
 
     @Override
-    public long length() {
-        return SIZE * Float.BYTES;
+    public final Layout layout() {
+        return LAYOUT;
     }
 }
 ```
 
-We will not be using normals or the texture coordinates for the triangle demo so we will gloss over these objects until they are required.
+Vectors and texture coordinates are not required for the triangle demo so we will gloss over these objects until later.
 
-We can now compose these domain objects into the new vertex class:
+Finally we implement a builder for a vertex with the specific component implementations listed above:
 
 ```java
-public interface Vertex {
-    Point position();
-    Vector normal();
-    TextureCoordinate coords();
-    Colour colour();
+public static class Builder {
+    private Point pos;
+    private Vector normal;
+    private Coordinate coord;
+    private Colour col;
 
-    /**
-     * Default implementation.
-     */
-    record DefaultVertex(Point position, Vector normal, TextureCoordinate coords, Colour colour) implements Vertex {
-    }
+    public Vertex build() {
+        final var components = Stream
+            .of(pos, normal, coord, col)
+            .filter(Objects::nonNull)
+            .collect(toList());
 
-    class Builder {
-        ...
-        public Vertex build() {
-            return new DefaultVertex(pos, normal, coords, col);
-        }
+        return new Vertex(components);
     }
 }
 ```
 
 Note that all the components of the vertex are optional.
-
-> Generally we would model these optional properties using an `Optional` but we have intentionally broken that rule here for the sake of simplicity.
-
-### Buffering Vertices
-
-To buffer an entire vertex we add the following enumeration that extracts a component from a vertex:
-
-```java
-enum Component {
-    POSITION(Point.SIZE, Vertex::position),
-    NORMAL(Vector.SIZE, Vertex::normal),
-    TEXTURE_COORDINATE(TextureCoordinate.Coordinate2D.SIZE, Vertex::coords),
-    COLOUR(Colour.SIZE, Vertex::colour);
-
-    ...
-
-    /**
-     * Extracts this component from the given vertex.
-     * @param vertex Vertex
-     * @return Vertex component
-     */
-    protected Bufferable map(Vertex vertex) {
-        return mapper.apply(vertex);
-    }
-}
-```
-
-This is used in the new _vertex layout_ object that specifies the _order_ of the vertex components in the interleaved buffer:
-
-```java
-class Layout {
-    private final List<Component> layout;
-    private final int size;
-
-    public Layout(List<Component> layout) {
-        this.layout = List.copyOf(layout);
-        this.size = layout.stream().mapToInt(Component::size).sum();
-    }
-}
-
-public void buffer(Vertex vertex, ByteBuffer buffer) {
-    for(final var c : layout) {
-        c.map(vertex).buffer(buffer);
-    }
-}
-```
-
-Notes:
-
-- The enumeration allows us to specify arbitrary vertex layouts using the same underlying object.
-
-- The _size_ attribute is the total number of floating-point values in a vertex (used later when we allocate the interleaved buffer).
-
-- This implementation assumes that the output data buffer will be interleaved (the most common approach) but other strategies should be simple to implement using these entities.
-
-### Integration #1
-
-We can now start the demo application for this phase (based on the triangle demo) and add the vertex data and an interleaved buffer:
-
-```java
-// Build triangle vertices
-final Vertex[] vertices = {
-    new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-    new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
-    new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 0,  1, 1)).build(),
-};
-
-// Define vertex layout
-final Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.COLOUR);
-
-// Create interleaved buffer
-final ByteBuffer bb = ByteBuffer
-    .allocate(vertices.length * layout.size() * Float.BYTES)
-    .order(ByteOrder.nativeOrder());
-
-// Buffer vertices
-for(Vertex v : vertices) {
-    layout.buffer(v, bb);
-}
-bb.rewind();
-```
 
 ---
 
@@ -246,274 +236,232 @@ bb.rewind();
 
 ### Domain Class
 
-Next we implement the vertex buffer domain class that will be used for both the staging and device-local buffers:
+The outline class for the vertex buffer is as follows:
 
 ```java
 public class VulkanBuffer extends AbstractVulkanObject {
-    private final long len;
+    private final Set<VkBufferUsage> usage;
     private final DeviceMemory mem;
+    private final long len;
 
-    VulkanBuffer(Pointer handle, LogicalDevice dev, long len, DeviceMemory mem) {
-        super(handle, dev, dev.library()::vkDestroyBuffer);
-        this.len = oneOrMore(len);
-        this.mem = notNull(mem);
-    }
-
-    /**
-     * @return Length of this buffer (bytes)
-     */
-    public long length() {
-        return len;
+    @Override
+    protected Destructor<VulkanBuffer> destructor(VulkanLibrary lib) {
+        return lib::vkDestroyBuffer;
     }
 }
 ```
 
-The _mem_ class member is a handle to the device memory for the buffer - memory allocation is covered in the following chapter.
-
-The memory is released in the over-ridden destructor of the buffer:
-
-```java
-@Override
-protected void release() {
-    final LogicalDevice dev = super.device();
-    dev.library().vkDestroyBuffer(dev.handle(), this.handle(), null);
-
-    if(!mem.isDestroyed()) {
-        mem.destroy();
-    }
-}
-```
-
-The buffer can be bound to a pipeline:
+The buffer is bound to a pipeline using the following command factory:
 
 ```java
 public Command bind() {
-    final PointerArray array = Handle.toArray(List.of(this));
+    require(VkBufferUsage.VERTEX_BUFFER);
+    final VulkanBuffer[] array = new VulkanBuffer[]{this};
     return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
 }
 ```
 
-Finally we add a command factory for copying between vertex buffers, this will be used to move the vertex data from the staging buffer to the hardware.
+The local `require` helper checks that the buffer supports a given operation (in this case that it is a vertex buffer that can be bound to a pipeline).
+
+Copying the vertex data from staging to a device-local buffer is also implemented as a command:
 
 ```java
 public Command copy(VulkanBuffer dest) {
+    // Validate
+    if(len > dest.len) throw new IllegalStateException(...);
+    require(VkBufferUsage.TRANSFER_SRC);
+    dest.require(VkBufferUsage.TRANSFER_DST);
+
+    // Build copy descriptor
     final VkBufferCopy region = new VkBufferCopy();
     region.size = len;
-    return (api, cb) -> api.vkCmdCopyBuffer(cb, this.handle(), dest.handle(), 1, new VkBufferCopy[]{region});
+
+    // Create copy command
+    return (api, buffer) -> api.vkCmdCopyBuffer(buffer, this, dest, 1, new VkBufferCopy[]{region});
 }
 ```
 
-### Builder
+### Device Memory
 
-As normal a vertex buffer is created via a builder:
+The _mem_ field of the vertex buffer represents the underlying _device memory_ defined as follows:
 
 ```java
-public static class Builder {
-    private final LogicalDevice dev;
-    private long len;
-    private VkSharingMode mode = VkSharingMode.EXCLUSIVE;
-    private final Set<VkBufferUsageFlag> usage = new HashSet<>();
-    private final VulkanAllocator.Request request;
+public interface DeviceMemory extends TransientNativeObject {
+    /**
+     * A <i>region</i> is a mapped area of device memory.
+     */
+    public interface Region {
+        ...
+    }
 
-    public Builder(LogicalDevice dev) {
-        this.dev = notNull(dev);
-        this.request = dev.allocator().request();
+    /**
+     * @return Size of this memory (bytes)
+     */
+    long size();
+
+    /**
+     * @return Mapped memory region
+     */
+    Optional<Region> region();
+
+    /**
+     * Maps a region of this device memory.
+     * @param offset        Offset into this memory
+     * @param size          Size of the region to map
+     * @return Mapped memory region
+     * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this memory
+     * @throws IllegalStateException if a mapping already exists or this memory has been destroyed
+     */
+    Region map(long offset, long size);
+}
+```
+
+A _region_ is a _mapped_ segment of this memory that can be accessed for read or write operations:
+
+```java
+public interface Region {
+    /**
+     * @return Size of this region (bytes)
+     */
+    long size();
+
+    /**
+     * Provides a byte-buffer to access a sub-section of this memory region.
+     * @param offset        Offset
+     * @param size          Region size (bytes)
+     * @return Byte-buffer
+     * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this region
+     */
+    ByteBuffer buffer(long offset, long size);
+
+    /**
+     * Un-maps this mapped region.
+     * @throws IllegalStateException if the mapping has also been released or the memory has been destroyed
+     */
+    void unmap();
+}
+```
+
+Finally the memory is released when the buffer is destroyed:
+
+```java
+@Override
+protected void release() {
+    if(!mem.isDestroyed()) {
+        mem.close();
     }
 }
 ```
 
-Creating the buffer involves the following steps:
-1. Instantiate the buffer object.
-2. Retrieve the memory requirements for the new buffer.
+### Instantiation
+
+Creating a Vulkan buffer is comprised of the following steps:
+
+1. Instantiate the buffer.
+
+2. Retrieve the _memory requirements_ for the new buffer.
+
 3. Allocate device memory given these requirements.
-4. Bind the memory to the buffer.
 
-In the `build` method the vertex buffer is instantiated as follows:
+4. Bind the allocated memory to the buffer.
 
-```java
-// Build buffer descriptor
-final VkBufferCreateInfo info = new VkBufferCreateInfo();
-info.usage = IntegerEnumeration.mask(usage);
-info.sharingMode = mode;
-info.size = len;
-
-// Allocate buffer
-final VulkanLibrary lib = dev.library();
-final PointerByReference handle = lib.factory().pointer();
-check(lib.vkCreateBuffer(dev.handle(), info, null, handle));
-```
-
-Next we query the memory requirements for the new buffer:
+Instantiating the buffer follows the usual pattern of populating a descriptor and invoking the API:
 
 ```java
-final VkMemoryRequirements reqs = new VkMemoryRequirements();
-lib.vkGetBufferMemoryRequirements(dev.handle(), handle.getValue(), reqs);
-```
+public static VulkanBuffer create(LogicalDevice dev, long len, MemoryProperties<VkBufferUsage> props) {
+    // Build buffer descriptor
+    final var info = new VkBufferCreateInfo();
+    info.usage = IntegerEnumeration.mask(props.usage());
+    info.sharingMode = props.mode();
+    info.size = oneOrMore(len);
 
-Note that the returned `size` may be larger than the configured length of the buffer (depending on how the hardware handles alignment):
-
-These requirements are passed to the allocator which returns memory of the appropriate type:
-
-```java
-final DeviceMemory mem = request.init(reqs).allocate();
-```
-
-Which is then bound to the new buffer:
-
-```java
-check(lib.vkBindBufferMemory(dev.handle(), handle.getValue(), mem.handle(), 0L));
-```
-
-And finally we create the domain object:
-
-```java
-return new VulkanBuffer(handle.getValue(), dev, len, mem);
-```
-
-### Population
-
-Populating a vertex buffer consists of the following steps:
-1. Map the internal memory to an NIO buffer.
-2. Copy the source data to this buffer.
-3. Release the memory mapping.
-
-We add the following method to load data to the buffer:
-
-```java
-public void load(Bufferable obj, long len, long offset) {
-    // Check buffer
-    Check.zeroOrMore(offset);
-    if(offset + len > this.len) {
-        throw new IllegalStateException(String.format("Buffer exceeds size of this VBO: length=%d offset=%d this=%s", len, offset, this));
-    }
-
-    // Map buffer memory
-    final LogicalDevice dev = this.device();
+    // Allocate buffer
     final VulkanLibrary lib = dev.library();
-    final PointerByReference data = lib.factory().pointer();
-    check(lib.vkMapMemory(dev.handle(), mem.handle(), offset, len, 0, data));
-
-    try {
-        // Copy to memory
-        final ByteBuffer bb = data.getValue().getByteBuffer(0, len);
-        obj.buffer(bb);
-    }
-    finally {
-        // Cleanup
-        lib.vkUnmapMemory(dev.handle(), mem.handle());
-    }
-}
-```
-
-And provide the following over-loaded variants:
-
-```java
-public void load(ByteBuffer bb) {
-    load(Bufferable.of(bb));
-}
-
-public void load(Bufferable obj) {
-    load(obj, obj.length(), 0);
-}
-
-public void load(Bufferable obj, long offset) {
-    load(obj, obj.length(), offset);
-}
-```
-
-The interleaved NIO buffer is converted to a general `Bufferable` using a static helper:
-
-```java
-static Bufferable of(ByteBuffer bb) {
-    return new Bufferable() {
-        @Override
-        public long length() {
-            return bb.remaining();
-        }
-
-        @Override
-        public void buffer(ByteBuffer dest) {
-            if(bb.remaining() == 0) throw new IllegalStateException("Empty source buffer");
-            dest.put(bb);
-        }
-    };
-}
-```
-
-### Integration #2
-
-We bring all this together in the demo to copy the triangle vertex data to the hardware:
-
-```java
-// Create staging VBO
-final VulkanBuffer staging = new VulkanBuffer.Builder(dev)
-    .length(bb.limit())
-    .usage(VkBufferUsageFlag.TRANSFER_SRC)
-    .property(VkMemoryPropertyFlag.HOST_VISIBLE)
-    .property(VkMemoryPropertyFlag.HOST_COHERENT)
-    .build();
-
-// Load to staging
-staging.load(bb);
-
-// Create device VBO
-final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
-    .length(bb.limit())
-    .usage(VkBufferUsageFlag.TRANSFER_DST)
-    .usage(VkBufferUsageFlag.VERTEX_BUFFER)
-    .property(VkMemoryPropertyFlag.DEVICE_LOCAL)
-    .build();
-
-// Create command to copy from staging to device
-final Queue queue = dev.queue(transferFamily);
-final Command.Pool pool = Command.Pool.create(queue);
-final Command.Buffer copy = pool
-    .allocate()
-    .begin(VkCommandBufferUsageFlag.ONE_TIME_SUBMIT)
-    .add(staging.copy(dest))
-    .end();
+    final PointerByReference handle = lib.factory().pointer();
+    check(lib.vkCreateBuffer(dev, info, null, handle));
     
-// Perform copy
-new Work.Builder()
-    .add(copyBuffer)
-    .build()
-    .submit();
-queue.waitIdle();
-
-// Release staging
-staging.destroy();
+    ...
+}
 ```
 
-The copy portion of the code is quite long-winded - we will come back and simplify this later.
+The `MemoryProperties` class specifies the memory configuration for the buffer (also detailed in the next chapter).
+
+Next we allocate the device memory and bind it to the new buffer:
+
+```java
+// Query memory requirements
+final var reqs = new VkMemoryRequirements();
+lib.vkGetBufferMemoryRequirements(dev, handle.getValue(), reqs);
+
+// Allocate buffer memory
+final DeviceMemory mem = dev.allocate(reqs, props);
+
+// Bind memory
+check(lib.vkBindBufferMemory(dev, handle.getValue(), mem.handle(), 0L));
+
+// Create buffer
+return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem, len);
+```
+
+Notes:
+
+* Device memory is allocated from the logical device.
+
+* The actual size of the allocated memory may be larger than the requested length depending on how the hardware handles alignment.
 
 ---
 
 ## Vertex Configuration
 
-### Vertex Input Pipeline Stage
+### Overview
 
-We next need to configure the structure of the vertex data in the pipeline.
+To use the vertex buffer in the shader we need to configure the structure of the data in the pipeline, which is where the vertex layout comes into play.
 
-This consists of two pieces of information:
+This configuration consists of two pieces of information:
 
-1. A _binding_ description that specifies the data to be passed to the shader (corresponding to the vertex layout).
+1. A _binding_ that specifies the vertex data to be passed to the shader.
 
-2. A number of _attribute_ descriptors that define the format of each vertex (the vertex components).
+2. A number of _vertex attributes_ that define the structure of the data (corresponding to layouts of the vertex components).
 
-We add two new nested builders to the pipeline stage builder:
+We introduce a new pipeline stage with nested builders for the bindings and attributes:
 
 ```java
 public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
     private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
     private final List<AttributeBuilder> attributes = new ArrayList<>();
 
-    public class BindingBuilder {
+    public BindingBuilder binding() {
+        return new BindingBuilder();
     }
-    
-    public class AttributeBuilder {
-    }   
+
+    public AttributeBuilder attribute() {
+        return new AttributeBuilder();
+    }
 }
 ```
+
+The descriptor for the vertex configuration is generated as follows:
+
+```java
+VkPipelineVertexInputStateCreateInfo get() {
+    // Create descriptor
+    final var info = new VkPipelineVertexInputStateCreateInfo();
+
+    // Add binding descriptions
+    info.vertexBindingDescriptionCount = bindings.size();
+    info.pVertexBindingDescriptions = StructureHelper.first(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
+
+    // Add attributes
+    info.vertexAttributeDescriptionCount = attributes.size();
+    info.pVertexAttributeDescriptions = StructureHelper.first(attributes, VkVertexInputAttributeDescription::new, AttributeBuilder::populate);
+
+    return info;
+}
+```
+
+Note that the nested builders are added to the parent rather than using any intermediate data objects.
+
+### Bindings
 
 The nested builder for the bindings is relatively simple:
 
@@ -521,43 +469,13 @@ The nested builder for the bindings is relatively simple:
 public class BindingBuilder {
     private int binding;
     private int stride;
-    private VkVertexInputRate rate = VkVertexInputRate.VERTEX; // TODO - instancing
-
-    private BindingBuilder() {
-    }
-
-    /**
-     * Sets the binding index.
-     * @param binding Binding index
-     */
-    public BindingBuilder binding(int binding) {
-        this.binding = zeroOrMore(binding);
-        return this;
-    }
-
-    /**
-     * Sets the vertex stride.
-     * @param stride Vertex stride (bytes)
-     */
-    public BindingBuilder stride(int stride) {
-        this.stride = oneOrMore(stride);
-        return this;
-    }
-
-    /**
-     * Sets the input rate.
-     * @param rate Input rate (default is {@link VkVertexInputRate#VERTEX})
-     */
-    public BindingBuilder rate(VkVertexInputRate rate) {
-        this.rate = notNull(rate);
-        return this;
-    }
+    private VkVertexInputRate rate = VkVertexInputRate.VERTEX;
 }
 ```
 
-The _stride_ is the number of bytes per vertex which normally is the size() attribute of the vertex layout.
+The _stride_ is the number of bytes per vertex (normally the `length` attribute of a vertex).
 
-Again we add a `populate` method that fills an instance of the Vulkan descriptor from this data:
+The `populate` method fills an instance of the corresponding Vulkan descriptor for the binding:
 
 ```java
 void populate(VkVertexInputBindingDescription desc) {
@@ -567,13 +485,13 @@ void populate(VkVertexInputBindingDescription desc) {
 }
 ```
 
-The build method validates the data and returns to the parent builder:
+The `build` method validates the data and returns to the parent builder:
 
 ```java
 public VertexInputStageBuilder build() {
     // Validate binding description
-    if(bindings.containsKey(binding)) throw new IllegalArgumentException("Duplicate binding index: " + binding);
-    if(stride == 0) throw new IllegalArgumentException("Invalid vertex stride");
+    if(bindings.containsKey(binding)) throw new IllegalArgumentException(...);
+    if(stride == 0) throw new IllegalArgumentException(...);
 
     // Add binding
     bindings.add(this);
@@ -582,9 +500,9 @@ public VertexInputStageBuilder build() {
 }
 ```
 
-Note that we add the builder itself to the parent rather than creating any intermediate POJO for the binding data.
+### Attributes
 
-The builder for the vertex attributes follows the same pattern:
+The nested builder for the vertex attributes follows the same pattern:
 
 ```java
 public class AttributeBuilder {
@@ -593,9 +511,7 @@ public class AttributeBuilder {
     private VkFormat format;
     private int offset;
 
-    ...
-
-    private void populate(VkVertexInputAttributeDescription desc) {
+    private void populate(VkVertexInputAttributeDescription attr) {
         attr.binding = binding;
         attr.location = loc;
         attr.format = format;
@@ -603,53 +519,29 @@ public class AttributeBuilder {
     }
 
     public VertexInputStageBuilder build() {
-        // Validate attribute
-        final BindingBuilder desc = bindings.get(binding);
-        if(desc == null) throw new IllegalArgumentException("Invalid binding index for attribute: " + binding);
-        if(offset >= desc.stride) throw new IllegalArgumentException("Offset exceeds vertex stride");
-        if(format == null) throw new IllegalArgumentException("No format specified for attribute");
-
-        // Check location
-        if(desc.locations.contains(loc)) throw new IllegalArgumentException("Duplicate location: " + loc);
-        desc.locations.add(loc);
-
-        // Add attribute
+        ...
         attributes.add(this);
-
         return VertexInputStageBuilder.this;
     }
 }
 ```
 
-The _loc_ field corresponds to the _layout_ directives in the GLSL shader (see below).
+Where:
 
-The _offset_ specifies the offset (in bytes) of the attribute within the vertex.
+* _loc_ corresponds to the _layout_ directives in the GLSL shader (see below).
 
-Finally we can complete the parent builder for the vertex input stage:
+* _offset_ specifies the starting byte of the attribute.
 
-```java
-protected VkPipelineVertexInputStateCreateInfo result() {
-    // Validate bindings
-    ...
+We also implement validation (not shown) to ensure the attribute offsets and vertex stride are logical and that attribute locations are not duplicated.
 
-    // Create descriptor
-    final var info = new VkPipelineVertexInputStateCreateInfo();
 
-    // Add binding descriptions
-    if(!bindings.isEmpty()) {
-        info.vertexBindingDescriptionCount = bindings.size();
-        info.pVertexBindingDescriptions = StructureCollector.toPointer(VkVertexInputBindingDescription::new, bindings.values(), BindingBuilder::populate);
 
-        // Add attributes
-        info.vertexAttributeDescriptionCount = attributes.size();
-        info.pVertexAttributeDescriptions = StructureCollector.toPointer(VkVertexInputAttributeDescription::new, attributes, AttributeBuilder::populate);
-    }
 
-    return info;
-}
-```
+
 
 ### Convenience
+
+TODO - add as improvement in MODELS
 
 We also take the opportunity to implement a convenience method to create the binding and attributes for a given vertex layout.
 
@@ -747,6 +639,159 @@ final Pipeline pipeline = new Pipeline.Builder(dev)
         .build()
     ...
 ```
+
+---
+
+## Integration 
+
+### Vertex Data
+
+We bring all this new functionality together to programatically create the triangle vertices and copy the vertex data to the hardware.
+
+The triangle vertices is specified as a simple array in a new configuration class:
+
+```java
+@Configuration
+public class VertexBufferConfiguration {
+    Vertex[] vertices = {
+        new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
+        new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
+        new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
+    };
+    
+    @Autowired private LogicalDevice dev;
+}
+```
+
+Which we wrap as a bufferable object:
+
+```java
+private static final Bufferable TRIANGLE = new Bufferable() {
+    private final Vertex[] vertices = ...
+
+    @Override
+    public int length() {
+        return 3 * vertices[0].length();
+    }
+
+    @Override
+    public void buffer(ByteBuffer buffer) {
+        for(Vertex v : vertices) {
+            v.buffer(buffer);
+        }
+    }
+};
+```
+
+### Vertex Buffers
+
+We next implement a helper on the VBO class to create the staging buffer.
+
+The memory properties defines a buffer that is used as the source of a copy operation and is visible to the host (i.e. the application):
+
+```java
+public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
+    // Init memory properties
+    final var props = new MemoryProperties.Builder<VkBufferUsage>()
+        .usage(VkBufferUsage.TRANSFER_SRC)
+        .required(VkMemoryPropertyFlag.HOST_VISIBLE)
+        .required(VkMemoryPropertyFlag.HOST_COHERENT)
+        .build();
+
+    ...
+}
+```
+
+Next we create the staging VBO:
+
+```java
+// Create staging buffer
+final int len = data.length();
+final VulkanBuffer buffer = create(dev, len, props);
+```
+
+And write the buffered triangle data:
+
+```java
+// Write data to buffer
+final ByteBuffer bb = buffer.memory().map().buffer();
+data.buffer(bb);
+```
+
+Note that the VBO memory must be mapped before it can be accessed.
+
+The new helper is used to create the staging buffer bean:
+
+```java
+@Bean
+public VulkanBuffer staging() {
+    return VulkanBuffer.staging(dev, TRIANGLE);
+}
+```
+
+The device-local VBO is created is a similar fashion:
+
+```java
+@Bean
+public VulkanBuffer vbo() {
+    final MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
+            .usage(VkBufferUsage.TRANSFER_DST)
+            .usage(VkBufferUsage.VERTEX_BUFFER)
+            .required(VkMemoryPropertyFlag.DEVICE_LOCAL)
+            .build();
+
+    return VulkanBuffer.create(dev, TRIANGLE.length(), props);
+}
+```
+
+### Copy Operation
+
+
+
+### Integration #2
+
+We bring all this together in the demo to copy the triangle vertex data to the hardware:
+
+```java
+
+
+// Create device VBO
+final VulkanBuffer dest = new VulkanBuffer.Builder(dev)
+    .length(bb.limit())
+    .usage(VkBufferUsageFlag.TRANSFER_DST)
+    .usage(VkBufferUsageFlag.VERTEX_BUFFER)
+    .property(VkMemoryPropertyFlag.DEVICE_LOCAL)
+    .build();
+
+// Create command to copy from staging to device
+final Queue queue = dev.queue(transferFamily);
+final Command.Pool pool = Command.Pool.create(queue);
+final Command.Buffer copy = pool
+    .allocate()
+    .begin(VkCommandBufferUsageFlag.ONE_TIME_SUBMIT)
+    .add(staging.copy(dest))
+    .end();
+    
+// Perform copy
+new Work.Builder()
+    .add(copyBuffer)
+    .build()
+    .submit();
+queue.waitIdle();
+
+// Release staging
+staging.destroy();
+```
+
+The copy portion of the code is quite long-winded - we will come back and simplify this later.
+
+---
+
+
+
+
+
+
 
 ### Integration #3
 
