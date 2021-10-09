@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.api;
 
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.memory.DefaultDeviceMemory;
 
 import com.sun.jna.Pointer;
@@ -20,7 +19,7 @@ interface VulkanLibraryMemory {
 	 * @param pMemory			Returned memory handle
 	 * @return Result code
 	 */
-	int vkAllocateMemory(LogicalDevice device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
+	int vkAllocateMemory(DeviceContext device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
 
 	/**
 	 * Releases memory.

@@ -24,9 +24,6 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
-import org.sarge.jove.platform.vulkan.memory.Allocator;
-import org.sarge.jove.platform.vulkan.memory.MemoryType;
-import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.lib.util.Percentile;
 
@@ -112,52 +109,6 @@ public class LogicalDeviceTest {
 	void waitIdle() {
 		device.waitIdle();
 		verify(lib).vkDeviceWaitIdle(device);
-	}
-
-	@Nested
-	class AllocationTests {
-		private MemoryType type;
-
-		@BeforeEach
-		void before() {
-			type = new MemoryType(0, new Heap(0, 1, Set.of()), Set.of());
-		}
-
-		@Test
-		void allocate() {
-//			final DeviceMemory mem = device.allocate(type, 2);
-		}
-
-		@Test
-		void select() {
-//			// Allocate memory
-//			final DeviceMemory mem = device.allocate(reqs, props);
-//			assertNotNull(mem);
-//
-//			// Check memory block
-//			assertEquals(2, mem.size());
-//			assertEquals(false, mem.isMapped());
-//			assertEquals(false, mem.isDestroyed());
-//
-//			// Check API
-//			final ArgumentCaptor<VkMemoryAllocateInfo> captor = ArgumentCaptor.forClass(VkMemoryAllocateInfo.class);
-//			final PointerByReference ref = lib.factory().pointer();
-//			verify(lib).vkAllocateMemory(eq(dev.handle()), captor.capture(), isNull(), eq(ref));
-//
-//			// Check memory descriptor
-//			final VkMemoryAllocateInfo info = captor.getValue();
-//			assertNotNull(info);
-//			assertEquals(1, info.memoryTypeIndex);
-//			assertEquals(2L, info.allocationSize);
-		}
-
-		@Test
-		void allocator() {
-			final Allocator allocator = mock(Allocator.class);
-			device.allocator(allocator);
-//			device.allocate(type, 1);
-//			verify(allocator).allocate(type, 1);
-		}
 	}
 
 	@DisplayName("Create a semaphore for this device")

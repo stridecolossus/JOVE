@@ -3,7 +3,8 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,7 @@ import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
+import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -78,16 +80,23 @@ public class ImageTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private Image.Builder builder;
+		private AllocationService allocator;
 		private MemoryProperties<VkImageUsage> props;
 
 		@BeforeEach
 		void before() {
-			when(dev.allocate(any(VkMemoryRequirements.class), any(MemoryProperties.class))).thenReturn(mem);
-			builder = new Image.Builder();
+			// Init image memory properties
 			props = new MemoryProperties.Builder()
 					.mode(VkSharingMode.CONCURRENT)
 					.usage(VkImageUsage.COLOR_ATTACHMENT)
 					.build();
+
+			// Init memory allocator
+			allocator = mock(AllocationService.class);
+			when(allocator.allocate(isA(VkMemoryRequirements.class), eq(props))).thenReturn(mem);
+
+			// Create builder
+			builder = new Image.Builder();
 		}
 
 		@Test
@@ -99,7 +108,7 @@ public class ImageTest extends AbstractVulkanTest {
 					.samples(4)
 					.tiling(VkImageTiling.LINEAR)
 					.initialLayout(VkImageLayout.PREINITIALIZED)
-					.build(dev);
+					.build(dev, allocator);
 
 			// Check image
 			assertNotNull(image);
@@ -137,13 +146,13 @@ public class ImageTest extends AbstractVulkanTest {
 		@Test
 		void buildEmptyMemoryProperties() {
 			builder.descriptor(descriptor);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
+			assertThrows(IllegalArgumentException.class, () -> builder.build(dev, allocator));
 		}
 
 		@Test
 		void buildEmptyImageDescriptor() {
 			builder.properties(props);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
+			assertThrows(IllegalArgumentException.class, () -> builder.build(dev, allocator));
 		}
 
 		@Test

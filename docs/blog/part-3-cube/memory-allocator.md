@@ -1,16 +1,14 @@
 ---
-title: Memory Allocator
+title: Memory Allocation
 ---
 
 ## Overview
 
-In the previous chapter we skipped over the process of allocating device memory for the vertex buffers.
-Here we will flesh out the memory allocator which will also be used in the next chapter for allocation of texture memory.
+In the following chapters we will be implementing vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.
 
-The maximum number of memory allocations supported by the hardware is limited. 
-A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool (growing the available memory as required).
+The [Vulkan documentation](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html) suggests implementing a _fallback strategy_ when selecting the memory type.  The application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
 
-Initially we will simply allocate a new memory block for every request and once that is working extend our implementation to use a memory pool.
+Additionally the maximum number of memory allocations supported by the hardware is limited.  A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool (growing the available memory as required).  Initially we will allocate a new memory block for every request and then extend the implementation to use a memory pool.
 
 References:
 
@@ -19,214 +17,384 @@ References:
 
 ---
 
-## Memory Allocator
+## Device Memory
 
-### Memory Request
+### Definition
 
-We start with a basic abstraction for device memory based on our understanding of the requirements for vertex buffers in the previous chapter:
+We start with an abstraction for device memory which will have two implementations:
+
+1. A public class used in vertex buffers and texture images.
+
+2. An internal implementation for a _memory block_ allocated from the pool.
+
+Device memory is defined as follows:
 
 ```java
 public interface DeviceMemory extends TransientNativeObject {
     /**
-     * @return Memory offset
+     * A <i>region</i> is a mapped area of device memory.
      */
-    long offset();
+    public interface Region {
+        ...
+    }
 
     /**
-     * @return Size of this memory
+     * @return Size of this memory (bytes)
      */
     long size();
+
+    /**
+     * @return Mapped memory region
+     */
+    Optional<Region> region();
+
+    /**
+     * Maps a region of this device memory.
+     * @param offset        Offset into this memory
+     * @param size          Size of the region to map
+     * @return Mapped memory region
+     * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this memory
+     * @throws IllegalStateException if a mapping already exists or this memory has been destroyed
+     */
+    Region map(long offset, long size);
 }
 ```
 
-And a template implementation:
+A _region_ is a _mapped_ segment of this memory that can be accessed for read or write operations:
 
 ```java
-abstract class AbstractDeviceMemory extends AbstractTransientNativeObject implements DeviceMemory {
-    private final long size;
-    private final long offset;
+public interface Region {
+    /**
+     * @return Size of this region (bytes)
+     */
+    long size();
 
-    protected AbstractMemory(Pointer handle, long size, long offset) {
-        super(handle);
-        this.size = oneOrMore(size);
-        this.offset = zeroOrMore(offset);
-    }
+    /**
+     * Provides a byte-buffer to access a sub-section of this memory region.
+     * @param offset        Offset
+     * @param size          Region size (bytes)
+     * @return Byte-buffer
+     * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this region
+     */
+    ByteBuffer buffer(long offset, long size);
 
-    @Override
-    public long offset() {
-        return offset;
+    /**
+     * Un-maps this mapped region.
+     * @throws IllegalStateException if the mapping has also been released or the memory has been destroyed
+     */
+    void unmap();
+}
+```
+
+### Default Implementation
+
+We create a new domain object for the public implementation:
+
+```java
+public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
+    private final long len;
+
+    public DefaultDeviceMemory(Pointer handle, DeviceContext dev, long len) {
+        super(handle, dev);
+        this.len = oneOrMore(len);
     }
 
     @Override
     public long size() {
-        return size;
+        return len;
+    }
+
+    @Override
+    protected Destructor<DefaultDeviceMemory> destructor(VulkanLibrary lib) {
+        return lib::vkFreeMemory;
     }
 }
 ```
 
-Next we implement an outline for the memory allocator service:
+And a local class for the implementation of the mapped region:
 
 ```java
-public class MemoryAllocator {
-    public Request request() {
-        return new Request();
+public class DefaultDeviceMemory ... {
+    private volatile DefaultRegion region;
+
+    private class DefaultRegion implements Region {
+        private final Pointer ptr;
+        private final long size;
+        private final long offset;
     }
 
-    public class Request {
-        private Request() {
-        }
+    @Override
+    public Optional<Region> region() {
+        return Optional.ofNullable(region);
+    }
 
-        public DeviceMemory allocate() {
-        }
+    @Override
+    protected void release() {
+        region = null;
     }
 }
 ```
 
-The nested request class is used by the application to specify the memory requirements using a builder-like interface:
+The `map` method creates a mapped region for the memory:
 
 ```java
-public class Request {
-    private long size;
-    private int filter = Integer.MAX_VALUE;
-    private final Set<VkMemoryProperty> flags = new HashSet<>();
+public synchronized Region map(long offset, long size) {
+    // Validate
+    ...
 
-    private Request() {
-    }
+    // Map memory
+    final DeviceContext dev = this.device();
+    final VulkanLibrary lib = dev.library();
+    final PointerByReference ref = lib.factory().pointer();
+    check(lib.vkMapMemory(dev, this, offset, size, 0, ref));
 
-    public Request size(long size) {
-        this.size = oneOrMore(size);
-        return this;
-    }
+    // Create mapped region
+    region = new DefaultRegion(ref.getValue(), offset, size);
 
-    public Request filter(int filter) {
-        this.filter = filter;
-        return this;
-    }
+    return region;
+}
+```
 
-    public Request init(VkMemoryRequirements reqs) {
-        size(reqs.size);
-        filter(reqs.memoryTypeBits);
-        return this;
-    }
+Note that only one mapped region is permitted for a given device memory object.
 
-    public Request property(VkMemoryProperty flag) {
-        flags.add(notNull(flag));
-        return this;
+An NIO buffer can then be retrieved from a mapped region to read or write to the memory:
+
+```java
+public ByteBuffer buffer(long offset, long size) {
+    checkMapped();
+    if(offset + size > this.size) throw new IllegalArgumentException(...);
+    return ptr.getByteBuffer(offset, size);
+}
+```
+
+Finally a mapped region can be released:
+
+```java
+public synchronized void unmap() {
+    // Validate mapping is active
+    checkMapped();
+
+    // Release mapping
+    final DeviceContext dev = device();
+    final VulkanLibrary lib = dev.library();
+    lib.vkUnmapMemory(dev, DefaultDeviceMemory.this);
+
+    // Clear mapping
+    region = null;
+}
+```
+
+### Memory Types
+
+The memory types supported by the hardware are specified by the `VkPhysicalDeviceMemoryProperties` descriptor.
+
+We represent each memory type by a new domain record:
+
+```java
+public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties) {
+}
+```
+
+With a local class for the memory heap:
+
+```java
+public static class Heap {
+    private final int index;
+    private final long size;
+    private final Set<VkMemoryHeapFlag> flags;
+}
+```
+
+The memory types are generated from the two arrays in the descriptor by the following factory:
+
+```java
+public static List<MemoryType> enumerate(VkPhysicalDeviceMemoryProperties props) {
+}
+```
+
+First the memory heaps is transformed to the domain object:
+
+```java
+    // Enumerate memory heaps
+    final IntFunction<Heap> heapMapper = index -> {
+        final VkMemoryHeap heap = props.memoryHeaps[index];
+        final var flags = IntegerEnumeration.enumerate(VkMemoryHeapFlag.class, heap.flags);
+        return new Heap(index, heap.size, flags);
+    };
+    final Heap[] heaps = new Heap[props.memoryHeapCount];
+    Arrays.setAll(heaps, heapMapper);
+
+    ...
+}
+```
+
+Similarly for the memory types:
+
+```java
+// Enumerate memory types
+final IntFunction<MemoryType> typeMapper = index -> {
+    final VkMemoryType type = props.memoryTypes[index];
+    final Heap heap = heaps[type.heapIndex];
+    final var properties = IntegerEnumeration.enumerate(VkMemoryProperty.class, type.propertyFlags);
+    return new MemoryType(index, heap, properties);
+};
+final MemoryType[] types = new MemoryType[props.memoryTypeCount];
+Arrays.setAll(types, typeMapper);
+
+// Convert to collection
+return Arrays.asList(types);
+```
+
+Note that the `index` of each memory type is implicitly the array index.
+
+The final supporting component needed before memory allocation can be implemented is a _memory properties_ record:
+
+```java
+public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryProperty> required, Set<VkMemoryProperty> optimal) {
+    public static class Builder {
+        ...
     }
 }
 ```
 
-The _filter_ field specifies the _memory types_ required for the allocation request as a bit-field - we will cover the purpose of this shortly.
-
-We also provide the convenience `init` method to initialise the request to the `VkMemoryRequirements` retrieved from Vulkan when the VBO (or texture) is instantiated.
+This new type specifies the intent of the memory and the _optimal_ and _required_ properties for the request.  Note that the record is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
 
 ### Memory Allocation
 
-With the outline code in place we can now integrate the API methods for memory allocation.
-
-The first step is to retrieve the `VkPhysicalDeviceMemoryProperties` that specifies the available _memory types_ supported by the hardware:
+Next we define the _allocator_ that is responsible for allocating memory of a given type:
 
 ```java
-public class MemoryAllocator {
-    private final LogicalDevice dev;
-    private final VkPhysicalDeviceMemoryProperties props = new VkPhysicalDeviceMemoryProperties();
-
-    MemoryAllocator(LogicalDevice dev) {
-        this.dev = notNull(dev);
-        dev.library().vkGetPhysicalDeviceMemoryProperties(dev.parent().handle(), props);
+@FunctionalInterface
+public interface Allocator {
+    /**
+     * An <i>allocation exception</i> is thrown when this allocator cannot allocate memory.
+     */
+    class AllocationException extends RuntimeException {
+        ...
     }
+
+    /**
+     * Allocates device memory.
+     * @param type Type of memory to allocate
+     * @param size Size of the memory (bytes)
+     * @return New device memory
+     * @throws AllocationException if the memory cannot be allocated
+     */
+    DeviceMemory allocate(MemoryType type, long size) throws AllocationException;
 }
 ```
 
-The documentation outlines the suggested approach for selecting the memory type for a given memory allocation:
-
-1. Walk through the array of memory types in the `VkPhysicalDeviceMemoryProperties` structure.
-2. Filter the elements by _index_ using the _filter_ bit-mask from the `VkMemoryRequirements` of the object we are allocating memory for.
-3. Filter by matching the supported properties of each memory type against those requested.
-
-We wrap this logic into a helper method on the request class (and introduce a custom exception class):
+We provide a factory to create a default implementation that simply allocates a new memory block on each request:
 
 ```java
-private int find() throws AllocationException {
-    final int mask = IntegerEnumeration.mask(flags);
-    for(int n = 0; n < props.memoryTypes.length; ++n) {
-        if(MathsUtil.isBit(filter, n) && MathsUtil.isMask(props.memoryTypes[n].propertyFlags, mask)) {
-            return n;
-        }
-    }
-    throw new AllocationException("No memory type available:" + this);
-}
-```
+static Allocator allocator(DeviceContext dev) {
+    return (type, size) -> {
+        // Init memory descriptor
+        final var info = new VkMemoryAllocateInfo();
+        info.allocationSize = oneOrMore(size);
+        info.memoryTypeIndex = type.index();
 
-Finally we can allocate the memory:
+        // Allocate memory
+        final VulkanLibrary lib = dev.library();
+        final PointerByReference ref = lib.factory().pointer();
+        check(lib.vkAllocateMemory(dev, info, null, ref));
 
-```java
-public DeviceMemory allocate() {
-    // Determine memory type
-    if(size == 0) throw new IllegalArgumentException("Memory size not specified");
-    final int type = find();
-
-    // Init memory descriptor
-    final VkMemoryAllocateInfo info = new VkMemoryAllocateInfo();
-    info.allocationSize = size;
-    info.memoryTypeIndex = type;
-
-    // Allocate memory
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference ptr = lib.factory().pointer();
-    check(lib.vkAllocateMemory(dev.handle(), info, null, ptr));
-    
-    ...
-}
-```
-
-And create the domain object for the allocated memory:
-
-```java
-    ...
-    return new AbstractDeviceMemory(ptr.getValue(), size, 0) {
-        @Override
-        protected void release() {
-            dev.library().vkFreeMemory(dev.handle(), handle, null);
-        }
+        // Create memory wrapper
+        return new DefaultDeviceMemory(ref.getValue(), dev, size);
     };
 }
 ```
 
-### Fallback Strategy
+Later in the chapter we will provide further implementations to support a memory pool and pagination.
 
-The documentation also suggests implementing a _fallback strategy_ when selecting the memory type.
-The application requests _optimal_ and _minimal_ properties for the memory with the algorithm falling back to the minimal (or required) properties if the optimal settings are not available.
+Note that the actual size of the allocated memory may be larger than the requested length depending on how the hardware handles alignment.
 
-We first refactor the `find` method to accept an arbitrary set of properties and return an optional result:
+All the above components are brought together into the following service which is the entry-point for allocation of device memory:
 
 ```java
-private Optional<Integer> find(Set<VkMemoryProperty> flags) {
-    final int mask = IntegerEnumeration.mask(flags);
-    for(int n = 0; n < props.memoryTypes.length; ++n) {
-        if(MathsUtil.isBit(filter, n) && MathsUtil.isMask(props.memoryTypes[n].propertyFlags, mask)) {
-            return Optional.of(n);
-        }
+public class AllocationService {
+    private final Allocator allocator;
+    private final List<MemoryType> types;
+
+    public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
+        ...
     }
-    return Optional.empty();
 }
 ```
 
-This can then be used in `allocate` to match on the optimal memory properties or fallback to the minimal requirements:
+Creating this service is comprised of the following steps:
+
+1. Retrieve the descriptor for the memory types supported by the hardware.
+
+2. Transform this to the memory type and heap domain objects.
+
+3. Instantiate the service.
+
+As normal this is implemented as a factory method:
 
 ```java
-public class Request {
-    private final Set<VkMemoryProperty> optimal = new HashSet<>();
-    private final Set<VkMemoryProperty> required = new HashSet<>();
-    ...
+public static AllocationService create(LogicalDevice dev, Allocator allocator) {
+    // Retrieve supported memory types
+    final var props = new VkPhysicalDeviceMemoryProperties();
+    final VulkanLibrary lib = dev.library();
+    lib.vkGetPhysicalDeviceMemoryProperties(dev.parent(), props);
 
-    public DeviceMemory allocate() {
-        final int index = find(optimal)
-                .or(() -> find(required))
-                .orElseThrow(() -> new AllocationException(...);
-            
-        ...
+    // Enumerate memory types
+    final List<MemoryType> types = MemoryType.enumerate(props);
+
+    // Create service
+    return new AllocationService(allocator, types);
+}
+```
+
+The Vulkan documentation outlines the suggested approach for selecting the memory type for a given allocation request as follows:
+
+1. Walk through the supported memory types.
+
+2. Filter by _index_ using the _filter_ bit-mask from the `VkMemoryRequirements` of the object in question.
+
+3. Filter by the supported memory properties of each type (i.e. matching against either the _optimal_ properties or falling back to the minimal _required_ properties).
+
+The `allocate` method first enumerates the _candidate_ memory types by applying the filter:
+
+```java
+public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
+    final var candidates = types
+        .stream()
+        .filter(type -> MathsUtil.isBit(reqs.memoryTypeBits, type.index()))
+        .collect(toList());
+
+    ...
+}
+```
+
+Next the best available type is selected from these candidates:
+
+```java
+final MemoryType type =
+    find(candidates, props.optimal())
+    .or(() -> find(candidates, props.required()))
+    .orElseThrow(() -> new AllocationException(...));
+```
+
+And finally we can allocate the memory of the selected type:
+
+```java
+return allocator.allocate(type, reqs.size);
+```
+
+The `find` method is a helper that applies the memory properties matching logic:
+
+```java
+private static Optional<MemoryType> find(List<MemoryType> types, Set<VkMemoryProperty> props) {
+    if(props.isEmpty()) {
+        return Optional.empty();
     }
+
+    return types
+        .stream()
+        .filter(type -> type.properties().containsAll(props))
+        .findAny();
 }
 ```
 
@@ -252,140 +420,26 @@ Additionally the `VkPhysicalDeviceLimits` structure contains a `bufferImageGranu
 
 ### Implementation
 
-The first design decision is that the pool will be Vulkan-agnostic amd separate from the allocator itself.
-It is unlikely that we will re-use the memory pool elsewhere but separating the two concerns will reduce the overall complexity and simplify testing.
-
-The first-cut class outline for the pool is as follows:
-
-```java
-class Pool {
-    public static class AllocationException extends RuntimeException {
-        ...
-    }
-
-    /**
-     * A <i>memory allocator</i> allocates new memory blocks on demand.
-     */
-    @FunctionalInterface
-    public interface Allocator {
-        /**
-         * Allocates a new block of memory.
-         * @param size Memory size
-         * @return Pointer to the new memory
-         * @throws AllocationException if the memory cannot be allocated
-         */
-        DeviceMemory allocate(long size) throws AllocationException;
-    }
-    
-    /**
-     * Adds free memory to this pool.
-     * @param size Memory to add
-     * @throws IllegalArgumentException if the given size is zero-or-less
-     * @throws AllocationException if the memory cannot be allocated
-     */
-    public void add(long size) throws AllocationException {
-    }
-
-    /**
-     * Allocates memory from this pool.
-     * @param size Amount of memory to allocate
-     * @return New memory
-     * @throws IllegalArgumentException if the given size is zero-or-less
-     * @throws AllocationException if the memory cannot be allocated by this pool
-     */
-    public DeviceMemory allocate(long size) throws AllocationException {
-    }
-}
-```
-
-The `Allocator` is responsible for actually allocating a new block of memory as required by the pool.
+### Pagination
 
 ### Integration
 
-Before we implement the main functionality of the pool we will integrate this first-cut into the Vulkan allocator and create an instance per memory type.
-
-We will also implement local domain classes for the memory heaps and types instead of using the `VkPhysicalDeviceMemoryProperties` structure directly.
-Whilst this is not really necessary it makes for slightly neater code and means we have logical places for pool initialisation and statistics (rather than messing about with array indices).
-
-The new domain objects basically replicate the data from the structure:
 
 ```java
-public class MemoryAllocator {
-    /**
-     * A <i>memory heap</i> specifies the properties of a group of device memory types.
-     */
-    public static final class Heap {
-        private final int index;
-        private final long size;
-        private final Set<VkMemoryProperty> props;
-        private final List<Type> types = new ArrayList<>();
-    }
-
-    /**
-     * A <i>memory type</i> defines a type of device memory supported by the hardware.
-     */
-    public final class Type {
-        private final int index;
-        private final Heap heap;
-        private final int props;
-    }
-}
-```
-
-Next we refactor the constructor to a static factory method:
-
-```java
-public static MemoryAllocator create(LogicalDevice dev) {
-        // Retrieve memory properties for this device
-        final var props = new VkPhysicalDeviceMemoryProperties();
-        dev.library().vkGetPhysicalDeviceMemoryProperties(dev.parent().handle(), props);
-        
-        ...
-
+@Bean
+public static Allocator allocator(LogicalDevice dev, @Value("${memory.page.size}") long page) {
+    final Allocator allocator = Allocator.allocator(dev);
+    return new PageAllocator(allocator, page);
 }
 ```
 
 ```java
-        final List<Heap> heaps = new ArrayList<>();
-        for(int n = 0; n < props.memoryHeapCount; ++n) {
-            final VkMemoryHeap h = props.memoryHeaps[n];
-            final var flags = IntegerEnumeration.enumerate(VkMemoryProperty.class, h.flags);
-            final Heap heap = new Heap(n, h.size, flags);
-            heaps.add(heap);
-        }
-
-        // Enumerate memory types array
-        final Type[] array = new Type[props.memoryTypeCount];
-        for(int n = 0; n < array.length; ++n) {
-            final VkMemoryType info = props.memoryTypes[n];
-            final Heap heap = heaps.get(info.heapIndex);
-            array[n] = new Type(n, heap, info.propertyFlags);
-        }
-        this.types = Arrays.asList(array);
-
-        // Retrieve global memory parameters
-        final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
-        this.max = limits.maxMemoryAllocationCount;
-        this.page = limits.bufferImageGranularity;
-        this.dev = dev;
-    }
+@Bean
+public static AllocationService allocationService(LogicalDevice dev, Allocator allocator) {
+    return AllocationService.create(dev, allocator);
+}
 ```
 
-
-
-
-However note that we intentionally made the objects inter-dependant
-
-refactor using heap/type
-
-allocates blocks
-allocations offset into block
-
-paging
-stream
-stats
-
-### Memory Blocks
 
 
 
@@ -393,6 +447,9 @@ stats
 
 ## Summary
 
-In this chapter we designed and implemented the device memory allocator using a memory pool.
+In this chapter we:
 
-The API methods to manage device memory are defined in the `VulkanLibraryMemory` JNA interface.
+- Implemented the framework for memory allocation.
+
+TODO
+

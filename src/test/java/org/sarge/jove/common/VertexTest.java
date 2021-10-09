@@ -74,6 +74,12 @@ public class VertexTest {
 			final Layout layout = Layout.of(2, Float.class);
 			assertEquals(layout, Layout.of(2));
 		}
+
+		@Test
+		void stride() {
+			final int stride = Layout.stride(List.of(Layout.of(2), Layout.of(3)));
+			assertEquals((2 + 3) * Float.BYTES, stride);
+		}
 	}
 
 	private Vertex vertex;

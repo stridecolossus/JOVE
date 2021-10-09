@@ -14,7 +14,6 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.ByteSource.Sink;
 import org.sarge.jove.common.Handle;
 
 /**
@@ -199,8 +198,8 @@ public class PoolAllocator implements Allocator {
 		 * Device memory allocated from this block.
 		 */
 		private class BlockDeviceMemory implements DeviceMemory {
-			private final long size;
 			private final long offset;
+			private final long size;
 
 			private boolean destroyed;
 
@@ -209,9 +208,9 @@ public class PoolAllocator implements Allocator {
 			 * @param size
 			 * @param offset
 			 */
-			private BlockDeviceMemory(long size, long offset) {
-				this.size = size;
+			private BlockDeviceMemory(long offset, long size) {
 				this.offset = offset;
+				this.size = size;
 			}
 
 			@Override
@@ -225,18 +224,13 @@ public class PoolAllocator implements Allocator {
 			}
 
 			@Override
-			public boolean isMapped() {
-				return mem.isMapped();
+			public Optional<Region> region() {
+				return mem.region();
 			}
 
 			@Override
-			public Sink map(long size, long offset) {
-				return mem.map(size, this.offset + offset);
-			}
-
-			@Override
-			public void unmap() {
-				mem.unmap();
+			public Region map(long offset, long size) {
+				return mem.map(offset, size);
 			}
 
 			@Override
@@ -263,8 +257,8 @@ public class PoolAllocator implements Allocator {
 			@Override
 			public String toString() {
 				return new ToStringBuilder(this)
-						.append("size", size)
 						.append("offset", offset)
+						.append("size", size)
 						.append("mem", mem)
 						.build();
 			}

@@ -9,8 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Vertex.Layout;
-import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
 
@@ -78,8 +76,7 @@ public class VertexInputStageBuilderTest {
 	@Test
 	void buildBindingFromVertexLayout() {
 		final var layout = List.of(Layout.of(1), Layout.of(2));
-		final var header = new Model.Header(layout, Primitive.TRIANGLES, 3, false);
-		final var descriptor = builder.binding(header).get();
+		final var descriptor = builder.binding(layout).get();
 		assertNotNull(descriptor);
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);
 		assertEquals(2, descriptor.vertexAttributeDescriptionCount);

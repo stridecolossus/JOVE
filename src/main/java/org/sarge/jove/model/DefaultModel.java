@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sarge.jove.common.ByteSource;
 import org.sarge.jove.common.Vertex;
+import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 
@@ -63,42 +63,41 @@ public class DefaultModel extends AbstractModel {
 	}
 
 	@Override
-	public ByteSource vertexBuffer() {
+	public ByteBuffer vertexBuffer() {
 		// Allocate buffer
-		final int len = vertices.size() * header().length();
+		final int len = vertices.size() * Layout.stride(header.layout());
 		final ByteBuffer buffer = VulkanHelper.buffer(len);
 
 		// Buffer vertices
 		for(Vertex v : vertices) {
 			v.buffer(buffer);
 		}
+		buffer.rewind();
 
-		// Create wrapper
-		return ByteSource.of(buffer);
+		return buffer;
 	}
 
 	@Override
-	public Optional<ByteSource> indexBuffer() {
+	public Optional<ByteBuffer> indexBuffer() {
 		return index.map(DefaultModel::index);
 	}
 
 	/**
 	 * Creates the index buffer.
 	 */
-	private static ByteSource index(List<Integer> index) {
+	private static ByteBuffer index(List<Integer> index) {
 		// Allocate index buffer
 		final int len = index.size() * Integer.BYTES;
 		final ByteBuffer bb = VulkanHelper.buffer(len);
 
 		// Buffer index
-		// TODO - convert to array first? or change arg to array?
 		final IntBuffer buffer = bb.asIntBuffer();
 		for(int n : index) {
 			buffer.put(n);
 		}
+		bb.rewind();
 
-		// Create wrapper
-		return ByteSource.of(bb);
+		return bb;
 	}
 
 	public BufferedModel buffer() {

@@ -13,7 +13,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkMemoryHeap;
 import org.sarge.jove.platform.vulkan.VkMemoryHeapFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
+import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 import org.sarge.jove.platform.vulkan.VkMemoryType;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
@@ -24,7 +24,7 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 @SuppressWarnings("unused")
-public record MemoryType(int index, Heap heap, Set<VkMemoryPropertyFlag> properties) {
+public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties) {
 	/**
 	 * Constructor.
 	 * @param index				Memory type index
@@ -124,7 +124,6 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryPropertyFlag> propert
 	 * Extracts the memory types supported by the hardware from the given descriptor.
 	 * @param props Memory properties descriptor
 	 * @return Memory types
-	 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html">Vulkan documentation</a>
 	 */
 	public static List<MemoryType> enumerate(VkPhysicalDeviceMemoryProperties props) {
 		// Enumerate memory heaps
@@ -140,7 +139,7 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryPropertyFlag> propert
 		final IntFunction<MemoryType> typeMapper = index -> {
 			final VkMemoryType type = props.memoryTypes[index];
 			final Heap heap = heaps[type.heapIndex];
-			final var properties = IntegerEnumeration.enumerate(VkMemoryPropertyFlag.class, type.propertyFlags);
+			final var properties = IntegerEnumeration.enumerate(VkMemoryProperty.class, type.propertyFlags);
 			return new MemoryType(index, heap, properties);
 		};
 		final MemoryType[] types = new MemoryType[props.memoryTypeCount];

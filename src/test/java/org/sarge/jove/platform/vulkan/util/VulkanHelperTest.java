@@ -40,6 +40,15 @@ public class VulkanHelperTest {
 	}
 
 	@Test
+	void bufferPopulate() {
+		final ByteBuffer bb = VulkanHelper.buffer(new byte[]{1, 2, 3});
+		assertNotNull(bb);
+		assertEquals(3, bb.limit());
+		assertEquals(3, bb.capacity());
+		assertEquals(ByteOrder.nativeOrder(), bb.order());
+	}
+
+	@Test
 	void extensions() {
 		// Init Vulkan
 		final VulkanLibrary lib = mock(VulkanLibrary.class);

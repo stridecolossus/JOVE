@@ -2,8 +2,8 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
@@ -26,7 +27,9 @@ import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Resource;
+import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -38,6 +41,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	private VulkanBuffer buffer;
 	private DeviceMemory mem;
+	private AllocationService allocator;
 
 	@BeforeEach
 	void before() {
@@ -46,17 +50,56 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
 		when(mem.size()).thenReturn(SIZE);
 
+		allocator = mock(AllocationService.class);
+		when(allocator.allocate(isA(VkMemoryRequirements.class), isA(MemoryProperties.class))).thenReturn(mem);
+
 		// Create buffer
 		buffer = new VulkanBuffer(new Pointer(2), dev, FLAGS, mem, SIZE);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(new Pointer(2)), buffer.handle());
+		assertEquals(new Handle(2), buffer.handle());
 		assertEquals(dev, buffer.device());
 		assertEquals(FLAGS, buffer.usage());
 		assertEquals(mem, buffer.memory());
 		assertEquals(SIZE, buffer.length());
+	}
+
+	@Test
+	void create() {
+		final MemoryProperties<VkBufferUsage> props = new MemoryProperties<>(FLAGS, VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
+		buffer = VulkanBuffer.create(dev, allocator, SIZE, props);
+		assertNotNull(buffer);
+		assertEquals(FLAGS, buffer.usage());
+	}
+
+	@Test
+	void staging() {
+		// Init memory region
+		final Region region = mock(Region.class);
+		when(mem.map()).thenReturn(region);
+
+		// Create data
+		final Bufferable data = mock(Bufferable.class);
+		when(data.length()).thenReturn((int) SIZE);
+
+		// Create staging buffer
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
+		assertNotNull(staging);
+		assertEquals(Set.of(VkBufferUsage.TRANSFER_SRC), staging.usage());
+		assertEquals(SIZE, staging.length());
+
+		// Check data is copied to buffer
+		verify(region).buffer();
+		verify(data).buffer(null);
+	}
+
+	@Test
+	void close() {
+		buffer.close();
+		verify(lib).vkDestroyBuffer(dev, buffer, null);
+		verify(mem).close();
 	}
 
 	@Nested
@@ -132,13 +175,6 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		}
 	}
 
-	@Test
-	void destroy() {
-		buffer.close();
-		verify(lib).vkDestroyBuffer(dev, buffer, null);
-		verify(mem).close();
-	}
-
 	@Nested
 	class UniformBufferResourceTests {
 		private Resource uniform;
@@ -173,22 +209,5 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		void uniformInvalidBuffer() {
 			assertThrows(IllegalStateException.class, "Invalid usage", () -> buffer.uniform());
 		}
-	}
-
-	@Test
-	void create() {
-		final MemoryProperties<VkBufferUsage> props = new MemoryProperties<>(FLAGS, VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
-		when(dev.allocate(any(VkMemoryRequirements.class), eq(props))).thenReturn(mem);
-		buffer = VulkanBuffer.create(dev, SIZE, props);
-		assertNotNull(buffer);
-		assertEquals(FLAGS, buffer.usage());
-	}
-
-	@Test
-	void staging() {
-		when(dev.allocate(any(VkMemoryRequirements.class), any(MemoryProperties.class))).thenReturn(mem);
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, SIZE);
-		assertNotNull(staging);
-		assertEquals(Set.of(VkBufferUsage.TRANSFER_SRC), staging.usage());
 	}
 }

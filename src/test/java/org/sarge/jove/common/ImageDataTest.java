@@ -23,42 +23,6 @@ import org.sarge.jove.common.Vertex.Layout;
 public class ImageDataTest {
 	private static final int LENGTH = 4 * (3 * 4);
 
-	private ImageData image;
-	private Layout layout;
-	private Dimensions size;
-
-	@BeforeEach
-	void before() {
-		size = new Dimensions(3, 4);
-		layout = Layout.of(4, Byte.class);
-		image = new ImageData(size, layout, ByteSource.of(new byte[LENGTH]));
-	}
-
-	@Test
-	void header() {
-		assertEquals(size, image.size());
-		assertEquals(layout, image.layout());
-		assertEquals(LENGTH, image.length());
-	}
-
-	@Test
-	void data() {
-		assertNotNull(image.data());
-		assertNotNull(image.data().toByteArray());
-		assertEquals(LENGTH, image.data().toByteArray().length);
-	}
-
-//	@Test
-//	void constructorInvalidArrayLength() {
-//		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, new byte[0]));
-//		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, components, new byte[42]));
-//	}
-//
-//	@Test
-//	void constructorEmptyComponents() {
-//		assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(size, List.of(), new byte[3 * 3 * 4]));
-//	}
-
 	@Nested
 	class LoaderTests {
 		private Loader loader;
@@ -71,8 +35,8 @@ public class ImageDataTest {
 		@SuppressWarnings("resource")
 		@ParameterizedTest
 		@CsvSource({
-			"duke.jpg, 375, 375, 4",
-			"duke.png, 375, 375, 4",
+			"duke.jpg, 375, 375, 3",
+			"duke.png, 375, 375, 3",
 			"heightmap.jpg, 256, 256, 1",
 		})
 		void load(String filename, int w, int h, int components) throws IOException {
@@ -83,10 +47,15 @@ public class ImageDataTest {
 			// Load image wrapper
 			final ImageData image = loader.load(buffered);
 			assertNotNull(image);
+
+			// Check image properties
 			assertEquals(new Dimensions(w, h), image.size());
-//			assertNotNull(image.components());
-//			assertEquals(components, image.components().size());
-//			assertNotNull(image.data());
+			assertEquals(Layout.of(components, Byte.class), image.layout());
+
+			// Check image data
+			final int bytes = (components > 1) ? 4 : 1;
+			assertNotNull(image.bytes());
+			assertEquals(w * h * bytes, image.bytes().length);
 		}
 
 		@Test

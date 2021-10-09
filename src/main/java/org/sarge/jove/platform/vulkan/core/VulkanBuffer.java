@@ -5,15 +5,18 @@ import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Resource;
+import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 
@@ -22,6 +25,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>Vulkan buffer</i> is used to copy data to/from the hardware.
+ * TODO - doc
  * @author Sarge
  */
 public class VulkanBuffer extends AbstractVulkanObject {
@@ -33,7 +37,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @return New vertex buffer
 	 * @throws IllegalArgumentException if the buffer length is zero
 	 */
-	public static VulkanBuffer create(LogicalDevice dev, long len, MemoryProperties<VkBufferUsage> props) {
+	public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsage> props) {
 		// TODO
 		if(props.mode() == VkSharingMode.CONCURRENT) throw new UnsupportedOperationException();
 		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
@@ -57,7 +61,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		lib.vkGetBufferMemoryRequirements(dev, handle.getValue(), reqs);
 
 		// Allocate buffer memory
-		final DeviceMemory mem = dev.allocate(reqs, props);
+		final DeviceMemory mem = allocator.allocate(reqs, props);
 
 		// Bind memory
 		check(lib.vkBindBufferMemory(dev, handle.getValue(), mem.handle(), 0L));
@@ -67,21 +71,28 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Helper - Creates a staging buffer.
-	 * @param dev Logical device
-	 * @param len Buffer length (bytes)
-	 * @return New staging buffer
+	 * Helper - Creates and initialises a staging buffer containing the given data.
+	 * @param dev		Logical device
+	 * @param data		Data to write
+	 * @return New staging buffer containing the given data
 	 */
-	public static VulkanBuffer staging(LogicalDevice dev, long len) {
+	public static VulkanBuffer staging(LogicalDevice dev, AllocationService allocator, Bufferable data) {
 		// Init memory properties
 		final var props = new MemoryProperties.Builder<VkBufferUsage>()
 				.usage(VkBufferUsage.TRANSFER_SRC)
-				.required(VkMemoryPropertyFlag.HOST_VISIBLE)
-				.required(VkMemoryPropertyFlag.HOST_COHERENT)
+				.required(VkMemoryProperty.HOST_VISIBLE)
+				.required(VkMemoryProperty.HOST_COHERENT)
 				.build();
 
 		// Create staging buffer
-		return create(dev, len, props);
+		final int len = data.length();
+		final VulkanBuffer buffer = create(dev, allocator, len, props);
+
+		// Write data to buffer
+		final ByteBuffer bb = buffer.memory().map().buffer();
+		data.buffer(bb);
+
+		return buffer;
 	}
 
 	private final Set<VkBufferUsage> usage;

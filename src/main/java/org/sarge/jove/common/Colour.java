@@ -91,11 +91,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		return LAYOUT;
 	}
 
-	@Override
-	public int length() {
-		return LAYOUT.length();
-	}
-
 	/**
 	 * @return This colour as an RGBA array of floating-point values
 	 */

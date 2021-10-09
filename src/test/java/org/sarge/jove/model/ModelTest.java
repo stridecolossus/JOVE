@@ -3,13 +3,13 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.ByteSource;
 import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.model.Model.Header;
@@ -35,20 +35,14 @@ class ModelTest {
 		}
 
 		@Test
-		void layout() {
-			assertEquals(2 * Float.BYTES, header.stride());
-			assertEquals(2 * Float.BYTES * 3, header.length());
-		}
-
-		@Test
 		void invalidVertexCount() {
 			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(layout), Primitive.TRIANGLES, 2, true));
 		}
 
 		@Test
 		void invalidPrimitiveNormals() {
-// TODO
-//			assertThrows(IllegalArgumentException.class, () -> new Header(Primitive.LINES, new Layout(Component.NORMAL), true));
+			// TODO - how can tell the vertices contain normals?
+			//assertThrows(IllegalArgumentException.class, () -> new Header(new Layout(Component.NORMAL), Primitive.LINES, 2, true));
 		}
 
 		@Test
@@ -62,13 +56,11 @@ class ModelTest {
 
 	@Nested
 	class AbstractModelTests {
-		private Model model;
-
-		@BeforeEach
-		void before() {
-			model = new AbstractModel(header) {
+		@Test
+		void constructor() {
+			final Model model = new AbstractModel(header) {
 				@Override
-				public ByteSource vertexBuffer() {
+				public ByteBuffer vertexBuffer() {
 					return null;
 				}
 
@@ -78,14 +70,10 @@ class ModelTest {
 				}
 
 				@Override
-				public Optional<ByteSource> indexBuffer() {
+				public Optional<ByteBuffer> indexBuffer() {
 					return null;
 				}
 			};
-		}
-
-		@Test
-		void constructor() {
 			assertEquals(header, model.header());
 		}
 	}

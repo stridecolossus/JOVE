@@ -1,17 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.sarge.jove.platform.vulkan.VkImageAspect.COLOR;
-import static org.sarge.jove.platform.vulkan.VkImageType.IMAGE_TYPE_2D;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.Set;
@@ -20,173 +10,85 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.VkImageAspect;
+import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
-
 public class ImageDescriptorTest extends AbstractVulkanTest {
-	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
+	private static final VkImageType TYPE = VkImageType.IMAGE_TYPE_2D;
+	private static final Set<VkImageAspect> ASPECTS = Set.of(VkImageAspect.COLOR);
 	private static final ImageExtents EXTENTS = new ImageExtents(3, 4);
 
-	private DefaultImage image;
-	private Pointer handle;
 	private ImageDescriptor descriptor;
-	private DeviceMemory mem;
 
 	@BeforeEach
 	void before() {
-		// Create descriptor
-		descriptor = new ImageDescriptor.Builder()
-				.format(FORMAT)
-				.extents(EXTENTS)
-				.aspect(COLOR)
-				.mipLevels(2)
-				.arrayLayers(3)
-				.build();
-
-		// Init image memory
-		mem = mock(DeviceMemory.class);
-		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
-
-		// Create image
-		handle = new Pointer(2);
-		image = new DefaultImage(handle, dev, descriptor, mem);
+		descriptor = new ImageDescriptor(TYPE, FORMAT, EXTENTS, ASPECTS, 2, 3);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(handle), image.handle());
-		assertEquals(dev, image.device());
-		assertEquals(descriptor, image.descriptor());
+		assertEquals(TYPE, descriptor.type());
+		assertEquals(FORMAT, descriptor.format());
+		assertEquals(EXTENTS, descriptor.extents());
+		assertEquals(ASPECTS, descriptor.aspects());
+		assertEquals(2, descriptor.levels());
+		assertEquals(3, descriptor.layers());
 	}
 
-	@Nested
-	class DescriptorTests {
-		@Test
-		void constructor() {
-			assertEquals(IMAGE_TYPE_2D, descriptor.type());
-			assertEquals(FORMAT, descriptor.format());
-			assertEquals(EXTENTS, descriptor.extents());
-			assertEquals(COLOUR, descriptor.aspects());
-		}
-
-		@DisplayName("Image must have at least one aspect")
-		@Test
-		void emptyAspects() {
-			assertThrows(IllegalArgumentException.class, () -> new ImageDescriptor(IMAGE_TYPE_2D, FORMAT, EXTENTS, Set.of(), 1, 1));
-		}
-
-		@DisplayName("Image aspects must be a valid combination")
-		@Test
-		void invalidAspects() {
-			final var aspects = Set.of(COLOR, VkImageAspect.DEPTH);
-			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new ImageDescriptor(IMAGE_TYPE_2D, FORMAT, EXTENTS, aspects, 1, 1));
-		}
-
-		@DisplayName("2D image must have depth of one")
-		@Test
-		void invalidExtentsDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(IMAGE_TYPE_2D, FORMAT, new ImageExtents(new Dimensions(2, 3), 4), COLOUR, 1, 1));
-		}
-
-		@DisplayName("2D image must have height and depth of one")
-		@Test
-		void invalidExtentsHeightDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(VkImageType.IMAGE_TYPE_1D, FORMAT, EXTENTS, COLOUR, 1, 1));
-		}
-
-		@DisplayName("3D image can only have one array layer")
-		@Test
-		void invalidArrayLayers() {
-			assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new ImageDescriptor(VkImageType.IMAGE_TYPE_3D, FORMAT, EXTENTS, COLOUR, 1, 2));
-		}
-	}
-
+	@DisplayName("Image must have at least one aspect")
 	@Test
-	void destroy() {
-		image.close();
-		verify(lib).vkDestroyImage(dev, image, null);
-		verify(mem).close();
+	void emptyAspects() {
+		assertThrows(IllegalArgumentException.class, () -> new ImageDescriptor(TYPE, FORMAT, EXTENTS, Set.of(), 1, 1));
+	}
+
+	@DisplayName("Image aspects must be a valid combination")
+	@Test
+	void invalidAspects() {
+		final var aspects = Set.of(VkImageAspect.COLOR, VkImageAspect.DEPTH);
+		assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new ImageDescriptor(TYPE, FORMAT, EXTENTS, aspects, 1, 1));
+	}
+
+	@DisplayName("2D image must have depth of one")
+	@Test
+	void invalidExtentsDepth() {
+		final ImageExtents extents = new ImageExtents(new Dimensions(2, 3), 4);
+		assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(TYPE, FORMAT, extents, ASPECTS, 1, 1));
+	}
+
+	@DisplayName("2D image must have height and depth of one")
+	@Test
+	void invalidExtentsHeightDepth() {
+		assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(VkImageType.IMAGE_TYPE_1D, FORMAT, EXTENTS, ASPECTS, 1, 1));
+	}
+
+	@DisplayName("3D image can only have one array layer")
+	@Test
+	void invalidArrayLayers() {
+		assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new ImageDescriptor(VkImageType.IMAGE_TYPE_3D, FORMAT, EXTENTS, ASPECTS, 1, 2));
 	}
 
 	@Nested
 	class BuilderTests {
-		private Image.Builder builder;
-		private MemoryProperties<VkImageUsage> props;
+		private ImageDescriptor.Builder builder;
 
 		@BeforeEach
 		void before() {
-			when(dev.allocate(any(VkMemoryRequirements.class), any(MemoryProperties.class))).thenReturn(mem);
-			builder = new Image.Builder();
-			props = new MemoryProperties.Builder()
-					.mode(VkSharingMode.CONCURRENT)
-					.usage(VkImageUsage.COLOR_ATTACHMENT)
-					.build();
+			builder = new ImageDescriptor.Builder();
 		}
 
 		@Test
 		void build() {
-			// Create image
-			image = builder
-					.descriptor(descriptor)
-					.properties(props)
-					.samples(4)
-					.tiling(VkImageTiling.LINEAR)
-					.initialLayout(VkImageLayout.PREINITIALIZED)
-					.build(dev);
+			builder
+				.type(TYPE)
+				.format(FORMAT)
+				.extents(EXTENTS)
+				.aspect(VkImageAspect.COLOR)
+				.mipLevels(2)
+				.arrayLayers(3);
 
-			// Check image
-			assertNotNull(image);
-			assertNotNull(image.handle());
-			assertEquals(descriptor, image.descriptor());
-			assertEquals(dev, image.device());
-			assertEquals(false, image.isDestroyed());
-
-			// Check API
-			final Pointer ptr = image.handle().toPointer();
-			final ArgumentCaptor<VkImageCreateInfo> captor = ArgumentCaptor.forClass(VkImageCreateInfo.class);
-			verify(lib).vkCreateImage(eq(dev), captor.capture(), isNull(), isA(PointerByReference.class));
-			verify(lib).vkGetImageMemoryRequirements(eq(dev), eq(ptr), any(VkMemoryRequirements.class));
-			verify(lib).vkBindImageMemory(dev, ptr, image.memory(), 0);
-
-			// Check create descriptor
-			final VkImageCreateInfo info = captor.getValue();
-			assertNotNull(info);
-			assertEquals(IMAGE_TYPE_2D, info.imageType);
-			assertEquals(FORMAT, info.format);
-			assertEquals(2, info.mipLevels);
-			assertEquals(3, info.arrayLayers);
-			assertEquals(VkSampleCountFlag.COUNT_4, info.samples);
-			assertEquals(VkImageTiling.LINEAR, info.tiling);
-			assertEquals(VkImageLayout.PREINITIALIZED, info.initialLayout);
-			assertEquals(VkImageUsage.COLOR_ATTACHMENT.value(), info.usage);
-			assertEquals(VkSharingMode.CONCURRENT, info.sharingMode);
-
-			// Check extents
-			assertNotNull(info.extent);
-			assertEquals(3, info.extent.width);
-			assertEquals(4, info.extent.height);
-			assertEquals(1, info.extent.depth);
-		}
-
-		@Test
-		void buildEmptyMemoryProperties() {
-			builder.descriptor(descriptor);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
-		}
-
-		@Test
-		void buildEmptyImageDescriptor() {
-			builder.properties(props);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
+			assertEquals(descriptor, builder.build());
 		}
 	}
 }

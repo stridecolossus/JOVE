@@ -28,8 +28,8 @@ The [introduction](blog/part-1-intro/introduction) in the first section outlines
     - [Rendering](blog/part-2-triangle/rendering)
 
 - Part 3 - Textured Cube
+    - [Memory Allocation](blog/part-3-cube/memory-allocation)
     - [Vertex Buffers](blog/part-3-cube/vertex-buffers)
-    - [Memory Allocator](blog/part-3-cube/memory-allocator)
     - [Texture Sampling](blog/part-3-cube/textures)
     - [Descriptor Sets](blog/part-3-cube/descriptor-sets)
     - [Perspective Projection](blog/part-3-cube/perspective)

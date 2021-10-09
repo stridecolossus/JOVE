@@ -331,6 +331,107 @@ ClearValue DEPTH = new DepthClearValue(Percentile.ONE);
 
 ## Integration #2
 
+### Convenience
+
+TODO - add as improvement in MODELS
+
+We also take the opportunity to implement a convenience method to create the binding and attributes for a given vertex layout.
+
+First we select the next available binding index:
+
+```java
+public VertexInputStageBuilder binding(Vertex.Layout layout) {
+    // Allocate next binding
+    final int index = bindings.size();
+
+    ...
+
+    return this;
+}
+```
+
+Then we use the nested builder to create the binding:
+
+```java
+    // Add binding
+    new BindingBuilder()
+        .binding(index)
+        .stride(layout.size() * Float.BYTES)
+        .build();
+```
+
+Next we iterate over the components of the layout:
+
+```java
+    // Add attribute for each component
+    int offset = 0;
+    int loc = 0;
+    for(Vertex.Component c : layout.components()) {
+    }
+```
+
+And create an attribute for each component:
+
+```java
+    // Determine component format
+    final VkFormat format = new FormatBuilder()
+        .components(c.size())
+        .type(FormatBuilder.Type.FLOAT)
+        .bytes(Float.BYTES)
+        .build();
+
+    // Add attribute for component
+    new AttributeBuilder()
+        .binding(index)
+        .location(loc)
+        .format(format)
+        .offset(offset)
+        .build();
+```
+
+The byte _offset_ within the vertex is incremented at the end of the loop:
+
+```java
+        // Increment offset to the start of the next attribute
+        ++loc;
+        offset += c.size() * Float.BYTES;
+    }
+    assert offset == layout.size() * Float.BYTES;
+```
+
+Using this helper we can configure the vertex input stage of the pipeline to match the vertex layout of the triangle:
+
+```java
+final Pipeline pipeline = new Pipeline.Builder(dev)
+    .input()
+        .binding(layout)
+        .build()
+    ...
+```
+
+Which is equivalent to:
+
+```java
+final Pipeline pipeline = new Pipeline.Builder(dev)
+    .input()
+        .binding()
+            .binding(0)
+            .stride(layout.size() * Float.BYTES)
+            .build()
+        .attribute()            // Position
+            .binding(0)
+            .location(0)
+            .format(VkFormat.R32G32B32_SFLOAT)
+            .offset(0)
+        .attribute()            // Colour
+            .binding(0)
+            .location(1)
+            .format(VkFormat.R32G32B32A32_SFLOAT)            
+            .offset(Point.SIZE * Float.BYTES)
+        .build()
+    ...
+```
+
 ### Depth Buffer
 
 Unlike the swapchain images we need to create the depth buffer image ourselves:

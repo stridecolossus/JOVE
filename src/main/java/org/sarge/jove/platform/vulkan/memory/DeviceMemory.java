@@ -1,10 +1,12 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import org.sarge.jove.common.ByteSource.Sink;
+import java.nio.ByteBuffer;
+import java.util.Optional;
+
 import org.sarge.jove.common.TransientNativeObject;
 
 /**
- * A <i>device memory</i> is an area of device or host memory accessible to the hardware.
+ * A <i>device memory</i> instance is an area of device or host memory accessible to the hardware.
  * <p>
  * A <i>region</i> of the memory must be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write access.
  * <p>
@@ -17,54 +19,85 @@ import org.sarge.jove.common.TransientNativeObject;
  * <p>
  * Usage:
  * <pre>
- * // Create memory record
- * DeviceMemory mem = new DefaultDeviceMemory(handle, dev, size);
+ * 	// Create memory record
+ * 	DeviceMemory mem = ...
  *
- * // Write to memory
- * Sink region = mem.map();
- * region.write(new byte[]{...});
+ *	// Map accessible region
+ *	Region region = mem.region(0, len);
  *
- * // Un-map memory region
- * mem.unmap();
+ * 	// Write to memory
+ * 	ByteBuffer buffer = region.buffer();
+ * 	buffer.put(...);
  *
- * // Release memory
- * mem.destroy();
+ * 	// Release mapping
+ * 	region.unmap();
+ *
+ * 	// Release memory
+ * 	mem.destroy();
  * </pre>
  * @author Sarge
  */
 public interface DeviceMemory extends TransientNativeObject {
+	/**
+	 * A <i>region</i> is a mapped area of device memory.
+	 */
+	public interface Region {
+		/**
+		 * @return Size of this region (bytes)
+		 */
+		long size();
+
+		/**
+		 * Provides a byte-buffer to access a sub-section of this memory region.
+		 * @param offset		Offset
+		 * @param size			Region size (bytes)
+		 * @return Byte-buffer
+		 * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this region
+		 */
+		ByteBuffer buffer(long offset, long size);
+
+		/**
+		 * Provides a byte-buffer to access this memory region.
+		 * @return Byte-buffer
+		 * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this region
+		 */
+		default ByteBuffer buffer() {
+			return buffer(0, size());
+		}
+
+		/**
+		 * Un-maps this mapped region.
+		 * @throws IllegalStateException if the mapping has also been released or the memory has been destroyed
+		 */
+		void unmap();
+	}
+
 	/**
 	 * @return Size of this memory (bytes)
 	 */
 	long size();
 
 	/**
-	 * @return Whether this memory has been mapped
+	 * @return Mapped memory region
 	 */
-	boolean isMapped();
+	Optional<Region> region();
 
 	/**
 	 * Maps a region of this device memory.
-	 * @param size			Size of the region to map
 	 * @param offset		Offset into this memory
-	 * @return Mapped memory
+	 * @param size			Size of the region to map
+	 * @return Mapped memory region
+	 * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this memory
 	 * @throws IllegalStateException if a mapping already exists or this memory has been destroyed
 	 */
-	Sink map(long size, long offset);
+	Region map(long offset, long size);
 
 	/**
 	 * Maps this device memory.
-	 * @return Mapped memory
+	 * @return Mapped memory region
 	 * @throws IllegalStateException if a mapping already exists or this memory has been destroyed
-	 * @see #map(long, long)
 	 */
-	default Sink map() {
-		return map(size(), 0);
+	default Region map() {
+		return map(0, size());
 	}
-
-	/**
-	 * Releases the currently mapped region of this memory.
-	 * @throws IllegalStateException if this memory has been destroyed or is not mapped
-	 */
-	void unmap();
 }

@@ -11,8 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sarge.jove.common.Vertex;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkVertexInputAttributeDescription;
@@ -47,7 +46,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	}
 
 	/**
-	 * Helper - Adds a vertex input binding and attributes for the given model.
+	 * Helper - Adds a vertex input binding and attributes for the given vertex layout.
 	 * <p>
 	 * Notes:
 	 * <ul>
@@ -55,48 +54,14 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * <li>Vertex data is assumed to be contiguous, i.e. the offset of each component is the end of the previous element</li>
 	 * </ul>
 	 * <p>
-	 * Using this helper is equivalent to the following code:
-	 * <pre>
-	 *  // Define model header
-	 *  Model.Header header = ...
-	 *
-	 *  // Allocate binding index
-	 *  int index = ...
-	 *
-	 *  // Create builder
-	 *  VertexInputStageBuilder builder = new VertexInputStageBuilder();
-	 *
-	 *  // Configure binding
-	 *  builder
-	 *  	.binding()
-	 *  	.index(index)
-	 *  	.stride(header.stride())
-	 *  	.build();
-	 *
-	 *  // Configure vertex attribute for each component of the model
-	 *  int loc = 0;
-	 *  int offset = 0;
-	 *  for(Layout layout : header.layout()) {
-	 *  	builder
-	 *  		.attribute()
-	 *  		.binding(index)
-	 *  		.location(loc)
-	 *  		.format(FormatBuilder.format(layout))
-	 *  		.offset(offset)
-	 *  		.build();
-	 *
-	 *  	++loc;
-	 *  	offset += layout.length();
-	 *  }
-	 * </pre>
-	 * @param header Model header
+	 * @param layout Vertex layout
 	 */
-	public VertexInputStageBuilder binding(Model.Header header) {
+	public VertexInputStageBuilder binding(List<Layout> layout) {
 		// Allocate next binding
 		final int index = bindings.size();
 
 		// Calculate vertex stride for this layout
-		final int stride = header.stride();
+		final int stride = layout.stream().mapToInt(Layout::length).sum();
 
 		// Add binding
 		new BindingBuilder()
@@ -107,9 +72,9 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		// Add attribute for each layout component
 		int offset = 0;
 		int loc = 0;
-		for(Vertex.Layout layout : header.layout()) {
+		for(Layout entry : layout) {
 			// Determine component format
-			final VkFormat format = FormatBuilder.format(layout);
+			final VkFormat format = FormatBuilder.format(entry);
 
 			// Add attribute for component
 			new AttributeBuilder()
@@ -121,7 +86,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 
 			// Increment offset to the start of the next attribute
 			++loc;
-			offset += layout.length();
+			offset += entry.length();
 			// TODO - assumes contiguous => introduce offset (default 0)
 		}
 		assert offset == stride;
@@ -146,15 +111,13 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		// Create descriptor
 		final var info = new VkPipelineVertexInputStateCreateInfo();
 
-		if(!bindings.isEmpty()) {
-			// Add binding descriptions
-			info.vertexBindingDescriptionCount = bindings.size();
-			info.pVertexBindingDescriptions = StructureHelper.first(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
+		// Add binding descriptions
+		info.vertexBindingDescriptionCount = bindings.size();
+		info.pVertexBindingDescriptions = StructureHelper.first(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
 
-			// Add attributes
-			info.vertexAttributeDescriptionCount = attributes.size();
-			info.pVertexAttributeDescriptions = StructureHelper.first(attributes, VkVertexInputAttributeDescription::new, AttributeBuilder::populate);
-		}
+		// Add attributes
+		info.vertexAttributeDescriptionCount = attributes.size();
+		info.pVertexAttributeDescriptions = StructureHelper.first(attributes, VkVertexInputAttributeDescription::new, AttributeBuilder::populate);
 
 		return info;
 	}

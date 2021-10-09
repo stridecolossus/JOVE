@@ -17,6 +17,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
@@ -162,12 +163,13 @@ public interface Image extends NativeObject {
 
 		/**
 		 * Constructs this image.
-		 * @param dev Logical device
+		 * @param dev 			Logical device
+		 * @param allocator		Memory allocator
 		 * @return New image
 		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#TYPE_3D} image
 		 * @throws VulkanException if the image cannot be created
 		 */
-		public DefaultImage build(LogicalDevice dev) {
+		public DefaultImage build(LogicalDevice dev, AllocationService allocator) {
 			// Validate
 			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
 			if(props == null) throw new IllegalArgumentException("No memory properties specified");
@@ -198,7 +200,7 @@ public interface Image extends NativeObject {
 			lib.vkGetImageMemoryRequirements(dev, handle.getValue(), reqs);
 
 			// Allocate image memory
-			final DeviceMemory mem = dev.allocate(reqs, props);
+			final DeviceMemory mem = allocator.allocate(reqs, props);
 
 			// Bind memory to image
 			check(lib.vkBindImageMemory(dev, handle.getValue(), mem, 0));

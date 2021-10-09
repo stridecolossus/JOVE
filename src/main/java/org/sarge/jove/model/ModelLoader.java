@@ -5,13 +5,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.sarge.jove.common.ByteSource;
 import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.ResourceLoader;
 
 /**
@@ -70,8 +71,19 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		out.flush();
 	}
 
-	private static void write(ByteSource src, DataOutputStream out) throws IOException {
-		final byte[] array = src.toByteArray();
+	private static void write(ByteBuffer src, DataOutputStream out) throws IOException {
+		// Convert to array
+		final byte[] array;
+		if(src.isDirect()) {
+			final int len = src.rewind().remaining();
+			array = new byte[len];
+			src.get(array);
+		}
+		else {
+			array = src.array();
+		}
+
+		// Write length and data
 		out.writeInt(array.length);
 		out.write(array);
 	}
@@ -119,8 +131,8 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		}
 
 		// Load data
-		final ByteSource vertices = loadBuffer(in);
-		final ByteSource index = loadBuffer(in);
+		final ByteBuffer vertices = loadBuffer(in);
+		final ByteBuffer index = loadBuffer(in);
 
 		// Create model
 		return new BufferedModel(new Header(layout, primitive, count, clockwise), vertices, Optional.ofNullable(index));
@@ -132,7 +144,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 	 * @return New buffer or {@code null} if empty
 	 * @throws IOException if the buffer cannot be loaded
 	 */
-	private static ByteSource loadBuffer(DataInputStream in) throws IOException {
+	private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
 		// Read buffer size
 		final int len = in.readInt();
 		if(len == 0) {
@@ -144,7 +156,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		final int actual = in.read(bytes);
 		if(actual != len) throw new IOException(String.format("Error loading buffer: expected=%d actual=%d", len, actual));
 
-		// Convert to data wrapper
-		return ByteSource.of(bytes);
+		// Convert to buffer
+		return VulkanHelper.buffer(bytes).rewind();
 	}
 }

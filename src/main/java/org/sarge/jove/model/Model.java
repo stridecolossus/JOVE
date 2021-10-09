@@ -2,12 +2,12 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.ByteSource;
-import org.sarge.jove.common.Vertex;
+import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.lib.util.Check;
 
 /**
@@ -18,7 +18,7 @@ public interface Model {
 	/**
 	 * Descriptor for this model.
 	 */
-	public record Header(List<Vertex.Layout> layout, Primitive primitive, int count, boolean clockwise) {
+	public record Header(List<Layout> layout, Primitive primitive, int count, boolean clockwise) {
 		/**
 		 * Constructor.
 		 * @param layout			Vertex layout
@@ -41,20 +41,6 @@ public interface Model {
 			// TODO - check primitive supports normals
 			// primitive.hasNormals()
 		}
-
-		/**
-		 * @return Vertex stride (bytes)
-		 */
-		public int stride() {
-			return layout.stream().mapToInt(Vertex.Layout::length).sum();
-		}
-
-		/**
-		 * @return Vertex buffer length (bytes)
-		 */
-		public int length() {
-			return count * stride();
-		}
 	}
 
 	/**
@@ -65,7 +51,7 @@ public interface Model {
 	/**
 	 * @return Vertex buffer
 	 */
-	ByteSource vertexBuffer();
+	ByteBuffer vertexBuffer();
 
 	/**
 	 * @return Whether this is an indexed model
@@ -75,9 +61,7 @@ public interface Model {
 	/**
 	 * @return Index buffer
 	 */
-	Optional<ByteSource> indexBuffer();
-
-	// TODO - VBO and index should be byte stream wrapper of some sort
+	Optional<ByteBuffer> indexBuffer();
 
 	/**
 	 * Skeleton implementation.

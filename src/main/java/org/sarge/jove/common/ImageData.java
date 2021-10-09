@@ -1,7 +1,5 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
@@ -10,70 +8,28 @@ import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.util.ResourceLoader;
 
 /**
- * An <i>image data</i> is a wrapper for an RGBA image texture.
+ * The <i>image data</i> interface abstracts an RGBA texture.
  * @author Sarge
  */
-public class ImageData {
-	private final Dimensions size;
-	private final Vertex.Layout layout;
-	private final ByteSource data;
-
-	/**
-	 * Constructor.
-	 * @param size				Size of this image
-	 * @param layout			Data layout
-	 * @param bytes				Image data
-	 */
-	public ImageData(Dimensions size, Vertex.Layout layout, ByteSource data) {
-		// TODO - validate
-//		Check.notEmpty(components);
-//		final int expected = size.width() * size.height() * components.size(); // TODO - assumes 8 bits per component
-//		if(expected != data.length) throw new IllegalArgumentException("Buffer length does not match image dimensions");
-
-		this.size = notNull(size);
-		this.layout = notNull(layout);
-		this.data = notNull(data);
-	}
-
+public interface ImageData {
 	/**
 	 * @return Image dimensions
 	 */
-	public Dimensions size() {
-		return size;
-	}
+	Dimensions size();
 
 	/**
-	 * @return Layout of this image
+	 * @return Image layout
 	 */
-	public Vertex.Layout layout() {
-		return layout;
-	}
-
-	/**
-	 * @return Length of this image (bytes)
-	 */
-	public int length() {
-		return layout.length() * size.width() * size.height();
-	}
+	Layout layout();
 
 	/**
 	 * @return Image data
 	 */
-	public ByteSource data() {
-		return data;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("size", size)
-				.append("layout", layout)
-				.build();
-	}
+	byte[] bytes();
 
 	/**
 	 * Loader for an image.
@@ -137,21 +93,25 @@ public class ImageData {
 //				default -> throw new RuntimeException("Unsupported image data type: " + 42);
 //			};
 
-			// Extract image data
-			final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
-			final ByteSource bytes = ByteSource.of(buffer.getData());
-
-			// Create image layout
-			final var layout = Vertex.Layout.of(result.getColorModel().getNumComponents(), Byte.class);
-
-//			// Enumerate image components
-//			final int[] components = result.getColorModel().getComponentSize();
-//			final var list = Arrays.stream(components).boxed().collect(toList());
-			//result.getRaster().getDataBuffer().getDataType();
-
 			// Create image wrapper
-			final Dimensions dim = new Dimensions(result.getWidth(), result.getHeight());
-			return new ImageData(dim, layout, bytes);
+			return new ImageData() {
+				@Override
+				public Dimensions size() {
+					return new Dimensions(result.getWidth(), result.getHeight());
+				}
+
+				@Override
+				public Layout layout() {
+					final int num = result.getColorModel().getNumColorComponents();
+					return Layout.of(num, Byte.class);
+				}
+
+				@Override
+				public byte[] bytes() {
+					final DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
+					return buffer.getData();
+				}
+			};
 		}
 
 		/**

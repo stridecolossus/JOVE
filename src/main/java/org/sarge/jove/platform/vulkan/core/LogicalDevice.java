@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.core;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,10 +20,7 @@ import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
-import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -32,11 +28,6 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.common.ValidationLayer;
-import org.sarge.jove.platform.vulkan.memory.Allocator;
-import org.sarge.jove.platform.vulkan.memory.DefaultDeviceMemory;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
-import org.sarge.jove.platform.vulkan.memory.MemoryType;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
@@ -50,27 +41,22 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>logical device</i> is an instance of a {@link PhysicalDevice}.
  * @author Sarge
  */
-public class LogicalDevice extends AbstractTransientNativeObject implements DeviceContext, Allocator {
+public class LogicalDevice extends AbstractTransientNativeObject implements DeviceContext {
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
 	private final Map<Family, List<Queue>> queues;
-	private final List<MemoryType> types;
-	private Allocator allocator; // TODO - ugly
 
 	/**
 	 * Constructor.
 	 * @param handle 		Device handle
 	 * @param parent 		Parent physical device
 	 * @param queues 		Work queues
-	 * @param types			Supported memory types
 	 */
-	LogicalDevice(Pointer handle, PhysicalDevice parent, Map<Family, List<Queue>> queues, List<MemoryType> types) {
+	LogicalDevice(Pointer handle, PhysicalDevice parent, Map<Family, List<Queue>> queues) {
 		super(new Handle(handle));
 		this.parent = parent;
 		this.lib = parent.instance().library();
 		this.queues = Map.copyOf(queues);
-		this.types = types;
-		this.allocator = this;
 	}
 
 	/**
@@ -104,47 +90,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			throw new IllegalArgumentException(String.format("Queue not present: required=%s available=%s", family, queues.keySet()));
 		}
 		return list.get(0);
-	}
-
-	/**
-	 * Sets the memory allocator used by this device.
-	 * @param allocator Memory allocator
-	 */
-	public void allocator(Allocator allocator) {
-		this.allocator = notNull(allocator);
-	}
-
-	/**
-	 * Selects and allocates memory.
-	 * @param reqs			Memory requirements
-	 * @param props			Memory properties
-	 * @return New device memory
-	 * @throws AllocationException if the memory cannot be allocated
-	 * @see #allocate(MemoryType, long)
-	 */
-	public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-		// Select memory type for this request
-		final MemoryType type = props
-				.select(reqs.memoryTypeBits, types)
-				.orElseThrow(() -> new AllocationException(String.format("No available memory type: requirements=%s properties=%s", reqs, props)));
-
-		// Delegate to allocator
-		return allocator.allocate(type, reqs.size);
-	}
-
-	@Override
-	public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
-		// Init memory descriptor
-		final var info = new VkMemoryAllocateInfo();
-		info.allocationSize = oneOrMore(size);
-		info.memoryTypeIndex = type.index();
-
-		// Allocate memory
-		final PointerByReference ref = lib.factory().pointer();
-		check(lib.vkAllocateMemory(this, info, null, ref));
-
-		// Create memory wrapper
-		return new DefaultDeviceMemory(ref.getValue(), this, size); // TODO - cyclic!
 	}
 
 	/**
@@ -384,14 +329,8 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 					.flatMap(RequiredQueue::stream)
 					.collect(groupingBy(Queue::family));
 
-			// Enumerate supported memory types
-			// TODO - should props be cached locally somewhere?
-			final var props = new VkPhysicalDeviceMemoryProperties();
-			lib.vkGetPhysicalDeviceMemoryProperties(parent, props);
-			final var types = MemoryType.enumerate(props);
-
 			// Create logical device
-			return new LogicalDevice(handle.getValue(), parent, map, types);
+			return new LogicalDevice(handle.getValue(), parent, map);
 		}
 	}
 }

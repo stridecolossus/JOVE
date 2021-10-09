@@ -454,12 +454,12 @@ class DesktopConfiguration {
     }
 
     @Bean
-    public static Window window(Desktop desktop) {
+    public static Window window(Desktop desktop, @Value("${application.title}") String title) {
         return new Window.Builder()
-                .title("TriangleDemo")
-                .size(new Dimensions(1024, 768))
-                .property(Window.Property.DISABLE_OPENGL)
-                .build(desktop);
+            .title("TriangleDemo")
+            .size(new Dimensions(1024, 768))
+            .property(Window.Property.DISABLE_OPENGL)
+            .build(desktop);
     }
 
     @Bean
@@ -501,19 +501,27 @@ class VulkanConfiguration {
     }
 
     @Bean
-    public static Instance instance(VulkanLibrary lib, Desktop desktop) {
+    public static Instance instance(VulkanLibrary lib, Desktop desktop, @Value("${application.title}") String title) {
         return new Instance.Builder()
-                .name("TriangleDemo")
-                .extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
-                .extensions(desktop.extensions())
-                .layer(ValidationLayer.STANDARD_VALIDATION)
-                .build(lib)
-                .handler()
-                .init()
-                .attach();
+            .name(title)
+            .extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
+            .extensions(desktop.extensions())
+            .layer(ValidationLayer.STANDARD_VALIDATION)
+            .build(lib)
+            .handler()
+            .init()
+            .attach();
     }
 }
 ```
+
+The `@Value` annotation retrieves a configuration property which is usually specified in the `application.properties` file:
+
+```java
+application.title: Triangle Demo
+```
+
+We refactor the window title in the desktop configuration class similarly.
 
 Note that we also attach the diagnostics handler in the `instance` bean method, the `attach` method is modified to return the instance enabling a slightly more fluid API.
 

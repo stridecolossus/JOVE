@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkMemoryHeap;
 import org.sarge.jove.platform.vulkan.VkMemoryHeapFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlag;
+import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 import org.sarge.jove.platform.vulkan.VkMemoryType;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
@@ -23,20 +23,20 @@ public class MemoryTypeTest {
 	@BeforeEach
 	void before() {
 		heap = new Heap(0, 1, Set.of(VkMemoryHeapFlag.DEVICE_LOCAL));
-		type = new MemoryType(0, heap, Set.of(VkMemoryPropertyFlag.DEVICE_LOCAL));
+		type = new MemoryType(0, heap, Set.of(VkMemoryProperty.DEVICE_LOCAL));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(0, type.index());
 		assertEquals(heap, type.heap());
-		assertEquals(Set.of(VkMemoryPropertyFlag.DEVICE_LOCAL), type.properties());
+		assertEquals(Set.of(VkMemoryProperty.DEVICE_LOCAL), type.properties());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, type.equals(type));
-		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(VkMemoryPropertyFlag.DEVICE_LOCAL))));
+		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(VkMemoryProperty.DEVICE_LOCAL))));
 		assertEquals(false, type.equals(null));
 		assertEquals(false, type.equals(new MemoryType(0, heap, Set.of())));
 	}
@@ -69,7 +69,7 @@ public class MemoryTypeTest {
 		// Create memory type
 		final var info = new VkMemoryType();
 		info.heapIndex = 0;
-		info.propertyFlags = IntegerEnumeration.mask(VkMemoryPropertyFlag.DEVICE_LOCAL);
+		info.propertyFlags = IntegerEnumeration.mask(VkMemoryProperty.DEVICE_LOCAL);
 
 		// Create memory properties
 		final var props = new VkPhysicalDeviceMemoryProperties();

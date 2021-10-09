@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -100,6 +101,15 @@ public class Vertex implements Bufferable {
 		 */
 		public static Layout of(int size) {
 			return new Layout(size, Float.BYTES, Float.class);
+		}
+
+		/**
+		 * Helper - Calculates the total <i>stride</i> of the given vertex layout, i.e. the sum of the {@link Layout#length()}
+		 * @param layout Vertex layout
+		 * @return Stride
+		 */
+		public static int stride(Collection<Layout> layout) {
+			return layout.stream().mapToInt(Vertex.Layout::length).sum();
 		}
 
 		/**

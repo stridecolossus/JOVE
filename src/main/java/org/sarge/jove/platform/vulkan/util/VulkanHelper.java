@@ -35,12 +35,25 @@ public final class VulkanHelper {
 	}
 
 	/**
-	 * Allocate a new byte buffer.
+	 * Allocate a new direct byte buffer.
 	 * @param len Buffer length
 	 * @return New byte buffer
 	 */
 	public static ByteBuffer buffer(int len) {
 		return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
+	}
+
+	/**
+	 * Allocate and populate a new direct byte buffer.
+	 * @param bytes Bytes
+	 * @return New byte buffer
+	 */
+	public static ByteBuffer buffer(byte[] bytes) {
+		final ByteBuffer bb = buffer(bytes.length);
+		for(byte b : bytes) {
+			bb.put(b);
+		}
+		return bb;
 	}
 
 	/**
