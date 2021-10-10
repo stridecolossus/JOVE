@@ -64,7 +64,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		final DeviceMemory mem = allocator.allocate(reqs, props);
 
 		// Bind memory
-		check(lib.vkBindBufferMemory(dev, handle.getValue(), mem.handle(), 0L));
+		check(lib.vkBindBufferMemory(dev, handle.getValue(), mem, 0L));
 
 		// Create buffer
 		return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem, len);

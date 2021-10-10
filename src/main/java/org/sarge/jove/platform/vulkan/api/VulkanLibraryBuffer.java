@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.api;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
 import org.sarge.jove.platform.vulkan.VkIndexType;
@@ -9,6 +8,7 @@ import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -53,7 +53,7 @@ interface VulkanLibraryBuffer {
 	 * @param memoryOffset		Offset
 	 * @return Result code
 	 */
-	int vkBindBufferMemory(LogicalDevice device, Pointer buffer, Handle memory, long memoryOffset);
+	int vkBindBufferMemory(LogicalDevice device, Pointer buffer, DeviceMemory memory, long memoryOffset);
 
 	/**
 	 * Binds a vertex buffer.

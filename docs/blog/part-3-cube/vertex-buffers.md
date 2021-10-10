@@ -169,7 +169,7 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 }
 ```
 
-A vertex position is implemented as a point in 3D space:
+A vertex position is a point in 3D space:
 
 ```java
 public final class Point extends Tuple {
@@ -286,6 +286,8 @@ protected void release() {
 }
 ```
 
+### Buffer Creation
+
 Creating a Vulkan buffer is comprised of the following steps:
 
 1. Instantiate the buffer.
@@ -299,7 +301,7 @@ Creating a Vulkan buffer is comprised of the following steps:
 Instantiating the buffer follows the usual pattern of populating a descriptor and invoking the API:
 
 ```java
-public static VulkanBuffer create(LogicalDevice dev, long len, MemoryProperties<VkBufferUsage> props) {
+public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsage> props) {
     // Build buffer descriptor
     final var info = new VkBufferCreateInfo();
     info.usage = IntegerEnumeration.mask(props.usage());
@@ -315,18 +317,23 @@ public static VulkanBuffer create(LogicalDevice dev, long len, MemoryProperties<
 }
 ```
 
-Then the underlying device memory is allocated and bound to the new buffer:
+Next we retrieve the memory requirements for the vertex buffer:
 
 ```java
-// Query memory requirements
 final var reqs = new VkMemoryRequirements();
 lib.vkGetBufferMemoryRequirements(dev, handle.getValue(), reqs);
+```
 
-// Allocate buffer memory
-final DeviceMemory mem = dev.allocate(reqs, props);
+Which are passed to the allocation service with the specified memory properties:
 
-// Bind memory
-check(lib.vkBindBufferMemory(dev, handle.getValue(), mem.handle(), 0L));
+```java
+final DeviceMemory mem = allocator.allocate(reqs, props);
+```
+
+The allocated memory is then bound to the buffer:
+
+```java
+check(lib.vkBindBufferMemory(dev, handle.getValue(), mem, 0L));
 ```
 
 And finally we create the vertex buffer domain object:
@@ -516,21 +523,9 @@ private static final Bufferable TRIANGLE = new Bufferable() {
 };
 ```
 
-And add to a new configuration class:
+### Staging Buffer
 
-```java
-@Configuration
-public class VertexBufferConfiguration {
-    private static final Bufferable TRIANGLE = ... {
-    };
-    
-    @Autowired private LogicalDevice dev;
-}
-```
-
-### Vertex Buffers
-
-We next implement a helper on the VBO class to create the staging buffer.
+We next implement a helper on the VBO class to create a staging buffer.
 
 The memory properties define a buffer that is used as the source of a copy operation and is visible to the host (i.e. the application):
 
@@ -563,34 +558,54 @@ final ByteBuffer bb = buffer.memory().map().buffer();
 data.buffer(bb);
 ```
 
-The new helper is used to create the staging buffer bean:
+### Configuration
+
+We start a new configuration class for the vertex buffer and triangle data:
 
 ```java
-@Bean
-public VulkanBuffer staging() {
-    return VulkanBuffer.staging(dev, TRIANGLE);
+@Configuration
+public class VertexBufferConfiguration {
+    private static final Bufferable TRIANGLE = ...
+
+    @Bean
+    public static VulkanBuffer vbo(LogicalDevice dev, AllocationService allocator, Pool pool) {
+        ...
+    }
 }
 ```
 
-The device-local VBO is created similarly:
+In the bean method we use the new helper to create the staging buffer:
 
 ```java
-@Bean
-public VulkanBuffer vbo() {
-    final MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
-            .usage(VkBufferUsage.TRANSFER_DST)
-            .usage(VkBufferUsage.VERTEX_BUFFER)
-            .required(VkMemoryPropertyFlag.DEVICE_LOCAL)
-            .build();
-
-    return VulkanBuffer.create(dev, TRIANGLE.length(), props);
-}
+VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, TRIANGLE);
 ```
 
-### Copy Operation
+And similarly for the vertex buffer:
 
-TODO
+```java
+MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
+    .usage(VkBufferUsage.TRANSFER_DST)
+    .usage(VkBufferUsage.VERTEX_BUFFER)
+    .required(VkMemoryProperty.DEVICE_LOCAL)
+    .build();
 
+VulkanBuffer vbo = VulkanBuffer.create(dev, allocator, staging.length(), props);
+```
+
+We next submit the copy command and wait for it to complete:
+
+```java
+Command copy = staging.copy(vbo);
+Work.submit(copy, pool);
+pool.waitIdle();
+```
+
+And finally we release the staging buffer:
+
+```java
+staging.close();
+return vbo;
+```
 
 ### Vertex Shader
 
@@ -633,7 +648,7 @@ In this chapter we:
 
 - Created new domain objects and supporting framework code to define vertex data.
 
-- Implemented the vertex buffer object to transfer the data from the application to the hardware.
+- Implemented the VBO class to transfer the data from the application to the hardware.
 
 - Integrated the vertex input pipeline stage builder.
 
