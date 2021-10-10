@@ -120,9 +120,9 @@ public class PoolAllocatorTest {
 
 		@DisplayName("Allocated memory should also be destroyed when the pool is destroyed")
 		@Test
-		void destroy() {
+		void close() {
 			final DeviceMemory mem = allocator.allocate(type, SIZE);
-			pool.destroy();
+			pool.close();
 			verify(block).close();
 			assertEquals(0, pool.free());
 			assertEquals(0, pool.size());
@@ -294,8 +294,8 @@ public class PoolAllocatorTest {
 
 		@DisplayName("Destroying the allocator should destroy all memory")
 		@Test
-		void destroy() {
-			allocator.destroy();
+		void close() {
+			allocator.close();
 			assertEquals(0, allocator.count());
 			assertEquals(Map.of(type, pool), allocator.pools());
 			verify(block).close();

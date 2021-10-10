@@ -49,7 +49,7 @@ import org.sarge.jove.common.Handle;
  *  ...
  *
  *  // Cleanup
- *  allocator.destroy();
+ *  allocator.close();
  * </pre>
  * <p>
  * @see Allocator#paged(Allocator, long)
@@ -128,10 +128,11 @@ public class PoolAllocator implements Allocator {
 	/**
 	 * Destroys <b>all</b> memory allocation by this pool.
 	 */
-	public synchronized void destroy() {
-		pools.values().forEach(Pool::destroy);
+	public synchronized void close() {
+		pools.values().forEach(Pool::close);
 		count = 0;
 		assert size() == 0;
+		assert free() == 0;
 	}
 
 	@Override
@@ -403,7 +404,7 @@ public class PoolAllocator implements Allocator {
 		 * Releases <b>all</b> memory allocated back to this pool.
 		 */
 		public synchronized void release() {
-			final var allocations = allocations().collect(toList());
+			final var allocations = allocations().collect(toList());		// Copy to avoid concurrent modification
 			allocations.forEach(DeviceMemory::close);
 			assert free() == total;
 		}
@@ -411,7 +412,7 @@ public class PoolAllocator implements Allocator {
 		/**
 		 * Destroys <b>all</b> memory allocated by this pool.
 		 */
-		public synchronized void destroy() {
+		public synchronized void close() {
 			// Remove allocations count
 			count -= blocks.size();
 			assert count >= 0;

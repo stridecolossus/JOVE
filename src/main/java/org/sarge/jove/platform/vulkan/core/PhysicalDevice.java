@@ -254,6 +254,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @return Device limits
 		 */
 		public VkPhysicalDeviceLimits limits() {
+			// TODO - clone
 			return struct.limits;
 		}
 	}

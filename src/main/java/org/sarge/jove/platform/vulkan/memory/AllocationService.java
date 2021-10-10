@@ -9,10 +9,12 @@ import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
+import org.sarge.jove.platform.vulkan.memory.Allocator.PageAllocator;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -63,6 +65,26 @@ public class AllocationService {
 
 		// Create service
 		return new AllocationService(allocator, types);
+	}
+
+	/**
+	 * Helper - Creates and configures an allocation service implemented by a memory pool.
+	 * <p>
+	 * The memory allocator is configured as follows:
+	 * <ul>
+	 * <li>Device memory is served from a {@link PoolAllocator} limited to {@link VkPhysicalDeviceLimits#maxMemoryAllocationCount}</li>
+	 * <li>Memory blocks are allocated by a {@link PageAllocator} sized by {@link VkPhysicalDeviceLimits#bufferImageGranularity}</li>
+	 * </ul>
+	 * <p>
+	 * @param dev Logical device
+	 * @return New default allocation service
+	 */
+	public static AllocationService pool(LogicalDevice dev) {
+		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
+		final Allocator allocator = Allocator.allocator(dev);
+		final Allocator paged = new PageAllocator(allocator, limits.bufferImageGranularity);
+		final Allocator pool = new PoolAllocator(paged, limits.maxMemoryAllocationCount);
+		return create(dev, pool);
 	}
 
 	private final Allocator allocator;
