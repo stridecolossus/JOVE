@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
@@ -28,6 +29,7 @@ import org.sarge.jove.platform.vulkan.common.Command.Pool;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 
 class CommandTest extends AbstractVulkanTest {
@@ -42,11 +44,12 @@ class CommandTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void submit() {
+	void submitAndWait() {
 		final Pool pool = Pool.create(dev, queue);
 		cmd = spy(Command.class);
-		cmd.submit(pool);
+		cmd.submitAndWait(pool);
 		verify(cmd).execute(eq(lib), isA(Buffer.class));
+		assertEquals(0, pool.buffers().count());
 	}
 
 	@Nested
@@ -200,7 +203,8 @@ class CommandTest extends AbstractVulkanTest {
 			final Buffer buffer = pool.allocate();
 			pool.free();
 			assertEquals(0, pool.buffers().count());
-			verify(lib).vkFreeCommandBuffers(dev, pool, 1, new Buffer[]{buffer});
+			final Memory array = NativeObject.toArray(List.of(buffer));
+			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
 		}
 
 		@Test

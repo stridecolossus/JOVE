@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateFlag;
 import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
@@ -104,7 +105,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		// Check API
 		final Command.Buffer cb = mock(Command.Buffer.class);
 		bind.execute(lib, cb);
-		verify(lib).vkCmdBindDescriptorSets(cb, VkPipelineBindPoint.GRAPHICS, pipelineLayout, 0, 1, new DescriptorSet[]{descriptor}, 0, null);
+		verify(lib).vkCmdBindDescriptorSets(cb, VkPipelineBindPoint.GRAPHICS, pipelineLayout, 0, 1, NativeObject.toArray(List.of(descriptor)), 0, null);
 	}
 
 	@Nested
@@ -236,7 +237,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		void free() {
 			final var sets = pool.allocate(List.of(layout));
 			pool.free(sets);
-			verify(lib).vkFreeDescriptorSets(dev, pool, 1, sets.toArray(DescriptorSet[]::new));
+			verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.toArray(List.of(descriptor)));
 			assertEquals(1, pool.maximum());
 			assertEquals(1, pool.available());
 			assertEquals(0, pool.sets().count());

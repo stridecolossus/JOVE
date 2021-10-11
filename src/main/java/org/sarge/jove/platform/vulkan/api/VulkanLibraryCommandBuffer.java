@@ -57,7 +57,7 @@ interface VulkanLibraryCommandBuffer {
 	 * @param commandBufferCount	Number of buffers
 	 * @param pCommandBuffers		Buffer handles
 	 */
-	void vkFreeCommandBuffers(DeviceContext device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
+	void vkFreeCommandBuffers(DeviceContext device, Pool commandPool, int commandBufferCount, Pointer pCommandBuffers);
 
 	/**
 	 * Starts recording.

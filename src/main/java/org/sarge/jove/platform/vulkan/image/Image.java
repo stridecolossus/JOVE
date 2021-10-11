@@ -41,14 +41,6 @@ public interface Image extends NativeObject {
 	DeviceContext device();
 
 	/**
-	 * Creates a view for this image with default configuration.
-	 * @return New image view
-	 */
-	default View view() {
-		return new View.Builder().build(this);
-	}
-
-	/**
 	 * Default implementation managed by the application.
 	 */
 	class DefaultImage extends AbstractVulkanObject implements Image {

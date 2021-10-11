@@ -63,7 +63,7 @@ interface VulkanLibraryBuffer {
 	 * @param pBuffers			Buffer(s)
 	 * @param pOffsets			Buffer offset(s)
 	 */
-	void vkCmdBindVertexBuffers(Command.Buffer commandBuffer, int firstBinding, int bindingCount, VulkanBuffer[] pBuffers, long[] pOffsets);
+	void vkCmdBindVertexBuffers(Command.Buffer commandBuffer, int firstBinding, int bindingCount, Pointer pBuffers, long[] pOffsets);
 
 	/**
 	 * Binds an index buffer.

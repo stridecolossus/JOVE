@@ -498,8 +498,8 @@ The triangle vertices are specified as a simple array:
 ```java
 Vertex[] vertices = {
     new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-    new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
     new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
+    new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
 };
 ```
 
@@ -595,9 +595,10 @@ VulkanBuffer vbo = VulkanBuffer.create(dev, allocator, staging.length(), props);
 We next submit the copy command and wait for it to complete:
 
 ```java
-Command copy = staging.copy(vbo);
-Work.submit(copy, pool);
-pool.waitIdle();
+staging
+    .copy(vbo)
+    .submit(pool)
+    .waitIdle();
 ```
 
 And finally we release the staging buffer:

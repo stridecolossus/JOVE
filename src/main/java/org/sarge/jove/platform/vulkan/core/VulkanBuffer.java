@@ -6,11 +6,13 @@ import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -166,9 +168,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public Command bindVertexBuffer() {
 		require(VkBufferUsage.VERTEX_BUFFER);
-		// TODO - support binding multiple VBO
-//		final Handle array = Handle.toArray(List.of(this));
-		final VulkanBuffer[] array = new VulkanBuffer[]{this};
+		final Pointer array = NativeObject.toArray(List.of(this));
 		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
 	}
 

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
@@ -121,7 +123,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			final Command cmd = buffer.bindVertexBuffer();
 			assertNotNull(cmd);
 			cmd.execute(lib, cb);
-			verify(lib).vkCmdBindVertexBuffers(cb, 0, 1, new VulkanBuffer[]{buffer}, new long[]{0});
+			verify(lib).vkCmdBindVertexBuffers(cb, 0, 1, NativeObject.toArray(List.of(buffer)), new long[]{0});
 		}
 
 		@Test

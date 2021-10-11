@@ -46,10 +46,14 @@ public interface Command {
 	/**
 	 * Helper - Submits this as a <i>one time</i> command to the given pool and waits for completion.
 	 * @param pool Command pool
+	 * @return New command buffer
 	 * @see Work#submit(Command, Pool)
+	 * @see Pool#waitIdle()
 	 */
-	default void submit(Pool pool) {
-		Work.submit(this, pool);
+	default void submitAndWait(Pool pool) {
+		final Buffer buffer = Work.submit(this, pool);
+		pool.waitIdle();
+		buffer.free();
 	}
 
 	/**
@@ -311,7 +315,7 @@ public interface Command {
 		 */
 		private void free(Collection<Buffer> buffers) {
 			final DeviceContext dev = super.device();
-			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), buffers.toArray(Buffer[]::new));
+			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.toArray(buffers));
 		}
 
 		@Override

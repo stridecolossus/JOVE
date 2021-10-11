@@ -30,17 +30,34 @@ public class NativeObjectTest {
 		when(obj.handle()).thenReturn(new Handle(ptr));
 	}
 
-	@Test
-	void toArray() {
-		final Memory mem = NativeObject.toArray(List.of(obj, obj));
-		assertNotNull(mem);
-		assertEquals(Native.POINTER_SIZE * 2, mem.size());
-		verify(obj, times(2)).handle();
-	}
+	@Nested
+	class ArrayTests {
+		private Memory mem;
 
-	@Test
-	void toArrayEmpty() {
-		assertEquals(null, NativeObject.toArray(Set.of()));
+		@BeforeEach
+		void before() {
+			mem = NativeObject.toArray(List.of(obj, obj));
+		}
+
+		@Test
+		void array() {
+			assertNotNull(mem);
+			assertEquals(Native.POINTER_SIZE * 2, mem.size());
+			verify(obj, times(2)).handle();
+		}
+
+		@Test
+		void empty() {
+			assertEquals(null, NativeObject.toArray(Set.of()));
+		}
+
+		@Test
+		void equals() {
+			assertEquals(true, mem.equals(mem));
+			assertEquals(true, mem.equals(NativeObject.toArray(List.of(obj, obj))));
+			assertEquals(false, mem.equals(null));
+			assertEquals(false, mem.equals(NativeObject.toArray(List.of(obj))));
+		}
 	}
 
 	@Nested

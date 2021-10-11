@@ -103,7 +103,7 @@ public interface ImageData {
 				@Override
 				public Layout layout() {
 					final int num = result.getColorModel().getNumColorComponents();
-					return Layout.of(num, Byte.class);
+					return Layout.of(num == 1 ? 1 : 4, Byte.class);
 				}
 
 				@Override

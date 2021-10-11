@@ -343,7 +343,7 @@ public class DescriptorSet implements NativeObject {
 				layout,
 				0,					// First set
 				sets.size(),
-				sets.toArray(DescriptorSet[]::new),
+				NativeObject.toArray(sets),
 				0,					// Dynamic offset count
 				null				// Dynamic offsets
 		);
@@ -456,7 +456,7 @@ public class DescriptorSet implements NativeObject {
 
 			// Release sets
 			final DeviceContext dev = this.device();
-			check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), sets.toArray(DescriptorSet[]::new)));
+			check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.toArray(sets)));
 		}
 
 		/**

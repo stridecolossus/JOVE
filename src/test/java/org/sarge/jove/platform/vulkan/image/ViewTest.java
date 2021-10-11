@@ -87,11 +87,17 @@ public class ViewTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void destroy() {
+	void close() {
 		view.close();
 		verify(lib).vkDestroyImageView(dev, view, null);
 		verify(image).close();
 		verifyNoMoreInteractions(lib);
+	}
+
+	@Test
+	void of() {
+		when(image.device()).thenReturn(dev);
+		assertNotNull(View.of(image));
 	}
 
 	@Nested

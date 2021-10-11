@@ -10,7 +10,6 @@ import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
-import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Pool;
 
@@ -83,7 +82,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pDescriptorSets		Descriptor set handles
 	 * @return Result code
 	 */
-	int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, DescriptorSet[] pDescriptorSets);
+	int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, Pointer pDescriptorSets);
 
 	/**
 	 * Updates the resources for one-or-more descriptor sets.
@@ -106,5 +105,5 @@ interface VulkanLibraryDescriptorSet {
 	 * @param dynamicOffsetCount	Number of dynamic offsets
 	 * @param pDynamicOffsets		Dynamic offsets
 	 */
-	void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, DescriptorSet[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
+	void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, Pointer pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
 }

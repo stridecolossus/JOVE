@@ -1,5 +1,5 @@
 ---
-title: Textures and Descriptor Sets
+title: Textures
 ---
 
 ## Overview

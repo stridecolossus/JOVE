@@ -1,7 +1,6 @@
 package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * A <i>bufferable</i> is a data object that can be written to an NIO buffer.
@@ -9,34 +8,37 @@ import java.util.Arrays;
  */
 public interface Bufferable {
 	/**
+	 * @return Length of this object (bytes)
+	 */
+	int length();
+
+	/**
 	 * Writes this object to the given buffer.
 	 * @param buffer Buffer
 	 */
 	void buffer(ByteBuffer buffer);
 
 	/**
-	 * @return Length of this object (bytes)
+	 * Creates a bufferable wrapping the given array.
+	 * @param bytes Byte array
+	 * @return Bufferable wrapper
 	 */
-	int length();
-
-	/**
-	 * Creates a compound bufferable object.
-	 * @param objects Bufferable objects
-	 * @return Compound bufferable
-	 */
-	static Bufferable of(Bufferable... objects) {
-		final int len = Arrays.stream(objects).mapToInt(Bufferable::length).sum();
-
+	static Bufferable of(byte[] bytes) {
 		return new Bufferable() {
 			@Override
 			public int length() {
-				return len;
+				return bytes.length;
 			}
 
 			@Override
 			public void buffer(ByteBuffer buffer) {
-				for(Bufferable obj : objects) {
-					obj.buffer(buffer);
+				if(buffer.isDirect()) {
+					for(byte b : bytes) {
+						buffer.put(b);
+					}
+				}
+				else {
+					buffer.put(bytes);
 				}
 			}
 		};

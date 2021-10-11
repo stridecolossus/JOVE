@@ -38,6 +38,15 @@ public class View extends AbstractVulkanObject {
 		};
 	}
 
+	/**
+	 * Helper - Creates a view for the given image with default configuration.
+	 * @param image Image
+	 * @return New image view
+	 */
+	public static View of(Image image) {
+		return new Builder().build(image);
+	}
+
 	private final Image image;
 
 	private ClearValue clear = ClearValue.NONE;

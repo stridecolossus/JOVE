@@ -107,4 +107,12 @@ public class AllocationServiceTest extends AbstractVulkanTest {
 		// Create memory pool
 		assertNotNull(AllocationService.pool(dev));
 	}
+
+	@Test
+	void close() {
+		final PoolAllocator pool = mock(PoolAllocator.class);
+		service = new AllocationService(pool, List.of(type));
+		service.close();
+		verify(pool).close();
+	}
 }

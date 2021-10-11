@@ -185,7 +185,7 @@ public class PoolAllocator implements Allocator {
 		 */
 		private DeviceMemory allocate(long size) {
 			// Allocate from free space
-			final DeviceMemory alloc = new BlockDeviceMemory(size, free);
+			final DeviceMemory alloc = new BlockDeviceMemory(free, size);
 			allocations.add(alloc);
 
 			// Update free space pointer

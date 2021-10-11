@@ -402,7 +402,7 @@ public class Swapchain extends AbstractVulkanObject {
 					.stream(handles)
 					.map(Handle::new)
 					.map(image -> new SwapChainImage(image, dev, descriptor))
-					.map(Image::view)
+					.map(View::of)
 					.collect(toList());
 
 			// Init clear value

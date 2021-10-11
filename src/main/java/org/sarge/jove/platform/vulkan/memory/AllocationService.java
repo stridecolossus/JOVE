@@ -138,4 +138,13 @@ public class AllocationService {
 				.filter(type -> type.properties().containsAll(props))
 				.findAny();
 	}
+
+	/**
+	 * Closes this service and releases allocated memory.
+	 */
+	public void close() {
+		if(allocator instanceof PoolAllocator pool) {
+			pool.close();
+		}
+	}
 }

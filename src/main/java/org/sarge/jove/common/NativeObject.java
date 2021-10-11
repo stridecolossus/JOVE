@@ -1,5 +1,6 @@
 package org.sarge.jove.common;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import com.sun.jna.FromNativeContext;
@@ -31,19 +32,32 @@ public interface NativeObject {
 		}
 
 		// Convert to array
-		final Pointer[] array = objects
+		final Pointer[] pointers = objects
 				.stream()
 				.map(NativeObject::handle)
 				.map(Handle::toPointer)
 				.toArray(Pointer[]::new);
 
-		// Create contiguous memory block
-		final Memory mem = new Memory(Native.POINTER_SIZE * array.length);
-		for(int n = 0; n < array.length; ++n) {
-			mem.setPointer(n * Native.POINTER_SIZE, array[n]);
+		// Array of pointers as a contiguous memory block
+		class PointerArray extends Memory {
+			private final Pointer[] array;
+
+			PointerArray(Pointer[] array) {
+				super(Native.POINTER_SIZE * array.length);
+				this.array = array;
+				for(int n = 0; n < array.length; ++n) {
+					setPointer(n * Native.POINTER_SIZE, array[n]);
+				}
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				return (obj == this) || (obj instanceof PointerArray that) && Arrays.equals(this.array, that.array);
+			}
 		}
 
-		return mem;
+		// Create contiguous pointer array
+		return new PointerArray(pointers);
 	}
 
 	/**
