@@ -2,11 +2,9 @@ package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
 import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
@@ -29,24 +27,17 @@ public interface Coordinate extends Vertex.Component {
 	}
 
 	/**
-	 * @param size Number of texture coordinates (1..3)
-	 * @return Texture coordinate layout
-	 * @throws IllegalArgumentException if the given size is invalid
-	 */
-	static Layout layout(int size) {
-		Check.range(size, 1, 3);
-		return Coordinate1D.LAYOUTS[size - 1];
-	}
-
-	/**
 	 * One-dimensional texture coordinate.
 	 */
 	record Coordinate1D(float u) implements Coordinate {
-		private static final Layout[] LAYOUTS = IntStream.range(1, 4).mapToObj(Layout::of).toArray(Layout[]::new);
+		/**
+		 * Layout of a 1D texture coordinate.
+		 */
+		public static final Layout LAYOUT = Layout.of(1);
 
 		@Override
 		public Layout layout() {
-			return LAYOUTS[0];
+			return LAYOUT;
 		}
 
 		@Override
@@ -65,6 +56,11 @@ public interface Coordinate extends Vertex.Component {
 	 */
 	record Coordinate2D(float u, float v) implements Coordinate {
 		/**
+		 * Layout of a 2D texture coordinate.
+		 */
+		public static final Layout LAYOUT = Layout.of(2);
+
+		/**
 		 * Quad coordinates.
 		 */
 		public static final Coordinate2D
@@ -80,7 +76,7 @@ public interface Coordinate extends Vertex.Component {
 
 		@Override
 		public Layout layout() {
-			return Coordinate1D.LAYOUTS[1];
+			return LAYOUT;
 		}
 
 		@Override
@@ -97,6 +93,11 @@ public interface Coordinate extends Vertex.Component {
 	 * Three-dimensional texture coordinate.
 	 */
 	record Coordinate3D(float u, float v, float w) implements Coordinate {
+		/**
+		 * Layout of a 3D texture coordinate.
+		 */
+		public static final Layout LAYOUT = Layout.of(3);
+
 		@Override
 		public void buffer(ByteBuffer buffer) {
 			buffer.putFloat(u).putFloat(v).putFloat(w);
@@ -104,7 +105,7 @@ public interface Coordinate extends Vertex.Component {
 
 		@Override
 		public Layout layout() {
-			return Coordinate1D.LAYOUTS[2];
+			return LAYOUT;
 		}
 
 		@Override

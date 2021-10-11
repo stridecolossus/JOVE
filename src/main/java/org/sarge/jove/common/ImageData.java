@@ -61,9 +61,7 @@ public interface ImageData {
 			// Convert image
 			final BufferedImage result = switch(image.getType()) {
 				// Gray-scale
-				case BufferedImage.TYPE_BYTE_GRAY -> {
-					yield image;
-				}
+				case BufferedImage.TYPE_BYTE_GRAY -> image;
 
 				// RGB
 				case BufferedImage.TYPE_3BYTE_BGR, BufferedImage.TYPE_BYTE_INDEXED -> {
@@ -102,8 +100,8 @@ public interface ImageData {
 
 				@Override
 				public Layout layout() {
-					final int num = result.getColorModel().getNumColorComponents();
-					return Layout.of(num == 1 ? 1 : 4, Byte.class);
+					final int num = result.getColorModel().getNumComponents();
+					return new Layout(num, 1, Byte.class);
 				}
 
 				@Override

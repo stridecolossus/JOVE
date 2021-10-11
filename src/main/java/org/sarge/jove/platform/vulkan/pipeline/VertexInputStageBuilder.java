@@ -56,12 +56,12 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * <p>
 	 * @param layout Vertex layout
 	 */
-	public VertexInputStageBuilder binding(List<Layout> layout) {
+	public VertexInputStageBuilder add(List<Layout> layout) {
 		// Allocate next binding
 		final int index = bindings.size();
 
 		// Calculate vertex stride for this layout
-		final int stride = layout.stream().mapToInt(Layout::length).sum();
+		final int stride = Layout.stride(layout);
 
 		// Add binding
 		new BindingBuilder()
@@ -72,9 +72,9 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		// Add attribute for each layout component
 		int offset = 0;
 		int loc = 0;
-		for(Layout entry : layout) {
+		for(Layout attr : layout) {
 			// Determine component format
-			final VkFormat format = FormatBuilder.format(entry);
+			final VkFormat format = FormatBuilder.format(attr);
 
 			// Add attribute for component
 			new AttributeBuilder()
@@ -86,7 +86,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 
 			// Increment offset to the start of the next attribute
 			++loc;
-			offset += entry.length();
+			offset += attr.length();
 			// TODO - assumes contiguous => introduce offset (default 0)
 		}
 		assert offset == stride;

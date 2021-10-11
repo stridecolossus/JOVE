@@ -68,7 +68,7 @@ public class FormatBuilder {
 			return switch(type.getSimpleName().toLowerCase()) {
 				case "float"				-> Type.FLOAT;
 				case "int", "integer"		-> Type.INTEGER;
-				case "byte"					-> Type.RGB;
+				case "byte"					-> Type.NORMALIZED;
 				default -> throw new IllegalArgumentException("Unsupported component type: " + type);
 			};
 		}
@@ -85,11 +85,12 @@ public class FormatBuilder {
 	 * @param layout Vertex layout
 	 * @return Format for the given vertex layout
 	 */
-	public static VkFormat format(Vertex.Layout layout) {
+	public static VkFormat format(Vertex.Layout layout, boolean signed) {
 		return new FormatBuilder()
 				.count(layout.size())
 				.bytes(layout.bytes())
 				.type(Type.of(layout.type()))
+				.signed(signed)
 				.build();
 	}
 

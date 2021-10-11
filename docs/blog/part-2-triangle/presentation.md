@@ -251,7 +251,7 @@ Finally we add a new JNA library for images and views:
 
 ```java
 interface VulkanLibraryImage {
-    int vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
+    int  vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
     void vkDestroyImageView(LogicalDevice device, View imageView, Pointer pAllocator);
 ```
 

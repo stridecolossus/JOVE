@@ -35,8 +35,8 @@ public class ImageDataTest {
 		@SuppressWarnings("resource")
 		@ParameterizedTest
 		@CsvSource({
-			"duke.jpg, 375, 375, 3",
-			"duke.png, 375, 375, 3",
+			"duke.jpg, 375, 375, 4",
+			"duke.png, 375, 375, 4",
 			"heightmap.jpg, 256, 256, 1",
 		})
 		void load(String filename, int w, int h, int components) throws IOException {
@@ -53,9 +53,8 @@ public class ImageDataTest {
 			assertEquals(Layout.of(components, Byte.class), image.layout());
 
 			// Check image data
-			final int bytes = (components > 1) ? 4 : 1;
 			assertNotNull(image.bytes());
-			assertEquals(w * h * bytes, image.bytes().length);
+			assertEquals(w * h * components, image.bytes().length);
 		}
 
 		@Test

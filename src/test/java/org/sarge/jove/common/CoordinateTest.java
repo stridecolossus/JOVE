@@ -15,6 +15,7 @@ class CoordinateTest {
 		final Coordinate1D one = new Coordinate1D(1);
 		assertEquals(1, one.u());
 		assertEquals(Layout.of(1, Float.class), one.layout());
+		assertEquals(Layout.of(1, Float.class), Coordinate1D.LAYOUT);
 		assertEquals(1 * Float.BYTES, one.length());
 		assertEquals(true, one.equals(one));
 		assertEquals(true, one.equals(new Coordinate1D(1)));
@@ -28,6 +29,7 @@ class CoordinateTest {
 		assertEquals(1, two.u());
 		assertEquals(2, two.v());
 		assertEquals(Layout.of(2, Float.class), two.layout());
+		assertEquals(Layout.of(2, Float.class), Coordinate2D.LAYOUT);
 		assertEquals(2 * Float.BYTES, two.length());
 		assertEquals(true, two.equals(two));
 		assertEquals(true, two.equals(new Coordinate2D(1, 2)));
@@ -42,6 +44,7 @@ class CoordinateTest {
 		assertEquals(2, three.v());
 		assertEquals(3, three.w());
 		assertEquals(Layout.of(3, Float.class), three.layout());
+		assertEquals(Layout.of(3, Float.class), Coordinate3D.LAYOUT);
 		assertEquals(3 * Float.BYTES, three.length());
 		assertEquals(true, three.equals(three));
 		assertEquals(true, three.equals(new Coordinate3D(1, 2, 3)));
@@ -63,23 +66,10 @@ class CoordinateTest {
 	}
 
 	@Test
-	void coordinates() {
+	void quad() {
 		assertEquals(new Coordinate2D(0, 0), Coordinate2D.TOP_LEFT);
 		assertEquals(new Coordinate2D(0, 1), Coordinate2D.BOTTOM_LEFT);
 		assertEquals(new Coordinate2D(1, 0), Coordinate2D.TOP_RIGHT);
 		assertEquals(new Coordinate2D(1, 1), Coordinate2D.BOTTOM_RIGHT);
-	}
-
-	@Test
-	void layout() {
-		assertEquals(Layout.of(1), Coordinate.layout(1));
-		assertEquals(Layout.of(2), Coordinate.layout(2));
-		assertEquals(Layout.of(3), Coordinate.layout(3));
-	}
-
-	@Test
-	void layoutInvalidSize() {
-		assertThrows(IllegalArgumentException.class, () -> Coordinate.layout(0));
-		assertThrows(IllegalArgumentException.class, () -> Coordinate.layout(4));
 	}
 }

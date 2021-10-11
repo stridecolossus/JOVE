@@ -97,13 +97,9 @@ public interface Image extends NativeObject {
 	class Builder {
 		private ImageDescriptor descriptor;
 		private MemoryProperties<VkImageUsage> props;
-		private VkSampleCountFlag samples;
+		private VkSampleCountFlag samples = VkSampleCountFlag.COUNT_1;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
 		private VkImageLayout layout = VkImageLayout.UNDEFINED;
-
-		public Builder() {
-			samples(1);
-		}
 
 		/**
 		 * Sets the descriptor for this image.

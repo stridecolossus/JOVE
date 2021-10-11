@@ -558,7 +558,7 @@ final ByteBuffer bb = buffer.memory().map().buffer();
 data.buffer(bb);
 ```
 
-### Configuration
+### Vertex Buffers
 
 We start a new configuration class for the vertex buffer and triangle data:
 
@@ -597,8 +597,7 @@ We next submit the copy command and wait for it to complete:
 ```java
 staging
     .copy(vbo)
-    .submit(pool)
-    .waitIdle();
+    .submitAndWait(pool);
 ```
 
 And finally we release the staging buffer:
@@ -607,6 +606,82 @@ And finally we release the staging buffer:
 staging.close();
 return vbo;
 ```
+
+The `submitAndWait` method is a new helper on the command class:
+
+```java
+default void submitAndWait(Pool pool) {
+    final Buffer buffer = Work.submit(this, pool);
+    pool.waitIdle();
+    buffer.free();
+}
+```
+
+Which delegates to another factory that creates and submits a _one-time_ command:
+
+```java
+public static Buffer submit(Command cmd, Pool pool) {
+    // Allocate and record one-time command
+    final Buffer buffer = pool
+        .allocate()
+        .begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
+        .add(cmd)
+        .end();
+
+    // Submit work
+    final Work work = Work.of(buffer);
+    work.submit(null);
+
+    return buffer;
+}
+```
+
+### Configuration
+
+The VBO is bound to the render sequence:
+
+```java
+public Buffer sequence(...) {
+    Command draw = ...
+    return graphics
+        .allocate()
+        .begin()
+            .add(frame.begin())
+            .add(pipeline.bind())
+            .add(vbo.bindVertexBuffer())
+            .add(draw)
+            .add(FrameBuffer.END)
+        .end();
+}
+```
+
+And we configure the structure of the vertex data using the new pipeline stage builder:
+
+```java
+public Pipeline pipeline(...) {
+    return new Pipeline.Builder()
+        ...
+        .input()
+            .binding()
+                .index(0)
+                .stride(Point.LAYOUT.length() + Colour.LAYOUT.length())
+                .build()
+            .attribute()
+                .binding(0)
+                .location(0)
+                .format(VkFormat.R32G32B32_SFLOAT)
+                .offset(0)
+                .build()
+            .attribute()
+                .binding(0)
+                .location(1)
+                .format(VkFormat.R32G32B32A32_SFLOAT)
+                .offset(Point.LAYOUT.length())
+                .build()
+            .build()
+```
+
+There is a lot of mucking about and hard-coded data here that we will address in the next chapter.
 
 ### Vertex Shader
 

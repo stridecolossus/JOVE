@@ -150,7 +150,7 @@ public class ImageCopyCommand implements Command {
 			Check.notNull(layout);
 
 			// Populate descriptor
-			final VkBufferImageCopy copy = new VkBufferImageCopy();
+			final var copy = new VkBufferImageCopy();
 			copy.imageSubresource = SubResource.of(image.descriptor(), subresource).toLayers();
 			copy.imageExtent = image.descriptor().extents().toExtent3D();
 			copy.imageOffset = offset;
