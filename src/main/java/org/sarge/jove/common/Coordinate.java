@@ -3,7 +3,6 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.util.MathsUtil;
 
 /**

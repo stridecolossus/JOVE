@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.sarge.jove.common.Vertex.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.ResourceLoader;
@@ -127,7 +127,7 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 			catch(ClassNotFoundException e) {
 				throw new IOException("Unknown layout component type: " + name, e);
 			}
-			layout.add(new Layout(size, bytes, type));
+			layout.add(new Layout(size, type, bytes, true));
 		}
 
 		// Load data

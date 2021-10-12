@@ -185,7 +185,7 @@ We can now be fairly confident that the texture coordinates are being handled co
 
 ### Vertex Configuration Redux
 
-As noted above the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded of the vertex attribute format.  However we already have the necessary information represented by the layout of the vertex data, hence we add a new convenience helper to the pipeline stage builder.
+As noted above the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already have the necessary information represented by the layout of the vertex data, hence we add a new convenience helper to the pipeline stage builder.
 
 The new method first allocates the next available binding index:
 

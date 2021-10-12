@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Vertex.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.lib.util.Check;
 
 /**

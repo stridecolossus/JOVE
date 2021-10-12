@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Vertex.Builder;
 import org.sarge.jove.common.Vertex.Component;
-import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
@@ -28,57 +27,6 @@ public class VertexTest {
 			final Component component = spy(Component.class);
 			when(component.layout()).thenReturn(Layout.of(2));
 			assertEquals(2 * 4, component.length());
-		}
-	}
-
-	@Nested
-	class LayoutTests {
-		@Test
-		void floats() {
-			final Layout layout = Layout.of(2, Float.class);
-			assertEquals(2, layout.size());
-			assertEquals(Float.BYTES, layout.bytes());
-			assertEquals(Float.class, layout.type());
-			assertEquals(2 * 4, layout.length());
-		}
-
-		@Test
-		void integers() {
-			final Layout layout = Layout.of(2, Integer.class);
-			assertEquals(2, layout.size());
-			assertEquals(Integer.BYTES, layout.bytes());
-			assertEquals(Integer.class, layout.type());
-			assertEquals(2 * 4, layout.length());
-		}
-
-		@Test
-		void shorts() {
-			final Layout layout = Layout.of(2, Short.class);
-			assertEquals(2, layout.size());
-			assertEquals(Short.BYTES, layout.bytes());
-			assertEquals(Short.class, layout.type());
-			assertEquals(4, layout.length());
-		}
-
-		@Test
-		void bytes() {
-			final Layout layout = Layout.of(2, Byte.class);
-			assertEquals(2, layout.size());
-			assertEquals(Byte.BYTES, layout.bytes());
-			assertEquals(Byte.class, layout.type());
-			assertEquals(2, layout.length());
-		}
-
-		@Test
-		void of() {
-			final Layout layout = Layout.of(2, Float.class);
-			assertEquals(layout, Layout.of(2));
-		}
-
-		@Test
-		void stride() {
-			final int stride = Layout.stride(List.of(Layout.of(2), Layout.of(3)));
-			assertEquals((2 + 3) * Float.BYTES, stride);
 		}
 	}
 

@@ -8,7 +8,6 @@ import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
-import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.util.ResourceLoader;
 
 /**
@@ -101,7 +100,7 @@ public interface ImageData {
 				@Override
 				public Layout layout() {
 					final int num = result.getColorModel().getNumComponents();
-					return new Layout(num, 1, Byte.class);
+					return new Layout(num, Byte.class, false);
 				}
 
 				@Override

@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Vertex.Layout;
 
 class ColourTest {
 	private Colour col;
@@ -30,7 +29,7 @@ class ColourTest {
 
 	@Test
 	void layout() {
-		assertEquals(Layout.of(4, Float.class), col.layout());
+		assertEquals(Layout.of(4), col.layout());
 	}
 
 	@Test

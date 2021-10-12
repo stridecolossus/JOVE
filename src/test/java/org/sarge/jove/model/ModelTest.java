@@ -10,7 +10,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Vertex.Layout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.model.Model.Header;
 
@@ -20,7 +20,7 @@ class ModelTest {
 
 	@BeforeEach
 	void before() {
-		layout = Layout.of(2, Float.class);
+		layout = Layout.of(2);
 		header = new Header(List.of(layout), Primitive.TRIANGLES, 3, true);
 	}
 

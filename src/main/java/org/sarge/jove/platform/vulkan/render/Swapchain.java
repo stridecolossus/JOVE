@@ -50,10 +50,10 @@ public class Swapchain extends AbstractVulkanObject {
 	 * Default swapchain image format.
 	 */
 	public static final VkFormat DEFAULT_FORMAT = new FormatBuilder()
-			.template(FormatBuilder.BGRA)
+			.components("BGRA")
 			.bytes(1)
 			.signed(false)
-			.type(FormatBuilder.Type.NORMALIZED)
+			.type(FormatBuilder.Type.NORM)
 			.build();
 	// TODO - should be VkFormat.B8G8R8A8_SRGB; i.e. is it SRBG or UNORM?
 

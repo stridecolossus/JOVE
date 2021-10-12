@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Vertex;
-import org.sarge.jove.common.Vertex.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 
@@ -168,7 +168,7 @@ public class DefaultModel extends AbstractModel {
 		 * @return New model
 		 */
 		protected final DefaultModel build(List<Integer> index, int count) {
-			final List<Vertex.Layout> layout = vertices.isEmpty() ? List.of() : vertices.get(0).layout();
+			final List<Layout> layout = vertices.isEmpty() ? List.of() : vertices.get(0).layout();
 			return new DefaultModel(new Header(layout, primitive, count, clockwise), vertices, index);
 		}
 	}

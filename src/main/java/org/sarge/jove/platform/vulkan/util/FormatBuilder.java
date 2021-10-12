@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.common.Vertex;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
@@ -17,10 +17,10 @@ import org.sarge.lib.util.Check;
  * <pre>
  * // Construct a format: <code>B16G16R16A16_UNORM</code>
  * VkFormat format = new FormatBuilder()
- *      .template("BGRA")			// BGRA
+ *      .components("BGRA")			// BGRA
  *      .bytes(2)					// 16
  *      .signed(false)				// U
- *      .type(Type.NORMALIZED)		// NORM
+ *      .type(Type.NORM)			// NORM
  *      .build();
  *
  * // Determine format from a component layout: <code>R32G32B32_SFLOAT</code>
@@ -34,49 +34,33 @@ import org.sarge.lib.util.Check;
  */
 public class FormatBuilder {
 	/**
-	 * Default component layout.
+	 * Vulkan components template.
 	 */
 	public static final String RGBA = "RGBA";
-
-	/**
-	 * Reverse component layout.
-	 */
-	public static final String ARGB = "ARGB";
-
-	/**
-	 * Surface format components.
-	 */
-	public static final String BGRA = "BGRA";
 
 	/**
 	 * Component data-type.
 	 */
 	public enum Type {
-		INTEGER("INT"),
-		FLOAT("FLOAT"),
-		NORMALIZED("NORM"),
-		SCALED("SCALED"),
-		RGB("RGB");
+		INT,
+		FLOAT,
+		NORM,
+		SCALED,
+		RGB;
 
 		/**
-		 * Maps the given component type to the corresponding format type suffix.
-		 * @param type Component type
-		 * @return Format type
-		 * @throws IllegalArgumentException if the type is unsupported
+		 * Maps the given Java type to a Vulkan component type.
+		 * @param type Type
+		 * @return Vulkan type
+		 * @throws IllegalArgumentException if the type is not supported
 		 */
 		public static Type of(Class<?> type) {
 			return switch(type.getSimpleName().toLowerCase()) {
-				case "float"				-> Type.FLOAT;
-				case "int", "integer"		-> Type.INTEGER;
-				case "byte"					-> Type.NORMALIZED;
-				default -> throw new IllegalArgumentException("Unsupported component type: " + type);
+				case "float" -> FLOAT;
+				case "integer", "int", "short" -> INT;
+				case "byte" -> NORM;
+				default -> throw new IllegalArgumentException("Unsupported data type: " + type);
 			};
-		}
-
-		private final String token;
-
-		private Type(String token) {
-			this.token = token;
 		}
 	}
 
@@ -85,16 +69,16 @@ public class FormatBuilder {
 	 * @param layout Vertex layout
 	 * @return Format for the given vertex layout
 	 */
-	public static VkFormat format(Vertex.Layout layout, boolean signed) {
+	public static VkFormat format(Layout layout) {
 		return new FormatBuilder()
 				.count(layout.size())
 				.bytes(layout.bytes())
-				.type(Type.of(layout.type()))
-				.signed(signed)
+				.type(layout.type())
+				.signed(layout.signed())
 				.build();
 	}
 
-	private String template = RGBA;
+	private String components = RGBA;
 	private int count = 4;
 	private int bytes = 4;
 	private Type type = Type.FLOAT;
@@ -105,16 +89,19 @@ public class FormatBuilder {
 	 * @param template Colour component template string
 	 * @throws IllegalArgumentException if the given template is empty, contains an invalid character, or is longer than 4 components
 	 */
-	public FormatBuilder template(String template) {
-		Check.range(template.length(), 1, 4);
-		if(template.chars().anyMatch(ch -> RGBA.indexOf(ch) == -1)) throw new IllegalArgumentException("Invalid components specifier: " + template);
-		this.template = template;
+	public FormatBuilder components(String components) {
+		Check.range(components.length(), 1, 4);
+		if(components.chars().anyMatch(ch -> RGBA.indexOf(ch) == -1)) throw new IllegalArgumentException("Invalid components template: " + components);
+		this.components = components;
+		this.count = Math.min(count, components.length());
 		return this;
 	}
 
 	/**
 	 * Sets the number of components.
-	 * @param count Number of components 1..4
+	 * @param count Number of components
+	 * @throws IllegalArgumentException if the given count exceeds the components template
+	 * @see #components(String)
 	 */
 	public FormatBuilder count(int count) {
 		this.count = Check.range(count, 1, 4);
@@ -144,12 +131,21 @@ public class FormatBuilder {
 	}
 
 	/**
-	 * Sets the data type.
+	 * Sets the Vulkan data type.
 	 * @param type Data type (default is {@link Type#FLOAT})
-	 * @see Type#of(Class)
 	 */
 	public FormatBuilder type(Type type) {
 		this.type = notNull(type);
+		return this;
+	}
+
+	/**
+	 * Sets the data type.
+	 * @param type Data type
+	 * @see Type#of(Class)
+	 */
+	public FormatBuilder type(Class<?> type) {
+		this.type = Type.of(type);
 		return this;
 	}
 
@@ -160,21 +156,21 @@ public class FormatBuilder {
 	 */
 	public VkFormat build() {
 		// Validate format
-		if(count > template.length()) {
-			throw new IllegalArgumentException(String.format("Invalid components specification: components=%s length=%d", template, count));
+		if(count > components.length()) {
+			throw new IllegalArgumentException(String.format("Invalid components specification: components=%s length=%d", components, count));
 		}
 
 		// Build component layout
 		final StringBuilder layout = new StringBuilder();
 		final int size = bytes * Byte.SIZE;
 		for(int n = 0; n < count; ++n) {
-			layout.append(template.charAt(n));
+			layout.append(components.charAt(n));
 			layout.append(size);
 		}
 
 		// Build format string
 		final char ch = signed ? 'S' : 'U';
-		final String format = String.format("%s_%c%s", layout, ch, type.token);
+		final String format = String.format("%s_%c%s", layout, ch, type.name());
 
 		// Lookup format
 		return VkFormat.valueOf(format);

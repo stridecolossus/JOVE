@@ -7,15 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate1D;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Coordinate.Coordinate3D;
-import org.sarge.jove.common.Vertex.Layout;
 
 class CoordinateTest {
 	@Test
 	void one() {
 		final Coordinate1D one = new Coordinate1D(1);
 		assertEquals(1, one.u());
-		assertEquals(Layout.of(1, Float.class), one.layout());
-		assertEquals(Layout.of(1, Float.class), Coordinate1D.LAYOUT);
+		assertEquals(Layout.of(1), one.layout());
+		assertEquals(Layout.of(1), Coordinate1D.LAYOUT);
 		assertEquals(1 * Float.BYTES, one.length());
 		assertEquals(true, one.equals(one));
 		assertEquals(true, one.equals(new Coordinate1D(1)));
@@ -28,8 +27,8 @@ class CoordinateTest {
 		final Coordinate2D two = new Coordinate2D(1, 2);
 		assertEquals(1, two.u());
 		assertEquals(2, two.v());
-		assertEquals(Layout.of(2, Float.class), two.layout());
-		assertEquals(Layout.of(2, Float.class), Coordinate2D.LAYOUT);
+		assertEquals(Layout.of(2), two.layout());
+		assertEquals(Layout.of(2), Coordinate2D.LAYOUT);
 		assertEquals(2 * Float.BYTES, two.length());
 		assertEquals(true, two.equals(two));
 		assertEquals(true, two.equals(new Coordinate2D(1, 2)));
@@ -43,8 +42,8 @@ class CoordinateTest {
 		assertEquals(1, three.u());
 		assertEquals(2, three.v());
 		assertEquals(3, three.w());
-		assertEquals(Layout.of(3, Float.class), three.layout());
-		assertEquals(Layout.of(3, Float.class), Coordinate3D.LAYOUT);
+		assertEquals(Layout.of(3), three.layout());
+		assertEquals(Layout.of(3), Coordinate3D.LAYOUT);
 		assertEquals(3 * Float.BYTES, three.length());
 		assertEquals(true, three.equals(three));
 		assertEquals(true, three.equals(new Coordinate3D(1, 2, 3)));
