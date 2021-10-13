@@ -420,7 +420,6 @@ public class Swapchain ... {
     private final IntByReference index = new IntByReference();
     
     public int acquire(Semaphore semaphore, Fence fence) {
-        if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
         final DeviceContext dev = device();
         final VulkanLibrary lib = dev.library();
         check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));

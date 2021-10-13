@@ -441,42 +441,52 @@ interface VulkanLibraryRenderPass {
 
 ### Rendering Sequence
 
-In the demo application we add a new configuration class for the rendering sequence:
+In the demo application we modify the devices configuration class by replacing the two queues with command pools:
+
+```java
+class DeviceConfiguration {
+    private static Pool pool(LogicalDevice dev, Selector selector) {
+        final Queue queue = dev.queue(selector.family());
+        return Pool.create(dev, queue);
+    }
+    
+    @Bean
+    public Pool graphics(LogicalDevice dev) {
+        return pool(dev, graphics);
+    }
+    
+    @Bean
+    public Pool presentation(LogicalDevice dev) {
+        return pool(dev, presentation);
+    }
+}
+```
+
+Next we add a new configuration class for the rendering sequence based on the pseudo-code above:
 
 ```java
 @Configuration
 public class RenderConfiguration {
     @Bean
-    public static Pool pool(LogicalDevice dev, @Qualifier("presentation") Queue presentation) {
-        return Pool.create(dev, presentation);
+    public static Buffer sequence(FrameBuffer frame, Pipeline pipeline, Pool graphics) {
+        Command draw = ...
+        return graphics
+            .allocate()
+            .begin()
+                .add(frame.begin())
+                .add(pipeline.bind())
+                .add(draw)
+                .add(FrameBuffer.END)
+            .end();
     }
 }
 ```
 
-Note the use of `@Qualifier` which disambiguates the work queue to be injected by _name_ (since there are multiple queue instances).
-
-The following bean allocates a command buffer and records the rendering sequence (based on the pseudo-code from the introduction):
-
-```java
-@Bean
-public static Buffer sequence(Pool pool, FrameBuffer frame, Pipeline pipeline) {
-    Command draw = ...
-    return pool
-        .allocate()
-        .begin()
-            .add(frame.begin())
-            .add(pipeline.bind())
-            .add(draw)
-            .add(FrameBuffer.END)
-        .end();
-}
-```
-
-### Rendering
+Note that the bean for the injected command pool is disambiguated by _name_ (alternatively we could use an explicit `@Qualifier` annotation).
 
 To finally display the triangle we need to invoke presentation and rendering.
 
-We add the following bean which invokes a Spring `ApplicationRunner` once the container has been initialised:
+We add another bean which starts a Spring `ApplicationRunner` once the container has been initialised:
 
 ```java
 @Bean
@@ -489,13 +499,14 @@ Although we have a double-buffer swapchain and many of the components required t
 
 ```java
 // Start next frame
-final int index = swapchain.acquire(null, null);
+Semaphore semaphore = dev.semaphore();
+swapchain.acquire(null, null);
 
 // Render frame
 Work.of(render).submit(null);
 
 // Wait for frame
-final Pool pool = render.pool();
+Pool pool = render.pool();
 pool.waitIdle();
 
 // Present frame
@@ -505,9 +516,13 @@ swapchain.present(pool.queue(), Set.of());
 Thread.sleep(1000);
 ```
 
-Note we briefly block execution at the end of the lambda to have a chance of seeing the results (if there are any).
+Notes:
+
+* The `acquire` method will generate a Vulkan error since we are not providing any synchronisation parameters.
+
+* We briefly block execution at the end of the 'loop' so we have a chance of seeing the results (if there are any).
  
-Obviously this is temporary code just sufficient to test this first demo - we will be implementing a proper render loop in future chapters.
+* Obviously this is temporary code just sufficient to test this first demo - we will be implementing a proper render loop in future chapters.
 
 ### Conclusion
 
@@ -521,9 +536,9 @@ All that for a triangle?
 
 There are a couple of gotchas that could result in staring at a blank screen:
 
-- The triangle vertices in the vertex shader are ordered counter-clockwise which _should_ be the default winding order - although not covered in this part of the demo the _rasterizer_ pipeline stage may need to be configured explicitly (or culling switched off altogether).
+* The triangle vertices in the vertex shader are ordered counter-clockwise which _should_ be the default winding order - although not covered in this part of the demo the _rasterizer_ pipeline stage may need to be configured explicitly (or culling switched off altogether).
 
-- The arguments for the hard-coded drawing command are all integers and can easily be accidentally transposed.
+* The arguments for the hard-coded drawing command are all integers and can easily be accidentally transposed.
 
 ---
 
