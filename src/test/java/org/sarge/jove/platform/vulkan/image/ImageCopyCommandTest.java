@@ -48,7 +48,6 @@ public class ImageCopyCommandTest {
 
 		// Create copy command builder
 		builder = new ImageCopyCommand.Builder();
-		builder.subresource(SubResource.of(descriptor));
 
 		// Create command buffer
 		cb = mock(Command.Buffer.class);

@@ -487,10 +487,8 @@ We introduce the following helper class that is used to specify the various comp
 ```java
 public class FormatBuilder {
     public static final String RGBA = "RGBA";
-    public static final String ARGB = "ARGB";
-    public static final String BGRA = "BGRA";
 
-    private String template = RGBA;
+    private String components = RGBA;
     private int count = 4;
     private int bytes = 4;
     private Type type = Type.FLOAT;
@@ -502,11 +500,11 @@ The `Type` field is an enumeration of the Vulkan component types:
 
 ```java
 public enum Type {
-    INTEGER("INT"),
-    FLOAT("FLOAT"),
-    NORMALIZED("NORM"),
-    SCALED("SCALED"),
-    RGB("RGB");
+    INT,
+    FLOAT,
+    NORM,
+    SCALED,
+    RGB
 }
 ```
 
@@ -524,7 +522,7 @@ public VkFormat build() {
 
     // Build format string
     final char ch = signed ? 'S' : 'U';
-    final String format = String.format("%s_%c%s", layout, ch, type.token);
+    final String format = String.format("%s_%c%s", layout, ch, type.name());
 
     // Lookup format
     return VkFormat.valueOf(format);
@@ -535,10 +533,10 @@ We can now refactor the demo to build the format rather than having to find it i
 
 ```java
 VkFormat format = new FormatBuilder()
-    .template(FormatBuilder.BGRA)
+    .template("BGRA")
     .bytes(1)
     .signed(false)
-    .type(FormatBuilder.Type.NORMALIZED)
+    .type(FormatBuilder.Type.NORM)
     .build();
 ```
 

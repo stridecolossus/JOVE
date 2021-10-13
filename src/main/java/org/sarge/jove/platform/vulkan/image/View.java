@@ -8,7 +8,6 @@ import org.sarge.jove.common.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -26,25 +25,12 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class View extends AbstractVulkanObject {
 	/**
-	 * Helper - Maps an image type to the corresponding view type.
-	 * @param type Image type
-	 * @return View type
-	 */
-	static VkImageViewType type(VkImageType type) {
-		return switch(type) {
-			case IMAGE_TYPE_1D -> VkImageViewType.VIEW_TYPE_1D;
-			case IMAGE_TYPE_2D -> VkImageViewType.VIEW_TYPE_2D;
-			case IMAGE_TYPE_3D -> VkImageViewType.VIEW_TYPE_3D;
-		};
-	}
-
-	/**
 	 * Helper - Creates a view for the given image with default configuration.
 	 * @param image Image
 	 * @return New image view
 	 */
 	public static View of(Image image) {
-		return new Builder().build(image);
+		return new Builder(image).build();
 	}
 
 	private final Image image;
@@ -151,9 +137,33 @@ public class View extends AbstractVulkanObject {
 			return mapping;
 		}
 
+		/**
+		 * Helper - Maps an image type to the corresponding view type.
+		 * @param type Image type
+		 * @return View type
+		 */
+		private static VkImageViewType type(Image image) {
+			return switch(image.descriptor().type()) {
+				case IMAGE_TYPE_1D -> VkImageViewType.VIEW_TYPE_1D;
+				case IMAGE_TYPE_2D -> VkImageViewType.VIEW_TYPE_2D;
+				case IMAGE_TYPE_3D -> VkImageViewType.VIEW_TYPE_3D;
+			};
+		}
+
+		private final Image image;
 		private VkImageViewType type;
 		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
 		private SubResource subresource;
+
+		/**
+		 * Constructor.
+		 * @param image Image
+		 */
+		public Builder(Image image) {
+			this.image = notNull(image);
+			this.type = type(image);
+			this.subresource = image.descriptor();
+		}
 
 		/**
 		 * Sets the view type of this image.
@@ -187,19 +197,14 @@ public class View extends AbstractVulkanObject {
 		 * Constructs this image view.
 		 * @return New image view
 		 */
-		public View build(Image image) {
-			// Init view type if not explicitly specified
-			if(type == null) {
-				type = View.type(image.descriptor().type());
-			}
-
+		public View build() {
 			// Build view descriptor
 			final VkImageViewCreateInfo info = new VkImageViewCreateInfo();
 			info.viewType = type;
 			info.format = image.descriptor().format();
 			info.image = image.handle();
 			info.components = mapping;
-			info.subresourceRange = SubResource.of(image.descriptor(), subresource).toRange();
+			info.subresourceRange = SubResource.toRange(subresource);
 
 			// Allocate image view
 			final DeviceContext dev = image.device();

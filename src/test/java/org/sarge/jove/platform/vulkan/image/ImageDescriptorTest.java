@@ -33,8 +33,10 @@ public class ImageDescriptorTest extends AbstractVulkanTest {
 		assertEquals(FORMAT, descriptor.format());
 		assertEquals(EXTENTS, descriptor.extents());
 		assertEquals(ASPECTS, descriptor.aspects());
-		assertEquals(2, descriptor.levels());
-		assertEquals(3, descriptor.layers());
+		assertEquals(0, descriptor.mipLevel());
+		assertEquals(2, descriptor.levelCount());
+		assertEquals(0, descriptor.baseArrayLayer());
+		assertEquals(3, descriptor.layerCount());
 	}
 
 	@DisplayName("Image must have at least one aspect")

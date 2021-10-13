@@ -19,7 +19,6 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
@@ -80,13 +79,6 @@ public class ViewTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void type() {
-		assertEquals(VkImageViewType.VIEW_TYPE_1D, View.type(VkImageType.IMAGE_TYPE_1D));
-		assertEquals(VkImageViewType.VIEW_TYPE_2D, View.type(VkImageType.IMAGE_TYPE_2D));
-		assertEquals(VkImageViewType.VIEW_TYPE_3D, View.type(VkImageType.IMAGE_TYPE_3D));
-	}
-
-	@Test
 	void close() {
 		view.close();
 		verify(lib).vkDestroyImageView(dev, view, null);
@@ -107,13 +99,13 @@ public class ViewTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			when(image.device()).thenReturn(dev);
-			builder = new View.Builder();
+			builder = new View.Builder(image);
 		}
 
 		@Test
 		void build() {
 			// Build view
-			view = builder.build(image);
+			view = builder.build();
 
 			// Check view
 			assertNotNull(view);

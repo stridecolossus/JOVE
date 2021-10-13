@@ -10,11 +10,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.image.SubResource.Builder;
+import org.sarge.jove.platform.vulkan.VkImageSubresourceLayers;
+import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class SubResourceTest {
 	private ImageDescriptor descriptor;
+	private SubResource res;
 
 	@BeforeEach
 	void before() {
@@ -22,90 +24,90 @@ public class SubResourceTest {
 				.aspect(VkImageAspect.DEPTH)
 				.aspect(VkImageAspect.STENCIL)
 				.format(AbstractVulkanTest.FORMAT)
-				.extents(new ImageExtents(4, 5))
-				.mipLevels(2)
-				.arrayLayers(3)
+				.mipLevels(3)
+				.arrayLayers(4)
+				.extents(new ImageExtents(5, 6))
+				.build();
+
+		res = new SubResource.Builder(descriptor)
+				.aspect(VkImageAspect.DEPTH)
+				.levelCount(2)
+				.mipLevel(1)
+				.layerCount(3)
+				.baseArrayLayer(2)
 				.build();
 	}
 
 	@Test
 	void constructor() {
-		final SubResource res = new SubResource(Set.of(VkImageAspect.DEPTH), 0, 1, 1, 2);
-		assertEquals(Set.of(VkImageAspect.DEPTH), res.mask());
-		assertEquals(0, res.mipLevel());
-		assertEquals(1, res.levelCount());
-		assertEquals(1, res.baseArrayLayer());
-		assertEquals(2, res.layerCount());
-	}
-
-	@Test
-	void constructorInvalidAspect() {
-		assertThrows(IllegalArgumentException.class, () -> new SubResource(Set.of(VkImageAspect.COLOR), 0, 1, 0, 1));
-	}
-
-	@Test
-	void constructorInvalidMipLevels() {
-		assertThrows(IllegalArgumentException.class, () -> new SubResource(Set.of(VkImageAspect.DEPTH), 0, 3, 0, 1));
-	}
-
-	@Test
-	void constructorInvalidArrayLayers() {
-		assertThrows(IllegalArgumentException.class, () -> new SubResource(Set.of(VkImageAspect.DEPTH), 0, 1, 0, 4));
-	}
-
-	@Test
-	void of() {
-		final SubResource res = SubResource.of(descriptor);
-		assertEquals(Set.of(VkImageAspect.DEPTH, VkImageAspect.STENCIL), res.mask());
-		assertEquals(0, res.mipLevel());
+		assertNotNull(res);
+		assertEquals(Set.of(VkImageAspect.DEPTH), res.aspects());
+		assertEquals(1, res.mipLevel());
 		assertEquals(2, res.levelCount());
-		assertEquals(0, res.baseArrayLayer());
+		assertEquals(2, res.baseArrayLayer());
 		assertEquals(3, res.layerCount());
 	}
 
 	@Test
-	void ofResource() {
-		final SubResource res = SubResource.of(descriptor);
-		assertEquals(res, SubResource.of(descriptor, null));
-		assertEquals(res, SubResource.of(descriptor, res));
+	void toLayers() {
+		final VkImageSubresourceLayers layers = SubResource.toLayers(res);
+		assertNotNull(layers);
+		assertEquals(VkImageAspect.DEPTH.value(), layers.aspectMask);
+		assertEquals(1, layers.mipLevel);
+		assertEquals(2, layers.baseArrayLayer);
+		assertEquals(3, layers.layerCount);
 	}
 
 	@Test
-	void ofResourceInvalid() {
-		final ImageDescriptor other = new ImageDescriptor.Builder()
-				.aspect(VkImageAspect.COLOR)
-				.format(AbstractVulkanTest.FORMAT)
-				.extents(new ImageExtents(4, 5))
-				.build();
-
-		assertThrows(IllegalStateException.class, () -> SubResource.of(other, SubResource.of(descriptor)));
-	}
-
-	@Test
-	void equals() {
-		final SubResource res = SubResource.of(descriptor);
-		assertEquals(true, res.equals(res));
-		assertEquals(false, res.equals(null));
+	void toRange() {
+		final VkImageSubresourceRange range = SubResource.toRange(res);
+		assertNotNull(range);
+		assertEquals(VkImageAspect.DEPTH.value(), range.aspectMask);
+		assertEquals(1, range.baseMipLevel);
+		assertEquals(2, range.levelCount);
+		assertEquals(2, range.baseArrayLayer);
+		assertEquals(3, range.layerCount);
 	}
 
 	@Nested
 	class BuilderTests {
-		private Builder builder;
+		private SubResource.Builder builder;
 
 		@BeforeEach
 		void before() {
-			builder = new Builder();
+			builder = new SubResource.Builder(descriptor);
 		}
 
 		@Test
-		void build() {
-			final SubResource res = builder.build();
-			assertNotNull(res);
-			assertEquals(Set.of(VkImageAspect.DEPTH, VkImageAspect.STENCIL), res.mask());
-			assertEquals(0, res.mipLevel());
-			assertEquals(2, res.levelCount());
-			assertEquals(0, res.baseArrayLayer());
-			assertEquals(3, res.layerCount());
+		void buildEmptyAspectMask() {
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void buildInvalidAspect() {
+			assertThrows(IllegalArgumentException.class, () -> builder.aspect(VkImageAspect.COLOR));
+		}
+
+		@Test
+		void buildInvalidLevel() {
+			assertThrows(IllegalArgumentException.class, () -> builder.mipLevel(2));
+		}
+
+		@Test
+		void buildInvalidLevelCount() {
+			assertThrows(IllegalArgumentException.class, () -> builder.levelCount(0));
+			assertThrows(IllegalArgumentException.class, () -> builder.levelCount(4));
+		}
+
+		@Test
+		void buildInvalidLayer() {
+			assertThrows(IllegalArgumentException.class, () -> builder.baseArrayLayer(3));
+		}
+
+		@Test
+		void buildInvalidLayerCount() {
+			assertThrows(IllegalArgumentException.class, () -> builder.layerCount(0));
+			assertThrows(IllegalArgumentException.class, () -> builder.layerCount(5));
 		}
 	}
 }

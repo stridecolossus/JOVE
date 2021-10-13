@@ -24,7 +24,6 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.ImageExtents;
-import org.sarge.jove.platform.vulkan.image.SubResource;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class BarrierTest {
@@ -93,7 +92,6 @@ public class BarrierTest {
 						.newLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
 						.source(VkAccess.MEMORY_READ)
 						.destination(VkAccess.TRANSFER_WRITE)
-						.subresource(SubResource.of(descriptor))
 						.build()
 					.build();
 

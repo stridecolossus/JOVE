@@ -86,7 +86,7 @@ public interface Component extends Bufferable {
 Which is a simple record type specifying the type and number of the elements that make up that component:
 
 ```java
-public record Layout(int size, int bytes, Class<?> type) {
+public record Layout(int size, Class<?> type, int bytes, boolean signed) {
     public int length() {
         return size * bytes;
     }
@@ -96,7 +96,15 @@ public record Layout(int size, int bytes, Class<?> type) {
 For example a point or vector is comprised of three floating-point values:
 
 ```java
-new Layout(3, Float.BYTES, Float.class);
+new Layout(3, Float.class, Float.BYTES, true);
+```
+
+We also provide a convenience over-loaded constructor and factory method for the most common case of a floating-point layout:
+
+```java
+public static Layout of(int size) {
+    return new Layout(size, Float.class, true);
+}
 ```
 
 Finally a compound vertex can be written to an NIO buffer:
@@ -611,7 +619,7 @@ The `submitAndWait` method is a new helper on the command class:
 
 ```java
 default void submitAndWait(Pool pool) {
-    final Buffer buffer = Work.submit(this, pool);
+    Buffer buffer = Work.submit(this, pool);
     pool.waitIdle();
     buffer.free();
 }

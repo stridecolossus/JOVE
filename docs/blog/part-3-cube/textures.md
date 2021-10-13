@@ -249,7 +249,18 @@ Notes:
 
 * The loop calculates the cumulative _offset_ of each attribute within a vertex.
 
-* We utilise the `FormatBuilder` to determine the attribute formats.
+We also added convenience factory method to the `FormatBuilder` to determine the format of each attribute from its layout:
+
+```java
+public static VkFormat format(Layout layout) {
+    return new FormatBuilder()
+        .count(layout.size())
+        .bytes(layout.bytes())
+        .type(layout.type())
+        .signed(layout.signed())
+        .build();
+}
+```
 
 We can now replace the configuration for the vertex data in the pipeline with the following considerably simpler code:
 
@@ -394,7 +405,7 @@ return new ImageData() {
     @Override
     public Layout layout() {
         int num = result.getColorModel().getNumComponents();
-        return new Layout(num, 1, Byte.class);
+        return new Layout(num, Byte.class, false);
     }
 
     @Override
@@ -743,7 +754,7 @@ public class Barrier implements Command {
 
 Notes:
 
-* The _src_ and _dest_ members specify how the image is used before/after the barrier transition.
+* The _src_ and _dest_ members specify at what stage(s) in the pipeline the transition should occur.
 
 * For the demo we only require a partial implementation to support image transitions (the other arguments are initialised to zero or `null` in the API call).
 
@@ -825,18 +836,12 @@ ImageData image = loader.load(new FileInputStream("./src/main/resources/thiswayu
 From which we can determine the appropriate Vulkan format:
 
 ```java
-VkFormat format = FormatBuilder
-
-() // R8G8B8A8_UNORM
-    .bytes(1)
-    .type(FormatBuilder.Type.NORMALIZED)
-    .signed(false)
-    .build();
+VkFormat format = FormatBuilder.format(image.layout());
 ```
 
 The image is a `TYPE_3BYTE_BGR` buffered image which maps to the `R8G8B8A8_UNORM` format.
 
-Next we create a texture configured according to the image:
+Next we create a texture suitably configured for the image:
 
 ```java
 // Create descriptor
@@ -916,7 +921,7 @@ staging.close();
 return View.of(texture);
 ```
 
-This code is still quite imperative and long-winded but relatively straight-forward.  We could make more use of dependency injection but most of the objects we create are not required outside of this class.
+This code is still quite long-winded but at least is relatively straight-forward.  We could make more use of dependency injection, but most of the objects we create are not required outside of this class.
 
 ---
 
