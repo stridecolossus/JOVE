@@ -29,7 +29,7 @@ public interface Transform {
 	 * TODO - billboard
 	 * TODO - factor out flip by axis
 	 */
-	Transform BILLBOARD = Matrix4.rotation(Vector.Y, MathsUtil.PI);
+	Transform BILLBOARD = Matrix.rotation(Vector.Y, MathsUtil.PI);
 
 	/**
 	 * Creates a compound transform.
@@ -37,7 +37,7 @@ public interface Transform {
 	 * @return Compound transform
 	 */
 	static Transform of(List<Transform> transforms) {
-		record Compound(List<Transform> list) implements Transform {
+		record Compound(List<Transform> list) implements Transform { // TODO - record ???
 			@Override
 			public boolean isDirty() {
 				return list.stream().anyMatch(Transform::isDirty);
@@ -45,7 +45,7 @@ public interface Transform {
 
 			@Override
 			public Matrix matrix() {
-				return list.stream().map(Transform::matrix).reduce(Matrix4.IDENTITY, Matrix::multiply);
+				return list.stream().map(Transform::matrix).reduce(Matrix.IDENTITY, Matrix::multiply);
 			}
 		}
 

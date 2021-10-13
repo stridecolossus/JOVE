@@ -2,7 +2,6 @@ package org.sarge.jove.scene;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.geometry.Matrix4;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -47,8 +46,7 @@ public interface Projection {
 			@Override
 			public Matrix matrix(float near, float far, Dimensions dim) {
 				final float f = 1 / height;
-				return Matrix4
-						.builder()
+				return new Matrix.Builder()
 						.set(0, 0, f / dim.ratio())
 						.set(1, 1, -f)
 						.set(2, 2, far / (near - far))
@@ -82,8 +80,7 @@ public interface Projection {
 			final float bottom = dim.height();
 
 			// Build projection matrix
-			return Matrix4
-					.builder()
+			return new Matrix.Builder()
 					.identity()
 					.set(0, 0, 2f / (right - left))
 					.set(1, 1, 2f / (top - bottom))

@@ -542,8 +542,8 @@ public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
     // Init memory properties
     final var props = new MemoryProperties.Builder<VkBufferUsage>()
         .usage(VkBufferUsage.TRANSFER_SRC)
-        .required(VkMemoryPropertyFlag.HOST_VISIBLE)
-        .required(VkMemoryPropertyFlag.HOST_COHERENT)
+        .required(VkMemoryProperty.HOST_VISIBLE)
+        .required(VkMemoryProperty.HOST_COHERENT)
         .build();
 
     ...

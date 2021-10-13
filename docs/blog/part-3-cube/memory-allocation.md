@@ -551,11 +551,6 @@ public Handle handle() {
 }
 
 @Override
-public long size() {
-    return size;
-}
-
-@Override
 public Optional<Region> region() {
     return mem.region();
 }

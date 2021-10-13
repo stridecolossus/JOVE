@@ -1,12 +1,11 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.oneOrMore;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>matrix</i> is a 2-dimensional floating-point array used for geometry transformation and projection.
@@ -29,8 +28,18 @@ import org.sarge.jove.util.MathsUtil;
  * </pre>
  * @author Sarge
  */
-public class Matrix implements Transform, Bufferable {
+public final class Matrix implements Transform, Bufferable {
 	private static final String LINE_SEPARATOR = System.lineSeparator();
+
+	/**
+	 * Order for a 4x4 matrix.
+	 */
+	private static final int DEFAULT_ORDER = 4;
+
+	/**
+	 * 4x4 identity matrix.
+	 */
+	public static final Matrix IDENTITY = Matrix.identity(DEFAULT_ORDER);
 
 	/**
 	 * Creates an identity matrix.
@@ -41,49 +50,89 @@ public class Matrix implements Transform, Bufferable {
 		return new Builder(order).identity().build();
 	}
 
-	private final float[] matrix;
+	/**
+	 * Creates a 4x4 translation matrix.
+	 * @param vec Translation vector
+	 * @return Translation matrix
+	 */
+	public static Matrix translation(Vector vec) {
+		return new Builder()
+				.identity()
+				.column(3, vec)
+				.build();
+	}
+
+	/**
+	 * Creates a 4x4 scaling matrix.
+	 * @return Scaling matrix
+	 */
+	public static Matrix scale(float x, float y, float z) {
+		return new Builder()
+				.identity()
+				.set(0, 0, x)
+				.set(1, 1, y)
+				.set(2, 2, z)
+				.build();
+	}
+
+	/**
+	 * Creates a 4x4 <b>clockwise</b> rotation matrix about the given axis.
+	 * @param axis		Rotation axis
+	 * @param angle		Angle (radians)
+	 * @return Rotation matrix
+	 * @throws UnsupportedOperationException if the given axis is an arbitrary vector (i.e. not one of the 3 orthogonal axes)
+	 */
+	public static Matrix rotation(Vector axis, float angle) { // TODO - Rotation? move to that class?
+		final Builder rot = new Builder().identity();
+		final float sin = MathsUtil.sin(angle);
+		final float cos = MathsUtil.cos(angle);
+		if(Vector.X.equals(axis)) {
+			rot.set(1, 1, cos);
+			rot.set(1, 2, sin);
+			rot.set(2, 1, -sin);
+			rot.set(2, 2, cos);
+		}
+		else
+		if(Vector.Y.equals(axis)) {
+			rot.set(0, 0, cos);
+			rot.set(0, 2, -sin);
+			rot.set(2, 0, sin);
+			rot.set(2, 2, cos);
+		}
+		else
+		if(Vector.Z.equals(axis)) {
+			rot.set(0, 0, cos);
+			rot.set(0, 1, -sin);
+			rot.set(1, 0, sin);
+			rot.set(1, 1, cos);
+		}
+		else {
+			throw new UnsupportedOperationException("Arbitrary rotation axis not supported");
+			// TODO - return Quaternion(rotation)?
+		}
+		return rot.build();
+	}
+
+	private final float[][] matrix;
 
 	/**
 	 * Constructor.
-	 * @param matrix Matrix array in column-major order
+	 * @param order Matrix order
 	 */
-	protected Matrix(float[] matrix) {
-		this.matrix = matrix;
+	private Matrix(int order) {
+		matrix = new float[order][order];
 	}
 
 	/**
 	 * @return Order (or size) of this matrix
 	 */
 	public int order() {
-		return switch(matrix.length) {
-			case 1 -> 1;
-			case 4 -> 2;
-			case 9 -> 3;
-			case 16 -> 4;
-			default -> (int) MathsUtil.sqrt(matrix.length);
-		};
+		return matrix.length;
 	}
 
 	@Override
 	public final Matrix matrix() {
 		return this;
-	}
-
-	/**
-	 * Helper - Calculates the column-major matrix index for the given row and column.
-	 * @param row			Row
-	 * @param col			Column
-	 * @param order			Matrix order
-	 * @return Matrix index
-	 */
-	protected static int index(int row, int col, int order) {
-		assert validate(row, order);
-		assert validate(col, order);
-		return row + col * order;
-	}
-
-	private static boolean validate(int index, int order) {
-		return (index >= 0) && (index < order);
 	}
 
 	/**
@@ -94,15 +143,7 @@ public class Matrix implements Transform, Bufferable {
 	 * @throws ArrayIndexOutOfBoundsException if the row or column are out-of-bounds
 	 */
 	public float get(int row, int col) {
-		final int index = index(row, col, order());
-		return matrix[index];
-	}
-
-	/**
-	 * @return Matrix as a 1D column-major array
-	 */
-	public float[] array() {
-		return Arrays.copyOf(matrix, matrix.length);
+		return matrix[row][col];
 	}
 
 	/**
@@ -112,11 +153,9 @@ public class Matrix implements Transform, Bufferable {
 	 * @throws ArrayIndexOutOfBoundsException if the row index is invalid or the matrix is too small
 	 */
 	public Vector row(int row) {
-		final int order = order();
-		final int index = index(row, 0, order);
-		final float x = matrix[index];
-		final float y = matrix[index + order];
-		final float z = matrix[index + 2 * order];
+		final float x = matrix[row][0];
+		final float y = matrix[row][1];
+		final float z = matrix[row][2];
 		return new Vector(x, y, z);
 	}
 
@@ -127,23 +166,25 @@ public class Matrix implements Transform, Bufferable {
 	 * @throws ArrayIndexOutOfBoundsException if the column index is invalid or the matrix is too small
 	 */
 	public Vector column(int col) {
-		final int index = Matrix.index(0, col, order());
-		final float x = matrix[index];
-		final float y = matrix[index + 1];
-		final float z = matrix[index + 2];
+		final float x = matrix[0][col];
+		final float y = matrix[1][col];
+		final float z = matrix[2][col];
 		return new Vector(x, y, z);
 	}
 
 	@Override
 	public void buffer(ByteBuffer buffer) {
-		for(float f : matrix) {
-			buffer.putFloat(f);
+		final int order = order();
+		for(int r = 0; r < order; ++r) {
+			for(int c = 0; c < order; ++c) {
+				buffer.putFloat(matrix[c][r]);
+			}
 		}
 	}
 
 	@Override
 	public int length() {
-		return matrix.length * Float.BYTES;
+		return matrix.length * matrix.length * Float.BYTES;
 	}
 
 	/**
@@ -151,17 +192,13 @@ public class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix transpose() {
 		final int order = order();
-		final Builder trans = new Builder(order);
-		int dest = 0;
+		final Matrix trans = new Matrix(order);
 		for(int r = 0; r < order; ++r) {
-			int src = r;
 			for(int c = 0; c < order; ++c) {
-				trans.matrix[dest] = matrix[src];
-				++dest;
-				src += order;
+				trans.matrix[r][c] = this.matrix[c][r];
 			}
 		}
-		return trans.build();
+		return trans;
 	}
 
 	/**
@@ -176,28 +213,19 @@ public class Matrix implements Transform, Bufferable {
 		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
 
 		// Multiply matrices
-		final Builder result = new Builder(order);
-// TODO - avoid get() and calc indices once and increment, otherwise this will be slow
-		int dest = 0;
-		for(int c = 0; c < order; ++c) {
-			for(int r = 0; r < order; ++r) {
-				// Sum this row by the corresponding column
+		final Matrix result = new Matrix(order);
+		for(int r = 0; r < order; ++r) {
+			for(int c = 0; c < order; ++c) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
-					total += get(r, n) * m.get(n, c);
+					total += this.matrix[r][n] * m.matrix[n][c];
 				}
-
-				// Set result element
-				result.matrix[dest] = total;
-				++dest;
+				result.matrix[r][c] = total;
 			}
 		}
-		return result.build();
-	}
 
-	// TODO
-	// - determinant, invert, etc
-	// - SIMD/vector operations?
+		return result;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
@@ -205,7 +233,7 @@ public class Matrix implements Transform, Bufferable {
 				(obj == this) ||
 				(obj instanceof Matrix that) &&
 				(this.order() == that.order()) &&
-				MathsUtil.isEqual(this.matrix, that.matrix);
+				Arrays.deepEquals(this.matrix, that.matrix);
 	}
 
 	@Override
@@ -214,7 +242,7 @@ public class Matrix implements Transform, Bufferable {
 		final int order = this.order();
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				sb.append(String.format("%10.5f ", get(r, c)));
+				sb.append(String.format("%10.5f ", matrix[r][c]));
 			}
 			sb.append(LINE_SEPARATOR);
 		}
@@ -225,8 +253,14 @@ public class Matrix implements Transform, Bufferable {
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private final int order;
-		private final float[] matrix;
+		private Matrix matrix;
+
+		/**
+		 * Default constructor for a 4x4 matrix builder.
+		 */
+		public Builder() {
+			this(DEFAULT_ORDER);
+		}
 
 		/**
 		 * Constructor for a matrix builder of the given order.
@@ -234,14 +268,15 @@ public class Matrix implements Transform, Bufferable {
 		 * @throws IllegalArgumentException for an illogical matrix order
 		 */
 		public Builder(int order) {
-			this.order = oneOrMore(order);
-			this.matrix = new float[order * order];
+			Check.oneOrMore(order);
+			matrix = new Matrix(order);
 		}
 
 		/**
 		 * Initialises this matrix to identity.
 		 */
 		public Builder identity() {
+			final int order = matrix.order();
 			for(int n = 0; n < order; ++n) {
 				set(n, n, 1);
 			}
@@ -256,12 +291,9 @@ public class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			final int index = index(row, col, order);
-			matrix[index] = value;
+			matrix.matrix[row][col] = value;
 			return this;
 		}
-
-		// TODO - bulk setter to create matrix from array?
 
 		/**
 		 * Sets a matrix row to the given vector.
@@ -294,11 +326,11 @@ public class Matrix implements Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			if(order == Matrix4.ORDER) {
-				return new Matrix4(matrix);
+			try {
+				return matrix;
 			}
-			else {
-				return new Matrix(matrix);
+			finally {
+				matrix = null;
 			}
 		}
 	}

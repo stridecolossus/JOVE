@@ -1,11 +1,8 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 import java.nio.ByteBuffer;
 
@@ -13,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Matrix.Builder;
+import org.sarge.jove.util.MathsUtil;
 
 class MatrixTest {
 	private static final int ORDER = 4;
@@ -25,7 +23,7 @@ class MatrixTest {
 		int index = 1;
 		for(int r = 0; r < ORDER; ++r) {
 			for(int c = 0; c < ORDER; ++c) {
-				builder.set(c, r, index);			// Note index increments in column-major order
+				builder.set(r, c, index);
 				++index;
 			}
 		}
@@ -38,14 +36,6 @@ class MatrixTest {
 		assertEquals(ORDER, matrix.order());
 		assertEquals(matrix, matrix.matrix());
 		assertEquals(false, matrix.isDirty());
-		assertEquals(ORDER * ORDER * Float.BYTES, matrix.length());
-	}
-
-	@Test
-	void identity() {
-		final Matrix identity = Matrix.identity(ORDER);
-		assertNotNull(identity);
-		assertEquals(ORDER, identity.order());
 	}
 
 	@Test
@@ -53,7 +43,7 @@ class MatrixTest {
 		int index = 1;
 		for(int r = 0; r < ORDER; ++r) {
 			for(int c = 0; c < ORDER; ++c) {
-				assertEquals(index, matrix.get(c, r));
+				assertEquals(index, matrix.get(r, c));
 				++index;
 			}
 		}
@@ -61,29 +51,20 @@ class MatrixTest {
 
 	@Test
 	void getInvalidIndex() {
-		assertThrows(AssertionError.class, () -> matrix.get(0, -1));
-		assertThrows(AssertionError.class, () -> matrix.get(4, 0));
-	}
-
-	@Test
-	void array() {
-		final float[] expected = new float[ORDER * ORDER];
-		for(int n = 0; n < expected.length; ++n) {
-			expected[n] = n + 1;
-		}
-		assertArrayEquals(expected, matrix.array());
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> matrix.get(0, -1));
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> matrix.get(4, 0));
 	}
 
 	@Test
 	void row() {
-		assertEquals(new Vector(1, 5, 9), matrix.row(0));
-		assertEquals(new Vector(2, 6, 10), matrix.row(1));
+		assertEquals(new Vector(1, 2, 3), matrix.row(0));
+		assertEquals(new Vector(5, 6, 7), matrix.row(1));
 	}
 
 	@Test
 	void column() {
-		assertEquals(new Vector(1, 2, 3), matrix.column(0));
-		assertEquals(new Vector(5, 6, 7), matrix.column(1));
+		assertEquals(new Vector(1, 5, 9), matrix.column(0));
+		assertEquals(new Vector(2, 6, 10), matrix.column(1));
 	}
 
 	@Test
@@ -97,7 +78,7 @@ class MatrixTest {
 		int index = 1;
 		for(int r = 0; r < ORDER; ++r) {
 			for(int c = 0; c < ORDER; ++c) {
-				assertEquals(index, transpose.get(r, c));
+				assertEquals(index, transpose.get(c, r));
 				++index;
 			}
 		}
@@ -114,6 +95,7 @@ class MatrixTest {
 		final Matrix result = matrix.multiply(matrix);
 		assertNotNull(result);
 		assertEquals(ORDER, result.order());
+		// TODO
 	}
 
 	@Test
@@ -135,10 +117,17 @@ class MatrixTest {
 
 	@Test
 	void buffer() {
-		final ByteBuffer buffer = mock(ByteBuffer.class);
+		// Buffer matrix
+		final ByteBuffer buffer = ByteBuffer.allocate(ORDER * ORDER * Float.BYTES);
 		matrix.buffer(buffer);
-		for(int n = 0; n < ORDER * ORDER; ++n) {
-			verify(buffer).putFloat(n + 1);
+		assertEquals(0, buffer.remaining());
+
+		// Check matrix written in column-major order
+		buffer.rewind();
+		for(int r = 0; r < ORDER; ++r) {
+			for(int c = 0; c < ORDER; ++c) {
+				assertEquals(1 + r + c * ORDER, buffer.getFloat());
+			}
 		}
 	}
 
@@ -151,14 +140,58 @@ class MatrixTest {
 	}
 
 	@Nested
+	class FactoryMethodTests {
+		@Test
+		void identity() {
+			final Matrix identity = Matrix.identity(ORDER);
+			assertNotNull(identity);
+			assertEquals(ORDER, identity.order());
+			assertEquals(Matrix.IDENTITY, identity);
+			for(int r = 0; r < ORDER; ++r) {
+				for(int c = 0; c < ORDER; ++c) {
+					final float expected = r == c ? 1 : 0;
+					assertEquals(expected, identity.get(r, c));
+				}
+			}
+		}
+
+		@Test
+		void translation() {
+			final Matrix expected = new Matrix.Builder().identity().column(3, Vector.X).build();
+			assertEquals(expected, Matrix.translation(Vector.X));
+		}
+
+		@Test
+		void scale() {
+			final Matrix expected = new Matrix.Builder().identity().set(2, 2, 3).build();
+			assertEquals(expected, Matrix.scale(1, 1, 3));
+		}
+
+		@Test
+		void rotation() {
+			final Matrix expected = new Matrix.Builder()
+					.identity()
+					.set(1, 1, MathsUtil.cos(MathsUtil.HALF))
+					.set(1, 2, MathsUtil.sin(MathsUtil.HALF))
+					.set(2, 1, -MathsUtil.sin(MathsUtil.HALF))
+					.set(2, 2, MathsUtil.cos(MathsUtil.HALF))
+					.build();
+			assertEquals(expected, Matrix.rotation(Vector.X, MathsUtil.HALF));
+		}
+
+		@Test
+		void rotationInvalidAxis() {
+			assertThrows(UnsupportedOperationException.class, () -> Matrix.rotation(new Vector(1, 2, 3), MathsUtil.HALF));
+		}
+	}
+
+	@Nested
 	class BuilderTests {
 		private Builder builder;
-		private float[] expected;
 
 		@BeforeEach
 		void before() {
 			builder = new Builder(ORDER);
-			expected = new float[ORDER * ORDER];
 		}
 
 		@Test
@@ -166,32 +199,28 @@ class MatrixTest {
 			final Matrix matrix = builder.build();
 			assertNotNull(matrix);
 			assertEquals(ORDER, matrix.order());
-			assertArrayEquals(expected, matrix.array());
 		}
 
 		@Test
 		void set() {
 			matrix = builder.set(1, 2, 3).build();
-			expected[1 + 2 * ORDER] = 3;
-			assertArrayEquals(expected, matrix.array());
+			assertEquals(3, matrix.get(1, 2));
 		}
 
 		@Test
 		void row() {
-			builder.row(1, new Vector(1, 2, 3));
-			expected[1] = 1;
-			expected[5] = 2;
-			expected[9] = 3;
-			assertArrayEquals(expected, builder.build().array());
+			matrix = builder.row(1, new Vector(1, 2, 3)).build();
+			assertEquals(1, matrix.get(1, 0));
+			assertEquals(2, matrix.get(1, 1));
+			assertEquals(3, matrix.get(1, 2));
 		}
 
 		@Test
 		void column() {
-			builder.column(1, new Vector(1, 2, 3));
-			expected[4] = 1;
-			expected[5] = 2;
-			expected[6] = 3;
-			assertArrayEquals(expected, builder.build().array());
+			matrix = builder.column(1, new Vector(1, 2, 3)).build();
+			assertEquals(1, matrix.get(0, 1));
+			assertEquals(2, matrix.get(1, 1));
+			assertEquals(3, matrix.get(2, 1));
 		}
 
 		@Test

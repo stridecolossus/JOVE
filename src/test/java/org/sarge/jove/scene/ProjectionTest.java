@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.geometry.Matrix4;
 import org.sarge.jove.util.MathsUtil;
 
 public class ProjectionTest {
@@ -19,8 +18,7 @@ public class ProjectionTest {
 
 	@Test
 	public void perspective() {
-		final Matrix expected = Matrix4
-				.builder()
+		final Matrix expected = new Matrix.Builder()
 				.set(0, 0, 0.75f)
 				.set(1, 1, -1)
 				.set(2, 2, -1.0001f)
