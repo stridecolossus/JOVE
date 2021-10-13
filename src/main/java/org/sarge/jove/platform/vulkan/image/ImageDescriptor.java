@@ -18,7 +18,7 @@ import org.sarge.lib.util.Check;
  * An <i>image descriptor</i> specifies the properties of an image.
  * @author Sarge
  */
-public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {
+public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents extents, Set<VkImageAspect> aspects, int levels, int layers) {
 	// Valid image aspect combinations
 	private static final Collection<Set<VkImageAspect>> VALID_ASPECTS = List.of(
 			Set.of(VkImageAspect.COLOR),
@@ -43,8 +43,8 @@ public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents ex
 		Check.notNull(format);
 		Check.notNull(extents);
 		aspects = Set.copyOf(notEmpty(aspects));
-		Check.oneOrMore(levelCount);
-		Check.oneOrMore(layerCount);
+		Check.oneOrMore(levels);
+		Check.oneOrMore(layers);
 
 		// Validate extents
 		final boolean valid = switch(type) {
@@ -57,7 +57,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents ex
 		}
 
 		// Validate array layers
-		if((type == VkImageType.IMAGE_TYPE_3D) && (layerCount != 1)) {
+		if((type == VkImageType.IMAGE_TYPE_3D) && (layers != 1)) {
 			throw new IllegalArgumentException("Array layers must be one for a 3D image");
 		}
 
@@ -67,14 +67,12 @@ public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents ex
 		// TODO - validate format against aspects, e.g. D32_FLOAT is not stencil, D32_FLOAT_S8_UINT has stencil
 	}
 
-	@Override
-	public int mipLevel() {
-		return 0;
-	}
-
-	@Override
-	public int baseArrayLayer() {
-		return 0;
+	/**
+	 * Creates a sub-resource for this image.
+	 * @return New sub-resource
+	 */
+	public SubResource subresource() {
+		return new SubResource(aspects, 0, levels, 0, layers);
 	}
 
 	/**

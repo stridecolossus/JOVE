@@ -570,7 +570,99 @@ interface VulkanLibraryImage {
 }
 ```
 
-### Image Copy
+### Image Sub-Resource
+
+The copy command and pipeline barrier are dependant on the image _subresource_ which we glossed over in the previous chapter.
+
+A slight irritation that only came to light during development of the code for this chapter is that are two slightly different Vulkan descriptors for image sub-resources.  We define the following record class with the common fields:
+
+```java
+public record SubResource(Set<VkImageAspect> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount)
+```
+
+With factory methods to generate the Vulkan descriptors for both cases:
+
+```java
+public VkImageSubresourceRange toRange() {
+    final var range = new VkImageSubresourceRange();
+    range.aspectMask = IntegerEnumeration.mask(aspects);
+    range.baseMipLevel = mipLevel;
+    range.levelCount = levelCount;
+    range.baseArrayLayer = baseArrayLayer;
+    range.layerCount = layerCount;
+    return range;
+}
+
+VkImageSubresourceLayers toLayers() {
+    final var layers = new VkImageSubresourceLayers();
+    layers.aspectMask = IntegerEnumeration.mask(aspects);
+    layers.mipLevel = mipLevel;
+    layers.baseArrayLayer = baseArrayLayer;
+    layers.layerCount = layerCount;
+    return layers;
+}
+```
+
+For the general case of a sub-resource that incorporates the whole image we add the following factory method:
+
+```java
+public record ImageDescriptor(...) {
+    public SubResource subresource() {
+        return new SubResource(aspects, 0, levels, 0, layers);
+    }
+}
+```
+
+We also add a builder to configure a custom sub-resource for a given image:
+
+```java
+public static class Builder {
+    private final ImageDescriptor descriptor;
+    private Set<VkImageAspect> aspects = new HashSet<>();
+    private int mipLevel;
+    private int levelCount;
+    private int baseArrayLayer;
+    private int layerCount;
+}
+```
+
+The constructor initialises the number of mip levels and array layers to the image:
+
+```java
+public Builder(ImageDescriptor descriptor) {
+    this.descriptor = notNull(descriptor);
+    this.levelCount = descriptor.levels();
+    this.layerCount = descriptor.layers();
+}
+```
+
+The various setters validate against the 'parent' image descriptor to ensure the sub-resource is a subset, for example:
+
+```java
+public Builder levelCount(int levelCount) {
+    if(levelCount > descriptor.levels()) throw new IllegalArgumentException(...);
+    this.levelCount = oneOrMore(levelCount);
+    return this;
+}
+```
+
+Finally the build method initialises the aspect mask to the parent image if not explicitly specified:
+
+```java
+public SubResource build() {
+    // Init image aspects if not explicitly specified
+    if(aspects.isEmpty()) {
+        aspects = descriptor.aspects();
+    }
+
+    // Create sub-resource
+    return new SubResource(aspects, mipLevel, levelCount, baseArrayLayer, layerCount);
+}
+```
+
+We may in future want to add further logic to ensure when a sub-resource is used it is actually derived from the image in question.  For the moment we rely on the Vulkan validation layer.
+
+### Image Copying
 
 To copy the image data from the staging buffer to the texture (or vice-versa) we implement a new command:
 
@@ -597,11 +689,33 @@ public class ImageCopyCommand implements Command {
 We implement a builder to construct the copy command:
 
 ```java
+public static class Builder {
+    private Image image;
+    private VkImageLayout layout;
+    private VkOffset3D offset = new VkOffset3D();
+    private SubResource subresource;
+    private VulkanBuffer buffer;
+    private boolean bufferToImage = true;
+}
+```
+
+The sub-resource for the copy command is initialised in the constructor of the builder:
+
+```java
+public Builder(Image image) {
+    this.image = notNull(image);
+    this.subresource = image.descriptor().subresource();
+}
+```
+
+The build method populates the copy descriptor (which we restrict to a single entry for the moment):
+
+```java
 public ImageCopyCommand build() {
     // Populate descriptor
     var copy = new VkBufferImageCopy();
-    copy.imageSubresource = SubResource.of(image.descriptor(), subresource).toLayers();
     copy.imageExtent = image.descriptor().extents().toExtent3D();
+    copy.imageSubresource = subresource.toLayers();
     copy.imageOffset = offset;
     
     // Create copy command
@@ -609,22 +723,7 @@ public ImageCopyCommand build() {
 }
 ```
 
-A slight irritation that only came to light during development of the copy command is that there are two slightly different Vulkan descriptors for image sub-resources - `VkImageSubresourceRange` which is used when created an image view, and `VkImageSubresourceLayers` which is used above.  We bodge the sub-resource builder to support both cases rather than creating two separate builders or some overly complex class-hierarchy.
-
-TODO - sub-resource builder from image descriptor or another sub-resource???
-
-```java
-public static SubResource of(ImageDescriptor descriptor, SubResource subresource) {
-    if(subresource == null) {
-        return of(descriptor);
-    }
-    else {
-        return subresource;
-    }
-}
-```
-
-Finally we add a helper to create the extents descriptor for an image:
+We also add a helper to generate the Vulkan 3D extents of the copy region:
 
 ```java
 public VkExtent3D toExtent3D() {

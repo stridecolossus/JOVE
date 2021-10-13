@@ -108,7 +108,7 @@ public class Barrier implements Command {
 
 			private ImageBarrierBuilder(Image image) {
 				this.image = notNull(image);
-				this.subresource = image.descriptor();
+				this.subresource = image.descriptor().subresource();
 			}
 
 			/**
@@ -165,7 +165,7 @@ public class Barrier implements Command {
 				barrier.dstAccessMask = IntegerEnumeration.mask(dest);
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
-				barrier.subresourceRange = SubResource.toRange(subresource);
+				barrier.subresourceRange = subresource.toRange();
 				// TODO
 				barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
 				barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;

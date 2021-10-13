@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceLayers;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
@@ -41,16 +41,11 @@ public class SubResourceTest {
 	@Test
 	void constructor() {
 		assertNotNull(res);
-		assertEquals(Set.of(VkImageAspect.DEPTH), res.aspects());
-		assertEquals(1, res.mipLevel());
-		assertEquals(2, res.levelCount());
-		assertEquals(2, res.baseArrayLayer());
-		assertEquals(3, res.layerCount());
 	}
 
 	@Test
 	void toLayers() {
-		final VkImageSubresourceLayers layers = SubResource.toLayers(res);
+		final VkImageSubresourceLayers layers = res.toLayers();
 		assertNotNull(layers);
 		assertEquals(VkImageAspect.DEPTH.value(), layers.aspectMask);
 		assertEquals(1, layers.mipLevel);
@@ -60,7 +55,7 @@ public class SubResourceTest {
 
 	@Test
 	void toRange() {
-		final VkImageSubresourceRange range = SubResource.toRange(res);
+		final VkImageSubresourceRange range = res.toRange();
 		assertNotNull(range);
 		assertEquals(VkImageAspect.DEPTH.value(), range.aspectMask);
 		assertEquals(1, range.baseMipLevel);
@@ -78,32 +73,53 @@ public class SubResourceTest {
 			builder = new SubResource.Builder(descriptor);
 		}
 
+		@DisplayName("Default subresource for an image should match the descriptor")
 		@Test
-		void buildEmptyAspectMask() {
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		void build() {
+			final VkImageSubresourceRange range = builder.build().toRange();
+			assertNotNull(range);
+			assertEquals(IntegerEnumeration.mask(VkImageAspect.DEPTH, VkImageAspect.STENCIL), range.aspectMask);
+			assertEquals(0, range.baseMipLevel);
+			assertEquals(3, range.levelCount);
+			assertEquals(0, range.baseArrayLayer);
+			assertEquals(4, range.layerCount);
 		}
 
+		@DisplayName("Specifying an explicit aspect should override the image mask")
+		@Test
+		void buildOverrideAspect() {
+			builder.aspect(VkImageAspect.DEPTH);
+			final VkImageSubresourceRange range = builder.build().toRange();
+			assertNotNull(range);
+			assertEquals(VkImageAspect.DEPTH.value(), range.aspectMask);
+		}
+
+		@DisplayName("Aspect mask must be a subset of the image")
 		@Test
 		void buildInvalidAspect() {
 			assertThrows(IllegalArgumentException.class, () -> builder.aspect(VkImageAspect.COLOR));
 		}
 
+		@DisplayName("Base MIP level must be a subset of the image")
 		@Test
 		void buildInvalidLevel() {
-			assertThrows(IllegalArgumentException.class, () -> builder.mipLevel(2));
+			assertThrows(IllegalArgumentException.class, () -> builder.mipLevel(3));
 		}
 
+		@DisplayName("Number of MIP levels must be a subset of the image")
 		@Test
 		void buildInvalidLevelCount() {
 			assertThrows(IllegalArgumentException.class, () -> builder.levelCount(0));
 			assertThrows(IllegalArgumentException.class, () -> builder.levelCount(4));
 		}
 
+		@DisplayName("Base array layer must be a subset of the image")
 		@Test
 		void buildInvalidLayer() {
-			assertThrows(IllegalArgumentException.class, () -> builder.baseArrayLayer(3));
+			assertThrows(IllegalArgumentException.class, () -> builder.baseArrayLayer(4));
 		}
 
+		@DisplayName("Number of array layers must be a subset of the image")
 		@Test
 		void buildInvalidLayerCount() {
 			assertThrows(IllegalArgumentException.class, () -> builder.layerCount(0));

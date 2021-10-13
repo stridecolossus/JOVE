@@ -47,7 +47,7 @@ public class ImageCopyCommandTest {
 		buffer = mock(VulkanBuffer.class);
 
 		// Create copy command builder
-		builder = new ImageCopyCommand.Builder();
+		builder = new ImageCopyCommand.Builder(image);
 
 		// Create command buffer
 		cb = mock(Command.Buffer.class);
@@ -57,7 +57,6 @@ public class ImageCopyCommandTest {
 	void copyBufferToImage() {
 		// Create command to copy the buffer to the image
 		final ImageCopyCommand copy = builder
-				.image(image)
 				.buffer(buffer)
 				.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
 				.build();
@@ -87,7 +86,6 @@ public class ImageCopyCommandTest {
 	void copyImageToBuffer() {
 		// Create command to copy the image to the buffer
 		final ImageCopyCommand copy = builder
-				.image(image)
 				.buffer(buffer)
 				.layout(VkImageLayout.TRANSFER_SRC_OPTIMAL)
 				.invert()
@@ -105,18 +103,18 @@ public class ImageCopyCommandTest {
 
 	@Test
 	void buildEmptyImageLayout() {
-		assertThrows(IllegalArgumentException.class, () -> builder.image(image).buffer(buffer).build());
+		assertThrows(IllegalArgumentException.class, () -> builder.buffer(buffer).build());
 	}
 
 	@Test
 	void buildEmptyBuffer() {
-		assertThrows(IllegalArgumentException.class, () -> builder.image(image).build());
+		assertThrows(IllegalArgumentException.class, () -> builder.build());
 	}
 
 	@Test
 	void buildInvalidBuffer() {
 		doThrow(IllegalStateException.class).when(buffer).require(any());
-		builder.image(image).buffer(buffer).layout(VkImageLayout.TRANSFER_DST_OPTIMAL);
+		builder.buffer(buffer).layout(VkImageLayout.TRANSFER_DST_OPTIMAL);
 		assertThrows(IllegalStateException.class, () -> builder.build());
 	}
 }

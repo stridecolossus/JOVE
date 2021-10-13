@@ -116,11 +116,11 @@ public interface VulkanLibrarySurface {
 }
 ```
 
-### Images and Views
+### Images
 
 Vulkan creates the images for the colour attachments for us when the swapchain is instantiated.
 
-We first create new domain objects for a Vulkan image:
+We first create a new domain object for a Vulkan image:
 
 ```java
 public class Image implements NativeObject {
@@ -152,6 +152,8 @@ public record Dimensions(int width, int height) {
 ```
 
 We also add a builder to construct an image descriptor.
+
+### Image Views
 
 An _image view_ is a reference to an image and is the entry-point for operations such as layout transforms, sampling, etc:
 
@@ -185,23 +187,23 @@ To construct a view for a given image we implement a builder:
 
 ```java
 public static class Builder {
+    private final Image image;
     private VkImageViewType type;
-    private VkComponentMapping mapping = new VkComponentMapping();
-    private SubResource subresource;
+    private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
 }
 ```
 
 The `build` method populates a Vulkan descriptor for the view and invokes the API method:
 
 ```java
-public View build(Image image) {
+public View build() {
     // Build view descriptor
     final VkImageViewCreateInfo info = new VkImageViewCreateInfo();
     info.viewType = type;
     info.format = image.descriptor().format();
     info.image = image.handle();
-    info.components = mapping;
-    info.subresourceRange = subresource.toRange();
+    info.components = new VkComponentMapping();
+    info.subresourceRange = ...
 
     // Allocate image view
     final LogicalDevice dev = image.device();
@@ -214,36 +216,31 @@ public View build(Image image) {
 }
 ```
 
-The _sub-resource_ specifies the purpose of the view and which regions of the image should be accessed:
+The `subresourceRange` field of the create descriptor specifies a subset of the mipmap levels and array layers accessible to the view.  We will use the whole image so this data is hard-coded for the moment:
 
 ```java
-public record SubResource(Set<VkImageAspect> mask, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) {
-}
+var range = new VkImageSubresourceRange();
+range.aspectMask = IntegerEnumeration.mask(image.descriptor().aspects());
+range.baseMipLevel = 0;
+range.levelCount = 1;
+range.baseArrayLayer = 0;
+range.layerCount = 1;
+info.subresourceRange = range;
 ```
 
-We add a builder for the new class and a convenience factory method to initialise a sub-resource from an image descriptor (the most common case):
+The component mapping specifies the swizzle for the RGBA colour components of the view:
 
 ```java
-public static SubResource of(ImageDescriptor descriptor) {
-    return new Builder()
-        .aspects(descriptor.aspects())
-        .levelCount(descriptor.levels())
-        .layerCount(descriptor.layers())
-        .build();
-}
-```
+private static final VkComponentMapping DEFAULT_COMPONENT_MAPPING = create();
 
-The following helper creates the Vulkan descriptor for the sub-resource which is used in the image view builder:
-
-```java
-public VkImageSubresourceRange toRange() {
-    final var range = new VkImageSubresourceRange();
-    range.aspectMask = IntegerEnumeration.mask(mask);
-    range.baseMipLevel = mipLevel;
-    range.levelCount = levelCount;
-    range.baseArrayLayer = baseArrayLayer;
-    range.layerCount = layerCount;
-    return range;
+private static VkComponentMapping create() {
+    final VkComponentSwizzle identity = VkComponentSwizzle.IDENTITY;
+    final var mapping = new VkComponentMapping();
+    mapping.r = identity;
+    mapping.g = identity;
+    mapping.b = identity;
+    mapping.a = identity;
+    return mapping;
 }
 ```
 
