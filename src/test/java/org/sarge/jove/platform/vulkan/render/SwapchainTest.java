@@ -25,7 +25,7 @@ import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
+import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;

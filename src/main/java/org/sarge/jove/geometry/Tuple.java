@@ -77,7 +77,7 @@ public sealed class Tuple implements Bufferable, Vertex.Component permits Point,
 	 * <p>
 	 * <pre>A.B = |A| |B| cos(angle)</pre>
 	 * <p>
-	 * Some properties of the dot product:
+	 * The dot product is:
 	 * <ul>
 	 * <li>zero if the vectors are orthogonal (i.e. perpendicular, or at right angles)</li>
 	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
@@ -112,6 +112,7 @@ public sealed class Tuple implements Bufferable, Vertex.Component permits Point,
 	@Override
 	public boolean equals(Object obj) {
 		return (obj == this) || ((obj instanceof Tuple that) && isEqual(that));
+		// TODO - is this strictly correct? do we want point==vector?
 	}
 
 	protected final boolean isEqual(Tuple that) {

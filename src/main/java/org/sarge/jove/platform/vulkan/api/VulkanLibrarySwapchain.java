@@ -6,7 +6,7 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
+import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.render.Swapchain;
 
 import com.sun.jna.Pointer;

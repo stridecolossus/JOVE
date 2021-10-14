@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
@@ -164,7 +165,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 			// Add descriptor set layouts
 			info.setLayoutCount = sets.size();
-			info.pSetLayouts = null; // Handle.toArray(sets);
+			info.pSetLayouts = NativeObject.toArray(sets);
 
 			// Add push constant ranges
 			info.pushConstantRangeCount = ranges.size();

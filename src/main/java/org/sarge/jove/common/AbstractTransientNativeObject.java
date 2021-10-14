@@ -10,6 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public abstract class AbstractTransientNativeObject implements TransientNativeObject {
 	protected final Handle handle;
+
 	private boolean destroyed;
 
 	/**

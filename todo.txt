@@ -19,7 +19,6 @@ demo
 
 core
 - allocator merge released blocks (de-fragmentation)
-- swizzle & buffer image in one go?
 - DeviceFeatures - tests/annotations for required features? techniques -> materials ~ available features
 
 scene
@@ -48,8 +47,6 @@ other features
 - OpenAL audio
 
 current
-- instead of handle can type mapper be for i/f so can then pass domain objects rather than handle?
-- image class wrapper for buffered image, no need for ctor since just replicates
 - some sort of triangle builder? used in demo and to create x2 triangles for a quad
 - acquire should create a frame object of some sort (swap chain is immutable), i.e. don't care about index
 - move supporting extensions/layers stuff somewhere else [DONE-ish]

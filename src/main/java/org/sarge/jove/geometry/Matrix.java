@@ -14,12 +14,10 @@ import org.sarge.lib.util.Check;
  * <ul>
  * <li>Matrices are constrained to be <i>square</i>, i.e. same width and height</li>
  * <li>The <i>order</i> specifies the dimensions of the matrix</li>
- * <li>Matrix data is in <i>column major</i> order (the Vulkan default)</li>
- * <li>Matrices are also {@link Bufferable}</li>
+ * <li>Matrix data written by {@link #buffer(ByteBuffer)} is <i>column major</i> (the Vulkan default)</li>
  * </ul>
  * <p>
  * In general matrices are constructed using the builder:
- * <p>
  * <pre>
  * Matrix matrix = new Matrix.Builder()
  * 	.identity()
@@ -29,17 +27,15 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public final class Matrix implements Transform, Bufferable {
-	private static final String LINE_SEPARATOR = System.lineSeparator();
-
 	/**
 	 * Order for a 4x4 matrix.
 	 */
-	private static final int DEFAULT_ORDER = 4;
+	public static final int DEFAULT_ORDER = 4;
 
 	/**
 	 * 4x4 identity matrix.
 	 */
-	public static final Matrix IDENTITY = Matrix.identity(DEFAULT_ORDER);
+	public static final Matrix IDENTITY = identity(DEFAULT_ORDER);
 
 	/**
 	 * Creates an identity matrix.
@@ -86,6 +82,7 @@ public final class Matrix implements Transform, Bufferable {
 		final Builder rot = new Builder().identity();
 		final float sin = MathsUtil.sin(angle);
 		final float cos = MathsUtil.cos(angle);
+		// TODO - do we use these 2x2 matrices elsewhere? i.e. factor out 2x2 and introduce set(r,c,2x2)?
 		if(Vector.X.equals(axis)) {
 			rot.set(1, 1, cos);
 			rot.set(1, 2, sin);
@@ -233,18 +230,19 @@ public final class Matrix implements Transform, Bufferable {
 				(obj == this) ||
 				(obj instanceof Matrix that) &&
 				(this.order() == that.order()) &&
-				Arrays.deepEquals(this.matrix, that.matrix);
+				Arrays.deepEquals(this.matrix, that.matrix); // TODO - will this really work? i.e. not using MathsUtil
 	}
 
 	@Override
 	public String toString() {
+		final String newline = System.lineSeparator();
 		final StringBuilder sb = new StringBuilder();
 		final int order = this.order();
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				sb.append(String.format("%10.5f ", matrix[r][c]));
 			}
-			sb.append(LINE_SEPARATOR);
+			sb.append(newline);
 		}
 		return sb.toString();
 	}
@@ -256,14 +254,14 @@ public final class Matrix implements Transform, Bufferable {
 		private Matrix matrix;
 
 		/**
-		 * Default constructor for a 4x4 matrix builder.
+		 * Default constructor for a 4x4 matrix.
 		 */
 		public Builder() {
 			this(DEFAULT_ORDER);
 		}
 
 		/**
-		 * Constructor for a matrix builder of the given order.
+		 * Constructor for a matrix of the given order.
 		 * @param order Matrix order
 		 * @throws IllegalArgumentException for an illogical matrix order
 		 */
@@ -330,7 +328,7 @@ public final class Matrix implements Transform, Bufferable {
 				return matrix;
 			}
 			finally {
-				matrix = null;
+				matrix = null; // TODO - would we want to allow builder to be re-used? => some sort of reset method
 			}
 		}
 	}

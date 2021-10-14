@@ -25,7 +25,6 @@ import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.Command.Pool;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 

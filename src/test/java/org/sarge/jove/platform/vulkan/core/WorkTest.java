@@ -22,7 +22,6 @@ import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.Command.Pool;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class WorkTest extends AbstractVulkanTest {

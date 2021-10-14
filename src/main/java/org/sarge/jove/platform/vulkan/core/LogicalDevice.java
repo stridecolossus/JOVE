@@ -21,9 +21,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
@@ -90,31 +88,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			throw new IllegalArgumentException(String.format("Queue not present: required=%s available=%s", family, queues.keySet()));
 		}
 		return list.get(0);
-	}
-
-	/**
-	 * A <i>semaphore</i> is used to synchronise operations within or across command queues.
-	 */
-	public class Semaphore extends AbstractVulkanObject {
-		private Semaphore(Pointer handle) {
-			super(handle, LogicalDevice.this);
-		}
-
-		@Override
-		protected Destructor<Semaphore> destructor(VulkanLibrary lib) {
-			return lib::vkDestroySemaphore;
-		}
-	}
-
-	/**
-	 * Creates a new semaphore.
-	 * @return New semaphore
-	 */
-	public Semaphore semaphore() {
-		final VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
-		final PointerByReference handle = lib.factory().pointer();
-		VulkanLibrary.check(lib.vkCreateSemaphore(this, info, null, handle));
-		return new Semaphore(handle.getValue());
 	}
 
 	/**

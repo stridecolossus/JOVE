@@ -6,7 +6,6 @@ import static org.sarge.lib.util.Check.notNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
-import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
@@ -125,18 +124,6 @@ public class View extends AbstractVulkanObject {
 	 * Builder for an image view.
 	 */
 	public static class Builder {
-		private static final VkComponentMapping DEFAULT_COMPONENT_MAPPING = create();
-
-		private static VkComponentMapping create() {
-			final VkComponentSwizzle identity = VkComponentSwizzle.IDENTITY;
-			final var mapping = new VkComponentMapping();
-			mapping.r = identity;
-			mapping.g = identity;
-			mapping.b = identity;
-			mapping.a = identity;
-			return mapping;
-		}
-
 		/**
 		 * Helper - Maps an image type to the corresponding view type.
 		 * @param type Image type
@@ -152,7 +139,7 @@ public class View extends AbstractVulkanObject {
 
 		private final Image image;
 		private VkImageViewType type;
-		private VkComponentMapping mapping = DEFAULT_COMPONENT_MAPPING;
+		private VkComponentMapping mapping = ComponentMappingBuilder.IDENTITY;
 		private SubResource subresource;
 
 		/**
@@ -175,14 +162,14 @@ public class View extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the RGBA swizzle mapping.
+		 * Sets the component mapping for the view.
 		 * @param mapping Component mapping
+		 * @see ComponentMappingBuilder
 		 */
 		public Builder mapping(VkComponentMapping mapping) {
 			this.mapping = notNull(mapping);
 			return this;
 		}
-		// TODO - use this and remove swizzle in image loader?
 
 		/**
 		 * Sets the image sub-resource for this view.

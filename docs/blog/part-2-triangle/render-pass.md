@@ -386,7 +386,7 @@ We _could_ attempt to factor out the construction of each component into factory
 
 The obvious solution is use a _dependency injection_ framework that manages all the components and dependencies for us, freeing development to focus on each component in relative isolation.
 
-For this we use [Spring Boot](https://spring.io/projects/spring-boot) which is one of the most popular and best supported dependency injection frameworks (and also one we have used extensively elsewhere).
+For this we will use [Spring Boot](https://spring.io/projects/spring-boot) which is one of the most popular and best supported dependency injection frameworks (and also one we have used extensively elsewhere).  Note that only the demo applications will be dependant on the new framework and not the JOVE library itself.
 
 ### Project
 

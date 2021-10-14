@@ -150,8 +150,8 @@ public final class Vector extends Tuple {
 	 * <p>
 	 * Notes:
 	 * <ul>
-	 * <li>non-commutative</li>
-	 * <li>by convention the direction of the resultant vector is given by the <i>right-hand rule</i></li>
+	 * <li>the cross product is non-commutative</li>
+	 * <li>by convention the direction of the resultant vector is determined by the <i>right-hand rule</i></li>
 	 * </ul>
 	 * <p>
 	 * @param vec Vector

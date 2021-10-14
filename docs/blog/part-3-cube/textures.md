@@ -48,7 +48,7 @@ We will first modify the demo to render a quad and implement texture coordinates
 
 ### Quad
 
-First we change the vertex data to render a coloured quad with white in the bottom-right corner:
+First we will change the vertex data to render a coloured quad with white in the bottom-right corner:
 
 ```java
 new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
@@ -264,7 +264,7 @@ public static VkFormat format(Layout layout) {
 
 We can now replace the configuration for the vertex data in the pipeline with the following considerably simpler code:
 
-```
+```java
 .input()
     .add(List.of(Point.LAYOUT, Coordinate2D.LAYOUT))
     .build()
@@ -737,7 +737,7 @@ public VkExtent3D toExtent3D() {
 
 ### Texture Sampler
 
-A _texture sampler_ is used in the fragment shader to sample a fragment colour from the texture image:
+A _texture sampler_ is used by the fragment shader to sample a colour from the texture:
 
 ```java
 public class Sampler extends AbstractVulkanObject {
@@ -906,7 +906,7 @@ private void populate(VkImageMemoryBarrier barrier) {
 
 We now have all the new components we need to load an image to the hardware and create the texture sampler.
 
-We start a new configuration class:
+We start with a new configuration class:
 
 ```java
 @Configuration
@@ -940,7 +940,7 @@ VkFormat format = FormatBuilder.format(image.layout());
 
 The image is a `TYPE_3BYTE_BGR` buffered image which maps to the `R8G8B8A8_UNORM` format.
 
-Next we create a texture suitably configured for the image:
+Next we create a texture with a configuration suitable to the image:
 
 ```java
 // Create descriptor
@@ -997,7 +997,7 @@ new ImageCopyCommand.Builder()
     .submitAndWait(graphics);
 ```
 
-The texture is then transitioned again ready for use by the sampler:
+The texture is then transitioned again ready to be used by the sampler:
 
 ```java
 new Barrier.Builder()
@@ -1020,7 +1020,7 @@ staging.close();
 return View.of(texture);
 ```
 
-This code is still quite long-winded but at least is relatively straight-forward.  We could make more use of dependency injection, but most of the objects we create are not required outside of this class.
+This code is still quite long-winded but at least is relatively straight-forward.  We could perhaps make better use of dependency injection but most of the created objects are transient (other than the staging buffer which we explicitly destroy).
 
 ---
 

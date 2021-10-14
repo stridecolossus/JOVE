@@ -16,8 +16,8 @@ import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Work;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.lib.util.Check;
 
@@ -90,8 +90,8 @@ public class Runner {
 		 * @param dev Logical device
 		 */
 		private FrameState(LogicalDevice dev) {
-			this.ready = dev.semaphore();
-			this.finished = dev.semaphore();
+			this.ready = Semaphore.create(dev);
+			this.finished = Semaphore.create(dev);
 			this.fence = Fence.create(dev, VkFenceCreateFlag.VK_FENCE_CREATE_SIGNALED_BIT);
 		}
 

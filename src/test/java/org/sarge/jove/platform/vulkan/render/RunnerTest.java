@@ -24,7 +24,7 @@ import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.Semaphore;
+import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.render.Runner.Frame;
 import org.sarge.jove.platform.vulkan.render.Runner.FrameState;
@@ -68,7 +68,7 @@ public class RunnerTest extends AbstractVulkanTest {
 		// Mock synchronisation
 		semaphore = mock(Semaphore.class);
 		when(semaphore.handle()).thenReturn(new Handle(new Pointer(2)));
-		when(dev.semaphore()).thenReturn(semaphore);
+//		when(dev.semaphore()).thenReturn(semaphore);
 
 		// Create runner (note two frames but only one swapchain image)
 		runner = new Runner(swapchain, 2, ignored -> frame, queue);
