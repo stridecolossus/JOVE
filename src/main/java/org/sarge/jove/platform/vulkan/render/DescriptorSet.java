@@ -79,7 +79,7 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class DescriptorSet implements NativeObject {
 	/**
-	 * A <i>descriptor set binding</i> defines a binding for a descriptor set {@link Layout}.
+	 * A <i>descriptor set binding</i> defines the resource properties for a binding in this descriptor set.
 	 */
 	public static record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
 		/**
@@ -261,7 +261,7 @@ public class DescriptorSet implements NativeObject {
 	/**
 	 * Retrieves the resource in this descriptor set for the given binding.
 	 * @param binding Binding
-	 * @return Resource
+	 * @return Resource or {@code null} if not populated
 	 * @throws IllegalArgumentException if the binding does not belong to the layout of this descriptor set
 	 * @see #set(Binding, Resource)
 	 */
@@ -317,12 +317,13 @@ public class DescriptorSet implements NativeObject {
 
 		// Apply update
 		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
+
 		return writes.length;
 	}
 	// TODO - test return value
 
 	/**
-	 * Helper - Creates a pipeline bind command for this descriptor set.
+	 * Creates a pipeline bind command for this descriptor set.
 	 * @param layout Pipeline layout
 	 * @return New bind command
 	 */
@@ -370,7 +371,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param dev			Logical device
 		 * @param max			Maximum number of descriptor sets that <b>can</b> be allocated by this pool
 		 */
-		Pool(Pointer handle, LogicalDevice dev, int max) {
+		Pool(Pointer handle, DeviceContext dev, int max) {
 			super(handle, dev);
 			this.max = oneOrMore(max);
 		}
@@ -397,8 +398,8 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		/**
-		 * Allocates descriptor-sets for the given layouts.
-		 * @return New descriptor-sets
+		 * Allocates a number of descriptor sets for the given layouts.
+		 * @return New descriptor sets
 		 * @throws IllegalArgumentException if the requested number of sets exceeds the maximum for this pool
 		 */
 		public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
@@ -425,7 +426,10 @@ public class DescriptorSet implements NativeObject {
 				final Handle handle = new Handle(handles[index]);
 				return new DescriptorSet(handle, layouts.get(index));
 			};
-			final var allocated = IntStream.range(0, handles.length).mapToObj(ctor).collect(toList());
+			final var allocated = IntStream
+					.range(0, handles.length)
+					.mapToObj(ctor)
+					.collect(toList());
 
 			// Record sets allocated by this pool
 			sets.addAll(allocated);
@@ -493,18 +497,9 @@ public class DescriptorSet implements NativeObject {
 		 * Builder for a descriptor-set pool.
 		 */
 		public static class Builder {
-			private final LogicalDevice dev;
 			private final Map<VkDescriptorType, Integer> pool = new HashMap<>();
 			private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
 			private Integer max;
-
-			/**
-			 * Constructor.
-			 * @param dev Logical device
-			 */
-			public Builder(LogicalDevice dev) {
-				this.dev = notNull(dev);
-			}
 
 			/**
 			 * Adds a number of available sets to this pool.
@@ -538,10 +533,11 @@ public class DescriptorSet implements NativeObject {
 
 			/**
 			 * Constructs this pool.
+			 * @param dev Logical device
 			 * @return New descriptor-set pool
 			 * @throws IllegalArgumentException if the available sets is empty or the pool size exceeds the specified maximum
 			 */
-			public Pool build() {
+			public Pool build(DeviceContext dev) {
 				// Determine logical maximum number of sets that can be allocated
 				final int limit = pool
 						.values()
@@ -599,7 +595,7 @@ public class DescriptorSet implements NativeObject {
 		 * @throws IllegalArgumentException for if the bindings are empty
 		 * @throws IllegalStateException for a duplicate binding index
 		 */
-		public static Layout create(LogicalDevice dev, List<Binding> bindings) {
+		public static Layout create(DeviceContext dev, List<Binding> bindings) {
 			// Init layout descriptor
 			final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
 			info.bindingCount = bindings.size();
@@ -623,7 +619,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param bindings		Bindings
 		 * @throws IllegalStateException for a duplicate binding index
 		 */
-		Layout(Pointer handle, LogicalDevice dev, List<Binding> bindings) {
+		Layout(Pointer handle, DeviceContext dev, List<Binding> bindings) {
 			super(handle, dev);
 			Check.notEmpty(bindings);
 			this.bindings = bindings.stream().collect(toMap(Binding::index, Function.identity()));

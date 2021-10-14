@@ -269,7 +269,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 			@BeforeEach
 			void before() {
-				builder = new Pool.Builder(dev);
+				builder = new Pool.Builder();
 			}
 
 			@Test
@@ -278,7 +278,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 				pool = builder
 						.add(VkDescriptorType.SAMPLER, 3)
 						.flag(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET)
-						.build();
+						.build(dev);
 
 				// Check pool
 				assertNotNull(pool);
@@ -305,7 +305,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 						.max(1)
 						.add(VkDescriptorType.SAMPLER, 1)
 						.add(VkDescriptorType.UNIFORM_BUFFER, 1)
-						.build();
+						.build(dev);
 
 				assertEquals(1, pool.maximum());
 				assertEquals(1, pool.available());
@@ -313,13 +313,13 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 			@Test
 			void buildEmpty() {
-				assertThrows(IllegalArgumentException.class, () -> builder.build());
+				assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
 			}
 
 			@Test
 			void buildInvalidTotalPoolSize() {
 				builder.max(1).add(VkDescriptorType.SAMPLER, 2);
-				assertThrows(IllegalArgumentException.class, () -> builder.build());
+				assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
 			}
 		}
 	}

@@ -4,7 +4,7 @@ title: Descriptor Sets
 
 ## Overview
 
-The final piece of functionality we need to implement texture sampling is a _descriptor set_.
+The final piece of functionality we need to implement texture sampling is the _descriptor set_.
 
 - A descriptor set is comprised of the _resources_ used by the pipeline during rendering (samplers, uniform buffers, etc).
 
@@ -12,39 +12,24 @@ The final piece of functionality we need to implement texture sampling is a _des
 
 - A _descriptor set layout_ specifies the resource bindings for a descriptor set.
 
+We will also need to slightly refactor the pipeline layout which is used to configure the descriptor sets in the rendering process.
+
+> Descriptor sets are one of the more complex aspects of a Vulkan application (or at least they proved to be for the author).  We have attempted to come up with a design that reflects the flexibility that the Vulkan designers were clearly aiming for whilst providing a relatively developer-friendly API.
+
 ---
 
 ## Descriptor Sets
 
-### Domain Class
+### Layout
 
 The first-cut class outline is as follows:
 
 ```java
 public class DescriptorSet implements NativeObject {
-    private final Handle handle;
-    private final Layout layout;
-
-    ...
-
-    /**
-     * Creates a pipeline bind command for this descriptor set.
-     * @param layout Pipeline layout
-     * @return New bind command
-     */
-    public Command bind(Pipeline.Layout layout) {
-    }
-
-    /**
-     * A <i>descriptor set pool</i> is used to allocate and manage a group of descriptor sets.
-     */
-    public static class Pool extends AbstractVulkanObject {
-    }
-
-    /**
-     * Layout for a descriptor-set.
-     */
     public static class Layout extends AbstractVulkanObject {
+    }
+
+    public static class Pool extends AbstractVulkanObject {
     }
 }
 ```
@@ -55,28 +40,23 @@ We tackle the layout first:
 public static class Layout extends AbstractVulkanObject {
     private final Map<Integer, Binding> bindings;
 
-    /**
-     * Constructor.
-     * @param handle        Layout handle
-     * @param dev           Logical device
-     * @param bindings      Bindings
-     */
-    Layout(Pointer handle, LogicalDevice dev, List<Binding> bindings) {
-        super(handle, dev, dev.library()::vkDestroyDescriptorSetLayout);
-        Check.notEmpty(bindings);
-        this.bindings = bindings.stream().collect(toMap(Binding::binding, Function.identity()));
+    @Override
+    protected Destructor<Layout> destructor(VulkanLibrary lib) {
+        return lib::vkDestroyDescriptorSetLayout;
     }
 }
 ```
 
-A layout is comprised of a number of resource bindings defined as follows:
+A layout is comprised of a number of _resource bindings_ defined as follows:
 
 ```java
 public static record Binding(int binding, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
 }
 ```
 
-We implement a convenience builder for the binding and add a populate method for the binding descriptor used below:
+Where _count_ is the size of the resource (i.e. which can be an array) and _stages_ specifies where the resource is used in the pipeline.
+
+We implement a convenience builder for the binding and add a populate method for the binding descriptor which is used below:
 
 ```java
 private void populate(VkDescriptorSetLayoutBinding info) {
@@ -87,19 +67,19 @@ private void populate(VkDescriptorSetLayoutBinding info) {
 }
 ```
 
-A layout is created by a static factory method:
+A layout is created by a factory method:
 
 ```java
 public static Layout create(LogicalDevice dev, List<Binding> bindings) {
     // Init layout descriptor
     final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
     info.bindingCount = bindings.size();
-    info.pBindings = VulkanStructure.array(VkDescriptorSetLayoutBinding::new, bindings, Binding::populate);
+    info.pBindings = StructureHelper.first(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
 
     // Allocate layout
     final VulkanLibrary lib = dev.library();
     final PointerByReference handle = lib.factory().pointer();
-    check(lib.vkCreateDescriptorSetLayout(dev.handle(), info, null, handle));
+    check(lib.vkCreateDescriptorSetLayout(dev, info, null, handle));
 
     // Create layout
     return new Layout(handle.getValue(), dev, bindings);
@@ -115,147 +95,106 @@ public static class Pool extends AbstractVulkanObject {
     private final Set<DescriptorSet> sets = new HashSet<>();
     private final int max;
 
-    /**
-     * Constructor.
-     * @param handle        Pool handle
-     * @param dev           Logical device
-     * @param max           Maximum number of descriptor sets
-     */
-    Pool(Pointer handle, LogicalDevice dev, int max) {
-        super(handle, dev, dev.library()::vkDestroyDescriptorPool);
-        this.max = oneOrMore(max);
+    @Override
+    protected Destructor<Pool> destructor(VulkanLibrary lib) {
+        return lib::vkDestroyDescriptorPool;
+    }
+
+    @Override
+    protected void release() {
+        sets.clear();
     }
 }
 ```
 
-The _max_ member configures the maximum number of descriptors that can be allocated from the pool (allowing the implementation to potentially optimise and pre-allocate the pool).
+The _max_ member configures the maximum number of descriptors that can be allocated from the pool, allowing the implementation to potentially optimise and pre-allocate the pool.
 
-We add the following method to allocate a number of sets from the pool:
+Descriptor sets are requested from the pool as follows:
 
 ```java
 public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
     // Check pool size
-    if(sets.size() + layouts.size() > max) {
+    final int size = layouts.size();
+    if(sets.size() + size > max) {
         throw new IllegalArgumentException(...);
     }
 
     // Build allocation descriptor
     final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
     info.descriptorPool = this.handle();
-    info.descriptorSetCount = layouts.size();
-    info.pSetLayouts = Handle.toArray(layouts);
+    info.descriptorSetCount = size;
+    info.pSetLayouts = NativeObject.toArray(layouts);
 
     // Allocate descriptors sets
-    final LogicalDevice dev = this.device();
+    final DeviceContext dev = this.device();
     final VulkanLibrary lib = dev.library();
-    final Pointer[] handles = lib.factory().pointers(layouts.size());
-    check(lib.vkAllocateDescriptorSets(dev.handle(), info, handles));
+    final Pointer[] handles = lib.factory().array(size);
+    check(lib.vkAllocateDescriptorSets(dev, info, handles));
     ...
 }
 ```
 
-The returned handles are then transformed to the domain object:
+The returned handles are transformed to the domain object:
 
 ```java
-    ...
-    
-    // Create descriptor sets
-    final IntFunction<DescriptorSet> ctor = index -> {
-        final Handle handle = new Handle(handles[index]);
-        return new DescriptorSet(handle, layouts.get(index));
-    };
-    final var allocated = IntStream
+// Create descriptor sets
+final IntFunction<DescriptorSet> ctor = index -> {
+    final Handle handle = new Handle(handles[index]);
+    return new DescriptorSet(handle, layouts.get(index));
+};
+final var allocated = IntStream
         .range(0, handles.length)
         .mapToObj(ctor)
         .collect(toList());
-    
-    // Record sets allocated by this pool
-    sets.addAll(allocated);
-    
-    return allocated;
-}
+
+// Record sets allocated by this pool
+sets.addAll(allocated);
+return allocated;
 ```
+
+Note that descriptor sets are managed by the pool and are automatically released when the pool is destroyed.
 
 We also implement the other API methods for management of the pool:
 
 ```java
 public synchronized void free(Collection<DescriptorSet> sets) {
-    if(!this.sets.containsAll(sets)) throw new IllegalArgumentException(...);
-    this.sets.removeAll(sets);
-    final LogicalDevice dev = this.device();
-    check(dev.library().vkFreeDescriptorSets(dev.handle(), this.handle(), sets.size(), Handle.toArray(sets)));
+    ...
+    final DeviceContext dev = this.device();
+    check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.toArray(sets)));
 }
 
 public synchronized void free() {
-    if(sets.isEmpty()) throw new IllegalArgumentException("Pool is already empty");
-    final LogicalDevice dev = this.device();
-    check(dev.library().vkResetDescriptorPool(dev.handle(), this.handle(), 0));
+    if(sets.isEmpty()) throw new IllegalArgumentException(...);
+    final DeviceContext dev = this.device();
+    check(dev.library().vkResetDescriptorPool(dev, this, 0));
     sets.clear();
-}
-
-@Override
-protected void release() {
-    sets.clear();
-    super.release();
 }
 ```
 
-Note that descriptor sets are managed by the pool and are automatically released when the pool is destroyed.
+### Builder
 
 To construct a pool we provide a builder:
 
 ```java
 public static class Builder {
-    private final LogicalDevice dev;
     private final Map<VkDescriptorType, Integer> pool = new HashMap<>();
-    private final Set<VkDescriptorPoolCreate> flags = new HashSet<>();
+    private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
     private Integer max;
 }
 ```
 
-The _pool_ is a table of the pool sizes for each descriptor type (we don't bother implementing a transient object):
+The _pool_ is a table of the pool sizes for each descriptor type:
 
 ```java
 public Builder add(VkDescriptorType type, int count) {
     Check.notNull(type);
     Check.oneOrMore(count);
-    entries.put(type, count);
+    pool.put(type, count);
     return this;
 }
 ```
 
-We add a local helper to transform a pool entry to the Vulkan descriptor:
-
-```java
-private static void populate(Map.Entry<VkDescriptorType, Integer> entry, VkDescriptorPoolSize size) {
-    size.type = entry.getKey();
-    size.descriptorCount = entry.getValue();
-}
-```
-
-The `build` method first validates that the configured pool size does not exceed the maximum:
-
-```java
-// Determine logical maximum number of sets that can be allocated
-final int limit = pool
-    .values()
-    .stream()
-    .mapToInt(Integer::intValue)
-    .max()
-    .orElseThrow(() -> new IllegalArgumentException("No pool sizes specified"));
-
-// Initialise or validate the maximum number of sets
-if(max == null) {
-    max = limit;
-}
-else {
-    if(limit > max) {
-        throw new IllegalArgumentException(...);
-    }
-}
-```
-
-Next we transform the entries map to an array and populate the descriptor for the pool:
+The build method transforms the table to an array and populates the descriptor for the pool:
 
 ```java
 // Init pool descriptor
@@ -266,13 +205,24 @@ info.pPoolSizes = StructureCollector.toPointer(pool.entrySet(), VkDescriptorPool
 info.maxSets = max;
 ```
 
+Which uses the following helper:
+
+```java
+private static void populate(Map.Entry<VkDescriptorType, Integer> entry, VkDescriptorPoolSize size) {
+    size.type = entry.getKey();
+    size.descriptorCount = entry.getValue();
+}
+```
+
+The size of the table is also verified against the specified _max_ property (not shown).
+
 Finally we invoke the API to allocate the pool and create the domain object:
 
 ```java
 // Allocate pool
 final VulkanLibrary lib = dev.library();
 final PointerByReference handle = lib.factory().pointer();
-check(lib.vkCreateDescriptorPool(dev.handle(), info, null, handle));
+check(lib.vkCreateDescriptorPool(dev, info, null, handle));
 
 // Create pool
 return new Pool(handle.getValue(), dev, max);
@@ -280,7 +230,7 @@ return new Pool(handle.getValue(), dev, max);
 
 ### Resources
 
-With the framework for descriptor sets in place we next need functionality to update the _resources_ for a descriptor set.
+A descriptor set is essentially a mutable map of _resources_ indexed by the bindings in the layout.
 
 We first define a descriptor set resource:
 
@@ -299,80 +249,113 @@ public interface Resource {
 }
 ```
 
-The resources are wrapped by a new `Entry` class and indexed by the layout bindings:
+We can now implement a factory for the descriptor set resource for the sampler:
 
 ```java
-public class DescriptorSet {
-    ...
+public Resource resource(View texture) {
+    return new Resource() {
+        @Override
+        public VkDescriptorType type() {
+            return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
+        }
+
+        @Override
+        public void populate(VkWriteDescriptorSet write) {
+            // Create sampler descriptor
+            final var info = new VkDescriptorImageInfo();
+            info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
+            info.sampler = Sampler.this.handle();
+            info.imageView = texture.handle();
+
+            // Add to write descriptor
+            write.pImageInfo = info;
+        }
+    };
+}
+```
+
+Note that the same `VkWriteDescriptorSet` descriptor is used for __all__ types of resource, in this case we populate the `pImageInfo` field for the texture sampler.
+
+We can now finally implement the descriptor set domain object itself:
+
+```java
+public class DescriptorSet implements NativeObject {
+    private final Handle handle;
+    private final Layout layout;
     private final Map<Binding, Entry> entries;
 
-    DescriptorSet(Handle handle, Layout layout) {
+    public DescriptorSet(Handle handle, Layout layout) {
         this.handle = notNull(handle);
         this.layout = notNull(layout);
         this.entries = layout.bindings.values().stream().collect(toMap(Function.identity(), Entry::new));
     }
-
-    public Entry entry(Binding binding) {
-        final Entry entry = entries.get(binding);
-        if(entry == null) throw new IllegalArgumentException(...);
-        return entry;
-    }
 }
 ```
 
-An `Entry` is a mutable holder for a descriptor set resource:
+Note that the map is initialised in the constructor by instantiating a new `Entry` for each binding.
+
+An _entry_ is a local class that stores the descriptor set resource for a given binding:
 
 ```java
-public class Entry {
+private class Entry {
     private final Binding binding;
     private Resource res;
     private boolean dirty = true;
 
-    private boolean isDirty() {
-        if(dirty) {
-            dirty = false;
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    public Optional<Resource> resource() {
-        return Optional.ofNullable(res);
+    private Entry(Binding binding) {
+        this.binding = notNull(binding);
     }
 }
 ```
 
-The `dirty` flag is used later to identify resources that have been modified by the following mutator:
+Which is a mutable property of the descriptor set:
 
 ```java
-public void set(Resource res) {
-    if(res.type() != binding.type()) throw new IllegalArgumentException(...);
-    this.res = notNull(res);
-    this.dirty = true;
+public void set(Binding binding, Resource res) {
+    final Entry entry = entry(binding);
+    entry.res = notNull(res);
+    entry.dirty = true;
 }
 ```
 
-A descriptor set update is then populated as follows:
+### Updates
+
+
+    private Stream<Entry> modified() {
+        return entries
+                .values()
+                .stream()
+                .filter(Entry::isDirty);
+    }
+
+
 
 ```java
-private void populate(VkWriteDescriptorSet write) {
+void populate(VkWriteDescriptorSet write) {
+    // Validate
+    if(res == null) {
+        throw new IllegalStateException(...);
+    }
+
     // Init write descriptor
     write.dstBinding = binding.index();
     write.descriptorType = binding.type();
-    write.dstSet = handle();
+    write.dstSet = DescriptorSet.this.handle();
     write.descriptorCount = 1;
     write.dstArrayElement = 0;
 
     // Populate resource
     res.populate(write);
+
+    // Update flag
+    assert dirty;
+    dirty = false;
 }
 ```
 
-Note that this method also invokes the `populate` method of the resource itself.
 
-### Updates
+
+
 
 Now we can allocate a descriptor set and initialise its resources, the final step is to apply the changes:
 
@@ -448,34 +431,9 @@ With an over-loaded variant for a single descriptor set instance.
 
 ## Texture Sampling Redux
 
-### Texture Resource
 
-The final step in this chapter is to implement a descriptor set resource for the texture `Sampler`:
 
-```java
-public Resource resource(View texture) {
-    return new Resource() {
-        @Override
-        public VkDescriptorType type() {
-            return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
-        }
 
-        @Override
-        public void populate(VkWriteDescriptorSet write) {
-            // Create sampler descriptor
-            final var info = new VkDescriptorImageInfo();
-            info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
-            info.sampler = Sampler.this.handle();
-            info.imageView = texture.handle();
-
-            // Add to write descriptor
-            write.pImageInfo = info;
-        }
-    };
-}
-```
-
-Note that a `VkWriteDescriptorSet` is used for **all** types of resource - for textures we populate the `pImageInfo` field.
 
 ### Integration
 

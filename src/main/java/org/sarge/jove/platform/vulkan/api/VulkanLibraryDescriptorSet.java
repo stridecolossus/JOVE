@@ -8,7 +8,6 @@ import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Pool;
@@ -28,7 +27,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pSetLayout			Returned layout handle
 	 * @return Result code
 	 */
-	int vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
+	int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
 
 	/**
 	 * Destroys a descriptor set layout.
@@ -46,7 +45,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pDescriptorPool		Returned pool
 	 * @return Result code
 	 */
-	int vkCreateDescriptorPool(LogicalDevice device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
+	int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
 
 	/**
 	 * Destroys a descriptor-set pool.

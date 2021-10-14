@@ -115,7 +115,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @throws IllegalArgumentException if both the semaphore and fence are {@code null}
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) {
-//		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
+		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
 		final DeviceContext dev = device();
 		final VulkanLibrary lib = dev.library();
 		check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
@@ -169,6 +169,7 @@ public class Swapchain extends AbstractVulkanObject {
 		private final LogicalDevice dev;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private ClearValue clear = ClearValue.NONE;
+		// TODO - view created by factory function so can be customised (including clear value?)
 
 		// Surface constraints
 		private final VkSurfaceCapabilitiesKHR caps;
