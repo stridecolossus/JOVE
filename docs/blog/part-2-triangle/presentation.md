@@ -216,7 +216,7 @@ public View build() {
 }
 ```
 
-The `subresourceRange` field of the create descriptor specifies a subset of the mipmap levels and array layers accessible to the view.  We will use the whole image so this data is hard-coded for the moment:
+The `subresourceRange` field of the create descriptor specifies a subset of the mipmap levels and array layers accessible to the view.  For this demo we will use the whole image so the descriptor is hard-coded for the moment:
 
 ```java
 var range = new VkImageSubresourceRange();

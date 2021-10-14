@@ -32,7 +32,7 @@ public interface ImageData {
 	Layout layout();
 
 	/**
-	 * @return Channel components
+	 * @return Component mapping specification
 	 */
 	String mapping();
 

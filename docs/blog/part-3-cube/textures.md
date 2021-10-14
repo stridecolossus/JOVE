@@ -293,6 +293,11 @@ public interface ImageData {
     Layout layout();
 
     /**
+     * @return Component mapping specification
+     */
+    String mapping();
+
+    /**
      * @return Image data
      */
     byte[] bytes();
@@ -303,7 +308,9 @@ Notes:
 
 * We assume that image data is stored as bytes.
 
-* A vertex layout is reused to represent the structure of the image data.
+* We reuse the _layout_ specify the structure of the image data.
+
+* The purpose of the _mapping_ string is covered below.
 
 ### Image Loader
 
@@ -327,25 +334,18 @@ public ImageData load(InputStream in) throws IOException {
 }
 ```
 
-We transform the data to a format supported by Vulkan depending on the native image type:
+We add an alpha channel as necessary:
 
 ```java
-final BufferedImage result = switch(image.getType()) {
-    // Gray-scale
+BufferedImage result = switch(image.getType()) {
     case BufferedImage.TYPE_BYTE_GRAY -> image;
-
-    // RGB
-    case BufferedImage.TYPE_3BYTE_BGR, BufferedImage.TYPE_BYTE_INDEXED -> swizzle(alpha(image));
-
-    // RGBA
-    case BufferedImage.TYPE_4BYTE_ABGR -> swizzle(image);
-
-    // Unknown
-    default -> throw new RuntimeException(...);
+    case BufferedImage.TYPE_3BYTE_BGR, BufferedImage.TYPE_BYTE_INDEXED -> alpha(image);
+    case BufferedImage.TYPE_4BYTE_ABGR -> image;
+    default -> throw new RuntimeException("Unsupported image format: " + image);
 };
 ```
 
-Transforming the image to a format suitable for Vulkan turned out to be much harder than anticipated using the built-in Java libraries - in particular adding an alpha component either requires fiddly array manipulation or re-drawing the image, neither of which are very palatable.  In the end we opted for the simpler (if slower and uglier) approach of simply re-drawing the image into a buffered image with an alpha channel:
+Adding an alpha channel proved to be much harder than anticipated requiring fiddly byte-level manipulation.  In the end we opted for the simpler (if slower and uglier) approach of simply re-drawing into a new image with an alpha channel:
 
 ```java
 private static BufferedImage alpha(BufferedImage image) {
@@ -365,34 +365,6 @@ private static BufferedImage alpha(BufferedImage image) {
 }
 ```
 
-The method to swizzle the channels from BGRA to RGBA iterates the underlying data and swaps at the byte level:
-
-```java
-private static BufferedImage swizzle(BufferedImage image) {
-    DataBufferByte data = (DataBufferByte) image.getRaster().getDataBuffer();
-    byte[] bytes = data.getData();
-    for(int n = 0; n < bytes.length; n += 4) {
-        swap(bytes, n, 0, 3);
-        swap(bytes, n, 1, 2);
-    }
-    return image;
-}
-```
-
-Which uses the following helper:
-
-```java
-private static void swap(byte[] bytes, int index, int src, int dest) {
-    int a = index + src;
-    int b = index + dest;
-    byte temp = bytes[a];
-    bytes[a] = bytes[b];
-    bytes[b] = temp;
-}
-```
-
-> There are probably much simpler and better solutions for adding the alpha channel and channel swizzles.
-
 Finally we wrap the resultant buffered image:
 
 ```java
@@ -405,7 +377,16 @@ return new ImageData() {
     @Override
     public Layout layout() {
         int num = result.getColorModel().getNumComponents();
-        return new Layout(num, Byte.class, false);
+        return new Layout(num, Byte.class, 1, false);
+    }
+
+    @Override
+    public String mapping() {
+        return switch(result.getType()) {
+            ...
+            case BufferedImage.TYPE_4BYTE_ABGR -> "ABGR";
+            default -> throw new RuntimeException();
+        };
     }
 
     @Override
@@ -421,28 +402,18 @@ Note that layout of the image assumes one byte per channel.
 This loader is somewhat crude and brute-force, but it does the business for the images we are interested in for the forseeable future.  We add the following unit-test to check the texture images we will be using in the next few chapters:
 
 ```java
+@DisplayName("Should load supported image formats")
 @ParameterizedTest
 @CsvSource({
-    "duke.jpg, 375, 375, 4",
-    "duke.png, 375, 375, 4",
-    "heightmap.jpg, 256, 256, 1",
+    "duke.jpg, 5",
+    "duke.png, 13",
+    "heightmap.jpg, 10",
 })
-void load(String filename, int w, int h, int components) throws IOException {
-    // Load image from file-system
-    Path path = Paths.get("./src/test/resources", filename);
-    BufferedImage buffered = ImageIO.read(Files.newInputStream(path));
-
-    // Load image wrapper
-    ImageData image = loader.load(buffered);
-    assertNotNull(image);
-
-    // Check image properties
-    assertEquals(new Dimensions(w, h), image.size());
-    assertEquals(Layout.of(components, Byte.class), image.layout());
-
-    // Check image data
-    assertNotNull(image.bytes());
-    assertEquals(w * h * components, image.bytes().length);
+void map(String filename, int type) throws IOException {
+    final Path path = Paths.get("./src/test/resources", filename);
+    final BufferedImage image = loader.map(Files.newInputStream(path));
+    assertEquals(type, image.getType());
+    assertNotNull(loader.load(image));
 }
 ```
 
@@ -900,6 +871,77 @@ private void populate(VkImageMemoryBarrier barrier) {
 }
 ```
 
+### Component Mapping
+
+The last piece of functionality we will need is some means of determining the _component mapping_ for an image when we created the texture view.
+
+Native images have channels in `ABGR` order whereas Vulkan textures are `RGBA`, the component mapping allows the image view to _swizzles_ the image channels as required.
+
+We implement a new helper class that constructs the appropriate component mapping from the _mapping_ property of the image:
+
+```java
+public final class ComponentMappingBuilder {
+    public static VkComponentMapping build(String mapping) {
+        // Validate
+        if(mapping.length() != 4) throw new IllegalArgumentException(...);
+
+        // Build swizzle array
+        final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
+        Arrays.setAll(swizzle, n -> swizzle(mapping.charAt(n)));
+
+        // Build component mapping
+        return build(swizzle);
+    }
+}
+```
+
+The `swizzle` method maps a channel mapping character to the corresponding swizzle:
+
+```java
+private static VkComponentSwizzle swizzle(char mapping) {
+    return switch(mapping) {
+        case 'R' -> VkComponentSwizzle.R;
+        case 'G' -> VkComponentSwizzle.G;
+        case 'B' -> VkComponentSwizzle.B;
+        case 'A' -> VkComponentSwizzle.A;
+        case '=' -> VkComponentSwizzle.IDENTITY;
+        case '1' -> VkComponentSwizzle.ONE;
+        case '0' -> VkComponentSwizzle.ZERO;
+        default -> throw new IllegalArgumentException("Unsupported swizzle mapping: " + mapping);
+    };
+}
+```
+
+And the component mapping is constructed from the array as follows:
+
+```java
+private static VkComponentMapping build(VkComponentSwizzle[] swizzle) {
+    final VkComponentMapping components = new VkComponentMapping();
+    components.r = swizzle[0];
+    components.g = swizzle[1];
+    components.b = swizzle[2];
+    components.a = swizzle[3];
+    return components;
+}
+```
+
+Finally we re-implement the identity component mapping which replaces the previously hard-coded constant in the view builder:
+
+```java
+public final class ComponentMappingBuilder {
+    /**
+     * Identity component mapping.
+     */
+    public static final VkComponentMapping IDENTITY;
+
+    static {
+        final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
+        Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
+        IDENTITY = build(swizzle);
+    }
+}
+```
+
 ---
 
 ## Integration
@@ -938,7 +980,7 @@ From which we can determine the appropriate Vulkan format:
 VkFormat format = FormatBuilder.format(image.layout());
 ```
 
-The image is a `TYPE_3BYTE_BGR` buffered image which maps to the `R8G8B8A8_UNORM` format.
+The image is a `TYPE_4BYTE_ABGR` buffered image which maps to the `R8G8B8A8_UNORM` format.
 
 Next we create a texture with a configuration suitable to the image:
 
@@ -1013,11 +1055,20 @@ new Barrier.Builder()
     .submitAndWait(graphics);
 ```
 
-Finally we create a default image view for the texture:
+The component mapping is determined from the image by the new helper:
 
 ```java
-staging.close();
-return View.of(texture);
+VkComponentMapping mapping = ComponentMappingBuilder.build(image.mapping());
+```
+
+This swizzles the channels of the image in the demo (which has an `ABGR` channel order) to the Vulkan `RGBA` default.
+
+Finally we create the image view for the texture:
+
+```java
+return new View.Builder(texture)
+    .mapping(mapping)
+    .build();
 ```
 
 This code is still quite long-winded but at least is relatively straight-forward.  We could perhaps make better use of dependency injection but most of the created objects are transient (other than the staging buffer which we explicitly destroy).

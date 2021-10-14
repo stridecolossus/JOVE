@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import java.util.Arrays;
+
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 
@@ -11,7 +13,13 @@ public final class ComponentMappingBuilder {
 	/**
 	 * Identity component mapping.
 	 */
-	public static final VkComponentMapping IDENTITY = build("====");
+	public static final VkComponentMapping IDENTITY;
+
+	static {
+		final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
+		Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
+		IDENTITY = build(swizzle);
+	}
 
 	private ComponentMappingBuilder() {
 	}
@@ -34,12 +42,27 @@ public final class ComponentMappingBuilder {
 	 * @throws IllegalArgumentException if a channel swizzle is not supported
 	 */
 	public static VkComponentMapping build(String mapping) {
+		// Validate
 		if(mapping.length() != 4) throw new IllegalArgumentException(String.format("Invalid component mapping [%s]", mapping));
+
+		// Build swizzle array
+		final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
+		Arrays.setAll(swizzle, n -> swizzle(mapping.charAt(n)));
+
+		// Build component mapping
+		return build(swizzle);
+	}
+
+	/**
+	 * @param swizzle Component mapping array
+	 * @return New component mapping
+	 */
+	private static VkComponentMapping build(VkComponentSwizzle[] swizzle) {
 		final VkComponentMapping components = new VkComponentMapping();
-		components.r = swizzle(mapping.charAt(0));
-		components.g = swizzle(mapping.charAt(1));
-		components.b = swizzle(mapping.charAt(2));
-		components.a = swizzle(mapping.charAt(3));
+		components.r = swizzle[0];
+		components.g = swizzle[1];
+		components.b = swizzle[2];
+		components.a = swizzle[3];
 		return components;
 	}
 
