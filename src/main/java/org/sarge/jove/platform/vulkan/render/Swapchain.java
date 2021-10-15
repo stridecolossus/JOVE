@@ -52,10 +52,9 @@ public class Swapchain extends AbstractVulkanObject {
 	public static final VkFormat DEFAULT_FORMAT = new FormatBuilder()
 			.components("BGRA")
 			.bytes(1)
-			.signed(false)
-			.type(FormatBuilder.Type.NORM)
+			.signed(true)
+			.type(FormatBuilder.Type.RGB)
 			.build();
-	// TODO - should be VkFormat.B8G8R8A8_SRGB; i.e. is it SRBG or UNORM?
 
 	/**
 	 * Default swapchain colour-space.
@@ -79,7 +78,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param format		Image format
 	 * @param views			Image views
 	 */
-	Swapchain(Pointer handle, LogicalDevice dev, VkFormat format, Dimensions extents, List<View> views) {
+	Swapchain(Pointer handle, DeviceContext dev, VkFormat format, Dimensions extents, List<View> views) {
 		super(handle, dev);
 		this.format = notNull(format);
 		this.extents = notNull(extents);

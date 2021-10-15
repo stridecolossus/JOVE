@@ -39,7 +39,7 @@ public class Surface extends AbstractTransientNativeObject {
 
     @Override
     protected void release() {
-        final VulkanLibrarySurface lib = instance.library();
+        VulkanLibrarySurface lib = instance.library();
         lib.vkDestroySurfaceKHR(instance, this, null);
     }
 }
@@ -65,8 +65,8 @@ The surface properties provides a number of accessors that are used to configure
 
 ```java
 public VkSurfaceCapabilitiesKHR capabilities() {
-    final VulkanLibrary lib = dev.library();
-    final VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR();
+    VulkanLibrary lib = dev.library();
+    VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR();
     check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, Surface.this, caps));
     return caps;
 }
@@ -76,8 +76,8 @@ The supported _image formats_ are retrieved using the two-stage approach:
 
 ```java
 public Collection<VkSurfaceFormatKHR> formats() {
-    final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface.this, count, array);
-    final var formats = VulkanFunction.enumerate(func, dev.library(), VkSurfaceFormatKHR::new);
+    VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface.this, count, array);
+    var formats = VulkanFunction.enumerate(func, dev.library(), VkSurfaceFormatKHR::new);
     return Arrays.stream(formats).collect(toList());
 }
 ```
@@ -88,19 +88,19 @@ Finally the swapchain will support a number of available _presentation modes_ (a
 public Set<VkPresentModeKHR> modes() {
     // Count number of supported modes
     // TODO - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
-    final VulkanLibrary lib = dev.library();
-    final IntByReference count = lib.factory().integer();
+    VulkanLibrary lib = dev.library();
+    IntByReference count = lib.factory().integer();
     check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, null));
 
     // Retrieve modes
-    final int[] array = new int[count.getValue()];
+    int[] array = new int[count.getValue()];
     check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array));
 
     // Convert to enumeration
     return Arrays
-            .stream(array)
-            .mapToObj(n -> IntegerEnumeration.map(VkPresentModeKHR.class, n))
-            .collect(toSet());
+        .stream(array)
+        .mapToObj(n -> IntegerEnumeration.map(VkPresentModeKHR.class, n))
+        .collect(toSet());
 }
 ```
 
@@ -109,9 +109,9 @@ The new API methods are added to the surface library:
 ```java
 public interface VulkanLibrarySurface {
     ...
-    int vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, Surface surface, VkSurfaceCapabilitiesKHR caps);
-    int vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntByReference count, VkSurfaceFormatKHR formats);
-    int vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, IntByReference count, int[] modes);
+    int  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, Surface surface, VkSurfaceCapabilitiesKHR caps);
+    int  vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntByReference count, VkSurfaceFormatKHR formats);
+    int  vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, IntByReference count, int[] modes);
     void vkDestroySurfaceKHR(Instance instance, Surface surface, Pointer allocator);
 }
 ```
@@ -198,7 +198,7 @@ The `build` method populates a Vulkan descriptor for the view and invokes the AP
 ```java
 public View build() {
     // Build view descriptor
-    final VkImageViewCreateInfo info = new VkImageViewCreateInfo();
+    VkImageViewCreateInfo info = new VkImageViewCreateInfo();
     info.viewType = type;
     info.format = image.descriptor().format();
     info.image = image.handle();
@@ -206,9 +206,9 @@ public View build() {
     info.subresourceRange = ...
 
     // Allocate image view
-    final LogicalDevice dev = image.device();
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference handle = lib.factory().pointer();
+    LogicalDevice dev = image.device();
+    VulkanLibrary lib = dev.library();
+    PointerByReference handle = lib.factory().pointer();
     check(lib.vkCreateImageView(dev, info, null, handle));
 
     // Create image view
@@ -234,8 +234,8 @@ The component mapping specifies the swizzle for the RGBA colour components of th
 private static final VkComponentMapping DEFAULT_COMPONENT_MAPPING = create();
 
 private static VkComponentMapping create() {
-    final VkComponentSwizzle identity = VkComponentSwizzle.IDENTITY;
-    final var mapping = new VkComponentMapping();
+    VkComponentSwizzle identity = VkComponentSwizzle.IDENTITY;
+    var mapping = new VkComponentMapping();
     mapping.r = identity;
     mapping.g = identity;
     mapping.b = identity;
@@ -294,7 +294,7 @@ The available capabilities, formats and presentation modes are queried (once) fr
 
 ```java
 public Builder(LogicalDevice dev, Surface surface) {
-    final Surface.Properties props = surface.properties(dev.parent());
+    Surface.Properties props = surface.properties(dev.parent());
     this.caps = props.capabilities();
     this.formats = props.formats();
     this.modes = props.modes();
@@ -395,9 +395,9 @@ And add a new API:
 
 ```java
 interface VulkanLibrarySwapchain {
-    int vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
+    int  vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
     void vkDestroySwapchainKHR(LogicalDevice device, Swapchain swapchain, Pointer pAllocator);
-    int vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+    int  vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
 }
 ```
 
@@ -420,8 +420,7 @@ public class Swapchain ... {
     private final IntByReference index = new IntByReference();
     
     public int acquire(Semaphore semaphore, Fence fence) {
-        final DeviceContext dev = device();
-        final VulkanLibrary lib = dev.library();
+        ...
         check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
         return index.getValue();
     }
@@ -452,7 +451,6 @@ public void present(Queue queue, Set<Semaphore> semaphores) {
 Next we specify the array of images to be presented as a contiguous memory block:
 
 ```java
-// Set image indices
 int[] array = new int[]{index.getValue()};
 Memory mem = new Memory(array.length * Integer.BYTES);
 mem.write(0, array, 0, array.length);
@@ -462,7 +460,6 @@ info.pImageIndices = mem;
 And finally we invoke the API method that adds the presentation task to the relevant work queue:
 
 ```java
-// Present frame
 check(lib.vkQueuePresentKHR(queue, info));
 ```
 
@@ -509,16 +506,16 @@ The builder constructs the format name and looks up the enumeration constant:
 ```java
 public VkFormat build() {
     // Build component layout
-    final StringBuilder layout = new StringBuilder();
-    final int size = bytes * Byte.SIZE;
+    StringBuilder layout = new StringBuilder();
+    int size = bytes * Byte.SIZE;
     for(int n = 0; n < count; ++n) {
         layout.append(template.charAt(n));
         layout.append(size);
     }
 
     // Build format string
-    final char ch = signed ? 'S' : 'U';
-    final String format = String.format("%s_%c%s", layout, ch, type.name());
+    char ch = signed ? 'S' : 'U';
+    String format = String.format("%s_%c%s", layout, ch, type.name());
 
     // Lookup format
     return VkFormat.valueOf(format);
@@ -531,12 +528,12 @@ We can now refactor the demo to build the format rather than having to find it i
 VkFormat format = new FormatBuilder()
     .template("BGRA")
     .bytes(1)
-    .signed(false)
-    .type(FormatBuilder.Type.NORM)
+    .signed(true)
+    .type(FormatBuilder.Type.RGB)
     .build();
 ```
 
-Which maps to the `B8G8R8A8_UNORM` format used by the colour attachment.
+Which maps to the `B8G8R8A8_SRGB` format used by the colour attachment.
 
 ---
 
@@ -742,7 +739,7 @@ Which is used in the overridden `destroy` method:
 @Override
 public synchronized void destroy() {
     // Destroy this object
-    final Destructor destructor = destructor(dev.library());
+    Destructor destructor = destructor(dev.library());
     destructor.destroy(dev, this, null);
 
     // Delegate
@@ -823,7 +820,7 @@ public static final TypeConverter CONVERTER = new TypeConverter() {
             return FALSE.value;
         }
         else {
-            final VulkanBoolean bool = (VulkanBoolean) value;
+            VulkanBoolean bool = (VulkanBoolean) value;
             return bool.value;
         }
     }
