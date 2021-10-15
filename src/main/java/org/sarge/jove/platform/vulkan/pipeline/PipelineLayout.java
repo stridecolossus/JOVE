@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.Command;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.lib.util.Check;
 
@@ -35,7 +35,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 	 * @param handle		Pipeline handle
 	 * @param dev			Logical device
 	 */
-	private PipelineLayout(Pointer handle, LogicalDevice dev) {
+	private PipelineLayout(Pointer handle, DeviceContext dev) {
 		super(handle, dev);
 	}
 
@@ -122,19 +122,8 @@ public class PipelineLayout extends AbstractVulkanObject {
 	 * Builder for a pipeline layout.
 	 */
 	public static class Builder {
-		private final LogicalDevice dev;
 		private final List<DescriptorSet.Layout> sets = new ArrayList<>();
 		private final List<PushConstantRange> ranges = new ArrayList<>();
-
-		/**
-		 * Constructor.
-		 * @param dev			Logical device
-		 * @param parent		Parent builder
-		 * @param consumer		Consumer
-		 */
-		public Builder(LogicalDevice dev) {
-			this.dev = notNull(dev);
-		}
 
 		/**
 		 * Adds a descriptor-set to this layout.
@@ -157,9 +146,10 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 		/**
 		 * Constructs this pipeline layout.
+		 * @param dev Logical device
 		 * @return New pipeline layout
 		 */
-		public PipelineLayout build() {
+		public PipelineLayout build(DeviceContext dev) {
 			// Init pipeline layout descriptor
 			final var info = new VkPipelineLayoutCreateInfo();
 

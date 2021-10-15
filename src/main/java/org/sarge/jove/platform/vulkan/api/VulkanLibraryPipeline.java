@@ -27,7 +27,7 @@ interface VulkanLibraryPipeline {
 	 * @param pPipelineLayout	Returned pipeline layout handle
 	 * @return Result code
 	 */
-	int vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
+	int vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
 
 	/**
 	 * Destroys a pipeline layout.

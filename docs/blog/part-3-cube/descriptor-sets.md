@@ -4,7 +4,7 @@ title: Descriptor Sets
 
 ## Overview
 
-The final piece of functionality we need to implement texture sampling is the _descriptor set_.
+The final piece of functionality we need to support texture sampling is the _descriptor set_.
 
 - A descriptor set is comprised of the _resources_ used by the pipeline during rendering (samplers, uniform buffers, etc).
 
@@ -14,7 +14,7 @@ The final piece of functionality we need to implement texture sampling is the _d
 
 We will also need to slightly refactor the pipeline layout which is used to configure the descriptor sets in the rendering process.
 
-> Descriptor sets are one of the more complex aspects of a Vulkan application (or at least they proved to be for the author).  We have attempted to come up with a design that reflects the flexibility that the Vulkan designers were clearly aiming for whilst providing a relatively developer-friendly API.
+> Descriptor sets are one of the more complex aspects of a Vulkan application (or at least they proved to be for the author).  We have attempted to come up with a design that reflects the flexibility that the Vulkan designers were clearly aiming for while hopefully providing a relatively developer-friendly API.
 
 ---
 
@@ -54,9 +54,9 @@ public static record Binding(int binding, VkDescriptorType type, int count, Set<
 }
 ```
 
-Where _count_ is the size of the resource (i.e. which can be an array) and _stages_ specifies where the resource is used in the pipeline.
+Where _count_ is the size of the resource (which can be an array) and _stages_ specifies where the resource is used in the pipeline.
 
-We implement a convenience builder for the binding and add a populate method for the binding descriptor which is used below:
+We implement a convenience builder for the binding and add a populate method for the binding descriptor (used below):
 
 ```java
 private void populate(VkDescriptorSetLayoutBinding info) {
@@ -72,13 +72,13 @@ A layout is created by a factory method:
 ```java
 public static Layout create(LogicalDevice dev, List<Binding> bindings) {
     // Init layout descriptor
-    final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
+    VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
     info.bindingCount = bindings.size();
     info.pBindings = StructureHelper.first(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
 
     // Allocate layout
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference handle = lib.factory().pointer();
+    VulkanLibrary lib = dev.library();
+    PointerByReference handle = lib.factory().pointer();
     check(lib.vkCreateDescriptorSetLayout(dev, info, null, handle));
 
     // Create layout
@@ -114,7 +114,7 @@ Descriptor sets are requested from the pool as follows:
 ```java
 public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
     // Check pool size
-    final int size = layouts.size();
+    int size = layouts.size();
     if(sets.size() + size > max) {
         throw new IllegalArgumentException(...);
     }
@@ -126,9 +126,9 @@ public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
     info.pSetLayouts = NativeObject.toArray(layouts);
 
     // Allocate descriptors sets
-    final DeviceContext dev = this.device();
-    final VulkanLibrary lib = dev.library();
-    final Pointer[] handles = lib.factory().array(size);
+    DeviceContext dev = this.device();
+    VulkanLibrary lib = dev.library();
+    Pointer[] handles = lib.factory().array(size);
     check(lib.vkAllocateDescriptorSets(dev, info, handles));
     ...
 }
@@ -138,34 +138,34 @@ The returned handles are transformed to the domain object:
 
 ```java
 // Create descriptor sets
-final IntFunction<DescriptorSet> ctor = index -> {
-    final Handle handle = new Handle(handles[index]);
+IntFunction<DescriptorSet> ctor = index -> {
+    Handle handle = new Handle(handles[index]);
     return new DescriptorSet(handle, layouts.get(index));
 };
-final var allocated = IntStream
-        .range(0, handles.length)
-        .mapToObj(ctor)
-        .collect(toList());
+var allocated = IntStream
+    .range(0, handles.length)
+    .mapToObj(ctor)
+    .collect(toList());
 
 // Record sets allocated by this pool
 sets.addAll(allocated);
 return allocated;
 ```
 
-Note that descriptor sets are managed by the pool and are automatically released when the pool is destroyed.
+Note that descriptor sets are managed by the pool and are automatically released when the pool is destroyed.  However the pool also tracks the allocated sets for validation purposes.
 
-We also implement the other API methods for management of the pool:
+We also implement the following methods to release descriptor sets back to the pool:
 
 ```java
 public synchronized void free(Collection<DescriptorSet> sets) {
     ...
-    final DeviceContext dev = this.device();
+    DeviceContext dev = this.device();
     check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.toArray(sets)));
 }
 
 public synchronized void free() {
     if(sets.isEmpty()) throw new IllegalArgumentException(...);
-    final DeviceContext dev = this.device();
+    DeviceContext dev = this.device();
     check(dev.library().vkResetDescriptorPool(dev, this, 0));
     sets.clear();
 }
@@ -183,12 +183,10 @@ public static class Builder {
 }
 ```
 
-The _pool_ is a table of the pool sizes for each descriptor type:
+The _pool_ is a table of the number of each type of descriptor set available in the pool:
 
 ```java
 public Builder add(VkDescriptorType type, int count) {
-    Check.notNull(type);
-    Check.oneOrMore(count);
     pool.put(type, count);
     return this;
 }
@@ -197,8 +195,7 @@ public Builder add(VkDescriptorType type, int count) {
 The build method transforms the table to an array and populates the descriptor for the pool:
 
 ```java
-// Init pool descriptor
-final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
+VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
 info.flags = IntegerEnumeration.mask(flags);
 info.poolSizeCount = entries.size();
 info.pPoolSizes = StructureCollector.toPointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
@@ -214,17 +211,34 @@ private static void populate(Map.Entry<VkDescriptorType, Integer> entry, VkDescr
 }
 ```
 
-The size of the table is also verified against the specified _max_ property (not shown).
+The size of the table is also logically verified against the _max_ property (if specified):
+
+```java
+// Determine logical maximum number of sets that can be allocated
+int limit = pool
+    .values()
+    .stream()
+    .mapToInt(Integer::intValue)
+    .max()
+    .orElseThrow(() -> new IllegalArgumentException(...));
+
+// Initialise or validate the maximum number of sets
+if(max == null) {
+    max = limit;
+}
+else {
+    if(limit > max) {
+        throw new IllegalArgumentException(...);
+    }
+}
+```
 
 Finally we invoke the API to allocate the pool and create the domain object:
 
 ```java
-// Allocate pool
-final VulkanLibrary lib = dev.library();
-final PointerByReference handle = lib.factory().pointer();
+VulkanLibrary lib = dev.library();
+PointerByReference handle = lib.factory().pointer();
 check(lib.vkCreateDescriptorPool(dev, info, null, handle));
-
-// Create pool
 return new Pool(handle.getValue(), dev, max);
 ```
 
@@ -262,7 +276,7 @@ public Resource resource(View texture) {
         @Override
         public void populate(VkWriteDescriptorSet write) {
             // Create sampler descriptor
-            final var info = new VkDescriptorImageInfo();
+            var info = new VkDescriptorImageInfo();
             info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
             info.sampler = Sampler.this.handle();
             info.imageView = texture.handle();
@@ -292,7 +306,7 @@ public class DescriptorSet implements NativeObject {
 }
 ```
 
-Note that the map is initialised in the constructor by instantiating a new `Entry` for each binding.
+Note that the `entries` map is initialised in the constructor by instantiating a new `Entry` for each binding (which also results in an immutable map).
 
 An _entry_ is a local class that stores the descriptor set resource for a given binding:
 
@@ -312,7 +326,7 @@ Which is a mutable property of the descriptor set:
 
 ```java
 public void set(Binding binding, Resource res) {
-    final Entry entry = entry(binding);
+    Entry entry = entry(binding);
     entry.res = notNull(res);
     entry.dirty = true;
 }
@@ -320,15 +334,26 @@ public void set(Binding binding, Resource res) {
 
 ### Updates
 
+Applying the updated resources to the descriptor sets is slightly complicated:
 
-    private Stream<Entry> modified() {
-        return entries
-                .values()
-                .stream()
-                .filter(Entry::isDirty);
-    }
+1. Each modified descriptor set requires a `VkWriteDescriptorSet` structure.
 
+2. This includes a pointer to a structure for the resource (which we have implemented as the `populate` method of the resource interface).
 
+3. Updates are then applied as a batch operation.
+
+We first add a helper to the descriptor set to retrieve the modified entries:
+
+```java
+private Stream<Entry> modified() {
+    return entries
+        .values()
+        .stream()
+        .filter(Entry::isDirty);
+}
+```
+
+And the following code is added to `Entry` to populate a write descriptor for that modified resource:
 
 ```java
 void populate(VkWriteDescriptorSet write) {
@@ -353,36 +378,36 @@ void populate(VkWriteDescriptorSet write) {
 }
 ```
 
+Notes:
 
+* The write descriptor is dependant on the binding, the resource __and__ the descriptor set itself (hence `Entry` is a local class with a reference to the parent descriptor set).
 
+* The `dirty` flag is reset as a side-effect of the populate method (not pretty but works).
 
-
-Now we can allocate a descriptor set and initialise its resources, the final step is to apply the changes:
+To apply a batch of updates we first enumerate the modified resources and transform the results to an array of write descriptors:
 
 ```java
-public static void update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
-    // Enumerate dirty resources
-    final var writes = descriptors
+public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
+    var writes = descriptors
         .stream()
-        .flatMap(set -> set.entries.values().stream())
-        .filter(Entry::isDirty)
-        .collect(new StructureCollector<>(VkWriteDescriptorSet::new, Entry::populate));
-
-    // Ignore if nothing to update
-    if(writes == null) {
-        return;
-    }
-
-    // Apply update
-    dev.library().vkUpdateDescriptorSets(dev.handle(), writes.length, writes, 0, null);
+        .flatMap(DescriptorSet::modified)
+        .collect(StructureHelper.collector(VkWriteDescriptorSet::new, Entry::populate));
 }
 ```
 
-Notes:
+And then invoke the API:
 
-- A `VkWriteDescriptorSet` instance is created for **each** descriptor set.
+```java
+// Ignore if nothing to update
+if((writes == null) || (writes.length == 0)) {
+    return 0;
+}
 
-- The API assumes multiple descriptor set updates will be applied together to reduce the number of invocations.
+// Apply update
+dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
+
+return writes.length;
+```
 
 ### Pipeline Layout
 
@@ -395,115 +420,305 @@ public static class Builder {
     private final List<DescriptorSet.Layout> sets = new ArrayList<>();
 
     public Builder add(DescriptorSet.Layout layout) {
-        sets.add(notNull(layout));
+        sets.add(layout);
         return this;
     }
 }
 ```
 
-And add the following code to the build method:
+And add the following code to the build method (which were previously left as defaults):
 
 ```java
 info.setLayoutCount = sets.size();
 info.pSetLayouts = Handle.toArray(sets);
 ```
 
-Finally we implement the following method to bind a number of descriptor sets to the pipeline:
+Finally we implement the following method on the descriptor set class to bind to the pipeline:
 
 ```java
 public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> sets) {
     return (api, cmd) -> api.vkCmdBindDescriptorSets(
-            cmd,
-            VkPipelineBindPoint.GRAPHICS,
-            layout.handle(),
-            0,                  // First set
-            sets.size(),
-            Handle.toArray(sets),
-            0,                  // Dynamic offset count
-            null                // Dynamic offsets
+        cmd,
+        VkPipelineBindPoint.GRAPHICS,
+        layout,
+        0,                  // First set
+        sets.size(),
+        NativeObject.toArray(sets),
+        0,                  // Dynamic offset count
+        null                // Dynamic offsets
     );
 }
 ```
 
-With an over-loaded variant for a single descriptor set instance.
+We also add an over-loaded variant for a single descriptor set instance.
+
+### API
+
+The API for descriptor sets is as follows:
+
+```java
+interface VulkanLibraryDescriptorSet {
+    int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
+
+    void vkDestroyDescriptorSetLayout(DeviceContext device, Layout descriptorSetLayout, Pointer pAllocator);
+
+    int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
+
+    void vkDestroyDescriptorPool(DeviceContext device, Pool descriptorPool, Pointer pAllocator);
+
+    int vkAllocateDescriptorSets(DeviceContext device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
+
+    int vkResetDescriptorPool(DeviceContext device, Pool descriptorPool, int flags);
+
+    int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, Pointer pDescriptorSets);
+
+    void vkUpdateDescriptorSets(DeviceContext device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
+
+    void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, Pointer pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
+}
+```
 
 ---
 
-## Texture Sampling Redux
+## Integration
 
+We now have all the components required to apply the texture to the demo.
 
+However we will first make a couple of improvements to move the configuration towards a proper render loop.
 
+### Application Configuration
 
-
-### Integration
-
-We now have all the components we need to apply the texture in the demo.
-
-First we create a descriptor set layout for a sampler that will be used in the fragment shader:
+We first introduce a set of `ConfigurationProperties` for the demo:
 
 ```java
-final var binding = new DescriptorSet.Binding.Builder()
-    .type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
-    .stage(VkShaderStageFlag.FRAGMENT)
-    .build();
+@Configuration
+@ConfigurationProperties
+public class ApplicationConfiguration {
+    private String title;
+    private int frames;
+    private Colour col = Colour.BLACK;
 
-final var layout = DescriptorSet.Layout.create(dev, List.of(binding));
-```
+    public String getTitle() {
+        return title;
+    }
 
-Which is added to the pipeline layout:
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-```java
-final Pipeline.Layout pipelineLayout = new Pipeline.Layout.Builder(dev)
-    .add(layout)
-    .build();
-```
+    public int getFrameCount() {
+        return frames;
+    }
 
-Next we create a descriptor set pool (sized to the number of swapchain images):
+    public void setFrameCount(int frames) {
+        this.frames = frames;
+    }
 
-```java
-final var pool = new DescriptorSet.Pool.Builder(dev)
-    .add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
-    .max(2)
-    .build();
-```
+    public Colour getBackground() {
+        return col;
+    }
 
-We allocate a descriptor set for each swapchain image:
-
-```java
-final var descriptors = pool.allocate(layout, 2);
-```
-
-And initialise each with the texture sampler:
-
-```java
-final Sampler sampler = new Sampler.Builder(dev).build();
-final var resource = sampler.resource(texture);
-for(DescriptorSet set : descriptors) {
-    set.entry(binding).set(resource);
+    public void setBackground(float[] col) {
+        this.col = Colour.of(col);
+    }
 }
+```
+
+These properties map to the `application.properties` file:
+
+```java
+title: Rotating Cube Demo
+frameCount: 2
+background = 0.3, 0.3, 0.3
+```
+
+Notes:
+
+* The properties class __must__ be a simple POJO (with old-school getters and setters) to be auto-magically populated by the framework.
+
+* The `background` property (for the swapchain views) is a comma-separated list injected as an array.
+
+The swapchain configuration is refactored accordingly:
+
+```java
+class PresentationConfiguration {
+    @Autowired private LogicalDevice dev;
+    @Autowired private ApplicationConfiguration cfg;
+
+    @Bean
+    public Swapchain swapchain(Surface surface) {
+        return new Swapchain.Builder(dev, surface)
+            .count(cfg.getFrameCount())
+            .clear(cfg.getBackground())
+            .build();
+    }
+}
+```
+
+We also refactor the frame buffers to a list (one per swapchain image):
+
+```java
+@Bean
+public static List<FrameBuffer> buffers(Swapchain swapchain, RenderPass pass) {
+    Dimensions extents = swapchain.extents();
+    return swapchain
+        .views()
+        .stream()
+        .map(view -> FrameBuffer.create(pass, extents, List.of(view)))
+        .collect(toList());
+}
+```
+
+Note that we will now see a validation error since the frame buffers will no longer be automatically destroyed by the container (the list does not have a `close` method).
+
+We also refactor the application title in the window and instance configuration replacing the injected `@Value` parameter used previously.
+
+### Descriptor Sets
+
+We first create a new configuration class and instantiate a descriptor set layout for the texture sampler:
+
+```java
+@Configuration
+public class DescriptorConfiguration {
+    @Autowired private LogicalDevice dev;
+    @Autowired private ApplicationConfiguration cfg;
+
+    private final Binding binding = new Binding.Builder()
+        .type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
+        .stage(VkShaderStage.FRAGMENT)
+        .build();
+
+    @Bean
+    public Layout layout() {
+        return Layout.create(dev, List.of(binding));
+    }
+}
+```
+
+Next we create a descriptor set pool that can allocate two samplers (matching the number of frame buffers):
+
+```java
+@Bean
+public Pool pool() {
+    int count = cfg.getFrameCount();
+    return new Pool.Builder()
+        .add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, count)
+        .max(count)
+        .build(dev);
+}
+```
+
+Finally we allocate a descriptor set for each frame buffer:
+
+```java
+@Bean
+public List<DescriptorSet> descriptors(Pool pool, Layout layout, Sampler sampler, View texture) {
+    var descriptors = pool.allocate(layout, cfg.getFrameCount());
+    ...
+    return descriptors;
+}
+```
+
+And create a descriptor set resource for the texture sampler:
+
+```java
+Resource res = sampler.resource(texture);
+```
+
+Which is applied to each descriptor set:
+
+```java
+DescriptorSet.set(descriptors, binding, res);
 DescriptorSet.update(dev, descriptors);
 ```
 
-And finally we bind the descriptor set in the rendering sequence:
+### Configuration
+
+The descriptor set layout is registered with the pipeline:
 
 ```java
-.begin()
-    ...
-    .add(descriptors.get(n).bind(pipelineLayout))
-    .add(draw)
-    .add(RenderPass.END_COMMAND)
-.end();
+class PipelineConfiguration {
+    @Bean
+    PipelineLayout pipelineLayout(DescriptorSet.Layout layout) {
+        return new PipelineLayout.Builder()
+            .add(layout)
+            .build(dev);
+    }
+}
 ```
+
+Next we alter the render configuration to generate a _list_ of command buffers:
+
+```java
+public static List<Buffer> sequence(List<FrameBuffer> frames, Pipeline pipeline, VulkanBuffer vbo, List<DescriptorSet> sets, Pool graphics) {
+    int count = frames.size();
+    List<Buffer> buffers = graphics.allocate(count);
+
+    ...
+
+    return buffers;
+}
+```
+
+A render sequence is recorded for each command buffer with a new command to bind the descriptor set:
+
+```java
+for(int n = 0; n < count; ++n) {
+    FrameBuffer fb = frames.get(n);
+    DescriptorSet ds = sets.get(n);
+    buffers
+        .get(n)
+        .begin()
+            .add(fb.begin())
+            .add(pipeline.bind())
+            .add(vbo.bindVertexBuffer())
+            .add(ds.bind(pipeline.layout()))
+            .add(DrawCommand.draw(4))
+            .add(FrameBuffer.END)
+        .end();
+}
+```
+
+This code is becoming a bit messy as we now have a loop iterating through three parallel lists:
+- the frame buffer
+- a descriptor set
+- a command buffer for the render sequence 
+
+In the next chapter we will introduce a further abstraction that composes these objects into a single list.
+
+### Render Loop
+
+In the render configuration we modify the code to repeatedly invoke frame rendering and presentation:
+
+```java
+long start = System.currentTimeMillis();
+while(true) {
+    // Stop after a second or so
+    if(System.currentTimeMillis() - start > 1000) {
+        break;
+    }
+
+    ...
+}
+```
+
+We refactor the method signature to inject the _list_ of command buffers.  The code now looks up the render sequence for a frame given the `index` returned from the `acquire` step:
+
+```java
+Buffer frame = render.get(index);
+```
+
+Note that we could just use one command buffer since our render loop is essentially single-threaded.  However the above prepares us for properly synchronised code that utilises the multi-threaded nature of the Vulkan pipeline.
 
 ### Texture Sampling
 
-The only other change we need to make is to actually sample the texture in the fragment shader which involves:
+To use the texture sampler we make the following changes to the fragment shader:
 
-1. Adding a layout declaration for a `uniform sampler2D` with the binding index we specified in the descriptor set.
+1. Add a layout declaration for a `uniform sampler2D` with the binding index we specified in the descriptor set layout.
 
-2. Invoking the built-in `texture` function to sample the texture with the coordinate passed from the vertex shader.
+2. Invoke the built-in `texture` function to sample the texture with the coordinate passed from the vertex shader.
 
-The fragment shader should look like this:
+The fragment shader now looks like this:
 
 ```glsl
 #version 450 core
@@ -525,21 +740,15 @@ If all goes well we should finally see the textured quad:
 
 ![Textured Quad](textured-quad.png)
 
-There are a lot of steps in this chapter and therefore plenty that can go wrong.  Vulkan will generally throw a hissy fit if we attempt any invalid operations, e.g. forgetting to provide the target layout when performing an image transition.  However it is quite easy to specify a 'correct' pipeline and still end up with a black rectangle!  With so much going on behind the scenes this can be very difficult to diagnose - here are some possible failure cases:
+We have jumped through a number of hoops in the last couple of chapters and therefore there is plenty to go wrong.  The validation layer will provide excellent diagnostics if the application attempts any invalid operations (and often seems to be able to work around them).  However it is very easy to specify a 'valid' pipeline that results in a black rectangle.
 
-- Verify that the image contains RGBA data once it is loaded and that it matches the expected Vulkan format which is `R8G8B8A8_UNORM` in this example.
+Here are some of the problems that we encountered:
 
-- Ensure the texture alpha channel has a non-zero value.
+* The image loader is very crude and somewhat brittle - the native image _should_ be a `TYPE_3BYTE_BGR`, transformed to `TYPE_4BYTE_ABGR` when the alpha channel is added, which maps to the `R8G8B8A8_UNORM` format.  It is definitely worth using the debugger to step through image loading and the complex barrier transition logic.
 
-- Double-check that the winding order is counter-clockwise and back-facing fragments are being discarded (or turn off face culling).
+* Ensure the image data is being copied to the vertex buffer and not the other way around (yes we really did this).
 
-- Also check that the drawing primitive is a triangle strip.
-
-- Walk through the process of loading and transitioning the image and ensure that the previous/next layouts are correct and that image has the `COLOR` aspect.
-
-- Check that the image data is being copied to the vertex buffer and not the other way round (yes we really did this!)
-
-- Ensure that the descriptor set and layout are bound to the pipeline and added to the rendering sequence.
+* Check that the descriptor set layout is bound to the pipeline and added to the render sequence.
 
 ---
 
@@ -549,6 +758,5 @@ In this chapter we:
 
 - Implemented descriptor sets to support a texture sampler resource.
 
-- Applied texture sampling to the quad demo.
+- Applied texture sampling to the demo application.
 
-The API methods in this chapter are defined in the `VulkanLibraryDescriptorSet` JNA library interface.

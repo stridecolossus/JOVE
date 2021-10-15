@@ -980,7 +980,7 @@ From which we can determine the appropriate Vulkan format:
 VkFormat format = FormatBuilder.format(image.layout());
 ```
 
-The image is a `TYPE_4BYTE_ABGR` buffered image which maps to the `R8G8B8A8_UNORM` format.
+The resultant image is a `TYPE_4BYTE_ABGR` buffered image which maps to the `R8G8B8A8_UNORM` format.
 
 Next we create a texture with a configuration suitable to the image:
 

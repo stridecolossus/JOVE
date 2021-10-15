@@ -30,7 +30,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		builder = new Builder(dev);
+		builder = new Builder();
 	}
 
 	@Test
@@ -44,7 +44,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 		// Create layout
 		final PipelineLayout layout = builder
 				.add(set)
-				.build();
+				.build(dev);
 
 		// Check layout
 		assertNotNull(layout);
@@ -65,7 +65,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 	@Test
 	void buildEmpty() {
-		assertNotNull(builder.build());
+		assertNotNull(builder.build(dev));
 	}
 
 	@Test
@@ -81,7 +81,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 	@Test
 	void close() {
-		final PipelineLayout layout = builder.build();
+		final PipelineLayout layout = builder.build(dev);
 		layout.close();
 		verify(lib).vkDestroyPipelineLayout(dev, layout, null);
 	}
