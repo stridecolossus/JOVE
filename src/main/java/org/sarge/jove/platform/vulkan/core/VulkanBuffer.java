@@ -20,6 +20,7 @@ import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Resource;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 
 import com.sun.jna.Pointer;
@@ -135,6 +136,16 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public long length() {
 		return len;
+	}
+
+	/**
+	 * Helper - Loads the given data to this buffer (mapping the buffer memory as required).
+	 * @param data Data to load
+	 */
+	public void load(Bufferable data) {
+		final Region region = mem.region().orElseGet(mem::map);
+		final ByteBuffer bb = region.buffer();
+		data.buffer(bb);
 	}
 
 	/**

@@ -26,7 +26,7 @@ class ModelLoaderTest {
 		// Create a model to persist
 		final Model.Header header = new Header(List.of(Point.LAYOUT), Primitive.TRIANGLES, 3, false);
 		final Vertex vertex = Vertex.of(Point.ORIGIN);
-		model = new DefaultModel(header, List.of(vertex), List.of(0, 0, 0));
+		model = new DefaultModel(header, List.of(vertex), new int[]{0, 0, 0});
 
 		// Init persistence store
 		out = new ByteArrayOutputStream();

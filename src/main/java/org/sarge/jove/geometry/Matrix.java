@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
@@ -230,7 +229,19 @@ public final class Matrix implements Transform, Bufferable {
 				(obj == this) ||
 				(obj instanceof Matrix that) &&
 				(this.order() == that.order()) &&
-				Arrays.deepEquals(this.matrix, that.matrix); // TODO - will this really work? i.e. not using MathsUtil
+				equals(that);
+	}
+
+	private boolean equals(Matrix that) {
+		final int order = this.order();
+		for(int r = 0; r < order; ++r) {
+			for(int c = 0; c < order; ++c) {
+				if(!MathsUtil.isEqual(this.matrix[r][c], that.matrix[r][c])) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	@Override

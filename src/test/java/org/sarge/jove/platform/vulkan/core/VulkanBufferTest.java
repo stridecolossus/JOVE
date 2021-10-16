@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Set;
 
@@ -43,6 +44,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	private VulkanBuffer buffer;
 	private DeviceMemory mem;
+	private Region region;
 	private AllocationService allocator;
 
 	@BeforeEach
@@ -52,6 +54,11 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
 		when(mem.size()).thenReturn(SIZE);
 
+		// Init mapped region
+		region = mock(Region.class);
+		when(mem.map()).thenReturn(region);
+
+		// Init memory allocator
 		allocator = mock(AllocationService.class);
 		when(allocator.allocate(isA(VkMemoryRequirements.class), isA(MemoryProperties.class))).thenReturn(mem);
 
@@ -69,6 +76,19 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	}
 
 	@Test
+	void load() {
+		// Create target memory buffer
+		final ByteBuffer bb = mock(ByteBuffer.class);
+		when(region.buffer()).thenReturn(bb);
+
+		// Load data
+		final Bufferable data = mock(Bufferable.class);
+		buffer.load(data);
+		verify(mem).map();
+		verify(data).buffer(bb);
+	}
+
+	@Test
 	void create() {
 		final MemoryProperties<VkBufferUsage> props = new MemoryProperties<>(FLAGS, VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
 		buffer = VulkanBuffer.create(dev, allocator, SIZE, props);
@@ -78,10 +98,6 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void staging() {
-		// Init memory region
-		final Region region = mock(Region.class);
-		when(mem.map()).thenReturn(region);
-
 		// Create data
 		final Bufferable data = mock(Bufferable.class);
 		when(data.length()).thenReturn((int) SIZE);

@@ -193,7 +193,7 @@ public class ObjectModelTest {
 			// Check resultant model
 			final Model result = model.build().iterator().next();
 			assertNotNull(result);
-			assertEquals(Optional.empty(), result.indexBuffer());
+			assertEquals(Optional.empty(), result.index());
 
 			// Check model header
 			final Header header = result.header();

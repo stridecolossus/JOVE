@@ -2,11 +2,11 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 import org.sarge.lib.util.Check;
 
@@ -38,9 +38,15 @@ public interface Model {
 				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
 
-			// TODO - check primitive supports normals
-			// primitive.hasNormals()
+// TODO
+//			if(!primitive.isNormalSupported() && isNormalsLayout(layout)) {
+//				throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
+//			}
 		}
+
+//		private static boolean isNormalsLayout(List<Layout> layout) {
+//			return layout.stream().anyMatch(e -> e == Vector.LAYOUT);
+//		}
 	}
 
 	/**
@@ -51,7 +57,7 @@ public interface Model {
 	/**
 	 * @return Vertex buffer
 	 */
-	ByteBuffer vertexBuffer();
+	Bufferable vertices();
 
 	/**
 	 * @return Whether this is an indexed model
@@ -61,7 +67,7 @@ public interface Model {
 	/**
 	 * @return Index buffer
 	 */
-	Optional<ByteBuffer> indexBuffer();
+	Optional<Bufferable> index();
 
 	/**
 	 * Skeleton implementation.

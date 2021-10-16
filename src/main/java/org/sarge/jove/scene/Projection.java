@@ -10,13 +10,6 @@ import org.sarge.jove.util.MathsUtil;
  */
 public interface Projection {
 	/**
-	 * Calculates the frustum half-height for this projection.
-	 * @param dim Viewport dimensions
-	 * @return Frustum half-height
-	 */
-	float height(Dimensions dim);
-
-	/**
 	 * Builds the matrix for this projection.
 	 * @param near		Near plane
 	 * @param far		Far plane
@@ -36,19 +29,13 @@ public interface Projection {
 	 */
 	static Projection perspective(float fov) {
 		return new Projection() {
-			private final float height = MathsUtil.tan(fov * MathsUtil.HALF);
-
-			@Override
-			public float height(Dimensions dim) {
-				return height;
-			}
+			private final float scale = 1 / MathsUtil.tan(fov * MathsUtil.HALF);
 
 			@Override
 			public Matrix matrix(float near, float far, Dimensions dim) {
-				final float f = 1 / height;
 				return new Matrix.Builder()
-						.set(0, 0, f / dim.ratio())
-						.set(1, 1, -f)
+						.set(0, 0, scale / dim.ratio())
+						.set(1, 1, -scale)
 						.set(2, 2, far / (near - far))
 						.set(2, 3, (near * far) / (near - far))
 						.set(3, 2, -1)
@@ -60,17 +47,13 @@ public interface Projection {
 	// https://dovo329.github.io/DeriveOpenGLPerspectiveProjectionMatrix/
 	// https://stackoverflow.com/questions/51318119/what-is-the-role-of-gl-position-w-in-vulkan
 	// http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
+	// https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
 
 	/**
 	 * Orthographic or flat projection.
 	 * TODO - update for Vulkan (see cookbook)
 	 */
 	Projection FLAT = new Projection() {
-		@Override
-		public float height(Dimensions dim) {
-			return dim.height();
-		}
-
 		@Override
 		public Matrix matrix(float near, float far, Dimensions dim) {
 			// Determine clipping planes

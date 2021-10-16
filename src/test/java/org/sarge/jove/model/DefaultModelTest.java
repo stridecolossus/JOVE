@@ -3,14 +3,21 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyFloat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Vertex;
 import org.sarge.jove.geometry.Point;
@@ -21,22 +28,20 @@ import org.sarge.jove.model.Model.Header;
 class DefaultModelTest {
 	private DefaultModel model;
 	private Header header;
-	private List<Integer> index;
+	private int[] indices;
 	private Vertex vertex;
 
 	@BeforeEach
 	void before() {
 		header = new Header(List.of(Layout.of(3)), Primitive.TRIANGLES, 3, true);
 		vertex = Vertex.of(Point.ORIGIN);
-		index = List.of(1, 1, 1);
-		model = new DefaultModel(header, List.of(vertex), index);
+		indices = new int[]{1, 1, 1};
+		model = new DefaultModel(header, List.of(vertex), indices);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(header, model.header());
-		assertEquals(List.of(vertex), model.vertices());
-		assertEquals(Optional.of(index), model.index());
 	}
 
 	@Nested
@@ -53,6 +58,8 @@ class DefaultModelTest {
 		void invalidVertexCount() {
 			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(Layout.of(3)), Primitive.TRIANGLES, 4, false));
 		}
+
+		// TODO
 	}
 
 	@Test
@@ -63,23 +70,27 @@ class DefaultModelTest {
 
 	@Test
 	void vertexBuffer() {
-		final ByteBuffer vbo = model.vertexBuffer();
+		final Bufferable vbo = model.vertices();
 		assertNotNull(vbo);
-		assertEquals(3 * 3 * Float.BYTES, vbo.limit());
+		assertEquals(Point.LAYOUT.length(), vbo.length());
+
+		final ByteBuffer bb = mock(ByteBuffer.class);
+		when(bb.putFloat(anyFloat())).thenReturn(bb);
+		vbo.buffer(bb);
+		verify(bb, times(3)).putFloat(0);
 	}
 
 	@Test
 	void indexBuffer() {
-		final ByteBuffer indices = model.indexBuffer().orElseThrow();
-		assertNotNull(indices);
-		assertEquals(3 * Integer.BYTES, indices.limit());
-	}
+		final Bufferable index = model.index().orElseThrow();
+		assertNotNull(index);
+		assertEquals(3 * Integer.BYTES, index.length());
 
-	@Test
-	void buffer() {
-		final BufferedModel buffered = model.buffer();
-		assertNotNull(buffered);
-		assertEquals(header, buffered.header());
+		final ByteBuffer bb = mock(ByteBuffer.class);
+		final IntBuffer buffer = mock(IntBuffer.class);
+		when(bb.asIntBuffer()).thenReturn(buffer);
+		index.buffer(bb);
+		verify(buffer).put(indices);
 	}
 
 	@Nested
@@ -105,7 +116,7 @@ class DefaultModelTest {
 			assertNotNull(model);
 			assertEquals(new Header(List.of(Point.ORIGIN.layout()), Primitive.LINES, 2, true), model.header());
 			assertEquals(false, model.isIndexed());
-			assertEquals(List.of(vertex, vertex), model.vertices());
+			assertNotNull(model.vertices());
 			assertEquals(Optional.empty(), model.index());
 		}
 
@@ -114,7 +125,7 @@ class DefaultModelTest {
 			final DefaultModel model = builder.build();
 			assertNotNull(model);
 			assertEquals(new Header(List.of(), Primitive.TRIANGLE_STRIP, 0, false), model.header());
-			assertEquals(List.of(), model.vertices());
+			assertNotNull(model.vertices());
 			assertEquals(Optional.empty(), model.index());
 		}
 	}
@@ -141,13 +152,19 @@ class DefaultModelTest {
 			// Verify the indexed model
 			assertNotNull(model);
 			assertEquals(true, model.isIndexed());
-			assertEquals(List.of(vertex, other), model.vertices());
-			assertEquals(Optional.of(List.of(0, 1, 0)), model.index());
+			assertNotNull(model.vertices());
+			assertNotNull(model.index());
+			assertEquals(true, model.index().isPresent());
 
 			// Check model header
 			final Header header = model.header();
 			assertNotNull(header);
 			assertEquals(3, header.count());
+
+			// Check index
+			final Bufferable index = model.index().get();
+			assertNotNull(index);
+			assertEquals(3 * Integer.BYTES, index.length());
 		}
 
 		@Test
@@ -155,8 +172,8 @@ class DefaultModelTest {
 			final DefaultModel model = builder.build();
 			assertNotNull(model);
 			assertEquals(0, model.header().count());
-			assertEquals(List.of(), model.vertices());
-			assertEquals(Optional.of(List.of()), model.index());
+			assertNotNull(model.vertices());
+			assertNotNull(model.index());
 		}
 	}
 }

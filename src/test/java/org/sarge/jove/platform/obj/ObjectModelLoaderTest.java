@@ -74,8 +74,8 @@ public class ObjectModelLoaderTest {
 		// TODO - check texture flip
 
 		// Check index buffer
-		assertNotNull(model.indexBuffer());
-		assertEquals(true, model.indexBuffer().isPresent());
+		assertNotNull(model.index());
+		assertEquals(true, model.index().isPresent());
 //			assertEquals(3 * Integer.BYTES, model.indexBuffer().get().limit());
 	}
 

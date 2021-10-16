@@ -3,13 +3,13 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 import org.sarge.jove.model.Model.Header;
@@ -60,7 +60,7 @@ class ModelTest {
 		void constructor() {
 			final Model model = new AbstractModel(header) {
 				@Override
-				public ByteBuffer vertexBuffer() {
+				public Bufferable vertices() {
 					return null;
 				}
 
@@ -70,7 +70,7 @@ class ModelTest {
 				}
 
 				@Override
-				public Optional<ByteBuffer> indexBuffer() {
+				public Optional<Bufferable> index() {
 					return null;
 				}
 			};

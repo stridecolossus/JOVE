@@ -1,13 +1,10 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -27,25 +24,6 @@ public class VulkanHelperTest {
 		assertEquals(2, rect.offset.y);
 		assertEquals(3, rect.extent.width);
 		assertEquals(4, rect.extent.height);
-	}
-
-	@Test
-	void buffer() {
-		final ByteBuffer bb = VulkanHelper.buffer(42);
-		assertNotNull(bb);
-		assertEquals(42, bb.limit());
-		assertEquals(42, bb.capacity());
-		assertEquals(0, bb.position());
-		assertEquals(ByteOrder.nativeOrder(), bb.order());
-	}
-
-	@Test
-	void bufferPopulate() {
-		final ByteBuffer bb = VulkanHelper.buffer(new byte[]{1, 2, 3});
-		assertNotNull(bb);
-		assertEquals(3, bb.limit());
-		assertEquals(3, bb.capacity());
-		assertEquals(ByteOrder.nativeOrder(), bb.order());
 	}
 
 	@Test

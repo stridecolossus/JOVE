@@ -5,15 +5,16 @@ import static org.sarge.lib.util.Check.notNull;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Vertex;
 import org.sarge.jove.model.Model.AbstractModel;
-import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 
 /**
  * A <i>default model</i> is comprised of vertices and an optional index buffer.
@@ -29,7 +30,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanHelper;
  */
 public class DefaultModel extends AbstractModel {
 	private final List<Vertex> vertices;
-	private final Optional<List<Integer>> index;
+	private final int[] index;
 
 	/**
 	 * Constructor.
@@ -37,71 +38,64 @@ public class DefaultModel extends AbstractModel {
 	 * @param vertices			Vertices
 	 * @param index				Optional index
 	 */
-	public DefaultModel(Header header, List<Vertex> vertices, List<Integer> index) {
+	public DefaultModel(Header header, List<Vertex> vertices, int[] index) {
 		super(header);
 		this.vertices = List.copyOf(vertices);
-		this.index = Optional.ofNullable(index).map(List::copyOf);
+		this.index = index == null ? null : Arrays.copyOf(index, index.length);
 	}
 
 	@Override
 	public boolean isIndexed() {
-		return index.isPresent();
-	}
-
-	/**
-	 * @return Vertices
-	 */
-	public List<Vertex> vertices() {
-		return vertices;
-	}
-
-	/**
-	 * @return Index
-	 */
-	public Optional<List<Integer>> index() {
-		return index;
+		return index != null;
 	}
 
 	@Override
-	public ByteBuffer vertexBuffer() {
-		// Allocate buffer
-		final int len = vertices.size() * Layout.stride(header.layout());
-		final ByteBuffer buffer = VulkanHelper.buffer(len);
+	public Bufferable vertices() {
+		return new Bufferable() {
+			private final int len = vertices.size() * Layout.stride(header.layout());
 
-		// Buffer vertices
-		for(Vertex v : vertices) {
-			v.buffer(buffer);
-		}
-		buffer.rewind();
+			@Override
+			public int length() {
+				return len;
+			}
 
-		return buffer;
+			@Override
+			public void buffer(ByteBuffer buffer) {
+				for(Vertex v : vertices) {
+					v.buffer(buffer);
+				}
+			}
+		};
 	}
 
 	@Override
-	public Optional<ByteBuffer> indexBuffer() {
-		return index.map(DefaultModel::index);
-	}
-
-	/**
-	 * Creates the index buffer.
-	 */
-	private static ByteBuffer index(List<Integer> index) {
-		// Allocate index buffer
-		final int len = index.size() * Integer.BYTES;
-		final ByteBuffer bb = VulkanHelper.buffer(len);
-
-		// Buffer index
-		final IntBuffer buffer = bb.asIntBuffer();
-		for(int n : index) {
-			buffer.put(n);
+	public Optional<Bufferable> index() {
+		if(index == null) {
+			return Optional.empty();
 		}
-		bb.rewind();
 
-		return bb;
-	}
+		final Bufferable buffer = new Bufferable() {
+			private final int len = index.length * Integer.BYTES;
 
-	public BufferedModel buffer() {
-		return new BufferedModel(header, vertexBuffer(), indexBuffer());
+			@Override
+			public int length() {
+				return len;
+			}
+
+			@Override
+			public void buffer(ByteBuffer bb) {
+				final IntBuffer buffer = bb.asIntBuffer();
+				if(buffer.isDirect()) {
+					for(int n : index) {
+						buffer.put(n);
+					}
+				}
+				else {
+					buffer.put(index);
+				}
+			}
+		};
+		return Optional.of(buffer);
 	}
 
 	/**
@@ -167,7 +161,7 @@ public class DefaultModel extends AbstractModel {
 		 * @param count		Number of vertices
 		 * @return New model
 		 */
-		protected final DefaultModel build(List<Integer> index, int count) {
+		protected final DefaultModel build(int[] index, int count) {
 			final List<Layout> layout = vertices.isEmpty() ? List.of() : vertices.get(0).layout();
 			return new DefaultModel(new Header(layout, primitive, count, clockwise), vertices, index);
 		}
@@ -201,7 +195,8 @@ public class DefaultModel extends AbstractModel {
 
 		@Override
 		public DefaultModel build() {
-			return build(index, index.size());
+			final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
+			return build(array, array.length);
 		}
 	}
 }

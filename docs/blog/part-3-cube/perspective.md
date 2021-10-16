@@ -4,20 +4,25 @@ title: Perspective Projection
 
 ## Overview
 
-We now have almost all the Vulkan functionality required to implement the proverbial rotating textured cube. 
-The next step is to introduce perspective projection so that fragments that are more distant in the scene appear correctly foreshortened.
+In this chapter we will introduce _perspective projection_ so that fragments that are more distant in the scene appear correctly foreshortened.
 
-For this we will need:
+We will implement a _matrix_ which is central to 3D graphics.  Of course we could utilise a third-party library but the point of this project is to build from first principles.
 
-- a builder for a cube model.
+We will require the following new components:
 
-- a rotation animation.
+* The _matrix_ class.
 
-- a matrix class.
+* A perspective projection matrix.
 
-- the perspective projection matrix.
+* A _uniform buffer_ to pass the matrix to the shader.
 
-- uniform buffers to pass the matrix to the shader.
+We will then build a _model_ for a textured cube and apply a rotation animation requiring:
+
+* A builder for a general model.
+
+* A specific model builder for a cube.
+
+* A rotation matrix.
 
 ---
 
@@ -25,114 +30,88 @@ For this we will need:
 
 ### Enter The Matrix
 
-Matrices are central to 3D graphics programming - we will create a new matrix domain class to support perspective projection and the rotation animation.
+We first establish some constraints on our design for the matrix class:
 
-> We could of course easily use a third-party maths library but the point of this project is to learn the basics so we craft our own implementation from scratch.  Note that we will not attempt an explanation of matrix mathematics here, there are plenty of excellent tutorials[^matrix] that we have used to implement our own solution.
+* Must be _square_ (same width and height).
 
-We first establish the following requirements and constraints:
+* Arbitrary _order_ (or size).
 
-- immutable (the default for all domain classes where logical and feasible).
+* Immutable.
 
-- limit to _square_ matrices (i.e. same width and height) which makes things a lot simpler.
-
-- support an arbitrary _order_ (or size) of matrices.
-
-With the above in mind the first-cut matrix class is as follows:
+The first-cut outline for the matrix is as follows:
 
 ```java
 public final class Matrix implements Bufferable {
-    private final int order;
-    private final float[] matrix;
+    private final float[][] matrix;
 
-    public Matrix(float[] matrix) {
-        this(order(matrix.length), Arrays.copyOf(matrix, matrix.length));
-    }
-
-    private Matrix(int order, float[] matrix) {
-        this.order = order;
-        this.matrix = matrix;
-    }
-
-    /**
-     * Determines the order of the matrix.
-     * @param len Matrix length
-     * @return Order
-     * @throws IllegalArgumentException if the given length is not square
-     */
-    private static int order(int len) {
-        return switch(len) {
-            case 1 -> 1;
-            case 4 -> 2;
-            case 9 -> 3;
-            case 16 -> 4;
-            default -> {
-                final int order = (int) MathsUtil.sqrt(len);
-                if(len != order * order) throw new IllegalArgumentException("Matrix must be square");
-                yield order;
-            }
-        };
+    private Matrix(int order) {
+        matrix = new float[order][order];
     }
 
     public int order() {
-        return order;
+        return matrix.length;
+    }
+
+    public float get(int row, int col) {
+        return matrix[row][col];
     }
 }
 ```
 
-The matrix is represented as a one-dimensional array in _column-major_ order (matching the default layout for matrices in GLSL shaders).
+The matrix data is implemented as a 2D floating-point array.  This is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest.
 
-Indices into the array are calculated by the following helper:
+A matrix is a bufferable object:
 
 ```java
-private static int index(int order, int row, int col) {
-    return row + order * col;
+public int length() {
+    return matrix.length * matrix.length * Float.BYTES;
 }
-```
 
-For example to lookup a matrix element:
-
-```java
-public float get(int row, int col) {
-    final int index = index(order, row, col);
-    return matrix[index];
-}
-```
-
-The matrix is also `Bufferable` so it can be copied to an NIO buffer:
-
-```java
-@Override
 public void buffer(ByteBuffer buffer) {
-    for(float f : matrix) {
-        buffer.putFloat(f);
+    int order = order();
+    for(int r = 0; r < order; ++r) {
+        for(int c = 0; c < order; ++c) {
+            buffer.putFloat(matrix[c][r]);
+        }
     }
 }
 ```
 
-We provide an array constructor but in general a matrix will be created using a builder:
+To construct a matrix we provide a builder:
 
 ```java
 public static class Builder {
-    private final int order;
-    private float[] matrix;
+    private Matrix matrix;
 
     public Builder(int order) {
-        this.order = oneOrMore(order);
-        this.matrix = new float[order * order];
+        matrix = new Matrix(order);
     }
-
-    ...
     
     public Matrix build() {
-        return new Matrix(order, matrix);
+        try {
+            return matrix;
+        }
+        finally {
+            matrix = null;
+        }
     }
 }
 ```
 
-Which provides methods to initialise an empty matrix to identity:
+The builder is used to set a matrix element:
+
+```java
+public Builder set(int row, int col, float value) {
+    matrix.matrix[row][col] = value;
+    return this;
+}
+```
+
+The matrix can also be initialised to identity:
 
 ```java
 public Builder identity() {
+    int order = matrix.order();
     for(int n = 0; n < order; ++n) {
         set(n, n, 1);
     }
@@ -140,29 +119,14 @@ public Builder identity() {
 }
 ```
 
-And set a matrix element:
-
-```java
-public Builder set(int row, int col, float value) {
-    final int index = index(order, row, col);
-    matrix[index] = value;
-    return this;
-}
-```
+We will add further matrix functionality as we progress through this chapter.
 
 ### Perspective Projection
 
-We can now use this functionality to build the perspective projection matrix:
+We can now use the new class to construct a projection matrix defined as follows:
 
 ```java
 public interface Projection {
-    /**
-     * Calculates the frustum half-height for this projection.
-     * @param dim Viewport dimensions
-     * @return Frustum half-height
-     */
-    float height(Dimensions dim);
-
     /**
      * Builds the matrix for this projection.
      * @param near      Near plane
@@ -171,55 +135,51 @@ public interface Projection {
      * @return Projection matrix
      */
     Matrix matrix(float near, float far, Dimensions dim);
-
-    /**
-     * Perspective projection with a 60 degree FOV.
-     */
-    Projection DEFAULT = perspective(MathsUtil.toRadians(60));
-
-    /**
-     * Creates a perspective projection.
-     * @param fov Field-of-view (radians)
-     */
-    static Projection perspective(float fov) {
-        return new Projection() {
-            private final float height = MathsUtil.tan(fov * MathsUtil.HALF);
-
-            @Override
-            public float height(Dimensions dim) {
-                return height;
-            }
-
-            @Override
-            public Matrix matrix(float near, float far, Dimensions dim) {
-                final float f = 1 / height;
-                final float range = near - far;
-                return new Matrix.Builder()
-                    .set(0, 0, f / dim.ratio())
-                    .set(1, 1, -f)
-                    .set(2, 2, far / range)
-                    .set(2, 3, (near * far) / range)
-                    .set(3, 2, -1)
-                    .build();
-            }
-        };
-    }
 }
 ```
 
-The above implementation is based on this[^projection] tutorial.
+A perspective projection is based on the field-of-view (FOV) which is analogous to the focus of a camera.
+
+We add a factory method to create a perspective projection for a given FOV:
+
+```java
+static Projection perspective(float fov) {
+    return new Projection() {
+        private final float scale = 1 / MathsUtil.tan(fov * MathsUtil.HALF);
+
+        @Override
+        public Matrix matrix(float near, float far, Dimensions dim) {
+            return new Matrix.Builder()
+                .set(0, 0, scale / dim.ratio())
+                .set(1, 1, -scale)
+                .set(2, 2, far / (near - far))
+                .set(2, 3, (near * far) / (near - far))
+                .set(3, 2, -1)
+                .build();
+        }
+    };
+}
+```
+
+This code is based on the example from the Vulkan Cookbook.
+
+We also add a convenience constant for a perspective projection with a default 60 degree field-of-view:
+
+```java
+Projection DEFAULT = perspective(MathsUtil.toRadians(60));
+```
 
 ### Uniform Buffers
 
-To pass the perspective matrix to the shader we will next implement a _uniform buffer object_ (or UBO), a descriptor set resource implemented as a vertex buffer.
+To pass the matrix to the shader we next implement a _uniform buffer_ which is a descriptor set resource implemented as a general Vulkan buffer.
 
-This just involves creating a descriptor set resource from a `VulkanBuffer`:
+We add a new factory method to the `VulkanBuffer` class to create a uniform buffer:
 
 ```java
-public DescriptorSet.Resource uniform() {
+public Resource uniform() {
     require(VkBufferUsage.UNIFORM_BUFFER);
 
-    return new DescriptorSet.Resource() {
+    return new Resource() {
         @Override
         public VkDescriptorType type() {
             return VkDescriptorType.UNIFORM_BUFFER;
@@ -227,7 +187,7 @@ public DescriptorSet.Resource uniform() {
 
         @Override
         public void populate(VkWriteDescriptorSet write) {
-            final var info = new VkDescriptorBufferInfo();
+            var info = new VkDescriptorBufferInfo();
             info.buffer = handle();
             info.offset = 0;
             info.range = len;
@@ -237,89 +197,106 @@ public DescriptorSet.Resource uniform() {
 }
 ```
 
-We also take this opportunity to add the `require` invariant test which throws an exception if the intended usage of the buffer is not valid.
+The `require` method is an invariant test that throws an exception if the buffer does not support the required usage flag.
 
-### Integration #1
-
-As an intermediate step we will apply the identity matrix to the demo to test the uniform buffer before we start messing around with perspective projection.
-
-First we add support for a standard 4-order identity matrix:
+To make the process of loading the matrix into the buffer slightly more convenient we add the following helper:
 
 ```java
-public final class Matrix implements Transform, Bufferable {
-    /**
-     * Default order size for a matrix.
-     */
-    public static final int DEFAULT_ORDER = 4;
-
-    /**
-     * Default identity matrix.
-     */
-    public static final Matrix IDENTITY = identity(DEFAULT_ORDER);
-
-    public static Matrix identity(int order) {
-        return new Builder(order).identity().build();
+class VulkanBuffer {
+    public void load(Bufferable data) {
+        Region region = mem.region().orElseGet(mem::map);
+        ByteBuffer bb = region.buffer();
+        data.buffer(bb);
     }
 }
 ```
 
-Next we create a new uniform buffer and load the identity:
+### Integration #1
+
+As a first step we will apply an identity matrix to the quad vertices in the demo to test the uniform buffer.
+
+We create a new configuration class for the projection matrix:
 
 ```java
-VulkanBuffer uniform = new VulkanBuffer.Builder(dev)
-    .length(Matrix.IDENTITY.length())
-    .usage(VkBufferUsageFlag.UNIFORM_BUFFER)
-    .property(VkMemoryProperty.HOST_VISIBLE)
-    .property(VkMemoryProperty.HOST_COHERENT)
-    .build();
-
-uniform.load(Matrix.IDENTITY);
+@Configuration
+public class CameraConfiguration {
+    @Bean
+    public static Matrix matrix() {
+        return Matrix.IDENTITY;
+    }
+}
 ```
 
-Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than a device-local buffer - eventually the matrix will be rotated every frame so a device-local / staging buffer buffer would just add extra complexity and overhead.
-
-Next we add a second binding to the descriptor set layout for the uniform buffer:
+The matrix is loaded into a uniform buffer:
 
 ```java
-Binding samplerBinding = ...
+@Bean
+public static VulkanBuffer uniform(LogicalDevice dev, AllocationService allocator, Matrix matrix) {
+    MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
+        .usage(VkBufferUsage.UNIFORM_BUFFER)
+        .required(VkMemoryProperty.HOST_VISIBLE)
+        .required(VkMemoryProperty.HOST_COHERENT)
+        .build();
 
-Binding uniformBinding = new Binding.Builder()
+    VulkanBuffer uniform = VulkanBuffer.create(dev, allocator, matrix.length(), props);
+    uniform.load(matrix);
+
+    return uniform;
+}
+```
+
+Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than device-local memory.  However we will eventually be updating the matrix every frame to apply a rotation animation so this approach is more logical.
+
+We add a second binding to the descriptor set layout for the uniform buffer:
+
+```java
+private final Binding samplerBinding = ...
+
+private final Binding uniformBinding = new Binding.Builder()
     .binding(1)
     .type(VkDescriptorType.UNIFORM_BUFFER)
     .stage(VkShaderStage.VERTEX)
     .build();
-
-Layout layout = Layout.create(dev, List.of(samplerBinding, uniformBinding));
 ```
 
-Register the new resource type with the descriptor set pool:
+The new resource is registered with the descriptor set pool:
 
 ```java
-Pool pool = new Pool.Builder(dev)
-    .add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
-    .add(VkDescriptorType.UNIFORM_BUFFER, 2)
-    .max(2)
-    .build();
-```
-
-And finally update the descriptor sets:
-
-```java
-Resource uniformResource = uniform.uniform();
-for(DescriptorSet set : descriptors) {
-    ...
-    set.entry(uniformBinding).set(uniform);
+public Pool pool() {
+    final int count = cfg.getFrameCount();
+    return new Pool.Builder()
+        .add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, count)
+        .add(VkDescriptorType.UNIFORM_BUFFER, count)
+        .max(count)
+        .build(dev);
 }
 ```
 
-Note that we are using the same uniform buffer for each descriptor set - this is fine for the moment since we are not changing the matrix between frames. 
-In future chapters we will create a separate uniform buffer for each frame.
+And finally we initialise the uniform buffer resource in the `descriptors` bean:
 
-The last step is to modify the vertex shader to use the matrix which involves:
-1. Adding a new `layout` declaration for the uniform buffer which contains a 4-order matrix:
-2. Multiplying the vertex position by the matrix.
+```java
+DescriptorSet.set(descriptors, uniformBinding, uniform.uniform());
+```
 
-The vertex shader should look like the following:
+Note that for the moment we are using the same uniform buffer for all descriptor sets since we are not yet modifying the matrix between frames.
+
+To use the uniform buffer we add the following layout declaration to the vertex shader:
+
+```glsl
+layout(binding = 1) uniform ubo {
+    mat4 matrix;
+};
+```
+
+The matrix is applied to each vertex:
+
+```glsl
+gl_Position = matrix * vec4(inPosition, 1.0);
+```
+
+Note that we create a _homogeneous_ vector (consisting of four components) to multiply the vertex position by the matrix.
+
+The vertex shader should now look like this:
 
 ```glsl
 #version 450
@@ -340,11 +317,11 @@ void main() {
 }
 ```
 
-If all goes well we should still see the flat textured quad since the identity matrix essentially does nothing.
+If all goes well we should still see the flat textured quad since the identity matrix essentially changes nothing.
 
 ### View Transform
 
-We will now use the matrix class and the perspective projection to apply a _view transform_ to the demo.
+Next we apply a _view transform_ to the demo representing the viewers position and orientation (i.e. the camera).
 
 First we add the following methods to the matrix builder to populate a row or column of the matrix:
 
@@ -364,33 +341,94 @@ public Builder column(int col, Tuple vec) {
 }
 ```
 
+Next we introduce the _vector_ domain object:
+
+```java
+public final class Vector extends Tuple {
+    public static final Vector X = new Vector(1, 0, 0);
+    public static final Vector Y = new Vector(0, 1, 0);
+    public static final Vector Z = new Vector(0, 0, 1);
+
+    ...
+    
+    public Vector negate() {
+        return new Vector(-x, -y, -z);
+    }
+}
+```
+
+We can now replace the identity matrix with a perspective projection:
+
+```java
+@Bean
+public static Matrix matrix(Swapchain swapchain) {
+    Matrix projection = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
+}
+```
+
+Next we construct the view transform matrix which consists of translation and rotation components.
+
+The translation matrix moves the eye position (or camera) one unit out of the screen (or moves the scene one unit into the screen, whichever way you look at it):
+
+```java
+Matrix trans = new Matrix.Builder()
+    .identity()
+    .column(3, new Point(0, 0, -1))
+    .build();
+```
+
+The rotation matrix is initialised to the three camera axes:
+
+```java
+Matrix rot = new Matrix.Builder()
+    .row(0, Vector.X)
+    .row(1, Vector.Y.invert())
+    .row(2, Vector.Z)
+    .build();
+```
+
+Finally we compose the two view transform matrices to create the view transform which is then multiplied (see below) with the perspective projection:
+
+```java
+Matrix view = rot.multiply(trans);
+return projection.multiply(view);
+```
+
+Notes:
+
+* The Y axis is inverted for Vulkan.
+
+* The Z axis points _out_ from the screen.
+
+* Later we will wrap the above into a camera class.
+
+### Matrix Multiplication
+
 Matrix multiplication is implemented as follows:
 
 ```java
 public Matrix multiply(Matrix m) {
+    // Check same sized matrices
+    int order = order();
+    if(m.order() != order) throw new IllegalArgumentException(...);
+
     // Multiply matrices
-    final float[] result = new float[matrix.length];
-    int index = 0;
-    for(int c = 0; c < order; ++c) {
-        for(int r = 0; r < order; ++r) {
-            // Sum this row by the corresponding column
+    Matrix result = new Matrix(order);
+    for(int r = 0; r < order; ++r) {
+        for(int c = 0; c < order; ++c) {
             float total = 0;
             for(int n = 0; n < order; ++n) {
-                total += get(r, n) * m.get(n, c);
+                total += this.matrix[r][n] * m.matrix[n][c];
             }
-
-            // Set result element
-            result[index] = total;
-            ++index;
+            result.matrix[r][c] = total;
         }
     }
 
-    // Create resultant matrix
-    return new Matrix(order, result);
+    return result;
 }
 ```
 
-Each element of the resultant matrix is the _sum_ of its _row_ multiplied by the corresponding _column_ in the right-hand matrix:
+Each element of the resultant matrix is the _sum_ of its _row_ multiplied by the corresponding _column_ in the right-hand matrix.
 
 For example, given the following matrices:
 
@@ -401,67 +439,15 @@ For example, given the following matrices:
 
 The result for element [0, 0] is `a * c + b * d` (and similarly for the rest of the matrix).
 
-Note that the `multiply` implementation performs this operation in column-major order (such that the result `index` is a simple increment).
+### Integration #2
 
-We also introduce the _vector_ domain class at this point:
-
-```java
-public final class Vector extends Tuple {
-    public static final Vector X_AXIS = new Vector(1, 0, 0);
-    public static final Vector Y_AXIS = new Vector(0, 1, 0);
-    public static final Vector Z_AXIS = new Vector(0, 0, 1);
-
-    public Vector(float x, float y, float z) {
-        super(x, y, z);
-    }
-
-    public Vector invert() {
-        return new Vector(-x, -y, -z);
-    }
-}
-```
-
-We can now build the _view_ (or _camera_) transformation matrices:
+To test the perspective projection we modify the vertex data to moved one edge of the quad into the screen by fiddling the Z coordinate of the right-hand vertex positions:
 
 ```java
-final Matrix rot = new Matrix.Builder()
-    .identity()
-    .row(0, Vector.X_AXIS)
-    .row(1, Vector.Y_AXIS.invert())
-    .row(2, Vector.Z_AXIS)
-    .build();
-
-final Matrix trans = new Matrix.Builder()
-    .identity()
-    .column(3, new Point(0, 0, -1))
-    .build();
-
-final Matrix view = rot.multiply(trans);
-```
-
-The _rot_ matrix is the camera orientation and _trans_ is the camera (or eye) position which moves the camera one unit 'out' of the screen 
-(or moves the scene one unit into the screen, whichever way you look at it).
-
-Notes:
-- The Y (or up) direction is inverted for Vulkan.
-- The Z axis points _out_ from the screen towards the viewer.
-- Later on we will wrap the view transform into a camera class.
-
-Next we replace the identity matrix we used above with the actual perspective projection, multiply it with the view transform, and upload the result to the uniform buffer:
-
-```java
-final Matrix proj = Projection.DEFAULT.matrix(0.1f, 100, rect.size());
-final Matrix matrix = proj.multiply(view);
-uniform.load(matrix);
-```
-
-Finally we modify the vertex data to move one edge of the quad into the screen by modifying the Z coordinate of the right-hand vertices:
-
-```java
-new Point(-0.5f, -0.5f, 0))
-new Point(-0.5f, +0.5f, 0))
-new Point(+0.5f, -0.5f, -0.5f))
-new Point(+0.5f, +0.5f, -0.5f))
+new Point(-0.5f, +0.5f, 0)
+new Point(-0.5f, -0.5f, 0)
+new Point(+0.5f, +0.5f, -0.5f)
+new Point(+0.5f, -0.5f, -0.5f)
 ```
 
 If the transformation code is correct we should now see the quad in 3D with the right-hand edge sloping away from the viewer like an open door:
@@ -472,70 +458,40 @@ If the transformation code is correct we should now see the quad in 3D with the 
 
 ## Cube Model
 
-We are now going to replace the hard-coded quad with a cube model which will require:
+### Model
 
-1. A new domain class for a general model that encapsulates vertex data.
-
-2. A builder to construct a model.
-
-3. And a more specialised implementation to construct the cube.
-
-### Model Builder
-
-Initially the model class is quite straight-forward (we will be adding more functionality as we go):
+We introduce the _model_ class which composes the vertex data and associated properties:
 
 ```java
-public class Model {
-    private final Primitive primitive;
-    private final Vertex.Layout layout;
-    private final List<Vertex> vertices;
-
-    ...
-
-    /**
-     * @return Number of vertices in this model
-     */
-    public int count() {
-        return vertices.size();
-    }
-
-    /**
-     * @return Vertex buffer
-     */
-    public ByteBuffer vertices() {
-        ...
-    }
+public interface Model {
+    Header header();
+    Bufferable vertices();
 }
 ```
 
-To avoid fiddling the code-generated `VkPrimitiveTopology` enumeration we implement a wrapper:
+The _header_ is a descriptor for the properties of the model:
+
+```java
+public record Header(List<Layout> layout, Primitive primitive, int count) {
+}
+```
+
+The _layout_ field specifies the structure of the vertices and _count_ is the draw count of the model.
+
+Rather than fiddling the code-generated `VkPrimitiveTopology` enumeration we implement a wrapper:
 
 ```java
 public enum Primitive {
-    /**
-     * Triangles.
-     */
     TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST),
-    
+    TRIANGLE_STRIP(3, VkPrimitiveTopology.TRIANGLE_STRIP),
     ...
-    
-    /**
-     * @return Number of vertices per primitive
-     */
-    public int size() {
-        return size;
-    }
 
-    /**
-     * @return Vulkan primitive topology
-     */
-    public VkPrimitiveTopology topology() {
-        return topology;
-    }
-}    
+    private final int size;
+    private final VkPrimitiveTopology topology;
+}
 ```
 
-The new enumeration provides the following additional helper methods that are used when constructing models:
+The following methods on the new enumeration are used to validate the model in the constructor of the header (not shown):
 
 ```java
 public boolean isStrip() {
@@ -545,7 +501,7 @@ public boolean isStrip() {
     };
 }
 
-public boolean hasNormals() {
+public boolean isNormalSupported() {
     return switch(this) {
         case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
         default -> false;
@@ -562,67 +518,66 @@ public boolean isValidVertexCount(int count) {
 }
 ```
 
-The approach for generating the interleaved buffer is the same as the existing quad demo:
+We create a template implementation which is extended by the following default model class:
 
 ```java
-public ByteBuffer vertices() {
-    // Allocate buffer
-    final int len = vertices.size() * layout.size() * Float.BYTES;
-    vertexBuffer = Bufferable.allocate(len);
+public class DefaultModel extends AbstractModel {
+    private final List<Vertex> vertices;
 
-    // Buffer vertices
-    for(Vertex v : vertices) {
-        layout.buffer(v, vertexBuffer);
+    public DefaultModel(Header header, List<Vertex> vertices) {
+        super(header);
+        this.vertices = List.copyOf(vertices);
     }
-
-    // Prepare VBO
-    return vertexBuffer.rewind();
 }
 ```
 
-Next we add a builder to the model:
+The interleaved vertex buffer is generated from the vertex data as follows:
 
 ```java
-class Builder {
+public Bufferable vertexBuffer() {
+    return new Bufferable() {
+        private final int len = vertices.size() * Layout.stride(header.layout());
+
+        @Override
+        public int length() {
+            return len;
+        }
+
+        @Override
+        public void buffer(ByteBuffer buffer) {
+            for(Vertex v : vertices) {
+                v.buffer(buffer);
+            }
+        }
+    };
+}
+```
+
+To construct a model we provide the ubiquitous builder:
+
+```java
+public static class Builder {
     private Primitive primitive = Primitive.TRIANGLE_STRIP;
-    private Vertex.Layout layout = new Vertex.Layout(Vertex.Component.POSITION);
     private final List<Vertex> vertices = new ArrayList<>();
-    
+
     ...
-    
-    public Model build() {
-        return new Model(primitive, layout, vertices);
+
+    public DefaultModel build() {
+        Header header = new Header(layout, primitive, vertices.size());
+        return new DefaultModel(header, vertices);
     }
-}
-```
-
-The only notable method is `add` which validates the model vertices:
-
-```java
-public Builder add(Vertex vertex) {
-    if(!layout.matches(vertex)) throw new IllegalArgumentException(...);
-    vertices.add(vertex);
-    return this;
 }
 ```
 
 ### Cube Builder
 
-We can now build on the new model class to construct a cube:
+We build on the new class to construct a model for a cube:
 
-```java
-public class CubeBuilder {
-    private static final Vertex.Layout LAYOUT = new Vertex.Layout(Vertex.Component.POSITION, Vertex.Component.TEXTURE_COORDINATE);
-    
-    private final Model.Builder builder = new Model.Builder().primitive(Primitive.TRIANGLES).layout(LAYOUT);
-    private float size = 1;
-    
-    ...
-    
-    public Model build() {
-    }
-}
-```
+
+
+
+
+
 
 The cube vertices are specified as a simple array:
 

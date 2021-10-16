@@ -2,8 +2,6 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toSet;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -17,8 +15,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
  * @author Sarge
  */
 public final class VulkanHelper {
-	private static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
-
 	private VulkanHelper() {
 	}
 
@@ -32,28 +28,6 @@ public final class VulkanHelper {
 		out.offset.y = in.y();
 		out.extent.width = in.width();
 		out.extent.height = in.height();
-	}
-
-	/**
-	 * Allocate a new direct byte buffer.
-	 * @param len Buffer length
-	 * @return New byte buffer
-	 */
-	public static ByteBuffer buffer(int len) {
-		return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
-	}
-
-	/**
-	 * Allocate and populate a new direct byte buffer.
-	 * @param bytes Bytes
-	 * @return New byte buffer
-	 */
-	public static ByteBuffer buffer(byte[] bytes) {
-		final ByteBuffer bb = buffer(bytes.length);
-		for(byte b : bytes) {
-			bb.put(b);
-		}
-		return bb;
 	}
 
 	/**
