@@ -131,17 +131,17 @@ public class Frustum {
 
 		// Calc near/far planes
 		final Vector wz = w.add(z);
-		final Plane near = new Plane(wz.negate(), d + dist.z);
+		final Plane near = new Plane(wz.invert(), d + dist.z);
 		final Plane far = new Plane(wz, d - dist.z);
 
 		// Left/right
-		final Vector negw = w.negate();
+		final Vector negw = w.invert();
 		final Plane left = new Plane(x.add(w), d + dist.x);
-		final Plane right = new Plane(x.add(negw).negate(), d - dist.x);
+		final Plane right = new Plane(x.add(negw).invert(), d - dist.x);
 
 		// Top/bottom
 		final Plane top = new Plane(y.add(w), d + dist.y);
-		final Plane bottom = new Plane(y.add(negw).negate(), d - dist.y);
+		final Plane bottom = new Plane(y.add(negw).invert(), d - dist.y);
 
 		// Create frustum array
 		final Plane[] planes = {near, far, left, right, top, bottom};

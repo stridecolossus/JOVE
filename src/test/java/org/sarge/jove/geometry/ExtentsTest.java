@@ -62,9 +62,9 @@ class ExtentsTest {
 		assertEquals(max, extents.positive(Vector.X));
 		assertEquals(max, extents.positive(Vector.Y));
 		assertEquals(max, extents.positive(Vector.Z));
-		assertEquals(new Point(1, 6, 7), extents.positive(Vector.X.negate()));
-		assertEquals(new Point(5, 2, 7), extents.positive(Vector.Y.negate()));
-		assertEquals(new Point(5, 6, 3), extents.positive(Vector.Z.negate()));
+		assertEquals(new Point(1, 6, 7), extents.positive(Vector.X.invert()));
+		assertEquals(new Point(5, 2, 7), extents.positive(Vector.Y.invert()));
+		assertEquals(new Point(5, 6, 3), extents.positive(Vector.Z.invert()));
 
 	}
 
@@ -73,9 +73,9 @@ class ExtentsTest {
 		assertEquals(new Point(1, 6, 7), extents.negative(Vector.X));
 		assertEquals(new Point(5, 2, 7), extents.negative(Vector.Y));
 		assertEquals(new Point(5, 6, 3), extents.negative(Vector.Z));
-		assertEquals(max, extents.negative(Vector.X.negate()));
-		assertEquals(max, extents.negative(Vector.Y.negate()));
-		assertEquals(max, extents.negative(Vector.Z.negate()));
+		assertEquals(max, extents.negative(Vector.X.invert()));
+		assertEquals(max, extents.negative(Vector.Y.invert()));
+		assertEquals(max, extents.negative(Vector.Z.invert()));
 	}
 
 	@Test

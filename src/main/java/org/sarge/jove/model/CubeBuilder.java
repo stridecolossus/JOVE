@@ -3,8 +3,8 @@ package org.sarge.jove.model;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.sarge.jove.common.Vertex;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Vertex;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.MathsUtil;
 
@@ -38,22 +38,18 @@ public class CubeBuilder {
 			{ 1, 7, 3, 5 }, // Bottom
 	};
 
-	// Indices for the two triangles of each face
-	private static final int[] TRIANGLES = Stream.of(Quad.LEFT, Quad.RIGHT).flatMap(List::stream).mapToInt(Integer::intValue).toArray();
-
-	/**
-	 * Convenience method to create a unit-cube.
-	 * @return New cube
-	 */
-	public static Model create() {
-		return new CubeBuilder().size(MathsUtil.HALF).build();
-	}
+	// Indices for the two triangles making up each face
+	private static final int[] TRIANGLES = Stream
+			.of(Quad.LEFT, Quad.RIGHT)
+			.flatMap(List::stream)
+			.mapToInt(Integer::intValue)
+			.toArray();
 
 	private final DefaultModel.Builder builder = new DefaultModel.Builder().primitive(Primitive.TRIANGLES);
-	private float size = 1;
+	private float size = MathsUtil.HALF;
 
 	/**
-	 * Sets the size of this cube (default is {@code one}).
+	 * Sets the size of this cube.
 	 * @param size Cube size
 	 */
 	public CubeBuilder size(float size) {
@@ -65,13 +61,12 @@ public class CubeBuilder {
 	 * Constructs this cube.
 	 * @return New cube model
 	 */
-	public DefaultModel build() {
+	public Model build() {
 		for(int[] face : FACES) {
 			for(int corner : TRIANGLES) {
-				// Lookup cube vertex for this triangle
+				// Lookup vertex for this triangle
 				final int index = face[corner];
-				final Point pt = VERTICES[index];
-				final Point pos = scale(pt);
+				final Point pos = scale(VERTICES[index]);
 
 				// Lookup texture coordinate for this corner
 				final Coordinate2D tc = Quad.COORDINATES.get(corner);

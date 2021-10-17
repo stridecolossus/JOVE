@@ -50,7 +50,7 @@ public class OrbitalCameraController {
 	 * Initialises the camera position.
 	 */
 	private void init() {
-		final var pos = cam.direction().negate().multiply(radius);
+		final var pos = cam.direction().invert().multiply(radius);
 		cam.move(target.add(pos));
 	}
 

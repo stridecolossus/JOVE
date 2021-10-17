@@ -67,19 +67,10 @@ public final class Vector extends Tuple {
 	}
 
 	/**
-	 * @return Negative vector
-	 */
-	public Vector negate() {
-		return new Vector(-x, -y, -z);
-	}
-
-	/**
-	 * Inverts this vector, i.e. one over each component.
-	 * Note that division-by-zero results in components with {@link Float#isInfinite()} values.
-	 * @return Inverted vector
+	 * @return Inverse of this vector
 	 */
 	public Vector invert() {
-		return new Vector(1 / x, 1 / y, 1 / z);
+		return new Vector(-x, -y, -z);
 	}
 
 	/**

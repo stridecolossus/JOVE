@@ -97,6 +97,18 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		return this;
 	}
 
+//	/**
+//	 * Convenience method to create a flipped viewport and scissor with the given dimensions.
+//	 * @param size Viewport dimensions
+//	 */
+//	public Builder viewport(Dimensions size) {
+//		final Rectangle rect = new Rectangle(size);
+//		viewport.viewport(rect);
+//		viewport.scissor(rect);
+////		viewport.flip(true);
+//		return this;
+//	}
+
 	@Override
 	VkPipelineViewportStateCreateInfo get() {
 		// Validate

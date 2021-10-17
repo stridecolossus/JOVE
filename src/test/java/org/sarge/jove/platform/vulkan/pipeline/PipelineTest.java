@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
@@ -63,11 +64,13 @@ public class PipelineTest extends AbstractVulkanTest {
 	class BuilderTests {
 		private Pipeline.Builder builder;
 		private RenderPass pass;
+		private Rectangle viewport;
 
 		@BeforeEach
 		void before() {
 			builder = new Pipeline.Builder();
 			pass = mock(RenderPass.class);
+			viewport = new Rectangle(new Dimensions(3, 4));
 		}
 
 		@Test
@@ -85,7 +88,10 @@ public class PipelineTest extends AbstractVulkanTest {
 			pipeline = builder
 					.layout(layout)
 					.pass(pass)
-					.viewport(new Dimensions(3, 4))
+					.viewport()
+						.viewport(viewport)
+						.scissor(viewport)
+						.build()
 					.shader(VkShaderStage.VERTEX)
 						.shader(mock(Shader.class))
 						.build()
@@ -151,8 +157,12 @@ public class PipelineTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build(dev));
 
 			// Add viewport stage, should now build successfully
-			builder.viewport(new Dimensions(3, 4));
-			builder.build(dev);
+			builder
+				.viewport()
+					.viewport(viewport)
+					.scissor(viewport)
+					.build()
+				.build(dev);
 		}
 
 		@Test

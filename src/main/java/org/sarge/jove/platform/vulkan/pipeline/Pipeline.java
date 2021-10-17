@@ -7,8 +7,6 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
@@ -184,18 +182,6 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public ViewportStageBuilder viewport() {
 			return viewport;
-		}
-
-		/**
-		 * Convenience method to create a flipped viewport and scissor with the given dimensions.
-		 * @param size Viewport dimensions
-		 */
-		public Builder viewport(Dimensions size) {
-			final Rectangle rect = new Rectangle(size);
-			viewport.viewport(rect);
-			viewport.scissor(rect);
-			viewport.flip(true);
-			return this;
 		}
 
 		/**

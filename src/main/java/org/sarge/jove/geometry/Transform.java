@@ -2,8 +2,6 @@ package org.sarge.jove.geometry;
 
 import java.util.List;
 
-import org.sarge.jove.util.MathsUtil;
-
 /**
  * A <i>transform</i> generates a {@link Matrix} for a model transformation.
  * @author Sarge
@@ -14,7 +12,6 @@ public interface Transform {
 	 * @return Transformation matrix
 	 */
 	Matrix matrix();
-	// TODO - enforce Matrix4 for this accessor?
 
 	/**
 	 * @return Whether this transform has changed (default is {@code false})
@@ -22,14 +19,6 @@ public interface Transform {
 	default boolean isDirty() {
 		return false;
 	}
-
-	/**
-	 * Billboard transform.
-	 *
-	 * TODO - billboard
-	 * TODO - factor out flip by axis
-	 */
-	Transform BILLBOARD = Matrix.rotation(Vector.Y, MathsUtil.PI);
 
 	/**
 	 * Creates a compound transform.

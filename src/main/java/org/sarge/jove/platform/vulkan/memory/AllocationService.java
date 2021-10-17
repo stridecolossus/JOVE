@@ -80,11 +80,12 @@ public class AllocationService {
 	 * @return New default allocation service
 	 */
 	public static AllocationService pool(LogicalDevice dev) {
-		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
+//		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
 		final Allocator allocator = Allocator.allocator(dev);
-		final Allocator paged = new PageAllocator(allocator, limits.bufferImageGranularity);
-		final Allocator pool = new PoolAllocator(paged, limits.maxMemoryAllocationCount);
-		return create(dev, pool);
+//		final Allocator paged = new PageAllocator(allocator, limits.bufferImageGranularity);
+//		final Allocator pool = new PoolAllocator(paged, limits.maxMemoryAllocationCount);
+//		return create(dev, pool);
+		return create(dev, allocator);
 	}
 
 	private final Allocator allocator;

@@ -72,12 +72,12 @@ class FrustumTest {
 
 		// Check planes
 		final var expected = List.of(
-				new Plane(Z.negate(), 1),			// Near
+				new Plane(Z.invert(), 1),			// Near
 				new Plane(Z, 1),					// Far
 				new Plane(X, 1),					// Left
-				new Plane(X.negate(), 1),			// Right
+				new Plane(X.invert(), 1),			// Right
 				new Plane(Y, 1),					// Top
-				new Plane(Y.negate(), 1)			// Bottom
+				new Plane(Y.invert(), 1)			// Bottom
 		);
 		assertEquals(expected, frustum.planes());
 

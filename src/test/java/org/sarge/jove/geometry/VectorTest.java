@@ -53,14 +53,8 @@ class VectorTest {
 	}
 
 	@Test
-	void negate() {
-		assertEquals(new Vector(-1, -2, -3), vec.negate());
-	}
-
-	@Test
 	void invert() {
-		assertEquals(new Vector(1, 1 /2f, 1 / 3f), vec.invert());
-		assertEquals(new Vector(1, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY), X.invert());
+		assertEquals(new Vector(-1, -2, -3), vec.invert());
 	}
 
 	@Test
@@ -88,7 +82,7 @@ class VectorTest {
 	@Test
 	void dot() {
 		assertEquals(1f, X.dot(X));
-		assertEquals(-1f, X.dot(X.negate()));
+		assertEquals(-1f, X.dot(X.invert()));
 		assertEquals(0f, X.dot(Y));
 		assertEquals(0f, X.dot(Z));
 	}
@@ -96,7 +90,7 @@ class VectorTest {
 	@Test
 	void angle() {
 		assertEquals(0f, X.angle(X));
-		assertEquals(MathsUtil.PI, X.angle(X.negate()));
+		assertEquals(MathsUtil.PI, X.angle(X.invert()));
 		assertEquals(MathsUtil.HALF_PI, X.angle(Y));
 		assertEquals(MathsUtil.HALF_PI, X.angle(Z));
 	}
@@ -104,7 +98,7 @@ class VectorTest {
 	@Test
 	void cross() {
 		assertEquals(Z, X.cross(Y));
-		assertEquals(Z.negate(), Y.cross(X));
+		assertEquals(Z.invert(), Y.cross(X));
 	}
 
 	@Test
@@ -130,7 +124,7 @@ class VectorTest {
 
 	@Test
 	void reflectSelf() {
-		assertEquals(vec.negate(), vec.reflect(vec.normalize()));
+		assertEquals(vec.invert(), vec.reflect(vec.normalize()));
 	}
 
 	@Test

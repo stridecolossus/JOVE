@@ -82,7 +82,7 @@ class PlaneTest {
 		void intersect() {
 			assertEquals(Intersection.of(3f),  plane.intersect(new Ray(ORIGIN, X)));
 			assertEquals(Intersection.of(-0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X)));
-			assertEquals(Intersection.of(+0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X.negate())));
+			assertEquals(Intersection.of(+0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X.invert())));
 		}
 
 		@Test

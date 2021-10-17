@@ -121,6 +121,8 @@ public Builder identity() {
 
 We will add further matrix functionality as we progress through this chapter.
 
+For further background reading see [OpenGL matrices tutorial](http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/)
+
 ### Perspective Projection
 
 We can now use the new class to construct a projection matrix defined as follows:
@@ -351,7 +353,7 @@ public final class Vector extends Tuple {
 
     ...
     
-    public Vector negate() {
+    public Vector invert() {
         return new Vector(-x, -y, -z);
     }
 }
@@ -363,6 +365,7 @@ We can now replace the identity matrix with a perspective projection:
 @Bean
 public static Matrix matrix(Swapchain swapchain) {
     Matrix projection = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
+    ...
 }
 ```
 
@@ -387,7 +390,7 @@ Matrix rot = new Matrix.Builder()
     .build();
 ```
 
-Finally we compose the two view transform matrices to create the view transform which is then multiplied (see below) with the perspective projection:
+Finally we compose the two view matrices to create the view transform which is then multiplied (see below) with the perspective projection:
 
 ```java
 Matrix view = rot.multiply(trans);
@@ -399,6 +402,8 @@ Notes:
 * The Y axis is inverted for Vulkan.
 
 * The Z axis points _out_ from the screen.
+
+* The order of the operations is important since matrix multiplication is non-commutative.
 
 * Later we will wrap the above into a camera class.
 
@@ -460,7 +465,7 @@ If the transformation code is correct we should now see the quad in 3D with the 
 
 ### Model
 
-We introduce the _model_ class which composes the vertex data and associated properties:
+We next introduce the _model_ class which composes vertex data and associated properties:
 
 ```java
 public interface Model {
@@ -531,10 +536,10 @@ public class DefaultModel extends AbstractModel {
 }
 ```
 
-The interleaved vertex buffer is generated from the vertex data as follows:
+The interleaved vertex buffer is generated from the model in the same manner as we did for the hard-coded quad:
 
 ```java
-public Bufferable vertexBuffer() {
+public Bufferable vertices() {
     return new Bufferable() {
         private final int len = vertices.size() * Layout.stride(header.layout());
 
@@ -571,13 +576,14 @@ public static class Builder {
 
 ### Cube Builder
 
-We build on the new class to construct a model for a cube:
+We build on the new model class to construct a cube:
 
-
-
-
-
-
+```java
+public class CubeBuilder {
+    private final DefaultModel.Builder builder = new DefaultModel.Builder().primitive(Primitive.TRIANGLES);
+    private float size = MathsUtil.HALF;
+}
+```
 
 The cube vertices are specified as a simple array:
 
@@ -597,7 +603,7 @@ private static final Point[] VERTICES = {
 };
 ```
 
-Each face is comprised of a quad of indices into the vertices array:
+Each face of the cube is comprised of a quad indexing into the vertices array:
 
 ```java
 private static final int[][] FACES = {
@@ -610,7 +616,7 @@ private static final int[][] FACES = {
 };
 ```
 
-Each face is a quad consisting of two triangles specified by the following constants:
+Each quad is comprised of two triangles specified as follows:
 
 ```java
 public final class Quad {
@@ -620,67 +626,85 @@ public final class Quad {
 }
 ```
 
-Note that the triangles have alternate winding orders (exactly the same as we did for the quad in the previous chapter).
+Note that __both__ triangles have a counter clockwise winding order since the drawing primitive of the cube is `Primitive.TRIANGLES` (as opposed to a strip of triangles used up until now).
 
-The triangle indices are aggregated into a single array per face:
+The triangle indices are aggregated into a single concatenated array:
 
 ```java
-private static final int[] TRIANGLES = Stream.concat(Quad.LEFT.stream(), Quad.RIGHT.stream()).mapToInt(Integer::intValue).toArray();
+private static final int[] TRIANGLES = Stream
+    .of(Quad.LEFT, Quad.RIGHT)
+    .flatMap(List::stream)
+    .mapToInt(Integer::intValue)
+    .toArray();
 ```
 
-In the build method we can now construct the vertices for each face and build the model:
+In the build method we iterate over the array of faces to lookup the vertex index for each corner:
 
 ```java
 public Model build() {
     for(int[] face : FACES) {
         for(int corner : TRIANGLES) {
-            // Lookup cube vertex for this triangle
-            final int index = face[corner];
-            final Point pos = VERTICES[index].scale(size);
-    
-            // Lookup texture coordinate for this corner
-            final Coordinate2D tc = Quad.COORDINATES.get(corner);
-    
-            // Build vertex
-            final Vertex v = new Vertex.Builder()
-                .position(pos)
-                .coords(tc)
-                .build();
-    
-            // Add quad vertex to model
-            builder.add(v);
+            int index = face[corner];
+            ...
         }
     }
-    return builder.build();
 }
 ```
 
-> We could have implemented a more cunning approach using a triangle-strip wrapped around the cube (for example) which would perhaps result in slightly more efficient storage and rendering performance, but for such a trivial model it's hardly worth the trouble.
+We can now lookup the vertex position and texture coordinate for each corner of a face:
 
-Note that at the time of writing we hard-code the vertex layout and do not include model normals.
+```java
+Point pos = VERTICES[index];
+Coordinate2D tc = Quad.COORDINATES.get(corner);
+```
 
-### Input Assembly
+From which we create a vertex which is added to the model:
 
-Since the cube uses triangles (as opposed to the previous default of a _strip_ of triangles) we need to implement the _input assembly pipeline stage_ builder, which is very simple:
+```java
+Vertex v = new Vertex.Builder()
+    .position(pos)
+    .coordinate(tc)
+    .build();
+builder.add(v);
+```
+
+And finally we construct the cube model:
+
+```java
+return builder.build();
+```
+
+### Integration #3
+
+We replace the hard-coded quad vertices with a cube model:
+
+```java
+public class VertexBufferConfiguration {
+    @Bean
+    public static Model cube() {
+        return new CubeBuilder().build();
+    }
+}
+```
+
+The model is injected into the `vbo` bean and loaded into the staging buffer:
+
+```java
+VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, model.vertices());
+```
+
+To configure the drawing primitive we implement the _input assembly pipeline stage_ which is quite trivial:
 
 ```java
 public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelineInputAssemblyStateCreateInfo> {
     private VkPrimitiveTopology topology = VkPrimitiveTopology.TRIANGLE_STRIP;
     private boolean restart;
     
-    public InputAssemblyStageBuilder topology(Primitive primitive) {
-        this.topology = primitive.topology();
-        return this;
-    }
+    ...
 
-    public InputAssemblyStageBuilder restart(boolean restart) {
-        this.restart = restart;
-        return this;
-    }
-    
     @Override
-    protected VkPipelineInputAssemblyStateCreateInfo result() {
-        final var info = new VkPipelineInputAssemblyStateCreateInfo();
+    VkPipelineInputAssemblyStateCreateInfo get() {
+        var info = new VkPipelineInputAssemblyStateCreateInfo();
         info.topology = topology;
         info.primitiveRestartEnable = VulkanBoolean.of(restart);
         return info;
@@ -688,146 +712,122 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
 }
 ```
 
-This new stage configuration is added to the pipeline:
+The vertex input and assembly stages are now specified by the cube model in the pipeline configuration:
 
 ```java
-Pipeline pipeline = new Pipeline.Builder(dev)
+return new Pipeline.Builder()
     ...
-    .assembly()
-        .topology(cube.primitive())
+    .input()
+        .add(model.header().layout())
         .build()
-    ...
+    .assembly()
+        .topology(model.header().primitive())
+        .build()
+    .build(dev);
 ```
 
-### Integration #2
-
-We can now create a cube model:
+Finally we modify the draw command in the render sequence:
 
 ```java
-Model cube = new CubeBuilder().build();
-ByteBuffer vertices = cube.vertices();
-```
-
-Load it into the staging buffer:
-
-```java
-VulkanBuffer staging = VulkanBuffer.staging(dev, vertices.limit());
-staging.load(vertices);
-```
-
-Not forgetting to size the destination VBO accordingly:
-
-```java
-VulkanBuffer dest = new VulkanBuffer.Builder(dev)
-    .length(vertices.limit())
-    ...
-```
-
-And also update the draw command:
-
-```java
-Command draw = (api, handle) -> api.vkCmdDraw(handle, cube.count(), 1, 0, 0);
+Command draw = DrawCommand.draw(model.header().count());
 ```
 
 When we run the code it should look roughly the same as the quad demo since we will be looking at the front face of the cube.
 
-Next we will apply a rotation to the cube by implemented the following factory on the `Matrix` class to generate a rotation about a given axis:
+### Rotation
+
+To apply a rotation to the cube we implement the following factory on the matrix class to generate a rotation about an axis:
 
 ```java
 public static Matrix rotation(Vector axis, float angle) {
-    final Builder rot = new Builder().identity();
-    final float sin = MathsUtil.sin(angle);
-    final float cos = MathsUtil.cos(angle);
-    if(Vector.X_AXIS.equals(axis)) {
+    Builder rot = new Builder().identity();
+    float sin = MathsUtil.sin(angle);
+    float cos = MathsUtil.cos(angle);
+    if(Vector.X.equals(axis)) {
         rot.set(1, 1, cos);
         rot.set(1, 2, sin);
         rot.set(2, 1, -sin);
         rot.set(2, 2, cos);
     }
     else
-    if(Vector.Y_AXIS.equals(axis)) {
-        rot.set(0, 0, cos);
-        rot.set(0, 2, -sin);
-        rot.set(2, 0, sin);
-        rot.set(2, 2, cos);
+    if(Vector.Y.equals(axis)) {
+        ...
     }
     else
-    if(Vector.Z_AXIS.equals(axis)) {
-        rot.set(0, 0, cos);
-        rot.set(0, 1, -sin);
-        rot.set(1, 0, sin);
-        rot.set(1, 1, cos);
+    if(Vector.Z.equals(axis)) {
+        ...
     }
     else {
-        throw new UnsupportedOperationException("Arbitrary rotation axis not supported");
+        throw new UnsupportedOperationException();
     }
     return rot.build();
 }
 ```
 
-We add the following temporary matrix to implement a static rotation about the X-Y axis:
+Note that for the moment we only support the pre-defined axes.
+
+In the camera configuration we use this new method to compose a temporary, static rotation about the X-Y axis:
 
 ```java
-Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.toRadians(30));
-Matrix rotY = Matrix.rotation(Vector.Y_AXIS, MathsUtil.toRadians(30));
-Matrix rot = rotX.multiply(rotY);
+float angle = MathsUtil.toRadians(30);
+Matrix x = Matrix.rotation(Vector.X, angle);
+Matrix y = Matrix.rotation(Vector.Y, angle);
+Matrix model = x.multiply(y);
 ```
 
-And modify the view transform to compose all three matrices:
+Which is multiplied with the projection and view transform to generate the final matrix:
 
 ```java
-Matrix matrix = proj.multiply(view).multiply(rot);
-uniform.load(matrix);
+return projection.multiply(view).multiply(model);
 ```
 
-Note that the order of the multiplications is important since matrix multiplication is non-commutative.
+Again note the order of operations - here we essentially apply the rotation to the model, then the view transform, and finally the perspective projection.
 
-The above should give us this:
+We should now be able to see the fully 3D cube:
 
 ![Rotated Cube](cube.png)
 
-To animate the cube we need some sort of loop to render multiple frames and logic to modify the view matrix over time. 
-For the moment we bodge a temporary time-based loop that applies the matrix and exits the loop after a couple of rotations:
+### Animation
+
+To animate the cube rotation we first add a _period_ property to the application configuration which is used to terminate the render loop:
 
 ```java
-long period = 5000;
-long end = System.currentTimeMillis() + period * 2;
-Matrix rotX = Matrix.rotation(Vector.X_AXIS, MathsUtil.toRadians(45));
-
+long period = cfg.getPeriod();
+long start = System.currentTimeMillis();
 while(true) {
-    // Stop loop
-    final long now = System.currentTimeMillis();
-    if(now >= end) {
+    // Stop after a couple of rotations
+    final long time = System.currentTimeMillis() - start;
+    if(time > 3 * period) {
         break;
     }
-
-    // Update rotation
-    final float angle = (now % period) * MathsUtil.TWO_PI / period;
-    final Matrix rotY = Matrix.rotation(Vector.Y_AXIS, angle);
-    final Matrix rot = rotY.multiply(rotX);
-    uniform.load(rot, rot.length(), 2 * rot.length());
-
-    // Acquire next frame
-    int index = swapchain.acquire();
-
-    // Render frame
-    new Work.Builder()
-        .add(render)
-        .build()
-        .submit();
-    
-    // TODO
-    presentQueue.waitIdle();
+    ...
 }
 ```
 
-Notes:
+Next we remove the temporary rotation added above and build a model matrix on every frame.
 
-- The code to calculate the _angle_ interpolates a 5 second period onto the unit circle.
+We animate the horizontal rotation angle by interpolating the period onto the unit-circle:
 
-- This loop _should_ be generating a number of validation errors on every frame - we will address these issues in the next chapter.
+```java
+float angle = (time % period) * MathsUtil.TWO_PI / period;
+Matrix h = Matrix.rotation(Vector.Y, angle);
+```
 
-Hopefully when we run the demo we can now finally see the goal for this chapter: the proverbial rotating textured cube.
+This is combined with a fixed vertical rotation so we can see the top and bottom faces of the cube:
+
+```java
+Matrix v = Matrix.rotation(Vector.X, MathsUtil.toRadians(30));
+Matrix model = h.multiply(v);
+```
+
+Finally we inject the projection-view matrix and uniform buffer objects so we can compose the final matrix to be passed to the shader:
+
+```java
+Matrix m = matrix.multiply(model);
+uniform.load(m);
+```
+
+Hopefully we can now finally see the goal for this chapter: the proverbial rotating textured cube.
 
 Huzzah!
 
@@ -837,17 +837,5 @@ Huzzah!
 
 In this chapter we implemented perspective projection to render a 3D rotating cube.
 
-To support this demo we created:
-
-- The matrix class.
-
-- Uniform buffers.
-
-- The model class and builder.
-
 ---
-
-## References
-
-[^projection]: [OpenGL matrices tutorial](http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/)
 

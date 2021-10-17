@@ -31,7 +31,6 @@ public class Shader extends AbstractVulkanObject {
 		// Convert code to buffer
 		final ByteBuffer bb = ByteBuffer.allocateDirect(code.length).order(Bufferable.ORDER);
 		Bufferable.write(code, bb);
-		bb.flip();
 
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
