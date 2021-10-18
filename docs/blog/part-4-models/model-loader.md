@@ -8,12 +8,11 @@ In this chapter we will create a loader for an OBJ model and implement vertex de
 
 ---
 
-## OBJ Model Loader
+## Model Loader
 
 ### File Format
 
-An OBJ model is a text-based data format consisting of a series of *commands* to define a static model.
-Each line starts with a *command token* followed by a number of space-delimited arguments.
+An OBJ model is a text-based data format consisting of a series of _commands_ that define a static model, each line starts with a _command token_ followed by a number of space-delimited arguments.
 
 The most common commands are:
 
@@ -27,8 +26,7 @@ The most common commands are:
 | g             | name          | polygon group         | g body            |
 | s             | flag          | smoothing group       | s 1               |
 
-The _face_ command specifies the vertices of a polygon as a tuple of indices delimited by the slash character.
-Each vertex consists of a position index and optional normal and texture coordinate indices.
+The _face_ command specifies the vertices of a polygon as a tuple of indices delimited by the slash character.  Each vertex consists of a position index and optional normal and texture coordinate indices:
 
 | example                   | description                               |
 | -------                   | -----------                               |
@@ -37,7 +35,7 @@ Each vertex consists of a position index and optional normal and texture coordin
 | f 1/2/3 4/5/6 7/8/9       | also with normals                         |
 | f 1//2 3//4 5//6          | normals but no texture coordinates        |
 
-Example:
+Example for a simple triangle with texture coordinates:
 
 ```
 o object
@@ -51,34 +49,36 @@ g group
 f 1/1 2/2 3/3
 ```
 
-We will only implement the minimal functionality required for our test models therefore we apply the following assumptions and constraints on the scope of the loader:
+We will implement the minimal functionality required for our test models with the following assumptions and constraints on the scope of the loader:
 
-- Face primitives are assumed to be triangles.
+* Face primitives are assumed to be triangles.
 
-- Only the above commands will be supported - all others will be ignored.
+* Only the above commands will be supported.
 
-- The OBJ format supports material descriptors (.MTL) that specify texture properties (amongst others) - for the moment we will simply hard-code the associated texture image.
+* The OBJ format specifies material descriptors that specify texture properties (amongst other features) however we will hard-code the texture image.
 
-### Transient Model
+### Vertex Data
 
 Loading an OBJ model consists of two main steps:
-1. Load the vertex components (v, vn, vt).
-2. Load the object faces (f) that index into this data to build the resultant object.
 
-This implies we need an intermediate data structure to hold the vertex components:
+1. Load the vertex data (positions, normals, texture coordinates).
+
+2. Load the faces that index into this data to build the resultant object.
+
+We first implement an intermediate data structure to hold the parsed data:
 
 ```java
-public static class ObjectModel {
+public class ObjectModel {
     private final List<Point> vertices = new VertexComponentList<>();
     private final List<Vector> normals = new VertexComponentList<>();
     private final List<Coordinate2D> coords = new VertexComponentList<>();
 }
 ```
 
-The custom list implementation retrieves a vertex component using an OBJ index (which starts at one and can be negative):
+The custom list implementation looks up a vertex component by index (which starts at __one__ and can be negative):
 
 ```java
-static class VertexComponentList<T> extends ArrayList<T> {
+class VertexComponentList<T> extends ArrayList<T> {
     @Override
     public T get(int index) {
         if(index > 0) {
@@ -89,43 +89,36 @@ static class VertexComponentList<T> extends ArrayList<T> {
             return super.get(size() + index);
         }
         else {
-            throw new IndexOutOfBoundsException("Invalid zero index");
+            throw new IndexOutOfBoundsException(...);
         }
     }
 }
 ```
 
+
+
 ### Model Loader
 
 We can now parse the OBJ file and construct the model as follows:
-1. Create a new transient OBJ model.
-2. Load each line of the OBJ file (skipping comments and empty lines).
-3. Parse each command line and update the model accordingly.
-4. Generate the resultant JOVE model(s).
 
-The loader parses each line of the model and delegates to the local `parse` method:
+1. Create an instance of the above transient model.
+
+2. Load each line of the OBJ file (skipping comments and empty lines).
+
+3. Parse each command line and update the model accordingly.
+
+4. Generate the resultant JOVE model.
+
+
+
+
+
+
+
+We create a loader that parses each line of the model:
 
 ```java
 public class ObjectModelLoader {
-    public Model load(Reader r) throws IOException {
-        // Create transient model
-        final ObjectModel model = new ObjectModel();
-
-        // Parse OBJ model
-        try(final LineNumberReader in = new LineNumberReader(r)) {
-            in.lines()
-                .map(String::trim)
-                .filter(Predicate.not(String::isBlank))
-                .filter(Predicate.not(this::isComment))
-                .forEach(line -> parse(line, model));
-        }
-        catch(Exception e) {
-            throw new IOException(...);
-        }
-
-        // Construct models
-        return model.build();
-    }
 }
 ```
 

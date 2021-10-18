@@ -33,9 +33,9 @@ The [introduction](blog/part-1-intro/introduction) in the first section outlines
     - [Texture Sampling](blog/part-3-cube/textures)
     - [Descriptor Sets](blog/part-3-cube/descriptor-sets)
     - [Perspective Projection](blog/part-3-cube/perspective)
-    - [The Render Loop and Synchronisation](blog/part-3-cube/sync)
    
 - Part 4 - Models
+    - [Render Loop](blog/part-4-models/render-loop)
     - [Model Loader](blog/part-4-models/model-loader)
     - [Depth Buffers](blog/part-4-models/depth-buffer)
     - [Input Handling](blog/part-4-models/input-handling)

@@ -1,8 +1,52 @@
 ---
-title: The Render Loop
+title: The Render Loop and Synchronisation
 ---
 
 ## Overview
+
+Before we start the next demo application there are several issues with the existing, crude render loop we have been using so far:
+
+1. The rendering code code is completely single-threaded.
+
+2. There are several lists of objects (frame buffers, descriptor sets, etc) that are used to render a frame.
+
+3. The window event queue is blocked.
+
+4. There is no mechanism to terminate the application.
+
+In this chapter we will address these issues by implementing the following:
+
+* The built-in Vulkan synchronisation primitives: semaphores and fences.
+
+* A multi-threaded render loop.
+
+* Supporting framework code to compose the various objects that collaborate to render a frame.
+
+* A keyboard handler to gracefully exit the application.
+
+Note that during this chapter the demo application will generate validation errors that are addressed as we progress.
+
+---
+
+## Keyboard Handler
+
+We start with a GLFW keyboard handler to terminate the application when the ESCAPE key is pressed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Before we wrap up this phase of development we will finally implement a proper _render loop_.
 

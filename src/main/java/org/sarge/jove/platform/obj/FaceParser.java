@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.obj;
 
-import java.util.Arrays;
-
 /**
  * The <i>face parser</i> parses an OBJ face command.
  * <p>
@@ -36,11 +34,6 @@ import java.util.Arrays;
  * @author Sarge
  */
 public class FaceParser implements Parser {
-	private final Integer[] indices = new Integer[3];
-
-	/**
-	 * @throws IllegalArgumentException for an invalid or non-triangular face
-	 */
 	@Override
 	public void parse(String[] args, ObjectModel model) {
 		// Validate face
@@ -54,29 +47,28 @@ public class FaceParser implements Parser {
 			final String[] parts = face.trim().split("/");
 			if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
 
-			// Clear indices
-			Arrays.fill(indices, null);
-
 			// Clean values
 			for(int n = 0; n < parts.length; ++n) {
 				parts[n] = parts[n].trim();
 			}
 
 			// Parse mandatory vertex position
-			indices[0] = Integer.parseInt(parts[0]);
+			final int v = Integer.parseInt(parts[0]);
 
 			// Parse optional texture coordinate
+			Integer vt = null;
 			if((parts.length > 1) && !parts[1].isEmpty()) {
-				indices[1] = Integer.parseInt(parts[1]);
+				vt = Integer.parseInt(parts[1]);
 			}
 
 			// Parse optional normal
+			Integer vn = null;
 			if(parts.length == 3) {
-				indices[2] = Integer.parseInt(parts[2]);
+				vn = Integer.parseInt(parts[2]);
 			}
 
 			// Add vertex to model
-			model.vertex(indices);
+			model.vertex(v, vn, vt);
 		}
 	}
 }

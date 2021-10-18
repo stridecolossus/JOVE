@@ -1,12 +1,10 @@
 package org.sarge.jove.platform.obj;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,28 +13,24 @@ import org.sarge.jove.geometry.Point;
 public class VertexComponentParserTest {
 	private Parser parser;
 	private ObjectModel model;
+	private BiConsumer<ObjectModel, Point> consumer;
 
 	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		parser = new VertexComponentParser<>(3, Point::new, ObjectModel::vertices);
+		consumer = mock(BiConsumer.class);
+		parser = new VertexComponentParser<>(3, Point::new, consumer);
 		model = mock(ObjectModel.class);
-		when(model.vertices()).thenReturn(mock(List.class));
 	}
 
 	@Test
-	void constructor() {
-		assertNotNull(parser);
-	}
-
-	@Test
-	void array() {
+	void parse() {
 		parser.parse(new String[]{"1", "2", "3"}, model);
-		verify(model.vertices()).add(new Point(1, 2, 3));
+		verify(consumer).accept(model, new Point(1, 2, 3));
 	}
 
 	@Test
-	void arrayInvalidLength() {
+	void parseInvalidArrayLength() {
 		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}, model));
 		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1", "2", "3", "4"}, model));
 	}

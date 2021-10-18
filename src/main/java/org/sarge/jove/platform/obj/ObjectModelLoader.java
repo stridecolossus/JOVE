@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.util.ResourceLoader;
 import org.sarge.lib.util.Check;
@@ -29,12 +28,12 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> {
-	private static final String[] EMPTY_ARGUMENTS = new String[]{};
+	private static final String[] EMPTY_ARGUMENTS = new String[0];
 
 	/**
-	 * Adapter for an array parser to vertically flip texture coordinates.
+	 * Adapter to parse flipped texture coordinates.
 	 */
-	protected static final Function<float[], Coordinate> FLIP = array -> {
+	private static final Function<float[], Coordinate> FLIP = array -> {
 		array[1] = -array[1];
 		return Coordinate.of(array);
 	};
@@ -57,6 +56,7 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private Set<String> comments = Set.of("#");
 	private Consumer<String> handler = HANDLER_THROW;
+	private final ObjectModel model = new ObjectModel();
 
 	/**
 	 * Constructor.
@@ -69,9 +69,9 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v", new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::vertices));
-		add("vt", new VertexComponentParser<>(2, FLIP, ObjectModel::coordinates));
-		add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normals));
+		add("v", new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::vertex));
+		add("vt", new VertexComponentParser<>(2, FLIP, ObjectModel::coordinate));
+		add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normal));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);
@@ -105,17 +105,6 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 		this.handler = notNull(handler);
 	}
 
-	/**
-	 * Creates a new transient OBJ model.
-	 * <p>
-	 * Over-ride to provide a custom OBJ model and/or underlying builder.
-	 * <p>
-	 * @return New OBJ model
-	 */
-	protected ObjectModel create() {
-		return new ObjectModel(DefaultModel.IndexedBuilder::new);
-	}
-
 	@Override
 	public Reader map(InputStream in) throws IOException {
 		return new InputStreamReader(in);
@@ -130,9 +119,6 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 	 */
 	@Override
 	public Stream<Model> load(Reader r) throws IOException {
-		// Create transient model
-		final ObjectModel model = create();
-
 		// Parse OBJ model
 		try(final LineNumberReader in = new LineNumberReader(r)) {
 			try {
