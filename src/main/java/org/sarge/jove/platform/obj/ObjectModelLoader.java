@@ -28,7 +28,7 @@ import org.sarge.lib.util.Check;
  * Loader for an OBJ model.
  * @author Sarge
  */
-public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Model>> {
+public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> {
 	private static final String[] EMPTY_ARGUMENTS = new String[]{};
 
 	/**
@@ -117,7 +117,7 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	}
 
 	@Override
-	protected Reader map(InputStream in) {
+	public Reader map(InputStream in) throws IOException {
 		return new InputStreamReader(in);
 	}
 

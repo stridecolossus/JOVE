@@ -1,66 +1,38 @@
 package org.sarge.jove.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.ResourceLoader.Adapter;
 
 public class ResourceLoaderTest {
-	private static final String FILENAME = "filename";
-
-	private ResourceLoader<String, Object> loader;
-	private Adapter<InputStream, Object> adapter;
-	private DataSource src;
-
-	@SuppressWarnings("unchecked")
-	@BeforeEach
-	void before() {
-		src = mock(DataSource.class);
-		adapter = mock(Adapter.class);
-		loader = ResourceLoader.of(src, adapter);
-	}
-
 	@Test
-	void constructor() {
-		assertNotNull(loader);
-	}
+	void of() throws IOException {
+		// Create loader adapter
+		final DataSource src = mock(DataSource.class);
+		final ResourceLoader<Object, Object> loader = mock(ResourceLoader.class);
+		final var adapter = ResourceLoader.of(src, loader);
+		assertNotNull(adapter);
 
-	@SuppressWarnings("resource")
-	private InputStream init() throws IOException {
+		// Init data source
+		final String name = "filename";
 		final InputStream in = mock(InputStream.class);
-		when(src.open(FILENAME)).thenReturn(in);
-		when(adapter.map(in)).thenReturn(in);
-		return in;
-	}
+		when(src.open(name)).thenReturn(in);
 
-	@SuppressWarnings("resource")
-	@Test
-	void load() throws IOException {
-		final InputStream in = init();
-		loader.load(FILENAME);
-		verify(adapter).load(in);
-	}
+		// Init mapper
+		final Object data = new Object();
+		when(loader.map(in)).thenReturn(data);
 
-	@SuppressWarnings("resource")
-	@Test
-	void loadCannotOpen() throws IOException {
-		when(src.open(FILENAME)).thenThrow(IOException.class);
-		assertThrows(RuntimeException.class, () -> loader.load(FILENAME));
-	}
+		// Init loader
+		final Object obj = new Object();
+		when(loader.load(data)).thenReturn(obj);
 
-	@SuppressWarnings("resource")
-	@Test
-	void loadCannotLoad() throws IOException {
-		final InputStream in = init();
-		when(adapter.load(in)).thenThrow(IOException.class);
-		assertThrows(RuntimeException.class, () -> loader.load(FILENAME));
+		// Invoke loader
+		assertEquals(obj, adapter.apply(name));
 	}
 }

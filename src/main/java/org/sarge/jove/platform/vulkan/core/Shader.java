@@ -63,26 +63,26 @@ public class Shader extends AbstractVulkanObject {
 	/**
 	 * Loader for a shader.
 	 */
-	public static class ShaderLoader extends ResourceLoader.Adapter<InputStream, Shader> {
+	public static class Loader implements ResourceLoader<InputStream, Shader> {
 		private final LogicalDevice dev;
 
 		/**
 		 * Constructor.
 		 * @param dev Logical device
 		 */
-		public ShaderLoader(LogicalDevice dev) {
+		public Loader(LogicalDevice dev) {
 			this.dev = notNull(dev);
+		}
+
+		@Override
+		public InputStream map(InputStream in) throws IOException {
+			return in;
 		}
 
 		@Override
 		public Shader load(InputStream in) throws IOException {
 			final byte[] code = in.readAllBytes();
 			return create(dev, code);
-		}
-
-		@Override
-		protected InputStream map(InputStream in) throws IOException {
-			return in;
 		}
 	}
 }

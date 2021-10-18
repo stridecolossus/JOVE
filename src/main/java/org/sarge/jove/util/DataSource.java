@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 
 /**
  * A <i>data source</i> opens an input-stream for a given resource by name.
+ * @author Sarge
  */
 public interface DataSource {
 	/**

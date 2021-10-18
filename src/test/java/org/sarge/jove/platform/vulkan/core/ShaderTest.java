@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
-import org.sarge.jove.platform.vulkan.core.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.ptr.PointerByReference;
@@ -65,11 +64,11 @@ public class ShaderTest extends AbstractVulkanTest {
 
 	@Nested
 	class LoaderTests {
-		private ShaderLoader loader;
+		private Shader.Loader loader;
 
 		@BeforeEach
 		void before() {
-			loader = new ShaderLoader(dev);
+			loader = new Shader.Loader(dev);
 		}
 
 		@SuppressWarnings("resource")
