@@ -87,10 +87,10 @@ To instantiate the API itself we add the following factory method to the library
 
 ```java
 static VulkanLibrary create() {
-    final String name = switch(Platform.getOSType()) {
+    String name = switch(Platform.getOSType()) {
         case Platform.WINDOWS -> "vulkan-1";
         case Platform.LINUX -> "libvulkan";
-        default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
+        default -> throw new UnsupportedOperationException(...);
     }
 
     return Native.load(name, VulkanLibrary.class);
@@ -170,8 +170,7 @@ In the `build` method we use the code-generated structures for the first time to
 
 ```java
 public Instance build(VulkanLibrary lib) {
-    // Init application descriptor
-    final VkApplicationInfo app = new VkApplicationInfo();
+    VkApplicationInfo app = new VkApplicationInfo();
     app.pApplicationName = name;
     app.applicationVersion = ver.toInteger();
     app.pEngineName = "JOVE";
@@ -190,20 +189,19 @@ public interface VulkanLibrary {
 Next we populate the descriptor for the instance (which only consists of the application details for the moment):
 
 ```java
-    // Init instance descriptor
-    final VkInstanceCreateInfo info = new VkInstanceCreateInfo();
-    info.pApplicationInfo = app;
+var info = new VkInstanceCreateInfo();
+info.pApplicationInfo = app;
 ```
 
 Finally we invoke the API method to create the instance and construct the domain object:
 
 ```java
-    // Create instance
-    final PointerByReference handle = new PointerByReference();
-    check(api.vkCreateInstance(info, null, handle));
-    
-    // Create instance wrapper
-    return new Instance(api, handle.getValue());
+// Create instance
+PointerByReference handle = new PointerByReference();
+check(api.vkCreateInstance(info, null, handle));
+
+// Create instance wrapper
+return new Instance(api, handle.getValue());
 }
 ```
 
@@ -227,11 +225,6 @@ The `VulkanException` is a custom exception class that builds an informative mes
 public class VulkanException extends RuntimeException {
     public final int result;
 
-    /**
-     * Constructor.
-     * @param result        Vulkan result code
-     * @param message       Additional message
-     */
     public VulkanException(int result, String message) {
         super(String.format("[%d]%s: %s", result, reason(result), message));
         this.result = result;
@@ -315,7 +308,7 @@ public record ValidationLayer(String name, int version) {
 }
 ```
 
-(We discuss the purpose of the standard validation layer below).
+We discuss the purpose of the standard validation layer below.
 
 ### Required Extensions
 
@@ -373,8 +366,8 @@ public class Desktop {
     }
 
     public String[] extensions() {
-        final IntByReference size = new IntByReference();
-        final Pointer ptr = lib.glfwGetRequiredInstanceExtensions(size);
+        IntByReference size = new IntByReference();
+        Pointer ptr = lib.glfwGetRequiredInstanceExtensions(size);
         return ptr.getStringArray(0, size.getValue());
     }
 }
@@ -385,18 +378,18 @@ The service is created and initialised in a similar fashion to the Vulkan API:
 ```java
 public static Desktop create() {
     // Determine library name
-    final String name = switch(Platform.getOSType()) {
+    String name = switch(Platform.getOSType()) {
         case Platform.WINDOWS -> "glfw3";
         case Platform.LINUX -> "libglfw";
-        default -> throw new UnsupportedOperationException("Unsupported platform for GLFW: " + Platform.getOSType());
+        default -> throw new UnsupportedOperationException(...);
     };
 
     // Load native library
-    final DesktopLibrary lib = Native.load(name, DesktopLibrary.class);
+    DesktopLibrary lib = Native.load(name, DesktopLibrary.class);
 
     // Init GLFW
-    final int result = lib.glfwInit();
-    if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
+    int result = lib.glfwInit();
+    if(result != 1) throw new RuntimeException(...);
 
     // Create desktop
     return new Desktop(lib);
@@ -411,20 +404,20 @@ Finally we can create our first demo application to instantiate a Vulkan instanc
 public class InstanceDemo {
     public static void main(String[] args) throws Exception {
         // Open desktop
-        final Desktop desktop = Desktop.create();
+        Desktop desktop = Desktop.create();
         if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
         // Lookup required extensions
-        final String[] extensions = desktop.extensions();
+        String[] extensions = desktop.extensions();
 
         // Init Vulkan
-        final VulkanLibrary lib = VulkanLibrary.create();
+        VulkanLibrary lib = VulkanLibrary.create();
 
         // Create instance
-        final Instance instance = new Instance.Builder()
-                .name("InstanceDemo")
-                .extensions(desktop.extensions())
-                .build(lib);
+        Instance instance = new Instance.Builder()
+            .name("InstanceDemo")
+            .extensions(desktop.extensions())
+            .build(lib);
 
         // Cleanup
         instance.destroy();
@@ -442,6 +435,8 @@ We also add a convenience method to the builder to add the array of extensions r
 ### Overview
 
 Vulkan implements the `STANDARD_VALIDATION` layer that provides an excellent error and diagnostics reporting mechanism, offering comprehensive logging as well as identifying common problems such as orphaned object handles, invalid parameters, performance warnings, etc.  This functionality is not mandatory but its safe to say it is _highly_ recommended during development, so we will address it now before we progress any further.
+
+Note that we will still implement comprehensive argument and logic validation throughout JOVE (even if this replicates the validation layer) such that we can identify bugs and errors sooner rather than later.
 
 However there is a complication - the reporting mechanism is not a core part of the API but is itself an extension: the relevant function pointers must be looked up from the instance and the associated data structures are determined from the Vulkan documentation.
 
@@ -483,37 +478,21 @@ public class Handler {
     private final Set<VkDebugUtilsMessageType> types = new HashSet<>();
     private Consumer<Message> consumer = System.err::println;
 
-    /**
-     * Sets the message consumer (dumps messages to the error console by default).
-     * @param consumer Message consumer
-     */
     public Handler consumer(Consumer<Message> consumer) {
         this.consumer = notNull(consumer);
         return this;
     }
 
-    /**
-     * Adds a message severity to be reported by this handler.
-     * @param severity Message severity
-     */
     public Handler severity(VkDebugUtilsMessageSeverity severity) {
         this.severity.add(notNull(severity));
         return this;
     }
 
-    /**
-     * Adds a message type to be reported by this handler.
-     * @param type Message type
-     */
     public Handler type(VkDebugUtilsMessageType type) {
         types.add(notNull(type));
         return this;
     }
     
-    /**
-     * Attaches this handler to the instance.
-     * @throws IllegalArgumentException if the message severities or types is empty
-     */
     public void attach(Instance instance) {
         ...
     }
@@ -525,10 +504,10 @@ The `attach` method first populates a descriptor for the handler:
 ```java
 public void attach() {
     // Create callback
-    final MessageCallback callback = new MessageCallback(consumer);
+    MessageCallback callback = new MessageCallback(consumer);
 
     // Build handler descriptor
-    final var info = new VkDebugUtilsMessengerCreateInfoEXT();
+    var info = new VkDebugUtilsMessengerCreateInfoEXT();
     info.messageSeverity = IntegerEnumeration.mask(severity);
     info.messageType = IntegerEnumeration.mask(types);
     info.pfnUserCallback = callback;
@@ -541,19 +520,16 @@ public void attach() {
 Next we lookup and invoke the function pointer to create and attach the handler to the instance:
 
 ```java
-    ...
-    
-    // Lookup create function
-    final Function create = function("vkCreateDebugUtilsMessengerEXT");
-    
-    // Create and attach handler
-    final PointerByReference ref = new PointerByReference();
-    final Object[] args = {handle, info, null, ref};
-    check(create.invokeInt(args));
-    
-    // Register handler
-    handlers.add(ref.getValue());
-}
+// Lookup create function
+Function create = function("vkCreateDebugUtilsMessengerEXT");
+
+// Create and attach handler
+PointerByReference ref = new PointerByReference();
+Object[] args = {handle, info, null, ref};
+check(create.invokeInt(args));
+
+// Register handler
+handlers.add(ref.getValue());
 ```
 
 Notes:
@@ -567,14 +543,8 @@ Notes:
 Finally we add another helper to the instance to lookup a function pointer by name:
 
 ```java
-/**
- * Looks up a Vulkan function by name.
- * @param name Function name
- * @return Vulkan function
- * @throws RuntimeException if the function cannot be found
- */
 public Function function(String name) {
-    final Pointer ptr = lib.vkGetInstanceProcAddr(handle, name);
+    Pointer ptr = lib.vkGetInstanceProcAddr(handle, name);
     if(ptr == null) throw new RuntimeException("Cannot find function pointer: " + name);
     return Function.getFunction(ptr);
 }
@@ -653,8 +623,8 @@ We also add a custom `toString` implementation to the `Message` record to build 
 ```java
 @Override
 public String toString() {
-    final String compoundTypes = types.stream().map(Enum::name).collect(joining("-"));
-    final StringJoiner str = new StringJoiner(":");
+    String compoundTypes = types.stream().map(Enum::name).collect(joining("-"));
+    StringJoiner str = new StringJoiner(":");
     str.add(severity.name());
     str.add(compoundTypes);
     if(!data.pMessage.contains(data.pMessageIdName)) {
@@ -697,9 +667,9 @@ Finally we modify the `destroy` method of the instance to properly cleanup after
 ```java
 public void destroy() {
     if(!handlers.isEmpty()) {
-        final Function destroy = function("vkDestroyDebugUtilsMessengerEXT");
+        Function destroy = function("vkDestroyDebugUtilsMessengerEXT");
         for(Pointer p : handlers) {
-            final Object[] args = {handle, p, null};
+            Object[] args = {handle, p, null};
             destroy.invoke(args);
         }
     }
@@ -743,8 +713,8 @@ public class Instance extends AbstractTransientNativeObject {
     ...
     
     private void attach(VkDebugUtilsMessengerCreateInfoEXT info) {
-        final PointerByReference handle = lib.factory().pointer();
-        final Object[] args = {ptr, info, null, handle};
+        PointerByReference handle = lib.factory().pointer();
+        Object[] args = {ptr, info, null, handle};
         check(create.get().invokeInt(args));                    // <-- Lazy initialisation happens here
         handlers.add(handle.getValue());
     }
@@ -785,7 +755,7 @@ public Instance build(VulkanLibrary lib) {
     ...
     
     // Create instance
-    final PointerByReference handle = new PointerByReference();
+    PointerByReference handle = new PointerByReference();
     check(lib.vkCreateInstance(info, null, handle));
     
     // Create instance wrapper
@@ -876,7 +846,6 @@ verify(lib).vkCreateInstance(captor.capture(), isNull(), isA(PointerByReference.
 // Check create descriptor
 VkInstanceCreateInfo info = captor.getValue();
 assertEquals(0, info.flags);
-...
 ```
 
 This is a lot of fairly unpleasant code just to get around the fact that JNA structures do not support equality as expected.

@@ -4,9 +4,11 @@ title: Perspective Projection
 
 ## Overview
 
-In this chapter we will introduce _perspective projection_ so that fragments that are more distant in the scene appear correctly foreshortened.
+In the final chapter in this section we will introduce _perspective projection_ so that fragments that are more distant in the scene appear correctly foreshortened.
 
-We will implement a _matrix_ which is central to 3D graphics.  Of course we could utilise a third-party library but the point of this project is to build from first principles.
+We will implement the _matrix_ class which is a central component of 3D graphics.
+
+> Of course we could utilise a third-party matrices library but one of the aims of this project is to build (and learn) from first principles.
 
 We will require the following new components:
 
@@ -58,7 +60,7 @@ public final class Matrix implements Bufferable {
 }
 ```
 
-The matrix data is implemented as a 2D floating-point array.  This is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest.
+The matrix data is implemented as a 2D floating-point array.  This is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest to implement.  We anticipate this implementation will only be used in cases where we are constructing a matrix and are not concerned about efficiency (such as perspective projection).
 
 A matrix is a bufferable object:
 
@@ -76,6 +78,8 @@ public void buffer(ByteBuffer buffer) {
     }
 }
 ```
+
+Note that the row-column indices are transposed to output the matrix in _column major_ order which is the default expected by Vulkan.
 
 To construct a matrix we provide a builder:
 
@@ -247,7 +251,7 @@ public static VulkanBuffer uniform(LogicalDevice dev, AllocationService allocato
 }
 ```
 
-Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than device-local memory.  However we will eventually be updating the matrix every frame to apply a rotation animation so this approach is more logical.
+Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than device-local memory.  However we will eventually be updating the matrix every frame to apply a rotation animation, this approach is more logical than continually copying via a staging buffer.
 
 We add a second binding to the descriptor set layout for the uniform buffer:
 
@@ -280,7 +284,7 @@ And finally we initialise the uniform buffer resource in the `descriptors` bean:
 DescriptorSet.set(descriptors, uniformBinding, uniform.uniform());
 ```
 
-Note that for the moment we are using the same uniform buffer for all descriptor sets since we are not yet modifying the matrix between frames.
+Note that for the moment we are using the same uniform buffer for all descriptor sets since our render loop is essentially single threaded.
 
 To use the uniform buffer we add the following layout declaration to the vertex shader:
 
@@ -323,6 +327,16 @@ If all goes well we should still see the flat textured quad since the identity m
 
 ### View Transform
 
+We can now replace the identity matrix with a perspective projection:
+
+```java
+@Bean
+public static Matrix matrix(Swapchain swapchain) {
+    Matrix projection = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
+    ...
+}
+```
+
 Next we apply a _view transform_ to the demo representing the viewers position and orientation (i.e. the camera).
 
 First we add the following methods to the matrix builder to populate a row or column of the matrix:
@@ -359,19 +373,7 @@ public final class Vector extends Tuple {
 }
 ```
 
-We can now replace the identity matrix with a perspective projection:
-
-```java
-@Bean
-public static Matrix matrix(Swapchain swapchain) {
-    Matrix projection = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
-    ...
-}
-```
-
-Next we construct the view transform matrix which consists of translation and rotation components.
-
-The translation matrix moves the eye position (or camera) one unit out of the screen (or moves the scene one unit into the screen, whichever way you look at it):
+The view transform matrix which consists of translation and rotation components.  The translation moves the eye position (or camera) one unit out of the screen (or moves the scene one unit into the screen, whichever way you look at it):
 
 ```java
 Matrix trans = new Matrix.Builder()
@@ -390,7 +392,7 @@ Matrix rot = new Matrix.Builder()
     .build();
 ```
 
-Finally we compose the two view matrices to create the view transform which is then multiplied (see below) with the perspective projection:
+Finally we compose these two view matrices to create the view transform which is then multiplied (see below) with the perspective projection:
 
 ```java
 Matrix view = rot.multiply(trans);
@@ -399,7 +401,7 @@ return projection.multiply(view);
 
 Notes:
 
-* The Y axis is inverted for Vulkan.
+* The Y axis is inverted for Vulkan (points _down_ the screen).
 
 * The Z axis points _out_ from the screen.
 
@@ -433,7 +435,7 @@ public Matrix multiply(Matrix m) {
 }
 ```
 
-Each element of the resultant matrix is the _sum_ of its _row_ multiplied by the corresponding _column_ in the right-hand matrix.
+Each element of the resultant matrix is the _sum_ of a _row_ multiplied by the corresponding _column_ in the right-hand matrix.
 
 For example, given the following matrices:
 
@@ -446,13 +448,13 @@ The result for element [0, 0] is `a * c + b * d` (and similarly for the rest of 
 
 ### Integration #2
 
-To test the perspective projection we modify the vertex data to moved one edge of the quad into the screen by fiddling the Z coordinate of the right-hand vertex positions:
+To test the perspective projection we modify the vertex data to move one edge of the quad into the screen by fiddling the Z coordinate of the right-hand vertex positions:
 
 ```java
-new Point(-0.5f, +0.5f, 0)
 new Point(-0.5f, -0.5f, 0)
-new Point(+0.5f, +0.5f, -0.5f)
+new Point(-0.5f, +0.5f, 0)
 new Point(+0.5f, -0.5f, -0.5f)
+new Point(+0.5f, +0.5f, -0.5f)
 ```
 
 If the transformation code is correct we should now see the quad in 3D with the right-hand edge sloping away from the viewer like an open door:
@@ -626,7 +628,7 @@ public final class Quad {
 }
 ```
 
-Note that __both__ triangles have a counter clockwise winding order since the drawing primitive of the cube is `Primitive.TRIANGLES` (as opposed to a strip of triangles used up until now).
+Note that __both__ triangles have a counter clockwise winding order since the cube will be rendered using the triangle primitive (as opposed to a strip of triangles we have used up until now).
 
 The triangle indices are aggregated into a single concatenated array:
 
@@ -658,7 +660,7 @@ Point pos = VERTICES[index];
 Coordinate2D tc = Quad.COORDINATES.get(corner);
 ```
 
-From which we create a vertex which is added to the model:
+We compose these components into a vertex which is added to the model:
 
 ```java
 Vertex v = new Vertex.Builder()
@@ -668,7 +670,7 @@ Vertex v = new Vertex.Builder()
 builder.add(v);
 ```
 
-And finally we construct the cube model:
+And finally we construct the cube:
 
 ```java
 return builder.build();
@@ -676,7 +678,7 @@ return builder.build();
 
 ### Integration #3
 
-We replace the hard-coded quad vertices with a cube model:
+In the demo we replace the hard-coded quad vertices with a cube model:
 
 ```java
 public class VertexBufferConfiguration {
@@ -835,7 +837,17 @@ Huzzah!
 
 ## Summary
 
-In this chapter we implemented perspective projection to render a 3D rotating cube.
+In this chapter we rendered a 3D rotating textured cube.
+
+We implemented the following:
+
+* The matrix class
+
+* Perspective projection
+
+* Uniform buffers
+
+* Builders for a general model and cubes
 
 ---
 

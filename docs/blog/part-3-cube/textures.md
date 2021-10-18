@@ -312,6 +312,40 @@ Notes:
 
 * The purpose of the _mapping_ string is covered below.
 
+Later we will load the image data to the hardware as a `Bufferable` object - we add a new helper to wrap the byte-array of the image:
+
+```java
+static Bufferable of(byte[] bytes) {
+    return new Bufferable() {
+        @Override
+        public int length() {
+            return bytes.length;
+        }
+
+        @Override
+        public void buffer(ByteBuffer buffer) {
+            write(bytes, buffer);
+        }
+    };
+}
+```
+
+This delegates to another helper to write a byte-array to a buffer:
+
+```java
+static void write(byte[] bytes, ByteBuffer bb) {
+    if(bb.isDirect()) {
+        for(byte b : bytes) {
+            bb.put(b);
+        }
+    }
+    else {
+        bb.put(bytes);
+    }
+}
+```
+
+
 ### Image Loader
 
 The process of loading a texture image consists of the following steps:
@@ -320,9 +354,7 @@ The process of loading a texture image consists of the following steps:
 
 2. Add an alpha channel as required.
 
-3. Fiddle the colour channels as necessary (native images are BGR whereas Vulkan is generally RGBA).
-
-4. Wrap the resultant image with the new domain class.
+3. Wrap the resultant image with the new domain class.
 
 Loading the native image is straight-forward:
 
@@ -341,7 +373,7 @@ BufferedImage result = switch(image.getType()) {
     case BufferedImage.TYPE_BYTE_GRAY -> image;
     case BufferedImage.TYPE_3BYTE_BGR, BufferedImage.TYPE_BYTE_INDEXED -> alpha(image);
     case BufferedImage.TYPE_4BYTE_ABGR -> image;
-    default -> throw new RuntimeException("Unsupported image format: " + image);
+    default -> throw new RuntimeException(...);
 };
 ```
 
@@ -410,8 +442,8 @@ This loader is somewhat crude and brute-force, but it does the business for the 
     "heightmap.jpg, 10",
 })
 void map(String filename, int type) throws IOException {
-    final Path path = Paths.get("./src/test/resources", filename);
-    final BufferedImage image = loader.map(Files.newInputStream(path));
+    Path path = Paths.get("./src/test/resources", filename);
+    BufferedImage image = loader.map(Files.newInputStream(path));
     assertEquals(type, image.getType());
     assertNotNull(loader.load(image));
 }

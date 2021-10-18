@@ -46,6 +46,8 @@ Each chapter generally consists of:
 
 * A walk-through of the design and development of new or refactored software components to deliver that functionality, including any challenges or problems that arose.
 
+* One or more _integration_ steps where we use the new functionality to extend the demo applications.
+
 * A retrospective of any identified improvements and enhancements that lead to refactoring of existing code.
 
 Development of JOVE will be inherently complex with Vulkan requiring many inter-dependant components.  To adhere to the minimal functionality principle we will often develop temporary or skeleton implementations that are refactored later on.  For example, the graphics pipeline _requires_ a pipeline layout object (which has no relevance for the early demos), initially the implementation is an empty skeleton sufficient to progress the project.
@@ -69,6 +71,8 @@ To attempt to achieve these goals our approach and principles are as follows:
 * Implement the minimal functionality (or MVP) to deliver the next objective of the project.
 
 * Aggressive refactoring of existing code where we find we have made questionable design decisions or poorly implemented functionality.
+
+* Comprehensive argument validation to identify invalid or illogical usage of the software components.
 
 * High test coverage with unit-tests developed _test-first_ or _test-in-parallel_ with the source code.
 
@@ -110,7 +114,11 @@ The following are silently omitted unless their inclusion better illustrates the
 
 * Trivial equals, hash-code and `toString` implementations
 
+* Exception error messages.
+
 * Unit-tests
+
+* Package structure.
 
 ---
 

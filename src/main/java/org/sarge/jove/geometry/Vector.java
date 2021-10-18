@@ -129,7 +129,7 @@ public final class Vector extends Tuple {
 	/**
 	 * Calculates the <i>cross product</i> of this and the given vector.
 	 * <p>
-	 * The cross product is a vector perpendicular to two given vectors (and thus a normal to the plane containing them).
+	 * The cross product is the vector perpendicular to this and the given vector (and thus a normal to the plane containing both).
 	 * <p>
 	 * Mathematically the cross product is calculated as follows:
 	 * <p>

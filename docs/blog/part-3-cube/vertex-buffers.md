@@ -224,7 +224,7 @@ public static class Builder {
     private Colour col;
 
     public Vertex build() {
-        final var components = Stream
+        var components = Stream
             .of(pos, normal, coord, col)
             .filter(Objects::nonNull)
             .collect(toList());
@@ -258,7 +258,7 @@ The buffer is bound to a pipeline using the following command factory:
 ```java
 public Command bind() {
     require(VkBufferUsage.VERTEX_BUFFER);
-    final VulkanBuffer[] array = new VulkanBuffer[]{this};
+    VulkanBuffer[] array = new VulkanBuffer[]{this};
     return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
 }
 ```
@@ -275,7 +275,7 @@ public Command copy(VulkanBuffer dest) {
     dest.require(VkBufferUsage.TRANSFER_DST);
 
     // Build copy descriptor
-    final VkBufferCopy region = new VkBufferCopy();
+    VkBufferCopy region = new VkBufferCopy();
     region.size = len;
 
     // Create copy command
@@ -311,14 +311,14 @@ Instantiating the buffer follows the usual pattern of populating a descriptor an
 ```java
 public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsage> props) {
     // Build buffer descriptor
-    final var info = new VkBufferCreateInfo();
+    var info = new VkBufferCreateInfo();
     info.usage = IntegerEnumeration.mask(props.usage());
     info.sharingMode = props.mode();
     info.size = oneOrMore(len);
 
     // Allocate buffer
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference handle = lib.factory().pointer();
+    VulkanLibrary lib = dev.library();
+    PointerByReference handle = lib.factory().pointer();
     check(lib.vkCreateBuffer(dev, info, null, handle));
     
     ...
@@ -328,14 +328,14 @@ public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator
 Next we retrieve the memory requirements for the vertex buffer:
 
 ```java
-final var reqs = new VkMemoryRequirements();
+var reqs = new VkMemoryRequirements();
 lib.vkGetBufferMemoryRequirements(dev, handle.getValue(), reqs);
 ```
 
 Which are passed to the allocation service with the specified memory properties:
 
 ```java
-final DeviceMemory mem = allocator.allocate(reqs, props);
+DeviceMemory mem = allocator.allocate(reqs, props);
 ```
 
 The allocated memory is then bound to the buffer:
@@ -347,7 +347,6 @@ check(lib.vkBindBufferMemory(dev, handle.getValue(), mem, 0L));
 And finally we create the vertex buffer domain object:
 
 ```java
-// Create buffer
 return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem, len);
 ```
 
@@ -404,7 +403,7 @@ The descriptor for the vertex configuration is generated as follows:
 ```java
 VkPipelineVertexInputStateCreateInfo get() {
     // Create descriptor
-    final var info = new VkPipelineVertexInputStateCreateInfo();
+    var info = new VkPipelineVertexInputStateCreateInfo();
 
     // Add binding descriptions
     info.vertexBindingDescriptionCount = bindings.size();
@@ -540,7 +539,7 @@ The memory properties define a buffer that is used as the source of a copy opera
 ```java
 public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
     // Init memory properties
-    final var props = new MemoryProperties.Builder<VkBufferUsage>()
+    var props = new MemoryProperties.Builder<VkBufferUsage>()
         .usage(VkBufferUsage.TRANSFER_SRC)
         .required(VkMemoryProperty.HOST_VISIBLE)
         .required(VkMemoryProperty.HOST_COHERENT)
@@ -553,16 +552,14 @@ public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
 Next we create the staging VBO:
 
 ```java
-// Create staging buffer
-final int len = data.length();
-final VulkanBuffer buffer = create(dev, len, props);
+int len = data.length();
+VulkanBuffer buffer = create(dev, len, props);
 ```
 
 And write the buffered triangle data:
 
 ```java
-// Write data to buffer
-final ByteBuffer bb = buffer.memory().map().buffer();
+ByteBuffer bb = buffer.memory().map().buffer();
 data.buffer(bb);
 ```
 
@@ -630,14 +627,14 @@ Which delegates to another factory that creates and submits a _one-time_ command
 ```java
 public static Buffer submit(Command cmd, Pool pool) {
     // Allocate and record one-time command
-    final Buffer buffer = pool
+    Buffer buffer = pool
         .allocate()
         .begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
         .add(cmd)
         .end();
 
     // Submit work
-    final Work work = Work.of(buffer);
+    Work work = Work.of(buffer);
     work.submit(null);
 
     return buffer;
