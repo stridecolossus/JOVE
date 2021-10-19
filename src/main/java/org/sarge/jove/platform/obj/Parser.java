@@ -1,13 +1,13 @@
 package org.sarge.jove.platform.obj;
 
 /**
- * A <i>parser</i> handles an OBJ command line.
+ * A <i>parser</i> handles an OBJ command.
  * @author Sarge
  */
 public interface Parser {
 	/**
-	 * Parses the given arguments.
-	 * @param args 		Arguments
+	 * Parses the given command.
+	 * @param args 		Arguments (including the command token)
 	 * @param model		OBJ model
 	 * @throws NumberFormatException if the data cannot be parsed
 	 */
@@ -25,13 +25,17 @@ public interface Parser {
 	 * @see ObjectModel#start()
 	 */
 	Parser GROUP = (args, model) -> {
-		// TODO - models indexed by name, return map on build
+		// TODO - object names
 		// Start new object
 		model.start();
-
-//		// Init object name
-//		if(args.length > 0) {
-//			model.name(args[0].trim());
-//		}
 	};
+
+	/**
+	 * Helper - Trims the given array of strings.
+	 */
+	static void trim(String[] array) {
+		for(int n = 0; n < array.length; ++n) {
+			array[n] = array[n].trim();
+		}
+	}
 }

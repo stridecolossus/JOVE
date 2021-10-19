@@ -22,7 +22,6 @@ import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Vertex;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.DefaultModel.Builder;
-import org.sarge.jove.model.DefaultModel.IndexedBuilder;
 import org.sarge.jove.model.Model.Header;
 
 class DefaultModelTest {
@@ -127,53 +126,6 @@ class DefaultModelTest {
 			assertEquals(new Header(List.of(), Primitive.TRIANGLE_STRIP, 0, false), model.header());
 			assertNotNull(model.vertices());
 			assertEquals(Optional.empty(), model.index());
-		}
-	}
-
-	@Nested
-	class IndexedBuilderTests {
-		private IndexedBuilder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new IndexedBuilder();
-		}
-
-		@Test
-		void build() {
-			// Build an indexed model that re-uses some vertices
-			final Vertex other = Vertex.of(new Point(1, 2, 3));
-			final DefaultModel model = builder
-					.add(vertex)
-					.add(other)
-					.add(vertex)
-					.build();
-
-			// Verify the indexed model
-			assertNotNull(model);
-			assertEquals(true, model.isIndexed());
-			assertNotNull(model.vertices());
-			assertNotNull(model.index());
-			assertEquals(true, model.index().isPresent());
-
-			// Check model header
-			final Header header = model.header();
-			assertNotNull(header);
-			assertEquals(3, header.count());
-
-			// Check index
-			final Bufferable index = model.index().get();
-			assertNotNull(index);
-			assertEquals(3 * Integer.BYTES, index.length());
-		}
-
-		@Test
-		void buildEmpty() {
-			final DefaultModel model = builder.build();
-			assertNotNull(model);
-			assertEquals(0, model.header().count());
-			assertNotNull(model.vertices());
-			assertNotNull(model.index());
 		}
 	}
 }

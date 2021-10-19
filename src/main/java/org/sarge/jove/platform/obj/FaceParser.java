@@ -30,27 +30,24 @@ package org.sarge.jove.platform.obj;
  *  f 1/2/3		// Vertex, coordinate and normal
  *  f 1//3		// Vertex and normal
  * </pre>
- * @see ObjectModel#vertex(Integer[])
+ * @see ObjectModel#position(Integer[])
  * @author Sarge
  */
 public class FaceParser implements Parser {
 	@Override
 	public void parse(String[] args, ObjectModel model) {
 		// Validate face
-		if(args.length != 3) {
+		if(args.length != 4) {
 			throw new IllegalArgumentException("Expected triangle face");
 		}
 
 		// Parse vertices for this face
-		for(String face : args) {
+		for(int n = 0; n < 3; ++n) {
 			// Tokenize face
-			final String[] parts = face.trim().split("/");
+			final String face = args[n + 1];
+			final String[] parts = face.split("/");
+			Parser.trim(parts);
 			if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
-
-			// Clean values
-			for(int n = 0; n < parts.length; ++n) {
-				parts[n] = parts[n].trim();
-			}
 
 			// Parse mandatory vertex position
 			final int v = Integer.parseInt(parts[0]);

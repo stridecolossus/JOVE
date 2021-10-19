@@ -2,11 +2,13 @@ package org.sarge.jove.platform.obj;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.sarge.jove.util.TestHelper.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -79,14 +81,16 @@ public class ObjectModelLoaderTest {
 	}
 
 	@Test
-	void loadUnknownCommand() {
-		assertThrows(IOException.class, "Unsupported OBJ command", () -> loader.load(new StringReader("cobblers")));
+	void loadUnknownCommand() throws IOException {
+		loader.load(new StringReader("cobblers"));
 	}
 
 	@Test
-	void loadIgnoreUnknownCommand() throws IOException {
-		loader.setUnknownCommandHandler(ObjectModelLoader.HANDLER_IGNORE);
+	void setUnknownCommandHandler() throws IOException {
+		final Consumer<String> handler = mock(Consumer.class);
+		loader.setUnknownCommandHandler(handler);
 		loader.load(new StringReader("cobblers"));
+		verify(handler).accept("cobblers");
 	}
 
 	@Test

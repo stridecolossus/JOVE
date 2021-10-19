@@ -20,38 +20,38 @@ public class FaceParserTest {
 
 	@Test
 	void parsePosition() {
-		parser.parse(new String[]{"1", "1", "1"}, model);
+		parser.parse(new String[]{"f", "1", "1", "1"}, model);
 		verify(model, times(3)).vertex(1, null, null);
 	}
 
 	@Test
 	void parsePositionTexture() {
-		parser.parse(new String[]{"1/1", "1/1", "1/1"}, model);
+		parser.parse(new String[]{"f", "1/1", "1/1", "1/1"}, model);
 		verify(model, times(3)).vertex(1, null, 1);
 	}
 
 	@Test
 	void parsePositionTextureNormal() {
-		parser.parse(new String[]{"1/1/1", "1/1/1", "1/1/1"}, model);
+		parser.parse(new String[]{"f", "1/1/1", "1/1/1", "1/1/1"}, model);
 		verify(model, times(3)).vertex(1, 1, 1);
 	}
 
 	@Test
 	void parsePositionNormal() {
-		parser.parse(new String[]{"1//1", "1//1", "1//1"}, model);
+		parser.parse(new String[]{"f", "1//1", "1//1", "1//1"}, model);
 		verify(model, times(3)).vertex(1, 1, null);
 	}
 
 	@Test
 	void parseInvalidFaceLength() {
 		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1"}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1", "2", "3", "4"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"f"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"f", "1", "2", "3", "4"}, model));
 	}
 
 	@Test
 	void parseInvalidFaceComponents() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"", "1", "1"}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1/2/3/4", "1", "1"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"f", "", "1", "1"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"f", "1/2/3/4", "1", "1"}, model));
 	}
 }

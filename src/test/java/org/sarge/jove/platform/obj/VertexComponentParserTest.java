@@ -25,13 +25,14 @@ public class VertexComponentParserTest {
 
 	@Test
 	void parse() {
-		parser.parse(new String[]{"1", "2", "3"}, model);
+		parser.parse(new String[]{"command", "1", "2", "3"}, model);
 		verify(consumer).accept(model, new Point(1, 2, 3));
 	}
 
 	@Test
 	void parseInvalidArrayLength() {
 		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"1", "2", "3", "4"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"command"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"command", "2", "3", "4", "5"}, model));
 	}
 }

@@ -4,7 +4,9 @@ title: Model Loader
 
 ## Overview
 
-In this chapter we will create a loader for an OBJ model and implement vertex de-duplication.
+In this chapter we will create an OBJ loader to construct a JOVE representation of the chalet model used in the tutorial.
+
+We will then implement some improvements to reduce the memory footprint of the resultant model and loading times.
 
 ---
 
@@ -12,7 +14,7 @@ In this chapter we will create a loader for an OBJ model and implement vertex de
 
 ### File Format
 
-An OBJ model is a text-based data format consisting of a series of _commands_ that define a static model, each line starts with a _command token_ followed by a number of space-delimited arguments.
+An OBJ model is specified by a text-based data format consisting of a series of _commands_ that define a static model.  Each line starts with a _command token_ followed by a number of space-delimited arguments.
 
 The most common commands are:
 
@@ -26,14 +28,14 @@ The most common commands are:
 | g             | name          | polygon group         | g body            |
 | s             | flag          | smoothing group       | s 1               |
 
-The _face_ command specifies the vertices of a polygon as a tuple of indices delimited by the slash character.  Each vertex consists of a position index and optional normal and texture coordinate indices:
+The _face_ command specifies the vertices of a polygon as a tuple of indices delimited by the slash character with an optional normal and texture coordinate:
 
-| example                   | description                               |
-| -------                   | -----------                               |
-| f 1 2 3                   | triangle with vertex positions only       |
-| f 1/2 3/4 5/6             | triangle also with texture coordinates    |
-| f 1/2/3 4/5/6 7/8/9       | also with normals                         |
-| f 1//2 3//4 5//6          | normals but no texture coordinates        |
+| example                   | position | texture | normal |
+| -------                   | -------- | ------- | ------ |
+| f 1 2 3                   | yes      | no      | no     |
+| f 1/2 3/4 5/6             | yes      | yes     | no     |
+| f 1/2/3 4/5/6 7/8/9       | yes      | yes     | yes    |
+| f 1//2 3//4 5//6          | yes      | no      | yes    |
 
 Example for a simple triangle with texture coordinates:
 
@@ -49,27 +51,29 @@ g group
 f 1/1 2/2 3/3
 ```
 
-We will implement the minimal functionality required for our test models with the following assumptions and constraints on the scope of the loader:
+We will implement the minimal functionality required for the chalet model with the following assumptions and constraints on the scope of the loader:
 
 * Face primitives are assumed to be triangles.
 
-* Only the above commands will be supported.
+* Only the above commands will be supported, others are silently ignored.
 
-* The OBJ format specifies material descriptors that specify texture properties (amongst other features) however we will hard-code the texture image.
+* The OBJ format specifies material descriptors that specify texture properties (amongst other features) however we will hard-code the texture image in the demo.
 
 ### Vertex Data
 
-Loading an OBJ model consists of two main steps:
+Loading an OBJ model consists of the following steps:
 
 1. Load the vertex data (positions, normals, texture coordinates).
 
-2. Load the faces that index into this data to build the resultant object.
+2. Load the faces that index into this data to generate the model vertices.
 
-We first implement an intermediate data structure to hold the parsed data:
+3. Build the resultant JOVE model.
+
+We first implement an intermediate data structure to hold the vertex data:
 
 ```java
 public class ObjectModel {
-    private final List<Point> vertices = new VertexComponentList<>();
+    private final List<Point> positions = new VertexComponentList<>();
     private final List<Vector> normals = new VertexComponentList<>();
     private final List<Coordinate2D> coords = new VertexComponentList<>();
 }
@@ -95,11 +99,46 @@ class VertexComponentList<T> extends ArrayList<T> {
 }
 ```
 
+We also add trivial package-private mutators to add the various vertex components to the model:
 
+```java
+void position(Point v) {
+    positions.add(v);
+}
+```
+
+Although not required for the chalet model the OBJ format supports multiple object _groups_ corresponding to one-or-more JOVE models:
+
+```java
+public class ObjectModel {
+    ...
+    private final List<Builder> builders = new ArrayList<>();
+    private Builder current;
+}
+```
+
+We add a local helper to start a new group:
+
+```java
+private void add() {
+    current = new Model.Builder();
+    current.primitive(Primitive.TRIANGLES);
+    current.clockwise(true);
+    builders.add(current);
+}
+```
+
+Which is invoked in the constructor to initialise the first group:
+
+```java
+public ObjectModel() {
+    add();
+}
+```
 
 ### Model Loader
 
-We can now parse the OBJ file and construct the model as follows:
+We can now parse the OBJ file as follows:
 
 1. Create an instance of the above transient model.
 
@@ -107,334 +146,264 @@ We can now parse the OBJ file and construct the model as follows:
 
 3. Parse each command line and update the model accordingly.
 
-4. Generate the resultant JOVE model.
+4. Generate the resultant JOVE model(s).
 
-
-
-
-
-
-
-We create a loader that parses each line of the model:
-
-```java
-public class ObjectModelLoader {
-}
-```
-
-The `isComment` method checks for lines that start with a configured comment token:
+We start with the following class outline:
 
 ```java
 public class ObjectModelLoader {
     private Set<String> comments = Set.of("#");
-
-    private boolean isComment(String line) {
-        return comments.stream().anyMatch(line::startsWith);
-    }
-
-    public void setCommentTokens(Set<String> comments) {
-        this.comments = Set.copyOf(comments);
-    }
-}
-```
-
-The `parse` method first separates the command token from the arguments and then delegates to a `Parser` for that command:
-
-```java
-private void parse(String line, ObjectModel model) {
-    // Tokenize line
-    final String[] parts = StringUtils.split(line, null, 2);
-
-    // Lookup command parser
-    final Parser parser = parsers.get(parts[0]);
-    if(parser == null) ...
-
-    // Delegate
-    final String[] args = StringUtils.split(parts[1]);
-    parser.parse(args, model);
-}
-```
-
-A `Parser` is defined as follows:
-
-```java
-public interface Parser {
-    /**
-     * Parses the given arguments.
-     * @param args         Arguments
-     * @param model        OBJ model
-     * @throws NumberFormatException is the data cannot be parsed
-     */
-    void parse(String[] args, ObjectModel model);
-
-    /**
-     * Parser that ignores a command.
-     */
-    Parser IGNORE = (args, model) -> {
-        // Does nowt
-    };
-}
-```
-
-Each parser is registered with the loader indexed by the OBJ command token:
-
-```java
-public class ObjectModelLoader {
     private final Map<String, Parser> parsers = new HashMap<>();
-
-    public void add(String token, Parser parser) {
-        parsers.put(token, parser);
-    }
+    private final ObjectModel model = new ObjectModel();
 }
 ```
 
-### Error Handling
-
-The OBJ format is quite vague and models are notoriously flakey so our loader needs to be robust but not overly stringent.
-
-We add a callback handler with implementations to either ignore unknown commands or throw an exception depending on the application:
+The loader applies the above logic and delegates to a local helper method to parse a line:
 
 ```java
-public static final Consumer<String> HANDLER_IGNORE = str -> {
-};
+public Stream<Model> load(Reader r) throws IOException {
+    // Parse OBJ model
+    try(LineNumberReader in = new LineNumberReader(r)) {
+        try {
+            in.lines()
+                .map(String::trim)
+                .filter(Predicate.not(String::isBlank))
+                .filter(Predicate.not(this::isComment))
+                .forEach(this::parse);
+        }
+        catch(Exception e) {
+            throw new IOException(...);
+        }
+    }
 
-public static final Consumer<String> HANDLER_THROW = str -> {
-    throw new IllegalArgumentException("Unsupported OBJ command: " + str);
-};
-
-private Consumer<String> handler = HANDLER_THROW;
-
-public void setUnknownCommandHandler(Consumer<String> handler) {
-    this.handler = notNull(handler);
+    // Construct models
+    return model.build();
 }
+```
 
-private void parse(String line, ObjectModel model) {
-    ...
+The `isComment` method checks for lines that start with a comment token:
+
+```java
+private boolean isComment(String line) {
+    return comments.stream().anyMatch(line::startsWith);
+}
+```
+
+In the parse method we first tokenize the line and then delegate to a _parser_ for the command:
+
+```java
+private void parse(String line) {
+    // Tokenize line
+    String[] parts = StringUtils.split(line);
+    Parser.trim(parts);
+
+    // Lookup parser
+    Parser parser = parsers.get(parts[0]);
     if(parser == null) {
         handler.accept(line);
         return;
     }
-    ...
+    
+    // Delegate
+    parser.parse(parts, model);
 }
 ```
 
-In addition the application can specify the `IGNORE` parser for a given command.
+A parser is defined as follows:
+
+```java
+public interface Parser {
+    /**
+     * Parses the given command.
+     * @param args         Arguments (including the command token)
+     * @param model        OBJ model
+     * @throws NumberFormatException is the data cannot be parsed
+     */
+    void parse(String[] args, ObjectModel model);
+}
+```
+
+An unsupported command is delegated to an error handler which is a simple line consumer:
+
+```java
+private Consumer<String> handler = line -> { /* Ignored */ };
+```
+
+Normally we would throw an exception for an unknown command but it seems more prudent to ignore by default (given the nature of OBJ files).
+
+We also provide the following:
+
+* An `add` method to register a command parser.
+
+* A setter to override the error handler as required.
+
+* The `IGNORE` parser which can be used to explicitly ignore commands.
+
+* The `trim` helper to the parser interface to clean a tokenized array of strings.
 
 ### Vertex Components
 
-The process for parsing the various vertex components each follows the same pattern:
-1. Parse the line to a floating-point array (checking that the number of array elements matches the expected length).
-2. Construct the relevant domain object given this array.
-3. Add the result to the relevant list in the OBJ model.
+We note that the process of parsing the various vertex components (v, vn, vt) is the same in all cases:
 
-We abstract this pattern into the following generic parser:
+1. Parse the command arguments to a floating-point array.
+
+2. Construct the relevant domain object from this array.
+
+3. Add the resultant object to the model.
+
+We first implement an _array constructor_ on all the relevant vertex components, for example both points and vectors delegate to the following tuple constructor:
 
 ```java
-public class ArrayParser<T> implements Parser {
+protected Tuple(float[] array) {
+    if(array.length != SIZE) throw new IllegalArgumentException(...);
+    x = array[0];
+    y = array[1];
+    z = array[2];
+}
+```
+
+Next we abstract the common pattern by implementing a new generic parser:
+
+```java
+class VertexComponentParser<T extends Vertex.Component> implements Parser {
     private final float[] array;
     private final Function<float[], T> ctor;
-    private final Function<ObjectModel, List<T>> mapper;
-
-    public ArrayParser(int size, Function<float[], T> ctor, Function<ObjectModel, List<T>> mapper) {
-        this.array = new float[size];
-        this.ctor = notNull(ctor);
-        this.mapper = notNull(mapper);
-    }
-
-    @Override
-    public void parse(String[] args, ObjectModel model) {
-    }
+    private final BiConsumer<ObjectModel, T> consumer;
 }
 ```
 
-Where _ctor_ maps an array to the domain object constructor and _mapper_ retrieves the list for that type of component.
+Where:
 
-The `parse` method first validates the data and then parses the array elements:
+* _T_ is the component type.
+
+* _ctor_ is a method reference to the _array constructor_ for a given type of component.
+
+* _consumer_ is a reference to a setter method of the model for that vertex component.
+
+To continue the example, we can specify the parser for a vertex position as follows:
 
 ```java
-// Validate
-if(args.length != size) {
-    throw new IllegalArgumentException(...);
-}
-
-// Convert to array
-for(int n = 0; n < size; ++n) {
-    array[n] = Float.parseFloat(args[n].trim());
-}
+new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::position);
 ```
 
-Next we construct the domain object given the parsed array and add it to the model:
+The parse method follows the steps outlined above:
 
 ```java
-final T value = ctor.apply(array);
-mapper.apply(model).add(value);
-```
-
-We add array constructors to the appropriate domain objects, for example:
-
-```java
-public class Coordinate2D {
-    public Coordinate2D(float[] array) {
-        this(array[0], array[1]);
+public void parse(String[] args, ObjectModel model) {
+    // Convert to array
+    for(int n = 0; n < array.length; ++n) {
+        array[n] = Float.parseFloat(args[n + 1]);
     }
+
+    // Create object using array constructor
+    T value = ctor.apply(array);
+
+    // Add to model
+    consumer.accept(model, value);
 }
 ```
 
-Finally we register a parser for each vertex component:
+Finally we register built-in parsers for the supported vertex components:
 
 ```java
 public ObjectModelLoader() {
-    init();
-}
-
-private void init() {
-    add("v", new ArrayParser<>(Point.SIZE, Point::new, ObjectModel::vertices));
-    add("vn", new ArrayParser<>(Vector.SIZE, Vector::new, ObjectModel::normals));
-    add("vt", new ArrayParser<>(Coordinate2D.SIZE, Coordinate2D::new, ObjectModel::coordinates));
-    ...
+    add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::position));
+    add("vt", new VertexComponentParser<>(2, Coordinate2D::new, ObjectModel::coordinate));
+    add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normal));
 }
 ```
 
 ### Face Parser
 
-The face parser iterates over the vertices of a face (we assume each face is a triangle):
+The parser for the face command (f) iterates over the face vertices (which we assume to be a triangle):
 
 ```java
-public class FaceParser implements Parser {
-    @Override
-    public void parse(String[] args, ObjectModel model) {
-        // Validate face
-        if(args.length != 3) {
-            throw new IllegalArgumentException("Expected triangle face");
-        }
-
-        // Parse vertices for this face
-        for(String face : args) {
-            ...
-        }
+public void parse(String[] args, ObjectModel model) {
+    for(int n = 0; n < 3; ++n) {
+        // Tokenize face
+        String face = args[n + 1];
+        ...
     }
 }
 ```
 
-Each vertex is comprised of a slash-delimited array that specifies the components of the vertex:
+Each vertex is a slash-delimited tuple of indices into the vertex data:
 
 ```java
-// Tokenize face
-final String[] parts = face.trim().split("/");
-if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
-
-// Clean
-for(int n = 0; n < parts.length; ++n) {
-    parts[n] = parts[n].trim();
-}
+String[] parts = face.split("/");
+Parser.trim(parts);
+if(parts.length > 3) throw new IllegalArgumentException(...);
 ```
 
-Which are then parsed to integer indices (only the vertex position is mandatory) and added to the model:
+The vertex position is mandatory:
 
 ```java
-// Parse mandatory vertex position index
-final int v = Integer.parseInt(parts[0]);
+int v = Integer.parseInt(parts[0]);
+```
 
-// Parse optional normal index
-final Integer n = parts.length == 3 ? Integer.parseInt(parts[2]) : null;
+The middle component of the tuple is an optional texture coordinate:
 
-// Parse optional texture coordinate index
-final Integer tc;
+```java
+Integer vt = null;
 if((parts.length > 1) && !parts[1].isEmpty()) {
-    tc = Integer.parseInt(parts[1]);
+    vt = Integer.parseInt(parts[1]);
 }
-else {
-    tc = null;
-}
-
-// Add vertex
-model.vertex(v, n, tc);
 ```
 
-The `vertex` method looks up the components and constructs a `Vertex` which is added to the builder for the current group (covered in the following section):
+And the last component is the optional normal:
 
 ```java
-public void vertex(int v, Integer n, Integer tc) {
-    // Build vertex
+Integer vn = null;
+if(parts.length == 3) {
+    vn = Integer.parseInt(parts[2]);
+}
+```
+
+Finally we delegate to a new mutator on the model to add a vertex given the three parsed indices:
+
+```java
+public void vertex(int v, Integer vn, Integer vt) {
+    // Add vertex position
     final var vertex = new Vertex.Builder();
-    vertex.position(vertices.get(v));
+    vertex.position(positions.get(v));
 
     // Add optional normal
-    if(n != null) {
-        vertex.normal(normals.get(n));
+    if(vn != null) {
+        vertex.normal(normals.get(vn));
     }
 
     // Add optional texture coordinate
-    if(tc != null) {
-        vertex.coords(coords.get(tc));
+    if(vt != null) {
+        vertex.coordinate(coords.get(vt));
     }
 
-    // Add to model
-    final Model.Builder builder = current();
-    builder.add(vertex.build());
+    // Add vertex
+    current.add(vertex.build());
 }
 ```
 
-Finally we register the default face parser in the main loader class:
+### Conclusion
+
+To complete the loader we register the following command parsers:
 
 ```java
-private void init() {
-    ...
-    add("f", new FaceParser());
-}
+add("f", new FaceParser());
+add("o", Parser.GROUP);
+add("g", Parser.GROUP);
+add("s", Parser.IGNORE);
 ```
 
-### Groups
-
-A single OBJ file can be comprised of multiple _objects_ which results in a list of JOVE models.
-
-The transient OBJ model maintains a list of builders for each object and initialises the first in the constructor:
-
-```java
-public class ObjectModel {
-    private final Deque<Model.Builder> builders = new LinkedList<>();
-
-    public ObjectModel() {
-        add();
-    }
-
-    /**
-     * Adds a new model for the next group.
-     */
-    private void add() {
-        final Model.Builder next = new Model.Builder();
-        next.primitive(Primitive.TRIANGLES);
-        builders.add(next);
-    }
-}
-```
-
-A new object is started by the following command:
-
-```java
-public interface Parser {
-    /**
-     * Parser for a new object command (either {@code o} or {@code g}).
-     * @see ObjectModel#start()
-     */
-    Parser GROUP = (args, model) -> model.start();
-}
-```
-
-Which delegates to the `start` method:
+The `GROUP` command parser delegates to the following method on the model to start a new object group:
 
 ```java
 public void start() {
     // Ignore if the current group is empty
-    if(isEmpty()) {
+    if(positions.isEmpty()) {
         return;
     }
 
-    // Initialise the vertex layout for the previous model
-    init();
-    
     // Reset transient model
-    vertices.clear();
+    positions.clear();
     normals.clear();
     coords.clear();
 
@@ -443,370 +412,422 @@ public void start() {
 }
 ```
 
-The `init` method initialises the vertex layout of the _previous_ model builder:
+Notes that some OBJ files start with a group declaration, so we ignore the case where no vertex data has been added to the current group.
 
-```java
-private void init() {
-    // Determine vertex layout for the current object group
-    final var layout = new ArrayList<Vertex.Component>();
-    layout.add(Vertex.Component.POSITION);
-    if(!normals.isEmpty()) {
-        layout.add(Vertex.Component.NORMAL);
-    }
-    if(!coords.isEmpty()) {
-        layout.add(Vertex.Component.TEXTURE_COORDINATE);
-    }
-
-    // Initialise current model
-    final Model.Builder builder = current();
-    builder.layout(new Vertex.Layout(layout));
-}
-```
-
-The resultant model(s) are constructed in the `build` method:
+Finally we add a method to the model class to generate the resultant JOVE model(s):
 
 ```java
 public Stream<Model> build() {
-    if(isEmpty()) throw new IllegalStateException("Model is empty");
-    init();
-    return builders.stream().map(Model.Builder::build);
-}
-```
-
-Note that we also invoke `init` here to initialise the vertex layout of the last model before construction.
-
-Finally we register parsers for the relevant object and group commands:
-
-```java
-private void init() {
-    ...
-    add("o", Parser.GROUP);
-    add("g", Parser.GROUP);
-    add("s", Parser.IGNORE);
+    return builders.stream().map(Builder::build);
 }
 ```
 
 ---
 
-## Vertex Duplication
+## Improvements
 
 ### Indexed Builder
 
-We know that the OBJ model that we will be using in our demo contains a large number of duplicate vertices which we have ignored until now.
-The obvious next step is remove the duplicates and introduce an *index buffer* to the model building process.
-This will reduce the total amount of data in the vertex buffer (at the expense of a second buffer for the index).
+From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to introduce an _index buffer_ to the model to reduce the total amount of data (at the expense of a second buffer for the index itself).
 
-We implement the following model builder sub-class that maintains a map of the vertex indices so we can test for duplicates:
+We first add an optional index buffer to the model definition:
 
 ```java
-public static class IndexedBuilder extends Builder {
-    private final List<Integer> index = new ArrayList<>();
-    private final Map<Vertex, Integer> map = new HashMap<>();
+public interface Model {
+    ...
+    
+    /**
+     * @return Whether this is an indexed model
+     */
+    boolean isIndexed();
+
+    /**
+     * @return Index buffer
+     */
+    Optional<Bufferable> index();
 }
 ```
 
-The over-ridden `add` method intercepts duplicates and stores the index of new vertices:
+In the default model implementation the index is a simple integer array:
 
 ```java
-public IndexedBuilder add(Vertex vertex) {
-    // Lookup existing vertex index
-    final Integer prev = map.get(vertex);
+public class DefaultModel extends AbstractModel {
+    private final List<Vertex> vertices;
+    private final int[] index;
 
-    if(prev == null) {
-        // Add new vertex
-        final int idx = count();
-        map.put(vertex, idx);
-        index.add(idx);
-        super.add(vertex);
+    @Override
+    public boolean isIndexed() {
+        return index != null;
     }
-    else {
-        // Add existing vertex
-        index.add(prev);
-    }
-
-    return this;
 }
 ```
 
-We can now add an optional index to the model class:
+The bufferable object for the index is generated as follows:
 
 ```java
-private final List<Integer> index;
-private ByteBuffer indexBuffer;
-
-...
-
-@Override
-public Optional<ByteBuffer> index() {
-    // Check whether indexed
+public Optional<Bufferable> index() {
     if(index == null) {
         return Optional.empty();
     }
 
-    // Build IBO
-    if(indexBuffer == null) {
-        final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
-        indexBuffer = Bufferable.allocate(array.length * Integer.BYTES);
-        indexBuffer.asIntBuffer().put(array);
-    }
+    final Bufferable buffer = new Bufferable() {
+        private final int len = index.length * Integer.BYTES;
+        
+        @Override
+        public int length() {
+            return len;
+        }
 
-    // Prepare index
-    return Optional.of(indexBuffer.rewind());
+        @Override
+        public void buffer(ByteBuffer bb) {
+            ...
+        }
+    };
+    return Optional.of(buffer);
 }
 ```
 
-And implement the command to bind the index buffer on the `VulkanBuffer` class:
+The target byte-buffer is transformed to an `IntBuffer` which is more convenient in this case:
+
+```java
+public void buffer(ByteBuffer bb) {
+    IntBuffer buffer = bb.asIntBuffer();
+    if(buffer.isDirect()) {
+        for(int n : index) {
+            buffer.put(n);
+        }
+    }
+    else {
+        buffer.put(index);
+    }
+}
+```
+
+Next we implement a new model builder sub-class that maintains the mapping of vertices to indices:
+
+```java
+public class IndexedBuilder extends Builder {
+    private final Map<Vertex, Integer> map = new HashMap<>();
+    private final List<Integer> index = new ArrayList<>();
+}
+```
+
+The de-duplication process for a given vertex is:
+
+1. Lookup the index of the vertex (if present).
+
+2. If the vertex already exists in the model add its index to the index buffer.
+
+3. Otherwise add the vertex (__and__ its allocated index) to the model and add a new entry to the mapping.
+
+This is implemented in the overloaded `add` method as follows:
+
+```java
+public Builder add(Vertex v) {
+    Integer prev = map.get(v);
+    if(prev == null) {
+        // Add new vertex and register index
+        Integer n = vertices.size();
+        index.add(n);
+        map.put(v, n);
+        super.add(v);
+    }
+    else {
+        // Otherwise add index for existing vertex
+        index.add(prev);
+    }
+    return this;
+}
+```
+
+The indexed builder creates the index array and delegates to the base-class to construct the model:
+
+```java
+public DefaultModel build() {
+    final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
+    return build(array, array.length);
+}
+```
+
+Finally we add a new method on the buffer class to bind an index buffer to the pipeline:
 
 ```java
 public Command bindIndexBuffer() {
-    return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this.handle(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
+    require(VkBufferUsage.INDEX_BUFFER);
+    return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this, 0, VkIndexType.UINT32);
 }
 ```
 
-All this refactoring work reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).
+Notes:
 
-Result.
+* The index `mapping` assumes we have a decent hashing implementation in the vertex class.
 
-> Initially we tried to protect the buffers using `asReadOnlyBuffer` but this seemed to break our unit-tests (equality of buffers is complex) and caused issues when we came to integration so they are exposed as mutable for the moment.
+* We refactor the base-class model builder to accept the optional index.
+
+* For the moment we assume 32-bit integer indices, we may want to support other sizes in future.
+
+All this refactoring work reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
 
 ### Model Persistence
 
-One problem with the OBJ loader is it quite slow even though we are developing on a decent gaming machine.
+Although the OBJ loader and new indexed builder are relatively efficient loading the model is now quite slow (even on decent hardware).
 
-One obvious observation is that the following parts of the loading process are repeated *every* time we execute the demo:
+We could attempt to optimise the code but this is usually very time-consuming and often actually counter-productive (i.e. complexity can lead to bugs).
+
+Instead we note that as things stand the following steps in the loading process are repeated _every_ time we run the demo:
 
 1. Load and parse the OBJ model.
 
-2. De-duplication.
+2. De-duplication of the vertex data.
 
-3. Generation of the NIO buffers for the vertex data and the index.
+3. Transformation to NIO buffers.
 
-However we _really_ only need the resultant NIO buffers - therefore we will implement a persistence mechanism for a model so that we only need to do the above _once_ for a given model.
+Ideally we would only perform the above steps _once_ since we only really need the vertex and index bufferable objects.
 
-We create a new `ModelLoader` class that will be responsible for reading and writing a buffered model:
+We therefore introduce a custom persistence mechanism to write a model to the file-system:
 
 ```java
-public static class ModelLoader {
-    public Model load(DataInputStream in) throws IOException {
-    }
+public class ModelLoader {
+    private static final int VERSION = 1;
 
-    public void write(Model model, DataOutputStream out) throws IOException {
+    private static void write(Model model, DataOutputStream out) throws IOException {
     }
 }
 ```
 
-We use data streams so that we can persist Java primitives the byte arrays for the VBO and index.
+Note that we output the model to a `DataOutputStream` as this supports both Java primitives and byte arrays (see below).
 
-The model primitive is output as a UTF string:
+In the `write` method we first output the version number of our custom file-format (for later verification):
 
 ```java
-out.writeUTF(model.primitive().name());
+out.writeInt(VERSION);
 ```
 
-The layout is a concatenated string representation of the vertex components:
+Next we write the header information of the model:
 
 ```java
-private static final String DELIMITER = "-";
-
-...
-
-final String layout = model
-    .layout()
-    .components()
-    .stream()
-    .map(Enum::name)
-    .collect(joining(DELIMITER));
-
-out.writeUTF(layout);
+Header header = model.header();
+out.writeUTF(header.primitive().name());
+out.writeInt(header.count());
 ```
 
-Finally we write the vertex and index buffers:
+Followed by the vertex layout of the model:
 
 ```java
-// Write VBO
-out.writeInt(model.count());
-write(model.vertices(), out);
+var layout = header.layout();
+out.writeInt(layout.size());
+for(Layout c : header.layout()) {
+    out.writeInt(c.size());
+    out.writeInt(c.bytes());
+    out.writeUTF(c.type().getName());
+}
+```
 
-// Write index
-final var index = model.index();
+Note that the _type_ of each component in the layout is output as a string using the `writeUTF` method on the stream.
+
+Next we write the vertex buffer:
+
+```java
+writeBuffer(model.vertices(), out);
+```
+
+Which uses the following helper to output the length of the data followed by the buffer as a byte-array:
+
+```java
+private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOException {
+    byte[] array = Bufferable.toArray(src);
+    out.writeInt(array.length);
+    out.write(array);
+}
+```
+
+The intermediate byte-array is created using another new helper on the `Bufferable` interface:
+
+```java
+static byte[] toArray(Bufferable obj) {
+    int len = obj.length();
+    ByteBuffer bb = ByteBuffer.allocate(len).order(ORDER);
+    obj.buffer(bb);
+    return bb.array();
+}
+```
+
+Finally we output the optional index buffer using the same helper:
+
+```java
+var index = model.index();
 if(index.isPresent()) {
-    write(index.get(), out);
+    writeBuffer(index.get(), out);
 }
 else {
     out.writeInt(0);
 }
 ```
 
-The `write` helper outputs the length of the buffer and then writes it as an array:
+### Buffered Models
 
-```java
-private static void write(ByteBuffer bb, DataOutputStream out) throws IOException {
-    final byte[] bytes = new byte[bb.limit()];
-    bb.get(bytes);
-    out.writeInt(bytes.length);
-    out.write(bytes);
-}
-```
-
-> The handling of the optional index buffer is a bit ugly but things get messy when we mix optional values, lambdas and checked exceptions so it will have to do.
-
-We obviously do not want to recreate an instance of the _existing_ model implementation, so we will create a new _buffered model_ with the VBO and index as members. 
-The existing model class is refactored as an interface and we add a skeleton implementation shared by both:
+Obviously when we load this data we do not want to reuse the existing model class since we only require the underlying buffers.  We therefore introduce a new _buffered model_ implementation that simply composes the two bufferable objects:
 
 ```java
 public class BufferedModel extends AbstractModel {
-    private final ByteBuffer vertices;
-    private final Optional<ByteBuffer> index;
-    private final int count;
+    private final Bufferable vertices;
+    private final Optional<Bufferable> index;
 
-    protected BufferedModel(Primitive primitive, Vertex.Layout layout, ByteBuffer vertices, ByteBuffer index, int count) {
-        super(primitive, layout);
-        this.vertices = notNull(vertices);
-        this.index = Optional.ofNullable(index);
-        this.count = zeroOrMore(count);
-        validate();
+    ...
+
+    @Override
+    public boolean isIndexed() {
+        return index.isPresent();
     }
 
     @Override
-    public int count() {
-        return count;
+    public Bufferable vertices() {
+        return vertices;
     }
 
     @Override
-    public ByteBuffer vertices() {
-        return vertices.rewind();
-    }
-
-    @Override
-    public Optional<ByteBuffer> index() {
-        return index.map(ByteBuffer::rewind);
-    }
-
-    public static class ModelLoader {
-        ...
+    public Optional<Bufferable> index() {
+        return index;
     }
 }
 ```
 
-The model is loaded and created as follows:
+We add a new public method to the loader class to read a persisted model:
 
 ```java
-private static final int VERSION = 1;
-
-public Model load(DataInputStream in) throws IOException {
-    // Load and verify file format version
-    final int version = in.readInt();
-    if(version > VERSION) {
-        throw new UnsupportedOperationException(...);
-    }
-
-    // Load primitive
-    final Primitive primitive = Primitive.valueOf(in.readUTF());
-    
-    // Load layout
-    final var layout = Arrays.stream(in.readUTF().split(DELIMITER)).map(Vertex.Component::valueOf).collect(toList());
-    
-    // Load buffers
-    final int count = in.readInt();
-    final ByteBuffer vertices = loadBuffer(in);
-    final ByteBuffer index = loadBuffer(in);
-    
-    // Create model
-    return new BufferedModel(primitive, new Vertex.Layout(layout), vertices, index, count);
+public BufferedModel load(DataInputStream in) throws IOException {
 }
 ```
 
-The `loadBuffer` helper loads to an NIO buffer and handles the case of the optional index:
+Here we use the inverse input stream to read Java primitives and byte-arrays.
+
+The loader first verifies that the file-format version is supported:
 
 ```java
-private static ByteBuffer loadBuffer(DataInputStream in) throws IOException {
+int version = in.readInt();
+if(version > VERSION) {
+    throw new UnsupportedOperationException(...);
+}
+```
+
+Next we load the model header:
+
+```java
+Primitive primitive = Primitive.valueOf(in.readUTF());
+int count = in.readInt();
+```
+
+The process of loading and re-constructing the model layout is slightly more complex since we have to lookup the class of the _type_ by name:
+
+```java
+int num = in.readInt();
+List<Layout> layout = new ArrayList<>();
+for(int n = 0; n < num; ++n) {
+    int size = in.readInt();
+    int bytes = in.readInt();
+    String name = in.readUTF();
+    Class<?> type;
+    try {
+        type = Class.forName(name);
+    }
+    catch(ClassNotFoundException e) {
+        throw new IOException(...);
+    }
+    layout.add(new Layout(size, type, bytes, true));
+}
+```
+
+Next we load the vertex and index buffers:
+
+```java
+Bufferable vertices = loadBuffer(in);
+Bufferable index = loadBuffer(in);
+```
+
+And finally we create the new buffered model:
+
+```java
+return new BufferedModel(new Header(layout, primitive, count), vertices, Optional.ofNullable(index));
+```
+
+The `loadBuffer` helper is the inverse of `writeBuffer` above (with an additional check for an empty buffer):
+
+```java
+private static Bufferable loadBuffer(DataInputStream in) throws IOException {
     // Read buffer size
-    final int len = in.readInt();
+    int len = in.readInt();
     if(len == 0) {
         return null;
     }
 
     // Load bytes
-    final byte[] bytes = new byte[len];
-    final int actual = in.read(bytes);
-    if(actual != len) throw new IOException(String.format("Error loading buffer: expected=%d actual=%d", len, actual));
+    byte[] bytes = new byte[len];
+    int actual = in.read(bytes);
+    if(actual != len) throw new IOException(...);
 
     // Convert to buffer
-    return Bufferable.allocate(bytes);
+    return Bufferable.of(bytes);
 }
 ```
 
-We also introduce a `VERSION` for our custom file format (and modify the write method accordingly).
+There is still a fair amount of type conversions to/from byte-arrays in this code but the buffered model can now be loaded in a matter of milliseconds.  Result.
 
-We output the buffered model once and then modify the demo to read the persisted data thereafter.
-There is still a lot of conversions of byte buffers to/from arrays but our model is now loaded in a matter of milliseconds - Nice!
+### Loader Support
 
----
-
-## Loader Support
-
-We now have several loaders that all perform roughly the same functionality but with differing data types:
+Over the course of this project we have implemented various loaders that share a common pattern but with differing data types:
 
 | implementation        | input type        | resource type     |
 | --------------        | ----------        | -------------     |
-| ObjectModelLoader     | Reader            | Stream<Model>     |
 | ShaderLoader          | InputStream       | Shader            |
 | ImageData.Loader      | BufferedImage     | ImageData         |
+| ObjectModelLoader     | Reader            | Stream<Model>     |
 | ModelLoader           | DataInputStream   | BufferedModel     |
 
-As things stand the demo applications are required to implement fiddly I/O code to open the various resources and handle resource cleanup and exceptions.
-Ideally we would like the loaders to encapsulate this logic such that the application simply refers to resources by filename.
+Currently the demo applications are required to implement fiddly I/O code to open the various resources and handle cleanup and checked exceptions.  Ideally we would like to abstract this common pattern by referring to resources by _name_ and encapsulate the nasty code.
 
-We first create an abstraction for a general loader:
+We first implement the following abstraction for a general resource loader:
 
 ```java
-@FunctionalInterface
 public interface ResourceLoader<T, R> {
     /**
-     * Loads a resource.
-     * @param in Input data
+     * Maps an input stream to the intermediate data type.
+     * @param in Input stream
+     * @return Intermediate data type
+     * @throws IOException if the input data cannot be loaded
+     */
+    T map(InputStream in) throws IOException;
+
+    /**
+     * Constructs the resultant resource from the given data.
+     * @param data Input data
      * @return Loaded resource
      * @throws IOException if the resource cannot be loaded
      */
-    R load(T in) throws IOException;
+    R load(T data) throws IOException;
 }
 ```
 
-Where `<T>` is the input type (e.g. `DataInputStream` for the model loader above) and `<R>` is the resource type.
+Where _R_ is the type of the resource and _T_ is some intermediate data-type.
 
-We adapt this interface with a template implementation that converts a general input-stream to the loader-specific input type:
-
-```java
-abstract class Adapter<T, R> implements ResourceLoader<T, R> {
-    /**
-     * Maps the given input-stream to the input type for this loader.
-     * @param in Input-stream
-     * @return Input type
-     * @throws IOException if the stream cannot be opened
-     */
-    protected abstract T map(InputStream in) throws IOException;
-}
-```
-
-We can now refactor the various loaders accordingly, for example:
+The purpose of this abstraction is probably best illustrated by an example using the new model loader:
 
 ```java
-public static class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Model> {
+public class ModelLoader implements ResourceLoader<DataInputStream, BufferedModel> {
     @Override
-    protected DataInputStream map(InputStream in) throws IOException {
+    public DataInputStream map(InputStream in) throws IOException {
         return new DataInputStream(in);
     }
-
+    
     @Override
-    public Model load(DataInputStream in) throws IOException {
+    public BufferedModel load(DataInputStream in) throws IOException {
         ...
     }
 }
 ```
 
-This allows the loaders to expose the `load` method for easier testability but hides the input type mapping logic.
+The `map` method transforms an input-stream to the intermediate data stream, the `load` method itself is unchanged (except for the `@Override`).
 
-Next we introduce a _data source_ that allows the application to define a centralised resource factory:
+Next we introduce a _data source_ which is responsible for opening an input-stream for a given resource by name:
 
 ```java
 public interface DataSource {
@@ -820,7 +841,7 @@ public interface DataSource {
 }
 ```
 
-With factory methods to create a data-source from a given directory:
+We implement convenience factories to create a data-source from the file-system:
 
 ```java
 static DataSource of(Path dir) {
@@ -833,14 +854,14 @@ static DataSource of(String dir) {
 }
 ```
 
-The final piece of the jigsaw is the following factory method on the `ResourceLoader` that combines an adapter and a data-source:
+The final piece of the jigsaw is to create an adapter that combines a loader with a data-source:
 
 ```java
-static <T, R> ResourceLoader<String, R> of(DataSource src, Adapter<T, R> loader) {
+static <T, R> Function<String, R> of(DataSource src, ResourceLoader<T, R> loader) {
     return name -> {
-        try(final InputStream in = src.open(name)) {
-            final T input = loader.map(in);
-            return loader.load(input);
+        try(InputStream in = src.open(name)) {
+            T data = loader.map(in);
+            return loader.load(data);
         }
         catch(IOException e) {
             throw new RuntimeException("Error loading resource: " + name, e);
@@ -849,23 +870,34 @@ static <T, R> ResourceLoader<String, R> of(DataSource src, Adapter<T, R> loader)
 }
 ```
 
-An application can now define a data-source and combine it with the various loaders to load resources by filename:
+The adapter encapsulates the process of opening and loading the resource and nicely centralises the checked exceptions.
+
+Notes:
+
+* This framework assumes that all resources will be loaded from an underlying input stream (which seems safe enough).
+
+* The adapter is a Java function which is a little awkward but introducing yet another abstraction would probably be overkill.
+
+* The existing resource loaders are refactored accordingly.
+
+In the demo applications we can now configure a common data-source (which also nicely avoids duplication of the path):
 
 ```java
-// Create data-source
-DataSource src = DataSource.of("./src/test/resources");
-
-// Load model
-var modelLoader = ResourceLoader.of(src, new ModelLoader());
-Model model = modelLoader.load("chalet.model");
-
-// Load texture image
-var imageLoader = ResourceLoader.of(src, new ImageData.Loader());
-ImageData image = imageLoader.load("chalet.jpg");
+@SpringBootApplication
+public class RotatingCubeDemo {
+    @Bean
+    public static DataSource source() {
+        return DataSource.of("./src/main/resources");
+    }
+}
 ```
 
-This separates the mapping of filenames to resources from the actual loaders and centralises the common loader pattern.
-We also have the added bonus that the handling of the checked I/O exceptions is centralised in a single location.
+And resources can now be loaded much more conveniently:
+
+```java
+var loader = ResourceLoader.of(src, new ModelLoader());
+Model model = loader.apply("chalet.model");
+```
 
 ---
 

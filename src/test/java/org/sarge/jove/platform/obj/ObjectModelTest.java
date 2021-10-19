@@ -33,7 +33,7 @@ public class ObjectModelTest {
 
 	@Test
 	void start() {
-		model.vertex(Point.ORIGIN);
+		model.position(Point.ORIGIN);
 		model.start();
 		assertEquals(2, model.build().count());
 	}
@@ -48,7 +48,7 @@ public class ObjectModelTest {
 	class VertexTests {
 		@BeforeEach
 		void before() {
-			model.vertex(Point.ORIGIN);
+			model.position(Point.ORIGIN);
 			model.normal(Vector.X);
 			model.coordinate(Coordinate2D.BOTTOM_LEFT);
 		}
@@ -93,7 +93,7 @@ public class ObjectModelTest {
 	class BuilderTests {
 		@BeforeEach
 		void before() {
-			model.vertex(Point.ORIGIN);
+			model.position(Point.ORIGIN);
 			model.normal(Vector.X);
 			model.coordinate(Coordinate2D.BOTTOM_LEFT);
 		}

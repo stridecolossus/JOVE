@@ -28,8 +28,6 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> {
-	private static final String[] EMPTY_ARGUMENTS = new String[0];
-
 	/**
 	 * Adapter to parse flipped texture coordinates.
 	 */
@@ -38,25 +36,10 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 		return Coordinate.of(array);
 	};
 
-	/**
-	 * Handler to ignore unknown commands.
-	 */
-	public static final Consumer<String> HANDLER_IGNORE = str -> {
-		// Empty block
-	};
-
-	/**
-	 * Handler that throws an exception.
-	 * @throws IllegalArgumentException for an unknown command
-	 */
-	public static final Consumer<String> HANDLER_THROW = str -> {
-		throw new IllegalArgumentException("Unsupported OBJ command: " + str);
-	};
-
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private Set<String> comments = Set.of("#");
-	private Consumer<String> handler = HANDLER_THROW;
 	private final ObjectModel model = new ObjectModel();
+	private Consumer<String> handler = line -> { /* Ignored */ };
 
 	/**
 	 * Constructor.
@@ -69,7 +52,7 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v", new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::vertex));
+		add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::position));
 		add("vt", new VertexComponentParser<>(2, FLIP, ObjectModel::coordinate));
 		add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normal));
 		add("f", new FaceParser());
@@ -126,7 +109,7 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 					.map(String::trim)
 					.filter(Predicate.not(String::isBlank))
 					.filter(Predicate.not(this::isComment))
-					.forEach(line -> parse(line, model));
+					.forEach(this::parse);
 			}
 			catch(Exception e) {
 				throw new IOException(String.format("%s at line %d", e.getMessage(), in.getLineNumber()), e);
@@ -149,24 +132,19 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 	 * @param line Line
 	 * @throws IllegalArgumentException if the command is unsupported
 	 */
-	private void parse(String line, ObjectModel model) {
+	private void parse(String line) {
 		// Tokenize line
-		final String[] parts = StringUtils.split(line, null, 2);
+		final String[] parts = StringUtils.split(line);
+		Parser.trim(parts);
 
 		// Lookup command parser
-		final Parser parser = parsers.get(parts[0].trim());
+		final Parser parser = parsers.get(parts[0]);
 		if(parser == null) {
 			handler.accept(line);
 			return;
 		}
 
 		// Delegate
-		if(parts.length == 1) {
-			parser.parse(EMPTY_ARGUMENTS, model);
-		}
-		else {
-			final String[] args = StringUtils.split(parts[1]);
-			parser.parse(args, model);
-		}
+		parser.parse(parts, model);
 	}
 }

@@ -55,12 +55,12 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		}
 
 		// Write VBO
-		write(model.vertices(), out);
+		writeBuffer(model.vertices(), out);
 
 		// Write index
 		final var index = model.index();
 		if(index.isPresent()) {
-			write(index.get(), out);
+			writeBuffer(index.get(), out);
 		}
 		else {
 			out.writeInt(0);
@@ -70,7 +70,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		out.flush();
 	}
 
-	private static void write(Bufferable src, DataOutputStream out) throws IOException {
+	private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOException {
 		final byte[] array = Bufferable.toArray(src);
 		out.writeInt(array.length);
 		out.write(array);

@@ -9,7 +9,7 @@ import org.sarge.jove.common.Vertex;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DefaultModel.Builder;
-import org.sarge.jove.model.DefaultModel.IndexedBuilder;
+import org.sarge.jove.model.IndexedBuilder;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 
@@ -18,7 +18,7 @@ import org.sarge.jove.model.Primitive;
  * @author Sarge
  */
 public class ObjectModel {
-	private final List<Point> vertices = new VertexComponentList<>();
+	private final List<Point> positions = new VertexComponentList<>();
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
 	private final List<Builder> builders = new ArrayList<>();
@@ -34,12 +34,12 @@ public class ObjectModel {
 	 */
 	public void start() {
 		// Ignore if the current group is empty
-		if(vertices.isEmpty()) {
+		if(positions.isEmpty()) {
 			return;
 		}
 
 		// Reset transient model
-		vertices.clear();
+		positions.clear();
 		normals.clear();
 		coords.clear();
 
@@ -70,8 +70,8 @@ public class ObjectModel {
 	 * Adds a vertex position.
 	 * @param v Vertex position
 	 */
-	void vertex(Point v) {
-		vertices.add(v);
+	void position(Point v) {
+		positions.add(v);
 	}
 
 	/**
@@ -105,7 +105,7 @@ public class ObjectModel {
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
 		final var vertex = new Vertex.Builder();
-		vertex.position(vertices.get(v));
+		vertex.position(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {

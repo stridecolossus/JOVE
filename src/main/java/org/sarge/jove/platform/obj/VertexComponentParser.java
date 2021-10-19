@@ -34,13 +34,13 @@ class VertexComponentParser<T extends Vertex.Component> implements Parser {
 	@Override
 	public void parse(String[] args, ObjectModel model) {
 		// Validate
-		if(args.length != array.length) {
+		if(args.length != array.length + 1) {
 			throw new IllegalArgumentException(String.format("Invalid number of elements: expected=%d actual=%d", array.length, args.length));
 		}
 
 		// Convert to array
 		for(int n = 0; n < array.length; ++n) {
-			array[n] = Float.parseFloat(args[n].trim());
+			array[n] = Float.parseFloat(args[n + 1]);
 		}
 
 		// Create object using array constructor
