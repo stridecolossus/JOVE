@@ -75,11 +75,88 @@ public class Window extends AbstractTransientNativeObject {
 	 * Descriptor for the properties of a window.
 	 */
 	public record Descriptor(String title, Dimensions size, Set<Property> properties) {
+		/**
+		 * Constructor.
+		 * @param title				Window title
+		 * @param size				Dimensions
+		 * @param properties		Properties
+		 */
 		public Descriptor {
 			Check.notEmpty(title);
 			Check.notNull(size);
 			properties = Check.notNull(properties);
 		}
+
+		/**
+		 * Builder for a window descriptor.
+		 */
+		public static class Builder {
+			private String title;
+			private Dimensions size;
+			private final Set<Property> props = new HashSet<>();
+
+			/**
+			 * Sets the window title.
+			 * @param title Title
+			 */
+			public Builder title(String title) {
+				this.title = notEmpty(title);
+				return this;
+			}
+
+			/**
+			 * Sets the size of the window.
+			 * @param size Window size
+			 */
+			public Builder size(Dimensions size) {
+				this.size = notNull(size);
+				return this;
+			}
+
+			/**
+			 * Adds a window property.
+			 * @param p Property
+			 */
+			public Builder property(Property p) {
+				props.add(notNull(p));
+				return this;
+			}
+
+			/**
+			 * Constructs this descriptor.
+			 * @return New window descriptor
+			 */
+			public Descriptor build() {
+				return new Descriptor(title, size, props);
+			}
+		}
+	}
+
+	/**
+	 * Creates a new window.
+	 * @param desktop			Desktop service
+	 * @param descriptor		Window descriptor
+	 * @param monitor			Optional monitor
+	 * @return New window
+	 * @throws RuntimeException if the window cannot be created
+	 */
+	public static Window create(Desktop desktop, Descriptor descriptor, Monitor monitor) {
+		// Apply window hints
+		final DesktopLibrary lib = desktop.library();
+		lib.glfwDefaultWindowHints();
+		for(Property p : descriptor.properties) {
+			p.apply(lib);
+		}
+
+		// Create window
+		final Dimensions size = descriptor.size();
+		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);	// TODO - monitor
+		if(window == null) {
+			throw new RuntimeException(String.format("Window cannot be created: descriptor=%s monitor=%s", descriptor, monitor));
+		}
+
+		// Create window wrapper
+		return new Window(desktop, window, descriptor);
 	}
 
 	private final Desktop desktop;
@@ -88,11 +165,11 @@ public class Window extends AbstractTransientNativeObject {
 
 	/**
 	 * Constructor.
+	 * @param desktop			Desktop service
 	 * @param window			Window handle
-	 * @param lib				GLFW API
 	 * @param descriptor		Window descriptor
 	 */
-	Window(Desktop desktop, Pointer window, Descriptor descriptor) {
+	private Window(Desktop desktop, Pointer window, Descriptor descriptor) {
 		super(new Handle(window));
 		this.desktop = notNull(desktop);
 		this.descriptor = notNull(descriptor);
@@ -154,51 +231,5 @@ public class Window extends AbstractTransientNativeObject {
 	protected void release() {
 		final DesktopLibrary lib = desktop.library();
 		lib.glfwDestroyWindow(this);
-	}
-
-	/**
-	 * Builder for a window.
-	 */
-	public static class Builder {
-		private String title;
-		private Dimensions size;
-		private final Set<Property> props = new HashSet<>();
-
-		/**
-		 * Sets the window title.
-		 * @param title Title
-		 */
-		public Builder title(String title) {
-			this.title = notEmpty(title);
-			return this;
-		}
-
-		/**
-		 * Sets the size of the window.
-		 * @param size Window size
-		 */
-		public Builder size(Dimensions size) {
-			this.size = notNull(size);
-			return this;
-		}
-
-		/**
-		 * Adds a window property.
-		 * @param p Property
-		 */
-		public Builder property(Property p) {
-			props.add(notNull(p));
-			return this;
-		}
-
-		/**
-		 * Constructs this window.
-		 * @param desktop Desktop service
-		 * @param New window
-		 */
-		public Window build(Desktop desktop) {
-			final var descriptor = new Descriptor(title, size, props);
-			return desktop.window(descriptor, null); // TODO - monitor
-		}
 	}
 }

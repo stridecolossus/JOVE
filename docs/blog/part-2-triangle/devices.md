@@ -234,7 +234,7 @@ public record Descriptor(String title, Dimensions size, Set<Property> properties
 }
 ```
 
-The _properties_ is an enumeration of the various visual capabilities of a window (_hints_ in GLFW parlance):
+The _properties_ is an enumeration of the various visual capabilities of a window:
 
 ```java
 public enum Property {
@@ -251,41 +251,59 @@ public enum Property {
     }
 
     void apply(DesktopLibrary lib) {
-        final int value = this == DISABLE_OPENGL ? 0 : 1;
+        int value = this == DISABLE_OPENGL ? 0 : 1;
         lib.glfwWindowHint(hint, value);
     }
 }
 ```
 
-(The constants are copied from the header file).
+The enumeration values (window _hints_ in GLFW parlance) are copied from the header file.
 
-Finally we add the following factory method on the `Desktop` service to create a window given its descriptor:
+A hint is applied to a new window by the following helper:
 
 ```java
-public Window window(Window.Descriptor descriptor) {
-    // Apply window hints
-    lib.glfwDefaultWindowHints();
-    descriptor.properties().forEach(p -> p.apply(lib));
-
-    // Create window
-    final Dimensions size = descriptor.size();
-    final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);
-    if(window == null) throw new RuntimeException(...);
-
-    // Create window wrapper
-    return new Window(this, window, descriptor);
+void apply(DesktopLibrary lib) {
+    int value = this == DISABLE_OPENGL ? 0 : 1;
+    lib.glfwWindowHint(hint, value);
 }
+```
+
+Finally we add a factory method to create a window given its descriptor, starting with the window hints:
+
+```java
+public static Window create(Desktop desktop, Descriptor descriptor) {
+    DesktopLibrary lib = desktop.library();
+    lib.glfwDefaultWindowHints();
+    for(Property p : descriptor.properties) {
+        p.apply(lib);
+    }
+    ...
+}
+```
+
+Next we invoke the API to instantiate the window and retrieve the handle:
+
+```java
+Dimensions size = descriptor.size();
+Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);
+if(window == null) throw new RuntimeException(...);
+```
+
+And finally we create the window domain object:
+
+```java
+return new Window(desktop, window, descriptor);
 ```
 
 Notes:
 
 * This is a bare-bones implementation sufficient for the triangle demo, however we will almost certainly need to refactor this code to support richer functionality, e.g. full-screen windows.
 
-* We add a convenience builder for a window.
+* We add a convenience builder for a window descriptor.
 
 * By default GLFW creates an OpenGL surface for a new window which is disabled using the `DISABLE_OPENGL` window hint.
 
-* The argument for this hint is irritatingly the inverse to what one would expect (and to all the other hints).
+* The argument for this hint is irritatingly the opposite of what one would expect (and all the other hints).
 
 * The above implementation ignores display monitors for the moment.
 

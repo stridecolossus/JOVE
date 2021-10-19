@@ -107,3 +107,48 @@ public final class Monitor implements NativeObject {
 		return modes;
 	}
 }
+
+
+///**
+//* @return Monitors on this desktop
+//*/
+//public List<Monitor> monitors() {
+//	final IntByReference count = new IntByReference();
+//	final Pointer[] monitors = instance.glfwGetMonitors(count).getPointerArray(0, count.getValue());
+//	return Arrays.stream(monitors).map(this::monitor).collect(toList());
+//}
+//
+///**
+//* Retrieves and maps a monitor descriptor.
+//*/
+//private Monitor monitor(Pointer handle) {
+//	// Lookup monitor dimensions
+//	final IntByReference w = new IntByReference();
+//	final IntByReference h = new IntByReference();
+//	instance.glfwGetMonitorPhysicalSize(handle, w, h);
+//
+//	// Lookup display modes
+//	final IntByReference count = new IntByReference();
+//	final FrameworkDisplayMode result = instance.glfwGetVideoModes(handle, count);
+//	final FrameworkDisplayMode[] array = (FrameworkDisplayMode[]) result.toArray(count.getValue());
+//	final List<Monitor.DisplayMode> modes = Arrays.stream(array).map(Desktop::toDisplayMode).collect(toList());
+//
+//	// Create monitor
+//	final String name = instance.glfwGetMonitorName(handle);
+////	return new Monitor(handle, name, new Dimensions(w.getValue(), h.getValue()), modes);
+//	return null;
+//}
+//
+//public DisplayMode mode(Monitor monitor) {
+////	final FrameworkDisplayMode mode = instance.glfwGetVideoMode((Pointer) monitor.handle());
+////	return toDisplayMode(mode);
+//	return null;
+//}
+//
+///**
+//* Maps a GLFW display mode.
+//*/
+//private static DisplayMode toDisplayMode(FrameworkDisplayMode mode) {
+//	final int[] depth = new int[]{mode.red, mode.green, mode.blue};
+//	return new Monitor.DisplayMode(new Dimensions(mode.width, mode.height), depth, mode.refresh);
+//}

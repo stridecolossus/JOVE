@@ -9,6 +9,7 @@ import com.sun.jna.ptr.IntByReference;
  * GLFW API.
  * @author Sarge
  */
+public // TODO
 interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryDevice, DesktopLibraryMonitor {
 	/**
 	 * Initialises GLFW.

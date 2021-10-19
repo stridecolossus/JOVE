@@ -36,12 +36,15 @@ public class WindowTest {
 		desktop = mock(Desktop.class);
 		when(desktop.library()).thenReturn(lib);
 
-		// Create window
-		window = new Window.Builder()
+		// Init window descriptor
+		final Window.Descriptor descriptor = new Window.Descriptor.Builder()
 				.title("title")
 				.size(new Dimensions(640, 480))
 				.property(Window.Property.DECORATED)
-				.build(desktop);
+				.build();
+
+		// Create window
+		window = Window.create(desktop, descriptor, null);
 	}
 
 	@Test

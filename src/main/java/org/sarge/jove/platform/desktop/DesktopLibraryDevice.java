@@ -9,6 +9,7 @@ import com.sun.jna.Pointer;
  * GLFW device API.
  * @author Sarge
  */
+public // TODO
 interface DesktopLibraryDevice {
 	/**
 	 * Processes pending events.
@@ -26,7 +27,7 @@ interface DesktopLibraryDevice {
 	/**
 	 * Listener for key events.
 	 */
-	interface KeyListener extends Callback {
+	public interface KeyListener extends Callback {
 		/**
 		 * Notifies a key event.
 		 * @param window			Window
