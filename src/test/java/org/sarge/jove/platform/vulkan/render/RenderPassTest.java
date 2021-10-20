@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.DependencyBuilder;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.SubPassBuilder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -203,11 +202,11 @@ public class RenderPassTest extends AbstractVulkanTest {
 		 */
 		private void dependency(int src, int dest) {
 			builder
-				.dependency(src, dest)
-					.source()
+				.dependency()
+					.source(src)
 						.stage(VkPipelineStage.FRAGMENT_SHADER)
 						.build()
-					.destination()
+					.destination(dest)
 						.stage(VkPipelineStage.FRAGMENT_SHADER)
 						.build()
 					.build();
@@ -247,27 +246,45 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 		@Test
 		void buildDependencyRequiresPipelineStage() {
-			// Check source requires pipeline stage
-			final String error = "No pipeline stage(s)";
-			final DependencyBuilder dep = builder.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0);
-			assertThrows(IllegalArgumentException.class, error, () -> dep.build());
-			assertThrows(IllegalArgumentException.class, error, () -> builder.build(dev));
+//			// Check source requires pipeline stage
+//			final String error = "No pipeline stage(s)";
+//			final DependencyBuilder dep = builder.dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0);
+//			assertThrows(IllegalArgumentException.class, error, () -> dep.build());
+//			assertThrows(IllegalArgumentException.class, error, () -> builder.build(dev));
+//
+//			// Check destination requires pipeline stage
+//			dep.source().stage(VkPipelineStage.FRAGMENT_SHADER);
+//			assertThrows(IllegalArgumentException.class, error, () -> dep.build());
+//			assertThrows(IllegalArgumentException.class, error, () -> builder.build(dev));
 
-			// Check destination requires pipeline stage
-			dep.source().stage(VkPipelineStage.FRAGMENT_SHADER);
-			assertThrows(IllegalArgumentException.class, error, () -> dep.build());
-			assertThrows(IllegalArgumentException.class, error, () -> builder.build(dev));
+			builder
+				.dependency()
+					.source(VK_SUBPASS_EXTERNAL)
+						.stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+						.build()
+					.build();
+
+			assertThrows(IllegalArgumentException.class, "Invalid dependency indices", () -> builder.build(dev));
 		}
 
 		@Test
 		void dependencyInvalidSubPassIndex() {
-			assertThrows(IllegalArgumentException.class, "Invalid sub-pass index", () -> builder.dependency(0, 1));
+			assertThrows(IllegalArgumentException.class, "Invalid sub-pass index", () -> builder.dependency().source(1));
+			assertThrows(IllegalArgumentException.class, "Invalid sub-pass index", () -> builder.dependency().source(-1));
 		}
 
 		@Test
-		void dependencyEqualIndex() {
-			assertThrows(IllegalArgumentException.class, "Invalid dependency indices", () -> builder.dependency(0, 0));
-			assertThrows(IllegalArgumentException.class, "Invalid implicit indices", () -> builder.dependency(RenderPass.VK_SUBPASS_EXTERNAL, RenderPass.VK_SUBPASS_EXTERNAL));
+		void dependencySameIndex() {
+			builder
+				.dependency()
+				.source(0)
+					.stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+					.build()
+				.destination(0)
+					.stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+					.build();
+			assertThrows(IllegalArgumentException.class, "Invalid dependency indices", () -> builder.build(dev));
+//			assertThrows(IllegalArgumentException.class, "Invalid implicit indices", () -> builder.dependency(RenderPass.VK_SUBPASS_EXTERNAL, RenderPass.VK_SUBPASS_EXTERNAL));
 		}
 	}
 }

@@ -34,7 +34,7 @@ public class ObjectModel {
 	 */
 	public void start() {
 		// Ignore if the current group is empty
-		if(positions.isEmpty()) {
+		if(current.isEmpty()) {
 			return;
 		}
 

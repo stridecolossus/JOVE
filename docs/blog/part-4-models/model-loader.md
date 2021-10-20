@@ -28,7 +28,7 @@ The most common commands are:
 | g             | name          | polygon group         | g body            |
 | s             | flag          | smoothing group       | s 1               |
 
-The _face_ command specifies the vertices of a polygon as a tuple of indices delimited by the slash character with an optional normal and texture coordinate:
+The _face_ command specifies the vertices of a polygon as a tuple of indices delimited by the slash character (the normal and texture coordinate are optional):
 
 | example                   | position | texture | normal |
 | -------                   | -------- | ------- | ------ |
@@ -398,7 +398,7 @@ The `GROUP` command parser delegates to the following method on the model to sta
 ```java
 public void start() {
     // Ignore if the current group is empty
-    if(positions.isEmpty()) {
+    if(current.isEmpty()) {
         return;
     }
 
@@ -664,9 +664,11 @@ else {
 }
 ```
 
+We _could_ have implemented the model loader using Java serialization, which might have resulted in simpler code but is generally quite nasty to debug, at least our custom format is relatively straight-forward to implement and follow.
+
 ### Buffered Models
 
-Obviously when we load this data we do not want to reuse the existing model class since we only require the underlying buffers.  We therefore introduce a new _buffered model_ implementation that simply composes the two bufferable objects:
+Obviously when we load this data back we do not want to reuse the existing model class since we only require the underlying buffers.  We therefore introduce a new _buffered model_ implementation that simply composes the two bufferable objects:
 
 ```java
 public class BufferedModel extends AbstractModel {
@@ -778,7 +780,7 @@ Over the course of this project we have implemented various loaders that share a
 
 | implementation        | input type        | resource type     |
 | --------------        | ----------        | -------------     |
-| ShaderLoader          | InputStream       | Shader            |
+| Shader.Loader         | InputStream       | Shader            |
 | ImageData.Loader      | BufferedImage     | ImageData         |
 | ObjectModelLoader     | Reader            | Stream<Model>     |
 | ModelLoader           | DataInputStream   | BufferedModel     |
@@ -809,7 +811,7 @@ public interface ResourceLoader<T, R> {
 
 Where _R_ is the type of the resource and _T_ is some intermediate data-type.
 
-The purpose of this abstraction is probably best illustrated by an example using the new model loader:
+The purpose of this abstraction is probably best illustrated by an example for the new model loader:
 
 ```java
 public class ModelLoader implements ResourceLoader<DataInputStream, BufferedModel> {
@@ -854,7 +856,7 @@ static DataSource of(String dir) {
 }
 ```
 
-The final piece of the jigsaw is to create an adapter that combines a loader with a data-source:
+The final piece of the jigsaw is to create an _adapter_ that combines a resource loader with a data-source:
 
 ```java
 static <T, R> Function<String, R> of(DataSource src, ResourceLoader<T, R> loader) {

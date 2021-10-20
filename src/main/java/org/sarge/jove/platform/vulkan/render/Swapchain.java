@@ -69,7 +69,6 @@ public class Swapchain extends AbstractVulkanObject {
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> views;
-	private final IntByReference index = new IntByReference();
 
 	/**
 	 * Constructor.
@@ -100,6 +99,13 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
+	 * @return Number of swapchain images
+	 */
+	public int count() {
+		return views.size();
+	}
+
+	/**
 	 * @return Image views
 	 */
 	public List<View> views() {
@@ -115,6 +121,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) {
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
+		final IntByReference index = new IntByReference();
 		final DeviceContext dev = device();
 		final VulkanLibrary lib = dev.library();
 		check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
@@ -124,9 +131,10 @@ public class Swapchain extends AbstractVulkanObject {
 	/**
 	 * Presents the next frame.
 	 * @param queue				Presentation queue
+	 * @param index				Swapchain image index
 	 * @param semaphores		Wait semaphores
 	 */
-	public void present(Queue queue, Set<Semaphore> semaphores) {
+	public void present(Queue queue, int index, Set<Semaphore> semaphores) {
 		// Create presentation descriptor
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 
@@ -139,7 +147,7 @@ public class Swapchain extends AbstractVulkanObject {
 		info.pSwapchains = NativeObject.toArray(List.of(this));
 
 		// Set image indices
-		final int[] array = new int[]{index.getValue()};
+		final int[] array = new int[]{index};
 		final Memory mem = new Memory(array.length * Integer.BYTES);
 		mem.write(0, array, 0, array.length);
 		info.pImageIndices = mem;

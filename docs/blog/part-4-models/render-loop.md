@@ -4,653 +4,436 @@ title: The Render Loop and Synchronisation
 
 ## Overview
 
-Before we start the next demo application there are several issues with the existing, crude render loop we have been using so far:
+Before we start the next demo application there are several issues with the existing, crude render loop we have implemented so far.
 
-1. The rendering code code is completely single-threaded.
+In no particular order:
 
-2. There are several lists of objects (frame buffers, descriptor sets, etc) that are used to render a frame.
+* The rendering code is completely single-threaded (by blocking the work queues).
 
-3. The window event queue is blocked.
+* The code mixes up the Vulkan rendering process, the application logic (updating the rotation), and the code to control the loop (the dodgy timer).
 
-4. There is no mechanism to terminate the application.
+* The window event queue is blocked.
+
+* There is no mechanism to terminate the application (other than the timer code or force-quitting the process).
 
 In this chapter we will address these issues by implementing the following:
 
-* The built-in Vulkan synchronisation primitives: semaphores and fences.
+* New reusable components to separate the rendering process and the application logic.
 
-* A multi-threaded render loop.
+* Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
 
-* Supporting framework code to compose the various objects that collaborate to render a frame.
+* A GLFW keyboard handler to gracefully exit the application.
 
-* A keyboard handler to gracefully exit the application.
-
-Note that during this chapter the demo application will generate validation errors that are addressed as we progress.
+A complication of particular importance is that GLFW event processing __must__ be performed on the main application thread.  We cannot (for example) wrap up the application loop as a separate thread or use the task executor framework.  Note that GLFW does not return any errors or exceptions if a thread-safe method is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
 
 ---
 
-## Keyboard Handler
+## Refactoring
 
-We start with a GLFW keyboard handler to terminate the application when the ESCAPE key is pressed.
+### Render Loop
 
+We start by refactoring the existing render loop:
+* Remove the `while` loop and the timer logic.
+* Factor out the Vulkan code to a new component.
+* Factor out the rotation update logic to a separate component.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Before we wrap up this phase of development we will finally implement a proper _render loop_.
-
-Vulkan is designed to be multi-threading friendly:
-- Work submitted to a queue is executed asynchronously, e.g. rendering a frame.
-- Most Vulkan API methods can be invoked on multiple threads, e.g. recording a command buffer.
-
-To ensure that operations occur in the correct order Vulkan provides several synchronisation mechanisms:
-- a _semaphore_ that can synchronise operations within or across work queues.
-- a _fence_ synchronises between the host and the GPU, i.e. between the host and rendering operations.
-- pipeline barriers
-
-We will start with a temporary solution to gracefully terminate the application via the keyboard (rather than having to bodge a loop counter or use the IDE).
-
-Note that during this chapter the demo application will start generating validation errors (e.g. attempting to re-use command buffers that are not in the correct state) which we will address as they arise.
-
----
-
-## Graceful Exit
-
-To stop the render loop we create a simple GLFW keyboard listener that toggles a flag when the ESCAPE key is pressed:
+We create a new component for the remaining rendering code (the acquire-render-present steps):
 
 ```java
-final AtomicBoolean running = new AtomicBoolean(true);
-
-final KeyListener listener = (ptr, key, scancode, action, mods) -> {
-    if(key == 256) {
-        running.set(false);
-    }
-};
-```
-
-The listener is then attached to the desktop window:
-
-```java
-dev.library().glfwSetKeyCallback(window.handle(), listener);
-```
-
-We can now replace the nasty loop we implemented in the previous chapter with the following:
-
-```java
-while(running.get()) {
-    // Update rotation
-    ...
-}
-```
-
-Note this is temporary code that will be replaced with a more comprehensive input-event handling solution in a future chapter.
-
----
-
-## Render Loop
-
-Up until now we have basically cut-and-pasted the render loop for each demo (always a sign that we're doing it wrong) so we will factor out the current code into a reusable class.
-
-### Runner Class
-
-The new _runner_ class composes the various components that collaborate in the render loop:
-
-```java
-public class Runner {
+public class RenderLoop implements Runnable {
     private final Swapchain swapchain;
-    private final Queue queue;
-    private final AtomicBoolean running = new AtomicBoolean(true);
-    private final Frame[] frames;
+    private final List<Buffer> buffers;
+    private final Queue presentation;
 
-    public Runner(Swapchain swapchain, IntFunction<Frame> factory, Queue queue) {
-        this.swapchain = notNull(swapchain);
-        this.queue = notNull(queue);
-        this.frames = IntStream.range(0, swapchain().views().size()).mapToObj(factory::apply).toArray(Frame[]::new);
+    @Override
+    public void run() {
+        ...
     }
 }
 ```
 
-The `Frame` class factors out the logic for submitting render command and updating the application state:
+And we refactor the existing render loop bean accordingly:
 
 ```java
-public interface Frame {
-    /**
-     * Renders the next frame.
-     * @param view Swapchain image
-     */
-    void render(View view);
+return new RenderLoop(swapchain, buffers, presentation.queue());
+```
 
-    /**
-     * Updates state after a frame has been rendered.
-     * @return Whether to continue execution of this runner
-     */
-    void update();
+Next we create a new component in the main class that encapsulates the rotation logic:
+
+```java
+@Bean
+public static Runnable update(Matrix matrix, VulkanBuffer uniform, ApplicationConfiguration cfg) {
+    long period = cfg.getPeriod();
+    long start = System.currentTimeMillis();
+    return () -> {
+        ...
+        uniform.load(m);
+    };
 }
 ```
 
-The constructor of the runner invokes the _factory_ to create a frame instance for each swapchain image.
+### Application 
 
-We next add the render loop itself:
+Note that the newly refactored components are `Runnable` objects, we compose these _tasks_ into the following new class that encapsulates the application thread:
 
 ```java
-public final void run() {
-    while(running.get()) {
-        frame();
+public class Application {
+    private final List<Runnable> tasks;
+    private final AtomicBoolean running = new AtomicBoolean();
+
+    public boolean isRunning() {
+        return running.get();
     }
 }
 ```
 
-The `frame` method essentially 'inverts' the existing render loop code using the new _frame_ class:
+The application loop iterates through the tasks:
 
 ```java
-protected void frame() {
-    // Acquire next swapchain image
-    final int index = swapchain.acquire();
-
-    // Render frame
-    final Frame frame = frames[index];
-    final View view = swapchain.views().get(index);
-    frame.render(view);
-
-    // Present frame
-    swapchain.present(queue);
-
-    // Update application logic
-    frame.update();
+public void run() {
+    running.set(true);
+    while(isRunning()) {
+        tasks.forEach(Runnable::run);
+    }
 }
 ```
 
-The final piece of functionality is a method to exit the loop:
+The loop is terminated by the following method:
 
 ```java
-public final void stop() {
+public void stop() {
+    if(!isRunning()) throw new IllegalStateException(...);
     running.set(false);
 }
 ```
 
+### Graceful Exit
+
+To gracefully exit the application loop we add a GLFW key listener in the main class that stops the application when the ESCAPE key is pressed:
+
+```java
+@Bean
+public static KeyListener listener(Window window, Application app) {
+    KeyListener listener = (ptr, key, scancode, action, mods) -> {
+        if(key == 256) {
+            app.stop();
+        }
+    };
+    
+    ...
+    
+    return listener;
+}
+```
+
+The listener is a GLFW callback defined as follows:
+
+```java
+interface DesktopLibraryDevice {
+    public interface KeyListener extends Callback {
+        /**
+         * Notifies a key event.
+         * @param window            Window
+         * @param key               Key index
+         * @param scancode          Key scan code
+         * @param action            Key action
+         * @param mods              Modifiers
+         */
+        void key(Pointer window, int key, int scancode, int action, int mods);
+    }
+}
+```
+
+Finally the listener is registered on the window:
+
+```
+Desktop desktop = window.desktop();
+desktop.library().glfwSetKeyCallback(window.handle(), listener);
+```
+
+Notes:
+
+* We will replace this code with a more comprehensive event handling framework later.
+
+* For the moment we hard-code the ESCAPE key.
+
+* Although not used elsewhere in the application we add the listener to the container since GLFW seems to unregister a garbage-collected listener.
+
 ### Integration
 
-We can now remove the existing render loop and add a _frame_ implementation for the demo:
+We first instantiate the application in the main class:
 
 ```java
-final IntFunction<Frame> factory = idx -> new Frame() {
-    @Override
-    public void render(View view) {
-        new Work.Builder()
-            .add(commands.get(idx))
-            .build()
-            .submit();
+@Bean
+public static Application application(List<Runnable> tasks) {
+    return new Application(tasks);
+}
+```
+
+Spring handily creates a list of the tasks for us from __all__ the instances of `Runnable` registered in the container.
+
+We add a new local component to start the loop:
+
+```java
+@Component
+static class ApplicationLoop implements CommandLineRunner {
+    private final Application app;
+    private final LogicalDevice dev;
+
+    public ApplicationLoop(Application app, LogicalDevice dev) {
+        this.app = app;
+        this.dev = dev;
     }
 
     @Override
-    public void update() {
-        // Handle input events
-        desktop.poll();
-
-        // Update view matrix
-        ...
-
-        // TODO
+    public void run(String... args) throws Exception {
+        app.run();
         dev.waitIdle();
     }
-};
+}
 ```
 
-Next we instantiate the render loop:
+Notes:
+
+* Here we use `@Component` which defines a class to be instantiated by the container.
+
+* We also move the `waitIdle` call after the loop has finished to correctly cleanup the Vulkan resources.
+
+Finally we add a further task to process the GLFW window event queue:
 
 ```java
-final Runner runner = new Runner(swapchain, factory, dev.queue(present));
-```
-
-We will also need to re-implement the keyboard handler and remove the superfluous flag (which is now a property of the runner):
-
-```java
-final KeyListener listener = (ptr, key, scancode, action, mods) -> {
-    if(key == 256) {
-        runner.stop();
+class DesktopConfiguration {
+    @Bean
+    public static Runnable poll(Desktop desktop) {
+        return desktop::poll;
     }
-};
+}
 ```
 
-Finally we start the render loop:
+Again note that the GLFW listener and polling must be performed on the main application thread.
 
-```java
-// Start render loop
-runner.run();
-
-// Wait for pending work to complete
-presentQueue.waitIdle();
-runner.destroy();
-```
-
-All this work does not change the functionality of the demo but we now have a render loop implementation that we can re-use or extend in future applications.
+When we now run the demo we should finally be able to move the window and close the application gracefully.
 
 ---
 
-## Semaphores
+## Synchronisation
 
-We will first synchronise the process of acquiring and rendering a frame using two semaphores:
-1. one to signal when a swapchain image has been acquired and is ready for rendering.
-2. another to signal when a frame has been rendered and is ready for presentation.
+### Semaphores
 
-### Semaphore Class
+So far we have avoided synchronisation by blocking the device after rendering and presentation of a frame.  However Vulkan is designed to be multi-threaded from the ground up and provides several synchronisation mechanisms that can be used by the application.
 
-A semaphore has no functionality so we implement it as a factory method on the logical device:
+A _semaphore_ is the simplest of these used to synchronise operations within or across work queues.
+
+The semaphore class is trivial since there is no public functionality:
 
 ```java
 public class Semaphore extends AbstractVulkanObject {
-    private Semaphore(Pointer handle) {
-        super(handle, LogicalDevice.this, lib::vkDestroySemaphore);
+    private Semaphore(Pointer handle, DeviceContext dev) {
+        super(handle, dev);
+    }
+
+    @Override
+    protected Destructor<Semaphore> destructor(VulkanLibrary lib) {
+        return lib::vkDestroySemaphore;
     }
 }
-
-public Semaphore semaphore() {
-    final VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
-    final PointerByReference handle = lib.factory().pointer();
-    VulkanLibrary.check(lib.vkCreateSemaphore(this.handle(), info, null, handle));
-    return new Semaphore(handle.getValue());
-}
 ```
 
-Next we refactor the swapchain to signal a semaphore when the next frame has been acquired:
+A semaphore is created using a factory method:
 
 ```java
-public int acquire(Semaphore semaphore, Fence fence) {
-    check(device().library().vkAcquireNextImageKHR(device().handle(), this.handle(), Long.MAX_VALUE, handle(semaphore), handle(fence), index));
-    return index.getValue();
+public static Semaphore create(DeviceContext dev) {
+    VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
+    VulkanLibrary lib = dev.library();
+    PointerByReference handle = lib.factory().pointer();
+    VulkanLibrary.check(lib.vkCreateSemaphore(dev, info, null, handle));
+    return new Semaphore(handle.getValue(), dev);
 }
 ```
 
-The semaphore and fence (which we will cover later in this chapter) are both optional so we add the `handle` helper to extract the handle if it is not `null`.  However note that the API expects **either** a semaphore, or a fence, or both, so we also add an invariant test in the `acquire` method (this is one of the validation errors that we are receiving).
+We create two semaphores in the render loop to signal the following conditions:
 
-Finally the presentation method is refactored to wait on a semaphore that signals when the frame is ready to be presented:
+1. The acquired swapchain image is `available` for rendering.
+
+2. The frame has been rendered and is `ready` for presentation.
+
+The semaphores are instantiated in the constructor:
+
+```java
+private final Semaphore available, ready;
+
+public RenderLoop(Swapchain swapchain, ...) {
+    DeviceContext dev = swapchain.device();
+    available = Semaphore.create(dev);
+    ready = Semaphore.create(dev);
+}
+```
+
+We pass the _available_ semaphore to the acquire method which is refactored to pass it to the API method:
+
+```java
+int index = swapchain.acquire(available);
+```
+
+The _ready_ semaphore is passed to the presentation method:
+
+```java
+swapchain.present(presentation, Set.of(ready));
+```
+
+And the method is modified to populate the relevant member of the descriptor for the presentation operation:
 
 ```java
 public void present(Queue queue, Set<Semaphore> semaphores) {
     ...
-    // Populate wait semaphores
     info.waitSemaphoreCount = semaphores.size();
-    info.pWaitSemaphores = Handle.toArray(semaphores);
+    info.pWaitSemaphores = NativeObject.toArray(semaphores);
     ...
 }
 ```
 
-### Signalling
-
-Semaphores synchronise operations across queues so we next refactor the `Work` class by adding two new data structures for _wait_ and _signal_ semaphores:
+Finally we release the semaphores when the render loop object is destroyed:
 
 ```java
-public static class Builder {
-    private final Collection<Pair<Semaphore, Integer>> wait = new ArrayList<>();
+public void close() {
+    available.close();
+    ready.close();
+}
+```
+
+If we run the demo as it now stands (with the work queue blocking still present) we will get additional errors because the semaphores are never signalled.
+
+Also note that the `submit` and `present` methods are _asynchronous_ operations, i.e. a task is queued for execution and the method returns immediately.
+
+### Work Submission
+
+To use the semaphores we extend the work class by adding two new members:
+
+```java
+public class Work {
+    ...
+    private final Map<Semaphore, Integer> wait = new HashMap<>();
     private final Set<Semaphore> signal = new HashSet<>();
 }
 ```
 
-Note that a _wait_ semaphore also has an associated `VkPipelineStageFlag` bit-mask which we compose using an Apache commons `Pair` object (we could have created a simple record but this is easier).
+The `signal` member is the set of semaphores to be signalled when the work has completed.
 
-We add a new builder method to register a _wait_ semaphore:
+Each entry in the `wait` table is a semaphore that must be in the signalled state before the work can be performed and the stages(s) of the pipeline to wait on (represented as an integer mask).
+
+We modify the builder to configure the semaphores for a work submission:
 
 ```java
-public Builder wait(Semaphore semaphore, Set<VkPipelineStage> stages) {
-    final var entry = ImmutablePair.of(semaphore, IntegerEnumeration.mask(stages));
-    wait.add(entry);
-    return this;
+public Builder wait(Semaphore semaphore, Collection<VkPipelineStage> stages) {
+    wait.put(semaphore, IntegerEnumeration.mask(stages));
 }
-```
 
-And another for a _signal_ semaphore:
-
-```java
 public Builder signal(Semaphore semaphore) {
     signal.add(semaphore);
-    return this;
 }
 ```
 
-Finally we modify the build method to add the wait semaphores in the work descriptor:
+And the populate method of the work class is updated to include the signals:
 
 ```java
-if(!wait.isEmpty()) {
-    // Populate wait semaphores
-    final var semaphores = wait.stream().map(Pair::getLeft).collect(toList());
-    info.waitSemaphoreCount = wait.size();
-    info.pWaitSemaphores = Handle.toArray(semaphores);
-    ...
+info.signalSemaphoreCount = signal.size();
+info.pSignalSemaphores = NativeObject.toArray(signal);
 ```
 
-The pipeline stage bit-mask for each wait semaphore is actually a _separate_ field in the descriptor:
+Population of the wait semaphores is slightly more complicated because the two components are separate fields (rather than an array of some child structure):
+
+We first transform the table to a list of its entries:
 
 ```java
-    ...
-    // Populate pipeline stage flags (which for some reason is a pointer to an integer array)
-    final int[] stages = wait.stream().map(Pair::getRight).mapToInt(Integer::intValue).toArray();
-    final Memory mem = new Memory(stages.length * Integer.BYTES);
-    mem.write(0, stages, 0, stages.length);
-    info.pWaitDstStageMask = mem;
-}
+var list = new ArrayList<>(wait.entrySet());
 ```
 
-The `pWaitDstStageMask` field **must** have the same length and order as the wait semaphores, hence the semaphore-mask pairs.
-
-We also add the signal semaphores to the `pSignalSemaphores` field in the descriptor in the usual manner.
-
-### Frames In-Flight
-
-There are still several issues with our implementation even if we add semaphores to the render loop:
-- The `update` method waits on the device to complete all pending work before proceeding to the next frame.
-- The render loop is essentially single-threaded for one frame.
-
-To fully utilise the multi-threaded nature of the pipeline we will:
-1. introduce the notion of multiple _in-flight frames_ executed in parallel.
-2. implement sub-pass dependencies (which we skipped back in the swapchain chapter).
-
-To track the state of an in-flight frame during rendering we add the following local class to the `Runner` that composes the synchronisation state of that frame:
+Next we construct the pointer-array for the semaphores:
 
 ```java
-public static final class FrameState {
-    private final Semaphore ready, finished;
-
-    FrameState(LogicalDevice dev) {
-        this.ready = dev.semaphore();
-        this.finished = dev.semaphore();
-    }
-}
+var semaphores = list.stream().map(Entry::getKey).collect(toList());
+info.waitSemaphoreCount = wait.size();
+info.pWaitSemaphores = NativeObject.toArray(semaphores);
 ```
 
-We create an array of in-flight frames in the constructor:
+Finally we construct the stage masks which for some reason is a pointer-to-integer array:
 
 ```java
-public class Runner {
-    private final FrameState[] states;
-    private int current;
-    ...
-
-    public Runner(Swapchain swapchain, int size, IntFunction<Frame> factory, Queue queue) {
-        ...
-        this.states = Stream.generate(() -> new FrameState(swapchain.device())).limit(size).toArray(FrameState[]::new);
-    }
-}
+int[] stages = list.stream().map(Entry::getValue).mapToInt(Integer::intValue).toArray();
+Memory mem = new Memory(stages.length * Integer.BYTES);
+mem.write(0, stages, 0, stages.length);
+info.pWaitDstStageMask = mem;
 ```
 
-The _size_ parameter specifies the number of in-flight frames (which does not necessarily have to be the same as the number of swapchain images).
-
-The render loop now iterates through the array for each frame to be rendered:
+We can now configure the work submission for the render task to use the semaphores:
 
 ```java
-protected void frame() {
-    // Start next in-flight frame
-    final FrameState state = states[current];
-
-    // Acquire next swapchain image
-    final int index = swapchain.acquire(state.ready());
-
-    // Render frame
-    final Frame frame = frames[index];
-    final View view = swapchain.views().get(index);
-    frame.render(state, view);
-
-    // Present frame
-    swapchain.present(queue, Set.of(state.finished()));
-
-    // Update application logic
-    frame.update();
-
-    // Select next in-flight frame
-    if(++current >= frames.length) {
-        current = 0;
-    }
-}
+new Work.Builder(buffer.pool())
+    .add(buffer)
+    .wait(available, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+    .signal(ready)
+    .build()
+    .submit();
 ```
 
-Note that we now have **two** arrays:
-1. The array of `frames` indexed by the `index` of the swapchain image (returned by the `acquire` method).
-2. The `states` array indexed by the `current` in-flight frame (which is cycled at the end of the loop).
+This resolves the validation errors that were due to the semaphores never being signalled.
 
-> The names are slightly over-loaded but they will have to do.
+### Fence
 
-Lastly we modify `Frame` to accept the in-flight frame state so that the demo can synchronise the render operation:
+However if one were to remove the `waitIdle` calls in the existing code the validation layer will again flood with errors, we are trying to use the command buffers concurrently for multiple frames.  Additionally the application is continually queueing up rendering work without checking whether it actually completes (which can be seen if one watches the memory usage).
 
-```java
-public void render(FrameState state, View view) {
-    new Work.Builder()
-        .add(commands.get(idx))
-        .wait(state.ready(), VkPipelineStage.TOP_OF_PIPE)
-        .signal(state.finished())
-        .build();
-}
-```
-
-The `TOP_OF_PIPE` is a special-case pipeline stage that indicates that the semaphore should wait until the **entire** pipeline has completed execution.
-
-The semaphores are released after use:
-
-```java
-public class Runner {
-    public final class FrameState {
-        private void destroy() {
-            ready.destroy();
-            finished.destroy();
-        }
-    }
-
-    public void destroy() {
-        for(FrameState f : frames) {
-            f.destroy();
-        }
-    }
-}
-```
-
-### Sub-Pass Dependencies
-
-The render pass automatically manages image layout transitions, however until now we have forced the demo to wait before rendering and presenting a frame.
-To effectively utilise the pipeline we need to configure the _dependencies_ between the sub-passes.
-Note that although we currently only have a single sub-pass there is an _implicit_ sub-pass at the start and end of the overall render pass.
-
-To configure the sub-pass dependencies we add a new nested builder to the render pass class:
-
-```java
-public class RenderPass {
-    public static class Builder {
-        private final List<DependencyBuilder> dependencies = new ArrayList<>();
-    }
-    
-    ...
-
-    public DependencyBuilder dependency(int src, int dest) {
-        return new DependencyBuilder(src, dest);
-    }
-}
-```
-
-A sub-pass _dependency_ is comprised of configuration for a _source_ and a _destination_ sub-pass.
-
-```java
-public class DependencyBuilder {
-    public class Dependency {
-        ...
-    }
-    
-    private final Dependency src, dest;
-
-    private DependencyBuilder(int src, int dest) {
-        this.src = new Dependency(src);
-        this.dest = new Dependency(dest);
-    }
-
-    public Dependency source() {
-        return src;
-    }
-
-    public Dependency destination() {
-        return dest;
-    }
-
-    public Builder build() {
-        dependencies.add(this);
-        return Builder.this;
-    }
-}
-```
-
-The source and destination are essentially the same data so we create a single object that represents both (modifier methods omitted for brevity):
-
-```java
-public class Dependency {
-    private final int index;
-    private final Set<VkPipelineStage> stages = new HashSet<>();
-    private final Set<VkAccess> access = new HashSet<>();
-}
-```
-
-As usual we implement a `populate` method to configure a dependency:
-
-```java
-private void populate(VkSubpassDependency dep) {
-    // Populate source
-    dep.srcSubpass = src.index;
-    dep.srcStageMask = src.stages();
-    dep.srcAccessMask = src.access();
-
-    // Populate destination
-    dep.dstSubpass = dest.index;
-    dep.dstStageMask = dest.stages();
-    dep.dstAccessMask = dest.access();
-}
-```
-
-And we modify the parent build method to add the array of dependencies to the descriptor for the render pass:
-
-```java
-public RenderPass build() {
-    ...
-
-    // Add dependencies
-    info.dependencyCount = dependencies.size();
-    info.pDependencies = StructureCollector.toPointer(VkSubpassDependency::new, dependencies, DependencyBuilder::populate);
-    
-    ...
-}
-```
-
-Finally we add a constant for the special case index of the implicit sub-passes:
-
-```java
-public class RenderPass {
-    /**
-     * Index of the implicit sub-pass before or after the render pass.
-     */
-    public static final int VK_SUBPASS_EXTERNAL = (~0);
-}
-```
-
-> The weird looking `(~0)` value is copied from the Vulkan header.  The value is actually `-1` but we retain the above for consistency (apparently this is legal Java!)
-
-### Integration
-
-With all the above in place we can configure the demo to register a sub-pass dependency:
-
-```java
-final RenderPass pass = new RenderPass.Builder(dev)
-    .attachment()
-        ....
-    .subpass()
-        .colour(0, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-        .build()
-    .dependency(RenderPass.VK_SUBPASS_EXTERNAL, 0)
-        .source().stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
-        .destination().stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
-        .destination().access(VkAccess.COLOR_ATTACHMENT_WRITE)
-        .build()
-    .build();
-```
-
-Here we create a dependency between the implicit starting sub-pass and our single sub-pass (index zero) that specifies the following:
-1. The `source` clause tells the render pass to wait for the colour attachment of the swapchain image to be available.
-2. Our sub-pass (the `destination`) waits until the colour attachment is ready for writing (rendering) before it is executed.
-
-We also change the pipeline stage of the _wait_ semaphore in the `update` method to `COLOR_ATTACHMENT_OUTPUT` rather than `TOP_OF_PIPE` meaning the render task waits on the swapchain image rather than the entire pipeline.
-
----
-
-## Fences
-
-Although all this new functionality optimises use of the pipeline and render pass, if we remove the `waitIdle` call in the `update` method we still get validation errors - the application is constantly queueing up more render tasks that are trying to reuse the same command buffers.
-
-### Fence Class
-
-Vulkan provides another synchronisation mechanism called a _fence_ that allows application code to wait for a signalled state (whereas a semaphore only synchronises between queues).
-
-The _fence_ domain object is relatively simple:
+The second synchronisation mechanism is the _fence_ which can be used to synchronise Vulkan and application code:
 
 ```java
 public class Fence extends AbstractVulkanObject {
-    public static Fence create(LogicalDevice dev, VkFenceCreate... flags) {
-        // Init descriptor
-        final VkFenceCreateInfo info = new VkFenceCreateInfo();
-        info.flags = IntegerEnumeration.mask(flags);
-
-        // Create fence
-        final VulkanLibrary lib = dev.library();
-        final PointerByReference handle = lib.factory().pointer();
-        check(lib.vkCreateFence(dev.handle(), info, null, handle));
-
-        // Create domain object
-        return new Fence(handle.getValue(), dev);
-    }
-
-    Fence(Pointer handle, LogicalDevice dev) {
-        super(handle, dev, dev.library()::vkDestroyFence);
+    @Override
+    protected Destructor<Fence> destructor(VulkanLibrary lib) {
+        return lib::vkDestroyFence;
     }
 }
 ```
 
-The following method is used to synchronise the application with the graphics hardware:
+Again a fence is created using a factory:
 
 ```java
-/**
- * Waits for a group of fences.
- * @param dev           Logical device
- * @param fences        Fences
- * @param all           Whether to wait for all or any fence
- * @param timeout       Timeout (ms)
- * @throws VulkanException if the API method fails
- */
-public static void wait(LogicalDevice dev, Collection<Fence> fences, boolean all, long timeout) {
-    final Pointer[] array = Handle.toArray(fences);
-    final VulkanLibrary lib = dev.library();
-    check(lib.vkWaitForFences(dev.handle(), array.length, array, VulkanBoolean.of(all), timeout));
+public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
+    // Init descriptor
+    VkFenceCreateInfo info = new VkFenceCreateInfo();
+    info.flags = IntegerEnumeration.mask(flags);
+
+    // Create fence
+    VulkanLibrary lib = dev.library();
+    PointerByReference handle = lib.factory().pointer();
+    check(lib.vkCreateFence(dev, info, null, handle));
+
+    // Create domain object
+    return new Fence(handle.getValue(), dev);
 }
 ```
 
-After use a fence can be reset back to the unsignalled state:
+A fence can be signalled in the same manner as a semaphore but it can also be explicitly waited on by the application:
 
 ```java
-/**
- * Resets a group of fences.
- * @param dev           Logical device
- * @param fences        Fences to reset
- * @throws VulkanException if the fences cannot be reset
- */
-public static void reset(LogicalDevice dev, Collection<Fence> fences) {
-    final Pointer[] array = Handle.toArray(fences);
-    final VulkanLibrary lib = dev.library();
-    check(lib.vkResetFences(dev.handle(), array.length, array));
+public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
+    Pointer array = NativeObject.toArray(fences);
+    VulkanLibrary lib = dev.library();
+    check(lib.vkWaitForFences(dev, fences.size(), array, VulkanBoolean.of(all), timeout));
 }
 ```
 
-We also provide convenience methods to reset or wait on a single fence:
+Where _all_ specifies whether to wait for any or all of the supplied fences and _timeout_ is expressed in milliseconds.
+
+Signalled fences can also be reset:
+
+```java
+public static void reset(DeviceContext dev, Collection<Fence> fences) {
+    Pointer array = NativeObject.toArray(fences);
+    VulkanLibrary lib = dev.library();
+    check(lib.vkResetFences(dev, fences.size(), array));
+}
+```
+
+We also provide convenience equivalents of these two methods for the fence instance itself:
 
 ```java
 public void reset() {
@@ -662,15 +445,13 @@ public void waitReady() {
 }
 ```
 
-The application can also programatically query the state of a fence:
+The state of the fence can also be queried:
 
 ```java
-private static final int SIGNALLED = VkResult.SUCCESS.value();
-private static final int NOT_SIGNALLED = VkResult.NOT_READY.value();
-
 public boolean signalled() {
-    final LogicalDevice dev = this.device();
-    final int result = dev.library().vkGetFenceStatus(dev.handle(), this.handle());
+    DeviceContext dev = this.device();
+    VulkanLibrary lib = dev.library();
+    int result = lib.vkGetFenceStatus(dev, this);
     if(result == SIGNALLED) {
         return true;
     }
@@ -684,78 +465,152 @@ public boolean signalled() {
 }
 ```
 
-### Integration
-
-First we add a fence to the in-flight frame state object:
+Where the state codes are constants:
 
 ```java
-public final class FrameState {
-    ...
-    private final Fence fence;
-
-    FrameState(Frame frame) {
-        ...
-        this.fence = Fence.create(dev, VkFenceCreate.SIGNALED);
-    }
-}
+private static final int SIGNALLED = VkResult.SUCCESS.value();
+private static final int NOT_SIGNALLED = VkResult.NOT_READY.value();
 ```
 
-Note that the fence is initialised to the signalled state, the reason for this will become apparent shortly.
-
-The render loop is modified to wait for the fence to be signalled before:
-1. acquiring the next swapchain image.
-2. and rendering the frame.
-
-We also pass the `fence` to the swapchain `acquire` method resulting in the following:
+We can now add a fence to the render loop component:
 
 ```java
-protected void frame() {
-    // Start next frame
-    final FrameState state = frames[current];
-    state.waitFence();
-
-    // Acquire next swapchain image
-    // TODO - using same fence for both cases, does this work? need 1. for frame itself and 2. for image being rendered (pass null to acquire)?
-    final int index = swapchain.acquire(state.ready(), state.fence());
-    state.waitFence();
-    
-    ...
-}
+fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
 ```
 
-The `waitFence` helper method combines waiting for the fence to be signalled and then resets it:
+At the start of the render loop we block on the fence to ensure the previous frame has completed, the fence is initialised to the signalled state for this reason.
 
-```java
-private void waitFence() {
-    fence.waitReady();
-    fence.reset();
-}
-```
-
-The fence is passed to the `submit` method when we render a frame:
+After resetting the fence we then modify the work submission code to accept the fence, which just involves adding the parameter and passing it to the API:
 
 ```java
 public static void submit(List<Work> work, Fence fence) {
     ...
-    final VulkanLibrary lib = queue.device().library();
-    check(lib.vkQueueSubmit(queue.handle(), array.length, array, handle(fence)));
+    check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
 }
 ```
 
-We can finally remove the `waitIdle` call in the `update` method and should no longer see validation errors when we run the demo.
+The refactored render loop now looks like this:
 
-### ???
+```java
+// Wait for previous work to complete
+fence.waitReady();
 
-issue
-GLFW listeners being garbage collected
-separate thread with weak ref to listener -> is released!!!
-TODO - solution
+// Retrieve next swapchain image index
+final int index = swapchain.acquire(available, null);
 
----
+// Init frame sync
+fence.reset();
 
-## XXX
+// Render frame
+final Buffer buffer = factory.apply(index);
+new Work.Builder(buffer.pool())
+    .add(buffer)
+    .wait(available, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+    .signal(ready)
+    .build()
+    .submit(fence);
 
-*** REFACTOR TO FRAME PER SWAPCHAIN IMAGE - BUFFER, DESCRIPTOR SETS, FRAME BUFFER, ETC ***
+// Present frame
+swapchain.present(presentation, index, Set.of(ready));
+```
+
+We also release the fence in the `close` method.
+
+The demo should now run without validation errors (for the render loop anyway), however there are still further improvements we can implement.
+
+### Sub-Pass Dependencies
+
+TODO
+
+### Frames In-Flight
+
+The render loop is still likely not fully utilising the pipeline since the code for a frame is essentially single-threaded, completed pipeline stages could be used to render the next frame.
+
+Here we introduce multiple _in-flight_ frames to make better use of the pipeline whilst still bounding the overall amount of work.
+
+We first wrap up the existing render code and the synchronisation primitives into a separate local class representing an instance of an in-flight frame:
+
+```java
+private class Frame {
+    private final Semaphore available, ready;
+    private final Fence fence;
+
+    private void render() {
+        ...
+    }
+    
+    private void close() {
+        ...
+    }
+}
+```
+
+Next we add a new parameter to the constructor and instantiate an array of in-flight frames:
+
+```java
+public class RenderLoop {
+    private final Frame[] frames;
+    private int current;
+
+    public RenderLoop(Swapchain swapchain, int frames, ...) {
+        this.frames = new Frame[frames];
+        Arrays.setAll(this.frames, ignored -> new Frame());
+    }
+}
+```
+
+The frames are also released on destruction:
+
+```java
+public void close() {
+    for(Frame f : frames) {
+        f.close();
+    }
+}
+```
+
+The main render loop is refactored to iterate through the array of in-flight frames on each invocation:
+
+```java
+public void run() {
+    // Render next frame
+    final Frame frame = frames[current];
+    frame.render();
+
+    // Move to next in-flight frame
+    if(++current >= frames.length) {
+        current = 0;
+    }
+}
+```
+
+Since the majority of the Vulkan methods are asynchronous we should now be able to process multiple in-flight frames in parallel, with the synchronisation implemented above bounding the work (we should no longer be seeing increasing memory usage).
+
+There is one further potential failure case: if the number of in-flight frames is larger than the number of swapchain images and/or an image is acquired out-of-order we may end up rendering an image that is already in-flight.
+
+To avoid this scenario we track the swapchain images that are actively in-flight:
+
+```java
+public class RenderLoop {
+    ...
+    private final Frame[] active;
+
+    public RenderLoop(...) {
+        ...
+        active = new Frame[swapchain.views().size()];
+        Arrays.fill(active, frames[0]);
+    }
+}
+```
+
+After we acquire the image index we additionally wait on the frame currently using the image and then update the mapping:
+
+```java
+active[index].fence.waitReady();
+active[index] = this;
+```
+
+In the demo application we set the number of in-flight frames to be the same as the number of swapchain images.
 
 ---
 
@@ -763,8 +618,10 @@ TODO - solution
 
 In this chapter we:
 
-- Factored out the render loop so that it can be reused in future demos and applications.
+- Factored out a reusable render loop component.
 
-- Added synchronisation to ensure that the frame rendering is correctly synchronised within the pipeline and the work queues.
+- Factored out the application loop.
 
-- Implemented a temporary means of gracefully terminating the demo.
+- Implemented synchronisation to ensure that the frame rendering is correctly synchronised within the pipeline and across the work queues.
+
+- Integrated the GLFW window event queue and implemented a means of gracefully terminating the demo.

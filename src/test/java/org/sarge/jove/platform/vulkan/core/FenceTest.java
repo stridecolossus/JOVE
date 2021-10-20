@@ -9,9 +9,12 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -53,13 +56,13 @@ public class FenceTest extends AbstractVulkanTest {
 	@Test
 	void reset() {
 		fence.reset();
-		verify(lib).vkResetFences(dev, 1, new Fence[]{fence});
+		verify(lib).vkResetFences(dev, 1, NativeObject.toArray(List.of(fence)));
 	}
 
 	@Test
 	void waitReady() {
 		fence.waitReady();
-		verify(lib).vkWaitForFences(dev, 1, new Fence[]{fence}, VulkanBoolean.TRUE, Long.MAX_VALUE);
+		verify(lib).vkWaitForFences(dev, 1, NativeObject.toArray(List.of(fence)), VulkanBoolean.TRUE, Long.MAX_VALUE);
 	}
 
 	@Test
@@ -75,12 +78,12 @@ public class FenceTest extends AbstractVulkanTest {
 		when(lib.vkCreateFence(eq(dev), captor.capture(), isNull(), isA(PointerByReference.class))).thenReturn(VulkanLibrary.SUCCESS);
 
 		// Create fence
-		fence = Fence.create(dev, VkFenceCreateFlag.VK_FENCE_CREATE_SIGNALED_BIT);
+		fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
 		assertNotNull(fence);
 
 		// Check descriptor
 		final VkFenceCreateInfo info = captor.getValue();
 		assertNotNull(info);
-		assertEquals(VkFenceCreateFlag.VK_FENCE_CREATE_SIGNALED_BIT.value(), info.flags);
+		assertEquals(VkFenceCreateFlag.SIGNALED.value(), info.flags);
 	}
 }

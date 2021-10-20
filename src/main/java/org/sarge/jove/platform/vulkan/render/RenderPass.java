@@ -94,10 +94,11 @@ public class RenderPass extends AbstractVulkanObject {
 		 * @return New dependency builder
 		 * @throws IllegalArgumentException if the source index is greater-than the destination
 		 */
-		public DependencyBuilder dependency(int src, int dest) {
-			final var dep = new DependencyBuilder(src, dest);
-			dependencies.add(dep);
-			return dep;
+		public DependencyBuilder dependency() { //int src, int dest) {
+			return new DependencyBuilder();
+//			final var dep = new DependencyBuilder(src, dest);
+//			dependencies.add(dep);
+//			return dep;
 		}
 
 		/**
@@ -222,7 +223,7 @@ public class RenderPass extends AbstractVulkanObject {
 			 * Source or destination sub-pass dependency.
 			 */
 			public class Dependency {
-				private final int index;
+				private int index;
 				private final Set<VkPipelineStage> stages = new HashSet<>();
 				private final Set<VkAccess> access = new HashSet<>();
 
@@ -256,11 +257,11 @@ public class RenderPass extends AbstractVulkanObject {
 					return this;
 				}
 
-				/**
-				 * @return Pipeline stages mask
-				 */
+//				/**
+//				 * @return Pipeline stages mask
+//				 */
 				private int stages() {
-					check();
+//					check();
 					return IntegerEnumeration.mask(stages);
 				}
 
@@ -275,46 +276,44 @@ public class RenderPass extends AbstractVulkanObject {
 				 * Constructs this dependency.
 				 */
 				public DependencyBuilder build() {
-					check();
+					if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stage(s) specified for sub-pass dependency: subpass=" + index);
 					return DependencyBuilder.this;
 				}
-
-				private void check() {
-					if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stage(s) specified for sub-pass dependency: subpass=" + index);
-				}
 			}
 
-			private final Dependency src, dest;
+			private Dependency src, dest;
 
-			/**
-			 * Constructor.
-			 * @param src		Source index
-			 * @param dest		Destination index
-			 * @throws IllegalArgumentException if the source index is greater-than-or-equal to the destination
-			 */
-			private DependencyBuilder(int src, int dest) {
-				if(dest == VK_SUBPASS_EXTERNAL) {
-					if(src == VK_SUBPASS_EXTERNAL) throw new IllegalArgumentException("Invalid implicit indices");
-				}
-				else
-				if(src >= dest) {
-					throw new IllegalArgumentException(String.format("Invalid dependency indices: src=%d dest=%d", src, dest));
-				}
-				this.src = new Dependency(src);
-				this.dest = new Dependency(dest);
-			}
+//			/**
+//			 * Constructor.
+//			 * @param src		Source index
+//			 * @param dest		Destination index
+//			 * @throws IllegalArgumentException if the source index is greater-than-or-equal to the destination
+//			 */
+//			private DependencyBuilder(int src, int dest) {
+//				if(dest == VK_SUBPASS_EXTERNAL) {
+//					if(src == VK_SUBPASS_EXTERNAL) throw new IllegalArgumentException("Invalid implicit indices");
+//				}
+//				else
+//				if(src >= dest) {
+//					throw new IllegalArgumentException(String.format("Invalid dependency indices: src=%d dest=%d", src, dest));
+//				}
+////				this.src = new Dependency(src);
+////				this.dest = new Dependency(dest);
+//			}
 
 			/**
 			 * @return Source dependency
 			 */
-			public Dependency source() {
+			public Dependency source(int index) {
+				src = new Dependency(index);
 				return src;
 			}
 
 			/**
 			 * @return Destination dependency
 			 */
-			public Dependency destination() {
+			public Dependency destination(int index) {
+				dest = new Dependency(index);
 				return dest;
 			}
 
@@ -338,8 +337,21 @@ public class RenderPass extends AbstractVulkanObject {
 			 * Constructs this dependency.
 			 */
 			public Builder build() {
-				src.check();
-				dest.check();
+				if(src == null) throw new IllegalArgumentException("");
+				if(dest == null) throw new IllegalArgumentException("");
+
+				if((src.index == VK_SUBPASS_EXTERNAL) && (dest.index == VK_SUBPASS_EXTERNAL)) {
+					throw new IllegalArgumentException("Invalid implicit indices");
+				}
+
+				if(src.index >= dest.index) {
+					throw new IllegalArgumentException("Source index must be less-than destination");
+				}
+
+				dependencies.add(this);
+
+				//src.check();
+				//dest.check();
 				return Builder.this;
 			}
 		}

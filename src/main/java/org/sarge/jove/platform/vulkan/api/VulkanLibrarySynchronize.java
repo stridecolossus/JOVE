@@ -5,7 +5,6 @@ import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Fence;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
@@ -24,7 +23,7 @@ interface VulkanLibrarySynchronize {
 	 * @param pSemaphore		Returned semaphore
 	 * @return Result code
 	 */
-	int vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSemaphore);
+	int vkCreateSemaphore(DeviceContext device, VkSemaphoreCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSemaphore);
 
 	/**
 	 * Destroys a semaphore.
@@ -42,7 +41,7 @@ interface VulkanLibrarySynchronize {
 	 * @param pSemaphore		Returned fence
 	 * @return Result code
 	 */
-	int vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFence);
+	int vkCreateFence(DeviceContext device, VkFenceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFence);
 
 	/**
 	 * Destroys a fence.
@@ -59,7 +58,7 @@ interface VulkanLibrarySynchronize {
 	 * @param pFences			Fences
 	 * @return Result code
 	 */
-	int vkResetFences(DeviceContext device, int fenceCount, Fence[] pFences);
+	int vkResetFences(DeviceContext device, int fenceCount, Pointer pFences);
 
 	/**
 	 * Retrieves the status of a given fence.
@@ -79,6 +78,6 @@ interface VulkanLibrarySynchronize {
 	 * @param timeout			Timeout or {@link Long#MAX_VALUE}
 	 * @return Result code
 	 */
-	int vkWaitForFences(DeviceContext device, int fenceCount, Fence[] pFences, VulkanBoolean waitAll, long timeout);
+	int vkWaitForFences(DeviceContext device, int fenceCount, Pointer pFences, VulkanBoolean waitAll, long timeout);
 }
 

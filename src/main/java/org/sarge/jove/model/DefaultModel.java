@@ -106,6 +106,13 @@ public class DefaultModel extends AbstractModel {
 		protected final List<Vertex> vertices = new ArrayList<>();
 
 		/**
+		 * @return Whether this model is empty
+		 */
+		public boolean isEmpty() {
+			return vertices.isEmpty();
+		}
+
+		/**
 		 * Sets the drawing primitive (default is {@link Primitive#TRIANGLE_STRIP}).
 		 * @param primitive Drawing primitive
 		 */

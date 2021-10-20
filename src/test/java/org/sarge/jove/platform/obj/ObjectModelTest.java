@@ -34,6 +34,7 @@ public class ObjectModelTest {
 	@Test
 	void start() {
 		model.position(Point.ORIGIN);
+		model.vertex(1, null, null);
 		model.start();
 		assertEquals(2, model.build().count());
 	}

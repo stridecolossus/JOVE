@@ -635,7 +635,7 @@ public static Buffer submit(Command cmd, Pool pool) {
 
     // Submit work
     Work work = Work.of(buffer);
-    work.submit(null);
+    work.submit();
 
     return buffer;
 }

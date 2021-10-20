@@ -419,26 +419,22 @@ We add the following to acquire the index of the next image to be rendered:
 public class Swapchain ... {
     private final IntByReference index = new IntByReference();
     
-    public int acquire(Semaphore semaphore, Fence fence) {
+    public int acquire() {
         ...
-        check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
+        check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, null, null, index));
         return index.getValue();
     }
 }
 ```
 
-The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter when we fully implement the render loop.
+The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter when we fully implement the render loop.  For the moment we will leave these values as `null` in the acquire method.
 
 When an image has been rendered it can be presented to the surface, which requires population of a Vulkan descriptor for the presentation task:
 
 ```java
-public void present(Queue queue, Set<Semaphore> semaphores) {
+public void present(Queue queue) {
     // Create presentation descriptor
     VkPresentInfoKHR info = new VkPresentInfoKHR();
-
-    // Populate wait semaphores
-    info.waitSemaphoreCount = semaphores.size();
-    info.pWaitSemaphores = NativeObject.toArray(semaphores);
 
     // Populate swap-chain
     info.swapchainCount = 1;

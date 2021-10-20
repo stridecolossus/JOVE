@@ -80,6 +80,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		assertEquals(Swapchain.DEFAULT_FORMAT, swapchain.format());
 		assertEquals(new Dimensions(3, 4), swapchain.extents());
 		assertEquals(List.of(view), swapchain.views());
+		assertEquals(1, swapchain.count());
 	}
 
 	@Test
@@ -111,7 +112,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 //
 //				mock(Queue.class);
 //		when(queue.handle()).thenReturn(new Handle(new Pointer(42)));
-		swapchain.present(queue, Set.of(semaphore));
+		swapchain.present(queue, 0, Set.of(semaphore));
 
 		// Check API
 		final ArgumentCaptor<VkPresentInfoKHR> captor = ArgumentCaptor.forClass(VkPresentInfoKHR.class);

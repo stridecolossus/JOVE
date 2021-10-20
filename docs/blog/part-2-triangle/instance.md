@@ -396,6 +396,8 @@ public static Desktop create() {
 }
 ```
 
+Note that the new package is called `desktop` rather than the GLFW acronym.
+
 ### Integration
 
 Finally we can create our first demo application to instantiate a Vulkan instance for the local hardware:

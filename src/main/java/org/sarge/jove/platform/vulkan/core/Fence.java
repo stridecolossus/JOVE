@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -33,7 +34,7 @@ public class Fence extends AbstractVulkanObject {
 	 * @return New fence
 	 * @throws VulkanException if the fence cannot be created
 	 */
-	public static Fence create(LogicalDevice dev, VkFenceCreateFlag... flags) {
+	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 		// Init descriptor
 		final VkFenceCreateInfo info = new VkFenceCreateInfo();
 		info.flags = IntegerEnumeration.mask(flags);
@@ -54,9 +55,9 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the fences cannot be reset
 	 */
 	public static void reset(DeviceContext dev, Collection<Fence> fences) {
-		final Fence[] array = fences.toArray(Fence[]::new);
+		final Pointer array = NativeObject.toArray(fences);
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkResetFences(dev, array.length, array));
+		check(lib.vkResetFences(dev, fences.size(), array));
 	}
 
 	/**
@@ -68,10 +69,9 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the API method fails
 	 */
 	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
-//		final Handle array = Handle.toArray(fences);
-		final Fence[] array = fences.toArray(Fence[]::new);
+		final Pointer array = NativeObject.toArray(fences);
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkWaitForFences(dev, array.length, array, VulkanBoolean.of(all), timeout));
+		check(lib.vkWaitForFences(dev, fences.size(), array, VulkanBoolean.of(all), timeout));
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class Fence extends AbstractVulkanObject {
 	 * @param handle		Handle
 	 * @param dev			Logical device
 	 */
-	Fence(Pointer handle, LogicalDevice dev) {
+	Fence(Pointer handle, DeviceContext dev) {
 		super(handle, dev);
 	}
 

@@ -102,6 +102,11 @@ class DefaultModelTest {
 		}
 
 		@Test
+		void constructor() {
+			assertEquals(true, builder.isEmpty());
+		}
+
+		@Test
 		void build() {
 			// Build model
 			final DefaultModel model = builder
@@ -117,6 +122,7 @@ class DefaultModelTest {
 			assertEquals(false, model.isIndexed());
 			assertNotNull(model.vertices());
 			assertEquals(Optional.empty(), model.index());
+			assertEquals(false, builder.isEmpty());
 		}
 
 		@Test
@@ -126,6 +132,7 @@ class DefaultModelTest {
 			assertEquals(new Header(List.of(), Primitive.TRIANGLE_STRIP, 0, false), model.header());
 			assertNotNull(model.vertices());
 			assertEquals(Optional.empty(), model.index());
+			assertEquals(true, builder.isEmpty());
 		}
 	}
 }

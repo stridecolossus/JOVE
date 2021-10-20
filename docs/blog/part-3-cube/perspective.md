@@ -791,7 +791,7 @@ We should now be able to see the fully 3D cube:
 
 ### Animation
 
-To animate the cube rotation we first add a _period_ property to the application configuration which is used to terminate the render loop:
+To animate the cube rotation we first add a `while` loop to render multiple frames which terminates after a configurable period:
 
 ```java
 long period = cfg.getPeriod();
@@ -832,6 +832,12 @@ uniform.load(m);
 Hopefully we can now finally see the goal for this chapter: the proverbial rotating textured cube.
 
 Huzzah!
+
+Note that there are still a couple of problems with the render loop that we will address in the next section:
+
+* The GLFW event queue thread is still blocked.
+
+* The render loop will generate validation errors on every frame.
 
 ---
 

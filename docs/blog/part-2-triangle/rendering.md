@@ -499,18 +499,17 @@ Although we have a double-buffer swapchain and many of the components required t
 
 ```java
 // Start next frame
-Semaphore semaphore = dev.semaphore();
-swapchain.acquire(null, null);
+swapchain.acquire();
 
 // Render frame
-Work.of(render).submit(null);
+Work.of(render).submit();
 
 // Wait for frame
 Pool pool = render.pool();
 pool.waitIdle();
 
 // Present frame
-swapchain.present(pool.queue(), Set.of());
+swapchain.present(pool.queue());
 
 // Wait...
 Thread.sleep(1000);
@@ -523,6 +522,8 @@ Notes:
 * We briefly block execution at the end of the 'loop' so we have a chance of seeing the results (if there are any).
  
 * Obviously this is temporary code just sufficient to test this first demo - we will be implementing a proper render loop in future chapters.
+
+* In particular the window will be non-functional, i.e. cannot be moved or closed.
 
 ### Conclusion
 

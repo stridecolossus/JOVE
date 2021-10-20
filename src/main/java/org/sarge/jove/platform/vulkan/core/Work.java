@@ -228,6 +228,8 @@ public class Work {
 			return this;
 		}
 
+		// TODO - check not wait/signal same
+
 		/**
 		 * Adds a semaphore upon which to wait before executing this batch.
 		 * @param semaphore 	Wait semaphore
