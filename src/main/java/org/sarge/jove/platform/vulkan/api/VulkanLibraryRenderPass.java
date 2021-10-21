@@ -5,7 +5,6 @@ import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSubpassContents;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 
 import com.sun.jna.Pointer;
@@ -23,7 +22,7 @@ interface VulkanLibraryRenderPass {
 	 * @param pRenderPass		Returned render pass handle
 	 * @return Result code
 	 */
-	int vkCreateRenderPass(LogicalDevice device, VkRenderPassCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pRenderPass);
+	int vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pRenderPass);
 
 	/**
 	 * Destroys a render pass.

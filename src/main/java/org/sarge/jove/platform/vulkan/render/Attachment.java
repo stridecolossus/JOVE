@@ -35,7 +35,7 @@ public class Attachment {
 	 * Populates a descriptor for this descriptor.
 	 * @param desc Attachment descriptor
 	 */
-	public void populate(VkAttachmentDescription attachment) {
+	void populate(VkAttachmentDescription attachment) {
 		attachment.format = desc.format;
 		attachment.samples = desc.samples;
 		attachment.loadOp = desc.loadOp;

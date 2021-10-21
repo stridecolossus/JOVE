@@ -1,20 +1,28 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkAttachmentDescription;
+import org.sarge.jove.platform.vulkan.VkAttachmentReference;
+import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
+import org.sarge.jove.platform.vulkan.VkSubpassDependency;
+import org.sarge.jove.platform.vulkan.VkSubpassDescription;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
+import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency;
+import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency.Dependency;
 import org.sarge.jove.util.StructureHelper;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -28,7 +36,31 @@ public class RenderPass extends AbstractVulkanObject {
 	/**
 	 * Index of the implicit sub-pass before or after the render pass.
 	 */
-	public static final int VK_SUBPASS_EXTERNAL = (~0);
+	private static final int VK_SUBPASS_EXTERNAL = (~0);
+
+	/**
+	 * Creates a render-pass.
+	 * @param dev			Logical device
+	 * @param subpasses		Sub-passes
+	 * @return New render-pass
+	 * @throws IllegalArgumentException if the list of sub-passes is empty
+	 * @throws IllegalArgumentException for a sub-pass dependency that refers to a sub-pass not present in the given list
+	 */
+	public static RenderPass create(DeviceContext dev, List<Subpass> subpasses) {
+		// Build render-pass descriptor
+		if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
+		if(subpasses.contains(Subpass.EXTERNAL)) throw new IllegalArgumentException("Cannot explicitly use the EXTERNAL sub-pass");
+		final Helper helper = new Helper(subpasses);
+		final VkRenderPassCreateInfo info = helper.populate();
+
+		// Allocate render pass
+		final VulkanLibrary lib = dev.library();
+		final PointerByReference pass = lib.factory().pointer();
+		check(lib.vkCreateRenderPass(dev, info, null, pass));
+
+		// Create render pass
+		return new RenderPass(pass.getValue(), dev, helper.attachments);
+	}
 
 	private final List<Attachment> attachments;
 
@@ -38,13 +70,13 @@ public class RenderPass extends AbstractVulkanObject {
 	 * @param dev				Logical device
 	 * @param attachments		Attachments
 	 */
-	private RenderPass(Pointer handle, LogicalDevice dev, List<Attachment> attachments) {
+	private RenderPass(Pointer handle, DeviceContext dev, List<Attachment> attachments) {
 		super(handle, dev);
-		this.attachments = List.copyOf(attachments);
+		this.attachments = attachments;
 	}
 
 	/**
-	 * @return Attachments
+	 * @return Attachments used in this render-pass
 	 */
 	public List<Attachment> attachments() {
 		return attachments;
@@ -55,62 +87,41 @@ public class RenderPass extends AbstractVulkanObject {
 		return lib::vkDestroyRenderPass;
 	}
 
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
+				.append(attachments)
+				.build();
+	}
+
 	/**
-	 * Builder for a render pass.
+	 * Helper for building the render-pass descriptors.
 	 */
-	public static class Builder {
-		private final List<Attachment> attachments = new ArrayList<>();
-		private final List<SubPassBuilder> subpasses = new ArrayList<>();
-		private final List<DependencyBuilder> dependencies = new ArrayList<>();
+	private static class Helper {
+		private final List<Subpass> subpasses;
+		private final List<Attachment> attachments;
 
-		/**
-		 * Adds an attachment to this render pass.
-		 * @param attachment Attachment to add
-		 * @return Attachment index
-		 */
-		private int add(Attachment attachment) {
-			Check.notNull(attachment);
-			if(!attachments.contains(attachment)) {
-				attachments.add(attachment);
-			}
-			return attachments.indexOf(attachment);
+		private Helper(List<Subpass> subpasses) {
+			this.subpasses = subpasses;
+			this.attachments = attachments(subpasses);
 		}
 
 		/**
-		 * Starts a sub-pass.
-		 * @return New sub-pass builder
+		 * Enumerates <b>all</b> the attachments used in this render-pass.
 		 */
-		public SubPassBuilder subpass() {
-			return new SubPassBuilder();
+		private static List<Attachment> attachments(List<Subpass> subpasses) {
+			return subpasses
+					.stream()
+					.flatMap(Subpass::attachments)
+					.distinct()
+					.collect(toList());
 		}
 
 		/**
-		 * Starts a new sub-pass dependency.
-		 * <p>
-		 * The special case {@link RenderPass#VK_SUBPASS_EXTERNAL} index is used for the implicit sub-pass before or after the render pass.
-		 * <p>
-		 * @param src		Source index
-		 * @param dest		Destination index
-		 * @return New dependency builder
-		 * @throws IllegalArgumentException if the source index is greater-than the destination
+		 * Builds the render-pass descriptor.
 		 */
-		public DependencyBuilder dependency() { //int src, int dest) {
-			return new DependencyBuilder();
-//			final var dep = new DependencyBuilder(src, dest);
-//			dependencies.add(dep);
-//			return dep;
-		}
-
-		/**
-		 * Constructs this render pass.
-		 * @param dev Logical device
-		 * @return New render pass
-		 */
-		public RenderPass build(LogicalDevice dev) {
-			// Validate
-			if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one sub-pass must be specified");
-			assert !attachments.isEmpty();
-
+		private VkRenderPassCreateInfo populate() {
 			// Create render pass descriptor
 			final VkRenderPassCreateInfo info = new VkRenderPassCreateInfo();
 
@@ -120,240 +131,91 @@ public class RenderPass extends AbstractVulkanObject {
 
 			// Add sub-passes
 			info.subpassCount = subpasses.size();
-			info.pSubpasses = StructureHelper.first(subpasses, VkSubpassDescription::new, SubPassBuilder::populate);
+			info.pSubpasses = StructureHelper.first(subpasses, VkSubpassDescription::new, this::subpass);
 
 			// Add dependencies
+			final List<Entry<Subpass, SubpassDependency>> dependencies = subpasses.stream().flatMap(Helper::stream).collect(toList());
 			info.dependencyCount = dependencies.size();
-			info.pDependencies = StructureHelper.first(dependencies, VkSubpassDependency::new, DependencyBuilder::populate);
+			info.pDependencies = StructureHelper.first(dependencies, VkSubpassDependency::new, this::dependency);
 
-			// Allocate render pass
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference pass = lib.factory().pointer();
-			check(lib.vkCreateRenderPass(dev, info, null, pass));
-
-			// Create render pass
-			return new RenderPass(pass.getValue(), dev, attachments);
+			return info;
 		}
 
 		/**
-		 * An <i>attachment reference</i> refers to the attachment used in this sub-pass.
+		 * Populates a sub-pass descriptor.
 		 */
-		private record Reference(int index, VkImageLayout layout) {
-			private void populate(VkAttachmentReference ref) {
-				ref.attachment = index;
-				ref.layout = layout;
-			}
+		private void subpass(Subpass subpass, VkSubpassDescription desc) {
+			// Init descriptor
+			desc.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
+
+			// Populate colour attachments
+			final List<Reference> colour = subpass.colour();
+			desc.colorAttachmentCount = colour.size();
+			desc.pColorAttachments = StructureHelper.first(colour, VkAttachmentReference::new, this::reference);
+
+			// Populate depth attachment
+			desc.pDepthStencilAttachment = subpass.depth().map(this::depth).orElse(null);
 		}
 
 		/**
-		 * Builder for a sub-pass.
+		 * @return Depth-stencil descriptor
 		 */
-		public class SubPassBuilder {
-			private final List<Reference> colours = new ArrayList<>();
-			private Reference depth;
-
-			/**
-			 * Adds a colour attachment.
-			 * @param attachment	Colour attachment
-			 * @param layout		Attachment layout
-			 */
-			public SubPassBuilder colour(Attachment attachment, VkImageLayout layout) {
-				final int index = add(attachment);
-				if(colours.stream().mapToInt(Reference::index).anyMatch(idx -> index == idx)) {
-					throw new IllegalArgumentException("Duplicate colour attachment: " + attachment);
-				}
-				colours.add(new Reference(index, layout));
-				return this;
-			}
-
-			/**
-			 * Adds the depth-buffer attachment.
-			 * @param depth		Depth-buffer attachment
-			 * @param layout	Image layout
-			 * @throws IllegalArgumentException if a depth buffer has already been configured
-			 */
-			public SubPassBuilder depth(Attachment depth, VkImageLayout layout) {
-				if(this.depth != null) throw new IllegalArgumentException("Depth attachment already configured");
-				final int index = add(depth);
-				this.depth = new Reference(index, layout);
-				return this;
-			}
-
-			/**
-			 * Populates the descriptor for this sub-pass.
-			 * @param desc Sub-pass descriptor
-			 */
-			void populate(VkSubpassDescription desc) {
-				// Init descriptor
-				desc.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
-
-				// Populate colour attachments
-				desc.colorAttachmentCount = colours.size();
-				desc.pColorAttachments = StructureHelper.first(colours, VkAttachmentReference::new, Reference::populate);
-
-				// Populate depth attachment
-				if(depth != null) {
-					desc.pDepthStencilAttachment = new VkAttachmentReference();
-					depth.populate(desc.pDepthStencilAttachment);
-				}
-			}
-
-			/**
-			 * Constructs this sub-pass.
-			 * @throws IllegalArgumentException if no attachment references were specified
-			 */
-			public Builder build() {
-				if((depth == null) && colours.isEmpty()) throw new IllegalArgumentException("No attachments specified in sub-pass");
-				subpasses.add(this);
-				return Builder.this;
-			}
+		private VkAttachmentReference depth(Reference depth) {
+			final VkAttachmentReference ref = new VkAttachmentReference();
+			reference(depth, ref);
+			return ref;
 		}
 
 		/**
-		 * Builder for a render pass dependency.
-		 * <p>
-		 * Notes:
-		 * <ul>
-		 * <li>The special case {@link RenderPass#VK_SUBPASS_EXTERNAL} index specifies the implicit sub-pass before or after the render pass</li>
-		 * <li>All dependencies <b>must</b> specify at least one pipeline stage</li>
-		 * </ul>
+		 * Populates an attachment reference descriptor.
 		 */
-		public class DependencyBuilder {
-			/**
-			 * Source or destination sub-pass dependency.
-			 */
-			public class Dependency {
-				private int index;
-				private final Set<VkPipelineStage> stages = new HashSet<>();
-				private final Set<VkAccess> access = new HashSet<>();
+		private void reference(Reference ref, VkAttachmentReference desc) {
+			desc.attachment = attachments.indexOf(ref.attachment());
+			desc.layout = ref.layout();
+		}
 
-				/**
-				 * Constructor.
-				 * @param index Sub-pass index
-				 * @throws IllegalArgumentException for an invalid index
-				 */
-				private Dependency(int index) {
-					if((index != VK_SUBPASS_EXTERNAL) && ((index < 0) || (index >= subpasses.size()))) {
-						throw new IllegalArgumentException("Invalid sub-pass index: " + index);
-					}
-					this.index = index;
-				}
+		/**
+		 * @return Zipped stream of a sub-pass and its dependencies
+		 */
+		private static Stream<Entry<Subpass, SubpassDependency>> stream(Subpass subpass) {
+			return subpass
+					.dependencies()
+					.stream()
+					.map(e -> Map.entry(subpass, e));
+		}
 
-				/**
-				 * Adds a pipeline stage.
-				 * @param stage Pipeline stage
-				 */
-				public Dependency stage(VkPipelineStage stage) {
-					stages.add(notNull(stage));
-					return this;
-				}
+		/**
+		 * Populates a dependency descriptor from the given transient entry.
+		 */
+		private void dependency(Entry<Subpass, SubpassDependency> entry, VkSubpassDependency desc) {
+			// Determine dependant sub-pass
+			final SubpassDependency dependency = entry.getValue();
+			final Subpass subpass = dependency.subpass() == Subpass.SELF ? entry.getKey() : dependency.subpass();
 
-				/**
-				 * Adds an access flag.
-				 * @param access Access flag
-				 */
-				public Dependency access(VkAccess access) {
-					this.access.add(notNull(access));
-					return this;
-				}
+			// Populate source properties
+			final Dependency src = dependency.source();
+			desc.srcSubpass = indexOf(subpass);
+			desc.srcStageMask = IntegerEnumeration.mask(src.stages());
+			desc.srcAccessMask = IntegerEnumeration.mask(src.access());
 
-//				/**
-//				 * @return Pipeline stages mask
-//				 */
-				private int stages() {
-//					check();
-					return IntegerEnumeration.mask(stages);
-				}
+			// Populate destination properties
+			final Dependency dest = dependency.destination();
+			desc.dstSubpass = indexOf(entry.getKey());
+			desc.dstStageMask = IntegerEnumeration.mask(dest.stages());
+			desc.dstAccessMask = IntegerEnumeration.mask(dest.access());
+		}
 
-				/**
-				 * @return Access flags mask
-				 */
-				private int access() {
-					return IntegerEnumeration.mask(access);
-				}
-
-				/**
-				 * Constructs this dependency.
-				 */
-				public DependencyBuilder build() {
-					if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stage(s) specified for sub-pass dependency: subpass=" + index);
-					return DependencyBuilder.this;
-				}
+		/**
+		 * Looks up a sub-pass index.
+		 */
+		private int indexOf(Subpass subpass) {
+			if(subpass == Subpass.EXTERNAL) {
+				return VK_SUBPASS_EXTERNAL;
 			}
 
-			private Dependency src, dest;
-
-//			/**
-//			 * Constructor.
-//			 * @param src		Source index
-//			 * @param dest		Destination index
-//			 * @throws IllegalArgumentException if the source index is greater-than-or-equal to the destination
-//			 */
-//			private DependencyBuilder(int src, int dest) {
-//				if(dest == VK_SUBPASS_EXTERNAL) {
-//					if(src == VK_SUBPASS_EXTERNAL) throw new IllegalArgumentException("Invalid implicit indices");
-//				}
-//				else
-//				if(src >= dest) {
-//					throw new IllegalArgumentException(String.format("Invalid dependency indices: src=%d dest=%d", src, dest));
-//				}
-////				this.src = new Dependency(src);
-////				this.dest = new Dependency(dest);
-//			}
-
-			/**
-			 * @return Source dependency
-			 */
-			public Dependency source(int index) {
-				src = new Dependency(index);
-				return src;
-			}
-
-			/**
-			 * @return Destination dependency
-			 */
-			public Dependency destination(int index) {
-				dest = new Dependency(index);
-				return dest;
-			}
-
-			/**
-			 * Populates the dependency descriptor.
-			 */
-			void populate(VkSubpassDependency dep) {
-				// Populate source
-				dep.srcSubpass = src.index;
-				dep.srcStageMask = src.stages();
-				dep.srcAccessMask = src.access();
-
-				// Populate destination
-				dep.dstSubpass = dest.index;
-				dep.dstStageMask = dest.stages();
-				dep.dstAccessMask = dest.access();
-			}
-			// TODO - dependency flags
-
-			/**
-			 * Constructs this dependency.
-			 */
-			public Builder build() {
-				if(src == null) throw new IllegalArgumentException("");
-				if(dest == null) throw new IllegalArgumentException("");
-
-				if((src.index == VK_SUBPASS_EXTERNAL) && (dest.index == VK_SUBPASS_EXTERNAL)) {
-					throw new IllegalArgumentException("Invalid implicit indices");
-				}
-
-				if(src.index >= dest.index) {
-					throw new IllegalArgumentException("Source index must be less-than destination");
-				}
-
-				dependencies.add(this);
-
-				//src.check();
-				//dest.check();
-				return Builder.this;
-			}
+			final int index = subpasses.indexOf(subpass);
+			if(index == -1) throw new IllegalArgumentException("Sub-pass is not a member of this render-pass: " + subpass);
+			return index;
 		}
 	}
 }

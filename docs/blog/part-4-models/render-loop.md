@@ -146,7 +146,7 @@ interface DesktopLibraryDevice {
 
 Finally the listener is registered on the window:
 
-```
+```java
 Desktop desktop = window.desktop();
 desktop.library().glfwSetKeyCallback(window.handle(), listener);
 ```
@@ -520,7 +520,136 @@ The demo should now run without validation errors (for the render loop anyway), 
 
 ### Sub-Pass Dependencies
 
-TODO
+The last synchronisation mechanism provided by Vulkan are _subpass dependencies_ that specify memory and execution dependencies between the stages of a render-pass.
+
+We first add a new transient data type to the sub-pass class that specifies a dependency:
+
+```java
+public record SubpassDependency(Subpass subpass, Dependency source, Dependency destination) {
+    /**
+     * A <i>dependency</i> specifies the properties for the source or destination component of this sub-pass dependency.
+     */
+    public static record Dependency(Set<VkPipelineStage> stages, Set<VkAccess> access) {
+    }
+}
+```
+
+Where _subpass_ is the dependant sub-pass and the _source_ and _destination_ specify the dependency properties.
+
+We add a new member for a list of dependencies to the sub-pass class and its builder.
+
+Next we add a new nested builder to configure a sub-pass dependency:
+
+```java
+public class SubpassDependencyBuilder {
+    private final DependencyBuilder src = new DependencyBuilder();
+    private final DependencyBuilder dest = new DependencyBuilder();
+    private Subpass subpass;
+}
+```
+
+The source and destination properties are essentially the same for the source and destination properties, so we wrap these into yet another nested builder on the dependency builder:
+
+```java
+public class DependencyBuilder {
+    private final Set<VkPipelineStage> stages = new HashSet<>();
+    private final Set<VkAccess> access = new HashSet<>();
+}
+```
+
+Finally the build method constructs the dependency record and adds it to the list for the sub-pass:
+
+```java
+public Builder build() {
+    SubpassDependency dependency = new SubpassDependency(subpass, src.create(), dest.create());
+    dependencies.add(dependency);
+    return Builder.this;
+}
+```
+
+Finally we add a special case constant for the implicit sub-pass before and after the render-pass:
+
+```java
+public static final Subpass EXTERNAL = new Subpass() {
+    @Override
+    public String toString() {
+        return "EXTERNAL";
+    }
+};
+```
+
+In the render-pass helper class we add the following to populate the dependencies:
+
+```java
+List<Entry<Subpass, SubpassDependency>> dependencies = subpasses.stream().flatMap(Helper::stream).collect(toList());
+info.dependencyCount = dependencies.size();
+info.pDependencies = StructureHelper.first(dependencies, VkSubpassDependency::new, this::dependency);
+```
+
+The purpose of the first line is to generate a flattened list of dependencies zipped up with the parent sub-pass (for which we use a map entry):
+
+```java
+private static Stream<Entry<Subpass, SubpassDependency>> stream(Subpass subpass) {
+    return subpass
+        .dependencies()
+        .stream()
+        .map(e -> Map.entry(subpass, e));
+}
+```
+
+The reason for this somewhat ugly transformation is we need to lookup the indices of the source and destination sub-passes when we populate the descriptor for a dependency:
+
+```java
+private void dependency(Entry<Subpass, SubpassDependency> entry, VkSubpassDependency desc) {
+    // Populate source properties
+    final Dependency src = dependency.source();
+    desc.srcSubpass = indexOf(dependency.subpass());
+    desc.srcStageMask = IntegerEnumeration.mask(src.stages());
+    desc.srcAccessMask = IntegerEnumeration.mask(src.access());
+
+    // Populate destination properties
+    final Dependency dest = dependency.destination();
+    desc.dstSubpass = indexOf(entry.getKey());
+    desc.dstStageMask = IntegerEnumeration.mask(dest.stages());
+    desc.dstAccessMask = IntegerEnumeration.mask(dest.access());
+}
+```
+
+The `indexOf` helper also handles the case for the implicit external sub-pass:
+
+```java
+private int indexOf(Subpass subpass) {
+    if(subpass == Subpass.EXTERNAL) {
+        return VK_SUBPASS_EXTERNAL;
+    }
+
+    int index = subpasses.indexOf(subpass);
+    if(index == -1) throw new IllegalArgumentException(...);
+    return index;
+}
+```
+
+In the demo we can now configure a dependency between our single sub-pass and the implicit starting sub-pass:
+
+```java
+Subpass subpass = new Subpass.Builder()
+    .colour(new Reference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL))
+    .dependency()
+        .subpass(Subpass.EXTERNAL)
+        .source()
+            .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+            .build()
+        .destination()
+            .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+            .access(VkAccess.COLOR_ATTACHMENT_WRITE)
+            .build()
+        .build()
+    .build();
+```
+
+The _destination_ clause specifies that our sub-pass waits for the colour attachment to be ready for writing, i.e. we need to wait for the swapchain to finish using the image.
+
+This should allow the hardware to more efficiently use the multi-threaded nature of the pipeline.
 
 ### Frames In-Flight
 
