@@ -19,7 +19,7 @@ public class BufferedModelTest {
 
 	@BeforeEach
 	void before() {
-		header = new Header(List.of(Layout.of(2)), Primitive.TRIANGLES, 3, true);
+		header = new Header(List.of(Layout.of(2)), Primitive.TRIANGLES, 3);
 		vertices = mock(Bufferable.class);
 		index = mock(Bufferable.class);
 		model = new BufferedModel(header, vertices, Optional.of(index));

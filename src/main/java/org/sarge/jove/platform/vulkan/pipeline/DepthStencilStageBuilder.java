@@ -46,7 +46,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 
 	@Override
 	VkPipelineDepthStencilStateCreateInfo get() {
-		final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
+		final var info = new VkPipelineDepthStencilStateCreateInfo();
 		info.depthTestEnable = VulkanBoolean.of(enable);
 		info.depthWriteEnable = VulkanBoolean.of(write);
 		info.depthCompareOp = op;

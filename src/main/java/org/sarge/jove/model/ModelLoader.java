@@ -43,7 +43,6 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		final Header header = model.header();
 		out.writeUTF(header.primitive().name());
 		out.writeInt(header.count());
-		out.writeBoolean(header.clockwise());
 
 		// Write vertex layout
 		final var layout = header.layout();
@@ -99,7 +98,6 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		// Load model header
 		final Primitive primitive = Primitive.valueOf(in.readUTF());
 		final int count = in.readInt();
-		final boolean clockwise = in.readBoolean();
 
 		// Load vertex layout
 		final int num = in.readInt();
@@ -123,7 +121,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		final Bufferable index = loadBuffer(in);
 
 		// Create model
-		return new BufferedModel(new Header(layout, primitive, count, clockwise), vertices, Optional.ofNullable(index));
+		return new BufferedModel(new Header(layout, primitive, count), vertices, Optional.ofNullable(index));
 	}
 
 	/**

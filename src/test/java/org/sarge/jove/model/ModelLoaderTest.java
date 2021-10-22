@@ -1,13 +1,16 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +27,7 @@ class ModelLoaderTest {
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		final Model.Header header = new Header(List.of(Point.LAYOUT), Primitive.TRIANGLES, 3, false);
+		final Model.Header header = new Header(List.of(Point.LAYOUT), Primitive.TRIANGLES, 3);
 		final Vertex vertex = Vertex.of(Point.ORIGIN);
 		model = new DefaultModel(header, List.of(vertex), new int[]{0, 0, 0});
 
@@ -36,8 +39,8 @@ class ModelLoaderTest {
 	}
 
 	@Test
-	void write() throws IOException {
-		loader.write(model, out);
+	void map() throws IOException {
+		assertNotNull(loader.map(mock(InputStream.class)));
 	}
 
 	private Model read() throws IOException {
@@ -46,7 +49,10 @@ class ModelLoaderTest {
 
 	@Test
 	void load() throws IOException {
-		write();
+		// Write model to stream
+		loader.write(model, out);
+
+		// Re-load and check header
 		final Model result = read();
 		assertEquals(model.header(), result.header());
 		assertEquals(true, result.isIndexed());
@@ -56,5 +62,10 @@ class ModelLoaderTest {
 	void loadUnsupportedVersion() throws IOException {
 		new DataOutputStream(out).writeInt(2);
 		assertThrows(UnsupportedOperationException.class, () -> read());
+	}
+
+	@Test
+	void write() throws IOException {
+		loader.write(model, out);
 	}
 }

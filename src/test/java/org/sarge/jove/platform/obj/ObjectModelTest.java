@@ -117,7 +117,7 @@ public class ObjectModelTest {
 
 			// Check model header
 			final List<Layout> layout = List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT);
-			assertEquals(new Model.Header(layout, Primitive.TRIANGLES, 3, true), result.header());
+			assertEquals(new Model.Header(layout, Primitive.TRIANGLES, 3), result.header());
 		}
 	}
 }

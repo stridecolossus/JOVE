@@ -21,7 +21,7 @@ class ModelTest {
 	@BeforeEach
 	void before() {
 		layout = Layout.of(2);
-		header = new Header(List.of(layout), Primitive.TRIANGLES, 3, true);
+		header = new Header(List.of(layout), Primitive.TRIANGLES, 3);
 	}
 
 	@Nested
@@ -31,26 +31,25 @@ class ModelTest {
 			assertEquals(List.of(layout), header.layout());
 			assertEquals(Primitive.TRIANGLES, header.primitive());
 			assertEquals(3, header.count());
-			assertEquals(true, header.clockwise());
 		}
 
 		@Test
 		void invalidVertexCount() {
-			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(layout), Primitive.TRIANGLES, 2, true));
+			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(layout), Primitive.TRIANGLES, 2));
 		}
 
 		@Test
 		void invalidPrimitiveNormals() {
 			// TODO - how can tell the vertices contain normals?
-			//assertThrows(IllegalArgumentException.class, () -> new Header(new Layout(Component.NORMAL), Primitive.LINES, 2, true));
+			//assertThrows(IllegalArgumentException.class, () -> new Header(new Layout(Component.NORMAL), Primitive.LINES, 2));
 		}
 
 		@Test
 		void equals() {
 			assertEquals(true, header.equals(header));
-			assertEquals(true, header.equals(new Header(List.of(layout), Primitive.TRIANGLES, 3, true)));
+			assertEquals(true, header.equals(new Header(List.of(layout), Primitive.TRIANGLES, 3)));
 			assertEquals(false, header.equals(null));
-			assertEquals(false, header.equals(new Header(List.of(layout), Primitive.LINE_STRIP, 3, true)));
+			assertEquals(false, header.equals(new Header(List.of(layout), Primitive.LINE_STRIP, 3)));
 		}
 	}
 

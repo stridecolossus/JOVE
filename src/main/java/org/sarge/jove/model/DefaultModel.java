@@ -100,10 +100,8 @@ public class DefaultModel extends AbstractModel {
 	 * Builder for a model.
 	 */
 	public static class Builder {
-		private Primitive primitive = Primitive.TRIANGLE_STRIP;
-		private boolean clockwise;
-
 		protected final List<Vertex> vertices = new ArrayList<>();
+		private Primitive primitive = Primitive.TRIANGLE_STRIP;
 
 		/**
 		 * @return Whether this model is empty
@@ -118,15 +116,6 @@ public class DefaultModel extends AbstractModel {
 		 */
 		public Builder primitive(Primitive primitive) {
 			this.primitive = notNull(primitive);
-			return this;
-		}
-
-		/**
-		 * Sets the triangle winding order (default is {@code false}, counter-clockwise).
-		 * @param clockwise Triangle winding order
-		 */
-		public Builder clockwise(boolean clockwise) {
-			this.clockwise = clockwise;
 			return this;
 		}
 
@@ -168,7 +157,7 @@ public class DefaultModel extends AbstractModel {
 		 */
 		protected final DefaultModel build(int[] index, int count) {
 			final List<Layout> layout = vertices.isEmpty() ? List.of() : vertices.get(0).layout();
-			return new DefaultModel(new Header(layout, primitive, count, clockwise), vertices, index);
+			return new DefaultModel(new Header(layout, primitive, count), vertices, index);
 		}
 	}
 }

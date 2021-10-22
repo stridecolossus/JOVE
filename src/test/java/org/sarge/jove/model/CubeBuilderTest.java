@@ -24,7 +24,7 @@ public class CubeBuilderTest {
 		final var layout = List.of(Point.LAYOUT, Layout.of(2));
 		final Model cube = builder.build();
 		assertNotNull(cube);
-		assertEquals(new Header(layout, Primitive.TRIANGLES, (2 * 3) * 6, false), cube.header());
+		assertEquals(new Header(layout, Primitive.TRIANGLES, (2 * 3) * 6), cube.header());
 		assertEquals(false, cube.isIndexed());
 	}
 }

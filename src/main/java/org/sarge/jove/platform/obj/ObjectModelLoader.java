@@ -11,12 +11,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
@@ -28,14 +27,6 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> {
-	/**
-	 * Adapter to parse flipped texture coordinates.
-	 */
-	private static final Function<float[], Coordinate> FLIP = array -> {
-		array[1] = -array[1];
-		return Coordinate.of(array);
-	};
-
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private Set<String> comments = Set.of("#");
 	private final ObjectModel model = new ObjectModel();
@@ -53,7 +44,7 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 	 */
 	private void init() {
 		add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::position));
-		add("vt", new VertexComponentParser<>(2, FLIP, ObjectModel::coordinate));
+		add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, ObjectModel::coordinate));
 		add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normal));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
@@ -70,6 +61,15 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 		Check.notEmpty(token);
 		Check.notNull(parser);
 		parsers.put(token, parser);
+	}
+
+	/**
+	 * Vertically flips a texture coordinate.
+	 */
+	private static Coordinate2D flip(float[] array) {
+		assert array.length == 2;
+		array[1] = -array[1];
+		return new Coordinate2D(array[0], array[1]);
 	}
 
 	/**

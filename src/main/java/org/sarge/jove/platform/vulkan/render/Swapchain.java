@@ -52,8 +52,8 @@ public class Swapchain extends AbstractVulkanObject {
 	public static final VkFormat DEFAULT_FORMAT = new FormatBuilder()
 			.components("BGRA")
 			.bytes(1)
-			.signed(true)
-			.type(FormatBuilder.Type.RGB)
+			.signed(false)
+			.type(FormatBuilder.Type.NORM)
 			.build();
 
 	/**
@@ -175,8 +175,7 @@ public class Swapchain extends AbstractVulkanObject {
 		// Properties
 		private final LogicalDevice dev;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
-		private ClearValue clear = ClearValue.NONE;
-		// TODO - view created by factory function so can be customised (including clear value?)
+		private ClearValue clear;
 
 		// Surface constraints
 		private final VkSurfaceCapabilitiesKHR caps;
@@ -414,8 +413,10 @@ public class Swapchain extends AbstractVulkanObject {
 					.collect(toList());
 
 			// Init clear value
-			for(View view : views) {
-				view.clear(clear);
+			if(clear != null) {
+				for(View view : views) {
+					view.clear(clear);
+				}
 			}
 
 			// Create domain object

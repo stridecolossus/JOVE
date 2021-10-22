@@ -75,15 +75,6 @@ public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRa
 	}
 
 	/**
-	 * Sets the vertex winding order.
-	 * @param clockwise Vertex winding order
-	 * @see #winding(VkFrontFace)
-	 */
-	public RasterizerStageBuilder clockwise(boolean clockwise) {
-		return winding(clockwise ? VkFrontFace.CLOCKWISE : VkFrontFace.COUNTER_CLOCKWISE);
-	}
-
-	/**
 	 * Enables depth value bias (disabled by default).
 	 * @param depthBiasConstantFactor
 	 * @param depthBiasClamp

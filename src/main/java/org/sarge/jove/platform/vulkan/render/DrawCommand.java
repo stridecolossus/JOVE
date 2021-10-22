@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
+import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.common.Command;
 
 /**
@@ -16,7 +17,7 @@ import org.sarge.jove.platform.vulkan.common.Command;
  */
 public interface DrawCommand extends Command {
 	/**
-	 * Helper - Creates a simple draw command.
+	 * Creates a draw command.
 	 * @param count Number of vertices
 	 * @return New draw command
 	 */
@@ -25,12 +26,27 @@ public interface DrawCommand extends Command {
 	}
 
 	/**
-	 * Helper - Creates a simple indexed draw command.
-	 * @param count Number of vertices
+	 * Creates an indexed draw command.
+	 * @param count Number of indices
 	 * @return New indexed draw command
 	 */
 	static DrawCommand indexed(int count) {
 		return new Builder().indexed(0).count(count).build();
+	}
+
+	/**
+	 * Helper - Creates a draw command for the given model.
+	 * @param model Model
+	 * @return New draw command
+	 */
+	static DrawCommand of(Model model) {
+		final int count = model.header().count();
+		if(model.isIndexed()) {
+			return indexed(count);
+		}
+		else {
+			return draw(count);
+		}
 	}
 
 	/**

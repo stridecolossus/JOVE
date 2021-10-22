@@ -34,6 +34,7 @@ public class ViewTest extends AbstractVulkanTest {
 
 	private View view;
 	private MockImage image;
+	private ClearValue clear;
 
 	@BeforeEach
 	void before() {
@@ -50,6 +51,9 @@ public class ViewTest extends AbstractVulkanTest {
 
 		// Create image view
 		view = new View(new Pointer(1), image, dev);
+
+		// Init clear value
+		clear = new ColourClearValue(Colour.WHITE);
 	}
 
 	@Test
@@ -63,7 +67,6 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void clear() {
-		final ClearValue clear = new ColourClearValue(Colour.WHITE);
 		view.clear(clear);
 		assertEquals(clear, view.clear());
 	}
@@ -105,13 +108,18 @@ public class ViewTest extends AbstractVulkanTest {
 		@Test
 		void build() {
 			// Build view
-			view = builder.build();
+			view = builder
+					.clear(clear)
+					.build();
+
+			// TODO - mapping
+			// TODO - subresource
 
 			// Check view
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertEquals(image, view.image());
-			assertEquals(ClearValue.NONE, view.clear());
+			assertEquals(clear, view.clear());
 
 			// Check API
 			final ArgumentCaptor<VkImageViewCreateInfo> captor = ArgumentCaptor.forClass(VkImageViewCreateInfo.class);

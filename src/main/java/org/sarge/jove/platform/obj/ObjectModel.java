@@ -53,7 +53,6 @@ public class ObjectModel {
 	private void add() {
 		current = builder();
 		current.primitive(Primitive.TRIANGLES);
-		current.clockwise(true);
 		builders.add(current);
 	}
 

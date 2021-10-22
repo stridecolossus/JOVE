@@ -17,7 +17,16 @@ import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency.Dependenc
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>sub-pass</i> defines a stage of a render-pass.
+ * A <i>sub-pass</i> specifies a stage of the render-pass.
+ * <p>
+ * Each sub-pass consists of:
+ * <ul>
+ * <li>the attachments used in the sub-pass</li>
+ * <li>image layout transitions</li>
+ * <li>dependencies on other sub-passes in the render-pass</li>
+ * </ul>
+ * <p>
+ * The {@link #EXTERNAL} sub-pass is a special case instance for the implicit sub-pass before or after the render-pass.
  * <p>
  * Usage:
  * <p>
@@ -40,8 +49,6 @@ import org.sarge.lib.util.Check;
  * 			.build()
  * 		.build();
  * </pre>
- * <p>
- * The {@link #EXTERNAL} sub-pass is the special case for the implicit sub-pass before or after the render-pass.
  * <p>
  * @author Sarge
  */

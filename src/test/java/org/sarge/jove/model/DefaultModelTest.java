@@ -32,7 +32,7 @@ class DefaultModelTest {
 
 	@BeforeEach
 	void before() {
-		header = new Header(List.of(Layout.of(3)), Primitive.TRIANGLES, 3, true);
+		header = new Header(List.of(Layout.of(3)), Primitive.TRIANGLES, 3);
 		vertex = Vertex.of(Point.ORIGIN);
 		indices = new int[]{1, 1, 1};
 		model = new DefaultModel(header, List.of(vertex), indices);
@@ -50,12 +50,11 @@ class DefaultModelTest {
 			assertEquals(List.of(Layout.of(3)), header.layout());
 			assertEquals(Primitive.TRIANGLES, header.primitive());
 			assertEquals(3, header.count());
-			assertEquals(true, header.clockwise());
 		}
 
 		@Test
 		void invalidVertexCount() {
-			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(Layout.of(3)), Primitive.TRIANGLES, 4, false));
+			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(Layout.of(3)), Primitive.TRIANGLES, 4));
 		}
 
 		// TODO
@@ -111,14 +110,13 @@ class DefaultModelTest {
 			// Build model
 			final DefaultModel model = builder
 					.primitive(Primitive.LINES)
-					.clockwise(true)
 					.add(vertex)
 					.add(vertex)
 					.build();
 
 			// Verify model
 			assertNotNull(model);
-			assertEquals(new Header(List.of(Point.ORIGIN.layout()), Primitive.LINES, 2, true), model.header());
+			assertEquals(new Header(List.of(Point.ORIGIN.layout()), Primitive.LINES, 2), model.header());
 			assertEquals(false, model.isIndexed());
 			assertNotNull(model.vertices());
 			assertEquals(Optional.empty(), model.index());
@@ -129,7 +127,7 @@ class DefaultModelTest {
 		void buildEmpty() {
 			final DefaultModel model = builder.build();
 			assertNotNull(model);
-			assertEquals(new Header(List.of(), Primitive.TRIANGLE_STRIP, 0, false), model.header());
+			assertEquals(new Header(List.of(), Primitive.TRIANGLE_STRIP, 0), model.header());
 			assertNotNull(model.vertices());
 			assertEquals(Optional.empty(), model.index());
 			assertEquals(true, builder.isEmpty());

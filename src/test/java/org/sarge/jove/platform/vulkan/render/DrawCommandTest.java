@@ -3,10 +3,15 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.render.DrawCommand.Builder;
@@ -35,6 +40,20 @@ public class DrawCommandTest {
 	void indexed() {
 		final DrawCommand draw = DrawCommand.indexed(COUNT);
 		assertNotNull(draw);
+		draw.execute(lib, buffer);
+		verify(lib).vkCmdDrawIndexed(buffer, COUNT, 1, 0, 0, 0);
+	}
+
+	@Test
+	void model() {
+		// Create an indexed model
+		final Model.Header header = new Model.Header(List.of(), Primitive.TRIANGLES, COUNT);
+		final Model model = mock(Model.class);
+		when(model.isIndexed()).thenReturn(true);
+		when(model.header()).thenReturn(header);
+
+		// Check indexed draw command
+		final DrawCommand draw = DrawCommand.of(model);
 		draw.execute(lib, buffer);
 		verify(lib).vkCmdDrawIndexed(buffer, COUNT, 1, 0, 0, 0);
 	}

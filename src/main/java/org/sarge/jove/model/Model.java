@@ -18,13 +18,12 @@ public interface Model {
 	/**
 	 * Descriptor for this model.
 	 */
-	public record Header(List<Layout> layout, Primitive primitive, int count, boolean clockwise) {
+	public record Header(List<Layout> layout, Primitive primitive, int count) {
 		/**
 		 * Constructor.
 		 * @param layout			Vertex layout
 		 * @param primitive			Drawing primitive
 		 * @param count				Number of vertices
-		 * @param clockwise			Triangle winding order
 		 * @throws IllegalArgumentException if the {@link #count} is invalid for the given {@link #primitive}
 		 * @see Primitive#isValidVertexCount(int)
 		 * @see Primitive#isNormalSupported()
