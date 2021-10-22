@@ -47,7 +47,7 @@ public class RenderLoop implements Runnable {
 		 * Renders the next in-flight frame.
 		 */
 		private void render() {
-			// Wait for previous work to complete
+			// Wait for any previous work to complete
 			fence.waitReady();
 
 			// Retrieve next swapchain image index

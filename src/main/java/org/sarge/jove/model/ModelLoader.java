@@ -45,9 +45,9 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		out.writeInt(header.count());
 
 		// Write vertex layout
-		final var layout = header.layout();
+		final List<Layout> layout = header.layout();
 		out.writeInt(layout.size());
-		for(Layout c : header.layout()) {
+		for(Layout c : layout) {
 			out.writeInt(c.size());
 			out.writeInt(c.bytes());
 			out.writeUTF(c.type().getName());

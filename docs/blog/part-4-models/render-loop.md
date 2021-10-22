@@ -10,7 +10,10 @@ In no particular order:
 
 * The rendering code is completely single-threaded (by blocking the work queues).
 
-* The code mixes up the Vulkan rendering process, the application logic (updating the rotation), and the code to control the loop (the dodgy timer).
+* The code mixes up the following:
+    The Vulkan rendering process
+    The application logic to update the rotation
+    And the code to control the loop (the dodgy timer)
 
 * The window event queue is blocked.
 
@@ -33,11 +36,11 @@ A complication of particular importance is that GLFW event processing __must__ b
 ### Render Loop
 
 We start by refactoring the existing render loop:
-* Remove the `while` loop and the timer logic.
-* Factor out the Vulkan code to a new component.
+* Strip the `while` loop and the timer logic.
+* Move the Vulkan rendering code to a new JOVE component.
 * Factor out the rotation update logic to a separate component.
 
-We create a new component for the remaining rendering code (the acquire-render-present steps):
+We create a new domain class that performs rendering (the acquire-render-present steps):
 
 ```java
 public class RenderLoop implements Runnable {
@@ -74,7 +77,7 @@ public static Runnable update(Matrix matrix, VulkanBuffer uniform, ApplicationCo
 
 ### Application 
 
-Note that the newly refactored components are `Runnable` objects, we compose these _tasks_ into the following new class that encapsulates the application thread:
+Note that the newly refactored components are `Runnable` objects, we will compose these as _tasks_ into the following new class that encapsulates the application thread:
 
 ```java
 public class Application {
@@ -87,7 +90,7 @@ public class Application {
 }
 ```
 
-The application loop iterates through the tasks:
+The application loop continually iterates through the tasks:
 
 ```java
 public void run() {
@@ -130,7 +133,7 @@ The listener is a GLFW callback defined as follows:
 
 ```java
 interface DesktopLibraryDevice {
-    public interface KeyListener extends Callback {
+    interface KeyListener extends Callback {
         /**
          * Notifies a key event.
          * @param window            Window
@@ -157,7 +160,7 @@ Notes:
 
 * For the moment we hard-code the ESCAPE key.
 
-* Although not used elsewhere in the application we add the listener to the container since GLFW seems to unregister a garbage-collected listener.
+* Although not used elsewhere in the application the listener is registered with the container to prevent it being garbage collected (and unregistered by GLFW).
 
 ### Integration
 
@@ -197,7 +200,7 @@ Notes:
 
 * Here we use `@Component` which defines a class to be instantiated by the container.
 
-* We also move the `waitIdle` call after the loop has finished to correctly cleanup the Vulkan resources.
+* We also add a `waitIdle` call after the loop has finished to correctly cleanup Vulkan resources.
 
 Finally we add a further task to process the GLFW window event queue:
 
@@ -319,7 +322,9 @@ public class Work {
 
 The `signal` member is the set of semaphores to be signalled when the work has completed.
 
-Each entry in the `wait` table is a semaphore that must be in the signalled state before the work can be performed and the stages(s) of the pipeline to wait on (represented as an integer mask).
+Each entry in the `wait` table consists of:
+* A semaphore that must be signalled before the work can be performed.
+* The stages(s) of the pipeline to wait on (represented as an integer mask).
 
 We modify the builder to configure the semaphores for a work submission:
 
@@ -342,7 +347,7 @@ info.pSignalSemaphores = NativeObject.toArray(signal);
 
 Population of the wait semaphores is slightly more complicated because the two components are separate fields (rather than an array of some child structure):
 
-We first transform the table to a list of its entries:
+We first transform the table to a list of its entries (so that we ensure both components are processed in the same order):
 
 ```java
 var list = new ArrayList<>(wait.entrySet());
@@ -356,7 +361,7 @@ info.waitSemaphoreCount = wait.size();
 info.pWaitSemaphores = NativeObject.toArray(semaphores);
 ```
 
-Finally we construct the stage masks which for some reason is a pointer-to-integer array:
+Finally we construct the list of stage masks (which for some reason is a pointer-to-integer array):
 
 ```java
 int[] stages = list.stream().map(Entry::getValue).mapToInt(Integer::intValue).toArray();
@@ -380,9 +385,11 @@ This resolves the validation errors that were due to the semaphores never being 
 
 ### Fence
 
-However if one were to remove the `waitIdle` calls in the existing code the validation layer will again flood with errors, we are trying to use the command buffers concurrently for multiple frames.  Additionally the application is continually queueing up rendering work without checking whether it actually completes (which can be seen if one watches the memory usage).
+However if one were to remove the `waitIdle` calls in the existing code the validation layer will again flood with errors - we are trying to use the command buffers concurrently for multiple frames.
 
-The second synchronisation mechanism is the _fence_ which can be used to synchronise Vulkan and application code:
+Additionally the application is continually queueing up rendering work without checking whether it actually completes (which can be seen if one watches the memory usage).
+
+To resolve both of these we introduce the second synchronisation mechanism known as a _fence_ which can be used to synchronise Vulkan and application code:
 
 ```java
 public class Fence extends AbstractVulkanObject {
@@ -433,7 +440,7 @@ public static void reset(DeviceContext dev, Collection<Fence> fences) {
 }
 ```
 
-We also provide convenience equivalents of these two methods for the fence instance itself:
+We provide convenience equivalents of these two methods for the fence instance itself:
 
 ```java
 public void reset() {
@@ -492,13 +499,13 @@ public static void submit(List<Work> work, Fence fence) {
 The refactored render loop now looks like this:
 
 ```java
-// Wait for previous work to complete
+// Wait for any previous work to complete
 fence.waitReady();
 
 // Retrieve next swapchain image index
 final int index = swapchain.acquire(available, null);
 
-// Init frame sync
+// Clear synchronisation
 fence.reset();
 
 // Render frame
@@ -520,7 +527,7 @@ The demo should now run without validation errors (for the render loop anyway), 
 
 ### Sub-Pass Dependencies
 
-The last synchronisation mechanism provided by Vulkan are _subpass dependencies_ that specify memory and execution dependencies between the stages of a render-pass.
+The last synchronisation mechanism provided by Vulkan is _subpass dependencies_ that specify memory and execution dependencies between the stages of a render-pass.
 
 We first add a new transient data type to the sub-pass class that specifies a dependency:
 
@@ -534,9 +541,9 @@ public record SubpassDependency(Subpass subpass, Dependency source, Dependency d
 }
 ```
 
-Where _subpass_ is the dependant sub-pass and the _source_ and _destination_ specify the dependency properties.
+Where _subpass_ is the dependant sub-pass and the _source_ and _destination_ specify the dependency properties.  
 
-We add a new member for a list of dependencies to the sub-pass class and its builder.
+We add a new member for a list of `dependencies` to the sub-pass class and its builder.  Note that in our design the _destination_ is implicitly the sub-pass containing the dependency.
 
 Next we add a new nested builder to configure a sub-pass dependency:
 
@@ -653,7 +660,7 @@ This should allow the hardware to more efficiently use the multi-threaded nature
 
 ### Frames In-Flight
 
-The render loop is still likely not fully utilising the pipeline since the code for a frame is essentially single-threaded, completed pipeline stages could be used to render the next frame.
+The render loop is still likely not fully utilising the pipeline since the code for a frame is essentially single-threaded - completed pipeline stages could be used to render the next frame.
 
 Here we introduce multiple _in-flight_ frames to make better use of the pipeline whilst still bounding the overall amount of work.
 

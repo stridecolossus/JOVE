@@ -384,7 +384,7 @@ public void vertex(int v, Integer vn, Integer vt) {
 
 ### Conclusion
 
-To complete the loader we register the following command parsers:
+To complete the loader we register the remaining command parsers:
 
 ```java
 add("f", new FaceParser());
@@ -393,7 +393,7 @@ add("g", Parser.GROUP);
 add("s", Parser.IGNORE);
 ```
 
-The `GROUP` command parser delegates to the following method on the model to start a new object group:
+The `GROUP` parser delegates to the following method on the model to start a new object group:
 
 ```java
 public void start() {
@@ -572,7 +572,7 @@ All this refactoring work reduces the size of the interleaved model from 30Mb to
 
 Although the OBJ loader and new indexed builder are relatively efficient loading the model is now quite slow (even on decent hardware).
 
-We could attempt to optimise the code but this is usually very time-consuming and often actually counter-productive (i.e. complexity can lead to bugs).
+We could attempt to optimise the code but this is usually very time-consuming and often actually counter-productive (i.e. complexity often leads to bugs).
 
 Instead we note that as things stand the following steps in the loading process are repeated _every_ time we run the demo:
 
@@ -582,7 +582,7 @@ Instead we note that as things stand the following steps in the loading process 
 
 3. Transformation to NIO buffers.
 
-Ideally we would only perform the above steps _once_ since we only really need the vertex and index bufferable objects.
+Ideally we would only perform the above steps _once_ since we are only really interested in the vertex and index bufferable objects.
 
 We therefore introduce a custom persistence mechanism to write a model to the file-system:
 
@@ -614,9 +614,9 @@ out.writeInt(header.count());
 Followed by the vertex layout of the model:
 
 ```java
-var layout = header.layout();
+List<Layout> layout = header.layout();
 out.writeInt(layout.size());
-for(Layout c : header.layout()) {
+for(Layout c : layout) {
     out.writeInt(c.size());
     out.writeInt(c.bytes());
     out.writeUTF(c.type().getName());

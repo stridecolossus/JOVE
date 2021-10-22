@@ -393,7 +393,7 @@ info.clearValueCount = clear.size();
 info.pClearValues = StructureHelper.first(clear, VkClearValue::new, ClearValue::populate);
 ```
 
-Introducing this functionality should have been easy, however we had a nasty surprise when we introduced the depth-stencil with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the JNA union defaulted to using the first field (i.e. the `color` property).
+Introducing this functionality should have been easy, however we had a nasty surprise when we introduced the depth-stencil with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the JNA union defaulted to using the first field, i.e. the `color` and `float32` properties.
 
 Thankfully JNA supports unions out-of-the-box.  We manually modified the generated code and used the `setType` method of the JNA union class to 'select' the relevant properties.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
 
