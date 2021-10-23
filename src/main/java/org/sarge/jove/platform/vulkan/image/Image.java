@@ -3,24 +3,23 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkImageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkImageTiling;
-import org.sarge.jove.platform.vulkan.VkImageType;
-import org.sarge.jove.platform.vulkan.VkImageUsage;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
-import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -39,6 +38,27 @@ public interface Image extends NativeObject {
 	 * @return Device context for this image
 	 */
 	DeviceContext device();
+
+	/**
+	 * Helper - Selects an image format for a depth-stencil with optimal tiling.
+	 * @param dev Physical device
+	 * @return Selected depth buffer format
+	 * @throws RuntimeException if there is no supported format
+	 */
+	static VkFormat depth(PhysicalDevice dev) {
+		// Filter for depth-stencil formats with optimal tiling
+		final Predicate<VkFormat> predicate = format -> {
+			final VkFormatProperties props = dev.properties(format);
+			return MathsUtil.isMask(props.optimalTilingFeatures, VkFormatFeature.DEPTH_STENCIL_ATTACHMENT.value());
+		};
+
+		// Select from candidate formats
+		return Stream
+				.of(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT)
+				.filter(predicate)
+				.findAny()
+				.orElseThrow(() -> new RuntimeException("No supported depth buffer format"));
+	}
 
 	/**
 	 * Default implementation managed by the application.

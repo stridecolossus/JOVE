@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
@@ -17,14 +18,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkImageTiling;
-import org.sarge.jove.platform.vulkan.VkImageUsage;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
-import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
-import org.sarge.jove.platform.vulkan.VkSharingMode;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
@@ -71,10 +66,34 @@ public class ImageTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void destroy() {
+	void close() {
 		image.close();
 		verify(lib).vkDestroyImage(dev, image, null);
 		verify(mem).close();
+	}
+
+	@Nested
+	class DepthFormatTests {
+		private PhysicalDevice dev;
+
+		@BeforeEach
+		void before() {
+			dev = mock(PhysicalDevice.class);
+			when(dev.properties(any(VkFormat.class))).thenReturn(new VkFormatProperties());
+		}
+
+		@Test
+		void depth() {
+			final VkFormatProperties props = new VkFormatProperties();
+			props.optimalTilingFeatures = VkFormatFeature.DEPTH_STENCIL_ATTACHMENT.value();
+			when(dev.properties(VkFormat.D32_SFLOAT_S8_UINT)).thenReturn(props);
+			assertEquals(VkFormat.D32_SFLOAT_S8_UINT, Image.depth(dev));
+		}
+
+		@Test
+		void depthUnsupported() {
+			assertThrows(RuntimeException.class, () -> Image.depth(dev));
+		}
 	}
 
 	@Nested

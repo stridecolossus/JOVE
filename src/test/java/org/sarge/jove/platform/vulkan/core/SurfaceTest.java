@@ -4,14 +4,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
+import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
 import org.sarge.jove.platform.vulkan.core.Surface.Properties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -44,9 +50,9 @@ public class SurfaceTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void properties() {
-		final var props = surface.properties(physical);
-		assertNotNull(props);
+	void close() {
+		surface.close();
+		verify(lib).vkDestroySurfaceKHR(instance, surface, null);
 	}
 
 	@Nested
@@ -59,30 +65,33 @@ public class SurfaceTest extends AbstractVulkanTest {
 		}
 
 		@Test
+		void constructor() {
+			assertNotNull(props);
+			assertEquals(physical, props.device());
+			assertEquals(surface, props.surface());
+		}
+
+		@Test
 		void capabilities() {
-			final var caps = props.capabilities();
+			final VkSurfaceCapabilitiesKHR caps = props.capabilities();
 			assertNotNull(caps);
 			verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical, surface, caps);
 		}
 
 		@Test
 		void formats() {
-			final var formats = props.formats();
+			final List<VkSurfaceFormatKHR> formats = props.formats();
 			assertNotNull(formats);
-			verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(eq(physical), eq(surface), isA(IntByReference.class), isA(VkSurfaceFormatKHR.class));
+			props.formats();
+			verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfaceFormatsKHR(eq(physical), eq(surface), isA(IntByReference.class), isA(VkSurfaceFormatKHR.class));
 		}
 
 		@Test
 		void modes() {
-			final var modes = props.modes();
+			final Set<VkPresentModeKHR> modes = props.modes();
 			assertNotNull(modes);
-			verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(eq(physical), eq(surface), isA(IntByReference.class), isA(int[].class));
+			props.modes();
+			verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfacePresentModesKHR(eq(physical), eq(surface), isA(IntByReference.class), isA(int[].class));
 		}
-	}
-
-	@Test
-	void close() {
-		surface.close();
-		verify(lib).vkDestroySurfaceKHR(instance, surface, null);
 	}
 }

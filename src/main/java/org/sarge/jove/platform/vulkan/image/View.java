@@ -89,7 +89,7 @@ public class View extends AbstractVulkanObject {
 	 * @param clear			Clear value
 	 * @throws IllegalArgumentException if the clear value is incompatible with this view
 	 */
-	public void clear(ClearValue clear) {
+	public View clear(ClearValue clear) {
 		if(clear != ClearValue.NONE) {
 			final var aspects = image.descriptor().aspects();
 			if(!aspects.contains(clear.aspect())) {
@@ -97,6 +97,7 @@ public class View extends AbstractVulkanObject {
 			}
 		}
 		this.clear = notNull(clear);
+		return this;
 	}
 
 	@Override

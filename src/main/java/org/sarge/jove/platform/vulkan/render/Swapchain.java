@@ -5,7 +5,6 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +22,6 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Image;
@@ -34,6 +32,7 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Memory;
@@ -62,7 +61,7 @@ public class Swapchain extends AbstractVulkanObject {
 	public static final VkColorSpaceKHR DEFAULT_COLOUR_SPACE = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
 
 	/**
-	 * Default presentation mode (guaranteed on all Vulkan implementations).
+	 * Default presentation mode (FIFO, guaranteed on all Vulkan implementations).
 	 */
 	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
 
@@ -172,29 +171,23 @@ public class Swapchain extends AbstractVulkanObject {
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
-		// Properties
 		private final LogicalDevice dev;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
-		private ClearValue clear;
-
-		// Surface constraints
+		private final Surface.Properties props;
 		private final VkSurfaceCapabilitiesKHR caps;
-		private final Collection<VkSurfaceFormatKHR> formats;
-		private final Set<VkPresentModeKHR> modes;
+		private ClearValue clear = ClearValue.NONE;
 
 		/**
 		 * Constructor.
 		 * @param dev			Logical device
-		 * @param surface		Rendering surface
-		 * @see Surface#capabilities(PhysicalDevice)
+		 * @param props			Rendering surface properties
 		 */
-		public Builder(LogicalDevice dev, Surface surface) {
-			final Surface.Properties props = surface.properties(dev.parent());
-			this.caps = props.capabilities();
-			this.formats = props.formats();
-			this.modes = props.modes();
+		public Builder(LogicalDevice dev, Surface.Properties props) {
+			if(dev.parent() != props.device()) throw new IllegalArgumentException("Mismatched device and surface");
 			this.dev = notNull(dev);
-			info.surface = surface.handle();
+			this.props = notNull(props);
+			this.caps = props.capabilities();
+			this.info.surface = props.surface().handle();
 			init();
 		}
 
@@ -211,18 +204,12 @@ public class Swapchain extends AbstractVulkanObject {
 			mode(VkSharingMode.EXCLUSIVE);
 			usage(VkImageUsage.COLOR_ATTACHMENT);
 			alpha(VkCompositeAlphaFlagKHR.OPAQUE);
-			mode(DEFAULT_PRESENTATION_MODE);
+			presentation(DEFAULT_PRESENTATION_MODE);
 			clipped(true);
 		}
 
-		/**
-		 * Tests whether an integer mask contains the given enumeration value.
-		 * @param mask			Mask
-		 * @param constant		Enumeration constant
-		 * @return Whether the mask contains the given constant
-		 */
-		private static <E extends IntegerEnumeration> boolean contains(int mask, E constant) {
-			return (constant.value() & mask) != 0;
+		private static void validate(int mask, IntegerEnumeration e) {
+			if(!MathsUtil.isMask(mask, e.value())) throw new IllegalArgumentException("Unsupported property: " + e);
 		}
 
 		/**
@@ -301,7 +288,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the usage flag is not supported by the surface
 		 */
 		public Builder usage(VkImageUsage usage) {
-			if(!contains(caps.supportedUsageFlags, usage)) throw new IllegalArgumentException("Usage not supported: " + usage);
+			validate(caps.supportedUsageFlags, usage);
 			info.imageUsage = notNull(usage);
 			return this;
 		}
@@ -321,7 +308,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the transform is not supported by the surface
 		 */
 		public Builder transform(VkSurfaceTransformFlagKHR transform) {
-			if(!contains(caps.supportedTransforms, transform)) throw new IllegalArgumentException("Transform not supported: " + transform);
+			validate(caps.supportedTransforms, transform);
 			info.preTransform = notNull(transform);
 			return this;
 		}
@@ -329,10 +316,10 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Sets the surface alpha function.
 		 * @param alpha Alpha function
-		 * @throws IllegalArgumentException if the given alpha function is not supported
+		 * @throws IllegalArgumentException if the given alpha function is not supported by the surface
 		 */
 		public Builder alpha(VkCompositeAlphaFlagKHR alpha) {
-			if(!contains(caps.supportedCompositeAlpha, alpha)) throw new IllegalArgumentException("Compositive alpha not supported: " + alpha);
+			validate(caps.supportedCompositeAlpha, alpha);
 			info.compositeAlpha = notNull(alpha);
 			return this;
 		}
@@ -340,11 +327,11 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Sets the presentation mode.
 		 * @param mode Presentation mode
-		 * @throws IllegalArgumentException if the given mode is not supported by the surface
-		 * @see Surface#modes()
+		 * @throws IllegalArgumentException if the mode is not supported by the surface
+		 * @see Surface.Properties#modes()
 		 */
-		public Builder mode(VkPresentModeKHR mode) {
-			if(!modes.contains(mode)) throw new IllegalArgumentException("Presentation mode not supported: " + mode);
+		public Builder presentation(VkPresentModeKHR mode) {
+			if(!props.modes().contains(mode)) throw new IllegalArgumentException("Unsupported presentation mode: " + mode);
 			info.presentMode = notNull(mode);
 			return this;
 		}
@@ -370,16 +357,17 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Constructs this swap-chain.
 		 * @return New swap-chain
-		 * @throws IllegalArgumentException if the image format and colour-space are not supported by the given surface
+		 * @throws IllegalArgumentException if the image format or colour-space is not supported by the surface
 		 */
 		public Swapchain build() {
-			// Check image format and colour-space are supported by the surface
-			formats
+			// Validate surface format
+			props
+					.formats()
 					.stream()
 					.filter(f -> f.format == info.imageFormat)
 					.filter(f -> f.colorSpace == info.imageColorSpace)
 					.findAny()
-					.orElseThrow(() -> new IllegalArgumentException(String.format("Unsupported swapchain format: format=%s space=%s", info.imageFormat, info.imageColorSpace)));
+					.orElseThrow(() -> new RuntimeException(String.format("Unsupported surface format: format=%s space=%s", info.imageFormat, info.imageColorSpace)));
 
 			// TODO
 			info.queueFamilyIndexCount = 0;
@@ -410,14 +398,8 @@ public class Swapchain extends AbstractVulkanObject {
 					.map(Handle::new)
 					.map(image -> new SwapChainImage(image, dev, descriptor))
 					.map(View::of)
+					.map(view -> view.clear(clear))
 					.collect(toList());
-
-			// Init clear value
-			if(clear != null) {
-				for(View view : views) {
-					view.clear(clear);
-				}
-			}
 
 			// Create domain object
 			return new Swapchain(chain.getValue(), dev, info.imageFormat, extents, views);

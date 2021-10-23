@@ -156,17 +156,19 @@ public class SwapchainTest extends AbstractVulkanTest {
 		void before() {
 			// Create surface
 			surface = mock(Surface.class);
-			when(surface.handle()).thenReturn(new Handle(new Pointer(2)));
+//			when(surface.handle()).thenReturn(new Handle(new Pointer(2)));
 
 			// Init supported presentation modes
 			final Surface.Properties props = mock(Surface.Properties.class);
 			when(props.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
+			when(props.surface()).thenReturn(surface);
+//			when(props.device()).thenReturn(null)
 
 			// Init supported formats
 			final VkSurfaceFormatKHR format = new VkSurfaceFormatKHR();
 			format.format = Swapchain.DEFAULT_FORMAT;
 			format.colorSpace = Swapchain.DEFAULT_COLOUR_SPACE;
-			when(props.formats()).thenReturn(Set.of(format));
+			when(props.formats()).thenReturn(List.of(format));
 
 			// Init surface capabilities descriptor
 			caps = new VkSurfaceCapabilitiesKHR();
@@ -186,7 +188,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			caps.currentExtent = extent;
 
 			// Create builder
-			builder = new Swapchain.Builder(dev, surface);
+			builder = new Swapchain.Builder(dev, props);
 		}
 
 		@Test
@@ -287,7 +289,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 		@Test
 		void invalidPresentationMode() {
-			assertThrows(IllegalArgumentException.class, () -> builder.mode(VkPresentModeKHR.IMMEDIATE_KHR));
+			assertThrows(IllegalArgumentException.class, () -> builder.presentation(VkPresentModeKHR.IMMEDIATE_KHR));
 		}
 	}
 }
