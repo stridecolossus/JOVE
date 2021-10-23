@@ -31,7 +31,7 @@ public class ModelConfiguration {
 
     @Bean
     public static Model model(DataSource src) {
-        final var loader = ResourceLoader.of(src, new ModelLoader());
+        var loader = ResourceLoader.of(src, new ModelLoader());
         return loader.apply("chalet.model");
     }
 }
@@ -56,17 +56,17 @@ Which both delegate to the following helper:
 ```java
 private VulkanBuffer buffer(Bufferable data, VkBufferUsage usage) {
     // Create staging buffer
-    final VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
+    VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
 
     // Init buffer memory properties
-    final MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
-            .usage(VkBufferUsage.TRANSFER_DST)
-            .usage(usage)
-            .required(VkMemoryProperty.DEVICE_LOCAL)
-            .build();
+    MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
+        .usage(VkBufferUsage.TRANSFER_DST)
+        .usage(usage)
+        .required(VkMemoryProperty.DEVICE_LOCAL)
+        .build();
 
     // Create buffer
-    final VulkanBuffer buffer = VulkanBuffer.create(dev, allocator, staging.length(), props);
+    VulkanBuffer buffer = VulkanBuffer.create(dev, allocator, staging.length(), props);
 
     // Copy staging to buffer
     staging.copy(buffer).submitAndWait(graphics);
@@ -136,7 +136,7 @@ static DrawCommand indexed(int count) {
 }
 
 static DrawCommand of(Model model) {
-    final int count = model.header().count();
+    int count = model.header().count();
     if(model.isIndexed()) {
         return indexed(count);
     }
@@ -220,17 +220,35 @@ We assume that this will apply to all OBJ models, we can always make it an optio
 
 The model now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so we are not rendering the model inside-out for example).
 
-We did head down a blind alley for some time believing that some of the rendering problems were due to errors in culling or the triangle winding order.  This proved to be unfounded but we did fully implement the _rasterizer pipeline stage_ which we introduce at this point for the sake of posterity:
+### Rasterizer Pipeline Stage
+
+We did head down a blind alley for some time believing that some of the rendering problems were due to errors in culling or the triangle winding order.  This proved to be unfounded but we did fully implement the _rasterizer pipeline stage_ which we introduce at this point for the sake of posterity.
+
+The builder is essentially a wrapper for the underlying descriptor:
 
 ```java
 public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
-    private boolean depthClampEnable;
-    private boolean rasterizerDiscardEnable;
-    private VkPolygonMode polygonMode = VkPolygonMode.FILL;
-    private VkCullMode cullMode = VkCullMode.BACK;
-    private VkFrontFace frontFace = VkFrontFace.COUNTER_CLOCKWISE;
-    private float lineWidth = 1;
-    private boolean depthBiasEnable;
+    private final VkPipelineRasterizationStateCreateInfo info = new VkPipelineRasterizationStateCreateInfo();
+
+    ...
+
+    @Override
+    VkPipelineRasterizationStateCreateInfo get() {
+        return info;
+    }
+}
+```
+
+The rasterizer properties are initialised in the constructor:
+
+```java
+public RasterizerStageBuilder() {
+    depthClamp(false);
+    discard(false);
+    polygon(VkPolygonMode.FILL);
+    cull(VkCullMode.BACK);
+    winding(VkFrontFace.COUNTER_CLOCKWISE);
+    lineWidth(1);
 }
 ```
 
@@ -418,7 +436,7 @@ Subpass subpass = new Subpass.Builder()
 
 Notes:
 
-* The format of the depth buffer attachment is hard-coded to one that is commonly available on most Vulkan implementations, we make a note to properly select a format appropriate to the hardware later on.
+* The format of the depth buffer attachment is temporarily hard-coded to one that is commonly available on most Vulkan implementations.
 
 * The _store_ operation is left as the default (don't care).
 
@@ -482,6 +500,229 @@ Ta-da!
 
 ---
 
+## Improvements
+
+### Format Selector
+
+Rather than hard-coding the format of the depth buffer image and attachment we add a helper to the image class that selects the most suitable format.
+
+We first define a filter that tests whether a given depth-stencil format supports optimal tiling:
+
+```java
+static VkFormat depth(PhysicalDevice dev) {
+    Predicate<VkFormat> predicate = format -> {
+        VkFormatProperties props = dev.properties(format);
+        return MathsUtil.isMask(props.optimalTilingFeatures, VkFormatFeature.DEPTH_STENCIL_ATTACHMENT.value());
+    };
+    ...
+}
+```
+
+The format properties are retrieved using a new accessor on the physical device:
+
+```java
+public VkFormatProperties properties(VkFormat format) {
+    var props = new VkFormatProperties();
+    VulkanLibrary lib = instance.library();
+    lib.vkGetPhysicalDeviceFormatProperties(this, format, props);
+    return props;
+}
+```
+
+The helper then walks through the possible candidates to find the most suitable format:
+
+```java
+return Stream
+    .of(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT)
+    .filter(predicate)
+    .findAny()
+    .orElseThrow(() -> new RuntimeException("No supported depth buffer format"));
+```
+
+We can now replace the hard-coded image format in the presentation configuration.
+
+### Swapchain Configuration
+
+We also make some modifications to the configuration of the swapchain to select
+
+The presentation mode of the swapchain is set to the mailbox option, falling back to the default (FIFO) if not supported by the hardware:
+
+```java
+VkPresentModeKHR mode = props.modes().contains(VkPresentModeKHR.MAILBOX_KHR) ? VkPresentModeKHR.MAILBOX_KHR : Swapchain.DEFAULT_PRESENTATION_MODE;
+```
+
+Next we walk through the available surface formats to find one that supports the desired image format and colour-space, falling back to an arbitrary format if not available:
+
+```java
+List<VkSurfaceFormatKHR> formats = props.formats();
+VkSurfaceFormatKHR format = formats
+    .stream()
+    .filter(f -> f.format == VkFormat.B8G8R8_UNORM)
+    .filter(f -> f.colorSpace == VkColorSpaceKHR.SRGB_NONLINEAR_KHR)
+    .findAny()
+    .orElse(formats.get(0));
+```
+
+The code to create the swapchain now looks like this:
+
+```java
+return new Swapchain.Builder(dev, props)
+    .count(cfg.getFrameCount())
+    .clear(cfg.getBackground())
+    .format(format.format)
+    .space(format.colorSpace)
+    .presentation(mode)
+    .build();
+```
+
+Notes:
+
+* The `swapchain` bean now accepts the surface properties rather than the surface itself (since we now also use the properties in the selection code).
+
+* The presentation modes and surface formats are lazily retrieved in the surface class to minimise API calls.
+
+### Camera Model
+
+Finally we will replace the view transform code in the demo with a _camera_ implementation, which we will be using in the next chapter.
+
+The camera is a model class (in MVC terms) representing the position and orientation of the viewer:
+
+```java
+public class Camera {
+    private Point pos = Point.ORIGIN;
+    private Vector dir = Vector.Z;
+    private Vector up = Vector.Y;
+}
+```
+
+Note that under the hood the camera direction is the inverse of the view direction:
+
+```java
+public void direction(Vector dir) {
+    this.dir = dir.invert();
+}
+```
+
+We provide various mutator methods to move the camera position:
+
+```java
+public void move(Point pos) {
+    this.pos = notNull(pos);
+}
+
+public void move(Vector vec) {
+    pos = pos.add(vec);
+}
+
+public void move(float dist) {
+    move(dir.multiply(dist));
+}
+
+public void strafe(float dist) {
+    move(right.multiply(dist));
+}
+```
+
+And a convenience setter to point the camera at a given target location:
+
+```java
+public void look(Point pt) {
+    if(pos.equals(pt)) throw new IllegalArgumentException(...);
+    dir = Vector.between(pt, pos).normalize();
+}
+```
+
+We next add some transient members to the camera class to support the view transform:
+
+```java
+public class Camera {
+    ...
+    private Vector right;
+    private Matrix matrix;
+    private boolean dirty;
+}
+```
+
+Where:
+
+* The `dirty` flag is signalled in the various mutator methods (not shown) when any of the camera properties are modified.
+
+* The `right` vector is the horizontal axis of the viewport (also used in the `strafe` method above).
+
+The view transform matrix for the camera is then re-calculated as required:
+
+```java
+public Matrix matrix() {
+    if(dirty) {
+        update();
+        dirty = false;
+    }
+    return matrix;
+}
+```
+
+The `update` method first determines the viewport axes based on the camera axes:
+
+```java
+private void update() {
+    // Determine right axis
+    right = up.cross(dir).normalize();
+
+    // Determine up axis
+    Vector y = dir.cross(right).normalize();
+}
+```
+
+The `cross` method calculates the _cross product_ of two vectors yielding the vector perpendicular to both (using the right-hand rule):
+
+```java
+public Vector cross(Vector vec) {
+    final float x = this.y * vec.z - this.z * vec.y;
+    final float y = this.z * vec.x - this.x * vec.z;
+    final float z = this.x * vec.y - this.y * vec.x;
+    return new Vector(x, y, z);
+}
+```
+
+From the three axes we can now build the view transform matrix as before:
+
+```java
+// Build translation component
+Matrix trans = Matrix.translation(new Vector(pos));
+
+// Build rotation component
+Matrix rot = new Matrix.Builder()
+    .identity()
+    .row(0, right)
+    .row(1, y)
+    .row(2, dir)
+    .build();
+
+// Create camera matrix
+matrix = rot.multiply(trans);
+```
+
+We add a new camera object to the configuration class:
+
+```java
+public class CameraConfiguration {
+    @Bean
+    public static Camera camera() {
+        final Camera cam = new Camera();
+        cam.move(new Point(0, -0.5f, -2));
+        return cam;
+    }
+}
+```
+
+Then we remove the old view transform and use the camera to calculate the final projection matrix:
+
+```java
+return projection.multiply(cam.matrix()).multiply(model);
+```
+
+---
+
 ## Summary
 
 In this chapter we implemented:
@@ -494,3 +735,4 @@ In this chapter we implemented:
 
 - Texture coordinate inversion for an OBJ model.
 
+- A camera model.

@@ -14,7 +14,7 @@ import org.sarge.jove.geometry.Vector;
 public class Camera {
 	// Camera state
 	private Point pos = Point.ORIGIN;
-	private Vector dir = Vector.Z;			// Note this is actually the inverse of the view direction
+	private Vector dir = Vector.Z;
 
 	// Axes
 	private Vector up = Vector.Y;
@@ -162,10 +162,10 @@ public class Camera {
 		// Determine up axis
 		final Vector y = dir.cross(right).normalize();
 
-		// Calculate translation component
-		final Matrix trans = Matrix.translation(new Vector(pos).invert());
+		// Build translation component
+		final Matrix trans = Matrix.translation(new Vector(pos));
 
-		// Build rotation matrix
+		// Build rotation component
 		final Matrix rot = new Matrix.Builder()
 				.identity()
 				.row(0, right)
