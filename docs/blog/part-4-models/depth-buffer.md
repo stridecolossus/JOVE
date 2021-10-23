@@ -205,12 +205,11 @@ We introduce a sort of adapter method that flips the vertical component of the t
 ```java
 private static Coordinate2D flip(float[] array) {
     assert array.length == 2;
-    array[1] = -array[1];
-    return new Coordinate2D(array[0], array[1]);
+    return new Coordinate2D(array[0], -array[1]);
 }
 ```
 
-This is used in the parser configuration of the OBJ loader:
+And modify the texture coordinate parser in the OBJ loader:
 
 ```java
 add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, ObjectModel::coordinate));
@@ -222,7 +221,7 @@ The model now looks to be textured correctly, in particular the signs on the fro
 
 ### Rasterizer Pipeline Stage
 
-We did head down a blind alley for some time believing that some of the rendering problems were due to errors in culling or the triangle winding order.  This proved to be unfounded but we did fully implement the _rasterizer pipeline stage_ which we introduce at this point for the sake of posterity.
+We did head down a blind alley for some time believing that some of the rendering problems were due to errors in culling or the triangle winding order.  This proved to be unfounded but we did implement the _rasterizer pipeline stage_ which we introduce at this point for the sake of posterity.
 
 The builder is essentially a wrapper for the underlying descriptor:
 
@@ -258,7 +257,7 @@ public RasterizerStageBuilder() {
 
 ### Pipeline Stage
 
-To resolve the issue of overlapping fragments we either need to order the geometry by distance from the camera or use a _depth test_ to ensure that obscured fragments are not rendered.  A depth test is implemented using a _depth buffer_ which is a frame buffer attachment that stores the depth of each rendered fragment, discarding subsequent fragments that are closer.
+To resolve the issue of overlapping fragments we either need to order the geometry by distance from the camera or use a _depth test_ to ensure that obscured fragments are not rendered.  A depth test is implemented using a _depth buffer_ which is a frame buffer attachment that stores the depth of each rendered fragment, discarding subsequent fragments that are closer to the camera.
 
 To configure the depth test we first introduce a new pipeline stage:
 
@@ -331,11 +330,6 @@ For a depth-stencil attachment we add a second implementation:
 
 ```java
 record DepthClearValue(Percentile depth) implements ClearValue {
-    /**
-     * Default clear value for a depth attachment.
-     */
-    public static final ClearValue DEFAULT = new DepthClearValue(Percentile.ONE);
-
     @Override
     public VkImageAspect aspect() {
         return VkImageAspect.DEPTH;
@@ -492,6 +486,8 @@ Notes:
 
 * The same depth buffer can safely be used in each frame since only a single sub-pass will be executing at any one time in the current render loop.
 
+* We add a convenience constant for the default `DEPTH` clear value for a depth-stencil attachment.
+
 With the depth buffer enabled we should finally be able to see the chalet model:
 
 ![Chalet Model](chalet.png)
@@ -543,15 +539,15 @@ We can now replace the hard-coded image format in the presentation configuration
 
 ### Swapchain Configuration
 
-We also make some modifications to the configuration of the swapchain to select
+We also make some modifications to the configuration of the swapchain to select various properties rather than hard-coding.
 
-The presentation mode of the swapchain is set to the mailbox option, falling back to the default (FIFO) if not supported by the hardware:
+The presentation mode of the swapchain is set to the mailbox option if available, and otherwise falling back to the default (FIFO).
 
 ```java
 VkPresentModeKHR mode = props.modes().contains(VkPresentModeKHR.MAILBOX_KHR) ? VkPresentModeKHR.MAILBOX_KHR : Swapchain.DEFAULT_PRESENTATION_MODE;
 ```
 
-Next we walk through the available surface formats to find one that supports the desired image format and colour-space, falling back to an arbitrary format if not available:
+Next we walk through the available surface formats to find one that supports the desired image format and colour-space, falling back to an arbitrary format if the optimal combination is not available:
 
 ```java
 List<VkSurfaceFormatKHR> formats = props.formats();
@@ -581,9 +577,73 @@ Notes:
 
 * The presentation modes and surface formats are lazily retrieved in the surface class to minimise API calls.
 
+### Vector
+
+Next we add some new functionality to the `Vector` class that we will be using below.
+
+A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible (or use the GPU).  Additionally many distance comparisons work irrespective of whether the distance is squared or not.
+
+We therefore represent the magnitude as the __squared__ length of the vector (and highlight this in the documentation):
+
+```java
+/**
+ * @return Magnitude (or length) <b>squared</b> of this vector
+ */
+public float magnitude() {
+    return x * x + y * y + z * z;
+}
+```
+
+The _cross product_ yields the vector perpendicular to two other vectors (using the right-hand rule):
+
+```java
+public Vector cross(Vector vec) {
+    float x = this.y * vec.z - this.z * vec.y;
+    float y = this.z * vec.x - this.x * vec.z;
+    float z = this.x * vec.y - this.y * vec.x;
+    return new Vector(x, y, z);
+}
+```
+
+Many operations assume that a vector has _unit length_ which is applied by the following method:
+
+```java
+public Vector normalize() {
+    float len = magnitude();
+    if(MathsUtil.isEqual(1, len)) {
+        return this;
+    }
+    else {
+        float f = 1 / MathsUtil.sqrt(len);
+        return multiply(f);
+    }
+}
+```
+
+Where `multiply` scales a vector by a given value:
+
+```java
+public Vector multiply(float f) {
+    return new Vector(x * f, y * f, z * f);
+}
+```
+
+Finally we add a convenience method to create the vector between two points:
+
+```java
+public static Vector between(Point start, Point end) {
+    float dx = end.x - start.x;
+    float dy = end.y - start.y;
+    float dz = end.z - start.z;
+    return new Vector(dx, dy, dz);
+}
+```
+
+Note that the vector class is immutable and all 'mutator' methods create a new instance.
+
 ### Camera Model
 
-Finally we will replace the view transform code in the demo with a _camera_ implementation, which we will be using in the next chapter.
+The final improvement is to replace the view transform code in the demo with a _camera_ implementation, which we will be using heavily in the next chapter.
 
 The camera is a model class (in MVC terms) representing the position and orientation of the viewer:
 
@@ -673,17 +733,6 @@ private void update() {
 }
 ```
 
-The `cross` method calculates the _cross product_ of two vectors yielding the vector perpendicular to both (using the right-hand rule):
-
-```java
-public Vector cross(Vector vec) {
-    final float x = this.y * vec.z - this.z * vec.y;
-    final float y = this.z * vec.x - this.x * vec.z;
-    final float z = this.x * vec.y - this.y * vec.x;
-    return new Vector(x, y, z);
-}
-```
-
 From the three axes we can now build the view transform matrix as before:
 
 ```java
@@ -708,14 +757,14 @@ We add a new camera object to the configuration class:
 public class CameraConfiguration {
     @Bean
     public static Camera camera() {
-        final Camera cam = new Camera();
+        Camera cam = new Camera();
         cam.move(new Point(0, -0.5f, -2));
         return cam;
     }
 }
 ```
 
-Then we remove the old view transform and use the camera to calculate the final projection matrix:
+And finally we remove the old view transform code and use the camera to calculate the final projection matrix:
 
 ```java
 return projection.multiply(cam.matrix()).multiply(model);

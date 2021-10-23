@@ -51,6 +51,11 @@ public interface ClearValue {
 	};
 
 	/**
+	 * Default clear value for a depth attachment.
+	 */
+	DepthClearValue DEPTH = new DepthClearValue(Percentile.ONE);
+
+	/**
 	 * Clear value for a colour attachment.
 	 */
 	record ColourClearValue(Colour col) implements ClearValue {
@@ -79,11 +84,6 @@ public interface ClearValue {
 	 * Clear value for a depth attachment.
 	 */
 	record DepthClearValue(Percentile depth) implements ClearValue {
-		/**
-		 * Default clear value for a depth attachment.
-		 */
-		public static final ClearValue DEFAULT = new DepthClearValue(Percentile.ONE);
-
 		/**
 		 * Constructor.
 		 * @param depth Depth value

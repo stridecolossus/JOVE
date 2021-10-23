@@ -68,8 +68,7 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 	 */
 	private static Coordinate2D flip(float[] array) {
 		assert array.length == 2;
-		array[1] = -array[1];
-		return new Coordinate2D(array[0], array[1]);
+		return new Coordinate2D(array[0], -array[1]);
 	}
 
 	/**

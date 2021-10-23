@@ -6,13 +6,11 @@ import static org.sarge.lib.util.Check.notNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientNativeObject;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 
 import com.sun.jna.Pointer;
@@ -45,19 +43,6 @@ public class View extends AbstractVulkanObject {
 	View(Pointer handle, Image image, DeviceContext dev) {
 		super(handle, dev);
 		this.image = notNull(image);
-		this.clear = clear(image);
-	}
-
-	/**
-	 * @return Default clear value for the given image
-	 */
-	private static ClearValue clear(Image image) {
-		if(image.descriptor().aspects().contains(VkImageAspect.DEPTH)) {
-			return DepthClearValue.DEFAULT;
-		}
-		else {
-			return ClearValue.NONE;
-		}
 	}
 
 	/**
