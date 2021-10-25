@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -98,7 +98,7 @@ public class DesktopDeviceTest {
 			// Create source
 			src = dev.new DesktopSource<>() {
 				@Override
-				public Collection<Type> types() {
+				public List<? extends Type<?>> types() {
 					return null;
 				}
 

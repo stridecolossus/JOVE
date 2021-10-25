@@ -1,20 +1,20 @@
 package org.sarge.jove.platform.desktop;
 
+import static java.util.stream.Collectors.toList;
+
 import java.awt.MouseInfo;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.control.AxisEvent;
-import org.sarge.jove.control.ButtonEvent;
+import org.sarge.jove.control.Axis;
+import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.Event.Type;
-import org.sarge.jove.control.PositionEvent;
+import org.sarge.jove.control.Position;
+import org.sarge.jove.control.Position.PositionEvent;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
@@ -44,12 +44,12 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * @return Mouse pointer
 	 */
-	public DesktopSource<MousePositionListener> pointer() {
-		return ptr;
+	public Position pointer() {
+		return ptr.pointer;
 	}
 
 	/**
-	 * @return Mouse buttons
+	 * @return Mouse buttons source
 	 */
 	public DesktopSource<MouseButtonListener> buttons() {
 		return buttons;
@@ -58,8 +58,8 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * @return Mouse scroll-wheel
 	 */
-	public DesktopSource<MouseScrollListener> wheel() {
-		return wheel;
+	public Axis wheel() {
+		return wheel.axis;
 	}
 
 	@Override
@@ -71,17 +71,17 @@ public class MouseDevice extends DesktopDevice {
 	 * Mouse pointer event source.
 	 */
 	private class MousePointer extends DesktopSource<MousePositionListener> {
-		private final Type pointer = new Type("Pointer");
+		private final Position pointer = new Position("Pointer", this);
 
 		@Override
-		public Collection<Type> types() {
-			return Set.of(pointer);
+		public List<Position> types() {
+			return List.of(pointer);
 		}
 
 		@Override
 		protected MousePositionListener listener(Consumer<Event> handler) {
 			return (ptr, x, y) -> {
-				final PositionEvent pos = new PositionEvent(pointer, MousePointer.this, (float) x, (float) y);
+				final PositionEvent pos = pointer.new PositionEvent((float) x, (float) y);
 				handler.accept(pos);
 			};
 		}
@@ -96,26 +96,27 @@ public class MouseDevice extends DesktopDevice {
 	 * Mouse buttons event source.
 	 */
 	private class MouseButton extends DesktopSource<MouseButtonListener> {
-		private final String prefix = Event.name("Mouse", "Button", StringUtils.EMPTY);
+		private final String prefix = Event.name("Mouse", "Button");
 
-		private final Type[] types = IntStream
+		@SuppressWarnings("hiding")
+		private final List<Button> buttons = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())
 				.mapToObj(String::valueOf)
-				.map(prefix::concat)
-				.map(Type::new)
-				.toArray(Type[]::new);
+				.map(id -> Event.name(prefix, id))
+				.map(name -> new Button(name, this))
+				.collect(toList());
 
 		@Override
-		public Collection<Type> types() {
-			return Arrays.asList(types);
+		public List<Button> types() {
+			return buttons;
 		}
 
 		@Override
 		protected MouseButtonListener listener(Consumer<Event> handler) {
 			return (ptr, index, action, mods) -> {
-				final Type button = types[index];
+				final Button button = buttons.get(index);
 				final String name = DesktopDevice.name(button.name(), action, mods);
-				final ButtonEvent event = new ButtonEvent(name, button, MouseButton.this);
+				final Button event = new Button(name, MouseButton.this);
 				handler.accept(event);
 			};
 		}
@@ -130,18 +131,18 @@ public class MouseDevice extends DesktopDevice {
 	 * Mouse scroll-wheel source.
 	 */
 	private class MouseWheel extends DesktopSource<MouseScrollListener> {
-		private final Type axis = new Type("Wheel");
+		private final Axis axis = new Axis("Wheel", this);
 
 		@Override
-		public Set<Type> types() {
-			return Set.of(axis);
+		public List<Axis> types() {
+			return List.of(axis);
 		}
 
 		@Override
 		protected MouseScrollListener listener(Consumer<Event> handler) {
 			return (ptr, x, y) -> {
-				final AxisEvent event = new AxisEvent(axis, MouseWheel.this, (float) y);
-				handler.accept(event);
+				final Event e = axis.new AxisEvent((float) y);
+				handler.accept(e);
 			};
 		}
 

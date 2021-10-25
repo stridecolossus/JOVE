@@ -83,7 +83,7 @@ public abstract class DesktopDevice implements Device {
 					.enumerate(Modifier.class, mods)
 					.stream()
 					.map(Enum::name)
-					.collect(joining("-"));
+					.collect(joining(Event.DELIMITER));
 		}
 	}
 

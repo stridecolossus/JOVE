@@ -6,25 +6,21 @@ import static org.mockito.Mockito.mock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.Event.Type;
 
-public class AxisEventTest {
-	private AxisEvent axis;
-	private Type type;
+public class ButtonTest {
+	private Button button;
 	private Source src;
 
 	@BeforeEach
 	void before() {
-		type = new Type("axis");
 		src = mock(Source.class);
-		axis = new AxisEvent(type, src, 3f);
+		button = new Button("name", src);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("axis", axis.name());
-		assertEquals(type, axis.type());
-		assertEquals(src, axis.source());
-		assertEquals(3f, axis.value());
+		assertEquals("name", button.name());
+		assertEquals(src, button.source());
+		assertEquals(button, button.type());
 	}
 }

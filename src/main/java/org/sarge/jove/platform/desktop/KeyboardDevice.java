@@ -1,11 +1,9 @@
 package org.sarge.jove.platform.desktop;
 
-import static java.util.stream.Collectors.toMap;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,7 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.control.ButtonEvent;
+import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
@@ -24,25 +22,24 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
  * @author Sarge
  */
 public class KeyboardDevice extends DesktopDevice {
-	private static final Map<Integer, Type> TABLE;
+	private static final Map<Integer, String> TABLE = new HashMap<>();
 
 	static {
 		try(final InputStream in = KeyboardDevice.class.getResourceAsStream("/key.table.txt")) {
-			TABLE = new BufferedReader(new InputStreamReader(in))
+			new BufferedReader(new InputStreamReader(in))
 					.lines()
 					.map(StringUtils::split)
-					.map(KeyboardDevice::load)
-					.collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+					.forEach(KeyboardDevice::load);
 		}
 		catch(Exception e) {
 			throw new RuntimeException("Error loading key-table", e);
 		}
 	}
 
-	private static Map.Entry<Integer, Type> load(String[] tokens) {
+	private static void load(String[] tokens) {
 		final Integer key = Integer.parseInt(tokens[1].trim());
-		final Type type = new Type(tokens[0].trim());
-		return Map.entry(key, type);
+		final String name = tokens[0].trim();
+		TABLE.put(key, name);
 	}
 
 	private final KeyboardSource keyboard = new KeyboardSource();
@@ -58,7 +55,7 @@ public class KeyboardDevice extends DesktopDevice {
 	/**
 	 * @return Keyboard event source
 	 */
-	public DesktopSource<KeyListener> keyboard() {
+	public DesktopSource<KeyListener> source() {
 		return keyboard;
 	}
 
@@ -77,7 +74,7 @@ public class KeyboardDevice extends DesktopDevice {
 	 */
 	private class KeyboardSource extends DesktopSource<KeyListener> {
 		@Override
-		public Collection<Type> types() {
+		public List<Type<?>> types() {
 			return List.of();
 		}
 
@@ -85,13 +82,15 @@ public class KeyboardDevice extends DesktopDevice {
 		protected KeyListener listener(Consumer<Event> handler) {
 			return (ptr, key, scancode, action, mods) -> {
 				// Lookup key
-				final Type type = TABLE.get(key);
-				if(type == null) throw new RuntimeException("Unknown key code: " + key);
+				final String name = TABLE.get(key);
+				if(name == null) throw new RuntimeException("Unknown key code: " + key);
 
 				// Create event
-				final String prefix = Event.name("Key", type.name());
-				final String name = DesktopDevice.name(prefix, action, mods);
-				final ButtonEvent button = new ButtonEvent(name, type, KeyboardSource.this);
+				// TODO - just inject mods/action into button ctor, no need to parse until name() is actually needed
+				// - or maybe GLFW specific button class with mods/action?
+				final String id = DesktopDevice.name(Event.name("Key", name), action, mods);
+				final Button button = new Button(id, KeyboardSource.this);
+				// TODO - cache?
 
 				// Delegate
 				handler.accept(button);

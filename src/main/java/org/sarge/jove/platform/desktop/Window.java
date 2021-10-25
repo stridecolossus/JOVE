@@ -7,12 +7,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.Event;
 import org.sarge.lib.util.Check;
+import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -163,6 +165,8 @@ public class Window extends AbstractTransientNativeObject {
 
 	private final Desktop desktop;
 	private final Descriptor descriptor;
+	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
+	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
 	private final WeakHashMap<Object, Object> registry = new WeakHashMap<>();
 
 	/**
@@ -195,14 +199,14 @@ public class Window extends AbstractTransientNativeObject {
 	 * @return New keyboard device
 	 */
 	public KeyboardDevice keyboard() {
-		return new KeyboardDevice(this);
+		return keyboard.get();
 	}
 
 	/**
 	 * @return New mouse device
 	 */
 	public MouseDevice mouse() {
-		return new MouseDevice(this);
+		return mouse.get();
 	}
 
 	/**
