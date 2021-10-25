@@ -2,79 +2,70 @@ package org.sarge.jove.platform.desktop;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent;
+import org.sarge.jove.control.ButtonEvent;
+import org.sarge.jove.control.Event;
+import org.sarge.jove.control.Event.Type;
+import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
-import com.sun.jna.Pointer;
-
 public class KeyboardDeviceTest {
-	private KeyboardDevice device;
+	private KeyboardDevice dev;
 	private Window window;
 	private DesktopLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Create API
 		lib = mock(DesktopLibrary.class);
-
-		// Create window
 		window = mock(Window.class);
-//		when(window.library()).thenReturn(lib);
-		when(window.handle()).thenReturn(new Handle(new Pointer(1)));
-
-		// Create device
-		device = new KeyboardDevice(window);
+		dev = new KeyboardDevice(window);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("Keyboard", device.name());
-		assertNotNull(device.sources());
-		assertEquals(1, device.sources().size());
+		assertNotNull(dev.sources());
+		assertEquals(1, dev.sources().size());
 	}
 
-	@Test
-	void source() {
-		final InputEvent.Source<?> src = device.sources().iterator().next();
-		assertNotNull(src);
-		assertEquals(List.of(), src.types());
-	}
+	@Nested
+	class KeyboardSourceTests {
+		private DesktopSource<KeyListener> keyboard;
 
-	@SuppressWarnings("unchecked")
-	@Test
-	void enable() {
-		// Enable button events
-		final Consumer<InputEvent<Button>> handler = mock(Consumer.class);
-		device.enable(handler);
+		@BeforeEach
+		void before() {
+			keyboard = dev.keyboard();
+		}
 
-		// Check API
-		final ArgumentCaptor<KeyListener> captor = ArgumentCaptor.forClass(KeyListener.class);
-		verify(lib).glfwSetKeyCallback(eq(window.handle()), captor.capture());
-		assertNotNull(captor.getValue());
-		verify(window).register(handler, captor.getValue());
+		@Test
+		void constructor() {
+			assertNotNull(keyboard);
+			assertEquals(List.of(), keyboard.types());
+		}
 
-		// Create button
-		final int code = 256;
-		final Button button = new Button("ESCAPE", 1, 2);
+		@Test
+		void listener() {
+			final Consumer<Event> handler = mock(Consumer.class);
+			final KeyListener listener = keyboard.listener(handler);
+			listener.key(null, 256, 0, 1, 0x0001);
+			verify(handler).accept(new ButtonEvent("Key-ESCAPE-PRESS-SHIFT", new Type("ESCAPE"), keyboard));
+		}
 
-		// Generate an event
-		final KeyListener listener = captor.getValue();
-		listener.key(null, code, 0, 1, 2);
-
-		// Check event delegated to handler
-		verify(handler).accept(button);
+		@Test
+		void method() {
+			final KeyListener listener = mock(KeyListener.class);
+			final BiConsumer<Window, KeyListener> method = keyboard.method(lib);
+			assertNotNull(method);
+			method.accept(window, listener);
+			verify(lib).glfwSetKeyCallback(window, listener);
+		}
 	}
 }

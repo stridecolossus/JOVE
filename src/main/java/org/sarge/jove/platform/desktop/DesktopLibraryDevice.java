@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.common.Handle;
-
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 
@@ -9,7 +7,6 @@ import com.sun.jna.Pointer;
  * GLFW device API.
  * @author Sarge
  */
-public // TODO
 interface DesktopLibraryDevice {
 	/**
 	 * Processes pending events.
@@ -27,7 +24,7 @@ interface DesktopLibraryDevice {
 	/**
 	 * Listener for key events.
 	 */
-	public interface KeyListener extends Callback {
+	interface KeyListener extends Callback {
 		/**
 		 * Notifies a key event.
 		 * @param window			Window
@@ -44,7 +41,7 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Key listener
 	 */
-	void glfwSetKeyCallback(Handle window, KeyListener listener);
+	void glfwSetKeyCallback(Window window, KeyListener listener);
 
 	/**
 	 * Listener for mouse move events.
@@ -64,7 +61,7 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse movement listener
 	 */
-	void glfwSetCursorPosCallback(Handle window, MousePositionListener listener);
+	void glfwSetCursorPosCallback(Window window, MousePositionListener listener);
 
 	/**
 	 * Listener for mouse button events.
@@ -85,7 +82,7 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse button listener
 	 */
-	void glfwSetMouseButtonCallback(Handle window, MouseButtonListener listener);
+	void glfwSetMouseButtonCallback(Window window, MouseButtonListener listener);
 
 	/**
 	 * Listener for mouse scroll events.
@@ -105,5 +102,5 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse scroll listener
 	 */
-	void glfwSetScrollCallback(Handle window, MouseScrollListener listener);
+	void glfwSetScrollCallback(Window window, MouseScrollListener listener);
 }

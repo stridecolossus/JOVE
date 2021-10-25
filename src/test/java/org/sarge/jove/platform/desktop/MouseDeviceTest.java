@@ -2,130 +2,172 @@ package org.sarge.jove.platform.desktop;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
+import java.util.Collection;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.control.Axis;
-import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent;
-import org.sarge.jove.control.InputEvent.Source;
-import org.sarge.jove.control.Position;
+import org.sarge.jove.control.AxisEvent;
+import org.sarge.jove.control.ButtonEvent;
+import org.sarge.jove.control.Event;
+import org.sarge.jove.control.Event.Type;
+import org.sarge.jove.control.PositionEvent;
+import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
 
-import com.sun.jna.Pointer;
-
 public class MouseDeviceTest {
-	private MouseDevice device;
+	private MouseDevice mouse;
 	private Window window;
 	private DesktopLibrary lib;
+	private Consumer<Event> handler;
 
 	@BeforeEach
 	void before() {
-		// Create API
-		lib = mock(DesktopLibrary.class);
-
-		// Create window
 		window = mock(Window.class);
-//		when(window.library()).thenReturn(lib);
-		when(window.handle()).thenReturn(new Handle(new Pointer(1)));
-
-		// Create device
-		device = new MouseDevice(window);
+		lib = mock(DesktopLibrary.class);
+		handler = mock(Consumer.class);
+		mouse = new MouseDevice(window);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("Mouse", device.name());
-		assertNotNull(device.sources());
-		assertEquals(3, device.sources().size());
+		assertNotNull(mouse.sources());
 	}
 
-	@SuppressWarnings("unchecked")
-	@Test
-	void pointer() {
-		// Retrieve mouse pointer source
-		final Source<Position> pointer = device.pointer();
-		assertNotNull(pointer);
-		assertNotNull(pointer.types());
-		assertEquals(1, pointer.types().size());
+	@Nested
+	class MousePointerTests {
+		private DesktopSource<MousePositionListener> ptr;
 
-		// Enable mouse pointer
-		final Consumer<InputEvent<Position>> handler = mock(Consumer.class);
-		final ArgumentCaptor<MousePositionListener> captor = ArgumentCaptor.forClass(MousePositionListener.class);
-		pointer.enable(handler);
-		verify(lib).glfwSetCursorPosCallback(eq(window.handle()), captor.capture());
-		verify(window).register(handler, captor.getValue());
+		@BeforeEach
+		void before() {
+			ptr = mouse.pointer();
+		}
 
-		// Generate an event
-		final Position pos = pointer.types().get(0);
-		final MousePositionListener listener = captor.getValue();
-		assertNotNull(listener);
-		listener.move(null, 1, 2);
-		verify(handler).accept(new Position.Event(pos, 1, 2));
+		@Test
+		void constructor() {
+			assertNotNull(ptr);
+			assertEquals(mouse, ptr.device());
+			assertTrue(mouse.sources().contains(ptr));
+			assertNotNull(ptr.method(lib));
+		}
+
+		@Test
+		void types() {
+			final Collection<Type> types = ptr.types();
+			assertNotNull(types);
+			assertEquals(1, types.size());
+			assertEquals(new Type("Pointer"), types.iterator().next());
+		}
+
+		@Test
+		void listener() {
+			final MousePositionListener listener = ptr.listener(handler);
+			assertNotNull(listener);
+			listener.move(null, 1, 2);
+			verify(handler).accept(new PositionEvent(new Type("Pointer"), ptr, 1, 2));
+		}
+
+		@Test
+		void method() {
+			final MousePositionListener listener = mock(MousePositionListener.class);
+			final BiConsumer<Window, MousePositionListener> method = ptr.method(lib);
+			assertNotNull(method);
+			method.accept(window, listener);
+			verify(lib).glfwSetCursorPosCallback(window, listener);
+		}
 	}
 
-	@SuppressWarnings("unchecked")
-	@Test
-	void buttons() {
-		// Retrieve mouse buttons source
-		final Source<Button> buttons = device.buttons();
-		assertNotNull(buttons);
-		assertNotNull(buttons.types());
+	@Nested
+	class MouseButtonTests {
+		private DesktopSource<MouseButtonListener> buttons;
 
-		// Enable mouse buttons
-		final Consumer<InputEvent<Button>> handler = mock(Consumer.class);
-		final ArgumentCaptor<MouseButtonListener> captor = ArgumentCaptor.forClass(MouseButtonListener.class);
-		buttons.enable(handler);
-		verify(lib).glfwSetMouseButtonCallback(eq(window.handle()), captor.capture());
-		verify(window).register(handler, captor.getValue());
+		@BeforeEach
+		void before() {
+			buttons = mouse.buttons();
+		}
 
-		// Lookup axis
-		final Button button = buttons.types().get(0);
-		assertNotNull(button);
-		assertEquals("Button-1-PRESS", button.name());
+		@Test
+		void constructor() {
+			assertNotNull(buttons);
+			assertEquals(mouse, buttons.device());
+			assertTrue(mouse.sources().contains(buttons));
+			assertNotNull(buttons.method(lib));
+		}
 
-		// Generate an event
-		final MouseButtonListener listener = captor.getValue();
-		assertNotNull(listener);
-		listener.button(null, 0, 0, 0);
-		verify(handler).accept(button);
+		@Test
+		void types() {
+			final Collection<Type> types = buttons.types();
+			assertNotNull(types);
+			assertEquals(new Type("Mouse-Button-1"), types.iterator().next());
+		}
+
+		@Test
+		void listener() {
+			final Type one = buttons.types().iterator().next();
+			final MouseButtonListener listener = buttons.listener(handler);
+			assertNotNull(listener);
+			listener.button(null, 0, 1, 0x0002);
+			verify(handler).accept(new ButtonEvent("Mouse-Button-1-PRESS-CONTROL", one, buttons));
+		}
+
+		@Test
+		void method() {
+			final MouseButtonListener listener = mock(MouseButtonListener.class);
+			final BiConsumer<Window, MouseButtonListener> method = buttons.method(lib);
+			assertNotNull(method);
+			method.accept(window, listener);
+			verify(lib).glfwSetMouseButtonCallback(window, listener);
+		}
 	}
 
-	@SuppressWarnings("unchecked")
-	@Test
-	void wheel() {
-		// Retrieve mouse wheel source
-		final Source<Axis> wheel = device.wheel();
-		assertNotNull(wheel);
-		assertNotNull(wheel.types());
-		assertEquals(1, wheel.types().size());
+	@Nested
+	class MouseWheelTests {
+		private DesktopSource<MouseScrollListener> wheel;
 
-		// Lookup axis
-		final Axis axis = wheel.types().get(0);
-		assertNotNull(axis);
-		assertEquals("Wheel", axis.name());
+		@BeforeEach
+		void before() {
+			wheel = mouse.wheel();
+		}
 
-		// Enable mouse wheel
-		final Consumer<InputEvent<Axis>> handler = mock(Consumer.class);
-		final ArgumentCaptor<MouseScrollListener> captor = ArgumentCaptor.forClass(MouseScrollListener.class);
-		wheel.enable(handler);
-		verify(lib).glfwSetScrollCallback(eq(window.handle()), captor.capture());
-		verify(window).register(handler, captor.getValue());
+		@Test
+		void constructor() {
+			assertNotNull(wheel);
+			assertEquals(mouse, wheel.device());
+			assertTrue(mouse.sources().contains(wheel));
+			assertNotNull(wheel.method(lib));
+		}
 
-		// Generate an event
-		final MouseScrollListener listener = captor.getValue();
-		assertNotNull(listener);
-		listener.scroll(null, 1, 2);
-		verify(handler).accept(axis.create(2));
+		@Test
+		void types() {
+			final Collection<Type> types = wheel.types();
+			assertNotNull(types);
+			assertEquals(1, types.size());
+			assertEquals(new Type("Wheel"), types.iterator().next());
+		}
+
+		@Test
+		void listener() {
+			final MouseScrollListener listener = wheel.listener(handler);
+			assertNotNull(listener);
+			listener.scroll(null, 1, 2);
+			verify(handler).accept(new AxisEvent(new Type("Wheel"), wheel, 2));
+		}
+
+		@Test
+		void method() {
+			final MouseScrollListener listener = mock(MouseScrollListener.class);
+			final BiConsumer<Window, MouseScrollListener> method = wheel.method(lib);
+			assertNotNull(method);
+			method.accept(window, listener);
+			verify(lib).glfwSetScrollCallback(window, listener);
+		}
 	}
 }

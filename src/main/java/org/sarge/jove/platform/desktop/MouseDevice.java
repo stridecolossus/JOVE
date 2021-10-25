@@ -1,157 +1,153 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import java.awt.MouseInfo;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import org.sarge.jove.control.Axis;
-import org.sarge.jove.control.Button;
-import org.sarge.jove.control.InputEvent;
-import org.sarge.jove.control.InputEvent.Device;
-import org.sarge.jove.control.InputEvent.Source;
-import org.sarge.jove.control.Position;
+import org.apache.commons.lang3.StringUtils;
+import org.sarge.jove.control.AxisEvent;
+import org.sarge.jove.control.ButtonEvent;
+import org.sarge.jove.control.Event;
+import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.control.Event.Type;
+import org.sarge.jove.control.PositionEvent;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
 
 /**
- * A <i>mouse device</i> generates events for a mouse controller.
- * TODO - doc
+ * The <i>mouse device</i> comprises event sources for the mouse pointer, buttons and scroll-wheel.
  * @author Sarge
  */
-public class MouseDevice implements Device {
-	private final Window window;
+public class MouseDevice extends DesktopDevice {
+	private final MouseWheel wheel = new MouseWheel();
+	private final MouseButton buttons = new MouseButton();
+	private final MousePointer ptr = new MousePointer();
 
 	/**
 	 * Constructor.
 	 * @param window Parent window
 	 */
 	MouseDevice(Window window) {
-		this.window = notNull(window);
+		super(window);
 	}
 
 	@Override
-	public String name() {
-		return "Mouse";
+	public Set<Source> sources() {
+		return Set.of(ptr, buttons, wheel);
 	}
 
 	/**
 	 * @return Mouse pointer
 	 */
-	public Source<Position> pointer() {
-		return new Source<>() {
-			private final Position pos = new Position("Pointer");
-
-			@Override
-			public List<Position> types() {
-				return List.of(pos);
-			}
-
-			@Override
-			public void enable(Consumer<InputEvent<Position>> handler) {
-				final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event(pos, (float) x, (float) y));
-				apply(listener);
-				window.register(handler, listener);
-			}
-
-			@Override
-			public void disable() {
-				apply(null);
-			}
-
-			private void apply(MousePositionListener listener) {
-				final var lib = window.desktop().library();
-				lib.glfwSetCursorPosCallback(window.handle(), listener);
-			}
-		};
+	public DesktopSource<MousePositionListener> pointer() {
+		return ptr;
 	}
 
 	/**
 	 * @return Mouse buttons
 	 */
-	public Source<Button> buttons() {
-		return new Source<>() {
-			/**
-			 * @return Number of mouse buttons
-			 */
-			private int count() {
-				// TODO - uses AWT, not supported by GLFW
-				return MouseInfo.getNumberOfButtons();
-			}
-
-			private final Button[] buttons = IntStream
-					.rangeClosed(1, count())
-					.mapToObj(n -> "Button-" + n)
-					.map(Button::of)
-					.toArray(Button[]::new);
-
-			@Override
-			public List<Button> types() {
-				return Arrays.asList(buttons);
-			}
-
-			@Override
-			public void enable(Consumer<InputEvent<Button>> handler) {
-				final MouseButtonListener listener = (ptr, button, action, mods) -> {
-					// TODO - action/mods
-					handler.accept(buttons[button]);
-				};
-				apply(listener);
-				window.register(handler, listener);
-			}
-
-			@Override
-			public void disable() {
-				apply(null);
-			}
-
-			private void apply(MouseButtonListener listener) {
-				final var lib = window.desktop().library();
-				lib.glfwSetMouseButtonCallback(window.handle(), listener);
-			}
-		};
+	public DesktopSource<MouseButtonListener> buttons() {
+		return buttons;
 	}
 
 	/**
-	 * @return Mouse wheel
+	 * @return Mouse scroll-wheel
 	 */
-	public Source<Axis> wheel() {
-		return new Source<>() {
-			private final Axis wheel = new Axis("Wheel");
-
-			@Override
-			public List<Axis> types() {
-				return List.of(wheel);
-			}
-
-			@Override
-			public void enable(Consumer<InputEvent<Axis>> handler) {
-				final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
-				apply(listener);
-				window.register(handler, listener);
-				// TODO - what about disable?
-			}
-
-			@Override
-			public void disable() {
-				apply(null);
-			}
-
-			private void apply(MouseScrollListener listener) {
-				final var lib = window.desktop().library();
-				lib.glfwSetScrollCallback(window.handle(), listener);
-				//window.register(listener);
-			}
-		};
+	public DesktopSource<MouseScrollListener> wheel() {
+		return wheel;
 	}
 
 	@Override
-	public Set<Source<?>> sources() {
-		return Set.of(pointer(), buttons(), wheel());
+	public String toString() {
+		return "MouseDevice";
+	}
+
+	/**
+	 * Mouse pointer event source.
+	 */
+	private class MousePointer extends DesktopSource<MousePositionListener> {
+		private final Type pointer = new Type("Pointer");
+
+		@Override
+		public Collection<Type> types() {
+			return Set.of(pointer);
+		}
+
+		@Override
+		protected MousePositionListener listener(Consumer<Event> handler) {
+			return (ptr, x, y) -> {
+				final PositionEvent pos = new PositionEvent(pointer, MousePointer.this, (float) x, (float) y);
+				handler.accept(pos);
+			};
+		}
+
+		@Override
+		protected BiConsumer<Window, MousePositionListener> method(DesktopLibrary lib) {
+			return lib::glfwSetCursorPosCallback;
+		}
+	}
+
+	/**
+	 * Mouse buttons event source.
+	 */
+	private class MouseButton extends DesktopSource<MouseButtonListener> {
+		private final String prefix = Event.name("Mouse", "Button", StringUtils.EMPTY);
+
+		private final Type[] types = IntStream
+				.rangeClosed(1, MouseInfo.getNumberOfButtons())
+				.mapToObj(String::valueOf)
+				.map(prefix::concat)
+				.map(Type::new)
+				.toArray(Type[]::new);
+
+		@Override
+		public Collection<Type> types() {
+			return Arrays.asList(types);
+		}
+
+		@Override
+		protected MouseButtonListener listener(Consumer<Event> handler) {
+			return (ptr, index, action, mods) -> {
+				final Type button = types[index];
+				final String name = DesktopDevice.name(button.name(), action, mods);
+				final ButtonEvent event = new ButtonEvent(name, button, MouseButton.this);
+				handler.accept(event);
+			};
+		}
+
+		@Override
+		protected BiConsumer<Window, MouseButtonListener> method(DesktopLibrary lib) {
+			return lib::glfwSetMouseButtonCallback;
+		}
+	}
+
+	/**
+	 * Mouse scroll-wheel source.
+	 */
+	private class MouseWheel extends DesktopSource<MouseScrollListener> {
+		private final Type axis = new Type("Wheel");
+
+		@Override
+		public Set<Type> types() {
+			return Set.of(axis);
+		}
+
+		@Override
+		protected MouseScrollListener listener(Consumer<Event> handler) {
+			return (ptr, x, y) -> {
+				final AxisEvent event = new AxisEvent(axis, MouseWheel.this, (float) y);
+				handler.accept(event);
+			};
+		}
+
+		@Override
+		protected BiConsumer<Window, MouseScrollListener> method(DesktopLibrary lib) {
+			return lib::glfwSetScrollCallback;
+		}
 	}
 }

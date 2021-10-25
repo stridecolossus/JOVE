@@ -6,10 +6,12 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.control.Event;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -208,7 +210,7 @@ public class Window extends AbstractTransientNativeObject {
 	 * @param handler			Handler
 	 * @param callback			Callback
 	 */
-	void register(Object handler, Object callback) {
+	protected <T> void register(Consumer<Event> handler, T callback) {
 		registry.put(handler, callback);
 	}
 
