@@ -514,7 +514,13 @@ private class MouseButton extends DesktopSource<MouseButtonListener> {
 }
 ```
 
-Surprisingly GLFW does not seem to provide any means of determining the number of mouse buttons supported by the hardware - for the moment we use an AWT method.
+Surprisingly GLFW does not seem to provide any means of determining the number of mouse buttons supported by the hardware, for the moment we use the AWT `MouseInfo.getNumberOfButtons` method.  However this means that we need to override the default Spring application behaviour which creates a _headless_ application by default (otherwise the AWT method throws an exception):
+
+```java
+new SpringApplicationBuilder(ModelDemo.class)
+    .headless(false)
+    .run(args);
+```
 
 The GLFW listener implementation looks up a mouse button by index and uses the `resolve` method to apply the action and keyboard modifiers:
 

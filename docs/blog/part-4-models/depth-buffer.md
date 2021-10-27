@@ -12,6 +12,8 @@ This will include the introduction of a _depth test_ requiring the following new
 
 * Attachment clear values.
 
+We will also implement several improvements to the existing code including the introduction of a _camera_ model.
+
 ---
 
 ## Model Render
@@ -405,7 +407,7 @@ info.clearValueCount = clear.size();
 info.pClearValues = StructureHelper.first(clear, VkClearValue::new, ClearValue::populate);
 ```
 
-Introducing this functionality should have been easy, however we had a nasty surprise when we introduced the depth-stencil with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the JNA union defaulted to using the first field, i.e. the `color` and `float32` properties.
+Introducing this functionality should have been easy, however we had a nasty surprise when we introduced the depth-stencil with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
 
 Thankfully JNA supports unions out-of-the-box.  We manually modified the generated code and used the `setType` method of the JNA union class to 'select' the relevant properties.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
 
@@ -579,11 +581,11 @@ Notes:
 
 ### Vector
 
-Next we add some new functionality to the `Vector` class that we will be using below.
+Next we add some new functionality to the `Vector` class that will be used in the camera class below.
 
 A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible (or use the GPU).  Additionally many distance comparisons work irrespective of whether the distance is squared or not.
 
-We therefore represent the magnitude as the __squared__ length of the vector (and highlight this in the documentation):
+Therefore we treat the magnitude as the __squared__ length of the vector (which is highlighted in the documentation):
 
 ```java
 /**
@@ -594,18 +596,7 @@ public float magnitude() {
 }
 ```
 
-The _cross product_ yields the vector perpendicular to two other vectors (using the right-hand rule):
-
-```java
-public Vector cross(Vector vec) {
-    float x = this.y * vec.z - this.z * vec.y;
-    float y = this.z * vec.x - this.x * vec.z;
-    float z = this.x * vec.y - this.y * vec.x;
-    return new Vector(x, y, z);
-}
-```
-
-Many operations assume that a vector has _unit length_ which is applied by the following method:
+Many operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  We leave this responsibility to the application which can use the following method to normalize a vector as required:
 
 ```java
 public Vector normalize() {
@@ -628,7 +619,18 @@ public Vector multiply(float f) {
 }
 ```
 
-Finally we add a convenience method to create the vector between two points:
+The camera class uses the _cross product_ to yield the vector perpendicular to two other vectors (using the right-hand rule):
+
+```java
+public Vector cross(Vector vec) {
+    float x = this.y * vec.z - this.z * vec.y;
+    float y = this.z * vec.x - this.x * vec.z;
+    float z = this.x * vec.y - this.y * vec.x;
+    return new Vector(x, y, z);
+}
+```
+
+Finally we add a convenience method to generate the vector between two points:
 
 ```java
 public static Vector between(Point start, Point end) {

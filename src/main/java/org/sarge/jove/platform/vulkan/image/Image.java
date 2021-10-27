@@ -187,8 +187,8 @@ public interface Image extends NativeObject {
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent3D();
-			info.mipLevels = descriptor.levels();
-			info.arrayLayers = descriptor.layers();
+			info.mipLevels = descriptor.levelCount();
+			info.arrayLayers = descriptor.layerCount();
 			info.samples = samples;
 			info.tiling = tiling;
 			info.initialLayout = layout;

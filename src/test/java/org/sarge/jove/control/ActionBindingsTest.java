@@ -42,6 +42,7 @@ public class ActionBindingsTest {
 	@Test
 	void add() {
 		bindings.add(handler);
+		assertArrayEquals(new Object[]{handler}, bindings.handlers().toArray());
 		assertNotNull(bindings.bindings(handler));
 		assertEquals(0, bindings.bindings(handler).count());
 		assertEquals(Optional.empty(), bindings.binding(axis));
@@ -58,6 +59,7 @@ public class ActionBindingsTest {
 		bindings.bind(axis, handler);
 		assertEquals(Optional.of(handler), bindings.binding(axis));
 		assertArrayEquals(new Type[]{axis}, bindings.bindings(handler).toArray());
+		assertArrayEquals(new Object[]{handler}, bindings.handlers().toArray());
 	}
 
 	@Test

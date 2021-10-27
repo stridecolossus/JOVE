@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
 import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -35,24 +33,10 @@ public class ImageDescriptorTest extends AbstractVulkanTest {
 		assertEquals(FORMAT, descriptor.format());
 		assertEquals(EXTENTS, descriptor.extents());
 		assertEquals(ASPECTS, descriptor.aspects());
-		assertEquals(2, descriptor.levels());
-		assertEquals(3, descriptor.layers());
-	}
-
-	@Test
-	void subresource() {
-		// Create sub-resource
-		final SubResource res = descriptor.subresource();
-		assertNotNull(res);
-
-		// Check descriptor
-		final VkImageSubresourceRange range = res.toRange();
-		assertNotNull(range);
-		assertEquals(VkImageAspect.COLOR.value(), range.aspectMask);
-		assertEquals(0, range.baseMipLevel);
-		assertEquals(2, range.levelCount);
-		assertEquals(0, range.baseArrayLayer);
-		assertEquals(3, range.layerCount);
+		assertEquals(0, descriptor.mipLevel());
+		assertEquals(0, descriptor.baseArrayLayer());
+		assertEquals(2, descriptor.levelCount());
+		assertEquals(3, descriptor.layerCount());
 	}
 
 	@DisplayName("Image must have at least one aspect")

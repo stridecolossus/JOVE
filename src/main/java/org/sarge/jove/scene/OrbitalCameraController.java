@@ -76,6 +76,7 @@ public class OrbitalCameraController {
 	public void target(Point target) {
 		this.target = notNull(target);
 		cam.look(target);
+		// TODO - need to init radius? and/or set to min?
 	}
 
 	/**

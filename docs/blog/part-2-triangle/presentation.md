@@ -417,10 +417,9 @@ We add the following to acquire the index of the next image to be rendered:
 
 ```java
 public class Swapchain ... {
-    private final IntByReference index = new IntByReference();
-    
     public int acquire() {
         ...
+        final IntByReference index = new IntByReference();
         check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, null, null, index));
         return index.getValue();
     }
@@ -432,7 +431,7 @@ The _semaphore_ and _fence_ are synchronisation primitives that are covered in a
 When an image has been rendered it can be presented to the surface, which requires population of a Vulkan descriptor for the presentation task:
 
 ```java
-public void present(Queue queue) {
+public void present(Queue queue, int index) {
     // Create presentation descriptor
     VkPresentInfoKHR info = new VkPresentInfoKHR();
 

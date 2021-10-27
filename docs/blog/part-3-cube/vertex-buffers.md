@@ -192,7 +192,7 @@ public final class Point extends Tuple {
 }
 ```
 
-A colour is defined as an RGBA tuple:
+A colour is defined as an RGBA record:
 
 ```java
 public record Colour(float red, float green, float blue, float alpha) implements Bufferable, Component {

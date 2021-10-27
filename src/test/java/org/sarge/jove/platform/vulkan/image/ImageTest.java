@@ -146,8 +146,8 @@ public class ImageTest extends AbstractVulkanTest {
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent3D();
-			info.mipLevels = descriptor.levels();
-			info.arrayLayers = descriptor.layers();
+			info.mipLevels = descriptor.levelCount();
+			info.arrayLayers = descriptor.layerCount();
 			info.samples = VkSampleCountFlag.COUNT_1;
 			info.tiling = VkImageTiling.LINEAR;
 			info.initialLayout = VkImageLayout.PREINITIALIZED;

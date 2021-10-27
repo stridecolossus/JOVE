@@ -575,48 +575,37 @@ interface VulkanLibraryImage {
 
 ### Image Sub-Resource
 
-The copy command and pipeline barrier are dependant on the image _subresource_ which we glossed over in the previous chapter.
+The copy command and pipeline barrier are dependant on the image _sub-resource_ which we glossed over in the previous chapter.
 
-A slight irritation that only came to light during development of the code for this chapter is that are two slightly different Vulkan descriptors for image sub-resources.  We define the following record class with the common fields:
-
-```java
-public record SubResource(Set<VkImageAspect> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount)
-```
-
-With factory methods to generate the Vulkan descriptors for both cases:
+A sub-resource is a subset of the aspects, MIP levels and array layers of an image:
 
 ```java
-public VkImageSubresourceRange toRange() {
-    final var range = new VkImageSubresourceRange();
-    range.aspectMask = IntegerEnumeration.mask(aspects);
-    range.baseMipLevel = mipLevel;
-    range.levelCount = levelCount;
-    range.baseArrayLayer = baseArrayLayer;
-    range.layerCount = layerCount;
-    return range;
-}
-
-VkImageSubresourceLayers toLayers() {
-    final var layers = new VkImageSubresourceLayers();
-    layers.aspectMask = IntegerEnumeration.mask(aspects);
-    layers.mipLevel = mipLevel;
-    layers.baseArrayLayer = baseArrayLayer;
-    layers.layerCount = layerCount;
-    return layers;
+public interface SubResource {
+    Set<VkImageAspect> aspects();
+    int mipLevel();
+    int levelCount();
+    int baseArrayLayer();
+    int layerCount();
 }
 ```
 
-For the general case of a sub-resource that incorporates the whole image we add the following factory method:
+We note that the existing `ImageDescriptor` is essentially a sub-resource with default (zero) values for the MIP level and array layer, therefore we refactor the descriptor accordingly:
 
 ```java
-public record ImageDescriptor(...) {
-    public SubResource subresource() {
-        return new SubResource(aspects, 0, levels, 0, layers);
+public record ImageDescriptor(..., Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {
+    @Override
+    public int mipLevel() {
+        return 0;
+    }
+
+    @Override
+    public int baseArrayLayer() {
+        return 0;
     }
 }
 ```
 
-We also add a builder to configure a custom sub-resource for a given image:
+We can now initialise the sub-resource in the various use-cases (copy command, barrier, etc) to the image descriptor.  We also add a builder to configure a custom sub-resource:
 
 ```java
 public static class Builder {
@@ -629,7 +618,7 @@ public static class Builder {
 }
 ```
 
-The constructor initialises the number of mip levels and array layers to the image:
+The constructor initialises the number of mip levels and array layers to the 'parent' image:
 
 ```java
 public Builder(ImageDescriptor descriptor) {
@@ -639,7 +628,7 @@ public Builder(ImageDescriptor descriptor) {
 }
 ```
 
-The various setters validate against the 'parent' image descriptor to ensure the sub-resource is a subset, for example:
+The various setters validate that the sub-resource is a subset, for example:
 
 ```java
 public Builder levelCount(int levelCount) {
@@ -649,7 +638,9 @@ public Builder levelCount(int levelCount) {
 }
 ```
 
-Finally the build method initialises the aspect mask to the parent image if not explicitly specified:
+Later we may want to add further validation to ensure a sub-resource is actually derived from the image in question (for the moment we rely on the validation layer).
+
+Finally the build method initialises the aspect mask to the parent image if not explicitly specified and creates a private sub-resource implementation:
 
 ```java
 public SubResource build() {
@@ -658,12 +649,37 @@ public SubResource build() {
         aspects = descriptor.aspects();
     }
 
+    // Private implementation
+    record DefaultSubResource(...) {
+    }
+
     // Create sub-resource
-    return new SubResource(aspects, mipLevel, levelCount, baseArrayLayer, layerCount);
+    return new DefaultSubResource(aspects, mipLevel, levelCount, baseArrayLayer, layerCount);
 }
 ```
 
-We may in future want to add further logic to ensure when a sub-resource is used it is actually derived from the image in question.  For the moment we rely on the Vulkan validation layer.
+A slight irritation that only came to light during this chapter is that there are two slightly different Vulkan descriptors for sub-resources even though the fields are almost identical.  We add two factory methods to transform a sub-resource to either:
+
+```java
+static VkImageSubresourceRange toRange(SubResource res) {
+    final var range = new VkImageSubresourceRange();
+    range.aspectMask = IntegerEnumeration.mask(res.aspects());
+    range.baseMipLevel = res.mipLevel();
+    range.levelCount = res.levelCount();
+    range.baseArrayLayer = res.baseArrayLayer();
+    range.layerCount = res.layerCount();
+    return range;
+}
+
+static VkImageSubresourceLayers toLayers(SubResource res) {
+    final var layers = new VkImageSubresourceLayers();
+    layers.aspectMask = IntegerEnumeration.mask(res.aspects());
+    layers.mipLevel = res.mipLevel();
+    layers.baseArrayLayer = res.baseArrayLayer();
+    layers.layerCount = res.layerCount();
+    return layers;
+}
+```
 
 ### Image Copying
 

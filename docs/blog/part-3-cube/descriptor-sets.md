@@ -684,7 +684,7 @@ This code is becoming a bit messy as we now have a loop iterating through three 
 - a descriptor set
 - a command buffer for the render sequence 
 
-In the next chapter we will introduce a further abstraction that composes these objects into a single list.
+In a later chapter we will introduce a further abstraction that composes these objects into a single list.
 
 ### Render Loop
 

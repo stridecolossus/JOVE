@@ -11,9 +11,9 @@ In no particular order:
 * The rendering code is completely single-threaded (by blocking the work queues).
 
 * The code mixes up the following:
-    The Vulkan rendering process
-    The application logic to update the rotation
-    And the code to control the loop (the dodgy timer)
+    * The Vulkan rendering process
+    * The application logic to update the rotation
+    * And the code to control the loop (the dodgy timer)
 
 * The window event queue is blocked.
 

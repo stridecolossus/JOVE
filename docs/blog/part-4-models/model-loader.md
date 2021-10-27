@@ -8,6 +8,8 @@ In this chapter we will create an OBJ loader to construct a JOVE representation 
 
 We will then implement some improvements to reduce the memory footprint of the resultant model and loading times.
 
+> In the real world we would use a more modern format that included skeletal animation, but the OBJ is relatively simple to implement and is used in the Vulkan tutorial.
+
 ---
 
 ## Model Loader
@@ -566,13 +568,11 @@ Notes:
 
 * For the moment we assume 32-bit integer indices, we may want to support other sizes in future.
 
-All this refactoring work reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
+We refactor the OBJ loader to use the new indexed builder which reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
 
 ### Model Persistence
 
-Although the OBJ loader and new indexed builder are relatively efficient loading the model is now quite slow (even on decent hardware).
-
-We could attempt to optimise the code but this is usually very time-consuming and often actually counter-productive (i.e. complexity often leads to bugs).
+Although the OBJ loader and new indexed builder are relatively efficient loading the model is now quite slow (even on decent hardware).  We could attempt to optimise the code but this is usually very time-consuming and often actually counter-productive (i.e. complexity often leads to bugs).
 
 Instead we note that as things stand the following steps in the loading process are repeated _every_ time we run the demo:
 
@@ -582,9 +582,9 @@ Instead we note that as things stand the following steps in the loading process 
 
 3. Transformation to NIO buffers.
 
-Ideally we would only perform the above steps _once_ since we are only really interested in the vertex and index bufferable objects.
+Ideally we would only perform the above steps _once_ since we are only really interested in the vertex and index bufferable objects.  We therefore introduce a custom persistence mechanism to write _buffered model_ to the file-system _once_ which can then be loaded without the overhead of the above steps.
 
-We therefore introduce a custom persistence mechanism to write a model to the file-system:
+The model loader outputs a model to a `DataOutputStream` as this supports both Java primitives and byte arrays:
 
 ```java
 public class ModelLoader {
@@ -594,8 +594,6 @@ public class ModelLoader {
     }
 }
 ```
-
-Note that we output the model to a `DataOutputStream` as this supports both Java primitives and byte arrays (see below).
 
 In the `write` method we first output the version number of our custom file-format (for later verification):
 

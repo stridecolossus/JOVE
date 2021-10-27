@@ -73,22 +73,22 @@ import org.sarge.jove.util.ResourceLoader;
  */
 public class ActionBindings implements Consumer<Event> {
 	private final Map<Type<?>, Consumer<Event>> bindings = new HashMap<>();
-	private final Map<Consumer<? extends Event>, Set<Type<?>>> map = new HashMap<>();
-
-	/**
-	 * @return Action handlers
-	 */
-	public Stream<Consumer<? extends Event>> handlers() {
-		return map.keySet().stream();
-	}
+	private final Map<Object, Set<Type<?>>> map = new HashMap<>();
 
 	/**
 	 * Helper - Retrieves the reverse mapping of the event types bound to the given handler.
 	 */
-	private Set<Type<?>> types(Consumer<? extends Event> handler) {
-		final var entry = map.get(handler);
-		if(entry == null) throw new IllegalArgumentException("Handler not registered: " + handler);
-		return entry;
+	private Set<Type<?>> types(Object handler) {
+		final var types = map.get(handler);
+		if(types == null) throw new IllegalArgumentException("Handler not registered: " + handler);
+		return types;
+	}
+
+	/**
+	 * @return Action handlers
+	 */
+	public Stream<Object> handlers() {
+		return map.keySet().stream();
 	}
 
 	/**

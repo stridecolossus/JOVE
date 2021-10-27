@@ -136,7 +136,7 @@ public class View extends AbstractVulkanObject {
 		public Builder(Image image) {
 			this.image = notNull(image);
 			this.type = type(image);
-			this.subresource = image.descriptor().subresource();
+			this.subresource = image.descriptor();
 		}
 
 		/**
@@ -187,7 +187,7 @@ public class View extends AbstractVulkanObject {
 			info.format = image.descriptor().format();
 			info.image = image.handle();
 			info.components = mapping;
-			info.subresourceRange = subresource.toRange();
+			info.subresourceRange = SubResource.toRange(subresource);
 
 			// Allocate image view
 			final DeviceContext dev = image.device();

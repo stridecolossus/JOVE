@@ -369,7 +369,7 @@ public class Instance extends AbstractTransientNativeObject {
 		 * Attaches this handler to the instance.
 		 * @throws IllegalArgumentException if the message severities or types is empty
 		 */
-		public Instance attach() {
+		public void attach() {
 			// Validate
 			if(severity.isEmpty()) throw new IllegalArgumentException("No message severities specified");
 			if(types.isEmpty()) throw new IllegalArgumentException("No message types specified");
@@ -389,8 +389,6 @@ public class Instance extends AbstractTransientNativeObject {
 			final Object[] args = {handle.toPointer(), info, null, ref};
 			check(create.get().invokeInt(args));
 			handlers.add(ref.getValue());
-
-			return Instance.this;
 		}
 	}
 }

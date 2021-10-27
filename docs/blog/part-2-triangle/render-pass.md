@@ -488,15 +488,21 @@ class VulkanConfiguration {
 
     @Bean
     public static Instance instance(VulkanLibrary lib, Desktop desktop, @Value("${application.title}") String title) {
-        return new Instance.Builder()
+        // Create instance
+        Instance instance = new Instance.Builder()
             .name(title)
             .extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
             .extensions(desktop.extensions())
             .layer(ValidationLayer.STANDARD_VALIDATION)
-            .build(lib)
+            .build(lib);
+        
+        // Attach diagnostics handler
+        instance
             .handler()
             .init()
             .attach();
+            
+        return instance;
     }
 }
 ```
