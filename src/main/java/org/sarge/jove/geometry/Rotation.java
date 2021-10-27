@@ -46,12 +46,19 @@ public interface Rotation extends Transform {
 
 		@Override
 		public final boolean equals(Object obj) {
-			return (obj instanceof Rotation rot) && this.axis.equals(rot.axis()) && MathsUtil.isEqual(this.angle(), rot.angle());
+			return
+					(obj == this) ||
+					(obj instanceof Rotation that) &&
+					this.axis.equals(that.axis()) &&
+					MathsUtil.isEqual(this.angle(), that.angle());
 		}
 
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this).append(axis).append(angle()).build();
+			return new ToStringBuilder(this)
+					.append(axis)
+					.append(angle())
+					.build();
 		}
 	}
 

@@ -138,6 +138,7 @@ public final class Quaternion implements Transform {
 	@Override
 	public boolean equals(Object obj) {
 		return
+				(obj == this) ||
 				(obj instanceof Quaternion that) &&
 				MathsUtil.isEqual(this.w, that.w) &&
 				MathsUtil.isEqual(this.x, that.x) &&

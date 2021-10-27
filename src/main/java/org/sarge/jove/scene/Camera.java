@@ -123,17 +123,6 @@ public class Camera {
 		return right;
 	}
 
-//	/**
-//	 * Rotates the camera.
-//	 * @param rot Rotation
-//	 * @see Quaternion#rotate(Vector)
-//	 */
-//	public void rotate(Rotation rot) {
-//		// TODO
-//		dir = Quaternion.of(rot).rotate(dir);
-//		dirty();
-//	}
-
 	/**
 	 * Marks the camera matrix as dirty.
 	 */

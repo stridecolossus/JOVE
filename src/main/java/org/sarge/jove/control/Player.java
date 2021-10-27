@@ -23,7 +23,6 @@ public class Player {
 
 	/**
 	 * A <i>playable</i> is something that can be played, paused or stopped.
-	 * @author Sarge
 	 */
 	public interface Playable {
 		/**
