@@ -15,6 +15,7 @@ public record Position(String name, Source source) implements Type<PositionEvent
 	/**
 	 * Adapter for a position handler method.
 	 */
+	@FunctionalInterface
 	public interface PositionHandler {
 		/**
 		 * Handles a position event.

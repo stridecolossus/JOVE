@@ -4,464 +4,862 @@ title: Input Handling
 
 ## Overview
 
-In this chapter we will be taking a break from Vulkan to add support for input event processing and a camera controller.
+In this chapter we will design a framework for input event handling which will build on to implement an orbital camera controller.
 
-There are several ways we could have gone about implementing event handling and we did try several different approaches.
-
-We discuss the rationale for the design we eventually ended up with and illustrate some of the challenges we faced.
-
-This chapter also introduces a number of new helper methods on the `Matrix` and `Vector` domain classes that are covered at the end of the document.
+Note there is no new Vulkan functionality introduced in this chapter.
 
 ---
 
-## Analysis
+## Input Events
 
-### Requirements
+### Rationale
 
-There are a number of differing types of events provided by GLFW that we will support:
+Whilst we could simply use the GLFW functionality directly in our application (as we did for the ESCAPE key listener) there are compelling reasons to introduce a layer of abstraction:
+
+* The GLFW API exposes some underlying details (such as window handle pointers) that we would prefer to hide if possible.
+
+* Some events are implemented by GLFW as callback handlers e.g. `MousePositionListener` and others as query functions, e.g. `glfwGetJoystickAxes`.
+
+* Several of the event types map to the same general forms - for example keyboard keys, mouse buttons and controller buttons are essentially equivalent.
+
+* Traditional event callbacks mix application logic and event handling reducing code re-usability and testability.
+
+Based on these observations we enumerate the following requirements for our design:
+
+* Map the various events to a smaller number of general types.
+
+* Encapsulate the underlying GLFW code that generates input events.
+
+* Separate the event handling framework from the application logic.
+
+* Provide a mechanism to map events to application logic that requires minimal configuration (or ideally none).
+
+* Provide functionality to allow an application to query supported events without having to invoke specific API methods.
+
+> Apparently GLFW version 4 will deprecate callbacks in favour of query methods but we will cross that bridge if and when we upgrade the native library.
+
+### Analysis
+
+GLFW supports the following types of events:
 
 type                    | arguments                     | device
 ----                    | ---------                     | ------
 keyboard                | key, action, modifiers        | keyboard
-mouse position          | x, y                          | mouse
+mouse pointer           | x-y                           | mouse
 mouse button            | button, actions, modifiers    | mouse
 mouse wheel             | value                         | mouse
 window enter/leave      | boolean                       | window
 window focus            | boolean                       | window
+controller / joystick   | x-y                           | controller
 controller button       | button, press/release         | controller
 controller axis         | axis, value                   | controller
 controller hat          | hat, press/release            | controller
 
-(There are a few others but that should be enough for starters!)
-
-A _controller_ is defined here as a joystick, gamepad or console controller.
-
-Whilst we could simply use the GLFW functionality directly in our applications there are compelling reasons to introduce a layer of abstraction:
-
-- The GLFW API exposes some underlying details (such as window handle pointers) that we would prefer to hide if possible.
-
-- Some events are implemented by GLFW as callback handlers e.g. `MousePositionListener` and others as query functions, e.g. `glfwGetJoystickAxes`.
-
-- Several of the event types map to the same general forms - for example the mouse, controller and hat button events are essentially equivalent.
-
-- Traditional event callbacks mix application logic and the event handling framework reducing code re-usability and testability.
-
-Based on these observations we enumerate the following requirements for our design:
-
-- Map the various events to a smaller number of general types.
-
-- Encapsulate the underlying GLFW code that generates input events.
-
-- Separate the event handling framework from the application logic.
-
-- Provide a mechanism to map events to application logic that requires minimal configuration (or ideally none).
-
-- Provide functionality to allow an application to query supported events without having to invoke specific API methods.
-
-> Apparently GLFW version 4 will deprecate callbacks in favour of query methods but we will cross that bridge if and when we upgrade the native library.
-
-### Design
-
-After a bit of analysis we determine that the various events can be generalised to the following:
-
-type        | arguments             | range                         | examples
-----        | ---------             | -----                         | --------
-position    | x, y                  | n/a                           | mouse move, joystick, controller touch pad
-button      | id, action, modifiers | number of buttons or keys     | key, mouse button, controller button
-axis        | id, value             | number of axes                | mouse wheel, joystick throttle
-boolean     | boolean               | n/a                           | window enter/leave
-
-The _range_ is the possible number of events of a given type.
-
-Our initial design will consist of the following components:
-
-- an _event type_ for each of the above.
-
-- a general _input event_ record.
-
-- a _device_ that generates events and delegates to a single handler.
-
-The approach we are aiming for is probably best illustrated with some pseudo-code:
-
-```java
-// Create input device
-Device dev = new SomeDevice();
-
-// Initialise device
-Handler handler = new Handler();
-dev.enable(handler);
-
-// Bind event from this device to an action
-Event.Type type = dev.getEventType("SomeEvent");
-Action action = event -> { ... };
-handler.bind(type, action);
-```
-
----
-
-## Mouse Wheel
-
-As it turns out the _axis_ event type is probably the simplest case - we will implement an end-to-end solution for the mouse wheel axis.
-
-### Input Event
-
-We start with the definition of a generic input event and its associated type:
-
-```java
-public interface InputEvent<T extends Type> {
-    /**
-     * @return Type of this event
-     */
-    T type();
-
-    /**
-     * @return X coordinate
-     */
-    float x();
-
-    /**
-     * @return Y coordinate
-     */
-    float y();
-
-    /**
-     * An <i>event type</i> is the descriptor for an input event.
-     */
-    interface Type {
-        /**
-         * @return Event name
-         */
-        String name();
-    }
-}
-```
-
-The implementation for an axis is quite straight forward:
-
-```java
-public class Axis implements Type {
-    private final String name;
-
-    /**
-     * Constructor.
-     * @param name Axis name
-     */
-    public Axis(String name) {
-        this.name = notEmpty(name);
-    }
-
-    @Override
-    public String name() {
-        return name;
-    }
-
-    /**
-     * Creates an axis input event.
-     * @param value Axis value
-     * @return New axis event
-     */
-    public Event create(float value) {
-        return new Event(value);
-    }
-
-    /**
-     * Axis event.
-     */
-    public final class Event implements InputEvent {
-        private final float value;
-
-        /**
-         * Constructor.
-         * @param value Axis value
-         */
-        private Event(float value) {
-            this.value = value;
-        }
-
-        @Override
-        public float x() {
-            return value;
-        }
-
-        @Override
-        public float y() {
-            return value;
-        }
-
-        @Override
-        public Axis type() {
-            return Axis.this;
-        }
-    }
-}
-```
-
 Notes:
 
-- The axis event returns the same value for both methods.
+* A _controller_ is defined here as a joystick, gamepad or console controller.
 
-- The mouse wheel generates axis _increments_ whereas a joystick throttle (for example) generates _absolute_ axis values.
+* There are more but the above is enough to be getting on with.
 
-> All events implement the X and Y coordinates even if they are not required which is not very object orientated - we did try other approaches using generics, double-dispatching, etc. but the results were always ugly, at least this one is simple.
+After a bit of analysis we determine that the above can be generalised to the following:
 
-### Device
+type        | name      | parameterized | arguments     | examples                                          |
+----        | ----      | ------------- | ---------     | --------                                          |
+position    | no        | no            | x-y           | mouse pointer, controller                         |
+button      | yes       | yes           | n/a           | keyboard, mouse buttons, controller buttons       |
+axis        | yes       | no            | value         | mouse wheel, controller axis                      |
+boolean     | no        | no            | boolean       | window                                            |
 
-Next we define the device:
+Where _name_ specifies whether the event has a name parameter and _parameterized_ indicates an event that has multiple values, e.g. keyboard key names.
+
+### Framework
+
+Based on the above we start with an abstraction for an event:
 
 ```java
-interface Device {
+public interface Event {
     /**
-     * @return Device name
+     * @return Type of event
      */
-    String name();
-    
-    /**
-     * @return Event sources for this device
-     */
-    Set<Source<?>> sources();
+    Type<?> type();
 }
 ```
 
-We introduce an _event source_ that generates events to a given handler:
+An _event type_ specifies the static properties of the event:
 
 ```java
-interface Source<T extends InputEvent> {
+interface Type<T extends Event> {
     /**
-     * @return Events generated by this source
+     * @return Event name
      */
-    List<? extends Type> types();
+    String name();
 
     /**
-     * Enables generation of events.
+     * @return Source of this type of event
+     */
+    Source source();
+}
+```
+
+An event _source_ is a binding point for an _action handler_ that consumes events generated by that source:
+
+```java
+interface Source {
+    /**
+     * @return Device
+     */
+    Device device();
+
+    /**
+     * @return Types of events generated by this source
+     */
+    List<? extends Type<?>> types();
+
+    /**
+     * Binds the given handler to this source.
      * @param handler Event handler
      */
-    void enable(Consumer<InputEvent<?>> handler);
+    void bind(Consumer<Event> handler);
 
     /**
-     * Disables event generation.
+     * Disables this source.
      */
     void disable();
 }
 ```
 
-The purpose of the event source is to provide:
-
-- an additional binding point for an application, i.e. we can bind to a specific type of event or **all** events from a given source.
-
-- a means for an application to programatically query the events that are supported by a device.
-
-For the purposes of our end-to-end walk-through we create a _mouse device_ with an event source for the wheel axis:
+Finally a _device_ is comprised of a number of event sources:
 
 ```java
-public class MouseDevice implements Device {
-    private final Window window;
+interface Device {
+    /**
+     * @return Event sources
+     */
+    Set<Source> sources();
 
     /**
-     * Constructor.
-     * @param window Parent window
+     * Closes this device.
      */
-    MouseDevice(Window window) {
-        this.window = notNull(window);
+    void close();
+}
+```
+
+The purpose of this framework is to:
+
+* Provide a platform-independant mechanism to bind events to a handler (defined as a simple consumer).
+
+* Enumerate the types of event generated by a source.
+
+* Enumerate the event sources for a device.
+
+### Template Implementation
+
+As it turns out the _axis_ event type is probably the simplest case - we will implement an end-to-end solution for the mouse wheel axis.
+
+We start with a template implementation for a GLFW device and event source, which we will then extend to support the mouse wheel.
+
+The `DesktopDevice` encapsulates a reference to the underlying GLFW window:
+
+```java
+public abstract class DesktopDevice implements Device {
+    private final Window window;
+
+    @Override
+    public void close() {
+    }
+}
+```
+
+We next implement a local, template class for a GLFW source belonging to this device:
+
+```java
+public abstract class DesktopSource<T> implements Source {
+    @Override
+    public final Device device() {
+        return DesktopDevice.this;
     }
 
     @Override
-    public String name() {
-        return "Mouse";
-    }
-
-    public Source<Axis.Event> wheel() {
+    public final void bind(Consumer<Event> handler) {
         ...
     }
 
     @Override
-    public Set<Source<?>> sources() {
-        return Set.of(wheel(), ...);    // TODO - others
+    public final void disable() {
+        ...
     }
 }
 ```
 
-For convenience we provide an explicit `wheel` accessor as well as returning it in the `sources` method.
-
-The mouse wheel source is comprised of a single axis which is bound to a GLFW `MouseScrollListener` when enabled:
+A sub-class of this template is required to implement two methods to support registration of a GLFW listener.  The `listener` method creates a GLFW listener that is responsible for created an event and delegating to a given handler:
 
 ```java
-public Source<Axis.Event> wheel() {
-    return new Source<>() {
-        private final Axis wheel = new Axis("Wheel");
+/**
+ * Creates a listener that generates events and delegates to the given handler.
+ * @param handler Event handler
+ * @return New GLFW listener
+ */
+protected abstract T listener(Consumer<Event> handler);
+```
 
-        @Override
-        public List<Axis> types() {
-            return List.of(wheel);
+The `method` is a provider for the GLFW callback registration method for that listener (similar to how we return a destructor for a Vulkan object):
+
+```java
+/**
+ * Returns the registration method for the listener.
+ * @param lib GLFW library
+ * @return Listener registration method
+ */
+protected abstract BiConsumer<Window, T> method(DesktopLibrary lib);
+```
+
+The process of binding a general event handler to a GLFW-specific source is:
+
+1. Create a GLFW listener that delegates to the general event handler via the `listener` method.
+
+2. Retrieve the GLFW callback registration `method` for this listener.
+
+3. Invoke the callback method with the parent window and listener.
+
+This is implemented by the following helper:
+
+```java
+private void register(T listener) {
+    DesktopLibrary lib = window.desktop().library();
+    BiConsumer<Window, T> method = method(lib);
+    method.accept(window, listener);
+}
+```
+
+We can now implement the public methods in terms of this helper:
+
+```java
+@Override
+public final void bind(Consumer<Event> handler) {
+    T listener = listener(handler);
+    register(listener);
+    window.register(handler, listener);
+}
+
+@Override
+public final void disable() {
+    register(null);
+}
+```
+
+We add the `register` method to the window class to maintain a reference to a listener:
+
+```java
+public class Window {
+    private final Map<Object, Object> registry = new WeakHashMap<>();
+
+    protected <T> void register(Consumer<Event> handler, T callback) {
+        registry.put(handler, callback);
+    }
+}
+```
+
+This prevents GLFW de-registering a garbage collected listener that is still 'active', i.e. the listener goes out-of-scope at the end of the `bind` method.
+
+Finally we add the mouse device as a lazily instantiated member of the window:
+
+```java
+public class Window {
+    private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
+
+    public MouseDevice mouse() {
+        return mouse.get();
+    }
+}
+```
+
+### Axis
+
+We next define a general class representing an axis and its associated events:
+
+```java
+public record Axis(String name, Source source) implements Type<AxisEvent> {
+    public class AxisEvent implements Event {
+        private final float value;
+
+        public AxisEvent(float value) {
+            this.value = value;
         }
 
         @Override
-        public void enable(Consumer<InputEvent<?>> handler) {
-            final MouseScrollListener listener = (ptr, x, y) -> handler.accept(wheel.create((float) y));
-            apply(listener);
+        public Type<AxisEvent> type() {
+            return Axis.this;
         }
 
-        @Override
-        public void disable() {
-            apply(null);
+        public float value() {
+            return value;
         }
+    }
+}
+```
 
-        private void apply(MouseScrollListener listener) {
-            window.library().glfwSetScrollCallback(window.handle(), listener);
-        }
+We can now create a GLFW-specific device with an event source for the mouse-wheel:
+
+```java
+public class MouseDevice extends DesktopDevice {
+    private final MouseWheel wheel = new MouseWheel();
+
+    @Override
+    public Set<Source> sources() {
+        return Set.of(wheel);
+    }
+
+    public Axis wheel() {
+        return wheel.axis;
+    }
+}
+```
+
+The `MouseWheel` is a GLFW event source comprising a single axis for the mouse-wheel:
+
+```java
+private class MouseWheel extends DesktopSource<MouseScrollListener> {
+    private final Axis axis = new Axis("Wheel", this);
+
+    @Override
+    public List<Axis> types() {
+        return List.of(axis);
+    }
+}
+```
+
+The listener factory creates a GLFW mouse-wheel listener which wraps up the event and delegates it to the handler:
+
+```java
+protected MouseScrollListener listener(Consumer<Event> handler) {
+    return (ptr, x, y) -> {
+        Event e = axis.new AxisEvent((float) y);
+        handler.accept(e);
     };
 }
 ```
 
-### Integration #1
-
-To exercise the mouse wheel we first create a mouse device for the window:
+Finally we specify the callback registration method for the GLFW mouse-wheel:
 
 ```java
-class Window {
-    /**
-     * @return New mouse device
-     */
-    public MouseDevice mouse() {
-        return new MouseDevice(this);
-    }
-}
-```
-
-We can then enable generation of events from this device and dump the events to the console:
-
-```java
-final Consumer<InputEvent<?>> handler = System.out::println;
-final MouseDevice mouse = window.mouse();
-mouse.wheel().enable(handler);
-```
-
-After testing that we can see the events being generated we bodge the event handler to move the model when we use the mouse wheel:
-
-```java
-final AtomicInteger z = new AtomicInteger();
-final Consumer<InputEvent<?>> handler = event -> z.addAndGet((int) event.y());
-
-...
-
-while(...) {
-    // Poll input events
-    desktop.poll();
-
-    // Update camera translation
-    final Matrix trans = Matrix.translation(new Vector(0, 0, -z.get()));
-
-    // Update scene matrix
-    final Matrix view = rot.multiply(trans);
-    final Matrix matrix = proj.multiply(view).multiply(modelMatrix);
-    uniform.load(matrix);
-
-    ...
+protected BiConsumer<Window, MouseScrollListener> method(DesktopLibrary lib) {
+    return lib::glfwSetScrollCallback;
 }
 ```
 
 Notes:
-- We use an atomic integer because we need an effectively `final` value in the handler lambda.
-- The camera translation is moved to the render loop so that it is recalculated on each frame.
-- We also add `poll` for input events.
 
-We should now be able to move the model in the Z direction using the mouse wheel.
+* The GLFW listener for the mouse-wheel has X and Y arguments but we only need one.
 
-This satisfies our first three requirements (for the mouse wheel anyway) but doesn't achieve anything that we couldn't have done without all this framework.  We will persevere with the implementation for the other events and devices so that we have an overall picture of whether our design is working (or not as the case may be).
+* We also expose the mouse-wheel axis for convenience.
 
----
+### Position
 
-## Camera
+The next type of event is a _position_ that represents an event source for X-Y location events, we will implement this to support mouse movement events.
 
-Next we will replace the hard-coded view transformation with a _camera_ model.  We can then implement _position events_ and a _mouse pointer_ event source to control the camera using the mouse.
-
-TODO
-
-### Integration #2
-
-We replace the hard-coded matrices with the new camera class and check that the scene is still correctly rendered:
+The position event type follows the same pattern as the axis:
 
 ```java
-// Init camera
-final Camera cam = new Camera();
-cam.move(new Point(0, 0, 1));
+public record Position(String name, Source source) implements Type<PositionEvent> {
+    public class PositionEvent implements Event {
+        public final float x, y;
 
-// Bind mouse wheel
-final AtomicInteger z = new AtomicInteger();
-final Consumer<InputEvent<?>> handler = event -> cam.move(event.y());
-
-while(...) {
-    // Poll input events
-    desktop.poll();
-
-    // Update scene matrix
-    Matrix matrix = proj.multiply(cam.matrix()).multiply(modelMatrix);
-    uniform.load(matrix);
-    ...
+        @Override
+        public Type<?> type() {
+            return Position.this;
+        }
+    }
 }
 ```
 
-There are plenty of opportunities for making a mess of all these matrices so we:
-- dump the rotation and translation components of the camera to the console to compare against the previous hand-coded matrices.
-- double-check that the matrices are composed in the correct order (both in the camera and when we upload to the uniform buffer).
-- check that the camera direction and translation are inverted with respect to the scene.
-- ensure that the unit-test coverage is as high as possible to trap any simple bugs or flaws.
-
-### Position Events
-
-The next type of event we tackle is the _position event_ that is used for a joystick or the mouse pointer device:
+We use the same framework to implement an event source for the mouse pointer:
 
 ```java
-public final class Position implements Type {
-    private final String name;
+private class MousePointer extends DesktopSource<MousePositionListener> {
+    private final Position pointer = new Position("Pointer", this);
 
-    public Position(String name) {
-        this.name = notEmpty(name);
+    @Override
+    public List<Position> types() {
+        return List.of(pointer);
     }
 
     @Override
-    public String name() {
-        return name;
+    protected MousePositionListener listener(Consumer<Event> handler) {
+        return (ptr, x, y) -> {
+            PositionEvent pos = pointer.new PositionEvent((float) x, (float) y);
+            handler.accept(pos);
+        };
     }
 
-    /**
-     * Position event instance.
-     */
-    public record Event(Position type, float x, float y) implements InputEvent {
+    @Override
+    protected BiConsumer<Window, MousePositionListener> method(DesktopLibrary lib) {
+        return lib::glfwSetCursorPosCallback;
     }
 }
 ```
 
-We add a second source to the mouse device for the pointer:
+Which is added to the mouse device:
 
 ```java
-public Source<Position.Event> pointer() {
-    return new Source<>() {
-        private final Position pos = new Position("Pointer");
+public class MouseDevice extends DesktopDevice {
+    ...
+    private final MousePointer ptr = new MousePointer();
 
-        @Override
-        public List<Position> types() {
-            return List.of(pos);
-        }
+    @Override
+    public Set<Source> sources() {
+        return Set.of(ptr, wheel);
+    }
 
-        @Override
-        public void enable(InputEvent.Handler handler) {
-            final MousePositionListener listener = (ptr, x, y) -> handler.accept(new Position.Event(pos, (float) x, (float) y));
-            apply(listener);
-        }
+    public Position pointer() {
+        return ptr.pointer;
+    }
+}
+```
 
-        @Override
-        public void disable() {
-            apply(null);
-        }
+### Buttons
 
-        private void apply(MousePositionListener listener) {
-            window.library().glfwSetCursorPosCallback(window.handle(), listener);
-        }
+The final type of event (for now) is a _button_ that represents keyboard keys, mouse buttons, joystick hats, etc.
+
+A button also has an _action_ and a _keyboard modifiers_ mask:
+
+```java
+public record Button(String id, Source source, Action action, int mods) implements Type<Button>, Event {
+    @Override
+    public final Type<?> type() {
+        return this;
+    }
+}
+```
+
+Note that a button is also its own event since there are no additional arguments (unlike the axis or position events).
+
+An action is a simple enumeration based on the GLFW action codes:
+
+```java
+public enum Action {
+    RELEASE,
+    PRESS,
+    REPEAT
+}
+```
+
+Similarly for the keyboard modifiers:
+
+```java
+public enum Modifier implements IntegerEnumeration {
+    SHIFT(0x0001),
+    CONTROL(0x0002),
+    ALT(0x0004),
+    SUPER(0x0008),
+    CAPS_LOCK(0x0010),
+    NUM_LOCK(0x0020)
+}
+```
+
+The _name_ of the button is constructed on demand:
+
+```java
+public String name() {
+    String modifiers = modifiers().stream().map(Enum::name).collect(joining(Event.DELIMITER));
+    return Event.name(id, action.name(), modifiers);
+}
+```
+
+The following helper is added to the event class to build a hyphen-delimited name from a list of tokens:
+
+```java
+String DELIMITER = "-";
+
+static String name(String... tokens) {
+    return Arrays
+        .stream(tokens)
+        .filter(Predicate.not(String::isEmpty))
+        .collect(joining(DELIMITER));
+}
+```
+
+Finally we also provide a convenience constructor that generates the _default_ definition of a button:
+
+```java
+public Button(String id, Source source) {
+    this(id, source, Action.PRESS, 0);
+}
+```
+
+And the following factory method that derives a button with a specific action and keyboard modifiers from the default button:
+
+```java
+public Button resolve(Action action, int mods) {
+    return new Button(id, source, action, mods);
+}
+```
+
+The event source implementation for the GLFW mouse device first generates the list of buttons:
+
+```java
+private class MouseButton extends DesktopSource<MouseButtonListener> {
+    private final String prefix = Event.name("Mouse", "Button");
+    
+    private final List<Button> buttons = IntStream
+        .rangeClosed(1, MouseInfo.getNumberOfButtons())
+        .mapToObj(String::valueOf)
+        .map(id -> Event.name(prefix, id))
+        .map(name -> new Button(name, this))
+        .collect(toList());
+    
+    @Override
+    public List<Button> types() {
+        return buttons;
+    }
+}
+```
+
+Surprisingly GLFW does not seem to provide any means of determining the number of mouse buttons supported by the hardware - for the moment we use an AWT method.
+
+The GLFW listener implementation looks up a mouse button by index and uses the `resolve` method to apply the action and keyboard modifiers:
+
+```java
+private class MouseButton extends DesktopSource<MouseButtonListener> {
+    ```java
+    @Override
+    protected MouseButtonListener listener(Consumer<Event> handler) {
+        return (ptr, index, action, mods) -> {
+            Button button = buttons.get(index);
+            Button event = button.resolve(DesktopDevice.map(action), mods);
+            handler.accept(event);
+        };
+    }
+    
+    @Override
+    protected BiConsumer<Window, MouseButtonListener> method(DesktopLibrary lib) {
+        return lib::glfwSetMouseButtonCallback;
+    }
+}
+```
+
+Since the mouse buttons event source is _parameterized_ in this case we expose the source itself:
+
+```java
+public class MouseDevice extends DesktopDevice {
+    ...
+    private final MouseButton buttons = new MouseButton();
+
+    public DesktopSource<?> buttons() {
+        return buttons;
+    }
+    
+    @Override
+    public Set<Source> sources() {
+        return Set.of(ptr, buttons, wheel);
+    }
+}
+```
+
+We also add a helper to map a GLFW action code to the enumeration:
+
+```java
+protected static Action map(int action) {
+    return switch(action) {
+        case 0 -> Action.RELEASE;
+        case 1 -> Action.PRESS;
+        case 2 -> Action.REPEAT;
+        default -> throw new RuntimeException("Unsupported action code: " + action);
     };
 }
 ```
 
-### Orbital Camera
+### Keyboard
+
+The final device we will implement in this chapter is the GLFW keyboard:
+
+```java
+public class KeyboardDevice extends DesktopDevice {
+    private final KeyboardSource keyboard = new KeyboardSource();
+
+    public DesktopSource<?> source() {
+        return keyboard;
+    }
+
+    @Override
+    public Set<Source> sources() {
+        return Set.of(keyboard);
+    }
+}
+```
+
+The keyboard source is implemented as follows:
+
+```java
+private class KeyboardSource extends DesktopSource<KeyListener> {
+    @Override
+    public List<Type<?>> types() {
+        return List.of();
+    }
+
+    @Override
+    protected KeyListener listener(Consumer<Event> handler) {
+        ...
+    }
+
+    @Override
+    protected BiConsumer<Window, KeyListener> method(DesktopLibrary lib) {
+        return lib::glfwSetKeyCallback;
+    }
+}
+```
+
+The listener implementation caches the button definition for keyboard keys:
+
+```java
+private class KeyboardSource extends DesktopSource<KeyListener> {
+    private final Map<Integer, Button> keys = new HashMap<>();
+
+    @Override
+    protected KeyListener listener(Consumer<Event> handler) {
+        return (ptr, key, scancode, action, mods) -> {
+            Button base = keys.computeIfAbsent(key, this::button);
+            Button button = base.resolve(DesktopDevice.map(action), mods);
+            handler.accept(button);
+        };
+    }
+}
+```
+
+A new key definition is created by the following helper:
+
+```java
+private Button button(int key) {
+    String name = TABLE.get(key);
+    if(name == null) throw new RuntimeException("Unknown key code: " + key);
+    return new Button(name, KeyboardSource.this);
+}
+```
+
+Where `TABLE` maps GLFW key codes to key names specified by a local resource (loader not shown).  The key table is a simple text file illustrated in the following fragment:
+
+```
+SPACE              32
+APOSTROPHE         39
+COMMA              44
+```
+
+Notes:
+
+* The `types` for the keyboard source is empty since we assume applications will generally refer to keys by name.
+
+* GLFW also provides a _scancode_ argument and the `glfwGetKeyName` API method but this only seems to support a subset of expected keys.
+
+* At the time of writing `TABLE` is hidden as we assume that the GLFW key-codes will not be required outside this framework.
+
+* We add the keyboard device to the GLFW window.
+
+---
+
+## Action Bindings
+
+### Overview
+
+Using this framework we can now bind event sources to handlers, for example:
+
+```java
+// Retrieve devices
+Mouse mouse = window.mouse();
+Keyboard keyboard = window.keyboard();
+
+// Bind stop event
+Consumer<Event> kb = e -> {
+    ButtonEvent button = (ButtonEvent) e;
+    if(button.name().startsWith("ESCAPE")) {
+        app.stop();
+    }
+}
+keyboard.bind(kb);
+
+// Bind mouse-wheel handler
+Consumer<Event> handler = e -> {
+    AxisEvent axis = (AxisEvent) e;
+    ...
+};
+wheel.bind(handler);
+```
+
+However there are several problems with this approach:
+
+* We are required to cast the event if we want to use the sub-class properties.
+
+* Ideally we would prefer to bind specific _parameterized_ events (especially for the keyboard, e.g. for the ESCAPE handler) rather than having to implement switching logic.
+
+* Additionally we would also like to be able to bind directly to a method reference with an appropriate signature instead of hand-crafting some sort of adapter.
+
+We could refactor the event class to contain the properties for __all__ cases but this is pretty ugly (even if there are only a handful).  Alternatively we could implement some sort of double-dispatch to transform a base-class event to its sub-type but that feels overkill in this case.
+
+### Bindings
+
+Instead we introduce the _action bindings_ class which is essentially a bi-directional mapping of events to/from handlers:
+
+```java
+public class ActionBindings implements Consumer<Event> {
+    private final Map<Type<?>, Consumer<Event>> bindings = new HashMap<>();
+    private final Map<Consumer<? extends Event>, Set<Type<?>>> map = new HashMap<>();
+}
+```
+
+The bindings class is itself an event handler:
+
+```java
+@Override
+public void accept(Event e) {
+    Consumer<Event> handler = bindings.get(e.type());
+    if(handler != null) {
+        handler.accept(e);
+    }
+}
+```
+
+The following generic method binds an arbitrary event type to/from an event handler:
+
+```java
+public <T extends Event> void bind(Type<T> type, Consumer<? extends T> handler) {
+    // Lookup or create reverse mapping
+    var types = map.computeIfAbsent(handler, ignored -> new HashSet<>());
+
+    // Add binding
+    bindings.put(type, (Consumer<Event>) consumer);
+    types.add(type);
+}
+```
+
+Note that this method is type-safe at compile-time but down-casts the handler to the base-class event.
+
+We add accessors to retrieve the handler for a given type of event:
+
+```java
+public Optional<Consumer<? extends Event>> binding(Type<?> type) {
+    return Optional.ofNullable(bindings.get(type));
+}
+```
+
+And to retrieve the reverse mapping of event types for a given handler:
+
+```java
+public Stream<Type<?>> bindings(Consumer<? extends Event> handler) {
+    var types = map.get(handler);
+    if(types == null) throw new IllegalArgumentException(...);
+    return types.stream();
+}
+```
+
+We also add support (not shown) to remove bindings by handler or event type and to clear all bindings.
+
+### Binding Support
+
+We can now implement convenience methods to bind specific types of event to a method with the appropriate signature.
+
+Generally buttons events will be bound to a `void` method without any parameters (i.e. modelled as a Java `Runnable`) for which we create an event handler adapter:
+
+```java
+public Consumer<Button> bind(Type<Button> type, Runnable method) {
+    Consumer<Button> handler = ignored -> method.run();
+    bind(type, handler);
+    return handler;
+}
+```
+
+Next we add the following interface defining a method that accepts a floating-point X-Y position:
+
+```java
+public class Position {
+    @FunctionalInterface
+    public interface PositionHandler {
+        void handle(float x, float y);
+    }
+}
+```
+
+Which is used in a second bind variant for position events:
+
+```java
+public Consumer<PositionEvent> bind(Type<PositionEvent> type, PositionHandler adapter) {
+    Consumer<PositionEvent> handler = e -> adapter.handle(e.x, e.y);
+    bind(type, handler);
+    return handler;
+}
+```
+
+Finally we define a similar bind variant and abstraction for an axis event:
+
+```java
+@FunctionalInterface
+public interface AxisHandler {
+    void handle(float value);
+}
+```
+
+### Conclusion
+
+A final enhancement is to automatically initialise the sources used in the bindings:
+
+```java
+public void init() {
+    bindings
+        .keySet()
+        .stream()
+        .map(Type::source)
+        .distinct()
+        .forEach(src -> src.bind(this));
+}
+```
+
+The example above can now be refactored using the new class:
+
+```java
+// Bind stop event
+ActionBindings bindings = new ActionBindings();
+Source keyboard = window.keyboard().source();
+bindings.bind(new Button("ESCAPE", keyboard), app::stop);
+
+// Bind mouse-wheel handler
+AxisHandler handler = e -> ...
+bindings.bind(window.mouse().wheel(), handler);
+
+// Init
+bindings.init();
+```
+
+This framework should deliver the requirements we identified at the start of the chapter:
+
+* The GLFW specifics are now abstracted away (and theoretically could be replaced by an alternative implementation).
+
+* We have successfully separated the event-handling logic from the application code, e.g. for the stop method.
+
+* Binding events to handlers or methods is relatively concise and does not require any casting or switching logic.
+
+So far we have only implemented events that are based on GLFW callbacks, we will address devices that use query methods later (such as a controller or joystick).
+
+---
+
+## Camera Controller
+
+### Overview
+
+
+
+### Orbital Controller
+
+### Integration
+
+---
+
+
+
+
+
+
+
+
+
+
+
 
 The camera class is a simple model class - to implement richer functionality we introduce a  _camera controller_ that is invoked by action handlers.
 
@@ -496,40 +894,6 @@ public void update(float x, float y) {
 
 The _phi_ angle is a counter-clockwise rotation about the Y axis (or _yaw_ angle) and _theta_ is the vertical rotation (or _pitch_ angle).  Note that a _phi_ of zero 'points' in the X direction - hence we fiddle the angle by 90 degrees in the `update` method to rotate to the negative Z axis.
 
-An _interpolator_ is a mathematical function to scale a value over a range (such as an animation duration):
-
-```java
-@FunctionalInterface
-public interface Interpolator {
-    /**
-     * Applies this interpolator to the given value.
-     * @param value Value to be interpolated
-     * @return Interpolated value
-     */
-    float interpolate(float value);
-
-    /**
-     * Creates a linear (or <i>lerp</i>) interpolator over the given range.
-     * @param start     Range start
-     * @param end       Range end
-     * @return Linear interpolator
-     * @see #lerp(float, float, float)
-     */
-    static Interpolator linear(float start, float end) {
-        return value -> start + value * (end - start);
-    }
-}
-```
-
-The interpolator provides a variety of interpolation functions (often referred to as _tweening_ or _easing functions_) that will be used in future chapters.
-Here we use a simple _linear_ interpolation that maps the window dimensions to yaw-pitch angles (in radians):
-
-```java
-private Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
-private Interpolator vertical = Interpolator.linear(-MathsUtil.HALF_PI, MathsUtil.HALF_PI);
-```
-
-TODO - move / explain this above?
 
 Note that the ranges are different for the two rotation axes.
 
@@ -625,409 +989,6 @@ Moving the mouse should rotate the camera about the scene and the mouse-wheel is
 
 Sweet.
 
----
-
-## Keyboard
-
-The final type of event we will implement in this chapter is a _button event_ for the keyboard and mouse button devices.
-
-### Button Events
-
-A _button event_ is slightly more complex in that it also has an _action_ and a mask of keyboard _modifiers_:
-
-```java
-public final class Button implements Type, InputEvent {
-    private final String id;
-    private final int action;
-    private final int mods;
-
-    /**
-     * Constructor.
-     * @param id        Button identifier
-     * @param op        Action 0..2
-     * @param mods      Modifiers bit-mask
-     */
-    public Button(String id, int action, int mods) {
-        this.id = notEmpty(id);
-        this.action = range(action, 0, 2);
-        this.mods = zeroOrMore(mods);
-    }
-
-    @Override
-    public String name() {
-        ...
-    }
-
-    @Override
-    public Button type() {
-        return this;
-    }
-
-    @Override
-    public float x() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public float y() {
-        throw new UnsupportedOperationException();
-    }
-}
-```
-
-Note that a button is both an input event **and** its associated type, i.e. unlike the other types a button event does not require any additional data.
-
-We add the following enumerations and accessors to map the GLFW action and modifiers:
-
-```java
-public enum Operation {
-    RELEASE,
-    PRESS,
-    REPEAT
-}
-
-public enum Modifier implements IntegerEnumeration {
-    SHIFT(0x0001),
-    CONTROL(0x0002),
-    ALT(0x0004),
-    SUPER(0x0008),
-    CAPS_LOCK(0x0010),
-    NUM_LOCK(0x0020)
-
-    private final int value;
-}
-
-public Operation operation() {
-    return Operation.OPERATIONS[action];
-}
-
-public Set<Modifier> modifiers() {
-    return IntegerEnumeration.enumerate(Modifier.class, mods);
-}
-```
-
-The name of a button is a compound string:
-
-```java
-@Override
-public String name() {
-    final StringJoiner str = new StringJoiner(DELIMITER);
-    str.add(id);
-    str.add(operation().name());
-    if(mods > 0) {
-        str.add(modifiers().stream().map(Enum::name).collect(joining(DELIMITER)));
-    }
-    return str.toString();
-}
-```
-
-For example:
-
-```java
-new Button("NAME", 1, 0x0001 | 0x0002)
-```
-
-has the name
-
-```
-NAME-PRESS-SHIFT-CONTROL
-```
-
-### Keyboard Buttons
-
-The keyboard device itself is relatively simple:
-
-```java
-public class KeyboardDevice implements Device {
-    private final Window window;
-
-    KeyboardDevice(Window window) {
-        this.window = notNull(window);
-    }
-
-    @Override
-    public String name() {
-        return "Keyboard";
-    }
-
-    @Override
-    public Set<Source<?>> sources() {
-        return Set.of(keyboard());
-    }
-
-    /**
-     * @return New keyboard event source
-     */
-    private Source<Button> keyboard() {
-        ...
-    }
-}
-```
-
-However GLFW returns key **codes** that are defined as macros in the header (mapped to a US keyboard layout).  We _could_ simply replicate this as an enumeration but that would require tedious manual text monkeying - instead we opt to load the keys from a text file which requires less formatting and a simple loader class:
-
-```java
-private static class KeyTable {
-    /**
-     * Singleton instance.
-     */
-    public static final KeyTable INSTANCE = new KeyTable();
-
-    private final Map<Integer, String> table = load();
-
-    private KeyTable() {
-    }
-
-    /**
-     * Maps a key code to name.
-     */
-    String map(int code) {
-        final String name = table.get(code);
-        if(name == null) throw new IllegalArgumentException("Unknown key code: " + code);
-        return name;
-    }
-
-    /**
-     * Loads the standard key table.
-     */
-    private static Map<Integer, String> load() {
-        try(final InputStream in = KeyTable.class.getResourceAsStream("/key.table.txt")) {
-            if(in == null) throw new RuntimeException("Cannot find key names resource");
-            return new BufferedReader(new InputStreamReader(in))
-                    .lines()
-                    .map(StringUtils::split)
-                    .collect(toMap(tokens -> Integer.parseInt(tokens[1].trim()), tokens -> tokens[0].trim()));
-        }
-        catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-}
-```
-
-The key table is a simple text file (sample shown):
-
-```
-SPACE              32
-APOSTROPHE         39
-COMMA              44
-```
-
-The button event source can now be implemented as follows:
-
-```java
-private Source<Button> keyboard() {
-    return new Source<>() {
-        @Override
-        public List<Button> types() {
-            return List.of();
-        }
-
-        @Override
-        public void enable(InputEvent.Handler handler) {
-            // Create callback adapter
-            final KeyListener listener = (ptr, key, scancode, action, mods) -> {
-                final String name = KeyTable.INSTANCE.map(key);
-                final Button button = new Button(name, action, mods);
-                handler.accept(button);
-            };
-
-            // Register callback
-            apply(listener);
-        }
-
-        @Override
-        public void disable() {
-            apply(null);
-        }
-
-        /**
-         * Sets the GLFW keyboard listener.
-         * @param listener Keyboard listener
-         */
-        private void apply(KeyListener listener) {
-            window.library().glfwSetKeyCallback(window.handle(), listener);
-        }
-    };
-}
-```
-
-Notes:
-
-- The `types` for the keyboard source is empty since the application will generally refer to keys by name.
-
-- GLFW also provides the _scancode_ and the `glfwGetKeyName` API method but this only seems to support a subset of the expected keys.
-
-- At the time of writing the `KeyTable` is hidden as we assume that the GLFW key-codes will not be required outside of the callback listener, we can always expose the table (and refactor as a proper singleton) if this assumption turns out to be wrong.
-
-### Mouse Buttons
-
-Finally we implement the mouse buttons source:
-
-```java
-public Source<Button> buttons() {
-    return new Source<>() {
-        /**
-         * @return Number of mouse buttons
-         */
-        private int count() {
-            // TODO - uses AWT, not supported by GLFW
-            return MouseInfo.getNumberOfButtons();
-        }
-
-        private final Button[] buttons = IntStream
-                .rangeClosed(1, count())
-                .mapToObj(n -> "Button-" + n)
-                .map(Button::of)
-                .toArray(Button[]::new);
-
-        @Override
-        public List<Button> types() {
-            return Arrays.asList(buttons);
-        }
-
-        @Override
-        public void enable(InputEvent.Handler handler) {
-            final MouseButtonListener listener = (ptr, button, action, mods) -> {
-                // TODO - action/mods
-                handler.accept(buttons[button]);
-            };
-            apply(listener);
-        }
-
-        @Override
-        public void disable() {
-            apply(null);
-        }
-
-        private void apply(MouseButtonListener listener) {
-            window.library().glfwSetMouseButtonCallback(window.handle(), listener);
-        }
-    };
-}
-```
-
-Notes:
-
-- The `types` accessor returns a pre-defined list of mouse buttons.
-
-- Surprisingly GLFW does not provide a method to query the number of available mouse buttons, for the moment we implement `count` using an AWT helper.
-
-### Integration #4
-
-To _finally_ allow the demo to be terminated gracefully we enable keyboard events and bind an action to a _running_ flag in the render loop:
-
-```java
-// Bind stop event
-final AtomicBoolean running = new AtomicBoolean(true);
-final Consumer<InputEvent<?>> keyHandler = key -> {
-    if(key.type().name().equals("ESCAPE")) {
-        running.set(false);
-    }
-};
-window.keyboard().enable(keyHandler);
-...
-
-while(running.get()) {
-    // Poll input events
-    desktop.poll();
-    ...
-}
-```
-
-The key handler is very ugly (and precisely the sort of switching logic we are trying to avoid) - we will address this in the next section.
-
-If we now run the code again we should be able to ESCAPE the demo.
-
-(We really should have done this much earlier!)
-
----
-
-## Action Bindings
-
-To make all this work worthwhile the final piece of functionality is to implement a _bindings_ class that maps events to arbitrary _actions_.
-
-### Bindings Class
-
-The bindings class maintains the mappings between event type(s) and actions:
-
-```java
-public class Bindings implements Consumer<InputEvent<?>> {
-    private final Map<Action<?>, Set<Type>> actions = new HashMap<>();
-    private final Map<Type, Action<?>> bindings = new HashMap<>();
-    
-    ...
-    
-    @Override
-    public void accept(InputEvent event) {
-        final Action<?> action = bindings.get(event.type());
-        if(action != null) {
-            action.accept(event);
-        }
-    }
-}
-```
-
-An _action_ is a simple event consumer:
-
-```java
-interface Action<T extends Type> extends Consumer<InputEvent<?>> {
-    // Marker interface
-}
-```
-
-Notes:
-
-- The bindings class is itself an event handler.
-
-- Many events can be bound to the same action.
-
-An event is bound to an action as follows:
-
-```java
-/**
- * Binds an input event to the given action.
- * @param <T> Event type
- * @param type          Input event
- * @param action        Action handler
- * @throws IllegalStateException if the event is already bound
- */
-public <T extends Type> void bind(T type, Action<T> action) {
-    Check.notNull(type);
-    Check.notNull(action);
-    if(bindings.containsKey(type)) throw new IllegalStateException("Event is already bound: " + type);
-    actions.computeIfAbsent(action, ignored -> new HashSet<>()).add(type);
-    bindings.put(type, action);
-}
-```
-
-Note that `bind` is a generic method that will cause a compile-time error if the types of the event and handler do not match (though note bindings are wild-carded internally).
-
-An action can also be bound to an event source (i.e. to handle **all** events generated by that source):
-
-```java
-/**
- * Binds an event source to the given action.
- * @param <T> Event type
- * @param src           Event source
- * @param action        Action handler
- * @throws IllegalArgumentException if the source does not have exactly <b>one</b> event type
- */
-public <T extends Type> void bind(Source<T> src, Action<T> action) {
-    final var<T> list = src.types();
-    if(list.size() != 1) throw new IllegalArgumentException("Bound source can only have a one event type: " + src);
-    bind(list.get(0), action);
-}
-```
-
-The bindings class also provides various methods to query and manage bindings (not shown here).
-
-### Integration Finale
-
-We can now refactor the demo to replace the cumbersome event handler lambdas with
-
-
-
 
 
 
@@ -1051,26 +1012,10 @@ Hopefully the purpose of the event handling framework combined with the bindings
 
 In the next section we will illustrate how the bindings can be used to control the camera in the model demo.
 
----
 
 
-## Integration
 
 
-mouselook
-- look controller
-- WASD movement
-- wheel - forward/back
-
-common
-- escape
-- space -> toggle and-then home
-- home - reset view
-
----
-
-
-### Global Flip
 
 Up until this point we have just dealt with the fact that the Y direction in Vulkan is **down** (which is inverted compared to OpenGL and just about every other 3D framework).
 
@@ -1105,37 +1050,6 @@ Notes:
 - To avoid breaking our existing code the _flip_ setting is off by default.
 
 
-
-### Geometry Methods
-
-A translation matrix is built using a new helper:
-
-```java
-class Matrix {
-    public static Matrix translation(Vector vec) {
-        return new Builder().identity().column(3, vec).build();
-    }
-}
-```
-
-The _cross product_ calculates the vector that is perpendicular to the given vectors:
-
-```java
-class Vector {
-    public Vector cross(Vector vec) {
-        final float x = this.y * vec.z - this.z * vec.y;
-        final float y = this.z * vec.x - this.x * vec.z;
-        final float z = this.x * vec.y - this.y * vec.x;
-        return new Vector(x, y, z);
-    }
-}
-```
-
-
-
-
-
-## References
 
 [^invert]: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
 

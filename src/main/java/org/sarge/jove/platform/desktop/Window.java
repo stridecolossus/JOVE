@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.Consumer;
@@ -167,7 +168,7 @@ public class Window extends AbstractTransientNativeObject {
 	private final Descriptor descriptor;
 	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
 	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
-	private final WeakHashMap<Object, Object> registry = new WeakHashMap<>();
+	private final Map<Object, Object> registry = new WeakHashMap<>();
 
 	/**
 	 * Constructor.

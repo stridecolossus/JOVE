@@ -18,15 +18,15 @@ import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
 
-public class BindingsTest {
-	private Bindings bindings;
+public class ActionBindingsTest {
+	private ActionBindings bindings;
 	private Axis axis;
 	private Source src;
 	private Consumer<AxisEvent> handler;
 
 	@BeforeEach
 	void before() {
-		bindings = new Bindings();
+		bindings = new ActionBindings();
 		src = mock(Source.class);
 		axis = new Axis("axis", src);
 		handler = mock(Consumer.class);
@@ -140,6 +140,13 @@ public class BindingsTest {
 		bindings.clear();
 		assertEquals(0, bindings.bindings(handler).count());
 		assertEquals(Optional.empty(), bindings.binding(axis));
+	}
+
+	@Test
+	void init() {
+		bindings.bind(axis, handler);
+		bindings.init();
+		verify(src).bind(bindings);
 	}
 
 	@Test

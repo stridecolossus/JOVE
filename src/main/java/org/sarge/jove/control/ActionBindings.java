@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis.AxisEvent;
+import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
 import org.sarge.jove.control.Position.PositionEvent;
 import org.sarge.jove.util.ResourceLoader;
@@ -70,20 +71,9 @@ import org.sarge.jove.util.ResourceLoader;
  * @see Event
  * @author Sarge
  */
-public class Bindings implements Consumer<Event> {
-	/**
-	 * An <i>entry</i> is comprised of the event types bound to an action handler.
-	 */
-	private static class Entry {
-		private final Set<Type<?>> types = new HashSet<>();
-
-		private void clear() {
-			types.clear();
-		}
-	}
-
+public class ActionBindings implements Consumer<Event> {
 	private final Map<Type<?>, Consumer<Event>> bindings = new HashMap<>();
-	private final Map<Consumer<? extends Event>, Entry> map = new HashMap<>();
+	private final Map<Consumer<? extends Event>, Set<Type<?>>> map = new HashMap<>();
 
 	/**
 	 * @return Action handlers
@@ -93,10 +83,10 @@ public class Bindings implements Consumer<Event> {
 	}
 
 	/**
-	 * Helper - Retrieves the entry for the given handler.
+	 * Helper - Retrieves the reverse mapping of the event types bound to the given handler.
 	 */
-	private Entry entry(Consumer<? extends Event> handler) {
-		final Entry entry = map.get(handler);
+	private Set<Type<?>> types(Consumer<? extends Event> handler) {
+		final var entry = map.get(handler);
 		if(entry == null) throw new IllegalArgumentException("Handler not registered: " + handler);
 		return entry;
 	}
@@ -117,8 +107,8 @@ public class Bindings implements Consumer<Event> {
 	 * @throws IllegalArgumentException if the handler is not bound
 	 */
 	public Stream<Type<?>> bindings(Consumer<? extends Event> handler) {
-		final Entry entry = entry(handler);
-		return entry.types.stream();
+		final var types = types(handler);
+		return types.stream();
 	}
 
 	/**
@@ -128,7 +118,7 @@ public class Bindings implements Consumer<Event> {
 	 */
 	public void add(Consumer<? extends Event> handler) {
 		if(map.containsKey(handler)) throw new IllegalArgumentException("Duplicate handler: " + handler);
-		map.put(handler, new Entry());
+		map.put(handler, new HashSet<>());
 	}
 
 	/**
@@ -139,17 +129,17 @@ public class Bindings implements Consumer<Event> {
 	 */
 	public <T extends Event> void bind(Type<T> type, Consumer<? extends T> handler) {
 		// Validate
-		if(handler == this) throw new IllegalArgumentException("Cannot bind to this bindings");
+		if(handler == this) throw new IllegalArgumentException("Cannot bind to self!");
 		if(map.containsKey(handler)) throw new IllegalArgumentException("Handler is already bound: " + handler);
 
-		// Lookup or create bindings
-		final Entry entry = map.computeIfAbsent(handler, ignored -> new Entry());
+		// Lookup or create reverse mapping
+		final var types = map.computeIfAbsent(handler, ignored -> new HashSet<>());
 
 		// Add binding
 		@SuppressWarnings("unchecked")
 		final Consumer<Event> consumer = (Consumer<Event>) handler;
 		bindings.put(type, consumer);
-		entry.types.add(type);
+		types.add(type);
 	}
 
 	/**
@@ -199,8 +189,8 @@ public class Bindings implements Consumer<Event> {
 		if(type == null) throw new IllegalArgumentException("Handler not bound: " + handler);
 
 		// Remove reverse mapping
-		final Entry entry = entry(handler);
-		entry.types.remove(type);
+		final var types = types(handler);
+		types.remove(type);
 	}
 
 	/**
@@ -209,9 +199,9 @@ public class Bindings implements Consumer<Event> {
 	 * @throws IllegalArgumentException if the handler is not registered
 	 */
 	public void clear(Consumer<? extends Event> handler) {
-		final Entry entry = entry(handler);
-		entry.types.forEach(bindings::remove);
-		entry.clear();
+		final var types = types(handler);
+		types.forEach(bindings::remove);
+		types.clear();
 	}
 
 	/**
@@ -220,7 +210,20 @@ public class Bindings implements Consumer<Event> {
 	 */
 	public void clear() {
 		bindings.clear();
-		map.values().forEach(Entry::clear);
+		map.values().forEach(Set::clear);
+	}
+
+	/**
+	 * Helper - Automatically initialises the event sources used in this set of bindings.
+	 * @see Source#bind(Consumer)
+	 */
+	public void init() {
+		bindings
+				.keySet()
+				.stream()
+				.map(Type::source)
+				.distinct()
+				.forEach(src -> src.bind(this));
 	}
 
 	@Override
@@ -242,7 +245,7 @@ public class Bindings implements Consumer<Event> {
 	/**
 	 * Loader for action bindings.
 	 */
-	public class Loader implements ResourceLoader<BufferedReader, Bindings> {
+	public class Loader implements ResourceLoader<BufferedReader, ActionBindings> {
 		private Loader() {
 		}
 
@@ -252,9 +255,9 @@ public class Bindings implements Consumer<Event> {
 		}
 
 		@Override
-		public Bindings load(BufferedReader data) throws IOException {
+		public ActionBindings load(BufferedReader data) throws IOException {
 			// TODO
-			return Bindings.this;
+			return ActionBindings.this;
 		}
 
 		/**

@@ -68,7 +68,7 @@ public class KeyboardDevice extends DesktopDevice {
 	 * Keyboard event source.
 	 */
 	private class KeyboardSource extends DesktopSource<KeyListener> {
-		private final Map<String, Button> keys = new HashMap<>();
+		private final Map<Integer, Button> keys = new HashMap<>();
 
 		@Override
 		public List<Type<?>> types() {
@@ -78,17 +78,16 @@ public class KeyboardDevice extends DesktopDevice {
 		@Override
 		protected KeyListener listener(Consumer<Event> handler) {
 			return (ptr, key, scancode, action, mods) -> {
-				// Lookup key name
-				final String name = TABLE.get(key);
-				if(name == null) throw new RuntimeException("Unknown key code: " + key);
-
-				// Create key
-				final Button base = keys.computeIfAbsent(name, ignored -> new Button(name, KeyboardSource.this));
-
-				// Create derived button
+				final Button base = keys.computeIfAbsent(key, this::button);
 				final Button button = base.resolve(DesktopDevice.map(action), mods);
 				handler.accept(button);
 			};
+		}
+
+		private Button button(int key) {
+			final String name = TABLE.get(key);
+			if(name == null) throw new RuntimeException("Unknown key code: " + key);
+			return new Button(name, KeyboardSource.this);
 		}
 
 		@Override

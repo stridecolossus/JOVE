@@ -15,6 +15,7 @@ public record Axis(String name, Source source) implements Type<AxisEvent> {
 	/**
 	 * Convenience handler definition for the consumer of an axis event.
 	 */
+	@FunctionalInterface
 	public interface AxisHandler {
 		/**
 		 * Accepts an axis event.
