@@ -95,7 +95,7 @@ class CameraTest {
 				.build();
 
 		// Create camera translation one unit out of the screen
-		final Matrix trans = Matrix.translation(Vector.Z.invert());
+		final Matrix trans = Matrix.translation(new Vector(0, 0, 1));
 
 		// Init camera and check matrix
 		cam.move(new Point(0, 0, 1));

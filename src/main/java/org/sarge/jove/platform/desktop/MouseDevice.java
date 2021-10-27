@@ -20,7 +20,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListene
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
 
 /**
- * The <i>mouse device</i> comprises event sources for the mouse pointer, buttons and scroll-wheel.
+ * The <i>mouse device</i> exposes event sources for the mouse pointer, buttons and scroll-wheel.
  * @author Sarge
  */
 public class MouseDevice extends DesktopDevice {
@@ -51,20 +51,15 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * @return Mouse buttons source
 	 */
-	public DesktopSource<MouseButtonListener> buttons() {
+	public DesktopSource<?> buttons() {
 		return buttons;
 	}
 
 	/**
-	 * @return Mouse scroll-wheel
+	 * @return Mouse scroll-wheel axis
 	 */
 	public Axis wheel() {
 		return wheel.axis;
-	}
-
-	@Override
-	public String toString() {
-		return "MouseDevice";
 	}
 
 	/**
@@ -115,8 +110,7 @@ public class MouseDevice extends DesktopDevice {
 		protected MouseButtonListener listener(Consumer<Event> handler) {
 			return (ptr, index, action, mods) -> {
 				final Button button = buttons.get(index);
-				final String name = DesktopDevice.name(button.name(), action, mods);
-				final Button event = new Button(name, MouseButton.this);
+				final Button event = button.resolve(DesktopDevice.map(action), mods);
 				handler.accept(event);
 			};
 		}

@@ -1,7 +1,5 @@
 package org.sarge.jove.control;
 
-import java.util.function.Consumer;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
@@ -10,7 +8,7 @@ import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>position event</i> describes a positional event such as the mouse pointer location.
+ * A <i>position</i> defines a positional event such as the mouse pointer location.
  * @author Sarge
  */
 public record Position(String name, Source source) implements Type<PositionEvent> {
@@ -24,15 +22,6 @@ public record Position(String name, Source source) implements Type<PositionEvent
 		 * @param y
 		 */
 		void handle(float x, float y);
-	}
-
-	/**
-	 * Creates an adapter for a position handler method:
-	 * @param handler Position handler method
-	 * @return New position handler adapter
-	 */
-	public static Consumer<PositionEvent> handler(PositionHandler handler) {
-		return e -> handler.handle(e.x, e.y);
 	}
 
 	/**

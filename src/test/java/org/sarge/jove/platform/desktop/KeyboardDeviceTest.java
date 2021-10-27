@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
@@ -41,7 +42,7 @@ public class KeyboardDeviceTest {
 
 		@BeforeEach
 		void before() {
-			keyboard = dev.source();
+			keyboard = (DesktopSource<KeyListener>) dev.source();
 		}
 
 		@Test
@@ -55,7 +56,7 @@ public class KeyboardDeviceTest {
 			final Consumer<Event> handler = mock(Consumer.class);
 			final KeyListener listener = keyboard.listener(handler);
 			listener.key(null, 256, 0, 1, 0x0001);
-			verify(handler).accept(new Button("Key-ESCAPE-PRESS-SHIFT", keyboard));
+			verify(handler).accept(new Button("ESCAPE", keyboard, Action.PRESS, 0x0001));
 		}
 
 		@Test

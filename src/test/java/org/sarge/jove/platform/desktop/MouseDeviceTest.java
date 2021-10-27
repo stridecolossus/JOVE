@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Position;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
@@ -90,7 +91,7 @@ public class MouseDeviceTest {
 
 		@BeforeEach
 		void before() {
-			buttons = mouse.buttons();
+			buttons = (DesktopSource<MouseButtonListener>) mouse.buttons();
 		}
 
 		@Test
@@ -112,7 +113,7 @@ public class MouseDeviceTest {
 			final MouseButtonListener listener = buttons.listener(handler);
 			assertNotNull(listener);
 			listener.button(null, 0, 1, 0x0002);
-			verify(handler).accept(new Button("Mouse-Button-1-PRESS-CONTROL", buttons));
+			verify(handler).accept(new Button("Mouse-Button-1", buttons, Action.PRESS, 0x0002));
 		}
 
 		@Test

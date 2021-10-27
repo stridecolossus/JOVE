@@ -7,125 +7,152 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
 
 public class BindingsTest {
 	private Bindings bindings;
-	private Type type;
-	private Consumer<Event> handler;
+	private Axis axis;
+	private Source src;
+	private Consumer<AxisEvent> handler;
 
 	@BeforeEach
 	void before() {
 		bindings = new Bindings();
-		type = mock(Type.class);
+		src = mock(Source.class);
+		axis = new Axis("axis", src);
 		handler = mock(Consumer.class);
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(bindings.types());
-		assertEquals(0, bindings.types().count());
-		assertEquals(Optional.empty(), bindings.binding(handler));
+		assertNotNull(bindings.handlers());
+		assertEquals(0, bindings.handlers().count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
 	}
 
 	@Test
 	void add() {
-		bindings.add(type);
-		assertArrayEquals(new Type[]{type}, bindings.types().toArray());
-		assertNotNull(bindings.bindings(type));
-		assertEquals(0, bindings.bindings(type).count());
+		bindings.add(handler);
+		assertNotNull(bindings.bindings(handler));
+		assertEquals(0, bindings.bindings(handler).count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
 	}
 
 	@Test
 	void addDuplicate() {
-		bindings.add(type);
-		assertThrows(IllegalArgumentException.class, () -> bindings.add(type));
+		bindings.add(handler);
+		assertThrows(IllegalArgumentException.class, () -> bindings.add(handler));
 	}
 
 	@Test
 	void bind() {
-		bindings.bind(type, handler);
-		assertArrayEquals(new Object[]{handler}, bindings.bindings(type).toArray());
-		assertEquals(Optional.of(type), bindings.binding(handler));
-	}
-
-	@Test
-	void bindButtonMethod() {
-		final Button button = new Button("button", mock(Source.class));
-		final Runnable method = mock(Runnable.class);
-		bindings.bind(button, method);
-		bindings.accept(button);
-		verify(method).run();
+		bindings.bind(axis, handler);
+		assertEquals(Optional.of(handler), bindings.binding(axis));
+		assertArrayEquals(new Type[]{axis}, bindings.bindings(handler).toArray());
 	}
 
 	@Test
 	void bindNotAdded() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.bindings(type));
+		assertThrows(IllegalArgumentException.class, () -> bindings.bindings(handler));
 	}
 
 	@Test
-	void bindDuplicateListener() {
-		bindings.bind(type, handler);
-		assertThrows(IllegalArgumentException.class, () -> bindings.bind(type, handler));
+	void bindDuplicateHandler() {
+		bindings.bind(axis, handler);
+		assertThrows(IllegalArgumentException.class, () -> bindings.bind(axis, handler));
 	}
 
 	@Test
 	void bindSelf() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.bind(type, bindings));
+		assertThrows(IllegalArgumentException.class, () -> bindings.bind(mock(Type.class), bindings));
+	}
+
+	@Nested
+	class BindingHelpers {
+		@Test
+		void button() {
+			final Button button = new Button("button", src);
+			final Runnable method = mock(Runnable.class);
+			final var adapter = bindings.bind(button, method);
+			assertNotNull(adapter);
+			bindings.accept(button);
+			verify(method).run();
+		}
+
+		@Test
+		void position() {
+			final Position pos = new Position("pos", src);
+			final Position.PositionHandler handler = mock(Position.PositionHandler.class);
+			final var adapter = bindings.bind(pos, handler);
+			assertNotNull(adapter);
+			bindings.accept(pos.new PositionEvent(1, 2));
+			verify(handler).handle(1, 2);
+		}
+
+		@Test
+		void axis() {
+			final Axis.AxisHandler handler = mock(Axis.AxisHandler.class);
+			final var adapter = bindings.bind(axis, handler);
+			assertNotNull(adapter);
+			bindings.accept(axis.new AxisEvent(3));
+			verify(handler).handle(3);
+		}
 	}
 
 	@Test
 	void remove() {
-		bindings.bind(type, handler);
-		bindings.remove(handler);
-		assertEquals(0, bindings.bindings(type).count());
+		bindings.bind(axis, handler);
+		bindings.remove(axis);
+		assertEquals(0, bindings.bindings(handler).count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
 	}
 
 	@Test
 	void removeNotBound() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.remove(handler));
+		assertThrows(IllegalArgumentException.class, () -> bindings.remove(axis));
 	}
 
 	@Test
 	void clear() {
-		bindings.bind(type, handler);
-		bindings.clear(type);
-		assertEquals(0, bindings.bindings(type).count());
+		bindings.bind(axis, handler);
+		bindings.clear(handler);
+		assertEquals(0, bindings.bindings(handler).count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
 	}
 
 	@Test
 	void clearNotBound() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.clear(type));
+		assertThrows(IllegalArgumentException.class, () -> bindings.clear(handler));
 	}
 
 	@Test
 	void clearAll() {
-		bindings.bind(type, handler);
+		bindings.bind(axis, handler);
 		bindings.clear();
-		assertArrayEquals(new Type[]{type}, bindings.types().toArray());
-		assertEquals(0, bindings.bindings(type).count());
+		assertEquals(0, bindings.bindings(handler).count());
+		assertEquals(Optional.empty(), bindings.binding(axis));
 	}
 
 	@Test
 	void accept() {
-		final Event event = mock(Event.class);
-		when(event.type()).thenReturn(type);
-		bindings.bind(type, handler);
+		final AxisEvent event = axis.new AxisEvent(42);
+		bindings.bind(axis, handler);
 		bindings.accept(event);
 		verify(handler).accept(event);
 	}
 
 	@Test
 	void acceptUnknownEvent() {
-		bindings.bind(type, handler);
+		bindings.bind(axis, handler);
 		bindings.accept(mock(Event.class));
 		verifyNoMoreInteractions(handler);
 	}

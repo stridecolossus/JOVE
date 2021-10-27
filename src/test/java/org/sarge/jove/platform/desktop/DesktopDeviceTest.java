@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,12 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
-import org.sarge.jove.platform.desktop.DesktopDevice.Action;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
-import org.sarge.jove.platform.desktop.DesktopDevice.Modifier;
 
 public class DesktopDeviceTest {
 	private DesktopDevice dev;
@@ -42,34 +42,6 @@ public class DesktopDeviceTest {
 			public void close() {
 			}
 		};
-	}
-
-	@Nested
-	class ActionTests {
-		@Test
-		void map() {
-			assertEquals("RELEASE", Action.map(0));
-			assertEquals("PRESS", Action.map(1));
-			assertEquals("REPEAT", Action.map(2));
-		}
-	}
-
-	@Nested
-	class ModifierTests {
-		@Test
-		void map() {
-			assertEquals("SHIFT", Modifier.map(0x0001));
-			assertEquals("CONTROL", Modifier.map(0x0002));
-			assertEquals("ALT", Modifier.map(0x0004));
-			assertEquals("SUPER", Modifier.map(0x0008));
-			assertEquals("CAPS_LOCK", Modifier.map(0x0010));
-			assertEquals("NUM_LOCK", Modifier.map(0x0020));
-		}
-
-		@Test
-		void mask() {
-			assertEquals("SHIFT-CONTROL-ALT", Modifier.map(0x0001 | 0x0002 | 0x0004));
-		}
 	}
 
 	@Nested
@@ -120,11 +92,6 @@ public class DesktopDeviceTest {
 		}
 
 		@Test
-		void name() {
-			assertEquals("name-PRESS-SHIFT", DesktopDevice.name("name", 1, 0x0001));
-		}
-
-		@Test
 		void enable() {
 			src.bind(handler);
 			verify(method).accept(window, listener);
@@ -135,6 +102,21 @@ public class DesktopDeviceTest {
 		void disable() {
 			src.disable();
 			verify(method).accept(window, null);
+		}
+	}
+
+	@Nested
+	class ActionTests {
+		@Test
+		void map() {
+			assertEquals(Action.RELEASE, DesktopDevice.map(0));
+			assertEquals(Action.PRESS, DesktopDevice.map(1));
+			assertEquals(Action.REPEAT, DesktopDevice.map(2));
+		}
+
+		@Test
+		void unknown() {
+			assertThrows(RuntimeException.class, () -> DesktopDevice.map(999));
 		}
 	}
 }

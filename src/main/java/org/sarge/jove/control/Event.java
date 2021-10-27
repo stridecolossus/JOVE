@@ -11,12 +11,9 @@ import java.util.function.Predicate;
 /**
  * An <i>event</i> describes an input from the client.
  * <p>
- * An event is comprised of:
- * <ul>
- * <li>a <i>name</i> that identifies the event</li>
- * <li>a {@link Type} which describes the event category</li>
- * <li>the {@link Source} that generated the event</li>
- * </ul>
+ * An event has a {@link Type} which a descriptor of the event.
+ * <p>
+ * An event {@link Source} and {@link Device} are used to enumerate event generators.
  * <p>
  * @author Sarge
  */

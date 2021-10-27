@@ -1,17 +1,12 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Axis.AxisEvent;
-import org.sarge.jove.control.Axis.AxisHandler;
 import org.sarge.jove.control.Event.Source;
 
 public class AxisTest {
@@ -28,15 +23,6 @@ public class AxisTest {
 	void constructor() {
 		assertEquals("axis", axis.name());
 		assertEquals(src, axis.source());
-	}
-
-	@Test
-	void handler() {
-		final AxisHandler consumer = mock(AxisHandler.class);
-		final Consumer<AxisEvent> handler = axis.handler(consumer);
-		assertNotNull(handler);
-		handler.accept(axis.new AxisEvent(3));
-		verify(consumer).handle(3f);
 	}
 
 	@Nested

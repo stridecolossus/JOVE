@@ -18,7 +18,7 @@ import org.sarge.jove.control.Event.Type;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 /**
- * The <i>keyboard device</i>
+ * The <i>keyboard device</i> generates GLFW keyboard events.
  * @author Sarge
  */
 public class KeyboardDevice extends DesktopDevice {
@@ -55,7 +55,7 @@ public class KeyboardDevice extends DesktopDevice {
 	/**
 	 * @return Keyboard event source
 	 */
-	public DesktopSource<KeyListener> source() {
+	public DesktopSource<?> source() {
 		return keyboard;
 	}
 
@@ -64,15 +64,12 @@ public class KeyboardDevice extends DesktopDevice {
 		return Set.of(keyboard);
 	}
 
-	@Override
-	public String toString() {
-		return "Keyboard";
-	}
-
 	/**
 	 * Keyboard event source.
 	 */
 	private class KeyboardSource extends DesktopSource<KeyListener> {
+		private final Map<String, Button> keys = new HashMap<>();
+
 		@Override
 		public List<Type<?>> types() {
 			return List.of();
@@ -81,18 +78,15 @@ public class KeyboardDevice extends DesktopDevice {
 		@Override
 		protected KeyListener listener(Consumer<Event> handler) {
 			return (ptr, key, scancode, action, mods) -> {
-				// Lookup key
+				// Lookup key name
 				final String name = TABLE.get(key);
 				if(name == null) throw new RuntimeException("Unknown key code: " + key);
 
-				// Create event
-				// TODO - just inject mods/action into button ctor, no need to parse until name() is actually needed
-				// - or maybe GLFW specific button class with mods/action?
-				final String id = DesktopDevice.name(Event.name("Key", name), action, mods);
-				final Button button = new Button(id, KeyboardSource.this);
-				// TODO - cache?
+				// Create key
+				final Button base = keys.computeIfAbsent(name, ignored -> new Button(name, KeyboardSource.this));
 
-				// Delegate
+				// Create derived button
+				final Button button = base.resolve(DesktopDevice.map(action), mods);
 				handler.accept(button);
 			};
 		}
