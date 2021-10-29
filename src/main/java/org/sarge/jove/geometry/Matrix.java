@@ -70,45 +70,6 @@ public final class Matrix implements Transform, Bufferable {
 				.build();
 	}
 
-	/**
-	 * Creates a 4x4 <b>clockwise</b> rotation matrix about the given axis.
-	 * @param axis		Rotation axis
-	 * @param angle		Angle (radians)
-	 * @return Rotation matrix
-	 * @throws UnsupportedOperationException if the given axis is an arbitrary vector (i.e. not one of the 3 orthogonal axes)
-	 */
-	public static Matrix rotation(Vector axis, float angle) { // TODO - Rotation? move to that class?
-		final Builder rot = new Builder().identity();
-		final float sin = MathsUtil.sin(angle);
-		final float cos = MathsUtil.cos(angle);
-		// TODO - do we use these 2x2 matrices elsewhere? i.e. factor out 2x2 and introduce set(r,c,2x2)?
-		if(Vector.X.equals(axis)) {
-			rot.set(1, 1, cos);
-			rot.set(1, 2, sin);
-			rot.set(2, 1, -sin);
-			rot.set(2, 2, cos);
-		}
-		else
-		if(Vector.Y.equals(axis)) {
-			rot.set(0, 0, cos);
-			rot.set(0, 2, -sin);
-			rot.set(2, 0, sin);
-			rot.set(2, 2, cos);
-		}
-		else
-		if(Vector.Z.equals(axis)) {
-			rot.set(0, 0, cos);
-			rot.set(0, 1, -sin);
-			rot.set(1, 0, sin);
-			rot.set(1, 1, cos);
-		}
-		else {
-			throw new UnsupportedOperationException("Arbitrary rotation axis not supported");
-			// TODO - return Quaternion(rotation)?
-		}
-		return rot.build();
-	}
-
 	private final float[][] matrix;
 
 	/**

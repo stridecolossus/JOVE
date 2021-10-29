@@ -16,24 +16,14 @@ public class RotationAnimation implements Animation {
 
 	/**
 	 * Constructor.
-	 * @param axis			Rotation axis
-	 * @param angle			Initial angle (radians)
-	 */
-	public RotationAnimation(Vector axis, float angle) {
-		this.rot = new MutableRotation(axis);
-		rot.angle(angle);
-	}
-
-	/**
-	 * Constructor.
 	 * @param axis Rotation axis
 	 */
 	public RotationAnimation(Vector axis) {
-		this(axis, 0);
+		this.rot = new MutableRotation(axis);
 	}
 
 	/**
-	 * @return Rotation
+	 * @return Underlying rotation
 	 */
 	public Rotation rotation() {
 		return rot;
@@ -41,7 +31,8 @@ public class RotationAnimation implements Animation {
 
 	@Override
 	public void update(Animator animator) {
-		rot.angle(animator.position() * MathsUtil.TWO_PI);
+		final float angle = animator.position() * MathsUtil.TWO_PI;
+		rot.angle(angle);
 	}
 
 	@Override

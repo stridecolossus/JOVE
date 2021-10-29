@@ -1,11 +1,14 @@
 package org.sarge.jove.control;
 
+import static org.sarge.lib.util.Check.notNull;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sarge.jove.platform.desktop.Desktop;
 
 /**
- * The <i>render loop</i> comprised of a number of <i>tasks</i> to be executed as part of the rendering loop.
+ * The <i>render loop</i> is comprised of a number of <i>tasks</i> to be executed as part of the rendering loop.
  * <p>
  * The {@link #run()} method is an infinite loop terminated by the {@link #stop()} method.
  * <p>
@@ -25,26 +28,49 @@ public class RenderLoop {
 		void execute();
 	}
 
-	private final List<Task> tasks;
+	private final List<Task> tasks = new ArrayList<>();
 	private volatile boolean running;
 
 	/**
-	 * Constructor.
-	 * @param steps Execution steps of this application
+	 * Default constructor.
 	 */
-	public RenderLoop(List<Task> steps) {
-		this.tasks = List.copyOf(steps);
+	public RenderLoop() {
 	}
 
 	/**
-	 * @return Whether this application is running
+	 * Convenience constructor given a list of tasks.
+	 * @param tasks Render loop tasks
+	 * @see #add(Task)
+	 */
+	public RenderLoop(List<Task> tasks) {
+		tasks.forEach(this::add);
+	}
+
+	/**
+	 * Adds a task to the render loop.
+	 * @param task Task to add
+	 */
+	public void add(Task task) {
+		tasks.add(notNull(task));
+	}
+
+	/**
+	 * Removes a task from the render loop.
+	 * @param task Task to remove
+	 */
+	public void remove(Task task) {
+		tasks.remove(task);
+	}
+
+	/**
+	 * @return Whether this render loop is running
 	 */
 	public boolean isRunning() {
 		return running;
 	}
 
 	/**
-	 * Runs this application until stopped.
+	 * Runs this loop until stopped.
 	 */
 	public void run() {
 		running = true;
@@ -54,8 +80,8 @@ public class RenderLoop {
 	}
 
 	/**
-	 * Stops this application.
-	 * @throws IllegalStateException if the application is not running
+	 * Stops the render loop.
+	 * @throws IllegalStateException if the loop is not running
 	 */
 	public void stop() {
 		if(!running) throw new IllegalStateException("Not running");

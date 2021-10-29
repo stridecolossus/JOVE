@@ -1,11 +1,11 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.sarge.jove.util.MathsUtil.PI;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.MathsUtil;
 
 public class QuaternionTest {
 	private Quaternion quaternion;
@@ -24,20 +24,18 @@ public class QuaternionTest {
 	}
 
 	@Test
-	public void rotation() {
-		final Rotation rot = Rotation.of(Vector.Y, MathsUtil.PI);
-		assertEquals(quaternion, Quaternion.of(rot));
+	public void of() {
+		assertEquals(quaternion, Quaternion.of(Vector.Y, PI));
 	}
 
 	@Test
 	public void magnitude() {
-		assertEquals(1f, quaternion.magnitude(), 0.0001f);
+		assertEquals(1, quaternion.magnitude());
 	}
 
 	@Test
 	public void matrix() {
-		final Matrix expected = Matrix.rotation(Vector.Y, MathsUtil.PI);
-		assertEquals(expected, quaternion.matrix());
+		assertEquals(Rotation.matrix(Vector.Y, PI), quaternion.matrix());
 	}
 
 	@Test
@@ -51,11 +49,13 @@ public class QuaternionTest {
 		assertEquals(new Quaternion(quaternion.w, 0, -quaternion.y, 0), quaternion.conjugate());
 	}
 
-	@Disabled
 	@Test
 	public void toRotation() {
-		final Rotation rot = Rotation.of(Vector.Y, MathsUtil.PI);
-		assertEquals(rot, quaternion.rotation());
+		final Rotation rot = quaternion.rotation();
+		assertNotNull(rot);
+		assertEquals(Vector.Y, rot.axis());
+		assertEquals(PI, rot.angle());
+		assertEquals(quaternion.matrix(), rot.matrix());
 	}
 
 	@Test
@@ -72,8 +72,8 @@ public class QuaternionTest {
 	@Test
 	public void equals() {
 		assertEquals(true, quaternion.equals(quaternion));
-		assertEquals(true, quaternion.equals(Quaternion.of(Rotation.of(Vector.Y, MathsUtil.PI))));
+		assertEquals(true, quaternion.equals(Quaternion.of(Vector.Y, PI)));
 		assertEquals(false, quaternion.equals(null));
-		assertEquals(false, quaternion.equals(Quaternion.of(Rotation.of(Vector.X, MathsUtil.PI))));
+		assertEquals(false, quaternion.equals(Quaternion.of(Vector.X, PI)));
 	}
 }

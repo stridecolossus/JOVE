@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Matrix.Builder;
-import org.sarge.jove.util.MathsUtil;
 
 class MatrixTest {
 	private static final int ORDER = 4;
@@ -165,23 +164,6 @@ class MatrixTest {
 		void scale() {
 			final Matrix expected = new Matrix.Builder().identity().set(2, 2, 3).build();
 			assertEquals(expected, Matrix.scale(1, 1, 3));
-		}
-
-		@Test
-		void rotation() {
-			final Matrix expected = new Matrix.Builder()
-					.identity()
-					.set(1, 1, MathsUtil.cos(MathsUtil.HALF))
-					.set(1, 2, MathsUtil.sin(MathsUtil.HALF))
-					.set(2, 1, -MathsUtil.sin(MathsUtil.HALF))
-					.set(2, 2, MathsUtil.cos(MathsUtil.HALF))
-					.build();
-			assertEquals(expected, Matrix.rotation(Vector.X, MathsUtil.HALF));
-		}
-
-		@Test
-		void rotationInvalidAxis() {
-			assertThrows(UnsupportedOperationException.class, () -> Matrix.rotation(new Vector(1, 2, 3), MathsUtil.HALF));
 		}
 	}
 

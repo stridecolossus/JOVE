@@ -18,11 +18,20 @@ public class Player {
 	public enum State {
 		PLAY,
 		PAUSE,
-		STOP
+		STOP;
+
+		private void validate(State next) {
+			if(this == next) {
+				throw new IllegalStateException("Duplicate player state: " + this);
+			}
+			if((next == PAUSE) && (this != PLAY)) {
+				throw new IllegalStateException(String.format("Illegal player state transition: prev=%s next=%s", this, next));
+			}
+		}
 	}
 
 	/**
-	 * A <i>playable</i> is something that can be played, paused or stopped.
+	 * A <i>playable</i> is a resource that can be played, paused or stopped.
 	 */
 	public interface Playable {
 		/**
@@ -97,33 +106,18 @@ public class Player {
 	/**
 	 * Sets the state of this player.
 	 * @param state New state
+	 * @throws IllegalStateException for an invalid state transition
 	 */
 	public void set(State state) {
-		// Verify state-change
-		// TODO - move to enum
-		update();
-		switch(state) {
-		case PLAY:
-			if(this.state == State.PLAY) throw new IllegalStateException("Already playing");
-			break;
-
-		case STOP:
-			if(this.state == State.STOP) throw new IllegalStateException("Not playing");
-			break;
-
-		case PAUSE:
-			if(this.state != State.PLAY) throw new IllegalStateException("Not playing");
-			break;
-
-		default:
-			throw new RuntimeException();
-		}
-
 		// Update state
+		update();
+		this.state.validate(state);
 		this.state = state;
 
 		// Notify listeners
-		listeners.forEach(listener -> listener.update(state));
+		for(Listener listener : listeners) {
+			listener.update(state);
+		}
 	}
 
 	/**
@@ -148,6 +142,14 @@ public class Player {
 	 */
 	public void add(Listener listener) {
 		listeners.add(notNull(listener));
+	}
+
+	/**
+	 * Removes a listener.
+	 * @param listener Listener to remove
+	 */
+	public void remove(Listener listener) {
+		listeners.remove(listener);
 	}
 
 	@Override

@@ -1,7 +1,13 @@
 package org.sarge.jove.geometry;
 
+import static org.sarge.jove.util.MathsUtil.cos;
+import static org.sarge.jove.util.MathsUtil.inverseRoot;
+import static org.sarge.jove.util.MathsUtil.isEqual;
+import static org.sarge.jove.util.MathsUtil.sin;
+
 import java.util.Arrays;
 
+import org.sarge.jove.geometry.Rotation.AbstractRotation;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -18,11 +24,10 @@ public final class Quaternion implements Transform {
 	 * Creates a quaternion from the given rotation.
 	 * @param rot Rotation
 	 */
-	public static Quaternion of(Rotation rot) {
-		final float half = rot.angle() * MathsUtil.HALF;
-		final float sin = MathsUtil.sin(half);
-		final Vector axis = rot.axis();
-		return new Quaternion(MathsUtil.cos(half), axis.x * sin, axis.y * sin, axis.z * sin);
+	public static Quaternion of(Vector axis, float angle) {
+		final float half = angle * MathsUtil.HALF;
+		final Vector vec = axis.multiply(sin(half));
+		return new Quaternion(cos(half), vec.x, vec.y, vec.z);
 	}
 
 	public final float w, x, y, z;
@@ -42,7 +47,7 @@ public final class Quaternion implements Transform {
 	}
 
 	/**
-	 * @return Magnitude (squared) of this quaternion
+	 * @return Magnitude <b>squared</b> of this quaternion
 	 */
 	public float magnitude() {
 		return w * w + x * x + y * y + z * z;
@@ -53,10 +58,18 @@ public final class Quaternion implements Transform {
 	 * @return Rotation
 	 */
 	public Rotation rotation() {
-		final float scale = MathsUtil.inverseRoot(1 - w * w);
+		// Extract axis-angle
+		final float scale = inverseRoot(1 - w * w);
 		final Vector axis = new Vector(x, y, z).multiply(scale);
 		final float angle = 2 * MathsUtil.acos(w);
-		return Rotation.of(axis, angle);
+
+		// Create rotation wrapper
+		return new AbstractRotation(axis, angle) {
+			@Override
+			public Matrix matrix() {
+				return Quaternion.this.matrix();
+			}
+		};
 	}
 
 	/**
@@ -69,7 +82,7 @@ public final class Quaternion implements Transform {
 			return this;
 		}
 		else {
-			final float mag = MathsUtil.inverseRoot(magnitude);
+			final float mag = inverseRoot(magnitude);
 			return new Quaternion(w * mag, x * mag, y * mag, z * mag);
 		}
 	}
@@ -140,10 +153,10 @@ public final class Quaternion implements Transform {
 		return
 				(obj == this) ||
 				(obj instanceof Quaternion that) &&
-				MathsUtil.isEqual(this.w, that.w) &&
-				MathsUtil.isEqual(this.x, that.x) &&
-				MathsUtil.isEqual(this.y, that.y) &&
-				MathsUtil.isEqual(this.z, that.z);
+				isEqual(this.w, that.w) &&
+				isEqual(this.x, that.x) &&
+				isEqual(this.y, that.y) &&
+				isEqual(this.z, that.z);
 	}
 
 	@Override

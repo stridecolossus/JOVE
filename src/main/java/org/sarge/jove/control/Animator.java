@@ -11,9 +11,9 @@ import org.sarge.jove.control.Player.State;
  * An <i>animator</i> cycles a value over a given period.
  * @author Sarge
  */
-public class Animator implements Playable { //, Frame.Listener {
+public class Animator implements Playable, FrameTracker.Listener {
 	/**
-	 * Animation.
+	 * An <i>animation</i> is updated by this animator.
 	 */
 	@FunctionalInterface
 	public interface Animation {
@@ -28,8 +28,8 @@ public class Animator implements Playable { //, Frame.Listener {
 	private final Animation animation;
 
 	private long time;
+	private State state = State.STOP;
 	private float speed = 1;
-	private Player.State state = Player.State.STOP;
 	private boolean repeat;
 
 	/**
@@ -50,14 +50,15 @@ public class Animator implements Playable { //, Frame.Listener {
 	}
 
 	/**
-	 * @return Current time position
+	 * @return Current time position within the animation duration
 	 */
 	public long time() {
 		return time;
 	}
 
 	/**
-	 * @return Animation position 0..1
+	 * Calculates the animation <i>position</i> as a floating-point value in the range zero to one.
+	 * @return Animation position
 	 */
 	public float position() {
 		return time / (float) duration;
@@ -95,16 +96,15 @@ public class Animator implements Playable { //, Frame.Listener {
 		this.repeat = repeat;
 	}
 
-//	@Override
-	public void update(long elapsed) { // Frame frame) {
+	@Override
+	public void update(FrameTracker tracker) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
 		// Update time position
-//		time += frame.elapsed() * speed;
-		time += elapsed * speed;
+		time += tracker.elapsed() * speed;
 
 		// Check for completed animation
 		if(time > duration) {

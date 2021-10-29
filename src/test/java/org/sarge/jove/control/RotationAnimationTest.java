@@ -1,12 +1,12 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Rotation;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
@@ -15,12 +15,14 @@ public class RotationAnimationTest {
 
 	@BeforeEach
 	void before() {
-		animation = new RotationAnimation(Vector.X);
+		animation = new RotationAnimation(Vector.Y);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(Rotation.of(Vector.X, 0), animation.rotation());
+		assertNotNull(animation.rotation());
+		assertEquals(Vector.Y, animation.rotation().axis());
+		assertEquals(0, animation.rotation().angle());
 	}
 
 	@Test
@@ -28,6 +30,6 @@ public class RotationAnimationTest {
 		final Animator animator = mock(Animator.class);
 		when(animator.position()).thenReturn(MathsUtil.HALF);
 		animation.update(animator);
-		assertEquals(Rotation.of(Vector.X, MathsUtil.PI), animation.rotation());
+		assertEquals(MathsUtil.PI, animation.rotation().angle());
 	}
 }
