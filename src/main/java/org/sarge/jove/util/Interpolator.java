@@ -88,6 +88,7 @@ public interface Interpolator {
 	 * @return Compound interpolator
 	 */
 	static Interpolator mix(Interpolator start, Interpolator end, float weight) {
+		// TODO - validate weight?
 		return t -> (1 - weight) * start.interpolate(t) + weight * end.interpolate(t);
 	}
 
@@ -96,9 +97,11 @@ public interface Interpolator {
 	 * @param start		Start value
 	 * @param end		End value
 	 * @return Linear interpolator
+	 * @see #lerp(float, float, float)
 	 */
 	static Interpolator linear(float start, float end) {
-		return t -> start + t * (end - start);
+		final float range = end - start;
+		return t -> lerp(start, range, t);
 	}
 
 	/**
@@ -108,7 +111,7 @@ public interface Interpolator {
 	 * @param value		Value to interpolate
 	 * @return Interpolated value
 	 */
-	static float lerp(float start, float end, float value) {
-		return start + value * (end - start);
+	static float lerp(float start, float range, float value) {
+		return start + value * range;
 	}
 }

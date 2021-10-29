@@ -1,13 +1,9 @@
 package org.sarge.jove.scene;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Sphere;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.Interpolator;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -34,24 +30,15 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class OrbitalCameraController {
+public class OrbitalCameraController extends DefaultCameraController {
 	// http://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
 	// https://learnopengl.com/Getting-started/Camera
 
-	// Camera
-	private final Camera cam;
 	private Point target = Point.ORIGIN;
-
-	// Orbit
 	private float min = 1;
 	private float max = Integer.MAX_VALUE;
 	private float scale = 1;
 	private float radius = 1;
-
-	// Position
-	private final Dimensions dim;
-	private final Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
-	private final Interpolator vertical = Interpolator.linear(-MathsUtil.HALF_PI, MathsUtil.HALF_PI);
 
 	/**
 	 * Constructor.
@@ -59,8 +46,7 @@ public class OrbitalCameraController {
 	 * @param dim 	View dimensions
 	 */
 	public OrbitalCameraController(Camera cam, Dimensions dim) {
-		this.cam = notNull(cam);
-		this.dim = notNull(dim);
+		super(cam, dim);
 		init();
 		cam.look(target);
 	}
@@ -141,22 +127,10 @@ public class OrbitalCameraController {
 		init();
 	}
 
-	/**
-	 * Updates the camera for the given view coordinates.
-	 * @param x
-	 * @param y
-	 */
-	public void update(float x, float y) {
-		// Transform position to angles
-		final float yaw = horizontal.interpolate(x / dim.width());
-		final float pitch = vertical.interpolate(y / dim.height());
-
-		// Calc point on the unit-sphere
-		final Point surface = Sphere.pointRotated(yaw, pitch);
-		final Point pos = Sphere.swizzle(surface).scale(radius);
-
-		// Update camera
-		cam.move(target.add(pos));
+	@Override
+	protected void update(Point pt) {
+		final Point pos = pt.scale(radius).add(target);
+		cam.move(pos);
 		cam.look(target);
 	}
 
