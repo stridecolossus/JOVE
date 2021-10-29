@@ -111,10 +111,14 @@ public sealed class Tuple implements Bufferable, Vertex.Component permits Point,
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj == this) || ((obj instanceof Tuple that) && isEqual(that));
-		// TODO - is this strictly correct? do we want point==vector?
+		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * Helper - Tests whether two tuples are equal.
+	 * @param that Tuple
+	 * @return Whether equal
+	 */
 	protected final boolean isEqual(Tuple that) {
 		return
 				MathsUtil.isEqual(this.x, that.x) &&

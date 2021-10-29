@@ -48,6 +48,11 @@ class PointTest {
 	}
 
 	@Test
+	void scale() {
+		assertEquals(new Point(2, 4, 6), pos.scale(2));
+	}
+
+	@Test
 	public void equals() {
 		assertEquals(true, pos.equals(pos));
 		assertEquals(true, pos.equals(new Point(1, 2, 3)));

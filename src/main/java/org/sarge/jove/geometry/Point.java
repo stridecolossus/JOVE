@@ -55,8 +55,17 @@ public final class Point extends Tuple {
 		return new Point(x + vec.x, y + vec.y, z + vec.z);
 	}
 
+	/**
+	 * Scales this point.
+	 * @param scale Scale
+	 * @return Scaled point
+	 */
+	public Point scale(float scale) {
+		return new Point(x * scale, y * scale, z * scale);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
-		return (obj == this) || ((obj instanceof Point pt) && super.isEqual(pt));
+		return (obj == this) || (obj instanceof Point pt) && super.isEqual(pt);
 	}
 }

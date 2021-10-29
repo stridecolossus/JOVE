@@ -47,6 +47,9 @@ public abstract class DesktopDevice implements Device {
 	 * @param <T> Callback
 	 */
 	public abstract class DesktopSource<T> implements Source {
+		@SuppressWarnings("unused")
+		private T listener;
+
 		/**
 		 * Creates a listener that generates events and delegates to the given handler.
 		 * @param handler Event handler
@@ -61,26 +64,26 @@ public abstract class DesktopDevice implements Device {
 		 */
 		protected abstract BiConsumer<Window, T> method(DesktopLibrary lib);
 
+		@Override
+		public final Device device() {
+			return DesktopDevice.this;
+		}
+
 		/**
 		 * Registers the listener with the service and the window.
-		 * @param listener GLFW listener
+		 * @param listener Listener
 		 */
 		private void register(T listener) {
 			final DesktopLibrary lib = window.desktop().library();
 			final BiConsumer<Window, T> method = method(lib);
 			method.accept(window, listener);
-		}
-
-		@Override
-		public final Device device() {
-			return DesktopDevice.this;
+			this.listener = listener;
 		}
 
 		@Override
 		public final void bind(Consumer<Event> handler) {
 			final T listener = listener(handler);
 			register(listener);
-			window.register(handler, listener);
 		}
 
 		@Override

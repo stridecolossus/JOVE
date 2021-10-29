@@ -4,16 +4,12 @@ import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.control.Event;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.LazySupplier;
 
@@ -168,7 +164,6 @@ public class Window extends AbstractTransientNativeObject {
 	private final Descriptor descriptor;
 	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
 	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
-	private final Map<Object, Object> registry = new WeakHashMap<>();
 
 	/**
 	 * Constructor.
@@ -208,15 +203,6 @@ public class Window extends AbstractTransientNativeObject {
 	 */
 	public MouseDevice mouse() {
 		return mouse.get();
-	}
-
-	/**
-	 * Registers a native callback bound to the given handler to prevent GC of callbacks.
-	 * @param handler			Handler
-	 * @param callback			Callback
-	 */
-	protected <T> void register(Consumer<Event> handler, T callback) {
-		registry.put(handler, callback);
 	}
 
 	/**

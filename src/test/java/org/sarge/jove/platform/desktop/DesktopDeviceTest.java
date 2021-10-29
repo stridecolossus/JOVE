@@ -95,7 +95,6 @@ public class DesktopDeviceTest {
 		void enable() {
 			src.bind(handler);
 			verify(method).accept(window, listener);
-			verify(window).register(handler, listener);
 		}
 
 		@Test

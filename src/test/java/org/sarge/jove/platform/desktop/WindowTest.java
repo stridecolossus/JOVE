@@ -11,14 +11,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.control.Event;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -78,12 +76,6 @@ public class WindowTest {
 //
 //		Window.create(lib, new Window.Descriptor("title", new Dimensions(640, 480), Set.of()), null));
 //	}
-
-	@Test
-	void register() {
-		final Consumer<Event> handler = mock(Consumer.class);
-		window.register(handler, new Object());
-	}
 
 	@Test
 	void surface() {

@@ -27,12 +27,18 @@ public class TupleTest {
 
 	@Test
 	void copy() {
-		assertEquals(tuple, new Tuple(tuple));
+		tuple = new Tuple(tuple);
+		assertEquals(1, tuple.x);
+		assertEquals(2, tuple.y);
+		assertEquals(3, tuple.z);
 	}
 
 	@Test
 	void array() {
-		assertEquals(tuple, new Tuple(new float[]{1, 2, 3}));
+		tuple = new Tuple(new float[]{1, 2, 3});
+		assertEquals(1, tuple.x);
+		assertEquals(2, tuple.y);
+		assertEquals(3, tuple.z);
 	}
 
 	@Test
@@ -82,13 +88,5 @@ public class TupleTest {
 	@Test
 	void hash() {
 		assertEquals(Objects.hash(1f, 2f, 3f), tuple.hashCode());
-	}
-
-	@Test
-	void equals() {
-		assertEquals(true, tuple.equals(tuple));
-		assertEquals(true, tuple.equals(new Tuple(1, 2, 3)));
-		assertEquals(false, tuple.equals(null));
-		assertEquals(false, tuple.equals(new Tuple(4, 5, 6)));
 	}
 }

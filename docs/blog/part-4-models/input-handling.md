@@ -46,7 +46,7 @@ type                    | arguments                     | device
 ----                    | ---------                     | ------
 keyboard                | key, action, modifiers        | keyboard
 mouse pointer           | x-y                           | mouse
-mouse button            | button, actions, modifiers    | mouse
+mouse button            | button, action, modifiers     | mouse
 mouse wheel             | value                         | mouse
 window enter/leave      | boolean                       | window
 window focus            | boolean                       | window
@@ -418,9 +418,7 @@ public class MouseDevice extends DesktopDevice {
 
 ### Buttons
 
-The final type of event (for now) is a _button_ that represents keyboard keys, mouse buttons, joystick hats, etc.
-
-A button also has an _action_ and a _keyboard modifiers_ mask:
+The final type of event (for now) is a _button_ that represents keyboard keys, mouse buttons, joystick hats, etc:
 
 ```java
 public record Button(String id, Source source, Action action, int mods) implements Type<Button>, Event {
@@ -431,7 +429,11 @@ public record Button(String id, Source source, Action action, int mods) implemen
 }
 ```
 
-Note that a button is also its own event since there are no additional arguments (unlike the axis or position events).
+Notes:
+
+* A button also has an _action_ and a _keyboard modifiers_ mask.
+
+* A button is also its own event type since there are no additional arguments (unlike the axis or position events).
 
 An action is a simple enumeration based on the GLFW action codes:
 
@@ -526,7 +528,6 @@ The GLFW listener implementation looks up a mouse button by index and uses the `
 
 ```java
 private class MouseButton extends DesktopSource<MouseButtonListener> {
-    ```java
     @Override
     protected MouseButtonListener listener(Consumer<Event> handler) {
         return (ptr, index, action, mods) -> {
@@ -543,7 +544,7 @@ private class MouseButton extends DesktopSource<MouseButtonListener> {
 }
 ```
 
-Since the mouse buttons event source is _parameterized_ in this case we expose the source itself:
+In this case since mouse buttons are _parameterized_ we expose the source itself:
 
 ```java
 public class MouseDevice extends DesktopDevice {
@@ -706,7 +707,7 @@ Instead we introduce the _action bindings_ class which is essentially a bi-direc
 ```java
 public class ActionBindings implements Consumer<Event> {
     private final Map<Type<?>, Consumer<Event>> bindings = new HashMap<>();
-    private final Map<Consumer<? extends Event>, Set<Type<?>>> map = new HashMap<>();
+    private final Map<Object, Set<Type<?>>> map = new HashMap<>();
 }
 ```
 
