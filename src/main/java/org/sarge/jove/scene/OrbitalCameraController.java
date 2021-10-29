@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Sphere.PointFunction;
+import org.sarge.jove.geometry.Sphere;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.Interpolator;
 import org.sarge.jove.util.MathsUtil;
@@ -52,7 +52,6 @@ public class OrbitalCameraController {
 	private final Dimensions dim;
 	private final Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
 	private final Interpolator vertical = Interpolator.linear(-MathsUtil.HALF_PI, MathsUtil.HALF_PI);
-	private final PointFunction sphere = PointFunction.DEFAULT.swizzle().rotate();
 
 	/**
 	 * Constructor.
@@ -153,7 +152,8 @@ public class OrbitalCameraController {
 		final float pitch = vertical.interpolate(y / dim.height());
 
 		// Calc point on the unit-sphere
-		final Point pos = sphere.point(yaw, pitch).scale(radius);
+		final Point surface = Sphere.pointRotated(yaw, pitch);
+		final Point pos = Sphere.swizzle(surface).scale(radius);
 
 		// Update camera
 		cam.move(target.add(pos));
