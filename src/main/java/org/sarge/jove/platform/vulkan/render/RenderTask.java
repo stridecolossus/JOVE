@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.IntFunction;
 
+import org.sarge.jove.control.RenderLoop.Task;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
@@ -17,7 +18,7 @@ import org.sarge.jove.platform.vulkan.core.Work;
 import org.sarge.lib.util.Check;
 
 /**
- * The <i>render loop</i> encapsulates the process of rendering multiple in-flight frames.
+ * The <i>render task</i> encapsulates the process of rendering multiple in-flight frames.
  * <p>
  * Usage:
  * <pre>
@@ -28,7 +29,7 @@ import org.sarge.lib.util.Check;
  * </pre>
  * @author Sarge
  */
-public class RenderLoop implements Runnable {
+public class RenderTask implements Task {
 	/**
 	 * A <i>frame</i> tracks the progress of an <i>in-flight</i> frame.
 	 */
@@ -100,7 +101,7 @@ public class RenderLoop implements Runnable {
 	 * @param factory				Factory for command buffers
 	 * @param presentation			Presentation queue
 	 */
-	public RenderLoop(Swapchain swapchain, int frames, IntFunction<Buffer> factory, Queue presentation) {
+	public RenderTask(Swapchain swapchain, int frames, IntFunction<Buffer> factory, Queue presentation) {
 		Check.oneOrMore(frames);
 		this.swapchain = notNull(swapchain);
 		this.presentation = notNull(presentation);
@@ -116,7 +117,7 @@ public class RenderLoop implements Runnable {
 	}
 
 	@Override
-	public void run() {
+	public void execute() {
 		// Render next frame
 		final Frame frame = frames[current];
 		frame.render();

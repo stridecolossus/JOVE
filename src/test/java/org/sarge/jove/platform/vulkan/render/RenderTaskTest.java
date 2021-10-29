@@ -24,8 +24,8 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
 
-public class RenderLoopTest extends AbstractVulkanTest {
-	private RenderLoop loop;
+public class RenderTaskTest extends AbstractVulkanTest {
+	private RenderTask loop;
 	private Swapchain swapchain;
 	private Buffer buffer;
 	private Queue queue;
@@ -52,7 +52,7 @@ public class RenderLoopTest extends AbstractVulkanTest {
 		when(buffer.isReady()).thenReturn(true);
 
 		// Create render loop
-		loop = new RenderLoop(swapchain, 2, ignored -> buffer, queue);
+		loop = new RenderTask(swapchain, 2, ignored -> buffer, queue);
 	}
 
 	@Test
@@ -64,8 +64,8 @@ public class RenderLoopTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void run() {
-		loop.run();
+	void execute() {
+		loop.execute();
 		verify(lib, times(2)).vkWaitForFences(eq(dev), eq(1), isA(Pointer.class), eq(VulkanBoolean.TRUE), eq(Long.MAX_VALUE));
 		verify(lib).vkResetFences(eq(dev), eq(1), isA(Pointer.class));
 

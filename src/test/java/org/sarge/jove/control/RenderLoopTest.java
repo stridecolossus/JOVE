@@ -10,11 +10,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.sarge.jove.control.RenderLoop.Task;
 
 @Timeout(1000)
-public class ApplicationTest {
-	private Application app;
-	private Runnable task;
+public class RenderLoopTest {
+	private RenderLoop app;
+	private Task task;
 	private CountDownLatch latch;
 	private Thread thread;
 
@@ -22,7 +23,7 @@ public class ApplicationTest {
 	void before() {
 		latch = new CountDownLatch(1);
 		task = latch::countDown;
-		app = new Application(List.of(task));
+		app = new RenderLoop(List.of(task));
 	}
 
 	@AfterEach
