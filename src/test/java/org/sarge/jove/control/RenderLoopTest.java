@@ -3,7 +3,6 @@ package org.sarge.jove.control;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.junit.jupiter.api.AfterEach;
@@ -14,7 +13,7 @@ import org.sarge.jove.control.RenderLoop.Task;
 
 @Timeout(1000)
 public class RenderLoopTest {
-	private RenderLoop app;
+	private RenderLoop loop;
 	private Task task;
 	private CountDownLatch latch;
 	private Thread thread;
@@ -23,13 +22,13 @@ public class RenderLoopTest {
 	void before() {
 		latch = new CountDownLatch(1);
 		task = latch::countDown;
-		app = new RenderLoop(List.of(task));
+		loop = new RenderLoop();
 	}
 
 	@AfterEach
 	void after() {
-		if(app.isRunning()) {
-			app.stop();
+		if(loop.isRunning()) {
+			loop.stop();
 		}
 
 		if((thread != null) && thread.isAlive()) {
@@ -39,11 +38,23 @@ public class RenderLoopTest {
 
 	@Test
 	void constructor() {
-		assertEquals(false, app.isRunning());
+		assertEquals(false, loop.isRunning());
+	}
+
+	@Test
+	void add() {
+		loop.add(task);
+	}
+
+	@Test
+	void remove() {
+		loop.add(task);
+		loop.remove(task);
 	}
 
 	private void start() throws InterruptedException {
-		thread = new Thread(app::run);
+		loop.add(task);
+		thread = new Thread(loop::run);
 		thread.start();
 		latch.await();
 	}
@@ -51,25 +62,25 @@ public class RenderLoopTest {
 	@Test
 	void run() throws InterruptedException {
 		start();
-		assertEquals(true, app.isRunning());
+		assertEquals(true, loop.isRunning());
 	}
 
 	@Test
 	void stop() throws InterruptedException {
 		start();
-		app.stop();
-		assertEquals(false, app.isRunning());
+		loop.stop();
+		assertEquals(false, loop.isRunning());
 	}
 
 	@Test
 	void stopNotRunning() {
-		assertThrows(IllegalStateException.class, () -> app.stop());
+		assertThrows(IllegalStateException.class, () -> loop.stop());
 	}
 
 	@Test
 	void stopAlreadyStopped() throws InterruptedException {
 		start();
-		app.stop();
-		assertThrows(IllegalStateException.class, () -> app.stop());
+		loop.stop();
+		assertThrows(IllegalStateException.class, () -> loop.stop());
 	}
 }
