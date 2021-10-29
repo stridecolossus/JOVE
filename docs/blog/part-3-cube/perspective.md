@@ -791,7 +791,7 @@ We should now be able to see the fully 3D cube:
 
 ### Animation
 
-To animate the cube rotation we first add a `while` loop to render multiple frames which terminates after a configurable period:
+To animate the cube rotation we first add a temporary `while` loop to render multiple frames which terminates after a configurable period:
 
 ```java
 long period = cfg.getPeriod();
@@ -833,7 +833,7 @@ Hopefully we can now finally see the goal for this chapter: the proverbial rotat
 
 Huzzah!
 
-Note that there are still a couple of problems with the render loop that we will address in the next section:
+Note that there are still a couple of problems with the render loop that we will address in the next few chapters:
 
 * The GLFW event queue thread is still blocked.
 

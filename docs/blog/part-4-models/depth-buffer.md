@@ -579,6 +579,42 @@ Notes:
 
 * The presentation modes and surface formats are lazily retrieved in the surface class to minimise API calls.
 
+### Global Flip
+
+By default the Vulkan Y axis points __down__ which is the opposite of OpenGL (and just about every other 3D library).
+
+However we came across a global solution that handily flips the axis by specifying a 'negative' viewport rectangle: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
+
+The implementation is relatively trivial, we add a _flip_ setting to the `ViewportStageBuilder` which is applied when the viewport descriptor is populated:
+
+```java
+private void populate(VkViewport viewport, boolean flip) {
+    if(flip) {
+        viewport.x = rect.x();
+        viewport.y = rect.y() + rect.height();
+        viewport.width = rect.width();
+        viewport.height = -rect.height();
+    }
+    else {
+        viewport.x = rect.x();
+        viewport.y = rect.y();
+        viewport.width = rect.width();
+        viewport.height = rect.height();
+    }
+    ...
+}
+```
+
+Notes:
+
+* This solution is only supported in Vulkan version 1.1.x or above.
+
+* The Y coordinate of the viewport origin is also shifted to the bottom of the viewport.
+
+* To avoid breaking existing code the _flip_ setting is off by default.
+
+* In any case we are now too used to Y pointing down.
+
 ### Vector
 
 Next we add some new functionality to the `Vector` class that will be used in the camera class below.

@@ -4,7 +4,7 @@ title: Input Handling
 
 ## Overview
 
-In this chapter we will design a framework for input event handling which will build on to implement an orbital camera controller.
+In this chapter we will design a framework for input event handling and an orbital camera controller.
 
 Note there is no new Vulkan functionality introduced in this chapter.
 
@@ -14,7 +14,7 @@ Note there is no new Vulkan functionality introduced in this chapter.
 
 ### Rationale
 
-Whilst we could simply use the GLFW functionality directly in our application (as we did for the ESCAPE key listener) there are compelling reasons to introduce a layer of abstraction:
+Whilst we could simply use GLFW directly in our application (as we did for the ESCAPE key listener) there are compelling reasons to introduce a layer of abstraction:
 
 * The GLFW API exposes some underlying details (such as window handle pointers) that we would prefer to hide if possible.
 
@@ -22,21 +22,17 @@ Whilst we could simply use the GLFW functionality directly in our application (a
 
 * Several of the event types map to the same general forms - for example keyboard keys, mouse buttons and controller buttons are essentially equivalent.
 
-* Traditional event callbacks mix application logic and event handling reducing code re-usability and testability.
+* Traditional event callbacks violate the principle of separation of concerns by mixing application logic and the event handling code.
 
 Based on these observations we enumerate the following requirements for our design:
 
 * Map the various events to a smaller number of general types.
 
-* Encapsulate the underlying GLFW code that generates input events.
+* Abstract over the underlying GLFW code for the handling of input events.
 
 * Separate the event handling framework from the application logic.
 
 * Provide a mechanism to map events to application logic that requires minimal configuration (or ideally none).
-
-* Provide functionality to allow an application to query supported events without having to invoke specific API methods.
-
-> Apparently GLFW version 4 will deprecate callbacks in favour of query methods but we will cross that bridge if and when we upgrade the native library.
 
 ### Analysis
 
@@ -57,11 +53,11 @@ controller hat          | hat, press/release            | controller
 
 Notes:
 
-* A _controller_ is defined here as a joystick, gamepad or console controller.
+* A _controller_ is defined here as a joystick, gamepad, console controller, etc.
 
-* There are more but the above is enough to be getting on with.
+* There are several more but the above is enough to be getting on with.
 
-After a bit of analysis we determine that the above can be generalised to the following:
+After a bit of analysis we determine that the events can be generalised to the following:
 
 type        | name      | parameterized | arguments     | examples                                          |
 ----        | ----      | ------------- | ---------     | --------                                          |
@@ -70,7 +66,7 @@ button      | yes       | yes           | n/a           | keyboard, mouse button
 axis        | yes       | no            | value         | mouse wheel, controller axis                      |
 boolean     | no        | no            | boolean       | window                                            |
 
-Where _name_ specifies whether the event has a name parameter and _parameterized_ indicates an event that has multiple values, e.g. keyboard key names.
+Where _name_ specifies whether the event has a specific name property and _parameterized_ indicates an event that has multiple values, e.g. keyboard key names.
 
 ### Framework
 
@@ -228,17 +224,28 @@ private void register(T listener) {
     DesktopLibrary lib = window.desktop().library();
     BiConsumer<Window, T> method = method(lib);
     method.accept(window, listener);
+    this.listener = listener;
 }
 ```
 
-We can now implement the public methods in terms of this helper:
+Note that the `register` method keeps a reference to the generated GLFW listener:
+
+```java
+public abstract class DesktopSource<T> implements Source {
+    @SuppressWarnings("unused")
+    private T listener;
+}
+```
+
+This prevents GLFW de-registering a garbage collected listener that is still 'active', i.e. the `listener` argument is out-of-scope at the end of the method.
+
+We can now implement the public methods in terms of the new helper functionality:
 
 ```java
 @Override
 public final void bind(Consumer<Event> handler) {
     T listener = listener(handler);
     register(listener);
-    window.register(handler, listener);
 }
 
 @Override
@@ -246,20 +253,6 @@ public final void disable() {
     register(null);
 }
 ```
-
-We add the `register` method to the window class to maintain a reference to a listener:
-
-```java
-public class Window {
-    private final Map<Object, Object> registry = new WeakHashMap<>();
-
-    protected <T> void register(Consumer<Event> handler, T callback) {
-        registry.put(handler, callback);
-    }
-}
-```
-
-This prevents GLFW de-registering a garbage collected listener that is still 'active', i.e. the listener goes out-of-scope at the end of the `bind` method.
 
 Finally we add the mouse device as a lazily instantiated member of the window:
 
@@ -272,6 +265,8 @@ public class Window {
     }
 }
 ```
+
+> Apparently GLFW version 4 will deprecate callbacks in favour of query methods but we will cross that bridge if and when we upgrade the native library.
 
 ### Axis
 
@@ -328,7 +323,7 @@ private class MouseWheel extends DesktopSource<MouseScrollListener> {
 }
 ```
 
-The listener factory creates a GLFW mouse-wheel listener which wraps up the event and delegates it to the handler:
+The `listener` factory creates a GLFW mouse-wheel listener which wraps up the event and delegates it to the handler:
 
 ```java
 protected MouseScrollListener listener(Consumer<Event> handler) {
@@ -349,7 +344,7 @@ protected BiConsumer<Window, MouseScrollListener> method(DesktopLibrary lib) {
 
 Notes:
 
-* The GLFW listener for the mouse-wheel has X and Y arguments but we only need one.
+* The GLFW listener for the mouse-wheel has X and Y arguments (with the same values) but we only use one.
 
 * We also expose the mouse-wheel axis for convenience.
 
@@ -488,7 +483,7 @@ public Button(String id, Source source) {
 }
 ```
 
-And the following factory method that derives a button with a specific action and keyboard modifiers from the default button:
+And the following factory method that derives a button with specific action and keyboard modifiers:
 
 ```java
 public Button resolve(Action action, int mods) {
@@ -516,7 +511,7 @@ private class MouseButton extends DesktopSource<MouseButtonListener> {
 }
 ```
 
-Surprisingly GLFW does not seem to provide any means of determining the number of mouse buttons supported by the hardware, for the moment we use the AWT `MouseInfo.getNumberOfButtons` method.  However this means that we need to override the default Spring application behaviour which creates a _headless_ application by default (otherwise the AWT method throws an exception):
+Surprisingly GLFW does not seem to provide any means of determining the number of mouse buttons supported by the hardware, for the moment we use the an AWT method.  However this means that we need to override the default Spring application behaviour which creates a _headless_ application by default (otherwise the AWT method throws an exception):
 
 ```java
 new SpringApplicationBuilder(ModelDemo.class)
@@ -654,11 +649,11 @@ Notes:
 
 * The `types` for the keyboard source is empty since we assume applications will generally refer to keys by name.
 
-* GLFW also provides a _scancode_ argument and the `glfwGetKeyName` API method but this only seems to support a subset of expected keys.
+* GLFW also provides a _scancode_ argument and the `glfwGetKeyName` API method but this functionality only seems to support a subset of the expected keys.
 
-* At the time of writing `TABLE` is hidden as we assume that the GLFW key-codes will not be required outside this framework.
+* At the time of writing `TABLE` is hidden as we assume that the GLFW key-codes will not be required outside the framework.
 
-* We add the keyboard device to the GLFW window.
+* We add the lazily-instantiated keyboard device to the GLFW window.
 
 ---
 
@@ -690,15 +685,15 @@ Consumer<Event> handler = e -> {
 wheel.bind(handler);
 ```
 
-However there are several problems with this approach:
+However there are still problems with this approach:
 
 * We are required to cast the event if we want to use the sub-class properties.
 
 * Ideally we would prefer to bind specific _parameterized_ events (especially for the keyboard, e.g. for the ESCAPE handler) rather than having to implement switching logic.
 
-* Additionally we would also like to be able to bind directly to a method reference with an appropriate signature instead of hand-crafting some sort of adapter.
+* Additionally we would also like to be able to bind directly to a method reference with an appropriate signature instead of hand-crafting adapters or messy lambdas.
 
-We could refactor the event class to contain the properties for __all__ cases but this is pretty ugly (even if there are only a handful).  Alternatively we could implement some sort of double-dispatch to transform a base-class event to its sub-type but that feels overkill in this case.
+We _could_ refactor the event class to contain the properties for __all__ cases but this is pretty ugly (even if there are only a handful).  Alternatively we could implement some sort of double-dispatch to transform a base-class event to its sub-type but that also feels overkill in this case.
 
 ### Bindings
 
@@ -762,7 +757,7 @@ We also add support (not shown) to remove bindings by handler or event type and 
 
 We can now implement convenience methods to bind specific types of event to a method with the appropriate signature.
 
-Generally buttons events will be bound to a `void` method without any parameters (i.e. modelled as a Java `Runnable`) for which we create an event handler adapter:
+Generally buttons events will be bound to a `void` method without any parameters which is wrapped by an adapter:
 
 ```java
 public Consumer<Button> bind(Type<Button> type, Runnable method) {
@@ -833,233 +828,312 @@ bindings.bind(window.mouse().wheel(), handler);
 bindings.init();
 ```
 
-This framework should deliver the requirements we identified at the start of the chapter:
+The new event handling framework and the action bindings class should satisfy the requirements we identified at the start of the chapter:
 
 * The GLFW specifics are now abstracted away (and theoretically could be replaced by an alternative implementation).
 
-* We have successfully separated the event-handling logic from the application code, e.g. for the stop method.
+* The event-handling logic is separated from the application code, e.g. binding ESCAPE to the stop method.
 
 * Binding events to handlers or methods is relatively concise and does not require any casting or switching logic.
 
-So far we have only implemented events that are based on GLFW callbacks, we will address devices that use query methods later (such as a controller or joystick).
+So far we have only implemented events that are based on GLFW callbacks - we will address devices that use query methods later (such as a controller or joystick).
 
 ---
 
 ## Camera Controller
 
-### Overview
+### Default Implementation
 
+The camera class is a simple model class, to implement richer functionality we will introduce a _camera controller_ that can be bound to input actions.
 
-
-### Orbital Controller
-
-### Integration
-
----
-
-
-
-
-
-
-
-
-
-
-
-
-The camera class is a simple model class - to implement richer functionality we introduce a  _camera controller_ that is invoked by action handlers.
-
-An _orbital_ (or arcball) camera controller rotates the view position about a target point-of-interest.
-
-Rather than complicate the existing camera or derive a new sub-class we opt to create a separate _controller_ class:
+We first implement a basic _free-look_ controller that rotates the scene about the cameras position:
 
 ```java
-public class OrbitalCameraController {
+public class DefaultCameraController {
     private final Camera cam;
-    private Point target = Point.ORIGIN;
     private final Dimensions dim;
-}
-```
-
-Moving the camera around the _target_ involves the following steps on a positional input event:
-1. Map the position to yaw-pitch angles.
-2. Calculate the resultant camera position.
-3. Point the camera at the target.
-
-This is implemented in the `update` method of the controller:
-
-```java
-public void update(float x, float y) {
-    final float phi = horizontal.interpolate(x / dim.width());
-    final float theta = vertical.interpolate(y / dim.height());
-    final Point pos = Sphere.point(phi - MathsUtil.HALF_PI, theta, orbit.radius);
-    cam.move(target.add(pos));
-    cam.look(target);
-}
-```
-
-The _phi_ angle is a counter-clockwise rotation about the Y axis (or _yaw_ angle) and _theta_ is the vertical rotation (or _pitch_ angle).  Note that a _phi_ of zero 'points' in the X direction - hence we fiddle the angle by 90 degrees in the `update` method to rotate to the negative Z axis.
-
-
-Note that the ranges are different for the two rotation axes.
-
-To calculate the camera position we implement a _sphere_ geometry class which calculates a point on the surface of the sphere given a radius and the yaw-pitch angles:
-
-```java
-public record Sphere(float radius) {
-    ...
     
-    public static Point point(float phi, float theta, float radius) {
-        final float cos = MathsUtil.cos(theta);
-        final float x = radius * cos * MathsUtil.cos(phi);
-        final float y = radius * MathsUtil.sin(theta);
-        final float z = radius * cos * MathsUtil.sin(phi);
-        return new Point(x, y, z);
+    public void update(float x, float y) {
+        ...
     }
 }
 ```
 
-The orbital controller also supports a _zoom_ function to move the eye position towards or away from the target:
+The `update` method accepts an X-Y coordinate relative to the specified viewport dimensions, e.g. the mouse pointer location.
+
+The view direction of the free-look camera is determined as follows:
+
+1. Map the coordinates to yaw-pitch angles.
+
+2. Calculate a point on the unit-sphere given these angles.
+
+3. Point the camera in the direction of the calculated point.
+
+To transform the coordinates to yaw-pitch angles we add the _interpolator_ class:
 
 ```java
-public void zoom(float inc) {
-    final float actual = orbit.zoom(-inc);
-    cam.move(actual);
-}
-```
-
-The _orbit_ properties are factored out to a helper class passed to the controller in its constructor:
-
-```java
-public static final class Orbit {
-    private final float min;
-    private final float max;
-    private final float scale;
-
-    private float radius;
-
+@FunctionalInterface
+public interface Interpolator {
     /**
-     * Default constructor.
+     * Applies this interpolator to the given value.
+     * @param value Value to be interpolated (assumes normalized)
+     * @return Interpolated value
      */
-    public Orbit() {
-        this(1, Integer.MAX_VALUE, 1);
+    float interpolate(float t);
+    
+    static Interpolator linear(float start, float end) {
+        float range = end - start;
+        return t -> lerp(start, range, t);
     }
 
-    /**
-     * Constructor.
-     * @param min       Minimum radius
-     * @param max       Maximum radius
-     * @param scale     Zoom scalar
-     */
-    public Orbit(float min, float max, float scale) {
-        if(min >= max) throw new IllegalArgumentException("Invalid zoom range");
-        this.min = positive(min);
-        this.max = max;
-        this.scale = positive(scale);
-        this.radius = min;
-    }
-
-    /**
-     * Increments this radius and clamps to the specified range.
-     * @param inc Radius increment
-     * @return Actual increment
-     */
-    private float zoom(float inc) {
-        final float prev = radius;
-        radius = MathsUtil.clamp(prev + inc * scale, min, max);
-        return radius - prev;
+    static float lerp(float start, float range, float value) {
+        return start + value * range;
     }
 }
 ```
 
-This class clamps the zoom radius to the specified range and prevents the camera being moved onto the target position.
-
-### Integration #3
-
-We can now add an orbital camera controller to the demo and bind it to the mouse pointer and wheel:
+We can now add two interpolators to the controller:
 
 ```java
-// Init camera controller
-OrbitalCameraController controller = new OrbitalCameraController(cam, chain.extents(), new Orbit(0.75f, 25, 0.1f));
-controller.radius(3);
-
-// Enable mouse
-final MouseDevice mouse = window.mouse();
-final var pointer = mouse.pointer();
-final var wheel = mouse.wheel();
-pointer.enable(event -> controller.update(event.x(), event.y()));
-wheel.enable(event -> controller.zoom(event.y()));
-```
-
-Moving the mouse should rotate the camera about the scene and the mouse-wheel is used to zoom.
-
-Sweet.
-
-
-
-
-
-
-
-
-
-
-### Conclusions
-
-Hopefully the purpose of the event handling framework combined with the bindings class now makes some degree of sense:
-
-- The event handling framework satisfies the requirements of encapsulating the underlying workings of GLFW and reducing the various events to a smaller, more generic subset.
-
-- The bindings class follows the separation of concerns principle by splitting the event handling logic from the application actions (or at least helps).
-
-- This functionality could be used (for example) to implement keyboard/controller bindings in a game without having to craft or refactor event handlers.
-
-- In addition we provide a persistence mechanism to save and load bindings (not shown here).
-
-In the next section we will illustrate how the bindings can be used to control the camera in the model demo.
-
-
-
-
-
-
-Up until this point we have just dealt with the fact that the Y direction in Vulkan is **down** (which is inverted compared to OpenGL and just about every other 3D framework).
-
-However we came across a global solution[^invert] that handily flips the Vulkan viewport by specifying a 'negative' viewport rectangle.
-
-We add a _flip_ setting to the `ViewportStageBuilder` which is applied when we populate the viewport descriptor:
-
-```java
-private void populate(VkViewport viewport) {
-    if(flip) {
-        viewport.x = rect.x();
-        viewport.y = rect.y() + rect.height();
-        viewport.width = rect.width();
-        viewport.height = -rect.height();
-    }
-    else {
-        viewport.x = rect.x();
-        viewport.y = rect.y();
-        viewport.width = rect.width();
-        viewport.height = rect.height();
-    }
-    ...
-}
+private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
+private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
 ```
 
 Notes:
 
-- This solution is only supported in Vulkan version 1.1.x or above.
+* The ranges of the interpolators are dependant on the algorithm to calculate the point on the unit-sphere (see below).
 
-- Note that the Y coordinate of the viewport origin is also shifted to the bottom-left of the rectangle.
+* We may later choose to allow the range of the two interpolators to be mutable values, i.e. currently we assume the range is the entire viewport.
 
-- To avoid breaking our existing code the _flip_ setting is off by default.
+* The interpolator class will be expanded with additional functionality in subsequent chapters.
 
+### Unit Sphere
 
+To calculate the point on the unit-sphere we add another new helper class:
 
-[^invert]: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
+```java
+public final class Sphere {
+    public interface PointFactory {
+        /**
+         * Calculates the point on the unit-sphere for the given rotation angles (in radians).
+         * @param theta     Horizontal angle (or <i>yaw</i>) in the range zero to {@link MathsUtil#TWO_PI}
+         * @param phi       Vertical angle (or <i>pitch</i>) in the range +/- {@link MathsUtil#HALF_PI}
+         * @return Unit-sphere surface point
+         */
+        Point point(float theta, float phi);
+    }
+}
+```
 
-TODO - other refs?
+The default implementation of the factory method is relatively straight-forward:
 
+```java
+PointFactory DEFAULT = (theta, phi) -> {
+    final float cos = cos(phi);
+    final float x = cos(theta) * cos;
+    final float y = sin(theta) * cos;
+    final float z = sin(phi);
+    return new Point(x, y, z);
+};
+```
+
+This implementation is based on the standard algorithm for calculating a point on a sphere, however the _coordinate space_ of the generated points is not aligned with the Vulkan system:
+
+1. A horizontal (theta) angle of zero points in the direction of the X axis whereas we generally require the default to be the negative Z axis.
+
+2. The Y and Z axes are transposed, i.e. Z is _up_ in the default implementation of the algorithm.
+
+For these reasons we implement the algorithm as an interface so we can provide adapters to transform the coordinate space, rather than butchering the algorithm or forcing the client to pass option flags into the method.
+
+To make the camera point in the negative Z direction we simply fiddle the angle with a 90 degree clockwise 'rotation':
+
+```java
+default PointFactory rotate() {
+    return (theta, phi) -> point(theta - MathsUtil.HALF_PI, phi);
+}
+```
+
+To transpose the axes we create an adapter to swizzle the Y and Z components of the calculated point:
+
+```java
+default PointFactory swizzle() {
+    return (theta, phi) -> {
+        final Point pt = point(theta, phi);
+        return new Point(pt.x, pt.z, pt.y);
+    };
+}
+```
+
+Note that both these adapters are `default` interface methods which allow us to create the desired factory as follows:
+
+```java
+public class DefaultCameraController {
+    ...
+    private final PointFactory sphere = PointFactory.DEFAULT.swizzle().rotate();
+}
+```
+
+In the unit-test for the new sphere class we use a `spy` to create a mock that automatically implements the default methods:
+
+```java
+public class SphereTest {
+    @Nested
+    class PointFactoryTests {
+        @Test
+        void rotate() {
+            PointFactory factory = spy(PointFactory.class);
+            PointFactory rotate = factory.rotate();
+            assertNotNull(rotate);
+            rotate.point(0, 0);
+            verify(factory).point(-HALF_PI, 0);
+        }
+    }
+}
+```
+
+Finally we can implement the controller update method to point the camera at the calculated point on the sphere:
+
+```java
+public void update(float x, float y) {
+    float yaw = horizontal.interpolate(x / dim.width());
+    float pitch = vertical.interpolate(y / dim.height());
+    Point pt = sphere.point(yaw, pitch);
+    cam.direction(new Vector(pt));
+}
+```
+
+### Orbital Controller
+
+An _orbital_ (or arcball) camera controller rotates the view position _about_ a target point-of-interest.
+
+We first extend the default controller to include the target position and a _radius_ which is the distance from the camera:
+
+```java
+public class OrbitalCameraController extends DefaultCameraController {
+    private Point target = Point.ORIGIN;
+    private float radius = 1;
+
+    public OrbitalCameraController(Camera cam, Dimensions dim) {
+        super(cam, dim);
+        cam.look(target);
+    }
+}
+```
+
+The algorithm to calculate the position of the camera is the same as the default controller except for the final step, we therefore refactor the base-class by factoring out the code that updates the camera to a local helper:
+
+```java
+public void update(float x, float y) {
+    ...
+    Point pt = sphere.point(yaw, pitch);
+    update(pt);
+}
+
+protected void update(Point pos) {
+    cam.direction(new Vector(pos));
+}
+```
+
+In the orbital implementation we can now implement the local `update` method to move the camera to the calculated point on the sphere and then point it at the target:
+
+```java
+@Override
+protected void update(Point pt) {
+    Point pos = pt.scale(radius).add(target);
+    cam.move(pos);
+    cam.look(target);
+}
+```
+
+The orbital controller provides mutators (not shown) to set the radius and target, and to clamp the radius to a min/max range (to prevent the camera being moved to the target position).
+
+The orbital camera can also be _zoomed_ towards or away from the target:
+
+```java
+public void zoom(float inc) {
+    radius = MathsUtil.clamp(radius - inc * scale, min, max);
+    Vector pos = cam.direction().multiply(radius);
+    cam.move(target.add(pos));
+}
+```
+
+Note that the increment is _subtracted_ from the radius.
+
+---
+
+## Integration
+
+To integrate the new event framework and camera controller we add the following to the camera configuration class:
+
+```java
+public class CameraConfiguration {
+    private final Matrix projection;
+    private final Camera cam = new Camera();
+    private final OrbitalCameraController controller;
+
+    public CameraConfiguration(Swapchain swapchain) {
+        projection = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
+        controller = new OrbitalCameraController(cam, swapchain.extents());
+        controller.radius(3);
+        controller.scale(0.25f);
+    }
+}
+```
+
+Next we add a new component to instantiate the action bindings:
+
+```java
+@Bean
+public ActionBindings bindings(Window window, RenderLoop loop) {
+    ActionBindings bindings = new ActionBindings();
+    ...
+    bindings.init();
+    return bindings;
+}
+```
+
+The ESCAPE key is bound to the `stop` method of the render loop:
+
+```java
+var keyboard = window.keyboard().source();
+bindings.bind(new Button("ESCAPE", keyboard), loop::stop);
+```
+
+And the mouse pointer and wheel are bound to the relevant methods on the controller:
+
+```java
+MouseDevice mouse = window.mouse();
+bindings.bind(mouse.pointer(), controller::update);
+bindings.bind(mouse.wheel(), controller::zoom);
+```
+
+Finally we modify the matrix bean to apply the local rotation to the chalet model and to calculate the final projection matrix:
+
+```java
+@Bean
+public Task matrix(VulkanBuffer uniform) {
+    Matrix x = Rotation.matrix(Vector.X, MathsUtil.toRadians(90));
+    Matrix y = Rotation.matrix(Vector.Y, MathsUtil.toRadians(-120));
+    Matrix model = y.multiply(x);
+
+    return () -> {
+        final Matrix matrix = projection.multiply(cam.matrix()).multiply(model);
+        uniform.load(matrix);
+    };
+}
+```
+
+When we run the application we should now be able to use the mouse to look around the chalet model and zoom in using the scroll wheel.  Nice.
+
+---
+
+## Summary
+
+In this chapter we implemented:
+
+* A generic input event framework that abstracts over the underlying GLFW implementation.
+
+* The action bindings class that aids separation of concerns for input events and application action handlers.
+
+* A free-look and orbital camera controller.
 
