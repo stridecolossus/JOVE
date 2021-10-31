@@ -12,7 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
@@ -116,7 +116,7 @@ public class ObjectModelTest {
 			assertEquals(true, result.isIndexed());
 
 			// Check model header
-			final List<Layout> layout = List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT);
+			final CompoundLayout layout = CompoundLayout.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT);
 			assertEquals(new Model.Header(layout, Primitive.TRIANGLES, 3), result.header());
 		}
 	}

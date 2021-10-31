@@ -581,25 +581,24 @@ Notes:
 
 ### Global Flip
 
-By default the Vulkan Y axis points __down__ which is the opposite of OpenGL (and just about every other 3D library).
+By default the Vulkan Y axis points __down__ which is opposite to OpenGL (and just about every other 3D library).
 
 However we came across a global solution that handily flips the axis by specifying a 'negative' viewport rectangle: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
 
 The implementation is relatively trivial, we add a _flip_ setting to the `ViewportStageBuilder` which is applied when the viewport descriptor is populated:
 
 ```java
-private void populate(VkViewport viewport, boolean flip) {
+private void populate(Viewport viewport, VkViewport info) {
+    Rectangle rect = viewport.rect;
+    info.x = rect.x();
+    info.width = rect.width();
     if(flip) {
-        viewport.x = rect.x();
-        viewport.y = rect.y() + rect.height();
-        viewport.width = rect.width();
-        viewport.height = -rect.height();
+        info.y = rect.y() + rect.height();
+        info.height = -rect.height();
     }
     else {
-        viewport.x = rect.x();
-        viewport.y = rect.y();
-        viewport.width = rect.width();
-        viewport.height = rect.height();
+        info.y = rect.y();
+        info.height = rect.height();
     }
     ...
 }
@@ -612,8 +611,6 @@ Notes:
 * The Y coordinate of the viewport origin is also shifted to the bottom of the viewport.
 
 * To avoid breaking existing code the _flip_ setting is off by default.
-
-* In any case we are now too used to Y pointing down.
 
 ### Vector
 

@@ -130,8 +130,8 @@ public class Sampler extends AbstractVulkanObject {
 		private float anisotropy = 1f;
 
 		// TODO
+		//private VkCompareOp compareOp = VkCompareOp.ALWAYS;
 //		private boolean compareEnable;
-//		private VkCompareOp compareOp;
 //		private boolean unnormalizedCoordinates;
 //		flags
 

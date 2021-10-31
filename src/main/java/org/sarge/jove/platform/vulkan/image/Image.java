@@ -3,6 +3,8 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -117,6 +119,7 @@ public interface Image extends NativeObject {
 	class Builder {
 		private ImageDescriptor descriptor;
 		private MemoryProperties<VkImageUsage> props;
+		private final Set<VkImageCreateFlag> flags = new HashSet<>();
 		private VkSampleCountFlag samples = VkSampleCountFlag.COUNT_1;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
 		private VkImageLayout layout = VkImageLayout.UNDEFINED;
@@ -136,6 +139,15 @@ public interface Image extends NativeObject {
 		 */
 		public Builder properties(MemoryProperties<VkImageUsage> props) {
 			this.props = notNull(props);
+			return this;
+		}
+
+		/**
+		 * Adds an image creation flag.
+		 * @param flag Image creation flag
+		 */
+		public Builder flag(VkImageCreateFlag flag) {
+			flags.add(notNull(flag));
 			return this;
 		}
 
@@ -184,6 +196,7 @@ public interface Image extends NativeObject {
 
 			// Populate image structure
 			final VkImageCreateInfo info = new VkImageCreateInfo();
+			info.flags = IntegerEnumeration.mask(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent3D();

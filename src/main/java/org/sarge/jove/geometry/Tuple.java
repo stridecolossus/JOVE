@@ -18,11 +18,6 @@ public sealed class Tuple implements Bufferable, Vertex.Component permits Point,
 	 */
 	public static final int SIZE = 3;
 
-	/**
-	 * Layout for a tuple.
-	 */
-	public static final Layout LAYOUT = Layout.of(SIZE);
-
 	public final float x, y, z;
 
 	/**
@@ -95,8 +90,8 @@ public sealed class Tuple implements Bufferable, Vertex.Component permits Point,
 	}
 
 	@Override
-	public final Layout layout() {
-		return LAYOUT;
+	public Layout layout() {
+		return Layout.of(SIZE);
 	}
 
 	@Override

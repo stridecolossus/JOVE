@@ -51,6 +51,12 @@ public class ViewportStageBuilderTest {
 	}
 
 	@Test
+	void viewportAndScissor() {
+		final var descriptor = builder.viewport(rect, true).get();
+		assertEquals(1, descriptor.scissorCount);
+	}
+
+	@Test
 	void flip() {
 		final var descriptor = builder
 				.flip(true)

@@ -1,16 +1,12 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Vertex;
 import org.sarge.jove.model.Model.AbstractModel;
 
@@ -50,7 +46,7 @@ public class DefaultModel extends AbstractModel {
 	@Override
 	public Bufferable vertices() {
 		return new Bufferable() {
-			private final int len = vertices.size() * Layout.stride(header.layout());
+			private final int len = vertices.size() * header.layout().stride();
 
 			@Override
 			public int length() {
@@ -94,70 +90,5 @@ public class DefaultModel extends AbstractModel {
 			}
 		};
 		return Optional.of(buffer);
-	}
-
-	/**
-	 * Builder for a model.
-	 */
-	public static class Builder {
-		protected final List<Vertex> vertices = new ArrayList<>();
-		private Primitive primitive = Primitive.TRIANGLE_STRIP;
-
-		/**
-		 * @return Whether this model is empty
-		 */
-		public boolean isEmpty() {
-			return vertices.isEmpty();
-		}
-
-		/**
-		 * Sets the drawing primitive (default is {@link Primitive#TRIANGLE_STRIP}).
-		 * @param primitive Drawing primitive
-		 */
-		public Builder primitive(Primitive primitive) {
-			this.primitive = notNull(primitive);
-			return this;
-		}
-
-		/**
-		 * Adds a vertex.
-		 * @param v Vertex
-		 * @throws IllegalArgumentException if the vertex does not match the configured layout
-		 */
-		public Builder add(Vertex v) {
-			// TODO - check matching vertex
-			vertices.add(v);
-			return this;
-		}
-
-		// TODO
-		// compute normals
-		// - walk index -> faces (triangles) ~ primitive
-		// - accumulate normal @ each vertex of each face (cross product)
-		// - normalise all
-		// - invalid if no normals
-		// implies:
-		// - operations on model?
-		// - face iterator?
-		// - normal accessor and accumulator/mutator
-
-		/**
-		 * Constructs this model.
-		 * @return New model
-		 */
-		public DefaultModel build() {
-			return build(null, vertices.size());
-		}
-
-		/**
-		 * Constructs this model.
-		 * @param index		Index or {@code null} if not indexed
-		 * @param count		Number of vertices
-		 * @return New model
-		 */
-		protected final DefaultModel build(int[] index, int count) {
-			final List<Layout> layout = vertices.isEmpty() ? List.of() : vertices.get(0).layout();
-			return new DefaultModel(new Header(layout, primitive, count), vertices, index);
-		}
 	}
 }

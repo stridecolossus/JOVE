@@ -124,6 +124,7 @@ public class ImageTest extends AbstractVulkanTest {
 			image = builder
 					.descriptor(descriptor)
 					.properties(props)
+					.flag(VkImageCreateFlag.ALIAS)
 					.samples(4)
 					.tiling(VkImageTiling.LINEAR)
 					.initialLayout(VkImageLayout.PREINITIALIZED)
@@ -143,6 +144,7 @@ public class ImageTest extends AbstractVulkanTest {
 					return dataEquals((Structure) o);
 				}
 			};
+			info.flags = VkImageCreateFlag.ALIAS.value();
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent3D();

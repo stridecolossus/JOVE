@@ -7,13 +7,13 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.DefaultModel;
@@ -66,7 +66,7 @@ public class ObjectModelLoaderTest {
 		final Header header = model.header();
 		assertEquals(3, header.count());
 		assertEquals(Primitive.TRIANGLES, header.primitive());
-		assertEquals(List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT), header.layout());
+		assertEquals(CompoundLayout.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT), header.layout());
 
 		// Check vertex buffer
 		assertNotNull(model.vertices());

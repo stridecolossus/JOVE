@@ -15,6 +15,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.common.Vertex;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
@@ -27,7 +29,7 @@ class ModelLoaderTest {
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		final Model.Header header = new Header(List.of(Point.LAYOUT), Primitive.TRIANGLES, 3);
+		final Model.Header header = new Header(CompoundLayout.of(Point.LAYOUT), Primitive.TRIANGLES, 3);
 		final Vertex vertex = Vertex.of(Point.ORIGIN);
 		model = new DefaultModel(header, List.of(vertex), new int[]{0, 0, 0});
 
@@ -54,8 +56,30 @@ class ModelLoaderTest {
 
 		// Re-load and check header
 		final Model result = read();
-		assertEquals(model.header(), result.header());
+		assertNotNull(result);
+
+		// Check header
+		final Header header = result.header();
+		assertNotNull(header);
+		//assertEquals(CompoundLayout.of(Point.LAYOUT), header.layout());
+		assertEquals(Primitive.TRIANGLES, header.primitive());
+		assertEquals(3, header.count());
+
+		// Check layout
+		final CompoundLayout layout = header.layout();
+		assertNotNull(layout);
+		assertEquals(1, layout.size());
+		assertEquals(Layout.of(3), layout.iterator().next());
+
+		// Check vertices
+		assertNotNull(result.vertices());
+		assertEquals(3 * Float.BYTES, result.vertices().length());
+
+		// Check index
 		assertEquals(true, result.isIndexed());
+		assertNotNull(result.index());
+		assertEquals(true, result.index().isPresent());
+		assertEquals(3 * Integer.BYTES, result.index().get().length());
 	}
 
 	@Test

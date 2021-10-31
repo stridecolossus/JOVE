@@ -1,5 +1,6 @@
 package org.sarge.jove.common;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.spy;
@@ -46,9 +47,17 @@ public class VertexTest {
 	void constructor() {
 		assertNotNull(vertex);
 		assertEquals(List.of(component, component), vertex.components());
-		assertEquals(List.of(layout, layout), vertex.layout());
+	}
+
+	@Test
+	void layout() {
+		assertNotNull(vertex.layout());
+		assertArrayEquals(new Layout[]{layout, layout}, vertex.layout().toArray());
+	}
+
+	@Test
+	void length() {
 		assertEquals(2 * 3 * Float.BYTES, vertex.length());
-		assertEquals(List.of(component, component).hashCode(), vertex.hashCode());
 	}
 
 	@Test

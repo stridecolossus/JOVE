@@ -29,26 +29,6 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 			Check.notNull(min);
 			Check.notNull(max);
 		}
-
-		private void populate(VkViewport viewport, boolean flip) {
-			// Populate viewport rectangle
-			if(flip) {
-				viewport.x = rect.x();
-				viewport.y = rect.y() + rect.height();
-				viewport.width = rect.width();
-				viewport.height = -rect.height();
-			}
-			else {
-				viewport.x = rect.x();
-				viewport.y = rect.y();
-				viewport.width = rect.width();
-				viewport.height = rect.height();
-			}
-
-			// Init min/max depth
-			viewport.minDepth = min.floatValue();
-			viewport.maxDepth = max.floatValue();
-		}
 	}
 
 	private final List<Viewport> viewports = new ArrayList<>();
@@ -59,7 +39,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	/**
 	 * Sets whether to flip viewport rectangles (default is {@code false}).
 	 * <p>
-	 * This method is used to over-ride the default behaviour for Vulkan where the Y axis is positive in the <b>down</b> direction.
+	 * This method is used to over-ride the default behaviour for Vulkan where the Y axis points <b>down</b> by default.
 	 * @see <a href="https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/">article</a>
 	 * <p>
 	 * @param flip Whether to flip viewports
@@ -71,9 +51,9 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 
 	/**
 	 * Adds a viewport rectangle.
-	 * @param viewport 		Viewport rectangle
-	 * @param min			Minimum depth
-	 * @param max			Maximum depth
+	 * @param rect		Viewport rectangle
+	 * @param min		Minimum depth
+	 * @param max		Maximum depth
 	 */
 	public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
 		viewports.add(new Viewport(rect, min, max));
@@ -82,10 +62,23 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 
 	/**
 	 * Adds a viewport rectangle with default min/max depth.
-	 * @param viewport Viewport rectangle
+	 * @param rect Viewport rectangle
 	 */
-	public ViewportStageBuilder viewport(Rectangle viewport) {
-		return viewport(viewport, Percentile.ZERO, Percentile.ONE);
+	public ViewportStageBuilder viewport(Rectangle rect) {
+		return viewport(rect, false);
+	}
+
+	/**
+	 * Helper - Adds a viewport rectangle with default min/max depth and optionally a scissor with the same dimensions.
+	 * @param rect 			Viewport rectangle
+	 * @param scissor		Whether to add a scissor
+	 */
+	public ViewportStageBuilder viewport(Rectangle rect, boolean scissor) {
+		viewport(rect, Percentile.ZERO, Percentile.ONE);
+		if(scissor) {
+			scissor(rect);
+		}
+		return this;
 	}
 
 	/**
@@ -97,17 +90,27 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		return this;
 	}
 
-//	/**
-//	 * Convenience method to create a flipped viewport and scissor with the given dimensions.
-//	 * @param size Viewport dimensions
-//	 */
-//	public Builder viewport(Dimensions size) {
-//		final Rectangle rect = new Rectangle(size);
-//		viewport.viewport(rect);
-//		viewport.scissor(rect);
-////		viewport.flip(true);
-//		return this;
-//	}
+	/**
+	 * Populates a viewport descriptor.
+	 */
+	private void populate(Viewport viewport, VkViewport info) {
+		// Populate viewport rectangle
+		final Rectangle rect = viewport.rect;
+		info.x = rect.x();
+		info.width = rect.width();
+		if(flip) {
+			info.y = rect.y() + rect.height();
+			info.height = -rect.height();
+		}
+		else {
+			info.y = rect.y();
+			info.height = rect.height();
+		}
+
+		// Init min/max depth
+		info.minDepth = viewport.min.floatValue();
+		info.maxDepth = viewport.max.floatValue();
+	}
 
 	@Override
 	VkPipelineViewportStateCreateInfo get() {
@@ -121,7 +124,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		// Add viewports
 		final var info = new VkPipelineViewportStateCreateInfo();
 		info.viewportCount = count;
-		info.pViewports = StructureHelper.first(viewports, VkViewport::new, (rec, viewport) -> rec.populate(viewport, flip));
+		info.pViewports = StructureHelper.first(viewports, VkViewport::new, this::populate);
 
 		// Add scissors
 		info.scissorCount = count;

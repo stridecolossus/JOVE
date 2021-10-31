@@ -15,6 +15,7 @@ In no particular order:
     * The application logic to update the rotation
     * And the code to control the loop (the dodgy timer)
 
+
 * The window event queue is blocked.
 
 * There is no mechanism to terminate the application (other than the timer code or force-quitting the process).
@@ -35,67 +36,37 @@ A complication of particular importance is that GLFW event processing __must__ b
 
 ### Render Loop
 
-We start by refactoring the existing render loop:
-* Strip the `while` loop and the timer logic.
-* Move the Vulkan rendering code to a new JOVE component.
-* Factor out the rotation update logic to a separate component.
-
-We create a new domain class that performs rendering (the acquire-render-present steps):
-
-```java
-public class RenderLoop implements Runnable {
-    private final Swapchain swapchain;
-    private final List<Buffer> buffers;
-    private final Queue presentation;
-
-    @Override
-    public void run() {
-        ...
-    }
-}
-```
-
-And we refactor the existing render loop bean accordingly:
-
-```java
-return new RenderLoop(swapchain, buffers, presentation.queue());
-```
-
-Next we create a new component in the main class that encapsulates the rotation logic:
-
-```java
-@Bean
-public static Runnable update(Matrix matrix, VulkanBuffer uniform, ApplicationConfiguration cfg) {
-    long period = cfg.getPeriod();
-    long start = System.currentTimeMillis();
-    return () -> {
-        ...
-        uniform.load(m);
-    };
-}
-```
-
-### Application 
-
-Note that the newly refactored components are `Runnable` objects, we will compose these as _tasks_ into the following new class that encapsulates the application thread:
+We start by factoring out the application thread comprised of a number of _tasks_ in the following new component:
 
 ```java
 public class Application {
-    private final List<Runnable> tasks;
-    private final AtomicBoolean running = new AtomicBoolean();
-
-    public boolean isRunning() {
-        return running.get();
+    @FunctionalInterface
+    public interface Task {
+        void execute();
     }
+
+    private final List<Runnable> tasks;
+    private final volatile boolean running;
 }
 ```
 
-The application loop continually iterates through the tasks:
+We add methods to add and remove tasks and a convenience constructor given an initial list of tasks:
+
+```java
+public RenderLoop() {
+}
+
+public RenderLoop(List<Task> tasks) {
+    tasks.forEach(this::add);
+}
+```
+
+The loop repeatedly iterates through the tasks:
 
 ```java
 public void run() {
-    running.set(true);
-    while(isRunning()) {
+    running = true;
+    while(running) {
         tasks.forEach(Runnable::run);
     }
 }
@@ -105,8 +76,43 @@ The loop is terminated by the following method:
 
 ```java
 public void stop() {
-    if(!isRunning()) throw new IllegalStateException(...);
-    running.set(false);
+    if(!running) throw new IllegalStateException(...);
+    running = false;
+}
+```
+
+We next factor out the acquire-render-present rendering steps into a separate task:
+
+```java
+public class RenderTask implements Task {
+    private final Swapchain swapchain;
+    private final List<Buffer> buffers;
+    private final Queue presentation;
+
+    @Override
+    public void execute() {
+        ...
+    }
+}
+```
+
+And we modify the existing render loop bean accordingly:
+
+```java
+return new RenderTask(swapchain, buffers, presentation.queue());
+```
+
+Finally we factor out the rotation logic into another task and delete the original code:
+
+```java
+@Bean
+public static Task update(Matrix matrix, VulkanBuffer uniform, ApplicationConfiguration cfg) {
+    long period = cfg.getPeriod();
+    long start = System.currentTimeMillis();
+    return () -> {
+        ...
+        uniform.load(m);
+    };
 }
 ```
 
@@ -164,26 +170,26 @@ Notes:
 
 ### Integration
 
-We first instantiate the application in the main class:
+We first instantiate the render loop in the main class:
 
 ```java
 @Bean
-public static Application application(List<Runnable> tasks) {
-    return new Application(tasks);
+public static RenderLoop application(List<Task> tasks) {
+    return new RenderLoop(tasks);
 }
 ```
 
-Spring handily creates a list of the tasks for us from __all__ the instances of `Runnable` registered in the container.
+Spring handily creates a list of the tasks for us from __all__ the instances of `Task` registered in the container.
 
 We add a new local component to start the loop:
 
 ```java
 @Component
 static class ApplicationLoop implements CommandLineRunner {
-    private final Application app;
+    private final RenderLoop loop;
     private final LogicalDevice dev;
 
-    public ApplicationLoop(Application app, LogicalDevice dev) {
+    public ApplicationLoop(RenderLoop loop, LogicalDevice dev) {
         this.app = app;
         this.dev = dev;
     }
@@ -207,7 +213,7 @@ Finally we add a further task to process the GLFW window event queue:
 ```java
 class DesktopConfiguration {
     @Bean
-    public static Runnable poll(Desktop desktop) {
+    public static Task poll(Desktop desktop) {
         return desktop::poll;
     }
 }

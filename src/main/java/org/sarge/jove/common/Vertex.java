@@ -61,10 +61,10 @@ public class Vertex implements Bufferable {
 
 	/**
 	 * Convenience helper.
-	 * @return Layout of this vertex
+	 * @return Component layouts
 	 */
-	public List<Layout> layout() {
-		return components.stream().map(Component::layout).collect(toList());
+	public Stream<Layout> layout() {
+		return components.stream().map(Component::layout);
 	}
 
 	/**

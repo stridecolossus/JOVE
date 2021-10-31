@@ -203,7 +203,7 @@ Where `Rectangle` is another trivial record type:
 public record Rectangle(int x, int y, int width, int height) { ... }
 ```
 
-We add the following setters to specify the viewport(s) for the pipeline:
+We add the following setters to specify the viewports and scissors:
 
 ```java
 public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
@@ -211,12 +211,24 @@ public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile 
     return this;
 }
 
-public ViewportStageBuilder viewport(Rectangle viewport) {
-    return viewport(viewport, Percentile.ZERO, Percentile.ONE);
-}
-
 public ViewportStageBuilder scissor(Rectangle rect) {
     scissors.add(notNull(rect));
+    return this;
+}
+```
+
+And additional convenience methods to add a default viewport and optionally a scissor with the same dimensions:
+
+```java
+public ViewportStageBuilder viewport(Rectangle rect) {
+    return viewport(rect, false);
+}
+
+public ViewportStageBuilder viewport(Rectangle rect, boolean scissor) {
+    viewport(rect, Percentile.ZERO, Percentile.ONE);
+    if(scissor) {
+        scissor(rect);
+    }
     return this;
 }
 ```

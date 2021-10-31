@@ -8,7 +8,6 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Layout;
 
 public class TupleTest {
 	private Tuple tuple;
@@ -62,12 +61,6 @@ public class TupleTest {
 	@Test
 	void dot() {
 		assertEquals(1 * 1 + 2 * 2 + 3 * 3, tuple.dot(tuple));
-	}
-
-	@Test
-	void layout() {
-		assertEquals(Layout.of(3), Tuple.LAYOUT);
-		assertEquals(Layout.of(3), tuple.layout());
 	}
 
 	@Test

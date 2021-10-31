@@ -23,7 +23,8 @@ public class IndexedBuilderTests {
 		// Build an indexed model that re-uses some vertices
 		final Vertex vertex = Vertex.of(Point.ORIGIN);
 		final Vertex other = Vertex.of(new Point(1, 2, 3));
-		final DefaultModel model = builder
+		final Model model = builder
+				.layout(Point.LAYOUT)
 				.add(vertex)
 				.add(other)
 				.add(vertex)
@@ -49,7 +50,7 @@ public class IndexedBuilderTests {
 
 	@Test
 	void buildEmpty() {
-		final DefaultModel model = builder.build();
+		final Model model = builder.build();
 		assertNotNull(model);
 		assertEquals(0, model.header().count());
 		assertNotNull(model.vertices());

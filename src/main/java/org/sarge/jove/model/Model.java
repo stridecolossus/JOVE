@@ -2,12 +2,12 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
 
 /**
@@ -18,13 +18,14 @@ public interface Model {
 	/**
 	 * Descriptor for this model.
 	 */
-	public record Header(List<Layout> layout, Primitive primitive, int count) {
+	public record Header(CompoundLayout layout, Primitive primitive, int count) {
 		/**
 		 * Constructor.
 		 * @param layout			Vertex layout
 		 * @param primitive			Drawing primitive
 		 * @param count				Number of vertices
 		 * @throws IllegalArgumentException if the {@link #count} is invalid for the given {@link #primitive}
+		 * @throws IllegalArgumentException if the layout contains {@link Vector#NORMALS} and the primitive does not support normals
 		 * @see Primitive#isValidVertexCount(int)
 		 * @see Primitive#isNormalSupported()
 		 */
@@ -37,15 +38,10 @@ public interface Model {
 				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
 
-// TODO
-//			if(!primitive.isNormalSupported() && isNormalsLayout(layout)) {
-//				throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
-//			}
+			if(!primitive.isNormalSupported() && layout.contains(Vector.NORMALS)) {
+				throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
+			}
 		}
-
-//		private static boolean isNormalsLayout(List<Layout> layout) {
-//			return layout.stream().anyMatch(e -> e == Vector.LAYOUT);
-//		}
 	}
 
 	/**

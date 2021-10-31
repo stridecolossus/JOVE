@@ -149,7 +149,8 @@ public class Camera {
 		right = up.cross(dir).normalize();
 
 		// Determine up axis
-		final Vector y = dir.cross(right).normalize();
+		final Vector y = right.cross(dir).normalize();
+		// TODO - was dir.cross(right) before global flip, is this correct? or do we need a flag here too?
 
 		// Build translation component
 		final Matrix trans = Matrix.translation(new Vector(pos).invert());

@@ -6,18 +6,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.sarge.jove.common.Vertex;
-import org.sarge.jove.model.DefaultModel.Builder;
 
 /**
  * An <i>indexed builder</i> performs de-duplication of vertex data.
  * @author Sarge
  */
-public class IndexedBuilder extends Builder {
+public class IndexedBuilder extends ModelBuilder {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 	private final List<Integer> index = new ArrayList<>();
 
 	@Override
-	public Builder add(Vertex v) {
+	public ModelBuilder add(Vertex v) {
 		final Integer prev = map.get(v);
 		if(prev == null) {
 			// Add new vertex and register index
@@ -34,7 +33,7 @@ public class IndexedBuilder extends Builder {
 	}
 
 	@Override
-	public DefaultModel build() {
+	public Model build() {
 		final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
 		return build(array, array.length);
 	}

@@ -8,9 +8,9 @@ import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Vertex;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.DefaultModel.Builder;
 import org.sarge.jove.model.IndexedBuilder;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.ModelBuilder;
 import org.sarge.jove.model.Primitive;
 
 /**
@@ -21,9 +21,9 @@ public class ObjectModel {
 	private final List<Point> positions = new VertexComponentList<>();
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
-	private final List<Builder> builders = new ArrayList<>();
+	private final List<ModelBuilder> builders = new ArrayList<>();
 
-	private Builder current;
+	private ModelBuilder current;
 
 	public ObjectModel() {
 		add();
@@ -61,7 +61,7 @@ public class ObjectModel {
 	 * @return New builder
 	 */
 	@SuppressWarnings("static-method")
-	protected Builder builder() {
+	protected ModelBuilder builder() {
 		return new IndexedBuilder();
 	}
 
@@ -103,21 +103,29 @@ public class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final var vertex = new Vertex.Builder();
-		vertex.position(positions.get(v));
+		final var builder = new Vertex.Builder();
+		builder.position(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {
-			vertex.normal(normals.get(vn));
+			builder.normal(normals.get(vn));
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
-			vertex.coordinate(coords.get(vt));
+			builder.coordinate(coords.get(vt));
 		}
 
-		// Add vertex
-		current.add(vertex.build());
+		// Construct vertex
+		final Vertex vertex = builder.build();
+
+		// Init model
+		if(current.isEmpty()) {
+			vertex.layout().forEach(current::layout);
+		}
+
+		// Add vertex to model
+		current.add(vertex);
 	}
 
 	/**
@@ -126,6 +134,6 @@ public class ObjectModel {
 	 * @throws IllegalArgumentException if the models cannot be constructed
 	 */
 	public Stream<Model> build() {
-		return builders.stream().map(Builder::build);
+		return builders.stream().map(ModelBuilder::build);
 	}
 }

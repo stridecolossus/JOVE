@@ -5,11 +5,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -47,7 +46,7 @@ public class DrawCommandTest {
 	@Test
 	void model() {
 		// Create an indexed model
-		final Model.Header header = new Model.Header(List.of(), Primitive.TRIANGLES, COUNT);
+		final Model.Header header = new Model.Header(CompoundLayout.of(), Primitive.TRIANGLES, COUNT);
 		final Model model = mock(Model.class);
 		when(model.isIndexed()).thenReturn(true);
 		when(model.header()).thenReturn(header);

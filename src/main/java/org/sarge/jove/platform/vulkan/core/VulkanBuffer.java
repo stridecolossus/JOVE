@@ -147,6 +147,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		final ByteBuffer bb = region.buffer();
 		data.buffer(bb);
 	}
+	// TODO - gets buffer every time
+	// TODO - incremental load? e.g. for uniform buffer => incremental offset into buffer & reset to start and/or ref to buffer in this class?
 
 	/**
 	 * @return This buffer as a uniform buffer resource

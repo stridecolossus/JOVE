@@ -43,6 +43,14 @@ class VectorTest {
 	}
 
 	@Test
+	void layout() {
+		assertEquals(Float.class, Vector.NORMALS.type());
+		assertEquals(3, Vector.NORMALS.size());
+		assertEquals(Float.BYTES, Vector.NORMALS.bytes());
+		assertEquals(Vector.NORMALS, vec.layout());
+	}
+
+	@Test
 	void between() {
 		assertEquals(vec, Vector.between(new Point(1, 2, 3), new Point(2, 4, 6)));
 	}

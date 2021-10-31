@@ -36,6 +36,14 @@ class PointTest {
 	}
 
 	@Test
+	void layout() {
+		assertEquals(Float.class, Point.LAYOUT.type());
+		assertEquals(3, Point.LAYOUT.size());
+		assertEquals(Float.BYTES, Point.LAYOUT.bytes());
+		assertEquals(Point.LAYOUT, pos.layout());
+	}
+
+	@Test
 	void distance() {
 		final Point pt = new Point(4, 5, 6);
 		assertEquals(27, pos.distance(pt));

@@ -1,5 +1,6 @@
 package org.sarge.jove.geometry;
 
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -21,6 +22,11 @@ public final class Vector extends Tuple {
 	 * Z-axis vector (negative Z is <i>into</i> the screen).
 	 */
 	public static final Vector Z = new Vector(0, 0, 1);
+
+	/**
+	 * Vertex component layout for a normal represented as a vector.
+	 */
+	public static final Layout NORMALS = Layout.of(3);
 
 	/**
 	 * Creates the vector between the given points, i.e. <code>end - start</code>.
@@ -57,6 +63,11 @@ public final class Vector extends Tuple {
 	 */
 	public Vector(float[] array) {
 		super(array);
+	}
+
+	@Override
+	public Layout layout() {
+		return NORMALS;
 	}
 
 	/**
