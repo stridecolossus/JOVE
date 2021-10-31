@@ -22,6 +22,11 @@ public class RectangleTest {
 	}
 
 	@Test
+	void constructorDimensions() {
+		assertEquals(rect, new Rectangle(1, 2, new Dimensions(3, 4)));
+	}
+
+	@Test
 	void dimensions() {
 		assertEquals(new Dimensions(3, 4), rect.dimensions());
 	}
@@ -29,6 +34,7 @@ public class RectangleTest {
 	@Test
 	void equals() {
 		assertEquals(true, rect.equals(rect));
+		assertEquals(true, rect.equals(new Rectangle(1, 2, 3, 4)));
 		assertEquals(false, rect.equals(null));
 		assertEquals(false, rect.equals(new Rectangle(1, 2, 8, 9)));
 	}

@@ -93,31 +93,22 @@ Source code is generally presented as fragments interspersed with commentary, ra
 We also follow these additional coding guidelines:
 
 * All classes are immutable by default.
-
 * The `var` keyword is used where the type is already present to avoid duplication, e.g. `var thing = new Thing()`.
-
 * Local variables are `final` by default.
-
 * The latest Java features are used where appropriate or convenient, e.g. lambdas rather than anonymous classes.
-
 * If we do break a coding guideline this should be explicitly documented in the code.
 
 The following are silently omitted unless their inclusion better illustrates the code:
 
 * In-code comments and JavaDoc
-
-* Any `final` modifiers
-
+* Local variable `final` modifiers
 * Argument validation
-
 * Trivial getters and setters
-
 * Trivial equals, hash-code and `toString` implementations
-
 * Exception error messages.
-
+* Warning suppression
+* Method `@Override` annotations
 * Unit-tests
-
 * Package structure.
 
 ---
