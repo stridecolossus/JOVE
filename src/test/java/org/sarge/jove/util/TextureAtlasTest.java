@@ -4,11 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
 
@@ -64,13 +61,6 @@ public class TextureAtlasTest {
 		}
 
 		@Test
-		void map() throws IOException {
-			final InputStream in = mock(InputStream.class);
-			final Reader reader = loader.map(in);
-			assertNotNull(reader);
-		}
-
-		@Test
 		void load() throws IOException {
 			final String file =
 					"""
@@ -87,13 +77,13 @@ public class TextureAtlasTest {
 
 		@Test
 		void loadInvalidEntry() throws IOException {
-			assertThrows(IllegalArgumentException.class, () -> loader.load(new StringReader("name")));
+			assertThrows(IOException.class, () -> loader.load(new StringReader("name")));
 		}
 
 		@Test
 		void loadInvalidRectangle() throws IOException {
-			assertThrows(IllegalArgumentException.class, () -> loader.load(new StringReader("name 1,2,3")));
-			assertThrows(IllegalArgumentException.class, () -> loader.load(new StringReader("name a,b,c,d")));
+			assertThrows(IOException.class, () -> loader.load(new StringReader("name 1,2,3")));
+			assertThrows(IOException.class, () -> loader.load(new StringReader("name a,b,c,d")));
 		}
 	}
 }

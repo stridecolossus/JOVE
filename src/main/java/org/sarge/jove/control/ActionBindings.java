@@ -1,9 +1,6 @@
 package org.sarge.jove.control;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -18,7 +16,7 @@ import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
 import org.sarge.jove.control.Position.PositionEvent;
-import org.sarge.jove.util.ResourceLoader;
+import org.sarge.jove.util.ResourceLoader.TextResourceLoader;
 
 /**
  * A <i>bindings</i> is a mutable set of mappings that bind an input event to an <i>action</i> (an event consumer).
@@ -245,19 +243,30 @@ public class ActionBindings implements Consumer<Event> {
 	/**
 	 * Loader for action bindings.
 	 */
-	public class Loader implements ResourceLoader<BufferedReader, ActionBindings> {
+	// TODO
+	public class Loader extends TextResourceLoader<BufferedReader, ActionBindings> { // TODO - T should be Entry?
 		private Loader() {
 		}
 
+//		@Override
+//		public BufferedReader map(InputStream in) throws IOException {
+//			return new BufferedReader(new InputStreamReader(in));
+//		}
+//
+//		@Override
+//		public ActionBindings load(BufferedReader data) throws IOException {
+//			// TODO
+//			return ActionBindings.this;
+//		}
+
 		@Override
-		public BufferedReader map(InputStream in) throws IOException {
-			return new BufferedReader(new InputStreamReader(in));
+		protected BufferedReader load(String line) {
+			return null;
 		}
 
 		@Override
-		public ActionBindings load(BufferedReader data) throws IOException {
-			// TODO
-			return ActionBindings.this;
+		protected Collector<BufferedReader, ?, ActionBindings> collector() {
+			return null;
 		}
 
 		/**

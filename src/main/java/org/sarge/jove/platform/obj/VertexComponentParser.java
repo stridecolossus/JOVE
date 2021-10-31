@@ -3,6 +3,7 @@ package org.sarge.jove.platform.obj;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.sarge.jove.common.Vertex;
@@ -29,6 +30,16 @@ class VertexComponentParser<T extends Vertex.Component> implements Parser {
 		this.array = new float[size];
 		this.ctor = notNull(ctor);
 		this.consumer = notNull(consumer);
+	}
+
+//	public Consumer<ObjectModel> test() {
+//		final T value = ctor.apply(null);
+//		return m -> consumer.accept(m, value);
+//	}
+
+	public Consumer<ObjectModel> test() {
+		final T value = null;
+		return model -> consumer.accept(model, value);
 	}
 
 	@Override

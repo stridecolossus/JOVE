@@ -5,13 +5,12 @@ import static org.sarge.lib.util.Check.notNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +25,7 @@ import org.sarge.lib.util.Check;
  * Loader for an OBJ model.
  * @author Sarge
  */
-public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> {
+public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Model>> {
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private Set<String> comments = Set.of("#");
 	private final ObjectModel model = new ObjectModel();
@@ -87,37 +86,37 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 		this.handler = notNull(handler);
 	}
 
-	@Override
-	public Reader map(InputStream in) throws IOException {
-		return new InputStreamReader(in);
-	}
-
-	/**
-	 * Loads an OBJ model.
-	 * @param r Reader
-	 * @return Resultant model(s)
-	 * @throws IOException if the model cannot be loaded
-	 * @see #create()
-	 */
-	@Override
-	public Stream<Model> load(Reader r) throws IOException {
-		// Parse OBJ model
-		try(final LineNumberReader in = new LineNumberReader(r)) {
-			try {
-				in.lines()
-					.map(String::trim)
-					.filter(Predicate.not(String::isBlank))
-					.filter(Predicate.not(this::isComment))
-					.forEach(this::parse);
-			}
-			catch(Exception e) {
-				throw new IOException(String.format("%s at line %d", e.getMessage(), in.getLineNumber()), e);
-			}
-		}
-
-		// Construct models
-		return model.build();
-	}
+//	@Override
+//	public Reader map(InputStream in) throws IOException {
+//		return new InputStreamReader(in);
+//	}
+//
+//	/**
+//	 * Loads an OBJ model.
+//	 * @param r Reader
+//	 * @return Resultant model(s)
+//	 * @throws IOException if the model cannot be loaded
+//	 * @see #create()
+//	 */
+//	@Override
+//	public Stream<Model> load(Reader r) throws IOException {
+//		// Parse OBJ model
+//		try(final LineNumberReader in = new LineNumberReader(r)) {
+//			try {
+//				in.lines()
+//					.map(String::trim)
+//					.filter(Predicate.not(String::isBlank))
+//					.filter(Predicate.not(this::isComment))
+//					.forEach(this::parse);
+//			}
+//			catch(Exception e) {
+//				throw new IOException(String.format("%s at line %d", e.getMessage(), in.getLineNumber()), e);
+//			}
+//		}
+//
+//		// Construct models
+//		return model.build();
+//	}
 
 	/**
 	 * Tests whether the given line is a comment.
@@ -126,12 +125,26 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 		return comments.stream().anyMatch(line::startsWith);
 	}
 
+	@Override
+	protected Reader map(InputStream in) throws IOException {
+		return new InputStreamReader(in);
+	}
+
+	@Override
+	protected Stream<Model> load(Reader r) throws IOException {
+		final Function<Stream<String>, Stream<Model>> terminal = stream -> {
+			stream.forEach(this::parse);
+			return model.build();
+		};
+		return ResourceLoader.lines(r, terminal);
+	}
+
 	/**
 	 * Parses a line of the model.
 	 * @param line Line
 	 * @throws IllegalArgumentException if the command is unsupported
 	 */
-	private void parse(String line) {
+	protected void parse(String line) {
 		// Tokenize line
 		final String[] parts = StringUtils.split(line);
 		Parser.trim(parts);

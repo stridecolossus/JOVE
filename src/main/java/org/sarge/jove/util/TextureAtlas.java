@@ -1,31 +1,30 @@
 package org.sarge.jove.util;
 
-import static java.util.stream.Collectors.toMap;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Predicate;
+import java.util.Map.Entry;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.util.ResourceLoader.TextResourceLoader;
 
 /**
  * A <i>texture atlas</i> maps rectangles within a texture image by name.
+ * <p>
+ * Note that atlas entries are <b>ordered</b>.
+ * <p>
  * @author Sarge
  */
 public class TextureAtlas extends LinkedHashMap<String, Rectangle> {
 	/**
 	 * Creates a texture atlas for a cube-map with the given image dimensions.
 	 * <p>
-	 * The atlas entries are ordered: <code>+X -X +Y -Y +Z -Z</code>.
+	 * The atlas entries are ordered with the following key names: <code>+X -X +Y -Y +Z -Z</code>.
 	 * <p>
-	 * The cube-map layout is assumed to be as follows:
+	 * The cube-map image is assumed to have the following layout:
 	 * <p>
 	 * <table border=1>
 	 * <tr><td></td><td>top +Y 2</td><td></td><td></td></tr>
@@ -73,31 +72,15 @@ public class TextureAtlas extends LinkedHashMap<String, Rectangle> {
 	 * <li>Comments are indicated by the hash character</li>
 	 * </ul>
 	 */
-	public static class TextureAtlasLoader implements ResourceLoader<Reader, TextureAtlas> {
+	public static class TextureAtlasLoader extends TextResourceLoader<Entry<String, Rectangle>, TextureAtlas> {
 		@Override
-		public Reader map(InputStream in) throws IOException {
-			return new InputStreamReader(in);
+		protected Collector<Entry<String, Rectangle>, ?, TextureAtlas> collector() {
+			final var map = Collectors.toMap(Entry<String, Rectangle>::getKey, Entry::getValue);
+			return Collectors.collectingAndThen(map, TextureAtlas::new);
 		}
 
 		@Override
-		public TextureAtlas load(Reader r) throws IOException {
-			final Map<String, Rectangle> map = new BufferedReader(r)
-					.lines()
-					.map(String::trim)
-					.filter(Predicate.not(String::isEmpty))
-					.filter(line -> !line.startsWith("#"))
-					.map(this::load)
-					.collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-			return new TextureAtlas(map);
-		}
-
-		/**
-		 * Loads a texture atlas entry.
-		 * @param line Line
-		 * @return Atlas entry
-		 */
-		private Map.Entry<String, Rectangle> load(String line) {
+		public Entry<String, Rectangle> load(String line) {
 			// Tokenize atlas entry
 			final String[] parts = line.split(" ");
 			if(parts.length != 2) throw new IllegalArgumentException("Invalid texture atlas entry");
