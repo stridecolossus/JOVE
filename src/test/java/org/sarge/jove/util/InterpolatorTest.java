@@ -85,8 +85,8 @@ public class InterpolatorTest {
 
 	@Test
 	void lerp() {
-		assertEquals(1, Interpolator.lerp(1, 3, 0.0f));
-		assertEquals(2, Interpolator.lerp(1, 3, 0.5f));
-		assertEquals(3, Interpolator.lerp(1, 3, 1.0f));
+		assertEquals(1, Interpolator.lerp(1, 2, 0.0f));
+		assertEquals(2, Interpolator.lerp(1, 2, 0.5f));
+		assertEquals(3, Interpolator.lerp(1, 2, 1.0f));
 	}
 }

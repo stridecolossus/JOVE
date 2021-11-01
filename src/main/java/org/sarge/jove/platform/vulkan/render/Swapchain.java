@@ -120,9 +120,9 @@ public class Swapchain extends AbstractVulkanObject {
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) {
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
-		final IntByReference index = new IntByReference();
 		final DeviceContext dev = device();
 		final VulkanLibrary lib = dev.library();
+		final IntByReference index = lib.factory().integer();
 		check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
 		return index.getValue();
 	}
@@ -367,7 +367,7 @@ public class Swapchain extends AbstractVulkanObject {
 					.filter(f -> f.format == info.imageFormat)
 					.filter(f -> f.colorSpace == info.imageColorSpace)
 					.findAny()
-					.orElseThrow(() -> new RuntimeException(String.format("Unsupported surface format: format=%s space=%s", info.imageFormat, info.imageColorSpace)));
+					.orElseThrow(() -> new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", info.imageFormat, info.imageColorSpace)));
 
 			// TODO
 			info.queueFamilyIndexCount = 0;

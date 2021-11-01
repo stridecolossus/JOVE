@@ -107,8 +107,8 @@ public interface Interpolator {
 	/**
 	 * Helper - Performs a one-off linear floating-point interpolation.
 	 * @param start		Start value
-	 * @param end		End value
-	 * @param value		Value to interpolate
+	 * @param range		Interpolation range
+	 * @param value		Interpolator value
 	 * @return Interpolated value
 	 */
 	static float lerp(float start, float range, float value) {

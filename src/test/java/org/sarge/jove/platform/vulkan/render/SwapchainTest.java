@@ -85,7 +85,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 	@Test
 	void acquireSemaphore() {
-		assertEquals(0, swapchain.acquire(semaphore, null));
+		assertEquals(1, swapchain.acquire(semaphore, null));
 		verify(lib).vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, INTEGER);
 	}
 
@@ -257,13 +257,13 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 		@Test
 		void invalidFormat() {
-			assertThrows(IllegalArgumentException.class, "Unsupported swapchain format", () -> builder.format(VkFormat.UNDEFINED).build());
+			assertThrows(IllegalArgumentException.class, "Unsupported surface format", () -> builder.format(VkFormat.UNDEFINED).build());
 		}
 
 		@Test
 		void invalidColourSpace() {
 			builder.format(Swapchain.DEFAULT_FORMAT);
-			assertThrows(IllegalArgumentException.class, "Unsupported swapchain format", () -> builder.space(VkColorSpaceKHR.ADOBERGB_LINEAR_EXT).build());
+			assertThrows(IllegalArgumentException.class, "Unsupported surface format", () -> builder.space(VkColorSpaceKHR.ADOBERGB_LINEAR_EXT).build());
 		}
 
 		@Test

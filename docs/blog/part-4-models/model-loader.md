@@ -807,7 +807,7 @@ public interface ResourceLoader<T, R> {
 }
 ```
 
-Where _R_ is the type of the resource and _T_ is some intermediate data-type.
+Where _R_ is the type of the resource and _T_ is some arbitrary intermediate data-type.
 
 The purpose of this abstraction is probably best illustrated by an example for the new model loader:
 
@@ -827,46 +827,31 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 
 The `map` method transforms an input-stream to the intermediate data stream, the `load` method itself is unchanged (except for the `@Override`).
 
-Next we introduce a _data source_ which is responsible for opening an input-stream for a given resource by name:
+Next we introduce a _data source_ which is generally created via a factory method:
 
 ```java
-public interface DataSource {
-    /**
-     * Opens the resource with the given name.
-     * @param name Resource name
-     * @return Input-stream
-     * @throws IOException if the resource cannot be opened
-     */
-    InputStream open(String name) throws IOException;
+public class DataSource {
+    public static DataSource of(String dir) {
+        Path root = Paths.get(dir);
+        if(!Files.exists(root)) throw new IllegalArgumentException(...);
+        return new DataSource(root);
+    }
+    
+    private final Path root;
 }
 ```
 
-We implement convenience factories to create a data-source from the file-system:
+The final piece of the jigsaw is an adapter method that loads a resource by name:
 
 ```java
-static DataSource of(Path dir) {
-    if(!Files.exists(dir)) throw new IllegalArgumentException(...);
-    return name -> Files.newInputStream(dir.resolve(name));
-}
-
-static DataSource of(String dir) {
-    return of(Paths.get(dir));
-}
-```
-
-The final piece of the jigsaw is to create an _adapter_ that combines a resource loader with a data-source:
-
-```java
-static <T, R> Function<String, R> of(DataSource src, ResourceLoader<T, R> loader) {
-    return name -> {
-        try(InputStream in = src.open(name)) {
-            T data = loader.map(in);
-            return loader.load(data);
-        }
-        catch(IOException e) {
-            throw new RuntimeException("Error loading resource: " + name, e);
-        }
-    };
+public <T, R> R load(String name, ResourceLoader<T, R> loader) {
+    try(InputStream in = Files.newInputStream(root.resolve(name))) {
+        T data = loader.map(in);
+        return loader.load(data);
+    }
+    catch(IOException e) {
+        throw new RuntimeException(...);
+    }
 }
 ```
 
@@ -875,8 +860,6 @@ The adapter encapsulates the process of opening and loading the resource and nic
 Notes:
 
 * This framework assumes that all resources will be loaded from an underlying input stream (which seems safe enough).
-
-* The adapter is a Java function which is a little awkward but introducing yet another abstraction would probably be overkill.
 
 * The existing resource loaders are refactored accordingly.
 
@@ -895,8 +878,9 @@ public class RotatingCubeDemo {
 And resources can now be loaded much more conveniently:
 
 ```java
-var loader = ResourceLoader.of(src, new ModelLoader());
-Model model = loader.apply("chalet.model");
+public static Model model(DataSource src) {
+    return src.load("chalet.model", new ModelLoader());
+}
 ```
 
 ---

@@ -238,7 +238,6 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.subpass = 0;		// TODO
 
 			// Init shader pipeline stages
-			if(shaders.isEmpty()) throw new IllegalArgumentException("No programmable shader stages specified");
 			if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 			pipeline.stageCount = shaders.size();
 			pipeline.pStages = StructureHelper.first(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);

@@ -231,8 +231,8 @@ public class PoolAllocator implements Allocator {
 
 			@Override
 			public Region map(long offset, long size) {
-				if(destroyed) throw new IllegalStateException("Device memory has been destroyed: " + this);
-				unmap();
+				checkAlive();
+				mem.region().ifPresent(Region::unmap);
 				return mem.map(offset, size);
 			}
 
@@ -243,13 +243,12 @@ public class PoolAllocator implements Allocator {
 
 			@Override
 			public synchronized void close() {
-				if(isDestroyed()) throw new IllegalStateException("Device memory has already been destroyed: " + this);
-				unmap();
+				checkAlive();
 				destroyed = true;
 			}
 
-			private void unmap() {
-				mem.region().ifPresent(Region::unmap);
+			private void checkAlive() {
+				if(isDestroyed()) throw new IllegalStateException("Device memory has been destroyed: " + this);
 			}
 
 			@Override

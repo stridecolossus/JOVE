@@ -50,10 +50,9 @@ public class ShaderTest extends AbstractVulkanTest {
 
 		// Check code buffer
 		assertNotNull(info.pCode);
-		assertEquals(0, info.pCode.position());
 		assertEquals(1, info.pCode.limit());
 		assertEquals(1, info.pCode.capacity());
-		assertEquals((byte) 42, info.pCode.get());
+		assertEquals((byte) 42, info.pCode.rewind().get());
 	}
 
 	@Test

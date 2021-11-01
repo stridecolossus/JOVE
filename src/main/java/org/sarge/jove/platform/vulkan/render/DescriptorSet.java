@@ -245,7 +245,9 @@ public class DescriptorSet implements NativeObject {
 	 * @return Entry for this given binding
 	 */
 	private Entry entry(Binding binding) {
-		return entries.get(binding);
+		final Entry entry = entries.get(binding);
+		if(entry == null) throw new IllegalArgumentException(String.format("Invalid binding for this descriptor set: binding=%s set=%s", binding, this));
+		return entry;
 	}
 
 	/**
@@ -267,7 +269,6 @@ public class DescriptorSet implements NativeObject {
 	 */
 	public Resource resource(Binding binding) {
 		final Entry entry = entry(binding);
-		if(entry == null) throw new IllegalArgumentException(String.format("Invalid binding for this descriptor set: binding=%s set=%s", binding, this));
 		return entry.res;
 	}
 
@@ -280,6 +281,7 @@ public class DescriptorSet implements NativeObject {
 	 */
 	public void set(Binding binding, Resource res) {
 		final Entry entry = entry(binding);
+		if(binding.type != res.type()) throw new IllegalArgumentException(String.format("Invalid resource for this binding: expected=%s actual=%s", binding.type, res.type()));
 		entry.res = notNull(res);
 		entry.dirty = true;
 	}

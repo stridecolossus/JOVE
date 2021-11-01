@@ -209,6 +209,9 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}
+			if(priorities.size() > family.count()) {
+				throw new IllegalArgumentException(String.format("Number of queues exceeds family: avaiable=%d requested=%d", priorities.size(), family.count()));
+			}
 //			if(queues.containsKey(family)) {
 //				throw new IllegalArgumentException("Duplicate required queue family: " + family);
 //			}

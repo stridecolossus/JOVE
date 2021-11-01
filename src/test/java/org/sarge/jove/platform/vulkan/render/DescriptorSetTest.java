@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -81,7 +80,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	@Test
 	void set() {
 		descriptor.set(binding, res);
-		assertEquals(Optional.of(res), descriptor.resource(binding));
+		assertEquals(res, descriptor.resource(binding));
 	}
 
 	@Test
@@ -235,9 +234,9 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		@Test
 		void free() {
-			final var sets = pool.allocate(List.of(layout));
+			final List<DescriptorSet> sets = pool.allocate(List.of(layout));
 			pool.free(sets);
-			verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.toArray(List.of(descriptor)));
+			verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.toArray(sets));
 			assertEquals(1, pool.maximum());
 			assertEquals(1, pool.available());
 			assertEquals(0, pool.sets().count());
