@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -19,15 +18,15 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.util.ResourceLoader;
+import org.sarge.jove.util.TextLoader;
 import org.sarge.lib.util.Check;
 
 /**
  * Loader for an OBJ model.
  * @author Sarge
  */
-public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Model>> {
+public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> {
 	private final Map<String, Parser> parsers = new HashMap<>();
-	private Set<String> comments = Set.of("#");
 	private final ObjectModel model = new ObjectModel();
 	private Consumer<String> handler = line -> { /* Ignored */ };
 
@@ -71,14 +70,6 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	}
 
 	/**
-	 * Sets the comment tokens.
-	 * @param comments Comment tokens
-	 */
-	public void setCommentTokens(Set<String> comments) {
-		this.comments = Set.copyOf(comments);
-	}
-
-	/**
 	 * Sets the callback handler for unknown commands (default is {@link #HANDLER_THROW}).
 	 * @param handler Unknown command handler
 	 */
@@ -86,57 +77,19 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 		this.handler = notNull(handler);
 	}
 
-//	@Override
-//	public Reader map(InputStream in) throws IOException {
-//		return new InputStreamReader(in);
-//	}
-//
-//	/**
-//	 * Loads an OBJ model.
-//	 * @param r Reader
-//	 * @return Resultant model(s)
-//	 * @throws IOException if the model cannot be loaded
-//	 * @see #create()
-//	 */
-//	@Override
-//	public Stream<Model> load(Reader r) throws IOException {
-//		// Parse OBJ model
-//		try(final LineNumberReader in = new LineNumberReader(r)) {
-//			try {
-//				in.lines()
-//					.map(String::trim)
-//					.filter(Predicate.not(String::isBlank))
-//					.filter(Predicate.not(this::isComment))
-//					.forEach(this::parse);
-//			}
-//			catch(Exception e) {
-//				throw new IOException(String.format("%s at line %d", e.getMessage(), in.getLineNumber()), e);
-//			}
-//		}
-//
-//		// Construct models
-//		return model.build();
-//	}
-
-	/**
-	 * Tests whether the given line is a comment.
-	 */
-	private boolean isComment(String line) {
-		return comments.stream().anyMatch(line::startsWith);
-	}
-
 	@Override
-	protected Reader map(InputStream in) throws IOException {
+	public Reader map(InputStream in) throws IOException {
 		return new InputStreamReader(in);
 	}
 
 	@Override
-	protected Stream<Model> load(Reader r) throws IOException {
-		final Function<Stream<String>, Stream<Model>> terminal = stream -> {
-			stream.forEach(this::parse);
+	public Stream<Model> load(Reader reader) throws IOException {
+		final Function<Stream<String>, Stream<Model>> mapper = lines -> {
+			lines.forEach(this::parse);
 			return model.build();
 		};
-		return ResourceLoader.lines(r, terminal);
+		final TextLoader loader = new TextLoader();
+		return loader.load(reader, mapper);
 	}
 
 	/**
@@ -144,7 +97,7 @@ public class ObjectModelLoader extends ResourceLoader.Adapter<Reader, Stream<Mod
 	 * @param line Line
 	 * @throws IllegalArgumentException if the command is unsupported
 	 */
-	protected void parse(String line) {
+	private void parse(String line) {
 		// Tokenize line
 		final String[] parts = StringUtils.split(line);
 		Parser.trim(parts);

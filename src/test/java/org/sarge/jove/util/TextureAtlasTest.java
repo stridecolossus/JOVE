@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.util.TextureAtlas.TextureAtlasLoader;
 
 public class TextureAtlasTest {
 	private TextureAtlas atlas;
@@ -53,11 +52,11 @@ public class TextureAtlasTest {
 
 	@Nested
 	class LoaderTests {
-		private TextureAtlasLoader loader;
+		private TextureAtlas.Loader loader;
 
 		@BeforeEach
 		void before() {
-			loader = new TextureAtlasLoader();
+			loader = new TextureAtlas.Loader();
 		}
 
 		@Test

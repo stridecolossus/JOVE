@@ -28,7 +28,7 @@ public class ImageDataTest {
 
 	@DisplayName("ABGR should be loaded as-is")
 	@Test
-	void load() {
+	void load() throws IOException {
 		final BufferedImage image = new BufferedImage(1, 2, BufferedImage.TYPE_4BYTE_ABGR);
 		final ImageData data = loader.load(image);
 		assertNotNull(data);
@@ -40,7 +40,7 @@ public class ImageDataTest {
 
 	@DisplayName("Loader should add an alpha channel as required")
 	@Test
-	void loadAddAlpha() {
+	void loadAddAlpha() throws IOException {
 		final BufferedImage image = new BufferedImage(1, 2, BufferedImage.TYPE_3BYTE_BGR);
 		final ImageData data = loader.load(image);
 		assertNotNull(data);
@@ -51,7 +51,7 @@ public class ImageDataTest {
 
 	@DisplayName("Gray-scale image should have one channel")
 	@Test
-	void grayscale() {
+	void grayscale() throws IOException {
 		final BufferedImage image = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_GRAY);
 		final ImageData data = loader.load(image);
 		assertNotNull(data);

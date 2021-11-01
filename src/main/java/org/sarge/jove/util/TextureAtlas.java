@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.util.ResourceLoader.TextResourceLoader;
+import org.sarge.jove.util.TextLoader.TextResourceLoader;
 
 /**
  * A <i>texture atlas</i> maps rectangles within a texture image by name.
@@ -64,23 +64,10 @@ public class TextureAtlas extends LinkedHashMap<String, Rectangle> {
 
 	/**
 	 * Loader for a texture atlas.
-	 * <p>
-	 * File format:
-	 * <ul>
-	 * <li>Each atlas entry has the following structure: <code>name x,y,w,h</code>.</li>
-	 * <li>Empty lines are ignored</li>
-	 * <li>Comments are indicated by the hash character</li>
-	 * </ul>
 	 */
-	public static class TextureAtlasLoader extends TextResourceLoader<Entry<String, Rectangle>, TextureAtlas> {
+	public static class Loader extends TextResourceLoader<Entry<String, Rectangle>, TextureAtlas> {
 		@Override
-		protected Collector<Entry<String, Rectangle>, ?, TextureAtlas> collector() {
-			final var map = Collectors.toMap(Entry<String, Rectangle>::getKey, Entry::getValue);
-			return Collectors.collectingAndThen(map, TextureAtlas::new);
-		}
-
-		@Override
-		public Entry<String, Rectangle> load(String line) {
+		protected Entry<String, Rectangle> load(String line) {
 			// Tokenize atlas entry
 			final String[] parts = line.split(" ");
 			if(parts.length != 2) throw new IllegalArgumentException("Invalid texture atlas entry");
@@ -99,6 +86,12 @@ public class TextureAtlas extends LinkedHashMap<String, Rectangle> {
 
 			// Create atlas entry
 			return Map.entry(parts[0].trim(), rect);
+		}
+
+		@Override
+		protected Collector<Entry<String, Rectangle>, ?, TextureAtlas> collector() {
+			final var map = Collectors.toMap(Entry<String, Rectangle>::getKey, Entry::getValue);
+			return Collectors.collectingAndThen(map, TextureAtlas::new);
 		}
 	}
 }

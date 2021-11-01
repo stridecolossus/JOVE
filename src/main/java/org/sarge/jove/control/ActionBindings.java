@@ -1,14 +1,11 @@
 package org.sarge.jove.control;
 
-import java.io.BufferedReader;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -16,7 +13,6 @@ import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
 import org.sarge.jove.control.Position.PositionEvent;
-import org.sarge.jove.util.ResourceLoader.TextResourceLoader;
 
 /**
  * A <i>bindings</i> is a mutable set of mappings that bind an input event to an <i>action</i> (an event consumer).
@@ -238,50 +234,5 @@ public class ActionBindings implements Consumer<Event> {
 				.append("handlers", map.size())
 				.append("bindings", bindings.size())
 				.build();
-	}
-
-	/**
-	 * Loader for action bindings.
-	 */
-	// TODO
-	public class Loader extends TextResourceLoader<BufferedReader, ActionBindings> { // TODO - T should be Entry?
-		private Loader() {
-		}
-
-//		@Override
-//		public BufferedReader map(InputStream in) throws IOException {
-//			return new BufferedReader(new InputStreamReader(in));
-//		}
-//
-//		@Override
-//		public ActionBindings load(BufferedReader data) throws IOException {
-//			// TODO
-//			return ActionBindings.this;
-//		}
-
-		@Override
-		protected BufferedReader load(String line) {
-			return null;
-		}
-
-		@Override
-		protected Collector<BufferedReader, ?, ActionBindings> collector() {
-			return null;
-		}
-
-		/**
-		 * Writes this set of bindings.
-		 * @param out Writer
-		 */
-		public void write(PrintWriter out) {
-			// TODO
-		}
-	}
-
-	/**
-	 * @return New loader for this set of bindings
-	 */
-	public Loader loader() {
-		return new Loader();
 	}
 }

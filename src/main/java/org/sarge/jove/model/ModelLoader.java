@@ -18,7 +18,7 @@ import org.sarge.jove.util.ResourceLoader;
  * The <i>model loader</i> persists a vertex model.
  * @author Sarge
  */
-public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, BufferedModel> {
+public class ModelLoader implements ResourceLoader<DataInputStream, BufferedModel> {
 	private static final int VERSION = 1;
 
 	/**
@@ -80,13 +80,6 @@ public class ModelLoader extends ResourceLoader.Adapter<DataInputStream, Buffere
 		return new DataInputStream(in);
 	}
 
-	/**
-	 * Loads a buffered model.
-	 * @param in Input stream
-	 * @return New model
-	 * @throws IOException if the model cannot be loaded
-	 * @throws UnsupportedOperationException if the file version is unsupported by this loader
-	 */
 	@Override
 	public BufferedModel load(DataInputStream in) throws IOException {
 		// Load and verify file format version

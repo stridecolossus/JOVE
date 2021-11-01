@@ -44,16 +44,15 @@ public interface ImageData {
 	/**
 	 * Loader for an image.
 	 */
-	public static class Loader extends ResourceLoader.Adapter<BufferedImage, ImageData> {
+	public static class Loader implements ResourceLoader<BufferedImage, ImageData> {
 		@Override
 		public BufferedImage map(InputStream in) throws IOException {
-			final BufferedImage image = ImageIO.read(in);
-			if(image == null) throw new IOException("Invalid image");
-			return image;
+			return ImageIO.read(in);
 		}
 
 		@Override
-		public ImageData load(BufferedImage image) {
+		public ImageData load(BufferedImage image) throws IOException {
+			if(image == null) throw new IOException("Invalid image");
 			final BufferedImage result = convert(image);
 			return wrap(result);
 		}
