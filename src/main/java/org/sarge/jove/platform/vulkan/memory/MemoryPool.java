@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.lib.util.Check;
 
 /**
@@ -19,13 +20,20 @@ import org.sarge.lib.util.Check;
  * The pool manages a number of <i>blocks</i> from which device memory is allocated growing the pool as required.
  * Released memory allocations are restored to the pool and potentially reallocated.
  * <p>
- * The {@link Pool#init(long)} method can be used to pre-allocate memory into the pool.
+ * The {@link #policy(BlockPolicy)} method can be used to configure the growth policy for newly allocated blocks.
+ * <p>
+ * The {@link Pool#init(long)} is used to pre-allocate memory into the pool.
+ * <p>
+ * Note that the mapped {@link Region} for a block can be silently unmapped by the pool (only one mapped region is permitted for any given block).
+ * The client should ensure
+ * <p>
+ * @author Sarge
  */
 public class MemoryPool {
 	private final MemoryType type;
 	private final Allocator allocator;
 	private final List<Block> blocks = new ArrayList<>();
-	private BlockPolicy policy = BlockPolicy.NONE;
+	private BlockPolicy policy = BlockPolicy.NONE; // TODO - property of pool allocator?
 	private long total;
 
 	/**
@@ -71,8 +79,10 @@ public class MemoryPool {
 
 	/**
 	 * Initialises this pool with the given amount of free memory.
+	 * Note that the configured growth policy is applied to the given memory size.
 	 * @param size Amount of memory to add to this pool
 	 * @throws AllocationException if the memory cannot be allocated
+	 * @see #policy(BlockPolicy)
 	 */
 	public void init(long size) {
 		block(size);

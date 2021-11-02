@@ -26,6 +26,7 @@ class Block {
 	private final DeviceMemory mem;
 	private final List<BlockDeviceMemory> allocations = new ArrayList<>();
 	private long next;
+	private BlockDeviceMemory mapped;
 
 	/**
 	 * Constructor.
@@ -87,6 +88,7 @@ class Block {
 	void destroy() {
 		mem.close();
 		allocations.clear();
+		mapped = null;
 	}
 
 	@Override
@@ -94,6 +96,7 @@ class Block {
 		return new ToStringBuilder(this)
 				.append("mem", mem)
 				.append("free", next)
+				.append("mapped", mapped)
 				.build();
 	}
 
@@ -129,13 +132,19 @@ class Block {
 
 		@Override
 		public Optional<Region> region() {
-			return mem.region();
+			if(mapped == this) {
+				return mem.region();
+			}
+			else {
+				return Optional.empty();
+			}
 		}
 
 		@Override
 		public Region map(long offset, long size) {
 			checkAlive();
 			mem.region().ifPresent(Region::unmap);
+			mapped = this;
 			return mem.map(offset, size);
 		}
 
@@ -185,6 +194,7 @@ class Block {
 					.append("offset", offset)
 					.append("size", size)
 					.append("mem", mem)
+					.append("mapped", mapped == this)
 					.build();
 		}
 	}

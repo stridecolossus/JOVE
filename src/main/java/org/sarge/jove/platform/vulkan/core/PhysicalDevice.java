@@ -251,6 +251,13 @@ public class PhysicalDevice implements NativeObject {
 		}
 
 		/**
+		 * @return Pipeline cache ID
+		 */
+		public String cache() {
+			return new String(struct.pipelineCacheUUID);
+		}
+
+		/**
 		 * @return Device limits
 		 */
 		public VkPhysicalDeviceLimits limits() {

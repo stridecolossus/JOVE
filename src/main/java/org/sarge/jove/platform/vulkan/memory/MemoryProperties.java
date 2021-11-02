@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>memory properties</i> is a descriptor for the usage and requirements of a memory request.
+ * A <i>memory properties</i> specifies the usage and requirements of a memory request.
  * <p>
  * In general a consumer will allocate memory that matches the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
  * <br>
@@ -18,7 +18,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * Example for the properties of an image:
  * <pre>
- *  MemoryProperties&lt;VkImageUsageFlag&gt; props = new MemoryProperties.Builder()
+ *  MemoryProperties&lt;VkImageUsageFlag&gt; props = new MemoryProperties.Builder&lt;&gt;()
  *  	.usage(VkImageUsage.COLOR_ATTACHMENT)
  *  	.mode(VkSharingMode.CONCURRENT)
  *  	.optimal(VkMemoryProperty.HOST_COHERENT)

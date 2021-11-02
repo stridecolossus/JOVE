@@ -101,8 +101,14 @@ public class BlockTest {
 
 		@Test
 		void mapReplacePrevious() {
+			// Map region
+			allocation.map();
+
+			// Mock previous mapping
 			final Region prev = mock(Region.class);
 			when(mem.region()).thenReturn(Optional.of(prev));
+
+			// Map again and check previous mapping is released
 			allocation.map();
 			verify(prev).unmap();
 		}

@@ -7,52 +7,37 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.lib.util.Check;
 
 /**
  * A <i>pool allocator</i> maintains a <i>pool</i> of memory in order to reduce the total number of active allocations.
  * <p>
- * This implementation creates a pool for <b>each</b> memory type on demand which grows as required.
- * <br>
- * Memory can also be pre-allocated using the {@link Pool#init(long)} method.
- * <p>
- * Note that each pool contains a number of memory <i>blocks</i> from which individual instances are allocated.
- * <br>
- * Therefore a region mapping on <b>any</b> memory instance within a given block implicitly maps the <b>whole</b> block.
- * <br>
- * See {@link DeviceMemory#map(long, long)}.
+ * This implementation creates a {@link MemoryPool} pool for <b>each</b> memory type on demand which grows as required.
  * <p>
  * Usage:
  * <pre>
- *  // Create allocator
- *  Allocator delegate = ...
- *  PoolAllocator allocator = new PoolAllocator(delegate, max);
- *
- *  // Initialise a pool
- *  MemoryType type = ...
- *  Pool pool = allocator.pool(type);
- *  pool.init(amount);
- *
- *  // Allocate some memory
- *  DeviceMemory mem = allocator.allocate(type, size);
- *
- *  // Release memory back to the pool
- *  mem.destroy();
- *
- *  ...
- *
- *  // Cleanup
- *  allocator.close();
+ * TODO
  * </pre>
  * <p>
- * @see Allocator#paged(Allocator, long)
  * @author Sarge
  */
 public class PoolAllocator implements Allocator {
-	private final Allocator allocator;
-	private final int max;
+	/**
+	 * TODO
+	 * @param dev
+	 * @return
+	 */
+	public static PoolAllocator create(LogicalDevice dev) {
+		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
+		// TODO - limits.bufferImageGranularity
+		return new PoolAllocator(null, limits.maxMemoryAllocationCount);
+	}
 
+	private final Allocator allocator;
 	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
+	private final int max;
 	private int count;
 
 	/**

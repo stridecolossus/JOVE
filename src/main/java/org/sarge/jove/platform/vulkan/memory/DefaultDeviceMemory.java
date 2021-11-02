@@ -19,7 +19,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>default device memory</i> is the default implementation for memory allocated by the hardware.
+ * Default implementation for memory allocated by the hardware.
  * @author Sarge
  */
 public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {

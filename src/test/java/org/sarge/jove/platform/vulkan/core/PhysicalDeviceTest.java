@@ -80,6 +80,7 @@ public class PhysicalDeviceTest {
 		final Answer<Void> answer = inv -> {
 			final VkPhysicalDeviceProperties props = inv.getArgument(1);
 			props.deviceName = "device".getBytes();
+			props.pipelineCacheUUID = "cache".getBytes();
 			props.deviceType = VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 			return null;
 		};
@@ -95,8 +96,9 @@ public class PhysicalDeviceTest {
 		verifyNoInteractions(lib);
 
 		// Check properties
-		assertEquals("device", dev.properties().name());
-		assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, dev.properties().type());
+		assertEquals("device", props.name());
+		assertEquals("cache", props.cache());
+		assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, props.type());
 		assertNotNull(props.limits());
 	}
 
