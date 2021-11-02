@@ -28,30 +28,28 @@ public class FrameThrottleTest {
 
 	@Test
 	void update() {
-		when(tracker.elapsed()).thenReturn(25L);
 		throttle.update(tracker);
-		assertEquals(25L, sleep);
+		assertEquals(20, sleep);
 	}
 
 	@Test
 	void updateZeroDuration() {
-		when(tracker.elapsed()).thenReturn(50L);
+		when(tracker.elapsed()).thenReturn(20L);
 		throttle.update(tracker);
 		assertEquals(null, sleep);
 	}
 
 	@Test
-	void duration() {
-		when(tracker.elapsed()).thenReturn(50L);
-		throttle.duration(100);
+	void updatePartial() {
+		when(tracker.elapsed()).thenReturn(10L);
 		throttle.update(tracker);
-		assertEquals(100 - 50, sleep);
+		assertEquals(10, sleep);
 	}
 
 	@Test
-	void sleep() {
-		throttle = new FrameThrottle();
-		when(tracker.elapsed()).thenReturn(25L);
+	void throttle() {
+		throttle.throttle(25);
 		throttle.update(tracker);
+		assertEquals(40, sleep);
 	}
 }

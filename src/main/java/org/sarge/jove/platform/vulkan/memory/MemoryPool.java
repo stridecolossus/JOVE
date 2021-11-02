@@ -1,0 +1,200 @@
+package org.sarge.jove.platform.vulkan.memory;
+
+import static java.util.stream.Collectors.toList;
+import static org.sarge.lib.util.Check.notNull;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
+import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
+
+/**
+ * A <i>pool</i> is a delegate manager for memory allocations of a given type.
+ * <p>
+ * The pool manages a number of <i>blocks</i> from which device memory is allocated growing the pool as required.
+ * Released memory allocations are restored to the pool and potentially reallocated.
+ * <p>
+ * The {@link Pool#init(long)} method can be used to pre-allocate memory into the pool.
+ */
+public class MemoryPool {
+	private final MemoryType type;
+	private final Allocator allocator;
+	private final List<Block> blocks = new ArrayList<>();
+	private long total;
+
+	/**
+	 * Constructor.
+	 * @param type				Memory type
+	 * @param allocator			Allocator
+	 */
+	MemoryPool(MemoryType type, Allocator allocator) {
+		this.type = notNull(type);
+		this.allocator = notNull(allocator);
+	}
+	// TODO - growth policy
+
+	/**
+	 * @return Amount of available memory in this pool
+	 */
+	public long free() {
+		return blocks.stream().mapToLong(Block::free).sum();
+	}
+
+	/**
+	 * @return Total amount of memory in this pool
+	 */
+	public long size() {
+		return total;
+	}
+
+	/**
+	 * @return Number of memory blocks in this pool
+	 */
+	public int count() {
+		return blocks.size();
+	}
+
+	/**
+	 * @return Memory allocations in this pool
+	 */
+	public Stream<? extends DeviceMemory> allocations() {
+		return blocks
+				.stream()
+				.flatMap(Block::allocations)
+				.filter(Block.ALIVE);
+	}
+
+	/**
+	 * Initialises this pool with the given amount of free memory.
+	 * @param size Amount of memory to add to this pool
+	 * @throws AllocationException if the memory cannot be allocated
+	 */
+	public void init(long size) {
+		block(size);
+		assert free() >= size;
+	}
+
+	/**
+	 * Allocates memory from this pool.
+	 * @param size  Memory size
+	 * @return Allocated memory
+	 */
+	synchronized DeviceMemory allocate(long size) {
+		// Short cut to allocate a new block if pool has insufficient free memory
+		if(free() < size) {
+			return allocateNewBlock(size);
+		}
+
+		// Otherwise attempt to re/allocate from an existing block before allocating new memory
+		return
+				allocateFromBlock(size)
+				.or(() -> reallocate(size))
+				.orElseGet(() -> allocateNewBlock(size));
+	}
+
+	/**
+	 * Allocates from a new block.
+	 * @param size Allocation size
+	 * @return Allocated memory
+	 */
+	private DeviceMemory allocateNewBlock(long size) {
+		final Block block = block(size);
+		return block.allocate(size);
+	}
+
+	/**
+	 * Allocates from an existing block.
+	 * @param size Allocation size
+	 * @return Existing memory allocation
+	 */
+	private Optional<DeviceMemory> allocateFromBlock(long size) {
+		return blocks
+				.stream()
+				.filter(b -> b.remaining() >= size)
+				.findAny()
+				.map(b -> b.allocate(size));
+	}
+
+	/**
+	 * Re-allocates an existing memory allocation that has been restored to the pool.
+	 * @param size Allocation size
+	 * @return Re-allocated memory
+	 */
+	private Optional<DeviceMemory> reallocate(long size) {
+		return blocks
+				.stream()
+				.flatMap(Block::allocations)
+				.filter(DeviceMemory::isDestroyed)
+				.filter(mem -> mem.size() <= size)
+				.sorted(Comparator.comparingLong(DeviceMemory::size))
+				.findAny()
+				.map(BlockDeviceMemory::reallocate);
+	}
+
+	/**
+	 * Allocates a new memory block in this pool.
+	 * @param size Block size
+	 * @return New memory block
+	 * @throws AllocationException if the underlying allocator failed
+	 */
+	private Block block(long size) {
+		// Allocate memory
+		final DeviceMemory mem;
+		try {
+			mem = allocator.allocate(type, size);
+		}
+		catch(Exception e) {
+			throw new AllocationException(e);
+		}
+		if(mem == null) throw new AllocationException("Allocator returned NULL memory block");
+
+		// Check memory
+		final long actual = mem.size();
+		if(actual < size) throw new AllocationException("Allocator returned memory block smaller than the requested size");
+
+		// Add new block to the pool
+		final Block block = new Block(mem);
+		blocks.add(block);
+		total += actual;
+
+		return block;
+	}
+	// TODO - growth policy
+
+	/**
+	 * Releases <b>all</b> memory allocated back to this pool.
+	 */
+	public synchronized void release() {
+		// Copy to avoid concurrent modification
+		final var allocations = allocations().collect(toList());
+		allocations.forEach(DeviceMemory::close);
+		assert free() == total;
+	}
+
+	/**
+	 * Destroys <b>all</b> memory allocated by this pool.
+	 */
+	public synchronized void close() {
+		for(Block b : blocks) {
+			b.destroy();
+		}
+		blocks.clear();
+		total = 0;
+		assert free() == 0;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("type", type)
+				.append("size", total)
+				.append("free", free())
+				.append("blocks", blocks.size())
+				.build();
+	}
+}

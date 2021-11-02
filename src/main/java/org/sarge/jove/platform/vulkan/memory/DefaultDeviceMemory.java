@@ -23,7 +23,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
-	private final long len;
+	private final long size;
 
 	private volatile DefaultRegion region;
 
@@ -35,12 +35,12 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	 */
 	public DefaultDeviceMemory(Pointer handle, DeviceContext dev, long len) {
 		super(handle, dev);
-		this.len = oneOrMore(len);
+		this.size = oneOrMore(len);
 	}
 
 	@Override
 	public long size() {
-		return len;
+		return size;
 	}
 
 	@Override
@@ -51,6 +51,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	/**
 	 * Mapped region implementation.
 	 */
+	@SuppressWarnings("hiding")
 	private class DefaultRegion implements Region {
 		private final Pointer ptr;
 		private final long size;
@@ -125,7 +126,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		if(region != null) {
 			throw new IllegalStateException("Device memory has already been mapped: " + this);
 		}
-		if(offset + size > this.len) {
+		if(offset + size > this.size) {
 			throw new IllegalArgumentException(String.format("Mapped region is larger than this device memory: offset=%d size=%d mem=%s", offset, size, this));
 		}
 		// TODO - check memory has VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT when map()
@@ -171,7 +172,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(handle, len);
+		return Objects.hash(handle, size);
 	}
 
 	@Override
@@ -179,7 +180,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		return
 				(obj == this) ||
 				(obj instanceof DefaultDeviceMemory that) &&
-				(this.len == that.len) &&
+				(this.size == that.size) &&
 				this.handle.equals(that.handle);
 	}
 
@@ -187,7 +188,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("handle", super.handle())
-				.append("size", len)
+				.append("size", size)
 				.append("mapped", region)
 				.build();
 	}

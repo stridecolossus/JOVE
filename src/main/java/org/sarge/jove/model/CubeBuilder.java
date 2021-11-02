@@ -11,7 +11,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * Builder for a cube constructed as a {@link Primitive#TRIANGLES}.
+ * Builder for a cube constructed with {@link Primitive#TRIANGLES}.
  * @author Sarge
  */
 public class CubeBuilder extends ModelBuilder {

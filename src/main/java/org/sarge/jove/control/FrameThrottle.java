@@ -1,20 +1,27 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.zeroOrMore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The <i>frame throttle</i> sleeps the rendering thread for a specified duration between each frame.
  * @author Sarge
  */
 public class FrameThrottle implements FrameTracker.Listener {
-	private long duration = 50;
+	private long duration;
 
 	/**
-	 * Sets the throttle duration.
-	 * @param duration Throttle duration (default is 50ms)
+	 * Constructor.
 	 */
-	public void duration(long duration) {
-		this.duration = zeroOrMore(duration);
+	public FrameThrottle() {
+		throttle(50);
+	}
+
+	/**
+	 * Sets the target throttle rate.
+	 * @param fps Target frames-per-second (default is 50)
+	 */
+	public void throttle(int fps) {
+		this.duration = TimeUnit.SECONDS.toMillis(1) / fps;
 	}
 
 	@Override

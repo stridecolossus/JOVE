@@ -23,7 +23,7 @@ import org.sarge.jove.common.TransientNativeObject;
  * 	DeviceMemory mem = ...
  *
  *	// Map accessible region
- *	Region region = mem.region(0, len);
+ *	Region region = mem.region(0, size);
  *
  * 	// Write to memory
  * 	ByteBuffer buffer = region.buffer();
