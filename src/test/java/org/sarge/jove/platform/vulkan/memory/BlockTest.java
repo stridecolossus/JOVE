@@ -66,6 +66,7 @@ public class BlockTest {
 		verify(mem).close();
 		when(mem.isDestroyed()).thenReturn(true);
 		assertEquals(true, allocation.isDestroyed());
+		assertEquals(0, block.allocations().count());
 	}
 
 	@Nested

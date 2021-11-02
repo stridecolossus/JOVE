@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -37,8 +35,8 @@ public interface Allocator {
 
 	/**
 	 * Allocates device memory.
-	 * @param type Type of memory to allocate
-	 * @param size Size of the memory (bytes)
+	 * @param type		Type of memory to allocate
+	 * @param size		Size of the requested memory (bytes)
 	 * @return New device memory
 	 * @throws AllocationException if the memory cannot be allocated
 	 */
@@ -47,7 +45,7 @@ public interface Allocator {
 	/**
 	 * Creates a default memory allocator.
 	 * @param dev Logical device
-	 * @return New memory allocator
+	 * @return New default memory allocator
 	 */
 	static Allocator allocator(DeviceContext dev) {
 		return (type, size) -> {
@@ -64,34 +62,5 @@ public interface Allocator {
 			// Create memory wrapper
 			return new DefaultDeviceMemory(ref.getValue(), dev, size);
 		};
-	}
-
-	/**
-	 * A <i>page allocator</i> allocates device memory in multiples of the given page size.
-	 */
-	class PageAllocator implements Allocator {
-		private final Allocator allocator;
-		private final long page;
-
-		/**
-		 * Constructor.
-		 * @param allocator		Delegate allocator
-		 * @param page			Page size (bytes)
-		 */
-		public PageAllocator(Allocator allocator, long page) {
-			this.allocator = notNull(allocator);
-			this.page = oneOrMore(page);
-		}
-
-		@Override
-		public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
-			final long num = 1 + ((size - 1) / page);
-			return allocator.allocate(type, num * page);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this).append(allocator).append("page", page).build();
-		}
 	}
 }

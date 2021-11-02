@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
@@ -12,6 +11,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>pool</i> is a delegate manager for memory allocations of a given type.
@@ -25,6 +25,7 @@ public class MemoryPool {
 	private final MemoryType type;
 	private final Allocator allocator;
 	private final List<Block> blocks = new ArrayList<>();
+	private BlockPolicy policy = BlockPolicy.NONE;
 	private long total;
 
 	/**
@@ -36,7 +37,6 @@ public class MemoryPool {
 		this.type = notNull(type);
 		this.allocator = notNull(allocator);
 	}
-	// TODO - growth policy
 
 	/**
 	 * @return Amount of available memory in this pool
@@ -77,6 +77,14 @@ public class MemoryPool {
 	public void init(long size) {
 		block(size);
 		assert free() >= size;
+	}
+
+	/**
+	 * Sets the growth policy for this memory pool (default is {Policy#NONE}).
+	 * @param policy Growth policy
+	 */
+	public void policy(BlockPolicy policy) {
+		this.policy = notNull(policy);
 	}
 
 	/**
@@ -143,10 +151,15 @@ public class MemoryPool {
 	 * @throws AllocationException if the underlying allocator failed
 	 */
 	private Block block(long size) {
+		// Apply growth policy
+		Check.oneOrMore(size);
+		final long mod = policy.apply(size, total);
+		if(mod < size) throw new AllocationException(String.format("Invalid block size policy: policy=%s size=%d", policy, size));
+
 		// Allocate memory
 		final DeviceMemory mem;
 		try {
-			mem = allocator.allocate(type, size);
+			mem = allocator.allocate(type, mod);
 		}
 		catch(Exception e) {
 			throw new AllocationException(e);
@@ -164,14 +177,12 @@ public class MemoryPool {
 
 		return block;
 	}
-	// TODO - growth policy
 
 	/**
 	 * Releases <b>all</b> memory allocated back to this pool.
 	 */
 	public synchronized void release() {
-		// Copy to avoid concurrent modification
-		final var allocations = allocations().collect(toList());
+		final var allocations = this.allocations();
 		allocations.forEach(DeviceMemory::close);
 		assert free() == total;
 	}

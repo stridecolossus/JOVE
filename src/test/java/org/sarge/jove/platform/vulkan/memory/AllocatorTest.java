@@ -4,17 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
-import org.sarge.jove.platform.vulkan.memory.Allocator.PageAllocator;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -48,37 +45,5 @@ public class AllocatorTest extends AbstractVulkanTest {
 		assertNotNull(info);
 		assertEquals(type.index(), info.memoryTypeIndex);
 		assertEquals(size, info.allocationSize);
-	}
-
-	@Nested
-	class PageAllocatorTests {
-		private static final int PAGE = 3;
-
-		private Allocator delegate;
-		private Allocator allocator;
-
-		@BeforeEach
-		void before() {
-			delegate = mock(Allocator.class);
-			allocator = new PageAllocator(delegate, PAGE);
-		}
-
-		@Test
-		void allocateSmaller() {
-			allocator.allocate(type, 2);
-			verify(delegate).allocate(type, PAGE);
-		}
-
-		@Test
-		void allocatePageSize() {
-			allocator.allocate(type, PAGE);
-			verify(delegate).allocate(type, PAGE);
-		}
-
-		@Test
-		void allocateLarger() {
-			allocator.allocate(type, 4);
-			verify(delegate).allocate(type, 2 * PAGE);
-		}
 	}
 }

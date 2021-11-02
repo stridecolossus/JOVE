@@ -86,6 +86,7 @@ class Block {
 	 */
 	void destroy() {
 		mem.close();
+		allocations.clear();
 	}
 
 	@Override

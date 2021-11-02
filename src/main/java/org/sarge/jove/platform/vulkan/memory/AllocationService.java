@@ -14,7 +14,6 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
-import org.sarge.jove.platform.vulkan.memory.Allocator.PageAllocator;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -87,6 +86,7 @@ public class AllocationService {
 //		return create(dev, pool);
 		return create(dev, allocator);
 	}
+	// TODO
 
 	private final Allocator allocator;
 	private final List<MemoryType> types;
