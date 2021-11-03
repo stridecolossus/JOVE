@@ -21,8 +21,6 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrarySurface;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.lib.util.LazySupplier;
 
-import com.sun.jna.ptr.IntByReference;
-
 /**
  * A <i>surface</i> defines the capabilities of a Vulkan rendering surface.
  * @author Sarge
@@ -100,7 +98,7 @@ public class Surface extends AbstractTransientNativeObject {
 		private List<VkSurfaceFormatKHR> loadFormats() {
 			final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, Surface.this, count, array);
 			final VulkanLibrary lib = dev.instance().library();
-			final VkSurfaceFormatKHR[] array = VulkanFunction.enumerate(func, lib, VkSurfaceFormatKHR::new);
+			final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(func, lib, VkSurfaceFormatKHR::new);
 			return Arrays.stream(array).collect(toList());
 		}
 
@@ -112,15 +110,10 @@ public class Surface extends AbstractTransientNativeObject {
 		}
 
 		public Set<VkPresentModeKHR> loadModes() {
-			// Count number of supported modes
-			// TODO - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
+			// Retrieve array of presentation modes
 			final VulkanLibrary lib = instance.library();
-			final IntByReference count = lib.factory().integer();
-			check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, null));
-
-			// Retrieve modes
-			final int[] array = new int[count.getValue()];
-			check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array));
+			final VulkanFunction<int[]> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array);
+			final int[] array = VulkanFunction.invoke(func, lib, int[]::new);
 
 			// Convert to enumeration
 			return Arrays

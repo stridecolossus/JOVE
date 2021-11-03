@@ -382,7 +382,7 @@ public class Swapchain extends AbstractVulkanObject {
 
 			// Retrieve swapchain images
 			final VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
-			final var handles = VulkanFunction.enumerate(func, lib, factory::array);
+			final var handles = VulkanFunction.invoke(func, lib, factory::array);
 
 			// Init swapchain image descriptor
 			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);

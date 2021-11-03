@@ -40,7 +40,7 @@ public record ValidationLayer(String name, int version) {
 	 */
 	public static Set<ValidationLayer> layers(VulkanLibrary lib, VulkanFunction<VkLayerProperties> func) {
 		return Arrays
-				.stream(VulkanFunction.enumerate(func, lib, VkLayerProperties::new))
+				.stream(VulkanFunction.invoke(func, lib, VkLayerProperties::new))
 				.map(ValidationLayer::of)
 				.collect(toCollection(ValidationLayerSet::new));
 	}

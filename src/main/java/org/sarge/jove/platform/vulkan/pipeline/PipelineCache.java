@@ -15,10 +15,10 @@ import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.ResourceLoader;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -71,18 +71,9 @@ public class PipelineCache extends AbstractVulkanObject {
 	 * @return Cache data
 	 */
 	public byte[] data() {
-		// TODO - two-step invocation
-		// Query size of blob
 		final DeviceContext dev = super.device();
-		final VulkanLibrary lib = dev.library();
-		final IntByReference size = lib.factory().integer();
-		check(lib.vkGetPipelineCacheData(dev, this, size, null));
-
-		// Get data
-		final byte[] bytes = new byte[size.getValue()];
-		check(lib.vkGetPipelineCacheData(dev, this, size, bytes));
-
-		return bytes;
+		final VulkanFunction<byte[]> func = (api, count, data) -> api.vkGetPipelineCacheData(dev, this, count, data);
+		return VulkanFunction.invoke(func, dev.library(), byte[]::new);
 	}
 
 	/**

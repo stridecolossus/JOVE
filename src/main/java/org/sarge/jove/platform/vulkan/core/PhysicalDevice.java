@@ -43,7 +43,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public static Stream<PhysicalDevice> devices(Instance instance) {
 		final VulkanFunction<Pointer[]> func = (api, count, devices) -> api.vkEnumeratePhysicalDevices(instance, count, devices);
-		final Pointer[] handles = VulkanFunction.enumerate(func, instance.library(), Pointer[]::new);
+		final Pointer[] handles = VulkanFunction.invoke(func, instance.library(), Pointer[]::new);
 		return Arrays.stream(handles).map(ptr -> create(ptr, instance));
 	}
 
@@ -58,7 +58,7 @@ public class PhysicalDevice implements NativeObject {
 			api.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 			return VulkanLibrary.SUCCESS;
 		};
-		final VkQueueFamilyProperties[] props = VulkanFunction.enumerate(func, instance.library(), VkQueueFamilyProperties::new);
+		final VkQueueFamilyProperties[] props = VulkanFunction.invoke(func, instance.library(), VkQueueFamilyProperties::new);
 
 		// Create queue families
 		final List<Family> families = IntStream

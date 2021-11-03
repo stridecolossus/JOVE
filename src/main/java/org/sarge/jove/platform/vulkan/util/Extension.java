@@ -20,7 +20,7 @@ public final class Extension {
 	 */
 	public static Set<String> extensions(VulkanLibrary lib, VulkanFunction<VkExtensionProperties> func) {
 		return Arrays
-				.stream(VulkanFunction.enumerate(func, lib, VkExtensionProperties::new))
+				.stream(VulkanFunction.invoke(func, lib, VkExtensionProperties::new))
 				.map(e -> e.extensionName)
 				.map(String::new)
 				.collect(toSet());
