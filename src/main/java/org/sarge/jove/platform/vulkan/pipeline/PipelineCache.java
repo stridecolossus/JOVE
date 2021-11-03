@@ -6,16 +6,15 @@ import static org.sarge.lib.util.Check.notNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.Collection;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.ResourceLoader;
 
 import com.sun.jna.Pointer;
@@ -36,10 +35,8 @@ public class PipelineCache extends AbstractVulkanObject {
 		// Build create descriptor
 		final VkPipelineCacheCreateInfo info = new VkPipelineCacheCreateInfo();
 		if(data != null) {
-			final ByteBuffer bb = ByteBuffer.allocateDirect(data.length).order(Bufferable.ORDER);
-			Bufferable.of(data).buffer(bb);
 			info.initialDataSize = data.length;
-			info.pInitialData = bb;
+			info.pInitialData = BufferHelper.buffer(data);
 		}
 		// TODO info.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT
 

@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
@@ -12,6 +13,7 @@ import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.common.Layout.MutableCompoundLayout;
 import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.ResourceLoader;
 
 /**
@@ -70,9 +72,11 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 	}
 
 	private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOException {
-		final byte[] array = Bufferable.toArray(src);
-		out.writeInt(array.length);
-		out.write(array);
+		final int len = src.length();
+		final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferHelper.ORDER);
+		src.buffer(bb);
+		out.writeInt(len);
+		out.write(bb.array());
 	}
 
 	@Override

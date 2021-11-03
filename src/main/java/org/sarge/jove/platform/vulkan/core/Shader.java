@@ -5,12 +5,11 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.ResourceLoader;
 
 import com.sun.jna.Pointer;
@@ -28,14 +27,10 @@ public class Shader extends AbstractVulkanObject {
 	 * @return New shader
 	 */
 	public static Shader create(LogicalDevice dev, byte[] code) {
-		// Convert code to buffer
-		final ByteBuffer bb = ByteBuffer.allocateDirect(code.length).order(Bufferable.ORDER);
-		Bufferable.write(code, bb);
-
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
 		info.codeSize = code.length;
-		info.pCode = bb;
+		info.pCode = BufferHelper.buffer(code);
 
 		// Allocate shader
 		final VulkanLibrary lib = dev.library();
