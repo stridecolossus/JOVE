@@ -13,26 +13,32 @@ import java.nio.file.Paths;
  * @author Sarge
  */
 public class DataSource {
-	/**
-	 * Creates a file-system data-source at the given directory.
-	 * @param dir Root directory
-	 * @return New file-system data-source
-	 * @throws IllegalArgumentException if the root directory does not exist
-	 */
-	public static DataSource of(String dir) {
-		final Path root = Paths.get(dir);
-		if(!Files.exists(root)) throw new IllegalArgumentException("Data-source directory does not exist: " + root);
-		return new DataSource(root);
-	}
-
 	private final Path root;
 
 	/**
 	 * Constructor.
-	 * @param root Root of this data-source
+	 * @param root Data-source root path
+	 * @throws IllegalArgumentException if the root does not exist
 	 */
 	public DataSource(Path root) {
+		if(!Files.exists(root)) throw new IllegalArgumentException("Data-source root does not exist: " + root);
 		this.root = notNull(root);
+	}
+
+	/**
+	 * Constructor.
+	 * @param root Data-source root
+	 * @throws IllegalArgumentException if the root does not exist
+	 */
+	public DataSource(String root) {
+		this(Paths.get(root));
+	}
+
+	/**
+	 * @return Data-source root path
+	 */
+	public Path root() {
+		return root;
 	}
 
 	/**
@@ -46,7 +52,6 @@ public class DataSource {
 	 */
 	public <T, R> R load(String name, ResourceLoader<T, R> loader) {
 		try(final InputStream in = Files.newInputStream(root.resolve(name))) {
-			// TODO - null if not present
 			final T data = loader.map(in);
 			return loader.load(data);
 		}
@@ -54,6 +59,7 @@ public class DataSource {
 			throw new RuntimeException("Error loading resource: " + name, e);
 		}
 	}
+	// TODO - add default method for mapping filename -> stream, rename map() to transform()
 
 	@Override
 	public String toString() {

@@ -47,10 +47,10 @@ public class DataSourceTest {
 		loader = mock(ResourceLoader.class);
 	}
 
-	@Test
-	void constructorInvalidDirectory() {
-		assertThrows(IllegalArgumentException.class, () -> DataSource.of("cobblers"));
-	}
+//	@Test
+//	void constructorInvalidDirectory() {
+//		assertThrows(IllegalArgumentException.class, () -> DataSource.of("cobblers"));
+//	}
 
 	@Test
 	void load() throws IOException {

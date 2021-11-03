@@ -84,10 +84,14 @@ public class PipelineTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
+			// Create pipeline cache
+			final PipelineCache cache = mock(PipelineCache.class);
+
 			// Build pipeline
 			pipeline = builder
 					.layout(layout)
 					.pass(pass)
+					.cache(cache)
 					.viewport()
 						.viewport(viewport)
 						.scissor(viewport)
@@ -102,15 +106,17 @@ public class PipelineTest extends AbstractVulkanTest {
 
 			// Check allocation
 			final ArgumentCaptor<VkGraphicsPipelineCreateInfo[]> captor = ArgumentCaptor.forClass(VkGraphicsPipelineCreateInfo[].class);
-			verify(lib).vkCreateGraphicsPipelines(eq(dev), isNull(), eq(1), captor.capture(), isNull(), isA(Pointer[].class));
+			verify(lib).vkCreateGraphicsPipelines(eq(dev), eq(cache), eq(1), captor.capture(), isNull(), isA(Pointer[].class));
 			assertEquals(1, captor.getValue().length);
 
 			// Check descriptor
 			final VkGraphicsPipelineCreateInfo info = captor.getValue()[0];
 			assertNotNull(info);
+			assertEquals(0, info.flags);
+
+			// Check derived pipelines
 			assertEquals(null, info.basePipelineHandle);
 			assertEquals(-1, info.basePipelineIndex);
-			assertEquals(0, info.flags);
 
 			// Check render pass
 			// TODO

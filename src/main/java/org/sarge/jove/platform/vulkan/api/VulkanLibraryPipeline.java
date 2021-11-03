@@ -5,14 +5,17 @@ import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineCache;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -38,6 +41,44 @@ interface VulkanLibraryPipeline {
 	void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Pointer pAllocator);
 
 	/**
+	 * Creates a pipeline cache.
+	 * @param device			Logical device
+	 * @param pCreateInfo		Pipeline cache descriptor
+	 * @param pAllocator		Allocator
+	 * @param pPipelineCache	Returned pipeline cache handle
+	 * @return Result code
+	 */
+	int vkCreatePipelineCache(DeviceContext device, VkPipelineCacheCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineCache);
+
+	/**
+	 * Merges pipeline caches.
+	 * @param device			Logical device
+	 * @param dstCache			Target cache
+	 * @param srcCacheCount		Number of caches to merge
+	 * @param pSrcCaches		Array of caches to merge
+	 * @return Result code
+	 */
+	int vkMergePipelineCaches(DeviceContext device, PipelineCache dstCache, int srcCacheCount, Pointer pSrcCaches);
+
+	/**
+	 * Retrieves a pipeline cache.
+	 * @param device			Logical device
+	 * @param cache				Pipeline cache
+	 * @param pDataSize			Cache size
+	 * @param pData				Cache data
+	 * @return Result code
+	 */
+	int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntByReference pDataSize, byte[] pData);
+
+	/**
+	 * Destroys a pipeline cache.
+	 * @param device			Logical device
+	 * @param cache				Pipeline cache to destroy
+	 * @param pAllocator		Allocator
+	 */
+	void vkDestroyPipelineCache(DeviceContext device, PipelineCache cache, Pointer pAllocator);
+
+	/**
 	 * Creates a graphics pipeline.
 	 * @param device			Logical device
 	 * @param pipelineCache		Optional pipeline cache
@@ -47,7 +88,7 @@ interface VulkanLibraryPipeline {
 	 * @param pPipelines		Returned pipeline handle(s)
 	 * @return Result code
 	 */
-	int vkCreateGraphicsPipelines(LogicalDevice device, Pointer pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
+	int vkCreateGraphicsPipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
 
 	/**
 	 * Destroys a pipeline.

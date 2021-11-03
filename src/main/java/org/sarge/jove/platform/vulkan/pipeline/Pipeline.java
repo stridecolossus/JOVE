@@ -122,6 +122,7 @@ public class Pipeline extends AbstractVulkanObject {
 
 		// Properties
 		private PipelineLayout layout;
+		private PipelineCache cache;
 		private RenderPass pass;
 		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
 
@@ -151,6 +152,15 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public Builder layout(PipelineLayout layout) {
 			this.layout = notNull(layout);
+			return this;
+		}
+
+		/**
+		 * Sets the pipeline cache.
+		 * @param cache Pipeline cache
+		 */
+		public Builder cache(PipelineCache cache) {
+			this.cache = notNull(cache);
 			return this;
 		}
 
@@ -256,14 +266,14 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.pMultisampleState.sampleShadingEnable = VulkanBoolean.FALSE;
 //			pipeline.pMultisampleState.rasterizationSamples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
 
-			// TODO
-			pipeline.basePipelineHandle = null;
-			pipeline.basePipelineIndex = -1;
+			// TODO - derive from pipeline (faster to create, faster to bind if same parent)
+			pipeline.basePipelineHandle = null;			// TODO - from existing pipeline
+			pipeline.basePipelineIndex = -1;			// TODO - or from pipeline in this call
 
 			// Allocate pipeline
 			final VulkanLibrary lib = dev.library();
 			final Pointer[] pipelines = lib.factory().array(1);
-			check(lib.vkCreateGraphicsPipelines(dev, null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
+			check(lib.vkCreateGraphicsPipelines(dev, cache, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 			// Create pipeline
 			return new Pipeline(pipelines[0], dev, layout);
