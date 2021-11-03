@@ -156,7 +156,7 @@ public interface Image extends NativeObject {
 		 * @param samples Samples-per-texel
 		 */
 		public Builder samples(int samples) {
-			this.samples = IntegerEnumeration.map(VkSampleCountFlag.class, samples);
+			this.samples = IntegerEnumeration.mapping(VkSampleCountFlag.class).map(samples);
 			return this;
 		}
 

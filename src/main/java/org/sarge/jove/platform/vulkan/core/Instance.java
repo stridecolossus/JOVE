@@ -275,8 +275,8 @@ public class Instance extends AbstractTransientNativeObject {
 		 */
 		public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackData pCallbackData, Pointer pUserData) {
 			// Transform bit-masks to enumerations
-			final VkDebugUtilsMessageSeverity severityEnum = IntegerEnumeration.map(VkDebugUtilsMessageSeverity.class, severity);
-			final Collection<VkDebugUtilsMessageType> typesEnum = IntegerEnumeration.enumerate(VkDebugUtilsMessageType.class, type);
+			final VkDebugUtilsMessageSeverity severityEnum = IntegerEnumeration.mapping(VkDebugUtilsMessageSeverity.class).map(severity);
+			final Collection<VkDebugUtilsMessageType> typesEnum = IntegerEnumeration.mapping(VkDebugUtilsMessageType.class).enumerate(type);
 
 			// Create message wrapper
 			final Message message = new Message(severityEnum, typesEnum, pCallbackData);

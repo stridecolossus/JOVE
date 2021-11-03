@@ -129,7 +129,7 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 		// Enumerate memory heaps
 		final IntFunction<Heap> heapMapper = index -> {
 			final VkMemoryHeap heap = props.memoryHeaps[index];
-			final var flags = IntegerEnumeration.enumerate(VkMemoryHeapFlag.class, heap.flags);
+			final var flags = IntegerEnumeration.mapping(VkMemoryHeapFlag.class).enumerate(heap.flags);
 			return new Heap(index, heap.size, flags);
 		};
 		final Heap[] heaps = new Heap[props.memoryHeapCount];
@@ -139,7 +139,7 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 		final IntFunction<MemoryType> typeMapper = index -> {
 			final VkMemoryType type = props.memoryTypes[index];
 			final Heap heap = heaps[type.heapIndex];
-			final var properties = IntegerEnumeration.enumerate(VkMemoryProperty.class, type.propertyFlags);
+			final var properties = IntegerEnumeration.mapping(VkMemoryProperty.class).enumerate(type.propertyFlags);
 			return new MemoryType(index, heap, properties);
 		};
 		final MemoryType[] types = new MemoryType[props.memoryTypeCount];

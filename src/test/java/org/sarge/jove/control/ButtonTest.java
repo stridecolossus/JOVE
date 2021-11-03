@@ -51,17 +51,18 @@ public class ButtonTest {
 	class ModifierTests {
 		@Test
 		void map() {
-			assertEquals(Modifier.SHIFT, IntegerEnumeration.map(Modifier.class, 0x0001));
-			assertEquals(Modifier.CONTROL, IntegerEnumeration.map(Modifier.class, 0x0002));
-			assertEquals(Modifier.ALT, IntegerEnumeration.map(Modifier.class, 0x0004));
-			assertEquals(Modifier.SUPER, IntegerEnumeration.map(Modifier.class, 0x0008));
-			assertEquals(Modifier.CAPS_LOCK, IntegerEnumeration.map(Modifier.class, 0x0010));
-			assertEquals(Modifier.NUM_LOCK, IntegerEnumeration.map(Modifier.class, 0x0020));
+			final var mapping = IntegerEnumeration.mapping(Modifier.class);
+			assertEquals(Modifier.SHIFT, mapping.map(0x0001));
+			assertEquals(Modifier.CONTROL, mapping.map(0x0002));
+			assertEquals(Modifier.ALT, mapping.map(0x0004));
+			assertEquals(Modifier.SUPER, mapping.map(0x0008));
+			assertEquals(Modifier.CAPS_LOCK, mapping.map(0x0010));
+			assertEquals(Modifier.NUM_LOCK, mapping.map(0x0020));
 		}
 
 		@Test
 		void mask() {
-			assertEquals(Set.of(Modifier.SHIFT, Modifier.CONTROL, Modifier.ALT), IntegerEnumeration.enumerate(Modifier.class, 0x0001 | 0x0002 | 0x0004));
+			assertEquals(Set.of(Modifier.SHIFT, Modifier.CONTROL, Modifier.ALT), IntegerEnumeration.mapping(Modifier.class).enumerate(0x0001 | 0x0002 | 0x0004));
 		}
 	}
 }

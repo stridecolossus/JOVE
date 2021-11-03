@@ -109,7 +109,7 @@ public record Button(String id, Source source, Action action, int mods) implemen
 	 * @return Key modifiers
 	 */
 	public Set<Modifier> modifiers() {
-		return IntegerEnumeration.enumerate(Modifier.class, mods);
+		return IntegerEnumeration.mapping(Modifier.class).enumerate(mods);
 	}
 
 	@Override

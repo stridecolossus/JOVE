@@ -125,7 +125,7 @@ public class Surface extends AbstractTransientNativeObject {
 			// Convert to enumeration
 			return Arrays
 					.stream(array)
-					.mapToObj(n -> IntegerEnumeration.map(VkPresentModeKHR.class, n))
+					.mapToObj(n -> IntegerEnumeration.mapping(VkPresentModeKHR.class).map(n))
 					.collect(toSet());
 		}
 	}

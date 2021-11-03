@@ -16,6 +16,38 @@ import com.sun.jna.TypeConverter;
 
 /**
  * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <code>typedef enum</code>.
+ * <p>
+ * An integer enumeration has a {@link ReverseMapping} that can be used to map integer literals to enumeration constants.
+ * <p>
+ * Integer enumerations can be used in JNA methods and structures by registering the custom {@link CONVERTER} with the relevant JNA library.
+ * <p>
+ * Usage:
+ * <p>
+ * <pre>
+ * 	// Create integer enumeration
+ * 	enum Thing implements IntegerEnumeration {
+ * 		ONE(1),
+ * 		TWO(2),
+ * 		...
+ *
+ * 		private final int value;
+ *
+ * 		public int value() {
+ * 			return value;
+ * 		}
+ * 	}
+ *
+ * 	// Map literal to enumeration
+ * 	ReverseMapping&lt;Thing&gt; mapping = IntegerEnumeration.mapping(Thing.class);
+ * 	Thing thing = mapping.map(1);
+ *
+ * 	// Build integer mask from enumeration
+ * 	int mask = IntegerEnumeration.mask(Thing.ONE, ...);
+ *
+ * 	// Enumerate constants from integer mask
+ * 	Set&lt;Thing&gt; set = mapping.enumerate(mask);
+ * </pre>
+ * <p>
  * @author Sarge
  */
 public interface IntegerEnumeration {
@@ -23,6 +55,38 @@ public interface IntegerEnumeration {
 	 * @return Enum literal
 	 */
 	int value();
+
+	/**
+	 * Retrieves the reverse mapping for the given integer enumeration.
+	 * @param <E> Integer enumeration
+	 * @param clazz Enumeration class
+	 * @return Reverse mapping
+	 */
+	static <E extends IntegerEnumeration> ReverseMapping<E> mapping(Class<E> clazz) {
+		return ReverseMapping.get(clazz);
+	}
+
+	/**
+	 * Builds an integer mask from the given enumeration constants.
+	 * @param values Enumeration constants
+	 * @return Integer mask
+	 */
+	static <E extends IntegerEnumeration> int mask(Collection<E> values) {
+		return values
+				.stream()
+				.mapToInt(IntegerEnumeration::value)
+				.reduce(0, (a, b) -> a | b);
+	}
+
+	/**
+	 * Builds an integer mask from the given enumeration constants.
+	 * @param values Enumeration constants
+	 * @return Integer mask
+	 */
+	@SuppressWarnings("unchecked")
+	static <E extends IntegerEnumeration> int mask(E... values) {
+		return mask(Arrays.asList(values));
+	}
 
 	/**
 	 * Converts an integer enumeration to/from a native {@code int}.
@@ -44,147 +108,84 @@ public interface IntegerEnumeration {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public Object fromNative(Object nativeValue, FromNativeContext context) {
-			// Lookup enumeration
+			// Validate enumeration
 			final Class<?> type = context.getTargetType();
-			if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new IllegalStateException("Invalid native enumeration class: " + type.getSimpleName());
-			final var entry = Cache.CACHE.get((Class<? extends IntegerEnumeration>) type);
+			if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new RuntimeException("Invalid native enumeration class: " + type.getSimpleName());
 
 			// Map native value
+			final ReverseMapping<?> mapping = ReverseMapping.get(type);
 			final int value = (int) nativeValue;
 			if(value == 0) {
-				return entry.zero();
+				return mapping.zero;
 			}
 			else {
-				return entry.get(value);
+				return mapping.map(value);
 			}
 		}
 	};
 
 	/**
-	 * Maps an enumeration literal to the corresponding enumeration constant.
-	 * @param clazz Enumeration class
-	 * @param value Literal
-	 * @return Constant
-	 * @throws IllegalArgumentException if the enumeration does not contain the given value
+	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps integers to enumeration constants.
+	 * @param <E> Integer enumeration
 	 */
-	static <E extends IntegerEnumeration> E map(Class<E> clazz, int value) {
-		return Cache.CACHE.get(clazz).get(value);
-	}
-
-	/**
-	 * Converts an integer mask to a set of enumeration constants.
-	 * @param clazz		Enumeration class
-	 * @param mask		Mask
-	 * @return Enumeration constants (in ascending order of value)
-	 */
-	static <E extends IntegerEnumeration> Set<E> enumerate(Class<E> clazz, int mask) {
-		final var entry = Cache.CACHE.get(clazz);
-		final Set<E> values = new TreeSet<>();
-		final int max = Integer.highestOneBit(mask);
-		for(int n = 0; n < max; ++n) {
-			final int value = 1 << n;
-			if((value & mask) == value) {
-				values.add(entry.get(value));
-			}
-		}
-		return values;
-	}
-
-	/**
-	 * Builds an integer mask from the given enumeration constants.
-	 * @param values Enumeration constants
-	 * @return Mask
-	 */
-	static <E extends IntegerEnumeration> int mask(Collection<E> values) {
-		return values
-				.stream()
-				.mapToInt(IntegerEnumeration::value)
-				.reduce(0, (a, b) -> a | b);
-	}
-
-	/**
-	 * Builds an integer mask from the given enumeration constants.
-	 * @param values Enumeration constants
-	 * @return Mask
-	 */
-	@SafeVarargs
-	static <E extends IntegerEnumeration> int mask(E... values) {
-		return mask(Arrays.asList(values));
-	}
-
-	/**
-	 * Internal enumeration cache.
-	 */
-	final class Cache {
-		/**
-		 * Singleton instance.
-		 */
-		private static final Cache CACHE = new Cache();
+	final class ReverseMapping<E extends IntegerEnumeration> {
+		private static final Map<Class<?>, ReverseMapping<?>> CACHE = new ConcurrentHashMap<>();
 
 		/**
-		 * Cache entry.
-		 */
-		private static class Entry {
-			private final Map<Integer, ? extends IntegerEnumeration> map;
-			private final Object zero;
-
-			/**
-			 * Constructor.
-			 * @param clazz Enumeration class
-			 */
-			private Entry(Class<? extends IntegerEnumeration> clazz) {
-				// Build reverse mapping
-				final IntegerEnumeration[] array = clazz.getEnumConstants();
-				this.map = Arrays.stream(array).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
-
-				// Determine zero value
-				final Object def = map.get(0);
-				this.zero = def == null ? array[0] : def;
-			}
-
-			/**
-			 * Looks up the enumeration constant for the given value.
-			 * @param <E> Enumeration
-			 * @param value Constant value
-			 * @return Enumeration constant
-			 * @throws IllegalArgumentException for an unknown value
-			 */
-			@SuppressWarnings("unchecked")
-			private <E extends IntegerEnumeration> E get(int value) {
-				final E result = (E) map.get(value);
-				if(result == null) {
-					final Class<?> clazz = map.values().iterator().next().getClass();
-					throw new IllegalArgumentException(String.format("Unknown enumeration value: enum=%s value=%d", clazz.getSimpleName(), value));
-				}
-				return result;
-			}
-
-			/**
-			 * Zero (or default) value for this enumeration.
-			 * @param <E> Enumeration
-			 * @return Zero value
-			 */
-			@SuppressWarnings("unchecked")
-			private <E extends IntegerEnumeration> E zero() {
-				return (E) zero;
-			}
-		}
-
-		private final Map<Class<? extends IntegerEnumeration>, Entry> cache = new ConcurrentHashMap<>();
-
-		private Cache() {
-		}
-
-		/**
-		 * Looks up a cache entry for the given enumeration.
+		 * Looks up the reverse mapping for the given enumeration.
+		 * @param <E> Enumeration
 		 * @param clazz Enumeration class
-		 * @return Cache entry
+		 * @return Reverse mapping
 		 */
-		private Entry get(Class<? extends IntegerEnumeration> clazz) {
-			return cache.computeIfAbsent(clazz, Entry::new);
+		@SuppressWarnings("unchecked")
+		private static <E extends IntegerEnumeration> ReverseMapping<E> get(Class<?> clazz) {
+			return (ReverseMapping<E>) ReverseMapping.CACHE.computeIfAbsent(clazz, ReverseMapping::new);
+		}
+
+		private final Map<Integer, E> map;
+		private final E zero;
+
+		/**
+		 * Constructor.
+		 * @param clazz Integer enumeration class
+		 */
+		private ReverseMapping(Class<E> clazz) {
+			final E[] array = clazz.getEnumConstants();
+			this.map = Arrays.stream(array).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
+			this.zero = map.getOrDefault(0, array[0]);
+		}
+
+		/**
+		 * Maps an enumeration literal to the corresponding enumeration constant.
+		 * @param clazz Enumeration class
+		 * @param value Literal
+		 * @return Constant
+		 * @throws IllegalArgumentException if the enumeration does not contain the given value
+		 */
+		public E map(int value) {
+			final E constant = map.get(value);
+			if(constant == null) throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, zero.getClass().getSimpleName()));
+			return constant;
+		}
+
+		/**
+		 * Converts an integer mask to a set of enumeration constants.
+		 * @param clazz		Enumeration class
+		 * @param mask		Mask
+		 * @return Enumeration constants (in ascending order of value)
+		 */
+		public Set<E> enumerate(int mask) {
+			final Set<E> values = new TreeSet<>();
+			final int max = Integer.highestOneBit(mask);
+			for(int n = 0; n < max; ++n) {
+				final int value = 1 << n;
+				if((value & mask) == value) {
+					values.add(map(value));
+				}
+			}
+			return values;
 		}
 	}
 }

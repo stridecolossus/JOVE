@@ -77,7 +77,7 @@ public class PhysicalDevice implements NativeObject {
 	 * @return New queue family
 	 */
 	private static Family family(int index, VkQueueFamilyProperties props) {
-		final Set<VkQueueFlag> flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
+		final Set<VkQueueFlag> flags = IntegerEnumeration.mapping(VkQueueFlag.class).enumerate(props.queueFlags);
 		return new Family(index, props.queueCount, flags);
 	}
 
