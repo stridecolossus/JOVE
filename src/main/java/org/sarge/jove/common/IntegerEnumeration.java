@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -17,7 +16,7 @@ import com.sun.jna.TypeConverter;
 /**
  * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <code>typedef enum</code>.
  * <p>
- * An integer enumeration has a {@link ReverseMapping} that can be used to map integer literals to enumeration constants.
+ * An integer enumeration has a {@link ReverseMapping} that can be used to map integer literals to the enumeration constants.
  * <p>
  * Integer enumerations can be used in JNA methods and structures by registering the custom {@link CONVERTER} with the relevant JNA library.
  * <p>
@@ -89,7 +88,7 @@ public interface IntegerEnumeration {
 	}
 
 	/**
-	 * Converts an integer enumeration to/from a native {@code int}.
+	 * JNA type converter for an integer enumeration.
 	 */
 	TypeConverter CONVERTER = new TypeConverter() {
 		@Override
@@ -127,7 +126,7 @@ public interface IntegerEnumeration {
 	};
 
 	/**
-	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps integers to enumeration constants.
+	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers to the enumeration constants.
 	 * @param <E> Integer enumeration
 	 */
 	final class ReverseMapping<E extends IntegerEnumeration> {
@@ -171,13 +170,13 @@ public interface IntegerEnumeration {
 		}
 
 		/**
-		 * Converts an integer mask to a set of enumeration constants.
+		 * Converts an integer mask to an ordered set of enumeration constants.
 		 * @param clazz		Enumeration class
 		 * @param mask		Mask
 		 * @return Enumeration constants (in ascending order of value)
 		 */
-		public Set<E> enumerate(int mask) {
-			final Set<E> values = new TreeSet<>();
+		public TreeSet<E> enumerate(int mask) {
+			final TreeSet<E> values = new TreeSet<>();
 			final int max = Integer.highestOneBit(mask);
 			for(int n = 0; n < max; ++n) {
 				final int value = 1 << n;
