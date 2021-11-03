@@ -28,7 +28,6 @@ import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackData;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.core.Instance.Builder;
 import org.sarge.jove.platform.vulkan.core.Instance.Handler;
@@ -36,6 +35,7 @@ import org.sarge.jove.platform.vulkan.core.Instance.Message;
 import org.sarge.jove.platform.vulkan.core.Instance.MessageCallback;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;

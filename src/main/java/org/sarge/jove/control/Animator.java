@@ -18,8 +18,8 @@ public class Animator implements Playable, FrameTracker.Listener {
 	@FunctionalInterface
 	public interface Animation {
 		/**
-		 * Notifies that the animation has been updated.
-		 * @param animator Updated animator
+		 * Updates this animation.
+		 * @param animator Animator
 		 */
 		void update(Animator animator);
 	}

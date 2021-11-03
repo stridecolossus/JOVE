@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,9 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.common.ValidationLayer.ValidationLayerSet;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.platform.vulkan.util.ValidationLayer.ValidationLayerSet;
 
 import com.sun.jna.ptr.IntByReference;
 
@@ -101,7 +102,7 @@ public class ValidationLayerTest {
 		when(func.enumerate(eq(lib), eq(count), isA(VkLayerProperties.class))).thenAnswer(answer);
 
 		// Enumerate layers
-		final Set<ValidationLayer> layers = ValidationLayer.enumerate(lib, func);
+		final Set<ValidationLayer> layers = ValidationLayer.layers(lib, func);
 		assertEquals(Set.of(layer), layers);
 	}
 }

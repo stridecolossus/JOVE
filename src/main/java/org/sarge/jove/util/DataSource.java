@@ -46,6 +46,7 @@ public class DataSource {
 	 */
 	public <T, R> R load(String name, ResourceLoader<T, R> loader) {
 		try(final InputStream in = Files.newInputStream(root.resolve(name))) {
+			// TODO - null if not present
 			final T data = loader.map(in);
 			return loader.load(data);
 		}

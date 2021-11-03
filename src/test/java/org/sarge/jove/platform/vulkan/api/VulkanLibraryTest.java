@@ -3,9 +3,6 @@ package org.sarge.jove.platform.vulkan.api;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -17,12 +14,10 @@ import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.VkStructureType;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 
 import com.sun.jna.Structure.FieldOrder;
-import com.sun.jna.ptr.IntByReference;
 
 public class VulkanLibraryTest {
 	@Test
@@ -57,32 +52,6 @@ public class VulkanLibraryTest {
 	void create() {
 		final VulkanLibrary api = VulkanLibrary.create();
 		assertNotNull(api);
-	}
-
-	@Nested
-	class SupportTests {
-		private VulkanLibrary lib;
-		private IntByReference count;
-
-		@BeforeEach
-		void before() {
-			lib = mock(VulkanLibrary.class);
-			count = new IntByReference(0);
-			when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
-			when(lib.factory().integer()).thenReturn(count);
-		}
-
-		@Test
-		void extensions() {
-			VulkanLibrary.extensions(lib);
-			verify(lib).vkEnumerateInstanceExtensionProperties(null, count, null);
-		}
-
-		@Test
-		void layers() {
-			VulkanLibrary.layers(lib);
-			verify(lib).vkEnumerateInstanceLayerProperties(count, null);
-		}
 	}
 
 	// Note has to be public

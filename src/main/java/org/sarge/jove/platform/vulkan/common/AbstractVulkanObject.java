@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import com.sun.jna.Pointer;
 
 /**
- * An <i>abstract Vulkan object</i> is a template base-class for an object derived from the {@link DeviceContext}.
+ * An <i>abstract Vulkan object</i> is a template base-class for an object derived from the logical device.
  * @author Sarge
  */
 public abstract class AbstractVulkanObject extends AbstractTransientNativeObject {

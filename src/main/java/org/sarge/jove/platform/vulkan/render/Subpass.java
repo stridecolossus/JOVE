@@ -31,9 +31,6 @@ import org.sarge.lib.util.Check;
  * Usage:
  * <p>
  * <pre>
- * 	Attachment colour = ...
- * 	Attachment depth = ...
- *
  * 	Subpass subpass = new Subpass.Builder()
  * 		.colour(new Reference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL))
  * 		.depth(new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL))

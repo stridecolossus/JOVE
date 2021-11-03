@@ -5,29 +5,11 @@ import static java.util.stream.Collectors.toSet;
 import java.util.Arrays;
 import java.util.Set;
 
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
-import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 
-/**
- * Vulkan helper and utility methods.
- * @author Sarge
- */
-public final class VulkanHelper {
-	private VulkanHelper() {
-	}
-
-	/**
-	 * Populates a Vulkan rectangle.
-	 * @param in		Rectangle
-	 * @param out		Vulkan rectangle
-	 */
-	public static void populate(Rectangle in, VkRect2D out) {
-		out.offset.x = in.x();
-		out.offset.y = in.y();
-		out.extent.width = in.width();
-		out.extent.height = in.height();
+public final class Extension {
+	private Extension() {
 	}
 
 	/**
@@ -42,5 +24,14 @@ public final class VulkanHelper {
 				.map(e -> e.extensionName)
 				.map(String::new)
 				.collect(toSet());
+	}
+
+	/**
+	 * @param lib Vulkan
+	 * @return Extensions supported by this platform
+	 */
+	static Set<String> extensions(VulkanLibrary lib) {
+		final VulkanFunction<VkExtensionProperties> func = (api, count, array) -> api.vkEnumerateInstanceExtensionProperties(null, count, array);
+		return extensions(lib, func);
 	}
 }

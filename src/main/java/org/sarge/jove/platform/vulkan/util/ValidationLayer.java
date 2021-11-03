@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toCollection;
 
@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.lib.util.Check;
 
 /**
@@ -39,11 +38,20 @@ public record ValidationLayer(String name, int version) {
 	 * @param func			Layers function
 	 * @return Validation layers
 	 */
-	public static Set<ValidationLayer> enumerate(VulkanLibrary lib, VulkanFunction<VkLayerProperties> func) {
+	public static Set<ValidationLayer> layers(VulkanLibrary lib, VulkanFunction<VkLayerProperties> func) {
 		return Arrays
 				.stream(VulkanFunction.enumerate(func, lib, VkLayerProperties::new))
 				.map(ValidationLayer::of)
 				.collect(toCollection(ValidationLayerSet::new));
+	}
+
+	/**
+	 * @param lib Vulkan library
+	 * @return Validation layers supported by this platform
+	 */
+	public static Set<ValidationLayer> layers(VulkanLibrary lib) {
+		final VulkanFunction<VkLayerProperties> func = (api, count, array) -> api.vkEnumerateInstanceLayerProperties(count, array);
+		return layers(lib, func);
 	}
 
 	/**

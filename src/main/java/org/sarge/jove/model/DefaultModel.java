@@ -35,7 +35,7 @@ public class DefaultModel extends AbstractModel {
 	public DefaultModel(Header header, List<Vertex> vertices, int[] index) {
 		super(header);
 		this.vertices = List.copyOf(vertices);
-		this.index = index == null ? null : Arrays.copyOf(index, index.length);
+		this.index = index == null ? null : Arrays.copyOf(index, index.length); // TODO - ugly
 	}
 
 	@Override

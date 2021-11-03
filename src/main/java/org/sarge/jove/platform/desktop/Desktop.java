@@ -71,7 +71,6 @@ public class Desktop {
 	/**
 	 * @return GLFW library
 	 */
-	public // TODO
 	DesktopLibrary library() {
 		return lib;
 	}

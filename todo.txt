@@ -1,7 +1,6 @@
 pipeline
 - re-build pipeline after window viewport/focus change
 - check for depth attachment in frame-buffer::create
-- caching, https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/pipeline_cache/pipeline_cache_tutorial.md
 
 model
 - sphere/conic builder, uses unit circle, add pole, add ring with N points / segment
@@ -50,3 +49,8 @@ current
 
 * There are several lists of objects (frame buffers, descriptor sets, etc) that are used when recording the rendering sequence (again lots of dependencies).
 * New classes to compose the various objects that collaborate when recording the render sequence.
+
+should the JNA API interfaces be moved to the relevant packages?
+split descriptor set / pool / layout?
+ditto commands?
+vertex should be in geometry?

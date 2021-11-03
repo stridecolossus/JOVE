@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
+import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.lib.util.Percentile;
 
 import com.sun.jna.Pointer;

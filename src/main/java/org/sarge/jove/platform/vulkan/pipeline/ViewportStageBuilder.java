@@ -9,7 +9,6 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
-import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
@@ -112,6 +111,18 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 		info.maxDepth = viewport.max.floatValue();
 	}
 
+	/**
+	 * Populates a Vulkan rectangle.
+	 * @param in		Rectangle
+	 * @param out		Vulkan rectangle
+	 */
+	private static void populate(Rectangle in, VkRect2D out) {
+		out.offset.x = in.x();
+		out.offset.y = in.y();
+		out.extent.width = in.width();
+		out.extent.height = in.height();
+	}
+
 	@Override
 	VkPipelineViewportStateCreateInfo get() {
 		// Validate
@@ -128,7 +139,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = StructureHelper.first(scissors, VkRect2D.ByReference::new, VulkanHelper::populate);
+		info.pScissors = StructureHelper.first(scissors, VkRect2D.ByReference::new, ViewportStageBuilder::populate);
 
 		return info;
 	}

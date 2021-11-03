@@ -9,7 +9,7 @@ import org.sarge.jove.control.Event.Device;
 import org.sarge.jove.control.Event.Source;
 
 /**
- * Convenience base-class for a GLFW-based device.
+ * Base-class for a GLFW-based device.
  * @author Sarge
  */
 public abstract class DesktopDevice implements Device {

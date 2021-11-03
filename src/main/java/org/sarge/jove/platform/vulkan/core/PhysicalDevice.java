@@ -21,11 +21,11 @@ import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.common.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
+import org.sarge.jove.platform.vulkan.util.Extension;
+import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-import org.sarge.jove.platform.vulkan.util.VulkanHelper;
 import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;
@@ -295,7 +295,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public Set<String> extensions() {
 		final VulkanFunction<VkExtensionProperties> func = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(this, null, count, array);
-		return VulkanHelper.extensions(instance.library(), func);
+		return Extension.extensions(instance.library(), func);
 	}
 
 	/**
@@ -303,7 +303,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public Set<ValidationLayer> layers() {
 		final VulkanFunction<VkLayerProperties> func = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(this, count, array);
-		return ValidationLayer.enumerate(instance.library(), func);
+		return ValidationLayer.layers(instance.library(), func);
 	}
 
 	/**
