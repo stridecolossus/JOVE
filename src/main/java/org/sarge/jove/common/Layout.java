@@ -69,7 +69,7 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	}
 
 	/**
-	 * A <i>layout component</i> is a bufferable object with a layout, i.e. can be composed into a vertex.
+	 * A <i>layout component</i> defines a bufferable object that has a layout, i.e. can be composed into a vertex.
 	 */
 	public interface Component extends Bufferable {
 		/**
@@ -124,8 +124,8 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	 * Example:
 	 * <p>
 	 * <pre>
-	 * 	CompoundLayout one = new CompoundLayout(List.of(Point.LAYOUT);
-	 * 	CompoundLayout two = new CompoundLayout(List.of(Vector.NORMALS);
+	 * 	CompoundLayout one = CompoundLayout.of(Point.LAYOUT);
+	 * 	CompoundLayout two = CompoundLayout(Vector.NORMALS);
 	 * 	Point.LAYOUT.equals(Vector.NORMALS); // true
 	 * 	one.equals(two); // false
 	 * </pre>

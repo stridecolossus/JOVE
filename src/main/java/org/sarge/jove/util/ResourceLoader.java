@@ -8,8 +8,8 @@ import java.io.InputStream;
  * <p>
  * A resource loader is comprised of a two-stage approach:
  * <ol>
- * <li>{@link #map(InputStream)} transforms an input-stream to some intermediate data type</li>
- * <li>{@link #load(Object)} constructs the resultant object from this data</li>
+ * <li>{@link #map(InputStream)} transforms an input-stream to some intermediate data type or stream</li>
+ * <li>{@link #load(Object)} constructs the resultant object from the intermediate data</li>
  * </ol>
  * <p>
  * @param <T> Input type

@@ -2,8 +2,8 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -28,7 +28,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * <pre>
  * 	// Create service with default allocator
- * 	Allocator def = ...
+ * 	Allocator allocator = ...
  * 	AllocationService service = new AllocationService(new MemorySelector(), allocator);
  *
  * 	// Route to a different allocator
@@ -38,7 +38,7 @@ import org.sarge.lib.util.Check;
  *
  * 	// Allocate memory
  * 	VkMemoryRequirements reqs = ...
- * 	DeviceMemory mem = service.allocator(reqs, props);
+ * 	DeviceMemory mem = service.allocate(reqs, props);
  * </pre>
  * <p>
  * @author Sarge
@@ -56,7 +56,7 @@ public class AllocationService {
 
 	private final MemorySelector selector;
 	private final Allocator def;
-	private final Deque<Route> routes = new LinkedList<>();
+	private final List<Route> routes = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -75,7 +75,7 @@ public class AllocationService {
 	 * @param allocator		Allocator
 	 */
 	public void route(Predicate<MemoryProperties<?>> predicate, Allocator allocator) {
-		routes.addFirst(new Route(predicate, allocator));
+		routes.add(new Route(predicate, allocator));
 	}
 
 	/**

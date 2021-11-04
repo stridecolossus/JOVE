@@ -8,6 +8,10 @@ import java.util.Set;
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 
+/**
+ * Vulkan extensions utilities.
+ * @author Sarge
+ */
 public final class Extension {
 	private Extension() {
 	}

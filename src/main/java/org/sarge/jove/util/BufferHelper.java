@@ -3,6 +3,10 @@ package org.sarge.jove.util;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * Buffer utilities.
+ * @author Sarge
+ */
 public final class BufferHelper {
 	/**
 	 * Native byte order for a bufferable object.

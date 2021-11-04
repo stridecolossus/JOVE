@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +19,7 @@ import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
 /**
- * An <i>image copy command</i> is used to copy an image to/from a buffer.
+ * An <i>image copy command</i> is used to copy an image to/from a Vulkan buffer.
  * @author Sarge
  */
 public class ImageCopyCommand implements Command {
@@ -54,7 +55,7 @@ public class ImageCopyCommand implements Command {
 	}
 
 	/**
-	 * Invert this command to copy <i>from</i> the buffer <i>to</i> the image.
+	 * Inverts this command to copy <i>from</i> the buffer <i>to</i> the image.
 	 * @return Inverse copy command
 	 */
 	public Command invert() {
@@ -63,7 +64,7 @@ public class ImageCopyCommand implements Command {
 	}
 
 	/**
-	 * A <i>copy region</i> specifies the portion of the image to be copied.
+	 * A <i>copy region</i> specifies a portion of the image to be copied.
 	 */
 	public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents) {
 		/**
@@ -96,7 +97,7 @@ public class ImageCopyCommand implements Command {
 		}
 
 		/**
-		 * Populates the copy region descriptor.
+		 * Populates the copy descriptor.
 		 */
 		private void populate(VkBufferImageCopy copy) {
 			copy.bufferOffset = offset;
@@ -117,6 +118,33 @@ public class ImageCopyCommand implements Command {
 			private SubResource subresource;
 			private VkOffset3D imageOffset = new VkOffset3D();
 			private ImageExtents extents;
+
+			/**
+			 * Sets the buffer offset.
+			 * @param offset Buffer offset (bytes)
+			 */
+			public Builder offset(long offset) {
+				this.offset = zeroOrMore(offset);
+				return this;
+			}
+
+			/**
+			 * Sets the buffer row length.
+			 * @param length Row length (texels)
+			 */
+			public Builder length(int length) {
+				this.length = zeroOrMore(length);
+				return this;
+			}
+
+			/**
+			 * Sets the image height.
+			 * @param height Image height (texels)
+			 */
+			public Builder height(int height) {
+				this.height = zeroOrMore(height);
+				return this;
+			}
 
 			/**
 			 * Sets the image offset (default is no offset).

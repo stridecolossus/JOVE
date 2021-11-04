@@ -16,7 +16,7 @@ import com.sun.jna.TypeConverter;
 /**
  * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <code>typedef enum</code>.
  * <p>
- * An integer enumeration has a {@link ReverseMapping} that can be used to map integer literals to the enumeration constants.
+ * An integer enumeration has a {@link ReverseMapping} that can be used to map integer literals to the corresponding enumeration constants.
  * <p>
  * Integer enumerations can be used in JNA methods and structures by registering the custom {@link CONVERTER} with the relevant JNA library.
  * <p>
@@ -38,7 +38,7 @@ import com.sun.jna.TypeConverter;
  *
  * 	// Map literal to enumeration
  * 	ReverseMapping&lt;Thing&gt; mapping = IntegerEnumeration.mapping(Thing.class);
- * 	Thing thing = mapping.map(1);
+ * 	Thing thing = mapping.map(1);	// ONE
  *
  * 	// Build integer mask from enumeration
  * 	int mask = IntegerEnumeration.mask(Thing.ONE, ...);

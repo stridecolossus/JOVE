@@ -15,6 +15,7 @@ import org.sarge.jove.common.TransientNativeObject;
  * <li>Only <b>one</b> active mapping is permitted on a given instance at any one time</li>
  * <li>Memory mappings can be <i>persistent</i>, i.e. it is not required to explicitly un-map memory after a read/write access</li>
  * <li>Memory can be assumed to be automatically un-mapped when it is released</li>
+ * <li>Buffers retrieved from a mapped region using {@link Region#buffer(long, long)} are invalidated if the region is un-mapped or the memory destroyed</li>
  * </ul>
  * <p>
  * Usage:
@@ -53,13 +54,14 @@ public interface DeviceMemory extends TransientNativeObject {
 		 * @param size			Region size (bytes)
 		 * @return Byte-buffer
 		 * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this region
+		 * @throws IllegalStateException if this region has been released or the memory has been destroyed
 		 */
 		ByteBuffer buffer(long offset, long size);
 
 		/**
 		 * Provides a byte-buffer to access this memory region.
 		 * @return Byte-buffer
-		 * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this region
+		 * @throws IllegalStateException if this region has been released or the memory has been destroyed
 		 */
 		default ByteBuffer buffer() {
 			return buffer(0, size());
@@ -67,7 +69,7 @@ public interface DeviceMemory extends TransientNativeObject {
 
 		/**
 		 * Un-maps this mapped region.
-		 * @throws IllegalStateException if the mapping has also been released or the memory has been destroyed
+		 * @throws IllegalStateException if the mapping has already been released or the memory has been destroyed
 		 */
 		void unmap();
 	}
