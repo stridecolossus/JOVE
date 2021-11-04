@@ -15,17 +15,16 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>pool</i> is a delegate manager for memory allocations of a given type.
+ * A <i>memory pool</i> is comprised of a number of <i>blocks</i> from which device memory is allocated.
+ * The pool grows as required according to the configured {@link BlockPolicy}.
  * <p>
- * The pool manages a number of <i>blocks</i> from which device memory is allocated growing the pool as required.
  * Released memory allocations are restored to the pool and potentially reallocated.
  * <p>
- * The {@link #policy(BlockPolicy)} method can be used to configure the growth policy for newly allocated blocks.
+ * Free memory can be pre-allocated into the pool using the {@link Pool#init(long)} method.
  * <p>
- * The {@link Pool#init(long)} is used to pre-allocate memory into the pool.
- * <p>
- * Note that the mapped {@link Region} for a block can be silently unmapped by the pool (only one mapped region is permitted for any given block).
- * The client should ensure
+ * Note that the mapped {@link Region} for a block can be silently unmapped by the pool since only one mapped region is permitted per block by the underlying implementation.
+ * The client is responsible for ensuring that a new region is mapped as required.
+ * Alternatively a non-pooled allocator implementation should be considered where memory mapping is highly volatile.
  * <p>
  * @author Sarge
  */
@@ -33,7 +32,7 @@ public class MemoryPool {
 	private final MemoryType type;
 	private final Allocator allocator;
 	private final List<Block> blocks = new ArrayList<>();
-	private BlockPolicy policy = BlockPolicy.NONE; // TODO - property of pool allocator?
+	private BlockPolicy policy = BlockPolicy.NONE;
 	private long total;
 
 	/**
@@ -213,6 +212,7 @@ public class MemoryPool {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("type", type)
+				.append("policy", policy)
 				.append("size", total)
 				.append("free", free())
 				.append("blocks", blocks.size())

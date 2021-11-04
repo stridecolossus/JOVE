@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,10 +45,18 @@ public class AllocationServiceTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void init() {
+	void route() {
 		final Allocator other = mock(Allocator.class);
-		service.init(props, other);
+		final Predicate<MemoryProperties<?>> predicate = p -> p == props;
+		service.route(predicate, other);
 		service.allocate(reqs, props);
 		verify(other).allocate(type, 0);
+	}
+
+	@Test
+	void defaultRoute() {
+		service.route(ignored -> false, mock(Allocator.class));
+		service.allocate(reqs, props);
+		verify(allocator).allocate(type, 0);
 	}
 }

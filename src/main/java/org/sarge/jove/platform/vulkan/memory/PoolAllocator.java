@@ -8,37 +8,55 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>pool allocator</i> maintains a <i>pool</i> of memory in order to reduce the total number of active allocations.
+ * A <i>pool allocator</i> delegates allocation requests to a {@link MemoryPool}.
  * <p>
- * This implementation creates a {@link MemoryPool} pool for <b>each</b> memory type on demand which grows as required.
- * <p>
- * Usage:
- * <pre>
- * TODO
- * </pre>
+ * This implementation creates a memory pool for <b>each</b> memory type on demand.
+ * The pool grows as required according to a {@link BlockPolicy} configured using the {@link #policy(BlockPolicy)} method.
  * <p>
  * @author Sarge
  */
 public class PoolAllocator implements Allocator {
 	/**
-	 * TODO
-	 * @param dev
-	 * @return
+	 * Helper - Creates a pool allocator configured by the properties of the given device.
+	 * <p>
+	 * The pool is configured as follows:
+	 * <ul>
+	 * <li>{@link VkPhysicalDeviceLimits#bufferImageGranularity} specifies the <i>page size</i> used to create a {@link PageBlockPolicy} for the allocator</li>
+	 * <li>{@link VkPhysicalDeviceLimits#maxMemoryAllocationCount} configures the maximum number of allowed allocations</li>
+	 * <li>if {@link #allocator} is {@code null} a default allocator is created using {@link Allocator#allocator(DeviceContext)}</li>
+	 * </ul>
+	 * <p>
+	 * @param dev			Logical device
+	 * @param allocator		Optional delegate allocator
+	 * @return New pool allocator
+	 * @see PhysicalDevice.Properties#limits()
 	 */
-	public static PoolAllocator create(LogicalDevice dev) {
+	public static PoolAllocator create(LogicalDevice dev, Allocator allocator) {
+		// Init allocator if not specified
+		final Allocator delegate = allocator == null ? Allocator.allocator(dev) : allocator;
+
+		// Create paged policy
 		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
-		// TODO - limits.bufferImageGranularity
-		return new PoolAllocator(null, limits.maxMemoryAllocationCount);
+		final BlockPolicy policy = new PageBlockPolicy(limits.bufferImageGranularity);
+
+		// Create pool allocator
+		final PoolAllocator pool = new PoolAllocator(delegate, limits.maxMemoryAllocationCount);
+		pool.policy(policy);
+
+		return pool;
 	}
 
 	private final Allocator allocator;
 	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
 	private final int max;
 	private int count;
+	private BlockPolicy policy = BlockPolicy.NONE;
 
 	/**
 	 * Constructor.
@@ -77,7 +95,18 @@ public class PoolAllocator implements Allocator {
 	 * @return Pool
 	 */
 	public MemoryPool pool(MemoryType type) {
-		return pools.computeIfAbsent(type, ignored -> new MemoryPool(type, allocator));
+		return pools.computeIfAbsent(type, this::create);
+	}
+
+	/**
+	 * Creates a new memory pool.
+	 * @param type Memory type
+	 * @return New memory pool
+	 */
+	private MemoryPool create(MemoryType type) {
+		final MemoryPool pool = new MemoryPool(type, allocator);
+		pool.policy(policy);
+		return pool;
 	}
 
 	/**
@@ -85,6 +114,14 @@ public class PoolAllocator implements Allocator {
 	 */
 	public Map<MemoryType, MemoryPool> pools() {
 		return Map.copyOf(pools);
+	}
+
+	/**
+	 * Sets the block policy for new memory pools (default is {@link BlockPolicy#NONE}).
+	 * @param policy Block policy
+	 */
+	public void policy(BlockPolicy policy) {
+		this.policy = notNull(policy);
 	}
 
 	@Override
@@ -124,8 +161,9 @@ public class PoolAllocator implements Allocator {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("allocations", String.format("%d/%d", count, max))
 				.append("pools", pools.size())
+				.append("allocations", String.format("%d/%d", count, max))
+				.append("policy", policy)
 				.build();
 	}
 }

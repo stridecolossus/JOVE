@@ -12,6 +12,13 @@ public class BlockPolicyTest {
 	}
 
 	@Test
+	void initial() {
+		final BlockPolicy policy = BlockPolicy.NONE.initial(3);
+		assertEquals(3, policy.apply(1, 0));
+		assertEquals(1, policy.apply(1, 2));
+	}
+
+	@Test
 	void literal() {
 		final BlockPolicy policy = BlockPolicy.literal(3);
 		assertNotNull(policy);

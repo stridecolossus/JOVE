@@ -10,8 +10,7 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>memory allocator</i> defines a strategy for allocation of device memory.
- * @see DeviceMemory
+ * An <i>allocator</i> is responsible for allocating device memory.
  * @author Sarge
  */
 @FunctionalInterface

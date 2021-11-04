@@ -15,6 +15,10 @@ import org.sarge.lib.util.Check;
 
 /**
  * A <i>block</i> is a chunk of memory managed by a {@link MemoryPool}.
+ * <p>
+ * Note that the mapped region can be silently released by this implementation since only one mapped region is permitted per block.
+ * However the previous mapping is automatically released if a new mapping is created for a given block.
+ * <p>
  * @author Sarge
  */
 class Block {

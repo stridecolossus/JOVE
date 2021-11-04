@@ -15,8 +15,7 @@ import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- *
- * <p>
+ * The <i>memory selector</i> implements the recommended algorithm for selecting a {@link MemoryType}.
  * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html">Vulkan documentation</a>
  * @author Sarge
  */

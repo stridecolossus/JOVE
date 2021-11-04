@@ -22,6 +22,23 @@ public interface BlockPolicy {
 	BlockPolicy NONE = (size, current) -> size;
 
 	/**
+	 * Creates a policy adapter that sets the initial block size.
+	 * @param initial Initial block size
+	 * @return Initial block size policy
+	 */
+	default BlockPolicy initial(long initial) {
+		Check.oneOrMore(initial);
+		return (size, current) -> {
+			if(current == 0) {
+				return initial;
+			}
+			else {
+				return BlockPolicy.this.apply(size, current);
+			}
+		};
+	}
+
+	/**
 	 * Creates a policy for a minimal or incremental block size.
 	 * @param inc Block size increment
 	 * @return Literal block size policy
@@ -39,6 +56,6 @@ public interface BlockPolicy {
 	 */
 	static BlockPolicy expand(float scale) {
 		if(scale <= 0) throw new IllegalArgumentException("Growth scalar must be greater-than zero");
-		return (size, current) -> Math.max(size, (long) (current * scale));
+		return (size, current) -> (long) (current * scale);
 	}
 }

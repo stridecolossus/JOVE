@@ -153,7 +153,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	}
 
 	/**
-	 * @throws IllegalStateException if this region has not been destroyed or invalidated
+	 * @throws IllegalStateException if this region has been destroyed or invalidated
 	 */
 	private void checkMapped() {
 		checkAlive();
