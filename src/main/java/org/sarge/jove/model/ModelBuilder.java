@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Layout.MutableCompoundLayout;
-import org.sarge.jove.common.Vertex;
 import org.sarge.jove.model.Model.Header;
 
 /**

@@ -1,4 +1,4 @@
-package org.sarge.jove.common;
+package org.sarge.jove.model;
 
 import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
@@ -10,6 +10,11 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
@@ -18,21 +23,6 @@ import org.sarge.jove.geometry.Vector;
  * @author Sarge
  */
 public class Vertex implements Bufferable {
-	/**
-	 * A <i>vertex component</i> is a bufferable object that can be comprised in a vertex.
-	 */
-	public interface Component extends Bufferable {
-		/**
-		 * @return Layout of this component
-		 */
-		Layout layout();
-
-		@Override
-		default int length() {
-			return this.layout().length();
-		}
-	}
-
 	/**
 	 * Creates a vertex from the given array of components.
 	 * @param components Vertex components

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Vertex;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
 

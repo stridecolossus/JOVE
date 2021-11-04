@@ -9,7 +9,7 @@ import org.sarge.lib.util.Check;
  * RGBA colour.
  * @author Sarge
  */
-public record Colour(float red, float green, float blue, float alpha) implements Vertex.Component {
+public record Colour(float red, float green, float blue, float alpha) implements Layout.Component {
 	/**
 	 * Material colour types.
 	 */

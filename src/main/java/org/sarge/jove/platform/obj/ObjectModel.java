@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Vertex;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.IndexedBuilder;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.ModelBuilder;
 import org.sarge.jove.model.Primitive;
+import org.sarge.jove.model.Vertex;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing.

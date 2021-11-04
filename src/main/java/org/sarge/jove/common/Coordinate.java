@@ -9,7 +9,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
  * @author Sarge
  */
-public interface Coordinate extends Vertex.Component {
+public interface Coordinate extends Layout.Component {
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array

@@ -3,10 +3,9 @@ package org.sarge.jove.platform.obj;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.sarge.jove.common.Vertex;
+import org.sarge.jove.common.Layout.Component;
 import org.sarge.lib.util.Check;
 
 /**
@@ -14,7 +13,7 @@ import org.sarge.lib.util.Check;
  * @param <T> Vertex component
  * @author Sarge
  */
-class VertexComponentParser<T extends Vertex.Component> implements Parser {
+class VertexComponentParser<T extends Component> implements Parser {
 	private final float[] array;
 	private final Function<float[], T> ctor;
 	private final BiConsumer<ObjectModel, T> consumer;
@@ -30,16 +29,6 @@ class VertexComponentParser<T extends Vertex.Component> implements Parser {
 		this.array = new float[size];
 		this.ctor = notNull(ctor);
 		this.consumer = notNull(consumer);
-	}
-
-//	public Consumer<ObjectModel> test() {
-//		final T value = ctor.apply(null);
-//		return m -> consumer.accept(m, value);
-//	}
-
-	public Consumer<ObjectModel> test() {
-		final T value = null;
-		return model -> consumer.accept(model, value);
 	}
 
 	@Override

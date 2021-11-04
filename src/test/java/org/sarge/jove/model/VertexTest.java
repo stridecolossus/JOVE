@@ -1,4 +1,4 @@
-package org.sarge.jove.common;
+package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,11 +14,13 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Vertex.Builder;
-import org.sarge.jove.common.Vertex.Component;
+import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.Vertex.Builder;
 
 public class VertexTest {
 	@Nested

@@ -82,9 +82,9 @@ public interface SubResource {
 		private final ImageDescriptor descriptor;
 		private Set<VkImageAspect> aspects = new HashSet<>();
 		private int mipLevel;
-		private int levelCount;
+		private int levelCount = 1;
 		private int baseArrayLayer;
-		private int layerCount;
+		private int layerCount = 1;
 
 		/**
 		 * Constructor.
@@ -92,8 +92,6 @@ public interface SubResource {
 		 */
 		public Builder(ImageDescriptor descriptor) {
 			this.descriptor = notNull(descriptor);
-			this.levelCount = descriptor.levelCount();
-			this.layerCount = descriptor.layerCount();
 		}
 
 		/**

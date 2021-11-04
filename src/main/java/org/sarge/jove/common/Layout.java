@@ -69,6 +69,21 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	}
 
 	/**
+	 * A <i>layout component</i> is a bufferable object with a layout, i.e. can be composed into a vertex.
+	 */
+	public interface Component extends Bufferable {
+		/**
+		 * @return Layout of this component
+		 */
+		Layout layout();
+
+		@Override
+		default int length() {
+			return this.layout().length();
+		}
+	}
+
+	/**
 	 * Constructor.
 	 * @param size			Size of this layout (number of components)
 	 * @param type			Component type

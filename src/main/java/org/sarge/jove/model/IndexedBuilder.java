@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sarge.jove.common.Vertex;
-
 /**
  * An <i>indexed builder</i> performs de-duplication of vertex data.
  * @author Sarge

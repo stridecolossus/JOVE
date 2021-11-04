@@ -73,16 +73,15 @@ public class SubResourceTest {
 			builder = new SubResource.Builder(descriptor);
 		}
 
-		@DisplayName("Default subresource for an image should match the descriptor")
 		@Test
 		void build() {
 			final VkImageSubresourceRange range = SubResource.toRange(builder.build());
 			assertNotNull(range);
 			assertEquals(IntegerEnumeration.mask(VkImageAspect.DEPTH, VkImageAspect.STENCIL), range.aspectMask);
 			assertEquals(0, range.baseMipLevel);
-			assertEquals(3, range.levelCount);
+			assertEquals(1, range.levelCount);
 			assertEquals(0, range.baseArrayLayer);
-			assertEquals(4, range.layerCount);
+			assertEquals(1, range.layerCount);
 		}
 
 		@DisplayName("Specifying an explicit aspect should override the image mask")
