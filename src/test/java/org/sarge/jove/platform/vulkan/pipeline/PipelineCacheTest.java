@@ -4,8 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,11 +22,15 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineCache.Loader;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.DataSource;
 
 import com.sun.jna.Pointer;
 
 public class PipelineCacheTest extends AbstractVulkanTest {
+	private static final byte[] DATA = new byte[42];
+
 	private PipelineCache cache;
 
 	@BeforeEach
@@ -37,8 +48,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 	@Test
 	void create() {
 		// Create cache
-		final byte[] data = new byte[42];
-		cache = PipelineCache.create(dev, data);
+		cache = PipelineCache.create(dev, DATA);
 
 		// Check cache
 		assertNotNull(cache);
@@ -54,7 +64,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 		final VkPipelineCacheCreateInfo info = captor.getValue();
 		assertNotNull(info);
 		assertEquals(0, info.flags);
-		assertEquals(data.length, info.initialDataSize);
+		assertEquals(DATA.length, info.initialDataSize);
 		assertNotNull(info.pInitialData);
 	}
 
@@ -89,6 +99,36 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 
 	@Nested
 	class LoaderTests {
-		// TODO
+		private Loader loader;
+
+		@BeforeEach
+		void before() {
+			loader = new Loader(dev);
+		}
+
+		@Test
+		void load() throws IOException {
+			final PipelineCache cache = loader.load(new ByteArrayInputStream(DATA));
+			assertNotNull(cache);
+		}
+
+		@Test
+		void write() throws IOException {
+			final ByteArrayOutputStream out = new ByteArrayOutputStream();
+			final PipelineCache cache = mock(PipelineCache.class);
+			when(cache.data()).thenReturn(DATA);
+			loader.write(cache, out);
+			assertEquals(DATA.length, out.size());
+		}
+
+		@Test
+		void root() throws IOException {
+			final Path root = Files.createTempDirectory("PipelineCacheTest");
+			final DataSource src = Loader.source(root);
+			assertNotNull(src);
+			assertEquals(root, src.root());
+			src.load("name", loader);
+			assertEquals(true, Files.exists(root.resolve("name")));
+		}
 	}
 }

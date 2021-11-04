@@ -1,87 +1,92 @@
 package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileSystem;
-import java.nio.file.InvalidPathException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.spi.FileSystemProvider;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class DataSourceTest {
+	private static final String NAME = "name";
+
 	private DataSource src;
 	private Path root;
-	private InputStream in;
-	private ResourceLoader<InputStream, String> loader;
+	private ResourceLoaderWriter<InputStream, OutputStream, String> loader;
 
 	@BeforeEach
 	void before() throws IOException {
-		// Init root
-		root = mock(Path.class);
-		when(root.resolve(anyString())).thenReturn(root);
-
-		// Init file system
-		final FileSystem sys = mock(FileSystem.class);
-		when(root.getFileSystem()).thenReturn(sys);
-
-		// Init provider
-		final FileSystemProvider provider = mock(FileSystemProvider.class);
-		when(sys.provider()).thenReturn(provider);
-
-		// Init input stream
-		in = mock(InputStream.class);
-		when(provider.newInputStream(root)).thenReturn(in);
-
-		// Create data source
+		loader = mock(ResourceLoaderWriter.class);
+		root = Files.createTempDirectory("DataSourceTest");
 		src = new DataSource(root);
-
-		// Init resource loader
-		loader = mock(ResourceLoader.class);
 	}
 
-//	@Test
-//	void constructorInvalidDirectory() {
-//		assertThrows(IllegalArgumentException.class, () -> DataSource.of("cobblers"));
-//	}
+	@Test
+	void constructor() {
+		assertEquals(root, src.root());
+	}
+
+	@Test
+	void constructorInvalidRoot() throws IOException {
+		assertThrows(IllegalArgumentException.class, () -> new DataSource("cobblers"));
+	}
+
+	@Test
+	void home() {
+		final DataSource home = DataSource.home(null);
+		assertNotNull(home);
+	}
+
+	@Test
+	void resolve() throws IOException {
+		final Path path = Files.createTempFile(root, NAME, null);
+		final DataSource sub = src.resolve(path.getFileName());
+		assertNotNull(sub);
+		assertEquals(path, sub.root());
+	}
 
 	@Test
 	void load() throws IOException {
-		// Init resource path
-		final String name = "name";
-		when(root.resolve(name)).thenReturn(root);
-
-		// Create loader
-		when(loader.map(in)).thenReturn(in);
-		when(loader.load(in)).thenReturn(name);
-
-		// Load resource
-		assertEquals(name, src.load(name, loader));
+		final Path path = Files.createTempFile(root, NAME, null);
+		final String name = path.getFileName().toString();
+		src.load(name, loader);
+		verify(loader).map(isA(InputStream.class));
+		verify(loader).load(null);
 	}
 
 	@Test
-	void loadInvalidResource() {
-		when(root.resolve(anyString())).thenThrow(InvalidPathException.class);
-		assertThrows(RuntimeException.class, () -> src.load("cobblers", loader));
+	void loadResourceNotFound() throws IOException {
+		assertThrows(RuntimeException.class, "Error loading resource", () -> src.load("cobblers", loader));
 	}
 
 	@Test
-	void loadMapFail() throws IOException {
-		when(loader.map(in)).thenThrow(IOException.class);
-		assertThrows(RuntimeException.class, () -> src.load("cobblers", loader));
+	void loadMapFailed() throws IOException {
+		when(loader.map(any(InputStream.class))).thenThrow(IOException.class);
+		assertThrows(RuntimeException.class, () -> src.load(NAME, loader));
 	}
 
 	@Test
-	void loadLoaderFail() throws IOException {
-		when(loader.map(in)).thenReturn(in);
-		when(loader.load(in)).thenThrow(IOException.class);
-		assertThrows(RuntimeException.class, () -> src.load("cobblers", loader));
+	void loadLoaderFailed() throws IOException {
+		when(loader.load(any(InputStream.class))).thenThrow(IOException.class);
+		assertThrows(RuntimeException.class, () -> src.load(NAME, loader));
+	}
+
+	@Test
+	void write() throws IOException {
+		src.write(NAME, NAME, loader);
+		verify(loader).map(isA(OutputStream.class));
+		verify(loader).write(NAME, null);
 	}
 }

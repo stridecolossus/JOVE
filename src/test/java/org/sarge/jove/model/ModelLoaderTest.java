@@ -52,7 +52,7 @@ class ModelLoaderTest {
 	@Test
 	void load() throws IOException {
 		// Write model to stream
-		loader.write(model, out);
+		loader.write(model, new DataOutputStream(out));
 
 		// Re-load and check header
 		final Model result = read();
@@ -86,10 +86,5 @@ class ModelLoaderTest {
 	void loadUnsupportedVersion() throws IOException {
 		new DataOutputStream(out).writeInt(2);
 		assertThrows(UnsupportedOperationException.class, () -> read());
-	}
-
-	@Test
-	void write() throws IOException {
-		loader.write(model, out);
 	}
 }

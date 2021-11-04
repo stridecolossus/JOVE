@@ -15,6 +15,8 @@ import java.io.InputStream;
  * @param <T> Input type
  * @param <R> Resource type
  * @see DataSource#load(String, ResourceLoader)
+ * @see ResourceWriter
+ * @see ResourceLoaderWriter
  * @author Sarge
  */
 public interface ResourceLoader<T, R> {

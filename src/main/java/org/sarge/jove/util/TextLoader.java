@@ -87,10 +87,6 @@ public class TextLoader {
 		}
 	}
 
-	// load(r, Consumer<String>) => Function<Stream<String>, Void>
-	// List<T> load(r, Function<String, T> mapper)
-	// R load(r, Function<String, T> mapper, Collector<T, ?, R> collector) => as below
-
 	/**
 	 * Adapter for a resource loader based on a {@link TextLoader}.
 	 * <p>

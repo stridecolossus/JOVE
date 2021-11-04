@@ -14,30 +14,22 @@ import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.common.Layout.MutableCompoundLayout;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.ResourceLoader;
+import org.sarge.jove.util.ResourceLoaderWriter;
 
 /**
  * The <i>model loader</i> persists a vertex model.
  * @author Sarge
  */
-public class ModelLoader implements ResourceLoader<DataInputStream, BufferedModel> {
+public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOutputStream, Model> {
 	private static final int VERSION = 1;
 
-	/**
-	 * Writes the given model to an output stream.
-	 * @param model		Model
-	 * @param out		Output stream
-	 * @throws IOException if the model cannot be written
-	 */
-	@SuppressWarnings("static-method")
-	public void write(Model model, OutputStream out) throws IOException {
-		write(model, new DataOutputStream(out));
+	@Override
+	public DataOutputStream map(OutputStream out) {
+		return new DataOutputStream(out);
 	}
 
-	/**
-	 * Writes the given model.
-	 */
-	private static void write(Model model, DataOutputStream out) throws IOException {
+	@Override
+	public void write(Model model, DataOutputStream out) throws IOException {
 		// Write file format version
 		out.writeInt(VERSION);
 
@@ -71,6 +63,9 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		out.flush();
 	}
 
+	/**
+	 * Writes a buffer.
+	 */
 	private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOException {
 		final int len = src.length();
 		final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferHelper.ORDER);
