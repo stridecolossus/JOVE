@@ -6,6 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -219,11 +220,12 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @throws IllegalStateException if this buffer does not support the given usage flag
+	 * @throws IllegalStateException if this buffer does not support <b>any</b> of the given usage flags
 	 */
-	public void require(VkBufferUsage flag) {
-		if(!usage.contains(flag)) {
-			throw new IllegalStateException(String.format("Invalid usage for buffer: usage=%s buffer=%s", flag, this));
+	public void require(VkBufferUsage... flags) {
+		final boolean contains = Arrays.stream(flags).anyMatch(usage::contains);
+		if(!contains) {
+			throw new IllegalStateException(String.format("Invalid usage for buffer: usage=%s buffer=%s", Arrays.asList(flags), this));
 		}
 	}
 

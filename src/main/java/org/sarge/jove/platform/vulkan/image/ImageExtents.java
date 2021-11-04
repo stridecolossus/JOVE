@@ -6,6 +6,7 @@ import org.sarge.lib.util.Check;
 
 /**
  * An <i>image extents</i> defines the extents of a Vulkan image.
+ * @see VkExtent3D
  * @author Sarge
  */
 public record ImageExtents(Dimensions dimensions, int depth) {

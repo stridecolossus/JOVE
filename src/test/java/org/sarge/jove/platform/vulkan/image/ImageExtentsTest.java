@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ class ImageExtentsTest {
 	@Test
 	void toExtents3D() {
 		final VkExtent3D result = extents.toExtent3D();
+		assertNotNull(result);
 		assertEquals(1, result.depth);
 		assertEquals(2, result.width);
 		assertEquals(3, result.height);
