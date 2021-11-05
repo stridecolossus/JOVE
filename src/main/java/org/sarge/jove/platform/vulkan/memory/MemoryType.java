@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.IntFunction;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
@@ -126,24 +125,30 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 	 * @return Memory types
 	 */
 	public static List<MemoryType> enumerate(VkPhysicalDeviceMemoryProperties props) {
-		// Enumerate memory heaps
-		final IntFunction<Heap> heapMapper = index -> {
-			final VkMemoryHeap heap = props.memoryHeaps[index];
-			final var flags = IntegerEnumeration.mapping(VkMemoryHeapFlag.class).enumerate(heap.flags);
-			return new Heap(index, heap.size, flags);
-		};
+		// Init heaps and types
 		final Heap[] heaps = new Heap[props.memoryHeapCount];
-		Arrays.setAll(heaps, heapMapper);
-
-		// Enumerate memory types
-		final IntFunction<MemoryType> typeMapper = index -> {
-			final VkMemoryType type = props.memoryTypes[index];
-			final Heap heap = heaps[type.heapIndex];
-			final var properties = IntegerEnumeration.mapping(VkMemoryProperty.class).enumerate(type.propertyFlags);
-			return new MemoryType(index, heap, properties);
-		};
 		final MemoryType[] types = new MemoryType[props.memoryTypeCount];
-		Arrays.setAll(types, typeMapper);
+
+		// Helper
+		class Mapper {
+			Heap heap(int index) {
+				final VkMemoryHeap heap = props.memoryHeaps[index];
+				final var flags = IntegerEnumeration.mapping(VkMemoryHeapFlag.class).enumerate(heap.flags);
+				return new Heap(index, heap.size, flags);
+			}
+
+			MemoryType type(int index) {
+				final VkMemoryType type = props.memoryTypes[index];
+				final Heap heap = heaps[type.heapIndex];
+				final var properties = IntegerEnumeration.mapping(VkMemoryProperty.class).enumerate(type.propertyFlags);
+				return new MemoryType(index, heap, properties);
+			}
+		}
+
+		// Enumerate memory heaps and types
+		final Mapper mapper = new Mapper();
+		Arrays.setAll(heaps, mapper::heap);
+		Arrays.setAll(types, mapper::type);
 
 		// Convert to collection
 		return Arrays.asList(types);

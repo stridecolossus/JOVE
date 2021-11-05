@@ -79,9 +79,9 @@ public class PoolAllocatorTest {
 	}
 
 	@Test
-	void allocateInvalidPolicy() {
+	void allocatePolicy() {
 		when(policy.apply(1, 0)).thenReturn(0L);
-		assertThrows(AllocationException.class, () -> allocator.allocate(type, 1));
+		allocator.allocate(type, 1);
 	}
 
 	@Test

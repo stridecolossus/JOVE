@@ -113,10 +113,9 @@ public class PoolAllocator implements Allocator {
 		// Apply allocation policy
 		final MemoryPool pool = pool(type);
 		final long actual = policy.apply(size, pool.size());
-		if(actual < size) throw new AllocationException(String.format("Invalid block size policy: policy=%s size=%d", policy, size));
 
 		// Allocate from pool
-		final DeviceMemory mem = pool.allocate(actual);
+		final DeviceMemory mem = pool.allocate(Math.max(size, actual));
 
 		// Update stats
 		++count;
