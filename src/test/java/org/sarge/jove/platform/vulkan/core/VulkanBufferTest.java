@@ -144,7 +144,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void bindIndexBuffer() {
-			final Command cmd = index.bindIndexBuffer();
+			final Command cmd = index.bindIndexBuffer(VkIndexType.UINT32);
 			assertNotNull(cmd);
 			cmd.execute(lib, cb);
 			verify(lib).vkCmdBindIndexBuffer(cb, index, 0, VkIndexType.UINT32);

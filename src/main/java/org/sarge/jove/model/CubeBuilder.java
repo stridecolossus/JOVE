@@ -3,6 +3,7 @@ package org.sarge.jove.model;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
@@ -47,6 +48,16 @@ public class CubeBuilder extends ModelBuilder {
 			Vector.X.invert(),
 			Vector.Y,
 			Vector.Y.invert(),
+	};
+
+	// Face colours
+	private static final Colour[] COLOURS = {
+		new Colour(1, 0, 0),
+		new Colour(0, 1, 0),
+		new Colour(0, 0, 1),
+		new Colour(1, 1, 0),
+		Colour.BLACK,
+		Colour.WHITE
 	};
 
 	// Indices of the two triangles for each face

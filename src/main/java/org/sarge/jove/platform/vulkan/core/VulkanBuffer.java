@@ -188,14 +188,14 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 	/**
 	 * Creates a command to bind this buffer as an index buffer.
+	 * @param type Index type
 	 * @return Command to bind this index buffer
 	 * @throws IllegalStateException if this buffer cannot be used as an index
 	 * @see VkBufferUsage#INDEX_BUFFER
 	 */
-	public Command bindIndexBuffer() {
+	public Command bindIndexBuffer(VkIndexType type) {
 		require(VkBufferUsage.INDEX_BUFFER);
-		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this, 0, VkIndexType.UINT32);
-		// TODO - 16/32 depending on size
+		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this, 0, type);
 	}
 
 	/**

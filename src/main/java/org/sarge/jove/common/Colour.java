@@ -22,12 +22,12 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	/**
 	 * White colour.
 	 */
-	public static final Colour WHITE = new Colour(1, 1, 1, 1);
+	public static final Colour WHITE = new Colour(1, 1, 1);
 
 	/**
 	 * Black colour.
 	 */
-	public static final Colour BLACK = new Colour(0, 0, 0, 1);
+	public static final Colour BLACK = new Colour(0, 0, 0);
 
 	/**
 	 * Layout of a colour.
@@ -78,6 +78,13 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		Check.isPercentile(green);
 		Check.isPercentile(blue);
 		Check.isPercentile(alpha);
+	}
+
+	/**
+	 * Constructor with full alpha.
+	 */
+	public Colour(float red, float green, float blue) {
+		this(red, green, blue, 1);
 	}
 
 	@Override

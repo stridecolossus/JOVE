@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.vulkan.api;
 
+import java.nio.ByteBuffer;
+
 import org.sarge.jove.platform.vulkan.VkBufferMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
@@ -68,7 +70,7 @@ interface VulkanLibraryPipeline {
 	 * @param pData				Cache data
 	 * @return Result code
 	 */
-	int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntByReference pDataSize, byte[] pData);
+	int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntByReference pDataSize, ByteBuffer pData);
 
 	/**
 	 * Destroys a pipeline cache.

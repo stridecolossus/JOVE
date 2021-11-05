@@ -37,6 +37,26 @@ public final class BufferHelper {
 	}
 
 	/**
+	 * Converts the given byte buffer to an array.
+	 * @param bb Byte buffer
+	 * @return Array
+	 */
+	public static byte[] toArray(ByteBuffer bb) {
+		if(bb.isDirect()) {
+			bb.rewind();
+			final int len = bb.limit();
+			final byte[] bytes = new byte[len];
+			for(int n = 0; n < len; ++n) {
+				bytes[n] = bb.get();
+			}
+			return bytes;
+		}
+		else {
+			return bb.array();
+		}
+	}
+
+	/**
 	 * Writes a byte array to the given buffer.
 	 * @param bytes		Byte array
 	 * @param bb		Buffer

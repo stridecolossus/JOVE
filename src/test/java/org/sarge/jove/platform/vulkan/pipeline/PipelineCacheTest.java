@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineCache.Loader;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.DataSource;
 
 import com.sun.jna.Pointer;
@@ -75,9 +77,9 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 
 	@Test
 	void data() {
-		final byte[] data = cache.data();
+		final ByteBuffer data = cache.data();
 		assertNotNull(data);
-		assertEquals(1, data.length);
+		assertEquals(1, data.capacity());
 		verify(lib).vkGetPipelineCacheData(dev, cache, INTEGER, null);
 		verify(lib).vkGetPipelineCacheData(dev, cache, INTEGER, data);
 	}
@@ -116,7 +118,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 		void write() throws IOException {
 			final ByteArrayOutputStream out = new ByteArrayOutputStream();
 			final PipelineCache cache = mock(PipelineCache.class);
-			when(cache.data()).thenReturn(DATA);
+			when(cache.data()).thenReturn(BufferHelper.buffer(DATA));
 			loader.write(cache, out);
 			assertEquals(DATA.length, out.size());
 		}

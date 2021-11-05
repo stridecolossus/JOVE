@@ -6,6 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -71,10 +72,10 @@ public class PipelineCache extends AbstractVulkanObject {
 	 * Retrieves the data blob for this pipeline cache.
 	 * @return Cache data
 	 */
-	public byte[] data() {
+	public ByteBuffer data() {
 		final DeviceContext dev = super.device();
-		final VulkanFunction<byte[]> func = (api, count, data) -> api.vkGetPipelineCacheData(dev, this, count, data);
-		return VulkanFunction.invoke(func, dev.library(), byte[]::new);
+		final VulkanFunction<ByteBuffer> func = (api, count, data) -> api.vkGetPipelineCacheData(dev, this, count, data);
+		return VulkanFunction.invoke(func, dev.library(), BufferHelper::allocate);
 	}
 
 	/**
@@ -147,7 +148,8 @@ public class PipelineCache extends AbstractVulkanObject {
 
 		@Override
 		public void write(PipelineCache cache, OutputStream out) throws IOException {
-			final byte[] data = cache.data();
+			final ByteBuffer bb = cache.data();
+			final byte[] data = BufferHelper.toArray(bb);
 			out.write(data);
 		}
 	}
