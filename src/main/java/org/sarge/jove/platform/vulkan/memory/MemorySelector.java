@@ -59,7 +59,7 @@ public class MemorySelector {
 	 */
 	public MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
 		// Filter available memory types
-		final var candidates = types
+		final List<MemoryType> candidates = types
 				.stream()
 				.filter(type -> MathsUtil.isBit(reqs.memoryTypeBits, type.index()))
 				.collect(toList());

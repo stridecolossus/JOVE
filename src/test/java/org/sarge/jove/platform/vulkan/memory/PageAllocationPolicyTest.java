@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class PageBlockPolicyTest {
-	private BlockPolicy policy;
+public class PageAllocationPolicyTest {
+	private AllocationPolicy policy;
 
 	@BeforeEach
 	void before() {
-		policy = new PageBlockPolicy(5, 2);
+		policy = new PageAllocationPolicy(5, 2);
 	}
 
 	@Test

@@ -17,7 +17,7 @@ import org.sarge.lib.util.Check;
  * A <i>pool allocator</i> delegates allocation requests to a {@link MemoryPool}.
  * <p>
  * This implementation creates a memory pool for <b>each</b> memory type on demand.
- * The pool grows as required according to a {@link BlockPolicy} configured using the {@link #policy(BlockPolicy)} method.
+ * The pool grows as required according to a {@link AllocationPolicy} configured using the {@link #policy(AllocationPolicy)} method.
  * <p>
  * @author Sarge
  */
@@ -27,7 +27,7 @@ public class PoolAllocator implements Allocator {
 	 * <p>
 	 * The pool is configured as follows:
 	 * <ul>
-	 * <li>{@link VkPhysicalDeviceLimits#bufferImageGranularity} specifies the <i>page size</i> used to create a {@link PageBlockPolicy} for the allocator</li>
+	 * <li>{@link VkPhysicalDeviceLimits#bufferImageGranularity} specifies the <i>page size</i> used to create a {@link PageAllocationPolicy} for the allocator</li>
 	 * <li>{@link VkPhysicalDeviceLimits#maxMemoryAllocationCount} configures the maximum number of allowed allocations</li>
 	 * <li>if {@link #allocator} is {@code null} a default allocator is created using {@link Allocator#allocator(DeviceContext)}</li>
 	 * </ul>
@@ -41,31 +41,30 @@ public class PoolAllocator implements Allocator {
 		// Init allocator if not specified
 		final Allocator delegate = allocator == null ? Allocator.allocator(dev) : allocator;
 
-		// Create paged policy
+		// Create paged allocation policy
 		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
-		final BlockPolicy policy = new PageBlockPolicy(limits.bufferImageGranularity);
+		final AllocationPolicy policy = new PageAllocationPolicy(limits.bufferImageGranularity);
 
 		// Create pool allocator
-		final PoolAllocator pool = new PoolAllocator(delegate, limits.maxMemoryAllocationCount);
-		pool.policy(policy);
-
-		return pool;
+		return new PoolAllocator(delegate, limits.maxMemoryAllocationCount, policy);
 	}
 
 	private final Allocator allocator;
 	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
+	private final AllocationPolicy policy;
 	private final int max;
 	private int count;
-	private BlockPolicy policy = BlockPolicy.NONE;
 
 	/**
 	 * Constructor.
 	 * @param allocator 	Underlying allocator
 	 * @param max			Maximum number of allocations
+	 * @param policy		Allocation policy
 	 */
-	public PoolAllocator(Allocator allocator, int max) {
+	public PoolAllocator(Allocator allocator, int max, AllocationPolicy policy) {
 		this.allocator = notNull(allocator);
 		this.max = oneOrMore(max);
+		this.policy = notNull(policy);
 	}
 
 	/**
@@ -95,18 +94,7 @@ public class PoolAllocator implements Allocator {
 	 * @return Pool
 	 */
 	public MemoryPool pool(MemoryType type) {
-		return pools.computeIfAbsent(type, this::create);
-	}
-
-	/**
-	 * Creates a new memory pool.
-	 * @param type Memory type
-	 * @return New memory pool
-	 */
-	private MemoryPool create(MemoryType type) {
-		final MemoryPool pool = new MemoryPool(type, allocator);
-		pool.policy(policy);
-		return pool;
+		return pools.computeIfAbsent(type, ignored -> new MemoryPool(type, allocator));
 	}
 
 	/**
@@ -116,23 +104,19 @@ public class PoolAllocator implements Allocator {
 		return Map.copyOf(pools);
 	}
 
-	/**
-	 * Sets the block policy for new memory pools (default is {@link BlockPolicy#NONE}).
-	 * @param policy Block policy
-	 */
-	public void policy(BlockPolicy policy) {
-		this.policy = notNull(policy);
-	}
-
 	@Override
 	public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
 		// Validate
 		Check.oneOrMore(size);
 		if(count >= max) throw new AllocationException("Maximum number of allocations exceeded");
 
-		// Allocate from pool
+		// Apply allocation policy
 		final MemoryPool pool = pool(type);
-		final DeviceMemory mem = pool.allocate(size);
+		final long actual = policy.apply(size, pool.size());
+		if(actual < size) throw new AllocationException(String.format("Invalid block size policy: policy=%s size=%d", policy, size));
+
+		// Allocate from pool
+		final DeviceMemory mem = pool.allocate(actual);
 
 		// Update stats
 		++count;

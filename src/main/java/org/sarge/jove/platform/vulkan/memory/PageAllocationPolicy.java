@@ -5,10 +5,10 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- *
+ * A <i>page allocation policy</i> quantises allocation requests to a given <i>page</i> size.
  * @author Sarge
  */
-public class PageBlockPolicy implements BlockPolicy {
+public class PageAllocationPolicy implements AllocationPolicy {
 	private final long page;
 	private final long min;
 
@@ -17,7 +17,7 @@ public class PageBlockPolicy implements BlockPolicy {
 	 * @param page 		Page size (bytes)
 	 * @param min		Minimum number of pages
 	 */
-	public PageBlockPolicy(long page, int min) {
+	public PageAllocationPolicy(long page, int min) {
 		this.page = oneOrMore(page);
 		this.min = oneOrMore(min) * page;
 	}
@@ -26,7 +26,7 @@ public class PageBlockPolicy implements BlockPolicy {
 	 * Constructor.
 	 * @param page Page size (bytes)
 	 */
-	public PageBlockPolicy(long page) {
+	public PageAllocationPolicy(long page) {
 		this(page, 1);
 	}
 

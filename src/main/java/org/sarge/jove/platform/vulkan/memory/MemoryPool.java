@@ -12,11 +12,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>memory pool</i> is comprised of a number of <i>blocks</i> from which device memory is allocated.
- * The pool grows as required according to the configured {@link BlockPolicy}.
+ * The pool grows as required according to the configured {@link AllocationPolicy}.
  * <p>
  * Released memory allocations are restored to the pool and potentially reallocated.
  * <p>
@@ -32,7 +31,6 @@ public class MemoryPool {
 	private final MemoryType type;
 	private final Allocator allocator;
 	private final List<Block> blocks = new ArrayList<>();
-	private BlockPolicy policy = BlockPolicy.NONE;
 	private long total;
 
 	/**
@@ -49,7 +47,10 @@ public class MemoryPool {
 	 * @return Amount of available memory in this pool
 	 */
 	public long free() {
-		return blocks.stream().mapToLong(Block::free).sum();
+		return blocks
+				.stream()
+				.mapToLong(Block::free)
+				.sum();
 	}
 
 	/**
@@ -69,7 +70,7 @@ public class MemoryPool {
 	/**
 	 * @return Memory allocations in this pool
 	 */
-	public Stream<? extends DeviceMemory> allocations() {
+	Stream<? extends DeviceMemory> allocations() {
 		return blocks
 				.stream()
 				.flatMap(Block::allocations)
@@ -81,19 +82,11 @@ public class MemoryPool {
 	 * Note that the configured growth policy is applied to the given memory size.
 	 * @param size Amount of memory to add to this pool
 	 * @throws AllocationException if the memory cannot be allocated
-	 * @see #policy(BlockPolicy)
 	 */
 	public void init(long size) {
+		// TODO - Ideally we should apply policy here as well
 		block(size);
 		assert free() >= size;
-	}
-
-	/**
-	 * Sets the growth policy for this memory pool (default is {Policy#NONE}).
-	 * @param policy Growth policy
-	 */
-	public void policy(BlockPolicy policy) {
-		this.policy = notNull(policy);
 	}
 
 	/**
@@ -160,15 +153,10 @@ public class MemoryPool {
 	 * @throws AllocationException if the underlying allocator failed
 	 */
 	private Block block(long size) {
-		// Apply growth policy
-		Check.oneOrMore(size);
-		final long mod = policy.apply(size, total);
-		if(mod < size) throw new AllocationException(String.format("Invalid block size policy: policy=%s size=%d", policy, size));
-
 		// Allocate memory
 		final DeviceMemory mem;
 		try {
-			mem = allocator.allocate(type, mod);
+			mem = allocator.allocate(type, size);
 		}
 		catch(Exception e) {
 			throw new AllocationException(e);
@@ -212,7 +200,6 @@ public class MemoryPool {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("type", type)
-				.append("policy", policy)
 				.append("size", total)
 				.append("free", free())
 				.append("blocks", blocks.size())

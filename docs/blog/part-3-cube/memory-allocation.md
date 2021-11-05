@@ -92,16 +92,16 @@ We create a new domain object for the public implementation:
 
 ```java
 public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
-    private final long len;
+    private final long size;
 
-    public DefaultDeviceMemory(Pointer handle, DeviceContext dev, long len) {
+    public DefaultDeviceMemory(Pointer handle, DeviceContext dev, long size) {
         super(handle, dev);
-        this.len = oneOrMore(len);
+        this.len = oneOrMore(size);
     }
 
     @Override
     public long size() {
-        return len;
+        return size;
     }
 
     @Override
@@ -259,6 +259,89 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 
 This new type specifies the intent of the memory and the _optimal_ and _required_ properties for the request.  Note that the record is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
 
+### Memory Selection
+
+The Vulkan documentation outlines the suggested approach for selecting the memory type for a given allocation request as follows:
+
+1. Walk through the supported memory types.
+
+2. Filter by _index_ using the _filter_ bit-mask from the `VkMemoryRequirements` of the object in question.
+
+3. Filter by the supported memory properties of each type (i.e. matching against either the _optimal_ properties or falling back to the minimal _required_ properties).
+
+The allocation algorithm is encapsulated in a new component:
+
+```java
+public class MemorySelector {
+    private final List<MemoryType> types;
+
+    /**
+     * Selects the memory type for the given request.
+     * @param reqs          Requirements
+     * @param props         Memory properties
+     * @return
+     * @throws AllocationException if no memory type matches the request
+     */
+    public MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
+        ...
+    }
+}
+```
+
+The `select` method first enumerates the _candidate_ memory types by applying the filter:
+
+```java
+public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
+    List<MemoryType> candidates = types
+        .stream()
+        .filter(type -> MathsUtil.isBit(reqs.memoryTypeBits, type.index()))
+        .collect(toList());
+
+    ...
+}
+```
+
+Next the best available type is selected from these candidates:
+
+```java
+MemoryType type =
+    find(candidates, props.optimal())
+    .or(() -> find(candidates, props.required()))
+    .orElseThrow(() -> new AllocationException(...));
+```
+
+Where the `find` method is a helper that applies the memory properties matching logic:
+
+```java
+private static Optional<MemoryType> find(List<MemoryType> types, Set<VkMemoryProperty> props) {
+    if(props.isEmpty()) {
+        return Optional.empty();
+    }
+
+    return types
+        .stream()
+        .filter(type -> type.properties().containsAll(props))
+        .findAny();
+}
+```
+
+A memory selector is created via a factory method:
+
+```java
+public static MemorySelector create(LogicalDevice dev) {
+    // Retrieve supported memory types
+    var props = new VkPhysicalDeviceMemoryProperties();
+    VulkanLibrary lib = dev.library();
+    lib.vkGetPhysicalDeviceMemoryProperties(dev.parent(), props);
+
+    // Enumerate memory types
+    List<MemoryType> types = MemoryType.enumerate(props);
+
+    // Create selector
+    return new MemorySelector(types);
+}
+```
+
 ### Memory Allocation
 
 Next we define the _allocator_ that is responsible for allocating memory of a given type:
@@ -305,108 +388,29 @@ static Allocator allocator(DeviceContext dev) {
 }
 ```
 
-Later in the chapter we will provide further implementations to support a memory pool and pagination.
-
 Note that the actual size of the allocated memory may be larger than the requested length depending on how the hardware handles alignment.
 
 All the above components are brought together into the following service which is the entry-point for allocation of device memory:
 
 ```java
 public class AllocationService {
+    private final MemorySelector selector;
     private final Allocator allocator;
-    private final List<MemoryType> types;
 
     public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-        ...
+        final MemoryType type = selector.select(reqs, props);
+        return allocator.allocate(type, reqs.size);
     }
 }
 ```
 
-Creating this service is comprised of the following steps:
-
-1. Retrieve the descriptor for the memory types supported by the hardware.
-
-2. Transform this to the memory type and heap domain objects.
-
-3. Instantiate the service.
-
-As normal this is implemented as a factory method:
-
-```java
-public static AllocationService create(LogicalDevice dev, Allocator allocator) {
-    // Retrieve supported memory types
-    final var props = new VkPhysicalDeviceMemoryProperties();
-    final VulkanLibrary lib = dev.library();
-    lib.vkGetPhysicalDeviceMemoryProperties(dev.parent(), props);
-
-    // Enumerate memory types
-    final List<MemoryType> types = MemoryType.enumerate(props);
-
-    // Create service
-    return new AllocationService(allocator, types);
-}
-```
-
-And we add new API method is added to the physical device JNA library.
-
-The Vulkan documentation outlines the suggested approach for selecting the memory type for a given allocation request as follows:
-
-1. Walk through the supported memory types.
-
-2. Filter by _index_ using the _filter_ bit-mask from the `VkMemoryRequirements` of the object in question.
-
-3. Filter by the supported memory properties of each type (i.e. matching against either the _optimal_ properties or falling back to the minimal _required_ properties).
-
-The `allocate` method first enumerates the _candidate_ memory types by applying the filter:
-
-```java
-public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-    final var candidates = types
-        .stream()
-        .filter(type -> MathsUtil.isBit(reqs.memoryTypeBits, type.index()))
-        .collect(toList());
-
-    ...
-}
-```
-
-Next the best available type is selected from these candidates:
-
-```java
-final MemoryType type =
-    find(candidates, props.optimal())
-    .or(() -> find(candidates, props.required()))
-    .orElseThrow(() -> new AllocationException(...));
-```
-
-And finally we can allocate the memory of the selected type:
-
-```java
-return allocator.allocate(type, reqs.size);
-```
-
-The `find` method is a helper that applies the memory properties matching logic:
-
-```java
-private static Optional<MemoryType> find(List<MemoryType> types, Set<VkMemoryProperty> props) {
-    if(props.isEmpty()) {
-        return Optional.empty();
-    }
-
-    return types
-        .stream()
-        .filter(type -> type.properties().containsAll(props))
-        .findAny();
-}
-```
-
-We create a new API for memory management:
+Finally a new API is added for memory management:
 
 ```java
 interface VulkanLibraryMemory {
-    int vkAllocateMemory(DeviceContext device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
+    int  vkAllocateMemory(DeviceContext device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
     void vkFreeMemory(DeviceContext device, DefaultDeviceMemory memory, Pointer pAllocator);
-    int vkMapMemory(DeviceContext device, DefaultDeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
+    int  vkMapMemory(DeviceContext device, DefaultDeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
     void vkUnmapMemory(DeviceContext device, DefaultDeviceMemory memory);
 }
 ```
@@ -431,166 +435,135 @@ Our requirements are:
 
 - The allocator and pool(s) should provide useful statistics to the application, e.g. number of allocations, free memory, etc.
 
-TODO - diagram
-
-### Allocator
-
-We start with a new allocator implementation for a memory pool:
-
-```java
-public class PoolAllocator implements Allocator {
-    private final Map<MemoryType, Pool> pools = new ConcurrentHashMap<>();
-    private final Allocator allocator;
-    private final int max;
-    private int count;
-}
-```
-
-The _max_ member is the maximum number of allowed memory allocations (see below).
-
-A pool is instantiated on demand for each memory type:
-
-```java
-public Pool pool(MemoryType type) {
-    return pools.computeIfAbsent(type, Pool::new);
-}
-```
-
-Which is invoked on a request for new device memory from the application:
-
-```java
-@Override
-public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
-    if(count >= max) throw new AllocationException(...);
-    final Pool pool = pool(type);
-    return pool.allocate(size);
-}
-```
-
-The allocator provides methods to release all allocated memory back to the pool:
-
-```java
-public synchronized void release() {
-    pools.values().forEach(Pool::release);
-    count = 0;
-    assert free() == size();
-}
-```
-
-And to destroy all allocated memory:
-
-```java
-public synchronized void close() {
-    pools.values().forEach(Pool::close);
-    count = 0;
-    assert size() == 0;
-    assert free() == 0;
-}
-```
-
-Finally we provide accessors to query the number of allocations and the free and total amount of memory:
-
-```java
-public int count() {
-    return count;
-}
-
-public long free() {
-    return pools.values().stream().mapToLong(Pool::free).sum();
-}
-
-public long size() {
-    return pools.values().stream().mapToLong(Pool::size).sum();
-}
-```
+To support these requirements we will introduce the second device memory implementation for a _block_ of memory managed by a pool.  Device memory is then be allocated from a block with available free memory or new blocks are created on demand to grow the pool.
 
 ### Memory Blocks
 
-Each pool is comprised of a number of memory blocks from which memory is allocated:
+A memory block is a wrapper for an area of memory and maintains the list of allocations from the block:
 
 ```java
-private static class Block {
+class Block {
     private final DeviceMemory mem;
-    private final List<DeviceMemory> allocations = new ArrayList<>();
-    private long free;
+    private final List<BlockDeviceMemory> allocations = new ArrayList<>();
+    private long next;
+
+    class BlockDeviceMemory implements DeviceMemory {
+        ...
+    }
+
+    void destroy() {
+        mem.close();
+        allocations.clear();
+    }
 }
 ```
 
-New memory is allocated from the 'end' of the block:
+Memory is allocated from the end of the block indicated by the `next` free-space offset:
 
 ```java
-private DeviceMemory allocate(long size) {
+BlockDeviceMemory allocate(long size) {
     // Allocate from free space
-    final DeviceMemory alloc = new BlockDeviceMemory(size, free);
+    BlockDeviceMemory alloc = new BlockDeviceMemory(next, size);
     allocations.add(alloc);
 
     // Update free space pointer
-    free += size;
-    assert free <= mem.size();
+    next += size;
+    assert next <= mem.size();
 
     return alloc;
 }
 ```
 
-Next we add a second device memory implementation for memory served from a block:
+The memory allocated from the block is an inner class:
 
 ```java
-private class BlockDeviceMemory implements DeviceMemory {
+class BlockDeviceMemory implements DeviceMemory {
     private final long offset;
     private final long size;
     private boolean destroyed;
-}
-```
 
-This implementation delegates the various memory management methods to the parent block:
-
-```java
-@Override
-public Handle handle() {
-    return mem.handle();
-}
-
-@Override
-public Optional<Region> region() {
-    return mem.region();
-}
-
-@Override
-public Region map(long offset, long size) {
-    return mem.map(offset, size);
-}
-```
-
-Similarly for the cleanup methods:
-
-```java
-@Override
-public boolean isDestroyed() {
-    return destroyed || mem.isDestroyed();
-}
-
-@Override
-public synchronized void close() {
-    if(isDestroyed()) throw new IllegalStateException(...);
-    destroyed = true;
-}
-```
-
-Note that destroyed allocations are not removed from the pool but are only marked as released (and potentially reallocated later).
-
-Finally the block provides accessors for the available memory in the block:
-
-```java
-private static class Block {
-    private long free() {
-        final long total = allocations().mapToLong(DeviceMemory::size).sum();
-        return mem.size() - total;
+    @Override
+    public long size() {
+        return size;
+    }
+    
+    @Override
+    public synchronized void close() {
+        checkAlive();
+        destroyed = true;
     }
 
-    private long remaining() {
-        return mem.size() - free;
+    private void checkAlive() {
+        if(isDestroyed()) throw new IllegalStateException(...);
     }
 }
+```
+
+This implementation is essentially a proxy to the device memory of the parent block:
+
+```java
+class BlockDeviceMemory implements DeviceMemory {
+    ...
+    
+    @Override
+    public Handle handle() {
+        return mem.handle();
+    }
+
+    @Override
+    public Optional<Region> region() {
+        return mem.region();
+    }
+
+    @Override
+    public Region map(long offset, long size) {
+        checkAlive();
+        mem.region().ifPresent(Region::unmap);
+        return mem.map(offset, size);
+    }
+
+    @Override
+    public boolean isDestroyed() {
+        return destroyed || mem.isDestroyed();
+    }
+}
+```
+
+Notes:
+
+* Since only one region mapping is allowed per memory block the `map` method silently releases the previous mapping (if any).
+
+* Destroyed allocations are not removed from the block but are only marked as released (and potentially reallocated).
+
+An allocation from the block can also be reallocated:
+
+```java
+BlockDeviceMemory reallocate() {
+    if(!destroyed) throw new IllegalStateException(...);
+    if(mem.isDestroyed()) throw new IllegalStateException(...);
+    destroyed = false;
+    return this;
+}
+```
+
+Finally the amount of available memory in the block is queried using the following method:
+
+```java
+long free() {
+    long total = allocations
+        .stream()
+        .filter(ALIVE)
+        .mapToLong(DeviceMemory::size)
+        .sum();
+        
+    return mem.size() - total;
+}
+```
+
+Where `ALIVE` is a simple helper constant:
+
+```java
+static final Predicate<BlockDeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
 ```
 
 ### Pool
@@ -598,26 +571,64 @@ private static class Block {
 Each pool is comprised of a number of blocks from which memory requests are served:
 
 ```java
-public class Pool {
+public class MemoryPool {
     private final MemoryType type;
+    private final Allocator allocator;
     private final List<Block> blocks = new ArrayList<>();
     private long total;
 
-    public long free() {
-        return blocks.stream().mapToLong(Block::free).sum();
-    }
-
-    public long size() {
-        return total;
-    }
-
-    public Stream<DeviceMemory> allocations() {
-        return blocks.stream().flatMap(Block::allocations);
+    synchronized DeviceMemory allocate(long size) {
+        ...
     }
 }
 ```
 
-To service an allocation request the allocator applies the following logic:
+The free space in the pool is queried as follows:
+
+```java
+public long free() {
+    return blocks
+        .stream()
+        .mapToLong(Block::free)
+        .sum();
+}
+```
+
+All memory allocations can be released back to the pool:
+
+```java
+public synchronized void release() {
+    Stream<? extends DeviceMemory> allocations = this.allocations();
+    allocations.forEach(DeviceMemory::close);
+    assert free() == total;
+}
+```
+
+Which uses the following helper:
+
+```java
+Stream<? extends DeviceMemory> allocations() {
+    return blocks
+        .stream()
+        .flatMap(Block::allocations)
+        .filter(Block.ALIVE);
+}
+```
+
+Destroying the pool also destroys the allocated memory blocks:
+
+```java
+public synchronized void close() {
+    for(Block b : blocks) {
+        b.destroy();
+    }
+    blocks.clear();
+    total = 0;
+    assert free() == 0;
+}
+```
+
+To service an allocation request the pool applies the following logic:
 
 1. If the pool is exhausted allocate a new memory block.
 
@@ -662,7 +673,6 @@ private Block block(long size) {
     final Block block = new Block(mem);
     blocks.add(block);
     total += actual;
-    ++count;
 
     return block;
 }
@@ -680,93 +690,247 @@ private Optional<DeviceMemory> allocateFromBlock(long size) {
 }
 ```
 
-Finally a previously destroyed allocation can be reused:
+Finally memory can be reallocated if available:
 
 ```java
 private Optional<DeviceMemory> reallocate(long size) {
     return blocks
         .stream()
-        .flatMap(b -> b.allocations.stream())
+        .flatMap(Block::allocations)
         .filter(DeviceMemory::isDestroyed)
         .filter(mem -> mem.size() <= size)
         .sorted(Comparator.comparingLong(DeviceMemory::size))
-        .findAny();
+        .findAny()
+        .map(BlockDeviceMemory::reallocate);
 }
 ```
 
-All memory allocations can be released back to the pool:
+### Allocator
+
+We next create a new allocator implementation to manage a group of memory pools:
+
+```java
+public class PoolAllocator implements Allocator {
+    private final Allocator allocator;
+    private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
+    private final int max;
+    private int count;
+}
+```
+
+The `max` member is the total maximum number of allowed allocations (see below).
+
+A pool is instantiated on demand for each memory type:
+
+```java
+public MemoryPool pool(MemoryType type) {
+    return pools.computeIfAbsent(type, ignored -> new MemoryPool(type, allocator));
+}
+```
+
+Which is invoked on a request for new device memory from the application:
+
+```java
+public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
+    // Allocate from pool
+    MemoryPool pool = pool(type);
+    DeviceMemory mem = pool.allocate(size);
+
+    // Update stats
+    ++count;
+
+    return mem;
+}
+```
+
+The allocator provides methods to release all allocated memory back to the pool:
 
 ```java
 public synchronized void release() {
-    final var allocations = allocations().collect(toList());
-    allocations.forEach(DeviceMemory::close);
-    assert free() == total;
+    pools.values().forEach(MemoryPool::release);
+    assert free() == size();
 }
 ```
 
-Note that `allocations` is a copy of the memory allocated from the pool to avoid concurrent modifications.
-
-Destroying the pool also destroys the allocated memory blocks:
+And to destroy all allocated memory:
 
 ```java
 public synchronized void close() {
-    // Remove allocations count
-    count -= blocks.size();
-    assert count >= 0;
-
-    // Destroy allocated blocks
-    for(Block b : blocks) {
-        b.mem.close();
-    }
-    blocks.clear();
-    total = 0;
+    pools.values().forEach(MemoryPool::close);
+    count = 0;
+    assert size() == 0;
     assert free() == 0;
 }
 ```
 
-### Pagination
-
-The `VkPhysicalDeviceLimits` descriptor contains two properties that can be used to configure the service:
-
-* `bufferImageGranularity` used to size new memory blocks as the pool grows.
-
-* `maxMemoryAllocationCount` that specifies the maximum number of individual memory allocations that can be supported by the hardware.
-
-We implement a further allocator that sizes new memory blocks to multiples of a given page-size:
+Finally we provide accessors for the various pool properties:
 
 ```java
-class PageAllocator implements Allocator {
-    private final Allocator allocator;
-    private final long page;
-
-    public PageAllocator(Allocator allocator, long page) {
-        this.allocator = notNull(allocator);
-        this.page = oneOrMore(page);
-    }
-
-    @Override
-    public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
-        final long num = 1 + ((size - 1) / page);
-        return allocator.allocate(type, num * page);
-    }
+public int count() {
+    return count;
 }
-```
 
-Finally we add a new convenience factory to the service to create a memory pool that delegates to the new paged implementation:
+public long free() {
+    return pools.values().stream().mapToLong(Pool::free).sum();
+}
 
-```java
-public static AllocationService pool(LogicalDevice dev) {
-    final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
-    final Allocator allocator = Allocator.allocator(dev);
-    final Allocator paged = new PageAllocator(allocator, limits.bufferImageGranularity);
-    final Allocator pool = new PoolAllocator(paged, limits.maxMemoryAllocationCount);
-    return create(dev, pool);
+public long size() {
+    return pools.values().stream().mapToLong(Pool::size).sum();
 }
 ```
 
 ---
 
+## Enhancements
+
+### Allocation Policy
+
+We next introduce an _allocation policy_ which modifies the size of a memory request to support the following requirements:
+
+* Configuration of the growth policy for a memory pool.
+
+* Memory pagination (see below).
+
+An allocation policy is defined by the following function:
+
+```java
+@FunctionalInterface
+public interface AllocationPolicy {
+    /**
+     * Calculates the size of a new memory according to this policy.
+     * @param size          Requested memory size
+     * @param total         Total memory
+     * @return Modified size to allocate
+     */
+    long apply(long size, long total);
+
+    /**
+     * Default policy that does not modify the requested size.
+     */
+    AllocationPolicy NONE = (size, total) -> size;
+}
+```
+
+We provide various implementations, in particular the following factory creates a policy to grow a memory pool:
+
+```java
+static AllocationPolicy expand(float scale) {
+    if(scale <= 0) throw new IllegalArgumentException(...);
+    return (size, total) -> (long) (total * scale);
+}
+```
+
+We add an allocation policy to the pool allocator which is applied before delegating to the memory pool:
+
+```java
+public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
+    MemoryPool pool = pool(type);
+    long actual = policy.apply(size, pool.size());
+    if(actual < size) throw new AllocationException(...);
+    ...
+}
+```
+
+### Pagination
+
+The `VkPhysicalDeviceLimits` descriptor contains two properties that can be used to configure the pool allocator:
+
+* `bufferImageGranularity` specifies the optimal _page size_ for memory blocks.
+
+* `maxMemoryAllocationCount` is the maximum number of individual memory allocations that can be supported by the hardware.
+
+We first implement a custom pagination policy which quantises the memory request to a given page size:
+
+```java
+public class PageAllocationPolicy implements AllocationPolicy {
+    private final long page;
+    private final long min;
+
+    @Override
+    public long apply(long size, long current) {
+        long num = 1 + ((size - 1) / page);
+        return Math.max(min, num * page);
+    }
+}
+```
+
+Next we add a convenience factory method to create and configure a pool allocator based on the hardware:
+
+```java
+public static PoolAllocator create(LogicalDevice dev, Allocator allocator) {
+    // Init allocator if not specified
+    Allocator delegate = allocator == null ? Allocator.allocator(dev) : allocator;
+
+    // Create paged policy
+    VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
+    AllocationPolicy policy = new PageAllocationPolicy(limits.bufferImageGranularity);
+
+    // Create pool allocator
+    return new PoolAllocator(delegate, limits.maxMemoryAllocationCount, policy);
+}
+```
+
+### Allocation Request Routing
+
+We anticipate that an application will also require different allocation strategies depending on the use-cases for device memory.
+
+Examples:
+
+* We would prefer to avoid frequent mapping of memory that is highly volatile, e.g. a uniform buffer for projection matrices.
+
+* Transient memory is generally explicitly released by an application, e.g. staging buffers.
+
+* A memory pool is often suitable for similar types of request (e.g. image processing) whereas for one-off allocations we probably don't care.
+
+To support these different use-cases we introduce a _routing policy_ to the allocation service:
+
+```java
+public class AllocationService {
+    /**
+     * Route descriptor.
+     */
+    private record Route(Predicate<MemoryProperties<?>> predicate, Allocator allocator) {
+    }
+
+    private final List<Route> routes = new ArrayList<>();
+    private final Allocator def;
+    ...
+
+    public void route(Predicate<MemoryProperties<?>> predicate, Allocator allocator) {
+        routes.add(new Route(predicate, allocator));
+    }
+}
+```
+
+The `allocate` method is modified to find the matching route based on the memory properties of the request:
+
+```java
+public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
+    // Route request
+    Allocator allocator = routes
+        .stream()
+        .filter(r -> r.predicate().test(props))
+        .findAny()
+        .map(r -> r.allocator())
+        .orElse(def);
+
+    // Select memory type and delegate request
+    MemoryType type = selector.select(reqs, props);
+    return allocator.allocate(type, reqs.size);
+}
+```
+
+Notes:
+
+* The routing policy is mutable.
+
+* Routes are implicitly ordered.
+
+* The allocator in the constructor is the default if there is no matching route (or no routes are configured).
+
+---
+
 ## Summary
 
-In this chapter we implemented the framework for memory allocation that will be used for vertex buffers and texture images.
+In this chapter we implemented the framework for memory allocation that will be used when creating vertex buffers and texture images.
 

@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.memory;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,19 +63,6 @@ public class MemoryPoolTest {
 		assertEquals(1, pool.free());
 		assertEquals(1, pool.count());
 		assertEquals(0, pool.allocations().count());
-	}
-
-	@Test
-	void policy() {
-		pool.policy(BlockPolicy.literal(3));
-		pool.allocate(1);
-		assertEquals(3, pool.size());
-	}
-
-	@Test
-	void policyInvalid() {
-		pool.policy((size, current) -> 0);
-		assertThrows(AllocationException.class, () -> pool.allocate(1));
 	}
 
 	@DisplayName("Released memory should be returned to the pool")

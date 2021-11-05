@@ -25,7 +25,7 @@ class Block {
 	/**
 	 * Active memory filter.
 	 */
-	public static final Predicate<BlockDeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
+	static final Predicate<BlockDeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
 
 	private final DeviceMemory mem;
 	private final List<BlockDeviceMemory> allocations = new ArrayList<>();
