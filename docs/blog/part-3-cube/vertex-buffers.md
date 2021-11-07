@@ -107,7 +107,7 @@ public static Layout of(int size) {
 }
 ```
 
-Finally a compound vertex can be written to an NIO buffer:
+Finally a vertex can be written to an NIO buffer:
 
 ```java
 public class Vertex implements Bufferable {
@@ -213,28 +213,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 ```
 
 Vectors and texture coordinates are not required for the triangle demo so we will gloss over these objects until later.
-
-Finally we implement a builder for a vertex with the above components:
-
-```java
-public static class Builder {
-    private Point pos;
-    private Vector normal;
-    private Coordinate coord;
-    private Colour col;
-
-    public Vertex build() {
-        var components = Stream
-            .of(pos, normal, coord, col)
-            .filter(Objects::nonNull)
-            .collect(toList());
-
-        return new Vertex(components);
-    }
-}
-```
-
-Note that all the components of the vertex are optional.
 
 ### Vertex Buffer
 
@@ -504,13 +482,13 @@ The triangle vertices are specified as a simple array:
 
 ```java
 Vertex[] vertices = {
-    new Vertex.Builder().position(new Point(0, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-    new Vertex.Builder().position(new Point(0.5f, 0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
-    new Vertex.Builder().position(new Point(-0.5f, 0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
+    Vertex.of(new Point(0, -0.5f, 0), new Colour(1, 0, 0, 1)),
+    Vertex.of(new Point(0.5f, 0.5f, 0), new Colour(0, 0, 1, 1)),
+    Vertex.of(new Point(-0.5f, 0.5f, 0), new Colour(0, 1, 0, 1)),
 };
 ```
 
-Which we wrap as a bufferable object:
+Which we wrap with a temporary compound bufferable object:
 
 ```java
 private static final Bufferable TRIANGLE = new Bufferable() {

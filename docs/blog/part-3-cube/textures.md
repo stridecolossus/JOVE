@@ -185,24 +185,43 @@ We can now be fairly confident that the texture coordinates are being handled co
 
 ### Vertex Configuration Redux
 
-As noted above the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already have the necessary information represented by the layout of the vertex data, hence we add a new convenience helper to the pipeline stage builder.
+As noted above the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already have the necessary information represented by the layout of the vertex data, 
 
-The new method first allocates the next available binding index:
+We first introduce a wrapper for a list of layouts:
 
 ```java
-public VertexInputStageBuilder add(List<Layout> layout) {
+public class CompoundLayout {
+    private final List<Layout> layouts;
+
+    public boolean contains(Layout layout) {
+        ...
+    }
+}
+```
+
+This class compares elements of the compound layout by _identity_ which avoids components having the same layout being considered the same (e.g. vertex positions and normals):
+
+```java
+public boolean contains(Layout layout) {
+    return layouts.stream().anyMatch(e -> e == layout);
+}
+```
+
+We can now add a convenience helper to the pipeline stage builder to configure the vertex data:
+
+```java
+public VertexInputStageBuilder add(CompoundLayout layout) {
     // Allocate next binding
     int index = bindings.size();
-    
     ...
 }
 ```
 
-We use the nested builder to configure the binding for the layout:
+This helper allocates the next available binding index and then uses the nested builder to configure the binding:
 
 ```java
 // Calculate vertex stride for this layout
-int stride = Layout.stride(layout);
+int stride = layout.stride();
 
 // Add binding
 new BindingBuilder()
@@ -211,11 +230,11 @@ new BindingBuilder()
     .build();
 ```
 
-Where `stride` is another new helper on the layout class:
+Where `stride` is a helper accessor on the new class:
 
 ```java
-public static int stride(Collection<Layout> layout) {
-    return layout.stream().mapToInt(Vertex.Layout::length).sum();
+public int stride() {
+    return layouts.stream().mapToInt(Layout::length).sum();
 }
 ```
 
@@ -225,9 +244,9 @@ Next we iterate over the layout to construct a vertex attribute for each entry:
 // Add attribute for each layout component
 int offset = 0;
 int loc = 0;
-for(Layout attr : layout) {
+for(Layout component : layout) {
     // Determine component format
-    final VkFormat format = FormatBuilder.format(attr);
+    final VkFormat format = FormatBuilder.format(component);
 
     // Add attribute for component
     new AttributeBuilder()
@@ -239,7 +258,7 @@ for(Layout attr : layout) {
         
     // Increment offset to the start of the next attribute
     ++loc;
-    offset += entry.length();
+    offset += component.length();
 }
 ```
 
@@ -248,6 +267,8 @@ Notes:
 * The _location_ of each attribute is assumed to begin at index zero.
 
 * The loop calculates the cumulative _offset_ of each attribute within a vertex.
+
+* The `equals` method of the compound layout also tests equality by identity.
 
 We also added convenience factory method to the `FormatBuilder` to determine the format of each attribute from its layout:
 
@@ -266,7 +287,7 @@ We can now replace the configuration for the vertex data in the pipeline with th
 
 ```java
 .input()
-    .add(List.of(Point.LAYOUT, Coordinate2D.LAYOUT))
+    .add(new CompoundLayout(List.of(Point.LAYOUT, Coordinate2D.LAYOUT)))
     .build()
 ```
 

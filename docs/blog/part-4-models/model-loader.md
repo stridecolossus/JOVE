@@ -109,34 +109,6 @@ void position(Point v) {
 }
 ```
 
-Although not required for the chalet model the OBJ format supports multiple object _groups_ corresponding to one-or-more JOVE models:
-
-```java
-public class ObjectModel {
-    ...
-    private final List<Builder> builders = new ArrayList<>();
-    private Builder current;
-}
-```
-
-We add a local helper to start a new group:
-
-```java
-private void add() {
-    current = new Model.Builder();
-    current.primitive(Primitive.TRIANGLES);
-    builders.add(current);
-}
-```
-
-Which is invoked in the constructor to initialise the first group:
-
-```java
-public ObjectModel() {
-    add();
-}
-```
-
 ### Model Loader
 
 We can now parse the OBJ file as follows:
@@ -365,25 +337,78 @@ Finally we delegate to a new mutator on the model to add a vertex given the thre
 ```java
 public void vertex(int v, Integer vn, Integer vt) {
     // Add vertex position
-    final var vertex = new Vertex.Builder();
-    vertex.position(positions.get(v));
+    final List<Component> components = new ArrayList<>();
+    components.add(positions.get(v));
 
     // Add optional normal
     if(vn != null) {
-        vertex.normal(normals.get(vn));
+        components.add(normals.get(vn));
     }
 
     // Add optional texture coordinate
     if(vt != null) {
-        vertex.coordinate(coords.get(vt));
+        components.add(coords.get(vt));
     }
 
-    // Add vertex
-    current.add(vertex.build());
+    // Construct vertex
+    final Vertex vertex = new Vertex(components);
+    vertices.add(vertex);
 }
 ```
 
-### Conclusion
+Where `vertices` is another transient member on the OBJ model:
+
+```java
+private final List<Vertex> vertices = new ArrayList<>();
+```
+
+### Model Builder
+
+Although not required for the current demo application the OBJ format supports construction of multiple models from a single file:
+
+```java
+public class ObjectModel {
+    ...
+    private final List<Model> models = new ArrayList<>();
+
+    public List<Model> build() {
+        append();
+        return new ArrayList<>(models);
+    }
+}
+```
+
+The `append` method builds a JOVE model from the transient data and resets the model:
+
+```java
+private void append() {
+    // Ignore if current group is empty
+    if(vertices.isEmpty()) {
+        return;
+    }
+
+    // Create new model builder
+    final ModelBuilder builder = builder();
+    builder.primitive(Primitive.TRIANGLES);
+
+    // Init model layout
+    builder.layout(Point.LAYOUT);
+    if(!normals.isEmpty()) {
+        builder.layout(Vector.NORMALS);
+    }
+    if(!coords.isEmpty()) {
+        builder.layout(Coordinate2D.LAYOUT);
+    }
+
+    // Add vertex data
+    for(Vertex v : vertices) {
+        builder.add(v);
+    }
+
+    // Add to models
+    models.add(builder.build());
+}
+```
 
 To complete the loader we register the remaining command parsers:
 
@@ -394,34 +419,22 @@ add("g", Parser.GROUP);
 add("s", Parser.IGNORE);
 ```
 
-The `GROUP` parser delegates to the following method on the model to start a new object group:
+The `GROUP` parser delegates to the following method on the model to build the current group and start a new one:
 
 ```java
 public void start() {
-    // Ignore if the current group is empty
-    if(current.isEmpty()) {
-        return;
-    }
+    // Build current model group
+    append();
 
     // Reset transient model
     positions.clear();
     normals.clear();
     coords.clear();
-
-    // Start new model
-    add();
+    vertices.clear();
 }
 ```
 
 Notes that some OBJ files start with a group declaration, so we ignore the case where no vertex data has been added to the current group.
-
-Finally we add a method to the model class to generate the resultant JOVE model(s):
-
-```java
-public Stream<Model> build() {
-    return builders.stream().map(Builder::build);
-}
-```
 
 ---
 
