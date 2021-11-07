@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -20,6 +22,7 @@ public class FrameThrottleTest {
 			@Override
 			protected void sleep(long duration) {
 				sleep = duration;
+				super.sleep(duration);
 			}
 		};
 		sleep = null;
@@ -29,27 +32,27 @@ public class FrameThrottleTest {
 	@Test
 	void update() {
 		throttle.update(tracker);
-		assertEquals(20, sleep);
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(20), sleep);
 	}
 
 	@Test
 	void updateZeroDuration() {
-		when(tracker.elapsed()).thenReturn(20L);
+		when(tracker.elapsed()).thenReturn(TimeUnit.MILLISECONDS.toNanos(20));
 		throttle.update(tracker);
 		assertEquals(null, sleep);
 	}
 
 	@Test
 	void updatePartial() {
-		when(tracker.elapsed()).thenReturn(10L);
+		when(tracker.elapsed()).thenReturn(TimeUnit.MILLISECONDS.toNanos(10));
 		throttle.update(tracker);
-		assertEquals(10, sleep);
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), sleep);
 	}
 
 	@Test
 	void throttle() {
 		throttle.throttle(25);
 		throttle.update(tracker);
-		assertEquals(40, sleep);
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(40), sleep);
 	}
 }
