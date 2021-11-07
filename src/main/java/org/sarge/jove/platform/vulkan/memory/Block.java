@@ -90,7 +90,7 @@ class Block {
 	 * Destroys this block.
 	 */
 	void destroy() {
-		mem.close();
+		mem.destroy();
 		allocations.clear();
 		mapped = null;
 	}
@@ -168,7 +168,7 @@ class Block {
 		}
 
 		@Override
-		public synchronized void close() {
+		public synchronized void destroy() {
 			checkAlive();
 			destroyed = true;
 		}

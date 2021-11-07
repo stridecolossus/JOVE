@@ -78,9 +78,9 @@ public class RenderTask implements Task {
 		 * Release resources.
 		 */
 		private void close() {
-			available.close();
-			ready.close();
-			fence.close();
+			available.destroy();
+			ready.destroy();
+			fence.destroy();
 		}
 	}
 

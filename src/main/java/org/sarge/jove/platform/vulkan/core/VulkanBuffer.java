@@ -237,7 +237,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	@Override
 	protected void release() {
 		if(!mem.isDestroyed()) {
-			mem.close();
+			mem.destroy();
 		}
 	}
 

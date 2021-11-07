@@ -51,7 +51,7 @@ public class SurfaceTest extends AbstractVulkanTest {
 
 	@Test
 	void close() {
-		surface.close();
+		surface.destroy();
 		verify(lib).vkDestroySurfaceKHR(instance, surface, null);
 	}
 

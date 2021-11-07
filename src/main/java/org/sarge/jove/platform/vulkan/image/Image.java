@@ -99,7 +99,7 @@ public interface Image extends NativeObject {
 		@Override
 		protected void release() {
 			if(!mem.isDestroyed()) {
-				mem.close();
+				mem.destroy();
 			}
 		}
 

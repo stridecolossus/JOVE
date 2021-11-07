@@ -209,7 +209,7 @@ class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		void destroy() {
-			pool.close();
+			pool.destroy();
 			verify(lib).vkDestroyCommandPool(dev, pool, null);
 		}
 	}

@@ -67,9 +67,9 @@ public class ImageTest extends AbstractVulkanTest {
 
 	@Test
 	void close() {
-		image.close();
+		image.destroy();
 		verify(lib).vkDestroyImage(dev, image, null);
-		verify(mem).close();
+		verify(mem).destroy();
 	}
 
 	@Nested

@@ -81,9 +81,9 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void close() {
-		view.close();
+		view.destroy();
 		verify(lib).vkDestroyImageView(dev, view, null);
-		verify(image).close();
+		verify(image).destroy();
 		verifyNoMoreInteractions(lib);
 	}
 

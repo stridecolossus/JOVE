@@ -69,7 +69,7 @@ public class MemoryPoolTest {
 	@Test
 	void destroyAllocatedMemory() {
 		final DeviceMemory mem = pool.allocate(1);
-		mem.close();
+		mem.destroy();
 		assertEquals(1, pool.size());
 		assertEquals(1, pool.free());
 		assertEquals(1, pool.count());
@@ -134,11 +134,11 @@ public class MemoryPoolTest {
 
 		// Allocate then destroy some memory
 		final DeviceMemory mem = pool.allocate(1);
-		mem.close();
+		mem.destroy();
 		assertEquals(true, mem.isDestroyed());
 
 		// Allocate and destroy some more memory that is larger
-		pool.allocate(2).close();
+		pool.allocate(2).destroy();
 
 		// Allocate and check reallocates the memory with nearest size
 		assertEquals(mem, pool.allocate(1));

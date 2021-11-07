@@ -63,7 +63,7 @@ public class BlockTest {
 	void destroy() {
 		final DeviceMemory allocation = block.allocate(1);
 		block.destroy();
-		verify(mem).close();
+		verify(mem).destroy();
 		when(mem.isDestroyed()).thenReturn(true);
 		assertEquals(true, allocation.isDestroyed());
 		assertEquals(0, block.allocations().count());
@@ -95,7 +95,7 @@ public class BlockTest {
 
 		@Test
 		void mapDestroyed() {
-			allocation.close();
+			allocation.destroy();
 			assertThrows(IllegalStateException.class, () -> allocation.map());
 		}
 
@@ -115,7 +115,7 @@ public class BlockTest {
 
 		@Test
 		void reallocate() {
-			allocation.close();
+			allocation.destroy();
 			allocation.reallocate();
 			assertEquals(false, allocation.isDestroyed());
 		}
@@ -127,22 +127,22 @@ public class BlockTest {
 
 		@Test
 		void reallocateBlockDestroyed() {
-			mem.close();
+			mem.destroy();
 			assertThrows(IllegalStateException.class, () -> allocation.reallocate());
 		}
 
 		@Test
-		void close() {
-			allocation.close();
+		void destroy() {
+			allocation.destroy();
 			assertEquals(true, allocation.isDestroyed());
 			assertEquals(3, block.free());
 			assertEquals(1, block.remaining());
 		}
 
 		@Test
-		void closeAlreadyDestroyed() {
-			allocation.close();
-			assertThrows(IllegalStateException.class, () -> allocation.close());
+		void destroyAlreadyDestroyed() {
+			allocation.destroy();
+			assertThrows(IllegalStateException.class, () -> allocation.destroy());
 		}
 
 		@Test

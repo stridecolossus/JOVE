@@ -85,7 +85,7 @@ public class View extends AbstractVulkanObject {
 	@Override
 	protected void release() {
 		if(image instanceof TransientNativeObject obj) {
-			obj.close();
+			obj.destroy();
 		}
 	}
 

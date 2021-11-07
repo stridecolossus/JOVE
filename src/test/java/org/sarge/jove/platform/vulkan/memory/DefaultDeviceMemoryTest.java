@@ -44,7 +44,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	@Test
 	void close() {
 		mem.map();
-		mem.close();
+		mem.destroy();
 		assertEquals(true, mem.isDestroyed());
 		assertEquals(Optional.empty(), mem.region());
 	}
@@ -140,7 +140,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 
 		@Test
 		void bufferDestroyed() {
-			mem.close();
+			mem.destroy();
 			assertThrows(IllegalStateException.class, () -> region.buffer());
 		}
 
@@ -165,7 +165,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 
 		@Test
 		void unmapDestroyed() {
-			mem.close();
+			mem.destroy();
 			assertThrows(IllegalStateException.class, () -> region.unmap());
 		}
 

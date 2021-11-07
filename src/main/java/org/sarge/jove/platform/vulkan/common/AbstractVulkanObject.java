@@ -56,14 +56,14 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public synchronized void close() {
+	public final synchronized void destroy() {
 		// Destroy this object
 		@SuppressWarnings("rawtypes")
 		final Destructor destructor = destructor(dev.library());
 		destructor.destroy(dev, this, null);
 
 		// Delegate
-		super.close();
+		super.destroy();
 	}
 
 	@Override

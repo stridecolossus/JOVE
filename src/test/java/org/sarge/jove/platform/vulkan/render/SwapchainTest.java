@@ -134,9 +134,9 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 	@Test
 	void close() {
-		swapchain.close();
+		swapchain.destroy();
 		verify(lib).vkDestroySwapchainKHR(dev, swapchain, null);
-		verify(view).close();
+		verify(view).destroy();
 	}
 
 	@Test

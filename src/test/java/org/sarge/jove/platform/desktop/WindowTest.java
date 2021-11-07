@@ -96,7 +96,7 @@ public class WindowTest {
 
 	@Test
 	void destroy() {
-		window.close();
+		window.destroy();
 		verify(lib).glfwDestroyWindow(window);
 	}
 }

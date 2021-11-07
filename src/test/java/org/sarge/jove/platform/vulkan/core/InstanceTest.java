@@ -72,7 +72,7 @@ public class InstanceTest {
 
 	@Test
 	void destroy() {
-		instance.close();
+		instance.destroy();
 		verify(lib).vkDestroyInstance(handle, null);
 	}
 
@@ -264,7 +264,7 @@ public class InstanceTest {
 
 			// Destroy instance and handler
 			when(lib.vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT")).thenReturn(func);
-			instance.close();
+			instance.destroy();
 
 			// Check API
 			final ArgumentCaptor<Object[]> captor = ArgumentCaptor.forClass(Object[].class);
@@ -311,6 +311,6 @@ public class InstanceTest {
 		assertEquals(lib, instance.library());
 
 		// Destroy instance
-		instance.close();
+		instance.destroy();
 	}
 }

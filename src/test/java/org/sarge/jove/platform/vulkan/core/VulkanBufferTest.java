@@ -115,9 +115,9 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void close() {
-		buffer.close();
+		buffer.destroy();
 		verify(lib).vkDestroyBuffer(dev, buffer, null);
-		verify(mem).close();
+		verify(mem).destroy();
 	}
 
 	@Nested

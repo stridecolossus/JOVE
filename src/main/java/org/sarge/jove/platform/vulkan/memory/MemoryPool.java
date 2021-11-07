@@ -180,7 +180,7 @@ public class MemoryPool {
 	 */
 	public synchronized void release() {
 		final var allocations = this.allocations();
-		allocations.forEach(DeviceMemory::close);
+		allocations.forEach(DeviceMemory::destroy);
 		assert free() == total;
 	}
 

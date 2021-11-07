@@ -107,7 +107,7 @@ public class LogicalDeviceTest {
 
 	@Test
 	void close() {
-		device.close();
+		device.destroy();
 		verify(lib).vkDestroyDevice(device, null);
 	}
 

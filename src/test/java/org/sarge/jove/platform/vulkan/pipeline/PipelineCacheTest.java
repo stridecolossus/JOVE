@@ -94,7 +94,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 
 	@Test
 	void close() {
-		cache.close();
+		cache.destroy();
 		assertEquals(true, cache.isDestroyed());
 		verify(lib).vkDestroyPipelineCache(dev, cache, null);
 	}
