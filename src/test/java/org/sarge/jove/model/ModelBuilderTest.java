@@ -26,11 +26,6 @@ class ModelBuilderTest {
 	}
 
 	@Test
-	void isEmpty() {
-		assertEquals(true, builder.isEmpty());
-	}
-
-	@Test
 	void build() {
 		// Build model
 		final Model model = builder
@@ -46,7 +41,6 @@ class ModelBuilderTest {
 		assertEquals(false, model.isIndexed());
 		assertNotNull(model.vertices());
 		assertEquals(Optional.empty(), model.index());
-		assertEquals(false, builder.isEmpty());
 	}
 
 	@Test
@@ -56,7 +50,6 @@ class ModelBuilderTest {
 		assertEquals(new Header(new CompoundLayout(List.of()), Primitive.TRIANGLE_STRIP, 0), model.header());
 		assertNotNull(model.vertices());
 		assertEquals(Optional.empty(), model.index());
-		assertEquals(true, builder.isEmpty());
 	}
 
 	@DisplayName("Invalid vertices are trapped if validation is switched on")

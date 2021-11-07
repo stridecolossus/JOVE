@@ -55,7 +55,7 @@ public class ModelBuilder {
 	 * @throws IllegalStateException if the model contains vertex data
 	 */
 	public ModelBuilder layout(Layout layout) {
-		if(!isEmpty()) throw new IllegalStateException("Cannot modify model layout after adding vertex data");
+		if(!vertices.isEmpty()) throw new IllegalStateException("Cannot modify model layout after adding vertex data");
 		this.layout.add(layout);
 		return this;
 	}
@@ -78,13 +78,6 @@ public class ModelBuilder {
 	public ModelBuilder primitive(Primitive primitive) {
 		this.primitive = notNull(primitive);
 		return this;
-	}
-
-	/**
-	 * @return Whether this model is empty
-	 */
-	public boolean isEmpty() {
-		return vertices.isEmpty();
 	}
 
 	/**

@@ -560,12 +560,15 @@ public Bufferable vertices() {
 }
 ```
 
-To construct a model we provide the ubiquitous builder:
+### Model Builder
+
+To construct a model we provide the ubiquitous builder which essentially a wrapper for a mutable list of vertices:
 
 ```java
-public static class Builder {
-    private Primitive primitive = Primitive.TRIANGLE_STRIP;
+public class ModelBuilder {
     private final List<Vertex> vertices = new ArrayList<>();
+    private final MutableCompoundLayout layout = new MutableCompoundLayout();
+    private Primitive primitive = Primitive.TRIANGLE_STRIP;
 
     ...
 
@@ -576,14 +579,62 @@ public static class Builder {
 }
 ```
 
-### Cube Builder
-
-We build on the new model class to construct a cube:
+To configure the vertex layout we add a local mutable implementation of the compound layout:
 
 ```java
-public class CubeBuilder {
-    private final DefaultModel.Builder builder = new DefaultModel.Builder().primitive(Primitive.TRIANGLES);
+private static class MutableCompoundLayout extends CompoundLayout {
+    @Override
+    protected void add(Layout layout) {
+        super.add(layout);
+    }
+}
+```
+
+Which is used by the following mutator:
+
+```java
+public ModelBuilder layout(Layout layout) {
+    if(!vertices.isEmpty()) throw new IllegalStateException(...);
+    this.layout.add(layout);
+    return this;
+}
+```
+
+Vertices added to the model can optionally be validated against the layout:
+
+```java
+public ModelBuilder add(Vertex vertex) {
+    if(validate) {
+        validate(vertex);
+    }
+    vertices.add(vertex);
+    return this;
+}
+```
+
+Where `validate` compares the layouts by identity:
+
+```java
+private void validate(Vertex vertex) {
+    final CompoundLayout actual = vertex.layout();
+    if(!layout.equals(actual)) {
+        throw new IllegalArgumentException(...);
+    }
+}
+```
+
+### Cube Builder
+
+To construct a cube we extend the model builder:
+
+```java
+public class CubeBuilder extends ModelBuilder {
     private float size = MathsUtil.HALF;
+
+    public CubeBuilder() {
+        super.primitive(Primitive.TRIANGLES);
+        layout(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
+    }
 }
 ```
 
@@ -640,40 +691,80 @@ private static final int[] TRIANGLES = Stream
     .toArray();
 ```
 
-In the build method we iterate over the array of faces to lookup the vertex index for each corner:
+In the `build` method we iterate over the array of faces to lookup the vertex data for each triangle:
 
 ```java
 public Model build() {
-    for(int[] face : FACES) {
+    for(int face = 0; face < FACES.length; ++face) {
         for(int corner : TRIANGLES) {
-            int index = face[corner];
-            ...
+            int index = FACES[face][corner];
+            Point pos = VERTICES[index].scale(size);
+            Vector normal = NORMALS[face];
+            Coordinate coord = Quad.COORDINATES.get(corner);
+            Colour col = COLOURS[face];
+            Vertex vertex = Vertex.of(pos, normal, coord, col);
+            super.add(vertex);
         }
+    }
+    return super.build();
+}
+```
+
+### Model Transformation
+
+The cube builder creates vertices containing all the vertex components (position, normal, texture coordinate, colour), however for the demo application we only require the vertex position and texture coordinates.  Additionally applications may require the vertex components to be re-ordered if (for example) the shader cannot be modified to suit a given model.
+
+Therefore we introduce a _transformation_ method to the model to applies a new vertex layout:
+
+```java
+public interface Model {
+    /**
+     * Transforms this model to the given component layout.
+     * @param layouts Component layout
+     * @return Transformed model
+     * @throws IllegalArgumentException if this model is not comprised of the given layouts
+     */
+    Model transform(List<Layout> layout);
+}
+```
+
+In the default model implementation we first build the mapping from the current to the desired layout:
+
+```java
+int map[] = current.stream().mapToInt(layouts::indexOf).toArray();
+for(int n : map) {
+    if(n == -1) {
+        throw new IllegalArgumentException(...);
     }
 }
 ```
 
-We can now lookup the vertex position and texture coordinate for each corner of a face:
+We can then apply this mapping to the vertex data:
 
 ```java
-Point pos = VERTICES[index];
-Coordinate2D tc = Quad.COORDINATES.get(corner);
+List<Vertex> data = vertices
+    .stream()
+    .map(v -> v.transform(map))
+    .collect(toList());
 ```
 
-We compose these components into a vertex which is added to the model:
+Which delegates to the following new helper on the vertex class:
 
 ```java
-Vertex v = new Vertex.Builder()
-    .position(pos)
-    .coordinate(tc)
-    .build();
-builder.add(v);
+public Vertex transform(int[] layout) {
+    return Arrays
+        .stream(layout)
+        .mapToObj(components::get)
+        .collect(TRANSFORM);
+}
 ```
 
-And finally we construct the cube:
+Finally we create the transformed model:
 
 ```java
-return builder.build();
+Header prev = this.header();
+Header header = new Header(new CompoundLayout(layouts), prev.primitive(), prev.count());
+return new DefaultModel(header, data, index);
 ```
 
 ### Integration #3
@@ -684,7 +775,9 @@ In the demo we replace the hard-coded quad vertices with a cube model:
 public class VertexBufferConfiguration {
     @Bean
     public static Model cube() {
-        return new CubeBuilder().build();
+        return new CubeBuilder()
+            .build()
+            .transform(List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
     }
 }
 ```
