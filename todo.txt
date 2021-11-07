@@ -15,7 +15,6 @@ demo
 - geometry shader, normals, bounding volumes (spheres as x2 circles)
 
 core
-- allocator merge released blocks (de-fragmentation)
 - DeviceFeatures - tests/annotations for required features? techniques -> materials ~ available features
 
 scene
@@ -45,7 +44,6 @@ other features
 current
 - some sort of triangle builder? used in demo and to create x2 triangles for a quad
 - acquire should create a frame object of some sort (swap chain is immutable), i.e. don't care about index
-- how to ensure vertex layout is same order if compound layout is mutable? i.e. in cube builder (and OBJ?)
 
 * There are several lists of objects (frame buffers, descriptor sets, etc) that are used when recording the rendering sequence (again lots of dependencies).
 * New classes to compose the various objects that collaborate when recording the render sequence.

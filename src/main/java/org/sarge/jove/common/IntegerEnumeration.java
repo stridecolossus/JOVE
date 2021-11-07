@@ -140,7 +140,7 @@ public interface IntegerEnumeration {
 		 */
 		@SuppressWarnings("unchecked")
 		private static <E extends IntegerEnumeration> ReverseMapping<E> get(Class<?> clazz) {
-			return (ReverseMapping<E>) ReverseMapping.CACHE.computeIfAbsent(clazz, ReverseMapping::new);
+			return (ReverseMapping<E>) CACHE.computeIfAbsent(clazz, ReverseMapping::new);
 		}
 
 		private final Map<Integer, E> map;

@@ -125,7 +125,6 @@ We add a local helper to start a new group:
 private void add() {
     current = new Model.Builder();
     current.primitive(Primitive.TRIANGLES);
-    current.clockwise(true);
     builders.add(current);
 }
 ```
@@ -827,21 +826,24 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 
 The `map` method transforms an input-stream to the intermediate data stream, the `load` method itself is unchanged (except for the `@Override`).
 
-Next we introduce a _data source_ which is generally created via a factory method:
+Next we introduce a _data source_ which abstracts access to a resource:
 
 ```java
 public class DataSource {
-    public static DataSource of(String dir) {
-        Path root = Paths.get(dir);
-        if(!Files.exists(root)) throw new IllegalArgumentException(...);
-        return new DataSource(root);
-    }
-    
     private final Path root;
+
+    public DataSource(Path root) {
+        if(!Files.exists(root)) throw new IllegalArgumentException(...);
+        this.root = notNull(root);
+    }
+
+    public DataSource(String root) {
+        this(Paths.get(root));
+    }
 }
 ```
 
-The final piece of the jigsaw is an adapter method that loads a resource by name:
+The final piece of the jigsaw is the following method that loads a resource by name:
 
 ```java
 public <T, R> R load(String name, ResourceLoader<T, R> loader) {
@@ -855,33 +857,37 @@ public <T, R> R load(String name, ResourceLoader<T, R> loader) {
 }
 ```
 
-The adapter encapsulates the process of opening and loading the resource and nicely centralises the checked exceptions.
+This method encapsulates the process of opening and loading the resource and nicely centralises the checked exceptions.
 
 Notes:
 
-* This framework assumes that all resources will be loaded from an underlying input stream (which seems safe enough).
+* The implementation assumes that all resources will be loaded from an underlying input stream (which seems safe enough).
 
-* The existing resource loaders are refactored accordingly.
+* This framework allows loaders to remain relatively simple (and testable) and factors out the name mapping and exception handling logic.
 
-In the demo applications we can now configure a common data-source (which also nicely avoids duplication of the path):
+* Existing resource loaders are refactored accordingly.
+
+In the demo applications we can now configure a common data-source (which also avoids duplication of the path):
 
 ```java
 @SpringBootApplication
 public class RotatingCubeDemo {
     @Bean
     public static DataSource source() {
-        return DataSource.of("./src/main/resources");
+        return new DataSource("./src/main/resources");
     }
 }
 ```
 
-And resources can now be loaded much more conveniently:
+Resources can now be loaded much more concisely:
 
 ```java
 public static Model model(DataSource src) {
     return src.load("chalet.model", new ModelLoader());
 }
 ```
+
+Finally we define the inverse `ResourceWriter` and a convenience `ResourceLoaderWriter` that composes both interfaces.
 
 ---
 
