@@ -1,30 +1,30 @@
 package org.sarge.jove.model;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.stream.Collector;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.collections4.ListUtils;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.Component;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.Component;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
 
 /**
- * A <i>vertex</i> is a compound object comprised of a collection of {@link Component} such as vertex positions, normals, texture coordinates, etc.
+ * A <i>vertex</i> is a compound object comprised of a collection of <i>components</i> such as vertex positions, normals, texture coordinates, etc.
+ * @see Component
  * @author Sarge
  */
 public class Vertex implements Bufferable {
+	private static final Collector<Component, List<Component>, Vertex> TRANSFORM = Collector.of(ArrayList::new, List::add, ListUtils::union, Vertex::new);
+
 	/**
-	 * Creates a vertex from the given array of components.
+	 * Helper - Creates a vertex.
 	 * @param components Vertex components
 	 * @return New vertex
 	 */
@@ -43,111 +43,54 @@ public class Vertex implements Bufferable {
 	}
 
 	/**
-	 * @return Components of this vertex
+	 * @return Layout of this vertex
 	 */
-	public List<Component> components() {
-		return components;
-	}
-
-	/**
-	 * Convenience helper.
-	 * @return Component layouts
-	 */
-	public Stream<Layout> layout() {
-		return components.stream().map(Component::layout);
-	}
-
-	/**
-	 * Retrieves a vertex component by index.
-	 * @param <T> Component type
-	 * @param index Index
-	 * @return Vertex component
-	 * @throws ArrayIndexOutOfBoundsException for an invalid index
-	 */
-	@SuppressWarnings("unchecked")
-	public <T extends Bufferable> T get(int index) {
-		return (T) components.get(index);
+	public CompoundLayout layout() {
+		final List<Layout> layout = components.stream().map(Component::layout).collect(toList());
+		return new CompoundLayout(layout);
 	}
 
 	@Override
 	public int length() {
-		return components.stream().mapToInt(Component::length).sum();
+		final CompoundLayout layout = this.layout();
+		return layout.stride();
 	}
 
 	@Override
-	public void buffer(ByteBuffer buffer) {
-		for(Component obj : components) {
-			obj.buffer(buffer);
+	public void buffer(ByteBuffer bb) {
+		for(Bufferable c : components) {
+			c.buffer(bb);
 		}
+	}
+
+	/**
+	 * Transforms this vertex to a new layout.
+	 * @param layout Layout indices
+	 * @return Transformed vertex
+	 * @throws IndexOutOfBoundsException for an invalid layout index
+	 */
+	public Vertex transform(int[] layout) {
+		return Arrays
+				.stream(layout)
+				.mapToObj(components::get)
+				.collect(TRANSFORM);
 	}
 
 	@Override
 	public int hashCode() {
-		return components.hashCode();
+		return Objects.hash(components);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Vertex that) && this.components.equals(that.components);
+		return
+				(obj == this) ||
+				(obj instanceof Vertex that) &&
+				this.components.equals(that.components);
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(components).build();
-	}
-
-	/**
-	 * Builder for a vertex.
-	 */
-	public static class Builder {
-		private Point pos;
-		private Vector normal;
-		private Coordinate coord;
-		private Colour col;
-
-		/**
-		 * Sets the vertex position.
-		 * @param pos Vertex position
-		 */
-		public Builder position(Point pos) {
-			this.pos = notNull(pos);
-			return this;
-		}
-
-		/**
-		 * Sets the vertex normal.
-		 * @param normal Vertex normal
-		 */
-		public Builder normal(Vector normal) {
-			this.normal = notNull(normal);
-			return this;
-		}
-
-		/**
-		 * Sets the vertex texture coordinate.
-		 * @param coord Vertex coordinate
-		 */
-		public Builder coordinate(Coordinate coord) {
-			this.coord = notNull(coord);
-			return this;
-		}
-
-		/**
-		 * Sets the vertex colour.
-		 * @param col Vertex colour
-		 */
-		public Builder colour(Colour col) {
-			this.col = notNull(col);
-			return this;
-		}
-
-		/**
-		 * Constructs this vertex.
-		 * @return New vertex
-		 */
-		public Vertex build() {
-			final var components = Stream.of(pos, normal, coord, col).filter(Objects::nonNull).collect(toList());
-			return new Vertex(components);
-		}
+		return components.toString();
 	}
 }

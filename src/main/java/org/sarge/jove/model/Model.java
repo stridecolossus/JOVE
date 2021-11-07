@@ -2,11 +2,13 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.common.CompoundLayout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
 
@@ -65,6 +67,14 @@ public interface Model {
 	Optional<Bufferable> index();
 
 	/**
+	 * Transforms this model to the given component layout.
+	 * @param layouts Component layout
+	 * @return Transformed model
+	 * @throws IllegalArgumentException if this model is not comprised of the given layouts
+	 */
+	Model transform(List<Layout> layout);
+
+	/**
 	 * Skeleton implementation.
 	 */
 	abstract class AbstractModel implements Model {
@@ -81,6 +91,11 @@ public interface Model {
 		@Override
 		public final Header header() {
 			return header;
+		}
+
+		@Override
+		public Model transform(List<Layout> layouts) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

@@ -1,108 +1,86 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.Component;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Vertex.Builder;
 
 public class VertexTest {
-	@Nested
-	class ComponentTests {
-		@Test
-		void length() {
-			final Component component = spy(Component.class);
-			when(component.layout()).thenReturn(Layout.of(2));
-			assertEquals(2 * 4, component.length());
-		}
-	}
-
 	private Vertex vertex;
-	private Component component;
-	private Layout layout;
+	private Component one, two;
 
 	@BeforeEach
 	void before() {
-		layout = Layout.of(3);
-		component = spy(Component.class);
-		when(component.layout()).thenReturn(layout);
-		vertex = Vertex.of(component, component);
+		// Create a component
+		one = spy(Component.class);
+		when(one.layout()).thenReturn(Layout.of(2));
+
+		// Create another component
+		two = spy(Component.class);
+		when(two.layout()).thenReturn(Layout.of(3));
+
+		// Create vertex
+		vertex = new Vertex(List.of(one, two));
 	}
 
 	@Test
-	void constructor() {
-		assertNotNull(vertex);
-		assertEquals(List.of(component, component), vertex.components());
+	void of() {
+		assertEquals(vertex, Vertex.of(one, two));
 	}
 
 	@Test
 	void layout() {
 		assertNotNull(vertex.layout());
-		assertArrayEquals(new Layout[]{layout, layout}, vertex.layout().toArray());
+		assertEquals(List.of(one.layout(), two.layout()), vertex.layout().layouts());
 	}
 
 	@Test
 	void length() {
-		assertEquals(2 * 3 * Float.BYTES, vertex.length());
+		assertEquals((2 + 3) * Float.BYTES, vertex.length());
+	}
+
+	@Test
+	void buffer() {
+		final ByteBuffer bb = mock(ByteBuffer.class);
+		vertex.buffer(bb);
+		verify(one).buffer(bb);
+		verify(two).buffer(bb);
+	}
+
+	@Test
+	void transform() {
+		final int[] map = {1, 0};
+		final Vertex transformed = vertex.transform(map);
+		assertEquals(Vertex.of(two, one), transformed);
+	}
+
+	@Test
+	void transformInvalidIndex() {
+		assertThrows(IndexOutOfBoundsException.class, () -> vertex.transform(new int[]{2}));
+	}
+
+	@Test
+	void hash() {
+		assertEquals(Objects.hash(List.of(one, two)), vertex.hashCode());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, vertex.equals(vertex));
-		assertEquals(true, vertex.equals(Vertex.of(component, component)));
+		assertEquals(true, vertex.equals(Vertex.of(one, two)));
 		assertEquals(false, vertex.equals(null));
-		assertEquals(false, vertex.equals(Vertex.of(component)));
-	}
-
-	@Test
-	void get() {
-		assertEquals(component, vertex.get(0));
-		assertEquals(component, vertex.get(1));
-	}
-
-	@Test
-	void buffer() {
-		final int len = vertex.length();
-		final ByteBuffer buffer = ByteBuffer.allocate(len);
-		vertex.buffer(buffer);
-		verify(component, times(2)).buffer(buffer);
-	}
-
-	@Nested
-	class BuilderTests {
-		private Builder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new Builder();
-		}
-
-		@Test
-		void build() {
-			builder.position(Point.ORIGIN);
-			builder.normal(Vector.X);
-			builder.coordinate(Coordinate2D.BOTTOM_LEFT);
-			builder.colour(Colour.WHITE);
-			vertex = builder.build();
-			assertNotNull(vertex);
-			assertEquals(List.of(Point.ORIGIN, Vector.X, Coordinate2D.BOTTOM_LEFT, Colour.WHITE), vertex.components());
-			assertEquals((3 + 3 + 2 + 4) * Float.BYTES, vertex.length());
-		}
+		assertEquals(false, vertex.equals(Vertex.of(one)));
 	}
 }

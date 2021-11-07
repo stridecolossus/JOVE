@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.util.MathsUtil;
 
@@ -11,7 +12,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>tuple</i> is the base-class for 3-component floating-point values.
  * @author Sarge
  */
-public sealed class Tuple implements Bufferable, Layout.Component permits Point, Vector {
+public sealed class Tuple implements Bufferable, Component permits Point, Vector {
 	/**
 	 * Size of a tuple.
 	 */

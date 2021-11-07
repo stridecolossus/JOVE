@@ -5,8 +5,8 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.MutableCompoundLayout;
 import org.sarge.jove.model.Model.Header;
 
 /**
@@ -34,20 +34,40 @@ import org.sarge.jove.model.Model.Header;
  * @author Sarge
  */
 public class ModelBuilder {
+	/**
+	 *
+	 */
+	private static class MutableCompoundLayout extends CompoundLayout {
+		@Override
+		protected void add(Layout layout) {
+			super.add(layout);
+		}
+	}
+
 	protected final List<Vertex> vertices = new ArrayList<>();
-	protected final MutableCompoundLayout layout = new MutableCompoundLayout();
+	private final MutableCompoundLayout layout = new MutableCompoundLayout();
 	private Primitive primitive = Primitive.TRIANGLE_STRIP;
-	private boolean validate;
+	private boolean validate = true;
 
 	/**
 	 * Adds a vertex component layout.
 	 * @param layout Vertex component layout
-	 * @throws IllegalArgumentException for a duplicate component layout
 	 * @throws IllegalStateException if the model contains vertex data
 	 */
 	public ModelBuilder layout(Layout layout) {
 		if(!isEmpty()) throw new IllegalStateException("Cannot modify model layout after adding vertex data");
 		this.layout.add(layout);
+		return this;
+	}
+
+	/**
+	 * Adds vertex component layouts.
+	 * @param layouts Layouts
+	 */
+	public ModelBuilder layout(Layout... layouts) {
+		for(Layout layout : layouts) {
+			layout(layout);
+		}
 		return this;
 	}
 
@@ -82,7 +102,7 @@ public class ModelBuilder {
 
 	/**
 	 * Sets whether vertices are validated against the layout of this model.
-	 * @param validate Whether to validate vertices (default is {@code false})
+	 * @param validate Whether to validate vertices (default is {@code true})
 	 */
 	public ModelBuilder validate(boolean validate) {
 		this.validate = validate;
@@ -95,10 +115,9 @@ public class ModelBuilder {
 	 * @throws IllegalArgumentException if the vertex does not match the layout of this model
 	 */
 	private void validate(Vertex vertex) {
-		final MutableCompoundLayout compound = new MutableCompoundLayout();
-		vertex.layout().forEach(compound::add);
-		if(!compound.equals(layout)) {
-			throw new IllegalArgumentException(String.format("Invalid vertex for this layout: expected=%s actual=%s", layout, compound));
+		final CompoundLayout actual = vertex.layout();
+		if(!layout.equals(actual)) {
+			throw new IllegalArgumentException(String.format("Invalid vertex for this layout: expected=%s actual=%s", layout, actual));
 		}
 	}
 
@@ -128,6 +147,7 @@ public class ModelBuilder {
 	 * @return New model
 	 */
 	protected final Model build(int[] index, int count) {
-		return new DefaultModel(new Header(layout, primitive, count), vertices, index);
+		final Header header = new Header(layout, primitive, count);
+		return DefaultModel.of(header, vertices, index);
 	}
 }

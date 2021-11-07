@@ -7,16 +7,14 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.model.Primitive;
@@ -51,22 +49,19 @@ public class ObjectModelLoaderTest {
 		""";
 
 		// Load OBJ models
-		final Stream<Model> models = loader.load(new StringReader(data));
+		final List<Model> models = loader.load(new StringReader(data));
 		assertNotNull(models);
-
-		// Check number of models generated
-		final Model[] array = models.toArray(Model[]::new);
-		assertEquals(1, array.length);
+		assertEquals(1, models.size());
 
 		// Check model
-		final DefaultModel model = (DefaultModel) array[0];
+		final Model model = models.get(0);
 		assertNotNull(model);
 
 		// Check header
 		final Header header = model.header();
 		assertEquals(3, header.count());
 		assertEquals(Primitive.TRIANGLES, header.primitive());
-		assertEquals(CompoundLayout.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT), header.layout());
+		assertEquals(List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT), header.layout().layouts());
 
 		// Check vertex buffer
 		assertNotNull(model.vertices());

@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -25,7 +26,7 @@ import org.sarge.lib.util.Check;
  * Loader for an OBJ model.
  * @author Sarge
  */
-public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> {
+public class ObjectModelLoader implements ResourceLoader<Reader, List<Model>> {
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private final ObjectModel model = new ObjectModel();
 	private Consumer<String> handler = line -> { /* Ignored */ };
@@ -83,8 +84,8 @@ public class ObjectModelLoader implements ResourceLoader<Reader, Stream<Model>> 
 	}
 
 	@Override
-	public Stream<Model> load(Reader reader) throws IOException {
-		final Function<Stream<String>, Stream<Model>> mapper = lines -> {
+	public List<Model> load(Reader reader) throws IOException {
+		final Function<Stream<String>, List<Model>> mapper = lines -> {
 			lines.forEach(this::parse);
 			return model.build();
 		};

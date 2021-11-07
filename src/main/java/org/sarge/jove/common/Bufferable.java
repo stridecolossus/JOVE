@@ -16,9 +16,9 @@ public interface Bufferable {
 
 	/**
 	 * Writes this object to the given buffer.
-	 * @param buffer Buffer
+	 * @param bb Buffer
 	 */
-	void buffer(ByteBuffer buffer);
+	void buffer(ByteBuffer bb);
 
 	/**
 	 * Creates a bufferable wrapping the given array.
@@ -33,8 +33,8 @@ public interface Bufferable {
 			}
 
 			@Override
-			public void buffer(ByteBuffer buffer) {
-				BufferHelper.write(bytes, buffer);
+			public void buffer(ByteBuffer bb) {
+				BufferHelper.write(bytes, bb);
 			}
 		};
 	}

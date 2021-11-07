@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import org.sarge.jove.common.Layout.Component;
+import org.sarge.jove.common.Component;
 import org.sarge.lib.util.Check;
 
 /**

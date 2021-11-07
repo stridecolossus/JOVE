@@ -6,12 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.CompoundLayout;
-import org.sarge.jove.common.Layout.MutableCompoundLayout;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.ResourceLoaderWriter;
@@ -39,7 +40,7 @@ public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOu
 		out.writeInt(header.count());
 
 		// Write vertex layout
-		final CompoundLayout layout = header.layout();
+		final List<Layout> layout = header.layout().layouts();
 		out.writeInt(layout.size());
 		for(Layout c : layout) {
 			out.writeInt(c.size());
@@ -93,7 +94,7 @@ public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOu
 
 		// Load vertex layout
 		final int num = in.readInt();
-		final MutableCompoundLayout layout = new MutableCompoundLayout();
+		final List<Layout> layout = new ArrayList<>();
 		for(int n = 0; n < num; ++n) {
 			final int size = in.readInt();
 			final int bytes = in.readInt();
@@ -113,7 +114,8 @@ public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOu
 		final Bufferable index = loadBuffer(in);
 
 		// Create model
-		return new BufferedModel(new Header(layout, primitive, count), vertices, Optional.ofNullable(index));
+		final Header header = new Header(new CompoundLayout(layout), primitive, count);
+		return new BufferedModel(header, vertices, Optional.ofNullable(index));
 	}
 
 	/**

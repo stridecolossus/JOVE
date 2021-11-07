@@ -1,5 +1,8 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.toList;
+import static org.sarge.lib.util.Check.notNull;
+
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
@@ -7,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.CompoundLayout;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 
 /**
@@ -22,6 +27,22 @@ import org.sarge.jove.model.Model.AbstractModel;
  * @author Sarge
  */
 public class DefaultModel extends AbstractModel {
+	/**
+	 * Creates a default model.
+	 * @param header		Header
+	 * @param vertices		Vertex data
+	 * @param index			Optional index
+	 * @return New default model
+	 */
+	public static DefaultModel of(Header header, List<Vertex> vertices, int[] index) {
+		if(index == null) {
+			return new DefaultModel(header, List.copyOf(vertices), null);
+		}
+		else {
+			return new DefaultModel(header, List.copyOf(vertices), Arrays.copyOf(index, index.length));
+		}
+	}
+
 	private final List<Vertex> vertices;
 	private final int[] index;
 
@@ -31,10 +52,10 @@ public class DefaultModel extends AbstractModel {
 	 * @param vertices			Vertices
 	 * @param index				Optional index
 	 */
-	public DefaultModel(Header header, List<Vertex> vertices, int[] index) {
+	protected DefaultModel(Header header, List<Vertex> vertices, int[] index) {
 		super(header);
-		this.vertices = List.copyOf(vertices);
-		this.index = index == null ? null : Arrays.copyOf(index, index.length); // TODO - ugly
+		this.vertices = notNull(vertices);
+		this.index = index;
 	}
 
 	@Override
@@ -89,5 +110,33 @@ public class DefaultModel extends AbstractModel {
 			}
 		};
 		return Optional.of(buffer);
+	}
+
+	@Override
+	public DefaultModel transform(List<Layout> layouts) {
+		// Skip if same layout
+		final List<Layout> current = this.header().layout().layouts();
+		if(current.equals(layouts)) {
+			return this;
+		}
+
+		// Build mapping to new layout
+		final int map[] = current.stream().mapToInt(layouts::indexOf).toArray();
+		for(int n : map) {
+			if(n == -1) {
+				throw new IllegalArgumentException(String.format("Model does not contain layout: required=%s actual=%s", layouts, current));
+			}
+		}
+
+		// Transform vertex data
+		final List<Vertex> data = vertices
+				.stream()
+				.map(v -> v.transform(map))
+				.collect(toList());
+
+		// Create transformed model
+		final Header prev = this.header();
+		final Header header = new Header(new CompoundLayout(layouts), prev.primitive(), prev.count());
+		return new DefaultModel(header, data, index);
 	}
 }

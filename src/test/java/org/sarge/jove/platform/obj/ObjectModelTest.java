@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.obj;
 
-import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,8 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
@@ -29,20 +28,6 @@ public class ObjectModelTest {
 	@Test
 	void builder() {
 		assertNotNull(model.builder());
-	}
-
-	@Test
-	void start() {
-		model.position(Point.ORIGIN);
-		model.vertex(1, null, null);
-		model.start();
-		assertEquals(2, model.build().count());
-	}
-
-	@Test
-	void startEmpty() {
-		model.start();
-		assertEquals(1, model.build().count());
 	}
 
 	@Nested
@@ -92,22 +77,25 @@ public class ObjectModelTest {
 
 	@Nested
 	class BuilderTests {
-		@BeforeEach
-		void before() {
+		private void triangle() {
+			// Add vertex data
 			model.position(Point.ORIGIN);
 			model.normal(Vector.X);
 			model.coordinate(Coordinate2D.BOTTOM_LEFT);
+
+			// Add face
+			for(int n = 0; n < 3; ++n) {
+				model.vertex(1, 1, 1);
+			}
 		}
 
 		@Test
 		void build() {
 			// Add a triangle
-			for(int n = 0; n < 3; ++n) {
-				model.vertex(1, 1, 1);
-			}
+			triangle();
 
 			// Build models
-			final List<Model> models = model.build().collect(toList());
+			final List<Model> models = model.build();
 			assertEquals(1, models.size());
 
 			// Check model
@@ -116,8 +104,21 @@ public class ObjectModelTest {
 			assertEquals(true, result.isIndexed());
 
 			// Check model header
-			final CompoundLayout layout = CompoundLayout.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT);
-			assertEquals(new Model.Header(layout, Primitive.TRIANGLES, 3), result.header());
+			final List layout = List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT);
+			assertEquals(new Model.Header(new CompoundLayout(layout), Primitive.TRIANGLES, 3), result.header());
+		}
+
+		@Test
+		void empty() {
+			assertEquals(List.of(), model.build());
+		}
+
+		@Test
+		void start() {
+			triangle();
+			model.start();
+			triangle();
+			assertEquals(2, model.build().size());
 		}
 	}
 }

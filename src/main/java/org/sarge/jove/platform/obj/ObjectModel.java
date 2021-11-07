@@ -2,9 +2,10 @@ package org.sarge.jove.platform.obj;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
+import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.IndexedBuilder;
@@ -21,39 +22,52 @@ public class ObjectModel {
 	private final List<Point> positions = new VertexComponentList<>();
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
-	private final List<ModelBuilder> builders = new ArrayList<>();
-
-	private ModelBuilder current;
-
-	public ObjectModel() {
-		add();
-	}
+	private final List<Vertex> vertices = new ArrayList<>();
+	private final List<Model> models = new ArrayList<>();
 
 	/**
 	 * Starts a new object group.
 	 */
 	public void start() {
-		// Ignore if the current group is empty
-		if(current.isEmpty()) {
-			return;
-		}
+		// Build current model group
+		append();
 
 		// Reset transient model
 		positions.clear();
 		normals.clear();
 		coords.clear();
-
-		// Start new model
-		add();
+		vertices.clear();
 	}
 
 	/**
-	 * Adds a new model builder.
+	 * Constructs the model for the current object.
 	 */
-	private void add() {
-		current = builder();
-		current.primitive(Primitive.TRIANGLES);
-		builders.add(current);
+	private void append() {
+		// Ignore if current group is empty
+		if(vertices.isEmpty()) {
+			return;
+		}
+
+		// Create new model builder
+		final ModelBuilder builder = builder();
+		builder.primitive(Primitive.TRIANGLES);
+
+		// Init model layout
+		builder.layout(Point.LAYOUT);
+		if(!normals.isEmpty()) {
+			builder.layout(Vector.NORMALS);
+		}
+		if(!coords.isEmpty()) {
+			builder.layout(Coordinate2D.LAYOUT);
+		}
+
+		// Add vertex data
+		for(Vertex v : vertices) {
+			builder.add(v);
+		}
+
+		// Add to models
+		models.add(builder.build());
 	}
 
 	/**
@@ -103,37 +117,30 @@ public class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final var builder = new Vertex.Builder();
-		builder.position(positions.get(v));
+		final List<Component> components = new ArrayList<>();
+		components.add(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {
-			builder.normal(normals.get(vn));
+			components.add(normals.get(vn));
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
-			builder.coordinate(coords.get(vt));
+			components.add(coords.get(vt));
 		}
 
 		// Construct vertex
-		final Vertex vertex = builder.build();
-
-		// Init model
-		if(current.isEmpty()) {
-			vertex.layout().forEach(current::layout);
-		}
-
-		// Add vertex to model
-		current.add(vertex);
+		final Vertex vertex = new Vertex(components);
+		vertices.add(vertex);
 	}
 
 	/**
 	 * Constructs the model(s).
 	 * @return Model(s)
-	 * @throws IllegalArgumentException if the models cannot be constructed
 	 */
-	public Stream<Model> build() {
-		return builders.stream().map(ModelBuilder::build);
+	public List<Model> build() {
+		append();
+		return new ArrayList<>(models);
 	}
 }

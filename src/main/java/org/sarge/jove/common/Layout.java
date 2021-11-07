@@ -1,11 +1,5 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.util.Check.notNull;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.sarge.lib.util.Check;
 
 /**
@@ -59,6 +53,7 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	 * @throws IllegalArgumentException for an unsupported type
 	 */
 	public static int bytes(Class<?> type) {
+		// TODO - JDK17 switch
 		return switch(type.getSimpleName().toLowerCase()) {
 			case "float" -> Float.BYTES;
 			case "int", "integer" -> Integer.BYTES;
@@ -66,21 +61,6 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 			case "byte" -> Byte.BYTES;
 			default -> throw new IllegalArgumentException("Unsupported layout component type: " + type);
 		};
-	}
-
-	/**
-	 * A <i>layout component</i> defines a bufferable object that has a layout, i.e. can be composed into a vertex.
-	 */
-	public interface Component extends Bufferable {
-		/**
-		 * @return Layout of this component
-		 */
-		Layout layout();
-
-		@Override
-		default int length() {
-			return this.layout().length();
-		}
 	}
 
 	/**
@@ -113,126 +93,5 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	 */
 	public int length() {
 		return size * bytes;
-	}
-
-	/**
-	 * A <i>compound layout</i> is a convenience wrapper for a list of layouts.
-	 * <p>
-	 * Note that the component layouts are compared by <i>identity</i> rather than equality in the {@link #contains(Layout)} and {@link #equals(List)} methods.
-	 * This prevents objects with the same layout structure being accidentally considered equal, e.g. points and vectors.
-	 * <p>
-	 * Example:
-	 * <p>
-	 * <pre>
-	 * 	CompoundLayout one = CompoundLayout.of(Point.LAYOUT);
-	 * 	CompoundLayout two = CompoundLayout(Vector.NORMALS);
-	 * 	Point.LAYOUT.equals(Vector.NORMALS); // true
-	 * 	one.equals(two); // false
-	 * </pre>
-	 */
-	public static class CompoundLayout implements Iterable<Layout> {
-		/**
-		 * Creates a compound layout.
-		 * @param layouts Layouts
-		 * @return New compound layout
-		 */
-		public static CompoundLayout of(Layout... layouts) {
-			final CompoundLayout compound = new CompoundLayout();
-			for(Layout e : layouts) {
-				compound.add(e);
-			}
-			return compound;
-		}
-
-		private final List<Layout> layouts = new ArrayList<>();
-
-		protected CompoundLayout() {
-		}
-
-		/**
-		 * Adds a layout to this list.
-		 * @param layout Layout to add
-		 * @throws IllegalArgumentException for a duplicate layout
-		 */
-		protected void add(Layout layout) {
-			if(contains(layout)) throw new IllegalArgumentException("Duplicate layout entry: " + layout);
-			layouts.add(notNull(layout));
-		}
-
-		/**
-		 * @return Number of components in this layout
-		 */
-		public int size() {
-			return layouts.size();
-		}
-
-		/**
-		 * Calculates the total <i>stride</i> of this compound layout, i.e. the sum of {@link Layout#length()}
-		 * @return Total stride
-		 */
-		public int stride() {
-			return layouts.stream().mapToInt(Layout::length).sum();
-		}
-
-		/**
-		 * @param layout Layout
-		 * @return Whether this list contains the given layout
-		 */
-		public boolean contains(Layout layout) {
-			return layouts.stream().anyMatch(e -> e == layout);
-		}
-
-		@Override
-		public Iterator<Layout> iterator() {
-			return layouts.iterator();
-		}
-
-		@Override
-		public int hashCode() {
-			return layouts.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return (obj == this) || (obj instanceof CompoundLayout that) && equals(that.layouts);
-		}
-
-		/**
-		 * Compares layouts by identity.
-		 */
-		private boolean equals(List<Layout> layouts) {
-			// Check same length
-			if(this.layouts.size() != layouts.size()) {
-				return false;
-			}
-
-			// Compare layout by identity
-			final Iterator<Layout> left = this.iterator();
-			final Iterator<Layout> right = layouts.iterator();
-			while(left.hasNext()) {
-				if(left.next() != right.next()) {
-					return false;
-				}
-			}
-
-			// Matching layouts
-			assert !right.hasNext();
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return layouts.toString();
-		}
-	}
-
-	/**
-	 * Mutable implementation.
-	 */
-	public static class MutableCompoundLayout extends CompoundLayout {
-		@Override
-		public void add(Layout layout) {
-			super.add(layout);
-		}
 	}
 }

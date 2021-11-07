@@ -15,8 +15,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
 
@@ -28,7 +28,7 @@ class ModelLoaderTest {
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		final Model.Header header = new Header(CompoundLayout.of(Point.LAYOUT), Primitive.TRIANGLES, 3);
+		final Model.Header header = new Header(new CompoundLayout(List.of(Point.LAYOUT)), Primitive.TRIANGLES, 3);
 		final Vertex vertex = Vertex.of(Point.ORIGIN);
 		model = new DefaultModel(header, List.of(vertex), new int[]{0, 0, 0});
 
@@ -65,7 +65,7 @@ class ModelLoaderTest {
 		assertEquals(3, header.count());
 
 		// Check layout
-		final CompoundLayout layout = header.layout();
+		final List<Layout> layout = header.layout().layouts();
 		assertNotNull(layout);
 		assertEquals(1, layout.size());
 		assertEquals(Layout.of(3), layout.iterator().next());

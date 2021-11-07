@@ -4,11 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
@@ -21,24 +22,9 @@ public class CubeBuilderTest {
 	}
 
 	@Test
-	void invalidVertexComponent() {
-		assertThrows(IllegalArgumentException.class, () -> builder.layout(Layout.of(3)));
-	}
-
-	@Test
-	void duplicatePositionComponent() {
-		assertThrows(IllegalArgumentException.class, () -> builder.layout(Point.LAYOUT));
-	}
-
-	@Test
 	void build() {
 		// Build cube
-		final Model cube = builder
-				.size(2)
-				.layout(Vector.NORMALS)
-				.layout(Coordinate2D.LAYOUT)
-				.validate(true)
-				.build();
+		final Model cube = builder.size(2).build();
 
 		// Check model
 		assertNotNull(cube);
@@ -47,11 +33,16 @@ public class CubeBuilderTest {
 		// Check header
 		final int count = 6 * 2 * 3;
 		assertNotNull(cube.header());
-		assertEquals(CompoundLayout.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT), cube.header().layout());
+		assertEquals(List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT), cube.header().layout().layouts());
 		assertEquals(Primitive.TRIANGLES, cube.header().primitive());
 		assertEquals(count, cube.header().count());
 
 		assertNotNull(cube.vertices());
-		assertEquals(count * (3 + 3 + 2) * Float.BYTES, cube.vertices().length());
+		assertEquals(count * (3 + 3 + 2 + 4) * Float.BYTES, cube.vertices().length());
+	}
+
+	@Test
+	void primitive() {
+		assertThrows(UnsupportedOperationException.class, () -> builder.primitive(Primitive.LINES));
 	}
 }
