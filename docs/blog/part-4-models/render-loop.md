@@ -36,28 +36,17 @@ A complication of particular importance is that GLFW event processing __must__ b
 
 ### Render Loop
 
-We start by factoring out the application thread comprised of a number of _tasks_ in the following new component:
+We start by factoring out the render loop which is comprised of a mutable lists of _tasks_ to be executed on the main application thread:
 
 ```java
-public class Application {
+public class RenderLoop {
     @FunctionalInterface
     public interface Task {
         void execute();
     }
 
-    private final List<Runnable> tasks;
+    private final List<Task> tasks = new ArrayList<>();
     private final volatile boolean running;
-}
-```
-
-We add methods to add and remove tasks and a convenience constructor given an initial list of tasks:
-
-```java
-public RenderLoop() {
-}
-
-public RenderLoop(List<Task> tasks) {
-    tasks.forEach(this::add);
 }
 ```
 
@@ -67,7 +56,7 @@ The loop repeatedly iterates through the tasks:
 public void run() {
     running = true;
     while(running) {
-        tasks.forEach(Runnable::run);
+        tasks.forEach(Task::execute);
     }
 }
 ```
@@ -81,7 +70,7 @@ public void stop() {
 }
 ```
 
-We next factor out the acquire-render-present rendering steps into a separate task:
+We can now factor out the acquire-render-present rendering steps to a task:
 
 ```java
 public class RenderTask implements Task {
@@ -99,7 +88,9 @@ public class RenderTask implements Task {
 And we modify the existing render loop bean accordingly:
 
 ```java
-return new RenderTask(swapchain, buffers, presentation.queue());
+public static Task render(...) {
+    return new RenderTask(swapchain, buffers, presentation.queue());
+}
 ```
 
 Finally we factor out the rotation logic into another task and delete the original code:
@@ -168,9 +159,106 @@ Notes:
 
 * Although not used elsewhere in the application the listener is registered with the container to prevent it being garbage collected (and unregistered by GLFW).
 
+### Frame Tracker
+
+This seems a convenience point to introduce support for frame event tracking, we create a new model class that delegates frame updates to interested listeners:
+
+```java
+public class FrameTracker implements RenderLoop.Task {
+    public interface Listener {
+        /**
+         * Notifies a new frame.
+         * @param tracker Frame tracker
+         */
+        void update(FrameTracker tracker);
+    }
+
+    private static long now() {
+        return System.nanoTime();
+    }
+
+    private final Set<Listener> listeners = new HashSet<>();
+    private long time = now();
+    private long prev = time;
+    private long elapsed;
+}
+```
+
+The frame tracker calculates the time elapsed since the previous frame (in nanoseconds) and delegates to the attached listeners:
+
+```java
+public void execute() {
+    // Update times
+    final long now = now();
+    elapsed = now - prev;
+    time = now;
+
+    // Notify listeners
+    for(Listener listener : listeners) {
+        listener.update(this);
+    }
+}
+```
+
+We can now implement a simple listener that tracks FPS (frames-per-second):
+
+```java
+public class FrameCounter implements FrameTracker.Listener {
+    private static final long SECOND = TimeUnit.SECONDS.toNanos(1);
+
+    private long time;
+    private int count;
+    private int current;
+
+    @Override
+    public void update(FrameTracker tracker) {
+        // Increment
+        time += tracker.elapsed();
+        ++current;
+    
+        // Reset after each second
+        if(time >= SECOND) {
+            count = current;
+            current = 0;
+            time = 0;
+        }
+    }
+}
+```
+
+We also provide another implementation that throttles the number of frames-per-second by sleeping the thread:
+
+```java
+public class FrameThrottle implements FrameTracker.Listener {
+    private long duration;
+
+    public FrameThrottle() {
+        throttle(50);
+    }
+
+    /**
+     * Sets the target throttle rate.
+     * @param fps Target frames-per-second (default is 50)
+     */
+    public void throttle(int fps) {
+        this.duration = TimeUnit.SECONDS.toNanos(1) / fps;
+    }
+
+    @Override
+    public void update(FrameTracker tracker) {
+        final long sleep = duration - tracker.elapsed();
+        if(sleep > 0) {
+            LockSupport.parkNanos(duration);
+        }
+    }
+}
+```
+
+Both of these implementations are quite crude but do the job.
+
 ### Integration
 
-We first instantiate the render loop in the main class:
+To integrate the above in the demo we first instantiate a render loop in the main class:
 
 ```java
 @Bean

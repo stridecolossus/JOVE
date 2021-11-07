@@ -51,3 +51,4 @@ current
 should the JNA API interfaces be moved to the relevant packages?
 split descriptor set / pool / layout?
 
+check out old blog

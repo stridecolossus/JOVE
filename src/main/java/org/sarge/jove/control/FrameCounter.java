@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
  * @author Sarge
  */
 public class FrameCounter implements FrameTracker.Listener {
-	private static final long SECOND = TimeUnit.SECONDS.toMillis(1);
+	private static final long SECOND = TimeUnit.SECONDS.toNanos(1);
 
 	private long time;
 	private int count;

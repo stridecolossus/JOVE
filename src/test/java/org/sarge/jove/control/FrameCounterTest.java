@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +19,7 @@ public class FrameCounterTest {
 	void before() {
 		counter = new FrameCounter();
 		tracker = mock(FrameTracker.class);
-		when(tracker.elapsed()).thenReturn(1000 / FPS);
+		when(tracker.elapsed()).thenReturn(TimeUnit.SECONDS.toNanos(1) / FPS);
 	}
 
 	@Test
