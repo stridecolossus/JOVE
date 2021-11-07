@@ -2,7 +2,6 @@ package org.sarge.jove.util;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -89,7 +88,7 @@ public class DataSource {
 			final T data = loader.map(in);
 			return loader.load(data);
 		}
-		catch(IOException e) {
+		catch(Exception e) {
 			throw new RuntimeException("Error loading resource: " + name, e);
 		}
 	}
@@ -108,7 +107,7 @@ public class DataSource {
 			final T dest = writer.map(out);
 			writer.write(data, dest);
 		}
-		catch(IOException e) {
+		catch(Exception e) {
 			throw new RuntimeException("Error writing resource: " + name, e);
 		}
 	}

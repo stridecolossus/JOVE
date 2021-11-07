@@ -1,7 +1,9 @@
 package org.sarge.jove.platform.desktop;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -22,32 +24,41 @@ public class KeyboardDeviceTest {
 	private KeyboardDevice dev;
 	private Window window;
 	private DesktopLibrary lib;
+	private DesktopSource<KeyListener> keyboard;
 
 	@BeforeEach
 	void before() {
 		lib = mock(DesktopLibrary.class);
 		window = mock(Window.class);
 		dev = new KeyboardDevice(window);
+		keyboard = (DesktopSource<KeyListener>) dev.keyboard();
 	}
 
 	@Test
-	void constructor() {
+	void keyboard() {
+		assertNotNull(keyboard);
+	}
+
+	@Test
+	void sources() {
 		assertNotNull(dev.sources());
-		assertEquals(1, dev.sources().size());
+		assertArrayEquals(new Object[]{keyboard}, dev.sources().toArray());
+	}
+
+	@Test
+	void key() {
+		assertEquals(new Button("ESCAPE", keyboard), dev.key("ESCAPE"));
+	}
+
+	@Test
+	void keyUnknown() {
+		assertThrows(IllegalArgumentException.class, () -> dev.key("COBBLERS"));
 	}
 
 	@Nested
 	class KeyboardSourceTests {
-		private DesktopSource<KeyListener> keyboard;
-
-		@BeforeEach
-		void before() {
-			keyboard = (DesktopSource<KeyListener>) dev.source();
-		}
-
 		@Test
 		void constructor() {
-			assertNotNull(keyboard);
 			assertEquals(List.of(), keyboard.types());
 		}
 

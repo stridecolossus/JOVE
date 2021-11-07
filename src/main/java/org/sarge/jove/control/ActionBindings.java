@@ -235,4 +235,8 @@ public class ActionBindings implements Consumer<Event> {
 				.append("bindings", bindings.size())
 				.build();
 	}
+
+	// TODO - loader
+	// TODO - action class? composes handler and name for lookup when load bindings
+	// TODO - also used as predicate for actions, e.g. button for any of mods/actions, etc.
 }
