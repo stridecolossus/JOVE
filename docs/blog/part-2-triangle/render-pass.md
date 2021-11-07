@@ -631,15 +631,13 @@ Notes:
 
 ### Cleanup
 
-Spring provides another bonus when we address cleanup of the various Vulkan components.  By default, on application shutdown, the container will invoke an _inferred_ public method named `close` or `shutdown` on a bean when it is destroyed.
+Spring provides another couple of bonuses when we address cleanup of the various Vulkan components:
 
-We rename the destroy method in `TransientNativeObject` to `close` to take advantage of this functionality.  The container also ensures that components are destroyed in the correct order (inferred from the dependencies) removing another responsibility from the developer.
+On application shutdown the container invokes the `destroy` method of a `DisposableBean` (or alternatively an _inferred_ public method named `close` or `shutdown` on the bean).  All JOVE components implement `TransientNativeObject` which already has a `destroy` method satisfying the disposable bean interface.
 
-Notes:
+The container also ensures that components are destroyed in the correct reverse order (inferred from the dependencies) removing another responsibility from the developer.
 
-* An alternative could have been to specify an explicit `destroyMethod` in each bean declaration but the inferred approach is obviously easier (if a little bit of black-magic).
-
-* The `@DependsOn` annotation can also be used to implement more explicit dependencies between components.
+Nice.
 
 ---
 

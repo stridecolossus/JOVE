@@ -26,6 +26,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>pipeline cache</i> allows the result of pipeline construction to be reused between pipelines and runs of an application.
+ * TODO - persistent implementation?
  * TODO - doc persistence
  * @author Sarge
  */
