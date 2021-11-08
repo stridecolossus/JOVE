@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.DataSource;
+import org.sarge.jove.util.FileDataSource;
 import org.sarge.jove.util.ResourceLoaderWriter;
 
 import com.sun.jna.Pointer;
@@ -98,11 +98,11 @@ public class PipelineCache extends AbstractVulkanObject {
 		 * @param root Data-source root directory
 		 * @return New data-source
 		 */
-		public static DataSource source(Path root) {
-			return new DataSource(root) {
+		public static FileDataSource source(Path root) {
+			return new FileDataSource(root) {
 				@Override
-				protected Path resolve(String name) {
-					final Path file = super.resolve(name);
+				public InputStream input(String name) throws IOException {
+					final Path file = root.resolve(name);
 					if(!Files.exists(file)) {
 						try {
 							Files.createFile(file);
@@ -111,12 +111,7 @@ public class PipelineCache extends AbstractVulkanObject {
 							throw new RuntimeException("Cannot create pipeline cache file: " + file, e);
 						}
 					}
-					return file;
-				}
-
-				@Override
-				public DataSource resolve(Path path) {
-					throw new UnsupportedOperationException();
+					return Files.newInputStream(file);
 				}
 			};
 		}

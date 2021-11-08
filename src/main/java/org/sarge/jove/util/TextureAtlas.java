@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.util.TextLoader.TextResourceLoader;
@@ -69,7 +70,7 @@ public class TextureAtlas extends LinkedHashMap<String, Rectangle> {
 		@Override
 		protected Entry<String, Rectangle> load(String line) {
 			// Tokenize atlas entry
-			final String[] parts = line.split(" ");
+			final String[] parts = StringUtils.split(line);
 			if(parts.length != 2) throw new IllegalArgumentException("Invalid texture atlas entry");
 
 			// Parse rectangle

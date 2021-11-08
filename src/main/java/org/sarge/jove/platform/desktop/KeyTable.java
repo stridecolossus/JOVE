@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
+import org.sarge.jove.util.ClasspathDataSource;
 import org.sarge.jove.util.DataSource;
 import org.sarge.jove.util.TextLoader.TextResourceLoader;
 
@@ -16,7 +17,7 @@ import org.sarge.jove.util.TextLoader.TextResourceLoader;
  * @author Sarge
  */
 public class KeyTable {
-	private static final KeyTable INSTANCE = new KeyTable();
+	private static final KeyTable INSTANCE = new KeyTable(); // TODO - lazy init?
 
 	/**
 	 * @return Singleton key-table instance
@@ -28,7 +29,7 @@ public class KeyTable {
 	private final BidiMap<Integer, String> keys;
 
 	private KeyTable() {
-		final DataSource src = new DataSource("src/main/resources");
+		final DataSource src = new ClasspathDataSource();
 		this.keys = src.load("key.table.txt", new Loader());
 	}
 
@@ -58,6 +59,7 @@ public class KeyTable {
 	private static class Loader extends TextResourceLoader<Entry<Integer, String>, BidiMap<Integer, String>> {
 		@Override
 		protected Entry<Integer, String> load(String line) {
+			// TODO - tokenize/validate/trim helpers
 			final String[] tokens = StringUtils.split(line);
 			if(tokens.length != 2) throw new IllegalArgumentException("Invalid key table entry");
 			final Integer code = Integer.parseInt(tokens[1].trim());

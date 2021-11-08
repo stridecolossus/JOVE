@@ -128,7 +128,6 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 			final Path root = Files.createTempDirectory("PipelineCacheTest");
 			final DataSource src = Loader.source(root);
 			assertNotNull(src);
-			assertEquals(root, src.root());
 			src.load("name", loader);
 			assertEquals(true, Files.exists(root.resolve("name")));
 		}
