@@ -1,4 +1,4 @@
-package org.sarge.jove.util;
+package org.sarge.jove.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,6 +12,7 @@ import java.util.zip.ZipFile;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.io.ZipDataSource;
 
 public class ZipDataSourceTest {
 	private ZipDataSource src;

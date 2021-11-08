@@ -1,4 +1,4 @@
-package org.sarge.jove.util;
+package org.sarge.jove.io;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.io.ClasspathDataSource;
 
 public class ClasspathDataSourceTest {
 	private static final String PATH = ClasspathDataSource.class.getName().replace('.', '/') + ".class";

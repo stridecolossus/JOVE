@@ -8,9 +8,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.util.ClasspathDataSource;
-import org.sarge.jove.util.DataSource;
-import org.sarge.jove.util.TextLoader.TextResourceLoader;
+import org.sarge.jove.io.ClasspathDataSource;
+import org.sarge.jove.io.DataSource;
+import org.sarge.jove.io.TextLoader.TextResourceLoader;
 
 /**
  * The <i>key table</i> maps a GLFW keyboard code to the corresponding key name.

@@ -1,4 +1,4 @@
-package org.sarge.jove.util;
+package org.sarge.jove.io;
 
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +17,9 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.TextLoader.TextResourceLoader;
+import org.sarge.jove.io.ResourceLoader;
+import org.sarge.jove.io.TextLoader;
+import org.sarge.jove.io.TextLoader.TextResourceLoader;
 
 public class TextLoaderTest {
 	private TextLoader loader;

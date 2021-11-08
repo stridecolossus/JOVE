@@ -8,7 +8,7 @@ import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
-import org.sarge.jove.util.ResourceLoader;
+import org.sarge.jove.io.ResourceLoader;
 
 /**
  * The <i>image data</i> interface abstracts a native image.

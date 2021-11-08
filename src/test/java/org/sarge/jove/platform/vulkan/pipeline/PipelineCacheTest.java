@@ -22,11 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.io.DataSource;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineCache.Loader;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.DataSource;
 
 import com.sun.jna.Pointer;
 

@@ -2,7 +2,7 @@ package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
 
-import org.sarge.jove.util.BufferHelper;
+import org.sarge.jove.io.BufferHelper;
 
 /**
  * A <i>bufferable</i> is a data object that can be written to an NIO buffer.

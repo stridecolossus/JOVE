@@ -12,14 +12,14 @@ import java.nio.file.Path;
 import java.util.Collection;
 
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.io.FileDataSource;
+import org.sarge.jove.io.ResourceLoaderWriter;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.FileDataSource;
-import org.sarge.jove.util.ResourceLoaderWriter;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

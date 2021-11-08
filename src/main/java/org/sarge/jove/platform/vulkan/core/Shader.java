@@ -6,11 +6,11 @@ import static org.sarge.lib.util.Check.notNull;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.ResourceLoader;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

@@ -1,4 +1,4 @@
-package org.sarge.jove.util;
+package org.sarge.jove.io;
 
 /**
  * Convenience compound type for a persistent resource.

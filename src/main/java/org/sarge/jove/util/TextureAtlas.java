@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.util.TextLoader.TextResourceLoader;
+import org.sarge.jove.io.TextLoader.TextResourceLoader;
 
 /**
  * A <i>texture atlas</i> maps rectangles within a texture image by name.
@@ -47,6 +47,9 @@ public class TextureAtlas extends LinkedHashMap<String, Rectangle> {
 		return new TextureAtlas(cubemap);
 	}
 	// TODO - offset within texture image? i.e. argument is rectangle = (offset, size)
+	// TODO - contiguous cube-map image?
+	// TODO - factor out to separate helper?
+	// TODO - do we need to expose the names?
 
 	/**
 	 * Helper - Builds a cube-map rectangle at the given X-Y location.

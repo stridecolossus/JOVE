@@ -13,9 +13,9 @@ import java.util.Optional;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.io.ResourceLoaderWriter;
 import org.sarge.jove.model.Model.Header;
-import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.ResourceLoaderWriter;
 
 /**
  * The <i>model loader</i> persists a vertex model.
