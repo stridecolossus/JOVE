@@ -143,4 +143,5 @@ public class ObjectModel {
 		append();
 		return new ArrayList<>(models);
 	}
+	// TODO - check all groups have same layout
 }

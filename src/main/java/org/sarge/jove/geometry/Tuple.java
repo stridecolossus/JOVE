@@ -91,7 +91,7 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 
 	@Override
 	public Layout layout() {
-		return Layout.of(SIZE);
+		throw new RuntimeException();
 	}
 
 	@Override

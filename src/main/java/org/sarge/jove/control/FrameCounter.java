@@ -38,6 +38,6 @@ public class FrameCounter implements FrameTracker.Listener {
 	protected void reset() {
 		count = current;
 		current = 0;
-		time = 0;
+		time = time % SECOND;
 	}
 }

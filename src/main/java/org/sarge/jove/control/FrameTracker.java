@@ -33,7 +33,6 @@ public class FrameTracker implements RenderLoop.Task {
 	private final Set<Listener> listeners = new HashSet<>();
 
 	private long time = now();
-	private long prev = time;
 	private long elapsed;
 
 	/**
@@ -77,7 +76,7 @@ public class FrameTracker implements RenderLoop.Task {
 	public void execute() {
 		// Update times
 		final long now = now();
-		elapsed = now - prev;
+		elapsed = now - time;
 		time = now;
 
 		// Notify listeners

@@ -819,7 +819,23 @@ static AllocationPolicy expand(float scale) {
 }
 ```
 
-We add an allocation policy to the pool allocator which is applied before delegating to the memory pool:
+Allocation policies can also be chained:
+
+```java
+/**
+ * Chains an allocation policy.
+ * @param policy Policy to be applied <i>after</i> this policy
+ * @return Chained policy
+ */
+default AllocationPolicy then(AllocationPolicy policy) {
+    return (size, total) -> {
+        final long actual = AllocationPolicy.this.apply(size, total);
+        return policy.apply(actual, total);
+    };
+}
+```
+
+An allocation policy is added to the pool allocator which is applied before delegating to the memory pool:
 
 ```java
 public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
@@ -856,16 +872,18 @@ public class PageAllocationPolicy implements AllocationPolicy {
 }
 ```
 
-Next we add a convenience factory method to create and configure a pool allocator based on the hardware:
+Next we implement a convenience factory to create and configure a pool allocator based on the hardware:
 
 ```java
-public static PoolAllocator create(LogicalDevice dev, Allocator allocator) {
+public static PoolAllocator create(LogicalDevice dev, Allocator allocator, float expand) {
     // Init allocator if not specified
     Allocator delegate = allocator == null ? Allocator.allocator(dev) : allocator;
 
-    // Create paged policy
+    // Create paged allocation policy
     VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
-    AllocationPolicy policy = new PageAllocationPolicy(limits.bufferImageGranularity);
+    AllocationPolicy paged = new PageAllocationPolicy(limits.bufferImageGranularity);
+    AllocationPolicy grow = AllocationPolicy.expand(expand);
+    AllocationPolicy policy = grow.then(paged);
 
     // Create pool allocator
     return new PoolAllocator(delegate, limits.maxMemoryAllocationCount, policy);
@@ -874,7 +892,7 @@ public static PoolAllocator create(LogicalDevice dev, Allocator allocator) {
 
 ### Allocation Request Routing
 
-We anticipate that an application will also require different allocation strategies depending on the use-cases for device memory.
+We also anticipate that an application will require different allocation strategies depending on the use-cases for device memory.
 
 Examples:
 

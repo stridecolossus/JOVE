@@ -64,11 +64,6 @@ public class TupleTest {
 	}
 
 	@Test
-	void length() {
-		assertEquals(3 * Float.BYTES, tuple.length());
-	}
-
-	@Test
 	void buffer() {
 		final ByteBuffer buffer = ByteBuffer.allocate(3 * Float.BYTES);
 		tuple.buffer(buffer);

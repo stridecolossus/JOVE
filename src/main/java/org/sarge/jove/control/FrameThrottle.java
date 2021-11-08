@@ -40,19 +40,5 @@ public class FrameThrottle implements FrameTracker.Listener {
 	@SuppressWarnings("static-method")
 	protected void sleep(long duration) {
 		LockSupport.parkNanos(duration);
-//		try {
-//			Thread.sleep(ms, nano);
-//		}
-//		catch(InterruptedException e) {
-//			interrupted(e);
-//		}
 	}
-
-//	/**
-//	 * Notifies that the thread was interrupted while sleeping.
-//	 * @param e Interrupted exception
-//	 */
-//	protected void interrupted(InterruptedException e) {
-//		// Ignored
-//	}
 }

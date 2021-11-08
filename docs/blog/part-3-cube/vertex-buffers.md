@@ -150,7 +150,6 @@ Positions and normal vectors are both floating-point tuples with common function
 ```java
 public sealed class Tuple implements Bufferable, Component permits Point, Vector {
     public static final int SIZE = 3;
-    public static final Layout LAYOUT = Layout.of(SIZE);
 
     public final float x, y, z;
 
@@ -168,11 +167,6 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
     @Override
     public void buffer(ByteBuffer buffer) {
         buffer.putFloat(x).putFloat(y).putFloat(z);
-    }
-
-    @Override
-    public final Layout layout() {
-        return LAYOUT;
     }
 }
 ```
@@ -332,11 +326,11 @@ The API for vertex buffers consists of the following methods:
 
 ```java
 interface VulkanLibraryBuffer {
-    int vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
+    int  vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
     void vkDestroyBuffer(DeviceContext device, VulkanBuffer buffer, Pointer pAllocator);
 
     void vkGetBufferMemoryRequirements(LogicalDevice device, Pointer buffer, VkMemoryRequirements pMemoryRequirements);
-    int vkBindBufferMemory(LogicalDevice device, Pointer buffer, Handle memory, long memoryOffset);
+    int  vkBindBufferMemory(LogicalDevice device, Pointer buffer, Handle memory, long memoryOffset);
 
     void vkCmdBindVertexBuffers(Command.Buffer commandBuffer, int firstBinding, int bindingCount, VulkanBuffer[] pBuffers, long[] pOffsets);
     void vkCmdBindIndexBuffer(Command.Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType);

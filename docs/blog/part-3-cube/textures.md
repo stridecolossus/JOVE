@@ -51,10 +51,10 @@ We will first modify the demo to render a quad and implement texture coordinates
 First we will change the vertex data to render a coloured quad with white in the bottom-right corner:
 
 ```java
-new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).colour(new Colour(1, 0, 0, 1)).build(),
-new Vertex.Builder().position(new Point(-0.5f, +0.5f, 0)).colour(new Colour(0, 1, 0, 1)).build(),
-new Vertex.Builder().position(new Point(+0.5f, -0.5f, 0)).colour(new Colour(0, 0, 1, 1)).build(),
-new Vertex.Builder().position(new Point(+0.5f, +0.5f, 0)).colour(new Colour(1, 1, 1, 1)).build(),
+Vertex.of(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1)),
+Vertex.of(new Point(-0.5f, +0.5f, 0), new Colour(0, 1, 0, 1)),
+Vertex.of(new Point(+0.5f, -0.5f, 0), new Colour(0, 0, 1, 1)),
+Vertex.of(new Point(+0.5f, +0.5f, 0), new Colour(1, 1, 1, 1)),
 ```
 
 The default drawing primitive is a _triangle strip_ with vertices ordered as follows:
@@ -120,7 +120,7 @@ public static final Coordinate2D
 We can now replace the colour data in the quad with texture coordinates as shown here for the top-left vertex:
 
 ```java
-new Vertex.Builder().position(new Point(-0.5f, -0.5f, 0)).coordinates(Coordinate2D.TOP_LEFT).build()
+Vertex.of(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT)
 ```
 
 Finally we modify the second attribute of the vertex input pipeline stage to configure the structure of the texture coordinates:
@@ -704,7 +704,7 @@ static VkImageSubresourceLayers toLayers(SubResource res) {
 
 ### Image Copying
 
-To copy the image data from the staging buffer to the texture (or vice-versa) we implement a new command:
+The process of copying the image data from the staging buffer to the texture is implemented as a new command:
 
 ```java
 public class ImageCopyCommand implements Command {
@@ -712,68 +712,72 @@ public class ImageCopyCommand implements Command {
     private final VulkanBuffer buffer;
     private final VkBufferImageCopy[] regions;
     private final VkImageLayout layout;
-    private final boolean bufferToImage;
 
     @Override
     public void execute(VulkanLibrary lib, Command.Buffer cb) {
-        if(bufferToImage) {
-            lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
-        }
-        else {
-            lib.vkCmdCopyImageToBuffer(cb, image, layout, buffer, regions.length, regions);
-        }
+        buffer.require(VkBufferUsage.TRANSFER_SRC);
+        lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
     }
 }
 ```
 
-We implement a builder to construct the copy command:
+Which is constructed by a builder:
 
 ```java
 public static class Builder {
+    private VulkanBuffer buffer;
     private Image image;
     private VkImageLayout layout;
-    private VkOffset3D offset = new VkOffset3D();
-    private SubResource subresource;
-    private VulkanBuffer buffer;
-    private boolean bufferToImage = true;
+    private final List<CopyRegion> regions = new ArrayList<>();
 }
 ```
 
-The sub-resource for the copy command is initialised in the constructor of the builder:
+A copy command is comprised of a number of _copy regions_ which are specified by a transient record:
 
 ```java
-public Builder(Image image) {
-    this.image = notNull(image);
-    this.subresource = image.descriptor().subresource();
+public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents) {
+    public static class Builder {
+        ...
+    }
 }
 ```
 
-The build method populates the copy descriptor (which we restrict to a single entry for the moment):
+The descriptor for each copy region is populated as follows:
+
+```java
+private void populate(VkBufferImageCopy copy) {
+    copy.bufferOffset = offset;
+    copy.bufferRowLength = length;
+    copy.bufferImageHeight = height;
+    copy.imageSubresource = SubResource.toLayers(res);
+    copy.imageOffset = imageOffset;
+    copy.imageExtent = extents.toExtent3D();
+}
+```
+
+The builder for the copy command generates the array of copy region descriptors:
 
 ```java
 public ImageCopyCommand build() {
-    // Populate descriptor
-    var copy = new VkBufferImageCopy();
-    copy.imageExtent = image.descriptor().extents().toExtent3D();
-    copy.imageSubresource = subresource.toLayers();
-    copy.imageOffset = offset;
-    
+    // Init whole image copy region if none specified
+    if(regions.isEmpty()) {
+        ImageDescriptor desc = image.descriptor();
+        CopyRegion region = new CopyRegion.Builder()
+            .subresource(desc)
+            .extents(desc.extents())
+            .build();
+        regions.add(region);
+    }
+
+    // Populate copy regions
+    VkBufferImageCopy[] array = StructureHelper.array(regions, VkBufferImageCopy::new, CopyRegion::populate);
+
     // Create copy command
-    return new ImageCopyCommand(image, buffer, new VkBufferImageCopy[]{copy}, layout, bufferToImage);
+    return new ImageCopyCommand(image, buffer, array, layout);
 }
 ```
 
-We also add a helper to generate the Vulkan 3D extents of the copy region:
-
-```java
-public VkExtent3D toExtent3D() {
-    VkExtent3D extent = new VkExtent3D();
-    extent.width = dimensions.width();
-    extent.height = dimensions.height();
-    extent.depth = depth;
-    return extent;
-}
-```
+For convenience the builder creates a single copy region for the entire image if none are explicitly configured.
 
 ### Texture Sampler
 

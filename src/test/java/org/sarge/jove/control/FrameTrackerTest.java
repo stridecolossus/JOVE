@@ -1,13 +1,13 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.sarge.jove.control.FrameTracker.Listener;
 
 public class FrameTrackerTest {
@@ -48,12 +48,12 @@ public class FrameTrackerTest {
 		verifyNoMoreInteractions(listener);
 	}
 
+	@Timeout(1000)
 	@Test
 	void execute() throws InterruptedException {
 		final long start = tracker.time();
 		Thread.sleep(50);
 		tracker.execute();
-		assertTrue(tracker.time() > start);
-		assertTrue(tracker.elapsed() > 0);
+		assertEquals(tracker.time() - start, tracker.elapsed());
 	}
 }
