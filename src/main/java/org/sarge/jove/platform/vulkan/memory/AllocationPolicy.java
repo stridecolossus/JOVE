@@ -22,18 +22,30 @@ public interface AllocationPolicy {
 	AllocationPolicy NONE = (size, total) -> size;
 
 	/**
+	 * Chains an allocation policy.
+	 * @param policy Policy to be applied <i>after</i> this policy
+	 * @return Chained policy
+	 */
+	default AllocationPolicy then(AllocationPolicy policy) {
+		return (size, total) -> {
+			final long actual = AllocationPolicy.this.apply(size, total);
+			return policy.apply(actual, total);
+		};
+	}
+
+	/**
 	 * Creates a policy adapter that is only applied to an empty pool.
 	 * @param initial Initial size
 	 * @return Initial size policy
 	 */
-	default AllocationPolicy initial(long initial) {
+	static AllocationPolicy initial(long initial) {
 		Check.oneOrMore(initial);
 		return (size, total) -> {
 			if(total == 0) {
 				return initial;
 			}
 			else {
-				return AllocationPolicy.this.apply(size, total);
+				return size;
 			}
 		};
 	}

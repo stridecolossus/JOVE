@@ -34,16 +34,19 @@ public class PoolAllocator implements Allocator {
 	 * <p>
 	 * @param dev			Logical device
 	 * @param allocator		Optional delegate allocator
+	 * @param expand		Growth scalar
 	 * @return New pool allocator
 	 * @see PhysicalDevice.Properties#limits()
 	 */
-	public static PoolAllocator create(LogicalDevice dev, Allocator allocator) {
+	public static PoolAllocator create(LogicalDevice dev, Allocator allocator, float expand) {
 		// Init allocator if not specified
 		final Allocator delegate = allocator == null ? Allocator.allocator(dev) : allocator;
 
 		// Create paged allocation policy
 		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
-		final AllocationPolicy policy = new PageAllocationPolicy(limits.bufferImageGranularity);
+		final AllocationPolicy paged = new PageAllocationPolicy(limits.bufferImageGranularity);
+		final AllocationPolicy grow = AllocationPolicy.expand(expand);
+		final AllocationPolicy policy = grow.then(paged);
 
 		// Create pool allocator
 		return new PoolAllocator(delegate, limits.maxMemoryAllocationCount, policy);
