@@ -95,7 +95,6 @@ public record Button(String id, Source source, Action action, int mods) implemen
 	 * @return New button
 	 */
 	public Button resolve(Action action, int mods) {
-		// TODO - cache?
 		return new Button(id, source, action, mods);
 	}
 
