@@ -3,17 +3,19 @@ package org.sarge.jove.util;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
 
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.util.TextureAtlas.Loader;
 
 public class TextureAtlasTest {
 	private TextureAtlas atlas;
@@ -52,37 +54,43 @@ public class TextureAtlasTest {
 
 	@Nested
 	class LoaderTests {
-		private TextureAtlas.Loader loader;
+		private Loader loader;
 
 		@BeforeEach
 		void before() {
-			loader = new TextureAtlas.Loader();
+			loader = new Loader();
 		}
 
 		@Test
 		void load() throws IOException {
-			final String file =
-					"""
-					# comment
+			// Create JSON
+			final String json = """
+					{
+						atlas: [
+							{
+								name: one,
+								rect: [1, 2, 3, 4]
+							},
+							{
+								name: two,
+								rect: [1, 2, 3, 4]
+							}
+						]
+					}
+			""";
 
-					name 1,2,3,4
-					""";
+			// Load JSON
+			final JSONObject obj = new JSONObject(new JSONTokener(new StringReader(json)));
 
-			final TextureAtlas atlas = loader.load(new StringReader(file));
+			// Load texture atlas
+			final TextureAtlas atlas = loader.load(obj);
 			assertNotNull(atlas);
-			assertEquals(1, atlas.size());
-			assertEquals(new Rectangle(1, 2, 3, 4), atlas.get("name"));
-		}
+			assertEquals(2, atlas.size());
 
-		@Test
-		void loadInvalidEntry() throws IOException {
-			assertThrows(IOException.class, () -> loader.load(new StringReader("name")));
-		}
-
-		@Test
-		void loadInvalidRectangle() throws IOException {
-			assertThrows(IOException.class, () -> loader.load(new StringReader("name 1,2,3")));
-			assertThrows(IOException.class, () -> loader.load(new StringReader("name a,b,c,d")));
+			// Check atlas
+			final Rectangle rect = new Rectangle(1, 2, 3, 4);
+			assertEquals(rect, atlas.get("one"));
+			assertEquals(rect, atlas.get("two"));
 		}
 	}
 }

@@ -112,6 +112,11 @@ TODO - ant task? custom Mojo?
 			<version>5.3.0</version>
 		</dependency>
 
+		<dependency>
+		    <groupId>org.json</groupId>
+		    <artifactId>json</artifactId>
+		    <version>20210307</version>
+		</dependency>
 <!--
 		<dependency>
 		    <groupId>org.apache.velocity</groupId>

@@ -1,17 +1,13 @@
 package org.sarge.jove.io;
 
-import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.Reader;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 /**
@@ -85,57 +81,5 @@ public class TextLoader {
 		catch(Exception e) {
 			throw new IOException(String.format("%s at line %d", e.getMessage(), reader.getLineNumber() + 1), e);
 		}
-	}
-
-	/**
-	 * Adapter for a resource loader based on a {@link TextLoader}.
-	 * <p>
-	 * Usage:
-	 * <p>
-	 * <pre>
-	 * 	TextResourceLoader loader = new TextResourceLoader() {
-	 * 		protected String load(String line) {
-	 * 			return line;
-	 * 		}
-	 *
-	 * 		protected Collector<String, ?, List<String>> collector() {
-	 * 			return Collectors.toList();
-	 * 		}
-	 * 	};
-	 * </pre>
-	 */
-	public static abstract class TextResourceLoader<T, R> implements ResourceLoader<Reader, R> {
-		private TextLoader loader = new TextLoader();
-
-		/**
-		 * Sets the underlying text loader.
-		 * @param loader Text loader
-		 */
-		public void loader(TextLoader loader) {
-			this.loader = notNull(loader);
-		}
-
-		@Override
-		public Reader map(InputStream in) throws IOException {
-			return new InputStreamReader(in);
-		}
-
-		@Override
-		public R load(Reader reader) throws IOException {
-			final Function<Stream<String>, R> mapper = stream -> stream.map(this::load).collect(collector());
-			return loader.load(reader, mapper);
-		}
-
-		/**
-		 * Loads and parses line.
-		 * @param line Line
-		 * @return Data
-		 */
-		protected abstract T load(String line);
-
-		/**
-		 * @return Data collector
-		 */
-		protected abstract Collector<T, ?, R> collector();
 	}
 }

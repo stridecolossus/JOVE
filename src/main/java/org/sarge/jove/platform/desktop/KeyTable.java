@@ -1,19 +1,19 @@
 package org.sarge.jove.platform.desktop;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.io.ClasspathDataSource;
-import org.sarge.jove.io.DataSource;
-import org.sarge.jove.io.TextLoader.TextResourceLoader;
 
 /**
- * The <i>key table</i> maps a GLFW keyboard code to the corresponding key name.
+ * The <i>key table</i> maps GLFW keyboard codes to the corresponding key names.
  * @author Sarge
  */
 public class KeyTable {
@@ -26,11 +26,36 @@ public class KeyTable {
 		return INSTANCE;
 	}
 
-	private final BidiMap<Integer, String> keys;
+	/**
+	 * Loads the key table.
+	 * @return Key table
+	 */
+	private static BidiMap<Integer, String> load() {
+		try(final InputStream in = KeyTable.class.getResourceAsStream("/key.table.txt")) {
+			return new BufferedReader(new InputStreamReader(in))
+					.lines()
+					.map(String::trim)
+					.map(StringUtils::split)
+					.map(KeyTable::load)
+					.collect(Collectors.collectingAndThen(Collectors.toMap(Entry::getKey, Entry::getValue), DualHashBidiMap::new));
+		}
+		catch(IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Loads a key table entry.
+	 */
+	private static Entry<Integer, String> load(String[] tokens) {
+		final Integer code = Integer.parseInt(tokens[1].trim());
+		final String name = tokens[0].trim();
+		return Map.entry(code, name);
+	}
+
+	private final BidiMap<Integer, String> keys = load();
 
 	private KeyTable() {
-		final DataSource src = new ClasspathDataSource();
-		this.keys = src.load("key.table.txt", new Loader());
 	}
 
 	/**
@@ -51,25 +76,5 @@ public class KeyTable {
 		final Integer code = keys.inverseBidiMap().get(name);
 		if(code == null) throw new IllegalArgumentException("Unknown key name: " + name);
 		return code;
-	}
-
-	/**
-	 * Key table loader.
-	 */
-	private static class Loader extends TextResourceLoader<Entry<Integer, String>, BidiMap<Integer, String>> {
-		@Override
-		protected Entry<Integer, String> load(String line) {
-			// TODO - tokenize/validate/trim helpers
-			final String[] tokens = StringUtils.split(line);
-			if(tokens.length != 2) throw new IllegalArgumentException("Invalid key table entry");
-			final Integer code = Integer.parseInt(tokens[1].trim());
-			final String name = tokens[0].trim();
-			return Map.entry(code, name);
-		}
-
-		@Override
-		protected Collector<Entry<Integer, String>, ?, BidiMap<Integer, String>> collector() {
-			return Collectors.collectingAndThen(Collectors.toMap(Entry<Integer, String>::getKey, Entry::getValue), DualHashBidiMap::new);
-		}
 	}
 }

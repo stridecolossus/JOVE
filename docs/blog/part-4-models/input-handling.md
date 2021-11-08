@@ -630,14 +630,12 @@ private class KeyboardSource extends DesktopSource<KeyListener> {
 A new key definition is created by the following helper:
 
 ```java
-private Button button(int key) {
-    String name = TABLE.get(key);
-    if(name == null) throw new RuntimeException("Unknown key code: " + key);
-    return new Button(name, KeyboardSource.this);
+private Button key(int code) {
+    return new Button(table.name(code), this);
 }
 ```
 
-Where `TABLE` maps GLFW key codes to key names specified by a local resource (loader not shown).  The key table is a simple text file illustrated in the following fragment:
+Where `table` maps GLFW key codes to key names specified by a local resource (loader not shown).  The key table is a simple text file illustrated in the following fragment:
 
 ```
 SPACE              32

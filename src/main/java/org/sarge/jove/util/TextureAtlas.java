@@ -1,16 +1,21 @@
 package org.sarge.jove.util;
 
-import java.util.Arrays;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toMap;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.io.TextLoader.TextResourceLoader;
+import org.sarge.jove.io.ResourceLoader;
 
 /**
  * A <i>texture atlas</i> maps rectangles within a texture image by name.
@@ -68,34 +73,52 @@ public class TextureAtlas extends LinkedHashMap<String, Rectangle> {
 
 	/**
 	 * Loader for a texture atlas.
+	 * <p>
+	 * A texture atlas is specified as a JSON document illustrated by the following example:
+	 * <p>
+	 * <pre>
+	 * {
+	 *   atlas: [
+	 *     {
+	 *       name: rectangle,
+	 *       rect: [1, 2, 3, 4]
+	 *     }
+	 *   ]
+	 * }
+	 * </pre>
 	 */
-	public static class Loader extends TextResourceLoader<Entry<String, Rectangle>, TextureAtlas> {
+	public static class Loader implements ResourceLoader<JSONObject, TextureAtlas> {
 		@Override
-		protected Entry<String, Rectangle> load(String line) {
-			// Tokenize atlas entry
-			final String[] parts = StringUtils.split(line);
-			if(parts.length != 2) throw new IllegalArgumentException("Invalid texture atlas entry");
-
-			// Parse rectangle
-			final int[] array = Arrays
-					.stream(parts[1].split(","))
-					.map(String::trim)
-					.map(Integer::parseInt)
-					.mapToInt(Integer::valueOf)
-					.toArray();
-
-			// Create rectangle
-			if(array.length != 4) throw new IllegalArgumentException("Expected comma-delimited rectangle");
-			final Rectangle rect = new Rectangle(array[0], array[1], array[2], array[3]);
-
-			// Create atlas entry
-			return Map.entry(parts[0].trim(), rect);
+		public JSONObject map(InputStream in) throws IOException {
+			return new JSONObject(new JSONTokener(in));
 		}
 
 		@Override
-		protected Collector<Entry<String, Rectangle>, ?, TextureAtlas> collector() {
-			final var map = Collectors.toMap(Entry<String, Rectangle>::getKey, Entry::getValue);
-			return Collectors.collectingAndThen(map, TextureAtlas::new);
+		public TextureAtlas load(JSONObject root) throws IOException {
+			// Extract array of entries
+			final JSONArray array = root.getJSONArray("atlas");
+
+			// Load texture atlas
+			return StreamSupport
+					.stream(array.spliterator(), false)
+					.map(JSONObject.class::cast)
+					.map(Loader::entry)
+					.collect(collectingAndThen(toMap(Entry::getKey, Entry::getValue), TextureAtlas::new));
+		}
+
+		/**
+		 * Loads a texture atlas entry.
+		 */
+		private static Entry<String, Rectangle> entry(JSONObject entry) {
+			final String name = entry.getString("name").trim();
+			final JSONArray array = entry.getJSONArray("rect");
+			final Rectangle rect = new Rectangle(
+					array.getInt(0),
+					array.getInt(1),
+					array.getInt(2),
+					array.getInt(3)
+			);
+			return Map.entry(name, rect);
 		}
 	}
 }
