@@ -51,7 +51,8 @@ public interface Image extends NativeObject {
 		// Filter for depth-stencil formats with optimal tiling
 		final Predicate<VkFormat> predicate = format -> {
 			final VkFormatProperties props = dev.properties(format);
-			return MathsUtil.isMask(props.optimalTilingFeatures, VkFormatFeature.DEPTH_STENCIL_ATTACHMENT.value());
+			final int value = VkFormatFeature.DEPTH_STENCIL_ATTACHMENT.value();
+			return MathsUtil.isMask(value, props.optimalTilingFeatures);
 		};
 
 		// Select from candidate formats

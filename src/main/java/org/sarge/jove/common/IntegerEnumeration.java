@@ -8,6 +8,10 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.ToNativeContext;
@@ -74,7 +78,7 @@ public interface IntegerEnumeration {
 		return values
 				.stream()
 				.mapToInt(IntegerEnumeration::value)
-				.reduce(0, (a, b) -> a | b);
+				.sum();
 	}
 
 	/**
@@ -176,15 +180,12 @@ public interface IntegerEnumeration {
 		 * @return Enumeration constants (in ascending order of value)
 		 */
 		public TreeSet<E> enumerate(int mask) {
-			final TreeSet<E> values = new TreeSet<>();
-			final int max = Integer.highestOneBit(mask);
-			for(int n = 0; n < max; ++n) {
-				final int value = 1 << n;
-				if((value & mask) == value) {
-					values.add(map(value));
-				}
-			}
-			return values;
+			return IntStream
+					.range(0, Integer.highestOneBit(mask))
+					.map(bit -> 1 << bit)
+					.filter(value -> MathsUtil.isMask(value, mask))
+					.mapToObj(this::map)
+					.collect(Collectors.toCollection(TreeSet::new));
 		}
 	}
 }

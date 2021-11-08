@@ -1,7 +1,5 @@
 package org.sarge.jove.util;
 
-import org.sarge.lib.util.Check;
-
 /**
  * Maths utilities.
  * <p>
@@ -108,18 +106,16 @@ public final class MathsUtil {
 	 * @return Whether the given value matches the specified bit-wise mask
 	 */
 	public static boolean isMask(int value, int mask) {
-		return (value & mask) == mask;
+		return (value & mask) == value;
 	}
 
 	/**
 	 * @param mask		Mask
 	 * @param bit		Bit index
 	 * @return Whether the specified bit is set in the given integer mask
-	 * @throws IllegalArgumentException if the given integer bit index is invalid
 	 */
 	public static boolean isBit(int mask, int bit) {
-		Check.range(bit, 0, Integer.SIZE - 1);
-		return isMask(mask, 1 << bit);
+		return isMask(1 << bit, mask);
 	}
 
 	/**

@@ -1,7 +1,6 @@
 package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.sarge.jove.util.MathsUtil.HALF_PI;
 import static org.sarge.jove.util.MathsUtil.PI;
 import static org.sarge.jove.util.MathsUtil.TWO_PI;
@@ -50,16 +49,11 @@ class MathsUtilTest {
 	@Test
 	void isMask() {
 		assertEquals(true,  MathsUtil.isMask(0b101, 0b101));
-		assertEquals(true,  MathsUtil.isMask(0b101, 0b100));
-		assertEquals(true,  MathsUtil.isMask(0b101, 0b001));
-		assertEquals(false, MathsUtil.isMask(0b101, 0b111));
-		assertEquals(false, MathsUtil.isMask(0b101, 0b010));
+		assertEquals(true,  MathsUtil.isMask(0b100, 0b101));
+		assertEquals(true,  MathsUtil.isMask(0b001, 0b101));
+		assertEquals(false, MathsUtil.isMask(0b111, 0b101));
+		assertEquals(false, MathsUtil.isMask(0b010, 0b101));
 	}
-
-//	@Test
-//	void isMaskZero() {
-//		assertThrows(IllegalArgumentException.class, () -> MathsUtil.isMask(42, 0));
-//	}
 
 	@Test
 	void isBit() {
@@ -67,11 +61,6 @@ class MathsUtilTest {
 		assertEquals(false, MathsUtil.isBit(0b101, 1));
 		assertEquals(true,  MathsUtil.isBit(0b101, 2));
 		assertEquals(false, MathsUtil.isBit(0b101, 3));
-	}
-
-	@Test
-	void isBitInvalidIndex() {
-		assertThrows(IllegalArgumentException.class, () -> MathsUtil.isBit(42, Integer.SIZE));
 	}
 
 	@Test

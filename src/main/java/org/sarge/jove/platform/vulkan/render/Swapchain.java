@@ -209,7 +209,7 @@ public class Swapchain extends AbstractVulkanObject {
 		}
 
 		private static void validate(int mask, IntegerEnumeration e) {
-			if(!MathsUtil.isMask(mask, e.value())) throw new IllegalArgumentException("Unsupported property: " + e);
+			if(!MathsUtil.isMask(e.value(), mask)) throw new IllegalArgumentException("Unsupported property: " + e);
 		}
 
 		/**
