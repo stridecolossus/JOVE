@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -16,11 +15,9 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
@@ -123,13 +120,10 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	@Nested
 	class CommandTests {
 		private Command.Buffer cb;
-		private VulkanBuffer dest;
 		private VulkanBuffer index;
 
 		@BeforeEach
 		void before() {
-			final var flags = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_DST);
-			dest = new VulkanBuffer(new Pointer(2), dev, flags, mem, SIZE);
 			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.INDEX_BUFFER), mem, SIZE);
 			cb = mock(Command.Buffer.class);
 		}
@@ -152,44 +146,10 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void copy() {
-			// Execute copy command
+			final var flags = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_DST);
+			final VulkanBuffer dest = new VulkanBuffer(new Pointer(2), dev, flags, mem, SIZE);
 			final Command cmd = buffer.copy(dest);
 			assertNotNull(cmd);
-			cmd.execute(lib, cb);
-
-			// Check API
-			final ArgumentCaptor<VkBufferCopy[]> captor = ArgumentCaptor.forClass(VkBufferCopy[].class);
-			verify(lib).vkCmdCopyBuffer(eq(cb), eq(buffer), eq(dest), eq(1), captor.capture());
-
-			// Check region
-			final VkBufferCopy[] array = captor.getValue();
-			assertNotNull(array);
-			assertEquals(1, array.length);
-			assertEquals(SIZE, array[0].size);
-		}
-
-		@Test
-		void copyTooSmall() {
-			final DeviceMemory small = mock(DeviceMemory.class);
-			final VulkanBuffer dest = mock(VulkanBuffer.class);
-			when(dest.memory()).thenReturn(small);
-			when(small.size()).thenReturn(SIZE - 1);
-			assertThrows(IllegalStateException.class, "Destination buffer is too small", () -> buffer.copy(dest));
-		}
-
-		@Test
-		void copyInvalidDirection() {
-			assertThrows(IllegalStateException.class, "Invalid usage", () -> dest.copy(buffer));
-		}
-
-		@Test
-		void copySelf() {
-			assertThrows(IllegalStateException.class, "Invalid usage", () -> buffer.copy(buffer));
-		}
-
-		@Test
-		void copyInvalidUsage() {
-			assertThrows(IllegalStateException.class, "Invalid usage", () -> buffer.copy(index));
 		}
 	}
 

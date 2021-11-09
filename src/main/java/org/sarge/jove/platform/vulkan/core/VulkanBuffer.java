@@ -199,24 +199,15 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Creates a command to copy this buffer to the given buffer.
+	 * Helper - Creates a command to copy this buffer to the given destination buffer.
 	 * Note that this method does not enforce any restrictions on the <i>usage</i> of either buffer (other than being a valid source and destination).
 	 * @param dest Destination buffer
 	 * @return New copy command
-	 * @throws IllegalStateException if this buffer is not a source, the given buffer is not a destination, or it is too small
+	 * @throws IllegalArgumentException if the destination buffer is too small
+	 * @throws IllegalStateException if this buffer is not a source or the given buffer is not a destination
 	 */
-	public Command copy(VulkanBuffer dest) {
-		// Validate
-		if(len > dest.len) throw new IllegalStateException(String.format("Destination buffer is too small: this=%s dest=%s", this, dest));
-		require(VkBufferUsage.TRANSFER_SRC);
-		dest.require(VkBufferUsage.TRANSFER_DST);
-
-		// Build copy descriptor
-		final VkBufferCopy region = new VkBufferCopy();
-		region.size = len;
-
-		// Create copy command
-		return (api, buffer) -> api.vkCmdCopyBuffer(buffer, this, dest, 1, new VkBufferCopy[]{region});
+	public BufferCopyCommand copy(VulkanBuffer dest) {
+		return BufferCopyCommand.of(this, dest);
 	}
 
 	/**
