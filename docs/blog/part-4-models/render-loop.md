@@ -10,15 +10,14 @@ In no particular order:
 
 * The rendering code is completely single-threaded (by blocking the work queues).
 
+* The window event queue is blocked.
+
+* There is no mechanism to terminate the application (other than the timer code or force-quitting the process).
+
 * The code mixes up the following:
     * The Vulkan rendering process
     * The application logic to update the rotation
     * And the code to control the loop (the dodgy timer)
-
-
-* The window event queue is blocked.
-
-* There is no mechanism to terminate the application (other than the timer code or force-quitting the process).
 
 In this chapter we will address these issues by implementing the following:
 
@@ -28,7 +27,9 @@ In this chapter we will address these issues by implementing the following:
 
 * A GLFW keyboard handler to gracefully exit the application.
 
-A complication of particular importance is that GLFW event processing __must__ be performed on the main application thread.  We cannot (for example) wrap up the application loop as a separate thread or use the task executor framework.  Note that GLFW does not return any errors or exceptions if a thread-safe method is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
+A complication of particular importance is that GLFW event processing __must__ be performed on the main application thread.  We cannot (for example) wrap up the application loop as a separate thread or use the task executor framework.
+
+Note that GLFW does not return any errors or exceptions if a thread-safe method is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
 
 ---
 
@@ -61,7 +62,7 @@ public void run() {
 }
 ```
 
-The loop is terminated by the following method:
+And can be terminated by another thread:
 
 ```java
 public void stop() {
@@ -85,7 +86,7 @@ public class RenderTask implements Task {
 }
 ```
 
-And we modify the existing render loop bean accordingly:
+And modify the existing render loop bean accordingly:
 
 ```java
 public static Task render(...) {
@@ -141,6 +142,8 @@ interface DesktopLibraryDevice {
          */
         void key(Pointer window, int key, int scancode, int action, int mods);
     }
+
+    void glfwSetKeyCallback(Window window, KeyListener listener);
 }
 ```
 
@@ -179,7 +182,6 @@ public class FrameTracker implements RenderLoop.Task {
 
     private final Set<Listener> listeners = new HashSet<>();
     private long time = now();
-    private long prev = time;
     private long elapsed;
 }
 ```
@@ -190,7 +192,7 @@ The frame tracker calculates the time elapsed since the previous frame (in nanos
 public void execute() {
     // Update times
     final long now = now();
-    elapsed = now - prev;
+    elapsed = now - time;
     time = now;
 
     // Notify listeners
@@ -317,9 +319,9 @@ When we now run the demo we should finally be able to move the window and close 
 
 ### Semaphores
 
-So far we have avoided synchronisation by blocking the device after rendering and presentation of a frame.  However Vulkan is designed to be multi-threaded from the ground up and provides several synchronisation mechanisms that can be used by the application.
+So far we have avoided synchronisation by simply blocking the device after rendering and presentation of a frame.  However Vulkan is designed to be multi-threaded from the ground up and provides several synchronisation mechanisms that can be used by the application.
 
-A _semaphore_ is the simplest of these used to synchronise operations within or across work queues.
+A _semaphore_ is the simplest of these and is used to synchronise operations within or across work queues.
 
 The semaphore class is trivial since there is no public functionality:
 
@@ -366,7 +368,7 @@ public RenderLoop(Swapchain swapchain, ...) {
 }
 ```
 
-We pass the _available_ semaphore to the acquire method which is refactored to pass it to the API method:
+We pass the _available_ semaphore to the acquire method which passes it to the API method:
 
 ```java
 int index = swapchain.acquire(available);
@@ -476,7 +478,7 @@ However if one were to remove the `waitIdle` calls in the existing code the vali
 
 Additionally the application is continually queueing up rendering work without checking whether it actually completes (which can be seen if one watches the memory usage).
 
-To resolve both of these we introduce the second synchronisation mechanism known as a _fence_ which can be used to synchronise Vulkan and application code:
+To resolve both of these issues we introduce the second synchronisation mechanism known as a _fence_ which can be used to synchronise Vulkan and application code:
 
 ```java
 public class Fence extends AbstractVulkanObject {
@@ -505,7 +507,7 @@ public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 }
 ```
 
-A fence can be signalled in the same manner as a semaphore but it can also be explicitly waited on by the application:
+A fence can be signalled in the same manner as a semaphore but can also be explicitly waited on by the application:
 
 ```java
 public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
@@ -614,7 +616,7 @@ The demo should now run without validation errors (for the render loop anyway), 
 
 ### Sub-Pass Dependencies
 
-The last synchronisation mechanism provided by Vulkan is _subpass dependencies_ that specify memory and execution dependencies between the stages of a render-pass.
+The final synchronisation mechanism is a _subpass dependency_ that specifies memory and execution dependencies between the stages of a render-pass.
 
 We first add a new transient data type to the sub-pass class that specifies a dependency:
 
@@ -642,7 +644,7 @@ public class SubpassDependencyBuilder {
 }
 ```
 
-The source and destination properties are essentially the same for the source and destination properties, so we wrap these into yet another nested builder on the dependency builder:
+The source and destination properties are essentially the same so we wrap these into yet another nested builder on the dependency builder:
 
 ```java
 public class DependencyBuilder {
@@ -651,7 +653,7 @@ public class DependencyBuilder {
 }
 ```
 
-Finally the build method constructs the dependency record and adds it to the list for the sub-pass:
+The build method constructs the dependency record and adds it to the list for the sub-pass:
 
 ```java
 public Builder build() {
@@ -672,7 +674,7 @@ public static final Subpass EXTERNAL = new Subpass() {
 };
 ```
 
-In the render-pass helper class we add the following to populate the dependencies:
+We modify the render pass builder to populate the dependencies:
 
 ```java
 List<Entry<Subpass, SubpassDependency>> dependencies = subpasses.stream().flatMap(Helper::stream).collect(toList());
@@ -743,7 +745,7 @@ Subpass subpass = new Subpass.Builder()
 
 The _destination_ clause specifies that our sub-pass waits for the colour attachment to be ready for writing, i.e. we need to wait for the swapchain to finish using the image.
 
-This should allow the hardware to more efficiently use the multi-threaded nature of the pipeline.
+This should allow the application to more efficiently use the multi-threaded nature of the pipeline.
 
 ### Frames In-Flight
 
@@ -751,7 +753,7 @@ The render loop is still likely not fully utilising the pipeline since the code 
 
 Here we introduce multiple _in-flight_ frames to make better use of the pipeline whilst still bounding the overall amount of work.
 
-We first wrap up the existing render code and the synchronisation primitives into a separate local class representing an instance of an in-flight frame:
+We first wrap up the existing render code and the synchronisation primitives into an inner class representing an instance of an in-flight frame:
 
 ```java
 private class Frame {
@@ -768,7 +770,7 @@ private class Frame {
 }
 ```
 
-Next we add a new parameter to the constructor and instantiate an array of in-flight frames:
+Next we add a new parameter to the constructor to instantiate the array of in-flight frames:
 
 ```java
 public class RenderLoop {

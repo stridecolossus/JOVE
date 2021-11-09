@@ -373,7 +373,7 @@ public final class Vector extends Tuple {
 }
 ```
 
-The view transform matrix which consists of translation and rotation components.  The translation moves the eye position (or camera) one unit out of the screen (or moves the scene one unit into the screen, whichever way you look at it):
+The view transform matrix consists of translation and rotation components.  The translation moves the eye position (or camera) one unit out of the screen (or moves the scene one unit into the screen, whichever way you look at it):
 
 ```java
 Matrix trans = new Matrix.Builder()
@@ -382,7 +382,7 @@ Matrix trans = new Matrix.Builder()
     .build();
 ```
 
-The rotation matrix is initialised to the three camera axes:
+The rotation component of the matrix is initialised to the three camera axes:
 
 ```java
 Matrix rot = new Matrix.Builder()
@@ -562,7 +562,7 @@ public Bufferable vertices() {
 
 ### Model Builder
 
-To construct a model we provide the ubiquitous builder which essentially a wrapper for a mutable list of vertices:
+To construct a model we provide the ubiquitous builder which is essentially a wrapper for a mutable list of vertices:
 
 ```java
 public class ModelBuilder {
@@ -712,9 +712,9 @@ public Model build() {
 
 ### Model Transformation
 
-The cube builder creates vertices containing all the vertex components (position, normal, texture coordinate, colour), however for the demo application we only require the vertex position and texture coordinates.  Additionally applications may require the vertex components to be re-ordered if (for example) the shader cannot be modified to suit a given model.
+The cube builder creates vertices containing all components (position, normal, texture coordinate, colour), however for the demo application we only require the vertex position and texture coordinates.  Additionally applications may require vertex components to be re-ordered if (for example) the shader cannot be modified to suit a given model.
 
-Therefore we introduce a _transformation_ method to the model to applies a new vertex layout:
+Therefore we introduce a _transform_ method to the model to apply a new vertex layout:
 
 ```java
 public interface Model {
@@ -728,7 +728,7 @@ public interface Model {
 }
 ```
 
-In the default model implementation we first build the mapping from the current to the desired layout:
+In the default model implementation we first build a mapping from the current to the desired layout:
 
 ```java
 int map[] = current.stream().mapToInt(layouts::indexOf).toArray();
