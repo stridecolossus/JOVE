@@ -46,7 +46,7 @@ We will first modify the demo to render a quad and implement texture coordinates
 
 ```mermaid
 flowchart TD
-    Start ---> Stop
+Start ---> Stop
 ```
 
 
