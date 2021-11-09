@@ -124,8 +124,8 @@ public class Work {
 		return new ToStringBuilder(this)
 				.append("pool", pool)
 				.append("buffers", buffers.size())
-				.append("wait", wait.size())
-				.append("signal", signal.size())
+				.append("waits", wait.size())
+				.append("signals", signal.size())
 				.build();
 	}
 

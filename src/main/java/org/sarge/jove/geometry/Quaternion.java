@@ -34,10 +34,6 @@ public final class Quaternion implements Transform {
 
 	/**
 	 * Constructor.
-	 * @param w
-	 * @param x
-	 * @param y
-	 * @param z
 	 */
 	public Quaternion(float w, float x, float y, float z) {
 		this.w = w;

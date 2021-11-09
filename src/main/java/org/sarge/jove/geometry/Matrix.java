@@ -23,6 +23,7 @@ import org.sarge.lib.util.Check;
  * 	.set(row, col, value)
  * 	.build();
  * </pre>
+ * @see Rotation
  * @author Sarge
  */
 public final class Matrix implements Transform, Bufferable {

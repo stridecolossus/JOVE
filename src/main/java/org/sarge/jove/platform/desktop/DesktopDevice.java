@@ -12,7 +12,7 @@ import org.sarge.jove.control.Event.Source;
  * Base-class for a GLFW-based device.
  * @author Sarge
  */
-public abstract class DesktopDevice implements Device {
+abstract class DesktopDevice implements Device {
 	private final Window window;
 
 	/**
@@ -33,7 +33,7 @@ public abstract class DesktopDevice implements Device {
 	 * @param action Action code
 	 * @return Action
 	 */
-	protected static Action map(int action) {
+	static Action map(int action) {
 		return switch(action) {
 			case 0 -> Action.RELEASE;
 			case 1 -> Action.PRESS;
@@ -46,7 +46,7 @@ public abstract class DesktopDevice implements Device {
 	 * Template implementation for a source based on a GLFW callback.
 	 * @param <T> Callback
 	 */
-	public abstract class DesktopSource<T> implements Source {
+	abstract class DesktopSource<T> implements Source {
 		@SuppressWarnings("unused")
 		private T listener;
 

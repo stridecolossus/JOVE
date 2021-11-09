@@ -36,13 +36,6 @@ class DimensionsTest {
 	}
 
 	@Test
-	void isPowerOfTwo() {
-		assertEquals(true, new Dimensions(2, 2).isPowerOfTwo());
-		assertEquals(false, new Dimensions(0, 0).isPowerOfTwo());
-		assertEquals(false, new Dimensions(3, 4).isPowerOfTwo());
-	}
-
-	@Test
 	void isLargerThan() {
 		assertEquals(false, dim.isLargerThan(dim));
 		assertEquals(true, dim.isLargerThan(new Dimensions(0, 0)));

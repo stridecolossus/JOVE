@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.sarge.jove.io.BufferHelper;
 
 /**
- * A <i>bufferable</i> is a data object that can be written to an NIO buffer.
+ * A <i>bufferable</i> object can be written to an NIO buffer.
  * @author Sarge
  */
 public interface Bufferable {

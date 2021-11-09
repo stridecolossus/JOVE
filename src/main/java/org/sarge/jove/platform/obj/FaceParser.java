@@ -33,7 +33,7 @@ package org.sarge.jove.platform.obj;
  * @see ObjectModel#position(Integer[])
  * @author Sarge
  */
-public class FaceParser implements Parser {
+class FaceParser implements Parser {
 	@Override
 	public void parse(String[] args, ObjectModel model) {
 		// Validate face

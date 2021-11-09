@@ -5,7 +5,7 @@ import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>plane</i> is a flat surface in 3D space.
+ * A <i>plane</i> defines a flat surface in 3D space.
  * <p>
  * Mathematically the <i>general form</i> of a plane is:
  * <pre>ax + by + cz + d = 0</pre>

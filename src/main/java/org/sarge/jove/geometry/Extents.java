@@ -10,7 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * An <i>extents</i> defines an axis-aligned rectangular volume specified by min/max points.
+ * An <i>extents</i> defines an axis-aligned rectilinear volume specified by min/max points.
  * @author Sarge
  */
 public class Extents {

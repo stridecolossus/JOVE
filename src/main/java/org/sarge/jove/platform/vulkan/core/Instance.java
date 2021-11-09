@@ -105,7 +105,10 @@ public class Instance extends AbstractTransientNativeObject {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("handlers", handlers.size()).build();
+		return new ToStringBuilder(this)
+				.append("handle", handle)
+				.append("handlers", handlers.size())
+				.build();
 	}
 
 	/**

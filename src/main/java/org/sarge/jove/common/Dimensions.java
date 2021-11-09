@@ -1,6 +1,5 @@
 package org.sarge.jove.common;
 
-import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
@@ -33,19 +32,10 @@ public record Dimensions(int width, int height) {
 	}
 
 	/**
-	 * @return Whether these dimension are <i>square</i>
+	 * @return Whether these dimensions are <i>square</i>
 	 */
 	public boolean isSquare() {
 		return width == height;
-	}
-
-	/**
-	 * @return Whether these dimensions are square and a power-of-two
-	 * @see #isSquare()
-	 * @see MathsUtil#isPowerOfTwo(int)
-	 */
-	public boolean isPowerOfTwo() {
-		return isSquare() && MathsUtil.isPowerOfTwo(width);
 	}
 
 	/**

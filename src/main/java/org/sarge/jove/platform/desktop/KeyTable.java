@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
  * The <i>key table</i> maps GLFW keyboard codes to the corresponding key names.
  * @author Sarge
  */
-public class KeyTable {
+class KeyTable {
 	private static final KeyTable INSTANCE = new KeyTable(); // TODO - lazy init?
 
 	/**

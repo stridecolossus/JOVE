@@ -32,8 +32,8 @@ public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents ex
 	 * @param format		Format
 	 * @param extents		Extents
 	 * @param aspects		Image aspect(s)
-	 * @param levels		Number of mip levels
-	 * @param layers		Number of array layers
+	 * @param levelCount	Number of mip levels
+	 * @param layerCount	Number of array layers
 	 * @throws IllegalArgumentException if the image aspects is empty or is an invalid combination
 	 * @throws IllegalArgumentException if the extents are invalid for the given image type
 	 */

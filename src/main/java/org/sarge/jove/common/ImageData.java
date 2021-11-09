@@ -16,7 +16,7 @@ import javax.imageio.ImageIO;
 import org.sarge.jove.io.ResourceLoader;
 
 /**
- * The <i>image data</i> interface abstracts a native image.
+ * An <i>image data</i> is an abstraction of a native image.
  * <p>
  * The image {@link #layout()} specifies the number of channels comprising the image and the structure of each pixel.
  * For example a standard ABGR image with one byte per channel would have the following layout: <code>new Layout("ABGR", Byte.class, 1, false)</code>

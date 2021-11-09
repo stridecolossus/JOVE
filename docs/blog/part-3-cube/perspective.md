@@ -479,7 +479,7 @@ public interface Model {
 The _header_ is a descriptor for the properties of the model:
 
 ```java
-public record Header(List<Layout> layout, Primitive primitive, int count) {
+public record Header(CompoundLayout layout, Primitive primitive, int count) {
 }
 ```
 

@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Objects;
 
 import org.sarge.jove.common.Bufferable;
@@ -123,6 +124,6 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 
 	@Override
 	public String toString() {
-		return String.format("%s,%s,%s", x, y, z);
+		return Arrays.toString(new float[]{x, y, z});
 	}
 }

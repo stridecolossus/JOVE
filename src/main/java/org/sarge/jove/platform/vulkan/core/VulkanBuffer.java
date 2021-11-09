@@ -184,6 +184,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		require(VkBufferUsage.VERTEX_BUFFER);
 		final Pointer array = NativeObject.toArray(List.of(this));
 		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
+		// TODO - batch
 	}
 
 	/**
@@ -200,7 +201,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 	/**
 	 * Helper - Creates a command to copy this buffer to the given destination buffer.
-	 * Note that this method does not enforce any restrictions on the <i>usage</i> of either buffer (other than being a valid source and destination).
+	 * Note that this method does not enforce any restrictions on the <i>usage</i> of either buffer (other than they must be a valid source and destination).
 	 * @param dest Destination buffer
 	 * @return New copy command
 	 * @throws IllegalArgumentException if the destination buffer is too small

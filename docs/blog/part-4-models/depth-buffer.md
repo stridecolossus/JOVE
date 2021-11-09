@@ -692,12 +692,6 @@ public class Camera {
 
 Note that under the hood the camera direction is the inverse of the view direction:
 
-```java
-public void direction(Vector dir) {
-    this.dir = dir.invert();
-}
-```
-
 We provide various mutator methods to move the camera position:
 
 ```java

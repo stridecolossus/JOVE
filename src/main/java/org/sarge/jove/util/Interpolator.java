@@ -25,6 +25,10 @@ public interface Interpolator {
 ////https://www.febucci.com/2018/08/easing-functions/
 //	Interpolator COSINE = value -> (1 - MathsUtil.cos(value * MathsUtil.PI)) / 2f;
 
+	// TODO
+	// - should we have two interfaces here? 1. float function 2. ranged?
+	// - surely we should have some sort of chaining before/after using default methods?
+
 	/**
 	 * Linear interpolation, i.e. does nothing.
 	 */

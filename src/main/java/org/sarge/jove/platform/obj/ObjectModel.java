@@ -18,7 +18,7 @@ import org.sarge.jove.model.Vertex;
  * The <i>OBJ model</i> holds the transient vertex data during parsing.
  * @author Sarge
  */
-public class ObjectModel {
+class ObjectModel {
 	private final List<Point> positions = new VertexComponentList<>();
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
