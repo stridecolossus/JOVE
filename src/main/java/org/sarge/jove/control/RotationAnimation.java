@@ -2,8 +2,8 @@ package org.sarge.jove.control;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Animator.Animation;
+import org.sarge.jove.geometry.MutableRotation;
 import org.sarge.jove.geometry.Rotation;
-import org.sarge.jove.geometry.Rotation.MutableRotation;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
