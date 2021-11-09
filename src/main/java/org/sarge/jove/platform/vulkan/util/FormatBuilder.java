@@ -67,7 +67,7 @@ public class FormatBuilder {
 	 */
 	public static VkFormat format(Layout layout) {
 		return new FormatBuilder()
-				.components(layout.components())
+				.count(layout.count())
 				.bytes(layout.bytes())
 				.type(layout.type())
 				.signed(layout.signed())

@@ -102,7 +102,7 @@ public record Layout(String components, Class<?> type, int bytes, boolean signed
 	/**
 	 * @return Number of components
 	 */
-	public int size() {
+	public int count() {
 		return components.length();
 	}
 
@@ -110,6 +110,6 @@ public record Layout(String components, Class<?> type, int bytes, boolean signed
 	 * @return Length of this layout (bytes)
 	 */
 	public int length() {
-		return size() * bytes;
+		return count() * bytes;
 	}
 }

@@ -43,7 +43,7 @@ public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOu
 		final List<Layout> layout = header.layout().layouts();
 		out.writeInt(layout.size());
 		for(Layout c : layout) {
-			out.writeInt(c.size());
+			out.writeInt(c.count());
 			out.writeInt(c.bytes());
 			out.writeUTF(c.type().getName());
 		}

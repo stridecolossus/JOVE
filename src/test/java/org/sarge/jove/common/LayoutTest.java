@@ -18,11 +18,10 @@ public class LayoutTest {
 
 	@Test
 	void constructor() {
-		assertEquals(3, layout.size());
 		assertEquals(Float.class, layout.type());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(true, layout.signed());
-		assertEquals(3, layout.size());
+		assertEquals(3, layout.count());
 		assertEquals(3 * Float.BYTES, layout.length());
 	}
 

@@ -45,7 +45,7 @@ class VectorTest {
 	@Test
 	void layout() {
 		assertEquals(Float.class, Vector.NORMALS.type());
-		assertEquals(3, Vector.NORMALS.size());
+		assertEquals(3, Vector.NORMALS.count());
 		assertEquals(Float.BYTES, Vector.NORMALS.bytes());
 		assertEquals(Vector.NORMALS, vec.layout());
 	}
