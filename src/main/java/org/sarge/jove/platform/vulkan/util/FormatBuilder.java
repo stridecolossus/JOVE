@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.util;
 
+import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.Layout;
@@ -34,11 +35,6 @@ import org.sarge.lib.util.Check;
  */
 public class FormatBuilder {
 	/**
-	 * Vulkan components template.
-	 */
-	public static final String RGBA = "RGBA";
-
-	/**
 	 * Component data-type.
 	 */
 	public enum Type {
@@ -71,18 +67,25 @@ public class FormatBuilder {
 	 */
 	public static VkFormat format(Layout layout) {
 		return new FormatBuilder()
-				.count(layout.size())
+				.components(layout.components())
 				.bytes(layout.bytes())
 				.type(layout.type())
 				.signed(layout.signed())
 				.build();
 	}
 
-	private String components = RGBA;
-	private int count = 4;
-	private int bytes = 4;
+	private String components;
+	private int count;
+	private int bytes = Float.BYTES;
 	private Type type = Type.FLOAT;
 	private boolean signed = true;
+
+	/**
+	 * Constructor.
+	 */
+	public FormatBuilder() {
+		components(Layout.MAPPING);
+	}
 
 	/**
 	 * Sets the colour component template characters, e.g. {@code ARGB}.
@@ -90,11 +93,9 @@ public class FormatBuilder {
 	 * @throws IllegalArgumentException if the given template is empty, contains an invalid character, or is longer than 4 components
 	 */
 	public FormatBuilder components(String components) {
-		Check.range(components.length(), 1, 4);
-		if(components.chars().anyMatch(ch -> RGBA.indexOf(ch) == -1)) throw new IllegalArgumentException("Invalid components template: " + components);
-		this.components = components;
-		this.count = Math.min(count, components.length());
-		return this;
+		if(components.length() > 4) throw new IllegalArgumentException(String.format("Invalid components [%s]", components));
+		this.components = notEmpty(components);
+		return count(components.length());
 	}
 
 	/**
@@ -104,7 +105,7 @@ public class FormatBuilder {
 	 * @see #components(String)
 	 */
 	public FormatBuilder count(int count) {
-		this.count = Check.range(count, 1, 4);
+		this.count = Check.range(count, 1, components.length());
 		return this;
 	}
 
@@ -114,7 +115,8 @@ public class FormatBuilder {
 	 * @throws IllegalArgumentException if the number of bytes is invalid
 	 */
 	public FormatBuilder bytes(int bytes) {
-		if((bytes < 1) || (bytes > 8) || !MathsUtil.isPowerOfTwo(bytes)) {
+		Check.range(bytes, 1, 8);
+		if(!MathsUtil.isPowerOfTwo(bytes)) {
 			throw new IllegalArgumentException("Unsupported number of component bytes: " + bytes);
 		}
 		this.bytes = bytes;
@@ -155,11 +157,6 @@ public class FormatBuilder {
 	 * @throws IllegalArgumentException if the format is not supported
 	 */
 	public VkFormat build() {
-		// Validate format
-		if(count > components.length()) {
-			throw new IllegalArgumentException(String.format("Invalid components specification: components=%s length=%d", components, count));
-		}
-
 		// Build component layout
 		final StringBuilder layout = new StringBuilder();
 		final int size = bytes * Byte.SIZE;

@@ -101,7 +101,7 @@ class DefaultModelTest {
 
 	@Test
 	void transformInvalidLayout() {
-		final List<Layout> layout = List.of(Layout.of(999));
+		final List<Layout> layout = List.of(Layout.of(4));
 		assertThrows(IllegalArgumentException.class, () -> model.transform(layout));
 	}
 }

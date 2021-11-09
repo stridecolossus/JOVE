@@ -86,24 +86,50 @@ public interface Component extends Bufferable {
 Which is a simple record type specifying the type and number of the elements that make up that component:
 
 ```java
-public record Layout(int size, Class<?> type, int bytes, boolean signed) {
+public record Layout(String components, Class<?> type, int bytes, boolean signed) {
+    public int size() {
+        return components.length();
+    }
+
     public int length() {
-        return size * bytes;
+        return size() * bytes;
     }
 }
 ```
 
-For example a point or vector is comprised of three floating-point values:
+The _components_ member specifies the number of components as a string, for example the layout for a `Colour` is comprised of floating-point RGBA components:
 
 ```java
-new Layout(3, Float.class, Float.BYTES, true);
+new Layout("RGBA", Float.class, Float.BYTES, true);
 ```
 
-We also provide a convenience over-loaded constructor and factory method for the most common case of a floating-point layout:
+The `bytes` helper can be used to determine the number of bytes for a Java numeric type:
 
 ```java
+public static int bytes(Class<?> type) {
+    return switch(type.getSimpleName().toLowerCase()) {
+        case "float" -> Float.BYTES;
+        case "int", "integer" -> Integer.BYTES;
+        case "short" -> Short.BYTES;
+        case "byte" -> Byte.BYTES;
+        default -> throw new IllegalArgumentException(...);
+    };
+}
+```
+
+We also provide convenience factory methods to specify the most common layouts:
+
+```java
+public static final String MAPPING = "RGBA";
+
+public static Layout of(int size, Class<?> type, boolean signed) {
+    String components = MAPPING.substring(0, size);
+    int bytes = bytes(type);
+    return new Layout(components, type, bytes, signed);
+}
+
 public static Layout of(int size) {
-    return new Layout(size, Float.class, true);
+    return of(size, Float.class, true);
 }
 ```
 

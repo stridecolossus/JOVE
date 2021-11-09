@@ -14,9 +14,7 @@ import org.sarge.jove.io.ResourceLoader;
  * The <i>image data</i> interface abstracts a native image.
  * <p>
  * The image {@link #layout()} specifies the number of channels comprising the image and the structure of each pixel.
- * For example a standard ABGR image with one byte per channel would have the following layout: <code>new Layout(4, Byte.class, 1, false)</code>
- * <p>
- * The {@link #mapping()} is a string representing the order of the channels, e.g. {@code ABGR} for a standard native image with an alpha channel.
+ * For example a standard ABGR image with one byte per channel would have the following layout: <code>new Layout("ABGR", Byte.class, 1, false)</code>
  * <p>
  * @author Sarge
  */
@@ -30,11 +28,6 @@ public interface ImageData {
 	 * @return Image layout
 	 */
 	Layout layout();
-
-	/**
-	 * @return Component mapping specification
-	 */
-	String mapping();
 
 	/**
 	 * @return Image data
@@ -81,17 +74,14 @@ public interface ImageData {
 
 				@Override
 				public Layout layout() {
-					final int num = image.getColorModel().getNumComponents();
-					return new Layout(num, Byte.class, 1, false);
-				}
-
-				@Override
-				public String mapping() {
-					return switch(image.getType()) {
-						case BufferedImage.TYPE_BYTE_GRAY -> "RRR1";		// TODO
-						case BufferedImage.TYPE_4BYTE_ABGR -> "ABGR";
-						default -> throw new RuntimeException();
+					final String mapping = switch(image.getType()) {
+						case BufferedImage.TYPE_BYTE_GRAY -> "RRR1";
+						default -> {
+							final int num = image.getColorModel().getNumComponents();
+							yield "ABGR".substring(0, num);
+						}
 					};
+					return new Layout(mapping, Byte.class, 1, false);
 				}
 
 				@Override

@@ -7,7 +7,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * A layout is comprised of:
  * <ul>
- * <li>the {@link #size} which specifies the number of <i>components</i> that comprise the data, e.g. 3 for a point or vector</li>
+ * <li>{@link #components} as a string representation of the <i>component</i> mapping of the data, e.g. {@code RGB} for a point or vector</li>
  * <li>the {@link #type} of each component, e.g. {@link Float}</li>
  * <li>the number of {@link #bytes} per component, e.g. {@link Float#BYTES}</li>
  * <li>whether the data is {@link #signed}</li>
@@ -23,20 +23,43 @@ import org.sarge.lib.util.Check;
  * </pre>
  * <p>
  */
-public record Layout(int size, Class<?> type, int bytes, boolean signed) {
+public record Layout(String components, Class<?> type, int bytes, boolean signed) {
+	/**
+	 * Default component mapping.
+	 */
+	public static final String MAPPING = "RGBA";
+
+	/**
+	 * Creates a layout with a number of components of the given numeric type.
+	 * @param size			Size of this layout (number of components)
+	 * @param type			Component type
+	 * @param signed		Whether components are signed or unsigned
+	 * @throws IllegalArgumentException if the number of components is larger than {@link #MAPPING}
+	 * @throws IllegalArgumentException for an unsupported type
+	 * @see #bytes(Class)
+	 */
+	public static Layout of(int size, Class<?> type, boolean signed) {
+		if(size > MAPPING.length()) throw new IllegalArgumentException("Invalid number of components");
+		final String components = MAPPING.substring(0, size);
+		final int bytes = bytes(type);
+		return new Layout(components, type, bytes, signed);
+	}
+
 	/**
 	 * Creates a layout with {@link #size} signed floating-point components.
 	 * @param size Size of this layout (number of components)
 	 * @return New floating-point layout
 	 */
 	public static Layout of(int size) {
-		return new Layout(size, Float.class, true);
+		return of(size, Float.class, true);
 	}
+
+	// TODO - builder?
 
 	/**
 	 * Determines the number of bytes for the given numeric type.
 	 * <p>
-	 * The {@link #type} parameter can be either the wrapper or primitive type.
+	 * The {@link #type} parameter can be either a wrapper or primitive type.
 	 * <p>
 	 * For example: {@link Float} or {@code float} is mapped to {@link Float#BYTES}.
 	 * <p>
@@ -65,33 +88,28 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 
 	/**
 	 * Constructor.
-	 * @param size			Size of this layout (number of components)
+	 * @param components	Component mapping
 	 * @param type			Component type
 	 * @param bytes			Number of bytes per component
 	 * @param signed		Whether components are signed or unsigned
 	 */
 	public Layout {
-		Check.oneOrMore(size);
+		Check.notEmpty(components);
 		Check.notNull(type);
 		Check.oneOrMore(bytes);
 	}
 
 	/**
-	 * Constructor for a layout comprised of a numeric type.
-	 * @param size			Size of this layout (number of components)
-	 * @param type			Component type
-	 * @param signed		Whether components are signed or unsigned
-	 * @throws IllegalArgumentException for an unsupported type
-	 * @see #bytes(Class)
+	 * @return Number of components
 	 */
-	public Layout(int size, Class<?> type, boolean signed) {
-		this(size, type, bytes(type), signed);
+	public int size() {
+		return components.length();
 	}
 
 	/**
 	 * @return Length of this layout (bytes)
 	 */
 	public int length() {
-		return size * bytes;
+		return size() * bytes;
 	}
 }

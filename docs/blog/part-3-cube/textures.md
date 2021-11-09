@@ -314,11 +314,6 @@ public interface ImageData {
     Layout layout();
 
     /**
-     * @return Component mapping specification
-     */
-    String mapping();
-
-    /**
      * @return Image data
      */
     byte[] bytes();
@@ -329,9 +324,7 @@ Notes:
 
 * We assume that image data is stored as bytes.
 
-* We reuse the _layout_ specify the structure of the image data.
-
-* The purpose of the _mapping_ string is covered below.
+* We reuse the _layout_ class to specify the structure of the image data.
 
 Later we will load the image data to the hardware as a `Bufferable` object - we add a new helper to wrap the byte-array of the image:
 
@@ -429,17 +422,14 @@ return new ImageData() {
 
     @Override
     public Layout layout() {
-        int num = result.getColorModel().getNumComponents();
-        return new Layout(num, Byte.class, 1, false);
-    }
-
-    @Override
-    public String mapping() {
-        return switch(result.getType()) {
-            ...
-            case BufferedImage.TYPE_4BYTE_ABGR -> "ABGR";
-            default -> throw new RuntimeException();
+        final String mapping = switch(image.getType()) {
+            case BufferedImage.TYPE_BYTE_GRAY -> "RRR1";
+            default -> {
+                int num = image.getColorModel().getNumComponents();
+                yield "ABGR".substring(0, num);
+            }
         };
+        return new Layout(mapping, Byte.class, 1, false);
     }
 
     @Override
@@ -934,16 +924,18 @@ The last piece of functionality we will need is some means of determining the _c
 
 Native images have channels in `ABGR` order whereas Vulkan textures are `RGBA`, the component mapping allows the image view to _swizzles_ the image channels as required.
 
-We implement a new helper class that constructs the appropriate component mapping from the _mapping_ property of the image:
+We implement a new helper class that constructs the appropriate component mapping from the _components_ property of the image layout:
 
 ```java
 public final class ComponentMappingBuilder {
+    private static final int SIZE = 4;
+
     public static VkComponentMapping build(String mapping) {
         // Validate
-        if(mapping.length() != 4) throw new IllegalArgumentException(...);
+        if(mapping.length() != SIZE) throw new IllegalArgumentException(...);
 
         // Build swizzle array
-        final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
+        final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
         Arrays.setAll(swizzle, n -> swizzle(mapping.charAt(n)));
 
         // Build component mapping
@@ -992,7 +984,7 @@ public final class ComponentMappingBuilder {
     public static final VkComponentMapping IDENTITY;
 
     static {
-        final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
+        final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
         Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
         IDENTITY = build(swizzle);
     }

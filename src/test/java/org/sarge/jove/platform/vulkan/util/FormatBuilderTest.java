@@ -58,8 +58,8 @@ class FormatBuilderTest {
 
 	@Test
 	void layout() {
-		assertEquals(VkFormat.R16G16B16_SFLOAT, FormatBuilder.format(new Layout(3, Float.class, 2, true)));
-		assertEquals(VkFormat.R8G8_UNORM, FormatBuilder.format(new Layout(2, Byte.class, 1, false)));
+		assertEquals(VkFormat.R16G16B16_SFLOAT, FormatBuilder.format(new Layout("RGB", Float.class, 2, true)));
+		assertEquals(VkFormat.R8G8_UNORM, FormatBuilder.format(new Layout("RG", Byte.class, 1, false)));
 	}
 
 	@Nested

@@ -33,8 +33,7 @@ public class ImageDataTest {
 		final ImageData data = loader.load(image);
 		assertNotNull(data);
 		assertEquals(new Dimensions(1, 2), data.size());
-		assertEquals(new Layout(4, Byte.class, 1, false), data.layout());
-		assertEquals("ABGR", data.mapping());
+		assertEquals(new Layout("ABGR", Byte.class, 1, false), data.layout());
 		assertArrayEquals(new byte[1 * 2 * 4], data.bytes());
 	}
 
@@ -45,8 +44,7 @@ public class ImageDataTest {
 		final ImageData data = loader.load(image);
 		assertNotNull(data);
 		assertEquals(new Dimensions(1, 2), data.size());
-		assertEquals(new Layout(4, Byte.class, 1, false), data.layout());
-		assertEquals("ABGR", data.mapping());
+		assertEquals(new Layout("ABGR", Byte.class, 1, false), data.layout());
 	}
 
 	@DisplayName("Gray-scale image should have one channel")
@@ -56,8 +54,7 @@ public class ImageDataTest {
 		final ImageData data = loader.load(image);
 		assertNotNull(data);
 		assertEquals(new Dimensions(1, 2), data.size());
-		assertEquals(new Layout(1, Byte.class, 1, false), data.layout());
-		assertEquals("RRR1", data.mapping());
+		assertEquals(new Layout("RRR1", Byte.class, 1, false), data.layout());
 		assertArrayEquals(new byte[1 * 2], data.bytes());
 	}
 

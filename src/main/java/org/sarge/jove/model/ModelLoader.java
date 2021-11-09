@@ -97,7 +97,7 @@ public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOu
 		final List<Layout> layout = new ArrayList<>();
 		for(int n = 0; n < num; ++n) {
 			final int size = in.readInt();
-			final int bytes = in.readInt();
+			final int bytes = in.readInt();			// TODO
 			final String name = in.readUTF();
 			final Class<?> type;
 			try {
@@ -106,7 +106,7 @@ public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOu
 			catch(ClassNotFoundException e) {
 				throw new IOException("Unknown layout component type: " + name, e);
 			}
-			layout.add(new Layout(size, type, bytes, true));
+			layout.add(Layout.of(size, type, true));
 		}
 
 		// Load data

@@ -3,6 +3,7 @@ package org.sarge.jove.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,7 @@ public class LayoutTest {
 
 	@BeforeEach
 	void before() {
-		layout = new Layout(3, Float.class, true);
+		layout = new Layout("RGB", Float.class, Float.BYTES, true);
 	}
 
 	@Test
@@ -21,11 +22,14 @@ public class LayoutTest {
 		assertEquals(Float.class, layout.type());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(true, layout.signed());
+		assertEquals(3, layout.size());
+		assertEquals(3 * Float.BYTES, layout.length());
 	}
 
 	@Test
-	void length() {
-		assertEquals(3 * Float.BYTES, layout.length());
+	void constructorInvalidComponentMapping() {
+		assertThrows(IllegalArgumentException.class, () -> new Layout(null, Float.class, Float.BYTES, true));
+		assertThrows(IllegalArgumentException.class, () -> new Layout(StringUtils.EMPTY, Float.class, Float.BYTES, true));
 	}
 
 	@Test
