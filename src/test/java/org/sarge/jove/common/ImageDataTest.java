@@ -1,6 +1,5 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,39 +28,43 @@ public class ImageDataTest {
 	@DisplayName("ABGR should be loaded as-is")
 	@Test
 	void load() throws IOException {
-		final BufferedImage image = new BufferedImage(1, 2, BufferedImage.TYPE_4BYTE_ABGR);
+		final BufferedImage image = new BufferedImage(2, 3, BufferedImage.TYPE_4BYTE_ABGR);
 		final ImageData data = loader.load(image);
 		assertNotNull(data);
-		assertEquals(new Dimensions(1, 2), data.size());
+		assertEquals(new Dimensions(2, 3), data.size());
 		assertEquals(new Layout("ABGR", Byte.class, 1, false), data.layout());
-		assertArrayEquals(new byte[1 * 2 * 4], data.bytes());
+		assertNotNull(data.buffer());
+		assertEquals(2 * 3 * 4, data.buffer().length());
 	}
 
 	@DisplayName("Loader should add an alpha channel as required")
 	@Test
 	void loadAddAlpha() throws IOException {
-		final BufferedImage image = new BufferedImage(1, 2, BufferedImage.TYPE_3BYTE_BGR);
+		final BufferedImage image = new BufferedImage(2, 3, BufferedImage.TYPE_3BYTE_BGR);
 		final ImageData data = loader.load(image);
 		assertNotNull(data);
-		assertEquals(new Dimensions(1, 2), data.size());
+		assertEquals(new Dimensions(2, 3), data.size());
 		assertEquals(new Layout("ABGR", Byte.class, 1, false), data.layout());
+		assertNotNull(data.buffer());
+		assertEquals(2 * 3 * 4, data.buffer().length());
 	}
 
 	@DisplayName("Gray-scale image should have one channel")
 	@Test
 	void grayscale() throws IOException {
-		final BufferedImage image = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_GRAY);
+		final BufferedImage image = new BufferedImage(2, 3, BufferedImage.TYPE_BYTE_GRAY);
 		final ImageData data = loader.load(image);
 		assertNotNull(data);
-		assertEquals(new Dimensions(1, 2), data.size());
+		assertEquals(new Dimensions(2, 3), data.size());
 		assertEquals(new Layout("RRR1", Byte.class, 1, false), data.layout());
-		assertArrayEquals(new byte[1 * 2], data.bytes());
+		assertNotNull(data.buffer());
+		assertEquals(2 * 3 * 1, data.buffer().length());
 	}
 
 	@DisplayName("Should fail for an unsupported image type")
 	@Test
 	void unsupported() {
-		final BufferedImage image = new BufferedImage(1, 2, BufferedImage.TYPE_BYTE_BINARY);
+		final BufferedImage image = new BufferedImage(2, 3, BufferedImage.TYPE_BYTE_BINARY);
 		assertThrows(RuntimeException.class, () -> loader.load(image));
 	}
 

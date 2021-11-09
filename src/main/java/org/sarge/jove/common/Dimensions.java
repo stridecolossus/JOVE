@@ -19,6 +19,13 @@ public record Dimensions(int width, int height) {
 	}
 
 	/**
+	 * @return Area of these dimensions
+	 */
+	public int area() {
+		return width * height;
+	}
+
+	/**
 	 * @return Ratio
 	 */
 	public float ratio() {

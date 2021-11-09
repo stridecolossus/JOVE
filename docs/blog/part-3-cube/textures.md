@@ -316,17 +316,81 @@ public interface ImageData {
     /**
      * @return Image data
      */
-    byte[] bytes();
+    Bufferable buffer();
 }
 ```
 
 Notes:
 
-* We assume that image data is stored as bytes.
+* The _layout_ class is reused to specify the structure of the image data.
 
-* We reuse the _layout_ class to specify the structure of the image data.
+* We impose the constraint that all images are assumed to be structured with one byte per channel.
 
-Later we will load the image data to the hardware as a `Bufferable` object - we add a new helper to wrap the byte-array of the image:
+The AWT helper is used to load the Java image:
+
+```java
+public static class Loader {
+    public ImageData load(InputStream in) throws IOException {
+        BufferedImage image = ImageIO.read(in);
+        if(image == null) throw new IOException(...);
+        ...
+    }
+}
+```
+
+Next the Vulkan layout for the image is determined from the type of image (failing if the image is unsupported):
+
+```java
+String components = switch(image.getType()) {
+    case TYPE_BYTE_GRAY -> "RRR1";
+    case TYPE_4BYTE_ABGR, TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> "ABGR";
+    default -> throw new RuntimeException(...);
+};
+```
+
+The image data is extracted as a byte array.
+
+```java
+DataBufferByte buffer = (DataBufferByte) image.getRaster().getDataBuffer();
+byte[] bytes = buffer.getData();
+```
+
+Finally we wrap the Java image with an anonymous wrapper implementation:
+
+```java
+return new ImageData() {
+    @Override
+    public Dimensions size() {
+        return new Dimensions(image.getWidth(), image.getHeight());
+    }
+
+    @Override
+    public Layout layout() {
+        return new Layout(components, Byte.class, 1, false);
+    }
+
+    @Override
+    public Bufferable buffer() {
+        ...
+    }
+};
+```
+
+The `buffer` method creates a bufferable object that can be copied to the hardware:
+
+```java
+public Bufferable buffer() {
+    return switch(image.getType()) {
+        case TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> {
+            int size = this.size().area();
+            yield alpha(bytes, size);
+        }
+        default -> Bufferable.of(bytes);
+    };
+}
+```
+
+For the default case we wrap the image data using a new factory method:
 
 ```java
 static Bufferable of(byte[] bytes) {
@@ -344,7 +408,7 @@ static Bufferable of(byte[] bytes) {
 }
 ```
 
-This delegates to another helper to write a byte-array to a buffer:
+Which delegates to another helper to write a byte-array to a buffer:
 
 ```java
 static void write(byte[] bytes, ByteBuffer bb) {
@@ -359,88 +423,28 @@ static void write(byte[] bytes, ByteBuffer bb) {
 }
 ```
 
-
-### Image Loader
-
-The process of loading a texture image consists of the following steps:
-
-1. Load the native image using the `ImageIO` helper class.
-
-2. Add an alpha channel as required.
-
-3. Wrap the resultant image with the new domain class.
-
-Loading the native image is straight-forward:
+Vulkan requires all colour images to have an alpha channel whereas native images are not necessarily transparent.  Adding an alpha channel proved to be somewhat harder than anticipated, the Java library does not seem to provide a mechanism to simply attach a new channel.  We could redraw the image into a `TYPE_4BYTE_ABGR` image which would do the job but is pretty nasty (and slow).  Instead we opted for the uglier if simpler approach of injected the alpha channel on demand:
 
 ```java
-public ImageData load(InputStream in) throws IOException {
-    BufferedImage image = ImageIO.read(in);
-    if(image == null) throw new IOException(...);
-    ...
-}
-```
+private static Bufferable alpha(byte[] bytes, int size) {
+    return new Bufferable() {
+        @Override
+        public int length() {
+            return bytes.length + size;
+        }
 
-We add an alpha channel as necessary:
-
-```java
-BufferedImage result = switch(image.getType()) {
-    case BufferedImage.TYPE_BYTE_GRAY -> image;
-    case BufferedImage.TYPE_3BYTE_BGR, BufferedImage.TYPE_BYTE_INDEXED -> alpha(image);
-    case BufferedImage.TYPE_4BYTE_ABGR -> image;
-    default -> throw new RuntimeException(...);
-};
-```
-
-Adding an alpha channel proved to be much harder than anticipated requiring fiddly byte-level manipulation.  In the end we opted for the simpler (if slower and uglier) approach of simply re-drawing into a new image with an alpha channel:
-
-```java
-private static BufferedImage alpha(BufferedImage image) {
-    BufferedImage alpha = new BufferedImage(
-        image.getWidth(),
-        image.getHeight(),
-        BufferedImage.TYPE_4BYTE_ABGR
-    );
-    Graphics g = alpha.getGraphics();
-    try {
-        g.drawImage(image, 0, 0, null);
-    }
-    finally {
-        g.dispose();
-    }
-    return alpha;
-}
-```
-
-Finally we wrap the resultant buffered image:
-
-```java
-return new ImageData() {
-    @Override
-    public Dimensions size() {
-        return new Dimensions(result.getWidth(), result.getHeight());
-    }
-
-    @Override
-    public Layout layout() {
-        final String mapping = switch(image.getType()) {
-            case BufferedImage.TYPE_BYTE_GRAY -> "RRR1";
-            default -> {
-                int num = image.getColorModel().getNumComponents();
-                yield "ABGR".substring(0, num);
+        @Override
+        public void buffer(ByteBuffer bb) {
+            for(int n = 0; n < bytes.length; n += 3) {
+                bb.put(Byte.MAX_VALUE);
+                bb.put(bytes[n]);
+                bb.put(bytes[n + 1]);
+                bb.put(bytes[n + 2]);
             }
-        };
-        return new Layout(mapping, Byte.class, 1, false);
-    }
-
-    @Override
-    public byte[] bytes() {
-        DataBufferByte buffer = (DataBufferByte) result.getRaster().getDataBuffer();
-        return buffer.getData();
-    }
-};
+        }
+    };
+}
 ```
-
-Note that layout of the image assumes one byte per channel.
 
 This loader is somewhat crude and brute-force, but it does the business for the images we are interested in for the forseeable future.  We add the following unit-test to check the texture images we will be using in the next few chapters:
 
@@ -450,13 +454,14 @@ This loader is somewhat crude and brute-force, but it does the business for the 
 @CsvSource({
     "duke.jpg, 5",
     "duke.png, 13",
+    "chalet.jpg, 5"
     "heightmap.jpg, 10",
 })
 void map(String filename, int type) throws IOException {
     Path path = Paths.get("./src/test/resources", filename);
-    BufferedImage image = loader.map(Files.newInputStream(path));
+    BufferedImage image = loader.load(Files.newInputStream(path));
+    assertNotNull(image);
     assertEquals(type, image.getType());
-    assertNotNull(loader.load(image));
 }
 ```
 

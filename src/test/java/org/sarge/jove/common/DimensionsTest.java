@@ -17,6 +17,15 @@ class DimensionsTest {
 	void constructor() {
 		assertEquals(640, dim.width());
 		assertEquals(480, dim.height());
+	}
+
+	@Test
+	void area() {
+		assertEquals(640 * 480, dim.area());
+	}
+
+	@Test
+	void ratio() {
 		assertEquals(640 / 480f, dim.ratio());
 	}
 
