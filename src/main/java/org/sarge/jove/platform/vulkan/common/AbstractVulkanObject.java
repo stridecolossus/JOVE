@@ -41,7 +41,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	}
 
 	/**
-	 * @return Device context
+	 * @return Logical device
 	 */
 	public DeviceContext device() {
 		return dev;

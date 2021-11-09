@@ -1,18 +1,9 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.IntegerEnumeration;
@@ -83,7 +74,7 @@ public class Work {
 
 	private final Pool pool;
 	private final List<Buffer> buffers = new ArrayList<>();
-	private final Map<Semaphore, Integer> wait = new HashMap<>();
+	private final Map<Semaphore, Integer> wait = new LinkedHashMap<>();
 	private final Set<Semaphore> signal = new HashSet<>();
 
 	/**
@@ -103,16 +94,12 @@ public class Work {
 		info.pCommandBuffers = NativeObject.toArray(buffers);
 
 		if(!wait.isEmpty()) {
-			// Convert map to list (to ensure the two fields in the descriptor have the same order)
-			final var list = new ArrayList<>(wait.entrySet());
-
 			// Populate wait semaphores
-			final var semaphores = list.stream().map(Entry::getKey).collect(toList());
 			info.waitSemaphoreCount = wait.size();
-			info.pWaitSemaphores = NativeObject.toArray(semaphores);
+			info.pWaitSemaphores = NativeObject.toArray(wait.keySet());
 
 			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
-			final int[] stages = list.stream().map(Entry::getValue).mapToInt(Integer::intValue).toArray();
+			final int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
 			final Memory mem = new Memory(stages.length * Integer.BYTES);
 			mem.write(0, stages, 0, stages.length);
 			info.pWaitDstStageMask = mem;

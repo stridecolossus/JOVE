@@ -11,7 +11,6 @@ import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.geometry.Tuple;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
@@ -79,7 +78,7 @@ public class BoundingBox implements Volume {
 		float far = Float.POSITIVE_INFINITY;
 
 		// Test intersection on each pair of planes
-		for(int n = 0; n < Tuple.SIZE; ++n) {
+		for(int n = 0; n < Vector.SIZE; ++n) {
 			// Tests are performed component-wise
 			final float origin = ray.origin().get(n);
 			final float dir = ray.direction().get(n);

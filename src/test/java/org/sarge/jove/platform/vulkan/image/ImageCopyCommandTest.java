@@ -96,6 +96,13 @@ public class ImageCopyCommandTest {
 			final CopyRegion expected = new CopyRegion(0, 0, 0, image.descriptor(), offset, image.descriptor().extents());
 			assertEquals(expected, region);
 		}
+
+		@Test
+		void of() {
+			final ImageDescriptor descriptor = image.descriptor();
+			final CopyRegion expected = new CopyRegion(0, 0, 0, descriptor, offset, descriptor.extents());
+			assertEquals(expected, CopyRegion.of(descriptor));
+		}
 	}
 
 	@Nested
@@ -107,6 +114,7 @@ public class ImageCopyCommandTest {
 					.image(image)
 					.buffer(buffer)
 					.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+					.region(image)
 					.build();
 
 			// Check buffer is validated
@@ -156,6 +164,14 @@ public class ImageCopyCommandTest {
 		void buildEmptyImageLayout() {
 			builder.image(image);
 			builder.buffer(buffer);
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void buildEmptyRegions() {
+			builder.image(image);
+			builder.buffer(buffer);
+			builder.layout(VkImageLayout.TRANSFER_DST_OPTIMAL);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 	}

@@ -409,16 +409,16 @@ To use the semaphores we extend the work class by adding two new members:
 ```java
 public class Work {
     ...
-    private final Map<Semaphore, Integer> wait = new HashMap<>();
+    private final Map<Semaphore, Integer> wait = new LinkedHashMap<>();
     private final Set<Semaphore> signal = new HashSet<>();
 }
 ```
 
-The `signal` member is the set of semaphores to be signalled when the work has completed.
-
 Each entry in the `wait` table consists of:
 * A semaphore that must be signalled before the work can be performed.
 * The stages(s) of the pipeline to wait on (represented as an integer mask).
+
+The `signal` member is the set of semaphores to be signalled when the work has completed.
 
 We modify the builder to configure the semaphores for a work submission:
 
@@ -439,31 +439,24 @@ info.signalSemaphoreCount = signal.size();
 info.pSignalSemaphores = NativeObject.toArray(signal);
 ```
 
-Population of the wait semaphores is slightly more complicated because the two components are separate fields (rather than an array of some child structure):
-
-We first transform the table to a list of its entries (so that we ensure both components are processed in the same order):
+Population of the wait semaphores is slightly more complicated because the two components are separate fields (rather than an array of some child structure).  We first populate the pointer array for the semaphores:
 
 ```java
-var list = new ArrayList<>(wait.entrySet());
-```
-
-Next we construct the pointer-array for the semaphores:
-
-```java
-var semaphores = list.stream().map(Entry::getKey).collect(toList());
 info.waitSemaphoreCount = wait.size();
-info.pWaitSemaphores = NativeObject.toArray(semaphores);
+info.pWaitSemaphores = NativeObject.toArray(wait.keySet());
 ```
 
-Finally we construct the list of stage masks (which for some reason is a pointer-to-integer array):
+And then the list of stage masks for each semaphore, which for some reason is a pointer-to-integer array:
 
 ```java
-int[] stages = list.stream().map(Entry::getValue).mapToInt(Integer::intValue).toArray();
+int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
 Memory mem = new Memory(stages.length * Integer.BYTES);
 mem.write(0, stages, 0, stages.length);
 info.pWaitDstStageMask = mem;
 ```
 
+Note that the `wait` table is a linked map so that the two fields have the same order.
+  
 We can now configure the work submission for the render task to use the semaphores:
 
 ```java

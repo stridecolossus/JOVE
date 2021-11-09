@@ -11,31 +11,31 @@ import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
 /**
- * A <i>vulkan function</i> abstracts an API method used to retrieve a Vulkan array via the <i>two-stage invocation</i> approach.
+ * A <i>vulkan function</i> abstracts an API method used to retrieve data from Vulkan via the <i>two-stage invocation</i> approach.
  * <p>
  * The function is of the following form:
  * <p>
- * <code>int function(VulkanLibrary lib, IntByReference count, T[] array)</code>
+ * <code>int function(VulkanLibrary lib, IntByReference count, T data)</code>
  * <p>
  * where:
  * <ul>
- * <li><i>count</i> is the length of the array</li>
- * <li><i>array</i> is a pre-allocated array to be populated by the function or {@code null} to retrieve the length of the array</li>
+ * <li><i>count</i> is the size of the data</li>
+ * <li><i>data</i> is a pre-allocated container (often an array) to be populated by the function</li>
  * <li>the return value is a Vulkan success code</li>
  * </ul>
  * <p>
  * The method is invoked <b>twice</b> to retrieve the data from the native API method:
  * <ol>
- * <li>retrieve the length of the array (array parameter is ignored)</li>
- * <li>populate the array (passing back the length)</li>
+ * <li>retrieve the length of the data (the <i>data</i> argument is {@code null})</li>
+ * <li>populate the data (passing back the length)</li>
  * </ol>
- * @param <T> Array component type
+ * @param <T> Data type
  * @author Sarge
  */
 @FunctionalInterface
 public interface VulkanFunction<T> {
 	/**
-	 * Vulkan API method that retrieves an array of the given type using the <i>two-stage invocation</i> approach.
+	 * Vulkan API method that retrieves data using the <i>two-stage invocation</i> approach.
 	 * @param lib			Vulkan library
 	 * @param count 		Size of the data
 	 * @param data			Returned data or {@code null} to retrieve the size of the data
@@ -45,6 +45,25 @@ public interface VulkanFunction<T> {
 
 	/**
 	 * Invokes a Vulkan function that uses the <i>two-stage invocation</i> approach.
+	 * <p>
+	 * Example to retrieve an array of pointers:
+	 * <pre>
+	 *  VulkanFunction&lt;Pointer[]&gt; func = (api, count, array) -> api.someFunction(count, array, ...);
+	 *  Pointer[] array = VulkanFunction.enumerate(func, lib, Pointer[]::new);
+	 * </pre>
+	 * <p>
+	 * This method is equivalent to the following:
+	 * <pre>
+	 *  // Count number of results
+	 *  IntegerByReference count = ...
+	 *  api.someFunction(count, null, ...);
+	 *
+	 *  // Allocate data
+	 *  Pointer[] array = new Pointer[count.getValue()];
+	 *
+	 *  // Populate array
+	 *  api.someFunction(count, array, ...);
+	 * </pre>
 	 * @param <T> Data type
 	 * @param func			Vulkan function
 	 * @param lib			API
@@ -69,16 +88,19 @@ public interface VulkanFunction<T> {
 	}
 
 	/**
-	 * Invokes a Vulkan function that uses the <i>two-stage invocation</i> approach to retrieve a JNA structure array.
+	 * Invokes a Vulkan function that uses the <i>two-stage invocation</i> approach to retrieve an <b>array</b> of JNA structures.
+	 * <p>
+	 * Note that a JNA structure array <b>must</b> be a contiguous block of memory allocated via the {@link Structure#toArray(int)} helper.
 	 * <p>
 	 * Usage:
 	 * <pre>
-	 *  VulkanFunction&gt;SomeStructure&lt; func = (api, count, array) -> api.someFunction(count, array, ...);
+	 *  VulkanFunction&lt;SomeStructure&gt; func = (api, count, array) -> api.someFunction(count, array, ...);
 	 *  SomeStructure[] array = VulkanFunction.enumerate(func, lib, SomeStructure::new);
 	 * </pre>
-	 * The adapter is equivalent to the following:
+	 * This adapter is equivalent to the following:
 	 * <pre>
 	 *  // Count number of results
+	 *  IntegerByReference count = ...
 	 *  api.someFunction(count, null, ...);
 	 *
 	 *  // Allocate JNA array

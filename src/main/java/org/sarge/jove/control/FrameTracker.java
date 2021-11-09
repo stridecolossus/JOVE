@@ -8,7 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * The <i>frame tracker</i> is a render loop task that maintains per-frame time information.
+ * The <i>frame tracker</i> is a render loop task that broadcasts frame events to interested listeners.
  * @author Sarge
  */
 public class FrameTracker implements RenderLoop.Task {

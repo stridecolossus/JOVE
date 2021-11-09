@@ -2,6 +2,8 @@ package org.sarge.jove.control;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * The <i>frame counter</i> tracks the number of frames-per-second.
  * @author Sarge
@@ -22,7 +24,7 @@ public class FrameCounter implements FrameTracker.Listener {
 
 	@Override
 	public void update(FrameTracker tracker) {
-		// Increment
+		// Update stats
 		time += tracker.elapsed();
 		++current;
 
@@ -39,5 +41,10 @@ public class FrameCounter implements FrameTracker.Listener {
 		count = current;
 		current = 0;
 		time = time % SECOND;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append(count).build();
 	}
 }

@@ -613,7 +613,7 @@ public interface SubResource {
 We note that the existing `ImageDescriptor` is essentially a sub-resource with default (zero) values for the MIP level and array layer, therefore we refactor the descriptor accordingly:
 
 ```java
-public record ImageDescriptor(..., Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {
+public record ImageDescriptor(...) implements SubResource {
     @Override
     public int mipLevel() {
         return 0;
@@ -626,7 +626,7 @@ public record ImageDescriptor(..., Set<VkImageAspect> aspects, int levelCount, i
 }
 ```
 
-We can now initialise the sub-resource in the various use-cases (copy command, barrier, etc) to the image descriptor.  We also add a builder to configure a custom sub-resource:
+The sub-resource can now be initialised to the image descriptor in the various use-cases (image copy, barriers) or a builder can be used to configure a custom sub-resource:
 
 ```java
 public static class Builder {
@@ -639,17 +639,7 @@ public static class Builder {
 }
 ```
 
-The constructor initialises the number of mip levels and array layers to the 'parent' image:
-
-```java
-public Builder(ImageDescriptor descriptor) {
-    this.descriptor = notNull(descriptor);
-    this.levelCount = descriptor.levels();
-    this.layerCount = descriptor.layers();
-}
-```
-
-The various setters validate that the sub-resource is a subset, for example:
+The various setters validate that the sub-resource is a subset of the parent image, for example:
 
 ```java
 public Builder levelCount(int levelCount) {
@@ -759,25 +749,19 @@ The builder for the copy command generates the array of copy region descriptors:
 
 ```java
 public ImageCopyCommand build() {
-    // Init whole image copy region if none specified
-    if(regions.isEmpty()) {
-        ImageDescriptor desc = image.descriptor();
-        CopyRegion region = new CopyRegion.Builder()
-            .subresource(desc)
-            .extents(desc.extents())
-            .build();
-        regions.add(region);
-    }
-
-    // Populate copy regions
     VkBufferImageCopy[] array = StructureHelper.array(regions, VkBufferImageCopy::new, CopyRegion::populate);
-
-    // Create copy command
     return new ImageCopyCommand(image, buffer, array, layout);
 }
 ```
 
-For convenience the builder creates a single copy region for the entire image if none are explicitly configured.
+The command can also be inverted to copy _from_ the image to a buffer:
+
+```java
+public Command invert() {
+    buffer.require(VkBufferUsage.TRANSFER_DST);
+    return (lib, cmd) -> lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
+}
+```
 
 ### Texture Sampler
 

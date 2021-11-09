@@ -68,6 +68,18 @@ public class ImageCopyCommand implements Command {
 	 */
 	public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents) {
 		/**
+		 * Creates a copy region for the whole of the given image.
+		 * @param descriptor Image descriptor
+		 * @return New copy region
+		 */
+		public static CopyRegion of(ImageDescriptor descriptor) {
+			return new CopyRegion.Builder()
+					.subresource(descriptor)
+					.extents(descriptor.extents())
+					.build();
+		}
+
+		/**
 		 * Constructor.
 		 * @param offset			Buffer offset
 		 * @param length			Row length
@@ -240,26 +252,27 @@ public class ImageCopyCommand implements Command {
 		}
 
 		/**
+		 * Adds a copy region for the whole of the given image.
+		 * @param image Image
+		 * @see CopyRegion#of(ImageDescriptor)
+		 */
+		public Builder region(Image image) {
+			final CopyRegion whole = CopyRegion.of(image.descriptor());
+			return region(whole);
+		}
+
+		/**
 		 * Constructs this copy command.
 		 * If no regions are specified the resultant command copies the <b>whole</b> of the image.
 		 * @return New copy command
-		 * @throws IllegalArgumentException if the image, buffer or image layout have not been populated
+		 * @throws IllegalArgumentException if the image, buffer or image layout have not been populated, or if no copy regions have been specified
 		 */
 		public ImageCopyCommand build() {
 			// Validate
 			Check.notNull(image);
 			Check.notNull(buffer);
 			Check.notNull(layout);
-
-			// Init whole image copy region if none specified
-			if(regions.isEmpty()) {
-				final ImageDescriptor desc = image.descriptor();
-				final CopyRegion region = new CopyRegion.Builder()
-						.subresource(desc)
-						.extents(desc.extents())
-						.build();
-				regions.add(region);
-			}
+			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 
 			// Populate copy regions
 			final VkBufferImageCopy[] array = StructureHelper.array(regions, VkBufferImageCopy::new, CopyRegion::populate);

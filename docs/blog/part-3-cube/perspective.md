@@ -928,9 +928,11 @@ Huzzah!
 
 Note that there are still a couple of problems with the render loop that we will address in the next few chapters:
 
-* The GLFW event queue thread is still blocked.
+* The GLFW event queue thread is still blocked (we cannot move the window).
 
-* The render loop will generate validation errors on every frame.
+* The render loop will generate validation errors on every frame because no synchronisation has been configured.
+
+* This demo will overload the hardware as we are not applying any limits on the frame rate.
 
 ---
 
