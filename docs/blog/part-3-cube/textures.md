@@ -45,11 +45,8 @@ We will first modify the demo to render a quad and implement texture coordinates
 
 
 ```mermaid
-graph TD
-    A--->B
-    A--->C
-    B--->D
-    C--->D
+flowchart TD
+    Start ---> Stop
 ```
 
 
