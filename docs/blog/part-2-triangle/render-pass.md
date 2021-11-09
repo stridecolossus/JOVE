@@ -368,9 +368,7 @@ Although we are perhaps half-way to our goal of rendering a triangle it is alrea
 
 What we have is a 'God class' which will become harder to navigate and maintain as we add more code to the demo.
 
-We _could_ attempt to factor out the construction of each component into factory methods, but this would still need some 'master' controller comprising the main components, and the complex code to invoke the methods in the correct order.
-
-The obvious solution is use a _dependency injection_ framework that manages all the components and dependencies for us, freeing development to focus on each component in relative isolation.
+The obvious solution is to use a _dependency injection_ framework that manages all the components and dependencies, freeing development to focus on each component in relative isolation.
 
 For this we will use [Spring Boot](https://spring.io/projects/spring-boot) which is one of the most popular and best supported dependency injection frameworks (and also one we have used extensively elsewhere).  Note that only the demo applications will be dependant on the new framework and not the JOVE library itself.
 

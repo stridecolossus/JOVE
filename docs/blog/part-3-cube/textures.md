@@ -270,7 +270,7 @@ Notes:
 
 * The `equals` method of the compound layout also tests equality by identity.
 
-We also added convenience factory method to the `FormatBuilder` to determine the format of each attribute from its layout:
+We also added a convenience factory method to the `FormatBuilder` to determine the format of each attribute from its layout:
 
 ```java
 public static VkFormat format(Layout layout) {
@@ -293,7 +293,7 @@ We can now replace the configuration for the vertex data in the pipeline with th
 
 ---
 
-## Images
+## Textures
 
 ### Image Data
 
@@ -464,10 +464,6 @@ void map(String filename, int type) throws IOException {
     assertEquals(type, image.getType());
 }
 ```
-
----
-
-## Textures
 
 ### Texture Image
 
@@ -1078,8 +1074,7 @@ new Barrier.Builder()
 We load the image data to a staging buffer:
 
 ```java
-Bufferable data = Bufferable.of(image.bytes());
-VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
+VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.buffer());
 ```
 
 And invoke the copy command:
@@ -1089,11 +1084,12 @@ new ImageCopyCommand.Builder()
     .image(texture)
     .buffer(staging)
     .layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+    .region(CopyRegion.of(descriptor))
     .build()
     .submitAndWait(graphics);
 ```
 
-The texture is then transitioned again ready to be used by the sampler:
+The texture is then transitioned again for use by the sampler:
 
 ```java
 new Barrier.Builder()
@@ -1112,7 +1108,7 @@ new Barrier.Builder()
 The component mapping is determined from the image by the new helper:
 
 ```java
-VkComponentMapping mapping = ComponentMappingBuilder.build(image.mapping());
+VkComponentMapping mapping = ComponentMappingBuilder.build(image.layout().components());
 ```
 
 This swizzles the channels of the image in the demo (which has an `ABGR` channel order) to the Vulkan `RGBA` default.
@@ -1125,7 +1121,7 @@ return new View.Builder(texture)
     .build();
 ```
 
-This code is still quite long-winded but at least is relatively straight-forward.  We could perhaps make better use of dependency injection but most of the created objects are transient (other than the staging buffer which we explicitly destroy).
+This code is still quite long-winded but at least is relatively straight-forward.  We could perhaps make better use of dependency injection but most of the created objects are transient (other than the staging buffer which is explicitly destroyed).
 
 ---
 

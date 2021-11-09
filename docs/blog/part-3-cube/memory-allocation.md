@@ -524,13 +524,9 @@ class BlockDeviceMemory implements DeviceMemory {
 }
 ```
 
-Notes:
+Note that since only one region mapping is allowed per memory block the `map` method silently releases the previous mapping (if any).
 
-* Since only one region mapping is allowed per memory block the `map` method silently releases the previous mapping (if any).
-
-* Destroyed allocations are not removed from the block but are only marked as released (and potentially reallocated).
-
-An allocation from the block can also be reallocated:
+Destroyed allocations are not removed from the block but are only marked as released and can be reallocated:
 
 ```java
 BlockDeviceMemory reallocate() {
@@ -623,12 +619,9 @@ public synchronized void close() {
 }
 ```
 
-To service an allocation request the pool applies the following logic:
-
+To service an allocation request the pool tries the following in order:
 1. Find a block with sufficient free memory.
-
-2. Or find a released allocation that can be re-allocated.
-
+2. Find a released allocation that can be re-allocated.
 3. Otherwise allocate a new block.
 
 This is implemented as follows:
@@ -671,7 +664,7 @@ private Block block(long size) {
 }
 ```
 
-Memory can be allocated from an existing block if there is one with available memory remaining:
+Memory can be allocated from an existing block with available free memory:
 
 ```java
 private Optional<DeviceMemory> allocateFromBlock(long size) {
@@ -683,7 +676,7 @@ private Optional<DeviceMemory> allocateFromBlock(long size) {
 }
 ```
 
-Finally memory can be reallocated if available:
+Or released memory can be reallocated if available:
 
 ```java
 private Optional<DeviceMemory> reallocate(long size) {
@@ -698,7 +691,7 @@ private Optional<DeviceMemory> reallocate(long size) {
 }
 ```
 
-Note that although the pool supports pre-allocation of blocks and destroyed memory can be reallocated, the overall memory will be subject to fragmentation.  However we have decided that de-fragmentation is out-of-scope for a couple of reasons:
+Note that although the pool supports pre-allocation of blocks and reallocation, the overall memory will be subject to fragmentation.  However we have decided that de-fragmentation is out-of-scope for a couple of reasons:
 
 1. A de-fragmentation algorithm would be very complex to implement and test.
 
@@ -896,11 +889,11 @@ We also anticipate that an application will require different allocation strateg
 
 Examples:
 
-* We would prefer to avoid frequent mapping of memory that is highly volatile, e.g. a uniform buffer for projection matrices.
+* Application would probably prefer to avoid frequent mapping of memory that is highly volatile, e.g. a uniform buffer for projection matrices.
 
 * Transient memory is generally explicitly released by an application, e.g. staging buffers.
 
-* A memory pool is often suitable for similar types of request (e.g. image processing) whereas for one-off allocations we probably don't care.
+* A memory pool is generally suitable for similar or frequent types of request (e.g. an image processing application) whereas one-off allocations can probably be arbitrarily satisfied.
 
 To support these different use-cases we introduce a _routing policy_ to the allocation service:
 

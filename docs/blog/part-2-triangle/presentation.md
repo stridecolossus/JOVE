@@ -558,10 +558,6 @@ public final class Handle {
         this.ptr = new Pointer(Pointer.nativeValue(ptr));
     }
 
-    public Pointer toPointer() {
-        return new Pointer(Pointer.nativeValue(ptr));
-    }
-
     @Override
     public int hashCode() {
         return ptr.hashCode();
@@ -578,8 +574,6 @@ public final class Handle {
     }
 }
 ```
-
-Note we clone the underlying pointer in the constructor and accessor using a JNA helper function (the pointer class does not have a copy constructor).
 
 We next introduce a new base-class for domain objects that contain a handle:
 
@@ -717,7 +711,7 @@ public interface Destructor<T extends AbstractVulkanObject> {
 }
 ```
 
-We add the following to return the API method used to destroy the object:
+We add the following provider for the API method used to destroy the object:
 
 ```java
 /**
@@ -741,8 +735,6 @@ public synchronized void destroy() {
     super.destroy();
 }
 ```
-
-Ideally `destroy` would also be `final` but this would make testing trickier (since base Mockito cannot mock a final method).
 
 ### Vulkan Booleans
 
