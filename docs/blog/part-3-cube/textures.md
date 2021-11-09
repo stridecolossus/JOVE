@@ -42,6 +42,24 @@ We will require the following components:
 
 We will first modify the demo to render a quad and implement texture coordinates before moving on to loading the image to the texture.
 
+
+
+```mermaid
+graph LR
+
+A(Start)
+
+A --> B[Look for an item]
+
+B --> C{Did you find it?}
+C -->|Yes| D(Stop looking)
+C -->|No| E{Do you need it?}
+E -->|Yes| B
+E -->|No| D
+```
+
+
+
 ---
 
 ## Texture Coordinates

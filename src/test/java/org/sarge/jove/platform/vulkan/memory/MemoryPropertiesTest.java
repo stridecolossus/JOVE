@@ -55,7 +55,7 @@ public class MemoryPropertiesTest {
 					.usage(VkImageUsage.COLOR_ATTACHMENT)
 					.mode(CONCURRENT)
 					.required(HOST_VISIBLE)
-					.optimal(HOST_VISIBLE)
+					.optimal()
 					.optimal(HOST_CACHED)
 					.build();
 

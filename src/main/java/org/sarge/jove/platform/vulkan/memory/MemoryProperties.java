@@ -74,6 +74,14 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		}
 
 		/**
+		 * Helper - Copies the <i>required</i> properties to the <i>optional</i> properties.
+		 */
+		public Builder<T> optimal() {
+			optimal.addAll(required);
+			return this;
+		}
+
+		/**
 		 * Adds a usage for this memory.
 		 * @param usage Memory usage
 		 */
