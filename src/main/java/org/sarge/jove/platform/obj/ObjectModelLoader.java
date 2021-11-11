@@ -24,6 +24,7 @@ import org.sarge.lib.util.Check;
 
 /**
  * Loader for an OBJ model.
+ * @see <a href="https://en.wikipedia.org/wiki/Wavefront_.obj_file">OBJ file format</a>
  * @author Sarge
  */
 public class ObjectModelLoader implements ResourceLoader<Reader, List<Model>> {

@@ -147,8 +147,8 @@ public class Camera {
 		// Determine right axis
 		right = up.cross(dir).normalize();
 
-		// Determine up axis
-		final Vector y = dir.cross(right).normalize();
+		// Determine up axis (note Y axis is inverted)
+		final Vector y = right.cross(dir).normalize();
 
 		// Build translation component
 		final Matrix trans = Matrix.translation(new Vector(pos).invert());

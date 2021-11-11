@@ -181,6 +181,7 @@ public final class MathsUtil {
 	/**
 	 * @param angle Angle (radians)
 	 * @return Sine of the given angle
+	 * @see <a href="https://en.wikipedia.org/wiki/Sine">Wikipedia</a>
 	 */
 	public static float sin(float angle) {
 		return (float) Math.sin(angle);
@@ -189,6 +190,7 @@ public final class MathsUtil {
 	/**
 	 * @param angle Angle (radians)
 	 * @return Cosine of the given angle
+	 * @see <a href="https://en.wikipedia.org/wiki/Sine">Wikipedia</a>
 	 */
 	public static float cos(float angle) {
 		// TODO - return sin(angle + HALF_PI); ???

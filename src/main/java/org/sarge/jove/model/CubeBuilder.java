@@ -18,16 +18,16 @@ public class CubeBuilder extends ModelBuilder {
 	// Vertices
 	private static final Point[] VERTICES = {
 			// Front
-			new Point(-1, -1, 1),
 			new Point(-1, +1, 1),
-			new Point(+1, -1, 1),
+			new Point(-1, -1, 1),
 			new Point(+1, +1, 1),
+			new Point(+1, -1, 1),
 
 			// Back
-			new Point(+1, -1, -1),
 			new Point(+1, +1, -1),
-			new Point(-1, -1, -1),
+			new Point(+1, -1, -1),
 			new Point(-1, +1, -1),
+			new Point(-1, -1, -1),
 	};
 
 	// Face indices
