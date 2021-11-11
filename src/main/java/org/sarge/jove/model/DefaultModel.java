@@ -114,19 +114,15 @@ public class DefaultModel extends AbstractModel {
 
 	@Override
 	public DefaultModel transform(List<Layout> layouts) {
-		// Skip if same layout
-		final List<Layout> current = this.header().layout().layouts();
-		if(current.equals(layouts)) {
+		// Skip is same layout
+		final CompoundLayout current = this.header().layout();
+		final CompoundLayout that = new CompoundLayout(layouts);
+		if(current.equals(that)) {
 			return this;
 		}
 
 		// Build mapping to new layout
-		final int map[] = current.stream().mapToInt(layouts::indexOf).toArray();
-		for(int n : map) {
-			if(n == -1) {
-				throw new IllegalArgumentException(String.format("Model does not contain layout: required=%s actual=%s", layouts, current));
-			}
-		}
+		final int map[] = that.map(current);
 
 		// Transform vertex data
 		final List<Vertex> data = vertices

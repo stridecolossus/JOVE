@@ -2,31 +2,50 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.sarge.jove.util.MathsUtil.HALF;
+import static org.sarge.jove.util.MathsUtil.PI;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Rotation.AbstractRotation;
-import org.sarge.jove.util.MathsUtil;
 
 class RotationTest {
 	@Test
-	void matrix() {
+	void x() {
 		final Matrix expected = new Matrix.Builder()
 				.identity()
-				.set(1, 1, MathsUtil.cos(HALF))
-				.set(1, 2, MathsUtil.sin(HALF))
-				.set(2, 1, -MathsUtil.sin(HALF))
-				.set(2, 2, MathsUtil.cos(HALF))
+				.set(1, 1, -1)
+				.set(2, 2, -1)
 				.build();
 
-		assertEquals(expected, Rotation.matrix(Vector.X, HALF));
+		assertEquals(expected, Rotation.matrix(Vector.X, PI));
+	}
+
+	@Test
+	void y() {
+		final Matrix expected = new Matrix.Builder()
+				.identity()
+				.set(0, 0, -1)
+				.set(2, 2, -1)
+				.build();
+
+		assertEquals(expected, Rotation.matrix(Vector.Y, PI));
+	}
+
+	@Test
+	void z() {
+		final Matrix expected = new Matrix.Builder()
+				.identity()
+				.set(0, 0, -1)
+				.set(1, 1, -1)
+				.build();
+
+		assertEquals(expected, Rotation.matrix(Vector.Z, PI));
 	}
 
 	@Test
 	void matrixInvalidArbitraryAxis() {
-		assertThrows(UnsupportedOperationException.class, () -> Rotation.matrix(new Vector(1, 2, 3), HALF));
+		assertThrows(UnsupportedOperationException.class, () -> Rotation.matrix(new Vector(1, 2, 3), PI));
 	}
 
 	@Nested
@@ -35,7 +54,7 @@ class RotationTest {
 
 		@BeforeEach
 		void before() {
-			rot = new AbstractRotation(Vector.Y, HALF) {
+			rot = new AbstractRotation(Vector.Y, PI) {
 				@Override
 				public Matrix matrix() {
 					return null;
@@ -46,7 +65,7 @@ class RotationTest {
 		@Test
 		void constructor() {
 			assertEquals(Vector.Y, rot.axis());
-			assertEquals(HALF, rot.angle());
+			assertEquals(PI, rot.angle());
 		}
 
 		@Test

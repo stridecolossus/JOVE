@@ -27,6 +27,7 @@ public interface Rotation extends Transform {
 	 * @param angle		Angle (radians)
 	 * @return New rotation matrix
 	 * @throws UnsupportedOperationException if the axis is not pre-defined
+	 * @see Matrix
 	 * @see Quaternion#of(Vector, float)
 	 */
 	static Matrix matrix(Vector axis, float angle) {
@@ -36,15 +37,15 @@ public interface Rotation extends Transform {
 		// TODO - do we use these 2x2 matrices elsewhere? i.e. factor out 2x2 and introduce set(r,c,2x2)?
 		if(Vector.X == axis) {
 			rot.set(1, 1, cos);
-			rot.set(1, 2, sin);
-			rot.set(2, 1, -sin);
+			rot.set(1, 2, -sin);
+			rot.set(2, 1, sin);
 			rot.set(2, 2, cos);
 		}
 		else
 		if(Vector.Y == axis) {
 			rot.set(0, 0, cos);
-			rot.set(0, 2, -sin);
-			rot.set(2, 0, sin);
+			rot.set(0, 2, sin);
+			rot.set(2, 0, -sin);
 			rot.set(2, 2, cos);
 		}
 		else

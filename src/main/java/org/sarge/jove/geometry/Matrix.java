@@ -23,6 +23,24 @@ import org.sarge.lib.util.Check;
  * 	.set(row, col, value)
  * 	.build();
  * </pre>
+ * <p>
+ * An order 4 matrix with the following structure is used for view and perspective transformation:
+ * <p>
+ * <table border=0>
+ * <tr><td>Rx</td><td>Ry</td><td>Rz</td><td>Tx</td></tr>
+ * <tr><td>Yx</td><td>Yy</td><td>Yz</td><td>Ty</td></tr>
+ * <tr><td>Dx</td><td>Dy</td><td>Dz</td><td>Tz</td></tr>
+ * <tr><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+ * </table>
+ * <p>
+ * Where:
+ * <ul>
+ * <li>the top-left 3x3 component of the matrix is the view rotation and the right-hand column is the transformation</li>
+ * <li>R is the <i>right</i> vector, Y is <i>up</i> and D is the view <i>direction</i></li>
+ * <li>T is the view transformation (or eye position)</li>
+ * </ul>
+ * Note that generally both components are inverted (transposed and negated) since the scene is transformed in the opposite direction to the view (or camera).
+ * <p>
  * @see Rotation
  * @author Sarge
  */
@@ -47,7 +65,7 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	/**
-	 * Creates a 4x4 translation matrix.
+	 * Creates a 4x4 translation matrix by populating the top-right column of the matrix.
 	 * @param vec Translation vector
 	 * @return Translation matrix
 	 */
@@ -59,7 +77,7 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	/**
-	 * Creates a 4x4 scaling matrix.
+	 * Creates a 4x4 scaling matrix and populating the diagonal of the matrix.
 	 * @return Scaling matrix
 	 */
 	public static Matrix scale(float x, float y, float z) {
@@ -161,6 +179,10 @@ public final class Matrix implements Transform, Bufferable {
 
 	/**
 	 * Multiplies this and the given matrix.
+	 * <p>
+	 * Note that matrix multiplication is <b>non-commutative</b>.
+	 * The resultant matrix first applies the given matrix and <b>then</b> this matrix, i.e. <code>A x B</code> applies B then A.
+	 * <p>
 	 * @param m Matrix
 	 * @return New matrix
 	 * @throws IllegalArgumentException if the given matrix is not of the same order as this matrix

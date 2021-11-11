@@ -41,7 +41,7 @@ public class DepthStencilStageBuilderTest {
 		assertEquals(0, result.flags);
 		assertEquals(VulkanBoolean.FALSE, result.depthTestEnable);
 		assertEquals(VulkanBoolean.TRUE, result.depthWriteEnable);
-		assertEquals(VkCompareOp.LESS, result.depthCompareOp);
+		assertEquals(VkCompareOp.LESS_OR_EQUAL, result.depthCompareOp);
 		assertEquals(VulkanBoolean.FALSE, result.stencilTestEnable);
 	}
 }

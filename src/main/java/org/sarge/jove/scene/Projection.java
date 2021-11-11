@@ -44,11 +44,6 @@ public interface Projection {
 		};
 	}
 
-	// https://dovo329.github.io/DeriveOpenGLPerspectiveProjectionMatrix/
-	// https://stackoverflow.com/questions/51318119/what-is-the-role-of-gl-position-w-in-vulkan
-	// http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
-	// https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
-
 	/**
 	 * Orthographic or flat projection.
 	 * TODO - update for Vulkan (see cookbook)

@@ -129,8 +129,9 @@ public class Sampler extends AbstractVulkanObject {
 		// Anisotropy settings
 		private float anisotropy = 1f;
 
+		// Comparison operation
+		private VkCompareOp compareOp = VkCompareOp.NEVER;
 		// TODO
-		//private VkCompareOp compareOp = VkCompareOp.ALWAYS;
 //		private boolean compareEnable;
 //		private boolean unnormalizedCoordinates;
 //		flags
@@ -273,13 +274,9 @@ public class Sampler extends AbstractVulkanObject {
 			}
 
 			// Init comparison operation
+			info.compareOp = compareOp;
 			// TODO
-//			info.compareEnable = VulkanBoolean.FALSE;
-			info.compareOp = VkCompareOp.ALWAYS;
-
-			// Init other properties
-			// TODO
-//			info.unnormalizedCoordinates = VulkanBoolean.FALSE;
+			//info.compareEnable = VulkanBoolean.FALSE;
 
 			// Allocate sampler
 			final VulkanLibrary lib = dev.library();

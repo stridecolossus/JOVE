@@ -110,11 +110,11 @@ public interface SubResource {
 		/**
 		 * Sets the starting mip level.
 		 * @param mipLevel Starting mip level
-		 * @throws IllegalArgumentException if the mip level exceeds the number of levels
+		 * @throws IllegalArgumentException if the mip level exceeds the parent
 		 */
 		public Builder mipLevel(int mipLevel) {
-			if(mipLevel >= levelCount) {
-				throw new IllegalArgumentException(String.format("Invalid mip level: %d/%d", mipLevel, levelCount));
+			if(mipLevel >= descriptor.levelCount()) {
+				throw new IllegalArgumentException(String.format("Invalid mip level: %d/%d", mipLevel, descriptor.levelCount()));
 			}
 			this.mipLevel = zeroOrMore(mipLevel);
 			return this;
@@ -136,11 +136,11 @@ public interface SubResource {
 		/**
 		 * Sets the starting array layer.
 		 * @param baseArrayLayer Starting array layer
-		 * @throws IllegalArgumentException if the base layer exceeds the number of layers
+		 * @throws IllegalArgumentException if the base layer exceeds the parent
 		 */
 		public Builder baseArrayLayer(int baseArrayLayer) {
-			if(baseArrayLayer >= layerCount) {
-				throw new IllegalArgumentException(String.format("Invalid base array: %d/%d", baseArrayLayer, layerCount));
+			if(baseArrayLayer >= descriptor.layerCount()) {
+				throw new IllegalArgumentException(String.format("Invalid base array: %d/%d", baseArrayLayer, descriptor.layerCount()));
 			}
 			this.baseArrayLayer = zeroOrMore(baseArrayLayer);
 			return this;

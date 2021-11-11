@@ -15,7 +15,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 	private boolean enable;
 	private boolean write = true;
 	private boolean bounds;
-	private VkCompareOp op = VkCompareOp.LESS;
+	private VkCompareOp op = VkCompareOp.LESS_OR_EQUAL;
 
 	/**
 	 * Sets whether depth-testing is enabled (default is {@code false}).

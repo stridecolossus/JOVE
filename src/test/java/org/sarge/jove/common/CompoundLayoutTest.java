@@ -1,6 +1,8 @@
 package org.sarge.jove.common;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
@@ -31,6 +33,23 @@ public class CompoundLayoutTest {
 	void contains() {
 		assertEquals(true, compound.contains(layout));
 		assertEquals(false, compound.contains(Layout.of(3)));
+	}
+
+	@Test
+	void map() {
+		final CompoundLayout that = new CompoundLayout(List.of(layout));
+		assertArrayEquals(new int[]{0}, that.map(compound));
+	}
+
+	@Test
+	void mapSelf() {
+		assertArrayEquals(new int[]{0, 0}, compound.map(compound));
+	}
+
+	@Test
+	void mapInvalidLayout() {
+		final CompoundLayout that = new CompoundLayout(List.of(Layout.of(3)));
+		assertThrows(IllegalArgumentException.class, () -> compound.map(that));
 	}
 
 	@Test

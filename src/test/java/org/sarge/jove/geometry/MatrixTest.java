@@ -91,10 +91,28 @@ class MatrixTest {
 
 	@Test
 	void multiply() {
-		final Matrix result = matrix.multiply(matrix);
-		assertNotNull(result);
-		assertEquals(ORDER, result.order());
-		// TODO
+		// Create a 180 degree rotation about the X axis
+		final Matrix rot = new Matrix.Builder()
+				.identity()
+				.set(1, 1, 1)
+				.set(1, 2, -0)
+				.set(2, 1, 0)
+				.set(2, 2, 1)
+				.build();
+
+		// Create translation matrix
+		final Matrix trans = new Matrix.Builder()
+				.identity()
+				.column(3, new Vector(1, 2, 3))
+				.build();
+
+		// Check vs expected result
+		final Matrix expected = new Matrix.Builder()
+				.identity()
+				.column(3, new Vector(1, 2, 3))
+				.build();
+
+		assertEquals(expected, rot.multiply(trans));
 	}
 
 	@Test

@@ -27,7 +27,6 @@ import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 
 public class ImageTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
@@ -124,10 +123,10 @@ public class ImageTest extends AbstractVulkanTest {
 			image = builder
 					.descriptor(descriptor)
 					.properties(props)
-					.flag(VkImageCreateFlag.ALIAS)
 					.samples(4)
 					.tiling(VkImageTiling.LINEAR)
 					.initialLayout(VkImageLayout.PREINITIALIZED)
+					.cubemap()
 					.build(dev, allocator);
 
 			// Check image
@@ -140,17 +139,17 @@ public class ImageTest extends AbstractVulkanTest {
 			// Check create image API
 			final VkImageCreateInfo info = new VkImageCreateInfo() {
 				@Override
-				public boolean equals(Object o) {
-					return dataEquals((Structure) o);
+				public boolean equals(Object obj) {
+					return dataEquals((VkImageCreateInfo) obj, true);
 				}
 			};
-			info.flags = VkImageCreateFlag.ALIAS.value();
+			info.flags = VkImageCreateFlag.CUBE_COMPATIBLE.value();
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent3D();
 			info.mipLevels = descriptor.levelCount();
 			info.arrayLayers = descriptor.layerCount();
-			info.samples = VkSampleCountFlag.COUNT_1;
+			info.samples = VkSampleCountFlag.COUNT_4;
 			info.tiling = VkImageTiling.LINEAR;
 			info.initialLayout = VkImageLayout.PREINITIALIZED;
 			info.usage = IntegerEnumeration.mask(props.usage());

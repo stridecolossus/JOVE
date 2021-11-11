@@ -153,6 +153,14 @@ public interface Image extends NativeObject {
 		}
 
 		/**
+		 * Sets this image as a cube-map.
+		 * @see VkImageCreateFlag#CUBE_COMPATIBLE
+		 */
+		public Builder cubemap() {
+			return flag(VkImageCreateFlag.CUBE_COMPATIBLE);
+		}
+
+		/**
 		 * Sets the number of samples (default is {@code 1}).
 		 * @param samples Samples-per-texel
 		 */

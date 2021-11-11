@@ -24,8 +24,6 @@ public class Camera {
 	private Matrix matrix;
 	private boolean dirty;
 
-	// https://learnopengl.com/Getting-started/Camera
-
 	public Camera() {
 		update();
 	}
@@ -143,14 +141,14 @@ public class Camera {
 
 	/**
 	 * Updates the camera axes and matrix.
+	 * @see Matrix
 	 */
 	protected void update() {
 		// Determine right axis
 		right = up.cross(dir).normalize();
 
 		// Determine up axis
-		final Vector y = right.cross(dir).normalize();
-		// TODO - was dir.cross(right) before global flip, is this correct? or do we need a flag here too?
+		final Vector y = dir.cross(right).normalize();
 
 		// Build translation component
 		final Matrix trans = Matrix.translation(new Vector(pos).invert());

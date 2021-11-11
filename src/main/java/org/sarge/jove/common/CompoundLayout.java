@@ -41,12 +41,43 @@ public class CompoundLayout {
 	}
 
 	/**
+	 * Finds the index of the given layout.
+	 * @param layout Layout
+	 * @return Index
+	 */
+	private int find(Layout layout) {
+		for(int n = 0; n < layouts.size(); ++n) {
+			if(layouts.get(n) == layout) {
+				return n;
+			}
+		}
+		return -1;
+	}
+
+	/**
 	 * Tests whether this compound layout contains the given layout by <i>identity</i>.
 	 * @param layout Layout
 	 * @return Whether this compound layout contains the given layout
 	 */
 	public boolean contains(Layout layout) {
-		return layouts.stream().anyMatch(e -> e == layout);
+		return find(layout) >= 0;
+	}
+
+	/**
+	 * Builds the index mapping from this layout to the given layout.
+	 * @param that Target layout
+	 * @return Index mapping
+	 */
+	public int[] map(CompoundLayout that) {
+		return layouts
+				.stream()
+				.mapToInt(that::find)
+				.peek(this::validate)
+				.toArray();
+	}
+
+	private void validate(int index) {
+		if(index == -1) throw new IllegalArgumentException("Layout is not a member");
 	}
 
 	/**

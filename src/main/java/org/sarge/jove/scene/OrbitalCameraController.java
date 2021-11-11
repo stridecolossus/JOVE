@@ -31,9 +31,6 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class OrbitalCameraController extends DefaultCameraController {
-	// http://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
-	// https://learnopengl.com/Getting-started/Camera
-
 	private Point target = Point.ORIGIN;
 	private float min = 1;
 	private float max = Integer.MAX_VALUE;
