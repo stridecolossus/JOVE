@@ -51,4 +51,6 @@ current
 should the JNA API interfaces be moved to the relevant packages?
 split descriptor set / pool / layout?
 
+need to filter buttons by action/mods
+
 check out old blog

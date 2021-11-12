@@ -40,7 +40,7 @@ public interface ImageData {
 	Bufferable buffer();
 
 	/**
-	 * Loader for an image.
+	 * Loader for a Java image implemented using {@link ImageIO}.
 	 */
 	public static class Loader implements ResourceLoader<BufferedImage, ImageData> {
 		@Override

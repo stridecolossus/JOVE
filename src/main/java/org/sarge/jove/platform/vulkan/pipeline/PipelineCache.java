@@ -14,7 +14,7 @@ import java.util.Collection;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.io.FileDataSource;
-import org.sarge.jove.io.ResourceLoaderWriter;
+import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -92,7 +92,7 @@ public class PipelineCache extends AbstractVulkanObject {
 	/**
 	 * Loader for a pipeline cache.
 	 */
-	public static class Loader implements ResourceLoaderWriter<InputStream, OutputStream, PipelineCache> {
+	public static class Loader implements ResourceLoader<InputStream, PipelineCache> {
 		/**
 		 * Helper - Creates a data-source for a persistent pipeline cache.
 		 * @param root Data-source root directory
@@ -137,12 +137,7 @@ public class PipelineCache extends AbstractVulkanObject {
 			return create(dev, data);
 		}
 
-		@Override
-		public OutputStream map(OutputStream out) throws IOException {
-			return out;
-		}
-
-		@Override
+		// TODO
 		public void write(PipelineCache cache, OutputStream out) throws IOException {
 			final ByteBuffer bb = cache.data();
 			final byte[] data = BufferHelper.toArray(bb);

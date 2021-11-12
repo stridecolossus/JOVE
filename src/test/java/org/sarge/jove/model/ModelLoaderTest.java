@@ -51,7 +51,7 @@ class ModelLoaderTest {
 	@Test
 	void load() throws IOException {
 		// Write model to stream
-		loader.write(model, new DataOutputStream(out));
+		loader.save(model, new DataOutputStream(out));
 
 		// Re-load and check header
 		final Model result = read();

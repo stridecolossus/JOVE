@@ -3,8 +3,6 @@ package org.sarge.jove.model;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,23 +12,18 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.BufferHelper;
-import org.sarge.jove.io.ResourceLoaderWriter;
+import org.sarge.jove.io.DataResourceLoader;
 import org.sarge.jove.model.Model.Header;
 
 /**
- * The <i>model loader</i> persists a vertex model.
+ * The <i>model loader</i> persists a JOVE model.
  * @author Sarge
  */
-public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOutputStream, Model> {
+public class ModelLoader implements DataResourceLoader<Model> {
 	private static final int VERSION = 1;
 
 	@Override
-	public DataOutputStream map(OutputStream out) {
-		return new DataOutputStream(out);
-	}
-
-	@Override
-	public void write(Model model, DataOutputStream out) throws IOException {
+	public void save(Model model, DataOutputStream out) throws IOException {
 		// Write file format version
 		out.writeInt(VERSION);
 
@@ -74,11 +67,6 @@ public class ModelLoader implements ResourceLoaderWriter<DataInputStream, DataOu
 		src.buffer(bb);
 		out.writeInt(len);
 		out.write(bb.array());
-	}
-
-	@Override
-	public DataInputStream map(InputStream in) throws IOException {
-		return new DataInputStream(in);
 	}
 
 	@Override

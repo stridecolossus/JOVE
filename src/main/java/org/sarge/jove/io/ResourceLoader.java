@@ -4,34 +4,48 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * A <i>resource loader</i> defines a mechanism for loading a resource.
+ * A <i>resource loader</i> loads a resource from an input stream.
  * <p>
- * A resource loader is comprised of a two-stage approach:
- * <ol>
- * <li>{@link #map(InputStream)} transforms an input-stream to some intermediate data type or stream</li>
- * <li>{@link #load(Object)} constructs the resultant object from the intermediate data</li>
- * </ol>
+ * To allow implementations to operate on a specific data type (or stream) the {@link #map(InputStream)} method is first invoked to transform the input stream to an intermediate data type.
  * <p>
- * @param <T> Input type
- * @param <R> Resource type
- * @see DataSource#load(String, ResourceLoader)
- * @see ResourceWriter
- * @see ResourceLoaderWriter
+ * For example:
+ * <p>
+ * <pre>
+ * 	ResourceLoader&lt;BufferedReader, String&tg; loader = new ResourceLoader() {
+ * 	    public BufferedReader map(InputStream in) throws IOException {
+ * 	      return new BufferedReader(new InputStreamReader(in));
+ * 	    }
+ *
+ * 	    public String load(BufferedReader r) throws IOException {
+ * 	      return r.readLine();
+ * 	    }
+ * 	}
+ * </pre>
+ * This loader would then be used as follows:
+ * <pre>
+ * 	InputStream in = ...
+ * 	BufferedReader r = loader.map(in);
+ * 	String line = loader.load(r);
+ * </pre>
+ * <p>
+ * @param <T> Intermediate data type
+ * @param <R> Resultant type
+ * @see ResourceLoaderAdapter
  * @author Sarge
  */
 public interface ResourceLoader<T, R> {
 	/**
-	 * Maps an input stream to the intermediate data type.
+	 * Maps the given input stream to the intermediate data type for this resource.
 	 * @param in Input stream
-	 * @return Intermediate data type
-	 * @throws IOException if the input data cannot be loaded
+	 * @return Intermediate data
+	 * @throws IOException if the stream cannot be mapped
 	 */
 	T map(InputStream in) throws IOException;
 
 	/**
-	 * Constructs the resultant resource from the given data.
+	 * Loads this resource.
 	 * @param data Input data
-	 * @return Loaded resource
+	 * @return Resource
 	 * @throws IOException if the resource cannot be loaded
 	 */
 	R load(T data) throws IOException;

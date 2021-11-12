@@ -1,11 +1,5 @@
 package org.sarge.jove.control;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,13 +8,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
 import org.sarge.jove.control.Position.PositionEvent;
-import org.sarge.jove.io.ResourceLoaderWriter;
 
 /**
  * A <i>bindings</i> is a mutable set of mappings that bind an input event to an <i>action</i> (an event consumer).
@@ -244,36 +236,36 @@ public class ActionBindings implements Consumer<Event> {
 				.build();
 	}
 
-	// TODO
-	public static class Loader implements ResourceLoaderWriter<BufferedReader, PrintWriter, ActionBindings> {
-		@Override
-		public BufferedReader map(InputStream in) throws IOException {
-			return new BufferedReader(new InputStreamReader(in));
-		}
-
-		@Override
-		public ActionBindings load(BufferedReader data) throws IOException {
-			return null;
-		}
-
-		@Override
-		public PrintWriter map(OutputStream out) throws IOException {
-			return null;
-		}
-
-		@Override
-		public void write(ActionBindings data, PrintWriter out) throws IOException {
-			for(final var entry : data.map.entrySet()) {
-				out.print(entry.getKey());
-				out.print(StringUtils.SPACE);
-				for(final var type : entry.getValue()) {
-					out.print(type.name());
-					out.print(StringUtils.SPACE);
-				}
-				out.println();
-			}
-		}
-	}
+	// TODO - loader
+//	public static class Loader implements ResourceLoaderWriter<BufferedReader, PrintWriter, ActionBindings> {
+//		@Override
+//		public BufferedReader map(InputStream in) throws IOException {
+//			return new BufferedReader(new InputStreamReader(in));
+//		}
+//
+//		@Override
+//		public ActionBindings load(BufferedReader data) throws IOException {
+//			return null;
+//		}
+//
+//		@Override
+//		public PrintWriter map(OutputStream out) throws IOException {
+//			return null;
+//		}
+//
+//		@Override
+//		public void write(ActionBindings data, PrintWriter out) throws IOException {
+//			for(final var entry : data.map.entrySet()) {
+//				out.print(entry.getKey());
+//				out.print(StringUtils.SPACE);
+//				for(final var type : entry.getValue()) {
+//					out.print(type.name());
+//					out.print(StringUtils.SPACE);
+//				}
+//				out.println();
+//			}
+//		}
+//	}
 
 	// TODO - action class? composes handler and name for lookup when load bindings
 	// TODO - also used as predicate for actions, e.g. button for any of mods/actions, etc.
