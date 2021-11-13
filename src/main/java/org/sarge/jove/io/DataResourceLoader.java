@@ -8,6 +8,7 @@ import java.io.InputStream;
 /**
  * A <i>data resource loader</i> defines a resource that can be persisted to/from a data stream.
  * @param <T> Data type
+ * @see DataHelper
  * @author Sarge
  */
 public interface DataResourceLoader<T> extends ResourceLoader<DataInputStream, T> {
