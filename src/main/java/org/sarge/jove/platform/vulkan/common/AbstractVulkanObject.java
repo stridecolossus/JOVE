@@ -70,4 +70,11 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	protected void release() {
 		// Does nowt
 	}
+
+	/**
+	 * Synonym for {@link #destroy()} to automatically destroy Vulkan objects managed by a Spring container.
+	 */
+	public final void close() {
+		destroy();
+	}
 }
