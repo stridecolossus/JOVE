@@ -221,38 +221,6 @@ We assume that this will apply to all OBJ models, we can always make it an optio
 
 The model now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so we are not rendering the model inside-out for example).
 
-### Rasterizer Pipeline Stage
-
-We did head down a blind alley for some time believing that some of the rendering problems were due to errors in culling or the triangle winding order.  This proved to be unfounded but we did implement the _rasterizer pipeline stage_ which we introduce at this point for the sake of posterity.
-
-The builder is essentially a wrapper for the underlying descriptor:
-
-```java
-public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
-    private final VkPipelineRasterizationStateCreateInfo info = new VkPipelineRasterizationStateCreateInfo();
-
-    ...
-
-    @Override
-    VkPipelineRasterizationStateCreateInfo get() {
-        return info;
-    }
-}
-```
-
-The rasterizer properties are initialised in the constructor:
-
-```java
-public RasterizerStageBuilder() {
-    depthClamp(false);
-    discard(false);
-    polygon(VkPolygonMode.FILL);
-    cull(VkCullMode.BACK);
-    winding(VkFrontFace.COUNTER_CLOCKWISE);
-    lineWidth(1);
-}
-```
-
 ---
 
 ## Depth Buffer
@@ -805,7 +773,7 @@ return projection.multiply(cam.matrix()).multiply(model);
 
 In this chapter we implemented:
 
-- The depth-stencil and rasterizer pipeline stages.
+- The depth-stencil pipeline stage.
 
 - A mechanism to clear colour and depth-stencil attachments.
 

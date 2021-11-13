@@ -38,6 +38,16 @@ public class ImageDataTest {
 	}
 
 	@Test
+	void offset() {
+		assertEquals(0, image.offset(0));
+	}
+
+	@Test
+	void offsetInvalidIndex() {
+		assertThrows(IllegalArgumentException.class, () -> image.offset(1));
+	}
+
+	@Test
 	void array() {
 		// Create image array
 		final ImageData array = ImageData.array(List.of(image, image));
@@ -53,6 +63,10 @@ public class ImageDataTest {
 		final Bufferable data = array.data();
 		assertNotNull(data);
 		assertEquals(2 * (2 * 3 * 4), data.length());
+
+		// Check offsets
+		assertEquals(0, array.offset(0));
+		assertEquals(2 * 3 * 4, array.offset(1));
 	}
 
 	@Test

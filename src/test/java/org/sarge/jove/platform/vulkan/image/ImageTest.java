@@ -71,6 +71,11 @@ public class ImageTest extends AbstractVulkanTest {
 		verify(mem).destroy();
 	}
 
+	@Test
+	void cubemap() {
+		assertEquals(6, Image.CUBEMAP_ARRAY_LAYERS);
+	}
+
 	@Nested
 	class DepthFormatTests {
 		private PhysicalDevice dev;

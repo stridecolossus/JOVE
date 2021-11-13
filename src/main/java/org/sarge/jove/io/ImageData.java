@@ -38,7 +38,7 @@ public record ImageData(Dimensions size, int count, int mip, Layout layout, Buff
 		Check.oneOrMore(mip);
 		Check.notNull(layout);
 		Check.notNull(data);
-		final int expected = count * size.area() * layout.count() * layout.bytes();
+		final int expected = offset(count, size, layout);
 		if(data.length() != expected) throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%d", expected, data.length()));
 	}
 
@@ -50,6 +50,29 @@ public record ImageData(Dimensions size, int count, int mip, Layout layout, Buff
 	 */
 	private ImageData(ImageData image, int count, Bufferable data) {
 		this(image.size, count, 1, image.layout, data);
+	}
+
+	/**
+	 * Calculates the buffer offset for the given image index.
+	 * @param index Image index
+	 * @return Offset
+	 * @throws IllegalArgumentException if the given index is larger than the number of images
+	 */
+	public int offset(int index) {
+		Check.zeroOrMore(index);
+		if(index >= count) throw new IllegalArgumentException(String.format("Invalid image array index: index=%d this=%s", index, this));
+		return offset(index, size, layout);
+	}
+
+	/**
+	 * Helper - Calculates the buffer offset.
+	 * @param index			Image index
+	 * @param size			Dimensions
+	 * @param layout		Layout
+	 * @return Offset
+	 */
+	private static int offset(int index, Dimensions size, Layout layout) {
+		return index * size.area() * layout.count() * layout.bytes();
 	}
 
 	@Override

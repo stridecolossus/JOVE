@@ -32,6 +32,11 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public interface Image extends NativeObject {
 	/**
+	 * Number of array layers for a cube-map image.
+	 */
+	int CUBEMAP_ARRAY_LAYERS = 6;
+
+	/**
 	 * @return Descriptor for this image
 	 */
 	ImageDescriptor descriptor();

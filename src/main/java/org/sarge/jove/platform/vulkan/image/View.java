@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientNativeObject;
+import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
@@ -148,6 +149,16 @@ public class View extends AbstractVulkanObject {
 		public Builder mapping(VkComponentMapping mapping) {
 			this.mapping = notNull(mapping);
 			return this;
+		}
+
+		/**
+		 * Helper - Sets the component mapping for the given image.
+		 * @param image Image
+		 */
+		public Builder mapping(ImageData image) {
+			final String components = image.layout().components();
+			final VkComponentMapping mapping = ComponentMappingBuilder.build(components);
+			return mapping(mapping);
 		}
 
 		/**
