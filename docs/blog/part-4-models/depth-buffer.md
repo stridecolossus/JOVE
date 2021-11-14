@@ -549,11 +549,11 @@ Notes:
 
 ### Global Flip
 
-By default the Vulkan Y axis points __down__ which is opposite to OpenGL (and just about every other 3D library).
+By default the Vulkan Y axis points __down__ which is the opposite direction to OpenGL (and just about every other 3D library).
 
 However we came across a global solution that handily flips the axis by specifying a 'negative' viewport rectangle: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
 
-The implementation is relatively trivial, we add a _flip_ setting to the `ViewportStageBuilder` which is applied when the viewport descriptor is populated:
+The implementation is relatively trivial - we add a _flip_ setting to the `ViewportStageBuilder` which is applied when the viewport descriptor is populated:
 
 ```java
 private void populate(Viewport viewport, VkViewport info) {
@@ -578,7 +578,13 @@ Notes:
 
 * The Y coordinate of the viewport origin is also shifted to the bottom of the viewport.
 
-* To avoid breaking existing code the _flip_ setting is off by default.
+* The _flip_ setting is __on__ by default and can be assumed to be active from this point onwards.
+
+However note this is a breaking change since flipping the Y axis also essentially flips the triangle winding order.  This entails the following modifications to existing code:
+
+* The Y component of the vertex positions in the cube builder.
+
+* The model rotation applied to the chalet model.
 
 ### Vector
 
@@ -726,9 +732,11 @@ private void update() {
     right = up.cross(dir).normalize();
 
     // Determine up axis
-    Vector y = dir.cross(right).normalize();
+    Vector y = right.cross(dir).normalize();
 }
 ```
+
+Note that the computed Y axis is inverted to account for the global flip.
 
 From the three axes we can now build the view transform matrix as before:
 

@@ -479,7 +479,7 @@ public interface Model {
 The _header_ is a descriptor for the properties of the model:
 
 ```java
-public record Header(CompoundLayout layout, Primitive primitive, int count) {
+public record Header(List<Layout> layout, Primitive primitive, int count) {
 }
 ```
 
@@ -567,7 +567,7 @@ To construct a model we provide the ubiquitous builder which is essentially a wr
 ```java
 public class ModelBuilder {
     private final List<Vertex> vertices = new ArrayList<>();
-    private final MutableCompoundLayout layout = new MutableCompoundLayout();
+    private final List<Layout> layouts = new ArrayList<>();
     private Primitive primitive = Primitive.TRIANGLE_STRIP;
 
     ...
@@ -576,27 +576,6 @@ public class ModelBuilder {
         Header header = new Header(layout, primitive, vertices.size());
         return new DefaultModel(header, vertices);
     }
-}
-```
-
-To configure the vertex layout we add a local mutable implementation of the compound layout:
-
-```java
-private static class MutableCompoundLayout extends CompoundLayout {
-    @Override
-    protected void add(Layout layout) {
-        super.add(layout);
-    }
-}
-```
-
-Which is used by the following mutator:
-
-```java
-public ModelBuilder layout(Layout layout) {
-    if(!vertices.isEmpty()) throw new IllegalStateException(...);
-    this.layout.add(layout);
-    return this;
 }
 ```
 
@@ -612,14 +591,17 @@ public ModelBuilder add(Vertex vertex) {
 }
 ```
 
-Where `validate` compares the layouts by identity:
+Where `validate` compares the vertex layout to that of the model:
 
 ```java
 private void validate(Vertex vertex) {
-    final CompoundLayout actual = vertex.layout();
-    if(!layout.equals(actual)) {
-        throw new IllegalArgumentException(...);
-    }
+    List<Layout> actual = vertex
+        .components()
+        .stream()
+        .map(Component::layout)
+        .collect(toList());
+
+    if(!layout.equals(actual)) throw new IllegalArgumentException(...);
 }
 ```
 
@@ -763,7 +745,7 @@ Finally we create the transformed model:
 
 ```java
 Header prev = this.header();
-Header header = new Header(new CompoundLayout(layouts), prev.primitive(), prev.count());
+Header header = new Header(layouts, prev.primitive(), prev.count());
 return new DefaultModel(header, data, index);
 ```
 

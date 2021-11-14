@@ -94,6 +94,11 @@ public record Layout(String components, Class<?> type, int bytes, boolean signed
     public int length() {
         return size() * bytes;
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
 }
 ```
 
@@ -159,7 +164,7 @@ Notes:
 
 * This implementation assumes that vertex data is _interleaved_.
 
-* The design may be slightly over-engineered at the expense of supporting flexibility and a framework for custom implementations.
+* Layouts are compared by _identity_ to avoid components with the same structure being considered equal, i.e. points and vectors.
 
 ### Implementation
 

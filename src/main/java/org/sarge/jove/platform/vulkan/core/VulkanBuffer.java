@@ -14,6 +14,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -25,6 +26,7 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -140,38 +142,74 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Helper - Loads the given data to this buffer (mapping the buffer memory as required).
-	 * @param data Data to load
+	 * Helper - Provides access to the underlying buffer (mapping the buffer memory as required).
+	 * @return Underlying buffer
 	 */
-	public void load(Bufferable data) {
+	public ByteBuffer buffer() {
 		final Region region = mem.region().orElseGet(mem::map);
-		final ByteBuffer bb = region.buffer();
-		data.buffer(bb);
+		return region.buffer();
 	}
-	// TODO - gets buffer every time
-	// TODO - incremental load? e.g. for uniform buffer => incremental offset into buffer & reset to start and/or ref to buffer in this class?
+
+	/**
+	 * A <i>uniform buffer</i> is a descriptor set resource and provides various helpers for updating the uniform buffer object.
+	 */
+	public class UniformBuffer implements DescriptorResource {
+		private final ByteBuffer buffer = buffer();
+
+		@Override
+		public VkDescriptorType type() {
+			return VkDescriptorType.UNIFORM_BUFFER;
+		}
+
+		@Override
+		public void populate(VkWriteDescriptorSet write) {
+			final var info = new VkDescriptorBufferInfo();
+			info.buffer = handle();
+			info.offset = 0;
+			info.range = len;
+			write.pBufferInfo = info;
+		}
+
+		/**
+		 * Updates this uniform buffer at the specified offset.
+		 * @param offset		Offset
+		 * @param data			Data
+		 */
+		public void load(int offset, Bufferable data) {
+			buffer.position(offset);
+			data.buffer(buffer);
+		}
+
+		/**
+		 * Updates an <i>element</i> of this uniform buffer.
+		 * @param offset		Buffer offset
+		 * @param index			Element index
+		 * @param data			Data
+		 */
+		public void load(int offset, int index, Bufferable data) {
+			final int pos = offset + index * data.length();
+			load(pos, data);
+		}
+
+		/**
+		 * Loads a structure into this uniform buffer.
+		 * @param offset		Buffer offset
+		 * @param struct		Structure
+		 */
+		public void load(int offset, Structure struct) {
+			final ByteBuffer bb = struct.getPointer().getByteBuffer(0, struct.size());
+			buffer.position(offset);
+			BufferHelper.copy(bb, buffer);
+		}
+	}
 
 	/**
 	 * @return This buffer as a uniform buffer resource
+	 * @throws IllegalStateException if this buffer is not a {@link VkBufferUsage#UNIFORM_BUFFER}
 	 */
-	public DescriptorResource uniform() {
+	public UniformBuffer uniform() {
 		require(VkBufferUsage.UNIFORM_BUFFER);
-
-		return new DescriptorResource() {
-			@Override
-			public VkDescriptorType type() {
-				return VkDescriptorType.UNIFORM_BUFFER;
-			}
-
-			@Override
-			public void populate(VkWriteDescriptorSet write) {
-				final var info = new VkDescriptorBufferInfo();
-				info.buffer = handle();
-				info.offset = 0;
-				info.range = len;
-				write.pBufferInfo = info;
-			}
-		};
+		return new UniformBuffer();
 	}
 
 	/**

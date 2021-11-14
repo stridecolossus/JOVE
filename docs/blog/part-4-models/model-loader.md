@@ -842,35 +842,86 @@ The `map` method transforms an input-stream to the intermediate data stream, the
 Next we introduce a _data source_ which abstracts access to a resource:
 
 ```java
-public class DataSource {
+public interface DataSource {
+    /**
+     * Opens an input stream for the given resource.
+     * @param name Resource name
+     * @return Input stream
+     * @throws IOException if the resource cannot be opened
+     */
+    InputStream input(String name) throws IOException;
+
+    /**
+     * Opens an output stream to the given resource.
+     * @param name Resource name
+     * @return Output stream
+     * @throws IOException if the resource cannot be opened
+     */
+    OutputStream output(String name) throws IOException;
+}
+```
+
+We provide an implementation for the file-system:
+
+```java
+public class FileDataSource implements DataSource {
     private final Path root;
 
-    public DataSource(Path root) {
+    public FileDataSource(Path root) {
         if(!Files.exists(root)) throw new IllegalArgumentException(...);
         this.root = notNull(root);
     }
 
-    public DataSource(String root) {
-        this(Paths.get(root));
+    @Override
+    public InputStream input(String name) throws IOException {
+        return Files.newInputStream(root.resolve(name));
+    }
+
+    @Override
+    public OutputStream output(String name) throws IOException {
+        return Files.newOutputStream(root.resolve(name));
     }
 }
 ```
 
-The final piece of the jigsaw is the following method that loads a resource by name:
+And another for classpath resources (such as the shaders):
 
 ```java
-public <T, R> R load(String name, ResourceLoader<T, R> loader) {
-    try(InputStream in = Files.newInputStream(root.resolve(name))) {
-        T data = loader.map(in);
-        return loader.load(data);
+public class ClasspathDataSource implements DataSource {
+    @Override
+    public InputStream input(String name) throws IOException {
+        InputStream in = DataSource.class.getResourceAsStream(path);
+        if(in == null) throw new FileNotFoundException(...);
+        return in;
     }
-    catch(IOException e) {
-        throw new RuntimeException(...);
+
+    @Override
+    public OutputStream output(String name) throws IOException {
+        throw new UnsupportedOperationException();
     }
 }
 ```
 
-This method encapsulates the process of opening and loading the resource and nicely centralises the checked exceptions.
+The final piece of the jigsaw is the following adapter that composes a resource loader and a data source:
+
+```java
+public class ResourceLoaderAdapter<T, R> {
+    private final DataSource src;
+    private final ResourceLoader<T, R> loader;
+
+    public R load(String name) {
+        try(InputStream in = src.input(name)) {
+            T data = loader.map(in);
+            return loader.load(data);
+        }
+        catch(IOException e) {
+            throw new RuntimeException(...);
+        }
+    }
+}
+```
+
+This class encapsulates the process of opening and loading the resource and nicely centralises the checked exceptions.
 
 Notes:
 
@@ -880,14 +931,19 @@ Notes:
 
 * Existing resource loaders are refactored accordingly.
 
-In the demo applications we can now configure a common data-source (which also avoids duplication of the path):
+In the demo applications we can now configure common data sources (which also avoids duplication of the data directory):
 
 ```java
 @SpringBootApplication
 public class RotatingCubeDemo {
     @Bean
-    public static DataSource source() {
-        return new DataSource("./src/main/resources");
+    public static DataSource classpath() {
+        return new ClasspathDataSource();
+    }
+
+    @Bean
+    public static DataSource data() {
+        return new FileDataSource(...);
     }
 }
 ```
@@ -895,12 +951,11 @@ public class RotatingCubeDemo {
 Resources can now be loaded much more concisely:
 
 ```java
-public static Model model(DataSource src) {
-    return src.load("chalet.model", new ModelLoader());
+public static Model model(DataSource data) {
+    var loader = new ResourceLoaderAdapter<>(data, new ModelLoader());
+    return loader.load("chalet.model");
 }
 ```
-
-Finally we define the inverse `ResourceWriter` and a convenience `ResourceLoaderWriter` that composes both interfaces.
 
 ---
 

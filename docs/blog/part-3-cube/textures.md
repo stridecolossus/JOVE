@@ -187,30 +187,10 @@ We can now be fairly confident that the texture coordinates are being handled co
 
 As noted above the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already have the necessary information represented by the layout of the vertex data, 
 
-We first introduce a wrapper for a list of layouts:
+We first add a convenience helper to the pipeline stage builder to configure the vertex data for a given layout:
 
 ```java
-public class CompoundLayout {
-    private final List<Layout> layouts;
-
-    public boolean contains(Layout layout) {
-        ...
-    }
-}
-```
-
-This class compares elements of the compound layout by _identity_ which avoids components having the same layout being considered the same (e.g. vertex positions and normals):
-
-```java
-public boolean contains(Layout layout) {
-    return layouts.stream().anyMatch(e -> e == layout);
-}
-```
-
-We can now add a convenience helper to the pipeline stage builder to configure the vertex data:
-
-```java
-public VertexInputStageBuilder add(CompoundLayout layout) {
+public VertexInputStageBuilder add(List<Layout> layout) {
     // Allocate next binding
     int index = bindings.size();
     ...
@@ -230,10 +210,10 @@ new BindingBuilder()
     .build();
 ```
 
-Where `stride` is a helper accessor on the new class:
+Where `stride` is a helper accessor on the layout class:
 
 ```java
-public int stride() {
+public static int stride(List<Layout> layouts) {
     return layouts.stream().mapToInt(Layout::length).sum();
 }
 ```
@@ -287,7 +267,7 @@ We can now replace the configuration for the vertex data in the pipeline with th
 
 ```java
 .input()
-    .add(new CompoundLayout(List.of(Point.LAYOUT, Coordinate2D.LAYOUT)))
+    .add(List.of(Point.LAYOUT, Coordinate2D.LAYOUT))
     .build()
 ```
 

@@ -6,16 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.io.BufferHelper;
 
 public class BufferHelperTest {
 	private static final byte[] BYTES = {1, 2, 3};
@@ -77,35 +73,20 @@ public class BufferHelperTest {
 	}
 
 	@Test
-	void wrapper() {
-		class Wrapper<T extends Bufferable> implements Bufferable {
-			private final Bufferable[] array;
-			private int len;
+	void copy() {
+		final ByteBuffer src = BufferHelper.buffer(BYTES);
+		BufferHelper.copy(src, bb);
+		verify(bb).put(src);
+	}
 
-			public Wrapper(int size, T obj) {
-				array = new Bufferable[size];
-				len = size * obj.length();
-			}
-
-			public void set(int index, T obj) {
-				array[index] = notNull(obj);
-			}
-
-			@Override
-			public int length() {
-				return len;
-			}
-
-			@Override
-			public void buffer(ByteBuffer buffer) {
-				for(Bufferable b : array) {
-					b.buffer(buffer);
-				}
-			}
+	@Test
+	void copyDirect() {
+		final ByteBuffer src = BufferHelper.buffer(BYTES);
+		src.rewind();
+		when(bb.isDirect()).thenReturn(true);
+		BufferHelper.copy(src, bb);
+		for(byte b : BYTES) {
+			verify(bb).put(b);
 		}
-
-		Wrapper wrapper = new Wrapper(1, Matrix.IDENTITY);
-		wrapper.set(0, Matrix.IDENTITY);
-
 	}
 }

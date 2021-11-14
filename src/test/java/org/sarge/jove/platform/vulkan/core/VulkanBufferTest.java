@@ -2,11 +2,11 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -26,7 +26,7 @@ import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.Command;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer.UniformBuffer;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
@@ -34,14 +34,17 @@ import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
+import com.sun.jna.Structure.FieldOrder;
 
 public class VulkanBufferTest extends AbstractVulkanTest {
-	private static final Set<VkBufferUsage> FLAGS = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_SRC);
+	private static final Set<VkBufferUsage> FLAGS = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_SRC, VkBufferUsage.UNIFORM_BUFFER);
 	private static final long SIZE = 3;
 
 	private VulkanBuffer buffer;
 	private DeviceMemory mem;
 	private Region region;
+	private ByteBuffer bb;
 	private AllocationService allocator;
 
 	@BeforeEach
@@ -52,8 +55,10 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(mem.size()).thenReturn(SIZE);
 
 		// Init mapped region
+		bb = mock(ByteBuffer.class);
 		region = mock(Region.class);
 		when(mem.map()).thenReturn(region);
+		when(region.buffer()).thenReturn(bb);
 
 		// Init memory allocator
 		allocator = mock(AllocationService.class);
@@ -73,16 +78,8 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void load() {
-		// Create target memory buffer
-		final ByteBuffer bb = mock(ByteBuffer.class);
-		when(region.buffer()).thenReturn(bb);
-
-		// Load data
-		final Bufferable data = mock(Bufferable.class);
-		buffer.load(data);
-		verify(mem).map();
-		verify(data).buffer(bb);
+	void buffer() {
+		assertEquals(bb, buffer.buffer());
 	}
 
 	@Test
@@ -107,7 +104,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		// Check data is copied to buffer
 		verify(region).buffer();
-		verify(data).buffer(null);
+		verify(data).buffer(bb);
 	}
 
 	@Test
@@ -153,14 +150,22 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		}
 	}
 
+	// TODO - use one of these for all test cases?
+	@FieldOrder("field")
+	public static class MockStructure extends Structure {
+		public int field;
+	}
+
 	@Nested
-	class UniformBufferResourceTests {
-		private DescriptorResource uniform;
+	class UniformBufferTests {
+		private UniformBuffer uniform;
+		private Bufferable data;
 
 		@BeforeEach
 		void before() {
-			final VulkanBuffer vbo = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.UNIFORM_BUFFER), mem, SIZE);
-			uniform = vbo.uniform();
+			uniform = buffer.uniform();
+			data = mock(Bufferable.class);
+			when(data.length()).thenReturn(5);
 		}
 
 		@Test
@@ -185,7 +190,31 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void uniformInvalidBuffer() {
-			assertThrows(IllegalStateException.class, "Invalid usage", () -> buffer.uniform());
+			final VulkanBuffer invalid = new VulkanBuffer(new Pointer(1), dev, Set.of(VkBufferUsage.VERTEX_BUFFER), mem, SIZE);
+			assertThrows(IllegalStateException.class, () -> invalid.uniform());
+		}
+
+		@Test
+		void load() {
+			uniform.load(1, data);
+			verify(bb).position(1);
+			verify(data).buffer(bb);
+		}
+
+		@Test
+		void loadElement() {
+			uniform.load(1, 2, data);
+			verify(bb).position(1 + (2 * 5));
+			verify(data).buffer(bb);
+		}
+
+		@Test
+		void loadStructure() {
+			final Structure struct = new MockStructure();
+			final ByteBuffer ptr = struct.getPointer().getByteBuffer(0, struct.size());
+			uniform.load(2, struct);
+			verify(bb).position(2);
+			verify(bb).put(ptr);
 		}
 	}
 }

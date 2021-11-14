@@ -45,11 +45,7 @@ current
 - some sort of triangle builder? used in demo and to create x2 triangles for a quad
 - acquire should create a frame object of some sort (swap chain is immutable), i.e. don't care about index
 
-* There are several lists of objects (frame buffers, descriptor sets, etc) that are used when recording the rendering sequence (again lots of dependencies).
-* New classes to compose the various objects that collaborate when recording the render sequence.
-
 should the JNA API interfaces be moved to the relevant packages?
-split descriptor set / pool / layout?
 
 need to filter buttons by action/mods
 

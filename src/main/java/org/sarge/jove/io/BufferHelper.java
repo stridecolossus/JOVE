@@ -71,4 +71,21 @@ public final class BufferHelper {
 			bb.put(bytes);
 		}
 	}
+
+	/**
+	 * Copies a buffer.
+	 * @param src		Source
+	 * @param dest		Destination
+	 */
+	public static void copy(ByteBuffer src, ByteBuffer dest) {
+		if(dest.isDirect()) {
+			final int len = src.remaining();
+			for(int n = 0; n < len; ++n) {
+				dest.put(src.get());
+			}
+		}
+		else {
+			dest.put(src);
+		}
+	}
 }

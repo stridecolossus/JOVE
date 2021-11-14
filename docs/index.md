@@ -39,4 +39,5 @@ The [introduction](blog/part-1-intro/introduction) in the first section outlines
     - [Model Loader](blog/part-4-models/model-loader)
     - [Depth Buffers](blog/part-4-models/depth-buffer)
     - [Input Handling](blog/part-4-models/input-handling)
+    - [Skybox](blog/part-4-models/skybox)
     

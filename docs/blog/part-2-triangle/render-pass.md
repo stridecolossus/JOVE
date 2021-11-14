@@ -631,7 +631,23 @@ Notes:
 
 Spring provides another couple of bonuses when we address cleanup of the various Vulkan components:
 
-On application shutdown the container invokes the `destroy` method of a `DisposableBean` (or alternatively an _inferred_ public method named `close` or `shutdown` on the bean).  All JOVE components implement `TransientNativeObject` which already has a `destroy` method satisfying the disposable bean interface.
+The following bean processor is used to release all native JOVE objects:
+
+```java
+@Bean
+static DestructionAwareBeanPostProcessor destroyer() {
+    return new DestructionAwareBeanPostProcessor() {
+        @Override
+        public void postProcessBeforeDestruction(Object bean, String beanName) throws BeansException {
+            if(bean instanceof TransientNativeObject obj) {
+                obj.destroy();
+            }
+        }
+    };
+}
+```
+
+Alternatively the container also invokes an _inferred_ public destructor method named `close` or `shutdown` on all registered beans, but we prefer the less obtrusive approach using the bean processor.
 
 The container also ensures that components are destroyed in the correct reverse order (inferred from the dependencies) removing another responsibility from the developer.
 
