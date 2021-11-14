@@ -10,7 +10,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.Resource;
+import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
@@ -88,8 +88,8 @@ public class Sampler extends AbstractVulkanObject {
 	 * @param view View
 	 * @return Sampler resource
 	 */
-	public Resource resource(View view) {
-		return new Resource() {
+	public DescriptorResource resource(View view) {
+		return new DescriptorResource() {
 			@Override
 			public VkDescriptorType type() {
 				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;

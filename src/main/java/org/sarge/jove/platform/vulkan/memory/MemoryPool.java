@@ -19,7 +19,7 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
  * <p>
  * Released memory allocations are restored to the pool and potentially reallocated.
  * <p>
- * Free memory can be pre-allocated into the pool using the {@link Pool#init(long)} method.
+ * Free memory can be pre-allocated into the pool using the {@link MemoryPool#init(long)} method.
  * <p>
  * Note that the mapped {@link Region} for a block can be silently unmapped by the pool since only one mapped region is permitted per block by the underlying implementation.
  * The client is responsible for ensuring that a new region is mapped as required.

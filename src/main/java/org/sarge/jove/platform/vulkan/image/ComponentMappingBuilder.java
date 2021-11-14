@@ -7,7 +7,7 @@ import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 
 /**
  * The <i>component mapping builder</i> is a helper used to construct the component mapping for an image view.
- * @see Layout
+ * @see DescriptorLayout
  * @author Sarge
  */
 public final class ComponentMappingBuilder {

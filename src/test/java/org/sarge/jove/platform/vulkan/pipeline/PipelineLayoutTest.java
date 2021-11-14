@@ -20,7 +20,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.PushConstantRange;
-import org.sarge.jove.platform.vulkan.render.DescriptorSet;
+import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -36,7 +36,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 	@Test
 	void build() {
 		// Create descriptor set layout
-		final DescriptorSet.Layout set = mock(DescriptorSet.Layout.class);
+		final DescriptorLayout set = mock(DescriptorLayout.class);
 		when(set.handle()).thenReturn(new Handle(new Pointer(42)));
 
 		// TODO - range

@@ -16,7 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Resource;
+import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.render.Sampler.Wrap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -48,7 +48,7 @@ public class SamplerTest extends AbstractVulkanTest {
 
 	@Nested
 	class ResourceTests {
-		private Resource res;
+		private DescriptorResource res;
 		private View view;
 
 		@BeforeEach

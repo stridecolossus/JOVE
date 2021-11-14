@@ -1,7 +1,8 @@
 package org.sarge.jove.control;
 
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+
+import java.time.Duration;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Player.Playable;
@@ -34,11 +35,11 @@ public class Animator implements Playable, FrameTracker.Listener {
 
 	/**
 	 * Constructor.
-	 * @param duration		Duration (ms)
+	 * @param duration		Duration
 	 * @param animation		Animation
 	 */
-	public Animator(long duration, Animation animation) {
-		this.duration = oneOrMore(duration);
+	public Animator(Duration duration, Animation animation) {
+		this.duration = duration.toNanos();
 		this.animation = notNull(animation);
 	}
 

@@ -26,7 +26,7 @@ import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.Command;
-import org.sarge.jove.platform.vulkan.common.Resource;
+import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
@@ -155,7 +155,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Nested
 	class UniformBufferResourceTests {
-		private Resource uniform;
+		private DescriptorResource uniform;
 
 		@BeforeEach
 		void before() {

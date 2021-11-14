@@ -9,8 +9,8 @@ import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
-import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
-import org.sarge.jove.platform.vulkan.render.DescriptorSet.Pool;
+import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
+import org.sarge.jove.platform.vulkan.render.DescriptorPool;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -35,7 +35,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param descriptorSetLayout	Layout
 	 * @param pAllocator			Allocator
 	 */
-	void vkDestroyDescriptorSetLayout(DeviceContext device, Layout descriptorSetLayout, Pointer pAllocator);
+	void vkDestroyDescriptorSetLayout(DeviceContext device, DescriptorLayout descriptorSetLayout, Pointer pAllocator);
 
 	/**
 	 * Creates a descriptor-set pool.
@@ -53,7 +53,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param descriptorPool		Pool
 	 * @param pAllocator			Allocator
 	 */
-	void vkDestroyDescriptorPool(DeviceContext device, Pool descriptorPool, Pointer pAllocator);
+	void vkDestroyDescriptorPool(DeviceContext device, DescriptorPool descriptorPool, Pointer pAllocator);
 
 	/**
 	 * Allocates a number of descriptor sets from a given pool.
@@ -71,7 +71,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param flags					Unused
 	 * @return Result code
 	 */
-	int vkResetDescriptorPool(DeviceContext device, Pool descriptorPool, int flags);
+	int vkResetDescriptorPool(DeviceContext device, DescriptorPool descriptorPool, int flags);
 
 	/**
 	 * Releases allocated descriptor sets.
@@ -81,7 +81,7 @@ interface VulkanLibraryDescriptorSet {
 	 * @param pDescriptorSets		Descriptor set handles
 	 * @return Result code
 	 */
-	int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, Pointer pDescriptorSets);
+	int vkFreeDescriptorSets(DeviceContext device, DescriptorPool descriptorPool, int descriptorSetCount, Pointer pDescriptorSets);
 
 	/**
 	 * Updates the resources for one-or-more descriptor sets.

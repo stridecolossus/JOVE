@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.Command;
-import org.sarge.jove.platform.vulkan.common.Resource;
+import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
@@ -154,10 +154,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @return This buffer as a uniform buffer resource
 	 */
-	public Resource uniform() {
+	public DescriptorResource uniform() {
 		require(VkBufferUsage.UNIFORM_BUFFER);
 
-		return new Resource() {
+		return new DescriptorResource() {
 			@Override
 			public VkDescriptorType type() {
 				return VkDescriptorType.UNIFORM_BUFFER;
