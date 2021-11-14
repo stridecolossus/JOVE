@@ -1,5 +1,7 @@
 package org.sarge.jove.common;
 
+import java.util.Collection;
+
 import org.sarge.lib.util.Check;
 
 /**
@@ -22,6 +24,9 @@ import org.sarge.lib.util.Check;
  *     Layout.of(3);
  * </pre>
  * <p>
+ * Note that the {@link #equals(Object)} compares by <i>identity</i> in order to prevent components with the same structure being considered equal, i.e. points and vectors.
+ * <p>
+ * @author Sarge
  */
 public record Layout(String components, Class<?> type, int bytes, boolean signed) {
 	/**
@@ -53,8 +58,6 @@ public record Layout(String components, Class<?> type, int bytes, boolean signed
 	public static Layout of(int size) {
 		return of(size, Float.class, true);
 	}
-
-	// TODO - builder?
 
 	/**
 	 * Determines the number of bytes for the given numeric type.
@@ -111,5 +114,19 @@ public record Layout(String components, Class<?> type, int bytes, boolean signed
 	 */
 	public int length() {
 		return count() * bytes;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
+	}
+
+	/**
+	 * Calculates the total <i>stride</i> of the given layouts.
+	 * @param layouts Layouts
+	 * @return Stride
+	 */
+	public static int stride(Collection<Layout> layouts) {
+		return layouts.stream().mapToInt(Layout::length).sum();
 	}
 }

@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
@@ -77,7 +76,7 @@ public class VertexInputStageBuilderTest {
 	@Test
 	void buildAddVertexLayout() {
 		final var layout = List.of(Layout.of(1), Layout.of(2));
-		final var descriptor = builder.add(new CompoundLayout(layout)).get();
+		final var descriptor = builder.add(layout).get();
 		assertNotNull(descriptor);
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);
 		assertEquals(2, descriptor.vertexAttributeDescriptionCount);

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 
@@ -66,7 +65,7 @@ public class DefaultModel extends AbstractModel {
 	@Override
 	public Bufferable vertices() {
 		return new Bufferable() {
-			private final int len = vertices.size() * header.layout().stride();
+			private final int len = vertices.size() * Layout.stride(header.layout());
 
 			@Override
 			public int length() {
@@ -114,15 +113,11 @@ public class DefaultModel extends AbstractModel {
 
 	@Override
 	public DefaultModel transform(List<Layout> layouts) {
-		// Skip is same layout
-		final CompoundLayout current = this.header().layout();
-		final CompoundLayout that = new CompoundLayout(layouts);
-		if(current.equals(that)) {
-			return this;
-		}
-
 		// Build mapping to new layout
-		final int map[] = that.map(current);
+		final int map[] = layouts
+				.stream()
+				.mapToInt(this::indexOf)
+				.toArray();
 
 		// Transform vertex data
 		final List<Vertex> data = vertices
@@ -132,7 +127,19 @@ public class DefaultModel extends AbstractModel {
 
 		// Create transformed model
 		final Header prev = this.header();
-		final Header header = new Header(new CompoundLayout(layouts), prev.primitive(), prev.count());
+		final Header header = new Header(layouts, prev.primitive(), prev.count());
 		return new DefaultModel(header, data, index);
+	}
+
+	/**
+	 * Looks up the index of the given layout in this model.
+	 * @param layout Layout
+	 * @return Index
+	 * @throws IllegalArgumentException if the layout is not present
+	 */
+	private int indexOf(Layout layout) {
+		final int index = header.layout().indexOf(layout);
+		if(index == -1) throw new IllegalArgumentException(String.format("Invalid layout for this model: layout=%s model=%s", layout, this));
+		return index;
 	}
 }

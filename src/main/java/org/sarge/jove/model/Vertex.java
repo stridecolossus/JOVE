@@ -1,7 +1,5 @@
 package org.sarge.jove.model;
 
-import static java.util.stream.Collectors.toList;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +10,6 @@ import java.util.stream.Collector;
 import org.apache.commons.collections4.ListUtils;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Component;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 
 /**
@@ -43,17 +40,19 @@ public class Vertex implements Bufferable {
 	}
 
 	/**
-	 * @return Layout of this vertex
+	 * @return Components of this vertex
 	 */
-	public CompoundLayout layout() {
-		final List<Layout> layout = components.stream().map(Component::layout).collect(toList());
-		return new CompoundLayout(layout);
+	public List<Component> components() {
+		return components;
 	}
 
 	@Override
 	public int length() {
-		final CompoundLayout layout = this.layout();
-		return layout.stride();
+		return components
+				.stream()
+				.map(Component::layout)
+				.mapToInt(Layout::length)
+				.sum();
 	}
 
 	@Override

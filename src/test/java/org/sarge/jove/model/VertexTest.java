@@ -1,7 +1,6 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -36,14 +35,13 @@ public class VertexTest {
 	}
 
 	@Test
-	void of() {
-		assertEquals(vertex, Vertex.of(one, two));
+	void constructor() {
+		assertEquals(List.of(one, two), vertex.components());
 	}
 
 	@Test
-	void layout() {
-		assertNotNull(vertex.layout());
-		assertEquals(List.of(one.layout(), two.layout()), vertex.layout().layouts());
+	void of() {
+		assertEquals(vertex, Vertex.of(one, two));
 	}
 
 	@Test

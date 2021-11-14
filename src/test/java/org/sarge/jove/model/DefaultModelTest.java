@@ -17,7 +17,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -31,7 +30,7 @@ class DefaultModelTest {
 
 	@BeforeEach
 	void before() {
-		header = new Header(new CompoundLayout(List.of(Point.LAYOUT, Vector.NORMALS)), Primitive.TRIANGLES, 3);
+		header = new Header(List.of(Point.LAYOUT, Vector.NORMALS), Primitive.TRIANGLES, 3);
 		vertex = Vertex.of(Point.ORIGIN, new Vector(0, 0, 0));
 		indices = new int[]{0, 0, 0};
 		model = new DefaultModel(header, List.of(vertex, vertex), indices);
@@ -78,17 +77,11 @@ class DefaultModelTest {
 	}
 
 	@Test
-	void transform() {
-		final Model result = model.transform(header.layout().layouts());
-		assertEquals(model, result);
-	}
-
-	@Test
 	void transformSwapComponents() {
 		final List<Layout> layout = List.of(Vector.NORMALS, Point.LAYOUT);
 		final DefaultModel result = model.transform(layout);
 		assertNotNull(result);
-		assertEquals(layout, result.header().layout().layouts());
+		assertEquals(layout, result.header().layout());
 	}
 
 	@Test
@@ -96,7 +89,7 @@ class DefaultModelTest {
 		final List<Layout> layout = List.of(Point.LAYOUT);
 		final DefaultModel result = model.transform(layout);
 		assertNotNull(result);
-		assertEquals(layout, result.header().layout().layouts());
+		assertEquals(layout, result.header().layout());
 	}
 
 	@Test

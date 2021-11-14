@@ -61,7 +61,7 @@ public class ObjectModelLoaderTest {
 		final Header header = model.header();
 		assertEquals(3, header.count());
 		assertEquals(Primitive.TRIANGLES, header.primitive());
-		assertEquals(List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT), header.layout().layouts());
+		assertEquals(List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT), header.layout());
 
 		// Check vertex buffer
 		assertNotNull(model.vertices());

@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -105,7 +104,7 @@ public class ObjectModelTest {
 
 			// Check model header
 			final List layout = List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT);
-			assertEquals(new Model.Header(new CompoundLayout(layout), Primitive.TRIANGLES, 3), result.header());
+			assertEquals(new Model.Header(layout, Primitive.TRIANGLES, 3), result.header());
 		}
 
 		@Test

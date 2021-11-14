@@ -10,7 +10,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model.Header;
@@ -37,7 +36,7 @@ class ModelBuilderTest {
 
 		// Verify model
 		assertNotNull(model);
-		assertEquals(new Header(new CompoundLayout(List.of(Point.LAYOUT)), Primitive.LINES, 2), model.header());
+		assertEquals(new Header(List.of(Point.LAYOUT), Primitive.LINES, 2), model.header());
 		assertEquals(false, model.isIndexed());
 		assertNotNull(model.vertices());
 		assertEquals(Optional.empty(), model.index());
@@ -47,7 +46,7 @@ class ModelBuilderTest {
 	void buildEmpty() {
 		final Model model = builder.build();
 		assertNotNull(model);
-		assertEquals(new Header(new CompoundLayout(List.of()), Primitive.TRIANGLE_STRIP, 0), model.header());
+		assertEquals(new Header(List.of(), Primitive.TRIANGLE_STRIP, 0), model.header());
 		assertNotNull(model.vertices());
 		assertEquals(Optional.empty(), model.index());
 	}

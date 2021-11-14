@@ -1,11 +1,12 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.CompoundLayout;
+import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.Header;
 
@@ -34,18 +35,8 @@ import org.sarge.jove.model.Model.Header;
  * @author Sarge
  */
 public class ModelBuilder {
-	/**
-	 *
-	 */
-	private static class MutableCompoundLayout extends CompoundLayout {
-		@Override
-		protected void add(Layout layout) {
-			super.add(layout);
-		}
-	}
-
 	protected final List<Vertex> vertices = new ArrayList<>();
-	private final MutableCompoundLayout layout = new MutableCompoundLayout();
+	private final List<Layout> layout = new ArrayList<>();
 	private Primitive primitive = Primitive.TRIANGLE_STRIP;
 	private boolean validate = true;
 
@@ -56,7 +47,7 @@ public class ModelBuilder {
 	 */
 	public ModelBuilder layout(Layout layout) {
 		if(!vertices.isEmpty()) throw new IllegalStateException("Cannot modify model layout after adding vertex data");
-		this.layout.add(layout);
+		this.layout.add(notNull(layout));
 		return this;
 	}
 
@@ -108,7 +99,12 @@ public class ModelBuilder {
 	 * @throws IllegalArgumentException if the vertex does not match the layout of this model
 	 */
 	private void validate(Vertex vertex) {
-		final CompoundLayout actual = vertex.layout();
+		final List<Layout> actual = vertex
+				.components()
+				.stream()
+				.map(Component::layout)
+				.collect(toList());
+
 		if(!layout.equals(actual)) {
 			throw new IllegalArgumentException(String.format("Invalid vertex for this layout: expected=%s actual=%s", layout, actual));
 		}

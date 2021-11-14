@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
@@ -20,7 +19,7 @@ public interface Model {
 	/**
 	 * Descriptor for this model.
 	 */
-	public record Header(CompoundLayout layout, Primitive primitive, int count) {
+	public record Header(List<Layout> layout, Primitive primitive, int count) {
 		/**
 		 * Constructor.
 		 * @param layout			Vertex layout
@@ -32,7 +31,7 @@ public interface Model {
 		 * @see Primitive#isNormalSupported()
 		 */
 		public Header {
-			Check.notNull(layout);
+			layout = List.copyOf(layout);
 			Check.notNull(primitive);
 			Check.zeroOrMore(count);
 

@@ -25,11 +25,15 @@ class ColourTest {
 		assertEquals(0.2f, col.green());
 		assertEquals(0.3f, col.blue());
 		assertEquals(1.0f, col.alpha());
+		assertEquals(Colour.LAYOUT, col.layout());
 	}
 
 	@Test
 	void layout() {
-		assertEquals(Layout.of(4), col.layout());
+		assertEquals("RGBA", Colour.LAYOUT.components());
+		assertEquals(Float.class, Colour.LAYOUT.type());
+		assertEquals(4, Colour.LAYOUT.bytes());
+		assertEquals(true, Colour.LAYOUT.signed());
 	}
 
 	@Test

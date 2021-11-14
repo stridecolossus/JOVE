@@ -33,7 +33,7 @@ public class CubeBuilderTest {
 		// Check header
 		final int count = 6 * 2 * 3;
 		assertNotNull(cube.header());
-		assertEquals(List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT), cube.header().layout().layouts());
+		assertEquals(List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT), cube.header().layout());
 		assertEquals(Primitive.TRIANGLES, cube.header().primitive());
 		assertEquals(count, cube.header().count());
 

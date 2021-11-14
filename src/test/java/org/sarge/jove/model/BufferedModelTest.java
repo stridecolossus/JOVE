@@ -9,7 +9,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.Header;
 
@@ -20,7 +19,7 @@ public class BufferedModelTest {
 
 	@BeforeEach
 	void before() {
-		header = new Header(new CompoundLayout(List.of(Layout.of(2))), Primitive.TRIANGLES, 3);
+		header = new Header(List.of(Layout.of(2)), Primitive.TRIANGLES, 3);
 		vertices = mock(Bufferable.class);
 		index = mock(Bufferable.class);
 		model = new BufferedModel(header, vertices, Optional.of(index));

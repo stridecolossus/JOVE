@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
@@ -57,12 +56,12 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * <p>
 	 * @param layout Vertex layout
 	 */
-	public VertexInputStageBuilder add(CompoundLayout layout) {
+	public VertexInputStageBuilder add(List<Layout> layout) {
 		// Allocate next binding
 		final int index = bindings.size();
 
 		// Calculate vertex stride for this layout
-		final int stride = layout.stride();
+		final int stride = Layout.stride(layout);
 
 		// Add binding
 		new BindingBuilder()
@@ -73,7 +72,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		// Add attribute for each layout component
 		int offset = 0;
 		int loc = 0;
-		for(Layout component : layout.layouts()) {
+		for(Layout component : layout) {
 			// Determine component format
 			final VkFormat format = FormatBuilder.format(component);
 

@@ -26,6 +26,14 @@ public class NativeImageLoaderTest {
 		loader = new NativeImageLoader();
 	}
 
+	private void check(Layout layout, String expected) {
+		assertEquals(expected, layout.components());
+		assertEquals(Byte.class, layout.type());
+		assertEquals(Byte.BYTES, layout.bytes());
+		assertEquals(false, layout.signed());
+		assertEquals(expected.length(), layout.length());
+	}
+
 	@DisplayName("ABGR should be loaded as-is")
 	@Test
 	void load() throws IOException {
@@ -35,7 +43,7 @@ public class NativeImageLoaderTest {
 		assertEquals(new Dimensions(2, 3), image.size());
 		assertEquals(1, image.count());
 		assertEquals(1, image.mip());
-		assertEquals(new Layout("ABGR", Byte.class, 1, false), image.layout());
+		check(image.layout(), "ABGR");
 		assertNotNull(image.data());
 		assertEquals(2 * 3 * 4, image.data().length());
 	}
@@ -47,7 +55,7 @@ public class NativeImageLoaderTest {
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
 		assertEquals(new Dimensions(2, 3), image.size());
-		assertEquals(new Layout("ABGR", Byte.class, 1, false), image.layout());
+		check(image.layout(), "ABGR");
 		assertNotNull(image.data());
 		assertEquals(2 * 3 * 4, image.data().length());
 	}
@@ -59,7 +67,7 @@ public class NativeImageLoaderTest {
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
 		assertEquals(new Dimensions(2, 3), image.size());
-		assertEquals(new Layout("R", Byte.class, 1, false), image.layout());
+		check(image.layout(), "R");
 		assertNotNull(image.data());
 		assertEquals(2 * 3 * 1, image.data().length());
 	}

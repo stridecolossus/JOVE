@@ -3,6 +3,8 @@ package org.sarge.jove.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -33,15 +35,24 @@ public class LayoutTest {
 
 	@Test
 	void of() {
-		assertEquals(layout, Layout.of(3));
+		layout = Layout.of(3);
+		assertEquals(Float.class, layout.type());
+		assertEquals(Float.BYTES, layout.bytes());
+		assertEquals(true, layout.signed());
+		assertEquals(3, layout.count());
+		assertEquals(3 * Float.BYTES, layout.length());
+	}
+
+	@Test
+	void stride() {
+		assertEquals(2 * 3 * Float.BYTES, Layout.stride(List.of(layout, layout)));
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, layout.equals(layout));
-		assertEquals(true, layout.equals(Layout.of(3)));
 		assertEquals(false, layout.equals(null));
-		assertEquals(false, layout.equals(Layout.of(2)));
+		assertEquals(false, layout.equals(new Layout("RGB", Float.class, Float.BYTES, true)));
 	}
 
 	@Nested

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.DataHelper;
 import org.sarge.jove.io.DataResourceLoader;
@@ -30,7 +29,7 @@ public class ModelLoader implements DataResourceLoader<Model> {
 		out.writeInt(header.count());
 
 		// Write vertex layout
-		final List<Layout> layouts = header.layout().layouts();
+		final List<Layout> layouts = header.layout();
 		out.writeInt(layouts.size());
 		for(Layout layout : layouts) {
 			helper.write(layout, out);
@@ -71,7 +70,7 @@ public class ModelLoader implements DataResourceLoader<Model> {
 		final Bufferable index = helper.buffer(in);
 
 		// Create model
-		final Header header = new Header(new CompoundLayout(layouts), primitive, count);
+		final Header header = new Header(layouts, primitive, count);
 		return new BufferedModel(header, vertices, Optional.ofNullable(index));
 	}
 }
