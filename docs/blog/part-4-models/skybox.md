@@ -156,29 +156,88 @@ void main() {
 
 ### Uniform Buffer
 
-To support the new uniform buffer structure we modify the update method in the camera configuration:
+To support the new uniform buffer structure we first promote the object to an inner class of the VBO:
 
 ```java
-public Task matrix(VulkanBuffer uniform) {
-    ...
-    ByteBuffer bb = uniform.memory().map().buffer();
+public class UniformBuffer implements DescriptorResource {
+    private final ByteBuffer buffer = buffer();
 
+    @Override
+    public VkDescriptorType type() {
+        return VkDescriptorType.UNIFORM_BUFFER;
+    }
+
+    @Override
+    public void populate(VkWriteDescriptorSet write) {
+        ...
+    }
+}
+```
+
+The new class can now support helper methods to populate the uniform buffer:
+
+```java
+public UniformBuffer rewind() {
+    buffer.rewind();
+    return this;
+}
+
+public UniformBuffer append(Bufferable data) {
+    data.buffer(buffer);
+    return this;
+}
+```
+
+In particular we add a method to insert data using a random-access type approach:
+
+```java
+public UniformBuffer insert(int index, Bufferable data) {
+    int pos = index * data.length();
+    buffer.position(pos);
+    data.buffer(buffer);
+    return this;
+}
+```
+
+The update method of camera configuration can now be refactored as follows making the purpose of the code more explicit:
+
+```java
+public Task matrix(UniformBuffer uniform) {
+    // Init model rotation
+    Matrix model = ...
+
+    // Add projection matrix
+    uniform.insert(2, projection);
+
+    // Update modelview matrix
     return () -> {
-        bb.rewind();
-        model.buffer(bb);
-        cam.matrix().buffer(bb);
-        projection.buffer(bb);
+        uniform.rewind();
+        uniform.append(model);
+        uniform.append(cam.matrix());
     };
 }
 ```
 
-Notes:
+In the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
 
-* The uniform buffer is mapped once and the resultant byte buffer is rewound before updates.
+```java
+static Bufferable of(Structure struct) {
+    return new Bufferable() {
+        @Override
+        public int length() {
+            return struct.size();
+        }
 
-* The projection matrix is updated on every frame but could be done just once (since it never changes).
+        @Override
+        public void buffer(ByteBuffer bb) {
+            final byte[] array = struct.getPointer().getByteArray(0, struct.size());
+            BufferHelper.write(array, bb);
+        }
+    };
+}
+```
 
-* The existing vertex shader for the chalet model is refactored accordingly.
+This allows arbitrary JNA structures to be used to populate a uniform buffer (which will become useful in future chapters).
 
 ### Loader
 

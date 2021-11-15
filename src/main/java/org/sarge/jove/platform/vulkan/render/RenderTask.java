@@ -131,7 +131,7 @@ public class RenderTask implements Task {
 	/**
 	 * Destroys this render loop and any resources.
 	 */
-	public void destroy() {
+	public void close() {
 		for(Frame f : frames) {
 			f.destroy();
 		}

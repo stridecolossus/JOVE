@@ -394,11 +394,13 @@ public void present(Queue queue, Set<Semaphore> semaphores) {
 Finally we release the semaphores when the render loop object is destroyed:
 
 ```java
-public void destroy() {
+public void close() {
     available.destroy();
     ready.destroy();
 }
 ```
+
+Note that here the cleanup method is named `close` to take advantage of the _inferred_ bean destructor method used by the Spring container.
 
 If we run the demo as it now stands (with the work queue blocking still present) we will get additional errors because the semaphores are never signalled.
 

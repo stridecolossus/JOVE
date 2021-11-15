@@ -647,9 +647,9 @@ static DestructionAwareBeanPostProcessor destroyer() {
 }
 ```
 
-Alternatively the container also invokes an _inferred_ public destructor method named `close` or `shutdown` on all registered beans, but we prefer the less obtrusive approach using the bean processor.
+Alternatively the container also invokes an _inferred_ public destructor method named `close` or `shutdown` on all registered beans, though we prefer the less obtrusive (and more explicit) approach using the bean processor.
 
-The container also ensures that components are destroyed in the correct reverse order (inferred from the dependencies) removing another responsibility from the developer.
+Finally the container also ensures that components are destroyed in the correct reverse order (inferred from the dependencies) removing another responsibility from the developer.
 
 Nice.
 

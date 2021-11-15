@@ -78,7 +78,7 @@ public class RenderTaskTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void destroy() {
-		loop.destroy();
+	void close() {
+		loop.close();
 	}
 }
