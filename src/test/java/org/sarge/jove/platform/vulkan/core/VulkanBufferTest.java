@@ -25,7 +25,6 @@ import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
-import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer.UniformBuffer;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
-import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.core.BufferCopyCommand.Builder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 

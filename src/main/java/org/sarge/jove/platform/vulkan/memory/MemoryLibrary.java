@@ -1,8 +1,7 @@
-package org.sarge.jove.platform.vulkan.api;
+package org.sarge.jove.platform.vulkan.memory;
 
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.memory.DefaultDeviceMemory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -10,7 +9,7 @@ import com.sun.jna.ptr.PointerByReference;
 /**
  * Vulkan memory API.
  */
-interface VulkanLibraryMemory {
+public interface MemoryLibrary {
 	/**
 	 * Allocates memory.
 	 * @param device			Logical device

@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import org.sarge.jove.model.Model;
-import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.core.Command;
 
 /**
  * A <i>draw command</i> is used to render a model.

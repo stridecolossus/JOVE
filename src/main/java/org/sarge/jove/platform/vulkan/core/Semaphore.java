@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 
@@ -32,5 +31,28 @@ public class Semaphore extends AbstractVulkanObject {
 	@Override
 	protected Destructor<Semaphore> destructor(VulkanLibrary lib) {
 		return lib::vkDestroySemaphore;
+	}
+
+	/**
+	 * Vulkan semaphore API.
+	 */
+	interface Library {
+		/**
+		 * Creates a semaphore.
+		 * @param device			Device
+		 * @param pCreateInfo		Descriptor
+		 * @param pAllocator		Allocator
+		 * @param pSemaphore		Returned semaphore
+		 * @return Result code
+		 */
+		int vkCreateSemaphore(DeviceContext device, VkSemaphoreCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSemaphore);
+
+		/**
+		 * Destroys a semaphore.
+		 * @param device			Device
+		 * @param semaphore			Semaphore
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroySemaphore(DeviceContext device, Semaphore semaphore, Pointer pAllocator);
 	}
 }

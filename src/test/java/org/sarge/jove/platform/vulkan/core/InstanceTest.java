@@ -26,7 +26,6 @@ import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackData;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.core.Instance.Builder;
 import org.sarge.jove.platform.vulkan.core.Instance.Handler;

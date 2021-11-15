@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -9,10 +9,13 @@ import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.VkSamplerCreateInfo;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.render.Sampler;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -208,5 +211,46 @@ public class View extends AbstractVulkanObject {
 
 			return view;
 		}
+	}
+
+	/**
+	 * Image view API.
+	 */
+	interface Library {
+		/**
+		 * Creates an image view.
+		 * @param device			Logical device
+		 * @param pCreateInfo		Image view descriptor
+		 * @param pAllocator		Allocator
+		 * @param pView				Returned image view handle
+		 * @return Result code
+		 */
+		int vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
+
+		/**
+		 * Destroys an image view.
+		 * @param device			Logical device
+		 * @param imageView			Image view
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroyImageView(DeviceContext device, View imageView, Pointer pAllocator);
+
+		/**
+		 * Creates an image sampler.
+		 * @param device			Logical device
+		 * @param pCreateInfo		Sampler descriptor
+		 * @param pAllocator		Allocator
+		 * @param pSampler			Returned sampler handle
+		 * @return Result code
+		 */
+		int vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
+
+		/**
+		 * Destroys a sampler.
+		 * @param device			Logical device
+		 * @param sampler			Sampler
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroySampler(DeviceContext device, Sampler sampler, Pointer pAllocator);
 	}
 }

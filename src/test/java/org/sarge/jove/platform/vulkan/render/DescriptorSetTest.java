@@ -21,8 +21,8 @@ import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
-import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
+import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 

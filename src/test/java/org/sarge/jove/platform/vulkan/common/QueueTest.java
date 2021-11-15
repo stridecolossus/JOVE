@@ -10,8 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 import com.sun.jna.Pointer;
 

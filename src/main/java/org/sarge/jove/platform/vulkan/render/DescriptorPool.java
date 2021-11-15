@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
@@ -24,9 +24,9 @@ import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorPoolSize;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;

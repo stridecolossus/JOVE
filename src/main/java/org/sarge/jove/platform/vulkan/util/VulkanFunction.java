@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;

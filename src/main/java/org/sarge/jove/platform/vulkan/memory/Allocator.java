@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.oneOrMore;
 
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 import com.sun.jna.ptr.PointerByReference;
 

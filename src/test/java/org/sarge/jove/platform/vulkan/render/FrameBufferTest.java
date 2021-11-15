@@ -26,7 +26,7 @@ import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
 import org.sarge.jove.platform.vulkan.VkSubpassContents;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.common.Command;
+import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.ImageExtents;

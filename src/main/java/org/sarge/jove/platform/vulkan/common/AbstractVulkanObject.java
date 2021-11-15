@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 import com.sun.jna.Pointer;
 

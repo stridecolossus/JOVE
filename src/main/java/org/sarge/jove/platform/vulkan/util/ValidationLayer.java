@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.lib.util.Check;
 
 /**

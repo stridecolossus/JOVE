@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.api;
+package org.sarge.jove.platform.vulkan.core;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -9,6 +9,10 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.Version;
+import org.sarge.jove.platform.vulkan.image.ImageLibrary;
+import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
+import org.sarge.jove.platform.vulkan.render.RenderLibrary;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
@@ -25,7 +29,7 @@ import com.sun.jna.TypeMapper;
  * Vulkan API.
  * @author Sarge
  */
-public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibraryGraphics, VulkanLibraryUtility {
+public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, MemoryLibrary, UtilityLibrary {
 	/**
 	 * Vulkan API version.
 	 */
@@ -148,4 +152,16 @@ public interface VulkanLibrary extends Library, VulkanLibrarySystem, VulkanLibra
 			throw new VulkanException(result);
 		}
 	}
+}
+
+interface GraphicsLibrary extends PipelineLibrary, ImageLibrary, RenderLibrary, Surface.Library {
+	// Aggregate library
+}
+
+interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library, LogicalDevice.Library {
+	// Aggregate library
+}
+
+interface UtilityLibrary extends VulkanBuffer.Library, Command.Library, Semaphore.Library, Fence.Library {
+	// Aggregate library
 }

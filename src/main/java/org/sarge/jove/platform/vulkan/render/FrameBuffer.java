@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
@@ -12,16 +12,20 @@ import java.util.function.Predicate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.platform.vulkan.VkClearDepthStencilValue;
 import org.sarge.jove.platform.vulkan.VkClearValue;
 import org.sarge.jove.platform.vulkan.VkExtent2D;
 import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
+import org.sarge.jove.platform.vulkan.VkImageLayout;
+import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
 import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
 import org.sarge.jove.platform.vulkan.VkSubpassContents;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.util.StructureHelper;
@@ -159,5 +163,30 @@ public class FrameBuffer extends AbstractVulkanObject {
 				.append("attachments", attachments)
 				.append("extents", extents)
 				.build();
+	}
+
+	/**
+	 * Frame buffer API.
+	 */
+	interface Library {
+		/**
+		 * Creates a frame buffer.
+		 * @param device			Logical device
+		 * @param pCreateInfo		Descriptor
+		 * @param pAllocator		Allocator
+		 * @param pFramebuffer		Returned frame buffer
+		 * @return Result code
+		 */
+		int vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
+
+		/**
+		 * Destroys a frame buffer.
+		 * @param device			Logical device
+		 * @param framebuffer		Frame buffer
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroyFramebuffer(DeviceContext device, FrameBuffer framebuffer, Pointer pAllocator);
+
+		void vkCmdClearDepthStencilImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
 	}
 }

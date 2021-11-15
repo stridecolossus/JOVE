@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.api;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.MockStructure;
 import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;

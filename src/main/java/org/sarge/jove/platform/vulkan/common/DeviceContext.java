@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 /**
  * The <i>device context</i> represents an abstraction for objects dependant on the logical device.

@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.groupingBy;
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Collections;
@@ -21,7 +21,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
@@ -308,5 +308,61 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			// Create logical device
 			return new LogicalDevice(handle.getValue(), parent, map);
 		}
+	}
+
+	/**
+	 * Vulkan logical device API.
+	 */
+	interface Library {
+		/**
+		 * Creates a logical device.
+		 * @param physicalDevice		Physical device handle
+		 * @param pCreateInfo			Device descriptor
+		 * @param pAllocator			Allocator
+		 * @param device				Returned logical device handle
+		 * @return Result
+		 */
+		int vkCreateDevice(PhysicalDevice physicalDevice, VkDeviceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference device);
+
+		/**
+		 * Destroys a logical device.
+		 * @param device				Device handle
+		 * @param pAllocator			Allocator
+		 * @return Result
+		 */
+		void vkDestroyDevice(LogicalDevice device, Pointer pAllocator);
+
+		/**
+		 * Waits for the given device to become idle.
+		 * @param device Logical device
+		 * @return Result code
+		 */
+		int vkDeviceWaitIdle(LogicalDevice device);
+
+		/**
+		 * Retrieves logical device queue handle(s).
+		 * @param device				Device handle
+		 * @param queueFamilyIndex		Queue family index
+		 * @param queueIndex			Queue index
+		 * @param pQueue				Returned queue handle
+		 */
+		void vkGetDeviceQueue(Pointer device, int queueFamilyIndex, int queueIndex, PointerByReference pQueue);
+
+		/**
+		 * Submits work to a queue.
+		 * @param queue					Queue
+		 * @param submitCount			Number of submissions
+		 * @param pSubmits				Work submissions
+		 * @param fence					Optional fence
+		 * @return Result code
+		 */
+		int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
+
+		/**
+		 * Waits for the given queue to become idle.
+		 * @param queue Queue
+		 * @return Result code
+		 */
+		int vkQueueWaitIdle(Queue queue);
 	}
 }

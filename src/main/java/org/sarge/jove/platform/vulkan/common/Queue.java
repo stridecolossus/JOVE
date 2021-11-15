@@ -1,14 +1,14 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.Set;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.lib.util.Check;
 
 /**

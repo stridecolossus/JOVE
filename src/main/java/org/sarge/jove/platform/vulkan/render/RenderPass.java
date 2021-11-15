@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.List;
 import java.util.Map;
@@ -12,12 +12,15 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkAttachmentDescription;
 import org.sarge.jove.platform.vulkan.VkAttachmentReference;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
 import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
+import org.sarge.jove.platform.vulkan.VkSubpassContents;
 import org.sarge.jove.platform.vulkan.VkSubpassDependency;
 import org.sarge.jove.platform.vulkan.VkSubpassDescription;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency.Dependency;
@@ -217,5 +220,70 @@ public class RenderPass extends AbstractVulkanObject {
 			if(index == -1) throw new IllegalArgumentException("Sub-pass is not a member of this render-pass: " + subpass);
 			return index;
 		}
+	}
+
+	/**
+	 * Render pass API.
+	 */
+	interface Library {
+		/**
+		 * Creates a render pass.
+		 * @param device			Logical device
+		 * @param pCreateInfo		Descriptor
+		 * @param pAllocator		Allocator
+		 * @param pRenderPass		Returned render pass handle
+		 * @return Result code
+		 */
+		int vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pRenderPass);
+
+		/**
+		 * Destroys a render pass.
+		 * @param device			Logical device
+		 * @param renderPass		Render pass
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroyRenderPass(DeviceContext device, RenderPass renderPass, Pointer pAllocator);
+
+		/**
+		 * Command - Begins a render pass.
+		 * @param commandBuffer			Command buffer
+		 * @param pRenderPassBegin		Descriptor
+		 * @param contents				Sub-pass contents
+		 */
+		void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
+
+		/**
+		 * Command - Ends a render pass.
+		 * @param commandBuffer Command buffer
+		 */
+		void vkCmdEndRenderPass(Buffer commandBuffer);
+
+		/**
+		 * Command - Starts the next sub-pass.
+		 * @param commandBuffer			Command buffer
+		 * @param contents				Sub-pass contents
+		 */
+		void vkCmdNextSubpass(Buffer commandBuffer, VkSubpassContents contents);
+
+		/**
+		 * Command - Draws vertices.
+		 * @param commandBuffer			Command buffer
+		 * @param vertexCount			Number of vertices
+		 * @param instanceCount			Number of instances
+		 * @param firstVertex			First vertex index
+		 * @param firstInstance			First index index
+		 */
+		void vkCmdDraw(Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
+
+		/**
+		 * Command - Draws indexed vertices.
+		 * @param commandBuffer			Command buffer
+		 * @param indexCount			Number of indices
+		 * @param instanceCount			Number of instances
+		 * @param firstIndex			First index
+		 * @param firstVertex			First vertex index
+		 * @param firstInstance			First instance
+		 */
+		void vkCmdDrawIndexed(Buffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance);
 	}
 }

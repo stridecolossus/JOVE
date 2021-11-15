@@ -26,7 +26,6 @@ import org.sarge.jove.platform.vulkan.VkFormatProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
@@ -11,11 +11,13 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
@@ -243,5 +245,68 @@ public interface Image extends NativeObject {
 			// Create image
 			return new DefaultImage(handle.getValue(), dev, descriptor, mem);
 		}
+	}
+
+	/**
+	 * Image API.
+	 */
+	interface Library {
+		/**
+		 * Creates an image.
+		 * @param device			Logical device
+		 * @param pCreateInfo		Descriptor
+		 * @param pAllocator		Allocator
+		 * @param pImage			Returned image
+		 * @return Result code
+		 */
+		int vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pImage);
+
+		/**
+		 * Destroys an image.
+		 * @param device			Logical device
+		 * @param image				Image
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroyImage(DeviceContext device, Image image, Pointer pAllocator);
+
+		/**
+		 * Retrieves the memory requirements for the given image.
+		 * @param device				Logical device
+		 * @param image					Image
+		 * @param pMemoryRequirements	Returned memory requirements
+		 */
+		void vkGetImageMemoryRequirements(LogicalDevice device, Pointer image, VkMemoryRequirements pMemoryRequirements);
+
+		/**
+		 * Binds image memory.
+		 * @param device			Logical device
+		 * @param image				Image
+		 * @param memory			Image memory
+		 * @param memoryOffset		Offset
+		 * @return Result code
+		 */
+		int vkBindImageMemory(LogicalDevice device, Pointer image, DeviceMemory memory, long memoryOffset);
+
+		/**
+		 * Copies a buffer to an image.
+		 * @param commandBuffer		Command
+		 * @param srcBuffer			Buffer
+		 * @param dstImage			Image
+		 * @param dstImageLayout	Image layout
+		 * @param regionCount		Number of regions
+		 * @param pRegions			Regions
+		 */
+		void vkCmdCopyBufferToImage(Buffer commandBuffer, VulkanBuffer srcBuffer, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
+
+		/**
+		 * Copies an image to a buffer.
+		 * @param commandBuffer		Command
+		 * @param srcImage			Image
+		 * @param srcImageLayout	Image layout
+		 * @param dstBuffer			Buffer
+		 * @param regionCount		Number of regions
+		 * @param pRegions			Regions
+		 */
+		void vkCmdCopyImageToBuffer(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, VulkanBuffer dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
 	}
 }

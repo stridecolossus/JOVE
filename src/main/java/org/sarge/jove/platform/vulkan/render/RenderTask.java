@@ -9,12 +9,12 @@ import java.util.function.IntFunction;
 import org.sarge.jove.control.RenderLoop.Task;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
-import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Work;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.lib.util.Check;
 
 /**

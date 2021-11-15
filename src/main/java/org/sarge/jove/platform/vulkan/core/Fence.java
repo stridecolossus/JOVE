@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.Collection;
 import java.util.Set;
@@ -9,7 +9,6 @@ import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
@@ -123,5 +122,57 @@ public class Fence extends AbstractVulkanObject {
 	@Override
 	protected Destructor<Fence> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyFence;
+	}
+
+	/**
+	 * Fence API.
+	 */
+	interface Library {
+		/**
+		 * Creates a fence.
+		 * @param device			Device
+		 * @param pCreateInfo		Descriptor
+		 * @param pAllocator		Allocator
+		 * @param pSemaphore		Returned fence
+		 * @return Result code
+		 */
+		int vkCreateFence(DeviceContext device, VkFenceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFence);
+
+		/**
+		 * Destroys a fence.
+		 * @param device			Device
+		 * @param fence				Fence
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroyFence(DeviceContext device, Fence fence, Pointer pAllocator);
+
+		/**
+		 * Resets a number of fences.
+		 * @param device			Device
+		 * @param fenceCount		Number of fences
+		 * @param pFences			Fences
+		 * @return Result code
+		 */
+		int vkResetFences(DeviceContext device, int fenceCount, Pointer pFences);
+
+		/**
+		 * Retrieves the status of a given fence.
+		 * @param device
+		 * @param fence
+		 * @return Fence status flag
+		 * @see VkResult
+		 */
+		int vkGetFenceStatus(DeviceContext device, Fence fence);
+
+		/**
+		 * Waits for a number of fences.
+		 * @param device			Device
+		 * @param fenceCount		Number of fences
+		 * @param pFences			Fences
+		 * @param waitAll			Whether to wait for <b>all</b> fences or <b>any</b>
+		 * @param timeout			Timeout or {@link Long#MAX_VALUE}
+		 * @return Result code
+		 */
+		int vkWaitForFences(DeviceContext device, int fenceCount, Pointer pFences, VulkanBoolean waitAll, long timeout);
 	}
 }

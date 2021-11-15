@@ -17,11 +17,10 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
-import org.sarge.jove.platform.vulkan.common.Command;
-import org.sarge.jove.platform.vulkan.common.Command.Buffer;
-import org.sarge.jove.platform.vulkan.common.Command.Pool;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class WorkTest extends AbstractVulkanTest {

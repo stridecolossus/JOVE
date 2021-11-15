@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.toList;
-import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
+import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
@@ -18,7 +18,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.Extension;
@@ -325,5 +324,75 @@ public class PhysicalDevice implements NativeObject {
 				.append("instance", instance)
 				.append("families", families.size())
 				.build();
+	}
+
+	/**
+	 * Vulkan physical device API.
+	 */
+	interface Library {
+		/**
+		 * Enumerates the physical devices on this platform.
+		 * @param instance		Vulkan instance
+		 * @param count			Number of devices
+		 * @param devices		Device handles
+		 * @return Result
+		 */
+		int vkEnumeratePhysicalDevices(Instance instance, IntByReference count, Pointer[] devices);
+
+		/**
+		 * Retrieves the properties of the given physical device.
+		 * @param device		Device handle
+		 * @param props			Properties
+		 */
+		void vkGetPhysicalDeviceProperties(PhysicalDevice device, VkPhysicalDeviceProperties props);
+
+		/**
+		 * Retrieves the memory properties of the given physical device.
+		 * @param device				Device
+		 * @param pMemoryProperties		Returned memory properties
+		 */
+		void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, VkPhysicalDeviceMemoryProperties pMemoryProperties);
+
+		/**
+		 * Retrieves the features of the given physical device.
+		 * @param device		Device handle
+		 * @param features		Features
+		 */
+		void vkGetPhysicalDeviceFeatures(PhysicalDevice device, VkPhysicalDeviceFeatures features);
+
+		/**
+		 * Enumerates the queue families of a device.
+		 * @param device		Device handle
+		 * @param count			Number of devices
+		 * @param props			Queue family properties
+		 */
+		void vkGetPhysicalDeviceQueueFamilyProperties(Pointer device, IntByReference count, VkQueueFamilyProperties props);
+
+		/**
+		 * Enumerates device-specific extension properties.
+		 * @param device		Physical device handle
+		 * @param layer			Layer name or <tt>null</tt> for all
+		 * @param count			Number of extensions
+		 * @param extensions	Returned extensions
+		 * @return Result
+		 */
+		int vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, IntByReference count, VkExtensionProperties extensions);
+
+		/**
+		 * Enumerates device-specific validation layers.
+		 * @param device		Physical device handle
+		 * @param count			Number of layers
+		 * @param extensions	Returned layers
+		 * @return Result
+		 */
+		int vkEnumerateDeviceLayerProperties(PhysicalDevice device, IntByReference count, VkLayerProperties layers);
+
+		/**
+		 * Retrieves supported properties of the given format.
+		 * @param device		Physical device handle
+		 * @param format		Format
+		 * @param props			Format properties
+		 */
+		void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, VkFormatProperties props);
 	}
 }

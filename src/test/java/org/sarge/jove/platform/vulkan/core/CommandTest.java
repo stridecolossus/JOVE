@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,9 +24,10 @@ import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.common.Command.Buffer;
-import org.sarge.jove.platform.vulkan.common.Command.Pool;
+import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Memory;

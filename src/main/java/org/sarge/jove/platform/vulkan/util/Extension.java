@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkExtensionProperties;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 /**
  * Vulkan extensions utilities.
