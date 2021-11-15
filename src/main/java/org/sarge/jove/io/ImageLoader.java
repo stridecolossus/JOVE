@@ -4,7 +4,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 

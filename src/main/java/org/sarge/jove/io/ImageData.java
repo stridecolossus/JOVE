@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.lib.util.Check;

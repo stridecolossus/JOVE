@@ -140,7 +140,7 @@ public class PipelineCache extends AbstractVulkanObject {
 		// TODO
 		public void write(PipelineCache cache, OutputStream out) throws IOException {
 			final ByteBuffer bb = cache.data();
-			final byte[] data = BufferHelper.toArray(bb);
+			final byte[] data = BufferHelper.array(bb);
 			out.write(data);
 		}
 	}

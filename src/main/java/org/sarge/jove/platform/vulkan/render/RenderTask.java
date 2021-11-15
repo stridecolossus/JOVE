@@ -77,7 +77,7 @@ public class RenderTask implements Task {
 		/**
 		 * Release resources.
 		 */
-		private void close() {
+		private void destroy() {
 			available.destroy();
 			ready.destroy();
 			fence.destroy();
@@ -131,9 +131,9 @@ public class RenderTask implements Task {
 	/**
 	 * Destroys this render loop and any resources.
 	 */
-	public void close() {
+	public void destroy() {
 		for(Frame f : frames) {
-			f.close();
+			f.destroy();
 		}
 	}
 }

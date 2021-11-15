@@ -122,7 +122,7 @@ public class Desktop {
 	/**
 	 * Destroys this desktop.
 	 */
-	public void close() {
+	public void destroy() {
 		lib.glfwTerminate();
 	}
 }

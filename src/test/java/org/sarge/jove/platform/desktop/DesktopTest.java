@@ -81,8 +81,8 @@ public class DesktopTest {
 	}
 
 	@Test
-	void close() {
-		desktop.close();
+	void destroy() {
+		desktop.destroy();
 		verify(lib).glfwTerminate();
 	}
 
@@ -91,6 +91,6 @@ public class DesktopTest {
 	@Test
 	void create() {
 		final Desktop desktop = Desktop.create();
-		desktop.close();
+		desktop.destroy();
 	}
 }

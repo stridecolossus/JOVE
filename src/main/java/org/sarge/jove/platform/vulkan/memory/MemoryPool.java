@@ -187,7 +187,7 @@ public class MemoryPool {
 	/**
 	 * Destroys <b>all</b> memory allocated by this pool.
 	 */
-	public synchronized void close() {
+	public synchronized void destroy() {
 		for(Block b : blocks) {
 			b.destroy();
 		}

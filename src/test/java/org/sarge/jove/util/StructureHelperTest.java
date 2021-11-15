@@ -12,17 +12,9 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import org.sarge.jove.common.MockStructure;
 
 public class StructureHelperTest {
-	// Note has to be public
-	@FieldOrder("field")
-	public static class MockStructure extends Structure {
-		public int field;
-	}
-
 	private Object obj;
 	private BiConsumer<Object, MockStructure> populate;
 

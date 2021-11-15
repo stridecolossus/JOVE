@@ -186,9 +186,9 @@ public class MemoryPoolTest {
 
 	@DisplayName("Destroying the pool should destroy all allocated blocks")
 	@Test
-	void close() {
+	void destroy() {
 		final DeviceMemory mem = pool.allocate(1);
-		pool.close();
+		pool.destroy();
 		when(block.isDestroyed()).thenReturn(true);
 		assertEquals(0, pool.size());
 		assertEquals(0, pool.free());

@@ -11,10 +11,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -26,7 +25,6 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -171,35 +169,32 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Updates this uniform buffer at the specified offset.
-		 * @param offset		Offset
-		 * @param data			Data
+		 * Rewinds this uniform buffer.
 		 */
-		public void load(int offset, Bufferable data) {
-			buffer.position(offset);
-			data.buffer(buffer);
+		public UniformBuffer rewind() {
+			buffer.rewind();
+			return this;
 		}
 
 		/**
-		 * Updates an <i>element</i> of this uniform buffer.
-		 * @param offset		Buffer offset
+		 * Adds the given data to this uniform buffer.
+		 * @param data Data
+		 */
+		public UniformBuffer append(Bufferable data) {
+			data.buffer(buffer);
+			return this;
+		}
+
+		/**
+		 * Inserts a data <i>element</i> into this uniform buffer.
 		 * @param index			Element index
 		 * @param data			Data
 		 */
-		public void load(int offset, int index, Bufferable data) {
-			final int pos = offset + index * data.length();
-			load(pos, data);
-		}
-
-		/**
-		 * Loads a structure into this uniform buffer.
-		 * @param offset		Buffer offset
-		 * @param struct		Structure
-		 */
-		public void load(int offset, Structure struct) {
-			final ByteBuffer bb = struct.getPointer().getByteBuffer(0, struct.size());
-			buffer.position(offset);
-			BufferHelper.copy(bb, buffer);
+		public UniformBuffer insert(int index, Bufferable data) {
+			final int pos = index * data.length();
+			buffer.position(pos);
+			data.buffer(buffer);
+			return this;
 		}
 	}
 

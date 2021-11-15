@@ -96,9 +96,9 @@ public class PoolAllocatorTest {
 	}
 
 	@Test
-	void close() {
+	void destroy() {
 		allocator.allocate(type, 1);
-		allocator.close();
+		allocator.destroy();
 		assertEquals(0, allocator.count());
 		assertEquals(0, allocator.size());
 		assertEquals(0, allocator.free());

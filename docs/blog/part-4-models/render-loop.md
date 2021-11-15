@@ -394,9 +394,9 @@ public void present(Queue queue, Set<Semaphore> semaphores) {
 Finally we release the semaphores when the render loop object is destroyed:
 
 ```java
-public void close() {
-    available.close();
-    ready.close();
+public void destroy() {
+    available.destroy();
+    ready.destroy();
 }
 ```
 
@@ -764,7 +764,7 @@ private class Frame {
         ...
     }
     
-    private void close() {
+    private void destroy() {
         ...
     }
 }
@@ -787,9 +787,9 @@ public class RenderLoop {
 The frames are also released on destruction:
 
 ```java
-public void close() {
+public void destroy() {
     for(Frame f : frames) {
-        f.close();
+        f.destroy();
     }
 }
 ```

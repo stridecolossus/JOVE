@@ -548,8 +548,8 @@ for(int n = 0; n < Image.CUBEMAP_ARRAY_LAYERS; ++n) {
 }
 ```
 
-Note that the buffer offset is populated using the `offset` helper we implemented earlier.
- 
+Note that the copy region uses the `offset` helper we implemented earlier to offset into the compound image array.
+
 Finally the copy command is invoked and we release the staged image:
 
 ```java

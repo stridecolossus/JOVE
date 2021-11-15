@@ -137,8 +137,8 @@ public class PoolAllocator implements Allocator {
 	/**
 	 * Destroys <b>all</b> memory allocation by this pool.
 	 */
-	public synchronized void close() {
-		pools.values().forEach(MemoryPool::close);
+	public synchronized void destroy() {
+		pools.values().forEach(MemoryPool::destroy);
 		count = 0;
 		assert size() == 0;
 		assert free() == 0;

@@ -15,9 +15,9 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
@@ -34,8 +34,6 @@ import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
 
 public class VulkanBufferTest extends AbstractVulkanTest {
 	private static final Set<VkBufferUsage> FLAGS = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_SRC, VkBufferUsage.UNIFORM_BUFFER);
@@ -108,7 +106,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void close() {
+	void destroy() {
 		buffer.destroy();
 		verify(lib).vkDestroyBuffer(dev, buffer, null);
 		verify(mem).destroy();
@@ -150,12 +148,6 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		}
 	}
 
-	// TODO - use one of these for all test cases?
-	@FieldOrder("field")
-	public static class MockStructure extends Structure {
-		public int field;
-	}
-
 	@Nested
 	class UniformBufferTests {
 		private UniformBuffer uniform;
@@ -195,26 +187,16 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void load() {
-			uniform.load(1, data);
-			verify(bb).position(1);
+		void append() {
+			uniform.append(data);
 			verify(data).buffer(bb);
 		}
 
 		@Test
-		void loadElement() {
-			uniform.load(1, 2, data);
-			verify(bb).position(1 + (2 * 5));
+		void insert() {
+			uniform.insert(2, data);
+			verify(bb).position(2 * 5);
 			verify(data).buffer(bb);
-		}
-
-		@Test
-		void loadStructure() {
-			final Structure struct = new MockStructure();
-			final ByteBuffer ptr = struct.getPointer().getByteBuffer(0, struct.size());
-			uniform.load(2, struct);
-			verify(bb).position(2);
-			verify(bb).put(ptr);
 		}
 	}
 }

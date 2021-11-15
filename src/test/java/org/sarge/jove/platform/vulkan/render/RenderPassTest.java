@@ -170,7 +170,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void close() {
+	void destroy() {
 		pass.destroy();
 		verify(lib).vkDestroyRenderPass(dev, pass, null);
 	}

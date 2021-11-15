@@ -16,10 +16,10 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.model.Model.Header;
 
 class DefaultModelTest {

@@ -42,7 +42,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void close() {
+	void destroy() {
 		mem.map();
 		mem.destroy();
 		assertEquals(true, mem.isDestroyed());

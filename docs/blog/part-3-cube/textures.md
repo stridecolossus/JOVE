@@ -488,7 +488,7 @@ class DefaultImage extends AbstractVulkanObject implements Image {
     @Override
     protected void release() {
         if(!mem.isDestroyed()) {
-            mem.close();
+            mem.destroy();
         }
     }
 }

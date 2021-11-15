@@ -10,14 +10,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.common.MockStructure;
 import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.jove.platform.vulkan.VkStructureType;
-import org.sarge.jove.platform.vulkan.api.VulkanLibrary.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-
-import com.sun.jna.Structure.FieldOrder;
 
 public class VulkanLibraryTest {
 	@Test
@@ -52,12 +49,6 @@ public class VulkanLibraryTest {
 	void create() {
 		final VulkanLibrary api = VulkanLibrary.create();
 		assertNotNull(api);
-	}
-
-	// Note has to be public
-	@FieldOrder("sType")
-	public static class MockStructure extends VulkanStructure {
-		public VkStructureType sType;
 	}
 
 	@Nested

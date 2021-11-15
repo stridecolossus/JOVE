@@ -147,7 +147,8 @@ public class Camera {
 		// Determine right axis
 		right = up.cross(dir).normalize();
 
-		// Determine up axis (note Y axis is inverted)
+		// Determine up axis
+		// TODO - tutorial has dir.cross(right), Y is inverted, add global flip flag here as well?  Note cannot invert UP axis?
 		final Vector y = right.cross(dir).normalize();
 
 		// Build translation component

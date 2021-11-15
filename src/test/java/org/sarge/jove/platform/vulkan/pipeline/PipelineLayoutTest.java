@@ -80,7 +80,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void close() {
+	void destroy() {
 		final PipelineLayout layout = builder.build(dev);
 		layout.destroy();
 		verify(lib).vkDestroyPipelineLayout(dev, layout, null);

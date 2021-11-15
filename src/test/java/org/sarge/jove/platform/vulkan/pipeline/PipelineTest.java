@@ -55,7 +55,7 @@ public class PipelineTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void close() {
+	void destroy() {
 		pipeline.destroy();
 		verify(lib).vkDestroyPipeline(dev, pipeline, null);
 	}

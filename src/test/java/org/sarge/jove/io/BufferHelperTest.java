@@ -51,9 +51,9 @@ public class BufferHelperTest {
 	}
 
 	@Test
-	void toArray() {
+	void array() {
 		final ByteBuffer bb = BufferHelper.buffer(BYTES);
-		final byte[] array = BufferHelper.toArray(bb);
+		final byte[] array = BufferHelper.array(bb);
 		assertArrayEquals(BYTES, array);
 	}
 
@@ -67,24 +67,6 @@ public class BufferHelperTest {
 	void writeDirectBuffer() {
 		when(bb.isDirect()).thenReturn(true);
 		BufferHelper.write(BYTES, bb);
-		for(byte b : BYTES) {
-			verify(bb).put(b);
-		}
-	}
-
-	@Test
-	void copy() {
-		final ByteBuffer src = BufferHelper.buffer(BYTES);
-		BufferHelper.copy(src, bb);
-		verify(bb).put(src);
-	}
-
-	@Test
-	void copyDirect() {
-		final ByteBuffer src = BufferHelper.buffer(BYTES);
-		src.rewind();
-		when(bb.isDirect()).thenReturn(true);
-		BufferHelper.copy(src, bb);
 		for(byte b : BYTES) {
 			verify(bb).put(b);
 		}

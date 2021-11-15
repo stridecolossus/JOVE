@@ -292,7 +292,7 @@ Finally the memory is released when the buffer is destroyed:
 @Override
 protected void release() {
     if(!mem.isDestroyed()) {
-        mem.close();
+        mem.destroy();
     }
 }
 ```
@@ -611,7 +611,7 @@ staging
 And finally we release the staging buffer:
 
 ```java
-staging.close();
+staging.destroy();
 return vbo;
 ```
 

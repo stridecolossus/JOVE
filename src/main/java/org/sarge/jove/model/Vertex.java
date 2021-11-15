@@ -8,9 +8,9 @@ import java.util.Objects;
 import java.util.stream.Collector;
 
 import org.apache.commons.collections4.ListUtils;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.Bufferable;
 
 /**
  * A <i>vertex</i> is a compound object comprised of a collection of <i>components</i> such as vertex positions, normals, texture coordinates, etc.

@@ -13,7 +13,6 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 

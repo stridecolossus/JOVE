@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.io.Bufferable;
 import org.sarge.lib.util.Check;
 
 /**

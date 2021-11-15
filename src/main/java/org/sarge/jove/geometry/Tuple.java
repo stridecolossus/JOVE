@@ -4,9 +4,9 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.util.MathsUtil;
 
 /**

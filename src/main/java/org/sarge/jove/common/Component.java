@@ -1,5 +1,7 @@
 package org.sarge.jove.common;
 
+import org.sarge.jove.io.Bufferable;
+
 /**
  * A <i>component</i> is a bufferable object with a layout.
  * @author Sarge

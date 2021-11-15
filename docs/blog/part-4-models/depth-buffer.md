@@ -74,7 +74,7 @@ private VulkanBuffer buffer(Bufferable data, VkBufferUsage usage) {
     staging.copy(buffer).submitAndWait(graphics);
 
     // Release staging
-    staging.close();
+    staging.destroy();
 
     return buffer;
 }

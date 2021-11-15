@@ -447,7 +447,7 @@ class Block {
     }
 
     void destroy() {
-        mem.close();
+        mem.destroy();
         allocations.clear();
     }
 }
@@ -483,7 +483,7 @@ class BlockDeviceMemory implements DeviceMemory {
     }
     
     @Override
-    public synchronized void close() {
+    public synchronized void destroy() {
         checkAlive();
         destroyed = true;
     }
@@ -609,7 +609,7 @@ Stream<? extends DeviceMemory> allocations() {
 Destroying the pool also destroys the allocated memory blocks:
 
 ```java
-public synchronized void close() {
+public synchronized void destroy() {
     for(Block b : blocks) {
         b.destroy();
     }
@@ -747,7 +747,7 @@ public synchronized void release() {
 And to destroy all allocated memory:
 
 ```java
-public synchronized void close() {
+public synchronized void destroy() {
     pools.values().forEach(MemoryPool::close);
     count = 0;
     assert size() == 0;

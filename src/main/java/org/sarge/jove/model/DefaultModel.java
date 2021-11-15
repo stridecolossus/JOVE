@@ -9,8 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.model.Model.AbstractModel;
 
 /**
