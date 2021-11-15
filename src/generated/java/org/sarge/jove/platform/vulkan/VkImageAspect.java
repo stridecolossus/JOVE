@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.common.IntegerEnumeration;
+import org.sarge.jove.util.IntegerEnumeration;
 
 /**
  * Vulkan enumeration wrapper.

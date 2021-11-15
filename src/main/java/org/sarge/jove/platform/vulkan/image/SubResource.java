@@ -8,10 +8,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceLayers;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
+import org.sarge.jove.util.IntegerEnumeration;
 
 /**
  * An <i>image sub-resource</i> defines a subset of the image aspects, mip levels and array layers of an image.

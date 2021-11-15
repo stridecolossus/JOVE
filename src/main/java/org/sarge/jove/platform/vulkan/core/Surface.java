@@ -12,13 +12,13 @@ import java.util.function.Supplier;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrarySurface;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.LazySupplier;
 
 /**

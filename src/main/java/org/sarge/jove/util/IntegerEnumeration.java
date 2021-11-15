@@ -1,4 +1,4 @@
-package org.sarge.jove.common;
+package org.sarge.jove.util;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -10,8 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.ToNativeContext;

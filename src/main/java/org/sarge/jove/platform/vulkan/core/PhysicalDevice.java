@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -26,6 +25,7 @@ import org.sarge.jove.platform.vulkan.util.Extension;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;

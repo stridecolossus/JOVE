@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.platform.vulkan.*;
@@ -22,6 +21,7 @@ import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 
 import com.sun.jna.Pointer;

@@ -1,4 +1,4 @@
-package org.sarge.jove.common;
+package org.sarge.jove.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.MockStructure;
 import org.sarge.jove.io.Bufferable;
 
 public class BufferableTest {

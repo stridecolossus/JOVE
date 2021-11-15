@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkAttachmentDescription;
 import org.sarge.jove.platform.vulkan.VkAttachmentReference;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
@@ -22,6 +21,7 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency.Dependency;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;

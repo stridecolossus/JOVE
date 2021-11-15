@@ -7,10 +7,10 @@ import static org.sarge.lib.util.Check.zeroOrMore;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutBinding;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
 /**

@@ -11,7 +11,6 @@ import java.util.Set;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
@@ -32,6 +31,7 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 

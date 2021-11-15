@@ -6,7 +6,6 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
@@ -16,6 +15,7 @@ import org.sarge.jove.platform.vulkan.common.Command;
 import org.sarge.jove.platform.vulkan.common.Command.Buffer;
 import org.sarge.jove.platform.vulkan.common.Command.Pool;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 

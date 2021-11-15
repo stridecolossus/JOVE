@@ -9,12 +9,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.MockStructure;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.util.IntegerEnumeration;
 
 public class VulkanLibraryTest {
 	@Test

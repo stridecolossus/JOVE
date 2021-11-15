@@ -4,10 +4,10 @@ import static java.util.stream.Collectors.joining;
 
 import java.util.Set;
 
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.Event.Type;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
 /**

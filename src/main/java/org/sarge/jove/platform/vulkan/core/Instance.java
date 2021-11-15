@@ -17,7 +17,6 @@ import java.util.function.Supplier;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType;
@@ -28,6 +27,7 @@ import org.sarge.jove.platform.vulkan.api.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.LazySupplier;
 

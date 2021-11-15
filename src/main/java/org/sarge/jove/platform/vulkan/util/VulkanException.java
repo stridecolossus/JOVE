@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.util.IntegerEnumeration;
 
 /**
  * A <i>Vulkan exception</i> wraps an error code returned by the Vulkan platform.

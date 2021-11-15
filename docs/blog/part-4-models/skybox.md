@@ -8,9 +8,7 @@ In this chapter we will add a _skybox_ to the demo application.
 
 The skybox will be implemented as a cube centred on the camera rendered with a cubemap texture.
 
-Initially each image will be loaded and copied separately to the cubemap texture, we will then implement a compound _image array_ to improve the performance of the loading process.
-
-TODO
+We will then make changes to improve the performance of the loading process and to simplify building the render sequence.
 
 ---
 
@@ -18,9 +16,36 @@ TODO
 
 ### Pipeline Configuration
 
-The skybox requires new shaders and a custom pipeline configuration for rendering.
+We start with a new configuration class for the skybox which requires new shaders and a custom pipeline configuration:
 
-We start with the pipeline builder for the rasterizer stage which is essentially a wrapper for the underlying descriptor:
+```java
+@Configuration
+public class SkyBoxConfiguration {
+    @Bean
+    public Pipeline skyboxPipeline(...) {
+        return new Pipeline.Builder()
+            ...
+            .depth()
+                .enable(true)
+                .write(false)
+                .build()
+            .rasterizer()
+                .cull(VkCullMode.FRONT)
+                .build()
+            .build(dev);
+    }
+}
+```
+
+Notes:
+
+* The depth test is enabled but does not update the depth buffer (specified by the `write` property) which ensures the skybox is not rendered over existing geometry.
+
+* Front faces are culled (see below) since the camera is _inside_ the skybox.
+
+* The new pipeline shares the existing pipeline layout.
+
+The builder for the _rasterizer_ pipeline stage is essentially a wrapper for the underlying descriptor:
 
 ```java
 public class RasterizerStageBuilder extends AbstractPipelineBuilder<VkPipelineRasterizationStateCreateInfo> {
@@ -53,35 +78,6 @@ public RasterizerStageBuilder() {
 }
 ```
 
-Next we create a new configuration class for the skybox pipeline:
-
-```java
-@Configuration
-public class SkyBoxConfiguration {
-    @Bean
-    public Pipeline skyboxPipeline(...) {
-        return new Pipeline.Builder()
-            ...
-            .depth()
-                .enable(true)
-                .write(false)
-                .build()
-            .rasterizer()
-                .cull(VkCullMode.FRONT)
-                .build()
-            .build(dev);
-    }
-}
-```
-
-Notes:
-
-* The depth test is enabled but does not update the depth buffer (specified by the `write` property) which ensures the skybox is not rendered over existing geometry.
-
-* Front faces are culled since the camera is _inside_ the skybox.
-
-* The new pipeline shares the existing pipeline layout.
-
 Next we create a cube model for the skybox:
 
 ```java
@@ -95,7 +91,7 @@ public static Model skybox() {
 
 Note that we only need the vertex positions in the skybox shader (see below).
 
-Finally a cubemap sampler is created which clamps texture coordinates:
+Finally a cubemap sampler is created which also clamps texture coordinates:
 
 ```java
 @Bean
@@ -108,7 +104,46 @@ public Sampler cubeSampler() {
 
 ### Shaders
 
-The vertex shader for the skybox is as follows:
+In the vertex shader for the skybox we first split the matrices which were previously multiplied together in the application:
+
+```glsl
+#version 450
+
+layout(set = 0, binding = 1) uniform UniformBuffer {
+    mat4 model;
+    mat4 view;
+    mat4 projection;
+};
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 0) out vec3 outCoords;
+```
+
+The reason for this change is so the vertex positions of the skybox cube can be transformed by the view transform without being affected by the other components:
+
+```glsl
+void main() {
+    vec3 pos = mat3(view) * inPosition;
+}
+```
+
+Note that we use the build-in `mat3` operator to extract the rotation component of the view matrix.
+
+The projection transformation sets the last two components to be the same so that the resultant vertex lies on the far clipping plane, i.e. the skybox is drawn _behind_ the rest of the geometry.
+
+```glsl
+gl_Position = (projection * vec4(pos, 0.0)).xyzz;
+```
+
+Finally the texture coordinate is simply set to the incoming vertex position (hence the reason for not including texture coordinates in the cube model).
+
+```glsl
+outCoords = inPosition;
+```
+
+> We could have used a similar technique in the rotating cube demo.
+
+The full vertex shader is as follows:
 
 ```glsl
 #version 450
@@ -132,13 +167,9 @@ void main() {
 
 Notes:
 
-* The uniform buffer is now comprised of the three matrices as separate elements.
+* The `model` matrix is not used in the skybox shader.
 
-* The vertex position is first transformed by the rotation component of the view matrix (extracted using the built in `mat3` GLSL method) since the skybox is centred on the camera.
-
-* The projection transformation sets the last two components of the position to be same ensuring that the vertex lies on the far clipping plane.
-
-* The texture coordinate is set to the vertex position (we could have used the same technique in the rotating cube demo).
+* The existing vertex shader for the chalet model is refactored accordingly (both pipelines share the same layout).
 
 The fragment shader is the same as the previous demo except the sampler has a `samplerCube` declaration:
 
@@ -174,7 +205,7 @@ public class UniformBuffer implements DescriptorResource {
 }
 ```
 
-The new class can now support helper methods to populate the uniform buffer:
+The new class can now support convenience helper methods to populate the uniform buffer:
 
 ```java
 public UniformBuffer rewind() {
@@ -237,11 +268,11 @@ static Bufferable of(Structure struct) {
 }
 ```
 
-This allows arbitrary JNA structures to be used to populate a uniform buffer (which will become useful in future chapters).
+This allows arbitrary JNA structures to be used to populate a uniform buffer which will become useful in later chapters.
 
 ### Loader
 
-The code to load the cubemap texture roughly follows the same pattern as the chalet texture with the following differences.
+Initially we will load separate images for each 'face' of the cubemap texture.  The code roughly follows the same pattern as the chalet texture with the following differences:
 
 The texture is configured with six array layers (for each face of the cube):
 
@@ -265,7 +296,7 @@ Image texture = new Image.Builder()
     .build(dev, allocator);
 ```
 
-For some reason configuring the image as a cubemap is specified by a creation flag:
+Configuring the texture as a cubemap is specified as a creation flag:
 
 ```java
 public Builder cubemap() {
@@ -326,7 +357,7 @@ Integration of the skybox requires:
 
 * The addition of a second group of descriptor sets for the new pipeline.
 
-* The descriptor pool size is doubled accordingly.
+* Doubling the descriptor pool size.
 
 The final change is the addition of the following commands to the render sequence:
 
@@ -355,7 +386,7 @@ There are a couple of issues with the demo as it stands which we will address ne
 
 ### Image Arrays
 
-Rather than loading each image separately via the `NativeImageLoader` we would prefer a single object and buffer offsets to employ more efficient bulk transfer operations.  We will introduce an _image array_ comprised of a list of JOVE images.
+Rather than loading each image separately via the `NativeImageLoader` we would prefer a single object with offsets to employ more efficient bulk transfer operations.  We will introduce an _image array_ comprised of a list of JOVE images.
 
 To support an image array we first refactor the existing image abstraction:
 
@@ -365,7 +396,7 @@ public record ImageData(Dimensions size, int count, int mip, Layout layout, Buff
 
 The _count_ member is the number of images in the array (or one for a single image).
 
-We also add a placeholder for MIP levels which will be implemented in a future chapter (for now we assume one MIP level).
+We also add a placeholder for MIP levels which will be implemented in a future chapter (for now we assume one MIP level per image).
 
 To create an image array we add a factory method:
 
@@ -470,23 +501,29 @@ public class ImageLoader implements DataResourceLoader<ImageData> {
 
     @Override
     public void save(ImageData image, DataOutputStream out) throws IOException {
-        // Write image image header
-        helper.writeVersion(out);
-        out.writeInt(image.count());
-        out.writeInt(image.mip());
-
-        // Write dimensions
-        final Dimensions size = image.size();
-        out.writeInt(size.width());
-        out.writeInt(size.height());
-
-        // Write layout
-        helper.write(image.layout(), out);
-
-        // Write image data
-        helper.write(image.data(), out);
+        ...
     }
 }
+```
+
+The custom file format is illustrated by the output method:
+
+```java
+// Write image image header
+helper.writeVersion(out);
+out.writeInt(image.count());
+out.writeInt(image.mip());
+
+// Write dimensions
+final Dimensions size = image.size();
+out.writeInt(size.width());
+out.writeInt(size.height());
+
+// Write layout
+helper.write(image.layout(), out);
+
+// Write image data
+helper.write(image.data(), out);
 ```
 
 ### Copy Region
@@ -498,7 +535,11 @@ First a copy region is defined as a simple transient record with a companion bui
 ```java
 public class ImageCopyCommand implements Command {
     ...
-    public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents)
+    public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents) {
+        public static class Builder {
+            ...
+        }
+    }
 }
 ```
 
@@ -551,7 +592,7 @@ public static CopyRegion of(ImageDescriptor descriptor) {
 
 ### Integration
 
-We first temporarily bodge the cubemap loader method to create and output the image array:
+To generate the persistent image array we first temporarily bodge the cubemap loader method to create and output the image array from the separate images:
 
 ```java
 ImageData[] images = new ImageData[6];
@@ -563,7 +604,7 @@ ImageLoader loader = new ImageLoader();
 loader.save(array, new DataOutputStream(...));
 ```
 
-This code is then removed and instead we load the persisted image array:
+This code is then removed and instead we load the persisted compound image:
 
 ```java
 public View cubemap(...) {
@@ -574,13 +615,13 @@ public View cubemap(...) {
 }
 ```
 
-Which is then copied to the staging buffer:
+Which is copied to the staging buffer:
 
 ```
 VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data());
 ```
 
-The copy command builder is moved outside the `for` loop:
+The copy command is moved outside the `for` loop:
 
 ```java
 var copy = new ImageCopyCommand.Builder()
@@ -589,7 +630,7 @@ var copy = new ImageCopyCommand.Builder()
     .layout(VkImageLayout.TRANSFER_DST_OPTIMAL);
 ```
 
-And is refactored to specify a copy region for each image in the cubemap:
+Which is refactored to specify a copy region for each image in the cubemap:
 
 ```java
 for(int n = 0; n < Image.CUBEMAP_ARRAY_LAYERS; ++n) {
@@ -632,11 +673,13 @@ TODO
 
 In this chapter we added a skybox which involved implementing the following:
 
-* Expanding the image class to support array layers.
+* The rasterizer pipeline stage.
+
+* An extended uniform buffer object.
+
+* Extension of the image class to support array layers.
 
 * Implementation of a new custom file format and loader to persist an image array.
 
 * The addition of regions to the image copy command.
-
-* The rasterizer pipeline stage.
 

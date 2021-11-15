@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkBlendFactor;
 import org.sarge.jove.platform.vulkan.VkBlendOp;
 import org.sarge.jove.platform.vulkan.VkColorComponent;
@@ -15,6 +14,7 @@ import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
 
 /**

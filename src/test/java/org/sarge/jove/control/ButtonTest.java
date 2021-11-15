@@ -9,10 +9,10 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Button.Modifier;
 import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.util.IntegerEnumeration;
 
 public class ButtonTest {
 	private Button button;

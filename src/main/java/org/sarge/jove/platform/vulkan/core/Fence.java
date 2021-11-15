@@ -5,7 +5,6 @@ import static org.sarge.jove.platform.vulkan.api.VulkanLibrary.check;
 import java.util.Collection;
 import java.util.Set;
 
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
@@ -15,6 +14,7 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

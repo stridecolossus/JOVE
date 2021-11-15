@@ -11,7 +11,6 @@ import org.sarge.jove.util.MathsUtil;
  */
 public final class Sphere {
 	// TODO - will we ever need this class? integrate into sphere volume?
-	// http://www.songho.ca/opengl/gl_sphere.html
 	private Sphere() {
 	}
 
@@ -49,7 +48,7 @@ public final class Sphere {
 
 		/**
 		 * Creates an adapter that transforms the calculated point to the Vulkan coordinate space.
-		 * Specifically this function transposes the X and Z coordinate of the surface point.
+		 * Specifically this function transposes the Y and Z coordinate of the surface point.
 		 * @return Swizzle adapter
 		 */
 		default PointFactory swizzle() {

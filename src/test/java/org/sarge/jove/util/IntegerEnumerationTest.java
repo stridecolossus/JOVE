@@ -1,4 +1,4 @@
-package org.sarge.jove.common;
+package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,7 +11,8 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.IntegerEnumeration.ReverseMapping;
+import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
 
 import com.sun.jna.FromNativeContext;
 

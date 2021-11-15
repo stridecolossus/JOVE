@@ -34,7 +34,6 @@ public interface Rotation extends Transform {
 		final Builder rot = new Builder().identity();
 		final float sin = MathsUtil.sin(angle);
 		final float cos = MathsUtil.cos(angle);
-		// TODO - do we use these 2x2 matrices elsewhere? i.e. factor out 2x2 and introduce set(r,c,2x2)?
 		if(Vector.X == axis) {
 			rot.set(1, 1, cos);
 			rot.set(1, 2, -sin);

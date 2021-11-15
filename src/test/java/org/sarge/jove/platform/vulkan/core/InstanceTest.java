@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType;
@@ -36,6 +35,7 @@ import org.sarge.jove.platform.vulkan.core.Instance.MessageCallback;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;
