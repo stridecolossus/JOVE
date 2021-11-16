@@ -6,13 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.MockStructure;
 import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -45,7 +42,6 @@ public class VulkanLibraryTest {
 		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(Handle.class));
 	}
 
-	@Tag(AbstractVulkanTest.INTEGRATION_TEST)
 	@Test
 	void create() {
 		final VulkanLibrary api = VulkanLibrary.create();

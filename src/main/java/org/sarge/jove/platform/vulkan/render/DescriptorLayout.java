@@ -40,7 +40,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 
 		// Allocate layout
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference handle = lib.factory().pointer();
+		final PointerByReference handle = dev.factory().pointer();
 		check(lib.vkCreateDescriptorSetLayout(dev, info, null, handle));
 
 		// Create layout

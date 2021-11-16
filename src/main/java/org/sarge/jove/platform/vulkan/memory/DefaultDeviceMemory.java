@@ -134,7 +134,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		// Map memory
 		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = lib.factory().pointer();
+		final PointerByReference ref = dev.factory().pointer();
 		check(lib.vkMapMemory(dev, this, offset, size, 0, ref));
 
 		// Create mapped region

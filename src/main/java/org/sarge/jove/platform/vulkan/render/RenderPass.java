@@ -19,8 +19,8 @@ import org.sarge.jove.platform.vulkan.VkSubpassDependency;
 import org.sarge.jove.platform.vulkan.VkSubpassDescription;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency.Dependency;
@@ -58,7 +58,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 		// Allocate render pass
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference pass = lib.factory().pointer();
+		final PointerByReference pass = dev.factory().pointer();
 		check(lib.vkCreateRenderPass(dev, info, null, pass));
 
 		// Create render pass

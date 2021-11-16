@@ -8,31 +8,26 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
 public class VulkanFunctionTest {
-	private VulkanLibrary lib;
 	private IntByReference count;
 
 	@BeforeEach
 	void before() {
-		lib = mock(VulkanLibrary.class);
 		count = new IntByReference(2);
-		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
-		when(lib.factory().integer()).thenReturn(count);
 	}
 
 	@Test
-	void invokeArray() {
+	void array() {
 		final VulkanFunction<byte[]> func = mock(VulkanFunction.class);
-		final byte[] array = VulkanFunction.invoke(func, lib, byte[]::new);
+		final byte[] array = VulkanFunction.invoke(func, count, byte[]::new);
 		assertNotNull(array);
 		assertEquals(2, array.length);
-		verify(func).enumerate(lib, count, null);
-		verify(func).enumerate(lib, count, array);
+		verify(func).enumerate(count, null);
+		verify(func).enumerate(count, array);
 	}
 
 	@Test
@@ -44,9 +39,9 @@ public class VulkanFunctionTest {
 
 		// Invoke and check resultant array
 		final VulkanFunction<Structure> func = mock(VulkanFunction.class);
-		final Structure[] result = VulkanFunction.invoke(func, lib, () -> struct);
+		final Structure[] result = VulkanFunction.invoke(func, count, () -> struct);
 		assertEquals(array, result);
-		verify(func).enumerate(lib, count, null);
-		verify(func).enumerate(lib, count, struct);
+		verify(func).enumerate(count, null);
+		verify(func).enumerate(count, struct);
 	}
 }

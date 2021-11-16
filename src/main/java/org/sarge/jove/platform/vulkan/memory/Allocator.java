@@ -55,7 +55,7 @@ public interface Allocator {
 
 			// Allocate memory
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = lib.factory().pointer();
+			final PointerByReference ref = dev.factory().pointer();
 			check(lib.vkAllocateMemory(dev, info, null, ref));
 
 			// Create memory wrapper

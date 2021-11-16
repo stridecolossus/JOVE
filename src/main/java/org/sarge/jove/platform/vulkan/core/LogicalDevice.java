@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
@@ -67,6 +68,11 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	@Override
 	public VulkanLibrary library() {
 		return parent.instance().library();
+	}
+
+	@Override
+	public ReferenceFactory factory() {
+		return parent.instance().factory();
 	}
 
 	/**
@@ -265,8 +271,10 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			info.pQueueCreateInfos = StructureHelper.first(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
 
 			// Allocate device
-			final VulkanLibrary lib = parent.instance().library();
-			final PointerByReference handle = lib.factory().pointer();
+			final Instance instance = parent.instance();
+			final VulkanLibrary lib = instance.library();
+			final ReferenceFactory factory = instance.factory();
+			final PointerByReference handle = factory.pointer();
 			check(lib.vkCreateDevice(parent, info, null, handle));
 
 			// Retrieve required queues
@@ -293,7 +301,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 				 * @return New queue
 				 */
 				private Queue create(int index) {
-					final PointerByReference ref = lib.factory().pointer();
+					final PointerByReference ref = factory.pointer();
 					lib.vkGetDeviceQueue(handle.getValue(), family.index(), index, ref);
 					return new Queue(new Handle(ref.getValue()), family);
 				}

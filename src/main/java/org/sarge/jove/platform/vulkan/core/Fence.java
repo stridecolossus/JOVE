@@ -40,7 +40,7 @@ public class Fence extends AbstractVulkanObject {
 
 		// Create fence
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference handle = lib.factory().pointer();
+		final PointerByReference handle = dev.factory().pointer();
 		check(lib.vkCreateFence(dev, info, null, handle));
 
 		// Create domain object

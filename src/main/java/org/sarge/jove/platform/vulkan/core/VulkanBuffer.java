@@ -56,7 +56,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 		// Allocate buffer
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference handle = lib.factory().pointer();
+		final PointerByReference handle = dev.factory().pointer();
 		check(lib.vkCreateBuffer(dev, info, null, handle));
 
 		// Query memory requirements

@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -20,11 +19,6 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public abstract class AbstractVulkanTest {
 	/**
-	 * Identifier for a Vulkan integration test.
-	 */
-	public static final String INTEGRATION_TEST = "vulkan-integration-test";
-
-	/**
 	 * Arbitrary Vulkan format.
 	 */
 	public static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
@@ -41,6 +35,7 @@ public abstract class AbstractVulkanTest {
 
 	protected LogicalDevice dev;
 	protected VulkanLibrary lib;
+	protected ReferenceFactory factory;
 
 	@BeforeEach
 	private final void beforeVulkanTest() {
@@ -48,15 +43,14 @@ public abstract class AbstractVulkanTest {
 		lib = mock(VulkanLibrary.class);
 
 		// Init reference factory
-		final ReferenceFactory factory = mock(ReferenceFactory.class);
+		factory = mock(ReferenceFactory.class);
 		when(factory.integer()).thenReturn(INTEGER);
 		when(factory.pointer()).thenReturn(POINTER);
-		when(factory.array(anyInt())).thenReturn(new Pointer[]{new Pointer(3)});
-		when(lib.factory()).thenReturn(factory);
 
 		// Create logical device
 		dev = mock(LogicalDevice.class);
 		when(dev.handle()).thenReturn(new Handle(1));
 		when(dev.library()).thenReturn(lib);
+		when(dev.factory()).thenReturn(factory);
 	}
 }

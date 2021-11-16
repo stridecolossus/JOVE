@@ -13,11 +13,11 @@ import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
@@ -229,7 +229,7 @@ public interface Image extends NativeObject {
 
 			// Allocate image
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference handle = lib.factory().pointer();
+			final PointerByReference handle = dev.factory().pointer();
 			check(lib.vkCreateImage(dev, info, null, handle));
 
 			// Retrieve image memory requirements

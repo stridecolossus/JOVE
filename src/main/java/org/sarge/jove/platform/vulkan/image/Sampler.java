@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
@@ -10,9 +10,9 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
@@ -280,11 +280,34 @@ public class Sampler extends AbstractVulkanObject {
 
 			// Allocate sampler
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference handle = lib.factory().pointer();
+			final PointerByReference handle = dev.factory().pointer();
 			check(lib.vkCreateSampler(dev, info, null, handle));
 
 			// Create sampler
 			return new Sampler(handle.getValue(), dev);
 		}
+	}
+
+	/**
+	 * Sampler API.
+	 */
+	interface Library {
+		/**
+		 * Creates an image sampler.
+		 * @param device			Logical device
+		 * @param pCreateInfo		Sampler descriptor
+		 * @param pAllocator		Allocator
+		 * @param pSampler			Returned sampler handle
+		 * @return Result code
+		 */
+		int vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
+
+		/**
+		 * Destroys a sampler.
+		 * @param device			Logical device
+		 * @param sampler			Sampler
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroySampler(DeviceContext device, Sampler sampler, Pointer pAllocator);
 	}
 }

@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -20,12 +19,6 @@ public interface ReferenceFactory {
 	PointerByReference pointer();
 
 	/**
-	 * @param num Array size
-	 * @return New pointer array
-	 */
-	Pointer[] array(int num);
-
-	/**
 	 * Default implementation.
 	 */
 	ReferenceFactory DEFAULT = new ReferenceFactory() {
@@ -37,11 +30,6 @@ public interface ReferenceFactory {
 		@Override
 		public PointerByReference pointer() {
 			return new PointerByReference();
-		}
-
-		@Override
-		public Pointer[] array(int num) {
-			return new Pointer[num];
 		}
 	};
 }

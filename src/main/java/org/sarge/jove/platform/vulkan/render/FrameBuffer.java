@@ -86,7 +86,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		// Allocate frame buffer
 		final DeviceContext dev = pass.device();
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference buffer = lib.factory().pointer();
+		final PointerByReference buffer = dev.factory().pointer();
 		check(lib.vkCreateFramebuffer(dev, info, null, buffer));
 
 		// Create frame buffer

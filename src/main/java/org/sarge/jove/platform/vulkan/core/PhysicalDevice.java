@@ -41,8 +41,9 @@ public class PhysicalDevice implements NativeObject {
 	 * @return Physical devices
 	 */
 	public static Stream<PhysicalDevice> devices(Instance instance) {
-		final VulkanFunction<Pointer[]> func = (api, count, devices) -> api.vkEnumeratePhysicalDevices(instance, count, devices);
-		final Pointer[] handles = VulkanFunction.invoke(func, instance.library(), Pointer[]::new);
+		final VulkanFunction<Pointer[]> func = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
+		final IntByReference count = instance.factory().integer();
+		final Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
 		return Arrays.stream(handles).map(ptr -> create(ptr, instance));
 	}
 
@@ -53,11 +54,12 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	private static PhysicalDevice create(Pointer handle, Instance instance) {
 		// Enumerate queue families for this device (for some reason the return type is void)
-		final VulkanFunction<VkQueueFamilyProperties> func = (api, count, array) -> {
-			api.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
+		final VulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
+			instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 			return VulkanLibrary.SUCCESS;
 		};
-		final VkQueueFamilyProperties[] props = VulkanFunction.invoke(func, instance.library(), VkQueueFamilyProperties::new);
+		final IntByReference count = instance.factory().integer();
+		final VkQueueFamilyProperties[] props = VulkanFunction.invoke(func, count, VkQueueFamilyProperties::new);
 
 		// Create queue families
 		final List<Family> families = IntStream
@@ -125,7 +127,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public boolean isPresentationSupported(Surface surface, Family family) {
 		final VulkanLibrary lib = instance.library();
-		final IntByReference supported = lib.factory().integer();
+		final IntByReference supported = instance.factory().integer();
 		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported));
 		return VulkanBoolean.of(supported.getValue()).toBoolean();
 	}
@@ -293,16 +295,20 @@ public class PhysicalDevice implements NativeObject {
 	 * @return Extensions supported by this device
 	 */
 	public Set<String> extensions() {
-		final VulkanFunction<VkExtensionProperties> func = (api, count, array) -> api.vkEnumerateDeviceExtensionProperties(this, null, count, array);
-		return Extension.extensions(instance.library(), func);
+		final VulkanLibrary lib = instance.library();
+		final VulkanFunction<VkExtensionProperties> func = (count, array) -> lib.vkEnumerateDeviceExtensionProperties(this, null, count, array);
+		final IntByReference count = instance.factory().integer();
+		return Extension.extensions(lib, count, func);
 	}
 
 	/**
 	 * @return Validation layers supported by this device
 	 */
 	public Set<ValidationLayer> layers() {
-		final VulkanFunction<VkLayerProperties> func = (api, count, array) -> api.vkEnumerateDeviceLayerProperties(this, count, array);
-		return ValidationLayer.layers(instance.library(), func);
+		final VulkanLibrary lib = instance.library();
+		final VulkanFunction<VkLayerProperties> func = (count, array) -> lib.vkEnumerateDeviceLayerProperties(this, count, array);
+		final IntByReference count = instance.factory().integer();
+		return ValidationLayer.layers(lib, count, func);
 	}
 
 	/**

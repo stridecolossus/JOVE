@@ -35,7 +35,7 @@ public class Shader extends AbstractVulkanObject {
 
 		// Allocate shader
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference shader = lib.factory().pointer();
+		final PointerByReference shader = dev.factory().pointer();
 		check(lib.vkCreateShaderModule(dev, info, null, shader));
 
 		// Create shader

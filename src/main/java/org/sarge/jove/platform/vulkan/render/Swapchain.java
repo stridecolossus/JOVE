@@ -122,7 +122,7 @@ public class Swapchain extends AbstractVulkanObject {
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
 		final DeviceContext dev = device();
 		final VulkanLibrary lib = dev.library();
-		final IntByReference index = lib.factory().integer();
+		final IntByReference index = dev.factory().integer();
 		check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
 		return index.getValue();
 	}
@@ -376,13 +376,14 @@ public class Swapchain extends AbstractVulkanObject {
 
 			// Create swapchain
 			final VulkanLibrary lib = dev.library();
-			final ReferenceFactory factory = lib.factory();
+			final ReferenceFactory factory = dev.factory();
 			final PointerByReference chain = factory.pointer();
 			check(lib.vkCreateSwapchainKHR(dev, info, null, chain));
 
 			// Retrieve swapchain images
-			final VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
-			final var handles = VulkanFunction.invoke(func, lib, factory::array);
+			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
+			final IntByReference count = factory.integer();
+			final Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
 
 			// Init swapchain image descriptor
 			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);

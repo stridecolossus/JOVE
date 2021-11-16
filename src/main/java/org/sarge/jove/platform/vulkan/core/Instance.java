@@ -26,8 +26,8 @@ import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.common.Version;
+import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.LazySupplier;
@@ -45,6 +45,7 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
+	private final ReferenceFactory factory;
 	private final Supplier<Function> create = new LazySupplier<>(() -> function("vkCreateDebugUtilsMessengerEXT"));
 	private final Collection<Pointer> handlers = new ArrayList<>();
 
@@ -53,9 +54,10 @@ public class Instance extends AbstractTransientNativeObject {
 	 * @param lib			Vulkan library
 	 * @param handle		Instance handle
 	 */
-	Instance(VulkanLibrary lib, Handle handle) {
+	Instance(Handle handle, VulkanLibrary lib, ReferenceFactory factory) {
 		super(handle);
 		this.lib = notNull(lib);
+		this.factory = notNull(factory);
 	}
 
 	/**
@@ -63,6 +65,13 @@ public class Instance extends AbstractTransientNativeObject {
 	 */
 	VulkanLibrary library() {
 		return lib;
+	}
+
+	/**
+	 * @return Reference factory
+	 */
+	ReferenceFactory factory() {
+		return factory;
 	}
 
 	/**
@@ -123,6 +132,7 @@ public class Instance extends AbstractTransientNativeObject {
 		private Version ver = VERSION;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
+		private ReferenceFactory factory = ReferenceFactory.DEFAULT;
 
 		/**
 		 * Sets the application name.
@@ -173,9 +183,18 @@ public class Instance extends AbstractTransientNativeObject {
 		}
 
 		/**
+		 * Sets the reference factory used by this instance.
+		 * @param factory Reference factory
+		 */
+		Builder factory(ReferenceFactory factory) {
+			this.factory = notNull(factory);
+			return this;
+		}
+
+		/**
 		 * Constructs this instance.
+		 * @param lib Vulkan
 		 * @return New instance
-		 * @throws VulkanException if the instance cannot be created
 		 */
 		public Instance build(VulkanLibrary lib) {
 			// Init application descriptor
@@ -199,12 +218,12 @@ public class Instance extends AbstractTransientNativeObject {
 			info.enabledLayerCount = layers.size();
 
 			// Create instance
-			final PointerByReference ref = lib.factory().pointer();
+			final PointerByReference ref = factory.pointer();
 			check(lib.vkCreateInstance(info, null, ref));
 
-			// Create instance wrapper
+			// Create instance domain wrapper
 			final Handle handle = new Handle(ref.getValue());
-			return new Instance(lib, handle);
+			return new Instance(handle, lib, factory);
 		}
 	}
 
@@ -436,7 +455,8 @@ public class Instance extends AbstractTransientNativeObject {
 			info.pUserData = null;
 
 			// Attach to instance
-			final PointerByReference ref = lib.factory().pointer();
+			// TODO
+			final PointerByReference ref = new PointerByReference(); // lib.factory().pointer();
 			final Object[] args = {handle.toPointer(), info, null, ref};
 			check(create.get().invokeInt(args));
 			handlers.add(ref.getValue());

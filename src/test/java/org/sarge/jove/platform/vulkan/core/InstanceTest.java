@@ -14,9 +14,7 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
@@ -31,7 +29,6 @@ import org.sarge.jove.platform.vulkan.core.Instance.Builder;
 import org.sarge.jove.platform.vulkan.core.Instance.Handler;
 import org.sarge.jove.platform.vulkan.core.Instance.Message;
 import org.sarge.jove.platform.vulkan.core.Instance.MessageCallback;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -41,11 +38,10 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class InstanceTest {
-	private static final Pointer POINTER = new Pointer(1);
+	private static final PointerByReference POINTER = new PointerByReference(new Pointer(1));
 
 	private VulkanLibrary lib;
 	private Instance instance;
-	private Handle handle;
 
 	@BeforeEach
 	void before() {
@@ -54,25 +50,24 @@ public class InstanceTest {
 
 		// Init reference factory
 		final ReferenceFactory factory = mock(ReferenceFactory.class);
-		when(lib.factory()).thenReturn(factory);
-		when(factory.pointer()).thenReturn(new PointerByReference(POINTER));
+		when(factory.pointer()).thenReturn(POINTER);
 
 		// Create instance
-		handle = new Handle(POINTER);
-		instance = new Instance(lib, handle);
+		instance = new Instance(new Handle(1), lib, factory);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(lib, instance.library());
-		assertEquals(handle, instance.handle());
+		assertEquals(new Handle(1), instance.handle());
+		assertNotNull(instance.factory());
 		assertEquals(false, instance.isDestroyed());
 	}
 
 	@Test
 	void destroy() {
 		instance.destroy();
-		verify(lib).vkDestroyInstance(handle, null);
+		verify(lib).vkDestroyInstance(instance.handle(), null);
 	}
 
 	@Test
@@ -113,7 +108,6 @@ public class InstanceTest {
 
 			// Check instance
 			assertNotNull(instance);
-			assertEquals(handle, instance.handle());
 			assertEquals(lib, instance.library());
 			assertEquals(false, instance.isDestroyed());
 
@@ -145,7 +139,6 @@ public class InstanceTest {
 
 			// Check instance
 			assertNotNull(instance);
-			assertEquals(handle, instance.handle());
 			assertEquals(lib, instance.library());
 			assertEquals(false, instance.isDestroyed());
 
@@ -243,9 +236,9 @@ public class InstanceTest {
 			final Object[] args = captor.getValue();
 			assertNotNull(args);
 			assertEquals(4, args.length);
-			assertEquals(handle.toPointer(), args[0]);
+			assertEquals(instance.handle().toPointer(), args[0]);
 			assertEquals(null, args[2]);
-			assertEquals(lib.factory().pointer(), args[3]);
+			assertEquals(POINTER, args[3]);
 
 			// Check handler descriptor
 			final var info = (VkDebugUtilsMessengerCreateInfoEXT) args[1];
@@ -273,8 +266,8 @@ public class InstanceTest {
 			final Object[] args = captor.getValue();
 			assertNotNull(args);
 			assertEquals(3, args.length);
-			assertEquals(handle.toPointer(), args[0]);
-			assertEquals(lib.factory().pointer().getValue(), args[1]);
+			assertEquals(instance.handle().toPointer(), args[0]);
+			assertEquals(POINTER, args[1]);
 			assertEquals(null, args[2]);
 		}
 
@@ -289,27 +282,5 @@ public class InstanceTest {
 			handler.severity(VkDebugUtilsMessageSeverity.WARNING);
 			assertThrows(IllegalArgumentException.class, () -> handler.attach());
 		}
-	}
-
-	@Tag(AbstractVulkanTest.INTEGRATION_TEST)
-	@Test
-	@Disabled
-	void build() {
-		// Create real API
-		lib = VulkanLibrary.create();
-
-		// Create instance
-		instance = new Instance.Builder()
-				.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS)
-				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.build(lib);
-
-		// Check instance
-		assertNotNull(instance);
-		assertNotNull(instance.handle());
-		assertEquals(lib, instance.library());
-
-		// Destroy instance
-		instance.destroy();
 	}
 }

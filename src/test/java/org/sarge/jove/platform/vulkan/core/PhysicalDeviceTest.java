@@ -41,14 +41,17 @@ public class PhysicalDeviceTest {
 
 	@BeforeEach
 	void before() {
-		// Create Vulkan
-		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
-		when(lib.factory().integer()).thenReturn(new IntByReference());
-
 		// Create an instance
 		instance = mock(Instance.class);
+
+		// Init Vulkan
+		lib = mock(VulkanLibrary.class);
 		when(instance.library()).thenReturn(lib);
+
+		// Init reference factory
+		final ReferenceFactory factory = mock(ReferenceFactory.class);
+		when(factory.integer()).thenReturn(new IntByReference());
+		when(instance.factory()).thenReturn(factory);
 
 		// Create a queue family
 		family = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
@@ -172,7 +175,7 @@ public class PhysicalDeviceTest {
 
 			// Init supported boolean
 			final IntByReference supported = new IntByReference(1);
-			when(lib.factory().integer()).thenReturn(supported);
+			when(instance.factory().integer()).thenReturn(supported);
 
 			// Check presentation queue
 			assertEquals(true, selector.test(dev));

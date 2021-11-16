@@ -97,9 +97,10 @@ public class Surface extends AbstractTransientNativeObject {
 		}
 
 		private List<VkSurfaceFormatKHR> loadFormats() {
-			final VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, Surface.this, count, array);
-			final VulkanLibrary lib = dev.instance().library();
-			final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(func, lib, VkSurfaceFormatKHR::new);
+			final VulkanLibrary lib = instance.library();
+			final VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, Surface.this, count, array);
+			final IntByReference count = instance.factory().integer();
+			final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(func, count, VkSurfaceFormatKHR::new);
 			return Arrays.stream(array).collect(toList());
 		}
 
@@ -113,8 +114,9 @@ public class Surface extends AbstractTransientNativeObject {
 		public Set<VkPresentModeKHR> loadModes() {
 			// Retrieve array of presentation modes
 			final VulkanLibrary lib = instance.library();
-			final VulkanFunction<int[]> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array);
-			final int[] array = VulkanFunction.invoke(func, lib, int[]::new);
+			final VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array);
+			final IntByReference count = instance.factory().integer();
+			final int[] array = VulkanFunction.invoke(func, count, int[]::new);
 
 			// Convert to enumeration
 			return Arrays

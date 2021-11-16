@@ -5,8 +5,6 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
@@ -36,44 +34,43 @@ import com.sun.jna.ptr.IntByReference;
 public interface VulkanFunction<T> {
 	/**
 	 * Vulkan API method that retrieves data using the <i>two-stage invocation</i> approach.
-	 * @param lib			Vulkan library
 	 * @param count 		Size of the data
 	 * @param data			Returned data or {@code null} to retrieve the size of the data
 	 * @return Vulkan result code
 	 */
-	int enumerate(VulkanLibrary lib, IntByReference count, T data);
+	int enumerate(IntByReference count, T data);
 
 	/**
 	 * Invokes a Vulkan function that uses the <i>two-stage invocation</i> approach.
 	 * <p>
 	 * Example to retrieve an array of pointers:
 	 * <pre>
-	 *  VulkanFunction&lt;Pointer[]&gt; func = (api, count, array) -> api.someFunction(count, array, ...);
-	 *  Pointer[] array = VulkanFunction.enumerate(func, lib, Pointer[]::new);
+	 * 	VulkanLibrary lib = ...
+	 *  VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array, ...);
+	 *  Pointer[] array = VulkanFunction.enumerate(func, new IntegerByReference(), Pointer[]::new);
 	 * </pre>
 	 * <p>
 	 * This method is equivalent to the following:
 	 * <pre>
 	 *  // Count number of results
 	 *  IntegerByReference count = ...
-	 *  api.someFunction(count, null, ...);
+	 *  lib.someFunction(count, null, ...);
 	 *
 	 *  // Allocate data
 	 *  Pointer[] array = new Pointer[count.getValue()];
 	 *
 	 *  // Populate array
-	 *  api.someFunction(count, array, ...);
+	 *  lib.someFunction(count, array, ...);
 	 * </pre>
 	 * @param <T> Data type
 	 * @param func			Vulkan function
-	 * @param lib			API
+	 * @param count			Count
 	 * @param factory		Creates the resultant data object
 	 * @return Resultant data
 	 */
-	static <T> T invoke(VulkanFunction<T> func, VulkanLibrary lib, IntFunction<T> factory) {
+	static <T> T invoke(VulkanFunction<T> func, IntByReference count, IntFunction<T> factory) {
 		// Invoke to determine the size of the data
-		final IntByReference count = lib.factory().integer();
-		check(func.enumerate(lib, count, null));
+		check(func.enumerate(count, null));
 
 		// Instantiate the data object
 		final int size = count.getValue();
@@ -81,7 +78,7 @@ public interface VulkanFunction<T> {
 
 		// Invoke again to populate the data object
 		if(size > 0) {
-			check(func.enumerate(lib, count, data));
+			check(func.enumerate(count, data));
 		}
 
 		return data;
@@ -94,32 +91,32 @@ public interface VulkanFunction<T> {
 	 * <p>
 	 * Usage:
 	 * <pre>
-	 *  VulkanFunction&lt;SomeStructure&gt; func = (api, count, array) -> api.someFunction(count, array, ...);
-	 *  SomeStructure[] array = VulkanFunction.enumerate(func, lib, SomeStructure::new);
+	 * 	VulkanLibrary lib = ...
+	 *  VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array, ...);
+	 *  SomeStructure[] array = VulkanFunction.enumerate(func, new IntegerByReference(), SomeStructure::new);
 	 * </pre>
 	 * This adapter is equivalent to the following:
 	 * <pre>
 	 *  // Count number of results
 	 *  IntegerByReference count = ...
-	 *  api.someFunction(count, null, ...);
+	 *  lib.someFunction(count, null, ...);
 	 *
 	 *  // Allocate JNA array
 	 *  SomeStructure[] array = (SomeStructure[]) new SomeStructure().toArray(count.getValue());
 	 *
 	 *  // Populate array (note passes first element)
-	 *  api.someFunction(count, array[0], ...);
+	 *  lib.someFunction(count, array[0], ...);
 	 * </pre>
 	 * <p>
 	 * @param <T> Structure type
 	 * @param func			Vulkan function
-	 * @param lib			API
+	 * @param count			Count
 	 * @param identity		Identity structure
 	 * @return JNA structure array
 	 */
-	static <T extends Structure> T[] invoke(VulkanFunction<T> func, VulkanLibrary lib, Supplier<T> identity) {
+	static <T extends Structure> T[] invoke(VulkanFunction<T> func, IntByReference count, Supplier<T> identity) {
 		// Invoke to determine the length of the array
-		final IntByReference count = lib.factory().integer();
-		check(func.enumerate(lib, count, null));
+		check(func.enumerate(count, null));
 
 		// Instantiate the structure array
 		@SuppressWarnings("unchecked")
@@ -127,7 +124,7 @@ public interface VulkanFunction<T> {
 
 		// Invoke again to populate the array (note passes first element)
 		if(array.length > 0) {
-			check(func.enumerate(lib, count, array[0]));
+			check(func.enumerate(count, array[0]));
 		}
 
 		return array;

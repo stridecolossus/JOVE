@@ -13,7 +13,6 @@ import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderLibrary;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -132,14 +131,6 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 				throw new RuntimeException(e);
 			}
 		}
-	}
-
-	/**
-	 * @return Factory for pass-by-reference types used by this API
-	 * @see ReferenceFactory#DEFAULT
-	 */
-	default ReferenceFactory factory() {
-		return ReferenceFactory.DEFAULT;
 	}
 
 	/**

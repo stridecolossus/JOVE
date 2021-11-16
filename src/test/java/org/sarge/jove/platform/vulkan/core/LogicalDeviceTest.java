@@ -31,14 +31,17 @@ public class LogicalDeviceTest {
 
 	@BeforeEach
 	void before() {
-		// Init API
-		lib = mock(VulkanLibrary.class);
-		when(lib.factory()).thenReturn(mock(ReferenceFactory.class));
-		when(lib.factory().pointer()).thenReturn(new PointerByReference(new Pointer(1)));
-
 		// Create instance
 		final Instance instance = mock(Instance.class);
+
+		// Init Vulkan
+		lib = mock(VulkanLibrary.class);
 		when(instance.library()).thenReturn(lib);
+
+		// Init reference factory
+		final ReferenceFactory factory = mock(ReferenceFactory.class);
+		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(1)));
+		when(instance.factory()).thenReturn(factory);
 
 		// Create parent device
 		parent = mock(PhysicalDevice.class);
@@ -60,6 +63,7 @@ public class LogicalDeviceTest {
 	void constructor() {
 		assertEquals(parent, device.parent());
 		assertEquals(lib, device.library());
+		assertEquals(parent.instance().factory(), device.factory());
 		assertEquals(false, device.isDestroyed());
 	}
 

@@ -104,9 +104,9 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			// Create mapped memory pointer
 			ptr = mock(Pointer.class);
 
-			// Init reference factory for this pointer
+			// Init reference factory for this pointer (note by-ref has to be mocked for getValue() to work)
 			final PointerByReference ref = mock(PointerByReference.class);
-			when(lib.factory().pointer()).thenReturn(ref);
+			when(factory.pointer()).thenReturn(ref);
 			when(ref.getValue()).thenReturn(ptr);
 
 			// Map memory region

@@ -164,11 +164,34 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference layout = lib.factory().pointer();
+			final PointerByReference layout = dev.factory().pointer();
 			check(lib.vkCreatePipelineLayout(dev, info, null, layout));
 
 			// Create layout
 			return new PipelineLayout(layout.getValue(), dev);
 		}
+	}
+
+	/**
+	 * Pipeline layout API.
+	 */
+	public interface Library {
+		/**
+		 * Creates a pipeline layout.
+		 * @param device			Logical device
+		 * @param pCreateInfo		Pipeline layout descriptor
+		 * @param pAllocator		Allocator
+		 * @param pPipelineLayout	Returned pipeline layout handle
+		 * @return Result code
+		 */
+		int vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
+
+		/**
+		 * Destroys a pipeline layout.
+		 * @param device			Logical device
+		 * @param pPipelineLayout	Pipeline layout
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Pointer pAllocator);
 	}
 }

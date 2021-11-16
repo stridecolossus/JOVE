@@ -95,7 +95,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 		// Allocate descriptors sets
 		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
-		final Pointer[] handles = lib.factory().array(size);
+		final Pointer[] handles = new Pointer[size];
 		check(lib.vkAllocateDescriptorSets(dev, info, handles));
 
 		// Create descriptor sets
@@ -242,7 +242,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 
 			// Allocate pool
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference handle = lib.factory().pointer();
+			final PointerByReference handle = dev.factory().pointer();
 			check(lib.vkCreateDescriptorPool(dev, info, null, handle));
 
 			// Create pool

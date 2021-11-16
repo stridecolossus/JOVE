@@ -201,7 +201,7 @@ public interface Command {
 
 			// Create pool
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference pool = lib.factory().pointer();
+			final PointerByReference pool = dev.factory().pointer();
 			check(lib.vkCreateCommandPool(dev, info, null, pool));
 
 			// Create pool
@@ -258,9 +258,9 @@ public interface Command {
 			info.commandPool = this.handle();
 
 			// Allocate buffers
-			final DeviceContext dev = super.device(); //queue.device();
+			final DeviceContext dev = super.device();
 			final VulkanLibrary lib = dev.library();
-			final Pointer[] handles = lib.factory().array(num);
+			final Pointer[] handles = new Pointer[num];
 			check(lib.vkAllocateCommandBuffers(dev, info, handles));
 
 			// Create buffers

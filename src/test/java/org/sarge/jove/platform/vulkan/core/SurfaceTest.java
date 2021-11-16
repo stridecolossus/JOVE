@@ -34,6 +34,7 @@ public class SurfaceTest extends AbstractVulkanTest {
 		// Create instance
 		instance = mock(Instance.class);
 		when(instance.library()).thenReturn(lib);
+		when(instance.factory()).thenReturn(factory);
 
 		// Create physical device
 		physical = mock(PhysicalDevice.class);
