@@ -330,16 +330,5 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @param pImageMemoryBarriers
 		 */
 		void vkCmdPipelineBarrier(Buffer commandBuffer, int srcStageMask, int dstStageMask, int dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
-
-		/**
-		 * Updates pipeline push constants.
-		 * @param commandBuffer			Command buffer
-		 * @param layout				Pipeline layout
-		 * @param stageFlags			Stage flags (mask)
-		 * @param offset				Start of the range (bytes)
-		 * @param size					Size of the push constants (bytes)
-		 * @param pValues				Push constants as an array of bytes
-		 */
-		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, byte[] pValues);
 	}
 }

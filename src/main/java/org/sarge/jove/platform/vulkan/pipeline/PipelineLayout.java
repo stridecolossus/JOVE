@@ -1,9 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.ArrayList;
@@ -17,6 +15,7 @@ import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -45,25 +44,32 @@ public class PipelineLayout extends AbstractVulkanObject {
 	}
 
 	/**
-	 * A <i>push constant range</i>
-	 * TODO
+	 * A <i>push constant range</i> specifies a segment of a push constant that can be used at given pipeline stages.
 	 */
-	public static class PushConstantRange {
-		private final Set<VkPipelineStage> stages;
-		private final int size;
-		private final int offset;
-
+	public record PushConstantRange(int offset, int size, Set<VkPipelineStage> stages) {
 		/**
 		 * Constructor.
-		 * @param stages		Pipeline stages that <b>can</b> access this push constant range
-		 * @param size			Size of the data (bytes)
 		 * @param offset		Offset (bytes)
+		 * @param size			Size (bytes)
+		 * @param stages		Pipeline stage(s) that can access this range
 		 */
-		public PushConstantRange(Set<VkPipelineStage> stages, int size, int offset) {
-			this.stages = Set.copyOf(notEmpty(stages));
-			this.size = oneOrMore(size);
-			this.offset = zeroOrMore(offset);
+		public PushConstantRange {
+			Check.zeroOrMore(offset);
+			Check.oneOrMore(size);
+			stages = Set.copyOf(stages);
 		}
+
+//		/**
+//		 * Constructor.
+//		 * @param stages		Pipeline stages that <b>can</b> access this push constant range
+//		 * @param size			Size of the data (bytes)
+//		 * @param offset		Offset (bytes)
+//		 */
+//		public PushConstantRange(Set<VkPipelineStage> stages, int size, int offset) {
+//			this.stages = Set.copyOf(notEmpty(stages));
+//			this.size = oneOrMore(size);
+//			this.offset = zeroOrMore(offset);
+//		}
 
 //		public UpdateCommand update(Set<VkPipelineStageFlag> stages, int size, int offset) {
 //			return new UpdateCommand(stages, size, offset);
@@ -74,9 +80,9 @@ public class PipelineLayout extends AbstractVulkanObject {
 //		}
 
 		/**
-		 * Populates a push constant range structure.
+		 * Populates a push constant range descriptor.
 		 */
-		void populate(VkPushConstantRange range) {
+		private void populate(VkPushConstantRange range) {
 			range.stageFlags = IntegerEnumeration.mask(stages);
 			range.size = size;
 			range.offset = offset;
@@ -193,5 +199,17 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 * @param pAllocator		Allocator
 		 */
 		void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Pointer pAllocator);
+
+		/**
+		 * Updates pipeline push constants.
+		 * @param commandBuffer			Command buffer
+		 * @param layout				Pipeline layout
+		 * @param stageFlags			Stage flags (mask)
+		 * @param offset				Start of the range (bytes)
+		 * @param size					Size of the push constants (bytes)
+		 * @param pValues				Push constants as an array of bytes
+		 */
+		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, byte[] pValues);
+		// TODO - pValues -> byte buffer?
 	}
 }
