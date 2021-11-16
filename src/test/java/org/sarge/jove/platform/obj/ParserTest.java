@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.obj;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -35,12 +34,5 @@ public class ParserTest {
 		Parser.GROUP.parse(new String[]{}, model);
 		verify(model).start();
 		verifyNoMoreInteractions(model);
-	}
-
-	@Test
-	void trim() {
-		final String[] array = new String[]{" text "};
-		Parser.trim(array);
-		assertArrayEquals(new String[]{"text"}, array);
 	}
 }

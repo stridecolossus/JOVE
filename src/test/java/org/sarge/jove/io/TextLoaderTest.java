@@ -1,27 +1,29 @@
 package org.sarge.jove.io;
 
-import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class TextLoaderTest {
 	private TextLoader loader;
-	private Function<Stream<String>, List<String>> mapper;
+	private Consumer<String> consumer;
 
 	@BeforeEach
 	void before() {
 		loader = new TextLoader();
-		mapper = stream -> stream.collect(toList());
+		consumer = mock(Consumer.class);
 	}
 
 	@Test
@@ -40,15 +42,26 @@ public class TextLoaderTest {
 		loader.setComments(Set.of("-"));
 
 		// Load lines
-		final List<String> list = loader.load(new StringReader(text), mapper);
-		assertEquals(List.of("line"), list);
+		final Consumer<String> consumer = mock(Consumer.class);
+		loader.load(new StringReader(text), consumer);
+		verify(consumer).accept("line");
+		verifyNoMoreInteractions(consumer);
 	}
 
 	@Test
 	void error() {
-		mapper = stream -> {
-			throw new IllegalArgumentException("Whatever");
-		};
-		assertThrows(IOException.class, "Whatever at line 1", () -> loader.load(new StringReader("text"), mapper));
+		doThrow(new IllegalArgumentException("Whatever")).when(consumer).accept(anyString());
+		assertThrows(IOException.class, "Whatever at line 1", () -> loader.load(new StringReader("text"), consumer));
+	}
+
+	@Test
+	void tokenize() {
+		assertArrayEquals(new String[]{"1", "2", "3"}, TextLoader.tokenize("1  2\t 3 "));
+	}
+
+	@Test
+	void trim() {
+		final String[] array = {"1", " 2 ", "3 "};
+		assertArrayEquals(new String[]{"1", "2", "3"}, TextLoader.trim(array));
 	}
 }

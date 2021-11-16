@@ -29,13 +29,4 @@ public interface Parser {
 		// Start new object
 		model.start();
 	};
-
-	/**
-	 * Helper - Trims the given array of strings.
-	 */
-	static void trim(String[] array) {
-		for(int n = 0; n < array.length; ++n) {
-			array[n] = array[n].trim();
-		}
-	}
 }

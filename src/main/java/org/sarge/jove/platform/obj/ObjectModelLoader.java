@@ -10,10 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -27,7 +24,7 @@ import org.sarge.lib.util.Check;
  * @see <a href="https://en.wikipedia.org/wiki/Wavefront_.obj_file">OBJ file format</a>
  * @author Sarge
  */
-public class ObjectModelLoader implements ResourceLoader<Reader, List<Model>> {
+public class ObjectModelLoader extends TextLoader implements ResourceLoader<Reader, List<Model>> {
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private final ObjectModel model = new ObjectModel();
 	private Consumer<String> handler = line -> { /* Ignored */ };
@@ -86,12 +83,8 @@ public class ObjectModelLoader implements ResourceLoader<Reader, List<Model>> {
 
 	@Override
 	public List<Model> load(Reader reader) throws IOException {
-		final Function<Stream<String>, List<Model>> mapper = lines -> {
-			lines.forEach(this::parse);
-			return model.build();
-		};
-		final TextLoader loader = new TextLoader();
-		return loader.load(reader, mapper);
+		super.load(reader, this::parse);
+		return model.build();
 	}
 
 	/**
@@ -101,8 +94,7 @@ public class ObjectModelLoader implements ResourceLoader<Reader, List<Model>> {
 	 */
 	private void parse(String line) {
 		// Tokenize line
-		final String[] parts = StringUtils.split(line);
-		Parser.trim(parts);
+		final String[] parts = tokenize(line);
 
 		// Lookup command parser
 		final Parser parser = parsers.get(parts[0]);

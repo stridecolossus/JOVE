@@ -6,9 +6,10 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.Reader;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A <i>text loader</i> is a helper class that loads the lines from a file and delegates to a loader function.
@@ -55,31 +56,44 @@ public class TextLoader {
 
 	/**
 	 * Loads text from a reader and delegates to the given loader function.
-	 * @param <T> Resultant data type
-	 * @param r				Reader
-	 * @param loader		Delegate loader
-	 * @return Results
+	 * @param reader		Reader
+	 * @param consumer		Consumer for a line
 	 * @throws IOException if the text cannot be loaded
 	 */
-	public <T> T load(Reader r, Function<Stream<String>, T> loader) throws IOException {
-		final LineNumberReader reader = new LineNumberReader(r);
-		try(reader) {
-			// Load lines
-			final Stream<String> lines = reader
-					.lines()
-					.skip(skip)
-					.map(String::trim)
-					.filter(Predicate.not(String::isEmpty))
-					.filter(Predicate.not(this::isComment));
-
-			// Delegate
-			return loader.apply(lines);
+	public void load(Reader reader, Consumer<String> consumer) throws IOException {
+		final LineNumberReader wrapper = new LineNumberReader(reader);
+		try(wrapper) {
+			wrapper
+				.lines()
+				.skip(skip)
+				.map(String::trim)
+				.filter(Predicate.not(String::isEmpty))
+				.filter(Predicate.not(this::isComment))
+				.forEach(consumer);
 		}
 		catch(IOException e) {
 			throw e;
 		}
 		catch(Exception e) {
-			throw new IOException(String.format("%s at line %d", e.getMessage(), reader.getLineNumber() + 1), e);
+			throw new IOException(String.format("%s at line %d", e.getMessage(), wrapper.getLineNumber()), e);
 		}
+	}
+
+	/**
+	 * Helper - Tokenizes a white-space delimited array of strings.
+	 * @param line Line
+	 * @return String array
+	 */
+	public static String[] tokenize(String line) {
+		return StringUtils.split(line);
+	}
+
+	/**
+	 * Helper - Trims the given string array.
+	 * @param array String array
+	 * @return Trimmed array
+	 */
+	public static String[] trim(String[] array) {
+		return StringUtils.stripAll(array);
 	}
 }

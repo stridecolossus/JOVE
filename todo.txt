@@ -44,7 +44,7 @@ other features
 current
 - some sort of triangle builder? used in demo and to create x2 triangles for a quad
 - acquire should create a frame object of some sort (swap chain is immutable), i.e. don't care about index
-
-need to filter buttons by action/mods
+- need to filter buttons by action/mods
+- add pipeline cache
 
 check out old blog
