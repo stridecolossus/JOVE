@@ -2,6 +2,7 @@ package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
@@ -36,10 +37,10 @@ import org.sarge.lib.util.Check;
  * Where:
  * <ul>
  * <li>the top-left 3x3 component of the matrix is the view rotation and the right-hand column is the transformation</li>
- * <li>R is the <i>right</i> vector, Y is <i>up</i> and D is the view <i>direction</i></li>
+ * <li>in camera terms R is the <i>right</i> vector, Y is <i>up</i> and D is the view <i>direction</i></li>
  * <li>T is the view transformation (or eye position)</li>
  * </ul>
- * Note that generally both components are inverted (transposed and negated) since the scene is transformed in the opposite direction to the view (or camera).
+ * Note that both components are inverted (transposed and negated) since the scene is transformed in the opposite direction to the view (or camera).
  * <p>
  * @see Rotation
  * @author Sarge
@@ -107,7 +108,7 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public final Matrix matrix() {
+	public Matrix matrix() {
 		return this;
 	}
 
@@ -230,14 +231,13 @@ public final class Matrix implements Transform, Bufferable {
 
 	@Override
 	public String toString() {
-		final String newline = System.lineSeparator();
 		final StringBuilder sb = new StringBuilder();
 		final int order = this.order();
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				sb.append(String.format("%10.5f ", matrix[r][c]));
 			}
-			sb.append(newline);
+			sb.append(StringUtils.LF);
 		}
 		return sb.toString();
 	}

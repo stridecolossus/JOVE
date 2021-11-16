@@ -92,7 +92,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		final VulkanBuffer buffer = create(dev, allocator, len, props);
 
 		// Write data to buffer
-		final ByteBuffer bb = buffer.memory().map().buffer();
+		final ByteBuffer bb = buffer.buffer();
 		data.buffer(bb);
 
 		return buffer;

@@ -63,7 +63,6 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 			case 2 -> z;
 			default -> throw new IndexOutOfBoundsException("Invalid component index: " + index);
 		};
-		// TODO - enum instead of index?
 	}
 
 	/**

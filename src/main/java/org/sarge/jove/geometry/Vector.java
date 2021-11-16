@@ -24,9 +24,9 @@ public final class Vector extends Tuple {
 	public static final Vector Z = new Vector(0, 0, 1);
 
 	/**
-	 * Vertex component layout for a normal represented as a vector.
+	 * Layout for a normal represented as a vector.
 	 */
-	public static final Layout NORMALS = Layout.of(3);
+	public static final Layout NORMALS = Layout.of(SIZE);
 
 	/**
 	 * Creates the vector between the given points, i.e. <code>end - start</code>.

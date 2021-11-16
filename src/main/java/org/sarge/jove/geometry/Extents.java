@@ -24,7 +24,6 @@ public class Extents {
 	public Extents(Point min, Point max) {
 		this.min = notNull(min);
 		this.max = notNull(max);
-		// TODO - enforce min is actually < max?
 	}
 
 	/**
@@ -45,7 +44,7 @@ public class Extents {
 	 * @return Centre point of this extents
 	 */
 	public Point centre() {
-		return new Point(new Vector(min.add(max)).multiply(MathsUtil.HALF));
+		return min.add(max).scale(MathsUtil.HALF);
 	}
 
 	/**

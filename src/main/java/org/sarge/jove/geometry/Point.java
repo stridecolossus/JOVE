@@ -13,7 +13,7 @@ public final class Point extends Tuple {
 	public static final Point ORIGIN = new Point(0, 0, 0);
 
 	/**
-	 * Layout for a vertex position.
+	 * Layout for a point.
 	 */
 	public static final Layout LAYOUT = Layout.of(SIZE);
 

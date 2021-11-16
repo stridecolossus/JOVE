@@ -4,6 +4,7 @@ import org.sarge.jove.geometry.Rotation.AbstractRotation;
 
 /**
  * Mutable implementation.
+ * @author Sarge
  */
 public class MutableRotation extends AbstractRotation {
 	/**
@@ -14,7 +15,7 @@ public class MutableRotation extends AbstractRotation {
 		Transform matrix(Vector axis, float angle);
 	}
 
-	private final MutableRotation.Factory factory;
+	private final Factory factory;
 	private boolean dirty = true;
 
 	/**
@@ -23,7 +24,7 @@ public class MutableRotation extends AbstractRotation {
 	 */
 	public MutableRotation(Vector axis) {
 		super(axis, 0);
-		this.factory = isAxis(axis) ? Rotation::matrix : Quaternion::of;
+		factory = isAxis(axis) ? Rotation::matrix : Quaternion::of;
 	}
 
 	/**

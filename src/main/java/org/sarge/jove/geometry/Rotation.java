@@ -22,7 +22,7 @@ public interface Rotation extends Transform {
 	float angle();
 
 	/**
-	 * Creates a matrix for a <b>clockwise</b> rotation about the given pre-defined axis.
+	 * Creates a matrix for a <b>counter clockwise</b> rotation about the given pre-defined axis.
 	 * @param axis		Rotation axis
 	 * @param angle		Angle (radians)
 	 * @return New rotation matrix
