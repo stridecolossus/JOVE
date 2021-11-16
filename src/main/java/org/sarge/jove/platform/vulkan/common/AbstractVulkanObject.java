@@ -54,6 +54,8 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	 */
 	protected abstract Destructor<?> destructor(VulkanLibrary lib);
 
+	// TODO - all refer to compound VulkanLibrary, could it be parameterized?
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public synchronized void destroy() {

@@ -668,7 +668,7 @@ for(int n = 0; n < count; ++n) {
             .add(pipeline.bind())
             .add(vbo.bindVertexBuffer())
             .add(ds.bind(pipeline.layout()))
-            .add(DrawCommand.draw(4))
+            .add(draw)
             .add(FrameBuffer.END)
         .end();
 }

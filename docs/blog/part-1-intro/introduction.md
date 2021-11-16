@@ -84,6 +84,14 @@ Some of these might seem high-flown or even pointless for a personal project.  H
 
 On the other hand this _is_ a personal project and we allow ourselves some freedom in our decisions that might not be possible under the constraints of a real-world project - we can reinvent as many wheels as we choose if there is sufficient reason (or challenge) in doing so.
 
+Finally we collect some design decisions for common patterns applied throughout the JOVE library:
+
+* Most of the Vulkan domain classes are instantiated via the API (and are often highly configurable), we make extensive use of the _builder_ pattern and/or static factory methods to create Vulkan components.  However constructors are often package-private for testability.
+
+* Data transfer operations are generally implemented using NIO buffers since this is the most convenient 'primitive' supported by the JNA library.
+
+* Generally all classes are immutable by default unless there is a compelling reason to provide setters and mutator methods.  This usually simplifies the design and also has the benefit of mitigating risk for multi-threaded code (and Vulkan is designed to support multi-threaded applications from the outset).  In any case the majority of the Vulkan components are immutable by design, e.g. pipelines, semaphores, etc.
+
 ---
 
 ## Code Presentation
@@ -92,7 +100,6 @@ Source code is generally presented as fragments interspersed with commentary, ra
 
 We also follow these additional coding guidelines:
 
-* All classes are immutable by default.
 * The `var` keyword is used where the type is already present to avoid duplication, e.g. `var thing = new Thing()`.
 * Local variables are `final` by default.
 * The latest Java features are used where appropriate or convenient, e.g. lambdas rather than anonymous classes.
@@ -110,6 +117,8 @@ The following are silently omitted unless their inclusion better illustrates the
 * Method `@Override` annotations
 * Unit-tests
 * Package structure.
+
+Note that the presented code represents the state of the JOVE library at that stage of development, even if that code is eventually refactored, replaced, classes renamed, etc.  i.e. we have not refactored the blog.
 
 ---
 

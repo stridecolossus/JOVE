@@ -33,8 +33,8 @@ public class ModelConfiguration {
 
     @Bean
     public static Model model(DataSource src) {
-        var loader = ResourceLoader.of(src, new ModelLoader());
-        return loader.apply("chalet.model");
+        var loader = new ResourceLoaderAdapter<>(src, new ModelLoader());
+        return loader.load("chalet.model");
     }
 }
 ```

@@ -84,7 +84,7 @@ public class HandlerManager {
 	 */
 	public synchronized void close() {
 		List.copyOf(handlers).forEach(Handler::destroy);
-		handlers.clear();
+		assert handlers.isEmpty();
 	}
 
 	@Override
@@ -193,9 +193,13 @@ public class HandlerManager {
 
 		@Override
 		protected void release() {
+			// Destroy handler
 			final Pointer parent = instance.handle().toPointer();
 			final Object[] args = {parent, handle.toPointer(), null};
 			destroy.get().invoke(args);
+
+			// Remove handler
+			assert handlers.contains(this);
 			handlers.remove(this);
 		}
 	}

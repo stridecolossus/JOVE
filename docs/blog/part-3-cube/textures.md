@@ -201,7 +201,7 @@ This helper allocates the next available binding index and then uses the nested 
 
 ```java
 // Calculate vertex stride for this layout
-int stride = layout.stride();
+int stride = Layout.stride(layout);
 
 // Add binding
 new BindingBuilder()

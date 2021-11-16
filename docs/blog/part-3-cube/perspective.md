@@ -806,7 +806,8 @@ return new Pipeline.Builder()
 Finally we modify the draw command in the render sequence:
 
 ```java
-Command draw = DrawCommand.draw(model.header().count());
+int count = model.header().count();
+Command draw = (api, handle) -> api.vkCmdDraw(handle, count, 1, 0, 0);
 ```
 
 When we run the code it should look roughly the same as the quad demo since we will be looking at the front face of the cube.
