@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -11,9 +12,11 @@ import static org.mockito.Mockito.when;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
@@ -26,63 +29,119 @@ import org.sarge.jove.util.IntegerEnumeration;
 import com.sun.jna.Pointer;
 
 class PipelineLayoutTest extends AbstractVulkanTest {
-	private Builder builder;
+	private static final Set<VkPipelineStage> STAGES = Set.of(VkPipelineStage.VERTEX_SHADER, VkPipelineStage.FRAGMENT_SHADER);
+
+	private PipelineLayout layout;
 
 	@BeforeEach
 	void before() {
-		builder = new Builder();
+		layout = new PipelineLayout(new Pointer(1), dev, 4, STAGES);
 	}
 
 	@Test
-	void build() {
-		// Create descriptor set layout
-		final DescriptorLayout set = mock(DescriptorLayout.class);
-		when(set.handle()).thenReturn(new Handle(new Pointer(42)));
-
-		// TODO - range
-
-		// Create layout
-		final PipelineLayout layout = builder
-				.add(set)
-				.build(dev);
-
-		// Check layout
-		assertNotNull(layout);
-		assertNotNull(layout.handle());
-
-		// Check pipeline allocation
-		final ArgumentCaptor<VkPipelineLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineLayoutCreateInfo.class);
-		verify(lib).vkCreatePipelineLayout(eq(dev), captor.capture(), isNull(), eq(POINTER));
-
-		// Check descriptor
-		final VkPipelineLayoutCreateInfo info = captor.getValue();
-		assertNotNull(info);
-
-		// Check descriptor-set layouts
-		assertEquals(1, info.setLayoutCount);
-		assertNotNull(info.pSetLayouts);
-	}
-
-	@Test
-	void buildEmpty() {
-		assertNotNull(builder.build(dev));
-	}
-
-	@Test
-	void range() {
-		final var stages = Set.of(VkPipelineStage.VERTEX_SHADER);
-		final PushConstantRange range = new PushConstantRange(stages, 1, 2);
-		final VkPushConstantRange struct = new VkPushConstantRange();
-		range.populate(struct);
-		assertEquals(IntegerEnumeration.mask(stages), struct.stageFlags);
-		assertEquals(1, struct.size);
-		assertEquals(2, struct.offset);
+	void constructor() {
+		assertEquals(false, layout.isDestroyed());
+		assertEquals(4, layout.max());
+		assertEquals(STAGES, layout.stages());
 	}
 
 	@Test
 	void destroy() {
-		final PipelineLayout layout = builder.build(dev);
 		layout.destroy();
 		verify(lib).vkDestroyPipelineLayout(dev, layout, null);
+	}
+
+	@Nested
+	class PushConstantRangeTests {
+		private PushConstantRange range;
+
+		@BeforeEach
+		void before() {
+			range = new PushConstantRange(4, 8, STAGES);
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(4, range.offset());
+			assertEquals(8, range.size());
+			assertEquals(STAGES, range.stages());
+			assertEquals(4 + 8, range.length());
+		}
+
+		@Test
+		void populate() {
+			final var info = new VkPushConstantRange();
+			range.populate(info);
+			assertEquals(4, info.offset);
+			assertEquals(8, info.size);
+			assertEquals(IntegerEnumeration.mask(STAGES), info.stageFlags);
+		}
+
+		@Test
+		void constructorInvalidOffsetAlignment() {
+			assertThrows(IllegalArgumentException.class, () -> new PushConstantRange(3, 4, Set.of(VkPipelineStage.VERTEX_SHADER)));
+		}
+
+		@Test
+		void constructorInvalidSizeAlignment() {
+			assertThrows(IllegalArgumentException.class, () -> new PushConstantRange(0, 3, Set.of(VkPipelineStage.VERTEX_SHADER)));
+		}
+
+		@Test
+		void constructorEmptyStages() {
+			assertThrows(IllegalArgumentException.class, () -> new PushConstantRange(0, 4, Set.of()));
+		}
+	}
+
+	@Nested
+	class BuilderTests {
+		private Builder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new Builder();
+		}
+
+		@Test
+		void build() {
+			// Create descriptor set layout
+			final DescriptorLayout set = mock(DescriptorLayout.class);
+			when(set.handle()).thenReturn(new Handle(1));
+
+			// Create push constants range
+			final PushConstantRange range = new PushConstantRange(0, 4, Set.of(VkPipelineStage.VERTEX_SHADER));
+
+			// Create layout
+			final PipelineLayout layout = builder
+					.add(set)
+					.add(range)
+					.build(dev);
+
+			// Check layout
+			assertNotNull(layout);
+			assertNotNull(layout.handle());
+
+			// Check pipeline allocation
+			final ArgumentCaptor<VkPipelineLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineLayoutCreateInfo.class);
+			verify(lib).vkCreatePipelineLayout(eq(dev), captor.capture(), isNull(), eq(POINTER));
+
+			// Check descriptor
+			final VkPipelineLayoutCreateInfo info = captor.getValue();
+			assertNotNull(info);
+			assertEquals(0, info.flags);
+
+			// Check descriptor-set layouts
+			assertEquals(1, info.setLayoutCount);
+			assertEquals(NativeObject.toArray(Set.of(set)), info.pSetLayouts);
+
+			// Check push constants
+			assertEquals(1, info.pushConstantRangeCount);
+			assertNotNull(info.pPushConstantRanges);
+		}
+
+		@Test
+		void buildEmpty() {
+			assertNotNull(builder.build(dev));
+		}
 	}
 }

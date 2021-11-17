@@ -34,7 +34,7 @@ public interface Bufferable {
 
 			@Override
 			public void buffer(ByteBuffer bb) {
-				BufferHelper.write(bytes, bb);
+				BufferWrapper.write(bytes, bb);
 			}
 		};
 	}
@@ -54,7 +54,7 @@ public interface Bufferable {
 			@Override
 			public void buffer(ByteBuffer bb) {
 				final byte[] array = struct.getPointer().getByteArray(0, struct.size());
-				BufferHelper.write(array, bb);
+				BufferWrapper.write(array, bb);
 			}
 		};
 	}

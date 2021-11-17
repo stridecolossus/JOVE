@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.io.BufferWrapper;
 import org.sarge.jove.io.DataSource;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineCache.Loader;
@@ -118,7 +118,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 		void write() throws IOException {
 			final ByteArrayOutputStream out = new ByteArrayOutputStream();
 			final PipelineCache cache = mock(PipelineCache.class);
-			when(cache.data()).thenReturn(BufferHelper.buffer(DATA));
+			when(cache.data()).thenReturn(BufferWrapper.buffer(DATA));
 			loader.write(cache, out);
 			assertEquals(DATA.length, out.size());
 		}

@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.io.BufferWrapper;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -31,7 +31,7 @@ public class Shader extends AbstractVulkanObject {
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
 		info.codeSize = code.length;
-		info.pCode = BufferHelper.buffer(code);
+		info.pCode = BufferWrapper.buffer(code);
 
 		// Allocate shader
 		final VulkanLibrary lib = dev.library();

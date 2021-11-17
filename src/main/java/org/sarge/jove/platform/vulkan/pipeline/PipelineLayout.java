@@ -1,9 +1,11 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -14,11 +16,11 @@ import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
 import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -29,13 +31,34 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class PipelineLayout extends AbstractVulkanObject {
+	private final int max;
+	private final Set<VkPipelineStage> stages;
+
 	/**
 	 * Constructor.
 	 * @param handle		Pipeline handle
 	 * @param dev			Logical device
+	 * @param max			Maximum push constants buffer length
+	 * @param stages		Pipeline stages for push constants
 	 */
-	private PipelineLayout(Pointer handle, DeviceContext dev) {
+	PipelineLayout(Pointer handle, DeviceContext dev, int max, Set<VkPipelineStage> stages) {
 		super(handle, dev);
+		this.max = zeroOrMore(max);
+		this.stages = Set.copyOf(stages);
+	}
+
+	/**
+	 * @return Maximum length of the push constants buffer for this layout
+	 */
+	public int max() {
+		return max;
+	}
+
+	/**
+	 * @return Pipeline stages used by the push constants of this layout
+	 */
+	Set<VkPipelineStage> stages() {
+		return stages;
 	}
 
 	@Override
@@ -44,7 +67,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 	}
 
 	/**
-	 * A <i>push constant range</i> specifies a segment of a push constant that can be used at given pipeline stages.
+	 * A <i>push constant range</i> specifies a segment of the push constant buffer that can be used at given pipeline stages.
 	 */
 	public record PushConstantRange(int offset, int size, Set<VkPipelineStage> stages) {
 		/**
@@ -56,73 +79,37 @@ public class PipelineLayout extends AbstractVulkanObject {
 		public PushConstantRange {
 			Check.zeroOrMore(offset);
 			Check.oneOrMore(size);
+			Check.notEmpty(stages);
 			stages = Set.copyOf(stages);
+			validate(offset);
+			validate(size);
 		}
 
-//		/**
-//		 * Constructor.
-//		 * @param stages		Pipeline stages that <b>can</b> access this push constant range
-//		 * @param size			Size of the data (bytes)
-//		 * @param offset		Offset (bytes)
-//		 */
-//		public PushConstantRange(Set<VkPipelineStage> stages, int size, int offset) {
-//			this.stages = Set.copyOf(notEmpty(stages));
-//			this.size = oneOrMore(size);
-//			this.offset = zeroOrMore(offset);
-//		}
+		/**
+		 * Tests that the given offset/size satisfies the alignment rules for push constants.
+		 * TODO - link
+		 * @param size Size/offset
+		 */
+		static void validate(int size) {
+			if((size % 4) != 0) throw new IllegalArgumentException("Push constants offset/size must be multiples of four");
+		}
 
-//		public UpdateCommand update(Set<VkPipelineStageFlag> stages, int size, int offset) {
-//			return new UpdateCommand(stages, size, offset);
-//		}
-//
-//		public UpdateCommand update(int size) {
-//			return update(this.stages, size, 0);
-//		}
+		/**
+		 * @return Length of this push constant range, i.e. offset + size
+		 */
+		public int length() {
+			return offset + size;
+		}
 
 		/**
 		 * Populates a push constant range descriptor.
 		 */
-		private void populate(VkPushConstantRange range) {
+		void populate(VkPushConstantRange range) {
 			range.stageFlags = IntegerEnumeration.mask(stages);
 			range.size = size;
 			range.offset = offset;
 		}
 	}
-
-	/**
-	 * TODO
-	 */
-	public class UpdateCommand implements Command {
-		private final int mask;
-		private final int offset;
-
-		private byte[] data;
-
-		/**
-		 * Constructor.
-		 * @param stages
-		 * @param offset
-		 */
-		public UpdateCommand(Set<VkPipelineStage> stages, int offset) {
-			this.mask = IntegerEnumeration.mask(stages);
-			this.offset = zeroOrMore(offset);
-		}
-
-		/**
-		 * Sets the push constant data for this update.
-		 * @param data Push constant data
-		 */
-		public void write(byte[] data) {
-			this.data = notNull(data);
-		}
-
-		@Override
-		public void execute(VulkanLibrary lib, Buffer buffer) {
-			if(data == null) throw new IllegalStateException("Push constant data has not been populated");
-			lib.vkCmdPushConstants(buffer, PipelineLayout.this, mask, data.length, offset, data);
-		}
-	}
-	// TODO - is a command created from a range (or a subset of a range)?
 
 	/**
 	 * Builder for a pipeline layout.
@@ -165,16 +152,29 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 			// Add push constant ranges
 			info.pushConstantRangeCount = ranges.size();
-// TODO - memory error!!!
-//			info.pPushConstantRanges = StructureCollector.toPointer(ranges, VkPushConstantRange::new, PushConstantRange::populate);
+			info.pPushConstantRanges = StructureHelper.first(ranges, VkPushConstantRange::new, PushConstantRange::populate);
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference layout = dev.factory().pointer();
 			check(lib.vkCreatePipelineLayout(dev, info, null, layout));
 
+			// Determine overall size of the push constants data
+			final int max = ranges
+					.stream()
+					.mapToInt(PushConstantRange::length)
+					.max()
+					.orElse(0);
+
+			// Enumerate pipeline stages
+			final Set<VkPipelineStage> stages = ranges
+					.stream()
+					.map(PushConstantRange::stages)
+					.flatMap(Set::stream)
+					.collect(toSet());
+
 			// Create layout
-			return new PipelineLayout(layout.getValue(), dev);
+			return new PipelineLayout(layout.getValue(), dev, max, stages);
 		}
 	}
 
@@ -209,7 +209,6 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 * @param size					Size of the push constants (bytes)
 		 * @param pValues				Push constants as an array of bytes
 		 */
-		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, byte[] pValues);
-		// TODO - pValues -> byte buffer?
+		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, ByteBuffer pValues);
 	}
 }

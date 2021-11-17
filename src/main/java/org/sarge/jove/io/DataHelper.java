@@ -87,7 +87,7 @@ public class DataHelper {
 	 */
 	public void write(Bufferable obj, DataOutput out) throws IOException {
 		final int len = obj.length();
-		final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferHelper.ORDER);
+		final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferWrapper.ORDER);
 		obj.buffer(bb);
 		out.writeInt(len);
 		out.write(bb.array());

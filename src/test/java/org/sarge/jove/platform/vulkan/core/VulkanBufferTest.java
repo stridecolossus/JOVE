@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -25,7 +24,7 @@ import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer.UniformBuffer;
+import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
@@ -112,6 +111,33 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	}
 
 	@Nested
+	class UniformBufferTests {
+		private DescriptorResource uniform;
+
+		@BeforeEach
+		void before() {
+			uniform = buffer.uniform();
+		}
+
+		@Test
+		void constructor() {
+			assertNotNull(uniform);
+			assertEquals(VkDescriptorType.UNIFORM_BUFFER, uniform.type());
+		}
+
+		@Test
+		void populate() {
+			final var write = new VkWriteDescriptorSet();
+			uniform.populate(write);
+
+			final VkDescriptorBufferInfo info = write.pBufferInfo;
+			assertEquals(buffer.handle(), info.buffer);
+			assertEquals(0, info.offset);
+			assertEquals(buffer.length(), info.range);
+		}
+	}
+
+	@Nested
 	class CommandTests {
 		private Command.Buffer cb;
 		private VulkanBuffer index;
@@ -144,58 +170,6 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 			final VulkanBuffer dest = new VulkanBuffer(new Pointer(2), dev, flags, mem, SIZE);
 			final Command cmd = buffer.copy(dest);
 			assertNotNull(cmd);
-		}
-	}
-
-	@Nested
-	class UniformBufferTests {
-		private UniformBuffer uniform;
-		private Bufferable data;
-
-		@BeforeEach
-		void before() {
-			uniform = buffer.uniform();
-			data = mock(Bufferable.class);
-			when(data.length()).thenReturn(5);
-		}
-
-		@Test
-		void constructor() {
-			assertNotNull(uniform);
-			assertEquals(VkDescriptorType.UNIFORM_BUFFER, uniform.type());
-		}
-
-		@Test
-		void populate() {
-			// Populate write descriptor
-			final var write = new VkWriteDescriptorSet();
-			uniform.populate(write);
-
-			// Check descriptor
-			final VkDescriptorBufferInfo info = write.pBufferInfo;
-			assertNotNull(info);
-			assertEquals(buffer.handle(), info.buffer);
-			assertEquals(buffer.memory().size(), info.range);
-			assertEquals(0, info.offset);
-		}
-
-		@Test
-		void uniformInvalidBuffer() {
-			final VulkanBuffer invalid = new VulkanBuffer(new Pointer(1), dev, Set.of(VkBufferUsage.VERTEX_BUFFER), mem, SIZE);
-			assertThrows(IllegalStateException.class, () -> invalid.uniform());
-		}
-
-		@Test
-		void append() {
-			uniform.append(data);
-			verify(data).buffer(bb);
-		}
-
-		@Test
-		void insert() {
-			uniform.insert(2, data);
-			verify(bb).position(2 * 5);
-			verify(data).buffer(bb);
 		}
 	}
 }

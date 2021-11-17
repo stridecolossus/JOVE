@@ -148,62 +148,27 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * A <i>uniform buffer</i> is a descriptor set resource and provides various helpers for updating the uniform buffer object.
-	 */
-	public class UniformBuffer implements DescriptorResource {
-		private final ByteBuffer buffer = buffer();
-
-		@Override
-		public VkDescriptorType type() {
-			return VkDescriptorType.UNIFORM_BUFFER;
-		}
-
-		@Override
-		public void populate(VkWriteDescriptorSet write) {
-			final var info = new VkDescriptorBufferInfo();
-			info.buffer = handle();
-			info.offset = 0;
-			info.range = len;
-			write.pBufferInfo = info;
-		}
-
-		/**
-		 * Rewinds this uniform buffer.
-		 */
-		public UniformBuffer rewind() {
-			buffer.rewind();
-			return this;
-		}
-
-		/**
-		 * Adds the given data to this uniform buffer.
-		 * @param data Data
-		 */
-		public UniformBuffer append(Bufferable data) {
-			data.buffer(buffer);
-			return this;
-		}
-
-		/**
-		 * Inserts a data <i>element</i> into this uniform buffer.
-		 * @param index			Element index
-		 * @param data			Data
-		 */
-		public UniformBuffer insert(int index, Bufferable data) {
-			final int pos = index * data.length();
-			buffer.position(pos);
-			data.buffer(buffer);
-			return this;
-		}
-	}
-
-	/**
 	 * @return This buffer as a uniform buffer resource
 	 * @throws IllegalStateException if this buffer is not a {@link VkBufferUsage#UNIFORM_BUFFER}
 	 */
-	public UniformBuffer uniform() {
+	public DescriptorResource uniform() {
 		require(VkBufferUsage.UNIFORM_BUFFER);
-		return new UniformBuffer();
+
+		return new DescriptorResource() {
+			@Override
+			public VkDescriptorType type() {
+				return VkDescriptorType.UNIFORM_BUFFER;
+			}
+
+			@Override
+			public void populate(VkWriteDescriptorSet write) {
+				final var info = new VkDescriptorBufferInfo();
+				info.buffer = handle();
+				info.offset = 0;
+				info.range = len;
+				write.pBufferInfo = info;
+			}
+		};
 	}
 
 	/**
