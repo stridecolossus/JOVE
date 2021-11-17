@@ -12,8 +12,8 @@ import java.util.Set;
 
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
@@ -32,16 +32,16 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class PipelineLayout extends AbstractVulkanObject {
 	private final int max;
-	private final Set<VkPipelineStage> stages;
+	private final Set<VkShaderStage> stages;
 
 	/**
 	 * Constructor.
 	 * @param handle		Pipeline handle
 	 * @param dev			Logical device
 	 * @param max			Maximum push constants buffer length
-	 * @param stages		Pipeline stages for push constants
+	 * @param stages		Pipeline shader stages for push constants
 	 */
-	PipelineLayout(Pointer handle, DeviceContext dev, int max, Set<VkPipelineStage> stages) {
+	PipelineLayout(Pointer handle, DeviceContext dev, int max, Set<VkShaderStage> stages) {
 		super(handle, dev);
 		this.max = zeroOrMore(max);
 		this.stages = Set.copyOf(stages);
@@ -55,9 +55,9 @@ public class PipelineLayout extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Pipeline stages used by the push constants of this layout
+	 * @return Shader stages used by the push constants of this layout
 	 */
-	Set<VkPipelineStage> stages() {
+	Set<VkShaderStage> stages() {
 		return stages;
 	}
 
@@ -69,12 +69,12 @@ public class PipelineLayout extends AbstractVulkanObject {
 	/**
 	 * A <i>push constant range</i> specifies a segment of the push constant buffer that can be used at given pipeline stages.
 	 */
-	public record PushConstantRange(int offset, int size, Set<VkPipelineStage> stages) {
+	public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages) {
 		/**
 		 * Constructor.
 		 * @param offset		Offset (bytes)
 		 * @param size			Size (bytes)
-		 * @param stages		Pipeline stage(s) that can access this range
+		 * @param stages		Pipeline shader stage(s) that can access this range
 		 */
 		public PushConstantRange {
 			Check.zeroOrMore(offset);
@@ -167,7 +167,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 					.orElse(0);
 
 			// Enumerate pipeline stages
-			final Set<VkPipelineStage> stages = ranges
+			final Set<VkShaderStage> stages = ranges
 					.stream()
 					.map(PushConstantRange::stages)
 					.flatMap(Set::stream)

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.io.BufferWrapper;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.PushConstantRange;
 import org.sarge.jove.platform.vulkan.pipeline.PushUpdateCommand.Builder;
@@ -23,7 +23,7 @@ import org.sarge.jove.util.IntegerEnumeration;
 import com.sun.jna.Pointer;
 
 class PushUpdateCommandTest extends AbstractVulkanTest {
-	private static final Set<VkPipelineStage> STAGES = Set.of(VkPipelineStage.VERTEX_SHADER, VkPipelineStage.FRAGMENT_SHADER);
+	private static final Set<VkShaderStage> STAGES = Set.of(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT);
 
 	private PushUpdateCommand update;
 	private PipelineLayout layout;
@@ -90,7 +90,7 @@ class PushUpdateCommandTest extends AbstractVulkanTest {
 
 	@Test
 	void constructorInvalidPipelineStage() {
-		assertThrows(IllegalArgumentException.class, () -> new PushUpdateCommand(layout, 0, data, Set.of(VkPipelineStage.GEOMETRY_SHADER)));
+		assertThrows(IllegalArgumentException.class, () -> new PushUpdateCommand(layout, 0, data, Set.of(VkShaderStage.GEOMETRY)));
 	}
 
 	@Nested
@@ -109,8 +109,8 @@ class PushUpdateCommandTest extends AbstractVulkanTest {
 			final PushUpdateCommand result = builder
 					.offset(4)
 					.data(data)
-					.stage(VkPipelineStage.FRAGMENT_SHADER)
-					.stage(VkPipelineStage.VERTEX_SHADER)
+					.stage(VkShaderStage.VERTEX)
+					.stage(VkShaderStage.FRAGMENT)
 					.build(layout);
 
 			assertEquals(update, result);
@@ -126,29 +126,29 @@ class PushUpdateCommandTest extends AbstractVulkanTest {
 			// Create command to update a slice of the buffer
 			final PushUpdateCommand result = builder
 					.data(whole, 4, 4)
-					.stage(VkPipelineStage.FRAGMENT_SHADER)
+					.stage(VkShaderStage.FRAGMENT)
 					.build(layout);
 
 			// Check sliced command
 			final ByteBuffer slice = whole.slice(4, 4);
-			final PushUpdateCommand expected = new PushUpdateCommand(layout, 0, slice, Set.of(VkPipelineStage.FRAGMENT_SHADER));
+			final PushUpdateCommand expected = new PushUpdateCommand(layout, 0, slice, Set.of(VkShaderStage.FRAGMENT));
 			assertEquals(expected, result);
 		}
 
 		@Test
 		void range() {
 			// Create a push constant range
-			final PushConstantRange range = new PushConstantRange(4, 4, Set.of(VkPipelineStage.FRAGMENT_SHADER));
+			final PushConstantRange range = new PushConstantRange(4, 4, Set.of(VkShaderStage.FRAGMENT));
 
 			// Create a command to update the slice referenced by the range
 			final PushUpdateCommand result = builder
 					.data(whole, range)
-					.stage(VkPipelineStage.FRAGMENT_SHADER)
+					.stage(VkShaderStage.FRAGMENT)
 					.build(layout);
 
 			// Check sliced command
 			final ByteBuffer slice = whole.slice(4, 4);
-			final PushUpdateCommand expected = new PushUpdateCommand(layout, 0, slice, Set.of(VkPipelineStage.FRAGMENT_SHADER));
+			final PushUpdateCommand expected = new PushUpdateCommand(layout, 0, slice, Set.of(VkShaderStage.FRAGMENT));
 			assertEquals(expected, result);
 		}
 	}

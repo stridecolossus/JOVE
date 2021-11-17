@@ -18,8 +18,8 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.PushConstantRange;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
@@ -29,7 +29,7 @@ import org.sarge.jove.util.IntegerEnumeration;
 import com.sun.jna.Pointer;
 
 class PipelineLayoutTest extends AbstractVulkanTest {
-	private static final Set<VkPipelineStage> STAGES = Set.of(VkPipelineStage.VERTEX_SHADER, VkPipelineStage.FRAGMENT_SHADER);
+	private static final Set<VkShaderStage> STAGES = Set.of(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT);
 
 	private PipelineLayout layout;
 
@@ -79,12 +79,12 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 		@Test
 		void constructorInvalidOffsetAlignment() {
-			assertThrows(IllegalArgumentException.class, () -> new PushConstantRange(3, 4, Set.of(VkPipelineStage.VERTEX_SHADER)));
+			assertThrows(IllegalArgumentException.class, () -> new PushConstantRange(3, 4, Set.of(VkShaderStage.VERTEX)));
 		}
 
 		@Test
 		void constructorInvalidSizeAlignment() {
-			assertThrows(IllegalArgumentException.class, () -> new PushConstantRange(0, 3, Set.of(VkPipelineStage.VERTEX_SHADER)));
+			assertThrows(IllegalArgumentException.class, () -> new PushConstantRange(0, 3, Set.of(VkShaderStage.VERTEX)));
 		}
 
 		@Test
@@ -109,7 +109,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			when(set.handle()).thenReturn(new Handle(1));
 
 			// Create push constants range
-			final PushConstantRange range = new PushConstantRange(0, 4, Set.of(VkPipelineStage.VERTEX_SHADER));
+			final PushConstantRange range = new PushConstantRange(0, 4, Set.of(VkShaderStage.VERTEX));
 
 			// Create layout
 			final PipelineLayout layout = builder

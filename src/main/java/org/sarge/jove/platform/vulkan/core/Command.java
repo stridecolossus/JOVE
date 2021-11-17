@@ -160,6 +160,7 @@ public interface Command {
 		 */
 		public void reset(VkCommandBufferResetFlag... flags) {
 			if(state != State.EXECUTABLE) throw new IllegalStateException("Buffer has not been recorded: " + this);
+			// TODO - check pool has flag
 			final int mask = IntegerEnumeration.mask(flags);
 			final VulkanLibrary lib = pool.device().library();
 			check(lib.vkResetCommandBuffer(this, mask));

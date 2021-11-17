@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.io.BufferWrapper;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
+import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.PushConstantRange;
@@ -52,12 +52,12 @@ public class PushUpdateCommand implements Command {
 	 * @param layout		Pipeline layout
 	 * @param offset		Offset (bytes)
 	 * @param data			Data buffer
-	 * @param stages		Pipeline stage(s) that can access this updated data
+	 * @param stages		Pipeline shader stage(s) that can access this updated data
 	 * @throws IllegalArgumentException if {@link #offset} and size of the {@link #data} buffer exceed the {@link PipelineLayout#max()} length of the push constants
 	 * @throws IllegalArgumentException if {@link #offset} and {@link #data} buffer are not correctly aligned
 	 * @throws IllegalArgumentException if {@link #stages} is empty or is not a valid subset of the pipeline layout
 	 */
-	public PushUpdateCommand(PipelineLayout layout, int offset, ByteBuffer data, Set<VkPipelineStage> stages) {
+	public PushUpdateCommand(PipelineLayout layout, int offset, ByteBuffer data, Set<VkShaderStage> stages) {
 		this.layout = notNull(layout);
 		this.offset = zeroOrMore(offset);
 		this.data = notNull(data);
@@ -139,7 +139,7 @@ public class PushUpdateCommand implements Command {
 	public static class Builder {
 		private int offset;
 		private ByteBuffer data;
-		private final Set<VkPipelineStage> stages = new HashSet<>();
+		private final Set<VkShaderStage> stages = new HashSet<>();
 
 		/**
 		 * Sets the offset of this update.
@@ -185,9 +185,9 @@ public class PushUpdateCommand implements Command {
 
 		/**
 		 * Adds a pipeline stage for this update.
-		 * @param stage Pipeline stage
+		 * @param stage Pipeline shader stage
 		 */
-		public Builder stage(VkPipelineStage stage) {
+		public Builder stage(VkShaderStage stage) {
 			stages.add(notNull(stage));
 			return this;
 		}
