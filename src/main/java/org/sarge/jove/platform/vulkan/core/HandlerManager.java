@@ -285,14 +285,11 @@ public class HandlerManager {
 			if(severity.isEmpty()) throw new IllegalArgumentException("No message severities specified");
 			if(types.isEmpty()) throw new IllegalArgumentException("No message types specified");
 
-			// Create callback
-			final MessageCallback callback = new MessageCallback(consumer);
-
 			// Build handler descriptor
 			final var info = new VkDebugUtilsMessengerCreateInfoEXT();
 			info.messageSeverity = IntegerEnumeration.mask(severity);
 			info.messageType = IntegerEnumeration.mask(types);
-			info.pfnUserCallback = callback;
+			info.pfnUserCallback = new MessageCallback(consumer);
 			info.pUserData = null;
 
 			// Register handler with instance

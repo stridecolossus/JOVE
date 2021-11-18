@@ -164,8 +164,9 @@ public class Instance extends AbstractTransientNativeObject {
 		/**
 		 * Sets the reference factory used by this instance.
 		 * @param factory Reference factory
+		 * @see ReferenceFactory#DEFAULT
 		 */
-		Builder factory(ReferenceFactory factory) {
+		public Builder factory(ReferenceFactory factory) {
 			this.factory = notNull(factory);
 			return this;
 		}

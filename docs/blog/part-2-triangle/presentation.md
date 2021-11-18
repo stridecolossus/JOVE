@@ -331,9 +331,8 @@ Instantiating the swapchain is relatively trivial:
 
 ```java
 public Swapchain build() {
-    // Create swapchain
     VulkanLibrary lib = dev.library();
-    ReferenceFactory factory = lib.factory();
+    ReferenceFactory factory = dev.factory();
     PointerByReference chain = factory.pointer();
     check(lib.vkCreateSwapchainKHR(dev, info, null, chain));
     ...
@@ -343,7 +342,6 @@ public Swapchain build() {
 Next we retrieve the handles to the swapchain images created by Vulkan:
 
 ```java
-// Retrieve swapchain images
 VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
 Pointer[] handles = VulkanFunction.enumerate(func, lib, factory::array);
 ```
@@ -351,7 +349,6 @@ Pointer[] handles = VulkanFunction.enumerate(func, lib, factory::array);
 The images share the same descriptor:
 
 ```java
-// Init swapchain image descriptor
 Dimensions extents = new Dimensions(
     info.imageExtent.width,
     info.imageExtent.height
@@ -366,7 +363,6 @@ ImageDescriptor descriptor = new ImageDescriptor.Builder()
 Which is used when we create the view for each swapchain image:
 
 ```java
-// Create image views
 var views = Arrays
     .stream(handles)
     .map(Handle::new)

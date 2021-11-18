@@ -6,9 +6,11 @@ title: Skybox
 
 In this chapter we will add a _skybox_ to the demo application.
 
-The skybox will be implemented as a cube centred on the camera rendered with a cubemap texture.
+The skybox is implemented as a cube centred on the camera rendered with a cubemap texture.
 
-We will then make changes to improve the performance of the loading process and to simplify building the render sequence.
+We will also make changes to the image framework to improve the performance of the texture loading process.
+
+Finally we replace the existing uniform buffer with _push constants_ for the modelview and projection matrices.
 
 ---
 
@@ -89,7 +91,7 @@ public static Model skybox() {
 }
 ```
 
-Note that we only need the vertex positions in the skybox shader (see below).
+Note that we only use the vertex positions in the skybox shader (see below).
 
 Finally a cubemap sampler is created which also clamps texture coordinates:
 
@@ -104,7 +106,7 @@ public Sampler cubeSampler() {
 
 ### Shaders
 
-In the vertex shader for the skybox we first split the matrices which were previously multiplied together in the application:
+In the vertex shader for the skybox we first split the matrices which were previously multiplied together by the application:
 
 ```glsl
 #version 450
@@ -119,7 +121,7 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 0) out vec3 outCoords;
 ```
 
-The reason for this change is so the vertex positions of the skybox cube can be transformed by the view transform without being affected by the other components:
+The reason for this change is to allow the vertex positions of the skybox cube to be transformed by the view without being affected by the other components:
 
 ```glsl
 void main() {
@@ -129,7 +131,7 @@ void main() {
 
 Note that we use the build-in `mat3` operator to extract the rotation component of the view matrix.
 
-The projection transformation sets the last two components to be the same so that the resultant vertex lies on the far clipping plane, i.e. the skybox is drawn _behind_ the rest of the geometry.
+The projection transformation sets the last two components to be the same value such that the resultant vertex lies on the far clipping plane, i.e. the skybox is drawn _behind_ the rest of the geometry.
 
 ```glsl
 gl_Position = (projection * vec4(pos, 0.0)).xyzz;
@@ -185,91 +187,6 @@ void main() {
 }
 ```
 
-### Uniform Buffer
-
-To support the new uniform buffer structure we first promote the object to an inner class of the VBO:
-
-```java
-public class UniformBuffer implements DescriptorResource {
-    private final ByteBuffer buffer = buffer();
-
-    @Override
-    public VkDescriptorType type() {
-        return VkDescriptorType.UNIFORM_BUFFER;
-    }
-
-    @Override
-    public void populate(VkWriteDescriptorSet write) {
-        ...
-    }
-}
-```
-
-The new class can now support convenience helper methods to populate the uniform buffer:
-
-```java
-public UniformBuffer rewind() {
-    buffer.rewind();
-    return this;
-}
-
-public UniformBuffer append(Bufferable data) {
-    data.buffer(buffer);
-    return this;
-}
-```
-
-In particular we add a method to insert data using a random-access type approach:
-
-```java
-public UniformBuffer insert(int index, Bufferable data) {
-    int pos = index * data.length();
-    buffer.position(pos);
-    data.buffer(buffer);
-    return this;
-}
-```
-
-The update method of camera configuration can now be refactored as follows making the purpose of the code more explicit:
-
-```java
-public Task matrix(UniformBuffer uniform) {
-    // Init model rotation
-    Matrix model = ...
-
-    // Add projection matrix
-    uniform.insert(2, projection);
-
-    // Update modelview matrix
-    return () -> {
-        uniform.rewind();
-        uniform.append(model);
-        uniform.append(cam.matrix());
-    };
-}
-```
-
-In the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
-
-```java
-static Bufferable of(Structure struct) {
-    return new Bufferable() {
-        @Override
-        public int length() {
-            return struct.size();
-        }
-
-        @Override
-        public void buffer(ByteBuffer bb) {
-            final byte[] array = struct.getPointer().getByteArray(0, struct.size());
-            BufferHelper.write(array, bb);
-        }
-    };
-}
-```
-
-This allows arbitrary JNA structures to be used to populate a uniform buffer which will become useful in later chapters.
-
 ### Loader
 
 Initially we will load separate images for each 'face' of the cubemap texture.  The code roughly follows the same pattern as the chalet texture with the following differences:
@@ -304,7 +221,7 @@ public Builder cubemap() {
 }
 ```
 
-We next iterate over the array of filenames to load each image:
+We next iterate over an array of filenames to load each image:
 
 ```java
 var loader = new ResourceLoaderAdapter<>(src, new NativeImageLoader());
@@ -315,7 +232,7 @@ for(int n = 0; n < 6; ++n) {
 }
 ```
 
-And perform a separate copy for each image:
+And perform a separate copy operation:
 
 ```java
 new ImageCopyCommand.Builder()
@@ -327,7 +244,7 @@ new ImageCopyCommand.Builder()
     .submitAndWait(graphics);
 ```
 
-Where the sub-resource specifies the array layer for each image:
+Where the sub-resource specifies the array layer for each face of the cubemap texture:
 
 ```java
 SubResource res = new SubResource.Builder(descriptor)
@@ -374,19 +291,15 @@ If all goes well we should now see the skybox rendered behind the chalet model:
 
 TODO
 
-There are a couple of issues with the demo as it stands which we will address next:
-
-1. The process of loading the cubemap texture is quite slow since we load and copy each image separately. 
-
-2. The code to build the render sequence is a mess due to the large number of dependencies (pipelines, descriptor sets, vertex buffers, etc).
-
 ---
 
 ## Compound Image
 
 ### Image Arrays
 
-Rather than loading each image separately via the `NativeImageLoader` we would prefer a single object with offsets to employ more efficient bulk transfer operations.  We will introduce an _image array_ comprised of a list of JOVE images.
+The process of loading the cubemap texture is quite slow since we load and copy each image separately.
+
+Therefore we introduce an _image array_ which is a single chunk of data employing more efficient bulk transfer operations.
 
 To support an image array we first refactor the existing image abstraction:
 
@@ -404,7 +317,10 @@ To create an image array we add a factory method:
 public static ImageData array(List<ImageData> images) {
     int count = images.size();
     if(count == 0) throw new IllegalArgumentException(...);
+    
     ...
+    
+    return new ImageData(header, count, data);
 }
 ```
 
@@ -447,12 +363,6 @@ Bufferable data = new Bufferable() {
         }
     }
 };
-```
-
-Finally the image array is created from the compound data via a private copy constructor:
-
-```java
-return new ImageData(header, count, data);
 ```
 
 We also add a helper that calculates the buffer offset for a given image array element:
@@ -536,9 +446,6 @@ First a copy region is defined as a simple transient record with a companion bui
 public class ImageCopyCommand implements Command {
     ...
     public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents) {
-        public static class Builder {
-            ...
-        }
     }
 }
 ```
@@ -617,7 +524,7 @@ public View cubemap(...) {
 
 Which is copied to the staging buffer:
 
-```
+```java
 VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data());
 ```
 
@@ -663,23 +570,435 @@ This implementation improves the loading times by about 200% on our development 
 
 ---
 
-## Scene Graph
+## Push Constants
 
-TODO
+### Overview
+
+We will next introduce _push constants_ as an alternative (and more efficient) means of updating the view matrices.
+
+Push constants are used to send data to shaders with the following constraints:
+
+* The amount of data is usually relatively small (specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure).
+
+* Push constants are updated and stored within the command buffer itself.
+
+* Push constants have alignment restrictions, see [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
+
+### Push Constant Range
+
+We start with a _push constant range_ which specifies a portion of the push constants and the shaders stages where that data is used:
+
+```java
+public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages) {
+    public int length() {
+        return offset + size;
+    }
+
+    void populate(VkPushConstantRange range) {
+        range.stageFlags = IntegerEnumeration.mask(stages);
+        range.size = size;
+        range.offset = offset;
+    }
+}
+```
+
+The _offset_ and _size_ of a push constant range must be a multiply of four bytes which we validate in the constructor:
+
+```java
+public PushConstantRange {
+    Check.zeroOrMore(offset);
+    Check.oneOrMore(size);
+    Check.notEmpty(stages);
+    stages = Set.copyOf(stages);
+    validate(offset);
+    validate(size);
+}
+
+static void validate(int size) {
+    if((size % 4) != 0) throw new IllegalArgumentException(...);
+}
+```
+
+Note that the constructor copies the set of pipeline stages and rewrites the constructor argument.  This is the standard approach for ensuring that a record class is immutable (although unfortunately this is currently flagged as a warning in our IDE).
+
+The builder for the pipeline layout is modified to include a list of push constant ranges:
+
+```java
+public static class Builder {
+    ...
+    private final List<PushConstantRange> ranges = new ArrayList<>();
+
+    public Builder add(PushConstantRange range) {
+        ranges.add(range);
+        return this;
+    }
+}
+```
+
+The ranges are populated in the usual manner:
+
+```java
+public PipelineLayout build(DeviceContext dev) {
+    ...
+    info.pushConstantRangeCount = ranges.size();
+    info.pPushConstantRanges = StructureHelper.first(ranges, VkPushConstantRange::new, PushConstantRange::populate);
+    ...
+}
+```
+
+Note that multiple ranges can be specified:
+
+1. This enabled the application to update some or all of the push constants at different shader stages.
+
+2. And also allows the hardware to perform optimisations.
+
+In the `build` method we also determine the overall size of the push constants and associated shaders stages (which are added to the pipeline layout constructor):
+
+```java
+// Determine overall size of the push constants data
+int max = ranges
+    .stream()
+    .mapToInt(PushConstantRange::length)
+    .max()
+    .orElse(0);
+
+// Enumerate pipeline stages
+Set<VkShaderStage> stages = ranges
+    .stream()
+    .map(PushConstantRange::stages)
+    .flatMap(Set::stream)
+    .collect(toSet());
+
+// Create layout
+return new PipelineLayout(layout.getValue(), dev, max, stages);
+```
+
+These new properties are used to validate push constant update commands which are addressed next.
+
+### Update Command
+
+Push constants are backed by a data buffer and are updated using a new command:
+
+```java
+public class PushUpdateCommand implements Command {
+    private final PipelineLayout layout;
+    private final int offset;
+    private final ByteBuffer data;
+    private final int stages;
+
+    @Override
+    public void execute(VulkanLibrary lib, Buffer buffer) {
+        data.rewind();
+        lib.vkCmdPushConstants(buffer, layout, stages, offset, data.limit(), data);
+    }
+}
+```
+
+Notes:
+
+* The data buffer is rewound before updates are applied, generally Vulkan seems to automatically rewind buffers as required (e.g. for updating the uniform buffer) but not in this case.
+
+* The constructor applies validation (not shown) to verify alignments, buffer sizes, etc.
+
+The new API method is added to the library for the pipeline layout:
+
+```java
+void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, ByteBuffer pValues);
+```
+
+The constructor is public but we also provide a builder:
+
+```java
+public static class Builder {
+    private int offset;
+    private ByteBuffer data;
+    private final Set<VkShaderStage> stages = new HashSet<>();
+
+    ...
+    
+    public PushUpdateCommand build(PipelineLayout layout) {
+        return new PushUpdateCommand(layout, offset, data, stages);
+    }
+}
+```
+
+We provide builder methods to update all the push constants or an arbitrary _slice_ of the backing data buffer:
+
+```java
+public Builder data(ByteBuffer data, int offset, int size) {
+    this.data = data.slice(offset, size);
+    return this;
+}
+```
+
+And the following convenience method to update a slice specified by a corresponding range:
+
+```java
+public Builder data(ByteBuffer data, PushConstantRange range) {
+    return data(data, range.offset(), range.size());
+}
+```
+
+Finally we add a convenience factory method to create a backing buffer appropriate to the pipeline layout:
+
+```java
+public static ByteBuffer data(PipelineLayout layout) {
+    return BufferWrapper.allocate(layout.max());
+}
+```
+
+And a second helper to update the entire push constants buffer:
+
+```java
+public static PushUpdateCommand of(PipelineLayout layout) {
+    final ByteBuffer data = data(layout);
+    return new PushUpdateCommand(layout, 0, data, layout.stages());
+}
+```
+
+### Buffer Wrapper
+
+As a further convenience for applying updates to push constants (or to uniform buffers) we introduce a wrapper for a data buffer:
+
+```java
+public class BufferWrapper {
+    private final ByteBuffer bb;
+
+    public BufferWrapper rewind() {
+        bb.rewind();
+        return this;
+    }
+
+    public BufferWrapper append(Bufferable data) {
+        data.buffer(bb);
+        return this;
+    }
+}
+```
+
+The following method provides a random access approach to insert data into the buffer:
+
+```java
+public BufferWrapper insert(int index, Bufferable data) {
+    int pos = index * data.length();
+    bb.position(pos);
+    data.buffer(bb);
+    return this;
+}
+```
+
+This can be used to populate push constants or a uniform buffer that is essentially an array of some data type (used below).
+
+In the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
+
+```java
+static Bufferable of(Structure struct) {
+    return new Bufferable() {
+        @Override
+        public int length() {
+            return struct.size();
+        }
+
+        @Override
+        public void buffer(ByteBuffer bb) {
+            byte[] array = struct.getPointer().getByteArray(0, struct.size());
+            BufferWrapper.write(array, bb);
+        }
+    };
+}
+```
+
+This allows arbitrary JNA structures to be used to populate push constants or a uniform buffer which will become useful in later chapters.
+
+The `write` method is a static helper on the new class:
+
+```java
+public static void write(byte[] array, ByteBuffer bb) {
+    if(bb.isDirect()) {
+        for(byte b : array) {
+            bb.put(b);
+        }
+    }
+    else {
+        bb.put(array);
+    }
+}
+```
+
+Note that direct NIO buffers generally do not support the optional bulk methods.
+
+Finally we also implement helpers to allocate and populate direct buffers:
+
+```java
+public class BufferWrapper {
+    public static final ByteOrder ORDER = ByteOrder.nativeOrder();
+
+    public static ByteBuffer allocate(int len) {
+        return ByteBuffer.allocateDirect(len).order(ORDER);
+    }
+
+    public static ByteBuffer buffer(byte[] array) {
+        ByteBuffer bb = allocate(array.length);
+        write(array, bb);
+        return bb;
+    }
+}
+```
+
+### Integration
+
+First the uniform buffer is replaced with a push constants layout declaration in the vertex shaders:
+
+```glsl
+#version 450
+
+layout(location = 0) in vec3 inPosition;
+
+layout(push_constant) uniform Matrices {
+    mat4 model;
+    mat4 view;
+    mat4 projection;
+};
+
+layout(location = 0) out vec3 outCoords;
+
+void main() {
+    vec3 pos = mat3(view) * inPosition;
+    gl_Position = (projection * vec4(pos, 0.0)).xyzz;
+    outCoords = inPosition;
+}
+```
+
+In the pipeline configuration we remove the uniform buffer and replace it with a single push constants range sized to the three matrices:
+
+```java
+@Bean
+PipelineLayout layout(DescriptorLayout layout) {
+    int len = 3 * Matrix.IDENTITY.length();
+
+    return new PipelineLayout.Builder()
+        .add(layout)
+        .add(new PushConstantRange(0, len, Set.of(VkShaderStage.VERTEX)))
+        .build(dev);
+}
+```
+
+Next we create a command to update the whole of the push constants buffer:
+
+```java
+@Bean
+public static PushUpdateCommand update(PipelineLayout layout) {
+    return PushUpdateCommand.of(layout);
+}
+```
+
+In the camera configuration we use the new helper class to update the matrix data in the push constants:
+
+```java
+@Bean
+public Task matrix(PushUpdateCommand update) {
+    // Init model rotation
+    Matrix model = ...
+
+    // Add projection matrix
+    BufferWrapper buffer = new BufferWrapper(update.data());
+    buffer.insert(2, projection);
+
+    // Update modelview matrix
+    return () -> {
+        buffer.rewind();
+        buffer.append(model);
+        buffer.append(cam.matrix());
+    };
+}
+```
+
+In the render sequence we perform the update before starting the render pass:
+
+```java
+begin()
+add(update)
+add(fb.begin())
+    ...
+add(FrameBuffer.END)
+end();
+```
+
+Up to this point we have created and recorded the command buffers _once_ since both the scene and the render sequence are static.  However if one were to run the demo application as it stands nothing will be rendered because the push constants are updated in the command buffer itself.  We therefore need to re-record the command sequence for _every_ frame to apply the updates.
+
+In any case a real-world application would generally be rendering a dynamic scene (i.e. adding and removing geometry) requiring command buffers to be recorded prior to each frame (often as a separate multi-threaded activity).
+
+For the moment we will record the render sequence on demand.  We first factor out the code that allocates and record the command buffer to a separate, temporary component:
+
+```java
+@Component
+class Sequence {
+    @Autowired private Command.Pool graphics;
+    @Autowired private List<FrameBuffer> buffers;
+    @Autowired private PushUpdateCommand update;
+    ...
+
+    private List<Command.Buffer> commands;
+
+    @PostConstruct
+    void init() {
+        commands = graphics.allocate(2);
+    }
+}
+```
+
+The `@PostConstruct` annotation specifies that the method is invoked by the container after the object has been instantiated, which we use to allocate the command buffers.
+
+Next we add a factory method that selects and records a command buffer given the swapchain image index:
+
+```java
+public Command.Buffer get(int index) {
+    Command.Buffer cmd = commands.get(index);
+    if(cmd.isReady()) {
+        cmd.reset();
+    }
+    record(cmd, index);
+    return cmd;
+}
+```
+
+Where `record` wraps up the existing render sequence code.
+
+Note that for the purpose of progressing the demo application we are reusing the command buffers (as opposed to allocating new instances for example).  This requires a command buffer to be `reset` before it can be re-recorded, which entails the following temporary change to the command pool:
+
+```java
+return Pool.create(dev, queue, VkCommandPoolCreateFlag.RESET_COMMAND_BUFFER);
+```
+
+In general using this approach is discouraged in favour of resetting the entire command pool and/or implementing some sort of caching strategy.
+
+The demo application should now run as before using push constants to update the view matrices.
+
+However during the course of this chapter we have introduced several new problems:
+
+* The temporary code to manage the command buffers is very ugly and requires individual buffers to be programatically reset.
+
+* The code to record the command buffers is a mess due to the large number of dependencies.
+
+* We still have multiple arrays of frame buffers, descriptor sets and command buffers.
+
+These issues are all related and will be addressed in the next chapter before we add any further objects to the scene.
 
 ---
 
 ## Summary
 
-In this chapter we added a skybox which involved implementing the following:
+In this chapter we added a skybox which involved implementation of the following:
 
 * The rasterizer pipeline stage.
-
-* An extended uniform buffer object.
 
 * Extension of the image class to support array layers.
 
 * Implementation of a new custom file format and loader to persist an image array.
 
 * The addition of regions to the image copy command.
+
+* Push constants
+
+* The buffer wrapper helper class
 

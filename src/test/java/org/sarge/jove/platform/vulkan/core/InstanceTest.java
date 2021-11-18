@@ -3,8 +3,6 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,7 +10,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
@@ -25,10 +22,9 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class InstanceTest {
-	private static final PointerByReference POINTER = new PointerByReference(new Pointer(1));
-
-	private VulkanLibrary lib;
 	private Instance instance;
+	private VulkanLibrary lib;
+	private ReferenceFactory factory;
 
 	@BeforeEach
 	void before() {
@@ -36,8 +32,8 @@ public class InstanceTest {
 		lib = mock(VulkanLibrary.class);
 
 		// Init reference factory
-		final ReferenceFactory factory = mock(ReferenceFactory.class);
-		when(factory.pointer()).thenReturn(POINTER);
+		factory = mock(ReferenceFactory.class);
+		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(1)));
 
 		// Create instance
 		instance = new Instance(new Handle(1), lib, factory);
@@ -91,6 +87,7 @@ public class InstanceTest {
 				.version(ver)
 				.extension("ext")
 				.layer(layer)
+				.factory(factory)
 				.build(lib);
 
 			// Check instance
@@ -98,56 +95,32 @@ public class InstanceTest {
 			assertEquals(lib, instance.library());
 			assertEquals(false, instance.isDestroyed());
 
-			// Check API
-			final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
-			verify(lib).vkCreateInstance(captor.capture(), isNull(), isA(PointerByReference.class));
+			// Init expected create descriptor
+			final var expected = new VkInstanceCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					// Check instance descriptor
+					final var info = (VkInstanceCreateInfo) obj;
+					assertEquals(1, info.enabledExtensionCount);
+					assertEquals(1, info.enabledLayerCount);
+					assertNotNull(info.ppEnabledExtensionNames);
+					assertNotNull(info.ppEnabledLayerNames);
 
-			// Check instance descriptor
-			final VkInstanceCreateInfo info = captor.getValue();
-			assertEquals(1, info.enabledExtensionCount);
-			assertEquals(1, info.enabledLayerCount);
-			assertNotNull(info.ppEnabledExtensionNames);
-			assertNotNull(info.ppEnabledLayerNames);
+					// Check application descriptor
+					final VkApplicationInfo app = info.pApplicationInfo;
+					assertNotNull(app);
+					assertEquals("name", app.pApplicationName);
+					assertEquals(ver.toInteger(), app.applicationVersion);
+					assertEquals("JOVE", app.pEngineName);
+					assertEquals(new Version(1, 0, 0).toInteger(), app.engineVersion);
+					assertEquals(VulkanLibrary.VERSION.toInteger(), app.apiVersion);
 
-			// Check application descriptor
-			final VkApplicationInfo app = info.pApplicationInfo;
-			assertNotNull(app);
-			assertEquals("name", app.pApplicationName);
-			assertEquals(ver.toInteger(), app.applicationVersion);
-			assertEquals("JOVE", app.pEngineName);
-			assertEquals(new Version(1, 0, 0).toInteger(), app.engineVersion);
-			assertEquals(VulkanLibrary.VERSION.toInteger(), app.apiVersion);
-		}
-
-		@Test
-		void buildDefaults() {
-			// Create instance with default properties
-			instance = builder.build(lib);
-
-			// Check instance
-			assertNotNull(instance);
-			assertEquals(lib, instance.library());
-			assertEquals(false, instance.isDestroyed());
+					return true;
+				}
+			};
 
 			// Check API
-			final ArgumentCaptor<VkInstanceCreateInfo> captor = ArgumentCaptor.forClass(VkInstanceCreateInfo.class);
-			verify(lib).vkCreateInstance(captor.capture(), isNull(), isA(PointerByReference.class));
-
-			// Check instance descriptor
-			final VkInstanceCreateInfo info = captor.getValue();
-			assertEquals(0, info.enabledExtensionCount);
-			assertEquals(0, info.enabledLayerCount);
-			assertNotNull(info.ppEnabledExtensionNames);
-			assertNotNull(info.ppEnabledLayerNames);
-
-			// Check application descriptor
-			final VkApplicationInfo app = info.pApplicationInfo;
-			assertNotNull(app);
-			assertEquals("Unspecified", app.pApplicationName);
-			assertEquals(new Version(1, 0, 0).toInteger(), app.applicationVersion);
-			assertEquals("JOVE", app.pEngineName);
-			assertEquals(new Version(1, 0, 0).toInteger(), app.engineVersion);
-			assertEquals(VulkanLibrary.VERSION.toInteger(), app.apiVersion);
+			verify(lib).vkCreateInstance(expected, null, factory.pointer());
 		}
 	}
 }
