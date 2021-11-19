@@ -54,7 +54,7 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the fences cannot be reset
 	 */
 	public static void reset(DeviceContext dev, Collection<Fence> fences) {
-		final Pointer array = NativeObject.toArray(fences);
+		final Pointer array = NativeObject.array(fences);
 		final VulkanLibrary lib = dev.library();
 		check(lib.vkResetFences(dev, fences.size(), array));
 	}
@@ -68,7 +68,7 @@ public class Fence extends AbstractVulkanObject {
 	 * @throws VulkanException if the API method fails
 	 */
 	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
-		final Pointer array = NativeObject.toArray(fences);
+		final Pointer array = NativeObject.array(fences);
 		final VulkanLibrary lib = dev.library();
 		check(lib.vkWaitForFences(dev, fences.size(), array, VulkanBoolean.of(all), timeout));
 	}

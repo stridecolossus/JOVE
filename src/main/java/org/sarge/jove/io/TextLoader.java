@@ -87,13 +87,4 @@ public class TextLoader {
 	public static String[] tokenize(String line) {
 		return StringUtils.split(line);
 	}
-
-	/**
-	 * Helper - Trims the given string array.
-	 * @param array String array
-	 * @return Trimmed array
-	 */
-	public static String[] trim(String[] array) {
-		return StringUtils.stripAll(array);
-	}
 }

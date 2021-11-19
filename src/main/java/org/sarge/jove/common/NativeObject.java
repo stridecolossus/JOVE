@@ -21,11 +21,11 @@ public interface NativeObject {
 	Handle handle();
 
 	/**
-	 * Converts the given objects to an array of handles.
+	 * Helper - Converts the given objects to an array of handles.
 	 * @param objects Native objects
 	 * @return Handle array
 	 */
-	public static Memory toArray(Collection<? extends NativeObject> objects) {
+	static Memory array(Collection<? extends NativeObject> objects) {
 		// Check for empty data
 		if(objects.isEmpty()) {
 			return null;
@@ -58,6 +58,17 @@ public interface NativeObject {
 
 		// Create contiguous pointer array
 		return new PointerArray(pointers);
+	}
+
+	/**
+	 * Helper - Creates a JNA pointer to an integer array.
+	 * @param array Integer array
+	 * @return Pointer-to-integer-array
+	 */
+	static Pointer array(int[] array) {
+		final Memory mem = new Memory(array.length * Integer.BYTES);
+		mem.write(0, array, 0, array.length);
+		return mem;
 	}
 
 	/**

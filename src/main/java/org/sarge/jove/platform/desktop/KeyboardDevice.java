@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,8 +60,7 @@ public class KeyboardDevice extends DesktopDevice {
 	private class KeyboardSource extends DesktopSource<KeyListener> {
 		@Override
 		public List<Type<?>> types() {
-			// TODO - return keys map?
-			return List.of();
+			return new ArrayList<>(keys.values());
 		}
 
 		@Override

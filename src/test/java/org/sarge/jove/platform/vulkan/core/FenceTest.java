@@ -55,13 +55,13 @@ public class FenceTest extends AbstractVulkanTest {
 	@Test
 	void reset() {
 		fence.reset();
-		verify(lib).vkResetFences(dev, 1, NativeObject.toArray(List.of(fence)));
+		verify(lib).vkResetFences(dev, 1, NativeObject.array(List.of(fence)));
 	}
 
 	@Test
 	void waitReady() {
 		fence.waitReady();
-		verify(lib).vkWaitForFences(dev, 1, NativeObject.toArray(List.of(fence)), VulkanBoolean.TRUE, Long.MAX_VALUE);
+		verify(lib).vkWaitForFences(dev, 1, NativeObject.array(List.of(fence)), VulkanBoolean.TRUE, Long.MAX_VALUE);
 	}
 
 	@Test

@@ -131,7 +131,7 @@ public static RenderPass create(DeviceContext dev, List<Subpass> subpasses) {
 
     // Allocate render pass
     VulkanLibrary lib = dev.library();
-    PointerByReference pass = lib.factory().pointer();
+    PointerByReference pass = dev.factory().pointer();
     check(lib.vkCreateRenderPass(dev, info, null, pass));
 
     // Create render pass
@@ -282,7 +282,7 @@ The frame buffer is then created via the API and wrapped by a new domain object 
 // Allocate frame buffer
 final DeviceContext dev = pass.device();
 final VulkanLibrary lib = dev.library();
-final PointerByReference buffer = lib.factory().pointer();
+final PointerByReference buffer = dev.factory().pointer();
 check(lib.vkCreateFramebuffer(dev, info, null, buffer));
 
 // Create frame buffer
@@ -495,10 +495,7 @@ class VulkanConfiguration {
             .build(lib);
         
         // Attach diagnostics handler
-        instance
-            .handler()
-            .init()
-            .attach();
+        ...
             
         return instance;
     }

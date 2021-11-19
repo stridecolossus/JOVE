@@ -204,7 +204,7 @@ class CommandTest extends AbstractVulkanTest {
 			final Buffer buffer = pool.allocate();
 			pool.free();
 			assertEquals(0, pool.buffers().count());
-			final Memory array = NativeObject.toArray(List.of(buffer));
+			final Memory array = NativeObject.array(List.of(buffer));
 			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
 		}
 

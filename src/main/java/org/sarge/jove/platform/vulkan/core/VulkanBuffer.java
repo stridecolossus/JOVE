@@ -7,6 +7,8 @@ import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -179,8 +181,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public Command bindVertexBuffer() {
 		require(VkBufferUsage.VERTEX_BUFFER);
-		final Pointer array = NativeObject.toArray(List.of(this));
-		return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
+		final Pointer array = NativeObject.array(List.of(this));
+		return (api, cmd) -> api.vkCmdBindVertexBuffers(cmd, 0, 1, array, new long[]{0});
 		// TODO - batch
 	}
 
@@ -193,7 +195,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public Command bindIndexBuffer(VkIndexType type) {
 		require(VkBufferUsage.INDEX_BUFFER);
-		return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this, 0, type);
+		// TODO - verify type is logical, but how? buffer memory does not enforce its 'layout'
+		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, 0, type);
 	}
 
 	/**
@@ -212,9 +215,9 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @throws IllegalStateException if this buffer does not support <b>any</b> of the given usage flags
 	 */
 	public void require(VkBufferUsage... flags) {
-		final boolean contains = Arrays.stream(flags).anyMatch(usage::contains);
-		if(!contains) {
-			throw new IllegalStateException(String.format("Invalid usage for buffer: usage=%s buffer=%s", Arrays.asList(flags), this));
+		final Collection<VkBufferUsage> required = Arrays.asList(flags);
+		if(Collections.disjoint(required, usage)) {
+			throw new IllegalStateException(String.format("Invalid usage for buffer: required=%s buffer=%s", required, this));
 		}
 	}
 

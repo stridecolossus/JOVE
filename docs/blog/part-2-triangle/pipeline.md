@@ -59,7 +59,7 @@ And a builder to create the layout:
 public PipelineLayout build() {
     final var info = new VkPipelineLayoutCreateInfo();
     final VulkanLibrary lib = dev.library();
-    final PointerByReference layout = lib.factory().pointer();
+    final PointerByReference layout = dev.factory().pointer();
     check(lib.vkCreatePipelineLayout(dev, info, null, layout));
     return new PipelineLayout(layout.getValue(), dev);
 }
@@ -319,7 +319,7 @@ info.pCode = bb;
 
 // Allocate shader
 VulkanLibrary lib = dev.library();
-PointerByReference shader = lib.factory().pointer();
+PointerByReference shader = dev.factory().pointer();
 check(lib.vkCreateShaderModule(dev, info, null, shader));
 
 // Create shader
@@ -434,8 +434,8 @@ Finally we invoke the API to instantiate the pipeline:
 
 ```java
 // Allocate pipeline
-final VulkanLibrary lib = dev.library();
-final Pointer[] pipelines = lib.factory().array(1);
+VulkanLibrary lib = dev.library();
+Pointer[] pipelines = new Pointer[1];
 check(lib.vkCreateGraphicsPipelines(dev, null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
 
 // Create pipeline

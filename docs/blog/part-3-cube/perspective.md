@@ -579,7 +579,7 @@ public class ModelBuilder {
 }
 ```
 
-Vertices added to the model can optionally be validated against the layout:
+Vertices added to the model can optionally be validated against the layout (which is also mutable):
 
 ```java
 public ModelBuilder add(Vertex vertex) {
@@ -713,15 +713,23 @@ public interface Model {
 In the default model implementation we first build a mapping from the current to the desired layout:
 
 ```java
-int map[] = current.stream().mapToInt(layouts::indexOf).toArray();
-for(int n : map) {
-    if(n == -1) {
-        throw new IllegalArgumentException(...);
-    }
+int map[] = layouts
+    .stream()
+    .mapToInt(this::indexOf)
+    .toArray();
+```
+
+Where `indexOf` looks up and validates the index of a given layout:
+
+```java
+private int indexOf(Layout layout) {
+    int index = header.layout().indexOf(layout);
+    if(index == -1) throw new IllegalArgumentException(...);
+    return index;
 }
 ```
 
-We can then apply this mapping to the vertex data:
+The mapping is then applied to the vertex data:
 
 ```java
 List<Vertex> data = vertices
@@ -730,14 +738,14 @@ List<Vertex> data = vertices
     .collect(toList());
 ```
 
-Which delegates to the following new helper on the vertex class:
+Which delegates to a new helper on the vertex class that selects the components according to the mapping:
 
 ```java
 public Vertex transform(int[] layout) {
     return Arrays
         .stream(layout)
         .mapToObj(components::get)
-        .collect(TRANSFORM);
+        .collect(Collector.of(ArrayList::new, List::add, ListUtils::union, Vertex::new));
 }
 ```
 

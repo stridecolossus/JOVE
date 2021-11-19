@@ -266,7 +266,16 @@ public Command bind() {
 }
 ```
 
-The local `require` helper checks that the buffer supports a given operation (in this case that it is a vertex buffer that can be bound to a pipeline).
+The local `require` helper checks that the buffer supports a given operation (in this case that it is a vertex buffer that can be bound to a pipeline):
+
+```java
+public void require(VkBufferUsage... flags) {
+    Collection<VkBufferUsage> required = Arrays.asList(flags);
+    if(Collections.disjoint(required, usage)) {
+        throw new IllegalStateException(...);
+    }
+}
+```
 
 Copying the vertex data from staging to a device-local buffer is also implemented as a command:
 
@@ -321,7 +330,7 @@ public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator
 
     // Allocate buffer
     VulkanLibrary lib = dev.library();
-    PointerByReference handle = lib.factory().pointer();
+    PointerByReference handle = dev.factory().pointer();
     check(lib.vkCreateBuffer(dev, info, null, handle));
     
     ...

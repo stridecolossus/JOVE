@@ -529,7 +529,7 @@ Next the API is invoked to create the image:
 
 ```java
 VulkanLibrary lib = dev.library();
-PointerByReference handle = lib.factory().pointer();
+PointerByReference handle = dev.factory().pointer();
 check(lib.vkCreateImage(dev, info, null, handle));
 ```
 
@@ -805,7 +805,7 @@ public Sampler build() {
 
     // Allocate sampler
     VulkanLibrary lib = dev.library();
-    PointerByReference handle = lib.factory().pointer();
+    PointerByReference handle = dev.factory().pointer();
     check(lib.vkCreateSampler(dev, info, null, handle));
 
     // Create sampler

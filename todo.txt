@@ -5,6 +5,7 @@ pipeline
 model
 - sphere/conic builder, uses unit circle, add pole, add ring with N points / segment
 - extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
+- non-interleaved (see DefaultModel)
 
 demo
 - skybox, cube map, skydome?
@@ -46,5 +47,5 @@ current
 - acquire should create a frame object of some sort (swap chain is immutable), i.e. don't care about index
 - need to filter buttons by action/mods
 - add pipeline cache
-
-check out old blog
+- MIP levels
+- check out old blog

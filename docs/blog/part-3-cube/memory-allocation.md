@@ -136,7 +136,7 @@ public synchronized Region map(long offset, long size) {
     // Map memory
     DeviceContext dev = this.device();
     VulkanLibrary lib = dev.library();
-    PointerByReference ref = lib.factory().pointer();
+    PointerByReference ref = dev.factory().pointer();
     check(lib.vkMapMemory(dev, this, offset, size, 0, ref));
 
     // Create mapped region
@@ -374,7 +374,7 @@ static Allocator allocator(DeviceContext dev) {
 
         // Allocate memory
         final VulkanLibrary lib = dev.library();
-        final PointerByReference ref = lib.factory().pointer();
+        final PointerByReference ref = dev.factory().pointer();
         check(lib.vkAllocateMemory(dev, info, null, ref));
 
         // Create memory wrapper

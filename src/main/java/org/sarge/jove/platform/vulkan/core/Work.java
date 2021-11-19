@@ -17,8 +17,6 @@ import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
-import com.sun.jna.Memory;
-
 /**
  * A <i>work</i> instance represents a group of tasks to be submitted to a {@link Queue}.
  * <p>
@@ -89,23 +87,21 @@ public class Work {
 	private void populate(VkSubmitInfo info) {
 		// Populate command buffers
 		info.commandBufferCount = buffers.size();
-		info.pCommandBuffers = NativeObject.toArray(buffers);
+		info.pCommandBuffers = NativeObject.array(buffers);
 
 		if(!wait.isEmpty()) {
 			// Populate wait semaphores
 			info.waitSemaphoreCount = wait.size();
-			info.pWaitSemaphores = NativeObject.toArray(wait.keySet());
+			info.pWaitSemaphores = NativeObject.array(wait.keySet());
 
 			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
 			final int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
-			final Memory mem = new Memory(stages.length * Integer.BYTES);
-			mem.write(0, stages, 0, stages.length);
-			info.pWaitDstStageMask = mem;
+			info.pWaitDstStageMask = NativeObject.array(stages);
 		}
 
 		// Populate signal semaphores
 		info.signalSemaphoreCount = signal.size();
-		info.pSignalSemaphores = NativeObject.toArray(signal);
+		info.pSignalSemaphores = NativeObject.array(signal);
 	}
 
 	/**

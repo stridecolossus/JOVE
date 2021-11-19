@@ -259,7 +259,7 @@ public class DescriptorSet implements NativeObject {
 				layout,
 				0,					// First set
 				sets.size(),
-				NativeObject.toArray(sets),
+				NativeObject.array(sets),
 				0,					// Dynamic offset count
 				null				// Dynamic offsets
 		);

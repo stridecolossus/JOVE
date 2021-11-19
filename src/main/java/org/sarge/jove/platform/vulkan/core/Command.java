@@ -317,7 +317,7 @@ public interface Command {
 		 */
 		private void free(Collection<Buffer> buffers) {
 			final DeviceContext dev = super.device();
-			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.toArray(buffers));
+			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.array(buffers));
 		}
 
 		@Override

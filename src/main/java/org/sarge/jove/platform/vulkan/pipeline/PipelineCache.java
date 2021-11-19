@@ -88,7 +88,7 @@ public class PipelineCache extends AbstractVulkanObject {
 	public void merge(Collection<PipelineCache> caches) {
 		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkMergePipelineCaches(dev, this, caches.size(), NativeObject.toArray(caches)));
+		check(lib.vkMergePipelineCaches(dev, this, caches.size(), NativeObject.array(caches)));
 	}
 
 	/**

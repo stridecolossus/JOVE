@@ -89,7 +89,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 		final PipelineCache other = new PipelineCache(new Pointer(2), dev);
 		final List<PipelineCache> list = List.of(other, other);
 		cache.merge(list);
-		verify(lib).vkMergePipelineCaches(dev, cache, 2, NativeObject.toArray(list));
+		verify(lib).vkMergePipelineCaches(dev, cache, 2, NativeObject.array(list));
 	}
 
 	@Test

@@ -93,7 +93,7 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 	void free() {
 		final List<DescriptorSet> sets = pool.allocate(List.of(layout));
 		pool.free(sets);
-		verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.toArray(sets));
+		verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.array(sets));
 		assertEquals(1, pool.maximum());
 		assertEquals(1, pool.available());
 		assertEquals(0, pool.sets().count());

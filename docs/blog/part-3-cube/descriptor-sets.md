@@ -78,7 +78,7 @@ public static Layout create(LogicalDevice dev, List<Binding> bindings) {
 
     // Allocate layout
     VulkanLibrary lib = dev.library();
-    PointerByReference handle = lib.factory().pointer();
+    PointerByReference handle = dev.factory().pointer();
     check(lib.vkCreateDescriptorSetLayout(dev, info, null, handle));
 
     // Create layout
@@ -128,7 +128,7 @@ public synchronized List<DescriptorSet> allocate(List<Layout> layouts) {
     // Allocate descriptors sets
     DeviceContext dev = this.device();
     VulkanLibrary lib = dev.library();
-    Pointer[] handles = lib.factory().array(size);
+    Pointer[] handles = new Pointer[size];
     check(lib.vkAllocateDescriptorSets(dev, info, handles));
     ...
 }
@@ -237,7 +237,7 @@ Finally we invoke the API to allocate the pool and create the domain object:
 
 ```java
 VulkanLibrary lib = dev.library();
-PointerByReference handle = lib.factory().pointer();
+PointerByReference handle = dev.factory().pointer();
 check(lib.vkCreateDescriptorPool(dev, info, null, handle));
 return new Pool(handle.getValue(), dev, max);
 ```

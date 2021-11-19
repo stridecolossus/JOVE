@@ -35,7 +35,6 @@ import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
-import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -68,6 +67,7 @@ public class Swapchain extends AbstractVulkanObject {
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> views;
+	private final IntByReference index;
 
 	/**
 	 * Constructor.
@@ -81,6 +81,7 @@ public class Swapchain extends AbstractVulkanObject {
 		this.format = notNull(format);
 		this.extents = notNull(extents);
 		this.views = List.copyOf(views);
+		this.index = dev.factory().integer();
 	}
 
 	/**
@@ -120,9 +121,8 @@ public class Swapchain extends AbstractVulkanObject {
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) {
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
-		final DeviceContext dev = device();
+		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
-		final IntByReference index = dev.factory().integer();
 		check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
 		return index.getValue();
 	}
@@ -139,17 +139,14 @@ public class Swapchain extends AbstractVulkanObject {
 
 		// Populate wait semaphores
 		info.waitSemaphoreCount = semaphores.size();
-		info.pWaitSemaphores = NativeObject.toArray(semaphores);
+		info.pWaitSemaphores = NativeObject.array(semaphores);
 
 		// Populate swap-chain
 		info.swapchainCount = 1;
-		info.pSwapchains = NativeObject.toArray(List.of(this));
+		info.pSwapchains = NativeObject.array(List.of(this));
 
 		// Set image indices
-		final int[] array = new int[]{index};
-		final Memory mem = new Memory(array.length * Integer.BYTES);
-		mem.write(0, array, 0, array.length);
-		info.pImageIndices = mem;
+		info.pImageIndices = NativeObject.array(new int[]{index});
 
 		// Present frame
 		final VulkanLibrary lib = device().library();

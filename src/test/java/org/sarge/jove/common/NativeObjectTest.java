@@ -1,5 +1,6 @@
 package org.sarge.jove.common;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,13 +31,21 @@ public class NativeObjectTest {
 		when(obj.handle()).thenReturn(new Handle(ptr));
 	}
 
+	@Test
+	void integers() {
+		final int[] array = {1, 2, 3};
+		final Pointer ptr = NativeObject.array(array);
+		assertNotNull(ptr);
+		assertArrayEquals(array, ptr.getIntArray(0, 3));
+	}
+
 	@Nested
-	class ArrayTests {
+	class HandleArrayTests {
 		private Memory mem;
 
 		@BeforeEach
 		void before() {
-			mem = NativeObject.toArray(List.of(obj, obj));
+			mem = NativeObject.array(List.of(obj, obj));
 		}
 
 		@Test
@@ -48,15 +57,15 @@ public class NativeObjectTest {
 
 		@Test
 		void empty() {
-			assertEquals(null, NativeObject.toArray(Set.of()));
+			assertEquals(null, NativeObject.array(Set.of()));
 		}
 
 		@Test
 		void equals() {
 			assertEquals(true, mem.equals(mem));
-			assertEquals(true, mem.equals(NativeObject.toArray(List.of(obj, obj))));
+			assertEquals(true, mem.equals(NativeObject.array(List.of(obj, obj))));
 			assertEquals(false, mem.equals(null));
-			assertEquals(false, mem.equals(NativeObject.toArray(List.of(obj))));
+			assertEquals(false, mem.equals(NativeObject.array(List.of(obj))));
 		}
 	}
 

@@ -76,8 +76,10 @@ The supported _image formats_ are retrieved using the two-stage approach:
 
 ```java
 public Collection<VkSurfaceFormatKHR> formats() {
-    VulkanFunction<VkSurfaceFormatKHR> func = (api, count, array) -> api.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface.this, count, array);
-    var formats = VulkanFunction.enumerate(func, dev.library(), VkSurfaceFormatKHR::new);
+    VulkanLibrary lib = instance.library();
+    VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface.this, count, array);
+    IntByReference count = instance.factory().integer();
+    var formats = VulkanFunction.enumerate(func, count, VkSurfaceFormatKHR::new);
     return Arrays.stream(formats).collect(toList());
 }
 ```
@@ -85,23 +87,23 @@ public Collection<VkSurfaceFormatKHR> formats() {
 Finally the swapchain will support a number of available _presentation modes_ (at least one) which can be configured by the application:
 
 ```java
-public Set<VkPresentModeKHR> modes() {
-    // Count number of supported modes
-    // TODO - API method returns the modes as an int[] and we cannot use VulkanFunction::enumerate for a primitive array
-    VulkanLibrary lib = dev.library();
-    IntByReference count = lib.factory().integer();
-    check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, null));
-
-    // Retrieve modes
-    int[] array = new int[count.getValue()];
-    check(lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array));
-
-    // Convert to enumeration
-    return Arrays
-        .stream(array)
-        .mapToObj(n -> IntegerEnumeration.map(VkPresentModeKHR.class, n))
-        .collect(toSet());
+public Set<VkPresentModeKHR> loadModes() {
+    VulkanLibrary lib = instance.library();
+    VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array);
+    IntByReference count = instance.factory().integer();
+    int[] array = VulkanFunction.invoke(func, count, int[]::new);
+    ...
 }
+```
+
+The presentation modes are returned as an integer array which is mapped to the corresponding enumeration:
+
+```java
+IntegerEnumeration.ReverseMapping<VkPresentModeKHR> mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);
+return Arrays
+    .stream(array)
+    .mapToObj(mapping::map)
+    .collect(toSet());
 ```
 
 The new API methods are added to the surface library:
@@ -208,7 +210,7 @@ public View build() {
     // Allocate image view
     LogicalDevice dev = image.device();
     VulkanLibrary lib = dev.library();
-    PointerByReference handle = lib.factory().pointer();
+    PointerByReference handle = dev.factory().pointer();
     check(lib.vkCreateImageView(dev, info, null, handle));
 
     // Create image view
@@ -342,8 +344,9 @@ public Swapchain build() {
 Next we retrieve the handles to the swapchain images created by Vulkan:
 
 ```java
-VulkanFunction<Pointer[]> func = (api, count, array) -> api.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
-Pointer[] handles = VulkanFunction.enumerate(func, lib, factory::array);
+VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
+IntByReference count = factory.integer();
+Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
 ```
 
 The images share the same descriptor:
@@ -412,15 +415,15 @@ interface VulkanLibrarySwapchain {
 We add the following to acquire the index of the next image to be rendered:
 
 ```java
-public class Swapchain ... {
-    public int acquire() {
-        ...
-        final IntByReference index = new IntByReference();
-        check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, null, null, index));
-        return index.getValue();
-    }
+public int acquire() {
+    final DeviceContext dev = super.device();
+    final VulkanLibrary lib = dev.library();
+    check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, null, null, index));
+    return index.getValue();
 }
 ```
+
+The `index` is a new class member created from the reference factory in the swapchain constructor.
 
 The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter when we fully implement the render loop.  For the moment we will leave these values as `null` in the acquire method.
 

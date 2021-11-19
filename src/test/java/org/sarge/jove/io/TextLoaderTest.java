@@ -58,10 +58,4 @@ public class TextLoaderTest {
 	void tokenize() {
 		assertArrayEquals(new String[]{"1", "2", "3"}, TextLoader.tokenize("1  2\t 3 "));
 	}
-
-	@Test
-	void trim() {
-		final String[] array = {"1", " 2 ", "3 "};
-		assertArrayEquals(new String[]{"1", "2", "3"}, TextLoader.trim(array));
-	}
 }

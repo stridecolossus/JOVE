@@ -344,7 +344,7 @@ A semaphore is created using a factory method:
 public static Semaphore create(DeviceContext dev) {
     VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
     VulkanLibrary lib = dev.library();
-    PointerByReference handle = lib.factory().pointer();
+    PointerByReference handle = dev.factory().pointer();
     VulkanLibrary.check(lib.vkCreateSemaphore(dev, info, null, handle));
     return new Semaphore(handle.getValue(), dev);
 }
@@ -501,7 +501,7 @@ public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 
     // Create fence
     VulkanLibrary lib = dev.library();
-    PointerByReference handle = lib.factory().pointer();
+    PointerByReference handle = dev.factory().pointer();
     check(lib.vkCreateFence(dev, info, null, handle));
 
     // Create domain object

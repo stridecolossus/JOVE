@@ -41,6 +41,7 @@ public class DefaultModel extends AbstractModel {
 			return new DefaultModel(header, List.copyOf(vertices), Arrays.copyOf(index, index.length));
 		}
 	}
+	// TODO - extend IndexedModel and implementations for Integer and Short? see type in VulkanBuffer
 
 	private final List<Vertex> vertices;
 	private final int[] index;
@@ -80,6 +81,7 @@ public class DefaultModel extends AbstractModel {
 			}
 		};
 	}
+	// TODO - non-interleaved option? i.e. would have to select each component from each vertex
 
 	@Override
 	public Optional<Bufferable> index() {

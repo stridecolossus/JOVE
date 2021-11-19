@@ -110,13 +110,13 @@ A pool is created via a factory method:
 ```java
 public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFlag... flags) {
     // Init pool descriptor
-    final var info = new VkCommandPoolCreateInfo();
+    var info = new VkCommandPoolCreateInfo();
     info.queueFamilyIndex = queue.family().index();
     info.flags = IntegerEnumeration.mask(flags);
 
     // Create pool
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference pool = lib.factory().pointer();
+    VulkanLibrary lib = dev.library();
+    PointerByReference pool = dev.factory().pointer();
     check(lib.vkCreateCommandPool(dev, info, null, pool));
 
     // Create pool
@@ -129,15 +129,15 @@ To allocate command buffers we add the following factory method:
 ```java
 public List<Buffer> allocate(int num, boolean primary) {
     // Init descriptor
-    final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
+    var info = new VkCommandBufferAllocateInfo();
     info.level = primary ? VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY : VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
     info.commandBufferCount = oneOrMore(num);
     info.commandPool = this.handle();
 
     // Allocate buffers
-    final DeviceContext dev = super.device();
-    final VulkanLibrary lib = dev.library();
-    final Pointer[] handles = lib.factory().array(num);
+    DeviceContext dev = super.device();
+    VulkanLibrary lib = dev.library();
+    Pointer[] handles = new Pointer[num];
     check(lib.vkAllocateCommandBuffers(dev, info, handles));
     
     ...
@@ -148,7 +148,7 @@ The handles of the newly allocated buffers are then transformed to the domain ob
 
 ```java
 // Create buffers
-final var list = Arrays
+List<Buffer> list = Arrays
     .stream(handles)
     .map(ptr -> new Buffer(ptr, this))
     .collect(toList());
@@ -182,8 +182,8 @@ public synchronized void free() {
 }
 
 private void free(Collection<Buffer> buffers) {
-    final LogicalDevice dev = super.device();
-    dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), buffers.toArray(Buffer[]::new));
+    DeviceContext dev = super.device();
+    dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.toArray(buffers));
 }
 ```
 
@@ -191,8 +191,8 @@ Finally the pool can also be reset which recycles resources and restores all all
 
 ```java
 public void reset(VkCommandPoolResetFlag... flags) {
-    final int mask = IntegerEnumeration.mask(flags);
-    final LogicalDevice dev = super.device();
+    int mask = IntegerEnumeration.mask(flags);
+    DeviceContext dev = super.device();
     check(dev.library().vkResetCommandPool(dev, this, mask));
 }
 ```
@@ -234,11 +234,11 @@ public Buffer begin(VkCommandBufferUsageFlag... flags) {
     if(state != State.INITIAL) throw new IllegalStateException(...);
 
     // Init descriptor
-    final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
+    var info = new VkCommandBufferBeginInfo();
     info.flags = IntegerEnumeration.mask(flags);
 
     // Start buffer recording
-    final VulkanLibrary lib = pool.device().library();
+    VulkanLibrary lib = pool.device().library();
     check(lib.vkBeginCommandBuffer(this, info));
 
     // Start recording
@@ -262,7 +262,7 @@ Finally the `end` method completes recording:
 ```java
 public Buffer end() {
     if(state != State.RECORDING) throw new IllegalStateException(...);
-    final VulkanLibrary lib = pool.device().library();
+    VulkanLibrary lib = pool.device().library();
     check(lib.vkEndCommandBuffer(this));
     state = State.EXECUTABLE;
     return this;
@@ -307,8 +307,8 @@ All command buffers __must__ be submitted to the same queue family which is vali
 
 ```java
 private static boolean matches(Work work, Pool pool) {
-    final Family left = work.pool.queue().family();
-    final Family right = pool.queue().family();
+    Family left = work.pool.queue().family();
+    Family right = pool.queue().family();
     return left.equals(right);
 }
 ```
@@ -317,7 +317,7 @@ We also add a convenience factory to create a work submission for a single comma
 
 ```java
 public static Work of(Buffer buffer) {
-    final Pool pool = buffer.pool();
+    Pool pool = buffer.pool();
     return new Builder(pool).add(buffer).build();
 }
 ```
@@ -328,16 +328,16 @@ Work is submitted to the queue as a _batch_ of submissions (which again must all
 public static void submit(List<Work> work) {
     // Validate
     Check.notEmpty(work);
-    final Pool pool = work.get(0).pool;
+    Pool pool = work.get(0).pool;
     if(!work.stream().allMatch(e -> matches(e, pool))) {
         throw new IllegalArgumentException(...);
     }
 
     // Populate array of submission descriptors
-    final VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
+    VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
 
     // Submit work
-    final VulkanLibrary lib = pool.device().library();
+    VulkanLibrary lib = pool.device().library();
     check(lib.vkQueueSubmit(pool.queue(), array.length, array, null));
 }
 ```
@@ -373,12 +373,12 @@ We add the following factory method on the `FrameBuffer` class to begin renderin
 ```java
 public Command begin() {
     // Create descriptor
-    final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
+    var info = new VkRenderPassBeginInfo();
     info.renderPass = pass.handle();
     info.framebuffer = this.handle();
 
     // Populate rendering area
-    final VkExtent2D ext = info.renderArea.extent;
+    VkExtent2D ext = info.renderArea.extent;
     ext.width = extents.width();
     ext.height = extents.height();
 
@@ -390,21 +390,17 @@ public Command begin() {
 }
 ```
 
-For the moment we bodge a grey clear value for the colour attachment:
+For the moment we temporarily bodge a grey clear value for the colour attachment:
 
 ```java
-// Init clear values
-// TODO...
-final VkClearValue clear = new VkClearValue();
-clear.setType("color");
-clear.color.setType("float32");
+VkClearValue clear = new VkClearValue();
+clear.color = new VkClearColorValue();
 clear.color.float32 = new float[]{0.3f, 0.3f, 0.3f, 1};
 info.clearValueCount = 1;
 info.pClearValues = clear;
-// ...TODO
 ```
 
-We will explain the purpose of the JNA `setType` method when clear values are fully implemented in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
+Clear values will be more fully implemented in the [models](/JOVE/blog/part-4-models/model-loader) chapter.
 
 Ending the render pass is defined as a constant since the command does not require any additional arguments:
 
@@ -446,7 +442,7 @@ In the demo application we modify the devices configuration class by replacing t
 ```java
 class DeviceConfiguration {
     private static Pool pool(LogicalDevice dev, Selector selector) {
-        final Queue queue = dev.queue(selector.family());
+        Queue queue = dev.queue(selector.family());
         return Pool.create(dev, queue);
     }
     

@@ -168,7 +168,6 @@ In the parse method we first tokenize the line and then delegate to a _parser_ f
 private void parse(String line) {
     // Tokenize line
     String[] parts = StringUtils.split(line);
-    Parser.trim(parts);
 
     // Lookup parser
     Parser parser = parsers.get(parts[0]);
@@ -211,8 +210,6 @@ We also provide the following:
 * A setter to override the error handler as required.
 
 * The `IGNORE` parser which can be used to explicitly ignore commands.
-
-* The `trim` helper to the parser interface to clean a tokenized array of strings.
 
 ### Vertex Components
 
@@ -303,8 +300,7 @@ public void parse(String[] args, ObjectModel model) {
 Each vertex is a slash-delimited tuple of indices into the vertex data:
 
 ```java
-String[] parts = face.split("/");
-Parser.trim(parts);
+String[] parts = StringUtils.split(face, '/');
 if(parts.length > 3) throw new IllegalArgumentException(...);
 ```
 
@@ -378,7 +374,7 @@ public class ObjectModel {
 }
 ```
 
-The `append` method builds a JOVE model from the transient data and resets the model:
+The `append` method builds a JOVE model from the current group and then resets the transient model:
 
 ```java
 private void append() {
@@ -388,7 +384,7 @@ private void append() {
     }
 
     // Create new model builder
-    final ModelBuilder builder = builder();
+    ModelBuilder builder = new ModelBuilder();
     builder.primitive(Primitive.TRIANGLES);
 
     // Init model layout

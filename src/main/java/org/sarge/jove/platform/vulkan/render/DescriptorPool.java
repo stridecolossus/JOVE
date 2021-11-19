@@ -90,7 +90,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 		final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
 		info.descriptorPool = this.handle();
 		info.descriptorSetCount = size;
-		info.pSetLayouts = NativeObject.toArray(layouts);
+		info.pSetLayouts = NativeObject.array(layouts);
 
 		// Allocate descriptors sets
 		final DeviceContext dev = this.device();
@@ -137,7 +137,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 
 		// Release sets
 		final DeviceContext dev = this.device();
-		check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.toArray(sets)));
+		check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.array(sets)));
 	}
 
 	/**

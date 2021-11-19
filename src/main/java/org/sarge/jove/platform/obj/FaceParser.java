@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.obj;
 
-import org.sarge.jove.io.TextLoader;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * The <i>face parser</i> parses an OBJ face command.
@@ -47,11 +47,11 @@ class FaceParser implements Parser {
 		for(int n = 0; n < 3; ++n) {
 			// Tokenize face
 			final String face = args[n + 1];
-			final String[] parts = face.split("/");
-			TextLoader.trim(parts);
+			final String[] parts = StringUtils.splitPreserveAllTokens(face, '/');
 			if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
 
 			// Parse mandatory vertex position
+			if((parts.length == 0) || parts[0].isEmpty()) throw new IllegalArgumentException("Missing mandatory vertex position: " + face);
 			final int v = Integer.parseInt(parts[0]);
 
 			// Parse optional texture coordinate

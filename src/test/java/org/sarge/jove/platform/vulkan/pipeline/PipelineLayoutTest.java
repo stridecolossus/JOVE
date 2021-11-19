@@ -132,7 +132,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 			// Check descriptor-set layouts
 			assertEquals(1, info.setLayoutCount);
-			assertEquals(NativeObject.toArray(Set.of(set)), info.pSetLayouts);
+			assertEquals(NativeObject.array(Set.of(set)), info.pSetLayouts);
 
 			// Check push constants
 			assertEquals(1, info.pushConstantRangeCount);

@@ -119,9 +119,10 @@ public class Surface extends AbstractTransientNativeObject {
 			final int[] array = VulkanFunction.invoke(func, count, int[]::new);
 
 			// Convert to enumeration
+			final IntegerEnumeration.ReverseMapping<VkPresentModeKHR> mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);
 			return Arrays
 					.stream(array)
-					.mapToObj(n -> IntegerEnumeration.mapping(VkPresentModeKHR.class).map(n))
+					.mapToObj(mapping::map)
 					.collect(toSet());
 		}
 	}

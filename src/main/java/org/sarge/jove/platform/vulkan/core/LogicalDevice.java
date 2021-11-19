@@ -218,9 +218,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			if(priorities.size() > family.count()) {
 				throw new IllegalArgumentException(String.format("Number of queues exceeds family: avaiable=%d requested=%d", priorities.size(), family.count()));
 			}
-//			if(queues.containsKey(family)) {
-//				throw new IllegalArgumentException("Duplicate required queue family: " + family);
-//			}
 
 			// Register required queue
 			queues.put(family, List.copyOf(priorities));
@@ -238,7 +235,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			// Allocate contiguous memory block for the priorities array
 			final Memory mem = new Memory(array.length * Float.BYTES);
 			mem.write(0, array, 0, array.length);
-			// TODO - why is this required if using primitives?
 
 			// Populate queue descriptor
 			info.queueCount = array.length;
