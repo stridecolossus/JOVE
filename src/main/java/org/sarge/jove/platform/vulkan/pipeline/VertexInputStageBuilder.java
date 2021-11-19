@@ -38,14 +38,6 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	}
 
 	/**
-	 * Starts a new attribute.
-	 * @return New attribute builder
-	 */
-	public AttributeBuilder attribute() {
-		return new AttributeBuilder();
-	}
-
-	/**
 	 * Helper - Adds a vertex input binding and attributes for the given vertex layout.
 	 * <p>
 	 * Notes:
@@ -54,44 +46,35 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * <li>Vertex data is assumed to be contiguous, i.e. the offset of each component is the end of the previous element</li>
 	 * </ul>
 	 * <p>
-	 * @param layout Vertex layout
+	 * @param layouts Vertex component layouts
 	 */
-	public VertexInputStageBuilder add(List<Layout> layout) {
-		// Allocate next binding
-		final int index = bindings.size();
-
-		// Calculate vertex stride for this layout
-		final int stride = Layout.stride(layout);
-
+	public VertexInputStageBuilder add(List<Layout> layouts) {
 		// Add binding
-		new BindingBuilder()
-				.index(index)
-				.stride(stride)
-				.build();
+		final BindingBuilder binding = new BindingBuilder();
+
+		// Init vertex stride
+		final int stride = Layout.stride(layouts);
+		binding.stride(stride);
 
 		// Add attribute for each layout component
 		int offset = 0;
-		int loc = 0;
-		for(Layout component : layout) {
+		for(Layout component : layouts) {
 			// Determine component format
 			final VkFormat format = FormatBuilder.format(component);
 
 			// Add attribute for component
-			new AttributeBuilder()
-					.binding(index)
-					.location(loc)
+			new AttributeBuilder(binding)
 					.format(format)
 					.offset(offset)
 					.build();
 
 			// Increment offset to the start of the next attribute
-			++loc;
 			offset += component.length();
-			// TODO - assumes contiguous => introduce offset (default 0)
 		}
 		assert offset == stride;
 
-		return this;
+		// Construct binding
+		return binding.build();
 	}
 
 	/**
@@ -101,13 +84,6 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 */
 	@Override
 	VkPipelineVertexInputStateCreateInfo get() {
-		// Validate bindings
-		for(final var b : bindings.values()) {
-			if(b.locations.isEmpty()) {
-				throw new IllegalArgumentException(String.format("No attributes specified for binding: ", b.binding));
-			}
-		}
-
 		// Create descriptor
 		final var info = new VkPipelineVertexInputStateCreateInfo();
 
@@ -126,9 +102,9 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * Builder for a vertex input binding.
 	 */
 	public class BindingBuilder {
-		private int binding;
+		private int index = bindings.size();
 		private int stride;
-		private VkVertexInputRate rate = VkVertexInputRate.VERTEX; // TODO - instancing
+		private VkVertexInputRate rate = VkVertexInputRate.VERTEX;
 		private final Set<Integer> locations = new HashSet<>();
 
 		private BindingBuilder() {
@@ -139,7 +115,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		 * @param binding Binding index
 		 */
 		public BindingBuilder index(int binding) {
-			this.binding = zeroOrMore(binding);
+			this.index = zeroOrMore(binding);
 			return this;
 		}
 
@@ -161,23 +137,31 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 			return this;
 		}
 
+		/**
+		 * Starts a new attribute.
+		 * @return New attribute builder
+		 */
+		public AttributeBuilder attribute() {
+			return new AttributeBuilder(this);
+		}
+
 		private void populate(VkVertexInputBindingDescription desc) {
-			desc.binding = binding;
+			desc.binding = index;
 			desc.stride = stride;
 			desc.inputRate = rate;
 		}
 
 		/**
 		 * Constructs this input binding.
-		 * @throws IllegalArgumentException for a duplicate binding index or an invalid vertex stride
+		 * @throws IllegalArgumentException for a duplicate binding index or if no vertex attributes are specified
 		 */
 		public VertexInputStageBuilder build() {
 			// Validate binding description
-			if(bindings.containsKey(binding)) throw new IllegalArgumentException("Duplicate binding index: " + binding);
-			if(stride == 0) throw new IllegalArgumentException("Invalid vertex stride");
+			if(bindings.containsKey(index)) throw new IllegalArgumentException("Duplicate binding index: " + index);
+			if(locations.isEmpty()) throw new IllegalArgumentException(String.format("No attributes specified for binding: ", index));
 
 			// Add binding
-			bindings.put(binding, this);
+			bindings.put(index, this);
 
 			return VertexInputStageBuilder.this;
 		}
@@ -187,21 +171,14 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * Builder for a vertex input attribute.
 	 */
 	public class AttributeBuilder {
-		private int binding;
+		private final BindingBuilder binding;
 		private int loc;
 		private VkFormat format;
 		private int offset;
 
-		private AttributeBuilder() {
-		}
-
-		/**
-		 * Sets the binding index of this attribute.
-		 * @param binding Binding index
-		 */
-		public AttributeBuilder binding(int binding) {
-			this.binding = zeroOrMore(binding);
-			return this;
+		private AttributeBuilder(BindingBuilder binding) {
+			this.binding = binding;
+			this.loc = binding.locations.size();
 		}
 
 		/**
@@ -232,7 +209,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		}
 
 		private void populate(VkVertexInputAttributeDescription attr) {
-			attr.binding = binding;
+			attr.binding = binding.index;
 			attr.location = loc;
 			attr.format = format;
 			attr.offset = offset;
@@ -240,23 +217,22 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 
 		/**
 		 * Constructs this attribute description.
-		 * @throws IllegalArgumentException if the location is a duplicate, the attribute format is not specified, the binding is not present, or the offset exceeds the vertex stride
+		 * @return Parent binding builder
+		 * @throws IllegalArgumentException if the location is a duplicate, the attribute format is not specified, or the offset exceeds the vertex stride
 		 */
-		public VertexInputStageBuilder build() {
+		public BindingBuilder build() {
 			// Validate attribute
-			final BindingBuilder desc = bindings.get(binding);
-			if(desc == null) throw new IllegalArgumentException("Invalid binding index for attribute: " + binding);
-			if(offset >= desc.stride) throw new IllegalArgumentException("Offset exceeds vertex stride");
+			if(offset >= binding.stride) throw new IllegalArgumentException("Offset exceeds vertex stride");
 			if(format == null) throw new IllegalArgumentException("No format specified for attribute");
 
 			// Check location
-			if(desc.locations.contains(loc)) throw new IllegalArgumentException("Duplicate location: " + loc);
-			desc.locations.add(loc);
+			if(binding.locations.contains(loc)) throw new IllegalArgumentException("Duplicate location: " + loc);
+			binding.locations.add(loc);
 
 			// Add attribute
 			attributes.add(this);
 
-			return VertexInputStageBuilder.this;
+			return binding;
 		}
 	}
 }

@@ -48,4 +48,5 @@ current
 - need to filter buttons by action/mods
 - add pipeline cache
 - MIP levels
+- short/int index buffer, extends indexed model, extends model
 - check out old blog

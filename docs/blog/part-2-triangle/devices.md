@@ -697,13 +697,25 @@ Notes:
 Finally we implement a new Vulkan library for the various API methods to manage the logical device and work queues:
 
 ```java
-interface VulkanLibraryLogicalDevice {
-    int vkCreateDevice(Pointer physicalDevice, VkDeviceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference device);
+interface Library {
+    int  vkCreateDevice(Pointer physicalDevice, VkDeviceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference device);
     void vkDestroyDevice(Pointer device, Pointer pAllocator);
     void vkGetDeviceQueue(Pointer device, int queueFamilyIndex, int queueIndex, PointerByReference pQueue);
-    int vkDeviceWaitIdle(Pointer device);
-    int vkQueueWaitIdle(Pointer queue);
+    int  vkDeviceWaitIdle(Pointer device);
+    int  vkQueueWaitIdle(Pointer queue);
 }
+```
+
+Note from now on the API libraries are inner classes of the companion domain objects and are aggregated into the main Vulkan library:
+
+```java
+public interface VulkanLibrary extends Library, DeviceLibrary, ...
+```
+
+Where convenient we implement intermediate aggregations, e.g. for the various device libraries:
+
+```java
+interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library, LogicalDevice.Library
 ```
 
 ### Integration

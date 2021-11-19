@@ -150,10 +150,10 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void bind() {
-			final Command cmd = buffer.bindVertexBuffer();
+			final Command cmd = buffer.bindVertexBuffer(2);
 			assertNotNull(cmd);
 			cmd.execute(lib, cb);
-			verify(lib).vkCmdBindVertexBuffers(cb, 0, 1, NativeObject.array(List.of(buffer)), new long[]{0});
+			verify(lib).vkCmdBindVertexBuffers(cb, 2, 1, NativeObject.array(List.of(buffer)), new long[]{0});
 		}
 
 		@Test

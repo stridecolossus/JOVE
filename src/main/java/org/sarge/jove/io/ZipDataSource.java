@@ -35,4 +35,6 @@ public class ZipDataSource implements DataSource {
 	}
 }
 
-//https://www.baeldung.com/java-compress-and-uncompress
+// https://www.baeldung.com/java-compress-and-uncompress
+// https://docs.oracle.com/javase/8/docs/technotes/guides/io/fsp/zipfilesystemprovider.html
+// FileSystems.newFileSystem(URI of ZIP file);

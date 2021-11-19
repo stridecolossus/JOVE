@@ -175,14 +175,15 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 	/**
 	 * Creates a command to bind this buffer as a vertex buffer (VBO).
+	 * @param binding Binding index
 	 * @return Command to bind this buffer
 	 * @throws IllegalStateException if this buffer cannot be used as a VBO
 	 * @see VkBufferUsage#VERTEX_BUFFER
 	 */
-	public Command bindVertexBuffer() {
+	public Command bindVertexBuffer(int binding) {
 		require(VkBufferUsage.VERTEX_BUFFER);
 		final Pointer array = NativeObject.array(List.of(this));
-		return (api, cmd) -> api.vkCmdBindVertexBuffers(cmd, 0, 1, array, new long[]{0});
+		return (api, cmd) -> api.vkCmdBindVertexBuffers(cmd, binding, 1, array, new long[]{0});
 		// TODO - batch
 	}
 

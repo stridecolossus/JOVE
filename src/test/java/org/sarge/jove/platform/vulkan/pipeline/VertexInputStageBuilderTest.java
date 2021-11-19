@@ -14,16 +14,13 @@ import org.sarge.jove.platform.vulkan.VkVertexInputRate;
 
 public class VertexInputStageBuilderTest {
 	private static final VkFormat FORMAT = VkFormat.B8G8R8_SINT;
+	private static final int STRIDE = 3 * Float.BYTES;
 
 	private VertexInputStageBuilder builder;
 
 	@BeforeEach
 	void before() {
 		builder = new VertexInputStageBuilder();
-	}
-
-	private void addBinding() {
-		builder.binding().index(0).stride(2).build();
 	}
 
 	@Test
@@ -43,11 +40,11 @@ public class VertexInputStageBuilderTest {
 				.binding()
 					.index(1)
 					.stride(2)
-					.build()
-				.attribute()
-					.binding(1)
-					.format(FORMAT)
-					.offset(1)
+					.attribute()
+						.location(3)
+						.format(FORMAT)
+						.offset(1)
+						.build()
 					.build()
 				.get();
 
@@ -68,7 +65,7 @@ public class VertexInputStageBuilderTest {
 		final var attr = descriptor.pVertexAttributeDescriptions;
 		assertNotNull(attr);
 		assertEquals(1, attr.binding);
-		assertEquals(0, attr.location);
+		assertEquals(3, attr.location);
 		assertEquals(1, attr.offset);
 		assertEquals(FORMAT, attr.format);
 	}
@@ -84,45 +81,47 @@ public class VertexInputStageBuilderTest {
 
 	@Test
 	void buildEmptyBinding() {
-		addBinding();
-		assertThrows(IllegalArgumentException.class, "No attributes specified", () -> builder.get());
-	}
-
-	// TODO - how to test the descriptors for bindings/attributes?
-
-	@Test
-	void bindingInvalidVertexStride() {
-		assertThrows(IllegalArgumentException.class, "Invalid vertex stride", () -> builder.binding().build());
+		assertThrows(IllegalArgumentException.class, "No attributes specified", () -> builder.binding().build());
 	}
 
 	@Test
 	void bindingDuplicateIndex() {
-		addBinding();
+		builder
+				.binding()
+				.index(0)
+				.stride(STRIDE)
+				.attribute()
+					.format(FORMAT)
+					.build()
+				.build();
+
 		assertThrows(IllegalArgumentException.class, "Duplicate binding index", () -> builder.binding().index(0).build());
 	}
 
 	@Test
 	void attributeRequiresFormat() {
-		addBinding();
-		assertThrows(IllegalArgumentException.class, "No format specified", () -> builder.attribute().binding(0).build());
-	}
-
-	@Test
-	void attributeInvalidBindingIndex() {
-		addBinding();
-		assertThrows(IllegalArgumentException.class, "Invalid binding index", () -> builder.attribute().binding(1).build());
+		final var binding = builder.binding().stride(STRIDE);
+		assertThrows(IllegalArgumentException.class, "No format specified", () -> binding.attribute().build());
 	}
 
 	@Test
 	void attributeInvalidOffset() {
-		addBinding();
-		assertThrows(IllegalArgumentException.class, "Offset exceeds vertex stride", () -> builder.attribute().binding(0).offset(2).build());
+		assertThrows(IllegalArgumentException.class, "Offset exceeds vertex stride", () -> builder.binding().attribute().offset(2).build());
 	}
 
 	@Test
 	void attributeDuplicateLocation() {
-		addBinding();
-		builder.attribute().format(FORMAT).build();
-		assertThrows(IllegalArgumentException.class, "Duplicate location", () -> builder.attribute().format(FORMAT).build());
+		final var attribute = builder
+				.binding()
+					.stride(STRIDE)
+					.attribute()
+						.location(1)
+						.format(FORMAT)
+						.build()
+					.attribute()
+						.location(1)
+						.format(FORMAT);
+
+		assertThrows(IllegalArgumentException.class, "Duplicate location", () -> attribute.build());
 	}
 }
