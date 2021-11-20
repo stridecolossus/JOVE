@@ -145,6 +145,17 @@ public class SwapchainTest extends AbstractVulkanTest {
 		// TODO - should be VkFormat.B8G8R8A8_SRGB; i.e. is it SRBG or UNORM?
 	}
 
+	@Test
+	void mode() {
+		// Check default mode
+		final var props = mock(Surface.Properties.class);
+		assertEquals(VkPresentModeKHR.FIFO_KHR, Swapchain.mode(props, VkPresentModeKHR.MAILBOX_KHR));
+
+		// Select supported mode
+		when(props.modes()).thenReturn(Set.of(VkPresentModeKHR.MAILBOX_KHR));
+		assertEquals(VkPresentModeKHR.MAILBOX_KHR, Swapchain.mode(props, VkPresentModeKHR.MAILBOX_KHR));
+	}
+
 	@Nested
 	class BuilderTests {
 		private Swapchain.Builder builder;

@@ -321,7 +321,17 @@ When we now run the demo we should finally be able to move the window and close 
 
 So far we have avoided synchronisation by simply blocking the device after rendering and presentation of a frame.  However Vulkan is designed to be multi-threaded from the ground up and provides several synchronisation mechanisms that can be used by the application.
 
-A _semaphore_ is the simplest of these and is used to synchronise operations within or across work queues.
+In particular the following methods are asynchronous operations:
+
+* Acquiring the next swapchain image
+
+* Submitting the render task to the work queue
+
+* Presentation of the rendered frame
+
+All of these methods return immediately with the actual work queued for execution by Vulkan in the background.
+
+A _semaphore_ is the simplest of the synchronisation mechanisms provided and Vulkan and is used to synchronise operations within or across work queues.
 
 The semaphore class is trivial since there is no public functionality:
 
@@ -403,8 +413,6 @@ public void close() {
 Note that here the cleanup method is named `close` to take advantage of the _inferred_ bean destructor method used by the Spring container.
 
 If we run the demo as it now stands (with the work queue blocking still present) we will get additional errors because the semaphores are never signalled.
-
-Also note that the `submit` and `present` methods are _asynchronous_ operations, i.e. a task is queued for execution and the method returns immediately.
 
 ### Work Submission
 

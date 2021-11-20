@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.memory;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +22,7 @@ public class MemoryTypeTest {
 
 	@BeforeEach
 	void before() {
-		heap = new Heap(0, 1, Set.of(VkMemoryHeapFlag.DEVICE_LOCAL));
+		heap = new Heap(1, Set.of(VkMemoryHeapFlag.DEVICE_LOCAL));
 		type = new MemoryType(0, heap, Set.of(VkMemoryProperty.DEVICE_LOCAL));
 	}
 
@@ -45,17 +45,15 @@ public class MemoryTypeTest {
 	class HeapTests {
 		@Test
 		void heap() {
-			assertEquals(0, heap.index());
 			assertEquals(1, heap.size());
 			assertEquals(Set.of(VkMemoryHeapFlag.DEVICE_LOCAL), heap.flags());
-			assertEquals(List.of(type), heap.types());
 		}
 
 		@Test
 		void equals() {
 			assertEquals(true, heap.equals(heap));
 			assertEquals(false, heap.equals(null));
-			assertEquals(false, heap.equals(new Heap(0, 1, Set.of())));
+			assertEquals(false, heap.equals(new Heap(1, Set.of())));
 		}
 	}
 
@@ -79,6 +77,6 @@ public class MemoryTypeTest {
 		props.memoryTypes = new VkMemoryType[]{info};
 
 		// Extract from properties
-		assertEquals(List.of(type), MemoryType.enumerate(props));
+		assertArrayEquals(new MemoryType[]{type}, MemoryType.enumerate(props));
 	}
 }

@@ -393,7 +393,7 @@ This configuration consists of two pieces of information:
 
 2. A number of _vertex attributes_ that define the structure of the data (corresponding to layouts of the vertex components).
 
-We introduce a new pipeline stage with nested builders for the bindings and attributes:
+We introduce a new pipeline stage with a nested builders for the bindings and attributes:
 
 ```java
 public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
@@ -402,10 +402,6 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 
     public BindingBuilder binding() {
         return new BindingBuilder();
-    }
-
-    public AttributeBuilder attribute() {
-        return new AttributeBuilder();
     }
 }
 ```
@@ -437,13 +433,15 @@ The nested builder for the bindings is relatively simple:
 
 ```java
 public class BindingBuilder {
-    private int binding;
+    private int index = bindings.size();
     private int stride;
     private VkVertexInputRate rate = VkVertexInputRate.VERTEX;
 }
 ```
 
-The _stride_ is the number of bytes per vertex (normally the `length` attribute of a vertex).
+Note that the binding _index_ is initialised to the next available slot but can also be explicitly overridden.
+
+The _stride_ is the number of bytes per vertex (normally the `length` of a vertex).
 
 The `populate` method fills an instance of the corresponding Vulkan descriptor for the binding:
 
@@ -460,11 +458,11 @@ The `build` method validates the data and returns to the parent builder:
 ```java
 public VertexInputStageBuilder build() {
     // Validate binding description
-    if(bindings.containsKey(binding)) throw new IllegalArgumentException(...);
-    if(stride == 0) throw new IllegalArgumentException(...);
+    if(bindings.containsKey(index)) throw new IllegalArgumentException(...);
+    if(locations.isEmpty()) throw new IllegalArgumentException(...);
 
     // Add binding
-    bindings.add(this);
+    bindings.put(index, this);
 
     return VertexInputStageBuilder.this;
 }
@@ -472,26 +470,33 @@ public VertexInputStageBuilder build() {
 
 ### Attributes
 
-The nested builder for the vertex attributes follows the same pattern:
+Vertex attributes are configured via the following factory method:
+
+```java
+public AttributeBuilder attribute() {
+    return new AttributeBuilder(this);
+}
+```
+
+The nested builder for the vertex attributes follows a similar pattern to the bindings:
 
 ```java
 public class AttributeBuilder {
-    private int binding;
+    private final BindingBuilder binding;
     private int loc;
     private VkFormat format;
     private int offset;
 
+    private AttributeBuilder(BindingBuilder binding) {
+        this.binding = binding;
+        this.loc = binding.locations.size();
+    }
+
     private void populate(VkVertexInputAttributeDescription attr) {
-        attr.binding = binding;
+        attr.binding = binding.index;
         attr.location = loc;
         attr.format = format;
         attr.offset = offset;
-    }
-
-    public VertexInputStageBuilder build() {
-        ...
-        attributes.add(this);
-        return VertexInputStageBuilder.this;
     }
 }
 ```
@@ -502,7 +507,33 @@ Where:
 
 * _offset_ specifies the starting byte of the attribute.
 
-We also implement validation (not shown) to ensure the attribute offsets and vertex stride are logical and that attribute locations are not duplicated.
+Note that the attribute location is initialised to the next available slot which is tracked in the parent binding builder:
+
+```java
+public class BindingBuilder {
+    ...
+    private final Set<Integer> locations = new HashSet<>();
+}
+```
+
+The build method validates the attribute and returns to the parent builder:
+
+```java
+public BindingBuilder build() {
+    // Validate attribute
+    if(offset >= binding.stride) throw new IllegalArgumentException(...);
+    if(format == null) throw new IllegalArgumentException(...);
+
+    // Check location
+    if(binding.locations.contains(loc)) throw new IllegalArgumentException(...);
+    binding.locations.add(loc);
+
+    // Add attribute
+    attributes.add(this);
+
+    return binding;
+}
+```
 
 ---
 

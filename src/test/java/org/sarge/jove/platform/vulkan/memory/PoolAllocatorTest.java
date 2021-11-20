@@ -28,7 +28,7 @@ public class PoolAllocatorTest {
 		when(block.size()).thenReturn(1L);
 
 		// Create underlying allocator
-		type = new MemoryType(0, new MemoryType.Heap(0, 0, Set.of()), Set.of());
+		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of());
 		delegate = mock(Allocator.class);
 		when(delegate.allocate(type, 1)).thenReturn(block);
 

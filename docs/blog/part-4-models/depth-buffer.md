@@ -612,7 +612,7 @@ public Vector normalize() {
         return this;
     }
     else {
-        float f = 1 / MathsUtil.sqrt(len);
+        float f = MathsUtil.inverseRoot(len);
         return multiply(f);
     }
 }

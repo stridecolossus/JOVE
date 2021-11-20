@@ -282,22 +282,7 @@ In the short-term we will use the built-in AWT support for images - we are likel
 Our requirements for images are fairly straight-forward so we introduce the following abstraction rather than using (for example) Java images directly:
 
 ```java
-public interface ImageData {
-    /**
-     * @return Image dimensions
-     */
-    Dimensions size();
-
-    /**
-     * @return Image layout
-     */
-    Layout layout();
-
-    /**
-     * @return Image data
-     */
-    Bufferable buffer();
-}
+public record ImageData(Dimensions size, Layout layout, Bufferable data)
 ```
 
 Notes:
@@ -309,7 +294,7 @@ Notes:
 The AWT helper is used to load the Java image:
 
 ```java
-public static class Loader {
+public static class NativeImageLoader {
     public ImageData load(InputStream in) throws IOException {
         BufferedImage image = ImageIO.read(in);
         if(image == null) throw new IOException(...);
@@ -335,42 +320,24 @@ DataBufferByte buffer = (DataBufferByte) image.getRaster().getDataBuffer();
 byte[] bytes = buffer.getData();
 ```
 
-Finally we wrap the Java image with an anonymous wrapper implementation:
+The image properties are next extracted from the Java image:
 
 ```java
-return new ImageData() {
-    @Override
-    public Dimensions size() {
-        return new Dimensions(image.getWidth(), image.getHeight());
-    }
-
-    @Override
-    public Layout layout() {
-        return new Layout(components, Byte.class, 1, false);
-    }
-
-    @Override
-    public Bufferable buffer() {
-        ...
-    }
+Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
+Layout layout = new Layout(components, Byte.class, 1, false);
+Bufferable data = switch(image.getType()) {
+    case TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> alpha(bytes, size.area());
+    default -> Bufferable.of(bytes);
 };
 ```
 
-The `buffer` method creates a bufferable object that can be copied to the hardware:
+And finally the image record is instantiated:
 
 ```java
-public Bufferable buffer() {
-    return switch(image.getType()) {
-        case TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> {
-            int size = this.size().area();
-            yield alpha(bytes, size);
-        }
-        default -> Bufferable.of(bytes);
-    };
-}
+return new ImageData(size, layout, data);
 ```
 
-For the default case we wrap the image data using a new factory method:
+For the default case of an image that already contains an alpha channel the image data array is wrapped by a new factory method:
 
 ```java
 static Bufferable of(byte[] bytes) {
@@ -403,7 +370,7 @@ static void write(byte[] bytes, ByteBuffer bb) {
 }
 ```
 
-Vulkan requires all colour images to have an alpha channel whereas native images are not necessarily transparent.  Adding an alpha channel proved to be somewhat harder than anticipated, the Java library does not seem to provide a mechanism to simply attach a new channel.  We could redraw the image into a `TYPE_4BYTE_ABGR` image which would do the job but is pretty nasty (and slow).  Instead we opted for the uglier if simpler approach of injected the alpha channel on demand:
+Vulkan requires all colour images to have an alpha channel whereas native images are not necessarily transparent.  Adding an alpha channel proved to be somewhat harder than anticipated, the Java library does not seem to provide a mechanism to simply attach a new channel.  We could redraw the image into a `TYPE_4BYTE_ABGR` image which would do the job but is pretty nasty (and slow).  Instead we opted for the simpler if uglier approach of injected an alpha channel on demand:
 
 ```java
 private static Bufferable alpha(byte[] bytes, int size) {
@@ -1000,7 +967,7 @@ public class TextureConfiguration {
 In the `texture` bean method we first load the image from the file-system:
 
 ```java
-ImageData.Loader loader = new ImageData.Loader();
+ImageData.Loader loader = new NativeImageLoader();
 ImageData image = loader.load(new FileInputStream("./src/main/resources/thiswayup.jpg"));
 ```
 

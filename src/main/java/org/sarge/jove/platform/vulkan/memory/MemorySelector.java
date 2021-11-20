@@ -2,9 +2,11 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.stream.Collectors.toList;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
@@ -34,20 +36,20 @@ public class MemorySelector {
 		lib.vkGetPhysicalDeviceMemoryProperties(dev.parent(), props);
 
 		// Enumerate memory types
-		final List<MemoryType> types = MemoryType.enumerate(props);
+		final MemoryType[] types = MemoryType.enumerate(props);
 
 		// Create selector
 		return new MemorySelector(types);
 	}
 
-	private final List<MemoryType> types;
+	private final MemoryType[] types;
 
 	/**
 	 * Constructor.
 	 * @param types Memory types
 	 */
-	public MemorySelector(List<MemoryType> types) {
-		this.types = List.copyOf(types);
+	public MemorySelector(MemoryType[] types) {
+		this.types = Arrays.copyOf(types, types.length);
 	}
 
 	/**
@@ -59,9 +61,10 @@ public class MemorySelector {
 	 */
 	public MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
 		// Filter available memory types
-		final List<MemoryType> candidates = types
-				.stream()
-				.filter(type -> MathsUtil.isBit(reqs.memoryTypeBits, type.index()))
+		final List<MemoryType> candidates = IntStream
+				.range(0, types.length)
+				.filter(n -> MathsUtil.isBit(reqs.memoryTypeBits, n))
+				.mapToObj(n -> types[n])
 				.collect(toList());
 
 		// Find matching memory type

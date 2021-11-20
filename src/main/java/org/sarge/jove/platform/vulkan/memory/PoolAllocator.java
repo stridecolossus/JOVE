@@ -40,7 +40,7 @@ public class PoolAllocator implements Allocator {
 	 */
 	public static PoolAllocator create(LogicalDevice dev, Allocator allocator, float expand) {
 		// Init allocator if not specified
-		final Allocator delegate = allocator == null ? Allocator.allocator(dev) : allocator;
+		final Allocator delegate = allocator == null ? new DefaultAllocator(dev) : allocator;
 
 		// Create paged allocation policy
 		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();

@@ -4,9 +4,9 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
@@ -21,9 +21,9 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.util.FormatSelector;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -55,23 +55,15 @@ public interface Image extends NativeObject {
 	 * @throws RuntimeException if there is no supported format
 	 */
 	static VkFormat depth(PhysicalDevice dev) {
-		// Filter for depth-stencil formats with optimal tiling
-		final Predicate<VkFormat> predicate = format -> {
-			final VkFormatProperties props = dev.properties(format);
-			final int value = VkFormatFeature.DEPTH_STENCIL_ATTACHMENT.value();
-			return MathsUtil.isMask(value, props.optimalTilingFeatures);
-		};
-
-		// Select from candidate formats
-		return Stream
-				.of(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT)
-				.filter(predicate)
-				.findAny()
-				.orElseThrow(() -> new RuntimeException("No supported depth buffer format"));
+		final Predicate<VkFormatProperties> predicate = FormatSelector.predicate(Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT), true);
+		final FormatSelector selector = new FormatSelector(dev::properties, predicate);
+		final var formats = List.of(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT);
+		return selector.select(formats).orElseThrow(() -> new RuntimeException("No supported depth buffer format"));
 	}
+	// TODO - dependant on device, a bit too specific for a helper anyway? would want to specify higher/lower depth resolution?
 
 	/**
-	 * Default implementation managed by the application.
+	 * Default implementation for an image managed by the application.
 	 */
 	class DefaultImage extends AbstractVulkanObject implements Image {
 		private final ImageDescriptor descriptor;

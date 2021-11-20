@@ -285,9 +285,8 @@ public class PhysicalDevice implements NativeObject {
 	 * Retrieves the features supported by this device.
 	 */
 	private DeviceFeatures loadFeatures() {
-		final VulkanLibrary lib = instance.library();
 		final VkPhysicalDeviceFeatures struct = new VkPhysicalDeviceFeatures();
-		lib.vkGetPhysicalDeviceFeatures(this, struct);
+		instance.library().vkGetPhysicalDeviceFeatures(this, struct);
 		return new DeviceFeatures(struct);
 	}
 
@@ -318,8 +317,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public VkFormatProperties properties(VkFormat format) {
 		final var props = new VkFormatProperties();
-		final VulkanLibrary lib = instance.library();
-		lib.vkGetPhysicalDeviceFormatProperties(this, format, props);
+		instance.library().vkGetPhysicalDeviceFormatProperties(this, format, props);
 		return props;
 	}
 

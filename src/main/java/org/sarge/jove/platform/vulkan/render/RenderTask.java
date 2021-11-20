@@ -11,10 +11,10 @@ import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Fence;
 import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Work;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.lib.util.Check;
 
 /**
@@ -55,13 +55,10 @@ public class RenderTask implements Task {
 			final int index = swapchain.acquire(available, null);
 
 			// Wait on swapchain image if still in use by another frame
-			active[index].fence.waitReady();
-			active[index] = this;
-
-			// Clear synchronisation
-			fence.reset();
+			activate(index);
 
 			// Render frame
+			// TODO - factor out to interface, i.e. we dont deal with command buffers here, just swapchain and sync
 			final Buffer buffer = factory.apply(index);
 			new Work.Builder(buffer.pool())
 					.add(buffer)
@@ -72,6 +69,15 @@ public class RenderTask implements Task {
 
 			// Present frame
 			swapchain.present(presentation, index, Set.of(ready));
+		}
+
+		/**
+		 * Activates this in-flight frame.
+		 */
+		private void activate(int index) {
+			active[index].waitReady();
+			active[index] = fence;
+			fence.reset();
 		}
 
 		/**
@@ -91,29 +97,25 @@ public class RenderTask implements Task {
 
 	// In-flight frame state
 	private final Frame[] frames;
-	private final Frame[] active;
+	private final Fence[] active;
 	private int current;
 
 	/**
 	 * Constructor.
 	 * @param swapchain				Swapchain
-	 * @param frames				Number of in-flight frames
+	 * @param count					Number of in-flight frames
 	 * @param factory				Factory for command buffers
 	 * @param presentation			Presentation queue
 	 */
-	public RenderTask(Swapchain swapchain, int frames, IntFunction<Buffer> factory, Queue presentation) {
-		Check.oneOrMore(frames);
+	public RenderTask(Swapchain swapchain, int count, IntFunction<Buffer> factory, Queue presentation) {
+		Check.oneOrMore(count);
 		this.swapchain = notNull(swapchain);
 		this.presentation = notNull(presentation);
 		this.factory = notNull(factory);
-		this.frames = new Frame[frames];
-		this.active = new Frame[swapchain.count()];
-		init();
-	}
-
-	private void init() {
+		this.frames = new Frame[count];
+		this.active = new Fence[swapchain.count()];
 		Arrays.setAll(frames, ignored -> new Frame());
-		Arrays.fill(active, frames[0]);
+		Arrays.fill(active, frames[0].fence);
 	}
 
 	@Override

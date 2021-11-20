@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.memory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,10 +31,10 @@ public class MemorySelectorTest extends AbstractVulkanTest {
 		props = new MemoryProperties.Builder<VkImageUsage>().usage(VkImageUsage.COLOR_ATTACHMENT);
 
 		// Create memory type
-		type = new MemoryType(0, new MemoryType.Heap(0, 0, Set.of()), Set.of(VkMemoryProperty.DEVICE_LOCAL));
+		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of(VkMemoryProperty.DEVICE_LOCAL));
 
 		// Create selector
-		selector = new MemorySelector(List.of(type));
+		selector = new MemorySelector(new MemoryType[]{type});
 	}
 
 	@DisplayName("Select minimal memory type")

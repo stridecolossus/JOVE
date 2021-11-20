@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
+import org.sarge.jove.platform.vulkan.memory.Allocator.DefaultAllocator;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -20,14 +21,14 @@ public class AllocatorTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		final Heap heap = new Heap(0, 0, Set.of());
+		final Heap heap = new Heap(0, Set.of());
 		type = new MemoryType(1, heap, Set.of());
 	}
 
 	@Test
 	void allocate() {
 		// Create default allocator
-		final Allocator allocator = Allocator.allocator(dev);
+		final Allocator allocator = new DefaultAllocator(dev);
 		assertNotNull(allocator);
 
 		// Allocate memory

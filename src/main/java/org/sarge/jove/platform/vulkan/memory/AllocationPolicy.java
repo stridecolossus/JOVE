@@ -28,7 +28,7 @@ public interface AllocationPolicy {
 	 */
 	default AllocationPolicy then(AllocationPolicy policy) {
 		return (size, total) -> {
-			final long actual = AllocationPolicy.this.apply(size, total);
+			final long actual = apply(size, total);
 			return policy.apply(actual, total);
 		};
 	}

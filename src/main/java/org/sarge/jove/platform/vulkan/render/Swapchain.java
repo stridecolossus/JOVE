@@ -165,6 +165,21 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
+	 * Helper - Selects a preferred presentation mode or fall back to {@link #DEFAULT_PRESENTATION_MODE}.
+	 * @param props			Surface properties
+	 * @param modes			Preferred presentation modes
+	 * @return Selected presentation mode
+	 */
+	public static VkPresentModeKHR mode(Surface.Properties props, VkPresentModeKHR... modes) {
+		final Set<VkPresentModeKHR> available = props.modes();
+		return Arrays
+				.stream(modes)
+				.filter(available::contains)
+				.findAny()
+				.orElse(DEFAULT_PRESENTATION_MODE);
+	}
+
+	/**
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
@@ -221,9 +236,18 @@ public class Swapchain extends AbstractVulkanObject {
 		}
 
 		/**
+		 * Sets the surface format.
+		 * @param format Surface format
+		 */
+		public Builder format(VkSurfaceFormatKHR format) {
+			format(format.format);
+			space(format.colorSpace);
+			return this;
+		}
+
+		/**
 		 * Sets the image format.
 		 * @param format Image format
-		 * @see VkSurfaceFormatKHR
 		 */
 		public Builder format(VkFormat format) {
 			info.imageFormat = notNull(format);
@@ -233,7 +257,6 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Sets the colour-space.
 		 * @param space Colour-space
-		 * @see VkSurfaceFormatKHR
 		 */
 		public Builder space(VkColorSpaceKHR space) {
 			info.imageColorSpace = notNull(space);

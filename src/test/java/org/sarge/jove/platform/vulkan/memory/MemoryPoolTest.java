@@ -36,7 +36,7 @@ public class MemoryPoolTest {
 		when(larger.size()).thenReturn(3L);
 
 		// Define memory type
-		type = new MemoryType(0, new Heap(0, 0, Set.of()), Set.of());
+		type = new MemoryType(0, new Heap(0, Set.of()), Set.of());
 
 		// Create underlying allocator
 		allocator = mock(Allocator.class);

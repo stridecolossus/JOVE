@@ -28,7 +28,7 @@ public class AllocationServiceTest extends AbstractVulkanTest {
 		props = new MemoryProperties.Builder<VkImageUsage>().usage(VkImageUsage.COLOR_ATTACHMENT).build();
 
 		// Init selector
-		type = new MemoryType(0, new MemoryType.Heap(0, 0, Set.of()), Set.of());
+		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of());
 		selector = mock(MemorySelector.class);
 		when(selector.select(reqs, props)).thenReturn(type);
 

@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
@@ -12,6 +11,8 @@ import java.util.function.Supplier;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkColorSpaceKHR;
+import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
@@ -101,7 +102,23 @@ public class Surface extends AbstractTransientNativeObject {
 			final VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, Surface.this, count, array);
 			final IntByReference count = instance.factory().integer();
 			final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(func, count, VkSurfaceFormatKHR::new);
-			return Arrays.stream(array).collect(toList());
+			return Arrays.asList(array);
+		}
+
+		/**
+		 * Helper - Selects the preferred surface format that supports the given format and colour-space or fall back to an arbitrary supported format.
+		 * @param format		Surface format
+		 * @param space			Colour space
+		 * @return Selected surface format
+		 */
+		public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space) {
+			final List<VkSurfaceFormatKHR> formats = this.formats();
+			return formats
+					.stream()
+					.filter(f -> f.format == format)
+					.filter(f -> f.colorSpace == space)
+					.findAny()
+					.orElse(formats.get(0));
 		}
 
 		/**
@@ -111,7 +128,7 @@ public class Surface extends AbstractTransientNativeObject {
 			return modes.get();
 		}
 
-		public Set<VkPresentModeKHR> loadModes() {
+		private Set<VkPresentModeKHR> loadModes() {
 			// Retrieve array of presentation modes
 			final VulkanLibrary lib = instance.library();
 			final VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array);

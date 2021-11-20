@@ -831,8 +831,8 @@ public static Matrix rotation(Vector axis, float angle) {
     float cos = MathsUtil.cos(angle);
     if(Vector.X.equals(axis)) {
         rot.set(1, 1, cos);
-        rot.set(1, 2, sin);
-        rot.set(2, 1, -sin);
+        rot.set(1, 2, -sin);
+        rot.set(2, 1, sin);
         rot.set(2, 2, cos);
     }
     else
