@@ -74,7 +74,7 @@ public class CubeBuilder extends ModelBuilder {
 	 */
 	public CubeBuilder() {
 		super.primitive(Primitive.TRIANGLES);
-		layout(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
+		layout(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
 	}
 
 	@Override

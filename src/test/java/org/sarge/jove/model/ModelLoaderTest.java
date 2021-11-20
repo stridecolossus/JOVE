@@ -69,7 +69,7 @@ class ModelLoaderTest {
 		assertEquals(1, layouts.size());
 
 		final Layout layout = layouts.get(0);
-		assertEquals("RGB", layout.components());
+		assertEquals(3, layout.size());
 		assertEquals(Float.class, layout.type());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(true, layout.signed());

@@ -1,37 +1,28 @@
 package org.sarge.jove.model;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.Header;
 
 /**
- * Builder for a model.
+ * A <i>model builder</i> is used to construct a vertex model.
  * <p>
  * Usage:
  * <pre>
- * 	// Create builder
- * 	ModelBuilder builder = new ModelBuilder()
+ * 	Model model = new ModelBuilder()
  * 		.layout(Point.LAYOUT)
- * 		.layout(Vector.NORMALS)
- * 		.layout(Coordinate2D.LAYOUT)
+ * 		.layout(Model.NORMALS)
  * 		.primitive(Primitive.TRIANGLES)
- * 		.validate(true);
- *
- * 	// Add vertex data
- * 	Vertex vertex = ...
- * 	builder.add(vertex);
- * 	...
- *
- * 	// Build model
- * 	Model model = builder.build();
+ * 		.add(Vertex.of(...))
+ * 		.build();
  * </pre>
  * <p>
+ * @see Vertex
+ * @see Layout
  * @author Sarge
  */
 public class ModelBuilder {
@@ -41,8 +32,8 @@ public class ModelBuilder {
 	private boolean validate = true;
 
 	/**
-	 * Adds a vertex component layout.
-	 * @param layout Vertex component layout
+	 * Adds a vertex component layout to this model.
+	 * @param layout Layout
 	 * @throws IllegalStateException if the model contains vertex data
 	 */
 	public ModelBuilder layout(Layout layout) {
@@ -99,16 +90,11 @@ public class ModelBuilder {
 	 * @throws IllegalArgumentException if the vertex does not match the layout of this model
 	 */
 	private void validate(Vertex vertex) {
-		final List<Layout> actual = vertex
-				.components()
-				.stream()
-				.map(Component::layout)
-				.collect(toList());
-
-		if(!layout.equals(actual)) {
-			throw new IllegalArgumentException(String.format("Invalid vertex for this layout: expected=%s actual=%s", layout, actual));
+		if(vertex.length() != Layout.stride(layout)) {
+			throw new IllegalArgumentException("Invalid vertex for this layout: " + vertex);
 		}
 	}
+	// TODO - this should be better than just comparing length, but bufferable does not have layout
 
 	// TODO
 	// compute normals

@@ -28,12 +28,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public record Layout(String components, Class<?> type, int bytes, boolean signed) {
-	/**
-	 * Default component mapping.
-	 */
-	public static final String MAPPING = "RGBA";
-
+public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	/**
 	 * Creates a layout with a number of components of the given numeric type.
 	 * @param size			Size of this layout (number of components)
@@ -44,10 +39,8 @@ public record Layout(String components, Class<?> type, int bytes, boolean signed
 	 * @see #bytes(Class)
 	 */
 	public static Layout of(int size, Class<?> type, boolean signed) {
-		if(size > MAPPING.length()) throw new IllegalArgumentException("Invalid number of components");
-		final String components = MAPPING.substring(0, size);
 		final int bytes = bytes(type);
-		return new Layout(components, type, bytes, signed);
+		return new Layout(size, type, bytes, signed);
 	}
 
 	/**
@@ -90,43 +83,36 @@ public record Layout(String components, Class<?> type, int bytes, boolean signed
 	}
 
 	/**
-	 * Constructor.
-	 * @param components	Component mapping
-	 * @param type			Component type
-	 * @param bytes			Number of bytes per component
-	 * @param signed		Whether components are signed or unsigned
-	 */
-	public Layout {
-		Check.notEmpty(components);
-		Check.notNull(type);
-		Check.oneOrMore(bytes);
-	}
-
-	/**
-	 * @return Number of components
-	 */
-	public int count() {
-		return components.length();
-	}
-
-	/**
-	 * @return Length of this layout (bytes)
-	 */
-	public int length() {
-		return count() * bytes;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return obj == this;
-	}
-
-	/**
 	 * Calculates the total <i>stride</i> of the given layouts.
 	 * @param layouts Layouts
 	 * @return Stride
 	 */
 	public static int stride(Collection<Layout> layouts) {
 		return layouts.stream().mapToInt(Layout::length).sum();
+	}
+
+	/**
+	 * Constructor.
+	 * @param size			Number of components
+	 * @param type			Component type
+	 * @param bytes			Number of bytes per component
+	 * @param signed		Whether components are signed or unsigned
+	 */
+	public Layout {
+		Check.oneOrMore(size);
+		Check.notNull(type);
+		Check.oneOrMore(bytes);
+	}
+
+	/**
+	 * @return Length of this layout (bytes)
+	 */
+	public int length() {
+		return size * bytes;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
 	}
 }

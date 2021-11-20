@@ -17,9 +17,14 @@ import org.sarge.lib.util.Check;
  */
 public interface Model {
 	/**
+	 * Special case layout for vertex normals.
+	 */
+	Layout NORMALS = Layout.of(3);
+
+	/**
 	 * Descriptor for this model.
 	 */
-	public record Header(List<Layout> layout, Primitive primitive, int count) {
+	record Header(List<Layout> layout, Primitive primitive, int count) {
 		/**
 		 * Constructor.
 		 * @param layout			Vertex layout
@@ -39,7 +44,7 @@ public interface Model {
 				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
 
-			if(!primitive.isNormalSupported() && layout.contains(Vector.NORMALS)) {
+			if(!primitive.isNormalSupported() && layout.contains(NORMALS)) {
 				throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
 			}
 		}

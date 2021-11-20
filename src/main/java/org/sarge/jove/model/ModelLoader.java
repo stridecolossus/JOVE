@@ -31,8 +31,8 @@ public class ModelLoader implements DataResourceLoader<Model> {
 		// Write vertex layout
 		final List<Layout> layouts = header.layout();
 		out.writeInt(layouts.size());
-		for(Layout layout : layouts) {
-			helper.write(layout, out);
+		for(Layout c : layouts) {
+			helper.write(c, out);
 		}
 
 		// Write VBO

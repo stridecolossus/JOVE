@@ -3,11 +3,11 @@ package org.sarge.jove.platform.obj;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.model.IndexedBuilder;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.ModelBuilder;
@@ -55,7 +55,7 @@ class ObjectModel {
 		// Init model layout
 		builder.layout(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			builder.layout(Vector.NORMALS);
+			builder.layout(Model.NORMALS);
 		}
 		if(!coords.isEmpty()) {
 			builder.layout(Coordinate2D.LAYOUT);
@@ -117,7 +117,7 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final List<Component> components = new ArrayList<>();
+		final List<Bufferable> components = new ArrayList<>();
 		components.add(positions.get(v));
 
 		// Add optional normal

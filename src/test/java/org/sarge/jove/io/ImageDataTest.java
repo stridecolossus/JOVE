@@ -17,8 +17,8 @@ public class ImageDataTest {
 
 	@BeforeEach
 	void before() {
-		layout = new Layout("RGBA", Byte.class, 1, true);
-		image = new ImageData(new Dimensions(2, 3), 1, 1, layout, Bufferable.of(new byte[2 * 3 * 4]));
+		layout = new Layout(4, Byte.class, 1, true);
+		image = new ImageData(new Dimensions(2, 3), 1, 1, layout, "RGBA", Bufferable.of(new byte[2 * 3 * 4]));
 	}
 
 	@Test
@@ -33,7 +33,7 @@ public class ImageDataTest {
 
 	@Test
 	void constructorInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> new ImageData(new Dimensions(2, 3), 1, 1, layout, Bufferable.of(new byte[0])));
+		assertThrows(IllegalArgumentException.class, () -> new ImageData(new Dimensions(2, 3), 1, 1, layout, "RGBA", Bufferable.of(new byte[0])));
 	}
 
 	@Test
@@ -75,13 +75,13 @@ public class ImageDataTest {
 
 	@Test
 	void arrayMismatchedImage() {
-		final ImageData other = new ImageData(new Dimensions(3, 2), 1, 1, layout, Bufferable.of(new byte[2 * 3 * 4]));
+		final ImageData other = new ImageData(new Dimensions(3, 2), 1, 1, layout, "RGBA", Bufferable.of(new byte[2 * 3 * 4]));
 		assertThrows(IllegalArgumentException.class, () -> ImageData.array(List.of(image, other)));
 	}
 
 	@Test
 	void arrayAlreadyImageArray() {
-		final ImageData array = new ImageData(new Dimensions(3, 2), 2, 1, layout, Bufferable.of(new byte[2 * 2 * 3 * 4]));
+		final ImageData array = new ImageData(new Dimensions(3, 2), 2, 1, layout, "RGBA", Bufferable.of(new byte[2 * 2 * 3 * 4]));
 		assertThrows(IllegalArgumentException.class, () -> ImageData.array(List.of(array)));
 	}
 }

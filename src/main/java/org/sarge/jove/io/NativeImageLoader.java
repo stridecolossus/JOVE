@@ -32,7 +32,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		if(image == null) throw new IOException("Invalid image");
 
 		// Determine component mapping
-		final String components = switch(image.getType()) {
+		final String mapping = switch(image.getType()) {
 			case TYPE_BYTE_GRAY -> "R"; 		// TODO - will this work?
 			case TYPE_4BYTE_ABGR, TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> "ABGR";
 			default -> throw new RuntimeException("Unsupported image format: " + image);
@@ -44,7 +44,9 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 
 		// Init image properties
 		final Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
-		final Layout layout = new Layout(components, Byte.class, 1, false);
+		final Layout layout = new Layout(mapping.length(), Byte.class, 1, false);
+
+		// Wrap image data
 		final Bufferable data = switch(image.getType()) {
 			case TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> alpha(bytes, size.area());
 			default -> Bufferable.of(bytes);
@@ -52,7 +54,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 
 		// Create image
 		// TODO - mip levels
-		return new ImageData(size, 1, 1, layout, data);
+		return new ImageData(size, 1, 1, layout, mapping, data);
 	}
 
 	/**

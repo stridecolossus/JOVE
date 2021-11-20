@@ -3,13 +3,14 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.sarge.jove.io.Bufferable;
 import org.sarge.lib.util.Check;
 
 /**
  * RGBA colour.
  * @author Sarge
  */
-public record Colour(float red, float green, float blue, float alpha) implements Component {
+public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
 	/**
 	 * Material colour types.
 	 */
@@ -88,13 +89,13 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	@Override
-	public void buffer(ByteBuffer buffer) {
-		buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
+	public int length() {
+		return LAYOUT.length();
 	}
 
 	@Override
-	public Layout layout() {
-		return LAYOUT;
+	public void buffer(ByteBuffer buffer) {
+		buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
 	}
 
 	/**

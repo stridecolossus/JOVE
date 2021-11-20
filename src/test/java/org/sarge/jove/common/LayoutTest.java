@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,31 +14,25 @@ public class LayoutTest {
 
 	@BeforeEach
 	void before() {
-		layout = new Layout("RGB", Float.class, Float.BYTES, true);
+		layout = new Layout(3, Float.class, Float.BYTES, true);
 	}
 
 	@Test
 	void constructor() {
+		assertEquals(3, layout.size());
 		assertEquals(Float.class, layout.type());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(true, layout.signed());
-		assertEquals(3, layout.count());
 		assertEquals(3 * Float.BYTES, layout.length());
-	}
-
-	@Test
-	void constructorInvalidComponentMapping() {
-		assertThrows(IllegalArgumentException.class, () -> new Layout(null, Float.class, Float.BYTES, true));
-		assertThrows(IllegalArgumentException.class, () -> new Layout(StringUtils.EMPTY, Float.class, Float.BYTES, true));
 	}
 
 	@Test
 	void of() {
 		layout = Layout.of(3);
+		assertEquals(3, layout.size());
 		assertEquals(Float.class, layout.type());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(true, layout.signed());
-		assertEquals(3, layout.count());
 		assertEquals(3 * Float.BYTES, layout.length());
 	}
 
@@ -52,7 +45,7 @@ public class LayoutTest {
 	void equals() {
 		assertEquals(true, layout.equals(layout));
 		assertEquals(false, layout.equals(null));
-		assertEquals(false, layout.equals(new Layout("RGB", Float.class, Float.BYTES, true)));
+		assertEquals(false, layout.equals(new Layout(3, Float.class, Float.BYTES, true)));
 	}
 
 	@Nested

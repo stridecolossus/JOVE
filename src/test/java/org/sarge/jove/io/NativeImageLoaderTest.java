@@ -26,8 +26,14 @@ public class NativeImageLoaderTest {
 		loader = new NativeImageLoader();
 	}
 
-	private void check(Layout layout, String expected) {
-		assertEquals(expected, layout.components());
+	private void check(ImageData image, String expected) {
+		// Check mapping
+		assertEquals(expected, image.mapping());
+
+		// Check layout
+		final Layout layout = image.layout();
+		assertNotNull(layout);
+		assertEquals(expected.length(), layout.size());
 		assertEquals(Byte.class, layout.type());
 		assertEquals(Byte.BYTES, layout.bytes());
 		assertEquals(false, layout.signed());
@@ -43,7 +49,7 @@ public class NativeImageLoaderTest {
 		assertEquals(new Dimensions(2, 3), image.size());
 		assertEquals(1, image.count());
 		assertEquals(1, image.mip());
-		check(image.layout(), "ABGR");
+		check(image, "ABGR");
 		assertNotNull(image.data());
 		assertEquals(2 * 3 * 4, image.data().length());
 	}
@@ -55,7 +61,7 @@ public class NativeImageLoaderTest {
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
 		assertEquals(new Dimensions(2, 3), image.size());
-		check(image.layout(), "ABGR");
+		check(image, "ABGR");
 		assertNotNull(image.data());
 		assertEquals(2 * 3 * 4, image.data().length());
 	}
@@ -67,7 +73,7 @@ public class NativeImageLoaderTest {
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
 		assertEquals(new Dimensions(2, 3), image.size());
-		check(image.layout(), "R");
+		check(image, "R");
 		assertNotNull(image.data());
 		assertEquals(2 * 3 * 1, image.data().length());
 	}

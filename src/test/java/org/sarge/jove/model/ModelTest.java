@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model.Header;
 
 class ModelTest {
@@ -38,7 +37,7 @@ class ModelTest {
 
 		@Test
 		void invalidPrimitiveNormals() {
-			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(Vector.NORMALS), Primitive.LINES, 2));
+			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(Model.NORMALS), Primitive.LINES, 2));
 		}
 
 		@Test

@@ -37,10 +37,9 @@ class PointTest {
 
 	@Test
 	void layout() {
+		assertEquals(3, Point.LAYOUT.size());
 		assertEquals(Float.class, Point.LAYOUT.type());
-		assertEquals(3, Point.LAYOUT.count());
 		assertEquals(Float.BYTES, Point.LAYOUT.bytes());
-		assertEquals(Point.LAYOUT, pos.layout());
 	}
 
 	@Test

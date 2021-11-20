@@ -8,41 +8,38 @@ import java.util.Objects;
 import java.util.stream.Collector;
 
 import org.apache.commons.collections4.ListUtils;
-import org.sarge.jove.common.Component;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.Bufferable;
 
 /**
  * A <i>vertex</i> is a compound object comprised of a collection of <i>components</i> such as vertex positions, normals, texture coordinates, etc.
- * @see Component
  * @author Sarge
  */
 public class Vertex implements Bufferable {
-	private static final Collector<Component, List<Component>, Vertex> TRANSFORM = Collector.of(ArrayList::new, List::add, ListUtils::union, Vertex::new);
+	private static final Collector<Bufferable, List<Bufferable>, Vertex> TRANSFORM = Collector.of(ArrayList::new, List::add, ListUtils::union, Vertex::new);
 
 	/**
 	 * Helper - Creates a vertex.
 	 * @param components Vertex components
 	 * @return New vertex
 	 */
-	public static Vertex of(Component... components) {
+	public static Vertex of(Bufferable... components) {
 		return new Vertex(Arrays.asList(components));
 	}
 
-	private final List<Component> components;
+	private final List<Bufferable> components;
 
 	/**
 	 * Constructor.
 	 * @param components Vertex components
 	 */
-	public Vertex(List<Component> components) {
+	public Vertex(List<Bufferable> components) {
 		this.components = List.copyOf(components);
 	}
 
 	/**
 	 * @return Components of this vertex
 	 */
-	public List<Component> components() {
+	public List<Bufferable> components() {
 		return components;
 	}
 
@@ -50,8 +47,7 @@ public class Vertex implements Bufferable {
 	public int length() {
 		return components
 				.stream()
-				.map(Component::layout)
-				.mapToInt(Layout::length)
+				.mapToInt(Bufferable::length)
 				.sum();
 	}
 

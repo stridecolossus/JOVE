@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import org.sarge.jove.common.Component;
+import org.sarge.jove.io.Bufferable;
 import org.sarge.lib.util.Check;
 
 /**
@@ -13,7 +13,7 @@ import org.sarge.lib.util.Check;
  * @param <T> Vertex component
  * @author Sarge
  */
-class VertexComponentParser<T extends Component> implements Parser {
+class VertexComponentParser<T extends Bufferable> implements Parser {
 	private final float[] array;
 	private final Function<float[], T> ctor;
 	private final BiConsumer<ObjectModel, T> consumer;

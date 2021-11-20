@@ -101,7 +101,7 @@ public class DataHelper {
 	 */
 	public Layout layout(DataInput in) throws IOException {
 		// Load layout
-		final String components = in.readUTF();
+		final int size = in.readInt();
 		final int bytes = in.readInt();
 		final String name = in.readUTF();
 		final boolean signed = in.readBoolean();
@@ -116,7 +116,7 @@ public class DataHelper {
 		}
 
 		// Create layout
-		return new Layout(components, type, bytes, signed);
+		return new Layout(size, type, bytes, signed);
 	}
 
 	/**
@@ -126,7 +126,7 @@ public class DataHelper {
 	 * @throws IOException if the layout cannot be written
 	 */
 	public void write(Layout layout, DataOutput out) throws IOException {
-		out.writeUTF(layout.components());
+		out.writeInt(layout.size());
 		out.writeInt(layout.bytes());
 		out.writeUTF(layout.type().getName());
 		out.writeBoolean(layout.signed());

@@ -77,13 +77,13 @@ public class DataHelperTest {
 	@Test
 	void loadLayout() throws IOException {
 		// Init layout data
-		when(in.readUTF()).then(AdditionalAnswers.returnsElementsOf(List.of("RGB", Float.class.getName())));
-		when(in.readInt()).thenReturn(Float.BYTES);
+		when(in.readUTF()).thenReturn(Float.class.getName());
+		when(in.readInt()).then(AdditionalAnswers.returnsElementsOf(List.of(3, 4)));
 		when(in.readBoolean()).thenReturn(true);
 
 		// Load layout
 		final Layout layout = helper.layout(in);
-		assertEquals("RGB", layout.components());
+		assertEquals(3, layout.size());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(Float.class, layout.type());
 		assertEquals(true, layout.signed());
@@ -93,7 +93,7 @@ public class DataHelperTest {
 	void writeLayout() throws IOException {
 		final Layout layout = Layout.of(3);
 		helper.write(layout, out);
-		verify(out).writeUTF("RGB");
+		verify(out).writeInt(3);
 		verify(out).writeInt(Float.BYTES);
 		verify(out).writeUTF(Float.class.getName());
 		verify(out).writeBoolean(true);

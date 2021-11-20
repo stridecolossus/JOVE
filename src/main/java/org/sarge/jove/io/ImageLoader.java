@@ -22,6 +22,7 @@ public class ImageLoader implements DataResourceLoader<ImageData> {
 		// Load image header
 		final int count = in.readInt();
 		final int mip = in.readInt();
+		final String mapping = in.readUTF();
 
 		// Load dimensions
 		final Dimensions size = new Dimensions(in.readInt(), in.readInt());
@@ -33,7 +34,7 @@ public class ImageLoader implements DataResourceLoader<ImageData> {
 		final Bufferable data = helper.buffer(in);
 
 		// Create image
-		return new ImageData(size, count, mip, layout, data);
+		return new ImageData(size, count, mip, layout, mapping, data);
 	}
 
 	@Override
@@ -42,6 +43,7 @@ public class ImageLoader implements DataResourceLoader<ImageData> {
 		helper.writeVersion(out);
 		out.writeInt(image.count());
 		out.writeInt(image.mip());
+		out.writeUTF(image.mapping());
 
 		// Write dimensions
 		final Dimensions size = image.size();

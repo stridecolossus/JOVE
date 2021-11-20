@@ -41,11 +41,6 @@ public final class Point extends Tuple {
 		super(array);
 	}
 
-	@Override
-	public Layout layout() {
-		return LAYOUT;
-	}
-
 	/**
 	 * Calculates the distance <b>squared</b> to the given point.
 	 * @param point Destination point

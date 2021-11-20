@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
 
 public class CubeBuilderTest {
 	private CubeBuilder builder;
@@ -33,7 +32,7 @@ public class CubeBuilderTest {
 		// Check header
 		final int count = 6 * 2 * 3;
 		assertNotNull(cube.header());
-		assertEquals(List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT), cube.header().layout());
+		assertEquals(List.of(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT), cube.header().layout());
 		assertEquals(Primitive.TRIANGLES, cube.header().primitive());
 		assertEquals(count, cube.header().count());
 

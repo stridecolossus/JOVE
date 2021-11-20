@@ -3,7 +3,6 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,22 +12,21 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Component;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.Bufferable;
 
 public class VertexTest {
 	private Vertex vertex;
-	private Component one, two;
+	private Bufferable one, two;
 
 	@BeforeEach
 	void before() {
 		// Create a component
-		one = spy(Component.class);
-		when(one.layout()).thenReturn(Layout.of(2));
+		one = mock(Bufferable.class);
+		when(one.length()).thenReturn(1);
 
-		// Create another component
-		two = spy(Component.class);
-		when(two.layout()).thenReturn(Layout.of(3));
+		// And another
+		two = mock(Bufferable.class);
+		when(two.length()).thenReturn(2);
 
 		// Create vertex
 		vertex = new Vertex(List.of(one, two));
@@ -46,7 +44,7 @@ public class VertexTest {
 
 	@Test
 	void length() {
-		assertEquals((2 + 3) * Float.BYTES, vertex.length());
+		assertEquals(1 + 2, vertex.length());
 	}
 
 	@Test

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.model.Primitive;
@@ -61,7 +60,7 @@ public class ObjectModelLoaderTest {
 		final Header header = model.header();
 		assertEquals(3, header.count());
 		assertEquals(Primitive.TRIANGLES, header.primitive());
-		assertEquals(List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT), header.layout());
+		assertEquals(List.of(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT), header.layout());
 
 		// Check vertex buffer
 		assertNotNull(model.vertices());

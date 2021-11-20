@@ -10,8 +10,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model.Header;
 
 class ModelBuilderTest {
@@ -54,14 +54,14 @@ class ModelBuilderTest {
 	@DisplayName("Invalid vertices are trapped if validation is switched on")
 	@Test
 	void addInvalidVertex() {
-		builder.layout(Vector.NORMALS);
+		builder.layout(Layout.of(1));
 		assertThrows(IllegalArgumentException.class, () -> builder.add(vertex));
 	}
 
 	@DisplayName("Invalid vertices are ignored by default")
 	@Test
 	void addValidationIgnored() {
-		builder.layout(Vector.NORMALS);
+		builder.layout(Model.NORMALS);
 		builder.validate(false);
 		builder.add(vertex);
 	}

@@ -20,8 +20,8 @@ public class ImageLoaderTest {
 
 	@BeforeEach
 	void before() {
-		final Layout layout = new Layout("RGBA", Byte.class, 1, true);
-		image = new ImageData(new Dimensions(2, 3), 1, 1, layout, Bufferable.of(new byte[2 * 3 * 4]));
+		final Layout layout = new Layout(4, Byte.class, 1, true);
+		image = new ImageData(new Dimensions(2, 3), 1, 1, layout, "RGBA", Bufferable.of(new byte[2 * 3 * 4]));
 		loader = new ImageLoader();
 	}
 
@@ -40,9 +40,10 @@ public class ImageLoaderTest {
 		// Check persisted image
 		assertEquals(image.size(), result.size());
 		assertEquals(image.data().length(), result.data().length());
+		assertEquals("RGBA", result.mapping());
 
 		// Check layout
-		assertEquals("RGBA", result.layout().components());
+		assertEquals(4, result.layout().size());
 		assertEquals(1, result.layout().bytes());
 		assertEquals(Byte.class, result.layout().type());
 		assertEquals(true, result.layout().signed());

@@ -67,7 +67,7 @@ public class FormatBuilder {
 	 */
 	public static VkFormat format(Layout layout) {
 		return new FormatBuilder()
-				.count(layout.count())
+				.count(layout.size())
 				.bytes(layout.bytes())
 				.type(layout.type())
 				.signed(layout.signed())
@@ -84,7 +84,7 @@ public class FormatBuilder {
 	 * Constructor.
 	 */
 	public FormatBuilder() {
-		components(Layout.MAPPING);
+		components("RGBA");
 	}
 
 	/**

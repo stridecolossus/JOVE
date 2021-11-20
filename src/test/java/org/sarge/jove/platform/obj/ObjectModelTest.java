@@ -103,7 +103,7 @@ public class ObjectModelTest {
 			assertEquals(true, result.isIndexed());
 
 			// Check model header
-			final List layout = List.of(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT);
+			final List layout = List.of(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
 			assertEquals(new Model.Header(layout, Primitive.TRIANGLES, 3), result.header());
 		}
 

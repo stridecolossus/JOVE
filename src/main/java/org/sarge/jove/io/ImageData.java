@@ -21,7 +21,7 @@ import org.sarge.lib.util.Check;
  * TODO - MIP levels
  * @author Sarge
  */
-public record ImageData(Dimensions size, int count, int mip, Layout layout, Bufferable data) {
+public record ImageData(Dimensions size, int count, int mip, Layout layout, String mapping, Bufferable data) {
 	/**
 	 * Constructor.
 	 * @param size			Image dimensions
@@ -48,7 +48,7 @@ public record ImageData(Dimensions size, int count, int mip, Layout layout, Buff
 	 * @param data		Image data
 	 */
 	private ImageData(ImageData image, int count, Bufferable data) {
-		this(image.size, count, 1, image.layout, data);
+		this(image.size, count, 1, image.layout, image.mapping, data);
 	}
 
 	/**
@@ -71,7 +71,7 @@ public record ImageData(Dimensions size, int count, int mip, Layout layout, Buff
 	 * @return Offset
 	 */
 	private static int offset(int index, Dimensions size, Layout layout) {
-		return index * size.area() * layout.count() * layout.bytes();
+		return index * size.area() * layout.length();
 	}
 
 	@Override
