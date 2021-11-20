@@ -46,6 +46,9 @@ public class ModelLoader implements DataResourceLoader<Model> {
 		else {
 			out.writeInt(0);
 		}
+
+		// TODO
+		out.flush();
 	}
 
 	@Override

@@ -55,5 +55,6 @@ public class ImageLoader implements DataResourceLoader<ImageData> {
 
 		// Write image data
 		helper.write(image.data(), out);
+		out.flush(); // TODO
 	}
 }

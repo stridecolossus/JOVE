@@ -44,7 +44,7 @@ public interface Model {
 				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
 
-			if(!primitive.isNormalSupported() && layout.contains(NORMALS)) {
+			if(!primitive.isNormalSupported() && layout.stream().anyMatch(e -> e == NORMALS)) {
 				throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
 			}
 		}

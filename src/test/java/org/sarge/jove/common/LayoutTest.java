@@ -44,8 +44,9 @@ public class LayoutTest {
 	@Test
 	void equals() {
 		assertEquals(true, layout.equals(layout));
+		assertEquals(true, layout.equals(new Layout(3, Float.class, Float.BYTES, true)));
 		assertEquals(false, layout.equals(null));
-		assertEquals(false, layout.equals(new Layout(3, Float.class, Float.BYTES, true)));
+		assertEquals(false, layout.equals(new Layout(4, Float.class, Float.BYTES, true)));
 	}
 
 	@Nested

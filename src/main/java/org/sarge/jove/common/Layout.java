@@ -24,8 +24,6 @@ import org.sarge.lib.util.Check;
  *     Layout.of(3);
  * </pre>
  * <p>
- * Note that the {@link #equals(Object)} compares by <i>identity</i> in order to prevent components with the same structure being considered equal, i.e. points and vectors.
- * <p>
  * @author Sarge
  */
 public record Layout(int size, Class<?> type, int bytes, boolean signed) {
@@ -109,10 +107,5 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	 */
 	public int length() {
 		return size * bytes;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return obj == this;
 	}
 }
