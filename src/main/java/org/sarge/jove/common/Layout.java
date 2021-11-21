@@ -9,7 +9,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * A layout is comprised of:
  * <ul>
- * <li>{@link #components} as a string representation of the <i>component</i> mapping of the data, e.g. {@code RGB} for a point or vector</li>
+ * <li>{@link #size} number of components, e.g. 3 for a vertex normal</li>
  * <li>the {@link #type} of each component, e.g. {@link Float}</li>
  * <li>the number of {@link #bytes} per component, e.g. {@link Float#BYTES}</li>
  * <li>whether the data is {@link #signed}</li>
@@ -28,26 +28,12 @@ import org.sarge.lib.util.Check;
  */
 public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	/**
-	 * Creates a layout with a number of components of the given numeric type.
-	 * @param size			Size of this layout (number of components)
-	 * @param type			Component type
-	 * @param signed		Whether components are signed or unsigned
-	 * @throws IllegalArgumentException if the number of components is larger than {@link #MAPPING}
-	 * @throws IllegalArgumentException for an unsupported type
-	 * @see #bytes(Class)
-	 */
-	public static Layout of(int size, Class<?> type, boolean signed) {
-		final int bytes = bytes(type);
-		return new Layout(size, type, bytes, signed);
-	}
-
-	/**
 	 * Creates a layout with {@link #size} signed floating-point components.
 	 * @param size Size of this layout (number of components)
 	 * @return New floating-point layout
 	 */
 	public static Layout of(int size) {
-		return of(size, Float.class, true);
+		return new Layout(size, Float.class, true);
 	}
 
 	/**
@@ -100,6 +86,16 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 		Check.oneOrMore(size);
 		Check.notNull(type);
 		Check.oneOrMore(bytes);
+	}
+
+	/**
+	 * Constructor.
+	 * @param size			Number of components
+	 * @param type			Component type
+	 * @param signed		Whether components are signed or unsigned
+	 */
+	public Layout(int size, Class<?> type, boolean signed) {
+		this(size, type, bytes(type), signed);
 	}
 
 	/**

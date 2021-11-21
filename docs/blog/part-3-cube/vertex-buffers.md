@@ -38,7 +38,7 @@ We will need to implement the following:
 
 ## Vertex Data
 
-### Framework
+### Vertex
 
 We start with a definition for an object that can be written to an NIO buffer:
 
@@ -57,93 +57,12 @@ public interface Bufferable {
 }
 ```
 
-A _vertex_ is a compound object comprised of an arbitrary collection of bufferable _components_:
+A _vertex_ is a compound bufferable comprised of an arbitrary collection of _components_ such as positions and texture coordinates:
 
 ```java
 public class Vertex implements Bufferable {
-    /**
-     * A <i>vertex component</i> is a bufferable object that can be comprised in a vertex.
-     */
-    public interface Component extends Bufferable {
-        ...
-    }
+    private final List<Bufferable> components;
 
-    private final List<Component> components;
-}
-```
-
-The structure of a _vertex component_ is specified by a _layout_ declaration:
-
-```java
-public interface Component extends Bufferable {
-    /**
-     * @return Layout of this component
-     */
-    Layout layout();
-}
-```
-
-Which is a simple record type specifying the type and number of the elements that make up that component:
-
-```java
-public record Layout(String components, Class<?> type, int bytes, boolean signed) {
-    public int size() {
-        return components.length();
-    }
-
-    public int length() {
-        return size() * bytes;
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this;
-    }
-}
-```
-
-The _components_ member specifies the number of components as a string, for example the layout for a `Colour` is comprised of floating-point RGBA components:
-
-```java
-new Layout("RGBA", Float.class, Float.BYTES, true);
-```
-
-The `bytes` helper can be used to determine the number of bytes for a Java numeric type:
-
-```java
-public static int bytes(Class<?> type) {
-    return switch(type.getSimpleName().toLowerCase()) {
-        case "float" -> Float.BYTES;
-        case "int", "integer" -> Integer.BYTES;
-        case "short" -> Short.BYTES;
-        case "byte" -> Byte.BYTES;
-        default -> throw new IllegalArgumentException(...);
-    };
-}
-```
-
-We also provide convenience factory methods to specify the most common layouts:
-
-```java
-public static final String MAPPING = "RGBA";
-
-public static Layout of(int size, Class<?> type, boolean signed) {
-    String components = MAPPING.substring(0, size);
-    int bytes = bytes(type);
-    return new Layout(components, type, bytes, signed);
-}
-
-public static Layout of(int size) {
-    return of(size, Float.class, true);
-}
-```
-
-Finally a vertex can be written to an NIO buffer:
-
-```java
-public class Vertex implements Bufferable {
-    ...
-    
     @Override
     public int length() {
         return components.stream().mapToInt(Component::length).sum();
@@ -158,15 +77,9 @@ public class Vertex implements Bufferable {
 }
 ```
 
-Notes:
+Note that this implementation assumes that vertex data is _interleaved_.
 
-* The component layout is used to configure the structure of the vertex data to be passed to the shader (see below).
-
-* This implementation assumes that vertex data is _interleaved_.
-
-* Layouts are compared by _identity_ to avoid components with the same structure being considered equal, i.e. points and vectors.
-
-### Implementation
+### Vertex Components
 
 We can now implement vertex components to support the triangle demo.
 
@@ -179,7 +92,7 @@ In general a vertex is comprised of the following components:
 Positions and normal vectors are both floating-point tuples with common functionality, we implement a small hierarchy with the following base-class:
 
 ```java
-public sealed class Tuple implements Bufferable, Component permits Point, Vector {
+public sealed class Tuple implements Bufferable permits Point, Vector {
     public static final int SIZE = 3;
 
     public final float x, y, z;
@@ -220,19 +133,18 @@ public final class Point extends Tuple {
 A colour is defined as an RGBA record:
 
 ```java
-public record Colour(float red, float green, float blue, float alpha) implements Bufferable, Component {
-    public static final Layout LAYOUT = Layout.of(4);
+public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
     public static final Colour WHITE = new Colour(1, 1, 1, 1);
     public static final Colour BLACK = new Colour(0, 0, 0, 1);
 
     @Override
-    public void buffer(ByteBuffer buffer) {
-        buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
+    public final long length() {
+        return 4 * Float.BYTES;
     }
 
     @Override
-    public final Layout layout() {
-        return LAYOUT;
+    public void buffer(ByteBuffer buffer) {
+        buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
     }
 }
 ```

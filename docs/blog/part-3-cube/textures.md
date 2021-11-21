@@ -88,16 +88,14 @@ public interface Coordinate extends Vertex.Component {
     }
 
     record Coordinate2D(float u, float v) implements Coordinate {
-        public static final Layout LAYOUT = Layout.of(2);
-
+        @Override
+        public final long length() {
+            return 2 * Float.BYTES;
+        }
+    
         @Override
         public final void buffer(ByteBuffer buffer) {
             buffer.putFloat(u).putFloat(v);
-        }
-
-        @Override
-        public Layout layout() {
-            return LAYOUT;
         }
     }
 
@@ -123,30 +121,136 @@ We can now replace the colour data in the quad with texture coordinates as shown
 Vertex.of(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT)
 ```
 
-Finally we modify the second attribute of the vertex input pipeline stage to configure the structure of the texture coordinates:
+### Component Layout
+
+As previously noted the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already implicitly have the necessary information in the vertex components which just needs to be exposed.
+
+We first introduce the following record type to represent the layout of some arbitrary object:
 
 ```java
-.binding()
-    .index(0)
-    .stride(Point.LAYOUT.length() + Coordinate2D.LAYOUT.length())
-    .build()
-.attribute()
-    .binding(0)
-    .location(0)
-    .format(VkFormat.R32G32B32_SFLOAT)
-    .offset(0)
-    .build()
-.attribute()
-    .binding(0)
-    .location(1)
-    .format(VkFormat.R32G32_SFLOAT)
-    .offset(Point.LAYOUT.length())
+public record Layout(int size, Class<?> type, int bytes, boolean signed) {
+    public int length() {
+        return size * bytes;
+    }
+}
+```
+
+Where:
+
+* _size_ is the number of components comprising the object, e.g. 3 for a vertex normal.
+
+* _type_ is the class of each component, e.g. `Float`
+
+* _bytes_ is the number of bytes per component, e.g. `Float.BYTES`
+
+* and _signed_ specifies whether the data is signed.
+
+The number of bytes can be mapped from common Java types using the following helper:
+
+```java
+public static int bytes(Class<?> type) {
+    return switch(type.getSimpleName().toLowerCase()) {
+        case "float" -> Float.BYTES;
+        case "int", "integer" -> Integer.BYTES;
+        case "short" -> Short.BYTES;
+        case "byte" -> Byte.BYTES;
+        default -> throw new IllegalArgumentException(...);
+    };
+}
+```
+
+We also add a convenience factory for a floating-point layout:
+
+```java
+public static Layout of(int size) {
+    return new Layout(size, Float.class, true);
+}
+```
+
+We add layouts for the existing vertex components, for example the layout for an RGBA colour is:
+
+```java
+public record Colour(...) {
+    public static final Layout LAYOUT = Layout.of(4);
+}
+```
+
+Next we add a convenience factory method to the `FormatBuilder` to determine the format of a vertex attribute from a given layout:
+
+```java
+public static VkFormat format(Layout layout) {
+    return new FormatBuilder()
+        .count(layout.size())
+        .bytes(layout.bytes())
+        .type(layout.type())
+        .signed(layout.signed())
+        .build();
+}
+```
+
+We can now implement a helper method in the vertex input pipeline stage builder to configure a binding from the layouts of a vertex:
+
+```java
+public VertexInputStageBuilder add(List<Layout> layouts) {
+    // Add binding
+    BindingBuilder binding = new BindingBuilder();
+
+    // Init vertex stride
+    int stride = Layout.stride(layouts);
+    binding.stride(stride);
+
+    ...
+
+    // Construct binding
+    return binding.build();
+}
+```
+
+Where `stride` is a helper accessor on the layout class:
+
+```java
+public static int stride(List<Layout> layouts) {
+    return layouts.stream().mapToInt(Layout::length).sum();
+}
+```
+
+Next a vertex attribute is created for each layout:
+
+```java
+int offset = 0;
+for(Layout component : layouts) {
+    // Determine component format
+    VkFormat format = FormatBuilder.format(component);
+
+    // Add attribute for component
+    new AttributeBuilder(binding)
+        .format(format)
+        .offset(offset)
+        .build();
+
+    // Increment offset to the start of the next attribute
+    offset += component.length();
+}
+assert offset == stride;
+```
+
+Note that this implementation assumes:
+
+* The _layout_ indices are contiguous starting at index zero.
+
+* Vertex data is interleaved and contiguous.
+
+We can now replace the configuration for the vertex data in the pipeline with the following considerably simpler configuration:
+
+```java
+.input()
+    .add(List.of(Point.LAYOUT, Coordinate2D.LAYOUT))
     .build()
 ```
 
 ### Vertex Shader
 
-We modify the vertex shader to replace the colour with a texture coordinate which is passed through to the fragment shader:
+The final change modifies the vertex shader to replace the colour with a texture coordinate passed through to the fragment shader:
 
 ```glsl
 #version 450
@@ -182,94 +286,6 @@ This should render the quad with black in the top-left corner (corresponding to 
 ![Textured Quad](faked-quad.png)
 
 We can now be fairly confident that the texture coordinates are being handled correctly before we move onto texture sampling.
-
-### Vertex Configuration Redux
-
-As noted above the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already have the necessary information represented by the layout of the vertex data, 
-
-We first add a convenience helper to the pipeline stage builder to configure the vertex data for a given layout:
-
-```java
-public VertexInputStageBuilder add(List<Layout> layout) {
-    // Allocate next binding
-    int index = bindings.size();
-    ...
-}
-```
-
-This helper allocates the next available binding index and then uses the nested builder to configure the binding:
-
-```java
-// Calculate vertex stride for this layout
-int stride = Layout.stride(layout);
-
-// Add binding
-new BindingBuilder()
-    .index(index)
-    .stride(stride)
-    .build();
-```
-
-Where `stride` is a helper accessor on the layout class:
-
-```java
-public static int stride(List<Layout> layouts) {
-    return layouts.stream().mapToInt(Layout::length).sum();
-}
-```
-
-Next we iterate over the layout to construct a vertex attribute for each entry:
-
-```java
-// Add attribute for each layout component
-int offset = 0;
-int loc = 0;
-for(Layout component : layout) {
-    // Determine component format
-    final VkFormat format = FormatBuilder.format(component);
-
-    // Add attribute for component
-    new AttributeBuilder()
-        .binding(index)
-        .location(loc)
-        .format(format)
-        .offset(offset)
-        .build();
-        
-    // Increment offset to the start of the next attribute
-    ++loc;
-    offset += component.length();
-}
-```
-
-Notes:
-
-* The _location_ of each attribute is assumed to begin at index zero.
-
-* The loop calculates the cumulative _offset_ of each attribute within a vertex.
-
-* The `equals` method of the compound layout also tests equality by identity.
-
-We also added a convenience factory method to the `FormatBuilder` to determine the format of each attribute from its layout:
-
-```java
-public static VkFormat format(Layout layout) {
-    return new FormatBuilder()
-        .count(layout.size())
-        .bytes(layout.bytes())
-        .type(layout.type())
-        .signed(layout.signed())
-        .build();
-}
-```
-
-We can now replace the configuration for the vertex data in the pipeline with the following considerably simpler code:
-
-```java
-.input()
-    .add(List.of(Point.LAYOUT, Coordinate2D.LAYOUT))
-    .build()
-```
 
 ---
 
