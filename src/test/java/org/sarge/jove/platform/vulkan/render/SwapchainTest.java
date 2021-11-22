@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -103,6 +104,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 	@Test
 	void acquireNeither() {
 		assertThrows(IllegalArgumentException.class, () -> swapchain.acquire(null, null));
+	}
+
+	@DisplayName("The swapchain should wait for a previous frame to be completed")
+	@Test
+	void waitReady() {
+		swapchain.waitReady(0, fence);
+		swapchain.waitReady(0, null);
+		verify(fence).waitReady();
 	}
 
 	@Test

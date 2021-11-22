@@ -1,4 +1,4 @@
-package org.sarge.jove.control;
+package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,7 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import org.sarge.jove.control.RenderLoop.Task;
+import org.sarge.jove.scene.RenderLoop;
+import org.sarge.jove.scene.RenderLoop.Task;
 
 @Timeout(1000)
 public class RenderLoopTest {

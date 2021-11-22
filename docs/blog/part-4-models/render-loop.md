@@ -76,7 +76,7 @@ We can now factor out the acquire-render-present rendering steps to a task:
 ```java
 public class RenderTask implements Task {
     private final Swapchain swapchain;
-    private final List<Buffer> buffers;
+    private final IntFunction<Buffer> factory;
     private final Queue presentation;
 
     @Override
@@ -90,9 +90,11 @@ And modify the existing render loop bean accordingly:
 
 ```java
 public static Task render(...) {
-    return new RenderTask(swapchain, buffers, presentation.queue());
+    return new RenderTask(swapchain, buffers::get, presentation.queue());
 }
 ```
+
+Note that the render task is still tightly coupled to the command buffer, in a later chapter we will factor out the management of the rendering sequence.
 
 Finally we factor out the rotation logic into another task and delete the original code:
 
@@ -783,7 +785,7 @@ private class Frame {
 Next we add a new parameter to the constructor to instantiate the array of in-flight frames:
 
 ```java
-public class RenderLoop {
+public class RenderTask {
     private final Frame[] frames;
     private int current;
 
@@ -826,14 +828,14 @@ There is one further potential failure case: if the number of in-flight frames i
 To avoid this scenario we track the swapchain images that are actively in-flight:
 
 ```java
-public class RenderLoop {
+public class RenderTask {
     ...
-    private final Frame[] active;
+    private final Fence[] active;
 
     public RenderLoop(...) {
         ...
-        active = new Frame[swapchain.views().size()];
-        Arrays.fill(active, frames[0]);
+        active = new Frame[swapchain.count()];
+        Arrays.fill(active, frames[0].fence);
     }
 }
 ```
@@ -841,8 +843,8 @@ public class RenderLoop {
 After we acquire the image index we additionally wait on the frame currently using the image and then update the mapping:
 
 ```java
-active[index].fence.waitReady();
-active[index] = this;
+active[index].waitReady();
+active[index] = fence;
 ```
 
 In the demo application we set the number of in-flight frames to be the same as the number of swapchain images.

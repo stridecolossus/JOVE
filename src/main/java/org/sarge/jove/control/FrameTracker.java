@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.scene.RenderLoop;
 
 /**
  * The <i>frame tracker</i> is a render loop task that broadcasts frame events to interested listeners.

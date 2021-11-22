@@ -1,4 +1,4 @@
-package org.sarge.jove.control;
+package org.sarge.jove.scene;
 
 import static org.sarge.lib.util.Check.notNull;
 

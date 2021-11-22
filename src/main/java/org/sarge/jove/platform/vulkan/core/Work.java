@@ -104,15 +104,6 @@ public class Work {
 		info.pSignalSemaphores = NativeObject.array(signal);
 	}
 
-	/**
-	 * Submits this work.
-	 * @param fence Optional fence
-	 * @see #submit(List, Fence)
-	 */
-	public void submit(Fence fence) {
-		Work.submit(List.of(this), fence);
-	}
-
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
@@ -124,23 +115,37 @@ public class Work {
 	}
 
 	/**
-	 * Submits a <i>batch</i> of work.
-	 * @param work			One-or-more work batches
-	 * @param fence			Optional fence
-	 * @throws IllegalArgumentException if all batches do not submit to the same queue family
+	 * A <i>batch</i> is a convenience collection of work.
 	 */
-	public static void submit(List<Work> work, Fence fence) {
-		// Validate
-		Check.notEmpty(work);
-		final Pool pool = work.get(0).pool;
-		if(!work.stream().allMatch(e -> matches(e, pool))) throw new IllegalArgumentException("All work batches must submit to the same queue");
+	public interface Batch {
+		/**
+		 * Submits this batch of work.
+		 * @param fence Optional fence
+		 * @throws IllegalArgumentException if all batches do not submit to the same queue family
+		 */
+		void submit(Fence fence);
 
-		// Populate array of submission descriptors
-		final VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
+		/**
+		 * Creates a work batch.
+		 * @param work Work
+		 * @return New work batch
+		 */
+		static Batch of(List<Work> work) {
+			return fence -> {
+				// Validate
+				// TODO - factor out?
+				Check.notEmpty(work);
+				final Pool pool = work.get(0).pool;
+				if(!work.stream().allMatch(e -> matches(e, pool))) throw new IllegalArgumentException("All work batches must submit to the same queue");
 
-		// Submit work
-		final VulkanLibrary lib = pool.device().library();
-		check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
+				// Populate array of submission descriptors
+				final VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
+
+				// Submit work
+				final VulkanLibrary lib = pool.device().library();
+				check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
+			};
+		}
 	}
 
 	/**
@@ -169,7 +174,7 @@ public class Work {
 
 		// Submit work
 		final Work work = Work.of(buffer);
-		work.submit(null);
+		Batch.of(List.of(work)).submit(null);
 
 		return buffer;
 	}
@@ -219,7 +224,6 @@ public class Work {
 		 * @throws IllegalArgumentException for a duplicate semaphore
 		 */
 		public Builder wait(Semaphore semaphore, Collection<VkPipelineStage> stages) {
-			// TODO - not VK_PIPELINE_STAGE_HOST_BIT
 			Check.notNull(semaphore);
 			Check.notEmpty(stages);
 			if(work.wait.containsKey(semaphore)) throw new IllegalArgumentException(String.format("Duplicate wait semaphore: %s (%s)", semaphore, stages));
@@ -249,10 +253,12 @@ public class Work {
 		/**
 		 * Constructs this work.
 		 * @return New work
-		 * @throws IllegalArgumentException if the command buffers is empty
+		 * @throws IllegalArgumentException if the command buffers is empty or any semaphore is used as both a wait and signal
 		 */
 		public Work build() {
 			if(work.buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
+			if(!Collections.disjoint(work.signal, work.wait.keySet())) throw new IllegalArgumentException("Semaphore cannot be used as wait and signal");
+
 			try {
 				return work;
 			}

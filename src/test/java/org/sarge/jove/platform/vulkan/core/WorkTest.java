@@ -3,17 +3,16 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
@@ -21,6 +20,7 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
+import org.sarge.jove.platform.vulkan.core.Work.Batch;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class WorkTest extends AbstractVulkanTest {
@@ -47,22 +47,63 @@ public class WorkTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void constructor() {
+	void of() {
 		final Work work = Work.of(buffer);
 		assertNotNull(work);
-		work.submit(null);
+	}
+
+	@Nested
+	class BatchTests {
+		private Semaphore semaphore() {
+			final Semaphore semaphore = mock(Semaphore.class);
+			when(semaphore.handle()).thenReturn(new Handle(3));
+			return semaphore;
+		}
+
+		@Test
+		void submit() {
+			// Create work
+			final Work work = new Work.Builder(pool)
+					.add(buffer)
+					.wait(semaphore(), Set.of(VkPipelineStage.TOP_OF_PIPE))
+					.signal(semaphore())
+					.build();
+
+			// Create batch
+			final Batch batch = Batch.of(List.of(work));
+			assertNotNull(batch);
+
+			// Submit work
+			final Fence fence = mock(Fence.class);
+			batch.submit(fence);
+
+			// Check API
+			final VkSubmitInfo expected = new VkSubmitInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final VkSubmitInfo info = (VkSubmitInfo) obj;
+					assertNotNull(info);
+					assertEquals(1, info.commandBufferCount);
+					assertEquals(1, info.waitSemaphoreCount);
+					assertEquals(1, info.signalSemaphoreCount);
+					assertNotNull(info.pCommandBuffers);
+					assertNotNull(info.pWaitSemaphores);
+					assertNotNull(info.pWaitDstStageMask);
+					assertNotNull(info.pSignalSemaphores);
+					return true;
+				}
+			};
+			verify(lib).vkQueueSubmit(queue, 1, new VkSubmitInfo[]{expected}, fence);
+		}
 	}
 
 	@Nested
 	class BuilderTests {
 		private Work.Builder builder;
-		private Semaphore semaphore;
 
 		@BeforeEach
 		void before() {
 			builder = new Work.Builder(pool);
-			semaphore = mock(Semaphore.class);
-			when(semaphore.handle()).thenReturn(new Handle(3));
 		}
 
 		@Test
@@ -86,42 +127,18 @@ public class WorkTest extends AbstractVulkanTest {
 
 		@Test
 		void waitEmptyPipelineStages() {
-			assertThrows(IllegalArgumentException.class, () -> builder.wait(semaphore, Set.of()));
+			assertThrows(IllegalArgumentException.class, () -> builder.wait(mock(Semaphore.class), Set.of()));
 		}
 
 		@Test
 		void build() {
-			// Construct work submission
 			final Work work = builder
 					.add(buffer)
-					.wait(semaphore, Set.of(VkPipelineStage.TOP_OF_PIPE))
-					.signal(semaphore)
+					.wait(mock(Semaphore.class), Set.of(VkPipelineStage.TOP_OF_PIPE))
+					.signal(mock(Semaphore.class))
 					.build();
+
 			assertNotNull(work);
-
-			// Submit work
-			final Fence fence = mock(Fence.class);
-			work.submit(fence);
-
-			// Check API
-			final ArgumentCaptor<VkSubmitInfo[]> captor = ArgumentCaptor.forClass(VkSubmitInfo[].class);
-			verify(lib).vkQueueSubmit(eq(queue), eq(1), captor.capture(), eq(fence));
-
-			// Extract submission descriptor
-			final VkSubmitInfo[] array = captor.getValue();
-			assertNotNull(array);
-			assertEquals(1, array.length);
-
-			// Check submission descriptor
-			final VkSubmitInfo info = array[0];
-			assertNotNull(info);
-			assertEquals(1, info.commandBufferCount);
-			assertEquals(1, info.waitSemaphoreCount);
-			assertEquals(1, info.signalSemaphoreCount);
-			assertNotNull(info.pCommandBuffers);
-			assertNotNull(info.pWaitSemaphores);
-			assertNotNull(info.pWaitDstStageMask);
-			assertNotNull(info.pSignalSemaphores);
 		}
 	}
 }

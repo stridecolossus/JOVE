@@ -68,6 +68,7 @@ public class Swapchain extends AbstractVulkanObject {
 	private final Dimensions extents;
 	private final List<View> views;
 	private final IntByReference index;
+	private final Fence[] active;
 
 	/**
 	 * Constructor.
@@ -82,6 +83,7 @@ public class Swapchain extends AbstractVulkanObject {
 		this.extents = notNull(extents);
 		this.views = List.copyOf(views);
 		this.index = dev.factory().integer();
+		this.active = new Fence[views.size()];
 	}
 
 	/**
@@ -125,6 +127,19 @@ public class Swapchain extends AbstractVulkanObject {
 		final VulkanLibrary lib = dev.library();
 		check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
 		return index.getValue();
+	}
+
+	/**
+	 * Waits for a previous image to be completed.
+	 * @param index		Swapchain image index
+	 * @param fence		Fence
+	 */
+	public void waitReady(int index, Fence fence) {
+		final Fence prev = active[index];
+		if(prev != null) {
+			prev.waitReady();
+		}
+		active[index] = fence;
 	}
 
 	/**
