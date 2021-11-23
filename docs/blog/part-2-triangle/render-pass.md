@@ -264,8 +264,7 @@ A frame buffer is created using the following factory that as usual first popula
 
 ```java
 public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View> attachments) {
-    // Build descriptor
-    final VkFramebufferCreateInfo info = new VkFramebufferCreateInfo();
+    var info = new VkFramebufferCreateInfo();
     info.renderPass = pass.handle();
     info.attachmentCount = attachments.size();
     info.pAttachments = Handle.toArray(attachments);
@@ -280,9 +279,9 @@ The frame buffer is then created via the API and wrapped by a new domain object 
 
 ```java
 // Allocate frame buffer
-final DeviceContext dev = pass.device();
-final VulkanLibrary lib = dev.library();
-final PointerByReference buffer = dev.factory().pointer();
+DeviceContext dev = pass.device();
+VulkanLibrary lib = dev.library();
+PointerByReference buffer = dev.factory().pointer();
 check(lib.vkCreateFramebuffer(dev, info, null, buffer));
 
 // Create frame buffer
@@ -295,17 +294,16 @@ The API for frame buffers is simple:
 
 ```java
 interface VulkanLibraryFrameBuffer {
-    int vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
+    int  vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
     void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Pointer pAllocator);
 }
 ```
 
 ### Integration
 
-We now have all the components we require to add the swapchain and render pass to the demo application.
+We now have all the components we require to add a double-buffered swapchain and render pass to the demo application.
 
 ```java
-// Create double-buffer swapchain
 Swapchain swapchain = new Swapchain.Builder(dev, surface)
     .count(2)
     .build();
@@ -314,16 +312,14 @@ Swapchain swapchain = new Swapchain.Builder(dev, surface)
 The render pass consists of a single colour attachment which is cleared before rendering and transitioned to a layout ready for presentation:
 
 ```java
-// Determine colour attachment format
 VkFormat format = new FormatBuilder()
-    .template(FormatBuilder.BGRA)
+    .components(FormatBuilder.BGRA)
     .bytes(1)
     .signed(false)
-    .type(FormatBuilder.Type.NORMALIZED)
+    .type(FormatBuilder.Type.NORM)
     .build();
 
 
-// Create colour attachment
 Attachment attachment = new Attachment.Builder()
     .format(format)
     .load(VkAttachmentLoadOp.CLEAR)
@@ -335,11 +331,11 @@ Attachment attachment = new Attachment.Builder()
 We next create the render pass consisting of a single sub-pass that renders the colour attachment:
 
 ```java
-RenderPass pass = new RenderPass.Builder()
-    .subpass()
-        .colour(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-        .build()
-    .build(dev);
+Subpass subpass = new Subpass.Builder()
+    .colour(new Reference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL))
+    .build();
+
+return RenderPass.create(dev, List.of(subpass));
 ```
 
 Finally we create the frame buffers:
@@ -425,6 +421,8 @@ This should run the new application though it obviously doesn't do anything yet.
 
 ### Desktop
 
+Spring Boot performs a _component scan_ of the project to identify objects to be managed by the container, which by default starts at the package containing the main class.  The `@Configuration` annotation denotes a class that contains a number of Spring _beans_ identified by the `@Bean` annotation.
+
 We start by factoring out the various desktop components into a Spring _configuration class_:
 
 ```java
@@ -454,8 +452,6 @@ class DesktopConfiguration {
 }
 ```
 
-Spring Boot performs a _component scan_ of the project to identify objects to be managed by the container, which by default starts at the package containing the main class.  The `@Configuration` annotation denotes a class that contains a number of Spring _beans_ identified by the `@Bean` annotation.
-
 Here we can see the benefits of using dependency injection:
 
 * The code to instantiate each component is now factored out into neater, more concise factory methods.
@@ -464,11 +460,7 @@ Here we can see the benefits of using dependency injection:
 
 * We no longer need to worry about the ordering of component instantiation (also handled by the container), e.g. for the troublesome `surface` handle.
 
-Notes:
-
-* The bean methods are usually `static` to avoid compiler warnings.
-
-* Spring beans are generally singleton instances.
+Note that Spring beans are generally singleton instances.
 
 This should hopefully result in code that is both simpler to develop and (more importantly) considerably easier to refactor and fix.
 

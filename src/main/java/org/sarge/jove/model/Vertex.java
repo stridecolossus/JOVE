@@ -70,6 +70,7 @@ public class Vertex implements Bufferable {
 				.mapToObj(components::get)
 				.collect(TRANSFORM);
 	}
+	// TODO - could be mutable?
 
 	@Override
 	public int hashCode() {

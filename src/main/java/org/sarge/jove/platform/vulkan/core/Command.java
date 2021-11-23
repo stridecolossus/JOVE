@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -45,14 +46,15 @@ public interface Command {
 	 * @see Work#submit(Command, Pool)
 	 * @see Pool#waitIdle()
 	 */
-	default void submitAndWait(Pool pool) {
+	default Buffer submitAndWait(Pool pool) {
 		final Buffer buffer = Work.submit(this, pool);
 		pool.waitIdle();
 		buffer.free();
+		return buffer;
 	}
 
 	/**
-	 * A <i>command buffer</i> is allocated by a {@link Pool} and used to record commands.
+	 * A <i>command buffer</i> is allocated by a {@link Pool} and used to record a command sequence.
 	 */
 	class Buffer implements NativeObject {
 		/**
@@ -62,7 +64,7 @@ public interface Command {
 		private enum State {
 			INITIAL,
 			RECORDING,
-			EXECUTABLE,
+			EXECUTABLE
 		}
 
 		private final Handle handle;
@@ -75,7 +77,7 @@ public interface Command {
 		 * @param handle 		Command buffer handle
 		 * @param pool			Parent pool
 		 */
-		private Buffer(Pointer handle, Pool pool) {
+		protected Buffer(Pointer handle, Pool pool) {
 			this.handle = new Handle(handle);
 			this.pool = notNull(pool);
 		}
@@ -93,10 +95,29 @@ public interface Command {
 		}
 
 		/**
+		 * @return Whether this is a primary or secondary command buffer
+		 */
+		@SuppressWarnings("static-method")
+		public boolean isPrimary() {
+			return true;
+		}
+
+		/**
 		 * @return Whether this command buffer is ready for submission (i.e. has been recorded)
 		 */
 		public boolean isReady() {
 			return state == State.EXECUTABLE;
+		}
+
+		/**
+		 * Validates the state of this buffer.
+		 * @param expected Expected state
+		 * @throws IllegalStateException if this buffer is not in the expected state
+		 */
+		private void validate(State expected) {
+			if(state != expected) {
+				throw new IllegalStateException(String.format("Invalid buffer state: expected=%s actual=%s", expected, state));
+			}
 		}
 
 		/**
@@ -106,7 +127,7 @@ public interface Command {
 		 */
 		public Buffer begin(VkCommandBufferUsage... flags) {
 			// Check buffer can be recorded
-			if(state != State.INITIAL) throw new IllegalStateException("Buffer is not ready for recording: " + this);
+			validate(State.INITIAL);
 
 			// Init descriptor
 			final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
@@ -128,8 +149,20 @@ public interface Command {
 		 * @throws IllegalStateException if this buffer is not recording
 		 */
 		public Buffer add(Command cmd) {
-			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
+			validate(State.RECORDING);
 			cmd.execute(pool.device().library(), this);
+			return this;
+		}
+
+		/**
+		 * Adds secondary buffers.
+		 * @param secondary Secondary buffers
+		 */
+		public Buffer add(List<SecondaryBuffer> secondary) {
+			validate(State.RECORDING);
+			final Pointer array = NativeObject.array(secondary);
+			final VulkanLibrary lib = pool.device().library();
+			lib.vkCmdExecuteCommands(this, secondary.size(), array);
 			return this;
 		}
 
@@ -139,8 +172,7 @@ public interface Command {
 		 * @throws IllegalArgumentException if no commands have been recorded
 		 */
 		public Buffer end() {
-			if(state != State.RECORDING) throw new IllegalStateException("Buffer is not recording: " + this);
-			// TODO - count?
+			validate(State.RECORDING);
 			final VulkanLibrary lib = pool.device().library();
 			check(lib.vkEndCommandBuffer(this));
 			state = State.EXECUTABLE;
@@ -153,7 +185,7 @@ public interface Command {
 		 * @throws IllegalStateException if this buffer has not been recorded
 		 */
 		public void reset(VkCommandBufferResetFlag... flags) {
-			if(state != State.EXECUTABLE) throw new IllegalStateException("Buffer has not been recorded: " + this);
+			validate(State.EXECUTABLE);
 			// TODO - check pool has flag
 			final int mask = IntegerEnumeration.mask(flags);
 			final VulkanLibrary lib = pool.device().library();
@@ -175,16 +207,37 @@ public interface Command {
 					.append("handle", handle)
 					.append("state", state)
 					.append("pool", pool)
+					.append("primary", isPrimary())
 					.build();
 		}
 	}
 
 	/**
-	 * A <i>command pool</i> allocates and maintains command buffers that are used to perform work on a given {@link Queue}.
+	 * Secondary command buffer.
+	 */
+	class SecondaryBuffer extends Buffer {
+		private SecondaryBuffer(Pointer handle, Pool pool) {
+			super(handle, pool);
+		}
+
+		@Override
+		public final boolean isPrimary() {
+			return false;
+		}
+
+		@Override
+		public Buffer add(List<SecondaryBuffer> secondary) {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	/**
+	 * A <i>command pool</i> allocates command buffers that are used to perform work on a given {@link Queue}.
 	 */
 	class Pool extends AbstractVulkanObject {
 		/**
 		 * Creates a command pool for the given queue.
+		 * @param dev		Logical device
 		 * @param queue		Work queue
 		 * @param flags		Flags
 		 */
@@ -230,14 +283,16 @@ public interface Command {
 		public Stream<Buffer> buffers() {
 			return buffers.stream();
 		}
+		// TODO - will we ever need/use this? better to leave to specific applications, caches, etc?
 
 		/**
 		 * Allocates a number of command buffers from this pool.
 		 * @param num			Number of buffers to allocate
 		 * @param primary		Whether primary or secondary
+		 * @param ctor			Constructor
 		 * @return Allocated buffers
 		 */
-		public List<Buffer> allocate(int num, boolean primary) {
+		private <T extends Buffer> List<T> allocate(int num, boolean primary, BiFunction<Pointer, Pool, T> ctor) {
 			// Init descriptor
 			final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
 			info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
@@ -251,9 +306,9 @@ public interface Command {
 			check(lib.vkAllocateCommandBuffers(dev, info, handles));
 
 			// Create buffers
-			final var list = Arrays
+			final List<T> list = Arrays
 					.stream(handles)
-					.map(ptr -> new Buffer(ptr, this))
+					.map(ptr -> ctor.apply(ptr, this))
 					.collect(toList());
 
 			// Register buffers
@@ -263,20 +318,29 @@ public interface Command {
 		}
 
 		/**
-		 * Allocates a number of primary command buffers from this pool.
-		 * @param num Number of buffers to allocate
-		 * @return Allocated buffers
-		 */
-		public List<Buffer> allocate(int num) {
-			return allocate(num, true);
-		}
-
-		/**
-		 * Allocates a primary command buffer from this pool.
+		 * Allocates a single primary command buffer from this pool.
 		 * @return New command buffer
 		 */
 		public Buffer allocate() {
 			return allocate(1).get(0);
+		}
+
+		/**
+		 * Allocates a number of primary command buffers from this pool.
+		 * @param num Number of buffers to allocate
+		 * @return New command buffers
+		 */
+		public List<Buffer> allocate(int num) {
+			return allocate(num, true, Buffer::new);
+		}
+
+		/**
+		 * Allocates a number of secondary command buffers from this pool.
+		 * @param num Number of secondary buffers to allocate
+		 * @return New secondary buffers
+		 */
+		public List<SecondaryBuffer> secondary(int num) {
+			return allocate(num, false, SecondaryBuffer::new);
 		}
 
 		/**
@@ -417,5 +481,13 @@ public interface Command {
 		 * @return Result code
 		 */
 		int vkResetCommandBuffer(Buffer commandBuffer, int flags);
+
+		/**
+		 * Executes secondary command buffers.
+		 * @param commandBuffer			Primary command buffer
+		 * @param commandBufferCount	Number of secondary buffers
+		 * @param pCommandBuffers		Secondary buffers to execute
+		 */
+		void vkCmdExecuteCommands(Buffer commandBuffer, int commandBufferCount, Pointer pCommandBuffers);
 	}
 }

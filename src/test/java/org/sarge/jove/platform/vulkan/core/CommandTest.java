@@ -3,10 +3,6 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -18,18 +14,19 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
+import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
+import org.sarge.jove.platform.vulkan.core.Command.SecondaryBuffer;
 import org.sarge.jove.platform.vulkan.core.Work.Batch;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -39,32 +36,35 @@ import com.sun.jna.Pointer;
 class CommandTest extends AbstractVulkanTest {
 	private Command cmd;
 	private Queue queue;
+	private Pool pool;
 
 	@BeforeEach
 	void before() {
-		final Family family = new Family(0, 1, Set.of());
-		queue = new Queue(new Handle(new Pointer(1)), family);
+		queue = new Queue(new Handle(1), new Family(2, 1, Set.of()));
 		cmd = mock(Command.class);
+		pool = Pool.create(dev, queue);
 	}
 
 	@Test
 	void submitAndWait() {
-		final Pool pool = Pool.create(dev, queue);
+		// Create command
 		cmd = spy(Command.class);
-		cmd.submitAndWait(pool);
-		verify(cmd).execute(eq(lib), isA(Buffer.class));
+
+		// Execute one-time command
+		final Buffer buffer = cmd.submitAndWait(pool);
+		verify(cmd).execute(lib, buffer);
+
+		// Check buffer is transient
 		assertEquals(0, pool.buffers().count());
 	}
 
 	@Nested
 	class BufferTests {
 		private Buffer buffer;
-		private Pool pool;
 
 		@BeforeEach
 		void before() {
-			pool = Pool.create(dev, queue);
-			buffer = pool.allocate(1, true).iterator().next();
+			buffer = pool.allocate();
 		}
 
 		@Test
@@ -72,12 +72,22 @@ class CommandTest extends AbstractVulkanTest {
 			assertNotNull(buffer.handle());
 			assertEquals(pool, buffer.pool());
 			assertEquals(false, buffer.isReady());
+			assertEquals(true, buffer.isPrimary());
 		}
 
 		@Test
 		void begin() {
-			buffer.begin();
-			verify(lib).vkBeginCommandBuffer(eq(buffer), any(VkCommandBufferBeginInfo.class));
+			final var expected = new VkCommandBufferBeginInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final var info = (VkCommandBufferBeginInfo) obj;
+					assertEquals(VkCommandBufferUsage.ONE_TIME_SUBMIT.value(), info.flags);
+					assertEquals(null, info.pInheritanceInfo);
+					return true;
+				}
+			};
+			buffer.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT);
+			verify(lib).vkBeginCommandBuffer(buffer, expected);
 			assertEquals(false, buffer.isReady());
 		}
 
@@ -121,6 +131,14 @@ class CommandTest extends AbstractVulkanTest {
 		}
 
 		@Test
+		void secondary() {
+			final List<SecondaryBuffer> sec = pool.secondary(1);
+			buffer.begin();
+			buffer.add(sec);
+			verify(lib).vkCmdExecuteCommands(buffer, 1, NativeObject.array(sec));
+		}
+
+		@Test
 		void reset() {
 			buffer.begin();
 			buffer.end();
@@ -146,19 +164,35 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void free() {
 			buffer.free();
-			// TODO
+			assertEquals(0, pool.buffers().count());
+		}
+	}
+
+	@Nested
+	class SecondaryBufferTests {
+		private SecondaryBuffer sec;
+
+		@BeforeEach
+		void before() {
+			sec = pool.secondary(1).get(0);
+		}
+
+		@Test
+		void constructor() {
+			assertNotNull(sec);
+			assertEquals(pool, sec.pool());
+			assertEquals(false, sec.isReady());
+			assertEquals(false, sec.isPrimary());
+		}
+
+		@Test
+		void executeSecondary() {
+			assertThrows(UnsupportedOperationException.class, () -> sec.add(List.of()));
 		}
 	}
 
 	@Nested
 	class CommandPoolTests {
-		private Pool pool;
-
-		@BeforeEach
-		void before() {
-			pool = Pool.create(dev, queue);
-		}
-
 		@Test
 		void constructor() {
 			assertEquals(queue, pool.queue());
@@ -168,32 +202,44 @@ class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		void descriptor() {
-			// Check allocator
-			final ArgumentCaptor<VkCommandPoolCreateInfo> captor = ArgumentCaptor.forClass(VkCommandPoolCreateInfo.class);
-			verify(lib).vkCreateCommandPool(eq(dev), captor.capture(), isNull(), eq(POINTER));
-
-			// Check descriptor
-			final VkCommandPoolCreateInfo info = captor.getValue();
-			assertEquals(0, info.queueFamilyIndex);
-			assertEquals(0, info.flags);
+			final var expected = new VkCommandPoolCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final var info = (VkCommandPoolCreateInfo) obj;
+					assertEquals(0, info.flags);
+					assertEquals(queue.family().index(), info.queueFamilyIndex);
+					return true;
+				}
+			};
+			verify(lib).vkCreateCommandPool(dev, expected, null, POINTER);
 		}
 
 		@Test
 		void allocate() {
 			// Allocate a buffer
-			final List<Buffer> buffers = pool.allocate(1, false);
+			final List<Buffer> buffers = pool.allocate(1);
 			assertNotNull(buffers);
 			assertEquals(1, buffers.size());
 
 			// Check allocator
-			final ArgumentCaptor<VkCommandBufferAllocateInfo> captor = ArgumentCaptor.forClass(VkCommandBufferAllocateInfo.class);
-			verify(lib).vkAllocateCommandBuffers(eq(dev), captor.capture(), isA(Pointer[].class));
+			final var expected = new VkCommandBufferAllocateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final var info = (VkCommandBufferAllocateInfo) obj;
+					assertEquals(VkCommandBufferLevel.PRIMARY, info.level);
+					assertEquals(1, info.commandBufferCount);
+					assertEquals(pool.handle(), info.commandPool);
+					return true;
+				}
+			};
+			verify(lib).vkAllocateCommandBuffers(dev, expected, new Pointer[1]);
+		}
 
-			// Check descriptor
-			final VkCommandBufferAllocateInfo info = captor.getValue();
-			assertEquals(VkCommandBufferLevel.SECONDARY, info.level);
-			assertEquals(1, info.commandBufferCount);
-			assertEquals(pool.handle(), info.commandPool);
+		@Test
+		void secondary() {
+			final List<SecondaryBuffer> buffers = pool.secondary(1);
+			assertNotNull(buffers);
+			assertEquals(1, buffers.size());
 		}
 
 		@Test
