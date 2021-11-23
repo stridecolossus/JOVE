@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Set;
 import java.util.function.IntFunction;
-import java.util.stream.IntStream;
 
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -16,7 +15,13 @@ import org.sarge.jove.scene.RenderTask;
 /**
  * The <i>Vulkan frame</i> encapsulates the process of acquiring, rendering and presenting a frame.
  * <p>
- * This class manages the synchronisation of the various collaborators involved in rendering a frame.
+ * This class manages the synchronisation of the various collaborators involved in rendering a frame:
+ * <ul>
+ * <li>the swapchain</li>
+ * <li>a {@link FrameRenderer} that generates and submits a render sequence</li>
+ * <li>and the presentation queue</li>
+ * </ul>
+ * <p>
  * A frame is comprised of the following synchronisation signals:
  * <ul>
  * <li>{@link #available()} signals when the frame has been acquired and is ready for rendering</li>
@@ -51,7 +56,7 @@ public class VulkanFrame implements RenderTask.Frame {
 	// Presentation
 	private final Swapchain swapchain;
 	private final Queue presentation;
-	private final FrameRenderer[] renderer;
+	private final IntFunction<FrameRenderer> factory;
 
 	// Synchronisation
 	private final Semaphore available, ready;
@@ -61,13 +66,13 @@ public class VulkanFrame implements RenderTask.Frame {
 	 * Constructor.
 	 * @param swapchain				Swapchain
 	 * @param presentation			Presentation queue
-	 * @param factory				Frame factory
+	 * @param factory				Frame renderer factory
 	 */
 	public VulkanFrame(Swapchain swapchain, Queue presentation, IntFunction<FrameRenderer> factory) {
 		final DeviceContext dev = swapchain.device();
 		this.swapchain = notNull(swapchain);
 		this.presentation = notNull(presentation);
-		this.renderer = IntStream.range(0, swapchain.count()).mapToObj(factory).toArray(FrameRenderer[]::new);
+		this.factory = notNull(factory);
 		this.available = Semaphore.create(dev);
 		this.ready = Semaphore.create(dev);
 		this.fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
@@ -107,7 +112,8 @@ public class VulkanFrame implements RenderTask.Frame {
 		fence.reset();
 
 		// Render frame
-		renderer[index].render(this);
+		final FrameRenderer renderer = factory.apply(index);
+		renderer.render(this);
 
 		// Present frame
 		swapchain.present(presentation, index, Set.of(ready));
