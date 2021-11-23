@@ -80,7 +80,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		assertNotNull(swapchain.handle());
 		assertEquals(Swapchain.DEFAULT_FORMAT, swapchain.format());
 		assertEquals(new Dimensions(3, 4), swapchain.extents());
-		assertEquals(List.of(view), swapchain.views());
+		assertEquals(List.of(view), swapchain.attachments());
 		assertEquals(1, swapchain.count());
 	}
 
@@ -222,8 +222,8 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertNotNull(swapchain);
 			assertNotNull(swapchain.handle());
 			assertEquals(VkFormat.B8G8R8A8_UNORM, swapchain.format());
-			assertNotNull(swapchain.views());
-			assertEquals(1, swapchain.views().size());
+			assertNotNull(swapchain.attachments());
+			assertEquals(1, swapchain.attachments().size());
 
 			// Check allocation
 			final ArgumentCaptor<VkSwapchainCreateInfoKHR> captor = ArgumentCaptor.forClass(VkSwapchainCreateInfoKHR.class);
@@ -256,7 +256,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			verify(lib).vkGetSwapchainImagesKHR(eq(dev), isA(Pointer.class), isA(IntByReference.class), isA(Pointer[].class));
 
 			// Check view
-			final View view = swapchain.views().get(0);
+			final View view = swapchain.attachments().get(0);
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertNotNull(view.image());

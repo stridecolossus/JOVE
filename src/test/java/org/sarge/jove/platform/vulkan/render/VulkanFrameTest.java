@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.render.VulkanFrame.Renderer;
+import org.sarge.jove.platform.vulkan.render.VulkanFrame.FrameRenderer;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class VulkanFrameTest extends AbstractVulkanTest {
 	private VulkanFrame frame;
-	private Renderer renderer;
+	private FrameRenderer renderer;
 	private Swapchain swapchain;
 	private Queue queue;
 
@@ -27,13 +27,14 @@ public class VulkanFrameTest extends AbstractVulkanTest {
 		// Create swapchain
 		swapchain = mock(Swapchain.class);
 		when(swapchain.device()).thenReturn(dev);
+		when(swapchain.count()).thenReturn(2);
 
 		// Create presentation queue
 		queue = new Queue(new Handle(1), new Family(0, 1, Set.of()));
 
 		// Create frame
-		renderer = mock(Renderer.class);
-		frame = new VulkanFrame(swapchain, queue, renderer);
+		renderer = mock(FrameRenderer.class);
+		frame = new VulkanFrame(swapchain, queue, index -> renderer);
 	}
 
 	@Test
@@ -55,7 +56,7 @@ public class VulkanFrameTest extends AbstractVulkanTest {
 		verify(swapchain).waitReady(1, frame.fence());
 
 		// Check frame rendered
-		verify(renderer).render(1, frame);
+		verify(renderer).render(frame);
 
 		// Check frame presented
 		verify(swapchain).present(queue, 1, Set.of(frame.ready()));

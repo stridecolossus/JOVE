@@ -41,6 +41,22 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>swapchain</i> presents rendered images to a {@link Surface}.
+ * <p>
+ * The process of rendering a frame is generally:
+ * <ol>
+ * <li>Acquire the next swapchain image via {@link #acquire(Semaphore, Fence)}</li>
+ * <li>Wait for the previous frame to be rendered to that image (if in progress) using {@link #waitReady(int, Fence)}</li>
+ * <li>Render the frame</li>
+ * <li>Present the rendered frame to the surface using {@link #present(Queue, int, Set)}</li>
+ * </ol>
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>A swapchain is created and configured by the {@link Builder}</li>
+ * <li>The swapchain is comprised of a number of colour attachments which can be accessed using {@link #attachments()}</li>
+ * <li>The preferred presentation mode can be selected by the {@link #mode(Surface.Properties, VkPresentModeKHR...)} helper</li>
+ * </ul>
+ * <p>
  * @author Sarge
  */
 public class Swapchain extends AbstractVulkanObject {
@@ -66,24 +82,25 @@ public class Swapchain extends AbstractVulkanObject {
 
 	private final VkFormat format;
 	private final Dimensions extents;
-	private final List<View> views;
+	private final List<View> attachments;
 	private final IntByReference index;
 	private final Fence[] active;
 
 	/**
 	 * Constructor.
-	 * @param handle 		Swap-chain handle
-	 * @param dev			Logical device
-	 * @param format		Image format
-	 * @param views			Image views
+	 * @param handle 			Swapchain handle
+	 * @param dev				Logical device
+	 * @param format			Image format
+	 * @param extents			Image extents
+	 * @param attachments		Colour Attachments
 	 */
-	Swapchain(Pointer handle, DeviceContext dev, VkFormat format, Dimensions extents, List<View> views) {
+	Swapchain(Pointer handle, DeviceContext dev, VkFormat format, Dimensions extents, List<View> attachments) {
 		super(handle, dev);
 		this.format = notNull(format);
 		this.extents = notNull(extents);
-		this.views = List.copyOf(views);
+		this.attachments = List.copyOf(attachments);
 		this.index = dev.factory().integer();
-		this.active = new Fence[views.size()];
+		this.active = new Fence[attachments.size()];
 	}
 
 	/**
@@ -104,14 +121,14 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @return Number of swapchain images
 	 */
 	public int count() {
-		return views.size();
+		return attachments.size();
 	}
 
 	/**
-	 * @return Image views
+	 * @return Colour attachments
 	 */
-	public List<View> views() {
-		return views;
+	public List<View> attachments() {
+		return attachments;
 	}
 
 	/**
@@ -131,8 +148,8 @@ public class Swapchain extends AbstractVulkanObject {
 
 	/**
 	 * Waits for a previous image to be completed.
-	 * @param index		Swapchain image index
-	 * @param fence		Fence
+	 * @param index		Previous swapchain image index
+	 * @param fence		Fence for next frame
 	 */
 	public void waitReady(int index, Fence fence) {
 		final Fence prev = active[index];
@@ -176,7 +193,7 @@ public class Swapchain extends AbstractVulkanObject {
 
 	@Override
 	protected void release() {
-		views.forEach(View::destroy);
+		attachments.forEach(View::destroy);
 	}
 
 	/**

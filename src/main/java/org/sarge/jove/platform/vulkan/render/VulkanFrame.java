@@ -3,6 +3,8 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Set;
+import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -13,26 +15,43 @@ import org.sarge.jove.scene.RenderTask;
 
 /**
  * The <i>Vulkan frame</i> encapsulates the process of acquiring, rendering and presenting a frame.
- * TODO - sync
+ * <p>
+ * This class manages the synchronisation of the various collaborators involved in rendering a frame.
+ * A frame is comprised of the following synchronisation signals:
+ * <ul>
+ * <li>{@link #available()} signals when the frame has been acquired and is ready for rendering</li>
+ * <li>{@link #ready()} signals the frame has been rendered and is ready for presentation</li>
+ * <li>{@link #fence()} synchronises the rendering process of a given frame</li>
+ * </ul>
+ * <p>
+ * The render process for a frame is:
+ * <ol>
+ * <li>Acquire the next swapchain image</li>
+ * <li>Wait for the previous frame to complete (if still in progress)</li>
+ * <li>Render the frame</li>
+ * <li>Present the rendered frame</li>
+ * </ol>
+ * <p>
+ * Note that the acquire, render and present steps are asynchronous operations.
+ * <p>
  * @author Sarge
  */
 public class VulkanFrame implements RenderTask.Frame {
 	/**
-	 * The <i>renderer</i> is responsible for rendering a frame.
+	 * The <i>frame renderer</i> is responsible for rendering a frame.
 	 */
-	public interface Renderer {
+	public interface FrameRenderer {
 		/**
-		 * Renders the next frame.
-		 * @param index Swapchain image index
-		 * @param frame Frame
+		 * Renders a frame.
+		 * @param frame In-flight frame
 		 */
-		void render(int index, VulkanFrame frame);
+		void render(VulkanFrame frame);
 	}
 
 	// Presentation
 	private final Swapchain swapchain;
 	private final Queue presentation;
-	private final Renderer renderer;
+	private final FrameRenderer[] renderer;
 
 	// Synchronisation
 	private final Semaphore available, ready;
@@ -42,13 +61,13 @@ public class VulkanFrame implements RenderTask.Frame {
 	 * Constructor.
 	 * @param swapchain				Swapchain
 	 * @param presentation			Presentation queue
-	 * @param renderer				Frame renderer
+	 * @param factory				Frame factory
 	 */
-	public VulkanFrame(Swapchain swapchain, Queue presentation, Renderer renderer) {
+	public VulkanFrame(Swapchain swapchain, Queue presentation, IntFunction<FrameRenderer> factory) {
 		final DeviceContext dev = swapchain.device();
 		this.swapchain = notNull(swapchain);
 		this.presentation = notNull(presentation);
-		this.renderer = notNull(renderer);
+		this.renderer = IntStream.range(0, swapchain.count()).mapToObj(factory).toArray(FrameRenderer[]::new);
 		this.available = Semaphore.create(dev);
 		this.ready = Semaphore.create(dev);
 		this.fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
@@ -85,10 +104,10 @@ public class VulkanFrame implements RenderTask.Frame {
 
 		// Wait for previous frame to complete
 		swapchain.waitReady(index, fence);
+		fence.reset();
 
 		// Render frame
-		fence.reset();
-		renderer.render(index, this);
+		renderer[index].render(this);
 
 		// Present frame
 		swapchain.present(presentation, index, Set.of(ready));

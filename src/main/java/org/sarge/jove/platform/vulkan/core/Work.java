@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
@@ -48,11 +47,11 @@ import org.sarge.lib.util.Check;
  * 		.signal(signal)
  * 		.build();
  *
- *	// Submit work
- * 	work.submit(null);
+ *  // Create work batch
+ *  Batch batch = work.batch();
  *
- *	// Submit a work batch with a synchronisation fence
- * 	Work.submit(List.of(buffer, ...), fence);
+ *	// Submit batch
+ * 	pool.submit(batch, fence);
  * </pre>
  * @see Command
  * @author Sarge
@@ -82,6 +81,14 @@ public class Work {
 	}
 
 	/**
+	 * Helper - Creates a batch for this work.
+	 * @return New batch
+	 */
+	public Batch batch() {
+		return new Batch(List.of(this));
+	}
+
+	/**
 	 * @param info Submission descriptor for this work.
 	 */
 	private void populate(VkSubmitInfo info) {
@@ -105,6 +112,17 @@ public class Work {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Work that) &&
+				this.pool.equals(that.pool) &&
+				this.buffers.equals(that.buffers) &&
+				this.wait.equals(that.wait) &&
+				this.signal.equals(that.signal);
+	}
+
+	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("pool", pool)
@@ -116,35 +134,40 @@ public class Work {
 
 	/**
 	 * A <i>batch</i> is a convenience collection of work.
+	 * @see Pool#submit(Batch, Fence)
 	 */
-	public interface Batch {
+	public static class Batch {
+		private final List<Work> work;
+
 		/**
-		 * Submits this batch of work.
-		 * @param fence Optional fence
+		 * Constructor.
+		 * @param work Work batch
+		 */
+		public Batch(List<Work> work) {
+			this.work = List.copyOf(work);
+		}
+
+		// TODO
+		public void validate() {
+			final Pool pool = work.get(0).pool;
+			if(!work.stream().allMatch(e -> matches(e, pool))) throw new IllegalArgumentException("All work batches must submit to the same queue");
+		}
+
+		/**
+		 * Builds the submit descriptors for this batch of work.
+		 * @return Submit descriptors
 		 * @throws IllegalArgumentException if all batches do not submit to the same queue family
 		 */
-		void submit(Fence fence);
+		public VkSubmitInfo[] submit() {
+			return StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
+		}
 
-		/**
-		 * Creates a work batch.
-		 * @param work Work
-		 * @return New work batch
-		 */
-		static Batch of(List<Work> work) {
-			return fence -> {
-				// Validate
-				// TODO - factor out?
-				Check.notEmpty(work);
-				final Pool pool = work.get(0).pool;
-				if(!work.stream().allMatch(e -> matches(e, pool))) throw new IllegalArgumentException("All work batches must submit to the same queue");
-
-				// Populate array of submission descriptors
-				final VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
-
-				// Submit work
-				final VulkanLibrary lib = pool.device().library();
-				check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
-			};
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof Batch that) &&
+					this.work.equals(that.work);
 		}
 	}
 
@@ -161,7 +184,7 @@ public class Work {
 	 * Helper - Submits the given <i>one time</i> command to the given pool.
 	 * @param cmd		Command
 	 * @param pool		Pool
-	 * @return New command buffer
+	 * @return Command buffer
 	 * @see VkCommandBufferUsage#ONE_TIME_SUBMIT
 	 */
 	public static Buffer submit(Command cmd, Pool pool) {
@@ -174,7 +197,7 @@ public class Work {
 
 		// Submit work
 		final Work work = Work.of(buffer);
-		Batch.of(List.of(work)).submit(null);
+		pool.submit(work.batch(), null);
 
 		return buffer;
 	}
@@ -213,8 +236,6 @@ public class Work {
 
 			return this;
 		}
-
-		// TODO - check not wait/signal same
 
 		/**
 		 * Adds a semaphore upon which to wait before executing this batch.

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -27,6 +26,7 @@ public class WorkTest extends AbstractVulkanTest {
 	private Queue queue;
 	private Pool pool;
 	private Buffer buffer;
+	private Work work;
 
 	@BeforeEach
 	void before() {
@@ -44,12 +44,27 @@ public class WorkTest extends AbstractVulkanTest {
 		when(buffer.pool()).thenReturn(pool);
 		when(buffer.handle()).thenReturn(new Handle(2));
 		when(buffer.isReady()).thenReturn(true);
+
+		// Create work instance
+		work = Work.of(buffer);
 	}
 
 	@Test
-	void of() {
-		final Work work = Work.of(buffer);
+	void constructor() {
 		assertNotNull(work);
+	}
+
+	@Test
+	void batch() {
+		assertEquals(new Batch(List.of(work)), work.batch());
+	}
+
+	@Test
+	void equals() {
+		assertEquals(true, work.equals(work));
+		assertEquals(true, work.equals(Work.of(buffer)));
+		assertEquals(false, work.equals(null));
+		assertEquals(false, work.equals(mock(Work.class)));
 	}
 
 	@Nested
@@ -70,30 +85,33 @@ public class WorkTest extends AbstractVulkanTest {
 					.build();
 
 			// Create batch
-			final Batch batch = Batch.of(List.of(work));
+			final Batch batch = work.batch();
 			assertNotNull(batch);
 
 			// Submit work
-			final Fence fence = mock(Fence.class);
-			batch.submit(fence);
+			final VkSubmitInfo[] array = batch.submit();
+			assertNotNull(array);
+			assertEquals(1, array.length);
 
-			// Check API
-			final VkSubmitInfo expected = new VkSubmitInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final VkSubmitInfo info = (VkSubmitInfo) obj;
-					assertNotNull(info);
-					assertEquals(1, info.commandBufferCount);
-					assertEquals(1, info.waitSemaphoreCount);
-					assertEquals(1, info.signalSemaphoreCount);
-					assertNotNull(info.pCommandBuffers);
-					assertNotNull(info.pWaitSemaphores);
-					assertNotNull(info.pWaitDstStageMask);
-					assertNotNull(info.pSignalSemaphores);
-					return true;
-				}
-			};
-			verify(lib).vkQueueSubmit(queue, 1, new VkSubmitInfo[]{expected}, fence);
+			// Check submit descriptor
+			final VkSubmitInfo info = array[0];
+			assertNotNull(info);
+			assertEquals(1, info.commandBufferCount);
+			assertEquals(1, info.waitSemaphoreCount);
+			assertEquals(1, info.signalSemaphoreCount);
+			assertNotNull(info.pCommandBuffers);
+			assertNotNull(info.pWaitSemaphores);
+			assertNotNull(info.pWaitDstStageMask);
+			assertNotNull(info.pSignalSemaphores);
+		}
+
+		@Test
+		void equals() {
+			final Batch batch = work.batch();
+			assertEquals(true, batch.equals(batch));
+			assertEquals(true, batch.equals(new Batch(List.of(work))));
+			assertEquals(false, batch.equals(null));
+			assertEquals(false, batch.equals(mock(Batch.class)));
 		}
 	}
 
