@@ -2,10 +2,12 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static org.sarge.jove.util.MathsUtil.PI;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.Rotation.DefaultRotation;
 
 public class QuaternionTest {
 	private Quaternion quaternion;
@@ -25,7 +27,7 @@ public class QuaternionTest {
 
 	@Test
 	public void of() {
-		assertEquals(quaternion, Quaternion.of(Vector.Y, PI));
+		assertEquals(quaternion, Quaternion.of(new DefaultRotation(Vector.Y, PI)));
 	}
 
 	@Test
@@ -35,7 +37,8 @@ public class QuaternionTest {
 
 	@Test
 	public void matrix() {
-		assertEquals(Rotation.matrix(Vector.Y, PI), quaternion.matrix());
+		final Matrix expected = Rotation.matrix(new DefaultRotation(Vector.Y, PI));
+		assertEquals(expected, quaternion.matrix());
 	}
 
 	@Test
@@ -55,7 +58,6 @@ public class QuaternionTest {
 		assertNotNull(rot);
 		assertEquals(Vector.Y, rot.axis());
 		assertEquals(PI, rot.angle());
-		assertEquals(quaternion.matrix(), rot.matrix());
 	}
 
 	@Test
@@ -72,8 +74,8 @@ public class QuaternionTest {
 	@Test
 	public void equals() {
 		assertEquals(true, quaternion.equals(quaternion));
-		assertEquals(true, quaternion.equals(Quaternion.of(Vector.Y, PI)));
+		assertEquals(true, quaternion.equals(Quaternion.of(new DefaultRotation(Vector.Y, PI))));
 		assertEquals(false, quaternion.equals(null));
-		assertEquals(false, quaternion.equals(Quaternion.of(Vector.X, PI)));
+		assertEquals(false, quaternion.equals(mock(Quaternion.class)));
 	}
 }

@@ -1,10 +1,11 @@
 package org.sarge.jove.control;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.MutableRotation;
 import org.sarge.jove.geometry.Rotation;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -16,10 +17,10 @@ public class RotationAnimation implements Animation {
 
 	/**
 	 * Constructor.
-	 * @param axis Rotation axis
+	 * @param rot Rotation
 	 */
-	public RotationAnimation(Vector axis) {
-		this.rot = new MutableRotation(axis);
+	public RotationAnimation(MutableRotation rot) {
+		this.rot = notNull(rot);
 	}
 
 	/**

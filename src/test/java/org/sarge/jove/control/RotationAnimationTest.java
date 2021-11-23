@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.MutableRotation;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
@@ -15,7 +16,7 @@ public class RotationAnimationTest {
 
 	@BeforeEach
 	void before() {
-		animation = new RotationAnimation(Vector.Y);
+		animation = new RotationAnimation(MutableRotation.quaternion(Vector.Y));
 	}
 
 	@Test

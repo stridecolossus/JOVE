@@ -7,14 +7,14 @@ import static org.sarge.jove.util.MathsUtil.sin;
 
 import java.util.Arrays;
 
-import org.sarge.jove.geometry.Rotation.AbstractRotation;
+import org.sarge.jove.geometry.Rotation.DefaultRotation;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * Rotation represented by a quaternion.
  * @author Sarge
  */
-public final class Quaternion implements Transform {
+public class Quaternion implements Transform {
 	/**
 	 * Identity quaternion.
 	 */
@@ -23,10 +23,11 @@ public final class Quaternion implements Transform {
 	/**
 	 * Creates a quaternion from the given rotation.
 	 * @param rot Rotation
+	 * @return New quaternion
 	 */
-	public static Quaternion of(Vector axis, float angle) {
-		final float half = angle * MathsUtil.HALF;
-		final Vector vec = axis.multiply(sin(half));
+	public static Quaternion of(Rotation rot) {
+		final float half = rot.angle() * MathsUtil.HALF;
+		final Vector vec = rot.axis().multiply(sin(half));
 		return new Quaternion(cos(half), vec.x, vec.y, vec.z);
 	}
 
@@ -50,22 +51,14 @@ public final class Quaternion implements Transform {
 	}
 
 	/**
-	 * Converts this quaternion to a rotation transform (assumes normalized).
+	 * Converts this quaternion to an axis-angle rotation (assumes normalized).
 	 * @return Rotation
 	 */
 	public Rotation rotation() {
-		// Extract axis-angle
 		final float scale = inverseRoot(1 - w * w);
-		final Vector axis = new Vector(x, y, z).multiply(scale);
 		final float angle = 2 * MathsUtil.acos(w);
-
-		// Create rotation wrapper
-		return new AbstractRotation(axis, angle) {
-			@Override
-			public Matrix matrix() {
-				return Quaternion.this.matrix();
-			}
-		};
+		final Vector axis = new Vector(x, y, z).multiply(scale);
+		return new DefaultRotation(axis, angle);
 	}
 
 	/**

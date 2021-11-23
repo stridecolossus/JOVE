@@ -1,52 +1,50 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.MathsUtil.HALF;
+
+import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class MutableRotationTest {
 	private MutableRotation rot;
+	private Function<Rotation, Transform> mapper;
 
 	@BeforeEach
 	void before() {
-		rot = new MutableRotation(Vector.Y);
+		mapper = mock(Function.class);
+		rot = new MutableRotation(Vector.Y, mapper);
 	}
 
 	@Test
 	void constructor() {
+		assertEquals(Vector.Y, rot.axis());
 		assertEquals(0, rot.angle());
 		assertEquals(true, rot.isDirty());
 	}
 
 	@Test
-	void constructorArbitraryAxis() {
-		final Vector axis = new Vector(1, 2, 3).normalize();
-		rot = new MutableRotation(axis);
-		assertEquals(axis, rot.axis());
-		assertNotNull(rot.matrix());
-	}
-
-	@Test
 	void matrix() {
-		assertEquals(Rotation.matrix(Vector.Y, 0), rot.matrix());
+		when(mapper.apply(rot)).thenReturn(Matrix.IDENTITY);
+		assertEquals(Matrix.IDENTITY, rot.matrix());
 		assertEquals(false, rot.isDirty());
 	}
 
 	@Test
 	void angle() {
 		rot.angle(HALF);
-		assertEquals(Rotation.matrix(Vector.Y, HALF), rot.matrix());
+		assertEquals(HALF, rot.angle());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, rot.equals(rot));
-		assertEquals(true, rot.equals(new MutableRotation(Vector.Y)));
+		assertEquals(true, rot.equals(new MutableRotation(Vector.Y, mapper)));
 		assertEquals(false, rot.equals(null));
-		assertEquals(false, rot.equals(new MutableRotation(Vector.Z)));
+		assertEquals(false, rot.equals(new MutableRotation(Vector.Z, mapper)));
 	}
 }
-
