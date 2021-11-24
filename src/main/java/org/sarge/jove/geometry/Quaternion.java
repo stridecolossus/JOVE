@@ -2,7 +2,6 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.jove.util.MathsUtil.cos;
 import static org.sarge.jove.util.MathsUtil.inverseRoot;
-import static org.sarge.jove.util.MathsUtil.isEqual;
 import static org.sarge.jove.util.MathsUtil.sin;
 
 import java.util.Arrays;
@@ -48,6 +47,13 @@ public class Quaternion implements Transform {
 	 */
 	public float magnitude() {
 		return w * w + x * x + y * y + z * z;
+	}
+
+	/**
+	 * @return Components of this quaternion as an array
+	 */
+	public float[] array() {
+		return new float[]{w, x, y, z};
 	}
 
 	/**
@@ -142,14 +148,11 @@ public class Quaternion implements Transform {
 		return
 				(obj == this) ||
 				(obj instanceof Quaternion that) &&
-				isEqual(this.w, that.w) &&
-				isEqual(this.x, that.x) &&
-				isEqual(this.y, that.y) &&
-				isEqual(this.z, that.z);
+				MathsUtil.isEqual(this.array(), that.array());
 	}
 
 	@Override
 	public String toString() {
-		return Arrays.toString(new float[]{w, x, y, z});
+		return Arrays.toString(array());
 	}
 }

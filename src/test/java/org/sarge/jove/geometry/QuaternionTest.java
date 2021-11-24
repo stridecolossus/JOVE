@@ -1,8 +1,8 @@
 package org.sarge.jove.geometry;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
 import static org.sarge.jove.util.MathsUtil.PI;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,12 +13,12 @@ public class QuaternionTest {
 	private Quaternion quaternion;
 
 	@BeforeEach
-	public void before() {
+	void before() {
 		quaternion = new Quaternion(0, 0, 1, 0);
 	}
 
 	@Test
-	public void constructor() {
+	void constructor() {
 		assertEquals(0, quaternion.w);
 		assertEquals(0, quaternion.x);
 		assertEquals(1, quaternion.y);
@@ -26,34 +26,39 @@ public class QuaternionTest {
 	}
 
 	@Test
-	public void of() {
+	void of() {
 		assertEquals(quaternion, Quaternion.of(new DefaultRotation(Vector.Y, PI)));
 	}
 
 	@Test
-	public void magnitude() {
+	void magnitude() {
 		assertEquals(1, quaternion.magnitude());
 	}
 
 	@Test
-	public void matrix() {
+	void array() {
+		assertArrayEquals(new float[]{0, 0, 1, 0}, quaternion.array());
+	}
+
+	@Test
+	void matrix() {
 		final Matrix expected = Rotation.matrix(new DefaultRotation(Vector.Y, PI));
 		assertEquals(expected, quaternion.matrix());
 	}
 
 	@Test
-	public void normalize() {
+	void normalize() {
 		assertEquals(quaternion, quaternion.normalize());
 		assertEquals(quaternion, new Quaternion(0, 0, 42, 0).normalize());
 	}
 
 	@Test
-	public void conjugate() {
-		assertEquals(new Quaternion(quaternion.w, 0, -quaternion.y, 0), quaternion.conjugate());
+	void conjugate() {
+		assertEquals(new Quaternion(0, 0, -1, 0), quaternion.conjugate());
 	}
 
 	@Test
-	public void toRotation() {
+	void rotation() {
 		final Rotation rot = quaternion.rotation();
 		assertNotNull(rot);
 		assertEquals(Vector.Y, rot.axis());
@@ -61,21 +66,21 @@ public class QuaternionTest {
 	}
 
 	@Test
-	public void multiply() {
-		assertEquals(new Quaternion(-1, 0, 0, 0), quaternion.multiply(quaternion));
-	}
-
-	@Test
-	public void rotate() {
+	void rotate() {
 		final Vector vec = new Vector(1, 0, 0);
 		assertEquals(new Vector(-1, 0, 0), quaternion.rotate(vec));
 	}
 
 	@Test
-	public void equals() {
+	void multiply() {
+		assertEquals(new Quaternion(-1, 0, 0, 0), quaternion.multiply(quaternion));
+	}
+
+	@Test
+	void equals() {
 		assertEquals(true, quaternion.equals(quaternion));
-		assertEquals(true, quaternion.equals(Quaternion.of(new DefaultRotation(Vector.Y, PI))));
+		assertEquals(true, quaternion.equals(new Quaternion(0, 0, 1, 0)));
 		assertEquals(false, quaternion.equals(null));
-		assertEquals(false, quaternion.equals(mock(Quaternion.class)));
+		assertEquals(false, quaternion.equals(new Quaternion(0, 1, 0, 0)));
 	}
 }

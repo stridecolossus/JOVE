@@ -9,20 +9,14 @@ import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>mutable rotation</i> specifies a counter-clockwise rotation about an axis.
- * TODO - doc mapper
+ * <p>
+ * Calculation of the resultant rotation matrix is delegated to a <i>mapper</i> function which is {@link Quaternion#of(Rotation)} by default.
+ * <p>
+ * @see Quaternion#of(Rotation)
+ * @see Rotation#matrix(Rotation)
  * @author Sarge
  */
 public class MutableRotation implements Transform, Rotation {
-	/**
-	 * Helper - Creates a rotation with an arbitrary axis based on a quaternion.
-	 * @param axis Rotation axis
-	 * @return Quaternion based rotation
-	 * @see Quaternion#of(Rotation)
-	 */
-	public static MutableRotation quaternion(Vector axis) {
-		return new MutableRotation(axis, Quaternion::of);
-	}
-
 	private final Vector axis;
 	private final Function<Rotation, Transform> mapper;
 	private float angle;
@@ -36,6 +30,14 @@ public class MutableRotation implements Transform, Rotation {
 	public MutableRotation(Vector axis, Function<Rotation, Transform> mapper) {
 		this.axis = notNull(axis);
 		this.mapper = notNull(mapper);
+	}
+
+	/**
+	 * Constructor for a rotation based on a quaternion.
+	 * @param axis Rotation axis
+	 */
+	public MutableRotation(Vector axis) {
+		this(axis, Quaternion::of);
 	}
 
 	@Override

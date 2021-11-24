@@ -16,7 +16,7 @@ public class RotationAnimationTest {
 
 	@BeforeEach
 	void before() {
-		animation = new RotationAnimation(MutableRotation.quaternion(Vector.Y));
+		animation = new RotationAnimation(new MutableRotation(Vector.Y));
 	}
 
 	@Test
