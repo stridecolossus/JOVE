@@ -151,7 +151,7 @@ public class ImageTest extends AbstractVulkanTest {
 			info.flags = VkImageCreateFlag.CUBE_COMPATIBLE.value();
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
-			info.extent = descriptor.extents().toExtent3D();
+			info.extent = descriptor.extents().extents();
 			info.mipLevels = descriptor.levelCount();
 			info.arrayLayers = descriptor.layerCount();
 			info.samples = VkSampleCountFlag.COUNT_4;

@@ -67,7 +67,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 			}
 
 			// Validate attachment contains frame-buffer extents
-			final Dimensions dim = descriptor.extents().dimensions();
+			final Dimensions dim = descriptor.extents().size();
 			if(extents.isLargerThan(dim)) {
 				throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dim, extents));
 			}

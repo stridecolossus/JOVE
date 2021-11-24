@@ -97,8 +97,8 @@ public class ImageCopyCommand implements Command {
 			Check.notNull(res);
 			Check.notNull(imageOffset);
 			Check.notNull(extents);
-			validate(length, extents.dimensions().width());
-			validate(height, extents.dimensions().height());
+			validate(length, extents.size().width());
+			validate(height, extents.size().height());
 			if(res.aspects().size() != 1) throw new IllegalArgumentException("Sub-resource must have a single aspect: " + res);
 		}
 
@@ -117,7 +117,7 @@ public class ImageCopyCommand implements Command {
 			copy.bufferImageHeight = height;
 			copy.imageSubresource = SubResource.toLayers(res);
 			copy.imageOffset = imageOffset;
-			copy.imageExtent = extents.toExtent3D();
+			copy.imageExtent = extents.extents();
 		}
 
 		/**

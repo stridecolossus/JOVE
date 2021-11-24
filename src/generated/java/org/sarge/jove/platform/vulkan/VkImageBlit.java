@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"dstOffsets"
 })
 public class VkImageBlit extends VulkanStructure {
-	public static class ByValue extends VkImageBlit implements Structure.ByValue { }
-	public static class ByReference extends VkImageBlit implements Structure.ByReference { }
-	
 	public VkImageSubresourceLayers srcSubresource;
 	public VkOffset3D[] srcOffsets = new VkOffset3D[2];
 	public VkImageSubresourceLayers dstSubresource;

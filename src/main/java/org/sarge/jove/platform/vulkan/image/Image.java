@@ -207,7 +207,7 @@ public interface Image extends NativeObject {
 			info.flags = IntegerEnumeration.mask(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
-			info.extent = descriptor.extents().toExtent3D();
+			info.extent = descriptor.extents().extents();
 			info.mipLevels = descriptor.levelCount();
 			info.arrayLayers = descriptor.layerCount();
 			info.samples = samples;
@@ -300,5 +300,18 @@ public interface Image extends NativeObject {
 		 * @param pRegions			Regions
 		 */
 		void vkCmdCopyImageToBuffer(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, VulkanBuffer dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
+
+		/**
+		 * Performs an image blit operation.
+		 * @param commandBuffer		Command
+		 * @param srcImage			Source image
+		 * @param srcImageLayout	Source image layout
+		 * @param dstImage			Destination image
+		 * @param dstImageLayout	Destination image layout
+		 * @param regionCount		Number of blit regions
+		 * @param pRegions			Copy regions
+		 * @param filter			Filtering option
+		 */
+		void vkCmdBlitImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageBlit[] pRegions, VkFilter filter);
 	}
 }

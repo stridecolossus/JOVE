@@ -60,6 +60,12 @@ public class BlockTest {
 	}
 
 	@Test
+	void allocateDestroyed() {
+		when(mem.isDestroyed()).thenReturn(true);
+		assertThrows(IllegalStateException.class, () -> block.allocate(1));
+	}
+
+	@Test
 	void destroy() {
 		final DeviceMemory allocation = block.allocate(1);
 		block.destroy();
@@ -89,7 +95,10 @@ public class BlockTest {
 
 		@Test
 		void map() {
-			allocation.map(1, 2);
+			final Region region = mock(Region.class);
+			when(mem.region()).thenReturn(Optional.of(region));
+			when(mem.map(1, 2)).thenReturn(region);
+			assertEquals(region, allocation.map(1, 2));
 			verify(mem).map(1, 2);
 		}
 
@@ -102,9 +111,9 @@ public class BlockTest {
 		@Test
 		void mapReplacePrevious() {
 			// Map region
-			allocation.map();
+			final Region region = allocation.map();
 
-			// Mock previous mapping
+			// Init previous mapping on underlying memory
 			final Region prev = mock(Region.class);
 			when(mem.region()).thenReturn(Optional.of(prev));
 

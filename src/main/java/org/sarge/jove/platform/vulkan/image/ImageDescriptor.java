@@ -48,7 +48,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents ex
 
 		// Validate extents
 		final boolean valid = switch(type) {
-			case IMAGE_TYPE_1D -> (extents.dimensions().height() == 1) && (extents.depth() == 1);
+			case IMAGE_TYPE_1D -> (extents.size().height() == 1) && (extents.depth() == 1);
 			case IMAGE_TYPE_2D -> extents.depth() == 1;
 			case IMAGE_TYPE_3D -> true;
 		};

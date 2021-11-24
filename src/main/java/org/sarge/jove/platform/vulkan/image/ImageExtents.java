@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.image;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.VkExtent3D;
+import org.sarge.jove.platform.vulkan.VkOffset3D;
 import org.sarge.lib.util.Check;
 
 /**
@@ -9,15 +10,15 @@ import org.sarge.lib.util.Check;
  * @see VkExtent3D
  * @author Sarge
  */
-public record ImageExtents(Dimensions dimensions, int depth) {
+public record ImageExtents(Dimensions size, int depth) {
 	/**
 	 * Constructor.
 	 * @param dim		Image dimensions
 	 * @param depth		Depth
 	 */
 	public ImageExtents {
-		Check.notNull(dimensions);
-		Check.oneOrMore(depth);
+		Check.notNull(size);
+		Check.zeroOrMore(depth);
 	}
 
 	/**
@@ -30,18 +31,31 @@ public record ImageExtents(Dimensions dimensions, int depth) {
 	/**
 	 * Convenience constructor for a 2D image.
 	 */
-	public ImageExtents(Dimensions dim) {
-		this(dim, 1);
+	public ImageExtents(Dimensions size) {
+		this(size, 1);
 	}
 
 	/**
-	 * @return Vulkan image extents descriptor
+	 * Converts to Vulkan extents.
+	 * @return Extents
 	 */
-	public VkExtent3D toExtent3D() {
+	public VkExtent3D extents() {
 		final VkExtent3D extent = new VkExtent3D();
-		extent.width = dimensions.width();
-		extent.height = dimensions.height();
+		extent.width = size.width();
+		extent.height = size.height();
 		extent.depth = depth;
 		return extent;
+	}
+
+	/**
+	 * Converts to Vulkan offsets.
+	 * @return Offsets
+	 */
+	public VkOffset3D offsets() {
+		final VkOffset3D offset = new VkOffset3D();
+		offset.x = size.width();
+		offset.y = size.height();
+		offset.z = depth;
+		return offset;
 	}
 }

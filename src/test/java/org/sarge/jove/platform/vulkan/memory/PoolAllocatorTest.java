@@ -104,4 +104,9 @@ public class PoolAllocatorTest {
 		assertEquals(0, allocator.free());
 		assertEquals(1, allocator.pools().size());
 	}
+
+	@Test
+	void create() {
+		// TODO
+	}
 }
