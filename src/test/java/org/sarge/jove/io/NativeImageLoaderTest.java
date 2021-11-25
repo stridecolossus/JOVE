@@ -26,18 +26,27 @@ public class NativeImageLoaderTest {
 		loader = new NativeImageLoader();
 	}
 
-	private void check(ImageData image, String expected) {
-		// Check mapping
-		assertEquals(expected, image.mapping());
+	private void check(ImageData image) {
+		// Check image header
+		assertEquals(new Dimensions(2, 3), image.size());
+		assertEquals(1, image.layers());
+		assertEquals(1, image.levels());
+		assertNotNull(image.components());
 
 		// Check layout
+		final int num = image.components().length();
 		final Layout layout = image.layout();
 		assertNotNull(layout);
-		assertEquals(expected.length(), layout.size());
+		assertEquals(num, layout.size());
 		assertEquals(Byte.class, layout.type());
 		assertEquals(Byte.BYTES, layout.bytes());
 		assertEquals(false, layout.signed());
-		assertEquals(expected.length(), layout.length());
+		assertEquals(num, layout.length());
+
+		// Check image data
+		final Bufferable data = image.data(0, 0);
+		assertNotNull(data);
+		assertEquals(2 * 3 * num, data.length());
 	}
 
 	@DisplayName("ABGR should be loaded as-is")
@@ -46,12 +55,8 @@ public class NativeImageLoaderTest {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_4BYTE_ABGR);
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
-		assertEquals(new Dimensions(2, 3), image.size());
-		assertEquals(1, image.count());
-		assertEquals(1, image.mip());
-		check(image, "ABGR");
-		assertNotNull(image.data());
-		assertEquals(2 * 3 * 4, image.data().length());
+		assertEquals("ABGR", image.components());
+		check(image);
 	}
 
 	@DisplayName("Loader should add an alpha channel as required")
@@ -60,10 +65,8 @@ public class NativeImageLoaderTest {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_3BYTE_BGR);
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
-		assertEquals(new Dimensions(2, 3), image.size());
-		check(image, "ABGR");
-		assertNotNull(image.data());
-		assertEquals(2 * 3 * 4, image.data().length());
+		assertEquals("ABGR", image.components());
+		check(image);
 	}
 
 	@DisplayName("Gray-scale buffered should have one channel")
@@ -72,10 +75,8 @@ public class NativeImageLoaderTest {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_BYTE_GRAY);
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
-		assertEquals(new Dimensions(2, 3), image.size());
-		check(image, "R");
-		assertNotNull(image.data());
-		assertEquals(2 * 3 * 1, image.data().length());
+		assertEquals("R", image.components());
+		check(image);
 	}
 
 	@DisplayName("Should fail for an unsupported buffered type")

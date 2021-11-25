@@ -9,10 +9,10 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 
@@ -32,7 +32,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		if(image == null) throw new IOException("Invalid image");
 
 		// Determine component mapping
-		final String mapping = switch(image.getType()) {
+		final String components = switch(image.getType()) {
 			case TYPE_BYTE_GRAY -> "R"; 		// TODO - will this work?
 			case TYPE_4BYTE_ABGR, TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> "ABGR";
 			default -> throw new RuntimeException("Unsupported image format: " + image);
@@ -44,41 +44,65 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 
 		// Init image properties
 		final Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
-		final Layout layout = new Layout(mapping.length(), Byte.class, 1, false);
+		final Layout layout = new Layout(components.length(), Byte.class, 1, false);
 
-		// Wrap image data
-		final Bufferable data = switch(image.getType()) {
+		// Inject alpha channel as required
+		final byte[] data = switch(image.getType()) {
 			case TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> alpha(bytes, size.area());
-			default -> Bufferable.of(bytes);
+			default -> bytes;
 		};
+		assert data.length == size.area() * layout.length();
 
 		// Create image
-		// TODO - mip levels
-		return new ImageData(size, 1, 1, layout, mapping, data);
+		return new NativeImageData(size, components, layout, Bufferable.of(data));
+	}
+
+	/**
+	 * Native implementation.
+	 */
+	private record NativeImageData(Dimensions size, String components, Layout layout, Bufferable data) implements ImageData {
+		@Override
+		public int layers() {
+			return 1;
+		}
+
+		@Override
+		public int levels() {
+			return 1;
+		}
+
+		@Override
+		public Bufferable data(int layer, int level) {
+			if((layer != 0) || (level != 0)) throw new IndexOutOfBoundsException("Native image only supports a single layer and MIP level");
+			return data;
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append(size)
+					.append(components)
+					.append(layout)
+					.build();
+		}
 	}
 
 	/**
 	 * Creates an image buffer with an injected alpha channel.
 	 * @param bytes		RGB byte array
 	 * @param size		Image size
-	 * @return RGBA image data
+	 * @return ABGR image data
 	 */
-	private static Bufferable alpha(byte[] bytes, int size) {
-		return new Bufferable() {
-			@Override
-			public int length() {
-				return bytes.length + size;
-			}
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				for(int n = 0; n < bytes.length; n += 3) {
-					bb.put(Byte.MAX_VALUE);
-					bb.put(bytes[n]);
-					bb.put(bytes[n + 1]);
-					bb.put(bytes[n + 2]);
-				}
-			}
-		};
+	private static byte[] alpha(byte[] bytes, int size) {
+		final byte[] result = new byte[bytes.length + size];
+		int index = 0;
+		for(int n = 0; n < bytes.length; n += 3) {
+			result[index++] = Byte.MAX_VALUE;
+			result[index++] = bytes[n];
+			result[index++] = bytes[n + 1];
+			result[index++] = bytes[n + 2];
+		}
+		assert index == result.length;
+		return result;
 	}
 }

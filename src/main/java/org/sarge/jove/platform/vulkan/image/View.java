@@ -156,7 +156,7 @@ public class View extends AbstractVulkanObject {
 		 * @param image Image
 		 */
 		public Builder mapping(ImageData image) {
-			final VkComponentMapping mapping = ComponentMappingBuilder.build(image.mapping());
+			final VkComponentMapping mapping = ComponentMappingBuilder.build(image.components());
 			return mapping(mapping);
 		}
 
