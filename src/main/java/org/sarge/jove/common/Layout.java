@@ -28,12 +28,21 @@ import org.sarge.lib.util.Check;
  */
 public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	/**
-	 * Creates a layout with {@link #size} signed floating-point components.
-	 * @param size Size of this layout (number of components)
+	 * Creates a signed floating-point layout with {@link #size} components.
+	 * @param size Number of components
 	 * @return New floating-point layout
 	 */
-	public static Layout of(int size) {
-		return new Layout(size, Float.class, true);
+	public static Layout floats(int size) {
+		return new Layout(size, Float.class, Float.BYTES, true);
+	}
+
+	/**
+	 * Creates an unsigned byte layout with {@link #size} components.
+	 * @param size Number of bytes
+	 * @return New byte layout
+	 */
+	public static Layout bytes(int size) {
+		return new Layout(size, Byte.class, Byte.BYTES, false);
 	}
 
 	/**
@@ -86,16 +95,6 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 		Check.oneOrMore(size);
 		Check.notNull(type);
 		Check.oneOrMore(bytes);
-	}
-
-	/**
-	 * Constructor.
-	 * @param size			Number of components
-	 * @param type			Component type
-	 * @param signed		Whether components are signed or unsigned
-	 */
-	public Layout(int size, Class<?> type, boolean signed) {
-		this(size, type, bytes(type), signed);
 	}
 
 	/**

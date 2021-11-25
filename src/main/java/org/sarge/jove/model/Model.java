@@ -19,7 +19,7 @@ public interface Model {
 	/**
 	 * Special case layout for vertex normals.
 	 */
-	Layout NORMALS = Layout.of(3);
+	Layout NORMALS = Layout.floats(3);
 
 	/**
 	 * Descriptor for this model.

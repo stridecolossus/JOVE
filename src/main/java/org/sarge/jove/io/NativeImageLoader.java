@@ -12,9 +12,9 @@ import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.ImageData.AbstractImageData;
 
 /**
  * Loader for a Java image implemented using {@link ImageIO}.
@@ -54,37 +54,18 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		assert data.length == size.area() * layout.length();
 
 		// Create image
-		return new NativeImageData(size, components, layout, Bufferable.of(data));
-	}
+		return new AbstractImageData(size, components, layout) {
+			@Override
+			public int levels() {
+				return 1;
+			}
 
-	/**
-	 * Native implementation.
-	 */
-	private record NativeImageData(Dimensions size, String components, Layout layout, Bufferable data) implements ImageData {
-		@Override
-		public int layers() {
-			return 1;
-		}
-
-		@Override
-		public int levels() {
-			return 1;
-		}
-
-		@Override
-		public Bufferable data(int layer, int level) {
-			if((layer != 0) || (level != 0)) throw new IndexOutOfBoundsException("Native image only supports a single layer and MIP level");
-			return data;
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append(size)
-					.append(components)
-					.append(layout)
-					.build();
-		}
+			@Override
+			public Bufferable data(int layer, int level) {
+				if((layer != 0) || (level != 0)) throw new IndexOutOfBoundsException("Native image only supports a single layer and MIP level");
+				return Bufferable.of(data);
+			}
+		};
 	}
 
 	/**

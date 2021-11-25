@@ -91,7 +91,7 @@ public class DataHelperTest {
 
 	@Test
 	void writeLayout() throws IOException {
-		final Layout layout = Layout.of(3);
+		final Layout layout = Layout.floats(3);
 		helper.write(layout, out);
 		verify(out).writeInt(3);
 		verify(out).writeInt(Float.BYTES);

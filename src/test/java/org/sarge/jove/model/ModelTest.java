@@ -17,7 +17,7 @@ class ModelTest {
 
 	@BeforeEach
 	void before() {
-		layout = Layout.of(2);
+		layout = Layout.floats(2);
 		header = new Header(List.of(layout), Primitive.TRIANGLES, 3);
 	}
 

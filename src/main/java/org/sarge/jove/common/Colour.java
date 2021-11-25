@@ -33,7 +33,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	/**
 	 * Layout of a colour.
 	 */
-	public static final Layout LAYOUT = Layout.of(4);
+	public static final Layout LAYOUT = Layout.floats(4);
 
 	private static final int MASK = 0xff;
 	private static final float INV_MASK = 1f / MASK;

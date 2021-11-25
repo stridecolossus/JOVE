@@ -33,7 +33,7 @@ public interface Coordinate extends Bufferable {
 		/**
 		 * Layout of a 1D texture coordinate.
 		 */
-		public static final Layout LAYOUT = Layout.of(1);
+		public static final Layout LAYOUT = Layout.floats(1);
 
 		@Override
 		public int length() {
@@ -58,7 +58,7 @@ public interface Coordinate extends Bufferable {
 		/**
 		 * Layout of a 2D texture coordinate.
 		 */
-		public static final Layout LAYOUT = Layout.of(2);
+		public static final Layout LAYOUT = Layout.floats(2);
 
 		/**
 		 * Quad coordinates.
@@ -96,7 +96,7 @@ public interface Coordinate extends Bufferable {
 		/**
 		 * Layout of a 3D texture coordinate.
 		 */
-		public static final Layout LAYOUT = Layout.of(3);
+		public static final Layout LAYOUT = Layout.floats(3);
 
 		@Override
 		public int length() {

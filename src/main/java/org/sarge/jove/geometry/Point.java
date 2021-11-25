@@ -15,7 +15,7 @@ public final class Point extends Tuple {
 	/**
 	 * Layout for a point.
 	 */
-	public static final Layout LAYOUT = Layout.of(SIZE);
+	public static final Layout LAYOUT = Layout.floats(SIZE);
 
 	/**
 	 * Constructor.

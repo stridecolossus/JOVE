@@ -54,7 +54,7 @@ class ModelBuilderTest {
 	@DisplayName("Invalid vertices are trapped if validation is switched on")
 	@Test
 	void addInvalidVertex() {
-		builder.layout(Layout.of(1));
+		builder.layout(Layout.floats(1));
 		assertThrows(IllegalArgumentException.class, () -> builder.add(vertex));
 	}
 

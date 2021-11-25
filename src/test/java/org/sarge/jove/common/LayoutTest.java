@@ -27,13 +27,23 @@ public class LayoutTest {
 	}
 
 	@Test
-	void of() {
-		layout = Layout.of(3);
+	void floats() {
+		layout = Layout.floats(3);
 		assertEquals(3, layout.size());
 		assertEquals(Float.class, layout.type());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(true, layout.signed());
 		assertEquals(3 * Float.BYTES, layout.length());
+	}
+
+	@Test
+	void bytes() {
+		layout = Layout.bytes(3);
+		assertEquals(3, layout.size());
+		assertEquals(Byte.class, layout.type());
+		assertEquals(1, layout.bytes());
+		assertEquals(false, layout.signed());
+		assertEquals(3, layout.length());
 	}
 
 	@Test

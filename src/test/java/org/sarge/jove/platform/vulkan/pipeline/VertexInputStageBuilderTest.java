@@ -72,7 +72,7 @@ public class VertexInputStageBuilderTest {
 
 	@Test
 	void buildAddVertexLayout() {
-		final var layout = List.of(Layout.of(1), Layout.of(2));
+		final var layout = List.of(Layout.floats(1), Layout.floats(2));
 		final var descriptor = builder.add(layout).get();
 		assertNotNull(descriptor);
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);
