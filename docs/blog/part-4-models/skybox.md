@@ -293,148 +293,250 @@ TODO
 
 ---
 
-## Compound Image
+## KTX Images
 
-### Image Arrays
+### Overview
 
-The process of loading the cubemap texture is quite slow since we load and copy each image separately.
+The process of loading the cubemap texture is quite slow and cumbersome:
 
-Therefore we introduce an _image array_ which is a single chunk of data employing more efficient bulk transfer operations.
+1. Each cubemap texture is loaded and copied separately.
 
-To support an image array we first refactor the existing image abstraction:
+2. There is also the overhead of using the native image loader (including injection of the alpha channel).
+
+Ideally we would prefer the following:
+
+* A compound file format that reduces the file management overhead and allows the use of more efficient bulk transfer operations.
+
+* An image format that more closely matches the target Vulkan texture with minimal (or ideally zero) transformation.
+
+* Additionally we would also like to support MIP levels and eventually compressed image formats.
+
+To satisfy all these requirements we will implement a loader for a [KTX](https://www.khronos.org/ktx/) image.  Texture images, cubemaps, MIP levels, etc. can then be prepared offline minimising the work that needs to be performed at runtime (and the amount of code required).
+
+We will need the following new components:
+
+* Modifications to the image class to support multiple layers and MIP levels.
+
+* The KTX loader itself.
+
+* The addition of copy regions to the command used to copy an image to the hardware.
+
+### Loose Ends
+
+However there is a small problem - a KTX image is a binary format with _little endian_ byte ordering whereas Java is big-endian by default.
+
+Note that we _could_ load the entire file into an NIO byte buffer with little endian ordering which has a similar API to the data stream but we would prefer to stick with I/O streams for consistency with the existing loaders.  Additionally we anticipate that we will need to support other little endian file formats in the future.
+
+The matter is further complicated when one considers the weird implementation of the `DataInputStream` class.  __All__ the methods are declared `final` (though not the class itself oddly enough) so essentially it is closed for extension.  The stream implements `DataInput` but there is no way to provide a custom implementation of this interface to the stream, so the abstraction is completely pointless.
+
+Therefore we are forced to completely re-implement the whole data stream class rather than building on what is already available - great design!
+
+We start with a custom data stream wrapper:
 
 ```java
-public record ImageData(Dimensions size, int count, int mip, Layout layout, Bufferable data)
-```
+public class LittleEndianDataInputStream extends InputStream implements DataInput {
+    private final DataInputStream in;
 
-The _count_ member is the number of images in the array (or one for a single image).
-
-We also add a placeholder for MIP levels which will be implemented in a future chapter (for now we assume one MIP level per image).
-
-To create an image array we add a factory method:
-
-```java
-public static ImageData array(List<ImageData> images) {
-    int count = images.size();
-    if(count == 0) throw new IllegalArgumentException(...);
-    
-    ...
-    
-    return new ImageData(header, count, data);
+    public LittleEndianDataInputStream(InputStream in) {
+        this.in = new DataInputStream(in);
+    }
 }
 ```
 
-First the array of images is validated (not shown) to ensure each image has the same properties (dimensions, layout, etc):
+Most of the methods defined in `DataInput` simply delegate to the underlying stream, for example:
 
 ```java
-// Init header
-ImageData header = images.get(0);
-int len = header.data().length() * count;
+@Override
+public int skipBytes(int n) throws IOException {
+    return in.skipBytes(n);
+}
 
-// Validates images
-images
-    .stream()
-    .skip(1)
-    .forEach(e -> validate(header, e));
+@Override
+public byte readByte() throws IOException {
+    return in.readByte();
+}
 ```
 
-Next the images are transformed to a compound list of bufferable objects:
+We can now provide overridden implementations for the cases that we _need_ to handle which boils down to three methods (out of fifteen) to support little endian data types, for example:
 
 ```java
-List<Bufferable> compound = images
-    .stream()
-    .map(ImageData::data)
-    .collect(toList());
+public class LittleEndianDataInputStream extends InputStream implements DataInput {
+    private static final int MASK = 0xff;
+
+    private final byte[] buffer = new byte[8];
+
+    public int readInt() throws IOException {
+        in.readFully(buffer, 0, Integer.BYTES);
+        return
+                (buffer[3])        << 24 |
+                (buffer[2] & MASK) << 16 |
+                (buffer[1] & MASK) <<  8 |
+                (buffer[0] & MASK);
+    }
+}
 ```
 
-And wrapped by a local implementation:
+### Image Refactor
+
+We next modify the general image abstraction to support multiple layers:
 
 ```java
-Bufferable data = new Bufferable() {
+public interface ImageData {
+    int layers();
+    Bufferable data(int layer);
+}
+```
+
+And introduce a simple MIP level record:
+
+```java
+record Level(int offset, int length) {
+}
+
+List<Level> levels();
+```
+
+Where _offset_ indexes into the image data array.
+
+Finally we refactor the native image accordingly with a single layer and MIP level.
+
+### KTX Loader
+
+We can now use the new stream implementation in the KTX loader:
+
+```java
+public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
     @Override
-    public int length() {
-        return len;
+    public DataInput map(InputStream in) throws IOException {
+        return new LittleEndianDataInputStream(in);
     }
 
     @Override
-    public void buffer(ByteBuffer bb) {
-        for(Bufferable b : compound) {
-            b.buffer(bb);
-        }
+    public ImageData load(DataInput in) throws IOException {
+        ...
+    }
+}
+```
+
+The [KTX file format](https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html) consists of the following sections:
+
+1. A header token.
+
+2. Image details (dimensions, number of layers, etc).
+
+3. A MIP level index.
+
+4. A Data Format Descriptor (DFD)
+
+5. Additional information represented as a set of key-value pairs.
+
+6. Compression data.
+
+7. Image data ordered by MIP level and layer.
+
+Notes:
+
+* The DFD, key-values and compression data are optional.
+
+* For the moment we will assume image data is uncompressed and gloss over this section of the loader.
+
+* The KTX file format has a large number of byte offsets/indices into the file itself which we largely ignore.
+
+The header token is a fixed length byte array which we use to validate the file format:
+
+```java
+// Load header
+byte[] header = new byte[12];
+in.readFully(header);
+
+// Validate header
+String str = new String(header);
+if(!str.contains("KTX 20")) throw new IOException(...);
+```
+
+Next the image header details are loaded (the comments illustrate the values for the chalet image):
+
+```java
+int format = in.readInt();                      // 43 = R8G8B8A8_SRGB
+int typeSize = in.readInt();                    // 1 = size of the data type in bytes
+int width = in.readInt();                       // 4096 x 4096
+int height = in.readInt();
+int depth = Math.max(1, in.readInt());
+int layerCount = Math.max(1, in.readInt());
+int faceCount = in.readInt();                   // 1 or 6 for a cubemap
+int levelCount = in.readInt();                  // 13
+int scheme = in.readInt();                      // 0..3 (0 = no compression)
+```
+
+Note that some values can be zero and need to be constrained accordingly, e.g. the image depth.
+
+Next we load the MIP level index:
+
+```java
+Index[] index = new Index[levelCount];
+for(int n = 0; n < levelCount; ++n) {
+    int byteOffset = (int) in.readLong();
+    int len = (int) in.readLong();
+    int uncompressed = (int) in.readLong();
+    index[n] = new Index(fileOffset, len, uncompressed);
+}
+```
+
+Note:
+
+* The `Index` is a simple local transient record type.
+
+* The `byteOffset` field is the offset into the file itself.
+
+* The index is in MIP level order (starting at zero for the largest image) whereas the actual data is the __reverse__ (smallest MIP image first).
+
+TODO - DFD, key-values
+
+From the index we can now build the list of MIP levels:
+
+```java
+final List<Level> levels = new ArrayList<>();
+int len = 0;
+for(int n = index.length - 1; n >= 0; --n) {
+    final Level level = new Level(len, index[n].length);
+    levels.add(level);
+    len += index[n].length;
+}
+```
+
+Note that this is done in __reverse__ order since we want to calculate the offset of each MIP level into the image data.
+
+We can now load the rest of the file into the image data as a single byte array:
+
+```java
+byte[][] data = new byte[1][len];
+for(Level level : levels) {
+    in.readFully(data[0], level.offset(), level.length());
+}
+```
+
+We assume that most consumers of the image will expect the MIP levels to be in ascending index order therefore we reverse the index:
+
+```java
+Collections.reverse(levels);
+```
+
+Finally we can create the resultant image:
+
+```java
+Dimensions size = new Dimensions(width, height);
+Layout layout = Layout.bytes(4);
+return new AbstractImageData(size, "RGBA", layout, levels) {
+    @Override
+    public Bufferable data(int layer) {
+        return Bufferable.of(data[layer]);
     }
 };
 ```
 
-We also add a helper that calculates the buffer offset for a given image array element:
 
-```java
-public int offset(int index) {
-    return index * size.area() * layout.count() * layout.bytes();
-}
-```
 
-### Loader
 
-To persist an image array we will create a second image loader implementation using a custom data format (based on the model loader).
-
-We first define a new resource loader abstraction for a custom file format based on data streams:
-
-```java
-public interface DataResourceLoader<T> extends ResourceLoader<DataInputStream, T> {
-    @Override
-    default DataInputStream map(InputStream in) throws IOException {
-        return new DataInputStream(in);
-    }
-
-    /**
-     * Writes the given data object.
-     * @param data      Data to write
-     * @param out       Output stream
-     * @throws IOException if the data cannot be written
-     */
-    void save(T data, DataOutputStream out) throws IOException;
-}
-```
-
-Next we factor out the various helper methods from the model loader into a new `DataHelper` utility class as we will be reusing them for persisting the image array.
-
-The new loader is relatively straight forward:
-
-```java
-public class ImageLoader implements DataResourceLoader<ImageData> {
-    private final DataHelper helper = new DataHelper();
-
-    @Override
-    public ImageData load(DataInputStream in) throws IOException {
-        ...
-    }
-
-    @Override
-    public void save(ImageData image, DataOutputStream out) throws IOException {
-        ...
-    }
-}
-```
-
-The custom file format is illustrated by the output method:
-
-```java
-// Write image image header
-helper.writeVersion(out);
-out.writeInt(image.count());
-out.writeInt(image.mip());
-
-// Write dimensions
-final Dimensions size = image.size();
-out.writeInt(size.width());
-out.writeInt(size.height());
-
-// Write layout
-helper.write(image.layout(), out);
-
-// Write image data
-helper.write(image.data(), out);
-```
 
 ### Copy Region
 
@@ -499,33 +601,23 @@ public static CopyRegion of(ImageDescriptor descriptor) {
 
 ### Integration
 
-To generate the persistent image array we first temporarily bodge the cubemap loader method to create and output the image array from the separate images:
+TODO - try with chalet image first
+then mip maps
+then cubemap layers
+???
 
-```java
-ImageData[] images = new ImageData[6];
-var loader = new ResourceLoaderAdapter<>(src, new NativeImageLoader());
-for(int n = 0; n < filenames.length; ++n) {
-    images[n] = loader.load(filenames[n] + ".jpg");
-}
-ImageLoader loader = new ImageLoader();
-loader.save(array, new DataOutputStream(...));
-```
+show KTX commands
 
-This code is then removed and instead we load the persisted compound image:
+show loading times comparisons
 
-```java
-public View cubemap(...) {
-    var loader = new ResourceLoaderAdapter<>(src, new ImageLoader());
-    ImageData image = loader.load("skybox.image");
-    if(image.count() != Image.CUBEMAP_ARRAY_LAYERS) throw new IllegalArgumentException(...);
-    ...
-}
-```
+
+
+
 
 Which is copied to the staging buffer:
 
 ```java
-VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data());
+VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data(0));
 ```
 
 The copy command is moved outside the `for` loop:
@@ -570,435 +662,15 @@ This implementation improves the loading times by about 200% on our development 
 
 ---
 
-## Push Constants
-
-### Overview
-
-We will next introduce _push constants_ as an alternative (and more efficient) means of updating the view matrices.
-
-Push constants are used to send data to shaders with the following constraints:
-
-* The amount of data is usually relatively small (specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure).
-
-* Push constants are updated and stored within the command buffer itself.
-
-* Push constants have alignment restrictions, see [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
-
-### Push Constant Range
-
-We start with a _push constant range_ which specifies a portion of the push constants and the shaders stages where that data is used:
-
-```java
-public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages) {
-    public int length() {
-        return offset + size;
-    }
-
-    void populate(VkPushConstantRange range) {
-        range.stageFlags = IntegerEnumeration.mask(stages);
-        range.size = size;
-        range.offset = offset;
-    }
-}
-```
-
-The _offset_ and _size_ of a push constant range must be a multiply of four bytes which we validate in the constructor:
-
-```java
-public PushConstantRange {
-    Check.zeroOrMore(offset);
-    Check.oneOrMore(size);
-    Check.notEmpty(stages);
-    stages = Set.copyOf(stages);
-    validate(offset);
-    validate(size);
-}
-
-static void validate(int size) {
-    if((size % 4) != 0) throw new IllegalArgumentException(...);
-}
-```
-
-Note that the constructor copies the set of pipeline stages and rewrites the constructor argument.  This is the standard approach for ensuring that a record class is immutable (although unfortunately this is currently flagged as a warning in our IDE).
-
-The builder for the pipeline layout is modified to include a list of push constant ranges:
-
-```java
-public static class Builder {
-    ...
-    private final List<PushConstantRange> ranges = new ArrayList<>();
-
-    public Builder add(PushConstantRange range) {
-        ranges.add(range);
-        return this;
-    }
-}
-```
-
-The ranges are populated in the usual manner:
-
-```java
-public PipelineLayout build(DeviceContext dev) {
-    ...
-    info.pushConstantRangeCount = ranges.size();
-    info.pPushConstantRanges = StructureHelper.first(ranges, VkPushConstantRange::new, PushConstantRange::populate);
-    ...
-}
-```
-
-Note that multiple ranges can be specified:
-
-1. This enabled the application to update some or all of the push constants at different shader stages.
-
-2. And also allows the hardware to perform optimisations.
-
-In the `build` method we also determine the overall size of the push constants and associated shaders stages (which are added to the pipeline layout constructor):
-
-```java
-// Determine overall size of the push constants data
-int max = ranges
-    .stream()
-    .mapToInt(PushConstantRange::length)
-    .max()
-    .orElse(0);
-
-// Enumerate pipeline stages
-Set<VkShaderStage> stages = ranges
-    .stream()
-    .map(PushConstantRange::stages)
-    .flatMap(Set::stream)
-    .collect(toSet());
-
-// Create layout
-return new PipelineLayout(layout.getValue(), dev, max, stages);
-```
-
-These new properties are used to validate push constant update commands which are addressed next.
-
-### Update Command
-
-Push constants are backed by a data buffer and are updated using a new command:
-
-```java
-public class PushUpdateCommand implements Command {
-    private final PipelineLayout layout;
-    private final int offset;
-    private final ByteBuffer data;
-    private final int stages;
-
-    @Override
-    public void execute(VulkanLibrary lib, Buffer buffer) {
-        data.rewind();
-        lib.vkCmdPushConstants(buffer, layout, stages, offset, data.limit(), data);
-    }
-}
-```
-
-Notes:
-
-* The data buffer is rewound before updates are applied, generally Vulkan seems to automatically rewind buffers as required (e.g. for updating the uniform buffer) but not in this case.
-
-* The constructor applies validation (not shown) to verify alignments, buffer sizes, etc.
-
-The new API method is added to the library for the pipeline layout:
-
-```java
-void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, ByteBuffer pValues);
-```
-
-The constructor is public but we also provide a builder:
-
-```java
-public static class Builder {
-    private int offset;
-    private ByteBuffer data;
-    private final Set<VkShaderStage> stages = new HashSet<>();
-
-    ...
-    
-    public PushUpdateCommand build(PipelineLayout layout) {
-        return new PushUpdateCommand(layout, offset, data, stages);
-    }
-}
-```
-
-We provide builder methods to update all the push constants or an arbitrary _slice_ of the backing data buffer:
-
-```java
-public Builder data(ByteBuffer data, int offset, int size) {
-    this.data = data.slice(offset, size);
-    return this;
-}
-```
-
-And the following convenience method to update a slice specified by a corresponding range:
-
-```java
-public Builder data(ByteBuffer data, PushConstantRange range) {
-    return data(data, range.offset(), range.size());
-}
-```
-
-Finally we add a convenience factory method to create a backing buffer appropriate to the pipeline layout:
-
-```java
-public static ByteBuffer data(PipelineLayout layout) {
-    return BufferWrapper.allocate(layout.max());
-}
-```
-
-And a second helper to update the entire push constants buffer:
-
-```java
-public static PushUpdateCommand of(PipelineLayout layout) {
-    final ByteBuffer data = data(layout);
-    return new PushUpdateCommand(layout, 0, data, layout.stages());
-}
-```
-
-### Buffer Wrapper
-
-As a further convenience for applying updates to push constants (or to uniform buffers) we introduce a wrapper for a data buffer:
-
-```java
-public class BufferWrapper {
-    private final ByteBuffer bb;
-
-    public BufferWrapper rewind() {
-        bb.rewind();
-        return this;
-    }
-
-    public BufferWrapper append(Bufferable data) {
-        data.buffer(bb);
-        return this;
-    }
-}
-```
-
-The following method provides a random access approach to insert data into the buffer:
-
-```java
-public BufferWrapper insert(int index, Bufferable data) {
-    int pos = index * data.length();
-    bb.position(pos);
-    data.buffer(bb);
-    return this;
-}
-```
-
-This can be used to populate push constants or a uniform buffer that is essentially an array of some data type (used below).
-
-In the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
-
-```java
-static Bufferable of(Structure struct) {
-    return new Bufferable() {
-        @Override
-        public int length() {
-            return struct.size();
-        }
-
-        @Override
-        public void buffer(ByteBuffer bb) {
-            byte[] array = struct.getPointer().getByteArray(0, struct.size());
-            BufferWrapper.write(array, bb);
-        }
-    };
-}
-```
-
-This allows arbitrary JNA structures to be used to populate push constants or a uniform buffer which will become useful in later chapters.
-
-The `write` method is a static helper on the new class:
-
-```java
-public static void write(byte[] array, ByteBuffer bb) {
-    if(bb.isDirect()) {
-        for(byte b : array) {
-            bb.put(b);
-        }
-    }
-    else {
-        bb.put(array);
-    }
-}
-```
-
-Note that direct NIO buffers generally do not support the optional bulk methods.
-
-Finally we also implement helpers to allocate and populate direct buffers:
-
-```java
-public class BufferWrapper {
-    public static final ByteOrder ORDER = ByteOrder.nativeOrder();
-
-    public static ByteBuffer allocate(int len) {
-        return ByteBuffer.allocateDirect(len).order(ORDER);
-    }
-
-    public static ByteBuffer buffer(byte[] array) {
-        ByteBuffer bb = allocate(array.length);
-        write(array, bb);
-        return bb;
-    }
-}
-```
-
-### Integration
-
-First the uniform buffer is replaced with a push constants layout declaration in the vertex shaders:
-
-```glsl
-#version 450
-
-layout(location = 0) in vec3 inPosition;
-
-layout(push_constant) uniform Matrices {
-    mat4 model;
-    mat4 view;
-    mat4 projection;
-};
-
-layout(location = 0) out vec3 outCoords;
-
-void main() {
-    vec3 pos = mat3(view) * inPosition;
-    gl_Position = (projection * vec4(pos, 0.0)).xyzz;
-    outCoords = inPosition;
-}
-```
-
-In the pipeline configuration we remove the uniform buffer and replace it with a single push constants range sized to the three matrices:
-
-```java
-@Bean
-PipelineLayout layout(DescriptorLayout layout) {
-    int len = 3 * Matrix.IDENTITY.length();
-
-    return new PipelineLayout.Builder()
-        .add(layout)
-        .add(new PushConstantRange(0, len, Set.of(VkShaderStage.VERTEX)))
-        .build(dev);
-}
-```
-
-Next we create a command to update the whole of the push constants buffer:
-
-```java
-@Bean
-public static PushUpdateCommand update(PipelineLayout layout) {
-    return PushUpdateCommand.of(layout);
-}
-```
-
-In the camera configuration we use the new helper class to update the matrix data in the push constants:
-
-```java
-@Bean
-public Task matrix(PushUpdateCommand update) {
-    // Init model rotation
-    Matrix model = ...
-
-    // Add projection matrix
-    BufferWrapper buffer = new BufferWrapper(update.data());
-    buffer.insert(2, projection);
-
-    // Update modelview matrix
-    return () -> {
-        buffer.rewind();
-        buffer.append(model);
-        buffer.append(cam.matrix());
-    };
-}
-```
-
-In the render sequence we perform the update before starting the render pass:
-
-```java
-begin()
-add(update)
-add(fb.begin())
-    ...
-add(FrameBuffer.END)
-end();
-```
-
-Up to this point we have created and recorded the command buffers _once_ since both the scene and the render sequence are static.  However if one were to run the demo application as it stands nothing will be rendered because the push constants are updated in the command buffer itself.  We therefore need to re-record the command sequence for _every_ frame to apply the updates.
-
-In any case a real-world application would generally be rendering a dynamic scene (i.e. adding and removing geometry) requiring command buffers to be recorded prior to each frame (often as a separate multi-threaded activity).
-
-For the moment we will record the render sequence on demand.  We first factor out the code that allocates and record the command buffer to a separate, temporary component:
-
-```java
-@Component
-class Sequence {
-    @Autowired private Command.Pool graphics;
-    @Autowired private List<FrameBuffer> buffers;
-    @Autowired private PushUpdateCommand update;
-    ...
-
-    private List<Command.Buffer> commands;
-
-    @PostConstruct
-    void init() {
-        commands = graphics.allocate(2);
-    }
-}
-```
-
-The `@PostConstruct` annotation specifies that the method is invoked by the container after the object has been instantiated, which we use to allocate the command buffers.
-
-Next we add a factory method that selects and records a command buffer given the swapchain image index:
-
-```java
-public Command.Buffer get(int index) {
-    Command.Buffer cmd = commands.get(index);
-    if(cmd.isReady()) {
-        cmd.reset();
-    }
-    record(cmd, index);
-    return cmd;
-}
-```
-
-Where `record` wraps up the existing render sequence code.
-
-Note that for the purpose of progressing the demo application we are reusing the command buffers (as opposed to allocating new instances for example).  This requires a command buffer to be `reset` before it can be re-recorded, which entails the following temporary change to the command pool:
-
-```java
-return Pool.create(dev, queue, VkCommandPoolCreateFlag.RESET_COMMAND_BUFFER);
-```
-
-In general using this approach is discouraged in favour of resetting the entire command pool and/or implementing some sort of caching strategy.
-
-The demo application should now run as before using push constants to update the view matrices.
-
-However during the course of this chapter we have introduced several new problems:
-
-* The temporary code to manage the command buffers is very ugly and requires individual buffers to be programatically reset.
-
-* The code to record the command buffers is a mess due to the large number of dependencies.
-
-* We still have multiple arrays of frame buffers, descriptor sets and command buffers.
-
-These issues are all related and will be addressed in the next chapter before we add any further objects to the scene.
-
----
-
 ## Summary
 
 In this chapter we added a skybox which involved implementation of the following:
 
 * The rasterizer pipeline stage.
 
-* Extension of the image class to support array layers.
+* Extension of the image class to support array layers and MIP levels.
 
-* Implementation of a new custom file format and loader to persist an image array.
+* Implementation of the KTX loader (for uncompressed images).
 
 * The addition of regions to the image copy command.
-
-* Push constants
-
-* The buffer wrapper helper class
 

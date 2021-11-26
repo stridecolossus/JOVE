@@ -55,8 +55,11 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		};
 		assert data.length == size.area() * layout.length();
 
+		// Create synthetic MIP index
+		final var levels = List.of(new Level(0, data.length));
+
 		// Create image
-		return new AbstractImageData(size, components, layout, List.of(new Level(0, data.length))) {
+		return new AbstractImageData(size, components, layout, levels) {
 			@Override
 			public Bufferable data(int layer) {
 				if(layer != 0) throw new IndexOutOfBoundsException("Native images only support a single layer");
