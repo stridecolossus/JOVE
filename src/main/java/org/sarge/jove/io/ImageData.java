@@ -3,9 +3,12 @@ package org.sarge.jove.io;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.List;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
+import org.sarge.lib.util.Check;
 
 /**
  * An <i>image data</i> is an abstraction for a general image comprising multiple array layers and MIP levels.
@@ -18,6 +21,22 @@ import org.sarge.jove.common.Layout;
  * @author Sarge
  */
 public interface ImageData {
+	/**
+	 * An <i>image level</i> specifies a MIP level of this image.
+	 * @see Dimensions#mip(int)
+	 */
+	record Level(int offset, int length) {
+		/**
+		 * Constructor.
+		 * @param offset		Offset into the image data
+		 * @param length		Length of this level
+		 */
+		public Level {
+			Check.zeroOrMore(offset);
+			Check.oneOrMore(length);
+		}
+	}
+
 	/**
 	 * @return Image dimensions
 	 */
@@ -39,18 +58,17 @@ public interface ImageData {
 	int layers();
 
 	/**
-	 * @return Number of MIP levels
+	 * @return MIP levels
 	 */
-	int levels();
+	List<Level> levels();
 
 	/**
-	 * Retrieves the image data for the given layer and MIP level.
-	 * @param layer		Layer
-	 * @param level		MIP level
+	 * Retrieves the image data for the given layer.
+	 * @param layer Image layer
 	 * @return Image data
-	 * @throws IndexOutOfBoundsException for an invalid layer or level index
+	 * @throws IndexOutOfBoundsException for an invalid layer index
 	 */
-	Bufferable data(int layer, int level);
+	Bufferable data(int layer);
 
 	/**
 	 * Skeleton implementation.
@@ -59,18 +77,21 @@ public interface ImageData {
 		private final Dimensions size;
 		private final String components;
 		private final Layout layout;
+		private final List<Level> levels;
 
 		/**
 		 * Constructor.
 		 * @param size				Image dimensions
 		 * @param components		Components
 		 * @param layout			Layout
+		 * @param levels			MIP levels
 		 * @throws IllegalArgumentException if the size of the layout does not match the number of components
 		 */
-		protected AbstractImageData(Dimensions size, String components, Layout layout) {
+		protected AbstractImageData(Dimensions size, String components, Layout layout, List<Level> levels) {
 			this.size = notNull(size);
 			this.components = notEmpty(components);
 			this.layout = notNull(layout);
+			this.levels = List.copyOf(levels);
 			validate();
 		}
 
@@ -96,6 +117,11 @@ public interface ImageData {
 		}
 
 		@Override
+		public List<Level> levels() {
+			return levels;
+		}
+
+		@Override
 		public int layers() {
 			return 1;
 		}
@@ -106,7 +132,7 @@ public interface ImageData {
 					.append(size)
 					.append(components)
 					.append(layout)
-					.append("levels", levels())
+					.append("levels", levels.size())
 					.append("layers", layers())
 					.build();
 		}

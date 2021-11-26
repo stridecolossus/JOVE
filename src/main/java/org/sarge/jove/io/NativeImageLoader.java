@@ -9,12 +9,14 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.ImageData.AbstractImageData;
+import org.sarge.jove.io.ImageData.Level;
 
 /**
  * Loader for a Java image implemented using {@link ImageIO}.
@@ -54,15 +56,10 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		assert data.length == size.area() * layout.length();
 
 		// Create image
-		return new AbstractImageData(size, components, layout) {
+		return new AbstractImageData(size, components, layout, List.of(new Level(0, data.length))) {
 			@Override
-			public int levels() {
-				return 1;
-			}
-
-			@Override
-			public Bufferable data(int layer, int level) {
-				if((layer != 0) || (level != 0)) throw new IndexOutOfBoundsException("Native image only supports a single layer and MIP level");
+			public Bufferable data(int layer) {
+				if(layer != 0) throw new IndexOutOfBoundsException("Native images only support a single layer");
 				return Bufferable.of(data);
 			}
 		};

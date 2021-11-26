@@ -36,6 +36,27 @@ public record ImageExtents(Dimensions size, int depth) {
 	}
 
 	/**
+	 * Calculates the image extents for the given MIP level.
+	 * @param level MIP level
+	 * @return MIP extents
+	 */
+	public ImageExtents mip(int level) {
+		Check.zeroOrMore(level);
+
+		if(level == 0) {
+			return this;
+		}
+
+		final int w = mip(size.width(), level);
+		final int h = mip(size.height(), level);
+		return new ImageExtents(new Dimensions(w, h), depth);
+	}
+
+	private static int mip(int value, int level) {
+		return Math.max(1, value >> level);
+	}
+
+	/**
 	 * Converts to Vulkan extents.
 	 * @return Extents
 	 */

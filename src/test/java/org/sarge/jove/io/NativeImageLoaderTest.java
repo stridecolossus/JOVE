@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.ImageData.Level;
 
 public class NativeImageLoaderTest {
 	private NativeImageLoader loader;
@@ -30,7 +32,6 @@ public class NativeImageLoaderTest {
 		// Check image header
 		assertEquals(new Dimensions(2, 3), image.size());
 		assertEquals(1, image.layers());
-		assertEquals(1, image.levels());
 		assertNotNull(image.components());
 
 		// Check layout
@@ -43,10 +44,14 @@ public class NativeImageLoaderTest {
 		assertEquals(false, layout.signed());
 		assertEquals(num, layout.length());
 
+		// Check MIP level
+		final int len = 2 * 3 * num;
+		assertEquals(List.of(new Level(0, len)), image.levels());
+
 		// Check image data
-		final Bufferable data = image.data(0, 0);
+		final Bufferable data = image.data(0);
 		assertNotNull(data);
-		assertEquals(2 * 3 * num, data.length());
+		assertEquals(len, data.length());
 	}
 
 	@DisplayName("ABGR should be loaded as-is")
@@ -84,6 +89,14 @@ public class NativeImageLoaderTest {
 	void unsupported() {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_BYTE_BINARY);
 		assertThrows(RuntimeException.class, () -> loader.load(buffered));
+	}
+
+	@DisplayName("Native images should only support a single layer")
+	@Test
+	void invalidLayerIndex() throws IOException {
+		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_4BYTE_ABGR);
+		final ImageData image = loader.load(buffered);
+		assertThrows(IndexOutOfBoundsException.class, () -> image.data(1));
 	}
 
 	@DisplayName("Should load supported buffered formats")

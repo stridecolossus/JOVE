@@ -1,16 +1,18 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import java.io.DataInput;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.AbstractImageData;
+import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.util.LittleEndianDataInputStream;
 
@@ -22,52 +24,11 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 	/**
 	 *
 	 */
-	private record LevelIndex(int offset, int len, int uncompressed) {
-		// Empty
-	}
-
-	/**
-	 *
-	 */
-	private class Level {
-		private final byte[] bytes;
-
-		public Level(int len) {
-			this.bytes = new byte[len];
-		}
-	}
-
-	/**
-	 *
-	 */
-	private static class VulkanImageData extends AbstractImageData {
-		private final Level[] data;
-
-		private VulkanImageData(Dimensions size, String components, Layout layout, Level[] data) {
-			super(size, components, layout);
-			this.data = data;
-		}
-
-		@Override
-		public int levels() {
-			return data.length;
-		}
-
-		// TODO
-		@Override
-		public int layers() {
-			return 1;
-		}
-
-		@Override
-		public Bufferable data(int layer, int level) {
-			if(layer != 0) throw new UnsupportedOperationException("TODO");
-			return Bufferable.of(data[level].bytes);
-		}
+	private record Index(int offset, int length, int uncompressed) {
 	}
 
 	@Override
-	public LittleEndianDataInputStream map(InputStream in) throws IOException {
+	public DataInput map(InputStream in) throws IOException {
 		return new LittleEndianDataInputStream(in);
 	}
 
@@ -107,53 +68,55 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final long compressionByteLength = in.readLong();
 
 		// Load MIP level index
-		final LevelIndex[] index = new LevelIndex[levelCount];
+		final Index[] index = new Index[levelCount];
 		for(int n = 0; n < levelCount; ++n) {
-			final int offset = (int) in.readLong();
+			final int fileOffset = (int) in.readLong();
 			final int len = (int) in.readLong();
 			final int uncompressed = (int) in.readLong();
-			index[n] = new LevelIndex(offset, len, uncompressed);
+			index[n] = new Index(fileOffset, len, uncompressed);
 		}
 
-		// Skip format descriptor
-		final int formatTotalSize = in.readInt();
-		in.skipBytes(formatTotalSize);
-		assert formatByteLength == formatTotalSize;
-		assert formatByteOffset > 0;
-		// TODO
+		// Load DFD
+		loadFormatDescriptor(in, formatByteLength);
 
-		// Skip key-values
-		in.skipBytes(keyValuesByteLength);
-		assert keyValuesByteOffset > 0;
-		// TODO
+		// Load key-values
+		loadKeyValues(in, keyValuesByteLength);
 
-		// Skip compression
+		// Load compression
+		// TODO
 		if(compressionByteLength != 0) throw new UnsupportedOperationException();
 		assert compressionByteOffset >= 0;
-		// TODO
+
+		// Build levels (smallest MIP level first)
+		final List<Level> levels = new ArrayList<>();
+		int len = 0;
+		for(int n = index.length - 1; n >= 0; --n) {
+			final Level level = new Level(len, index[n].length);
+			levels.add(level);
+			len += index[n].length;
+		}
 
 		// Load image data
-		final Level[] levels = new Level[index.length];
-		ArrayUtils.reverse(index);
-		for(int n = 0; n < index.length; ++n) {
-			// Skip to start of next level
-			final LevelIndex level = index[n];
-			if(n > 0) {
-				final int skip = index[n - 1].offset - level.offset;
-				assert skip >= 0;
-				in.skipBytes(skip);
-			}
-
-			// Load level
-			final Level mip = new Level(level.len);
-			in.readFully(mip.bytes);
-			levels[n] = mip;
+		final byte[][] data = new byte[1][len];
+		for(Level level : levels) {
+			in.readFully(data[0], level.offset(), level.length());
+// TODO - calc this in Index
+//			final int padding = 3 - ((level.len + 3) % 4);
+//			in.skipBytes(padding);
 		}
+
+		// Order by MIP level index
+		Collections.reverse(levels);
 
 		// Create image
 		final Dimensions size = new Dimensions(width, height);
 		final Layout layout = Layout.bytes(4); // TODO
-		return new VulkanImageData(size, "RGBA", layout, levels);
+		return new AbstractImageData(size, "RGBA", layout, levels) {
+			@Override
+			public Bufferable data(int layer) {
+				return Bufferable.of(data[layer]);
+			}
+		};
 	}
 
 	/**
@@ -169,14 +132,78 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		if(!str.contains("KTX 20")) throw new IOException("Invalid KTX file");
 	}
 
-	////////////
+	/**
+	 *
+	 * @param in
+	 * @param total
+	 * @throws IOException
+	 */
+	private static void loadFormatDescriptor(DataInput in, int total) throws IOException {
+		if(in.readInt() != total) throw new IOException("Invalid DFD length");
 
-	public static void main2(String[] args) throws Exception {
-		final VulkanImageLoader loader = new VulkanImageLoader();
-		final var result = loader.load(new LittleEndianDataInputStream(new FileInputStream("../Demo/Data/chalet.ktx2")));
-		System.out.println(result);
+		if(total == 0) {
+			return;
+		}
+
+		final short vendor = in.readShort();
+		final short type = in.readShort();
+
+		final short version = in.readShort();
+		final short blockSize = in.readShort();
+
+		final byte colourModel = in.readByte();
+		final byte primaries = in.readByte();
+		final byte transferFunction = in.readByte();
+		final byte flags = in.readByte();
+
+		final byte[] texelDimensions = new byte[4];
+		in.readFully(texelDimensions);
+		in.readFully(texelDimensions); // bytesPlane 0-3
+		in.readFully(texelDimensions); // bytesPlane 4-7
+
+		for(int n = 0; n < 4; ++n) {
+			final byte bitOffset = in.readByte();
+			final byte qualifiers = in.readByte();
+			final byte bitLength = in.readByte();
+			final byte channelType = in.readByte();
+
+			final int samplePosition = in.readInt();
+			final int lower = in.readInt();
+			final int upper = in.readInt();
+		}
+	}
+
+	/**
+	 *
+	 * @param in
+	 * @param size
+	 * @throws IOException
+	 */
+	private static void loadKeyValues(DataInput in, int size) throws IOException {
+		if(size == 0) {
+			return;
+		}
+
+		int count = 0;
+		while(true) {
+			final int len = in.readInt();
+			final byte[] entry = new byte[len];
+			in.readFully(entry);
+
+			final int padding = 3 - ((len + 3) % 4);
+			in.skipBytes(padding);
+
+			count += len + padding + 4;
+
+			if(count >= size) {
+				break;
+			}
+		}
 	}
 }
 
 // http://www.peterfranza.com/2008/09/26/little-endian-input-stream/
 // https://github.com/KhronosGroup/3D-Formats-Guidelines/blob/main/KTXDeveloperGuide.md
+// https://community.khronos.org/t/implementing-a-ktx-loader/107981/3
+// https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#formats-compatibility
+// https://satellitnorden.wordpress.com/2018/03/13/vulkan-adventures-part-4-the-mipmap-menace-mipmapping-tutorial/
