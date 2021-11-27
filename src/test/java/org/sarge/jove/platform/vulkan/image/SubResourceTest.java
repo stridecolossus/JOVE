@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceLayers;
 import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
@@ -26,7 +28,7 @@ public class SubResourceTest {
 				.format(AbstractVulkanTest.FORMAT)
 				.mipLevels(3)
 				.arrayLayers(4)
-				.extents(new ImageExtents(5, 6))
+				.extents(new Extents(new Dimensions(5, 6)))
 				.build();
 
 		res = new SubResource.Builder(descriptor)

@@ -18,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.io.ImageData.Level;
 
 public class NativeImageLoaderTest {
@@ -30,7 +31,7 @@ public class NativeImageLoaderTest {
 
 	private void check(ImageData image) {
 		// Check image header
-		assertEquals(new Dimensions(2, 3), image.size());
+		assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
 		assertEquals(1, image.layers());
 		assertNotNull(image.components());
 

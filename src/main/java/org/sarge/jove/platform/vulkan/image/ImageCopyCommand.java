@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.io.ImageData;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
@@ -107,7 +108,7 @@ public class ImageCopyCommand implements Command {
 	/**
 	 * A <i>copy region</i> specifies a portion of the image to be copied.
 	 */
-	public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents) {
+	public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents) {
 		/**
 		 * Creates a copy region for the whole of the given image.
 		 * @param descriptor Image descriptor
@@ -158,7 +159,7 @@ public class ImageCopyCommand implements Command {
 			copy.bufferImageHeight = height;
 			copy.imageSubresource = SubResource.toLayers(res);
 			copy.imageOffset = imageOffset;
-			copy.imageExtent = extents.extents();
+			copy.imageExtent = Image.toExtent(extents);
 		}
 
 		/**
@@ -170,7 +171,7 @@ public class ImageCopyCommand implements Command {
 			private int height;
 			private SubResource subresource;
 			private VkOffset3D imageOffset = new VkOffset3D();
-			private ImageExtents extents;
+			private Extents extents;
 
 			/**
 			 * Sets the buffer offset.
@@ -212,7 +213,7 @@ public class ImageCopyCommand implements Command {
 			 * Sets the image extents.
 			 * @param extents Image extents
 			 */
-			public Builder extents(ImageExtents extents) {
+			public Builder extents(Extents extents) {
 				this.extents = notNull(extents);
 				return this;
 			}
@@ -224,7 +225,7 @@ public class ImageCopyCommand implements Command {
 			public Builder region(Rectangle rect) {
 				imageOffset.x = rect.x();
 				imageOffset.y = rect.y();
-				extents(new ImageExtents(rect.dimensions()));
+				extents(new Extents(rect.dimensions()));
 				return this;
 			}
 

@@ -22,25 +22,9 @@ import org.sarge.lib.util.Check;
  */
 public interface ImageData {
 	/**
-	 * An <i>image level</i> specifies a MIP level of this image.
-	 * @see Dimensions#mip(int)
+	 * @return Image extents
 	 */
-	record Level(int offset, int length) {
-		/**
-		 * Constructor.
-		 * @param offset		Offset into the image data
-		 * @param length		Length of this level
-		 */
-		public Level {
-			Check.zeroOrMore(offset);
-			Check.oneOrMore(length);
-		}
-	}
-
-	/**
-	 * @return Image dimensions
-	 */
-	Dimensions size();
+	Extents extents();
 
 	/**
 	 * @return Components
@@ -71,24 +55,83 @@ public interface ImageData {
 	Bufferable data(int layer);
 
 	/**
+	 * An <i>image level</i> specifies a MIP level of this image.
+	 * @see Extents#mip(int)
+	 */
+	record Level(int offset, int length) {
+		/**
+		 * Constructor.
+		 * @param offset		Offset into the image data
+		 * @param length		Length of this level
+		 */
+		public Level {
+			Check.zeroOrMore(offset);
+			Check.oneOrMore(length);
+		}
+	}
+
+	/**
+	 * Extents of this image.
+	 */
+	record Extents(Dimensions size, int depth) {
+		/**
+		 * Constructor.
+		 * @param dim		Image dimensions
+		 * @param depth		Depth
+		 */
+		public Extents {
+			Check.notNull(size);
+			Check.zeroOrMore(depth);
+		}
+
+		/**
+		 * Convenience constructor for a 2D image.
+		 */
+		public Extents(Dimensions size) {
+			this(size, 1);
+		}
+
+		/**
+		 * Calculates the image extents for the given MIP level.
+		 * @param level MIP level
+		 * @return MIP extents
+		 */
+		public Extents mip(int level) {
+			Check.zeroOrMore(level);
+
+			if(level == 0) {
+				return this;
+			}
+
+			final int w = mip(size.width(), level);
+			final int h = mip(size.height(), level);
+			return new Extents(new Dimensions(w, h), depth);
+		}
+
+		private static int mip(int value, int level) {
+			return Math.max(1, value >> level);
+		}
+	}
+
+	/**
 	 * Skeleton implementation.
 	 */
 	abstract class AbstractImageData implements ImageData {
-		private final Dimensions size;
+		private final Extents extents;
 		private final String components;
 		private final Layout layout;
 		private final List<Level> levels;
 
 		/**
 		 * Constructor.
-		 * @param size				Image dimensions
+		 * @param size				Image extents
 		 * @param components		Components
 		 * @param layout			Layout
 		 * @param levels			MIP levels
 		 * @throws IllegalArgumentException if the size of the layout does not match the number of components
 		 */
-		protected AbstractImageData(Dimensions size, String components, Layout layout, List<Level> levels) {
-			this.size = notNull(size);
+		protected AbstractImageData(Extents extents, String components, Layout layout, List<Level> levels) {
+			this.extents = notNull(extents);
 			this.components = notEmpty(components);
 			this.layout = notNull(layout);
 			this.levels = List.copyOf(levels);
@@ -102,8 +145,8 @@ public interface ImageData {
 		}
 
 		@Override
-		public Dimensions size() {
-			return size;
+		public Extents extents() {
+			return extents;
 		}
 
 		@Override
@@ -129,7 +172,7 @@ public interface ImageData {
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
-					.append(size)
+					.append(extents)
 					.append(components)
 					.append(layout)
 					.append("levels", levels.size())

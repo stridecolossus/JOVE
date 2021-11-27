@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.ImageData;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.io.ImageData.Level;
 
 public class VulkanImageLoaderTest {
@@ -75,13 +76,13 @@ public class VulkanImageLoaderTest {
 		out.writeLong(0);
 		out.writeLong(0);
 
-		// Write levels index (two MIP levels)
+		// Write levels index (two MIP levels, largest first)
 		final int len = 2 * 3 * 4;
 		final int half = 1 * 2 * 4;
-		out.writeLong(0);				// TODO
+		out.writeLong(5 + half);
 		out.writeLong(len);
 		out.writeLong(len);
-		out.writeLong(0);				// TODO
+		out.writeLong(5);
 		out.writeLong(half);
 		out.writeLong(half);
 
@@ -89,7 +90,7 @@ public class VulkanImageLoaderTest {
 		out.writeInt(0);
 
 		// Write image data
-		final int total = len + half;		// TODO
+		final int total = len + half;
 		out.write(new byte[total]);
 
 		// Load image
@@ -97,7 +98,7 @@ public class VulkanImageLoaderTest {
 		assertNotNull(image);
 
 		// Check image
-		assertEquals(new Dimensions(2, 3), image.size());
+		assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
 		assertEquals("RGBA", image.components());
 		assertEquals(Layout.bytes(4), image.layout());
 		assertEquals(1, image.layers());
@@ -114,6 +115,6 @@ public class VulkanImageLoaderTest {
 	@Test
 	void loadInvalidHeader() throws IOException {
 		out.write(new byte[12]);
-		assertThrows(IOException.class, () -> run());
+		assertThrows(UnsupportedOperationException.class, () -> run());
 	}
 }

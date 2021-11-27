@@ -15,8 +15,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.TransientNativeObject;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
@@ -40,7 +42,7 @@ public class ViewTest extends AbstractVulkanTest {
 		// Create image descriptor
 		final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 				.format(FORMAT)
-				.extents(new ImageExtents(3, 4))
+				.extents(new Extents(new Dimensions(3, 4)))
 				.aspect(VkImageAspect.COLOR)
 				.build();
 

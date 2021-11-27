@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkFilter;
 import org.sarge.jove.platform.vulkan.VkImageBlit;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
@@ -51,7 +52,7 @@ public class ImageBlitCommandTest extends AbstractVulkanTest {
 		void build() {
 			// Init copy regions
 			final SubResource res = mock(SubResource.class);
-			final ImageExtents offset = new ImageExtents(new Dimensions(2, 3), 1);
+			final Extents offset = new Extents(new Dimensions(2, 3));
 			final BlitRegion src = new BlitRegion(res, BlitRegion.MIN_OFFSET, offset);
 			final BlitRegion dest = new BlitRegion(res, BlitRegion.MIN_OFFSET, offset);
 

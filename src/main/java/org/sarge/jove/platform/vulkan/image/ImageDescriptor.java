@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageType;
@@ -18,7 +19,7 @@ import org.sarge.lib.util.Check;
  * An <i>image descriptor</i> specifies the properties of an image.
  * @author Sarge
  */
-public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {
+public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {
 	// Valid image aspect combinations
 	private static final Collection<Set<VkImageAspect>> VALID_ASPECTS = List.of(
 			Set.of(VkImageAspect.COLOR),
@@ -83,7 +84,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents ex
 	public static class Builder {
 		private VkImageType type = VkImageType.IMAGE_TYPE_2D;
 		private VkFormat format;
-		private ImageExtents extents;
+		private Extents extents;
 		private final Set<VkImageAspect> aspects = new HashSet<>();
 		private int levels = 1;
 		private int layers = 1;
@@ -110,7 +111,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents ex
 		 * Sets the image extents.
 		 * @param extents Image extents
 		 */
-		public Builder extents(ImageExtents extents) {
+		public Builder extents(Extents extents) {
 			this.extents = notNull(extents);
 			return this;
 		}

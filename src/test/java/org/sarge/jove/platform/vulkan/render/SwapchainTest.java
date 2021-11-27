@@ -22,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.Fence;
@@ -29,7 +30,6 @@ import org.sarge.jove.platform.vulkan.core.Semaphore;
 import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
-import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
@@ -49,7 +49,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		// Specify image swapchain descriptor
 		final Dimensions extents = new Dimensions(3, 4);
 		final ImageDescriptor descriptor = new ImageDescriptor.Builder()
-				.extents(new ImageExtents(extents))
+				.extents(new Extents(extents))
 				.format(FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();

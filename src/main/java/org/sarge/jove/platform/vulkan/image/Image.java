@@ -9,7 +9,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -61,6 +63,34 @@ public interface Image extends NativeObject {
 		return selector.select(formats).orElseThrow(() -> new RuntimeException("No supported depth buffer format"));
 	}
 	// TODO - dependant on device, a bit too specific for a helper anyway? would want to specify higher/lower depth resolution?
+
+	/**
+	 * Converts to Vulkan extents.
+	 * @param extents Image extents
+	 * @return Extents
+	 */
+	static VkExtent3D toExtent(Extents extents) {
+		final Dimensions size = extents.size();
+		final VkExtent3D extent = new VkExtent3D();
+		extent.width = size.width();
+		extent.height = size.height();
+		extent.depth = extents.depth();
+		return extent;
+	}
+
+	/**
+	 * Converts to Vulkan offsets.
+	 * @param extents Image extents
+	 * @return Offsets
+	 */
+	static VkOffset3D toOffset(Extents extents) {
+		final Dimensions size = extents.size();
+		final VkOffset3D offset = new VkOffset3D();
+		offset.x = size.width();
+		offset.y = size.height();
+		offset.z = extents.depth();
+		return offset;
+	}
 
 	/**
 	 * Default implementation for an image managed by the application.
@@ -207,7 +237,7 @@ public interface Image extends NativeObject {
 			info.flags = IntegerEnumeration.mask(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
-			info.extent = descriptor.extents().extents();
+			info.extent = toExtent(descriptor.extents());
 			info.mipLevels = descriptor.levelCount();
 			info.arrayLayers = descriptor.layerCount();
 			info.samples = samples;

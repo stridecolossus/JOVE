@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
@@ -36,7 +38,7 @@ public class ImageCopyCommandTest {
 
 		// Define image
 		final var descriptor = new ImageDescriptor.Builder()
-				.extents(new ImageExtents(2, 3))
+				.extents(new Extents(new Dimensions(2, 3)))
 				.format(AbstractVulkanTest.FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();
@@ -78,7 +80,7 @@ public class ImageCopyCommandTest {
 		@Test
 		void constructorInvalidImageAspects() {
 			final var descriptor = new ImageDescriptor.Builder()
-					.extents(new ImageExtents(2, 3))
+					.extents(new Extents(new Dimensions(2, 3)))
 					.format(AbstractVulkanTest.FORMAT)
 					.aspect(VkImageAspect.DEPTH)
 					.aspect(VkImageAspect.STENCIL)

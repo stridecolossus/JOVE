@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -18,7 +19,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 public class ImageDescriptorTest extends AbstractVulkanTest {
 	private static final VkImageType TYPE = VkImageType.IMAGE_TYPE_2D;
 	private static final Set<VkImageAspect> ASPECTS = Set.of(VkImageAspect.COLOR);
-	private static final ImageExtents EXTENTS = new ImageExtents(3, 4);
+	private static final Extents EXTENTS = new Extents(new Dimensions(3, 4));
 
 	private ImageDescriptor descriptor;
 
@@ -55,7 +56,7 @@ public class ImageDescriptorTest extends AbstractVulkanTest {
 	@DisplayName("2D image must have depth of one")
 	@Test
 	void invalidExtentsDepth() {
-		final ImageExtents extents = new ImageExtents(new Dimensions(2, 3), 4);
+		final Extents extents = new Extents(new Dimensions(2, 3), 4);
 		assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(TYPE, FORMAT, extents, ASPECTS, 1, 1));
 	}
 

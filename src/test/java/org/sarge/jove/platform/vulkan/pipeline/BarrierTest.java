@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkAccess;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
@@ -23,7 +25,6 @@ import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
-import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class BarrierTest {
@@ -49,7 +50,7 @@ public class BarrierTest {
 			// Create image descriptor
 			descriptor = new ImageDescriptor.Builder()
 					.format(AbstractVulkanTest.FORMAT)
-					.extents(new ImageExtents(3, 4))
+					.extents(new Extents(new Dimensions(3, 4)))
 					.aspect(VkImageAspect.COLOR)
 					.build();
 

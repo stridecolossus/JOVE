@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkFilter;
 import org.sarge.jove.platform.vulkan.VkImageBlit;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
@@ -57,11 +58,11 @@ public class ImageBlitCommand implements Command {
 		/**
 		 * Blit copy region.
 		 */
-		public record BlitRegion(SubResource subresource, ImageExtents min, ImageExtents max) {
+		public record BlitRegion(SubResource subresource, Extents min, Extents max) {
 			/**
 			 * Minimum blit offset.
 			 */
-			public static final ImageExtents MIN_OFFSET = new ImageExtents(new Dimensions(0, 0), 0);
+			public static final Extents MIN_OFFSET = new Extents(new Dimensions(0, 0), 0);
 
 			/**
 			 * Constructor.
@@ -141,8 +142,8 @@ public class ImageBlitCommand implements Command {
 		 */
 		private static VkOffset3D[] offsets(BlitRegion region) {
 			final VkOffset3D[] offsets = new VkOffset3D[2];
-			offsets[0] = region.min.offsets();
-			offsets[1] = region.max.offsets();
+			offsets[0] = Image.toOffset(region.min);
+			offsets[1] = Image.toOffset(region.max);
 			return offsets;
 		}
 

@@ -16,7 +16,9 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
@@ -30,7 +32,7 @@ import com.sun.jna.Pointer;
 
 public class ImageTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
-	private static final ImageExtents EXTENTS = new ImageExtents(3, 4);
+	private static final Extents EXTENTS = new Extents(new Dimensions(3, 4));
 
 	private DefaultImage image;
 	private Pointer handle;
@@ -74,6 +76,24 @@ public class ImageTest extends AbstractVulkanTest {
 	@Test
 	void cubemap() {
 		assertEquals(6, Image.CUBEMAP_ARRAY_LAYERS);
+	}
+
+	@Test
+	void toExtent() {
+		final VkExtent3D extents = Image.toExtent(EXTENTS);
+		assertNotNull(extents);
+		assertEquals(3, extents.width);
+		assertEquals(4, extents.height);
+		assertEquals(1, extents.depth);
+	}
+
+	@Test
+	void toOffset() {
+		final VkOffset3D offset = Image.toOffset(EXTENTS);
+		assertNotNull(offset);
+		assertEquals(3, offset.x);
+		assertEquals(4, offset.y);
+		assertEquals(1, offset.z);
 	}
 
 	@Nested
@@ -151,7 +171,7 @@ public class ImageTest extends AbstractVulkanTest {
 			info.flags = VkImageCreateFlag.CUBE_COMPATIBLE.value();
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
-			info.extent = descriptor.extents().extents();
+			info.extent = Image.toExtent(descriptor.extents());
 			info.mipLevels = descriptor.levelCount();
 			info.arrayLayers = descriptor.layerCount();
 			info.samples = VkSampleCountFlag.COUNT_4;

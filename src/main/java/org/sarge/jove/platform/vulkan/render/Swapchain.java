@@ -12,6 +12,7 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
@@ -25,7 +26,6 @@ import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
-import org.sarge.jove.platform.vulkan.image.ImageExtents;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
@@ -441,7 +441,7 @@ public class Swapchain extends AbstractVulkanObject {
 			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
 			final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 					.format(info.imageFormat)
-					.extents(new ImageExtents(extents))
+					.extents(new Extents(extents))
 					.aspect(VkImageAspect.COLOR)
 					.build();
 
