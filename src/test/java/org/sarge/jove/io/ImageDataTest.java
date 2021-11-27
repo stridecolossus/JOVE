@@ -43,7 +43,7 @@ public class ImageDataTest {
 	class AbstractImageDataTests {
 		class MockImageData extends AbstractImageData {
 			public MockImageData(Layout layout, Level level) {
-				super(new Extents(new Dimensions(2, 3)), "RGBA", layout, List.of(level));
+				super(new Extents(new Dimensions(2, 3)), "RGBA", layout, 42, List.of(level));
 			}
 
 			@Override
@@ -64,6 +64,7 @@ public class ImageDataTest {
 			assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
 			assertEquals("RGBA", image.components());
 			assertEquals(Layout.bytes(4), image.layout());
+			assertEquals(42, image.format());
 			assertEquals(1, image.layers());
 			assertEquals(List.of(new Level(0, 2 * 3 * 4)), image.levels());
 		}

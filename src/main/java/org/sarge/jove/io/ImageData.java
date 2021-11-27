@@ -2,6 +2,7 @@ package org.sarge.jove.io;
 
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.List;
 
@@ -37,6 +38,11 @@ public interface ImageData {
 	Layout layout();
 
 	/**
+	 * @return Format hint
+	 */
+	int format();
+
+	/**
 	 * @return Number of layers
 	 */
 	int layers();
@@ -67,6 +73,16 @@ public interface ImageData {
 		public Level {
 			Check.zeroOrMore(offset);
 			Check.oneOrMore(length);
+		}
+
+		/**
+		 * Helper - Determines the number of mipmap levels for the given image dimensions.
+		 * @param dim Image dimensions
+		 * @return Number of mipmap levels
+		 */
+		public static int levels(Dimensions dim) {
+			final float max = Math.max(dim.width(), dim.height());
+			return 1 + (int) Math.floor(Math.log(max) / Math.log(2));
 		}
 	}
 
@@ -120,6 +136,7 @@ public interface ImageData {
 		private final Extents extents;
 		private final String components;
 		private final Layout layout;
+		private final int format;
 		private final List<Level> levels;
 
 		/**
@@ -127,13 +144,15 @@ public interface ImageData {
 		 * @param size				Image extents
 		 * @param components		Components
 		 * @param layout			Layout
+		 * @param format			Format hint
 		 * @param levels			MIP levels
 		 * @throws IllegalArgumentException if the size of the layout does not match the number of components
 		 */
-		protected AbstractImageData(Extents extents, String components, Layout layout, List<Level> levels) {
+		protected AbstractImageData(Extents extents, String components, Layout layout, int format, List<Level> levels) {
 			this.extents = notNull(extents);
 			this.components = notEmpty(components);
 			this.layout = notNull(layout);
+			this.format = zeroOrMore(format);
 			this.levels = List.copyOf(levels);
 			validate();
 		}
@@ -160,6 +179,11 @@ public interface ImageData {
 		}
 
 		@Override
+		public int format() {
+			return format;
+		}
+
+		@Override
 		public List<Level> levels() {
 			return levels;
 		}
@@ -175,6 +199,7 @@ public interface ImageData {
 					.append(extents)
 					.append(components)
 					.append(layout)
+					.append("format", format)
 					.append("levels", levels.size())
 					.append("layers", layers())
 					.build();

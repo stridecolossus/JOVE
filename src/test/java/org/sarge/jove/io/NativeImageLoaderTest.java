@@ -34,6 +34,7 @@ public class NativeImageLoaderTest {
 		assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
 		assertEquals(1, image.layers());
 		assertNotNull(image.components());
+		assertEquals(0, image.format());
 
 		// Check layout
 		final int num = image.components().length();

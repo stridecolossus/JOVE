@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.util;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.MathsUtil;
@@ -84,7 +85,7 @@ public class FormatBuilder {
 	 * Constructor.
 	 */
 	public FormatBuilder() {
-		components("RGBA");
+		components(Colour.RGBA);
 	}
 
 	/**

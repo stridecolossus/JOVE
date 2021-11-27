@@ -4,9 +4,6 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
-import java.util.Arrays;
-
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
@@ -14,6 +11,7 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -23,17 +21,10 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Sampler extends AbstractVulkanObject {
-//  TODO - public static final float VK_LOD_CLAMP_NONE = 1000.0f;
-
 	/**
-	 * Helper - Determines the number of mipmap levels for the given image dimensions.
-	 * @param dim Image dimensions
-	 * @return Number of mipmap levels
+	 * Default maximum LOD clamp.
 	 */
-	public static int levels(Dimensions dim) {
-		final float max = Math.max(dim.width(), dim.height());
-		return 1 + (int) Math.floor(Math.log(max) / Math.log(2));
-	}
+	public static final float VK_LOD_CLAMP_NONE = 1000;
 
 	/**
 	 * Constructor.
@@ -47,6 +38,29 @@ public class Sampler extends AbstractVulkanObject {
 	@Override
 	protected Destructor<Sampler> destructor(VulkanLibrary lib) {
 		return lib::vkDestroySampler;
+	}
+
+	/**
+	 * Creates a descriptor set resource for this sampler on the given view.
+	 * @param view View
+	 * @return Sampler resource
+	 */
+	public DescriptorResource resource(View view) {
+		return new DescriptorResource() {
+			@Override
+			public VkDescriptorType type() {
+				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
+			}
+
+			@Override
+			public void populate(VkWriteDescriptorSet write) {
+				final var info = new VkDescriptorImageInfo();
+				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
+				info.sampler = Sampler.this.handle();
+				info.imageView = view.handle();
+				write.pImageInfo = info;
+			}
+		};
 	}
 
 	/**
@@ -84,65 +98,19 @@ public class Sampler extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Creates a descriptor set resource for this sampler on the given view.
-	 * @param view View
-	 * @return Sampler resource
-	 */
-	public DescriptorResource resource(View view) {
-		return new DescriptorResource() {
-			@Override
-			public VkDescriptorType type() {
-				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
-			}
-
-			@Override
-			public void populate(VkWriteDescriptorSet write) {
-				final var info = new VkDescriptorImageInfo();
-				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
-				info.sampler = Sampler.this.handle();
-				info.imageView = view.handle();
-				write.pImageInfo = info;
-			}
-		};
-	}
-
-	/**
 	 * Builder for a sampler.
 	 */
 	public static class Builder {
-		private final LogicalDevice dev;
+		private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
 
-		// Filters
-		private VkFilter magFilter = VkFilter.LINEAR;
-		private VkFilter minFilter = VkFilter.LINEAR;
-
-		// Mipmap settings
-		private VkSamplerMipmapMode mipmapMode = VkSamplerMipmapMode.LINEAR;
-		private float minLod;
-		private float maxLod;
-		private float mipLodBias; // = 1;
-
-		// Wrapping settings
-		private final VkSamplerAddressMode[] addressMode = new VkSamplerAddressMode[3];
-		private VkBorderColor border;
-
-		// Anisotropy settings
-		private float anisotropy = 1f;
-
-		// Comparison operation
-		private VkCompareOp compareOp = VkCompareOp.NEVER;
-		// TODO
-//		private boolean compareEnable;
-//		private boolean unnormalizedCoordinates;
-//		flags
-
-		/**
-		 * Constructor.
-		 * @param dev Logical device
-		 */
-		public Builder(LogicalDevice dev) {
-			this.dev = notNull(dev);
-			Arrays.fill(addressMode, VkSamplerAddressMode.REPEAT);
+		public Builder() {
+			min(VkFilter.LINEAR);
+			mag(VkFilter.LINEAR);
+			mipmap(VkSamplerMipmapMode.LINEAR);
+			maxLod(VK_LOD_CLAMP_NONE);
+			anisotropy(1);
+			compare(VkCompareOp.NEVER);
+			wrap(VkSamplerAddressMode.REPEAT);
 		}
 
 		/**
@@ -150,7 +118,7 @@ public class Sampler extends AbstractVulkanObject {
 		 * @param min Magnification filter (default is {@link VkFilter#LINEAR})
 		 */
 		public Builder mag(VkFilter mag) {
-			this.magFilter = notNull(mag);
+			info.magFilter = notNull(mag);
 			return this;
 		}
 
@@ -159,7 +127,7 @@ public class Sampler extends AbstractVulkanObject {
 		 * @param min Minification filter (default is {@link VkFilter#LINEAR})
 		 */
 		public Builder min(VkFilter min) {
-			this.minFilter = notNull(min);
+			info.minFilter = notNull(min);
 			return this;
 		}
 
@@ -168,7 +136,7 @@ public class Sampler extends AbstractVulkanObject {
 		 * @param mode Mipmap mode (default is {@link VkSamplerMipmapMode#LINEAR})
 		 */
 		public Builder mipmap(VkSamplerMipmapMode mode) {
-			this.mipmapMode = notNull(mode);
+			info.mipmapMode = notNull(mode);
 			return this;
 		}
 
@@ -177,113 +145,88 @@ public class Sampler extends AbstractVulkanObject {
 		 * @param minLod Minimum LOD
 		 */
 		public Builder minLod(float minLod) {
-			this.minLod = minLod;
+			info.minLod = minLod;
 			return this;
 		}
 
 		/**
 		 * Sets the maximum LOD value.
 		 * @param minLod Maximum LOD
+		 * @see Sampler#VK_LOD_CLAMP_NONE
 		 */
 		public Builder maxLod(float maxLod) {
-			this.maxLod = maxLod;
+			info.maxLod = maxLod;
 			return this;
 		}
 
 		/**
 		 * Sets the wrapping policy for the given component.
-		 * @param component		Component index 0..2 (U, V or W direction)
-		 * @param wrap			Wrapping policy
-		 * @param mirror		Whether coordinates are mirrored
+		 * @param component			Component index 0..2 (U, V or W direction)
+		 * @param mode				Addressing mode
+		 * @throws IndexOutOfBoundsException for an invalid component index
+		 * @see Wrap#mode(boolean)
 		 */
-		public Builder wrap(int component, Wrap wrap, boolean mirror) {
-			addressMode[component] = wrap.mode(mirror);
+		public Builder wrap(int component, VkSamplerAddressMode mode) {
+			Check.notNull(mode);
+			switch(component) {
+				case 0: info.addressModeU = mode; break;
+				case 1: info.addressModeV = mode; break;
+				case 2: info.addressModeW = mode; break;
+				default: throw new IndexOutOfBoundsException("Invalid address mode component: " + component);
+			}
 			return this;
 		}
 
 		/**
-		 * Sets the wrapping policy for <b>all</b> components.
-		 * @param wrap			Wrapping policy
-		 * @param mirror		Whether coordinates are mirrored
+		 * Sets the wrapping policy for all three components.
+		 * @param mode Addressing mode
 		 */
-		public Builder wrap(Wrap wrap, boolean mirror) {
-			final VkSamplerAddressMode mode = wrap.mode(mirror);
-			Arrays.fill(addressMode, mode);
+		public Builder wrap(VkSamplerAddressMode mode) {
+			for(int n = 0; n < 3; ++n) {
+				wrap(n, mode);
+			}
 			return this;
 		}
 
 		/**
-		 * Sets the texture border colour (required for a wrapping policy of {@link Wrap#BORDER}).
+		 * Sets the texture border colour.
 		 * @param border Border colour
 		 */
 		public Builder border(VkBorderColor border) {
-			this.border = notNull(border);
+			info.borderColor = notNull(border);
 			return this;
 		}
 
 		/**
-		 * Sets the number of texel samples for anisotropy filtering.
+		 * Sets the number of texel samples for anisotropy filtering (default is disabled).
 		 * @param maxAnisotropy Number of texel samples
 		 */
-		//@DeviceLimit(1, "maxSamplerAnisotropy")
-		//@DeviceFeature("samplerAnisotropy")
 		public Builder anisotropy(float anisotropy) {
-			this.anisotropy = oneOrMore(anisotropy);
+			info.maxAnisotropy = oneOrMore(anisotropy);
+			info.anisotropyEnable = VulkanBoolean.TRUE;
+			return this;
+		}
+
+		/**
+		 * Sets the comparison operation (default is {@link VkCompareOp#NEVER}).
+		 * @param op Comparison operation
+		 */
+		public Builder compare(VkCompareOp op) {
+			info.compareOp = notNull(op);
 			return this;
 		}
 
 		/**
 		 * Builds this sampler.
+		 * @param dev Logical device
 		 * @return New sampler
 		 * @throws IllegalArgumentException if the minimum LOD is greater-than the maximum LOD
-		 * @throws IllegalArgumentException if the border colour is not specified for a border wrapping policy (see {@link #border(VkBorderColor)})
 		 */
-		public Sampler build() {
-			// Create descriptor
-			final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
-
-			// Init filters
-			info.magFilter = magFilter;
-			info.minFilter = minFilter;
-
-			// Init addressing modes
-			if(border == null) {
-				for(VkSamplerAddressMode mode : addressMode) {
-					if(mode == VkSamplerAddressMode.CLAMP_TO_BORDER) {
-						throw new IllegalArgumentException("Border colour must be specified for clamp-to-border address mode");
-					}
-				}
-			}
-			info.addressModeU = addressMode[0];
-			info.addressModeV = addressMode[1];
-			info.addressModeW = addressMode[2];
-			info.borderColor = border;
-
-			// Init mipmap settings
-			if(maxLod < minLod) throw new IllegalArgumentException("Maximum LOD cannot exceed minimum LOD");
-			info.mipmapMode = mipmapMode;
-			info.mipLodBias = mipLodBias;
-			info.minLod = minLod;
-			info.maxLod = maxLod;
-
-			// Init anisotrophy settings
-			if(anisotropy > 1) {
-				// TODO - invalid if cubic min/mag filter
-				info.anisotropyEnable = VulkanBoolean.TRUE;
-				info.maxAnisotropy = anisotropy;
-			}
-
-			// Init comparison operation
-			info.compareOp = compareOp;
-			// TODO
-			//info.compareEnable = VulkanBoolean.FALSE;
-
-			// Allocate sampler
+		public Sampler build(LogicalDevice dev) {
+			if(info.minLod > info.maxLod) throw new IllegalArgumentException("Invalid min/max LOD");
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference handle = dev.factory().pointer();
 			check(lib.vkCreateSampler(dev, info, null, handle));
-
-			// Create sampler
 			return new Sampler(handle.getValue(), dev);
 		}
 	}

@@ -60,7 +60,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		final var levels = List.of(new Level(0, data.length));
 
 		// Create image
-		return new AbstractImageData(new Extents(size), components, layout, levels) {
+		return new AbstractImageData(new Extents(size), components, layout, 0, levels) {
 			@Override
 			public Bufferable data(int layer) {
 				if(layer != 0) throw new IndexOutOfBoundsException("Native images only support a single layer");

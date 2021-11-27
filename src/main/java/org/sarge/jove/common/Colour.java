@@ -12,6 +12,11 @@ import org.sarge.lib.util.Check;
  */
 public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
 	/**
+	 * RGBA string.
+	 */
+	public static final String RGBA = "RGBA";
+
+	/**
 	 * Material colour types.
 	 */
 	public enum Type {

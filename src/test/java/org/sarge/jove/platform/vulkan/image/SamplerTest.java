@@ -3,8 +3,6 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,14 +10,9 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
-import org.sarge.jove.platform.vulkan.image.Sampler;
-import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.image.Sampler.Wrap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
@@ -36,15 +29,6 @@ public class SamplerTest extends AbstractVulkanTest {
 	@Test
 	void constructor() {
 		assertEquals(new Handle(new Pointer(1)), sampler.handle());
-	}
-
-	@SuppressWarnings("static-method")
-	@Test
-	void levels() {
-		assertEquals(1, Sampler.levels(new Dimensions(1, 1)));
-		assertEquals(2, Sampler.levels(new Dimensions(2, 2)));
-		assertEquals(2, Sampler.levels(new Dimensions(3, 3)));
-		assertEquals(3, Sampler.levels(new Dimensions(4, 4)));
 	}
 
 	@Nested
@@ -85,7 +69,7 @@ public class SamplerTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Sampler.Builder(dev);
+			builder = new Sampler.Builder();
 		}
 
 		@Test
@@ -95,60 +79,49 @@ public class SamplerTest extends AbstractVulkanTest {
 					.min(VkFilter.LINEAR)
 					.mag(VkFilter.NEAREST)
 					.mipmap(VkSamplerMipmapMode.NEAREST)
-					.wrap(Wrap.BORDER, false)
+					.wrap(VkSamplerAddressMode.CLAMP_TO_BORDER)
 					.border(VkBorderColor.VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK)
 					.minLod(2)
 					.maxLod(3)
-					.anisotropy(4f)
-					.build();
+					.anisotropy(4)
+					.build(dev);
+
+			// Init expected descriptor
+			final VkSamplerCreateInfo expected = new VkSamplerCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final VkSamplerCreateInfo info = (VkSamplerCreateInfo) obj;
+					assertNotNull(info);
+					assertEquals(VkFilter.LINEAR, info.minFilter);
+					assertEquals(VkFilter.NEAREST, info.magFilter);
+					assertEquals(VkSamplerMipmapMode.NEAREST, info.mipmapMode);
+					assertEquals(0f, info.mipLodBias);
+					assertEquals(2f, info.minLod);
+					assertEquals(3f, info.maxLod);
+					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeU);
+					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeV);
+					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeW);
+					assertEquals(VkBorderColor.VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, info.borderColor);
+					assertEquals(VulkanBoolean.TRUE, info.anisotropyEnable);
+					assertEquals(4f, info.maxAnisotropy);
+					return true;
+				}
+			};
 
 			// Check sampler
 			assertNotNull(sampler);
-
-			// Check API
-			final ArgumentCaptor<VkSamplerCreateInfo> captor = ArgumentCaptor.forClass(VkSamplerCreateInfo.class);
-			verify(lib).vkCreateSampler(eq(dev), captor.capture(), isNull(), eq(POINTER));
-
-			// Check descriptor
-			final VkSamplerCreateInfo info = captor.getValue();
-			assertNotNull(info);
-			assertEquals(VkFilter.LINEAR, info.minFilter);
-			assertEquals(VkFilter.NEAREST, info.magFilter);
-
-			// Check mipmap settings
-			assertEquals(VkSamplerMipmapMode.NEAREST, info.mipmapMode);
-	//		assertEquals(1, info.mipLodBias);
-			assertEquals(2, info.minLod);
-			assertEquals(3, info.maxLod);
-
-			// Check address modes
-			assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeU);
-			assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeV);
-			assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeW);
-			assertEquals(VkBorderColor.VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, info.borderColor);
-
-			// Check anisotropy settings
-			assertEquals(VulkanBoolean.TRUE, info.anisotropyEnable);
-			assertEquals(4f, info.maxAnisotropy);
-
-			// TODO - others
+			verify(lib).vkCreateSampler(dev, expected, null, POINTER);
 		}
 
 		@Test
 		void buildDefaults() {
-			assertNotNull(builder.build());
-		}
-
-		@Test
-		void buildRequiresBorderColour() {
-			builder.wrap(1, Wrap.BORDER, false);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertNotNull(builder.build(dev));
 		}
 
 		@Test
 		void buildInvalidLOD() {
 			builder.minLod(2).maxLod(1);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
 		}
 	}
 }
