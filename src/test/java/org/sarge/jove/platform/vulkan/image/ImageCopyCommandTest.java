@@ -6,10 +6,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
 import org.sarge.jove.platform.vulkan.VkBufferUsage;
@@ -111,12 +114,16 @@ public class ImageCopyCommandTest {
 	class BuilderTests {
 		@Test
 		void copy() {
+			// Init MIP levels
+			final ImageData data = mock(ImageData.class);
+			when(data.levels()).thenReturn(List.of(new ImageData.Level(1, 2)));
+
 			// Create command to copy the buffer to the whole of the image
 			final ImageCopyCommand copy = builder
 					.image(image)
 					.buffer(buffer)
 					.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
-					.region(image)
+					.region(data)
 					.build();
 
 			// Check buffer is validated

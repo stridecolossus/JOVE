@@ -5,7 +5,9 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -73,6 +75,16 @@ public class FormatBuilder {
 				.type(layout.type())
 				.signed(layout.signed())
 				.build();
+	}
+
+	public static VkFormat format(ImageData image) {
+		final int format = image.format();
+		if(format == VkFormat.UNDEFINED.value()) {
+			return format(image.layout());
+		}
+		else {
+			return IntegerEnumeration.mapping(VkFormat.class).map(image.format());
+		}
 	}
 
 	private String components;

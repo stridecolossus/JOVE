@@ -120,8 +120,8 @@ public class VulkanImageLoaderTest {
 		assertEquals(expected, image.levels());
 
 		// Check image data
-		assertNotNull(image.data(0));
-		assertEquals(total, image.data(0).length());
+		assertNotNull(image.data());
+		assertEquals(total, image.data().length());
 	}
 
 	@Test

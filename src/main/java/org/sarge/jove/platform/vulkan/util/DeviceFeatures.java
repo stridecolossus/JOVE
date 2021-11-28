@@ -1,63 +1,107 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toSet;
-import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Set;
-import java.util.function.Predicate;
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 /**
- * Wrapper for the <i>device features</i> supported by a physical or logical device.
+ * A set of <i>device features</i> enumerates the <i>supported</i> features of a physical device or the <i>required</i> features of the logical device.
  * @see VkPhysicalDeviceFeatures
  * @author Sarge
  */
-public class DeviceFeatures {
-	private final VkPhysicalDeviceFeatures features;
+public interface DeviceFeatures {
+	/**
+	 * @return Features
+	 */
+	Collection<String> features();
 
 	/**
-	 * Constructor.
+	 * Tests whether this set contains the given features.
+	 * @param features Required features
+	 * @return Whether this set contains the given features
+	 * @see #contains(String)
+	 */
+	boolean contains(DeviceFeatures features);
+
+	/**
+	 * Skeleton implementation.
+	 */
+	abstract class AbstractDeviceFeatures implements DeviceFeatures {
+		@Override
+		public boolean equals(Object obj) {
+			return (obj == this) || (obj instanceof DeviceFeatures that) && this.features().equals(that.features());
+		}
+
+		@Override
+		public String toString() {
+			return features().toString();
+		}
+	}
+
+	/**
+	 * Creates a set of <i>required</i> device features.
+	 * @param required Required features
+	 * @return New required device features
+	 */
+	static DeviceFeatures of(List<String> required) {
+		return new AbstractDeviceFeatures() {
+			@Override
+			public Collection<String> features() {
+				return required;
+			}
+
+			@Override
+			public boolean contains(DeviceFeatures features) {
+				return required.containsAll(features.features());
+			}
+		};
+	}
+
+	/**
+	 * Creates a set of <i>supported</i> device features.
 	 * @param features Supported features
+	 * @return New supported device features
 	 */
-	public DeviceFeatures(VkPhysicalDeviceFeatures features) {
-		this.features = notNull(features);
-		features.write(); // TODO - what is this doing?
+	static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
+		// Init structure
+		features.write();
+
+		// Create wrapper
+		return new AbstractDeviceFeatures() {
+			@Override
+			public Collection<String> features() {
+				return features
+						.getFieldList()
+						.stream()
+						.map(Field::getName)
+						.filter(this::contains)
+						.collect(toSet());
+			}
+
+			@Override
+			public boolean contains(DeviceFeatures required) {
+				return required.features().stream().allMatch(this::contains);
+			}
+
+			private boolean contains(String field) {
+				return features.readField(field) == VulkanBoolean.TRUE;
+			}
+		};
 	}
 
 	/**
-	 * Tests whether the given feature is present in this set.
-	 * @param feature Feature name
-	 * @return Whether present
+	 * Helper - Populates a required features structure.
+	 * @param required		Required features
+	 * @param struct		Structure
 	 */
-	public boolean contains(String feature) {
-		return features.readField(feature) == VulkanBoolean.TRUE;
-	}
-
-	/**
-	 * @param required Required features
-	 * @return Whether this set contains the given required features
-	 */
-	public boolean contains(Set<String> required) {
-		return missing(required).isEmpty();
-	}
-
-	/**
-	 * Enumerates features that are not supported in this set.
-	 * @param required Required features
-	 * @return Missing features
-	 */
-	public Set<String> missing(Set<String> required) {
-		return required.stream().filter(Predicate.not(this::contains)).collect(toSet());
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return (obj == this) || (obj instanceof DeviceFeatures that) && this.features.dataEquals(that.features);
-	}
-
-	@Override
-	public String toString() {
-		return features.toString();
+	static void populate(DeviceFeatures required, VkPhysicalDeviceFeatures struct) {
+		required
+				.features()
+				.stream()
+				.forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
 	}
 }

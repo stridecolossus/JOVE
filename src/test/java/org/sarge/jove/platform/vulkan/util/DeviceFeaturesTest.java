@@ -1,58 +1,71 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 public class DeviceFeaturesTest {
 	private static final String SUPPORTED = "samplerAnisotropy";
-	private static final String OTHER = "wideLines";
-
-	private DeviceFeatures features;
-	private VkPhysicalDeviceFeatures struct;
-
-	@BeforeEach
-	void before() {
-		struct = new VkPhysicalDeviceFeatures();
-		struct.samplerAnisotropy = VulkanBoolean.TRUE;
-		features = new DeviceFeatures(struct);
-	}
 
 	@Test
-	void contains() {
-		assertEquals(true, features.contains(SUPPORTED));
-		assertEquals(false, features.contains(OTHER));
+	void populate() {
+		final DeviceFeatures required = DeviceFeatures.of(List.of(SUPPORTED));
+		final var struct = new VkPhysicalDeviceFeatures();
+		DeviceFeatures.populate(required, struct);
+		assertEquals(VulkanBoolean.TRUE, struct.samplerAnisotropy);
 	}
 
-	@Test
-	void containsInvalidField() {
-		assertThrows(IllegalArgumentException.class, () -> features.contains("cobblers"));
+	@Nested
+	class RequiredFeaturesTest {
+		private DeviceFeatures required;
+
+		@BeforeEach
+		void before() {
+			required = DeviceFeatures.of(List.of(SUPPORTED));
+		}
+
+		@Test
+		void features() {
+			assertEquals(List.of(SUPPORTED), required.features());
+		}
+
+		@Test
+		void contains() {
+			assertEquals(true, required.contains(required));
+			assertEquals(false, required.contains(DeviceFeatures.of(List.of("other"))));
+		}
 	}
 
-	@Test
-	void containSet() {
-		assertEquals(true, features.contains(Set.of(SUPPORTED)));
-		assertEquals(false, features.contains(Set.of(OTHER)));
-		assertEquals(false, features.contains(Set.of(SUPPORTED, OTHER)));
-	}
+	@Nested
+	class SupportedFeaturesTest {
+		private DeviceFeatures supported;
+		private VkPhysicalDeviceFeatures struct;
 
-	@Test
-	void missing() {
-		assertEquals(Set.of(), features.missing(Set.of(SUPPORTED)));
-		assertEquals(Set.of(OTHER), features.missing(Set.of(OTHER)));
-		assertEquals(Set.of(OTHER), features.missing(Set.of(SUPPORTED, OTHER)));
-	}
+		@BeforeEach
+		void before() {
+			struct = new VkPhysicalDeviceFeatures();
+			struct.samplerAnisotropy = VulkanBoolean.TRUE;
+			supported = DeviceFeatures.of(struct);
+		}
 
-	@Test
-	void equals() {
-		assertEquals(true, features.equals(features));
-		assertEquals(true, features.equals(new DeviceFeatures(struct)));
-		assertEquals(false, features.equals(null));
-		assertEquals(false, features.equals(new DeviceFeatures(new VkPhysicalDeviceFeatures())));
+		@Test
+		void features() {
+			assertEquals(Set.of(SUPPORTED), supported.features());
+		}
+
+		@Test
+		void contains() {
+			final var other = new VkPhysicalDeviceFeatures();
+			other.wideLines = VulkanBoolean.TRUE;
+			assertEquals(true, supported.contains(supported));
+			assertEquals(true, supported.contains(DeviceFeatures.of(struct)));
+			assertEquals(false, supported.contains(DeviceFeatures.of(other)));
+		}
 	}
 }

@@ -25,6 +25,7 @@ import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.StructureHelper;
@@ -157,8 +158,8 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * Sets the features required by this logical device.
 		 * @param required Required features
 		 */
-		public Builder features(VkPhysicalDeviceFeatures features) {
-			this.features = notNull(features);
+		public Builder features(DeviceFeatures required) {
+			DeviceFeatures.populate(required, features);
 			return this;
 		}
 

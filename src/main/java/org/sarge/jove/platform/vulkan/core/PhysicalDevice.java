@@ -82,6 +82,15 @@ public class PhysicalDevice implements NativeObject {
 		return new Family(index, props.queueCount, flags);
 	}
 
+	/**
+	 * Helper - Creates a device predicate for the given required features.
+	 * @param features Required features
+	 * @return New device predicate
+	 */
+	public static Predicate<PhysicalDevice> predicate(DeviceFeatures features) {
+		return dev -> dev.features().contains(features);
+	}
+
 	private final Handle handle;
 	private final Instance instance;
 	private final List<Family> families;
@@ -282,12 +291,12 @@ public class PhysicalDevice implements NativeObject {
 	}
 
 	/**
-	 * Retrieves the features supported by this device.
+	 * @return Features supported by this device
 	 */
 	private DeviceFeatures loadFeatures() {
 		final VkPhysicalDeviceFeatures struct = new VkPhysicalDeviceFeatures();
 		instance.library().vkGetPhysicalDeviceFeatures(this, struct);
-		return new DeviceFeatures(struct);
+		return DeviceFeatures.of(struct);
 	}
 
 	/**

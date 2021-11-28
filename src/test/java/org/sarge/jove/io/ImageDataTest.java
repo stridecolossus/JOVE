@@ -47,7 +47,7 @@ public class ImageDataTest {
 			}
 
 			@Override
-			public Bufferable data(int layer) {
+			public Bufferable data() {
 				return null;
 			}
 		}

@@ -102,19 +102,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final long compressionByteLength = in.readLong();
 
 		// Load MIP level index
-		final Index[] index = new Index[levelCount];
-		for(int n = 0; n < levelCount; ++n) {
-			final int offset = (int) in.readLong();
-			final int len = (int) in.readLong();
-			final int uncompressed = (int) in.readLong();
-			index[n] = new Index(offset, len, uncompressed);
-		}
-
-		// Re-calculate MIP level offsets relative to start of image array
-		final int offset = index[index.length - 1].offset;
-		for(int n = 0; n < levelCount; ++n) {
-			index[n].offset -= offset;
-		}
+		final List<Index> index = loadIndex(in, levelCount);
 
 		// Load DFD
 		final String components = loadFormatDescriptor(in, formatByteLength);
@@ -127,18 +115,18 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		if(compressionByteLength != 0) throw new UnsupportedOperationException();
 
 		// Build MIP level index
-		final List<Level> levels = Arrays.stream(index).map(Index::level).collect(toList());
+		final List<Level> levels = index.stream().map(Index::level).collect(toList());
 
 		// Allocate image data
-		final int len = levels.stream().mapToInt(Level::length).sum();
-		final byte[][] data = new byte[layerCount][len];
+		final int len = faceCount * levels.stream().mapToInt(Level::length).sum();
+		final byte[] data = new byte[len];
 
 		// Load image data (smallest MIP level first)
 		final Iterator<Level> itr = new ReverseListIterator<>(levels);
 		while(itr.hasNext()) {
 			final Level level = itr.next();
 			for(int face = 0; face < faceCount; ++face) {
-				in.readFully(data[face], level.offset(), level.length());
+				in.readFully(data, level.offset(), level.length() / faceCount);
 				// TODO - padding?
 			}
 		}
@@ -149,8 +137,13 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		// Create image
 		return new AbstractImageData(extents, components, layout, format, levels) {
 			@Override
-			public Bufferable data(int layer) {
-				return Bufferable.of(data[layer]);
+			public int layers() {
+				return faceCount;
+			}
+
+			@Override
+			public Bufferable data() {
+				return Bufferable.of(data);
 			}
 		};
 	}
@@ -166,6 +159,31 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		// Validate header
 		final String str = new String(header);
 		if(!str.contains("KTX 20")) throw new UnsupportedOperationException("Invalid KTX file");
+	}
+
+	/**
+	 * Loads the MIP index.
+	 * @param in
+	 * @param count Number of MIP levels
+	 * @return MIP index
+	 */
+	private static List<Index> loadIndex(DataInput in, int count) throws IOException {
+		// Load MIP level index
+		final Index[] index = new Index[count];
+		for(int n = 0; n < count; ++n) {
+			final int offset = (int) in.readLong();
+			final int len = (int) in.readLong();
+			final int uncompressed = (int) in.readLong();
+			index[n] = new Index(offset, len, uncompressed);
+		}
+
+		// Truncate MIP level offsets relative to start of image array
+		final int offset = index[index.length - 1].offset;
+		for(Index level : index) {
+			level.offset -= offset;
+		}
+
+		return Arrays.asList(index);
 	}
 
 	/**
@@ -200,7 +218,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		validate(ver, 2, "Version");
 		validate(model, 1, "ColorModel");
 		validate(primaries, 1, "Primaries");
-		validate(transferFunction, 2, "TransferFunction");
+		//validate(transferFunction, 2, "TransferFunction");
 		validate(flags, 0, "Flags");
 
 		// Skip texel dimensions

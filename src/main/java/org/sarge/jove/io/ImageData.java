@@ -53,12 +53,9 @@ public interface ImageData {
 	List<Level> levels();
 
 	/**
-	 * Retrieves the image data for the given layer.
-	 * @param layer Image layer
 	 * @return Image data
-	 * @throws IndexOutOfBoundsException for an invalid layer index
 	 */
-	Bufferable data(int layer);
+	Bufferable data();
 
 	/**
 	 * An <i>image level</i> specifies a MIP level of this image.

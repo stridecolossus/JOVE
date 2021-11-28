@@ -26,45 +26,6 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ImageCopyCommand implements Command {
-	/**
-	 * Helper - Creates an image copy command that copies all MIP levels.
-	 * @param image			Source image
-	 * @param buffer		Buffer
-	 * @param texture		Texture image
-	 * @param layout		Image layout
-	 * @return New copy command
-	 */
-	public static ImageCopyCommand of(ImageData image, VulkanBuffer buffer, Image texture, VkImageLayout layout) {
-		// Init builder
-		final var copy = new ImageCopyCommand.Builder()
-				.image(texture)
-				.buffer(buffer)
-				.layout(layout);
-
-		// Generate copy regions for each MIP level
-		final ImageDescriptor descriptor = texture.descriptor();
-		final Level[] levels = image.levels().toArray(Level[]::new);
-		for(int n = 0; n < levels.length; ++n) {
-			// Build MIP sub-resource
-			final SubResource res = new SubResource.Builder(descriptor)
-					.mipLevel(n)
-					.build();
-
-			// Create MIP copy region
-			final CopyRegion region = new CopyRegion.Builder()
-					.offset(levels[n].offset())
-					.subresource(res)
-					.extents(descriptor.extents().mip(n))
-					.build();
-
-			// Add to builder
-			copy.region(region);
-		}
-
-		// Construct copy command
-		return copy.build();
-	}
-
 	private final Image image;
 	private final VulkanBuffer buffer;
 	private final VkBufferImageCopy[] regions;
@@ -294,13 +255,39 @@ public class ImageCopyCommand implements Command {
 		}
 
 		/**
-		 * Adds a copy region for the whole of the given image.
+		 * Helper - Adds copy regions for <b>all</b> layers and MIP levels of the given image.
 		 * @param image Image
-		 * @see CopyRegion#of(ImageDescriptor)
+		 * @throws NullPointerException if the image texture has not been populated
 		 */
-		public Builder region(Image image) {
-			final CopyRegion whole = CopyRegion.of(image.descriptor());
-			return region(whole);
+		public Builder region(ImageData image) {
+			final ImageDescriptor descriptor = this.image.descriptor();
+			final Level[] levels = image.levels().toArray(Level[]::new);
+			for(int level = 0; level < levels.length; ++level) {
+				// Calculate MIP level extents
+				final Extents extents = descriptor.extents().mip(level);
+				final int offset = levels[level].offset();
+
+				// Load layers for this MIP level
+				for(int layer = 0; layer < descriptor.layerCount(); ++layer) {
+					// Build sub-resource
+					final SubResource res = new SubResource.Builder(descriptor)
+							.baseArrayLayer(layer)
+							.mipLevel(level)
+							.build();
+
+					// Create copy region
+					final CopyRegion region = new CopyRegion.Builder()
+							.offset(offset)
+							.subresource(res)
+							.extents(extents)
+							.build();
+
+					// Add region
+					region(region);
+				}
+			}
+
+			return this;
 		}
 
 		/**

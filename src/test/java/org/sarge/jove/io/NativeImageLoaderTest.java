@@ -51,7 +51,7 @@ public class NativeImageLoaderTest {
 		assertEquals(List.of(new Level(0, len)), image.levels());
 
 		// Check image data
-		final Bufferable data = image.data(0);
+		final Bufferable data = image.data();
 		assertNotNull(data);
 		assertEquals(len, data.length());
 	}
@@ -91,14 +91,6 @@ public class NativeImageLoaderTest {
 	void unsupported() {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_BYTE_BINARY);
 		assertThrows(RuntimeException.class, () -> loader.load(buffered));
-	}
-
-	@DisplayName("Native images should only support a single layer")
-	@Test
-	void invalidLayerIndex() throws IOException {
-		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_4BYTE_ABGR);
-		final ImageData image = loader.load(buffered);
-		assertThrows(IndexOutOfBoundsException.class, () -> image.data(1));
 	}
 
 	@DisplayName("Should load supported buffered formats")
