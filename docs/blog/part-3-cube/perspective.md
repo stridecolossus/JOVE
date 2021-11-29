@@ -579,6 +579,8 @@ public class ModelBuilder {
 }
 ```
 
+Note that the layout is mutable and is initially empty.
+
 Vertices added to the model can optionally be validated against the layout (which is also mutable):
 
 ```java
@@ -588,20 +590,6 @@ public ModelBuilder add(Vertex vertex) {
     }
     vertices.add(vertex);
     return this;
-}
-```
-
-Where `validate` compares the vertex layout to that of the model:
-
-```java
-private void validate(Vertex vertex) {
-    List<Layout> actual = vertex
-        .components()
-        .stream()
-        .map(Component::layout)
-        .collect(toList());
-
-    if(!layout.equals(actual)) throw new IllegalArgumentException(...);
 }
 ```
 

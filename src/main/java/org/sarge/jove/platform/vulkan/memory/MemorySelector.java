@@ -56,7 +56,7 @@ public class MemorySelector {
 	 * Selects the memory type for the given request.
 	 * @param reqs			Requirements
 	 * @param props			Memory properties
-	 * @return
+	 * @return Selected memory type
 	 * @throws AllocationException if no memory type matches the request
 	 */
 	public MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {

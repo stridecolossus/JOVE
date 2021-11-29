@@ -25,7 +25,7 @@ The [introduction](blog/part-1-intro/introduction) in the first section outlines
     - [Presentation](blog/part-2-triangle/presentation)
     - [Render Pass](blog/part-2-triangle/render-pass)
     - [Pipeline](blog/part-2-triangle/pipeline)
-    - [Rendering](blog/part-2-triangle/command-sequence)
+    - [Rendering Commands](blog/part-2-triangle/command-sequence)
 
 - Part 3 - Textured Cube
     - [Memory Allocation](blog/part-3-cube/memory-allocation)

@@ -564,7 +564,6 @@ And finally we release the staging buffer:
 
 ```java
 staging.destroy();
-return vbo;
 ```
 
 The `submitAndWait` method is a new helper on the command class:
@@ -574,6 +573,7 @@ default void submitAndWait(Pool pool) {
     Buffer buffer = Work.submit(this, pool);
     pool.waitIdle();
     buffer.free();
+    return buffer;
 }
 ```
 

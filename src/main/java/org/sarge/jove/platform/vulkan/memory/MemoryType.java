@@ -52,18 +52,20 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
 		// Extract heaps
 		final Heap[] heaps = new Heap[props.memoryHeapCount];
+		final var heapMapper = IntegerEnumeration.mapping(VkMemoryHeapFlag.class);
 		for(int n = 0; n < heaps.length; ++n) {
 			final VkMemoryHeap heap = props.memoryHeaps[n];
-			final Set<VkMemoryHeapFlag> flags = IntegerEnumeration.mapping(VkMemoryHeapFlag.class).enumerate(heap.flags);
+			final Set<VkMemoryHeapFlag> flags = heapMapper.enumerate(heap.flags);
 			heaps[n] = new Heap(heap.size, flags);
 		}
 
 		// Extract memory types
 		final MemoryType[] types = new MemoryType[props.memoryTypeCount];
+		final var typeMapper = IntegerEnumeration.mapping(VkMemoryProperty.class);
 		for(int n = 0; n < types.length; ++n) {
 			final VkMemoryType type = props.memoryTypes[n];
 			final Heap heap = heaps[type.heapIndex];
-			final var properties = IntegerEnumeration.mapping(VkMemoryProperty.class).enumerate(type.propertyFlags);
+			final Set<VkMemoryProperty> properties = typeMapper.enumerate(type.propertyFlags);
 			types[n] = new MemoryType(n, heap, properties);
 		}
 

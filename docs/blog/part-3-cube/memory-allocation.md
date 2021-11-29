@@ -183,62 +183,37 @@ We represent each memory type by a new domain record:
 
 ```java
 public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties) {
-}
-```
-
-With a local class for the memory heap:
-
-```java
-public static class Heap {
-    private final int index;
-    private final long size;
-    private final Set<VkMemoryHeapFlag> flags;
+    public record Heap(long size, Set<VkMemoryHeapFlag> flags) {
+    }
 }
 ```
 
 The memory types and heaps are enumerated from the two arrays in the descriptor by a factory method:
 
 ```java
-public static List<MemoryType> enumerate(VkPhysicalDeviceMemoryProperties props) {
-    // Init arrays
+public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
+    // Extract heaps
     Heap[] heaps = new Heap[props.memoryHeapCount];
+    var heapMapper = IntegerEnumeration.mapping(VkMemoryHeapFlag.class);
+    for(int n = 0; n < heaps.length; ++n) {
+        VkMemoryHeap heap = props.memoryHeaps[n];
+        Set<VkMemoryHeapFlag> flags = heapMapper.enumerate(heap.flags);
+        heaps[n] = new Heap(heap.size, flags);
+    }
+
+    // Extract memory types
     MemoryType[] types = new MemoryType[props.memoryTypeCount];
-
-    // Helper
-    class Mapper {
-        ...
-    }
-
-    // Enumerate memory heaps and types
-    Mapper mapper = new Mapper();
-    Arrays.setAll(heaps, mapper::heap);
-    Arrays.setAll(types, mapper::type);
-
-    // Convert to collection
-    return Arrays.asList(types);
-}
-```
-
-The mapper is a local class that converts the array elements:
-
-```java
-class Loader {
-    Heap heap(int index) {
-        VkMemoryHeap heap = props.memoryHeaps[index];
-        var flags = IntegerEnumeration.mapping(VkMemoryHeapFlag.class).enumerate(heap.flags);
-        return new Heap(index, heap.size, flags);
-    }
-
-    MemoryType type(int index) {
-        VkMemoryType type = props.memoryTypes[index];
+    var typeMapper = IntegerEnumeration.mapping(VkMemoryProperty.class);
+    for(int n = 0; n < types.length; ++n) {
+        VkMemoryType type = props.memoryTypes[n];
         Heap heap = heaps[type.heapIndex];
-        var properties = IntegerEnumeration.mapping(VkMemoryProperty.class).enumerate(type.propertyFlags);
-        return new MemoryType(index, heap, properties);
+        Set<VkMemoryProperty> properties = typeMapper.enumerate(type.propertyFlags);
+        types[n] = new MemoryType(n, heap, properties);
     }
+
+    return types;
 }
 ```
-
-Note that the `index` of each memory type is implicitly the array index.
 
 Finally we implement a _memory properties_ record:
 
@@ -268,13 +243,13 @@ The allocation algorithm is encapsulated in a new component:
 
 ```java
 public class MemorySelector {
-    private final List<MemoryType> types;
+    private final MemoryType[] types;
 
     /**
      * Selects the memory type for the given request.
      * @param reqs          Requirements
      * @param props         Memory properties
-     * @return
+     * @return Selected memory type
      * @throws AllocationException if no memory type matches the request
      */
     public MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
@@ -287,9 +262,10 @@ The `select` method first enumerates the _candidate_ memory types by applying th
 
 ```java
 public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-    List<MemoryType> candidates = types
-        .stream()
-        .filter(type -> MathsUtil.isBit(reqs.memoryTypeBits, type.index()))
+    List<MemoryType> candidates = IntStream
+        .range(0, types.length)
+        .filter(n -> MathsUtil.isBit(reqs.memoryTypeBits, n))
+        .mapToObj(n -> types[n])
         .collect(toList());
 
     ...
@@ -330,7 +306,7 @@ public static MemorySelector create(LogicalDevice dev) {
     lib.vkGetPhysicalDeviceMemoryProperties(dev.parent(), props);
 
     // Enumerate memory types
-    List<MemoryType> types = MemoryType.enumerate(props);
+    MemoryType[] types = MemoryType.enumerate(props);
 
     // Create selector
     return new MemorySelector(types);

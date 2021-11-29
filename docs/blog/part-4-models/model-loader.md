@@ -137,16 +137,14 @@ The loader applies the above logic and delegates to a local helper method to par
 public Stream<Model> load(Reader r) throws IOException {
     // Parse OBJ model
     try(LineNumberReader in = new LineNumberReader(r)) {
-        try {
-            in.lines()
-                .map(String::trim)
-                .filter(Predicate.not(String::isBlank))
-                .filter(Predicate.not(this::isComment))
-                .forEach(this::parse);
-        }
-        catch(Exception e) {
-            throw new IOException(...);
-        }
+        in.lines()
+            .map(String::trim)
+            .filter(Predicate.not(String::isBlank))
+            .filter(Predicate.not(this::isComment))
+            .forEach(this::parse);
+    }
+    catch(Exception e) {
+        throw new IOException(...);
     }
 
     // Construct models

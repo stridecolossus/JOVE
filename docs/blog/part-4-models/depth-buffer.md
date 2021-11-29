@@ -470,75 +470,114 @@ Ta-da!
 
 ### Format Selector
 
-Rather than hard-coding the format of the depth buffer image and attachment we add a helper to the image class that selects the most suitable format.
-
-We first define a filter that tests whether a given depth-stencil format supports optimal tiling:
+Rather than hard-coding the format of the depth buffer image and attachment we create a helper class that selects the most suitable format from a list of candidates:
 
 ```java
-static VkFormat depth(PhysicalDevice dev) {
-    Predicate<VkFormat> predicate = format -> {
-        VkFormatProperties props = dev.properties(format);
-        return MathsUtil.isMask(props.optimalTilingFeatures, VkFormatFeature.DEPTH_STENCIL_ATTACHMENT.value());
-    };
-    ...
+public class FormatSelector {
+    private final Function<VkFormat, VkFormatProperties> mapper;
+    private final Predicate<VkFormatProperties> predicate;
+
+    public Optional<VkFormat> select(List<VkFormat> candidates) {
+        return candidates
+            .stream()
+            .filter(this::matches)
+            .findAny();
+    }
+
+    private boolean matches(VkFormat format) {
+        VkFormatProperties props = mapper.apply(format);
+        return predicate.test(props);
+    }
 }
 ```
 
-The format properties are retrieved using a new accessor on the physical device:
+The _mapper_ retrieves the format properties for a given Vulkan format which will use a new accessor on the physical device:
 
 ```java
 public VkFormatProperties properties(VkFormat format) {
     var props = new VkFormatProperties();
-    VulkanLibrary lib = instance.library();
-    lib.vkGetPhysicalDeviceFormatProperties(this, format, props);
+    instance.library().vkGetPhysicalDeviceFormatProperties(this, format, props);
     return props;
 }
 ```
 
-The helper then walks through the possible candidates to find the most suitable format:
+We also a helper factory method to create a filter that selects a format based on the _optimal_ or _linear_ tiling features:
 
 ```java
-return Stream
-    .of(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT)
-    .filter(predicate)
-    .findAny()
-    .orElseThrow(() -> new RuntimeException("No supported depth buffer format"));
+public static Predicate<VkFormatProperties> feature(Set<VkFormatFeature> features, boolean optimal) {
+    int mask = IntegerEnumeration.mask(features);
+    return props -> {
+        int actual = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
+        return MathsUtil.isMask(mask, actual);
+    };
+}
 ```
 
-We can now replace the hard-coded image format in the presentation configuration.
+In the configuration class we can now select the best depth buffer format:
+
+```java
+@Bean
+public View depth(Swapchain swapchain, AllocationService allocator) {
+    // Select depth format
+    var filter = FormatSelector.feature(Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT), true);
+    PhysicalDevice parent = dev.parent();
+    FormatSelector selector = new FormatSelector(parent::properties, filter);
+    VkFormat format = selector.select(List.of(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT)).orElseThrow();
+    ...
+}
+```
+
+Later on we may want to encapsulate this code into another helper method or class and possibly retrieve the candidates from a configuration file.
 
 ### Swapchain Configuration
 
 We also make some modifications to the configuration of the swapchain to select various properties rather than hard-coding.
 
-The presentation mode of the swapchain is set to the mailbox option if available, and otherwise falling back to the default (FIFO).
+First the following helper is added to the surface properties class to select an image format, falling back to an arbitrary format if the optimal configuration is not available:
 
 ```java
-VkPresentModeKHR mode = props.modes().contains(VkPresentModeKHR.MAILBOX_KHR) ? VkPresentModeKHR.MAILBOX_KHR : Swapchain.DEFAULT_PRESENTATION_MODE;
+public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space) {
+    List<VkSurfaceFormatKHR> formats = this.formats();
+    return formats
+        .stream()
+        .filter(f -> f.format == format)
+        .filter(f -> f.colorSpace == space)
+        .findAny()
+        .orElse(formats.get(0));
+}
 ```
 
-Next we walk through the available surface formats to find one that supports the desired image format and colour-space, falling back to an arbitrary format if the optimal combination is not available:
+Next we implement another helper on the swapchain class that selects a preferred presentation mode or falls back to the default:
 
 ```java
-List<VkSurfaceFormatKHR> formats = props.formats();
-VkSurfaceFormatKHR format = formats
-    .stream()
-    .filter(f -> f.format == VkFormat.B8G8R8_UNORM)
-    .filter(f -> f.colorSpace == VkColorSpaceKHR.SRGB_NONLINEAR_KHR)
-    .findAny()
-    .orElse(formats.get(0));
+public static VkPresentModeKHR mode(Surface.Properties props, VkPresentModeKHR... modes) {
+    Set<VkPresentModeKHR> available = props.modes();
+    return Arrays
+        .stream(modes)
+        .filter(available::contains)
+        .findAny()
+        .orElse(DEFAULT_PRESENTATION_MODE);
+}
 ```
 
-The code to create the swapchain now looks like this:
+The configuration of the swapchain is now more robust:
 
 ```java
-return new Swapchain.Builder(dev, props)
-    .count(cfg.getFrameCount())
-    .clear(cfg.getBackground())
-    .format(format.format)
-    .space(format.colorSpace)
-    .presentation(mode)
-    .build();
+public Swapchain swapchain(Surface.Properties props, ApplicationConfiguration cfg) {
+    // Select presentation mode
+    VkPresentModeKHR mode = Swapchain.mode(props, VkPresentModeKHR.MAILBOX_KHR);
+
+    // Select SRGB surface format
+    VkSurfaceFormatKHR format = props.format(VkFormat.B8G8R8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
+
+    // Create swapchain
+    return new Swapchain.Builder(dev, props)
+        .count(cfg.getFrameCount())
+        .clear(cfg.getBackground())
+        .format(format)
+        .presentation(mode)
+        .build();
+}
 ```
 
 Notes:

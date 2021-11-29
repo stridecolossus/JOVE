@@ -298,14 +298,26 @@ In the short-term we will use the built-in AWT support for images - we are likel
 Our requirements for images are fairly straight-forward so we introduce the following abstraction rather than using (for example) Java images directly:
 
 ```java
-public record ImageData(Dimensions size, Layout layout, Bufferable data)
+public interface ImageData {
+    record Extents(Dimensions size, int depth) {
+    }
+
+    Extents extents();
+    String components();
+    Layout layout();
+    Bufferable data();
+}
 ```
 
 Notes:
 
+* The _components_ string specifies the image channels, e.g. `BGRA`
+
 * The _layout_ class is reused to specify the structure of the image data.
 
 * We impose the constraint that all images are assumed to be structured with one byte per channel.
+
+* We also provide a skeleton implementation of an image (not shown).
 
 The AWT helper is used to load the Java image:
 
@@ -347,10 +359,15 @@ Bufferable data = switch(image.getType()) {
 };
 ```
 
-And finally the image record is instantiated:
+And finally the image domain object is instantiated:
 
 ```java
-return new ImageData(size, layout, data);
+return new AbstractImageData(new Extents(size), components, layout, 0, levels) {
+    @Override
+    public Bufferable data() {
+        return Bufferable.of(data);
+    }
+};
 ```
 
 For the default case of an image that already contains an alpha channel the image data array is wrapped by a new factory method:
@@ -389,23 +406,17 @@ static void write(byte[] bytes, ByteBuffer bb) {
 Vulkan requires all colour images to have an alpha channel whereas native images are not necessarily transparent.  Adding an alpha channel proved to be somewhat harder than anticipated, the Java library does not seem to provide a mechanism to simply attach a new channel.  We could redraw the image into a `TYPE_4BYTE_ABGR` image which would do the job but is pretty nasty (and slow).  Instead we opted for the simpler if uglier approach of injected an alpha channel on demand:
 
 ```java
-private static Bufferable alpha(byte[] bytes, int size) {
-    return new Bufferable() {
-        @Override
-        public int length() {
-            return bytes.length + size;
-        }
-
-        @Override
-        public void buffer(ByteBuffer bb) {
-            for(int n = 0; n < bytes.length; n += 3) {
-                bb.put(Byte.MAX_VALUE);
-                bb.put(bytes[n]);
-                bb.put(bytes[n + 1]);
-                bb.put(bytes[n + 2]);
-            }
-        }
-    };
+private static byte[] alpha(byte[] bytes, int size) {
+    byte[] result = new byte[bytes.length + size];
+    int index = 0;
+    for(int n = 0; n < bytes.length; n += 3) {
+        result[index++] = Byte.MAX_VALUE;
+        result[index++] = bytes[n];
+        result[index++] = bytes[n + 1];
+        result[index++] = bytes[n + 2];
+    }
+    assert index == result.length;
+    return result;
 }
 ```
 
@@ -723,6 +734,8 @@ A _texture sampler_ is used by the fragment shader to sample a colour from the t
 
 ```java
 public class Sampler extends AbstractVulkanObject {
+    public static final float VK_LOD_CLAMP_NONE = 1000;
+
     ...
     
     @Override
@@ -732,49 +745,53 @@ public class Sampler extends AbstractVulkanObject {
 }
 ```
 
-To configure the sampler we implement a builder:
+To configure the sampler we implement a builder which is essentially a wrapper for the underlying Vulkan structure:
 
 ```java
 public static class Builder {
-    private VkFilter magFilter = VkFilter.LINEAR;
-    private VkFilter minFilter = VkFilter.LINEAR;
-    private VkSamplerMipmapMode mipmapMode = VkSamplerMipmapMode.LINEAR;
-    private float minLod;
-    private float maxLod;
-    private float mipLodBias;
-    private final VkSamplerAddressMode[] addressMode = new VkSamplerAddressMode[3];
-    private VkBorderColor border;
-    private float anisotropy = 1f;
+    private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
+
+    public Builder() {
+        min(VkFilter.LINEAR);
+        mag(VkFilter.LINEAR);
+        mipmap(VkSamplerMipmapMode.LINEAR);
+        maxLod(VK_LOD_CLAMP_NONE);
+        anisotropy(1);
+        compare(VkCompareOp.NEVER);
+        wrap(VkSamplerAddressMode.REPEAT);
+    }
 }
 ```
 
-The `addressMode` array specifies the _wrapping policy_ in the three axes of a texture, which we represent by the following enumeration:
+The `wrap` method is a helper that configures the _address mode_ in any of the three axes of a texture by component _index_ rather than the specific field:
+
+```java
+public Builder wrap(int component, VkSamplerAddressMode mode) {
+    switch(component) {
+        case 0: info.addressModeU = mode; break;
+        case 1: info.addressModeV = mode; break;
+        case 2: info.addressModeW = mode; break;
+        default: throw new IndexOutOfBoundsException(...);
+    }
+    return this;
+}
+```
+
+We also provide a convenience enumeration that simplifies selecting an addressing mode:
 
 ```java
 public enum Wrap {
     REPEAT,
     EDGE,
     BORDER;
-}
-```
 
-In the builder we configure the wrapping policy using the following helper that determines the appropriate addressing mode:
-
-```java
-public VkSamplerAddressMode mode(boolean mirror) {
-    return switch(this) {
-        case REPEAT -> mirror ? VkSamplerAddressMode.MIRRORED_REPEAT : VkSamplerAddressMode.REPEAT;
-        case EDGE -> mirror ? VkSamplerAddressMode.MIRROR_CLAMP_TO_EDGE : VkSamplerAddressMode.CLAMP_TO_EDGE;
-        case BORDER -> VkSamplerAddressMode.CLAMP_TO_BORDER;
-    };
-}
-```
-
-We initialise the wrapping policy in the constructor:
-
-```java
-public Builder() {
-    Arrays.fill(addressMode, VkSamplerAddressMode.REPEAT);
+    public VkSamplerAddressMode mode(boolean mirror) {
+        return switch(this) {
+            case REPEAT -> mirror ? VkSamplerAddressMode.MIRRORED_REPEAT : VkSamplerAddressMode.REPEAT;
+            case EDGE -> mirror ? VkSamplerAddressMode.MIRROR_CLAMP_TO_EDGE : VkSamplerAddressMode.CLAMP_TO_EDGE;
+            case BORDER -> VkSamplerAddressMode.CLAMP_TO_BORDER;
+        };
+    }
 }
 ```
 
@@ -783,7 +800,7 @@ The builder populates a descriptor for the sampler and invokes the API:
 ```java
 public Sampler build() {
     // Populate descriptor
-    VkSamplerCreateInfo info = new VkSamplerCreateInfo();
+    var info = new VkSamplerCreateInfo();
     ...
 
     // Allocate sampler
@@ -878,7 +895,7 @@ private void populate(VkImageMemoryBarrier barrier) {
     barrier.dstAccessMask = IntegerEnumeration.mask(dest);
     barrier.oldLayout = oldLayout;
     barrier.newLayout = newLayout;
-    barrier.subresourceRange = SubResource.of(image.descriptor(), subresource).toRange();
+    barrier.subresourceRange = SubResource.toRange(subresource);
 }
 ```
 
@@ -899,7 +916,7 @@ public final class ComponentMappingBuilder {
         if(mapping.length() != SIZE) throw new IllegalArgumentException(...);
 
         // Build swizzle array
-        final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
+        VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
         Arrays.setAll(swizzle, n -> swizzle(mapping.charAt(n)));
 
         // Build component mapping
@@ -920,7 +937,7 @@ private static VkComponentSwizzle swizzle(char mapping) {
         case '=' -> VkComponentSwizzle.IDENTITY;
         case '1' -> VkComponentSwizzle.ONE;
         case '0' -> VkComponentSwizzle.ZERO;
-        default -> throw new IllegalArgumentException("Unsupported swizzle mapping: " + mapping);
+        default -> throw new IllegalArgumentException(...);
     };
 }
 ```
@@ -929,7 +946,7 @@ And the component mapping is constructed from the array as follows:
 
 ```java
 private static VkComponentMapping build(VkComponentSwizzle[] swizzle) {
-    final VkComponentMapping components = new VkComponentMapping();
+    VkComponentMapping components = new VkComponentMapping();
     components.r = swizzle[0];
     components.g = swizzle[1];
     components.b = swizzle[2];
@@ -948,7 +965,7 @@ public final class ComponentMappingBuilder {
     public static final VkComponentMapping IDENTITY;
 
     static {
-        final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
+        VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
         Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
         IDENTITY = build(swizzle);
     }
@@ -975,7 +992,7 @@ public class TextureConfiguration {
 
     @Bean
     public Sampler sampler() {
-        return new Sampler.Builder(dev).build();
+        return new Sampler.Builder().build(dev);
     }
 }
 ```
@@ -1002,7 +1019,7 @@ Next we create a texture with a configuration suitable to the image:
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
     .type(VkImageType.IMAGE_TYPE_2D)
     .aspect(VkImageAspect.COLOR)
-    .extents(new ImageExtents(image.size()))
+    .extents(image.extents())
     .format(format)
     .build();
 
@@ -1037,7 +1054,7 @@ new Barrier.Builder()
 We load the image data to a staging buffer:
 
 ```java
-VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.buffer());
+VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data());
 ```
 
 And invoke the copy command:
@@ -1071,7 +1088,7 @@ new Barrier.Builder()
 The component mapping is determined from the image by the new helper:
 
 ```java
-VkComponentMapping mapping = ComponentMappingBuilder.build(image.layout().components());
+VkComponentMapping mapping = ComponentMappingBuilder.build(image.components());
 ```
 
 This swizzles the channels of the image in the demo (which has an `ABGR` channel order) to the Vulkan `RGBA` default.

@@ -4,9 +4,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
@@ -17,13 +15,11 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
-import org.sarge.jove.platform.vulkan.util.FormatSelector;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
 
@@ -49,20 +45,6 @@ public interface Image extends NativeObject {
 	 * @return Device context for this image
 	 */
 	DeviceContext device();
-
-	/**
-	 * Helper - Selects an image format for a depth-stencil with optimal tiling.
-	 * @param dev Physical device
-	 * @return Selected depth buffer format
-	 * @throws RuntimeException if there is no supported format
-	 */
-	static VkFormat depth(PhysicalDevice dev) {
-		final Predicate<VkFormatProperties> predicate = FormatSelector.predicate(Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT), true);
-		final FormatSelector selector = new FormatSelector(dev::properties, predicate);
-		final var formats = List.of(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT);
-		return selector.select(formats).orElseThrow(() -> new RuntimeException("No supported depth buffer format"));
-	}
-	// TODO - dependant on device, a bit too specific for a helper anyway? would want to specify higher/lower depth resolution?
 
 	/**
 	 * Converts to Vulkan extents.

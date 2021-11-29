@@ -14,6 +14,7 @@ import org.sarge.jove.platform.vulkan.VkFormatProperties;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>format selector</i> is used to select an appropriate format from a list of candidates.
@@ -28,58 +29,58 @@ import org.sarge.jove.util.MathsUtil;
  * 	Predicate predicate = FormatSelector.predicate(Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT), true);
  * 	FormatSelector selector = new FormatSelector(dev::properties, predicate);
  *
- * 	// The selector is also a predicate
- * 	selector.test(VkFormat.D32_SFLOAT);
- *
  * 	// Select a depth-stencil format
- * 	VkFormat = selector.select(List.of(VkFormat.D32_SFLOAT, ...));
+ * 	VkFormat format = selector.select(List.of(VkFormat.D32_SFLOAT)).orElseThrow();
  * </pre>
  * <p>
  * @author Sarge
  */
-public class FormatSelector implements Predicate<VkFormat> {
+public class FormatSelector {
+	/**
+	 * Creates a selection test for the given format features.
+	 * @param features		Required format features
+	 * @param optimal		Whether to select <i>optimal</i> or <i>linear</i> features
+	 * @return Format feature filter
+	 */
+	public static Predicate<VkFormatProperties> feature(Set<VkFormatFeature> features, boolean optimal) {
+		final int mask = IntegerEnumeration.mask(features);
+		return props -> {
+			final int actual = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
+			return MathsUtil.isMask(mask, actual);
+		};
+	}
+
 	private final Function<VkFormat, VkFormatProperties> mapper;
 	private final Predicate<VkFormatProperties> predicate;
 
 	/**
 	 * Constructor.
-	 * @param mapper		Function to lookup the properties for a given format
-	 * @param predicate		Format predicate
+	 * @param mapper 		Function to lookup the properties for a given format
+	 * @param predicate		Selection criteria
 	 */
 	public FormatSelector(Function<VkFormat, VkFormatProperties> mapper, Predicate<VkFormatProperties> predicate) {
 		this.mapper = notNull(mapper);
 		this.predicate = notNull(predicate);
 	}
 
-	@Override
-	public boolean test(VkFormat format) {
-		final VkFormatProperties props = mapper.apply(format);
-		return predicate.test(props);
-	}
-
 	/**
-	 * Selects the best format from the given candidates.
-	 * @param formats Candidate formats
+	 * Selects the first matching format from the given list of candidates.
+	 * @param candidates Candidate formats
 	 * @return Selected format
 	 */
-	public Optional<VkFormat> select(List<VkFormat> formats) {
-		return formats
+	public Optional<VkFormat> select(List<VkFormat> candidates) {
+		Check.notEmpty(candidates);
+		return candidates
 				.stream()
-				.filter(this::test)
+				.filter(this::matches)
 				.findAny();
 	}
 
 	/**
-	 * Creates a format predicate for the given features.
-	 * @param features		Format features
-	 * @param optimal		Whether to select optimal or linear features
-	 * @return Format predicate
+	 * Retrieves the properties for the given format and applies the selection test.
 	 */
-	public static Predicate<VkFormatProperties> predicate(Set<VkFormatFeature> features, boolean optimal) {
-		final int mask = IntegerEnumeration.mask(features);
-		return props -> {
-			final int actual = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-			return MathsUtil.isMask(mask, actual);
-		};
+	private boolean matches(VkFormat format) {
+		final VkFormatProperties props = mapper.apply(format);
+		return predicate.test(props);
 	}
 }

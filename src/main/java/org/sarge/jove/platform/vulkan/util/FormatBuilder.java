@@ -37,6 +37,8 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class FormatBuilder {
+	private static final IntegerEnumeration.ReverseMapping<VkFormat> MAPPING = IntegerEnumeration.mapping(VkFormat.class);
+
 	/**
 	 * Component data-type.
 	 */
@@ -77,13 +79,26 @@ public class FormatBuilder {
 				.build();
 	}
 
+	/**
+	 * Helper - Determine the format of the given image.
+	 * <p>
+	 * The image format is determined as follows:
+	 * <ol>
+	 * <li>Use the {@link ImageData#format()} hint unless this value is {@link VkFormat#UNDEFINED}</li>
+	 * <li>Otherwise delegate to {@link #format(Layout)} using the layout of the image</li>
+	 * </ol>
+	 * <p>
+	 * @param image Image
+	 * @return Image format
+	 * @see ImageData#format()
+	 */
 	public static VkFormat format(ImageData image) {
 		final int format = image.format();
 		if(format == VkFormat.UNDEFINED.value()) {
 			return format(image.layout());
 		}
 		else {
-			return IntegerEnumeration.mapping(VkFormat.class).map(image.format());
+			return MAPPING.map(image.format());
 		}
 	}
 

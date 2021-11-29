@@ -29,60 +29,50 @@ public class FormatSelectorTest {
 
 	@BeforeEach
 	void before() {
-		// Create properties for the format
-		props = new VkFormatProperties();
-
-		// Init mapper
 		mapper = mock(Function.class);
-		when(mapper.apply(FORMAT)).thenReturn(props);
-
-		// Init test
 		predicate = mock(Predicate.class);
-		when(predicate.test(props)).thenReturn(true);
-
-		// Create selector
 		selector = new FormatSelector(mapper, predicate);
-	}
-
-	@Test
-	void test() {
-		assertEquals(true, selector.test(FORMAT));
+		props = new VkFormatProperties();
 	}
 
 	@Test
 	void select() {
+		when(mapper.apply(FORMAT)).thenReturn(props);
+		when(predicate.test(props)).thenReturn(true);
 		assertEquals(Optional.of(FORMAT), selector.select(List.of(FORMAT)));
 	}
 
 	@Test
 	void selectNoneMatched() {
-		when(predicate.test(props)).thenReturn(false);
+		when(mapper.apply(FORMAT)).thenReturn(props);
 		assertEquals(Optional.empty(), selector.select(List.of(FORMAT)));
 	}
 
 	@Nested
-	class PredicateTests {
+	class FormatFeaturePredicateTests {
+		private VkFormatProperties other;
+
+		@BeforeEach
+		void before() {
+			other = new VkFormatProperties();
+		}
+
 		@Test
 		void optimal() {
-			final Predicate<VkFormatProperties> predicate = FormatSelector.predicate(Set.of(FEATURE), true);
+			final Predicate<VkFormatProperties> optimal = FormatSelector.feature(Set.of(FEATURE), true);
+			assertNotNull(optimal);
 			props.optimalTilingFeatures = FEATURE.value();
-			assertNotNull(predicate);
-			assertEquals(true, predicate.test(props));
+			assertEquals(true, optimal.test(props));
+			assertEquals(false, optimal.test(other));
 		}
 
 		@Test
 		void linear() {
-			final Predicate<VkFormatProperties> predicate = FormatSelector.predicate(Set.of(FEATURE), false);
+			final Predicate<VkFormatProperties> linear = FormatSelector.feature(Set.of(FEATURE), false);
+			assertNotNull(linear);
 			props.linearTilingFeatures = FEATURE.value();
-			assertNotNull(predicate);
-			assertEquals(true, predicate.test(props));
-		}
-
-		@Test
-		void none() {
-			final Predicate<VkFormatProperties> predicate = FormatSelector.predicate(Set.of(FEATURE), true);
-			assertNotNull(predicate);
-			assertEquals(false, predicate.test(props));
+			assertEquals(true, linear.test(props));
+			assertEquals(false, linear.test(other));
 		}
 	}
 }

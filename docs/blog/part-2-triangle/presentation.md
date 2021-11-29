@@ -735,6 +735,27 @@ public synchronized void destroy() {
 }
 ```
 
+For example the swapchain can now be refactored as follows:
+
+```java
+public class Swapchain extends AbstractVulkanObject {
+    Swapchain(Pointer handle, DeviceContext dev, ...) {
+        super(handle, dev);
+        ...
+    }
+
+    @Override
+    protected Destructor<Swapchain> destructor(VulkanLibrary lib) {
+        return lib::vkDestroySwapchainKHR;
+    }
+
+    @Override
+    protected void release() {
+        attachments.forEach(View::destroy);
+    }
+}
+```
+
 ### Vulkan Booleans
 
 Development of the swapchain was the first time we came across JNA code using boolean values and we encountered a curious problem that stumped us for some time.

@@ -2,11 +2,14 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder.Type;
 
@@ -60,6 +63,22 @@ class FormatBuilderTest {
 	void layout() {
 		assertEquals(VkFormat.R16G16B16_SFLOAT, FormatBuilder.format(new Layout(3, Float.class, 2, true)));
 		assertEquals(VkFormat.R8G8_UNORM, FormatBuilder.format(new Layout(2, Byte.class, 1, false)));
+	}
+
+	@Test
+	void imageFormatHint() {
+		final ImageData image = mock(ImageData.class);
+		final VkFormat format = VkFormat.B8G8R8_SRGB;
+		when(image.format()).thenReturn(format.value());
+		assertEquals(format, FormatBuilder.format(image));
+	}
+
+	@Test
+	void imageFormatLayout() {
+		final ImageData image = mock(ImageData.class);
+		final VkFormat format = VkFormat.UNDEFINED;
+		when(image.layout()).thenReturn(Layout.floats(3));
+		assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
 	}
 
 	@Nested

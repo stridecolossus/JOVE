@@ -429,7 +429,9 @@ public class Work {
 ```
 
 Each entry in the `wait` table consists of:
+
 * A semaphore that must be signalled before the work can be performed.
+
 * The stages(s) of the pipeline to wait on (represented as an integer mask).
 
 The `signal` member is the set of semaphores to be signalled when the work has completed.
@@ -789,9 +791,11 @@ public class RenderTask {
     private final Frame[] frames;
     private int current;
 
-    public RenderLoop(Swapchain swapchain, int frames, ...) {
-        this.frames = new Frame[frames];
-        Arrays.setAll(this.frames, ignored -> new Frame());
+    public RenderTask(int count, Supplier<? extends Frame> factory) {
+        this.frames = new Frame[count];
+        for(int n = 0; n < count; ++n) {
+            frames[n] = factory.get();
+        }
     }
 }
 ```
@@ -799,7 +803,7 @@ public class RenderTask {
 The frames are also released on destruction:
 
 ```java
-public void destroy() {
+public void close() {
     for(Frame f : frames) {
         f.destroy();
     }

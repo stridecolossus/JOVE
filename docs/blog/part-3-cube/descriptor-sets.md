@@ -371,18 +371,8 @@ void populate(VkWriteDescriptorSet write) {
 
     // Populate resource
     res.populate(write);
-
-    // Update flag
-    assert dirty;
-    dirty = false;
 }
 ```
-
-Notes:
-
-* The write descriptor is dependant on the binding, the resource __and__ the descriptor set itself (hence `Entry` is a local class with a reference to the parent descriptor set).
-
-* The `dirty` flag is reset as a side-effect of the populate method (not pretty but works).
 
 To apply a batch of updates we first enumerate the modified resources and transform the results to an array of write descriptors:
 
@@ -391,11 +381,18 @@ public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptor
     var writes = descriptors
         .stream()
         .flatMap(DescriptorSet::modified)
+        .peek(Entry::clear)
         .collect(StructureHelper.collector(VkWriteDescriptorSet::new, Entry::populate));
 }
 ```
 
-And then invoke the API:
+Notes:
+
+* The write descriptor is dependant on the binding, the resource __and__ the descriptor set itself (hence `Entry` is a local class with a reference to the parent descriptor set).
+
+* The `dirty` flag is reset as a side-effect of the update method (not pretty but works).
+
+finally we invoke the API to apply the batch of updates:
 
 ```java
 // Ignore if nothing to update
