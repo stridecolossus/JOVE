@@ -294,7 +294,7 @@ public class PhysicalDevice implements NativeObject {
 	 * @return Features supported by this device
 	 */
 	private DeviceFeatures loadFeatures() {
-		final VkPhysicalDeviceFeatures struct = new VkPhysicalDeviceFeatures();
+		final var struct = new VkPhysicalDeviceFeatures();
 		instance.library().vkGetPhysicalDeviceFeatures(this, struct);
 		return DeviceFeatures.of(struct);
 	}

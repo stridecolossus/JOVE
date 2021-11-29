@@ -4,13 +4,11 @@ title: Skybox
 
 ## Overview
 
-In this chapter we will add a _skybox_ to the demo application.
+In this chapter we will add a _skybox_ to the demo application which is implemented as a cube centred on the camera rendered with a cubemap texture.
 
-The skybox is implemented as a cube centred on the camera rendered with a cubemap texture.
+We will then enhance the image framework to support multiple layers and MIP levels and implement a new and more efficient image loader.
 
-We will also make changes to the image framework to improve the performance of the texture loading process.
-
-Finally we replace the existing uniform buffer with _push constants_ for the modelview and projection matrices.
+Finally we will also implement functionality to support optional device features.
 
 ---
 
@@ -297,7 +295,7 @@ TODO
 
 ### Overview
 
-The process of loading the cubemap texture is quite slow and cumbersome:
+The process of loading the cubemap texture is quite slow and cumbersome for various reasons:
 
 1. Each cubemap texture is loaded and copied separately.
 
@@ -338,7 +336,7 @@ public interface ImageData {
 
     int layers();
     
-    Bufferable data(int layer);
+    Bufferable data();
 }
 ```
 
@@ -395,10 +393,10 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
     public int readInt() throws IOException {
         in.readFully(buffer, 0, Integer.BYTES);
         return
-                (buffer[3])        << 24 |
-                (buffer[2] & MASK) << 16 |
-                (buffer[1] & MASK) <<  8 |
-                (buffer[0] & MASK);
+            (buffer[3])        << 24 |
+            (buffer[2] & MASK) << 16 |
+            (buffer[1] & MASK) <<  8 |
+            (buffer[0] & MASK);
     }
 }
 ```
@@ -492,29 +490,26 @@ Notes:
 Next we load the MIP level index:
 
 ```java
-private static List<Index> loadIndex(DataInput in, int count) throws IOException {
+private static List<Level> loadIndex(DataInput in, int count) throws IOException {
     // Load MIP level index
-    Index[] index = new Index[count];
+    Level[] index = new Level[count];
     for(int n = 0; n < count; ++n) {
         int offset = (int) in.readLong();
         int len = (int) in.readLong();
-        int uncompressed = (int) in.readLong();
-        index[n] = new Index(offset, len, uncompressed);
+        in.readLong();
+        index[n] = new Level(offset, len);
     }
 
     // Truncate MIP level offsets relative to start of image array
-    int offset = index[index.length - 1].offset;
-    for(Index level : index) {
-        level.offset -= offset;
-    }
-
-    return Arrays.asList(index);
+    int offset = index[index.length - 1].offset();
+    return Arrays
+        .stream(index)
+        .map(level -> new Level(level.offset() - offset, level.length()))
+        .collect(toList());
 }
 ```
 
 Notes:
-
-* The `Index` is a simple local transient record type.
 
 * The `byteOffset` field is the offset into the file itself, we truncate this value to the start of the image array.
 
@@ -599,10 +594,10 @@ static List<byte[]> loadKeyValues(DataInput in, int size) throws IOException {
     int count = 0;
     while(true) {
         // Load key-value length
-        final int len = in.readInt();
+        int len = in.readInt();
 
         // Load key-value entry
-        final byte[] entry = new byte[len];
+        byte[] entry = new byte[len];
         in.readFully(entry);
         entries.add(entry);
         
@@ -643,34 +638,21 @@ if(count >= size) {
 
 ### Image Data
 
-To load the image data we first transform the MIP index:
+Next the uncompressed image data is loaded as a single byte array:
 
 ```java
-List<Level> levels = index.stream().map(Index::level).collect(toList());
+int len = index.stream().mapToInt(Level::length).sum();
+byte[] data = new byte[len];
+in.readFully(data, 0, len);
 ```
 
-Next the total size of the image is calculated and the data array is allocated:
+Notes:
 
-```java
-int len = levels.stream().mapToInt(Level::length).sum();
-byte[][] data = new byte[faceCount][len];
-```
+* The data is ordered in __reverse__ MIP level order (smallest image first).
 
-Note that we represent the image data as a 2D byte array indexed by the _face_ (or layer in Vulkan parlance) where each array comprises a complete MIP pyramid.
+* A cubemap image is ordered by MIP level and __then__ face.
 
-The data is loaded from the file in __reverse__ MIP level order (smallest image first):
-
-```java
-Iterator<Level> itr = new ReverseListIterator<>(levels);
-while(itr.hasNext()) {
-    Level level = itr.next();
-    for(int face = 0; face < faceCount; ++face) {
-        in.readFully(data[face], level.offset(), level.length() / faceCount);
-    }
-}
-```
-
-Finally we can create the resultant image:
+Finally we create the resultant image domain object:
 
 ```java
 // Determine image layout (assume compacted bytes)
@@ -773,17 +755,17 @@ We can then generate a copy region for each layer in that MIP level:
 int offset = levels[level].offset();
 for(int layer = 0; layer < descriptor.layerCount(); ++layer) {
     // Build sub-resource
-    final SubResource res = new SubResource.Builder(descriptor)
-            .baseArrayLayer(layer)
-            .mipLevel(level)
-            .build();
+    SubResource res = new SubResource.Builder(descriptor)
+        .baseArrayLayer(layer)
+        .mipLevel(level)
+        .build();
 
     // Create copy region
-    final CopyRegion region = new CopyRegion.Builder()
-            .offset(offset)
-            .subresource(res)
-            .extents(extents)
-            .build();
+    CopyRegion region = new CopyRegion.Builder()
+        .offset(offset)
+        .subresource(res)
+        .extents(extents)
+        .build();
 
     // Add region
     region(region);
@@ -865,15 +847,18 @@ Notes:
 
 Note that we could generate the MIP pyramid at runtime (which the tutorial does) but in reality mipmap images will always be generated using an offline tool which produces better results and avoids the loading time penalty.  Additionally the process of generating mipmap images at runtime is quite convoluted so there in no point spending the time and effort.
 
+TODO...
+
 For the skybox we replace the previous images with an existing KTX cubemap texture from the excellent 
 [Vulkan samples](https://github.com/SaschaWillems/Vulkan/blob/master/data/README.md)
-TODO
-
-
 
 ```
 ktx2ktx2 cubemap_vulkan.ktx
 ```
+
+...TODO
+
+Replacing the code that loaded each cube face separately with a compound KTX cubemap image significantly reduces the loading time for the skybox (again almost an order of magnitude improvement).
 
 ---
 
@@ -881,13 +866,13 @@ ktx2ktx2 cubemap_vulkan.ktx
 
 ### Overview
 
-With support for mipmap images in place now is a good point to enable anisotrophy to further improve the texture quality.
+With support for mipmap images in place now is a good point to enable anisotropy to further improve the texture quality.
 
-However anisotrophy is an optional Vulkan feature that needs to be specified when creating the logical device.
+However anisotropy is an optional Vulkan feature that needs to be specifically enabled when creating the logical device.
 
 Therefore we introduce a new mechanism to specify the features _supported_ by the hardware and the features _required_ for a given application.
 
-We assume that required features would be specified by feature _names_, perhaps loaded from a configuration file.
+We assume that the required features would be specified by feature _names_, perhaps loaded from a configuration file.
 
 ### Helper Class
 
@@ -904,16 +889,15 @@ public interface DeviceFeatures {
      * Tests whether this set contains the given features.
      * @param features Required features
      * @return Whether this set contains the given features
-     * @see #contains(String)
      */
     boolean contains(DeviceFeatures features);
 }
 ```
 
-Next the _required_ features can be created from a list of feature names:
+A set of _required_ features can be created from the feature names using the following factory:
 
 ```java
-static DeviceFeatures of(List<String> required) {
+static DeviceFeatures of(Collection<String> required) {
     return new AbstractDeviceFeatures() {
         @Override
         public Collection<String> features() {
@@ -928,12 +912,158 @@ static DeviceFeatures of(List<String> required) {
 }
 ```
 
+The features supported by the hardware is specified by the `VkPhysicalDeviceFeatures` structure.  Somewhat surprisingly this structure is comprised of over fifty fields specifying each device feature as a boolean, as opposed to (say) a number of bit-field enumerations.  Therefore we implement a wrapper class to access the fields by _name_ rather than forcing the developer to programatically find and set flags:
+
+```java
+static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
+    // Init structure
+    features.write();
+
+    // Create wrapper
+    return new AbstractDeviceFeatures() {
+        ...
+    };
+}
+```
+
+In the wrapper we use several JNA methods to access the structure fields.  The `getFieldList` method reflects the fields of the structure which we use use to enumerate the names of the supported features:
+
+```java
+public Collection<String> features() {
+    return features
+        .getFieldList()
+        .stream()
+        .map(Field::getName)
+        .filter(this::contains)
+        .collect(toSet());
+}
+```
+
+Which uses the following helper to test whether a given feature is enabled:
+
+```java
+private boolean contains(String field) {
+    return features.readField(field) == VulkanBoolean.TRUE;
+}
+```
+
+Note that we need to invoke `write` on the structure when we construct the wrapper.
+
+Finally we implement the comparison method using the same helper:
+
+```java
+@Override
+public boolean contains(DeviceFeatures required) {
+    return required.features().stream().allMatch(this::contains);
+}
+```
+
+### Configuration
+
+The new wrapper implementation is used to retrieve the _supported_ features for a physical device:
+
+```java
+public class PhysicalDevice implements NativeObject {
+    private final Supplier<DeviceFeatures> features = new LazySupplier<>(this::loadFeatures);
+
+    public DeviceFeatures features() {
+        return features.get();
+    }
+
+    private DeviceFeatures loadFeatures() {
+        var struct = new VkPhysicalDeviceFeatures();
+        instance.library().vkGetPhysicalDeviceFeatures(this, struct);
+        return DeviceFeatures.of(struct);
+    }
+}
+```
+
+Next we implement a convenience factory to create a filter for physical devices that match a set of _required_ features:
+
+```java
+public static Predicate<PhysicalDevice> predicate(DeviceFeatures features) {
+    return dev -> dev.features().contains(features);
+}
+```
+
+In the builder for the logical device we populate the relevant field in the create descriptor:
+
+```java
+public LogicalDevice build() {
+    VkDeviceCreateInfo info = new VkDeviceCreateInfo();
+    info.pEnabledFeatures = DeviceFeatures.populate(required);
+    ...
+}
+```
+
+Which uses the following helper to transform the set of required features to the Vulkan structure:
+
+```java
+static VkPhysicalDeviceFeatures populate(DeviceFeatures required) {
+    // Ignore if not specified
+    if(required == null) {
+        return null;
+    }
+
+    // Enumerate required features
+    var struct = new VkPhysicalDeviceFeatures();
+    required
+        .features()
+        .stream()
+        .forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
+
+    return struct;
+}
+```
+
+This framework should allow an application to query the features _supported_ by the hardware and to specify the _required_ feature set.  Well behaved applications could adapt their functionality to the supported features.  For example the demo could avoid using sampler anisotropy if that feature is not supported (not likely, but illustrates the point).
 
 ### Integration
 
-TODO
+In the device configuration class we first specify the _required_ features for the demo:
 
-Finally we can now enable anisotrophy in the sampler for the chalet model:
+```java
+static DeviceFeatures required(ApplicationConfiguration cfg) {
+    return DeviceFeatures.of(cfg.getFeatures());
+}
+```
+
+The required features are declared as a comma-delimited list in the properties file, for example:
+
+```java
+features: samplerAnisotropy, geometryShader
+anisotropy: 8
+```
+
+The required features are then used to select the appropriate physical device:
+
+```java
+public PhysicalDevice physical(Instance instance, DeviceFeatures required) {
+    return PhysicalDevice
+        .devices(instance)
+        .filter(graphics)
+        .filter(presentation)
+        .filter(PhysicalDevice.predicate(required))
+        .findAny()
+        .orElseThrow();
+}
+```
+
+And are also used when constructing the logical device to enable the selected features:
+
+```java
+public LogicalDevice device(PhysicalDevice dev, DeviceFeatures required) {
+    return new LogicalDevice.Builder(dev)
+        .extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
+        .layer(ValidationLayer.STANDARD_VALIDATION)
+        .queue(graphics.family())
+        .queue(presentation.family())
+        .features(required)
+        .build();
+}
+```
+
+Finally we can now enable anisotropy in the sampler for the chalet model:
 
 ```java
 public Sampler sampler(ApplicationConfiguration cfg) {
@@ -943,7 +1073,7 @@ public Sampler sampler(ApplicationConfiguration cfg) {
 }
 ```
 
-The anisotrophy is set to 8 texel samples which is generally accepted as a good trade-off between quality and performance.
+The anisotropy is set to 8 texel samples which is generally accepted as a good trade-off between quality and performance.
 
 ---
 
@@ -958,4 +1088,6 @@ In this chapter we added a skybox which involved implementation of the following
 * Implementation of the KTX loader (for uncompressed images).
 
 * The addition of regions to the image copy command.
+
+* Support for device features.
 

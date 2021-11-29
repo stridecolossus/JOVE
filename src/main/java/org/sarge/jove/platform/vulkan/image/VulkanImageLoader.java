@@ -7,10 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.collections4.iterators.ReverseListIterator;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
@@ -30,31 +28,6 @@ import org.sarge.jove.util.LittleEndianDataInputStream;
  * @author Sarge
  */
 public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
-	/**
-	 * MIP level index entry.
-	 */
-	private static class Index {
-		private int offset;
-		private final int length;
-		private final int uncompressed;
-
-		/**
-		 * Constructor.
-		 * @param offset				Byte offset into file
-		 * @param length				Length
-		 * @param uncompressed			Uncompressed length
-		 */
-		private Index(int offset, int length, int uncompressed) {
-			this.offset = offset;
-			this.length = length;
-			this.uncompressed = uncompressed;
-		}
-
-		private Level level() {
-			return new Level(offset, length);
-		}
-	}
-
 	@Override
 	public DataInput map(InputStream in) throws IOException {
 		return new LittleEndianDataInputStream(in);
@@ -83,7 +56,9 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		// Validate
 		validate(1, typeSize, "TypeSize");
 		validate(1, layerCount, "LayerCount");
-		if((faceCount == Image.CUBEMAP_ARRAY_LAYERS) && !extents.size().isSquare()) throw new IllegalArgumentException("Cubemap images must be square");
+		if((faceCount == Image.CUBEMAP_ARRAY_LAYERS) && !extents.size().isSquare()) {
+			throw new IllegalArgumentException("Cubemap images must be square");
+		}
 
 		// Load compression scheme
 		final int scheme = in.readInt();
@@ -102,7 +77,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final long compressionByteLength = in.readLong();
 
 		// Load MIP level index
-		final List<Index> index = loadIndex(in, levelCount);
+		final List<Level> index = loadIndex(in, levelCount);
 
 		// Load DFD
 		final String components = loadFormatDescriptor(in, formatByteLength);
@@ -114,28 +89,16 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		// TODO
 		if(compressionByteLength != 0) throw new UnsupportedOperationException();
 
-		// Build MIP level index
-		final List<Level> levels = index.stream().map(Index::level).collect(toList());
-
-		// Allocate image data
-		final int len = faceCount * levels.stream().mapToInt(Level::length).sum();
+		// Load image data
+		final int len = index.stream().mapToInt(Level::length).sum();
 		final byte[] data = new byte[len];
+		in.readFully(data, 0, len);
 
-		// Load image data (smallest MIP level first)
-		final Iterator<Level> itr = new ReverseListIterator<>(levels);
-		while(itr.hasNext()) {
-			final Level level = itr.next();
-			for(int face = 0; face < faceCount; ++face) {
-				in.readFully(data, level.offset(), level.length() / faceCount);
-				// TODO - padding?
-			}
-		}
-
-		// Determine image layout (assume compacted bytes)
+		// Determine image layout (assume compacted byte components)
 		final Layout layout = Layout.bytes(components.length());
 
 		// Create image
-		return new AbstractImageData(extents, components, layout, format, levels) {
+		return new AbstractImageData(extents, components, layout, format, index) {
 			@Override
 			public int layers() {
 				return faceCount;
@@ -167,23 +130,22 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 	 * @param count Number of MIP levels
 	 * @return MIP index
 	 */
-	private static List<Index> loadIndex(DataInput in, int count) throws IOException {
+	private static List<Level> loadIndex(DataInput in, int count) throws IOException {
 		// Load MIP level index
-		final Index[] index = new Index[count];
+		final Level[] index = new Level[count];
 		for(int n = 0; n < count; ++n) {
 			final int offset = (int) in.readLong();
 			final int len = (int) in.readLong();
-			final int uncompressed = (int) in.readLong();
-			index[n] = new Index(offset, len, uncompressed);
+			in.readLong();
+			index[n] = new Level(offset, len);
 		}
 
 		// Truncate MIP level offsets relative to start of image array
-		final int offset = index[index.length - 1].offset;
-		for(Index level : index) {
-			level.offset -= offset;
-		}
-
-		return Arrays.asList(index);
+		final int offset = index[index.length - 1].offset();
+		return Arrays
+				.stream(index)
+				.map(level -> new Level(level.offset() - offset, level.length()))
+				.collect(toList());
 	}
 
 	/**

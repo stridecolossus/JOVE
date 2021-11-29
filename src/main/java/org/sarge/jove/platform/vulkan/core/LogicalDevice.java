@@ -20,7 +20,6 @@ import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
@@ -144,7 +143,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private final Map<Family, List<Percentile>> queues = new HashMap<>();
-		private VkPhysicalDeviceFeatures features = new VkPhysicalDeviceFeatures();
+		private DeviceFeatures required;
 
 		/**
 		 * Constructor.
@@ -159,7 +158,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @param required Required features
 		 */
 		public Builder features(DeviceFeatures required) {
-			DeviceFeatures.populate(required, features);
+			this.required = notNull(required);
 			return this;
 		}
 
@@ -253,7 +252,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
 
 			// Add required features
-			info.pEnabledFeatures = features;
+			info.pEnabledFeatures = DeviceFeatures.populate(required);
 
 			// Add required extensions
 			info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));

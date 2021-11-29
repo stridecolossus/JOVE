@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import java.util.Set;
@@ -16,9 +17,14 @@ public class DeviceFeaturesTest {
 	@Test
 	void populate() {
 		final DeviceFeatures required = DeviceFeatures.of(List.of(SUPPORTED));
-		final var struct = new VkPhysicalDeviceFeatures();
-		DeviceFeatures.populate(required, struct);
+		final VkPhysicalDeviceFeatures struct = DeviceFeatures.populate(required);
+		assertNotNull(struct);
 		assertEquals(VulkanBoolean.TRUE, struct.samplerAnisotropy);
+	}
+
+	@Test
+	void populateEmpty() {
+		assertEquals(null, DeviceFeatures.populate(null));
 	}
 
 	@Nested

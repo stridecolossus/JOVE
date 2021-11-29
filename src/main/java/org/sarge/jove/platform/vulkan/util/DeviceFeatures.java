@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toSet;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.List;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
@@ -44,10 +43,10 @@ public interface DeviceFeatures {
 
 	/**
 	 * Creates a set of <i>required</i> device features.
-	 * @param required Required features
+	 * @param required Required feature names
 	 * @return New required device features
 	 */
-	static DeviceFeatures of(List<String> required) {
+	static DeviceFeatures of(Collection<String> required) {
 		return new AbstractDeviceFeatures() {
 			@Override
 			public Collection<String> features() {
@@ -98,10 +97,19 @@ public interface DeviceFeatures {
 	 * @param required		Required features
 	 * @param struct		Structure
 	 */
-	static void populate(DeviceFeatures required, VkPhysicalDeviceFeatures struct) {
+	static VkPhysicalDeviceFeatures populate(DeviceFeatures required) {
+		// Ignore if not specified
+		if(required == null) {
+			return null;
+		}
+
+		// Enumerate required features
+		final var struct = new VkPhysicalDeviceFeatures();
 		required
 				.features()
 				.stream()
 				.forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
+
+		return struct;
 	}
 }
