@@ -666,8 +666,8 @@ return new AbstractImageData(extents, components, layout, format, levels) {
     }
 
     @Override
-    public Bufferable data(int layer) {
-        return Bufferable.of(data[layer]);
+    public Bufferable data() {
+        return Bufferable.of(data);
     }
 };
 ```
@@ -815,7 +815,7 @@ Finally we modify the copy command using the new helper method to construct the 
 
 ```java
 // Create staging buffer
-VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data(0));
+VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data());
 
 // Copy staging to image
 new ImageCopyCommand.Builder()

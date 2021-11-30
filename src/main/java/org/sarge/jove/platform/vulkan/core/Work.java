@@ -184,10 +184,11 @@ public class Work {
 	 * Helper - Submits the given <i>one time</i> command to the given pool.
 	 * @param cmd		Command
 	 * @param pool		Pool
+	 * @param fence		Optional fence
 	 * @return Command buffer
 	 * @see VkCommandBufferUsage#ONE_TIME_SUBMIT
 	 */
-	public static Buffer submit(Command cmd, Pool pool) {
+	public static Buffer submit(Command cmd, Pool pool, Fence fence) {
 		// Allocate and record one-time command
 		final Buffer buffer = pool
 				.allocate()
@@ -197,7 +198,7 @@ public class Work {
 
 		// Submit work
 		final Work work = Work.of(buffer);
-		pool.submit(work.batch(), null);
+		pool.submit(work.batch(), fence);
 
 		return buffer;
 	}

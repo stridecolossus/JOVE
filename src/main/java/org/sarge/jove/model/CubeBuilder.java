@@ -1,8 +1,5 @@
 package org.sarge.jove.model;
 
-import java.util.List;
-import java.util.stream.Stream;
-
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
@@ -61,11 +58,7 @@ public class CubeBuilder extends ModelBuilder {
 	};
 
 	// Indices of the two triangles for each face
-	private static final int[] TRIANGLES = Stream
-			.of(Quad.LEFT, Quad.RIGHT)
-			.flatMap(List::stream)
-			.mapToInt(Integer::intValue)
-			.toArray();
+	private static final int[] TRIANGLES = Quad.strip(1, false).toArray();
 
 	private float size = MathsUtil.HALF;
 

@@ -17,11 +17,13 @@ public class IndexedBuilder extends ModelBuilder {
 	public ModelBuilder add(Vertex v) {
 		final Integer prev = map.get(v);
 		if(prev == null) {
-			// Add new vertex and register index
+			// Register new vertex
 			final Integer n = vertices.size();
-			index.add(n);
 			map.put(v, n);
+
+			// Add vertex
 			super.add(v);
+			index.add(n);
 		}
 		else {
 			// Otherwise add index for existing vertex
@@ -33,6 +35,6 @@ public class IndexedBuilder extends ModelBuilder {
 	@Override
 	public Model build() {
 		final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
-		return build(array, array.length);
+		return build(array.length, array);
 	}
 }

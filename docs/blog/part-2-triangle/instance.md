@@ -238,7 +238,7 @@ public class VulkanException extends RuntimeException {
      */
     private static String reason(int result) {
         try {
-            VkResult value = IntegerEnumeration.map(VkResult.class, result);
+            VkResult value = IntegerEnumeration.mapping(VkResult.class).map(result);
             return value.name();
         }
         catch(IllegalArgumentException e) {

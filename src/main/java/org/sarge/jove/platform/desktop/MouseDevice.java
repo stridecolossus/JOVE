@@ -91,13 +91,11 @@ public class MouseDevice extends DesktopDevice {
 	 * Mouse buttons event source.
 	 */
 	private class MouseButton extends DesktopSource<MouseButtonListener> {
-		private final String prefix = Event.name("Mouse", "Button");
-
 		@SuppressWarnings("hiding")
 		private final List<Button> buttons = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())
 				.mapToObj(String::valueOf)
-				.map(id -> Event.name(prefix, id))
+				.map(id -> Event.name("Mouse", id))
 				.map(name -> new Button(name, this))
 				.collect(toList());
 

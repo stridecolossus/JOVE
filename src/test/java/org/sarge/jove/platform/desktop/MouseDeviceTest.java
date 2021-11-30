@@ -105,7 +105,7 @@ public class MouseDeviceTest {
 		void types() {
 			final var types = buttons.types();
 			assertNotNull(types);
-			assertEquals(new Button("Mouse-Button-1", buttons), types.get(0));
+			assertEquals(new Button("Mouse-1", buttons), types.get(0));
 		}
 
 		@Test
@@ -113,7 +113,7 @@ public class MouseDeviceTest {
 			final MouseButtonListener listener = buttons.listener(handler);
 			assertNotNull(listener);
 			listener.button(null, 0, 1, 0x0002);
-			verify(handler).accept(new Button("Mouse-Button-1", buttons, Action.PRESS, 0x0002));
+			verify(handler).accept(new Button("Mouse-1", buttons, Action.PRESS, 0x0002));
 		}
 
 		@Test

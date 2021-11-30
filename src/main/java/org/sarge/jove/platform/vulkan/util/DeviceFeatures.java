@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
  */
 public interface DeviceFeatures {
 	/**
-	 * @return Features
+	 * @return Enabled features
 	 */
 	Collection<String> features();
 
@@ -94,8 +94,8 @@ public interface DeviceFeatures {
 
 	/**
 	 * Helper - Populates a required features structure.
-	 * @param required		Required features
-	 * @param struct		Structure
+	 * @param required Required features
+	 * @return Device features or {@code null} if the argument is {@code null}
 	 */
 	static VkPhysicalDeviceFeatures populate(DeviceFeatures required) {
 		// Ignore if not specified

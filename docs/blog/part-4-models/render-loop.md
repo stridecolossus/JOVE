@@ -788,10 +788,11 @@ Next we add a new parameter to the constructor to instantiate the array of in-fl
 
 ```java
 public class RenderTask {
+    private final Swapchain swapchain;
     private final Frame[] frames;
     private int current;
 
-    public RenderTask(int count, Supplier<? extends Frame> factory) {
+    public RenderTask(Swapchain swapchain, int count, Supplier<? extends Frame> factory) {
         this.frames = new Frame[count];
         for(int n = 0; n < count; ++n) {
             frames[n] = factory.get();
@@ -799,6 +800,8 @@ public class RenderTask {
     }
 }
 ```
+
+Note that the number of in-flight frames does not necessarily have to be the same as the number of swapchains images (though in practice this is generally the case).
 
 The frames are also released on destruction:
 
@@ -832,26 +835,20 @@ There is one further potential failure case: if the number of in-flight frames i
 To avoid this scenario we track the swapchain images that are actively in-flight:
 
 ```java
-public class RenderTask {
-    ...
+public class Swapchain extends AbstractVulkanObject {
     private final Fence[] active;
 
-    public RenderLoop(...) {
-        ...
-        active = new Frame[swapchain.count()];
-        Arrays.fill(active, frames[0].fence);
+    public void waitReady(int index, Fence fence) {
+        final Fence prev = active[index];
+        if(prev != null) {
+            prev.waitReady();
+        }
+        active[index] = fence;
     }
 }
 ```
 
-After we acquire the image index we additionally wait on the frame currently using the image and then update the mapping:
-
-```java
-active[index].waitReady();
-active[index] = fence;
-```
-
-In the demo application we set the number of in-flight frames to be the same as the number of swapchain images.
+After acquiring the image index the in-flight frame invokes this method to additionally wait on the active image.
 
 ---
 

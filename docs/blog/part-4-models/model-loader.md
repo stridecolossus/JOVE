@@ -461,11 +461,11 @@ In the default model implementation the index is a simple integer array:
 ```java
 public class DefaultModel extends AbstractModel {
     private final List<Vertex> vertices;
-    private final int[] index;
+    private final Optional<int[]> index;
 
     @Override
     public boolean isIndexed() {
-        return index != null;
+        return index.isPresent();
     }
 }
 ```
@@ -473,14 +473,15 @@ public class DefaultModel extends AbstractModel {
 The bufferable object for the index is generated as follows:
 
 ```java
+@Override
 public Optional<Bufferable> index() {
-    if(index == null) {
-        return Optional.empty();
-    }
+    return index.map(DefaultModel::index);
+}
 
-    final Bufferable buffer = new Bufferable() {
+private static Bufferable index(int[] index) {
+    return new Bufferable() {
         private final int len = index.length * Integer.BYTES;
-        
+
         @Override
         public int length() {
             return len;
@@ -491,7 +492,6 @@ public Optional<Bufferable> index() {
             ...
         }
     };
-    return Optional.of(buffer);
 }
 ```
 

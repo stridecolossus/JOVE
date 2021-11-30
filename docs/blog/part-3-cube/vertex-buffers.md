@@ -571,7 +571,7 @@ The `submitAndWait` method is a new helper on the command class:
 ```java
 default void submitAndWait(Pool pool) {
     Buffer buffer = Work.submit(this, pool);
-    pool.waitIdle();
+    pool.waitIdle(); // TODO - synchronise using fence
     buffer.free();
     return buffer;
 }
@@ -595,6 +595,8 @@ public static Buffer submit(Command cmd, Pool pool) {
     return buffer;
 }
 ```
+
+Note that currently this approach blocks the entire device, this will be replaced later with proper synchronisation.
 
 ### Configuration
 

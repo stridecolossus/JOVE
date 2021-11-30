@@ -35,30 +35,6 @@ public class PhysicalDevice {
     private final Pointer handle;
     private final Instance instance;
     private final List<Family> families;
-
-    /**
-     * Constructor.
-     * @param handle        Device handle
-     * @param instance      Parent instance
-     * @param families      Queue family descriptors
-     */
-    PhysicalDevice(Pointer handle, Instance instance, List<Family> families) {
-        this.handle = notNull(handle);
-        this.instance = notNull(instance);
-        this.families = List.copyOf(families);
-    }
-
-    public Pointer handle() {
-        return handle;
-    }
-
-    public Instance instance() {
-        return instance;
-    }
-
-    public List<Family> families() {
-        return families;
-    }
 }
 ```
 
@@ -132,7 +108,7 @@ Finally we add another helper to create a queue family domain object:
 
 ```java
 private static Family family(int index, VkQueueFamilyProperties props) {
-    final Set<VkQueueFlag> flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
+    Set<VkQueueFlag> flags = IntegerEnumeration.enumerate(VkQueueFlag.class, props.queueFlags);
     return new Family(index, props.queueCount, flags);
 }
 ```
@@ -140,15 +116,14 @@ private static Family family(int index, VkQueueFamilyProperties props) {
 Which is used to transform the array of structures when we create the device domain object:
 
 ```java
-    // Create queue families
-    final List<Family> families = IntStream
-        .range(0, props.length)
-        .mapToObj(n -> family(n, props[n]))
-        .collect(toList());
-    
-    // Create device
-    return new PhysicalDevice(handle, instance, families);
-}
+// Create queue families
+List<Family> families = IntStream
+    .range(0, props.length)
+    .mapToObj(n -> family(n, props[n]))
+    .collect(toList());
+
+// Create device
+return new PhysicalDevice(handle, instance, families);
 ```
 
 ### Device Properties
@@ -157,10 +132,6 @@ A physical device exposes properties that we wrap into the following lazily-inst
 
 ```java
 private final Supplier<Properties> props = new LazySupplier<>(Properties::new);
-
-public Properties properties() {
-    return props.get();
-}
 
 public class Properties {
     private final VkPhysicalDeviceProperties struct = new VkPhysicalDeviceProperties();
@@ -183,7 +154,7 @@ Finally we add a new interface to the Vulkan library for the various API methods
 
 ```java
 interface VulkanLibraryPhysicalDevice {
-    int vkEnumeratePhysicalDevices(Pointer instance, IntByReference count, Pointer[] devices);
+    int  vkEnumeratePhysicalDevices(Pointer instance, IntByReference count, Pointer[] devices);
     void vkGetPhysicalDeviceProperties(Pointer device, VkPhysicalDeviceProperties props);
     void vkGetPhysicalDeviceQueueFamilyProperties(Pointer device, IntByReference count, VkQueueFamilyProperties props);
 }
@@ -214,12 +185,6 @@ public class Window {
     private final Desktop desktop;
     private final Pointer handle;
     private final Descriptor descriptor;
-
-    Window(Desktop desktop, Pointer window, Descriptor descriptor) {
-        this.desktop = notNull(desktop);
-        this.handle = notNull(window);
-        this.descriptor = notNull(descriptor);
-    }
 
     public void destroy() {
         lib.glfwDestroyWindow(handle);
@@ -313,9 +278,9 @@ To create a Vulkan surface we add the following factory to the new class:
 
 ```java
 public Pointer surface(Pointer instance) {
-    final DesktopLibrary lib = desktop.library();
-    final PointerByReference ref = new PointerByReference();
-    final int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
+    DesktopLibrary lib = desktop.library();
+    PointerByReference ref = new PointerByReference();
+    int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
     if(result != 0) {
         throw new RuntimeException(...);
     }
@@ -387,7 +352,7 @@ The `test` method retrieves the queue predicate and finds the matching family if
 ```java
 public boolean test(PhysicalDevice dev) {
     // Build filter for this device
-    final Predicate<Family> predicate = predicate(dev);
+    Predicate<Family> predicate = predicate(dev);
 
     // Retrieve matching queue family
     family = dev.families.stream().filter(predicate).findAny();
@@ -414,10 +379,10 @@ This delegates to the following helper on the physical device:
 
 ```java
 public boolean isPresentationSupported(Handle surface, Family family) {
-    final VulkanLibrary lib = this.library();
-    final IntByReference supported = instance.factory().integer();
+    VulkanLibrary lib = this.library();
+    IntByReference supported = instance.factory().integer();
     check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this.handle(), family.index(), surface, supported));
-    return supported.getValue() == 1; // TODO
+    return VulkanBoolean.of(supported.getValue()).toBoolean();
 }
 ```
 
@@ -443,7 +408,7 @@ Finally we add a second factory to create a selector based on general queue capa
 
 ```java
 public static Selector of(VkQueueFlag... flags) {
-    final var list = Arrays.asList(flags);
+    var list = Arrays.asList(flags);
     return new Selector() {
         @Override
         protected Predicate<Family> predicate(PhysicalDevice dev) {
@@ -492,13 +457,6 @@ public class LogicalDevice {
     private final VulkanLibrary lib;
     private final Map<Family, List<Queue>> queues;
 
-    LogicalDevice(Pointer handle, PhysicalDevice parent, Map<Family, List<Queue>> queues) {
-        this.handle = notNull(handle);
-        this.parent = notNull(parent);
-        this.lib = parent.instance().library();
-        this.queues = Map.copyOf(queues);
-    }
-
     public void destroy() {
         lib.vkDestroyDevice(handle, null);
     }
@@ -519,7 +477,7 @@ public Map<Family, List<Queue>> queues() {
  * @throws IllegalArgumentException if the queue is not present
  */
 public Queue queue(Family family) {
-    final var list = queues.get(family);
+    List<Queue> list = queues.get(family);
     if((list == null) || list.isEmpty()) throw new IllegalArgumentException(...);
     return list.get(0);
 }
@@ -537,8 +495,6 @@ Similarly for an individual queue:
 
 ```java
 public record Queue {
-    ...
-    
     public void waitIdle(VulkanLibrary lib) {
         check(lib.vkQueueWaitIdle(handle));
     }
@@ -585,7 +541,7 @@ Notes:
 
 - We can specify extensions and validation layers at both the instance and device level, however more recent Vulkan implementations will ignore layers specified at the device level (we retain both for backwards compatibility).
 
-The `build` method populates a Vulkan descriptor for the logical device and invokes the API:
+The `build` method populates a Vulkan descriptor for the logical device:
 
 ```java
 public LogicalDevice build() {
@@ -603,14 +559,6 @@ public LogicalDevice build() {
     // Add queue descriptors
     info.queueCreateInfoCount = queues.size();
     info.pQueueCreateInfos = StructureHelper.first(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
-
-    // Allocate device
-    Instance instance = parent.instance();
-    VulkanLibrary lib = instance.library();
-    ReferenceFactory factory = instance.factory();
-    PointerByReference handle = factory.pointer();
-    check(lib.vkCreateDevice(parent, info, null, handle));
-    
     ...
 }
 ```
@@ -639,29 +587,30 @@ public static void populate(Entry<Family, List<Percentile>> queue, VkDeviceQueue
 
 Note that again we create a contiguous memory block for the array of queue priorities mapping to a `const float*` native type.
 
+The builder next invokes the API to create the device:
+
+```java
+Instance instance = parent.instance();
+VulkanLibrary lib = instance.library();
+ReferenceFactory factory = instance.factory();
+PointerByReference handle = factory.pointer();
+check(lib.vkCreateDevice(parent, info, null, handle));
+```
+
 ### Work Queues
 
 To retrieve the work queues from the newly created device we transform the map of required queues to a number of instances of the `RequiredQueue` local class and finally create the logical device:
 
 ```java
-public LogicalDevice build() {
+class RequiredQueue {
     ...
-
-    // Retrieve work queues
-    class RequiredQueue {
-        ...
-    }
-    Map<Family, List<Queue>> map = queues
-        .entrySet()
-        .stream()
-        .map(RequiredQueue::new)
-        .flatMap(RequiredQueue::stream)
-        .collect(groupingBy(Queue::family));
-
-
-    // Create logical device
-    return new LogicalDevice(handle.getValue(), parent, map, types);
 }
+Map<Family, List<Queue>> map = queues
+    .entrySet()
+    .stream()
+    .map(RequiredQueue::new)
+    .flatMap(RequiredQueue::stream)
+    .collect(groupingBy(Queue::family));
 ```
 
 This local class is responsible for generating the requested number of work queues for each family:
@@ -694,7 +643,13 @@ Notes:
 
 * We use a local class to centralise the queue logic whilst retaining access to the API dependencies (the logical device handle and Vulkan library).
 
-Finally we implement a new Vulkan library for the various API methods to manage the logical device and work queues:
+Finally the builder creates the domain object for the new device:
+
+```java
+return new LogicalDevice(handle.getValue(), parent, map);
+```
+
+The new API is implemented as an inner member of the logical device class:
 
 ```java
 interface Library {
@@ -706,21 +661,23 @@ interface Library {
 }
 ```
 
-Note from now on the API libraries are inner classes of the companion domain objects and are aggregated into the main Vulkan library:
+The various API interfaces are then integrated into the main Vulkan library:
 
 ```java
 public interface VulkanLibrary extends Library, DeviceLibrary, ...
 ```
 
-Where convenient we implement intermediate aggregations, e.g. for the various device libraries:
+Where convenient we also implement intermediate aggregations, e.g. for the various device libraries:
 
 ```java
 interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library, LogicalDevice.Library
 ```
 
+From now on we will take this approach of aggregated API libraries which are implemented as inner classes of the companion domain objects.  This centralises each API with the class using its methods and reduces the number of super-interfaces for the root Vulkan library.
+
 ### Integration
 
-We can now create the logical device and retrieve the work queues:
+In the demo we can now create the logical device and retrieve the work queues:
 
 ```java
 // Create device
@@ -799,9 +756,9 @@ The process of enumerating the physical devices can now be refactored to the fol
 
 ```java
 public static Stream<PhysicalDevice> devices(Instance instance) {
-    final VulkanFunction<Pointer[]> func = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
-    final IntByReference count = instance.factory().integer();
-    final Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
+    VulkanFunction<Pointer[]> func = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
+    IntByReference count = instance.factory().integer();
+    Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
     return Arrays.stream(handles).map(ptr -> create(ptr, instance));
 }
 ```
@@ -867,10 +824,10 @@ public final class StructureHelper {
 
         // Allocate contiguous array
         @SuppressWarnings("unchecked")
-        final R[] array = (R[]) identity.get().toArray(data.size());
+        R[] array = (R[]) identity.get().toArray(data.size());
 
         // Populate array
-        final Iterator<T> itr = data.iterator();
+        Iterator<T> itr = data.iterator();
         for(final R element : array) {
             populate.accept(itr.next(), element);
         }
@@ -895,7 +852,7 @@ For the case where the API method requires a pointer-to-array argument we provid
 
 ```java
 public static <T, R extends Structure> R first(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
-    final R[] array = array(data, identity, populate);
+    R[] array = array(data, identity, populate);
     if(array == null) {
         return null;
     }
@@ -925,11 +882,11 @@ Finally we also provide a generalised custom stream collector:
  * @see #array(Collection, Supplier, BiConsumer)
  */
 public static <T, R extends Structure> Collector<T, ?, R[]> collector(Supplier<R> identity, BiConsumer<T, R> populate, Characteristics... chars) {
-    final BinaryOperator<List<T>> combiner = (left, right) -> {
+    BinaryOperator<List<T>> combiner = (left, right) -> {
         left.addAll(right);
         return left;
     };
-    final Function<List<T>, R[]> finisher = list -> array(list, identity, populate);
+    Function<List<T>, R[]> finisher = list -> array(list, identity, populate);
     return Collector.of(ArrayList::new, List::add, combiner, finisher, chars);
 }
 ```

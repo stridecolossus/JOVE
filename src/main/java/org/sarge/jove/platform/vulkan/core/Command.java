@@ -43,13 +43,20 @@ public interface Command {
 	 * Helper - Submits this as a <i>one time</i> command to the given pool and waits for completion.
 	 * @param pool Command pool
 	 * @return New command buffer
-	 * @see Work#submit(Command, Pool)
-	 * @see Pool#waitIdle()
+	 * @see Work#submit(Command, Pool, Fence)
 	 */
 	default Buffer submitAndWait(Pool pool) {
-		final Buffer buffer = Work.submit(this, pool);
-		pool.waitIdle();
+		// Submit work
+		final Fence fence = Fence.create(pool.device());
+		final Buffer buffer = Work.submit(this, pool, fence);
+
+		// Wait for completion
+		fence.waitReady();
+
+		// Release resources
+		fence.destroy();
 		buffer.free();
+
 		return buffer;
 	}
 

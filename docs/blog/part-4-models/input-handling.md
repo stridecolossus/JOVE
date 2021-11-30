@@ -495,12 +495,10 @@ The event source implementation for the GLFW mouse device first generates the li
 
 ```java
 private class MouseButton extends DesktopSource<MouseButtonListener> {
-    private final String prefix = Event.name("Mouse", "Button");
-    
     private final List<Button> buttons = IntStream
         .rangeClosed(1, MouseInfo.getNumberOfButtons())
         .mapToObj(String::valueOf)
-        .map(id -> Event.name(prefix, id))
+        .map(id -> Event.name("Mouse", id))
         .map(name -> new Button(name, this))
         .collect(toList());
     

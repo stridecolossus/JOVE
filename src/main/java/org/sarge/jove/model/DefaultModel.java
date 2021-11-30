@@ -5,7 +5,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,25 +25,8 @@ import org.sarge.jove.model.Model.AbstractModel;
  * @author Sarge
  */
 public class DefaultModel extends AbstractModel {
-	/**
-	 * Creates a default model.
-	 * @param header		Header
-	 * @param vertices		Vertex data
-	 * @param index			Optional index
-	 * @return New default model
-	 */
-	public static DefaultModel of(Header header, List<Vertex> vertices, int[] index) {
-		if(index == null) {
-			return new DefaultModel(header, List.copyOf(vertices), null);
-		}
-		else {
-			return new DefaultModel(header, List.copyOf(vertices), Arrays.copyOf(index, index.length));
-		}
-	}
-	// TODO - extend IndexedModel and implementations for Integer and Short? see type in VulkanBuffer
-
 	private final List<Vertex> vertices;
-	private final int[] index;
+	private final Optional<int[]> index;
 
 	/**
 	 * Constructor.
@@ -55,12 +37,12 @@ public class DefaultModel extends AbstractModel {
 	protected DefaultModel(Header header, List<Vertex> vertices, int[] index) {
 		super(header);
 		this.vertices = notNull(vertices);
-		this.index = index;
+		this.index = Optional.ofNullable(index);
 	}
 
 	@Override
 	public boolean isIndexed() {
-		return index != null;
+		return index.isPresent();
 	}
 
 	@Override
@@ -85,11 +67,14 @@ public class DefaultModel extends AbstractModel {
 
 	@Override
 	public Optional<Bufferable> index() {
-		if(index == null) {
-			return Optional.empty();
-		}
+		return index.map(DefaultModel::index);
+	}
 
-		final Bufferable buffer = new Bufferable() {
+	/**
+	 * Builds the index buffer.
+	 */
+	private static Bufferable index(int[] index) {
+		return new Bufferable() {
 			private final int len = index.length * Integer.BYTES;
 
 			@Override
@@ -110,8 +95,8 @@ public class DefaultModel extends AbstractModel {
 				}
 			}
 		};
-		return Optional.of(buffer);
 	}
+	// TODO - implementations for integer and short?
 
 	@Override
 	public DefaultModel transform(List<Layout> layouts) {
@@ -130,7 +115,7 @@ public class DefaultModel extends AbstractModel {
 		// Create transformed model
 		final Header prev = this.header();
 		final Header header = new Header(layouts, prev.primitive(), prev.count());
-		return new DefaultModel(header, data, index);
+		return new DefaultModel(header, data, index.orElse(null));
 	}
 
 	/**

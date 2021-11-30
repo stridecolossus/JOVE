@@ -795,20 +795,13 @@ public enum Wrap {
 }
 ```
 
-The builder populates a descriptor for the sampler and invokes the API:
+Construction of the sampler follows the usual pattern:
 
 ```java
-public Sampler build() {
-    // Populate descriptor
-    var info = new VkSamplerCreateInfo();
-    ...
-
-    // Allocate sampler
+public Sampler build(LogicalDevice dev) {
     VulkanLibrary lib = dev.library();
     PointerByReference handle = dev.factory().pointer();
     check(lib.vkCreateSampler(dev, info, null, handle));
-
-    // Create sampler
     return new Sampler(handle.getValue(), dev);
 }
 ```
@@ -816,7 +809,7 @@ public Sampler build() {
 Finally we add the new API methods to the image library:
 
 ```java
-interface VulkanLibraryImage {
+interface Library {
     int  vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
     void vkDestroySampler(DeviceContext device, Sampler sampler, Pointer pAllocator);
 }

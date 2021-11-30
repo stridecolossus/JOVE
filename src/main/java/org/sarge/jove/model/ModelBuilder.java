@@ -112,17 +112,17 @@ public class ModelBuilder {
 	 * @return New model
 	 */
 	public Model build() {
-		return build(null, vertices.size());
+		return build(vertices.size(), null);
 	}
 
 	/**
 	 * Constructs this model.
-	 * @param index		Index or {@code null} if not indexed
 	 * @param count		Number of vertices
+	 * @param index		Index or {@code null} if not indexed
 	 * @return New model
 	 */
-	protected final Model build(int[] index, int count) {
+	protected final Model build(int count, int[] index) {
 		final Header header = new Header(layout, primitive, count);
-		return DefaultModel.of(header, vertices, index);
+		return new DefaultModel(header, vertices, index);
 	}
 }
