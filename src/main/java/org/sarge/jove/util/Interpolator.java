@@ -20,14 +20,28 @@ public interface Interpolator {
 	 */
 	float interpolate(float t);
 
+	/**
+	 * Chains two interpolators.
+	 * @param next Interpolator to apply <b>after</b> this interpolator
+	 * @return Chained interpolator
+	 */
+	default Interpolator then(Interpolator next) {
+		return t -> next.interpolate(this.interpolate(t));
+	}
+
+	/**
+	 * Flips (or inverts) an interpolation function: <code>1 - P(t)</code>.
+	 * @param delegate Delegate interpolator
+	 * @return Flipped interpolator
+	 */
+	static Interpolator flip(Interpolator delegate) {
+		return t -> 1 - delegate.interpolate(t);
+	}
+
 	// TODO
 	//* @see <a href="https://en.wikipedia.org/wiki/Smoothstep">Wikipedia</a>
 ////https://www.febucci.com/2018/08/easing-functions/
 //	Interpolator COSINE = value -> (1 - MathsUtil.cos(value * MathsUtil.PI)) / 2f;
-
-	// TODO
-	// - should we have two interfaces here? 1. float function 2. ranged?
-	// - surely we should have some sort of chaining before/after using default methods?
 
 	/**
 	 * Linear interpolation, i.e. does nothing.
@@ -51,11 +65,6 @@ public interface Interpolator {
 	Interpolator SMOOTH = t -> t * t * (3 - 2 * t);
 
 	/**
-	 * Flip (or invert) interpolator.
-	 */
-	Interpolator FLIP = t -> 1 - t;
-
-	/**
 	 * Creates an interpolator that raises the parameter to the power of the given exponent.
 	 * @param exp Exponent
 	 * @return Power function
@@ -63,15 +72,6 @@ public interface Interpolator {
 	 */
 	static Interpolator pow(float exp) {
 		return t -> (float) Math.pow(t, exp);
-	}
-
-	/**
-	 * Creates a <i>flip</i> (or <i>inverse</i>) interpolation function: <code>1 - P(t)</code>.
-	 * @param func Delegate function
-	 * @return Flip function
-	 */
-	static Interpolator flip(Interpolator func) {
-		return t -> 1 - func.interpolate(t);
 	}
 
 	/**

@@ -16,21 +16,17 @@ As we worked through the [tutorial](https://vulkan-tutorial.com/) we found we we
 
 There were a few reasons for this:
 
-- The various Vulkan bindings provided by LWJGL are code-generated from the native library but all of the internal workings are exposed as **public** members and methods.  This completely obfuscates the intended purpose and usage of the class.
+* The various Vulkan bindings provided by LWJGL are code-generated from the native library but all of the internal workings are exposed as __public__ members and methods, obfuscating the intended purpose and usage of the class.  There are multiple getters/setters for each field and a slew of allocation factory methods which presumably have a purpose but are not explained.
 
-- In addition each component provides multiple getter/setters for the same field and a slew of allocation factory methods (over twenty) which presumably have a purpose but are not explained.  Without any documentation there is no clear direction for which methods we should be using, whether there are pros and cons, etc.
+* This was exacerbated by the fact that JavaDoc is also code-generated but focused on _how_ the code was generated rather than _what_ it is actually doing.  The developer is constantly forced to context switch to the Khronos website or the Vulkan header to work out how we should be using the bindings.  (UPDATE: The LWJGL JavaDoc now includes the relevant documentation which is a significant improvement).
 
-- The JavaDoc is also code-generated but is focused on _how_ the code was generated rather than _what_ its actually doing.  The developer is constantly forced to context switch to the Kronos website or the Vulkan header to work out how we should be using the bindings.  (UPDATE: It looks like the LWJGL JavaDoc now includes the relevant documentation which is a significant improvement).
+* In the tutorial the application name is a simple string.  In the corresponding LWJGL implementation we had to instantiate a memory stack, invoke a static helper to allocate a wrapper object, and pass that to the structure.  However there was no explanation for _why_ we needed to do this, whether there were alternatives, is the developer responsible for releasing it later, etc.
 
-- In the tutorial the application name is a simple string, in LWJGL we had to instantiate a memory stack and invoke a static helper to allocate a buffer for the string.  However there is no explanation for _why_ we need to do this, whether there are alternatives, do we need to release the string, etc.
+* This was exacerbated by the lack of decent examples and tutorials - those that we found all seemed to do the same thing in different ways without any explanation of _why_ a certain approach was used.  In addition most examples were basically C code masquerading as Java, with little or no in-code documentation or modularity, resulting in a wall-o-code that was virtually impossible to follow.
 
-- This was exacerbated by the lack of decent examples and tutorials - those that we found all seemed to do the same thing in different ways without any explanation of _why_ a certain approach was used.  In addition most examples were basically C code masquerading as Java, with little or no in-code documentation or modularity, resulting in a wall-o-code that was virtually impossible to follow.
-
-- The use of static imports was slightly annoying - to find a given class or method one just has to know its parent package, or add them to the content assist in the IDE, or switch off import organisation altogether and cut-and-paste _every_ import into _every_ source file.
+* The use of static imports was slightly annoying - to find a given class or method one just has to know its parent package, or add them to the content assist in the IDE, or switch off import organisation altogether and cut-and-paste _every_ import into _every_ source file.
 
 Note this is not intended to be negative review of LWJGL - we have used it with great results in our previous OpenGL project and it is widely used for Vulkan.  Unfortunately our own experience was frankly demoralising and we had barely scratched the surface of the Vulkan API - we eventually gave up in disgust.
-
-Sometime later we were encouraged by a friend to make a second attempt - our first design decision was that unless LWJGL had materially changed we would look for an alternative.
 
 ---
 
@@ -38,42 +34,55 @@ Sometime later we were encouraged by a friend to make a second attempt - our fir
 
 ### Alternatives
 
-Having made the decision not to use LWJGL for the native library bindings we needed an alternative technology.
+Sometime later we were encouraged by a friend to make a second attempt - our first design decision was that unless LWJGL had materially changed we would look for an alternative.
 
 Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also (thankfully) been many years since we wrote any C/C++ code and we certainly didn't intend starting now.
 
-There is a on-going JSR for a pure-Java alternative to JNI but it didn't appear to have progressed much (if at all) in the intervening period and there was little prospect of it being available any time soon.
+There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)) and although it appeared to do exactly what we wanted there were some misgivings:
 
-We next looked at SWIG which is the code-generation technology used by LWJGL but we were not encouraged - the tool seems to require descriptors to define the bindings to the native layer and we have already covered our issues with the code-generated results.
+* At the time of writing Panama was still in a fluid state and none of the components were part of the released JDK (although some components are now available as preview features).
+
+* The API looks _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer.
+
+We next looked at SWIG which is the code-generation technology used by LWJGL but again we were not encouraged, the tool seems to require additional descriptors to define the bindings to the native layer, and we have already covered our issues with the resultant code.
 
 Finally we came across JNA - having never had to deal with a native library directly (professionally or for personal projects) it was new to us but our initial impressions were promising:
-- The premise of auto-magically mapping Java interfaces and types to the native API was very appealing.
-- In particular the support for mapping to C structures would be important given the large number that are used by Vulkan.
-- The library seemed to have a large and active user base with plenty of posts on stack-overflow (for example).
-- The documentation was generally excellent and there seemed plenty of tutorials and examples available.
+
+* The premise of auto-magically mapping Java interfaces and types to the native API was very appealing.
+
+* In particular the support for mapping to C/C++ structures would be important given the large number that are used by Vulkan.
+
+* The library seemed to have a large and active user base with plenty of posts on stack-overflow (for example).
+
+* The documentation was generally excellent and there seemed plenty of tutorials and examples available.
 
 We had a possible winner.
 
 ### JNA
 
-To see whether JNA would suit our purposes we first tried it against a simpler native library.  We had already planned to use [GLFW](https://www.glfw.org/) for desktop related functionality such as managing windows, displays, input devices, etc. and it also integrates nicely with Vulkan (as we will see later on).
+To see whether JNA would suit our purposes we first tried it against a simpler native library.  We had already planned to use [GLFW](https://www.glfw.org/) for desktop related functionality such as creating native windows, managing input devices, etc. and it also integrates nicely with Vulkan (as we will see later).
 
 We implemented the bulk of what would become the _desktop_ package of JOVE in a couple of hours, the progress reflecting our initial positive impressions:
-- Instantiating the native library was relatively painless.
-- Defining a Java interface to represent the native API was also relatively simple with JNA generally providing logical mappings for method parameters.
-- Although GLFW doesn't require much in the way of structured data we found using JNA structures to be logical and straight-forward.
-- The library also supports callbacks specified as Java interfaces.
 
-On a high we stripped LWJGL from our project and replaced the Vulkan components with hand-crafted JNA interfaces and structures.  We progressed to the point of instantiating the logical device in the space of an hour or so without any of the road-blocks or surprises that LWJGL threw at us.
+* Instantiating the native library was relatively painless.
+
+* Defining a Java interface to represent the native API was also fairly simple with JNA generally providing logical mappings for method parameters.
+
+* Although GLFW doesn't require much in the way of structured data we found using JNA structures to be logical and straight-forward.
+
+* The library also supports callbacks specified as Java interfaces.
+
+On a high we stripped LWJGL from the project and replaced the Vulkan components with hand-crafted JNA interfaces and structures.  We progressed to the point of instantiating the logical device in the space of an hour or so without any of the road-blocks or surprises that LWJGL threw at us, despite the overheads of developing the API and structures as we went.
 
 In particular:
-- There are no mysterious management methods and marshalling to/from the native layer is generally transparent - the application name is simply a string.
-- Other than the fact that JNA mandates that all structure fields are public the internal workings are largely hidden.
-- Where we did come across problems or confusing situations there was plenty of documentation, examples, tutorials, etc. available.
 
-At this point we paused to take stock because of course there was the elephant in the room - Vulkan is a massive API with a large number of API calls, enumerations and structures.
-Some of the components are also absolutely huge such as the `VkStructureType` enumeration or the `VkPhysicalDeviceLimits` structure.
-Hand-crafting even a fraction of the API could be done but it would be very tedious and the likelihood of introducing errors quite high (e.g. accidentally removing a field).
+* There are no mysterious management methods and marshalling to/from the native layer is generally transparent - the application name is simply a string.
+
+* Other than the fact that JNA mandates that all structure fields are public the internal workings are largely hidden.
+
+* Where we did come across problems or confusing situations there was plenty of documentation, examples, tutorials, etc. available.
+
+At this point we paused to take stock because of course there was the elephant in the room - Vulkan is a massive API with a large number of API calls, enumerations and structures.  Some of the components are also absolutely huge such as the `VkStructureType` enumeration or the `VkPhysicalDeviceLimits` structure.  Hand-crafting even a fraction of the API could be done but it would be very tedious and the likelihood of introducing errors quite high (e.g. accidentally removing a field).
 
 We needed a code generator.
 
@@ -85,35 +94,166 @@ We needed a code generator.
 
 Having decided that JNA was the way to go for the native bindings we still needed some mechanism to actually generate the API.
 
-We first noted down some requirements for the code generator:
+We first noted down some requirements and constraints:
 
-- We will consider the generator to be complete once we have generated an acceptable proportion of the API rather than attempting to cover every possible use-case.
-i.e. we want to avoid diminishing returns on the time and effort to cover every edge case.
+1. The generator will be considered to be complete once we have generated an acceptable proportion of the API rather than attempting to cover every possible use-case.  i.e. avoid diminishing returns on the time and effort to cover every edge case.
 
-- That said the generated code will be treated as read-only, i.e. we will attempt to avoid fiddling the generated source code where possible.
+2. That said the generated code will be treated as read-only and we will attempt to avoid fiddling the generated source code where possible.
 
-- The generator will be invoked manually rather than being a part of an automated build process (which makes things _much_ simpler).
+3. The generator will be invoked manually rather than being a part of an automated build process (which makes things considerably simpler).
 
-- For future versions of the Vulkan API we assume Kronos will take the same approach as OpenGL whereby new iterations of the API are extensions and additions rather than replacements for existing components (i.e. which we can code generate separately).
+4. For future versions of the Vulkan API we assume Khronos will take the same approach as OpenGL whereby new iterations of the API are extensions and additions rather than replacements for existing components, i.e. we can code generate each release separately.
 
-- Any tools and libraries we use should follow our general goal of being well-documented and supported.
-
-### Tools
+5. Any tools and libraries should follow the general goal of being well-documented and supported.
 
 We first tried a tool called _JNAeator_ that generates JNA bindings for a given header file, this seemed perfect for our requirements.  Unfortunately the tool generated a seemingly random package structure and the generated code looked more like the SWIG bindings than the nice, neat code we had hand-crafted.  It also used yet another library called _BridJ_ and the fact that it took us some time to find a website for this tool was not encouraging.
 
 So we looked for a more general header parser that we could use to code generate the bindings ourselves.  We expected (probably naively) that there would be some library or tool out there that we could use to parse a C/C++ header to enumerate the structures, enumerations and API methods.
 
-After some research we largely drew a blank - the only option seemed to be an obscure Eclipse component called CDT that is used for code assist.  It wasn't an actual library as such (there is no maven or project page), we had to include a JAR file directly in our project.  CDT builds an AST (Abstract Source Tree?) from a C/C++ source file which is a node-tree representing the various elements of the code.
+### CDT
 
-It did the job but the exercise was very painful:
-- CDT isn't a public library so the documentation was virtually non-existent.
-- As it turned out most of the information we wanted was mapped to a single node type which largely made CDT pointless for our project.
-- Extracting the relevant information was extremely difficult - we didn't understand most of the terminology so it was just blind searching across mysteriously named fields and types.
-- The library provided a visitor to walk the tree but required the developer to set public booleans to select the relevant data as well - WTF!
-- Perhaps we were missing the point but we seemed to have to keep casting different types of node to find even the most basic information.
+After some research we largely drew a blank - the only option seemed to be an obscure Eclipse component called CDT that is used for code assist.  It wasn't an actual library as such (there is no maven or project page for example), we had to include a couple of JAR files directly in our project.  CDT builds an AST (Abstract Source Tree) from a C/C++ source file which is a node-tree representing the various elements of the code.
 
-In retrospect we spent far too much time messing around with CDT and it certainly doesn't adhere to our goal of only using well documented third-party tools.  If and when we need to re-generate the API we will replace it with a home-brewed parser (unless we find one in the meantime).  For that reason we will largely gloss over the details of how we used CDT.
+We did eventually manage to use CDT to extract the information required for the code generator but the process was very painful:
+
+* CDT is not a public library so the documentation was virtually non-existent.
+
+* We didn't understand most of the terminology so attempting to extract the relevant information from the AST was a process of blind searching across mysteriously named fields and types.
+
+* The AST also seems to require a lot of casting between different types of node that are all very similar.
+
+In retrospect we spent far too much time messing around with CDT and it certainly does not adhere to our goal of only using well documented third-party tools.  We could have perhaps tried to write a custom header parser (since our requirements are relatively simple) and this may be something to consider for future versions of the Vulkan API.
+
+
+
+```java
+FileContent content = FileContent.createForExternalFileLocation(...);
+```
+
+```java
+IScannerInfo info = new ScannerInfo(new HashMap<>(), new String[0]);
+IncludeFileContentProvider emptyIncludes = IncludeFileContentProvider.getEmptyFilesProvider();
+IIndex index = EmptyCIndex.INSTANCE;
+int options = ILanguage.OPTION_IS_SOURCE_UNIT;
+IParserLogService log = new DefaultLogService();
+IASTTranslationUnit unit = GPPLanguage.getDefault().getASTTranslationUnit(content, info, emptyIncludes, index, options, log);
+```
+
+
+```java
+public class HeaderVisitor extends ASTVisitor {
+    public HeaderVisitor() {
+        this.shouldVisitDeclSpecifiers = true;
+    }
+
+    @Override
+    public int visit(IASTDeclSpecifier spec) {
+        if(spec instanceof IASTEnumerationSpecifier enumeration) {
+            parse(enumeration);
+        }
+        else
+        if(spec instanceof IASTCompositeTypeSpecifier structure) {
+            parse(structure);
+        }
+
+        return PROCESS_CONTINUE;
+    }
+}
+```
+
+Note that in the visitor we are also required to set a __public__ boolean to select the relevant AST nodes - WTF!
+
+### Enumerations
+
+```java
+private void parse(IASTEnumerationSpecifier enumeration) {
+    String name = enumeration.getName().toString();
+
+    Map<String, Long> values = Arrays
+        .stream(enumeration.getEnumerators())
+        .map(CPPASTEnumerator.class::cast)
+        .map(HeaderVisitor::map)
+        .collect(toMap(Entry::getKey, Entry::getValue, Long::sum, LinkedHashMap::new));
+
+    generator.enumeration(name, values);
+}
+```
+
+```java
+private static Entry<String, Long> map(CPPASTEnumerator entry) {
+    String name = entry.getName().toString();
+    Long value = entry.getIntegralValue().numericalValue();
+    return Map.entry(name, value);
+}
+```
+
+
+```java
+public void enumeration(String name, Map<String, Long> values) {
+    // Determine name prefix based on enumeration name
+    String[] parts = StringUtils.splitByCharacterTypeCamelCase(name);
+    String prefix = String.join(UNDERSCORE, parts).toUpperCase() + UNDERSCORE;
+    ...
+}
+```
+
+```java
+    // Transform key names
+    LinkedHashMap<String, Object> transformed = new LinkedHashMap<>();
+    for(Entry<String, Long> entry : values.entrySet()) {
+        // Transform key
+        String key = StringUtils
+            .removeStart(entry.getKey(), prefix)
+            .transform(str -> StringUtils.removeStart(str, "VK_"))
+            .transform(Generator::ensureStartsAlpha);
+
+        // Skip synthetic entries
+        if(IGNORE.contains(key)) {
+            continue;
+        }
+
+        // Add value
+        transformed.put(key, entry.getValue());
+    }
+```
+
+    private static final Set<String> IGNORE = Set.of("BEGIN_RANGE", "END_RANGE", "RANGE_SIZE", "MAX_ENUM");
+    private static final String[] DIGITS = {"ONE", "TWO", "THREE"};
+
+```java
+private static String ensureStartsAlpha(String key) {
+    char ch = key.charAt(0);
+    if(Character.isDigit(ch)) {
+        StringBuilder str = new StringBuilder();
+        String digits = DIGITS[ch - '1'];
+        str.append(digits);
+        str.append(UNDERSCORE);
+        str.append(key.substring(1));
+        return str.toString();
+    }
+    else {
+        return key;
+    }
+}
+```
+
+
+```java
+// Build template arguments
+final Map<String, Object> map = new HashMap<>();
+map.put("package", PACKAGE);
+map.put("name", StringUtils.removeEnd(name, "Bits"));
+map.put("values", transformed);
+```
+
+```java
+// Remove bit-field suffix and delegate
+proc.generate("enumeration.template.txt", map);
+```
+
+
+
+
 
 ### Code Generation
 
