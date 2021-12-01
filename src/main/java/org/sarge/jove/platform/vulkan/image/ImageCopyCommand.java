@@ -261,19 +261,22 @@ public class ImageCopyCommand implements Command {
 		 */
 		public Builder region(ImageData image) {
 			final ImageDescriptor descriptor = this.image.descriptor();
+			final int count = descriptor.layerCount();
 			final Level[] levels = image.levels().toArray(Level[]::new);
 			for(int level = 0; level < levels.length; ++level) {
 				// Calculate MIP level extents
 				final Extents extents = descriptor.extents().mip(level);
-				final int offset = levels[level].offset();
 
 				// Load layers for this MIP level
-				for(int layer = 0; layer < descriptor.layerCount(); ++layer) {
+				for(int layer = 0; layer < count; ++layer) {
 					// Build sub-resource
 					final SubResource res = new SubResource.Builder(descriptor)
 							.baseArrayLayer(layer)
 							.mipLevel(level)
 							.build();
+
+					// Determine layer offset within this level
+					final int offset = levels[level].offset(layer, count);
 
 					// Create copy region
 					final CopyRegion region = new CopyRegion.Builder()

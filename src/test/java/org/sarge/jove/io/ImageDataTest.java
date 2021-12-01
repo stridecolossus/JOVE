@@ -16,6 +16,35 @@ import org.sarge.jove.io.ImageData.Level;
 
 public class ImageDataTest {
 	@Nested
+	class LevelTests {
+		private Level level;
+
+		@BeforeEach
+		void before() {
+			level = new Level(3, 16);
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(3, level.offset());
+			assertEquals(16, level.length());
+		}
+
+		@Test
+		void offset() {
+			assertEquals(3, level.offset(0, 4));
+			assertEquals(7, level.offset(1, 4));
+			assertEquals(11, level.offset(2, 4));
+			assertEquals(15, level.offset(3, 4));
+		}
+
+		@Test
+		void offsetInvalidLayerIndex() {
+			assertThrows(IllegalArgumentException.class, () -> level.offset(4, 4));
+		}
+	}
+
+	@Nested
 	class ExtentsTests {
 		private Extents extents;
 

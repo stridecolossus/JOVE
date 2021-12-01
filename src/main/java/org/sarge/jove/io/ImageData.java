@@ -73,6 +73,18 @@ public interface ImageData {
 		}
 
 		/**
+		 * Helper - Calculate the offset into the image data for the given layer.
+		 * @param layer			Layer index
+		 * @param count			Number of layers
+		 * @return Offset
+		 * @throws IllegalArgumentException if the layer index is larger than the given number of layers
+		 */
+		public int offset(int layer, int count) {
+			if(layer >= count) throw new IllegalArgumentException(String.format("Illogical offset for layer %d/%d", layer, count));
+			return offset + layer * (length / count);
+		}
+
+		/**
 		 * Helper - Determines the number of mipmap levels for the given image dimensions.
 		 * @param dim Image dimensions
 		 * @return Number of mipmap levels

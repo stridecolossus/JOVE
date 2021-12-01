@@ -717,8 +717,8 @@ We also add a convenience variant to add a copy region for an entire image:
 
 ```java
 public Builder region(ImageData image) {
-    final ImageDescriptor descriptor = this.image.descriptor();
-    final Level[] levels = image.levels().toArray(Level[]::new);
+    ImageDescriptor descriptor = this.image.descriptor();
+    Level[] levels = image.levels().toArray(Level[]::new);
     for(int level = 0; level < levels.length; ++level) {
         ...
     }
@@ -752,13 +752,16 @@ private static int mip(int value, int level) {
 We can then generate a copy region for each layer in that MIP level:
 
 ```java
-int offset = levels[level].offset();
-for(int layer = 0; layer < descriptor.layerCount(); ++layer) {
+int count = descriptor.layerCount();
+for(int layer = 0; layer < count; ++layer) {
     // Build sub-resource
     SubResource res = new SubResource.Builder(descriptor)
         .baseArrayLayer(layer)
         .mipLevel(level)
         .build();
+
+    // Determine layer offset within this level
+    int offset = levels[level].offset(layer, count);
 
     // Create copy region
     CopyRegion region = new CopyRegion.Builder()
@@ -769,6 +772,14 @@ for(int layer = 0; layer < descriptor.layerCount(); ++layer) {
 
     // Add region
     region(region);
+}
+```
+
+The offset of each layer (or face) within a MIP level is calculated by a new convenience helper method on the `Level` class:
+
+```java
+public int offset(int layer, int count) {
+    return offset + layer * (length / count);
 }
 ```
 
