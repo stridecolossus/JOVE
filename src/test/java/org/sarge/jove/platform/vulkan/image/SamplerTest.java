@@ -80,7 +80,7 @@ public class SamplerTest extends AbstractVulkanTest {
 					.mag(VkFilter.NEAREST)
 					.mipmap(VkSamplerMipmapMode.NEAREST)
 					.wrap(VkSamplerAddressMode.CLAMP_TO_BORDER)
-					.border(VkBorderColor.VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK)
+					.border(VkBorderColor.FLOAT_TRANSPARENT_BLACK)
 					.minLod(2)
 					.maxLod(3)
 					.anisotropy(4)
@@ -101,7 +101,7 @@ public class SamplerTest extends AbstractVulkanTest {
 					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeU);
 					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeV);
 					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeW);
-					assertEquals(VkBorderColor.VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, info.borderColor);
+					assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, info.borderColor);
 					assertEquals(VulkanBoolean.TRUE, info.anisotropyEnable);
 					assertEquals(4f, info.maxAnisotropy);
 					return true;

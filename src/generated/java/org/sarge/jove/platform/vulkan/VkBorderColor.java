@@ -7,12 +7,12 @@ import org.sarge.jove.util.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkBorderColor implements IntegerEnumeration {
- 	VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK(0),
- 	VK_BORDER_COLOR_INT_TRANSPARENT_BLACK(1),
- 	VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK(2),
- 	VK_BORDER_COLOR_INT_OPAQUE_BLACK(3),
- 	VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE(4),
- 	VK_BORDER_COLOR_INT_OPAQUE_WHITE(5);
+ 	FLOAT_TRANSPARENT_BLACK(0),
+ 	INT_TRANSPARENT_BLACK(1),
+ 	FLOAT_OPAQUE_BLACK(2),
+ 	INT_OPAQUE_BLACK(3),
+ 	FLOAT_OPAQUE_WHITE(4),
+ 	INT_OPAQUE_WHITE(5);
 
 	private final int value;
 
