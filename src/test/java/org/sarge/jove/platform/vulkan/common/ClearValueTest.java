@@ -61,7 +61,7 @@ public class ClearValueTest {
 
 	@Test
 	void defaultDepth() {
-		assertEquals(new DepthClearValue(Percentile.ONE), ClearValue.DEPTH);
+		assertEquals(new DepthClearValue(Percentile.ONE), DepthClearValue.DEFAULT);
 	}
 
 	@Test

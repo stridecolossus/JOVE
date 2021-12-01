@@ -15,20 +15,11 @@ public class VulkanException extends RuntimeException {
 
 	/**
 	 * Constructor.
-	 * @param result		Vulkan result code
-	 * @param message		Additional message
-	 */
-	public VulkanException(int result, String message) {
-		super(String.format("[%d]%s: %s", result, reason(result), message));
-		this.result = result;
-	}
-
-	/**
-	 * Constructor.
 	 * @param result Vulkan result code
 	 */
 	public VulkanException(int result) {
-		this(result, "Vulkan error");
+		super(String.format("%s[%d]", reason(result), result));
+		this.result = result;
 	}
 
 	/**
@@ -38,8 +29,7 @@ public class VulkanException extends RuntimeException {
 	 */
 	private static String reason(int result) {
 		try {
-			final VkResult value = IntegerEnumeration.mapping(VkResult.class).map(result);
-			return value.name();
+			return IntegerEnumeration.mapping(VkResult.class).map(result).name();
 		}
 		catch(IllegalArgumentException e) {
 			return "Unknown error code";

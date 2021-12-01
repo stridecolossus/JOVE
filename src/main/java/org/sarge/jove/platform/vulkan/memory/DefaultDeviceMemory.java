@@ -110,8 +110,8 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
-					.append("size", region)
 					.append("offset", offset)
+					.append("size", size)
 					.append("mem", DefaultDeviceMemory.this)
 					.build();
 		}

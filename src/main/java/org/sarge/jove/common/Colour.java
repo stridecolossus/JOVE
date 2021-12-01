@@ -17,15 +17,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	public static final String RGBA = "RGBA";
 
 	/**
-	 * Material colour types.
-	 */
-	public enum Type {
-		AMBIENT,
-		DIFFUSE,
-		SPECULAR,
-	}
-
-	/**
 	 * White colour.
 	 */
 	public static final Colour WHITE = new Colour(1, 1, 1);
@@ -40,8 +31,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 */
 	public static final Layout LAYOUT = Layout.floats(4);
 
-	private static final int MASK = 0xff;
-	private static final float INV_MASK = 1f / MASK;
 
 	/**
 	 * Creates a colour from the given 4-element floating-point array representing an RGBA value <b>or</b> a 3-element RGB array where the alpha value is initialised to <b>one</b>.
@@ -56,23 +45,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 			default -> throw new IllegalArgumentException("Expected RGB(A) array components");
 		};
 		return new Colour(array[0], array[1], array[2], alpha);
-	}
-
-	/**
-	 * Creates a colour from the given compacted pixel.
-	 * @param pixel Pixel value
-	 * @return Colour
-	 */
-	public static Colour of(int pixel) {
-		final float a = mask(pixel >> 24);
-		final float r = mask(pixel >> 16);
-		final float g = mask(pixel >> 8);
-		final float b = mask(pixel);
-		return new Colour(r, g, b, a);
-	}
-
-	private static float mask(int pixel) {
-		return (pixel & MASK) * INV_MASK;
 	}
 
 	/**
@@ -108,23 +80,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 */
 	public float[] toArray() {
 		return new float[]{red, green, blue, alpha};
-	}
-
-	/**
-	 * Converts this colour to a compacted integer pixel value.
-	 * @return Pixel value
-	 */
-	public int toPixel() {
-		final int a = mask(alpha);
-		final int r = mask(red);
-		final int g = mask(green);
-		final int b = mask(blue);
-		return (a << 24) | (r << 16) | (g << 8) | b;
-	}
-	// TODO - some sort of pixel converter? pixel int to/from colour?
-
-	private static int mask(float f) {
-		return (int) (f * MASK);
 	}
 
 	@Override

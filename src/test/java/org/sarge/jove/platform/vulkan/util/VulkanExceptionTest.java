@@ -10,8 +10,8 @@ public class VulkanExceptionTest {
 	@Test
 	void exception() {
 		final int code = VkResult.ERROR_INCOMPATIBLE_DRIVER.value();
-		final VulkanException e = new VulkanException(code, "message");
+		final VulkanException e = new VulkanException(code);
 		assertEquals(code, e.result);
-		assertEquals("[-9]ERROR_INCOMPATIBLE_DRIVER: message", e.getMessage());
+		assertEquals("ERROR_INCOMPATIBLE_DRIVER[-9]", e.getMessage());
 	}
 }

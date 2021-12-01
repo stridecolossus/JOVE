@@ -14,7 +14,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.AbstractImageData;
+import org.sarge.jove.io.ImageData.DefaultImageData;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.io.ResourceLoader;
@@ -98,17 +98,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final Layout layout = Layout.bytes(components.length());
 
 		// Create image
-		return new AbstractImageData(extents, components, layout, format, index) {
-			@Override
-			public int layers() {
-				return faceCount;
-			}
-
-			@Override
-			public Bufferable data() {
-				return Bufferable.of(data);
-			}
-		};
+		return new DefaultImageData(extents, components, layout, format, index, faceCount, Bufferable.of(data));
 	}
 
 	/**

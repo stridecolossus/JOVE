@@ -64,12 +64,6 @@ class ColourTest {
 	}
 
 	@Test
-	void pixel() {
-		final int pixel = Colour.WHITE.toPixel();
-		assertEquals(Colour.WHITE, Colour.of(pixel));
-	}
-
-	@Test
 	void equals() {
 		assertTrue(col.equals(col));
 		assertFalse(col.equals(null));

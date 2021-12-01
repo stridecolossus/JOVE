@@ -1,12 +1,7 @@
 package org.sarge.jove.io;
 
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
-
 import java.util.List;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.lib.util.Check;
@@ -28,29 +23,29 @@ public interface ImageData {
 	Extents extents();
 
 	/**
-	 * @return Components
+	 * @return Pixel components
 	 */
 	String components();
 
 	/**
-	 * @return Component layout
+	 * @return Pixel layout
 	 */
 	Layout layout();
 
 	/**
-	 * @return Format hint
+	 * @return Vulkan format hint
 	 */
 	int format();
-
-	/**
-	 * @return Number of layers
-	 */
-	int layers();
 
 	/**
 	 * @return MIP levels
 	 */
 	List<Level> levels();
+
+	/**
+	 * @return Number of image layers
+	 */
+	int layers();
 
 	/**
 	 * @return Image data
@@ -139,79 +134,33 @@ public interface ImageData {
 	}
 
 	/**
-	 * Skeleton implementation.
+	 * Default implementation.
 	 */
-	abstract class AbstractImageData implements ImageData {
-		private final Extents extents;
-		private final String components;
-		private final Layout layout;
-		private final int format;
-		private final List<Level> levels;
-
+	record DefaultImageData(Extents extents, String components, Layout layout, int format, List<Level> levels, int layers, Bufferable data) implements ImageData {
 		/**
 		 * Constructor.
-		 * @param size				Image extents
+		 * @param extents			Image extents
 		 * @param components		Components
-		 * @param layout			Layout
-		 * @param format			Format hint
+		 * @param layout			Layout descriptor
+		 * @param format			Vulkan format hint
 		 * @param levels			MIP levels
-		 * @throws IllegalArgumentException if the size of the layout does not match the number of components
+		 * @param layers			Number of array layers
+		 * @param data				Image data
+		 * @throws IllegalArgumentException if the size of the components and layout do not match
 		 */
-		protected AbstractImageData(Extents extents, String components, Layout layout, int format, List<Level> levels) {
-			this.extents = notNull(extents);
-			this.components = notEmpty(components);
-			this.layout = notNull(layout);
-			this.format = zeroOrMore(format);
-			this.levels = List.copyOf(levels);
-			validate();
-		}
+		public DefaultImageData {
+			Check.notNull(extents);
+			Check.notEmpty(components);
+			Check.notNull(layout);
+			Check.notEmpty(levels);
+			Check.oneOrMore(layers);
+			Check.notNull(data);
 
-		private void validate() {
+			levels = List.copyOf(levels);
+
 			if(components.length() != layout.size()) {
 				throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", components, layout));
 			}
-		}
-
-		@Override
-		public Extents extents() {
-			return extents;
-		}
-
-		@Override
-		public String components() {
-			return components;
-		}
-
-		@Override
-		public Layout layout() {
-			return layout;
-		}
-
-		@Override
-		public int format() {
-			return format;
-		}
-
-		@Override
-		public List<Level> levels() {
-			return levels;
-		}
-
-		@Override
-		public int layers() {
-			return 1;
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append(extents)
-					.append(components)
-					.append(layout)
-					.append("format", format)
-					.append("levels", levels.size())
-					.append("layers", layers())
-					.build();
 		}
 	}
 }
