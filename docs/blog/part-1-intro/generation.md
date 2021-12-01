@@ -482,7 +482,7 @@ Where:
 * _count_ is the number of pointers: either none, one (for a pointer), or two (pointer-to-pointer).
 * and _array_ is the length for array types (or zero).
 
-In the node visitor structures are parsed as follows:
+Structures are parsed in the node visitor as follows:
 
 ```java
 private void parse(IASTCompositeTypeSpecifier structure) {
@@ -542,7 +542,7 @@ private static String type(IASTDeclSpecifier spec) {
 }
 ```
 
-The length of array types is determined by the following helper:
+The length of an array type is determined by the following helper:
 
 ```java
 private static int length(CPPASTDeclarator declarator) {
@@ -581,15 +581,15 @@ List<String> imports = fields
     .collect(toList());
 ```
 
-All top-level Vulkan structures have an `sType` field that identifies the type of the structure to the native layer.  Since the values in the `VkStructureType` are highly logical and regular we can generate the enumeration constant from the name of the structure and inject it into the template:
+All top-level Vulkan structures have an `sType` field that identifies the type of the structure to the native layer.  Since the values in `VkStructureType` are highly logical and regular we can generate the enumeration constant from the name of the structure and inject it into the template:
 
 ```java
-boolean top = fields.stream().map(StructureField::getName).anyMatch(TYPE::equals);
+boolean top = fields.stream().map(StructureField::getName).anyMatch("sType"::equals);
 if(top) {
     String[] tokens = StringUtils.splitByCharacterTypeCamelCase(name);
     String prefix = String.join(UNDERSCORE, tokens).toUpperCase();
     String value = StringUtils.removeStart(prefix, "VK_");
-    map.put(TYPE, value);
+    map.put("sType", value);
 }
 ```
 
@@ -641,7 +641,7 @@ Notes:
 
 * The `foreach` loop for the structure fields injects the value for the `sType` special case.
 
-* JNA mandates that all array types are initialised so that the structure memory can be sized accordingly.
+* JNA mandates that all array fields are initialised so that structure memory can be sized accordingly.
 
 ### Type Mapping
 
@@ -701,7 +701,7 @@ Otherwise the field type is mapped to a primitive or retained as-is:
 return PRIMITIVES.getOrDefault(type, type);
 ```
 
-Where the primitives mappings is a lookup table defined as follows:
+Where the primitives mapping is a lookup table defined as follows:
 
 ```java
 public static final String BYTE = Byte.TYPE.getName();
@@ -722,6 +722,7 @@ private static final Map<String, String> PRIMITIVES = Map.of(
 The following table summarises the type mappings:
 
 | native type       | count     | mapped type           |
+| ~~~~~~~~~~~       | ~~~~~     | ~~~~~~~~~~~           |
 | void              | >= 1      | Pointer               |
 | any               | 1         | Pointer               |
 | char              | 0         | byte                  |
