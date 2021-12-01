@@ -5,18 +5,14 @@ pipeline
 model
 - sphere/conic builder, uses unit circle, add pole, add ring with N points / segment
 - extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
-- non-interleaved (see DefaultModel)
 
 demo
 - skydome
-- instancing, cubes then tree model, multiple models per OBJ? names? => materials?
+- instancing, cubes then tree model
 - lighting, materials
 - solar system, scene graph
 - terrain rendering, tiled, LOD, tesselation shader, loader from gray-scale, oct-tree?
 - geometry shader, normals, bounding volumes (spheres as x2 circles)
-
-core
-- DeviceFeatures - tests/annotations for required features? techniques -> materials ~ available features
 
 scene
 - is Ray.Intersection what we actually need? would need ray + volume in intersection record to be useful in stream processing?
@@ -33,8 +29,6 @@ sphere builder
 - https://www.mbsoftworks.sk/tutorials/opengl4/022-cylinder-and-sphere/
 - http://in4k.untergrund.net/html_articles/hugi_27_-_coding_corner_polaris_sphere_tessellation_101.htm
 - https://lindenreid.wordpress.com/2017/12/03/simple-mesh-tessellation-triangulation-tutorial/
-- mesh builder?
-- strip builder? should be some sort of collector that operates on a collection of vertices -> strip (?) + index? or factory method that generates vertices from triangle/index?
 - add degenerate triangle
 
 other features
@@ -43,7 +37,6 @@ other features
 - OpenAL audio
 
 current
-- some sort of triangle builder? used in demo and to create x2 triangles for a quad
 - need to filter buttons by action/mods
 - add pipeline cache
 - short/int index buffer, extends indexed model, extends model

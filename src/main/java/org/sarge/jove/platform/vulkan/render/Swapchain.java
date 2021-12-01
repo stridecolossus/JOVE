@@ -30,6 +30,7 @@ import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
@@ -79,6 +80,16 @@ public class Swapchain extends AbstractVulkanObject {
 	 * Default presentation mode (FIFO, guaranteed on all Vulkan implementations).
 	 */
 	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
+
+	/**
+	 * Indicates that a swapchain image could not be acquired.
+	 * @see Swapchain#acquire(Semaphore, Fence)
+	 */
+	public static class AcquireException extends VulkanException {
+		private AcquireException(int result) {
+			super(result);
+		}
+	}
 
 	private final VkFormat format;
 	private final Dimensions extents;
@@ -137,12 +148,21 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param fence			Optional fence
 	 * @return Image index
 	 * @throws IllegalArgumentException if both the semaphore and fence are {@code null}
+	 * @throws AcquireException if the swapchain image cannot be acquired
 	 */
-	public int acquire(Semaphore semaphore, Fence fence) {
+	public int acquire(Semaphore semaphore, Fence fence) throws AcquireException {
+		// Validate
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
+
+		// Acquire swapchain image
 		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
+		final int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+
+		// Check result
+		final boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
+		if(!ok) throw new AcquireException(result);
+
 		return index.getValue();
 	}
 

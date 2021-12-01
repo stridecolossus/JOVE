@@ -42,7 +42,7 @@ Next we considered SWIG which is the code-generation technology used by LWJGL, b
 
 Finally we came across JNA - having never had to deal with a native library directly (professionally or personally) it was new to us, but initial impressions were promising:
 
-* The premise of auto-magically mapping Java interfaces to the native API seemed ideal (no additional configuration or JNI-style descriptors required).
+* The premise of auto-magically mapping Java interfaces to the native API seemed ideal (no additional descriptors required).
 
 * In particular the support for mapping C/C++ structures to Java classes was very appealing given the large number of structures that are used to configure a Vulkan application.
 
@@ -246,7 +246,7 @@ typedef enum VkBorderColor {
 }
 ```
 
-The generator then transforms the key names of enumeration values:
+The generator then transforms the key names of the enumeration values:
 
 ```java
 LinkedHashMap<String, Object> transformed = new LinkedHashMap<>();

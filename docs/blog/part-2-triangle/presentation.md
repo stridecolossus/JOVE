@@ -325,8 +325,11 @@ private void init() {
 ```
 
 Constructing the swapchain is comprised of three steps:
+
 1. Create the swapchain.
+
 2. Retrieve the image handles.
+
 3. Create a view for each image.
 
 Instantiating the swapchain is relatively trivial:
@@ -415,17 +418,29 @@ interface VulkanLibrarySwapchain {
 We add the following to acquire the index of the next image to be rendered:
 
 ```java
-public int acquire() {
+public int acquire(Semaphore semaphore, Fence fence) throws AcquireException {
+    // Acquire swapchain image
     final DeviceContext dev = super.device();
     final VulkanLibrary lib = dev.library();
-    check(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, null, null, index));
+    final int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+
+    // Check result
+    final boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
+    if(!ok) throw new AcquireException(result);
+
     return index.getValue();
 }
 ```
 
-The `index` is a new class member created from the reference factory in the swapchain constructor.
+Notes:
 
-The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter when we fully implement the render loop.  For the moment we will leave these values as `null` in the acquire method.
+* The `index` is a class member created from the reference factory in the swapchain constructor.
+
+* The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter when we fully implement the render loop.  For the moment we will leave these values as `null` in the acquire method.
+
+* Acquiring the swapchain image is (probably) the only API method that can return multiple success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  We decide that a _suboptimal_ return value is considered as valid.
+
+* The `AcquireException` is sub-class of a Vulkan exception and is used to indicate that the swapchain has become invalid, e.g. the surface has been resized or minimised.
 
 When an image has been rendered it can be presented to the surface, which requires population of a Vulkan descriptor for the presentation task:
 
