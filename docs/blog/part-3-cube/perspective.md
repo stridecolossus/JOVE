@@ -600,9 +600,9 @@ To construct a cube we extend the model builder:
 public class CubeBuilder extends ModelBuilder {
     private float size = MathsUtil.HALF;
 
-    public CubeBuilder() {
+    public CubeBuilder(List<Layout> layouts) {
+        super(layouts);
         super.primitive(Primitive.TRIANGLES);
-        layout(Point.LAYOUT, Vector.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
     }
 }
 ```
@@ -660,7 +660,7 @@ private static final int[] TRIANGLES = Stream
     .toArray();
 ```
 
-In the `build` method we iterate over the array of faces to lookup the vertex data for each triangle:
+In the `build` method we iterate over the array of faces to lookup the vertex components for each triangle:
 
 ```java
 public Model build() {
@@ -671,78 +671,54 @@ public Model build() {
             Vector normal = NORMALS[face];
             Coordinate coord = Quad.COORDINATES.get(corner);
             Colour col = COLOURS[face];
-            Vertex vertex = Vertex.of(pos, normal, coord, col);
-            super.add(vertex);
+            ...
         }
     }
     return super.build();
 }
 ```
 
-### Model Transformation
+Each vertex is then transformed (see below) to the target layout and added to the cube model:
+
+```java
+Vertex vertex = Vertex.of(pos, normal, coord, col);
+Vertex transformed = vertex.transform(layouts);
+add(transformed);
+```
+
+### Vertex Transformation
 
 The cube builder creates vertices containing all components (position, normal, texture coordinate, colour), however for the demo application we only require the vertex position and texture coordinates.  Additionally applications may require vertex components to be re-ordered if (for example) the shader cannot be modified to suit a given model.
 
-Therefore we introduce a _transform_ method to the model to apply a new vertex layout:
+Therefore we introduce a _transform_ method to the `Vertex` class to apply a new layout:
 
 ```java
-public interface Model {
-    /**
-     * Transforms this model to the given component layout.
-     * @param layouts Component layout
-     * @return Transformed model
-     * @throws IllegalArgumentException if this model is not comprised of the given layouts
-     */
-    Model transform(List<Layout> layout);
+public Vertex transform(List<Layout> layouts) {
+    return layouts
+        .stream()
+        .map(this::map)
+        .collect(collectingAndThen(toList(), Vertex::new));
 }
 ```
 
-In the default model implementation we first build a mapping from the current to the desired layout:
+The vertex component matching each entry in the layout transformation is determined as follows:
 
 ```java
-int map[] = layouts
-    .stream()
-    .mapToInt(this::indexOf)
-    .toArray();
-```
-
-Where `indexOf` looks up and validates the index of a given layout:
-
-```java
-private int indexOf(Layout layout) {
-    int index = header.layout().indexOf(layout);
-    if(index == -1) throw new IllegalArgumentException(...);
-    return index;
+private Component map(Layout layout) {
+    for(Component c : components) {
+        if(c.layout() == layout) {
+            return c;
+        }
+    }
+    throw new IllegalArgumentException(...);
 }
 ```
 
-The mapping is then applied to the vertex data:
+Notes:
 
-```java
-List<Vertex> data = vertices
-    .stream()
-    .map(v -> v.transform(map))
-    .collect(toList());
-```
+* The resultant vertex component is matched by _identity_ of the layout since (for example) points and vector normals have equivalent layouts but are different instances.
 
-Which delegates to a new helper on the vertex class that selects the components according to the mapping:
-
-```java
-public Vertex transform(int[] layout) {
-    return Arrays
-        .stream(layout)
-        .mapToObj(components::get)
-        .collect(Collector.of(ArrayList::new, List::add, ListUtils::union, Vertex::new));
-}
-```
-
-Finally we create the transformed model:
-
-```java
-Header prev = this.header();
-Header header = new Header(layouts, prev.primitive(), prev.count());
-return new DefaultModel(header, data, index);
-```
+* The component is the _first_ matching layout of the transformation, i.e. the behaviour of duplicate layouts is undefined.
 
 ### Integration #3
 

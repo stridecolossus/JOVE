@@ -26,7 +26,7 @@ public interface Model {
 		 * @param primitive			Drawing primitive
 		 * @param count				Number of vertices
 		 * @throws IllegalArgumentException if the {@link #count} is invalid for the given {@link #primitive}
-		 * @throws IllegalArgumentException if the layout contains {@link Vector#NORMALS} and the primitive does not support normals
+		 * @throws IllegalArgumentException if the layout contains {@link Vector#LAYOUT} and the primitive does not support normals
 		 * @see Primitive#isValidVertexCount(int)
 		 * @see Primitive#isNormalSupported()
 		 */
@@ -39,7 +39,7 @@ public interface Model {
 				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
 
-			if(!primitive.isNormalSupported() && layout.contains(Vector.LAYOUT)) {
+			if(!primitive.isNormalSupported() && layout.stream().anyMatch(e -> e == Vector.LAYOUT)) {
 				throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
 			}
 		}

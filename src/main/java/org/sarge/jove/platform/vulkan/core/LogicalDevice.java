@@ -4,17 +4,14 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
@@ -139,10 +136,29 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * Note that the various {@link #queue(Family)} methods silently omit duplicates since the physical device may return the same family for a given queue specification.
 	 */
 	public static class Builder {
+		/**
+		 * Transient descriptor for required work queues.
+		 */
+		private record RequiredQueue(Family family, List<Percentile> priorities) {
+			private void populate(VkDeviceQueueCreateInfo info) {
+				// Allocate contiguous memory block for the priorities
+				final Percentile[] array = priorities.toArray(Percentile[]::new);
+				final Memory mem = new Memory(array.length * Float.BYTES);
+				for(int n = 0; n < array.length; ++n) {
+					mem.setFloat(n * Float.BYTES, array[n].floatValue());
+				}
+
+				// Populate queue descriptor
+				info.queueCount = array.length;
+				info.queueFamilyIndex = family.index();
+				info.pQueuePriorities = mem;
+			}
+		}
+
 		private final PhysicalDevice parent;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
-		private final Map<Family, List<Percentile>> queues = new HashMap<>();
+		private final Map<Family, RequiredQueue> queues = new HashMap<>();
 		private DeviceFeatures required;
 
 		/**
@@ -220,26 +236,9 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			}
 
 			// Register required queue
-			queues.put(family, List.copyOf(priorities));
+			//queues.put(family, List.copyOf(priorities));
+			queues.put(family, new RequiredQueue(family, priorities));
 			return this;
-		}
-
-		/**
-		 * Populates a required queue descriptor.
-		 */
-		public static void populate(Entry<Family, List<Percentile>> queue, VkDeviceQueueCreateInfo info) {
-			// Convert priorities to array
-			final Float[] floats = queue.getValue().stream().map(Percentile::floatValue).toArray(Float[]::new);
-			final float[] array = ArrayUtils.toPrimitive(floats);
-
-			// Allocate contiguous memory block for the priorities array
-			final Memory mem = new Memory(array.length * Float.BYTES);
-			mem.write(0, array, 0, array.length);
-
-			// Populate queue descriptor
-			info.queueCount = array.length;
-			info.queueFamilyIndex = queue.getKey().index();
-			info.pQueuePriorities = mem;
 		}
 
 		/**
@@ -264,7 +263,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 
 			// Add queue descriptors
 			info.queueCreateInfoCount = queues.size();
-			info.pQueueCreateInfos = StructureHelper.first(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
+			info.pQueueCreateInfos = StructureHelper.first(queues.values(), VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
 
 			// Allocate device
 			final Instance instance = parent.instance();
@@ -274,43 +273,39 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			check(lib.vkCreateDevice(parent, info, null, handle));
 
 			// Retrieve required queues
-			class RequiredQueue {
-				private final Family family;
-				private final int count;
-
-				private RequiredQueue(Entry<Family, List<Percentile>> entry) {
-					this.family = entry.getKey();
-					this.count = entry.getValue().size();
-				}
-
-				/**
-				 * Retrieves the required work queues.
-				 * @return Work queues
-				 */
-				private Stream<Queue> stream() {
-					return IntStream.range(0, count).mapToObj(this::create);
-				}
-
-				/**
-				 * Retrieves a work queue.
-				 * @param index Queue index
-				 * @return New queue
-				 */
-				private Queue create(int index) {
-					final PointerByReference ref = factory.pointer();
-					lib.vkGetDeviceQueue(handle.getValue(), family.index(), index, ref);
-					return new Queue(new Handle(ref.getValue()), family);
-				}
-			}
 			final Map<Family, List<Queue>> map = queues
-					.entrySet()
+					.values()
 					.stream()
-					.map(RequiredQueue::new)
-					.flatMap(RequiredQueue::stream)
+					.map(required -> queues(handle.getValue(), required))
+					.map(Arrays::asList)
+					.flatMap(List::stream)
 					.collect(groupingBy(Queue::family));
 
 			// Create logical device
 			return new LogicalDevice(handle.getValue(), parent, map);
+		}
+
+		/**
+		 * Retrieves the work queues.
+		 * @param dev			Logical device handle
+		 * @param required		Required queue descriptor
+		 * @return Work queues
+		 */
+		private Queue[] queues(Pointer dev, RequiredQueue required) {
+			// Init library
+			final Instance instance = parent.instance();
+			final Library lib = instance.library();
+			final PointerByReference ref = instance.factory().pointer();
+
+			// Retrieve queues
+			final int count = required.priorities.size();
+			final Queue[] queues = new Queue[count];
+			for(int n = 0; n < count; ++n) {
+				lib.vkGetDeviceQueue(dev, required.family.index(), n, ref);
+				queues[n] = new Queue(new Handle(ref.getValue()), required.family);
+			}
+
+			return queues;
 		}
 	}
 

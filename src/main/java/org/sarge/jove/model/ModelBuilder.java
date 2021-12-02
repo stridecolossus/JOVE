@@ -13,7 +13,7 @@ import org.sarge.jove.model.Model.Header;
  * <p>
  * Usage:
  * <pre>
- * 	Model model = new ModelBuilder(List.of(Point.LAYOUT, Model.NORMALS))
+ * 	Model model = new ModelBuilder(List.of(Point.LAYOUT, Vector.LAYOUT))
  * 		.primitive(Primitive.TRIANGLES)
  * 		.add(Vertex.of(new Point(...), new Vector(...))
  * 		.build();

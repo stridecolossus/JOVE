@@ -61,7 +61,25 @@ public class Vertex implements Bufferable {
 
 	/**
 	 * Transforms this vertex to the given layout.
-	 * TODO - identity, matches first, example
+	 * <p>
+	 * Example:
+	 * <pre>
+	 * // Create a vertex
+	 * Vertex vertex = Vertex.of(new Point(...), new Vector(...), Coordinate2D.TOP_LEFT);
+	 *
+	 * // Apply transform
+	 * Vertex transformed = vertex.transform(List.of(Vector.LAYOUT, Point.LAYOUT));
+	 *
+	 * // Returns vector normal then vertex position
+	 * vertex.components();
+	 * </pre>
+	 * <p>
+	 * Note that component layouts are matched by <b>identity</b>.  In the above example both points and vector normals have equivalent layouts but are different instances.
+	 * <p>
+	 * The components of the transformed vertex are determined as the <b>first</b> matching layout in the target transformation.
+	 * This method does not make any assumptions about the transformation other than the vertex must have a matching component for each layout entry.
+	 * For example the behaviour for a duplicate layout is undefined.
+	 * <p>
 	 * @param layouts New layout
 	 * @return Transformed vertex
 	 * @throws IllegalArgumentException if this vertex does not contain <b>all</b> components matching the given layout
