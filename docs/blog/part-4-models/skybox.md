@@ -655,21 +655,8 @@ Notes:
 Finally we create the resultant image domain object:
 
 ```java
-// Determine image layout (assume compacted bytes)
 Layout layout = Layout.bytes(components.length());
-
-// Create image
-return new AbstractImageData(extents, components, layout, format, levels) {
-    @Override
-    public int layers() {
-        return faceCount;
-    }
-
-    @Override
-    public Bufferable data() {
-        return Bufferable.of(data);
-    }
-};
+return new DefaultImageData(extents, components, layout, format, levels, faceCount, Bufferable.of(data));
 ```
 
 ### Copy Region

@@ -722,7 +722,7 @@ private static final Map<String, String> PRIMITIVES = Map.of(
 The following table summarises the type mappings:
 
 | native type       | count     | mapped type           |
-| ~~~~~~~~~~~       | ~~~~~     | ~~~~~~~~~~~           |
+| -----------       | -----     | -----------           |
 | void              | >= 1      | Pointer               |
 | any               | 1         | Pointer               |
 | char              | 0         | byte                  |
