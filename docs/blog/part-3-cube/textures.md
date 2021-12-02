@@ -82,7 +82,7 @@ After changing the number of vertices to 4 in the drawing command we should see 
 Next we implement the texture coordinate domain object:
 
 ```java
-public interface Coordinate extends Vertex.Component {
+public interface Coordinate extends Bufferable {
     record Coordinate1D(float u) implements Coordinate {
         ...
     }
@@ -123,7 +123,7 @@ Vertex.of(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT)
 
 ### Component Layout
 
-As previously noted the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already implicitly have the necessary information in the vertex components which just needs to be exposed.
+As noted in the previous chapter the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already implicitly have the necessary information in the vertex components which just needs to be exposed.
 
 We first introduce the following record type to represent the layout of some arbitrary object:
 
@@ -254,7 +254,6 @@ The final change modifies the vertex shader to replace the colour with a texture
 
 ```glsl
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexCoord;
@@ -317,7 +316,7 @@ Notes:
 
 * We impose the constraint that all images are assumed to be structured with one byte per channel.
 
-* We also provide a skeleton implementation of an image (not shown).
+* We also provide a default implementation of an image (not shown).
 
 The AWT helper is used to load the Java image:
 
@@ -362,12 +361,7 @@ Bufferable data = switch(image.getType()) {
 And finally the image domain object is instantiated:
 
 ```java
-return new AbstractImageData(new Extents(size), components, layout, 0, levels) {
-    @Override
-    public Bufferable data() {
-        return Bufferable.of(data);
-    }
-};
+return new DefaultImageData(new Extents(size), components, layout, 0, levels, Bufferable.of(data));
 ```
 
 For the default case of an image that already contains an alpha channel the image data array is wrapped by a new factory method:
@@ -550,7 +544,7 @@ return new DefaultImage(handle.getValue(), dev, descriptor, mem);
 The image API is extended accordingly:
 
 ```java
-interface VulkanLibraryImage {
+interface Library {
     int  vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pImage);
     void vkDestroyImage(DeviceContext device, Image image, Pointer pAllocator);
     void vkGetImageMemoryRequirements(LogicalDevice device, Pointer image, VkMemoryRequirements pMemoryRequirements);
@@ -896,7 +890,7 @@ private void populate(VkImageMemoryBarrier barrier) {
 
 The last piece of functionality we will need is some means of determining the _component mapping_ for an image when we created the texture view.
 
-Native images have channels in `ABGR` order whereas Vulkan textures are `RGBA`, the component mapping allows the image view to _swizzles_ the image channels as required.
+Native images have channels in `ABGR` order whereas Vulkan textures are `RGBA`, the component mapping allows the image view to _swizzle_ the image channels as required.
 
 We implement a new helper class that constructs the appropriate component mapping from the _components_ property of the image layout:
 
@@ -1084,7 +1078,7 @@ The component mapping is determined from the image by the new helper:
 VkComponentMapping mapping = ComponentMappingBuilder.build(image.components());
 ```
 
-This swizzles the channels of the image in the demo (which has an `ABGR` channel order) to the Vulkan `RGBA` default.
+This swizzles the `ABGR` channels of the native image to the `RGBA` default expected by Vulkan.
 
 Finally we create the image view for the texture:
 

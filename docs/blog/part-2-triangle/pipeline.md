@@ -57,9 +57,9 @@ And a builder to create the layout:
 
 ```java
 public PipelineLayout build() {
-    final var info = new VkPipelineLayoutCreateInfo();
-    final VulkanLibrary lib = dev.library();
-    final PointerByReference layout = dev.factory().pointer();
+    var info = new VkPipelineLayoutCreateInfo();
+    VulkanLibrary lib = dev.library();
+    PointerByReference layout = dev.factory().pointer();
     check(lib.vkCreatePipelineLayout(dev, info, null, layout));
     return new PipelineLayout(layout.getValue(), dev);
 }
@@ -96,7 +96,7 @@ public static class Builder {
 }
 ```
 
-Next we create outline builders for the mandatory fixed-function pipeline stages:
+Next we create nested builders for the mandatory fixed-function pipeline stages:
 
 ```java
 private final VertexInputStageBuilder input = new VertexInputStageBuilder();
@@ -109,15 +109,12 @@ private final ColourBlendStageBuilder blend = new ColourBlendStageBuilder();
 Which can be requested from the parent builder via an accessor, for example:
 
 ```java
-/**
- * @return Builder for the vertex input stage
- */
 public VertexInputStageBuilder input() {
     return input;
 }
 ```
 
-If the number and complexity of these nested builders was relatively small we would implement them as _local classes_ of the pipeline (as we did for the render pass in the previous chapter).  This is clearly not viable for the pipeline - the parent class would become unwieldy and difficult to maintain or test.
+If the number and complexity of these nested builders was relatively small we would implement them as inner classes of the pipeline (as we did for the render pass in the previous chapter).  This is clearly not viable for the pipeline - the parent class would become unwieldy and difficult to maintain or test.
 
 Therefore we need to factor out the nested builders into their own source files whilst maintaining the fluid interface.  After some research we failed to find a decent strategy or pattern for this approach (though we did find some absolutely hideous solutions using reflection and other shenanigans).
 
@@ -174,7 +171,7 @@ This is a slightly ropey implementation but it is relatively simple and achieves
 
 ### Viewport
 
-To avoid making this chapter overly long we only cover the implementation of the mandatory pipeline stages required for the triangle demo and introduce other stages as they are needed.
+To avoid making this chapter overly long we only cover the implementation of the mandatory pipeline stages required for the triangle demo and introduce other stages as they are needed in future chapters.
 
 The only fixed-function that we __must__ configure is the _viewport pipeline stage_ that defines the drawing regions of the frame buffers and rasterizer:
 
@@ -188,19 +185,13 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 A `Viewport` is a local type that aggregates the viewport rectangle and near/far rendering depths:
 
 ```java
-private record Viewport(Rectangle rect, Percentile min, Percentile max) {
-    private Viewport {
-        Check.notNull(rect);
-        Check.notNull(min);
-        Check.notNull(max);
-    }
-}
+private record Viewport(Rectangle rect, Percentile min, Percentile max)
 ```
 
 Where `Rectangle` is another trivial record type:
 
 ```java
-public record Rectangle(int x, int y, int width, int height) { ... }
+public record Rectangle(int x, int y, int width, int height)
 ```
 
 We add the following setters to specify the viewports and scissors:
@@ -271,8 +262,6 @@ private void populate(VkViewport viewport) {
 
 Note there are separate fields for the number of viewports and scissors but they __must__ be the same value.
 
-We also add a convenience factory method on the parent pipeline builder that configures a single viewport and scissor with the same rectangle (the most common case).
-
 ---
 
 ## Shaders
@@ -281,14 +270,10 @@ The other component that we must implement is the programmable pipeline stage to
 
 ### Shader Module
 
-We first create the a _shader module_ domain object:
+We first create the _shader module_ domain object:
 
 ```java
 public class Shader extends AbstractVulkanObject {
-    private Shader(Pointer handle, LogicalDevice dev) {
-        super(handle, dev);
-    }
-
     @Override
     protected Destructor<Shader> destructor(VulkanLibrary lib) {
         return lib::vkDestroyShaderModule;
@@ -300,7 +285,6 @@ Shaders are created via a factory that first converts the SPIV code to a byte-bu
 
 ```java
 public static Shader create(LogicalDevice dev, byte[] code) {
-    // Convert code to buffer
     ByteBuffer bb = ByteBuffer
         .allocateDirect(code.length)
         .order(ByteOrder.nativeOrder())
@@ -329,8 +313,8 @@ return new Shader(shader.getValue(), dev);
 The API for shader modules consists of two methods:
 
 ```java
-interface VulkanLibraryShader {
-    int vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Pointer pAllocator, PointerByReference shader);
+interface Library {
+    int  vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Pointer pAllocator, PointerByReference shader);
     void vkDestroyShaderModule(LogicalDevice device, Shader shader, Pointer pAllocator);
 }
 ```
@@ -346,7 +330,7 @@ public static Shader load(LogicalDevice dev, InputStream in) throws IOException 
 
 ### Shader Pipeline Stage
 
-A pipeline can be comprised of multiple programmable shader stages, therefore in this case we implement the nested builder for shaders as a local class of the pipeline builder:
+A pipeline can be comprised of multiple programmable shader stages, therefore in this case we implement the nested builder for shaders as an inner class of the pipeline builder:
 
 ```java
 public static class Builder {
@@ -445,11 +429,10 @@ return new Pipeline(pipelines[0], dev, layout);
 The pipeline API looks like this:
 
 ```java
-interface VulkanLibraryPipeline {
-    int vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
+interface Library {
+    int  vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
     void vkDestroyPipelineLayout(LogicalDevice device, PipelineLayout pipelineLayout, Pointer pAllocator);
-
-    int vkCreateGraphicsPipelines(LogicalDevice device, Pointer pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
+    int  vkCreateGraphicsPipelines(LogicalDevice device, Pointer pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
     void vkDestroyPipeline(LogicalDevice device, Pipeline pipeline, Pointer pAllocator);
 }
 ```
@@ -466,7 +449,6 @@ The vertex shader hard-codes the triangle vertices and passes the colour for eac
 
 ```glsl
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) out vec4 fragColour;
 
@@ -498,7 +480,6 @@ The colour for each vertex is simply passed through to the next stage by the fra
 
 ```glsl
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) in vec4 fragColour;
 

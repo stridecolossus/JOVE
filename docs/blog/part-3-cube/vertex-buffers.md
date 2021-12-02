@@ -277,7 +277,7 @@ return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem, len);
 The API for vertex buffers consists of the following methods:
 
 ```java
-interface VulkanLibraryBuffer {
+interface Library {
     int  vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
     void vkDestroyBuffer(DeviceContext device, VulkanBuffer buffer, Pointer pAllocator);
 
@@ -286,7 +286,6 @@ interface VulkanLibraryBuffer {
 
     void vkCmdBindVertexBuffers(Command.Buffer commandBuffer, int firstBinding, int bindingCount, VulkanBuffer[] pBuffers, long[] pOffsets);
     void vkCmdBindIndexBuffer(Command.Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType);
-
     void vkCmdCopyBuffer(Command.Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions);
 }
 ```
@@ -297,15 +296,13 @@ interface VulkanLibraryBuffer {
 
 ### Overview
 
-To use the vertex buffer in the shader we need to configure the structure of the data in the pipeline, which is where the vertex layout comes into play.
-
-This configuration consists of two pieces of information:
+To use the vertex buffer in the shader we need to configure the structure of the data in the pipeline which consists of two pieces of information:
 
 1. A _binding_ that specifies the vertex data to be passed to the shader.
 
 2. A number of _vertex attributes_ that define the structure of the data (corresponding to layouts of the vertex components).
 
-We introduce a new pipeline stage with a nested builders for the bindings and attributes:
+We introduce a new pipeline stage with nested builders for the bindings and attributes:
 
 ```java
 public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
@@ -659,7 +656,6 @@ The resultant vertex shader is:
 
 ```glsl
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec4 inColour;

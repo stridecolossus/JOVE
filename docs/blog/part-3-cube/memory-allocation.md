@@ -378,7 +378,7 @@ public class AllocationService {
 Finally a new API is added for memory management:
 
 ```java
-interface VulkanLibraryMemory {
+interface Library {
     int  vkAllocateMemory(DeviceContext device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
     void vkFreeMemory(DeviceContext device, DefaultDeviceMemory memory, Pointer pAllocator);
     int  vkMapMemory(DeviceContext device, DefaultDeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
@@ -406,7 +406,7 @@ Our requirements are:
 
 - The allocator and pool(s) should provide useful statistics to the application, e.g. number of allocations, free memory, etc.
 
-To support these requirements we will introduce a second device memory implementation for a _block_ of memory managed by the pool.  Device memory is then be allocated from a block with available free memory or new blocks are created on demand to grow the pool.
+To support these requirements we will introduce a second device memory implementation for a _block_ of memory managed by the pool.  Device memory is then allocated from a block with available free memory or new blocks are created on demand to grow the pool.
 
 ### Memory Blocks
 
@@ -596,8 +596,11 @@ public synchronized void destroy() {
 ```
 
 To service an allocation request the pool tries the following in order:
+
 1. Find a block with sufficient free memory.
+
 2. Find a released allocation that can be re-allocated.
+
 3. Otherwise allocate a new block.
 
 This is implemented as follows:
@@ -863,9 +866,9 @@ public static PoolAllocator create(LogicalDevice dev, Allocator allocator, float
 
 We also anticipate that an application will require different allocation strategies depending on the use-cases for device memory.
 
-Examples:
+For example:
 
-* Application would probably prefer to avoid frequent mapping of memory that is highly volatile, e.g. a uniform buffer for projection matrices.
+* Applications would probably prefer to avoid frequent mapping of memory that is highly volatile, e.g. a uniform buffer for projection matrices.
 
 * Transient memory is generally explicitly released by an application, e.g. staging buffers.
 

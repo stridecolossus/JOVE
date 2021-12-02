@@ -226,20 +226,14 @@ The `VulkanException` is a custom exception class that builds an informative mes
 public class VulkanException extends RuntimeException {
     public final int result;
 
-    public VulkanException(int result, String message) {
-        super(String.format("[%d]%s: %s", result, reason(result), message));
+    public VulkanException(int result) {
+        super(String.format("%s[%d]", reason(result), result));
         this.result = result;
     }
 
-    /**
-     * Helper - Maps the given Vulkan result code to the corresponding reason token.
-     * @param result Vulkan result code
-     * @return Reason code
-     */
     private static String reason(int result) {
         try {
-            VkResult value = IntegerEnumeration.mapping(VkResult.class).map(result);
-            return value.name();
+            return IntegerEnumeration.mapping(VkResult.class).map(result).name();
         }
         catch(IllegalArgumentException e) {
             return "Unknown error code";

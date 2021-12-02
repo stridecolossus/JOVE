@@ -14,7 +14,7 @@ The final components we need to complete the demo are the command sequence for d
 
 ### Introduction
 
-Vulkan implements work to performed on a queue by recording a sequence of _commands_ to a _command buffer_, which is allocated and managed by a _command pool_.
+Vulkan implements work to be performed on a queue by recording a sequence of _commands_ to a _command buffer_ which is allocated and managed by a _command pool_.
 
 For the triangle demo the command sequence is:
 
@@ -71,17 +71,17 @@ The `Command` interface abstracts the signature of a Vulkan command where the ar
 We also create a new API to support the new domain objects:
 
 ```java
-interface VulkanLibraryCommandBuffer {
-    int vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pCommandPool);
-    int vkResetCommandPool(LogicalDevice device, Pool commandPool, int flags);
+interface Library {
+    int  vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pCommandPool);
+    int  vkResetCommandPool(LogicalDevice device, Pool commandPool, int flags);
     void vkDestroyCommandPool(LogicalDevice device, Pool commandPool, Pointer pAllocator);
 
-    int vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
-    int vkResetCommandBuffer(Buffer commandBuffer, int flags);
+    int  vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
+    int  vkResetCommandBuffer(Buffer commandBuffer, int flags);
     void vkFreeCommandBuffers(LogicalDevice device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
 
-    int vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
-    int vkEndCommandBuffer(Buffer commandBuffer);
+    int  vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
+    int  vkEndCommandBuffer(Buffer commandBuffer);
 }
 ```
 
@@ -354,7 +354,7 @@ private void populate(VkSubmitInfo info) {
 Finally we add the API method to the existing device library:
 
 ```java
-interface VulkanLibraryLogicalDevice {
+interface Library {
     ...
     int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Handle fence);
 }
@@ -424,10 +424,10 @@ Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
 
 This specifies the three triangles vertices, in a single instance, both starting at index zero.  We will implement a proper builder for draw commands in a later chapter.
 
-Finally we add the API methods for the new commands:
+Finally we add the API methods for the new commands to the render pass library:
 
 ```java
-interface VulkanLibraryRenderPass {
+interface Library {
     ...
     void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
     void vkCmdEndRenderPass(Buffer commandBuffer);

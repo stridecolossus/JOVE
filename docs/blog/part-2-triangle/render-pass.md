@@ -144,7 +144,7 @@ We cover the purpose of the _helper_ below.
 Finally we create the new API for the render pass:
 
 ```java
-interface VulkanLibraryRenderPass {
+interface Library {
     int  vkCreateRenderPass(LogicalDevice device, VkRenderPassCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pRenderPass);
     void vkDestroyRenderPass(LogicalDevice device, RenderPass renderPass, Pointer pAllocator);
 }
@@ -293,7 +293,7 @@ Frame buffer functionality will be developed when we address rendering.
 The API for frame buffers is simple:
 
 ```java
-interface VulkanLibraryFrameBuffer {
+interface Library {
     int  vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
     void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Pointer pAllocator);
 }
@@ -318,7 +318,6 @@ VkFormat format = new FormatBuilder()
     .signed(false)
     .type(FormatBuilder.Type.NORM)
     .build();
-
 
 Attachment attachment = new Attachment.Builder()
     .format(format)
@@ -354,13 +353,13 @@ FrameBuffer[] buffers = swapchain
 
 ### Background
 
-Although we are perhaps half-way to our goal of rendering a triangle it is already apparent that our demo code is becoming unwieldy:
+Although we are perhaps half-way to our goal of rendering a triangle it is already apparent that our demo is becoming unwieldy:
 
-* The demo code is one large, imperative method.
+* The code is one large, imperative method.
 
 * The nature of a Vulkan application means that the various components are inherently highly inter-dependant.
 
-* We are forced to order the components based on the inter-dependencies which results in convoluted and brittle code.
+* We are forced to order the code based on the component inter-dependencies which results in convoluted and brittle code.
 
 What we have is a 'God class' which will become harder to navigate and maintain as we add more code to the demo.
 
@@ -436,7 +435,7 @@ class DesktopConfiguration {
     }
 
     @Bean
-    public static Window window(Desktop desktop, @Value("${application.title}") String title) {
+    public static Window window(Desktop desktop) {
         return new Window.Builder()
             .title("TriangleDemo")
             .size(new Dimensions(1024, 768))
@@ -456,9 +455,9 @@ Here we can see the benefits of using dependency injection:
 
 * The code to instantiate each component is now factored out into neater, more concise factory methods.
 
-* We only need to specify the dependencies in the signature of each bean method and the container injects the arguments for us.
+* We only need to _declare_ the dependencies in the signature of each bean method and the container injects the arguments for us.
 
-* We no longer need to worry about the ordering of component instantiation (also handled by the container), e.g. for the troublesome `surface` handle.
+* We no longer need to worry about the ordering of component instantiation (which is also handled by the container), e.g. for the troublesome `surface` handle.
 
 Note that Spring beans are generally singleton instances.
 
@@ -501,8 +500,6 @@ application.title: Triangle Demo
 ```
 
 We refactor the window title in the desktop configuration class similarly.
-
-Note that we also attach the diagnostics handler in the `instance` bean method, the `attach` method is modified to return the instance enabling a slightly more fluid API.
 
 ### Devices
 
@@ -560,67 +557,11 @@ public Queue presentation(LogicalDevice dev) {
 }
 ```
 
-### Presentation
-
-We create another configuration class for the swapchain:
-
-```java
-@Configuration
-class PresentationConfiguration {
-    @Bean
-    public static Swapchain swapchain(LogicalDevice dev, Surface surface) {
-        return new Swapchain.Builder(dev, surface)
-            .count(2)
-            .clear(new Colour(0.3f, 0.3f, 0.3f, 1))
-            .build();
-    }
-}
-```
-
-The render pass:
-
-```java
-@Bean
-public static RenderPass pass(LogicalDevice dev) {
-    // Create colour attachment
-    final Attachment attachment = new Attachment.Builder()
-        .format(Swapchain.DEFAULT_FORMAT)
-        .load(VkAttachmentLoadOp.CLEAR)
-        .store(VkAttachmentStoreOp.STORE)
-        .finalLayout(VkImageLayout.PRESENT_SRC_KHR)
-        .build();
-
-    // Create render pass
-    return new RenderPass.Builder()
-        .subpass()
-            .colour(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-            .build()
-        .build(dev);
-}
-```
-
-And the frame buffers:
-
-```java
-@Bean
-public static FrameBuffer frame(Swapchain swapchain, RenderPass pass) {
-    // TODO - only one!
-    final View view = swapchain.views().iterator().next();
-    return FrameBuffer.create(pass, swapchain.extents(), List.of(view));
-}
-```
-
-Notes:
-
-* We may choose to factor out the colour attachment as a separate bean at some point.
-
-* The above creates a _single_ frame buffer to make things easier for this first demo (see the next chapter).
+The swapchain, render pass and frame buffers are instantiated similarly.
 
 ### Cleanup
 
-Spring provides another couple of bonuses when we address cleanup of the various Vulkan components:
-
-The following bean processor is used to release all native JOVE objects:
+Spring provides another couple of bonuses when we address cleanup of the various Vulkan components, the following bean processor is registered to release all native JOVE objects:
 
 ```java
 @Bean

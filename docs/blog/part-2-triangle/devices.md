@@ -463,19 +463,9 @@ public class LogicalDevice {
 }
 ```
 
-We also provide accessors to retrieve the work queues:
+We also provide a convenience accessor to retrieve a single work queue for a given family:
 
 ```java
-public Map<Family, List<Queue>> queues() {
-    return queues;
-}
-
-/**
- * Helper - Retrieves the <i>first</i> queue of the given family.
- * @param family Queue family
- * @return Queue
- * @throws IllegalArgumentException if the queue is not present
- */
 public Queue queue(Family family) {
     List<Queue> list = queues.get(family);
     if((list == null) || list.isEmpty()) throw new IllegalArgumentException(...);

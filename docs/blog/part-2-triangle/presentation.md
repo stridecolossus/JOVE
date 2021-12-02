@@ -109,7 +109,7 @@ return Arrays
 The new API methods are added to the surface library:
 
 ```java
-public interface VulkanLibrarySurface {
+public interface Library {
     ...
     int  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, Surface surface, VkSurfaceCapabilitiesKHR caps);
     int  vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntByReference count, VkSurfaceFormatKHR formats);
@@ -246,12 +246,13 @@ private static VkComponentMapping create() {
 }
 ```
 
-Finally we add a new JNA library for images and views:
+Finally we add a new JNA library for images views:
 
 ```java
-interface VulkanLibraryImage {
+interface Library {
     int  vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
     void vkDestroyImageView(LogicalDevice device, View imageView, Pointer pAllocator);
+}
 ```
 
 ### Swapchain
@@ -396,7 +397,7 @@ return new Swapchain(chain.getValue(), dev, info.imageFormat, extents, views);
 And add a new API:
 
 ```java
-interface VulkanLibrarySwapchain {
+interface Library {
     int  vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
     void vkDestroySwapchainKHR(LogicalDevice device, Swapchain swapchain, Pointer pAllocator);
     int  vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
@@ -408,7 +409,7 @@ interface VulkanLibrarySwapchain {
 To support presentation we extend the new API with the following methods:
 
 ```java
-interface VulkanLibrarySwapchain {
+interface Library {
     ...
     int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
     int vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
@@ -420,12 +421,12 @@ We add the following to acquire the index of the next image to be rendered:
 ```java
 public int acquire(Semaphore semaphore, Fence fence) throws AcquireException {
     // Acquire swapchain image
-    final DeviceContext dev = super.device();
-    final VulkanLibrary lib = dev.library();
-    final int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+    DeviceContext dev = super.device();
+    VulkanLibrary lib = dev.library();
+    int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
 
     // Check result
-    final boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
+    boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
     if(!ok) throw new AcquireException(result);
 
     return index.getValue();
