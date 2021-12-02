@@ -7,6 +7,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.sarge.jove.common.BufferWrapper;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 
 /**

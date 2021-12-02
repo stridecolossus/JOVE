@@ -1,4 +1,4 @@
-package org.sarge.jove.io;
+package org.sarge.jove.common;
 
 import static org.sarge.lib.util.Check.notNull;
 

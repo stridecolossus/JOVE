@@ -2,7 +2,6 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -16,10 +15,9 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.model.Model.Header;
 
 class DefaultModelTest {
@@ -30,7 +28,7 @@ class DefaultModelTest {
 
 	@BeforeEach
 	void before() {
-		header = new Header(List.of(Point.LAYOUT, Model.NORMALS), Primitive.TRIANGLES, 3);
+		header = new Header(List.of(Point.LAYOUT, Vector.LAYOUT), Primitive.TRIANGLES, 3);
 		vertex = Vertex.of(Point.ORIGIN, new Vector(0, 0, 0));
 		indices = new int[]{0, 0, 0};
 		model = new DefaultModel(header, List.of(vertex, vertex), indices);
@@ -74,27 +72,5 @@ class DefaultModelTest {
 		when(bb.asIntBuffer()).thenReturn(buffer);
 		index.buffer(bb);
 		verify(buffer).put(indices);
-	}
-
-	@Test
-	void transformSwapComponents() {
-		final List<Layout> layout = List.of(Model.NORMALS, Point.LAYOUT);
-		final DefaultModel result = model.transform(layout);
-		assertNotNull(result);
-		assertEquals(layout, result.header().layout());
-	}
-
-	@Test
-	void transformRemoveComponent() {
-		final List<Layout> layout = List.of(Point.LAYOUT);
-		final DefaultModel result = model.transform(layout);
-		assertNotNull(result);
-		assertEquals(layout, result.header().layout());
-	}
-
-	@Test
-	void transformInvalidLayout() {
-		final List<Layout> layout = List.of(Layout.floats(4));
-		assertThrows(IllegalArgumentException.class, () -> model.transform(layout));
 	}
 }

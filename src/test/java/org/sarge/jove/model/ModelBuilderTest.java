@@ -2,15 +2,12 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
 
@@ -20,7 +17,7 @@ class ModelBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new ModelBuilder();
+		builder = new ModelBuilder(List.of(Point.LAYOUT));
 		vertex = Vertex.of(Point.ORIGIN);
 	}
 
@@ -29,7 +26,6 @@ class ModelBuilderTest {
 		// Build model
 		final Model model = builder
 				.primitive(Primitive.LINES)
-				.layout(Point.LAYOUT)
 				.add(vertex)
 				.add(vertex)
 				.build();
@@ -46,31 +42,8 @@ class ModelBuilderTest {
 	void buildEmpty() {
 		final Model model = builder.build();
 		assertNotNull(model);
-		assertEquals(new Header(List.of(), Primitive.TRIANGLE_STRIP, 0), model.header());
+		assertEquals(new Header(List.of(Point.LAYOUT), Primitive.TRIANGLE_STRIP, 0), model.header());
 		assertNotNull(model.vertices());
 		assertEquals(Optional.empty(), model.index());
-	}
-
-	@DisplayName("Invalid vertices are trapped if validation is switched on")
-	@Test
-	void addInvalidVertex() {
-		builder.layout(Layout.floats(1));
-		assertThrows(IllegalArgumentException.class, () -> builder.add(vertex));
-	}
-
-	@DisplayName("Invalid vertices are ignored by default")
-	@Test
-	void addValidationIgnored() {
-		builder.layout(Model.NORMALS);
-		builder.validate(false);
-		builder.add(vertex);
-	}
-
-	@DisplayName("Model layout cannot be modified after vertex data has been added")
-	@Test
-	void buildLayoutModified() {
-		builder.layout(Point.LAYOUT);
-		builder.add(vertex);
-		assertThrows(IllegalStateException.class, () -> builder.layout(Point.LAYOUT));
 	}
 }

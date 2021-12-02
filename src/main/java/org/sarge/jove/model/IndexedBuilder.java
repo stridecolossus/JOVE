@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.sarge.jove.common.Layout;
+
 /**
  * An <i>indexed builder</i> performs de-duplication of vertex data.
  * @author Sarge
@@ -12,6 +14,14 @@ import java.util.Map;
 public class IndexedBuilder extends ModelBuilder {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 	private final List<Integer> index = new ArrayList<>();
+
+	/**
+	 * Constructor.
+	 * @param layout Vertex layout
+	 */
+	public IndexedBuilder(List<Layout> layout) {
+		super(layout);
+	}
 
 	@Override
 	public ModelBuilder add(Vertex v) {

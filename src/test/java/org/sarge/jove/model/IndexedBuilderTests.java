@@ -3,10 +3,12 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.model.Model.Header;
 
 public class IndexedBuilderTests {
@@ -14,7 +16,7 @@ public class IndexedBuilderTests {
 
 	@BeforeEach
 	void before() {
-		builder = new IndexedBuilder();
+		builder = new IndexedBuilder(List.of(Point.LAYOUT));
 	}
 
 	@Test
@@ -23,7 +25,6 @@ public class IndexedBuilderTests {
 		final Vertex vertex = Vertex.of(Point.ORIGIN);
 		final Vertex other = Vertex.of(new Point(1, 2, 3));
 		final Model model = builder
-				.layout(Point.LAYOUT)
 				.add(vertex)
 				.add(other)
 				.add(vertex)

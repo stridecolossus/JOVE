@@ -1,6 +1,7 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -12,23 +13,17 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.io.Bufferable;
+import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Layout;
 
 public class VertexTest {
 	private Vertex vertex;
-	private Bufferable one, two;
+	private Component one, two;
 
 	@BeforeEach
 	void before() {
-		// Create a component
-		one = mock(Bufferable.class);
-		when(one.length()).thenReturn(1);
-
-		// And another
-		two = mock(Bufferable.class);
-		when(two.length()).thenReturn(2);
-
-		// Create vertex
+		one = mock(Component.class);
+		two = mock(Component.class);
 		vertex = new Vertex(List.of(one, two));
 	}
 
@@ -44,6 +39,8 @@ public class VertexTest {
 
 	@Test
 	void length() {
+		when(one.length()).thenReturn(1);
+		when(two.length()).thenReturn(2);
 		assertEquals(1 + 2, vertex.length());
 	}
 
@@ -57,14 +54,26 @@ public class VertexTest {
 
 	@Test
 	void transform() {
-		final int[] map = {1, 0};
-		final Vertex transformed = vertex.transform(map);
-		assertEquals(Vertex.of(two, one), transformed);
+		final Layout layout = Layout.floats(1);
+		when(one.layout()).thenReturn(layout);
+
+		final Vertex result = vertex.transform(List.of(layout));
+		assertNotNull(result);
+		assertEquals(List.of(one), result.components());
 	}
 
 	@Test
-	void transformInvalidIndex() {
-		assertThrows(IndexOutOfBoundsException.class, () -> vertex.transform(new int[]{2}));
+	void transformSelf() {
+		when(one.layout()).thenReturn(Layout.floats(1));
+		when(two.layout()).thenReturn(Layout.floats(2));
+		final Vertex result = vertex.transform(List.of(one.layout(), two.layout()));
+		assertEquals(vertex, result);
+	}
+
+	@Test
+	void transformInvalidLayout() {
+		final Layout layout = Layout.floats(1);
+		assertThrows(IllegalArgumentException.class, () -> vertex.transform(List.of(layout)));
 	}
 
 	@Test

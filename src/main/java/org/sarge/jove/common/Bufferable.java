@@ -1,4 +1,4 @@
-package org.sarge.jove.io;
+package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
 

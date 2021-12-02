@@ -1,8 +1,11 @@
 package org.sarge.jove.model;
 
+import java.util.List;
+
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
@@ -64,10 +67,18 @@ public class CubeBuilder extends ModelBuilder {
 
 	/**
 	 * Constructor.
+	 * @param Vertex layout
+	 */
+	public CubeBuilder(List<Layout> layout) {
+		super(layout);
+		super.primitive(Primitive.TRIANGLES);
+	}
+
+	/**
+	 * Default constructor for a cube with vertex position and texture coordinates.
 	 */
 	public CubeBuilder() {
-		super.primitive(Primitive.TRIANGLES);
-		layout(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
+		this(List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 	}
 
 	@Override
@@ -88,13 +99,19 @@ public class CubeBuilder extends ModelBuilder {
 	public Model build() {
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
+				// Lookup triangle index for this corner of the face
 				final int index = FACES[face][corner];
+
+				// Lookup vertex components
 				final Point pos = VERTICES[index].scale(size);
 				final Vector normal = NORMALS[face];
 				final Coordinate coord = Quad.COORDINATES.get(corner);
 				final Colour col = COLOURS[face];
+
+				// Add vertex
 				final Vertex vertex = Vertex.of(pos, normal, coord, col);
-				super.add(vertex);
+				final Vertex transformed = vertex.transform(layouts);
+				add(transformed);
 			}
 		}
 		return super.build();

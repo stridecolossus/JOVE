@@ -1,45 +1,46 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
+
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collector;
 
-import org.apache.commons.collections4.ListUtils;
-import org.sarge.jove.io.Bufferable;
+import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Layout;
 
 /**
  * A <i>vertex</i> is a compound object comprised of a collection of <i>components</i> such as vertex positions, normals, texture coordinates, etc.
+ * @see Component
  * @author Sarge
  */
 public class Vertex implements Bufferable {
-	private static final Collector<Bufferable, List<Bufferable>, Vertex> TRANSFORM = Collector.of(ArrayList::new, List::add, ListUtils::union, Vertex::new);
-
 	/**
 	 * Helper - Creates a vertex.
 	 * @param components Vertex components
 	 * @return New vertex
 	 */
-	public static Vertex of(Bufferable... components) {
+	public static Vertex of(Component... components) {
 		return new Vertex(Arrays.asList(components));
 	}
 
-	private final List<Bufferable> components;
+	private final List<Component> components;
 
 	/**
 	 * Constructor.
 	 * @param components Vertex components
 	 */
-	public Vertex(List<Bufferable> components) {
+	public Vertex(List<Component> components) {
 		this.components = List.copyOf(components);
 	}
 
 	/**
 	 * @return Components of this vertex
 	 */
-	public List<Bufferable> components() {
+	public List<Component> components() {
 		return components;
 	}
 
@@ -59,18 +60,33 @@ public class Vertex implements Bufferable {
 	}
 
 	/**
-	 * Transforms this vertex to a new layout.
-	 * @param layout Layout indices
+	 * Transforms this vertex to the given layout.
+	 * TODO - identity, matches first, example
+	 * @param layouts New layout
 	 * @return Transformed vertex
-	 * @throws IndexOutOfBoundsException for an invalid layout index
+	 * @throws IllegalArgumentException if this vertex does not contain <b>all</b> components matching the given layout
 	 */
-	public Vertex transform(int[] layout) {
-		return Arrays
-				.stream(layout)
-				.mapToObj(components::get)
-				.collect(TRANSFORM);
+	public Vertex transform(List<Layout> layouts) {
+		return layouts
+				.stream()
+				.map(this::map)
+				.collect(collectingAndThen(toList(), Vertex::new));
 	}
-	// TODO - could be mutable?
+
+	/**
+	 * Looks up the <b>first</b> vertex component matching the given layout.
+	 * @param layout Layout to match
+	 * @return Vertex component
+	 * @throws IllegalArgumentException if this vertex does not contain a matching component
+	 */
+	private Component map(Layout layout) {
+		for(Component c : components) {
+			if(c.layout() == layout) {
+				return c;
+			}
+		}
+		throw new IllegalArgumentException("Invalid layout for this vertex: " + layout);
+	}
 
 	@Override
 	public int hashCode() {

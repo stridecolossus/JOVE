@@ -1,4 +1,4 @@
-package org.sarge.jove.io;
+package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +11,8 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.BufferWrapper;
+import org.sarge.jove.common.Bufferable;
 
 public class BufferWrapperTest {
 	private static final byte[] BYTES = {1, 2, 3};

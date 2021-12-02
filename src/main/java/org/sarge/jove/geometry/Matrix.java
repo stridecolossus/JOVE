@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.io.Bufferable;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 

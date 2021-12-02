@@ -25,14 +25,9 @@ class ColourTest {
 		assertEquals(0.2f, col.green());
 		assertEquals(0.3f, col.blue());
 		assertEquals(1.0f, col.alpha());
-	}
-
-	@Test
-	void layout() {
-		assertEquals(4, Colour.LAYOUT.size());
-		assertEquals(Float.class, Colour.LAYOUT.type());
-		assertEquals(4, Colour.LAYOUT.bytes());
-		assertEquals(true, Colour.LAYOUT.signed());
+		assertEquals(Colour.LAYOUT, col.layout());
+		assertEquals(Layout.floats(4), Colour.LAYOUT);
+		assertEquals(4 * Float.BYTES, col.length());
 	}
 
 	@Test

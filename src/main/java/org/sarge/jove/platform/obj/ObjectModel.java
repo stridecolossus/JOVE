@@ -3,11 +3,12 @@ package org.sarge.jove.platform.obj;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.model.IndexedBuilder;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.ModelBuilder;
@@ -48,18 +49,19 @@ class ObjectModel {
 			return;
 		}
 
-		// Create new model builder
-		final ModelBuilder builder = builder();
-		builder.primitive(Primitive.TRIANGLES);
-
 		// Init model layout
-		builder.layout(Point.LAYOUT);
+		final List<Layout> layout = new ArrayList<>();
+		layout.add(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			builder.layout(Model.NORMALS);
+			layout.add(Vector.LAYOUT);
 		}
 		if(!coords.isEmpty()) {
-			builder.layout(Coordinate2D.LAYOUT);
+			layout.add(Coordinate2D.LAYOUT);
 		}
+
+		// Create new model builder
+		final ModelBuilder builder = new IndexedBuilder(layout);
+		builder.primitive(Primitive.TRIANGLES);
 
 		// Add vertex data
 		for(Vertex v : vertices) {
@@ -68,15 +70,6 @@ class ObjectModel {
 
 		// Add to models
 		models.add(builder.build());
-	}
-
-	/**
-	 * Creates a builder for a new group.
-	 * @return New builder
-	 */
-	@SuppressWarnings("static-method")
-	protected ModelBuilder builder() {
-		return new IndexedBuilder();
 	}
 
 	/**
@@ -117,7 +110,7 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final List<Bufferable> components = new ArrayList<>();
+		final List<Component> components = new ArrayList<>();
 		components.add(positions.get(v));
 
 		// Add optional normal

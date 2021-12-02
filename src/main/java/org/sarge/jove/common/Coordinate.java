@@ -3,14 +3,13 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
  * @author Sarge
  */
-public interface Coordinate extends Bufferable {
+public interface Coordinate extends Bufferable, Component {
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
@@ -34,6 +33,11 @@ public interface Coordinate extends Bufferable {
 		 * Layout of a 1D texture coordinate.
 		 */
 		public static final Layout LAYOUT = Layout.floats(1);
+
+		@Override
+		public Layout layout() {
+			return LAYOUT;
+		}
 
 		@Override
 		public int length() {
@@ -70,6 +74,11 @@ public interface Coordinate extends Bufferable {
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
 
 		@Override
+		public Layout layout() {
+			return LAYOUT;
+		}
+
+		@Override
 		public int length() {
 			return 2 * Float.BYTES;
 		}
@@ -97,6 +106,11 @@ public interface Coordinate extends Bufferable {
 		 * Layout of a 3D texture coordinate.
 		 */
 		public static final Layout LAYOUT = Layout.floats(3);
+
+		@Override
+		public Layout layout() {
+			return LAYOUT;
+		}
 
 		@Override
 		public int length() {

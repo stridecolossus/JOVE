@@ -2,6 +2,7 @@ package org.sarge.jove.io;
 
 import java.util.List;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.lib.util.Check;

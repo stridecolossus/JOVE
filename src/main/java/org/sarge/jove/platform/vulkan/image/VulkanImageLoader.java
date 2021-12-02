@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.DefaultImageData;
 import org.sarge.jove.io.ImageData.Extents;

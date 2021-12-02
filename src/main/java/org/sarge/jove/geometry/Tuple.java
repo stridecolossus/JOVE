@@ -4,14 +4,16 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.sarge.jove.io.Bufferable;
+import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>tuple</i> is the base-class for 3-component floating-point values.
  * @author Sarge
  */
-public sealed class Tuple implements Bufferable permits Point, Vector {
+public sealed class Tuple implements Bufferable, Component permits Point, Vector {
 	/**
 	 * Size of a tuple.
 	 */
@@ -88,7 +90,12 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 	}
 
 	@Override
-	public int length() {
+	public Layout layout() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public final int length() {
 		return SIZE * Float.BYTES;
 	}
 

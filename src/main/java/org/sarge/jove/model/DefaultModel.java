@@ -1,6 +1,5 @@
 package org.sarge.jove.model;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
@@ -8,8 +7,8 @@ import java.nio.IntBuffer;
 import java.util.List;
 import java.util.Optional;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.io.Bufferable;
 import org.sarge.jove.model.Model.AbstractModel;
 
 /**
@@ -97,36 +96,4 @@ public class DefaultModel extends AbstractModel {
 		};
 	}
 	// TODO - implementations for integer and short?
-
-	@Override
-	public DefaultModel transform(List<Layout> layouts) {
-		// Build mapping to new layout
-		final int map[] = layouts
-				.stream()
-				.mapToInt(this::indexOf)
-				.toArray();
-
-		// Transform vertex data
-		final List<Vertex> data = vertices
-				.stream()
-				.map(v -> v.transform(map))
-				.collect(toList());
-
-		// Create transformed model
-		final Header prev = this.header();
-		final Header header = new Header(layouts, prev.primitive(), prev.count());
-		return new DefaultModel(header, data, index.orElse(null));
-	}
-
-	/**
-	 * Looks up the index of the given layout in this model.
-	 * @param layout Layout
-	 * @return Index
-	 * @throws IllegalArgumentException if the layout is not present
-	 */
-	private int indexOf(Layout layout) {
-		final int index = header.layout().indexOf(layout);
-		if(index == -1) throw new IllegalArgumentException(String.format("Invalid layout for this model: layout=%s model=%s", layout, this));
-		return index;
-	}
 }

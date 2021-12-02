@@ -11,8 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
+import org.sarge.jove.common.BufferWrapper;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.io.BufferWrapper;
 import org.sarge.jove.io.FileDataSource;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;

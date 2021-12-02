@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.sarge.jove.io.BufferWrapper;
+import org.sarge.jove.common.BufferWrapper;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
