@@ -77,16 +77,16 @@ public interface DeviceFeatures {
 						.getFieldList()
 						.stream()
 						.map(Field::getName)
-						.filter(this::contains)
+						.filter(this::isEnabled)
 						.collect(toSet());
 			}
 
 			@Override
 			public boolean contains(DeviceFeatures required) {
-				return required.features().stream().allMatch(this::contains);
+				return required.features().stream().allMatch(this::isEnabled);
 			}
 
-			private boolean contains(String field) {
+			private boolean isEnabled(String field) {
 				return features.readField(field) == VulkanBoolean.TRUE;
 			}
 		};

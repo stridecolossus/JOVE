@@ -83,9 +83,7 @@ Next we create a cube model for the skybox:
 ```java
 @Bean
 public static Model skybox() {
-    return new CubeBuilder()
-        .build()
-        .transform(List.of(Point.LAYOUT));
+    return new CubeBuilder(List.of(Point.LAYOUT)).build();
 }
 ```
 
@@ -295,7 +293,7 @@ TODO
 
 ### Overview
 
-The process of loading the cubemap texture is quite slow and cumbersome for various reasons:
+The process of loading the cubemap texture is quite slow for several reasons:
 
 1. Each cubemap texture is loaded and copied separately.
 
@@ -352,9 +350,7 @@ We also introduce a skeleton implementation and refactor the native image loader
 
 A KTX image is a binary format with _little endian_ byte ordering whereas Java is big-endian by default.  We _could_ load the entire file into an NIO byte buffer with little endian ordering which has a similar API to the data stream but we would prefer to stick with I/O streams for consistency with the existing loaders.  Additionally we anticipate that we will need to support other little endian file formats in the future.
 
-The matter is further complicated when one considers the weird implementation of the `DataInputStream` class.  __All__ the methods are declared `final` (though not the class itself oddly enough) so essentially it is closed for extension.  The stream implements `DataInput` but there is no way to provide a custom implementation of this interface to the stream, so the abstraction is completely pointless.
-
-Therefore we are forced to completely re-implement the whole data stream class rather than building on what is already available - great design!
+The matter is further complicated when one considers the weird implementation of the `DataInputStream` class where __all__ the methods are declared `final` (though not the class itself oddly enough) so it is essentially closed for extension.  This class implements `DataInput` but there is no way to provide a custom implementation of this interface to the stream, so the abstraction is completely pointless.  Therefore we are forced to completely re-implement the whole data stream class rather than building on what is already available - great design!
 
 We start with a custom data stream wrapper:
 
@@ -485,13 +481,12 @@ Notes:
 
 * The KTX format supports image arrays specified by the _layerCount_ field, the loader constrains this value to one.
 
-* There is some overlap in terminology here - a Vulkan image can have multiple _layers_ which can be used for a cubemap image, the KTX equivalent is the `faceCount`, but the format also support multiple _layers_ (even though there is no corresponding Vulkan format for an array of images).  We try to use the terms appropriate to the loader and the modified image class in each case.
+* There is some overlap in terminology here: A Vulkan image can have multiple _array layers_ which can be used for a cubemap image, the KTX equivalent is the `faceCount`.  However the KTX format also supports multiple _layers_ which would map to one the array types defined in the `VkImageViewType` enumeration.  We try to use the terms appropriate to the loader and the modified image class in each case.  Note that Vulkan does not support an array of 3D images.
 
 Next we load the MIP level index:
 
 ```java
 private static List<Level> loadIndex(DataInput in, int count) throws IOException {
-    // Load MIP level index
     Level[] index = new Level[count];
     for(int n = 0; n < count; ++n) {
         int offset = (int) in.readLong();
@@ -499,21 +494,21 @@ private static List<Level> loadIndex(DataInput in, int count) throws IOException
         in.readLong();
         index[n] = new Level(offset, len);
     }
-
-    // Truncate MIP level offsets relative to start of image array
-    int offset = index[index.length - 1].offset();
-    return Arrays
-        .stream(index)
-        .map(level -> new Level(level.offset() - offset, level.length()))
-        .collect(toList());
+    ...
 }
 ```
 
-Notes:
+The _offset_ field is an offset into the file itself, we truncate this value to the start of the image data:
 
-* The `byteOffset` field is the offset into the file itself, we truncate this value to the start of the image array.
+```java
+int offset = index[index.length - 1].offset();
+return Arrays
+    .stream(index)
+    .map(level -> new Level(level.offset() - offset, level.length()))
+    .collect(toList());
+```
 
-* The index is in MIP level order (starting at zero for the largest image) whereas the actual image data is the __reverse__ (smallest MIP image first).
+Note that the index is in MIP level order (starting at zero for the largest image) whereas the actual image data is the __reverse__ (smallest MIP image first).
 
 ### Data Format Descriptor
 
@@ -661,7 +656,7 @@ return new DefaultImageData(extents, components, layout, format, levels, faceCou
 
 ### Copy Region
 
-In the previous implementation we used a staging buffer and a copy command for _each_ image.  To support the cubemap image we will extend the copy command to support _copy regions_ such that each face of the image can be transferred to the corresponding array layer in the cubemap texture.
+The previous implementation invoked a copy command for _each_ image.  To support the cubemap image we will extend the copy command to support _copy regions_ such that each face of the image can be transferred to the corresponding array layer in the cubemap texture in one operation.
 
 First a copy region is defined as a simple transient record with a companion builder:
 
@@ -736,7 +731,7 @@ private static int mip(int value, int level) {
 }
 ```
 
-We can then generate a copy region for each layer in that MIP level:
+We can then generate a copy region for each layer (or cubemap face) in that MIP level:
 
 ```java
 int count = descriptor.layerCount();
@@ -843,7 +838,7 @@ Notes:
 
 * One can test that the MIP levels are being used by setting the `maxLod` property of the sampler (which essentially switches of the mipmap).
 
-Note that we could generate the MIP pyramid at runtime (which the tutorial does) but in reality mipmap images will always be generated using an offline tool which produces better results and avoids the loading time penalty.  Additionally the process of generating mipmap images at runtime is quite convoluted so there in no point spending the time and effort.
+Note that we could generate the MIP pyramid at runtime (which the tutorial does) but in reality mipmap images will always be generated using an offline tool, producing better results and avoiding the runtime loading penalty.  Additionally the process of generating mipmap images at runtime is quite convoluted so there in no point spending the time and effort.
 
 TODO...
 
@@ -864,13 +859,9 @@ Replacing the code that loaded each cube face separately with a compound KTX cub
 
 ### Overview
 
-With support for mipmap images in place now is a good point to enable anisotropy to further improve the texture quality.
+With support for mipmap images in place now is a good point to enable anisotropy to further improve the texture quality.  However anisotropy is an optional Vulkan feature that needs to be specifically enabled when creating the logical device.
 
-However anisotropy is an optional Vulkan feature that needs to be specifically enabled when creating the logical device.
-
-Therefore we introduce a new mechanism to specify the features _supported_ by the hardware and the features _required_ for a given application.
-
-We assume that the required features would be specified by feature _names_, perhaps loaded from a configuration file.
+Therefore we introduce a new mechanism to specify the features _supported_ by the hardware and the features _required_ for a given application.  We make the assumption that required features would be specified by feature _names_ possibly loaded from a configuration file.
 
 ### Helper Class
 
@@ -924,7 +915,9 @@ static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
 }
 ```
 
-In the wrapper we use several JNA methods to access the structure fields.  The `getFieldList` method reflects the fields of the structure which we use use to enumerate the names of the supported features:
+In the wrapper we will use several JNA methods to access the structure fields, the constructor invokes the `write` method for this reason.
+
+The `getFieldList` method reflects the fields of the structure which we use use to enumerate the names of the supported features:
 
 ```java
 public Collection<String> features() {
@@ -932,7 +925,7 @@ public Collection<String> features() {
         .getFieldList()
         .stream()
         .map(Field::getName)
-        .filter(this::contains)
+        .filter(this::isEnabled)
         .collect(toSet());
 }
 ```
@@ -940,19 +933,17 @@ public Collection<String> features() {
 Which uses the following helper to test whether a given feature is enabled:
 
 ```java
-private boolean contains(String field) {
+private boolean isEnabled(String field) {
     return features.readField(field) == VulkanBoolean.TRUE;
 }
 ```
-
-Note that we need to invoke `write` on the structure when we construct the wrapper.
 
 Finally we implement the comparison method using the same helper:
 
 ```java
 @Override
 public boolean contains(DeviceFeatures required) {
-    return required.features().stream().allMatch(this::contains);
+    return required.features().stream().allMatch(this::isEnabled);
 }
 ```
 
