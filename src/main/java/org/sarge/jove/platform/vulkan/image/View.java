@@ -115,9 +115,9 @@ public class View extends AbstractVulkanObject {
 		 */
 		private static VkImageViewType type(Image image) {
 			return switch(image.descriptor().type()) {
-				case IMAGE_TYPE_1D -> VkImageViewType.VIEW_TYPE_1D;
-				case IMAGE_TYPE_2D -> VkImageViewType.VIEW_TYPE_2D;
-				case IMAGE_TYPE_3D -> VkImageViewType.VIEW_TYPE_3D;
+				case ONE_D -> VkImageViewType.ONE_D;
+				case TWO_D -> VkImageViewType.TWO_D;
+				case THREE_D -> VkImageViewType.THREE_D;
 			};
 		}
 
@@ -125,7 +125,6 @@ public class View extends AbstractVulkanObject {
 		private VkImageViewType type;
 		private VkComponentMapping mapping = ComponentMappingBuilder.IDENTITY;
 		private SubResource subresource;
-		private ClearValue clear;
 
 		/**
 		 * Constructor.
@@ -175,15 +174,6 @@ public class View extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the initial clear value for this view.
-		 * @param clear Clear value
-		 */
-		public Builder clear(ClearValue clear) {
-			this.clear = notNull(clear);
-			return this;
-		}
-
-		/**
 		 * Constructs this image view.
 		 * @return New image view
 		 */
@@ -203,14 +193,7 @@ public class View extends AbstractVulkanObject {
 			check(lib.vkCreateImageView(dev, info, null, handle));
 
 			// Create image view
-			final View view = new View(handle.getValue(), image, dev);
-
-			// Init clear value
-			if(clear != null) {
-				view.clear(clear);
-			}
-
-			return view;
+			return new View(handle.getValue(), image, dev);
 		}
 	}
 

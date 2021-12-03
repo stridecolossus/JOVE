@@ -3,8 +3,6 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -13,11 +11,9 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.TransientNativeObject;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
@@ -26,16 +22,14 @@ import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
+import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
 public class ViewTest extends AbstractVulkanTest {
-	private interface MockImage extends Image, TransientNativeObject {
-	}
-
 	private View view;
-	private MockImage image;
+	private DefaultImage image;
 	private ClearValue clear;
 
 	@BeforeEach
@@ -48,11 +42,12 @@ public class ViewTest extends AbstractVulkanTest {
 				.build();
 
 		// Create image
-		image = mock(MockImage.class);
+		image = mock(DefaultImage.class);
 		when(image.descriptor()).thenReturn(descriptor);
+		when(image.handle()).thenReturn(new Handle(1));
 
 		// Create image view
-		view = new View(new Pointer(1), image, dev);
+		view = new View(new Pointer(2), image, dev);
 
 		// Init clear value
 		clear = new ColourClearValue(Colour.WHITE);
@@ -60,7 +55,8 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(new Pointer(1)), view.handle());
+		assertNotNull(view.handle());
+		assertEquals(false, view.isDestroyed());
 		assertEquals(dev, view.device());
 		assertEquals(image, view.image());
 		assertEquals(ClearValue.NONE, view.clear());
@@ -108,49 +104,47 @@ public class ViewTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
+			// Init image sub-resource
+			final SubResource res = new SubResource.Builder(image.descriptor()).build();
+
 			// Build view
 			view = builder
-					.clear(clear)
+					.type(VkImageViewType.CUBE)
+					.mapping(ComponentMappingBuilder.build("BGRA"))
+					.subresource(res)
 					.build();
-
-			// TODO - mapping
-			// TODO - subresource
 
 			// Check view
 			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertEquals(image, view.image());
-			assertEquals(clear, view.clear());
+
+			// Init expected descriptor
+			final var expected = new VkImageViewCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					// Check descriptor
+					final var info = (VkImageViewCreateInfo) obj;
+					assertNotNull(info);
+					assertEquals(0, info.flags);
+					assertEquals(ViewTest.this.image.handle(), info.image);
+					assertEquals(VkImageViewType.CUBE, info.viewType);
+					assertEquals(FORMAT, info.format);
+					assertNotNull(info.subresourceRange);
+
+					// Check component mapping
+					assertNotNull(info.components);
+					assertEquals(VkComponentSwizzle.B, info.components.r);
+					assertEquals(VkComponentSwizzle.G, info.components.g);
+					assertEquals(VkComponentSwizzle.R, info.components.b);
+					assertEquals(VkComponentSwizzle.A, info.components.a);
+
+					return true;
+				}
+			};
 
 			// Check API
-			final ArgumentCaptor<VkImageViewCreateInfo> captor = ArgumentCaptor.forClass(VkImageViewCreateInfo.class);
-			verify(lib).vkCreateImageView(eq(dev), captor.capture(), isNull(), eq(POINTER));
-
-			// Check create descriptor
-			final VkImageViewCreateInfo info = captor.getValue();
-			assertNotNull(info);
-			assertEquals(image.handle(), info.image);
-			assertEquals(VkImageViewType.VIEW_TYPE_2D, info.viewType);
-			assertEquals(0, info.flags);
-			assertEquals(FORMAT, info.format);
-
-			// Check component mapping
-			assertNotNull(info.components);
-			assertEquals(VkComponentSwizzle.IDENTITY, info.components.r);
-			assertEquals(VkComponentSwizzle.IDENTITY, info.components.g);
-			assertEquals(VkComponentSwizzle.IDENTITY, info.components.b);
-			assertEquals(VkComponentSwizzle.IDENTITY, info.components.a);
-
-			// Check resource range
-			assertNotNull(info.subresourceRange);
-			assertEquals(VkImageAspect.COLOR.value(), info.subresourceRange.aspectMask);
-			assertEquals(0, info.subresourceRange.baseMipLevel);
-// TODO - remaining levels/layers
-//			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.levelCount);
-			assertEquals(1, info.subresourceRange.levelCount);
-			assertEquals(0, info.subresourceRange.baseArrayLayer);
-//			assertEquals(SubResourceBuilder.REMAINING, info.subresourceRange.layerCount);
-			assertEquals(1, info.subresourceRange.layerCount);
+			verify(lib).vkCreateImageView(dev, expected, null, POINTER);
 		}
 	}
 }

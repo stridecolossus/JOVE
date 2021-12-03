@@ -4,7 +4,7 @@ title: Depth Buffers
 
 ## Overview
 
-In this fairly short chapter we will render the OBJ model constructed previously and resolve various visual problems that arise.
+In this chapter we will render the OBJ model constructed previously and resolve various visual problems that arise.
 
 This will include the introduction of a _depth test_ requiring the following new functionality:
 
@@ -126,7 +126,7 @@ public DrawCommand build() {
 }
 ```
 
-We add factory methods implemented using the builder and add a further convenience method to create a drawing command for a given model:
+We provide convenience factory methods to create simple draw commands:
 
 ```java
 static DrawCommand draw(int count) {
@@ -136,7 +136,11 @@ static DrawCommand draw(int count) {
 static DrawCommand indexed(int count) {
     return new Builder().indexed(0).count(count).build();
 }
+```
 
+Finally we add a further helper to create a draw command for a given model:
+
+```java
 static DrawCommand of(Model model) {
     int count = model.header().count();
     if(model.isIndexed()) {
@@ -229,22 +233,16 @@ The model now looks to be textured correctly, in particular the signs on the fro
 
 To resolve the issue of overlapping fragments we either need to order the geometry by distance from the camera or use a _depth test_ to ensure that obscured fragments are not rendered.  A depth test is implemented using a _depth buffer_ which is a frame buffer attachment that stores the depth of each rendered fragment, discarding subsequent fragments that are closer to the camera.
 
-To configure the depth test we first introduce a new pipeline stage:
+The depth test is configured by a new pipeline stage:
 
 ```java
 public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipelineDepthStencilStateCreateInfo> {
-    private boolean enable;
-    private boolean write = true;
-    private boolean bounds;
-    private VkCompareOp op = VkCompareOp.LESS;
-    
-    @Override
-    VkPipelineDepthStencilStateCreateInfo get() {
-        var info = new VkPipelineDepthStencilStateCreateInfo();
-        info.depthTestEnable = VulkanBoolean.of(enable);
-        info.depthWriteEnable = VulkanBoolean.of(write);
-        info.depthCompareOp = op;
-        return info;
+    private final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
+
+    public DepthStencilStageBuilder() {
+        enable(false);
+        write(true);
+        compare(VkCompareOp.LESS_OR_EQUAL);
     }
 }
 ```
@@ -261,7 +259,11 @@ We can now enable the depth test in the pipeline configuration:
 
 In the previous demos we hard-coded a clear value for the colour attachments, with the addition of the depth buffer we will now properly implement this functionality.
 
-We first define the following abstraction for a general clear value:
+Introducing clear values should have been easy, however we had a nasty surprise when we added the depth-stencil to the demo, with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
+
+Thankfully JNA supports unions out-of-the-box.  We manually modified the generated code and used the `setType` method of the JNA union class to 'select' the relevant properties.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
+
+A clear value is defined by the following abstraction:
 
 ```java
 public interface ClearValue {
@@ -314,7 +316,7 @@ record DepthClearValue(Percentile depth) implements ClearValue {
 }
 ```
 
-Finally we also add an empty constant implementation as the default value:
+Finally we also create an empty implementation for the default value:
 
 ```java
 ClearValue NONE = new ClearValue() {
@@ -340,25 +342,23 @@ ClearValue NONE = new ClearValue() {
 };
 ```
 
-The clear value now becomes a mutable property of an image view:
+The clear value now becomes a mutable property of the image view:
 
 ```java
 public class View extends AbstractVulkanObject {
     private ClearValue clear = ClearValue.NONE;
 
-    public void clear(ClearValue clear) {
-        if(clear != ClearValue.NONE) {
-            var aspects = image.descriptor().aspects();
-            if(!aspects.contains(clear.aspect())) {
-                throw new IllegalArgumentException(...);
-            }
-        }
+    public View clear(ClearValue clear) {
+        validate(clear);
         this.clear = notNull(clear);
+        return this;
     }
 }
 ```
 
-We modify the image builder accordingly and also refactor the swapchain class to conveniently initialise a clear colour for all swapchain images.
+Where `validate` checks that the `aspect` of the clear value matches the image view.
+
+We also refactor the builder for the swapchain class to conveniently initialise a clear colour for all swapchain images.
 
 Finally we refactor the `begin` method of the frame buffer to populate the clear values at the start of the render-pass:
 
@@ -374,10 +374,6 @@ Collection<ClearValue> clear = attachments
 info.clearValueCount = clear.size();
 info.pClearValues = StructureHelper.first(clear, VkClearValue::new, ClearValue::populate);
 ```
-
-Introducing this functionality should have been easy, however we had a nasty surprise when we introduced the depth-stencil with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
-
-Thankfully JNA supports unions out-of-the-box.  We manually modified the generated code and used the `setType` method of the JNA union class to 'select' the relevant properties.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
 
 ### Integration
 
@@ -629,7 +625,7 @@ However note this is a breaking change since flipping the Y axis also essentiall
 
 Next we add some new functionality to the `Vector` class that will be used in the camera class below.
 
-A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible (or use the GPU).  Additionally many distance comparisons work irrespective of whether the distance is squared or not.
+A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible.  Additionally many algorithms work irrespective of whether the distance is squared or not.
 
 Therefore we treat the magnitude as the __squared__ length of the vector (which is highlighted in the documentation):
 
@@ -751,7 +747,7 @@ Where:
 
 * The `right` vector is the horizontal axis of the viewport (also used in the `strafe` method above).
 
-The view transform matrix for the camera is then re-calculated as required:
+The view transform matrix for the camera is then constructed on demand:
 
 ```java
 public Matrix matrix() {

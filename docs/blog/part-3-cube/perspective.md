@@ -728,9 +728,7 @@ In the demo we replace the hard-coded quad vertices with a cube model:
 public class VertexBufferConfiguration {
     @Bean
     public static Model cube() {
-        return new CubeBuilder()
-            .build()
-            .transform(List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+        return new CubeBuilder().build();
     }
 }
 ```

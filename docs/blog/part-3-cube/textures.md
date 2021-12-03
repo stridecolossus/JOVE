@@ -1004,7 +1004,7 @@ Next we create a texture with a configuration suitable to the image:
 ```java
 // Create descriptor
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
-    .type(VkImageType.IMAGE_TYPE_2D)
+    .type(VkImageType.TWO_D)
     .aspect(VkImageAspect.COLOR)
     .extents(image.extents())
     .format(format)

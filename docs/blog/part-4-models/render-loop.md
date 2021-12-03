@@ -166,7 +166,9 @@ Notes:
 
 ### Frame Tracker
 
-This seems a convenience point to introduce support for frame event tracking, we create a new model class that delegates frame updates to interested listeners:
+This seems a convenient point to introduce support for frame event tracking.
+
+The following new task delegates frame updates to interested listeners:
 
 ```java
 public class FrameTracker implements RenderLoop.Task {
@@ -188,7 +190,7 @@ public class FrameTracker implements RenderLoop.Task {
 }
 ```
 
-The frame tracker calculates the time elapsed since the previous frame (in nanoseconds) and delegates to the attached listeners:
+The frame tracker calculates the time elapsed since the previous frame (in nanoseconds) and notifies the attached listeners:
 
 ```java
 public void execute() {
@@ -204,7 +206,7 @@ public void execute() {
 }
 ```
 
-We can now implement a simple listener that tracks FPS (frames-per-second):
+We can now implement a simple FPS (frames-per-second) tracker:
 
 ```java
 public class FrameCounter implements FrameTracker.Listener {
@@ -271,7 +273,7 @@ public static RenderLoop application(List<Task> tasks) {
 }
 ```
 
-Spring handily creates a list of the tasks for us from __all__ the instances of `Task` registered in the container.
+Spring handily creates the list for us from __all__ instances of `Task` registered in the container.
 
 We add a new local component to start the loop:
 
@@ -321,21 +323,17 @@ When we now run the demo we should finally be able to move the window and close 
 
 ### Semaphores
 
-So far we have avoided synchronisation by simply blocking the device after rendering and presentation of a frame.  However Vulkan is designed to be multi-threaded from the ground up and provides several synchronisation mechanisms that can be used by the application.
-
-In particular the following methods are asynchronous operations:
+So far we have avoided synchronisation by simply blocking the device after rendering and presentation of a frame.  However Vulkan is designed to be multi-threaded from the ground up, in particular the following methods are asynchronous operations:
 
 * Acquiring the next swapchain image
 
-* Submitting the render task to the work queue
+* Submitting a render task to the work queue
 
-* Presentation of the rendered frame
+* Presentation of a rendered frame
 
-All of these methods return immediately with the actual work queued for execution by Vulkan in the background.
+All of these methods return immediately with the actual work queued for execution in the background.
 
-A _semaphore_ is the simplest of the synchronisation mechanisms provided and Vulkan and is used to synchronise operations within or across work queues.
-
-The semaphore class is trivial since there is no public functionality:
+The Vulkan API provides several synchronisation mechanisms that can be used by the application, a _semaphore_ is the simplest of these and is used to synchronise operations within or across work queues.  The class itself is trivial (since semaphores do not have any public functionality):
 
 ```java
 public class Semaphore extends AbstractVulkanObject {
@@ -364,9 +362,9 @@ public static Semaphore create(DeviceContext dev) {
 
 We create two semaphores in the render loop to signal the following conditions:
 
-1. The acquired swapchain image is `available` for rendering.
+1. An acquired swapchain image is `available` for rendering.
 
-2. The frame has been rendered and is `ready` for presentation.
+2. A frame has been rendered and is `ready` for presentation.
 
 The semaphores are instantiated in the constructor:
 
@@ -380,7 +378,7 @@ public RenderLoop(Swapchain swapchain, ...) {
 }
 ```
 
-We pass the _available_ semaphore to the acquire method which passes it to the API method:
+We pass the _available_ semaphore to the acquire method which passes it on to the API method:
 
 ```java
 int index = swapchain.acquire(available);
@@ -414,7 +412,7 @@ public void close() {
 
 Note that here the cleanup method is named `close` to take advantage of the _inferred_ bean destructor method used by the Spring container.
 
-If we run the demo as it now stands (with the work queue blocking still present) we will get additional errors because the semaphores are never signalled.
+If we run the demo as it now stands (with the work queue blocking still present) we will get additional errors because the semaphores are never actually signalled.
 
 ### Work Submission
 
@@ -462,7 +460,7 @@ info.waitSemaphoreCount = wait.size();
 info.pWaitSemaphores = NativeObject.toArray(wait.keySet());
 ```
 
-And then the list of stage masks for each semaphore, which for some reason is a pointer-to-integer array:
+And then the list of stage masks for each semaphore (which for some reason is a pointer-to-integer array):
 
 ```java
 int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
@@ -492,7 +490,7 @@ However if one were to remove the `waitIdle` calls in the existing code the vali
 
 Additionally the application is continually queueing up rendering work without checking whether it actually completes (which can be seen if one watches the memory usage).
 
-To resolve both of these issues we introduce the second synchronisation mechanism known as a _fence_ which can be used to synchronise Vulkan and application code:
+To resolve both of these issues we introduce the second synchronisation mechanism known as a _fence_ which is used to synchronise between Vulkan and application code:
 
 ```java
 public class Fence extends AbstractVulkanObject {
@@ -562,7 +560,7 @@ public boolean signalled() {
     DeviceContext dev = this.device();
     VulkanLibrary lib = dev.library();
     int result = lib.vkGetFenceStatus(dev, this);
-    if(result == SIGNALLED) {
+    if(result == SUCCESS) {
         return true;
     }
     else
@@ -573,13 +571,6 @@ public boolean signalled() {
         throw new VulkanException(result);
     }
 }
-```
-
-Where the state codes are constants:
-
-```java
-private static final int SIGNALLED = VkResult.SUCCESS.value();
-private static final int NOT_SIGNALLED = VkResult.NOT_READY.value();
 ```
 
 We can now add a fence to the render loop component:

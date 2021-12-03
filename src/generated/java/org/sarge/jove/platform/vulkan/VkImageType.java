@@ -7,9 +7,9 @@ import org.sarge.jove.util.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkImageType implements IntegerEnumeration {
- 	IMAGE_TYPE_1D(0),
- 	IMAGE_TYPE_2D(1),
- 	IMAGE_TYPE_3D(2);
+ 	ONE_D(0),
+ 	TWO_D(1),
+ 	THREE_D(2);
 
 	private final int value;
 

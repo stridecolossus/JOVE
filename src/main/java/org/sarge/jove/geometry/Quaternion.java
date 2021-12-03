@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
 import static org.sarge.jove.util.MathsUtil.cos;
-import static org.sarge.jove.util.MathsUtil.inverseRoot;
 import static org.sarge.jove.util.MathsUtil.sin;
 
 import java.util.Arrays;
@@ -61,7 +60,7 @@ public class Quaternion implements Transform {
 	 * @return Rotation
 	 */
 	public Rotation rotation() {
-		final float scale = inverseRoot(1 - w * w);
+		final float scale = MathsUtil.inverseRoot(1 - w * w);
 		final float angle = 2 * MathsUtil.acos(w);
 		final Vector axis = new Vector(x, y, z).multiply(scale);
 		return new DefaultRotation(axis, angle);
@@ -77,7 +76,7 @@ public class Quaternion implements Transform {
 			return this;
 		}
 		else {
-			final float mag = inverseRoot(magnitude);
+			final float mag = MathsUtil.inverseRoot(magnitude);
 			return new Quaternion(w * mag, x * mag, y * mag, z * mag);
 		}
 	}

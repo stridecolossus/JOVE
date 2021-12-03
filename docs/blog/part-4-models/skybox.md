@@ -193,7 +193,7 @@ The texture is configured with six array layers (for each face of the cube):
 
 ```java
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
-    .type(VkImageType.IMAGE_TYPE_2D)
+    .type(VkImageType.TWO_D)
     .aspect(VkImageAspect.COLOR)
     .extents(new ImageExtents(...))
     .format(format)
@@ -258,7 +258,7 @@ SubResource subresource = new SubResource.Builder(descriptor)
     .build();
 
 return new View.Builder(texture)
-    .type(VkImageViewType.VIEW_TYPE_CUBE)
+    .type(VkImageViewType.CUBE)
     .subresource(subresource)
     .mapping(image)
     .build();

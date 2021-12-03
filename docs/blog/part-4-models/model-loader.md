@@ -8,7 +8,7 @@ In this chapter we will create an OBJ loader to construct a JOVE representation 
 
 We will then implement some improvements to reduce the memory footprint of the resultant model and loading times.
 
-> In the real world we would use a more modern format that included skeletal animation, but the OBJ is relatively simple to implement and is used in the Vulkan tutorial.
+> In the real world we would use a more modern format that supported animation, skeletons, etc. but the OBJ is relatively simple to implement and is used in the Vulkan tutorial.
 
 ---
 
@@ -36,8 +36,8 @@ The _face_ command specifies the vertices of a polygon as a tuple of indices del
 | -------                   | -------- | ------- | ------ |
 | f 1 2 3                   | yes      | no      | no     |
 | f 1/2 3/4 5/6             | yes      | yes     | no     |
-| f 1/2/3 4/5/6 7/8/9       | yes      | yes     | yes    |
 | f 1//2 3//4 5//6          | yes      | no      | yes    |
+| f 1/2/3 4/5/6 7/8/9       | yes      | yes     | yes    |
 
 Example for a simple triangle with texture coordinates:
 
@@ -196,7 +196,7 @@ public interface Parser {
 An unsupported command is delegated to an error handler which is a simple line consumer:
 
 ```java
-private Consumer<String> handler = line -> { /* Ignored */ };
+private Consumer<String> handler = line -> {};
 ```
 
 Normally we would throw an exception for an unknown command but it seems more prudent to ignore by default (given the nature of OBJ files).
@@ -358,7 +358,7 @@ private final List<Vertex> vertices = new ArrayList<>();
 
 ### Model Builder
 
-Although not required for the current demo application the OBJ format supports construction of multiple models from a single file:
+The OBJ builder constructs the JOVE model(s) from the transient data:
 
 ```java
 public class ObjectModel {
@@ -372,7 +372,7 @@ public class ObjectModel {
 }
 ```
 
-The `append` method builds a JOVE model from the current group and then resets the transient model:
+The `append` method determines the layout of the model and adds the vertex data:
 
 ```java
 private void append() {
@@ -404,16 +404,7 @@ private void append() {
 }
 ```
 
-To complete the loader we register the remaining command parsers:
-
-```java
-add("f", new FaceParser());
-add("o", Parser.GROUP);
-add("g", Parser.GROUP);
-add("s", Parser.IGNORE);
-```
-
-The `GROUP` parser delegates to the following method on the model to build the current group and start a new one:
+Although not required for the current demo application the OBJ format supports construction of multiple models from a single file.  The following method builds the JOVE model for the current group and then resets the transient OBJ model:
 
 ```java
 public void start() {
@@ -428,7 +419,17 @@ public void start() {
 }
 ```
 
-Notes that some OBJ files start with a group declaration, so we ignore the case where no vertex data has been added to the current group.
+Notes that some OBJ files start with a group declaration, so the `append` method ignores the case where no vertex data has been added to the current group.
+
+To complete the loader we register the remaining command parsers:
+
+```java
+add("f", new FaceParser());
+add("o", Parser.GROUP);
+add("g", Parser.GROUP);
+add("s", Parser.IGNORE);
+```
+Where the `GROUP` parser delegates to the `start` method to begin a new group.
 
 ---
 
@@ -436,7 +437,7 @@ Notes that some OBJ files start with a group declaration, so we ignore the case 
 
 ### Indexed Builder
 
-From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to introduce an _index buffer_ to the model to reduce the total amount of data (at the expense of a second buffer for the index itself).
+From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to introduce an _index buffer_ to the model to reduce the total amount of data, at the expense of a second buffer for the index itself.
 
 We first add an optional index buffer to the model definition:
 
@@ -526,7 +527,7 @@ The de-duplication process for a given vertex is:
 
 2. If the vertex already exists in the model add its index to the index buffer.
 
-3. Otherwise add the vertex (__and__ its allocated index) to the model and add a new entry to the mapping.
+3. Otherwise add the vertex __and__ its allocated index to the model and create a new index entry.
 
 This is implemented in the overloaded `add` method as follows:
 
@@ -534,11 +535,13 @@ This is implemented in the overloaded `add` method as follows:
 public Builder add(Vertex v) {
     Integer prev = map.get(v);
     if(prev == null) {
-        // Add new vertex and register index
+        // Register new vertex
         Integer n = vertices.size();
-        index.add(n);
         map.put(v, n);
+
+        // Add vertex
         super.add(v);
+        index.add(n);
     }
     else {
         // Otherwise add index for existing vertex
@@ -578,7 +581,7 @@ We refactor the OBJ loader to use the new indexed builder which reduces the size
 
 ### Model Persistence
 
-Although the OBJ loader and new indexed builder are relatively efficient loading the model is now quite slow (even on decent hardware).  We could attempt to optimise the code but this is usually very time-consuming and often actually counter-productive (i.e. complexity often leads to bugs).
+Although the OBJ loader and indexed builder are relatively efficient, the process of loading the model is now quite slow.  We could attempt to optimise the code but this is usually very time-consuming and often results in complexity, leading to bugs and code that is difficult to maintain.
 
 Instead we note that as things stand the following steps in the loading process are repeated _every_ time we run the demo:
 
@@ -588,9 +591,9 @@ Instead we note that as things stand the following steps in the loading process 
 
 3. Transformation to NIO buffers.
 
-Ideally we would only perform the above steps _once_ since we are only really interested in the vertex and index bufferable objects.  We therefore introduce a custom persistence mechanism to write _buffered model_ to the file-system _once_ which can then be loaded without the overhead of the above steps.
+Ideally we would only perform the above steps _once_ since we are only really interested in the resultant vertex and index bufferable objects.  Therefore we introduce a custom persistence mechanism to write a model to the file-system _once_ which can then be loaded without the overhead of the above steps.
 
-The model loader outputs a model to a `DataOutputStream` as this supports both Java primitives and byte arrays:
+The model loader outputs a model to a `DataOutputStream` which supports both Java primitives and byte arrays:
 
 ```java
 public class ModelLoader {

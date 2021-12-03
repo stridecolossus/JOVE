@@ -49,16 +49,16 @@ public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents
 
 		// Validate extents
 		final boolean valid = switch(type) {
-			case IMAGE_TYPE_1D -> (extents.size().height() == 1) && (extents.depth() == 1);
-			case IMAGE_TYPE_2D -> extents.depth() == 1;
-			case IMAGE_TYPE_3D -> true;
+			case ONE_D -> (extents.size().height() == 1) && (extents.depth() == 1);
+			case TWO_D -> extents.depth() == 1;
+			case THREE_D -> true;
 		};
 		if(!valid) {
 			throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
 		}
 
 		// Validate array layers
-		if((type == VkImageType.IMAGE_TYPE_3D) && (layerCount != 1)) {
+		if((type == VkImageType.THREE_D) && (layerCount != 1)) {
 			throw new IllegalArgumentException("Array layers must be one for a 3D image");
 		}
 
@@ -82,7 +82,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents
 	 * Builder for an image descriptor.
 	 */
 	public static class Builder {
-		private VkImageType type = VkImageType.IMAGE_TYPE_2D;
+		private VkImageType type = VkImageType.TWO_D;
 		private VkFormat format;
 		private Extents extents;
 		private final Set<VkImageAspect> aspects = new HashSet<>();
@@ -90,7 +90,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents
 		private int layers = 1;
 
 		/**
-		 * Sets the image type (default is {@link VkImageType#IMAGE_TYPE_2D}).
+		 * Sets the image type (default is {@link VkImageType#TWO_D}).
 		 * @param type Image type
 		 */
 		public Builder type(VkImageType type) {

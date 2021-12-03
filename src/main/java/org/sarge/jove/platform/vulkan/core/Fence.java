@@ -23,7 +23,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Fence extends AbstractVulkanObject {
-	private static final int SIGNALLED = VkResult.SUCCESS.value();
+	private static final int SIGNALLED = VulkanLibrary.SUCCESS;
 	private static final int NOT_SIGNALLED = VkResult.NOT_READY.value();
 
 	/**

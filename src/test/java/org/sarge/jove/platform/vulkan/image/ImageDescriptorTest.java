@@ -17,7 +17,7 @@ import org.sarge.jove.platform.vulkan.VkImageType;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ImageDescriptorTest extends AbstractVulkanTest {
-	private static final VkImageType TYPE = VkImageType.IMAGE_TYPE_2D;
+	private static final VkImageType TYPE = VkImageType.TWO_D;
 	private static final Set<VkImageAspect> ASPECTS = Set.of(VkImageAspect.COLOR);
 	private static final Extents EXTENTS = new Extents(new Dimensions(3, 4));
 
@@ -63,13 +63,13 @@ public class ImageDescriptorTest extends AbstractVulkanTest {
 	@DisplayName("2D image must have height and depth of one")
 	@Test
 	void invalidExtentsHeightDepth() {
-		assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(VkImageType.IMAGE_TYPE_1D, FORMAT, EXTENTS, ASPECTS, 1, 1));
+		assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new ImageDescriptor(VkImageType.ONE_D, FORMAT, EXTENTS, ASPECTS, 1, 1));
 	}
 
 	@DisplayName("3D image can only have one array layer")
 	@Test
 	void invalidArrayLayers() {
-		assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new ImageDescriptor(VkImageType.IMAGE_TYPE_3D, FORMAT, EXTENTS, ASPECTS, 1, 2));
+		assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new ImageDescriptor(VkImageType.THREE_D, FORMAT, EXTENTS, ASPECTS, 1, 2));
 	}
 
 	@Nested
