@@ -73,6 +73,7 @@ abstract class DesktopDevice implements Device {
 			final DesktopLibrary lib = window.desktop().library();
 			final BiConsumer<Window, T> method = method(lib);
 			method.accept(window, listener);
+			this.listener = listener;
 		}
 	}
 }
