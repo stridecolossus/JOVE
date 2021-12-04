@@ -11,8 +11,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.Event.Type;
-import org.sarge.jove.control.Position.PositionEvent;
 
 /**
  * A <i>bindings</i> is a mutable set of mappings that bind an input event to an <i>action</i> (an event consumer).
@@ -66,13 +64,13 @@ import org.sarge.jove.control.Position.PositionEvent;
  * @author Sarge
  */
 public class ActionBindings implements Consumer<Event> {
-	private final Map<Type<?>, Consumer<Event>> bindings = new HashMap<>();
-	private final Map<Object, Set<Type<?>>> map = new HashMap<>();
+	private final Map<Object, Consumer<Event>> bindings = new HashMap<>();
+	private final Map<Consumer<? extends Event>, Set<Object>> map = new HashMap<>();
 
 	/**
 	 * Helper - Retrieves the reverse mapping of the event types bound to the given handler.
 	 */
-	private Set<Type<?>> types(Object handler) {
+	private Set<Object> types(Object handler) {
 		final var types = map.get(handler);
 		if(types == null) throw new IllegalArgumentException("Handler not registered: " + handler);
 		return types;
@@ -81,7 +79,7 @@ public class ActionBindings implements Consumer<Event> {
 	/**
 	 * @return Action handlers
 	 */
-	public Stream<Object> handlers() {
+	public Stream<Consumer<? extends Event>> handlers() {
 		return map.keySet().stream();
 	}
 
@@ -90,7 +88,7 @@ public class ActionBindings implements Consumer<Event> {
 	 * @param type Event type
 	 * @return Action handler
 	 */
-	public Optional<Consumer<? extends Event>> binding(Type<?> type) {
+	public Optional<Consumer<? extends Event>> binding(Object type) {
 		return Optional.ofNullable(bindings.get(type));
 	}
 
@@ -100,7 +98,7 @@ public class ActionBindings implements Consumer<Event> {
 	 * @return Events
 	 * @throws IllegalArgumentException if the handler is not bound
 	 */
-	public Stream<Type<?>> bindings(Consumer<? extends Event> handler) {
+	public Stream<Object> bindings(Consumer<? extends Event> handler) {
 		final var types = types(handler);
 		return types.stream();
 	}
@@ -121,7 +119,7 @@ public class ActionBindings implements Consumer<Event> {
 	 * @param handler		Event handler
 	 * @throws IllegalArgumentException if the handler is already bound
 	 */
-	public <T extends Event> void bind(Type<T> type, Consumer<? extends T> handler) {
+	public <T extends Event> void bind(Object key, Consumer<? extends T> handler) {
 		// Validate
 		if(handler == this) throw new IllegalArgumentException("Cannot bind to self!");
 		if(map.containsKey(handler)) throw new IllegalArgumentException("Handler is already bound: " + handler);
@@ -132,8 +130,8 @@ public class ActionBindings implements Consumer<Event> {
 		// Add binding
 		@SuppressWarnings("unchecked")
 		final Consumer<Event> consumer = (Consumer<Event>) handler;
-		bindings.put(type, consumer);
-		types.add(type);
+		bindings.put(key, consumer);
+		types.add(key);
 	}
 
 	/**
@@ -142,9 +140,9 @@ public class ActionBindings implements Consumer<Event> {
 	 * @param method		Method adapter
 	 * @return Button handler
 	 */
-	public Consumer<Button> bind(Type<Button> type, Runnable method) {
+	public Consumer<Button> bind(Button button, Runnable method) {
 		final Consumer<Button> handler = ignored -> method.run();
-		bind(type, handler);
+		bind(button, handler);
 		return handler;
 	}
 
@@ -154,9 +152,10 @@ public class ActionBindings implements Consumer<Event> {
 	 * @param adapter		Position adapter
 	 * @return Position handler
 	 */
-	public Consumer<PositionEvent> bind(Type<PositionEvent> type, Position.PositionHandler adapter) {
-		final Consumer<PositionEvent> handler = e -> adapter.handle(e.x, e.y);
-		bind(type, handler);
+	public Consumer<PositionEvent> bind(Source src, PositionEvent.Handler adapter) {
+		final Consumer<PositionEvent> handler = pos -> adapter.handle(pos.x(), pos.y());
+		bind(src, handler);
+		src.bind(this);
 		return handler;
 	}
 
@@ -166,9 +165,10 @@ public class ActionBindings implements Consumer<Event> {
 	 * @param adapter		Axis adapter
 	 * @return Axis handler
 	 */
-	public Consumer<AxisEvent> bind(Type<AxisEvent> type, Axis.AxisHandler adapter) {
+	public Consumer<AxisEvent> bind(Axis axis, Axis.Handler adapter) {
 		final Consumer<AxisEvent> handler = e -> adapter.handle(e.value());
-		bind(type, handler);
+		bind(axis, handler);
+		axis.bind(this);
 		return handler;
 	}
 
@@ -177,14 +177,14 @@ public class ActionBindings implements Consumer<Event> {
 	 * @param type Event binding to remove
 	 * @throws IllegalArgumentException if the event is not bound
 	 */
-	public void remove(Type<?> type) {
+	public void remove(Object key) {
 		// Remove binding
-		final Consumer<? extends Event> handler = bindings.remove(type);
-		if(type == null) throw new IllegalArgumentException("Handler not bound: " + handler);
+		final Consumer<Event> handler = bindings.remove(key);
+		if(handler == null) throw new IllegalArgumentException("Handler not bound: " + key);
 
 		// Remove reverse mapping
 		final var types = types(handler);
-		types.remove(type);
+		types.remove(key);
 	}
 
 	/**
@@ -205,19 +205,6 @@ public class ActionBindings implements Consumer<Event> {
 	public void clear() {
 		bindings.clear();
 		map.values().forEach(Set::clear);
-	}
-
-	/**
-	 * Helper - Automatically initialises the event sources used in this set of bindings.
-	 * @see Source#bind(Consumer)
-	 */
-	public void init() {
-		bindings
-				.keySet()
-				.stream()
-				.map(Type::source)
-				.distinct()
-				.forEach(src -> src.bind(this));
 	}
 
 	@Override

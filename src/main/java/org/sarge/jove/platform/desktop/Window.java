@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.control.WindowListener;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.LazySupplier;
 
@@ -151,7 +152,7 @@ public class Window extends AbstractTransientNativeObject {
 
 		// Create window
 		final Dimensions size = descriptor.size();
-		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);	// TODO - monitor
+		final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), monitor, null);
 		if(window == null) {
 			throw new RuntimeException(String.format("Window cannot be created: descriptor=%s monitor=%s", descriptor, monitor));
 		}
@@ -164,6 +165,7 @@ public class Window extends AbstractTransientNativeObject {
 	private final Descriptor descriptor;
 	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
 	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
+	private WindowListener listener;
 
 	/**
 	 * Constructor.
@@ -206,6 +208,27 @@ public class Window extends AbstractTransientNativeObject {
 	}
 
 	/**
+	 * Sets the event listener for this window.
+	 * @param listener Listener for window state changes or {@code null} to remove the listener
+	 */
+	public void listener(WindowListener listener) {
+		final DesktopLibrary lib = desktop.library();
+		if(listener == null) {
+			lib.glfwSetCursorEnterCallback(this, null);
+			lib.glfwSetWindowFocusCallback(this, null);
+			lib.glfwSetWindowIconifyCallback(this, null);
+			lib.glfwSetWindowResizeCallback(this, null);
+		}
+		else {
+			lib.glfwSetCursorEnterCallback(this, (window, enter) -> listener.cursor(enter));
+			lib.glfwSetWindowFocusCallback(this, (window, focus) -> listener.focus(focus));
+			lib.glfwSetWindowIconifyCallback(this, (window, iconify) -> listener.minimised(iconify));
+			lib.glfwSetWindowResizeCallback(this, (window, w, h) -> listener.resize(w, h));
+		}
+		this.listener = listener;
+	}
+
+	/**
 	 * Creates a Vulkan rendering surface for this window.
 	 * @param instance Vulkan instance
 	 * @return Vulkan surface
@@ -222,6 +245,12 @@ public class Window extends AbstractTransientNativeObject {
 
 	@Override
 	protected void release() {
+		// Detach listener
+		if(listener != null) {
+			listener(null);
+		}
+
+		// Destroy window
 		final DesktopLibrary lib = desktop.library();
 		lib.glfwDestroyWindow(this);
 	}

@@ -2,6 +2,7 @@ package org.sarge.jove.platform.desktop;
 
 import org.sarge.jove.common.Handle;
 
+import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -19,7 +20,7 @@ interface DesktopLibraryWindow {
 	 * @param shared		Optional shared window
 	 * @return Window handle
 	 */
-	Pointer glfwCreateWindow(int w, int h, String title, Handle monitor, Handle shared);
+	Pointer glfwCreateWindow(int w, int h, String title, Monitor monitor, Window shared);
 
 	/**
 	 * Destroys a window.
@@ -49,11 +50,64 @@ interface DesktopLibraryWindow {
 	 */
 	int glfwCreateWindowSurface(Handle instance, Window window, Pointer allocator, PointerByReference surface);
 
+	// TODO
 	// glfwWindowShouldClose(window)
 	// glfwSetWindowCloseCallback(window, window_close_callback);
 	// glfwSetWindowSize(window, 640, 480);
-	// glfwSetWindowSizeCallback(window, window_size_callback);
 	// glfwSetWindowTitle(window, u8"This is always a UTF-8 string");
 	// GLFWmonitor* monitor = glfwGetWindowMonitor(window);
-	// swap buffers?
+
+	/**
+	 * Listener for window events represented by a boolean state, e.g. window focus.
+	 */
+	@FunctionalInterface
+	interface WindowStateListener extends Callback {
+		/**
+		 * Notifies that a window state change.
+		 * @param window		Window
+		 * @param state			State
+		 */
+		void state(Pointer window, boolean state);
+	}
+
+	/**
+	 * Sets the focus listener of a window.
+	 * @param window		Window
+	 * @param listener		Focus listener
+	 */
+	void glfwSetWindowFocusCallback(Window window, WindowStateListener listener);
+
+	/**
+	 * Registers a cursor enter/leave listener.
+	 * @param window		Window
+	 * @param listener		Cursor listener
+	 */
+	void glfwSetCursorEnterCallback(Window window, WindowStateListener listener);
+
+	/**
+	 * Sets the iconify listener of a window.
+	 * @param window		Window
+	 * @param listener		Iconify listener
+	 */
+	void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener);
+
+	/**
+	 * Listener for window resize events.
+	 */
+	interface WindowResizeListener extends Callback {
+		/**
+		 * Notifies a window resize event.
+		 * @param window		Window
+		 * @param width			Width
+		 * @param height		Height
+		 */
+		void resize(Pointer window, int width, int height);
+	}
+
+	/**
+	 * Sets the resize listener of a window.
+	 * @param window		Window
+	 * @param listener		Resize listener
+	 */
+	void glfwSetWindowResizeCallback(Window window, WindowResizeListener listener);
 }

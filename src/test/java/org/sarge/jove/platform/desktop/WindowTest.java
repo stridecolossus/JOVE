@@ -2,10 +2,7 @@ package org.sarge.jove.platform.desktop;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doAnswer;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,12 +11,11 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.control.WindowListener;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class WindowTest {
 	private Window window;
@@ -30,7 +26,7 @@ public class WindowTest {
 	void before() {
 		// Init native library
 		lib = mock(DesktopLibrary.class);
-		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(new Pointer(42));
+		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(new Pointer(1));
 
 		// Init desktop
 		desktop = mock(Desktop.class);
@@ -67,31 +63,47 @@ public class WindowTest {
 		verify(lib).glfwWindowHint(0x00020005, 1);
 	}
 
-// TODO
-//	@Test
-//	void createFailed() {
-//		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(null);
-//		assertThrows(RuntimeException.class, () -> new Window(desktop, null, null)
+	@Test
+	void createFailed() {
+		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(null);
+		assertThrows(RuntimeException.class, () -> Window.create(desktop, window.descriptor(), null));
+	}
+
+	@Test
+	void listener() {
+		// Attach listener
+		final WindowListener listener = mock(WindowListener.class);
+		window.listener(listener);
+
+		// TODO - how to check each underlying listener without lots of nasty code?
+
+//		// Check API (for one of the underlying listeners)
+//		final ArgumentCaptor<WindowStateListener> captor = ArgumentCaptor.forClass(WindowStateListener.class);
+//		verify(lib).glfwSetCursorEnterCallback(eq(window), captor.capture());
 //
+//		// Check underlying listener
+//		final WindowStateListener state = captor.getValue();
+//		assertNotNull(state);
 //
-//		Window.create(lib, new Window.Descriptor("title", new Dimensions(640, 480), Set.of()), null));
-//	}
+//		// Check listener delegation
+//		state.state(window.handle().toPointer(), true);
+//		verify(listener).cursor(true);
+	}
+
+	@Test
+	void removeListener() {
+		window.listener(null);
+		verify(lib).glfwSetCursorEnterCallback(window, null);
+		verify(lib).glfwSetWindowFocusCallback(window, null);
+		verify(lib).glfwSetWindowIconifyCallback(window, null);
+		verify(lib).glfwSetWindowResizeCallback(window, null);
+	}
 
 	@Test
 	void surface() {
-		// Init API
-		final Handle vulkan = new Handle(new Pointer(42));
-		final Pointer ptr = new Pointer(2);
-		final Answer<Integer> answer = inv -> {
-			final PointerByReference ref = inv.getArgument(3);
-			ref.setValue(ptr);
-			return 0;
-		};
-		doAnswer(answer).when(lib).glfwCreateWindowSurface(eq(vulkan), eq(window), isNull(), isA(PointerByReference.class));
-
-		// Create surface
-		final Handle surface = window.surface(vulkan);
-		assertEquals(new Handle(ptr), surface);
+		final Handle instance = new Handle(new Pointer(2));
+		final Handle surface = window.surface(instance);
+		assertNotNull(surface);
 	}
 
 	@Test

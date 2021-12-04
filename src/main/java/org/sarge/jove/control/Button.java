@@ -5,8 +5,6 @@ import static java.util.stream.Collectors.joining;
 import java.util.Set;
 
 import org.sarge.jove.control.Button.Action;
-import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.Event.Type;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
@@ -17,22 +15,12 @@ import org.sarge.lib.util.Check;
  * <p>
  * The {@link #name()} method generates a human-readable string representation of the button, action and modifiers, see {@link Event#name(String...)}.
  * <p>
- * Note that a button is both the event <b>and</b> its type.
- * <p>
- * Usage:
- * <pre>
- * 	// Define button
- * 	Source source = ...
- * 	Button button = new Button("Name", source);
- *
- * 	// Derive button
- * 	Button derived = button.resolve(Action.RELEASE, Set.of(Modifier.SHIFT, Modifier.CONTROL));
- * </pre>
+ * Note that a button is both the event <b>and</b> its {@link #type()}.
  * <p>
  * @author Sarge
  */
 @SuppressWarnings("unused")
-public record Button(String id, Source source, Action action, int mods) implements Type<Button>, Event {
+public record Button(String id, Action action, int mods) implements Event {
 	/**
 	 * Button actions.
 	 */
@@ -68,37 +56,26 @@ public record Button(String id, Source source, Action action, int mods) implemen
 	/**
 	 * Constructor.
 	 * @param id			Button identifier
-	 * @param source		Event source
 	 * @param action		Action
 	 * @param mods			Modifier mask
 	 */
 	public Button {
 		Check.notEmpty(id);
-		Check.notNull(source);
 		Check.notNull(action);
 		Check.zeroOrMore(mods);
 	}
 
 	/**
 	 * Constructor for a basic button.
-	 * @param id			Button identifier
-	 * @param source		Event source
+	 * @param id Button identifier
 	 */
-	public Button(String id, Source source) {
-		this(id, source, Action.PRESS, 0);
+	public Button(String id) {
+		this(id, Action.PRESS, 0);
 	}
 
 	/**
-	 * Creates this button with the given actions and modifier mask.
-	 * @param action		Action
-	 * @param mods			Modifier mask
-	 * @return New button
+	 * @return Name of this button
 	 */
-	public Button resolve(Action action, int mods) {
-		return new Button(id, source, action, mods);
-	}
-
-	@Override
 	public String name() {
 		final String modifiers = modifiers().stream().map(Enum::name).collect(joining(Event.DELIMITER));
 		return Event.name(id, action.name(), modifiers);
@@ -112,8 +89,18 @@ public record Button(String id, Source source, Action action, int mods) implemen
 	}
 
 	@Override
-	public final Type<?> type() {
+	public Object type() {
 		return this;
+	}
+
+	/**
+	 * Creates this button with the given actions and modifier mask.
+	 * @param action		Action
+	 * @param mods			Modifier mask
+	 * @return New button
+	 */
+	public Button resolve(Action action, int mods) {
+		return new Button(id, action, mods);
 	}
 
 	@Override

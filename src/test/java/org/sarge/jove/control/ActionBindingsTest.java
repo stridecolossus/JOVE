@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.Event.Type;
 
 public class ActionBindingsTest {
 	private ActionBindings bindings;
@@ -28,7 +27,7 @@ public class ActionBindingsTest {
 	void before() {
 		bindings = new ActionBindings();
 		src = mock(Source.class);
-		axis = new Axis("axis", src);
+		axis = mock(Axis.class);
 		handler = mock(Consumer.class);
 	}
 
@@ -58,7 +57,7 @@ public class ActionBindingsTest {
 	void bind() {
 		bindings.bind(axis, handler);
 		assertEquals(Optional.of(handler), bindings.binding(axis));
-		assertArrayEquals(new Type[]{axis}, bindings.bindings(handler).toArray());
+		assertArrayEquals(new Object[]{axis}, bindings.bindings(handler).toArray());
 		assertArrayEquals(new Object[]{handler}, bindings.handlers().toArray());
 	}
 
@@ -75,14 +74,14 @@ public class ActionBindingsTest {
 
 	@Test
 	void bindSelf() {
-		assertThrows(IllegalArgumentException.class, () -> bindings.bind(mock(Type.class), bindings));
+		assertThrows(IllegalArgumentException.class, () -> bindings.bind(new Object(), bindings));
 	}
 
 	@Nested
 	class BindingHelpers {
 		@Test
 		void button() {
-			final Button button = new Button("button", src);
+			final Button button = new Button("button");
 			final Runnable method = mock(Runnable.class);
 			final var adapter = bindings.bind(button, method);
 			assertNotNull(adapter);
@@ -92,21 +91,22 @@ public class ActionBindingsTest {
 
 		@Test
 		void position() {
-			final Position pos = new Position("pos", src);
-			final Position.PositionHandler handler = mock(Position.PositionHandler.class);
-			final var adapter = bindings.bind(pos, handler);
+			final PositionEvent.Handler handler = mock(PositionEvent.Handler.class);
+			final var adapter = bindings.bind(src, handler);
 			assertNotNull(adapter);
-			bindings.accept(pos.new PositionEvent(1, 2));
+			bindings.accept(new PositionEvent(src, 1, 2));
 			verify(handler).handle(1, 2);
+			verify(src).bind(bindings);
 		}
 
 		@Test
 		void axis() {
-			final Axis.AxisHandler handler = mock(Axis.AxisHandler.class);
+			final Axis.Handler handler = mock(Axis.Handler.class);
 			final var adapter = bindings.bind(axis, handler);
 			assertNotNull(adapter);
-			bindings.accept(axis.new AxisEvent(3));
+			bindings.accept(new AxisEvent(axis, 3));
 			verify(handler).handle(3);
+			verify(axis).bind(bindings);
 		}
 	}
 
@@ -145,15 +145,8 @@ public class ActionBindingsTest {
 	}
 
 	@Test
-	void init() {
-		bindings.bind(axis, handler);
-		bindings.init();
-		verify(src).bind(bindings);
-	}
-
-	@Test
 	void accept() {
-		final AxisEvent event = axis.new AxisEvent(42);
+		final AxisEvent event = new AxisEvent(axis, 3);
 		bindings.bind(axis, handler);
 		bindings.accept(event);
 		verify(handler).accept(event);

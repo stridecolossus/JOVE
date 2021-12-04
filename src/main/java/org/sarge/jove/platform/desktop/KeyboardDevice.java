@@ -1,8 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -11,7 +9,6 @@ import java.util.function.Consumer;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.Event.Type;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 /**
@@ -34,7 +31,7 @@ public class KeyboardDevice extends DesktopDevice {
 	/**
 	 * @return Keyboard event source
 	 */
-	public DesktopSource<?> keyboard() {
+	Source keyboard() {
 		return keyboard;
 	}
 
@@ -55,14 +52,17 @@ public class KeyboardDevice extends DesktopDevice {
 	}
 
 	/**
+	 * Helper - Binds the keyboard to the given handler.
+	 * @param handler Keyboard handler
+	 */
+	public void bind(Consumer<Event> handler) {
+		keyboard.bind(handler);
+	}
+
+	/**
 	 * Keyboard event source.
 	 */
 	private class KeyboardSource extends DesktopSource<KeyListener> {
-		@Override
-		public List<Type<?>> types() {
-			return new ArrayList<>(keys.values());
-		}
-
 		@Override
 		protected KeyListener listener(Consumer<Event> handler) {
 			return (ptr, key, scancode, action, mods) -> {
@@ -73,7 +73,7 @@ public class KeyboardDevice extends DesktopDevice {
 		}
 
 		private Button key(int code) {
-			return new Button(table.name(code), this);
+			return new Button(table.name(code));
 		}
 
 		@Override

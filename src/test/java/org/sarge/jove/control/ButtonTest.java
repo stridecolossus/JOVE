@@ -1,8 +1,6 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
 
 import java.util.Set;
 
@@ -11,40 +9,31 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Button.Modifier;
-import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.util.IntegerEnumeration;
 
 public class ButtonTest {
+	private static final Set<Modifier> MODS = Set.of(Modifier.CONTROL, Modifier.SHIFT);
+
 	private Button button;
-	private Source src;
 
 	@BeforeEach
 	void before() {
-		src = mock(Source.class);
-		button = new Button("name", src);
+		button = new Button("name", Action.RELEASE, IntegerEnumeration.mask(MODS));
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("name-PRESS", button.name());
-		assertEquals(Action.PRESS, button.action());
-		assertEquals(0, button.mods());
-		assertEquals(Set.of(), button.modifiers());
-		assertEquals(src, button.source());
+		assertEquals("name-RELEASE-SHIFT-CONTROL", button.name());
+		assertEquals(Action.RELEASE, button.action());
+		assertEquals(IntegerEnumeration.mask(MODS), button.mods());
+		assertEquals(MODS, button.modifiers());
 		assertEquals(button, button.type());
 	}
 
 	@Test
 	void resolve() {
-		final int mods = 0x0001 | 0x0002;
-		final Button result = button.resolve(Action.RELEASE, mods);
-		assertNotNull(result);
-		assertEquals("name-RELEASE-SHIFT-CONTROL", result.name());
-		assertEquals(Action.RELEASE, result.action());
-		assertEquals(mods, result.mods());
-		assertEquals(Set.of(Modifier.SHIFT, Modifier.CONTROL), result.modifiers());
-		assertEquals(src, result.source());
-		assertEquals(result, result.type());
+		final Button base = new Button("name");
+		assertEquals(button, base.resolve(Action.RELEASE, IntegerEnumeration.mask(MODS)));
 	}
 
 	@Nested

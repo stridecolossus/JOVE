@@ -6,7 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -18,7 +17,6 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.Event.Type;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 
 public class DesktopDeviceTest {
@@ -36,10 +34,6 @@ public class DesktopDeviceTest {
 			@Override
 			public Set<Source> sources() {
 				return null;
-			}
-
-			@Override
-			public void close() {
 			}
 		};
 	}
@@ -70,11 +64,6 @@ public class DesktopDeviceTest {
 			// Create source
 			src = dev.new DesktopSource<>() {
 				@Override
-				public List<? extends Type<?>> types() {
-					return null;
-				}
-
-				@Override
 				protected BiConsumer<Window, Object> method(DesktopLibrary lib) {
 					return method;
 				}
@@ -87,19 +76,14 @@ public class DesktopDeviceTest {
 		}
 
 		@Test
-		void constructor() {
-			assertEquals(dev, src.device());
-		}
-
-		@Test
-		void enable() {
+		void bind() {
 			src.bind(handler);
 			verify(method).accept(window, listener);
 		}
 
 		@Test
 		void disable() {
-			src.disable();
+			src.bind(null);
 			verify(method).accept(window, null);
 		}
 	}

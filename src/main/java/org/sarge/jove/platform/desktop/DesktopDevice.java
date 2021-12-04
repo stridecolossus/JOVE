@@ -9,7 +9,7 @@ import org.sarge.jove.control.Event.Device;
 import org.sarge.jove.control.Event.Source;
 
 /**
- * Base-class for a GLFW-based device.
+ * Base-class for a device attached to a GLFW window.
  * @author Sarge
  */
 abstract class DesktopDevice implements Device {
@@ -21,11 +21,6 @@ abstract class DesktopDevice implements Device {
 	 */
 	protected DesktopDevice(Window window) {
 		this.window = window;
-	}
-
-	@Override
-	public void close() {
-		// Does nowt
 	}
 
 	/**
@@ -58,37 +53,26 @@ abstract class DesktopDevice implements Device {
 		protected abstract T listener(Consumer<Event> handler);
 
 		/**
-		 * Returns the registration method for the listener.
+		 * Provides the registration method for the listener.
 		 * @param lib GLFW library
 		 * @return Listener registration method
 		 */
 		protected abstract BiConsumer<Window, T> method(DesktopLibrary lib);
 
 		@Override
-		public final Device device() {
-			return DesktopDevice.this;
+		public final void bind(Consumer<Event> handler) {
+			if(handler == null) {
+				bind((T) null);
+			}
+			else {
+				bind(listener(handler));
+			}
 		}
 
-		/**
-		 * Registers the listener with the service and the window.
-		 * @param listener Listener
-		 */
-		private void register(T listener) {
+		private void bind(T listener) {
 			final DesktopLibrary lib = window.desktop().library();
 			final BiConsumer<Window, T> method = method(lib);
 			method.accept(window, listener);
-			this.listener = listener;
-		}
-
-		@Override
-		public final void bind(Consumer<Event> handler) {
-			final T listener = listener(handler);
-			register(listener);
-		}
-
-		@Override
-		public final void disable() {
-			register(null);
 		}
 	}
 }

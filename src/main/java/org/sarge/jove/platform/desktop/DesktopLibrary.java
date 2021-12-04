@@ -9,7 +9,7 @@ import com.sun.jna.ptr.IntByReference;
  * GLFW API.
  * @author Sarge
  */
-interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryDevice, DesktopLibraryMonitor {
+interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMonitor, DesktopLibraryDevice, DesktopLibraryJoystick {
 	/**
 	 * Initialises GLFW.
 	 * @return Success code
