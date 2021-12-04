@@ -62,6 +62,13 @@ public class MouseDevice extends DesktopDevice {
 	}
 
 	/**
+	 * @return Number of mouse buttons
+	 */
+	public int count() {
+		return buttons.buttons.size();
+	}
+
+	/**
 	 * Mouse pointer event source.
 	 */
 	private class MousePointer extends DesktopSource<MousePositionListener> {

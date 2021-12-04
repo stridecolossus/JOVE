@@ -29,6 +29,18 @@ public interface Event {
 	}
 
 	/**
+	 * Skeleton implementation.
+	 */
+	abstract class AbstractSource implements Source {
+		protected Consumer<Event> handler;
+
+		@Override
+		public void bind(Consumer<Event> handler) {
+			this.handler = handler;
+		}
+	}
+
+	/**
 	 * A <i>device</i> is comprised of a number of event sources.
 	 */
 	interface Device {

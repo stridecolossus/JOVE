@@ -44,6 +44,11 @@ public class MouseDeviceTest {
 		assertEquals(Set.of(mouse.pointer(), mouse.buttons(), mouse.wheel()), mouse.sources());
 	}
 
+	@Test
+	void count() {
+		assertEquals(true, mouse.count() > 0);
+	}
+
 	@Nested
 	class MousePointerTests {
 		private DesktopSource<MousePositionListener> ptr;

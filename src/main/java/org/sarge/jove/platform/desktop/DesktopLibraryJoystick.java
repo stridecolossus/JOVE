@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
+import org.sarge.jove.control.Button;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Callback;
@@ -95,8 +96,6 @@ interface DesktopLibraryJoystick {
 		 * @param event		Connection event
 		 */
 		void connect(int id, int event);
-		// connected = 0x00040001
-		// disconnected =  0x00040002
 	}
 
 	/**
@@ -104,35 +103,4 @@ interface DesktopLibraryJoystick {
 	 * @param listener Connection listener
 	 */
 	void glfwSetJoystickCallback(JoystickListener listener);
-
-
-	// TODO
-	public static void main(String[] args) throws Exception {
-		final Desktop desktop = Desktop.create();
-		final var lib = desktop.library();
-		final IntByReference count = new IntByReference();
-
-//		for(int n = 0; n < 16; ++n) {
-//			if(!lib.glfwJoystickPresent(n)) continue;
-
-		System.out.println(desktop.version());
-		System.out.println(lib.glfwGetJoystickName(0));
-
-		while(true) {
-			Pointer ptr = lib.glfwGetJoystickAxes(0, count);
-			final float[] array = ptr.getFloatArray(0, count.getValue());
-			//System.out.println(Arrays.toString(array));
-
-//			ptr = lib.glfwGetJoystickButtons(0, count);
-//			final byte[] buttons = ptr.getByteArray(0, count.getValue());
-//			System.out.println(Arrays.toString(buttons));
-
-			ptr = lib.glfwGetJoystickHats(0, count);
-			final byte[] hats = ptr.getByteArray(0, count.getValue());
-
-			System.out.println(IntegerEnumeration.mapping(Hat.class).enumerate(hats[0]));
-
-			Thread.sleep(1000);
-		}
-	}
 }

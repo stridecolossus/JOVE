@@ -39,7 +39,7 @@ abstract class DesktopDevice implements Device {
 
 	/**
 	 * Template implementation for a source based on a GLFW callback.
-	 * @param <T> Callback
+	 * @param <T> GLFW callback
 	 */
 	abstract class DesktopSource<T> implements Source {
 		@SuppressWarnings("unused")
