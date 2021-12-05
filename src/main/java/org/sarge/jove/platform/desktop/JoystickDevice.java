@@ -29,6 +29,23 @@ public class JoystickDevice implements Device {
 	 * Event source for joystick buttons.
 	 */
 	private class ButtonSource extends AbstractSource<Button> {
+		private final DesktopButton[] array;
+
+		public ButtonSource() {
+			// Instantiate buttons
+			final byte[] bytes = getButtonArray();
+			array = new DesktopButton[bytes.length];
+
+			// Init buttons
+			for(int n = 0; n < array.length; ++n) {
+				final String name = Button.name("Button", n);
+				array[n] = new DesktopButton(name);
+			}
+		}
+
+		/**
+		 * Polls for joystick button events.
+		 */
 		private void poll() {
 			// Ignore if no action handler
 			if(handler == null) {
@@ -42,26 +59,34 @@ public class JoystickDevice implements Device {
 			for(int n = 0; n < values.length; ++n) {
 				// Skip if not changed
 				final Action action = Action.map(values[n]);
-				if(buttons[n].action() == action) {
+				if(array[n].action() == action) {
 					continue;
 				}
 
 				// Update button state
-				buttons[n] = buttons[n].resolve(action);
+				array[n] = array[n].resolve(action);
 
 				// Generate event
-				handler.accept(buttons[n]);
+				handler.accept(array[n]);
 			}
 			// TODO - lots of array[n], move to local class?
+		}
+
+		/**
+		 * Queries the button values for this joystick.
+		 */
+		private byte[] getButtonArray() {
+			final IntByReference count = new IntByReference();
+			final Pointer ptr = lib.glfwGetJoystickButtons(id, count);
+			return ptr.getByteArray(0, count.getValue());
 		}
 	}
 
 	private final int id;
 	private final String name;
-	private final JoystickAxis[] axes;
-	private final DesktopButton[] buttons;
-	private final ButtonSource src = new ButtonSource();
 	private final DesktopLibraryJoystick lib;
+	private final JoystickAxis[] axes;
+	private final ButtonSource buttons;
 
 	/**
 	 * Constructor.
@@ -74,7 +99,7 @@ public class JoystickDevice implements Device {
 		this.name = notEmpty(name);
 		this.lib = notNull(lib);
 		this.axes = initAxes();
-		this.buttons = initButtons();
+		this.buttons = new ButtonSource();
 	}
 
 	/**
@@ -85,19 +110,6 @@ public class JoystickDevice implements Device {
 		final JoystickAxis[] axes = new JoystickAxis[array.length];
 		Arrays.setAll(axes, n -> new JoystickAxis(n, array[n]));
 		return axes;
-	}
-
-	/**
-	 * @return Buttons array
-	 */
-	private DesktopButton[] initButtons() {
-		final byte[] array = getButtonArray();
-		final DesktopButton[] buttons = new DesktopButton[array.length];
-		for(int n = 0; n < buttons.length; ++n) {
-			final String name = Button.name("Button", n);
-			buttons[n] = new DesktopButton(name);
-		}
-		return buttons;
 	}
 
 	/**
@@ -125,21 +137,21 @@ public class JoystickDevice implements Device {
 	 * @return Joystick buttons and hats
 	 */
 	public List<Button> buttons() {
-		return Arrays.asList(buttons);
+		return Arrays.asList(buttons.array);
 	}
 
 	/**
 	 * @return Buttons event source
 	 */
 	public Source<Button> buttonSource() {
-		return src;
+		return buttons;
 	}
 
 	@Override
 	public Set<Source<?>> sources() {
 		final Set<Source<?>> sources = new HashSet<>();
 		sources.addAll(axes());
-		sources.add(src);
+		sources.add(buttons);
 		return sources;
 	}
 
@@ -148,9 +160,12 @@ public class JoystickDevice implements Device {
 	 */
 	void poll() {
 		pollAxes();
-		src.poll();
+		buttons.poll();
 	}
 
+	/**
+	 * Polls axis events.
+	 */
 	private void pollAxes() {
 		final float[] array = getAxisArray();
 		for(int n = 0; n < array.length; ++n) {
@@ -165,15 +180,6 @@ public class JoystickDevice implements Device {
 		final IntByReference count = new IntByReference();
 		final Pointer ptr = lib.glfwGetJoystickAxes(id, count);
 		return ptr.getFloatArray(0, count.getValue());
-	}
-
-	/**
-	 * Queries the button values for this joystick.
-	 */
-	private byte[] getButtonArray() {
-		final IntByReference count = new IntByReference();
-		final Pointer ptr = lib.glfwGetJoystickButtons(id, count);
-		return ptr.getByteArray(0, count.getValue());
 	}
 
 	@Override
