@@ -31,12 +31,12 @@ public class KeyboardDevice extends DesktopDevice {
 	/**
 	 * @return Keyboard event source
 	 */
-	Source keyboard() {
+	Source<Button> keyboard() {
 		return keyboard;
 	}
 
 	@Override
-	public Set<Source> sources() {
+	public Set<Source<?>> sources() {
 		return Set.of(keyboard);
 	}
 
@@ -62,7 +62,7 @@ public class KeyboardDevice extends DesktopDevice {
 	/**
 	 * Keyboard event source.
 	 */
-	private class KeyboardSource extends DesktopSource<KeyListener> {
+	private class KeyboardSource extends DesktopSource<KeyListener, Button> {
 		@Override
 		protected KeyListener listener(Consumer<Event> handler) {
 			return (ptr, key, scancode, action, mods) -> {

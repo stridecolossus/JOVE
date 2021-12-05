@@ -37,7 +37,7 @@ public class Desktop {
 	public static Desktop create() {
 		// Determine library name
 		final String name = switch(Platform.getOSType()) {
-			case Platform.WINDOWS -> "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO
+			case Platform.WINDOWS -> "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO - path!
 			case Platform.LINUX -> "libglfw";
 			default -> throw new UnsupportedOperationException("Unsupported platform for GLFW: " + Platform.getOSType());
 		};

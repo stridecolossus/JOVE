@@ -38,7 +38,7 @@ import com.sun.jna.ptr.PointerByReference;
  * Notes:
  * <ul>
  * <li>Handlers are released when the instance itself is destroyed</li>
- * <li>In general it is expected that a single handler will be sufficient for most or all application requirements, however the API does support multiple handlers which is followed here</li>
+ * <li>In general it is expected that a single handler will be sufficient for most or all application requirements, however the API does support multiple handlers</li>
  * <li>Diagnostics messages can contain an arbitrary pointer to a <i>user data</i> object but this is assumed to be redundant for an OO implementation and is always {@code null}</li>
  * </ul>
  * @author Sarge
@@ -142,8 +142,8 @@ public class HandlerManager {
 	 * <p>
 	 * Notes:
 	 * <ul>
-	 * <li>a JNA callback <b>must</b> implement a <b>single</b> method (though this is not enforced at compile-time)</li>
-	 * <li>the signature of the {@link #message(int, int, VkDebugUtilsMessengerCallbackData, Pointer)} callback is not part of the public Vulkan API</li>
+	 * <li>A JNA callback <b>must</b> implement a <b>single</b> method (though this is not enforced at compile-time)</li>
+	 * <li>The signature of the callback is not part of the public Vulkan API</li>
 	 * <li>Diagnostics messages can contain an arbitrary pointer to a <i>user data</i> object but this is assumed to be redundant for an OO implementation and is always {@code null}</li>
 	 * <li>TODO - link to VK doc</li>
 	 * </ul>

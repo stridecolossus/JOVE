@@ -15,42 +15,14 @@ import org.sarge.jove.control.Event.Source;
 /**
  * A <i>bindings</i> is a mutable set of mappings that bind an input event to an <i>action</i> (an event consumer).
  * <p>
- * Usage:
- * <pre>
- * 	// Define action bindings
- * 	Button key = new Button(...);
- * 	Consumer<Button> action = ...
- * 	Bindings bindings = new Bindings();
- * 	bindings.bind(key, action);
- *
- *	// Register bindings with event source
- * 	Device dev = ...
- * 	Source src = dev.sources().get(...);
- * 	src.bind(bindings);
- * </pre>
+ * This class provides convenience _bind_ variants to bind events to common handler methods, e.g. {@link #bind(Axis, org.sarge.jove.control.Axis.Handler)} to bind axis events.
  * <p>
- * The bindings class provides convenience methods to bind events to common handler methods, e.g. {@link #bind(Type, org.sarge.jove.control.Axis.AxisHandler)} to bind an axis handler.
- * <p>
- * Examples:
+ * Example:
  * <pre>
- * 	// Bind a keyboard button to a runnable
- * 	Button key = new Button(...);
- * 	Runnable action = ...
- * 	bindings.bind(key, action);
- *
- * 	// Or to a method
- * 	class Target {
- * 		void key()
- * 		void pointer(float x, float y)
- * 	}
- * 	Target target = new Target();
- * 	bindings.bind(key, target::key);
- *
- * 	// Bind mouse pointer to X-Y handlers
- * 	Position ptr = ...
- * 	Position.Handler handler = (x, y) -> ...
- * 	bindings.bind(ptr, handler);
- * 	bindings.bind(ptr, target::pointer);
+ * void handle(float value) { ... }
+ * Axis axis = ...
+ * ActionBindings bindings = new ActionBindings();
+ * bindings.bind(axis, this::handle);
  * </pre>
  * <p>
  * Notes:
@@ -93,9 +65,9 @@ public class ActionBindings implements Consumer<Event> {
 	}
 
 	/**
-	 * Retrieves the events bound to the given handler.
+	 * Retrieves the event types bound to the given handler.
 	 * @param handler Event handler
-	 * @return Events
+	 * @return Event types
 	 * @throws IllegalArgumentException if the handler is not bound
 	 */
 	public Stream<Object> bindings(Consumer<? extends Event> handler) {
@@ -114,62 +86,67 @@ public class ActionBindings implements Consumer<Event> {
 	}
 
 	/**
-	 * Binds an event handler to the given event.
+	 * Binds an event type to an action handler.
+	 * @param <T> Event type
 	 * @param type			Event type
 	 * @param handler		Event handler
 	 * @throws IllegalArgumentException if the handler is already bound
 	 */
-	public <T extends Event> void bind(Object key, Consumer<? extends T> handler) {
+	private <T extends Event> void bindLocal(Object type, Consumer<? extends T> handler) {
 		// Validate
 		if(handler == this) throw new IllegalArgumentException("Cannot bind to self!");
 		if(map.containsKey(handler)) throw new IllegalArgumentException("Handler is already bound: " + handler);
 
 		// Lookup or create reverse mapping
-		final var types = map.computeIfAbsent(handler, ignored -> new HashSet<>());
+		final Set<Object> types = map.computeIfAbsent(handler, ignored -> new HashSet<>());
 
 		// Add binding
 		@SuppressWarnings("unchecked")
 		final Consumer<Event> consumer = (Consumer<Event>) handler;
-		bindings.put(key, consumer);
-		types.add(key);
+		bindings.put(type, consumer);
+		types.add(type);
 	}
 
 	/**
-	 * Convenience helper to bind an arbitrary adapter method to a button event.
-	 * @param type			Button event type
-	 * @param method		Method adapter
-	 * @return Button handler
+	 * Binds an event source to an action handler.
+	 * Note this method also automatically binds the event source to this set of bindings.
+	 * @param <T> Event type
+	 * @param src			Event source
+	 * @param handler		Handler
 	 */
-	public Consumer<Button> bind(Button button, Runnable method) {
-		final Consumer<Button> handler = ignored -> method.run();
-		bind(button, handler);
-		return handler;
-	}
-
-	/**
-	 * Convenience helper to bind a position adapter.
-	 * @param type			Button event type
-	 * @param adapter		Position adapter
-	 * @return Position handler
-	 */
-	public Consumer<PositionEvent> bind(Source src, PositionEvent.Handler adapter) {
-		final Consumer<PositionEvent> handler = pos -> adapter.handle(pos.x(), pos.y());
-		bind(src, handler);
+	public <T extends Event> void bind(Source<T> src, Consumer<T> handler) {
+		bindLocal(src, handler);
 		src.bind(this);
-		return handler;
 	}
 
 	/**
-	 * Convenience helper to bind an axis adapter.
-	 * @param type			Button event type
-	 * @param adapter		Axis adapter
-	 * @return Axis handler
+	 * Convenience helper to bind a button to a handler method.
+	 * @param type			Button
+	 * @param handler		Event handler
 	 */
-	public Consumer<AxisEvent> bind(Axis axis, Axis.Handler adapter) {
-		final Consumer<AxisEvent> handler = e -> adapter.handle(e.value());
-		bind(axis, handler);
-		axis.bind(this);
-		return handler;
+	public void bind(Button button, Runnable handler) {
+		final Consumer<Button> adapter = ignored -> handler.run();
+		bindLocal(button.type(), adapter);
+	}
+
+	/**
+	 * Convenience helper to bind a position event.
+	 * @param src			Position event source
+	 * @param handler		Event handler
+	 */
+	public void bind(Source<PositionEvent> src, PositionEvent.Handler handler) {
+		final Consumer<PositionEvent> adapter = pos -> handler.handle(pos.x(), pos.y());
+		bind(src, adapter);
+	}
+
+	/**
+	 * Convenience helper to bind an axis event.
+	 * @param axis			Axis
+	 * @param adapter		Event handler
+	 */
+	public void bind(Axis axis, Axis.Handler handler) {
+		final Consumer<AxisEvent> adapter = e -> handler.handle(e.value());
+		bind(axis, adapter);
 	}
 
 	/**
@@ -177,14 +154,14 @@ public class ActionBindings implements Consumer<Event> {
 	 * @param type Event binding to remove
 	 * @throws IllegalArgumentException if the event is not bound
 	 */
-	public void remove(Object key) {
+	public void remove(Object type) {
 		// Remove binding
-		final Consumer<Event> handler = bindings.remove(key);
-		if(handler == null) throw new IllegalArgumentException("Handler not bound: " + key);
+		final Consumer<Event> handler = bindings.remove(type);
+		if(handler == null) throw new IllegalArgumentException("Handler not bound: " + type);
 
 		// Remove reverse mapping
-		final var types = types(handler);
-		types.remove(key);
+		final Set<Object> types = types(handler);
+		types.remove(type);
 	}
 
 	/**
@@ -193,7 +170,7 @@ public class ActionBindings implements Consumer<Event> {
 	 * @throws IllegalArgumentException if the handler is not registered
 	 */
 	public void clear(Consumer<? extends Event> handler) {
-		final var types = types(handler);
+		final Set<Object> types = types(handler);
 		types.forEach(bindings::remove);
 		types.clear();
 	}
@@ -210,9 +187,10 @@ public class ActionBindings implements Consumer<Event> {
 	@Override
 	public void accept(Event e) {
 		final Consumer<Event> handler = bindings.get(e.type());
-		if(handler != null) {
-			handler.accept(e);
+		if(handler == null) {
+			return;
 		}
+		handler.accept(e);
 	}
 
 	@Override
@@ -222,38 +200,4 @@ public class ActionBindings implements Consumer<Event> {
 				.append("bindings", bindings.size())
 				.build();
 	}
-
-	// TODO - loader
-//	public static class Loader implements ResourceLoaderWriter<BufferedReader, PrintWriter, ActionBindings> {
-//		@Override
-//		public BufferedReader map(InputStream in) throws IOException {
-//			return new BufferedReader(new InputStreamReader(in));
-//		}
-//
-//		@Override
-//		public ActionBindings load(BufferedReader data) throws IOException {
-//			return null;
-//		}
-//
-//		@Override
-//		public PrintWriter map(OutputStream out) throws IOException {
-//			return null;
-//		}
-//
-//		@Override
-//		public void write(ActionBindings data, PrintWriter out) throws IOException {
-//			for(final var entry : data.map.entrySet()) {
-//				out.print(entry.getKey());
-//				out.print(StringUtils.SPACE);
-//				for(final var type : entry.getValue()) {
-//					out.print(type.name());
-//					out.print(StringUtils.SPACE);
-//				}
-//				out.println();
-//			}
-//		}
-//	}
-
-	// TODO - action class? composes handler and name for lookup when load bindings
-	// TODO - also used as predicate for actions, e.g. button for any of mods/actions, etc.
 }

@@ -1,11 +1,7 @@
 package org.sarge.jove.control;
 
-import static java.util.stream.Collectors.joining;
-
-import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
  * An <i>event</i> describes an input from the client.
@@ -19,8 +15,9 @@ public interface Event {
 
 	/**
 	 * An <i>event source</i> generates events and is a <i>binding point</i> for an event handler.
+	 * @param <T> Event type
 	 */
-	interface Source {
+	interface Source<T extends Event> {
 		/**
 		 * Binds the given handler to this source.
 		 * @param handler Event handler
@@ -31,7 +28,7 @@ public interface Event {
 	/**
 	 * Skeleton implementation.
 	 */
-	abstract class AbstractSource implements Source {
+	abstract class AbstractSource<T extends Event> implements Source<T> {
 		protected Consumer<Event> handler;
 
 		@Override
@@ -47,23 +44,6 @@ public interface Event {
 		/**
 		 * @return Event sources
 		 */
-		Set<Source> sources();
-	}
-
-	/**
-	 * Event name delimiter.
-	 */
-	String DELIMITER = "-";
-
-	/**
-	 * Builds a delimited event name from the given tokens.
-	 * @param tokens Name tokens
-	 * @return Event name
-	 */
-	static String name(String... tokens) {
-		return Arrays
-				.stream(tokens)
-				.filter(Predicate.not(String::isEmpty))
-				.collect(joining(DELIMITER));
+		Set<Source<?>> sources();
 	}
 }

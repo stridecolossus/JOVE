@@ -14,6 +14,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis;
+import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event.AbstractSource;
 import org.sarge.jove.control.Event.Device;
@@ -33,7 +34,7 @@ public class JoystickDevice implements Device {
 	/**
 	 * A <i>joystick axis</i> is a variable controller such as a HOTAS throttle.
 	 */
-	public static class JoystickAxis extends AbstractSource implements Axis {
+	public static class JoystickAxis extends AbstractSource<AxisEvent> implements Axis {
 		private final int index;
 		private float value;
 
@@ -94,7 +95,7 @@ public class JoystickDevice implements Device {
 	/**
 	 * Event source for joystick buttons.
 	 */
-	private class ButtonSource extends AbstractSource {
+	private class ButtonSource extends AbstractSource<Button> {
 		private void poll() {
 			// Ignore if no action handler
 			if(handler == null) {
@@ -161,13 +162,13 @@ public class JoystickDevice implements Device {
 	/**
 	 * @return Buttons event source
 	 */
-	public Source buttonSource() {
+	public Source<Button> buttonSource() {
 		return src;
 	}
 
 	@Override
-	public Set<Source> sources() {
-		final Set<Source> sources = new HashSet<>();
+	public Set<Source<?>> sources() {
+		final Set<Source<?>> sources = new HashSet<>();
 		sources.addAll(axes());
 		sources.add(src);
 		return sources;
@@ -308,7 +309,7 @@ public class JoystickDevice implements Device {
 			final int count = buttons(id, lib).length;
 			final Button[] buttons = IntStream
 					.range(0, count)
-					.mapToObj(n -> String.format("Button-%d", n))
+					.mapToObj(n -> Button.name("Button", n))
 					.map(Button::new)
 					.toArray(Button[]::new);
 

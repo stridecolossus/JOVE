@@ -25,9 +25,13 @@ public class ButtonTest {
 	void constructor() {
 		assertEquals("name-RELEASE-SHIFT-CONTROL", button.name());
 		assertEquals(Action.RELEASE, button.action());
-		assertEquals(IntegerEnumeration.mask(MODS), button.mods());
 		assertEquals(MODS, button.modifiers());
 		assertEquals(button, button.type());
+	}
+
+	@Test
+	void name() {
+		assertEquals("one-2", Button.name("one", 2));
 	}
 
 	@Test

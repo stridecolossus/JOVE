@@ -55,8 +55,7 @@ public class ModelBuilder {
 		return this;
 	}
 
-	// TODO
-	// compute normals
+	// TODO - compute normals
 	// - walk index -> faces (triangles) ~ primitive
 	// - accumulate normal @ each vertex of each face (cross product)
 	// - normalise all

@@ -50,7 +50,7 @@ interface DesktopLibraryWindow {
 	 */
 	int glfwCreateWindowSurface(Handle instance, Window window, Pointer allocator, PointerByReference surface);
 
-	// TODO
+	// TODO - other methods
 	// glfwWindowShouldClose(window)
 	// glfwSetWindowCloseCallback(window, window_close_callback);
 	// glfwSetWindowSize(window, 640, 480);

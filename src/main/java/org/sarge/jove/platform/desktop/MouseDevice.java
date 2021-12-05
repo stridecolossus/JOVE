@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Axis;
+import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
@@ -36,21 +37,21 @@ public class MouseDevice extends DesktopDevice {
 	}
 
 	@Override
-	public Set<Source> sources() {
+	public Set<Source<?>> sources() {
 		return Set.of(ptr, buttons, wheel);
 	}
 
 	/**
 	 * @return Mouse pointer
 	 */
-	public Source pointer() {
+	public Source<PositionEvent> pointer() {
 		return ptr;
 	}
 
 	/**
 	 * @return Mouse buttons
 	 */
-	public Source buttons() {
+	public Source<Button> buttons() {
 		return buttons;
 	}
 
@@ -71,7 +72,7 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse pointer event source.
 	 */
-	private class MousePointer extends DesktopSource<MousePositionListener> {
+	private class MousePointer extends DesktopSource<MousePositionListener, PositionEvent> {
 		@Override
 		protected MousePositionListener listener(Consumer<Event> handler) {
 			return (ptr, x, y) -> {
@@ -89,12 +90,11 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse buttons event source.
 	 */
-	private class MouseButton extends DesktopSource<MouseButtonListener> {
+	private class MouseButton extends DesktopSource<MouseButtonListener, Button> {
 		@SuppressWarnings("hiding")
 		private final List<Button> buttons = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())
-				.mapToObj(String::valueOf)
-				.map(id -> Event.name("Mouse", id))
+				.mapToObj(id -> Button.name("Mouse", id))
 				.map(Button::new)
 				.collect(toList());
 
@@ -116,7 +116,7 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse scroll-wheel source.
 	 */
-	private class MouseWheel extends DesktopSource<MouseScrollListener> implements Axis {
+	private class MouseWheel extends DesktopSource<MouseScrollListener, AxisEvent> implements Axis {
 		@Override
 		protected MouseScrollListener listener(Consumer<Event> handler) {
 			return (ptr, x, y) -> {

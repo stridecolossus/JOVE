@@ -84,7 +84,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 			out.writeInt(0);
 		}
 
-		// TODO
+		// TODO - do we need this?
 		out.flush();
 	}
 }

@@ -65,11 +65,11 @@ public class KeyboardDeviceTest {
 
 	@Nested
 	class KeyboardSourceTests {
-		private DesktopSource<KeyListener> src;
+		private DesktopSource<KeyListener, Button> src;
 
 		@BeforeEach
 		void before() {
-			src = (DesktopSource<KeyListener>) dev.keyboard();
+			src = (DesktopSource<KeyListener, Button>) dev.keyboard();
 		}
 
 		@Test

@@ -41,7 +41,7 @@ abstract class DesktopDevice implements Device {
 	 * Template implementation for a source based on a GLFW callback.
 	 * @param <T> GLFW callback
 	 */
-	abstract class DesktopSource<T> implements Source {
+	abstract class DesktopSource<T, E extends Event> implements Source<E> {
 		@SuppressWarnings("unused")
 		private T listener;
 

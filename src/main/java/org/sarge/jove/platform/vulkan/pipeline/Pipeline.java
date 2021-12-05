@@ -249,7 +249,7 @@ public class Pipeline extends AbstractVulkanObject {
 			// Init render pass
 			if(pass == null) throw new IllegalArgumentException("No render pass specified");
 			pipeline.renderPass = pass.handle();
-			pipeline.subpass = 0;		// TODO
+			pipeline.subpass = 0;		// TODO - subpass?
 
 			// Init shader pipeline stages
 			if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
@@ -265,7 +265,7 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.pColorBlendState = blend.get();
 			// TODO - check number of blend attachments = framebuffers
 
-			// TODO
+			// TODO - multi-sampling
 			pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo();
 			pipeline.pMultisampleState.sampleShadingEnable = VulkanBoolean.FALSE;
 //			pipeline.pMultisampleState.rasterizationSamples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();

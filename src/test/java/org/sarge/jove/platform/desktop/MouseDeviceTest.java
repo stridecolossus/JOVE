@@ -51,11 +51,11 @@ public class MouseDeviceTest {
 
 	@Nested
 	class MousePointerTests {
-		private DesktopSource<MousePositionListener> ptr;
+		private DesktopSource<MousePositionListener, PositionEvent> ptr;
 
 		@BeforeEach
 		void before() {
-			ptr = (DesktopSource<MousePositionListener>) mouse.pointer();
+			ptr = (DesktopSource<MousePositionListener, PositionEvent>) mouse.pointer();
 		}
 
 		@Test
@@ -83,11 +83,11 @@ public class MouseDeviceTest {
 
 	@Nested
 	class MouseButtonTests {
-		private DesktopSource<MouseButtonListener> buttons;
+		private DesktopSource<MouseButtonListener, Button> buttons;
 
 		@BeforeEach
 		void before() {
-			buttons = (DesktopSource<MouseButtonListener>) mouse.buttons();
+			buttons = (DesktopSource<MouseButtonListener, Button>) mouse.buttons();
 		}
 
 		@Test
@@ -117,11 +117,11 @@ public class MouseDeviceTest {
 
 	@Nested
 	class MouseWheelTests {
-		private DesktopSource<MouseScrollListener> wheel;
+		private DesktopSource<MouseScrollListener, AxisEvent> wheel;
 
 		@BeforeEach
 		void before() {
-			wheel = (DesktopSource<MouseScrollListener>) mouse.wheel();
+			wheel = (DesktopSource<MouseScrollListener, AxisEvent>) mouse.wheel();
 		}
 
 		@Test

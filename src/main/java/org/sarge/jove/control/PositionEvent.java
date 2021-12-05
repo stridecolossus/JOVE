@@ -3,13 +3,14 @@ package org.sarge.jove.control;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>position event</i> represents a 2D movement event such as the mouse pointer.
  * @author Sarge
  */
 @SuppressWarnings("unused")
-public record PositionEvent(Source source, float x, float y) implements Event {
+public record PositionEvent(Source<PositionEvent> source, float x, float y) implements Event {
 	/**
 	 * Handler for a position event.
 	 */
@@ -21,6 +22,16 @@ public record PositionEvent(Source source, float x, float y) implements Event {
 		 * @param y
 		 */
 		void handle(float x, float y);
+	}
+
+	/**
+	 * Constructor.
+	 * @param source Event source
+	 * @param x
+	 * @param y
+	 */
+	public PositionEvent {
+		Check.notNull(source);
 	}
 
 	@Override

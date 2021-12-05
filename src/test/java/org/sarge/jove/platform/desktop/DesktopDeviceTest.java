@@ -32,7 +32,7 @@ public class DesktopDeviceTest {
 		// Create device
 		dev = new DesktopDevice(window) {
 			@Override
-			public Set<Source> sources() {
+			public Set<Source<?>> sources() {
 				return null;
 			}
 		};
@@ -41,7 +41,7 @@ public class DesktopDeviceTest {
 	@Nested
 	class DesktopSourceTests {
 		private DesktopLibrary lib;
-		private DesktopSource<Object> src;
+		private DesktopSource<Object, Event> src;
 		private BiConsumer<Window, Object> method;
 		private Object listener;
 		private Consumer<Event> handler;

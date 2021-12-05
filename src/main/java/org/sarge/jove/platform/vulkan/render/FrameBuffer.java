@@ -81,7 +81,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		info.pAttachments = NativeObject.array(attachments);
 		info.width = extents.width();
 		info.height = extents.height();
-		info.layers = 1; // TODO
+		info.layers = 1; // TODO - layers?
 
 		// Allocate frame buffer
 		final DeviceContext dev = pass.device();

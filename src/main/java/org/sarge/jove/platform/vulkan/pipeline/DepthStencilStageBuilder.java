@@ -18,7 +18,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 		enable(false);
 		write(true);
 		compare(VkCompareOp.LESS_OR_EQUAL);
-		// TODO
+		// TODO - other fields
 		// depth bounds test
 		// stencil test
 		// front/back

@@ -227,9 +227,7 @@ public interface Image extends NativeObject {
 			info.initialLayout = layout;
 			info.usage = IntegerEnumeration.mask(props.usage());
 			info.sharingMode = props.mode();
-			// TODO
-			//queueFamilyIndexCount;
-			// pQueueFamilyIndices;
+			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 
 			// Allocate image
 			final VulkanLibrary lib = dev.library();

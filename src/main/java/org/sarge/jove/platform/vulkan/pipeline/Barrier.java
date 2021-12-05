@@ -53,9 +53,7 @@ public class Barrier implements Command {
 		private final Set<VkPipelineStage> srcStages = new HashSet<>();
 		private final Set<VkPipelineStage> destStages = new HashSet<>();
 		private final List<ImageBarrierBuilder> images = new ArrayList<>();
-		// TODO
-		// - buffer memory barriers
-		// - memory barriers
+		// TODO - buffer/memory barriers
 
 		/**
 		 * Adds a source pipeline stage for this barrier.
@@ -166,7 +164,7 @@ public class Barrier implements Command {
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
 				barrier.subresourceRange = SubResource.toRange(subresource);
-				// TODO
+				// TODO - what are these indices for?
 				barrier.srcQueueFamilyIndex = Queue.Family.IGNORED;
 				barrier.dstQueueFamilyIndex = Queue.Family.IGNORED;
 			}

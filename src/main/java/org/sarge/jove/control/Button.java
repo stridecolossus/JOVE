@@ -1,26 +1,31 @@
 package org.sarge.jove.control;
 
 import static java.util.stream.Collectors.joining;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 
-import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>button</i> defines a toggle event such as a keyboard key or mouse button.
  * <p>
  * A button has an {@link Action} and optionally a keyboard {@link Modifier} set.
  * <p>
- * The {@link #name()} method generates a human-readable string representation of the button, action and modifiers, see {@link Event#name(String...)}.
- * <p>
  * Note that a button is both the event <b>and</b> its {@link #type()}.
  * <p>
  * @author Sarge
  */
-@SuppressWarnings("unused")
-public record Button(String id, Action action, int mods) implements Event {
+public class Button implements Event {
+	/**
+	 * Button name delimiter.
+	 */
+	private static final String DELIMITER = "-";
+
 	/**
 	 * Button actions.
 	 */
@@ -53,16 +58,22 @@ public record Button(String id, Action action, int mods) implements Event {
 		}
 	}
 
+	private final String id;
+	private final String name;
+	private final Action action;
+	private final int mods;
+
 	/**
 	 * Constructor.
 	 * @param id			Button identifier
 	 * @param action		Action
 	 * @param mods			Modifier mask
 	 */
-	public Button {
-		Check.notEmpty(id);
-		Check.notNull(action);
-		Check.zeroOrMore(mods);
+	public Button(String id, Action action, int mods) {
+		this.id = notEmpty(id);
+		this.action = notNull(action);
+		this.mods = zeroOrMore(mods);
+		this.name = build();
 	}
 
 	/**
@@ -74,11 +85,44 @@ public record Button(String id, Action action, int mods) implements Event {
 	}
 
 	/**
-	 * @return Name of this button
+	 * Builds the button name.
+	 */
+	private String build() {
+		final String modifiers = name(modifiers().toArray());
+		return name(id, action.name(), modifiers);
+	}
+
+	/**
+	 * Builds a hyphen delimited name from the given tokens.
+	 * @param tokens Tokens
+	 * @return Button name
+	 */
+	public static String name(Object... tokens) {
+		return Arrays
+				.stream(tokens)
+				.map(String::valueOf)
+				.collect(joining(DELIMITER));
+	}
+
+	/**
+	 * @return Button ID
+	 */
+	public String id() {
+		return id;
+	}
+
+	/**
+	 * @return Button name
 	 */
 	public String name() {
-		final String modifiers = modifiers().stream().map(Enum::name).collect(joining(Event.DELIMITER));
-		return Event.name(id, action.name(), modifiers);
+		return name;
+	}
+
+	/**
+	 * @return Button action
+	 */
+	public Action action() {
+		return action;
 	}
 
 	/**
@@ -104,7 +148,22 @@ public record Button(String id, Action action, int mods) implements Event {
 	}
 
 	@Override
+	public int hashCode() {
+		return Objects.hash(id, action, mods);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Button that) &&
+				this.id.equals(that.id) &&
+				(this.action == that.action) &&
+				(this.mods == that.mods);
+	}
+
+	@Override
 	public String toString() {
-		return name();
+		return name;
 	}
 }
