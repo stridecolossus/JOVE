@@ -11,7 +11,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.control.Button;
 import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
 import org.sarge.jove.platform.desktop.JoystickManager.ConnectionListener;
 
@@ -39,7 +38,7 @@ public class JoystickManagerTest {
 		when(lib.glfwGetJoystickButtons(1, count)).thenReturn(new Pointer(0));
 
 		// Create a joystick
-		dev = new JoystickDevice(1, "name", new JoystickAxis[]{}, new Button[]{}, lib);
+		dev = new JoystickDevice(1, "name", lib);
 		when(lib.glfwJoystickPresent(1)).thenReturn(true);
 		when(lib.glfwGetJoystickName(1)).thenReturn("name");
 

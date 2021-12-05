@@ -18,21 +18,23 @@ public class ModifiedButtonTest {
 
 	@BeforeEach
 	void before() {
-		button = new ModifiedButton("name", Action.RELEASE, IntegerEnumeration.mask(MODS));
+		button = new ModifiedButton("name");
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("name-RELEASE-SHIFT-CONTROL", button.name());
+		assertEquals("name-RELEASE", button.name());
 		assertEquals(Action.RELEASE, button.action());
-		assertEquals(MODS, button.modifiers());
+		assertEquals(Set.of(), button.modifiers());
 		assertEquals(button, button.type());
 	}
 
 	@Test
 	void resolve() {
-		final ModifiedButton base = new ModifiedButton("name");
-		assertEquals(button, base.resolve(0, IntegerEnumeration.mask(MODS)));
+		final ModifiedButton resolved = button.resolve(1, IntegerEnumeration.mask(MODS));
+		assertEquals("name-PRESS-SHIFT-CONTROL", resolved.name());
+		assertEquals(Action.PRESS, resolved.action());
+		assertEquals(MODS, resolved.modifiers());
 	}
 
 	@Nested

@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +14,7 @@ public class DesktopButtonTest {
 
 	@BeforeEach
 	void before() {
-		button = new DesktopButton("name", Action.RELEASE);
+		button = new DesktopButton("name");
 	}
 
 	@Test
@@ -21,6 +22,14 @@ public class DesktopButtonTest {
 		assertEquals("name-RELEASE", button.name());
 		assertEquals(Action.RELEASE, button.action());
 		assertEquals(button, button.type());
+	}
+
+	@Test
+	void resolve() {
+		final DesktopButton pressed = button.resolve(Action.PRESS);
+		assertNotNull(pressed);
+		assertEquals(Action.PRESS, pressed.action());
+		assertEquals(button, button.resolve(Action.RELEASE));
 	}
 
 	@Nested

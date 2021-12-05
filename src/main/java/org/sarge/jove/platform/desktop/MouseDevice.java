@@ -117,10 +117,18 @@ public class MouseDevice extends DesktopDevice {
 	 * Mouse scroll-wheel source.
 	 */
 	private class MouseWheel extends DesktopSource<MouseScrollListener, AxisEvent> implements Axis {
+		private float value;
+
+		@Override
+		public float value() {
+			return value;
+		}
+
 		@Override
 		protected MouseScrollListener listener(Consumer<Event> handler) {
 			return (ptr, x, y) -> {
-				final AxisEvent e = new AxisEvent(this, (float) y);
+				value = (float) y;
+				final AxisEvent e = new AxisEvent(this, value);
 				handler.accept(e);
 			};
 		}

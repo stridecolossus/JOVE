@@ -10,6 +10,7 @@ import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>joystick axis</i> is a controller for a ranged value such as a HOTAS throttle.
+ * @author Sarge
  */
 class JoystickAxis extends AbstractSource<AxisEvent> implements Axis {
 	private final int index;
@@ -25,9 +26,7 @@ class JoystickAxis extends AbstractSource<AxisEvent> implements Axis {
 		this.value = value;
 	}
 
-	/**
-	 * @return Current axis position
-	 */
+	@Override
 	public float value() {
 		return value;
 	}

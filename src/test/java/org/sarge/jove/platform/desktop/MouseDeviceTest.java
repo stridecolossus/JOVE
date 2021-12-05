@@ -18,7 +18,6 @@ import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.PositionEvent;
-import org.sarge.jove.platform.desktop.DesktopButton.Action;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
@@ -103,7 +102,7 @@ public class MouseDeviceTest {
 			final MouseButtonListener listener = buttons.listener(handler);
 			assertNotNull(listener);
 			listener.button(null, 0, 1, mods);
-			verify(handler).accept(new ModifiedButton("Mouse-1", Action.PRESS, mods));
+			verify(handler).accept(new ModifiedButton("Mouse-1").resolve(1, mods));
 		}
 
 		@Test

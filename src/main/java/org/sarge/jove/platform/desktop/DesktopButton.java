@@ -40,17 +40,17 @@ class DesktopButton extends AbstractButton {
 	 * @param id			Button identifier
 	 * @param action		Action
 	 */
-	public DesktopButton(String id, Action action) {
+	protected DesktopButton(String id, Action action) {
 		this.id = notEmpty(id);
 		this.action = notNull(action);
 	}
 
 	/**
-	 * Constructor for a pressed button.
+	 * Constructor for a button.
 	 * @param id Button identifier
 	 */
 	public DesktopButton(String id) {
-		this(id, Action.PRESS);
+		this(id, Action.RELEASE);
 	}
 
 	@Override
@@ -61,5 +61,14 @@ class DesktopButton extends AbstractButton {
 	@Override
 	public final Action action() {
 		return action;
+	}
+
+	/**
+	 * Resolves this button for the given action.
+	 * @param action Action
+	 * @return Resolved button
+	 */
+	DesktopButton resolve(Action action) {
+		return new DesktopButton(id, action);
 	}
 }

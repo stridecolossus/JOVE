@@ -1,12 +1,10 @@
 package org.sarge.jove.platform.desktop;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import org.sarge.jove.control.Button;
 import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
 
 /**
@@ -49,6 +47,16 @@ public class JoystickManager {
 	}
 
 	/**
+	 * Creates a joystick device.
+	 * @param id Joystick ID
+	 * @return New joystick
+	 */
+	private JoystickDevice create(int id) {
+		final String name = lib.glfwGetJoystickName(id);
+		return new JoystickDevice(id, name, lib);
+	}
+
+	/**
 	 * Removes a disconnected device.
 	 * @param id Device ID
 	 * @return Removed device
@@ -63,32 +71,6 @@ public class JoystickManager {
 		devices.remove(prev);
 
 		return prev;
-	}
-
-	/**
-	 * Creates a joystick device.
-	 * @param id Joystick ID
-	 * @return New joystick
-	 */
-	private JoystickDevice create(int id) {
-		// Retrieve joystick name
-		final String name = lib.glfwGetJoystickName(id);
-
-		// Init joystick axis values
-		final float[] array = JoystickDevice.axes(id, lib);
-		final JoystickAxis[] axes = new JoystickAxis[array.length];
-		Arrays.setAll(axes, n -> new JoystickAxis(n, array[n]));
-
-		// Init buttons
-		final int count = JoystickDevice.buttons(id, lib).length;
-		final Button[] buttons = IntStream
-				.range(0, count)
-				.mapToObj(n -> Button.name("Button", n))
-				.map(DesktopButton::new)
-				.toArray(Button[]::new);
-
-		// Create joystick
-		return new JoystickDevice(id, name, axes, buttons, lib);
 	}
 
 	/**

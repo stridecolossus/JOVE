@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event;
-import org.sarge.jove.platform.desktop.DesktopButton.Action;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 import org.sarge.jove.platform.desktop.ModifiedButton.Modifier;
@@ -79,7 +78,7 @@ public class KeyboardDeviceTest {
 			final Consumer<Event> handler = mock(Consumer.class);
 			final KeyListener listener = src.listener(handler);
 			listener.key(null, 256, 0, 1, mods);
-			verify(handler).accept(new ModifiedButton("ESCAPE", Action.PRESS, mods));
+			verify(handler).accept(new ModifiedButton("ESCAPE").resolve(1, mods));
 		}
 
 		@Test

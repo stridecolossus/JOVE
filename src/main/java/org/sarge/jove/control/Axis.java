@@ -9,6 +9,11 @@ import org.sarge.jove.control.Event.Source;
  */
 public interface Axis extends Source<AxisEvent> {
 	/**
+	 * @return Current axis position
+	 */
+	float value();
+
+	/**
 	 * Handler for an axis event.
 	 */
 	@FunctionalInterface

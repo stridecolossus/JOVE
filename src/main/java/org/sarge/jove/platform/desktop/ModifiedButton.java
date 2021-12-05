@@ -43,7 +43,7 @@ class ModifiedButton extends DesktopButton {
 	 * @param action		Action
 	 * @param mods			Modifier mask
 	 */
-	public ModifiedButton(String id, Action action, int mods) {
+	private ModifiedButton(String id, Action action, int mods) {
 		super(id, action);
 		this.mods = zeroOrMore(mods);
 	}
@@ -53,13 +53,18 @@ class ModifiedButton extends DesktopButton {
 	 * @param id Button identifier
 	 */
 	public ModifiedButton(String id) {
-		this(id, Action.PRESS, 0);
+		this(id, Action.RELEASE, 0);
 	}
 
 	@Override
 	public String name() {
-		final String modifiers = Button.name(modifiers().toArray());
-		return Button.name(id, action.name(), modifiers);
+		if(mods == 0) {
+			return super.name();
+		}
+		else {
+			final String modifiers = Button.name(modifiers().toArray());
+			return Button.name(id, action.name(), modifiers);
+		}
 	}
 
 	/**
