@@ -14,17 +14,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event;
-import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
-import org.sarge.jove.platform.desktop.JoystickDevice.ConnectionListener;
-import org.sarge.jove.platform.desktop.JoystickDevice.JoystickAxis;
-import org.sarge.jove.platform.desktop.JoystickDevice.Manager;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
@@ -41,7 +35,7 @@ public class JoystickDeviceTest {
 	void before() {
 		lib = mock(DesktopLibrary.class);
 		axis = new JoystickAxis(2, 3);
-		button = new Button("button");
+		button = new DesktopButton("button");
 		dev = new JoystickDevice(1, "name", new JoystickAxis[]{axis}, new Button[]{button}, lib);
 		handler = mock(Consumer.class);
 	}
@@ -112,80 +106,5 @@ public class JoystickDeviceTest {
 		assertEquals(true, dev.equals(dev));
 		assertEquals(false, dev.equals(null));
 		assertEquals(false, dev.equals(mock(JoystickDevice.class)));
-	}
-
-	@Nested
-	class JoystickAxisTests {
-		@Test
-		void constructor() {
-			assertEquals(3, axis.value());
-		}
-
-		@Test
-		void bind() {
-			axis.bind(handler);
-		}
-
-		@Test
-		void update() {
-			axis.update(4);
-			assertEquals(4, axis.value());
-		}
-	}
-
-	@Nested
-	class ManagerTests {
-		private Manager manager;
-
-		@BeforeEach
-		void before() {
-			final Desktop desktop = mock(Desktop.class);
-			when(desktop.library()).thenReturn(lib);
-			when(lib.glfwJoystickPresent(1)).thenReturn(true);
-			when(lib.glfwGetJoystickName(1)).thenReturn("name");
-			initAxisValues();
-			initButtons();
-			manager = new Manager(desktop);
-		}
-
-		@Test
-		void create() {
-			for(int n = 0; n < 16; ++n) {
-				verify(lib).glfwJoystickPresent(n);
-			}
-		}
-
-		@Test
-		void devices() {
-			assertEquals(List.of(dev), manager.devices());
-		}
-
-		@Test
-		void poll() {
-			manager.poll();
-		}
-
-		@Test
-		void connect() {
-			// Register connection listener
-			final var listener = mock(ConnectionListener.class);
-			manager.listener(listener);
-
-			// Check API
-			final ArgumentCaptor<JoystickListener> captor = ArgumentCaptor.forClass(JoystickListener.class);
-			verify(lib).glfwSetJoystickCallback(captor.capture());
-
-			// Capture delegate listener
-			final JoystickListener delegate = captor.getValue();
-			assertNotNull(delegate);
-
-			// Disconnect device
-			delegate.connect(1, 0);
-			assertEquals(List.of(), manager.devices());
-
-			// Connect device
-			delegate.connect(1, 0x00040001);
-			assertEquals(List.of(dev), manager.devices());
-		}
 	}
 }

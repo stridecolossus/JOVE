@@ -11,8 +11,6 @@ import static org.mockito.Mockito.when;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
@@ -27,12 +25,14 @@ public class DesktopTest {
 	@BeforeEach
 	void before() {
 		lib = mock(DesktopLibrary.class);
-		desktop = new Desktop(lib);
+		when(lib.glfwInit()).thenReturn(1);
+		desktop = Desktop.create(lib);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(lib, desktop.library());
+		verify(lib).glfwInitHint(0x00050001, 0);
 	}
 
 	@Test
@@ -84,13 +84,5 @@ public class DesktopTest {
 	void destroy() {
 		desktop.destroy();
 		verify(lib).glfwTerminate();
-	}
-
-	@Disabled
-	@Tag("GLFW")
-	@Test
-	void create() {
-		final Desktop desktop = Desktop.create();
-		desktop.destroy();
 	}
 }

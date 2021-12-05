@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
@@ -85,21 +82,6 @@ public class DesktopDeviceTest {
 		void disable() {
 			src.bind(null);
 			verify(method).accept(window, null);
-		}
-	}
-
-	@Nested
-	class ActionTests {
-		@Test
-		void map() {
-			assertEquals(Action.RELEASE, DesktopDevice.map(0));
-			assertEquals(Action.PRESS, DesktopDevice.map(1));
-			assertEquals(Action.REPEAT, DesktopDevice.map(2));
-		}
-
-		@Test
-		void unknown() {
-			assertThrows(RuntimeException.class, () -> DesktopDevice.map(999));
 		}
 	}
 }

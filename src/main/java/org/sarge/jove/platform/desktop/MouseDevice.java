@@ -92,17 +92,17 @@ public class MouseDevice extends DesktopDevice {
 	 */
 	private class MouseButton extends DesktopSource<MouseButtonListener, Button> {
 		@SuppressWarnings("hiding")
-		private final List<Button> buttons = IntStream
+		private final List<ModifiedButton> buttons = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())
 				.mapToObj(id -> Button.name("Mouse", id))
-				.map(Button::new)
+				.map(ModifiedButton::new)
 				.collect(toList());
 
 		@Override
 		protected MouseButtonListener listener(Consumer<Event> handler) {
 			return (ptr, index, action, mods) -> {
-				final Button button = buttons.get(index);
-				final Button event = button.resolve(DesktopDevice.map(action), mods);
+				final ModifiedButton button = buttons.get(index);
+				final Button event = button.resolve(action, mods);
 				handler.accept(event);
 			};
 		}

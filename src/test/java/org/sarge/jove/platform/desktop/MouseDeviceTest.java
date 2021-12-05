@@ -16,13 +16,14 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.PositionEvent;
+import org.sarge.jove.platform.desktop.DesktopButton.Action;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
+import org.sarge.jove.platform.desktop.ModifiedButton.Modifier;
 import org.sarge.jove.util.IntegerEnumeration;
 
 public class MouseDeviceTest {
@@ -98,11 +99,11 @@ public class MouseDeviceTest {
 
 		@Test
 		void listener() {
-			final int mods = IntegerEnumeration.mask(Button.Modifier.CONTROL);
+			final int mods = IntegerEnumeration.mask(Modifier.CONTROL);
 			final MouseButtonListener listener = buttons.listener(handler);
 			assertNotNull(listener);
 			listener.button(null, 0, 1, mods);
-			verify(handler).accept(new Button("Mouse-1", Action.PRESS, mods));
+			verify(handler).accept(new ModifiedButton("Mouse-1", Action.PRESS, mods));
 		}
 
 		@Test

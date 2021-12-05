@@ -18,7 +18,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 public class KeyboardDevice extends DesktopDevice {
 	private final KeyboardSource keyboard = new KeyboardSource();
 	private final KeyTable table = KeyTable.instance();
-	private final Map<Integer, Button> keys = new HashMap<>();
+	private final Map<Integer, ModifiedButton> keys = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -66,14 +66,14 @@ public class KeyboardDevice extends DesktopDevice {
 		@Override
 		protected KeyListener listener(Consumer<Event> handler) {
 			return (ptr, key, scancode, action, mods) -> {
-				final Button base = keys.computeIfAbsent(key, this::key);
-				final Button button = base.resolve(DesktopDevice.map(action), mods);
+				final ModifiedButton base = keys.computeIfAbsent(key, this::key);
+				final Button button = base.resolve(action, mods);
 				handler.accept(button);
 			};
 		}
 
-		private Button key(int code) {
-			return new Button(table.name(code));
+		private ModifiedButton key(int code) {
+			return new ModifiedButton(table.name(code));
 		}
 
 		@Override

@@ -3,7 +3,6 @@ package org.sarge.jove.platform.desktop;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Device;
 import org.sarge.jove.control.Event.Source;
@@ -21,20 +20,6 @@ abstract class DesktopDevice implements Device {
 	 */
 	protected DesktopDevice(Window window) {
 		this.window = window;
-	}
-
-	/**
-	 * Maps a GLFW action code.
-	 * @param action Action code
-	 * @return Action
-	 */
-	static Action map(int action) {
-		return switch(action) {
-			case 0 -> Action.RELEASE;
-			case 1 -> Action.PRESS;
-			case 2 -> Action.REPEAT;
-			default -> throw new RuntimeException("Unsupported action code: " + action);
-		};
 	}
 
 	/**

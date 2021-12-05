@@ -11,6 +11,13 @@ import com.sun.jna.ptr.IntByReference;
  */
 interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMonitor, DesktopLibraryDevice, DesktopLibraryJoystick {
 	/**
+	 * Sets an initialisation hint.
+	 * @param hint		Hint
+	 * @param value		Value
+	 */
+	void glfwInitHint(int hint, int value);
+
+	/**
 	 * Initialises GLFW.
 	 * @return Success code
 	 */

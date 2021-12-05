@@ -15,10 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event;
+import org.sarge.jove.platform.desktop.DesktopButton.Action;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.platform.desktop.ModifiedButton.Modifier;
 import org.sarge.jove.util.IntegerEnumeration;
 
 public class KeyboardDeviceTest {
@@ -46,7 +47,7 @@ public class KeyboardDeviceTest {
 
 	@Test
 	void key() {
-		assertEquals(new Button("ESCAPE"), dev.key("ESCAPE"));
+		assertEquals(new ModifiedButton("ESCAPE"), dev.key("ESCAPE"));
 	}
 
 	@Test
@@ -74,11 +75,11 @@ public class KeyboardDeviceTest {
 
 		@Test
 		void listener() {
-			final int mods = IntegerEnumeration.mask(Button.Modifier.CONTROL);
+			final int mods = IntegerEnumeration.mask(Modifier.CONTROL);
 			final Consumer<Event> handler = mock(Consumer.class);
 			final KeyListener listener = src.listener(handler);
 			listener.key(null, 256, 0, 1, mods);
-			verify(handler).accept(new Button("ESCAPE", Action.PRESS, mods));
+			verify(handler).accept(new ModifiedButton("ESCAPE", Action.PRESS, mods));
 		}
 
 		@Test

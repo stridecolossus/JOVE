@@ -50,6 +50,19 @@ public class Desktop {
 		// Load native library
 		final DesktopLibrary lib = Native.load(name, DesktopLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));
 
+		// Create desktop service
+		return create(lib);
+	}
+
+	/**
+	 * Creates the desktop service.
+	 * @param lib GLFW library
+	 * @return New desktop service
+	 */
+	static Desktop create(DesktopLibrary lib) {
+		// Disable joystick hats being present in the array of buttons
+		lib.glfwInitHint(0x00050001, 0);
+
 		// Init GLFW
 		final int result = lib.glfwInit();
 		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
@@ -64,7 +77,7 @@ public class Desktop {
 	 * Constructor.
 	 * @param lib GLFW library
 	 */
-	Desktop(DesktopLibrary lib) {
+	private Desktop(DesktopLibrary lib) {
 		this.lib = notNull(lib);
 	}
 

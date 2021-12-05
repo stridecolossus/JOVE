@@ -80,7 +80,7 @@ public class ActionBindingsTest {
 	class BindingHelpers {
 		@Test
 		void button() {
-			final Button button = new Button("button");
+			final Button button = mock(Button.class);
 			final Runnable method = mock(Runnable.class);
 			bindings.bind(button, method);
 			bindings.accept(button);
