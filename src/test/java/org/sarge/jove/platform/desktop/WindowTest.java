@@ -3,6 +3,8 @@ package org.sarge.jove.platform.desktop;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,9 +13,12 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.WindowListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowResizeListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowStateListener;
 
 import com.sun.jna.Pointer;
 
@@ -75,19 +80,20 @@ public class WindowTest {
 		final WindowListener listener = mock(WindowListener.class);
 		window.listener(listener);
 
-		// TODO - how to check each underlying listener without lots of nasty code?
+		// Check cursor callback attached to the window
+		final ArgumentCaptor<WindowStateListener> captor = ArgumentCaptor.forClass(WindowStateListener.class);
+		verify(lib).glfwSetCursorEnterCallback(eq(window), captor.capture());
 
-//		// Check API (for one of the underlying listeners)
-//		final ArgumentCaptor<WindowStateListener> captor = ArgumentCaptor.forClass(WindowStateListener.class);
-//		verify(lib).glfwSetCursorEnterCallback(eq(window), captor.capture());
-//
-//		// Check underlying listener
-//		final WindowStateListener state = captor.getValue();
-//		assertNotNull(state);
-//
-//		// Check listener delegation
-//		state.state(window.handle().toPointer(), true);
-//		verify(listener).cursor(true);
+		// Invoke the callback and check delegated to the listener
+		final WindowStateListener callback = captor.getValue();
+		assertNotNull(callback);
+		callback.state(null, true);
+		verify(listener).cursor(true);
+
+		// Check other callbacks
+		verify(lib).glfwSetWindowFocusCallback(eq(window), any(WindowStateListener.class));
+		verify(lib).glfwSetWindowIconifyCallback(eq(window), any(WindowStateListener.class));
+		verify(lib).glfwSetWindowSizeCallback(eq(window), any(WindowResizeListener.class));
 	}
 
 	@Test
@@ -96,7 +102,7 @@ public class WindowTest {
 		verify(lib).glfwSetCursorEnterCallback(window, null);
 		verify(lib).glfwSetWindowFocusCallback(window, null);
 		verify(lib).glfwSetWindowIconifyCallback(window, null);
-		verify(lib).glfwSetWindowResizeCallback(window, null);
+		verify(lib).glfwSetWindowSizeCallback(window, null);
 	}
 
 	@Test

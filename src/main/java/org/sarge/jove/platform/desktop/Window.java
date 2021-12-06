@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.AbstractTransientNativeObject;
@@ -14,6 +15,7 @@ import org.sarge.jove.control.WindowListener;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.LazySupplier;
 
+import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -165,7 +167,7 @@ public class Window extends AbstractTransientNativeObject {
 	private final Descriptor descriptor;
 	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
 	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
-	private WindowListener listener;
+	private final Set<Callback> listeners = new HashSet<>();
 
 	/**
 	 * Constructor.
@@ -212,20 +214,38 @@ public class Window extends AbstractTransientNativeObject {
 	 * @param listener Listener for window state changes or {@code null} to remove the listener
 	 */
 	public void listener(WindowListener listener) {
+		listeners.clear();
 		final DesktopLibrary lib = desktop.library();
 		if(listener == null) {
 			lib.glfwSetCursorEnterCallback(this, null);
 			lib.glfwSetWindowFocusCallback(this, null);
 			lib.glfwSetWindowIconifyCallback(this, null);
-			lib.glfwSetWindowResizeCallback(this, null);
+			lib.glfwSetWindowSizeCallback(this, null);
 		}
 		else {
-			lib.glfwSetCursorEnterCallback(this, (window, enter) -> listener.cursor(enter));
-			lib.glfwSetWindowFocusCallback(this, (window, focus) -> listener.focus(focus));
-			lib.glfwSetWindowIconifyCallback(this, (window, iconify) -> listener.minimised(iconify));
-			lib.glfwSetWindowResizeCallback(this, (window, w, h) -> listener.resize(w, h));
+			listener(lib::glfwSetCursorEnterCallback, (window, enter) -> listener.cursor(enter));
+			listener(lib::glfwSetWindowFocusCallback, (window, focus) -> listener.focus(focus));
+			listener(lib::glfwSetWindowIconifyCallback, (window, iconify) -> listener.minimised(iconify));
+			listener(lib::glfwSetWindowSizeCallback, (window, w, h) -> listener.resize(w, h));
 		}
-		this.listener = listener;
+	}
+
+	/**
+	 * Helper - Registers a window listener.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>This method keeps a reference to the listener in order to prevent it being garbage-collected and de-registered by GLFW</li>
+	 * <li>Note that JNA callbacks <b>must</b> contain a single public method, i.e. the same {@link WindowListener} cannot be passed to each API method</li>
+	 * </ul>
+	 * <p>
+	 * @param <T> Callback type
+	 * @param method		GLFW registration method
+	 * @param listener		Callback
+	 */
+	private <T extends Callback> void listener(BiConsumer<Window, T> method, T listener) {
+		method.accept(this, listener);
+		listeners.add(listener);
 	}
 
 	/**
@@ -245,8 +265,8 @@ public class Window extends AbstractTransientNativeObject {
 
 	@Override
 	protected void release() {
-		// Detach listener
-		if(listener != null) {
+		// Detach listeners
+		if(!listeners.isEmpty()) {
 			listener(null);
 		}
 

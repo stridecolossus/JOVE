@@ -31,7 +31,7 @@ import org.sarge.jove.platform.vulkan.core.Surface;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.render.Swapchain.AcquireException;
+import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainException;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -110,7 +110,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 	@Test
 	void acquireError() {
 		when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, INTEGER)).thenReturn(VkResult.NOT_READY.value());
-		assertThrows(AcquireException.class, () -> swapchain.acquire(semaphore, null));
+		assertThrows(SwapchainException.class, () -> swapchain.acquire(semaphore, null));
 	}
 
 	@Test

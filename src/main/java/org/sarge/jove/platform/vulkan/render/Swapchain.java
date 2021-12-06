@@ -82,11 +82,11 @@ public class Swapchain extends AbstractVulkanObject {
 	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
 
 	/**
-	 * Indicates that a swapchain image could not be acquired.
-	 * @see Swapchain#acquire(Semaphore, Fence)
+	 * Indicates that a swapchain image could not be acquired or presented.
+	 * Note that {@link VkResult#SUBOPTIMAL_KHR} is considered as success
 	 */
-	public static class AcquireException extends VulkanException {
-		private AcquireException(int result) {
+	public static class SwapchainException extends VulkanException {
+		private SwapchainException(int result) {
 			super(result);
 		}
 	}
@@ -143,25 +143,29 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
+	 * @throws SwapchainException
+	 */
+	private static void validate(int result) {
+		final boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
+		if(!ok) throw new SwapchainException(result);
+	}
+
+	/**
 	 * Acquires the next image in this swap-chain.
 	 * @param semaphore		Optional semaphore signalled when the frame has been acquired
 	 * @param fence			Optional fence
 	 * @return Image index
 	 * @throws IllegalArgumentException if both the semaphore and fence are {@code null}
-	 * @throws AcquireException if the swapchain image cannot be acquired
+	 * @throws SwapchainException if the swapchain image cannot be acquired
 	 */
-	public int acquire(Semaphore semaphore, Fence fence) throws AcquireException {
+	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainException {
 		// Validate
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
 
 		// Acquire swapchain image
 		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
-		final int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
-
-		// Check result
-		final boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
-		if(!ok) throw new AcquireException(result);
+		validate(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
 
 		return index.getValue();
 	}
@@ -202,7 +206,7 @@ public class Swapchain extends AbstractVulkanObject {
 
 		// Present frame
 		final VulkanLibrary lib = device().library();
-		check(lib.vkQueuePresentKHR(queue, info));
+		validate(lib.vkQueuePresentKHR(queue, info));
 	}
 	// TODO - cache descriptor -> factory -> work submit?
 

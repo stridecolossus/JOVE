@@ -109,5 +109,5 @@ interface DesktopLibraryWindow {
 	 * @param window		Window
 	 * @param listener		Resize listener
 	 */
-	void glfwSetWindowResizeCallback(Window window, WindowResizeListener listener);
+	void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener);
 }
