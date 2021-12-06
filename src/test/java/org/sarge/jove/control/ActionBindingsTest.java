@@ -66,7 +66,7 @@ public class ActionBindingsTest {
 	}
 
 	@Test
-	void bindDuplicateHandler() {
+	void bindDuplicateEventType() {
 		bindings.bind(src, handler);
 		assertThrows(IllegalArgumentException.class, () -> bindings.bind(src, handler));
 	}
@@ -80,8 +80,9 @@ public class ActionBindingsTest {
 	class BindingHelpers {
 		@Test
 		void button() {
-			final Button button = mock(Button.class);
 			final Runnable method = mock(Runnable.class);
+			final Button button = mock(Button.class);
+			when(button.type()).thenReturn(button);
 			bindings.bind(button, method);
 			bindings.accept(button);
 			verify(method).run();

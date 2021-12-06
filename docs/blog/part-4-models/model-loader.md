@@ -374,7 +374,7 @@ public class ObjectModel {
 }
 ```
 
-The `append` method determines the layout of the model and adds the vertex data:
+The `append` method first determines the layout of the model:
 
 ```java
 private void append() {
@@ -383,27 +383,33 @@ private void append() {
         return;
     }
 
-    // Create new model builder
-    ModelBuilder builder = new ModelBuilder();
-    builder.primitive(Primitive.TRIANGLES);
-
     // Init model layout
-    builder.layout(Point.LAYOUT);
+    List<Layout> layout = new ArrayList<>();
+    layout.add(Point.LAYOUT);
     if(!normals.isEmpty()) {
-        builder.layout(Vector.NORMALS);
+        layout.add(Vector.LAYOUT);
     }
     if(!coords.isEmpty()) {
-        builder.layout(Coordinate2D.LAYOUT);
+        layout.add(Coordinate2D.LAYOUT);
     }
-
-    // Add vertex data
-    for(Vertex v : vertices) {
-        builder.add(v);
-    }
-
-    // Add to models
-    models.add(builder.build());
+    ...
 }
+```
+
+And then constructs an indexed model from the vertex data:
+
+```java
+// Create new model builder
+ModelBuilder builder = new IndexedBuilder(layout);
+builder.primitive(Primitive.TRIANGLES);
+
+// Add vertex data
+for(Vertex v : vertices) {
+    builder.add(v);
+}
+
+// Add to models
+models.add(builder.build());
 ```
 
 Although not required for the current demo application the OBJ format supports construction of multiple models from a single file.  The following method builds the JOVE model for the current group and then resets the transient OBJ model:

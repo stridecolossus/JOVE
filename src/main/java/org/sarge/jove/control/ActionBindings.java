@@ -11,9 +11,10 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Event.Source;
+import org.sarge.lib.util.Check;
 
 /**
- * A <i>bindings</i> is a mutable set of mappings that bind an input event to an <i>action</i> (an event consumer).
+ * An <i>action bindings</i> is a mutable set of mappings that bind input events to <i>action</i> handlers.
  * <p>
  * This class provides convenience _bind_ variants to bind events to common handler methods, e.g. {@link #bind(Axis, org.sarge.jove.control.Axis.Handler)} to bind axis events.
  * <p>
@@ -25,11 +26,14 @@ import org.sarge.jove.control.Event.Source;
  * bindings.bind(axis, this::handle);
  * </pre>
  * <p>
+ * Note that action handlers can also be registered using the {@link #add(Consumer)} to initialise actions that initially have no bindings.
+ * <p>
  * Notes:
  * <ul>
- * <li>The <i>bindings</i> is itself an event consumer</li>
- * <li>Events that are not bound are ignored</li>
+ * <li>Binding keys are the {@link Event#type()} of the event</li>
  * <li>Multiple events can be bound to a single action</li>
+ * <li>Events that are not bound are ignored</li>
+ * <li>The <i>action bindings</i> class is itself an action handler</li>
  * </ul>
  * <p>
  * @see Event
@@ -37,13 +41,13 @@ import org.sarge.jove.control.Event.Source;
  */
 public class ActionBindings implements Consumer<Event> {
 	private final Map<Object, Consumer<Event>> bindings = new HashMap<>();
-	private final Map<Consumer<? extends Event>, Set<Object>> map = new HashMap<>();
+	private final Map<Consumer<? extends Event>, Set<Object>> handlers = new HashMap<>();
 
 	/**
 	 * Helper - Retrieves the reverse mapping of the event types bound to the given handler.
 	 */
 	private Set<Object> types(Object handler) {
-		final var types = map.get(handler);
+		final Set<Object> types = handlers.get(handler);
 		if(types == null) throw new IllegalArgumentException("Handler not registered: " + handler);
 		return types;
 	}
@@ -52,7 +56,7 @@ public class ActionBindings implements Consumer<Event> {
 	 * @return Action handlers
 	 */
 	public Stream<Consumer<? extends Event>> handlers() {
-		return map.keySet().stream();
+		return handlers.keySet().stream();
 	}
 
 	/**
@@ -81,8 +85,8 @@ public class ActionBindings implements Consumer<Event> {
 	 * @throws IllegalArgumentException for a duplicate handler
 	 */
 	public void add(Consumer<? extends Event> handler) {
-		if(map.containsKey(handler)) throw new IllegalArgumentException("Duplicate handler: " + handler);
-		map.put(handler, new HashSet<>());
+		if(handlers.containsKey(handler)) throw new IllegalArgumentException("Duplicate handler: " + handler);
+		handlers.put(handler, new HashSet<>());
 	}
 
 	/**
@@ -94,11 +98,14 @@ public class ActionBindings implements Consumer<Event> {
 	 */
 	private <T extends Event> void bindLocal(Object type, Consumer<? extends T> handler) {
 		// Validate
+		Check.notNull(type);
+		Check.notNull(handler);
 		if(handler == this) throw new IllegalArgumentException("Cannot bind to self!");
-		if(map.containsKey(handler)) throw new IllegalArgumentException("Handler is already bound: " + handler);
+		if(bindings.containsKey(type)) throw new IllegalArgumentException("Event type is already bound: " + type);
+//		if(handlers.containsKey(handler)) throw new IllegalArgumentException("Handler is already bound: " + handler);
 
 		// Lookup or create reverse mapping
-		final Set<Object> types = map.computeIfAbsent(handler, ignored -> new HashSet<>());
+		final Set<Object> types = handlers.computeIfAbsent(handler, ignored -> new HashSet<>());
 
 		// Add binding
 		@SuppressWarnings("unchecked")
@@ -177,11 +184,11 @@ public class ActionBindings implements Consumer<Event> {
 
 	/**
 	 * Clears <b>all</b> bindings.
-	 * Note that the registered handler are unchanged.
+	 * Note that set of registered action handlers is unchanged.
 	 */
 	public void clear() {
 		bindings.clear();
-		map.values().forEach(Set::clear);
+		handlers.values().forEach(Set::clear);
 	}
 
 	@Override
@@ -196,7 +203,7 @@ public class ActionBindings implements Consumer<Event> {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("handlers", map.size())
+				.append("handlers", handlers.size())
 				.append("bindings", bindings.size())
 				.build();
 	}

@@ -229,7 +229,7 @@ public class MouseDevice extends DesktopDevice {
     }
 
     public Axis wheel() {
-        return wheel.axis;
+        return wheel;
     }
 }
 ```
@@ -543,7 +543,7 @@ The action bindings is essentially a bi-directional mapping of events to/from ha
 ```java
 public class ActionBindings implements Consumer<Event> {
     private final Map<Object, Consumer<Event>> bindings = new HashMap<>();
-    private final Map<Consumer<? extends Event>, Set<Object>> map = new HashMap<>();
+    private final Map<Consumer<? extends Event>, Set<Object>> handlers = new HashMap<>();
 }
 ```
 
@@ -573,7 +573,7 @@ And to retrieve the reverse mapping of event types for a given handler:
 
 ```java
 public Stream<Object> bindings(Consumer<? extends Event> handler) {
-    return map.get(handler).stream();
+    return handlers.get(handler).stream();
 }
 ```
 
@@ -585,12 +585,8 @@ The following generic method binds an arbitrary event type to/from an event hand
 
 ```java
 private <T extends Event> void bindLocal(Object type, Consumer<? extends T> handler) {
-    // Validate
-    if(handler == this) throw new IllegalArgumentException(...);
-    if(map.containsKey(handler)) throw new IllegalArgumentException(...);
-
     // Lookup or create reverse mapping
-    Set<Object> types = map.computeIfAbsent(handler, ignored -> new HashSet<>());
+    Set<Object> types = handlers.computeIfAbsent(handler, ignored -> new HashSet<>());
 
     // Add binding
     @SuppressWarnings("unchecked")
