@@ -36,6 +36,7 @@ public class JoystickManagerTest {
 		};
 		when(lib.glfwGetJoystickAxes(1, count)).thenReturn(new Pointer(0));
 		when(lib.glfwGetJoystickButtons(1, count)).thenReturn(new Pointer(0));
+		when(lib.glfwGetJoystickHats(1, count)).thenReturn(new Pointer(0));
 
 		// Create a joystick
 		dev = new JoystickDevice(1, "name", lib);

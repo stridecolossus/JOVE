@@ -26,10 +26,10 @@ public class DesktopButtonTest {
 
 	@Test
 	void resolve() {
-		final DesktopButton pressed = button.resolve(Action.PRESS);
+		final DesktopButton pressed = button.resolve(1);
 		assertNotNull(pressed);
 		assertEquals(Action.PRESS, pressed.action());
-		assertEquals(button, button.resolve(Action.RELEASE));
+		assertEquals(button, button.resolve(0));
 	}
 
 	@Nested

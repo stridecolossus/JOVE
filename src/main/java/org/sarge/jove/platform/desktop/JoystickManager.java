@@ -9,6 +9,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
 
 /**
  * The <i>joystick manager</i> manages the joystick devices attached to the system.
+ * @author Sarge
  */
 public class JoystickManager {
 	/**

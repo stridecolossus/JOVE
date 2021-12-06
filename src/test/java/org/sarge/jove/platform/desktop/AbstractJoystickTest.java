@@ -31,7 +31,7 @@ abstract class AbstractJoystickTest {
 			}
 		};
 
-		// Init axis values array
+		// Init axis values
 		final Answer<Pointer> axes = inv -> {
 			final IntByReference count = inv.getArgument(1);
 			final Pointer ptr = new Memory(Float.BYTES);
@@ -41,7 +41,7 @@ abstract class AbstractJoystickTest {
 		};
 		when(lib.glfwGetJoystickAxes(1, ref)).then(axes);
 
-		// Init buttons array
+		// Init buttons
 		final Answer<Pointer> buttons = inv -> {
 			final IntByReference count = inv.getArgument(1);
 			final Pointer ptr = new Memory(1);
@@ -50,5 +50,15 @@ abstract class AbstractJoystickTest {
 			return ptr;
 		};
 		when(lib.glfwGetJoystickButtons(1, ref)).then(buttons);
+
+		// Init hats
+		final Answer<Pointer> hats = inv -> {
+			final IntByReference count = inv.getArgument(1);
+			final Pointer ptr = new Memory(1);
+			ptr.setByte(0, (byte) (pressed ? (1 | 2) : 0));
+			count.setValue(1);
+			return ptr;
+		};
+		when(lib.glfwGetJoystickHats(1, ref)).then(hats);
 	}
 }

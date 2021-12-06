@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
 import org.sarge.jove.control.Button;
-import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
@@ -50,29 +49,6 @@ interface DesktopLibraryJoystick {
 	 * @return Button states
 	 */
 	Pointer glfwGetJoystickButtons(int id, IntByReference count);
-
-	/**
-	 * Hat states.
-	 * Note that hat diagonals are represented as a bit-mask, e.g. 3 for up-right.
-	 */
-	enum Hat implements IntegerEnumeration {
-		CENTERED(0),
-		UP(1),
-		RIGHT(2),
-		DOWN(4),
-		LEFT(8);
-
-		private final int value;
-
-		private Hat(int value) {
-			this.value = value;
-		}
-
-		@Override
-		public int value() {
-			return value;
-		}
-	}
 
 	/**
 	 * Retrieves the hat states of a joystick.

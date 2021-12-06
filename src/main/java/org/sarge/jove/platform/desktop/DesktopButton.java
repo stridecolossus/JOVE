@@ -68,7 +68,7 @@ class DesktopButton extends AbstractButton {
 	 * @param action Action
 	 * @return Resolved button
 	 */
-	DesktopButton resolve(Action action) {
-		return new DesktopButton(id, action);
+	protected DesktopButton resolve(int action) {
+		return new DesktopButton(id, Action.map(action));
 	}
 }

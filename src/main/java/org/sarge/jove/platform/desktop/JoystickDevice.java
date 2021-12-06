@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis;
-import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Event.Device;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.lib.util.Check;
@@ -75,16 +74,9 @@ public class JoystickDevice implements Device {
 	}
 
 	/**
-	 * @return Joystick buttons and hats
+	 * @return Event source for the buttons and hats of this device
 	 */
-	public List<Button> buttons() {
-		return buttons.buttons();
-	}
-
-	/**
-	 * @return Buttons event source
-	 */
-	public Source<Button> buttonSource() {
+	public JoystickButtonSource buttons() {
 		return buttons;
 	}
 
