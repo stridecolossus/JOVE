@@ -36,7 +36,12 @@ public enum Primitive {
 	/**
 	 * Strip of lines.
 	 */
-	LINE_STRIP(2, VkPrimitiveTopology.LINE_STRIP);
+	LINE_STRIP(2, VkPrimitiveTopology.LINE_STRIP),
+
+	/**
+	 * Tesselation patch list.
+	 */
+	PATCH(1, VkPrimitiveTopology.PATCH_LIST);
 
 	private final int size;
 	private final VkPrimitiveTopology topology;

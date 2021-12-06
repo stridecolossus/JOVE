@@ -26,7 +26,7 @@ import org.sarge.jove.model.Model.Header;
 public class ModelBuilder {
 	protected final List<Vertex> vertices = new ArrayList<>();
 	protected final List<Layout> layouts;
-	private Primitive primitive = Primitive.TRIANGLE_STRIP;
+	protected Primitive primitive = Primitive.TRIANGLE_STRIP;
 
 	/**
 	 * Constructor.

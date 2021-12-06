@@ -36,7 +36,7 @@ public class Pipeline extends AbstractVulkanObject {
 }
 ```
 
-The _pipeline layout_ specifies the _resources_ (texture samplers, uniform buffers and _push constants_) used by the pipeline.  None of these are needed for the triangle demo but we are still required to specify a layout for the pipeline.
+The _pipeline layout_ specifies the _resources_ (texture samplers, uniform buffers and push constants) used by the pipeline.  None of these are needed for the triangle demo but we are still required to specify a layout for the pipeline.
 
 We create a bare-bones implementation for this stage of development:
 

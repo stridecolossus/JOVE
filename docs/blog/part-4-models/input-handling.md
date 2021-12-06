@@ -49,7 +49,7 @@ window focus            | boolean                       | window
 controller / joystick   | x-y                           | controller
 controller button       | button, press/release         | controller
 controller axis         | axis, value                   | controller
-controller hat          | hat, press/release            | controller
+controller hat          | hat, direction                | controller
 
 Notes:
 

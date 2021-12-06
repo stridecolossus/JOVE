@@ -348,9 +348,9 @@ We also introduce a skeleton implementation and refactor the native image loader
 
 ### Loose Ends
 
-A KTX image is a binary format with _little endian_ byte ordering whereas Java is big-endian by default.  We _could_ load the entire file into an NIO byte buffer with little endian ordering which has a similar API to the data stream but we would prefer to stick with I/O streams for consistency with the existing loaders.  Additionally we anticipate that we will need to support other little endian file formats in the future.
+A KTX image is a binary format with _little endian_ byte ordering whereas Java is big-endian by default.  We _could_ load the entire file into an NIO byte buffer with little endian ordering, which has a similar API to the data stream, but we would prefer to stick with I/O streams for consistency with the existing loaders.  Additionally we anticipate that we will need to support other little endian file formats in the future.
 
-The matter is further complicated when one considers the weird implementation of the `DataInputStream` class where __all__ the methods are declared `final` (though not the class itself oddly enough) so it is essentially closed for extension.  This class implements `DataInput` but there is no way to provide a custom implementation of this interface to the stream, so the abstraction is completely pointless.  Therefore we are forced to completely re-implement the whole data stream class rather than building on what is already available - great design!
+The matter is further complicated when one considers the weird implementation of the `DataInputStream` class where __all__ methods are declared `final` (though not the class itself oddly enough) so it is essentially closed for extension.  This class implements `DataInput` but there is no way to provide a custom implementation of this interface to the stream, so the abstraction is completely pointless.  Therefore we are forced to completely re-implement the whole data stream class rather than building on what is already available - great design!
 
 We start with a custom data stream wrapper:
 
@@ -549,7 +549,7 @@ char[] components = new char[num];
 for(int n = 0; n < num; ++n) {
     // Load sample information
     in.readShort();                             // Bit offset
-    byte len = in.readByte();                   // Bit length
+    byte len = in.readByte();                   // Bit length (7)
     components[n] = channel(in.readByte());     // Channel
 
     // Skip sample position and lower/upper bounds
@@ -577,7 +577,7 @@ The resultant array of _components_ is used to populate the relevant field in th
 
 ### Key-Values
 
-A KTX image can also contain an arbitrary number of _key-values_ that provide supplementary information about the image.
+A KTX image can also contain an arbitrary number of _key-value_ pairs that provide supplementary information about the image.
 
 Again we could simple skip this section to position the stream at the start of the image data, but parsing the key-values verifies our understanding of the file format.
 
@@ -917,7 +917,7 @@ static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
 
 In the wrapper we will use several JNA methods to access the structure fields, the constructor invokes the `write` method for this reason.
 
-The `getFieldList` method reflects the fields of the structure which we use use to enumerate the names of the supported features:
+The JNA `getFieldList` method reflects the fields of the structure which we use use to enumerate the names of the supported features:
 
 ```java
 public Collection<String> features() {

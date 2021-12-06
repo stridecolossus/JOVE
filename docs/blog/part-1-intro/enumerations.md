@@ -6,7 +6,7 @@ title: Enumerations
 
 When we first started using the code generated enumerations we realised there were a couple of flaws in our thinking:
 
-1. Many of the Vulkan enumerations are not a set of contiguous values and/or are actually bit-fields.  What we really needed was some mechanism to map _from_ a native value to the relevant enumeration constant that worked for _all_ generated enumerations.
+1. Many of the Vulkan enumerations are not a set of contiguous values and/or are actually bit-fields.  What we really needed was some mechanism to map _from_ a native value to the relevant enumeration constant that worked for __all__ generated enumerations.
 
 2. For bit-field enumerations in particular we also require some means of building a bit-field _mask_ from a collection of constants and performing the reverse operation.
 
@@ -16,7 +16,7 @@ For a library with a handful of enumerations this would be a minor issue that co
 
 Although it is not common practice a Java enumeration __can__ implement an interface.  Indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java.  We leverage this technique to define a sort of base class for the code-generated enumerations such that we can implement helper methods to handle the mapping issues.
 
-The [interface](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/IntegerEnumeration.java) itself is trivial:
+The [interface](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/util/IntegerEnumeration.java) itself is trivial:
 
 ```java
 public interface IntegerEnumeration {
@@ -27,7 +27,7 @@ public interface IntegerEnumeration {
 }
 ```
 
-We can now add a static helper to build a bit-field mask from an enumeration:
+The following helper can now be implemented to build a bit-field mask from an arbitrary integer enumeration:
 
 ```java
 static <E extends IntegerEnumeration> int mask(Collection<E> values) {
@@ -40,7 +40,7 @@ static <E extends IntegerEnumeration> int mask(Collection<E> values) {
 
 ## Reverse Mapping
 
-For the other requirements we implement the _reverse mapping_ for a given enumeration:
+For the other requirements we implement the _reverse mapping_ of the enumeration:
 
 ```java
 final class ReverseMapping<E extends IntegerEnumeration> {
@@ -53,7 +53,7 @@ final class ReverseMapping<E extends IntegerEnumeration> {
 }
 ```
 
-Note that the reverse mapping silently ignores constants with duplicate native values (should not be a problem).
+Note that the reverse mapping silently ignores constants with duplicate native values (which should not be a problem).
 
 The enumeration constant for a given native value can now be looked up from the reverse mapping:
 

@@ -69,4 +69,14 @@ public class PrimitiveTest {
 		assertEquals(false, Primitive.LINE_STRIP.isValidVertexCount(1));
 		assertEquals(true, Primitive.LINE_STRIP.isValidVertexCount(2));
 	}
+
+	@Test
+	public void patch() {
+		assertEquals(1, Primitive.PATCH.size());
+		assertEquals(false, Primitive.PATCH.isStrip());
+		assertEquals(false, Primitive.PATCH.isNormalSupported());
+		assertEquals(true, Primitive.PATCH.isValidVertexCount(0));
+		assertEquals(true, Primitive.PATCH.isValidVertexCount(1));
+		assertEquals(true, Primitive.PATCH.isValidVertexCount(2));
+	}
 }

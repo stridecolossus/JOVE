@@ -24,7 +24,7 @@ For this we will require the following components:
 
 * The relevant code generated structures used to specify the requirements of the instance.
 
-As already mentioned in the [code generation](/JOVE/blog/part-1-generation/code-generation) chapter we will employ the GLFW library which provides services for managing windows, input devices, etc. that we will use in future chapters (the tutorial also uses GLFW).  However another compelling reason to use GLFW is that it also offers functionality to create a Vulkan rendering surface suitable for the platform on which the application is executed.
+As already mentioned in the [code generation](/JOVE/blog/part-1-intro/generation) chapter we will employ the GLFW library which provides services for managing windows, input devices, etc. that we will use in future chapters (the tutorial also uses GLFW).  However another compelling reason to use GLFW is that it also offers functionality to create a Vulkan rendering surface suitable for the platform on which the application is executed.
 
 We _could_ use Vulkan extensions to implement the surface from the ground up but it makes sense to take advantage of the platform-independant implementation.  The disadvantage of this approach is that the logic becomes a little convoluted as the surface and Vulkan components are slightly inter-dependant, but this seems an acceptable trade-off.
 
@@ -585,7 +585,7 @@ public Handler build() {
 }
 ```
 
-Next the the function pointer to create the handler is lazily retrieved and invoked with the appropriate arguments (specified by the documentation):
+Next the the function to create the handler is invoked with the appropriate arguments (specified by the documentation):
 
 ```java
 Pointer parent = instance.handle();
@@ -650,7 +650,11 @@ Note that this code copies the list of registered handlers to avoid concurrent m
 The message domain object is a simple inner record class:
 
 ```java
-public record Message(VkDebugUtilsMessageSeverity severity, Collection<VkDebugUtilsMessageType> types, VkDebugUtilsMessengerCallbackData data)
+public record Message(
+    VkDebugUtilsMessageSeverity severity,
+    Collection<VkDebugUtilsMessageType> types,
+    VkDebugUtilsMessengerCallbackData data
+)
 ```
 
 The callback invoked by Vulkan to report messages is a JNA callback:
@@ -824,7 +828,7 @@ We could change the `verify` statement to use Mockito matchers:
 verify(lib).vkCreateInstance(..., isA(PointerByReference.class));
 ```
 
-But this only allows us to check that the argument was not `null` rather than verifying the actual value.  Additionally __every__ argument would now have to be a Mockito argument matcher which just adds more development complexity and obfuscates the test.
+But this only allows us to check that the argument was not `null` rather than verifying the actual value.  Additionally __every__ argument would then have to be a Mockito argument matcher which just adds more development complexity and obfuscates the test.
 
 We could alternatively use a Mockito _answer_ for the handle to initialise the argument, but that would require tedious and repetitive code for _every_ unit-test that exercises API methods with by-reference return values (which is pretty much all of them).
 

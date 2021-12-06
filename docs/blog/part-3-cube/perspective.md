@@ -341,14 +341,14 @@ Next we apply a _view transform_ to the demo representing the viewers position a
 First we add the following methods to the matrix builder to populate a row or column of the matrix:
 
 ```java
-public Builder row(int row, Tuple vec) {
+public Builder row(int row, Vector vec) {
     set(row, 0, vec.x);
     set(row, 1, vec.y);
     set(row, 2, vec.z);
     return this;
 }
 
-public Builder column(int col, Tuple vec) {
+public Builder column(int col, Vector vec) {
     set(0, col, vec.x);
     set(1, col, vec.y);
     set(2, col, vec.z);
@@ -559,42 +559,26 @@ public Bufferable vertices() {
 }
 ```
 
-### Model Builder
+### Cube Builder
 
 To construct a model we provide the ubiquitous builder which is essentially a wrapper for a mutable list of vertices:
 
 ```java
 public class ModelBuilder {
     private final List<Vertex> vertices = new ArrayList<>();
-    private final List<Layout> layouts = new ArrayList<>();
+    private final List<Layout> layouts;
     private Primitive primitive = Primitive.TRIANGLE_STRIP;
 
     ...
 
     public DefaultModel build() {
-        Header header = new Header(layout, primitive, vertices.size());
+        Header header = new Header(layouts, primitive, vertices.size());
         return new DefaultModel(header, vertices);
     }
 }
 ```
 
-Note that the layout is mutable and is initially empty.
-
-Vertices added to the model can optionally be validated against the layout (which is also mutable):
-
-```java
-public ModelBuilder add(Vertex vertex) {
-    if(validate) {
-        validate(vertex);
-    }
-    vertices.add(vertex);
-    return this;
-}
-```
-
-### Cube Builder
-
-To construct a cube we extend the model builder:
+To construct the cube we extend the model builder:
 
 ```java
 public class CubeBuilder extends ModelBuilder {

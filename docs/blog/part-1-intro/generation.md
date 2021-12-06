@@ -20,7 +20,9 @@ As we worked through the [tutorial](https://vulkan-tutorial.com/) we found we we
 
 * The use of static imports was also slightly annoying - to find a given class or method one just has to know its parent package, or add them to the content assist in the IDE, or switch off import organisation altogether and cut-and-paste _every_ import into _every_ source file.
 
-In summary we could have cut-and-pasted example code to make _something_ work, but we wouldn't know _why_ it worked, so we would have learnt nothing.  This is not intended to be a negative review of LWJGL, it was used with great results in the previous OpenGL implementation, but the experience in the new project was frankly demoralising.  We had no idea how we were supposed to use the bindings, we had barely scratched the surface of the Vulkan API, and eventually we just gave up.
+In summary we could have blindly copied some of the example code, but we wouldn't know _why_ it worked, so we would have learnt nothing.
+
+This is not intended to be a negative review of LWJGL, it was used with great results in the previous OpenGL implementation.  Unfortunately our experience in the new project was frankly irritating, we had no idea how we were supposed to use the bindings, had barely scratched the surface of the Vulkan API, and eventually we just gave up.
 
 Sometime later we were encouraged by a friend to make a second attempt - our first design decision was that unless LWJGL had materially changed we would look for an alternative.
 
@@ -94,7 +96,7 @@ We first specified some requirements and constraints:
 
 3. The generator will be invoked manually rather than being a part of an automated build process (which makes things considerably simpler).
 
-4. For future versions of the Vulkan API we assume Khronos will take the same approach as OpenGL, whereby new iterations of the API are extensions and additions rather than replacements for existing components, i.e. we can code generate each release separately.
+4. For future versions of the Vulkan API we assume Khronos will take the same approach as OpenGL, whereby new iterations of the API are extensions and additions rather than replacements for existing components, i.e. each release can be code generated separately.
 
 5. Any tools and libraries should follow the general goal of being well-documented and supported.
 
@@ -168,7 +170,7 @@ Note that we are required to set a __public__ boolean to select the AST nodes to
 
 ### Parser
 
-We will first tackle enumerations as these are simplest component we will be processing.  From the AST node we parse the enumeration name and constants:
+We will first tackle enumerations as these are the simplest of the component we will be processing.  From the AST node we extract the enumeration name and constants:
 
 ```java
 private void parse(IASTEnumerationSpecifier enumeration) {
@@ -227,7 +229,7 @@ public class Generator {
 }
 ```
 
-The Vulkan enumeration constant names are often extremely long since (with a couple of exceptions) _every_ value is prefixed with the enumeration name.  We therefore build the name _prefix_ based on the enumeration name so that the values can be truncated:
+The Vulkan enumeration constant names are often extremely long since (with a couple of exceptions) _every_ value is prefixed with the enumeration name.  We therefore build a _prefix_ so that the values can be truncated:
 
 ```java
 public void enumeration(String name, Map<String, Long> values) {
@@ -237,16 +239,7 @@ public void enumeration(String name, Map<String, Long> values) {
 }
 ```
 
-For example the name of the following constant becomes `FLOAT_TRANSPARENT_BLACK`:
-
-```java
-typedef enum VkBorderColor {
-    VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK = ...
-    ...
-}
-```
-
-The generator then transforms the key names of the enumeration values:
+The generator then replaces the key names of the enumeration values as follows:
 
 ```java
 LinkedHashMap<String, Object> transformed = new LinkedHashMap<>();
@@ -269,6 +262,8 @@ for(Entry<String, Long> entry : values.entrySet()) {
 ```
 
 Notes:
+
+* For example `VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT` becomes the much more concise `RELEASE_RESOURCES`.
 
 * The second transform step strips names that begin the `VK` prefix, e.g. for `VkResult` which does not follow the pattern of the other enumerations.
 
@@ -307,7 +302,7 @@ private static final String[] DIGITS = {"ONE", "TWO", "THREE"};
 
 ### Enumeration Template
 
-To generate the Java enumerations we use [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for what we were doing.  In particular it provides support for collections which we will employ for enumeration constants and structure fields.
+To generate the Java enumerations we use [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for what we were doing, in particular providing support for collections.
 
 The _template processor_ is a wrapper for the Velocity engine:
 
@@ -482,7 +477,7 @@ Where:
 * _count_ is the number of pointers: either none, one (for a pointer), or two (pointer-to-pointer).
 * and _array_ is the length for array types (or zero).
 
-Structures are parsed in the node visitor as follows:
+Structures are parsed by from the AST as follows:
 
 ```java
 private void parse(IASTCompositeTypeSpecifier structure) {
@@ -499,7 +494,7 @@ private void parse(IASTCompositeTypeSpecifier structure) {
 }
 ```
 
-Next each field is parsed and wrapped by the transient field record:
+Next the properties of each field are extracted and wrapped by the transient record:
 
 ```java
 private static StructureField field(IASTSimpleDeclaration field) {
@@ -593,7 +588,7 @@ if(top) {
 }
 ```
 
-This saves us the effort of having to manually populate this field when we use the structure - a nice bonus.
+For example the type of the `VkApplicationInfo` structure is set to `APPLICATION_INFO`.  This saves us the effort of having to manually populate this field when we use the structure - a nice bonus.
 
 The template for a Vulkan structure is slightly more complicated than the enumerations:
 
@@ -677,9 +672,7 @@ Where an arbitrary pointer is implemented by the JNA type:
 public static final String POINTER = "com.sun.jna.Pointer";
 ```
 
-The `default` case also handles pointer-to-structure types (such as the `pApplicationInfo` field in the `VkInstanceCreateInfo` structure) or pointer-to-array types (e.g. `pQueueCreateInfos` in `VkDeviceCreateInfo`) which correspond to the _first_ element of a Java array.
-
-There are special case mappings for boolean values (the reason for this is explained in a later chapter):
+There are special case mappings for boolean values (the reason for `VulkanBoolean` is detailed in a later chapter):
 
 ```java
 if(type.equals("VkBool32")) {
@@ -754,7 +747,7 @@ Notes:
 
 * The constructor also determines the import _path_ (i.e. the package) for non-primitive types.
 
-* The structure field is a POJO with old-school getters (required to support the Velocity template engine).
+* The structure field is a POJO with old-school getters which is required by the Velocity template engine.
 
 ### Conclusion
 
@@ -775,7 +768,7 @@ In the end we decided not to code generate the API methods for a variety of reas
 
 1. Although we could re-use the type mapping for structures we anticipate that we _will_ want to manually fiddle with the signatures of the API methods, so we might as well craft them by hand.
 
-2. The number of API methods is relatively small (in comparison to the enumerations and structures).
+2. The number of API methods is relatively small (in comparison to the number of enumerations and structures).
 
 3. We would also like to group related API methods, both for ease of finding a method and to break up the overall library.  Obviously the native header has no notion of packaging so we would have to do this grouping manually anyway.
 
@@ -783,6 +776,6 @@ In the end we decided not to code generate the API methods for a variety of reas
 
 The code generator ran in a few milliseconds so we could iteratively modify the code until we achieved an acceptable level of results.  As it turned out there were only two structures that did not automatically compile, and since these were for an extension we had never heard of we simply deleted them.
 
-At the time of writing (for Vulkan version 1.1.101.0) the generator produced 390 structures, 142 enumerations, and the API consisted of 91 methods (excluding extensions) so the decision to implement methods manually was not particularly onerous.
+At the time of writing (for Vulkan version 1.1.101.0) the generator produced 390 structures and 142 enumerations.  The API consisted of 91 methods (excluding extensions) so the decision to implement methods manually was not particularly onerous.
 
 In retrospect we spent far too much time messing around with CDT, and it certainly does not adhere to our goal of using well documented third-party tools.  We probably ought to have tried to implement a custom parser (our requirements are relatively simple) and this may be something to consider for future versions of the Vulkan API.

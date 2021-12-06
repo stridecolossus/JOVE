@@ -311,7 +311,7 @@ Pointer surface = window.surface(instance.handle());
 As previously mentioned the process of selecting the physical device is slightly messy due to the inter-dependencies between the Vulkan instance, the rendering surface and the presentation queue.
 This is exacerbated by the mechanism Vulkan uses to select the work queues - this essentially requires the same logic to be applied twice: once to select the physical device with the required queue capabilities, and again to retrieve each queue from the resultant logical device.
 
-After trying several approaches we settled on the design described below which determines each queue family as a _side-effect_ of selecting the physical device in one operation (the same approach as that used in the tutorial).  Generally we would avoid such a design that could lead to unpleasant surprises, but at least the nastier aspects are self-contained and the resultant API is relatively simple from the perspective of the user.
+After trying several approaches we settled on the design described below which determines each queue family as a _side-effect_ of selecting the physical device in one operation (the same approach as that used in the tutorial).  Generally we would avoid side effects which can lead to unpleasant surprises, but at least the nastier aspects are self-contained and the resultant API is relatively simple from the perspective of the user.
 
 ### Selector
 
@@ -774,7 +774,7 @@ Notes:
 
 * The _identity_ generates an instance of the structure used to allocate the resultant array.
 
-* Note that in this case the API method accepts a pointer-to-structure which maps to the __first__ element of the allocated array.
+* In this case the API method accepts a pointer to a structure array which maps to the __first__ element of the allocated Java array.
 
 As an example, the code to retrieve the queue families for a physical device now becomes:
 
@@ -790,13 +790,13 @@ Vulkan makes heavy use of structures to configure a variety of objects.
 
 However an array of JNA structures poses a number of problems:
 
-- Unlike a standard POJO an array of JNA structures __must__ be allocated using the JNA `toArray` helper method to create a contiguous memory block.
+* Unlike a standard POJO an array of JNA structures __must__ be allocated using the JNA `toArray` helper method to create a contiguous memory block.
 
-- Obviously we must know the size of the data to allocate the array which imposes constraints on how we process data, in particular whether we can employ Java streams.
+* Obviously we must therefore know the size of the array _before_ it can be populated, which imposes constraints on how the data is handled, in particular whether we can employ Java streams.
 
-- Many API methods expect a pointer-to-array, i.e. the __first__ element of the array.
+* Many API methods expect a pointer-to-array, i.e. the __first__ element of the array.
 
-- Additionally there are edge cases where the data is empty or where `null` is a valid argument.
+* Additionally there are edge cases where `null` is a valid argument.
 
 None of these are particularly difficult to overcome but the number of situations where this occurs makes the code tedious to develop, error-prone, and less testable.
 
