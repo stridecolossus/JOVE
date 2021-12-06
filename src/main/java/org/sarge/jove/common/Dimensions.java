@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import org.sarge.lib.util.Check;
 
 /**
- * Viewport or window dimensions.
+ * General 2D dimensions.
  * @author Sarge
  */
 public record Dimensions(int width, int height) {

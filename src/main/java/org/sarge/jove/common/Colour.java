@@ -32,7 +32,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
 
 	/**
-	 * Creates a colour from the given 4-element floating-point array representing an RGBA value <b>or</b> a 3-element RGB array where the alpha value is initialised to <b>one</b>.
+	 * Creates a colour from the given floating-point array representing an RGBA value <b>or</b> a 3-element RGB array with the alpha value initialised to <b>one</b>.
 	 * @param array Colour array
 	 * @return New colour
 	 * @throws IllegalArgumentException if the array is not an RGB or RGBA array or any component is not a valid percentile value

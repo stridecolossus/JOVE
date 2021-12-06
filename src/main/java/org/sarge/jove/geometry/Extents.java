@@ -72,7 +72,7 @@ public class Extents {
 	}
 
 	/**
-	 * Determines the nearest vertex of this extents to the given point.
+	 * Determines the vertex of this extents that is nearest to the given point.
 	 * @param pt Point
 	 * @return Nearest point
 	 */
@@ -88,7 +88,7 @@ public class Extents {
 	}
 
 	/**
-	 * Calculates the <i>positive</i> vertex of this extents (<b>farthest</b> vertex in the direction of the normal).
+	 * Calculates the <i>positive</i> vertex of this extents which is <b>furthest</b> vertex in the direction of the normal.
 	 * @param normal Normal
 	 * @return Positive vertex
 	 */
@@ -103,7 +103,7 @@ public class Extents {
 	}
 
 	/**
-	 * Calculates the <i>negative</i> vertex of this extents (<b>nearest</b> vertex in the direction of the normal).
+	 * Calculates the <i>negative</i> vertex of this extents which is <b>nearest</b> vertex in the direction of the normal.
 	 * @param normal Normal
 	 * @return Positive vertex
 	 */

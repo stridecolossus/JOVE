@@ -147,8 +147,10 @@ public final class Vector extends Tuple {
 	 * <pre>A x B = |A| |B| sin(angle) N</pre>
 	 * <p>
 	 * where:
-	 * <br><i>angle</i> is the angle between the vectors in the plane containing A and B
-	 * <br><i>N</i> is a unit-vector perpendicular to the plane (see below).
+	 * <ul>
+	 * <li><i>angle</i> is the angle between the vectors in the plane containing A and B</li>
+	 * <li><i>N</i> is a unit-vector perpendicular to the plane (see below)</li>
+	 * </ul>
 	 * <p>
 	 * Notes:
 	 * <ul>

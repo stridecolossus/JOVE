@@ -17,14 +17,6 @@ import org.sarge.lib.util.Check;
  * <li>Matrix data written by {@link #buffer(ByteBuffer)} is <i>column major</i> (the Vulkan default)</li>
  * </ul>
  * <p>
- * In general matrices are constructed using the builder:
- * <pre>
- * Matrix matrix = new Matrix.Builder()
- * 	.identity()
- * 	.set(row, col, value)
- * 	.build();
- * </pre>
- * <p>
  * An order 4 matrix with the following structure is used for view and perspective transformation:
  * <p>
  * <table border=0>
@@ -78,7 +70,7 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	/**
-	 * Creates a 4x4 scaling matrix and populating the diagonal of the matrix.
+	 * Creates a 4x4 scaling matrix by populating the diagonal of the matrix.
 	 * @return Scaling matrix
 	 */
 	public static Matrix scale(float x, float y, float z) {
@@ -294,7 +286,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @param vec 		Vector
 		 * @throws ArrayIndexOutOfBoundsException if the row is out-of-bounds
 		 */
-		public Builder row(int row, Tuple vec) {
+		public Builder row(int row, Vector vec) {
 			set(row, 0, vec.x);
 			set(row, 1, vec.y);
 			set(row, 2, vec.z);
@@ -307,7 +299,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @param vec		Vector
 		 * @throws ArrayIndexOutOfBoundsException if the column is out-of-bounds
 		 */
-		public Builder column(int col, Tuple vec) {
+		public Builder column(int col, Vector vec) {
 			set(0, col, vec.x);
 			set(1, col, vec.y);
 			set(2, col, vec.z);

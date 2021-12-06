@@ -21,7 +21,7 @@ import org.sarge.lib.util.Check;
  * <pre>
  *     new Layout(3, Float.class, Float.BYTES, true);
  *     new Layout(3, Float.class, true);
- *     Layout.of(3);
+ *     Layout.floats(3);
  * </pre>
  * <p>
  * @author Sarge

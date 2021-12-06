@@ -16,7 +16,7 @@ import org.sarge.lib.util.Check;
 /**
  * An <i>action bindings</i> is a mutable set of mappings that bind input events to <i>action</i> handlers.
  * <p>
- * This class provides convenience _bind_ variants to bind events to common handler methods, e.g. {@link #bind(Axis, org.sarge.jove.control.Axis.Handler)} to bind axis events.
+ * This class provides convenience <i>bind</i> variants to bind events to common handler methods, e.g. {@link #bind(Axis, org.sarge.jove.control.Axis.Handler)} to bind axis events.
  * <p>
  * Example:
  * <pre>
@@ -127,8 +127,8 @@ public class ActionBindings implements Consumer<Event> {
 	}
 
 	/**
-	 * Convenience helper to bind a button to a handler method.
-	 * @param type			Button
+	 * Binds a button to an action handler.
+	 * @param button		Button
 	 * @param handler		Event handler
 	 */
 	public void bind(Button button, Runnable handler) {
@@ -137,7 +137,7 @@ public class ActionBindings implements Consumer<Event> {
 	}
 
 	/**
-	 * Convenience helper to bind a position event.
+	 * Binds a position event to an action handler.
 	 * @param src			Position event source
 	 * @param handler		Event handler
 	 */
@@ -147,9 +147,9 @@ public class ActionBindings implements Consumer<Event> {
 	}
 
 	/**
-	 * Convenience helper to bind an axis event.
+	 * Binds an axis to an action handler.
 	 * @param axis			Axis
-	 * @param adapter		Event handler
+	 * @param handler		Event handler
 	 */
 	public void bind(Axis axis, Axis.Handler handler) {
 		final Consumer<AxisEvent> adapter = e -> handler.handle(e.value());
