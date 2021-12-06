@@ -11,10 +11,8 @@ import java.util.Set;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Event.AbstractSource;
 import org.sarge.jove.control.Event.Device;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.platform.desktop.DesktopButton.Action;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -25,68 +23,11 @@ import com.sun.jna.ptr.IntByReference;
  * @author Sarge
  */
 public class JoystickDevice implements Device {
-	/**
-	 * Event source for joystick buttons.
-	 */
-	private class ButtonSource extends AbstractSource<Button> {
-		private final DesktopButton[] array;
-
-		public ButtonSource() {
-			// Instantiate buttons
-			final byte[] bytes = getButtonArray();
-			array = new DesktopButton[bytes.length];
-
-			// Init buttons
-			for(int n = 0; n < array.length; ++n) {
-				final String name = Button.name("Button", n);
-				array[n] = new DesktopButton(name);
-			}
-		}
-
-		/**
-		 * Polls for joystick button events.
-		 */
-		private void poll() {
-			// Ignore if no action handler
-			if(handler == null) {
-				return;
-			}
-
-			// Retrieve button values
-			final byte[] values = getButtonArray();
-
-			// Generate events for modified buttons
-			for(int n = 0; n < values.length; ++n) {
-				// Skip if not changed
-				final Action action = Action.map(values[n]);
-				if(array[n].action() == action) {
-					continue;
-				}
-
-				// Update button state
-				array[n] = array[n].resolve(action);
-
-				// Generate event
-				handler.accept(array[n]);
-			}
-			// TODO - lots of array[n], move to local class?
-		}
-
-		/**
-		 * Queries the button values for this joystick.
-		 */
-		private byte[] getButtonArray() {
-			final IntByReference count = new IntByReference();
-			final Pointer ptr = lib.glfwGetJoystickButtons(id, count);
-			return ptr.getByteArray(0, count.getValue());
-		}
-	}
-
 	private final int id;
 	private final String name;
 	private final DesktopLibraryJoystick lib;
 	private final JoystickAxis[] axes;
-	private final ButtonSource buttons;
+	private final JoystickButtonSource buttons;
 
 	/**
 	 * Constructor.
@@ -99,7 +40,7 @@ public class JoystickDevice implements Device {
 		this.name = notEmpty(name);
 		this.lib = notNull(lib);
 		this.axes = initAxes();
-		this.buttons = new ButtonSource();
+		this.buttons = new JoystickButtonSource(id, lib);
 	}
 
 	/**
@@ -137,7 +78,7 @@ public class JoystickDevice implements Device {
 	 * @return Joystick buttons and hats
 	 */
 	public List<Button> buttons() {
-		return Arrays.asList(buttons.array);
+		return buttons.buttons();
 	}
 
 	/**
