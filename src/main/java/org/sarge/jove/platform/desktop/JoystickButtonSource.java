@@ -5,14 +5,12 @@ import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.AbstractButton;
+import org.sarge.jove.control.DefaultButton;
 import org.sarge.jove.control.Event.AbstractSource;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.control.Hat;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -25,7 +23,7 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 	/**
 	 * Joystick button implementation.
 	 */
-	private class JoystickButton extends DesktopButton {
+	private class JoystickButton extends DefaultButton {
 		private byte current;
 
 		/**
@@ -34,7 +32,7 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 		 * @param action		Initial action
 		 */
 		protected JoystickButton(int id, byte action) {
-			super(Button.name("Button", id), Action.map(action));
+			super(Button.name("Button", id), Action.map(action), 0);
 			this.current = action;
 		}
 
@@ -49,98 +47,40 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 			}
 
 			// Generate event
-			final Button event = resolve(value);
+			final Button event = resolve(value, 0);
 			handler.accept(event);
 			current = value;
 		}
 	}
 
-	/**
-	 * Hat actions.
-	 * Note that hat diagonals are represented as a bit-mask, e.g. 3 for up-right.
-	 */
-	public enum HatAction implements IntegerEnumeration {
-		CENTERED(0),
-		UP(1),
-		RIGHT(2),
-		DOWN(4),
-		LEFT(8);
-
-		private static final IntegerEnumeration.ReverseMapping<HatAction> MAPPING = IntegerEnumeration.mapping(HatAction.class);
-		private static final TreeSet<HatAction> EMPTY = new TreeSet<>(Set.of(CENTERED));
-
-		private final int value;
-
-		private HatAction(int value) {
-			this.value = value;
-		}
-
-		@Override
-		public int value() {
-			return value;
-		}
-	}
-
-	/**
-	 * Joystick hat.
-	 */
-	public class Hat extends AbstractButton {
-		private final int hat;
-		private byte action;
+	private class JoystickHat extends Hat {
+		private byte current;
 
 		/**
 		 * Constructor.
-		 * @param hat			Hat ID
-		 * @param action		Initial action
+		 * @param id		Hat ID
+		 * @param mask		Initial value
 		 */
-		Hat(int hat, byte action) {
-			this.hat = zeroOrMore(id);
-			this.action = action;
+		public JoystickHat(int id, byte mask) {
+			super(id, mask);
+			this.current = mask;
 		}
 
-		@Override
-		public String name() {
-			if(action == 0) {
-				return Button.name("Hat", hat);
-			}
-			else {
-				return Button.name("Hat", hat, action());
-			}
-		}
-
-		@Override
-		public Object action() {
-			if(action == 0) {
-				return HatAction.EMPTY;
-			}
-			else {
-				return HatAction.MAPPING.enumerate(action);
-			}
-		}
-
-		/**
-		 * Updates the state of this hat and generates events.
-		 * @param action Hat action
-		 */
-		void update(byte action) {
-			// Ignore if not modified
-			if(action == this.action) {
+		void update(byte mask) {
+			if(mask == current) {
 				return;
 			}
 
-			// Update hat
-			this.action = action;
-
-			// Generate event
-			final Button event = new Hat(hat, action);
+			final Hat event = resolve(mask);
 			handler.accept(event);
+			current = mask;
 		}
 	}
 
 	private final int id;
 	private final DesktopLibraryJoystick lib;
 	private final JoystickButton[] buttons;
-	private final Hat[] hats;
+	private final JoystickHat[] hats;
 
 	/**
 	 * Constructor.
@@ -184,12 +124,12 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 	/**
 	 * @return Joystick hats
 	 */
-	private Hat[] initHats() {
+	private JoystickHat[] initHats() {
 		final byte[] bytes = getHatArray();
 		return IntStream
 				.range(0, bytes.length)
-				.mapToObj(n -> new Hat(n, bytes[n]))
-				.toArray(Hat[]::new);
+				.mapToObj(n -> new JoystickHat(n, bytes[n]))
+				.toArray(JoystickHat[]::new);
 	}
 
 	/**

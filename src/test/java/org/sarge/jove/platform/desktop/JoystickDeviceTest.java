@@ -13,10 +13,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.DefaultButton.Action;
 import org.sarge.jove.control.Event;
-import org.sarge.jove.platform.desktop.DesktopButton.Action;
-import org.sarge.jove.platform.desktop.JoystickButtonSource.Hat;
-import org.sarge.jove.platform.desktop.JoystickButtonSource.HatAction;
+import org.sarge.jove.control.Hat;
+import org.sarge.jove.control.Hat.HatAction;
 
 public class JoystickDeviceTest extends AbstractJoystickTest {
 	private JoystickDevice dev;

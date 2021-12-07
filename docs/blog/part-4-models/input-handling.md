@@ -843,7 +843,7 @@ public class OrbitalCameraController extends DefaultCameraController {
 }
 ```
 
-The algorithm to calculate the position of the camera is the same as the default controller except for the final step, there we factor out that step to a local helper which can the be over-ridden:
+The algorithm to calculate the position of the camera is the same as the default controller except for the final step, which is therefore factored out to a local helper which can then be over-ridden:
 
 ```java
 public void update(float x, float y) {
@@ -857,7 +857,7 @@ protected void update(Point pos) {
 }
 ```
 
-In the orbital implementation we override the new method to move the camera to the calculated point on the sphere and then point it at the target:
+In the orbital implementation we move the camera to the calculated point on the sphere and then point it at the target:
 
 ```java
 @Override
