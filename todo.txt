@@ -37,7 +37,6 @@ other features
 - OpenAL audio
 
 current
-- need to filter buttons by action/mods
 - add pipeline cache
 - short/int index buffer, extends indexed model, extends model
 - check out old blog

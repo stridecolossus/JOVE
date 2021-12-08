@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Sphere.PointFactory;
+import org.sarge.jove.geometry.Sphere;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.Interpolator;
 import org.sarge.jove.util.MathsUtil;
@@ -19,8 +19,6 @@ public class DefaultCameraController {
 	private final Dimensions dim;
 	private final Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
 	private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
-	private final PointFactory sphere = PointFactory.DEFAULT.swizzle().rotate();
-
 	// TODO - make interpolator ranges mutable?
 
 	/**
@@ -42,7 +40,7 @@ public class DefaultCameraController {
 	public void update(float x, float y) {
 		final float yaw = horizontal.interpolate(x / dim.width());
 		final float pitch = vertical.interpolate(y / dim.height());
-		final Point pt = sphere.point(yaw, pitch);
+		final Point pt = Sphere.point(yaw, pitch);
 		update(pt);
 	}
 

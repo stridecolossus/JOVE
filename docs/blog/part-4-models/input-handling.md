@@ -736,85 +736,50 @@ To calculate the point on the unit-sphere we add another new helper class:
 
 ```java
 public final class Sphere {
-    public interface PointFactory {
-        /**
-         * Calculates the point on the unit-sphere for the given rotation angles (in radians).
-         * @param theta     Horizontal angle (or <i>yaw</i>) in the range zero to {@link MathsUtil#TWO_PI}
-         * @param phi       Vertical angle (or <i>pitch</i>) in the range +/- {@link MathsUtil#HALF_PI}
-         * @return Unit-sphere surface point
-         */
-        Point point(float theta, float phi);
+    /**
+     * Calculates the point on the unit-sphere for the given rotation angles (in radians).
+     * @param theta     Horizontal angle (or <i>yaw</i>) in the range zero to {@link MathsUtil#TWO_PI}
+     * @param phi       Vertical angle (or <i>pitch</i>) in the range +/- {@link MathsUtil#HALF_PI}
+     * @return Unit-sphere surface point
+     */
+    public static Point point(float theta, float phi) {
+        ...
     }
 }
 ```
 
-The default implementation of the factory method is relatively straight-forward:
+The implementation of the factory method is based on the standard algorithm for calculating a point on a sphere:
 
 ```java
-PointFactory DEFAULT = (theta, phi) -> {
-    final float cos = cos(phi);
-    final float x = cos(theta) * cos;
-    final float y = sin(theta) * cos;
-    final float z = sin(phi);
-    return new Point(x, y, z);
-};
+float cos = cos(phi);
+float x = cos(theta) * cos;
+float y = sin(theta) * cos;
+float z = sin(phi);
 ```
 
-This implementation is based on the standard algorithm for calculating a point on a sphere, however the _coordinate space_ of the generated points is not aligned with the Vulkan system:
+However the _coordinate space_ of the generated points is not aligned with the Vulkan system:
 
 1. A horizontal (theta) angle of zero points in the direction of the X axis whereas we generally require the default to be the negative Z axis.
 
 2. The Y and Z axes are transposed, i.e. Z is _up_ in the default implementation of the algorithm.
 
-For these reasons we implement the algorithm as an interface so we can provide adapters to transform the coordinate space, rather than butchering the algorithm or (for example) forcing the client to pass option flags into the method.
+We assume that applications will always want to the resultant points in the default Vulkan space used elsewhere in JOVE, therefore we modify the default algorithm.
 
-To make the camera point in the negative Z direction we simply fiddle the angle with a 90 degree clockwise 'rotation':
-
-```java
-default PointFactory rotate() {
-    return (theta, phi) -> point(theta - MathsUtil.HALF_PI, phi);
-}
-```
-
-To transpose the axes we create an adapter to swizzle the Y and Z components of the calculated point:
+To make the camera point in the negative Z direction we simply fiddle _theta_ with a 90 degree clockwise 'rotation':
 
 ```java
-default PointFactory swizzle() {
-    return (theta, phi) -> {
-        final Point pt = point(theta, phi);
-        return new Point(pt.x, pt.z, pt.y);
-    };
-}
+// Apply 90 degree clockwise rotation to align with the -Z axis
+float angle = theta - MathsUtil.HALF_PI;
 ```
 
-Note that both these adapters are `default` interface methods which allows us to create the desired factory as follows:
+To transpose the axes we swizzle the resultant coordinates:
 
 ```java
-public class DefaultCameraController {
-    ...
-    private final PointFactory sphere = PointFactory.DEFAULT.swizzle().rotate();
-}
+// Swizzle the coordinates to default space
+return new Point(x, z, y);
 ```
 
-In the unit-test for the new sphere class we use a `spy` to create a mock that automatically implements the default methods:
-
-```java
-public class SphereTest {
-    @Nested
-    class PointFactoryTests {
-        @Test
-        void rotate() {
-            PointFactory factory = spy(PointFactory.class);
-            PointFactory rotate = factory.rotate();
-            assertNotNull(rotate);
-            rotate.point(0, 0);
-            verify(factory).point(-HALF_PI, 0);
-        }
-    }
-}
-```
-
-Finally we can implement the controller update method to point the camera at the calculated point on the sphere:
+We can now implement the controller update method to point the camera at the calculated point on the sphere:
 
 ```java
 public void update(float x, float y) {
