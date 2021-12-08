@@ -1,6 +1,7 @@
 package org.sarge.jove.control;
 
 import static java.util.stream.Collectors.joining;
+import static org.sarge.lib.util.Check.notEmpty;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -11,6 +12,10 @@ import java.util.function.Predicate;
  * <p>
  * Note that a button is both the event <b>and</b> its {@link #type()}.
  * <p>
+ * A button can be treated as a template for the purposes of event matching using the {@link #matches(Button)} method.
+ * <p>
+ * The {@link #resolve(int)} method is used to <i>resolve</i> a button to a different action.
+ * <p>
  * @author Sarge
  */
 public interface Button extends Event {
@@ -18,6 +23,11 @@ public interface Button extends Event {
 	 * Button name delimiter.
 	 */
 	String DELIMITER = "-";
+
+	/**
+	 * @return Button identifier
+	 */
+	String id();
 
 	/**
 	 * @return Button name
@@ -30,13 +40,18 @@ public interface Button extends Event {
 	Object action();
 
 	/**
-	 * Resolves this button to the given action and modifiers.
-	 * @param action		Action
-	 * @param mods			Modifiers mask
-	 * @return Resolved button
-	 * @throws IllegalArgumentException if the modifiers mask is not zero but the button cannot be modified
+	 * Matches the given button against this template.
+	 * @param button Button
+	 * @return Whether matches this template
 	 */
-	Button resolve(int action, int mods);
+	boolean matches(Button button);
+
+	/**
+	 * Resolves this button to the given action and modifiers.
+	 * @param action Action
+	 * @return Resolved button
+	 */
+	Button resolve(int action);
 
 	/**
 	 * Builds a hyphen delimited name from the given tokens.
@@ -56,13 +71,29 @@ public interface Button extends Event {
 	 * Skeleton implementation.
 	 */
 	abstract class AbstractButton implements Button {
+		protected final String id;
+
+		/**
+		 * Constructor.
+		 * @param id Button identifier
+		 */
+		protected AbstractButton(String id) {
+			this.id = notEmpty(id);
+		}
+
+		@Override
+		public final String id() {
+			return id;
+		}
+
 		@Override
 		public final Object type() {
 			return this;
 		}
 
-		protected void checkUnmodified(int mods) {
-			if(mods != 0) throw new IllegalArgumentException("Button cannot be modified: " + this);
+		@Override
+		public boolean matches(Button button) {
+			return id.equals(button.id());
 		}
 
 		@Override
@@ -75,7 +106,6 @@ public interface Button extends Event {
 			return
 					(obj == this) ||
 					(obj instanceof Button that) &&
-					this.action().equals(that.action()) &&
 					this.name().equals(that.name());
 		}
 

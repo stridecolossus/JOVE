@@ -2,7 +2,6 @@ package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,12 +21,34 @@ public class ButtonTest {
 
 		@BeforeEach
 		void before() {
-			button = spy(AbstractButton.class);
+			button = new AbstractButton("id") {
+				@Override
+				public String name() {
+					return "name";
+				}
+
+				@Override
+				public Object action() {
+					return null;
+				}
+
+				@Override
+				public Button resolve(int action) {
+					return null;
+				}
+			};
 		}
 
 		@Test
 		void constructor() {
+			assertEquals("id", button.id());
 			assertEquals(button, button.type());
+		}
+
+		@Test
+		void matches() {
+			assertEquals(true, button.matches(button));
+			assertEquals(false, button.matches(mock(AbstractButton.class)));
 		}
 
 		@Test

@@ -72,7 +72,7 @@ public class JoystickDeviceTest extends AbstractJoystickTest {
 		assertNotNull(button);
 
 		// Check initialised to default
-		assertEquals(Action.RELEASE, button.action());
+		assertEquals(Action.PRESS, button.action());
 	}
 
 	@Test

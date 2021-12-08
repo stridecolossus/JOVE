@@ -170,7 +170,7 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 		}
 
 		// Generate event
-		final Button event = button.resolve(value, 0);
+		final Button event = button.resolve(value);
 		handler.accept(event);
 	}
 }

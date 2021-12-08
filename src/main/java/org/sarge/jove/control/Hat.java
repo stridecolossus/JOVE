@@ -1,6 +1,5 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Set;
@@ -10,6 +9,16 @@ import org.sarge.jove.util.IntegerEnumeration;
 
 /**
  * A <i>hat</i> is a joystick controller that can be pointed in the compass directions.
+ * <p>
+ * When used as a template the sets of hat actions can be empty (but not {@code null}) to match <b>any</b> combination.
+ * <p>
+ * Note that a hat with a super-set of the specified actions is considered a match.
+ * For example the following match test would pass:
+ * <pre>
+ * Hat template = new Hat("id", Set.of(HatAction.UP));
+ * template.matches(new Hat("id", Set.of(HatAction.UP, HatAction.RIGHT));
+ * </pre>
+ * <p>
  * @author Sarge
  */
 public class Hat extends AbstractButton {
@@ -40,7 +49,6 @@ public class Hat extends AbstractButton {
 		}
 	}
 
-	private final String id;
 	private final String name;
 	private final Set<HatAction> action;
 
@@ -57,17 +65,10 @@ public class Hat extends AbstractButton {
 	 * @param id			Hat identifier
 	 * @param action		Hat action(s)
 	 */
-	private Hat(String id, Set<HatAction> action) {
-		this.id = notEmpty(id);
+	protected Hat(String id, Set<HatAction> action) {
+		super(id);
 		this.action = notNull(action);
 		this.name = Button.name(id, Button.name(action.toArray()));
-	}
-
-	/**
-	 * @return Hat identifier
-	 */
-	public String id() {
-		return id;
 	}
 
 	@Override
@@ -81,9 +82,16 @@ public class Hat extends AbstractButton {
 	}
 
 	@Override
-	public Hat resolve(int action, int mods) {
-		checkUnmodified(mods);
-		final Set<HatAction> set = action == 0 ? HatAction.DEFAULT : HatAction.MAPPING.enumerate(action);
-		return new Hat(id, set);
+	public boolean matches(Button button) {
+		return
+				super.matches(button) &&
+				(button instanceof Hat that) &&
+				that.action.containsAll(this.action);
+	}
+
+	@Override
+	public Hat resolve(int action) {
+		final Set<HatAction> actions = action == 0 ? HatAction.DEFAULT : HatAction.MAPPING.enumerate(action);
+		return new Hat(id, actions);
 	}
 }

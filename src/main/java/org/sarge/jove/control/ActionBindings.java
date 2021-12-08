@@ -102,7 +102,6 @@ public class ActionBindings implements Consumer<Event> {
 		Check.notNull(handler);
 		if(handler == this) throw new IllegalArgumentException("Cannot bind to self!");
 		if(bindings.containsKey(type)) throw new IllegalArgumentException("Event type is already bound: " + type);
-//		if(handlers.containsKey(handler)) throw new IllegalArgumentException("Handler is already bound: " + handler);
 
 		// Lookup or create reverse mapping
 		final Set<Object> types = handlers.computeIfAbsent(handler, ignored -> new HashSet<>());

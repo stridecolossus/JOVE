@@ -45,8 +45,8 @@ public class JoystickButtonSourceTest extends AbstractJoystickTest {
 		src.poll();
 
 		// Check events generated
-		verify(handler).accept(button.resolve(1, 0));
-		verify(handler).accept(hat.resolve((1 | 2), 0));
+		verify(handler).accept(button.resolve(1));
+		verify(handler).accept(hat.resolve((1 | 2)));
 
 		// Check buttons updated to new state
 		src.poll();
