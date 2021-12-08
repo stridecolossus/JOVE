@@ -1,8 +1,5 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.jove.util.MathsUtil.cos;
-import static org.sarge.jove.util.MathsUtil.sin;
-
 import java.util.Arrays;
 
 import org.sarge.jove.geometry.Rotation.DefaultRotation;
@@ -25,8 +22,8 @@ public class Quaternion implements Transform {
 	 */
 	public static Quaternion of(Rotation rot) {
 		final float half = rot.angle() * MathsUtil.HALF;
-		final Vector vec = rot.axis().multiply(sin(half));
-		return new Quaternion(cos(half), vec.x, vec.y, vec.z);
+		final Vector vec = rot.axis().multiply(MathsUtil.sin(half));
+		return new Quaternion(MathsUtil.cos(half), vec.x, vec.y, vec.z);
 	}
 
 	public final float w, x, y, z;

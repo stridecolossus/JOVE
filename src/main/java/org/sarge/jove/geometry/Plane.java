@@ -79,15 +79,14 @@ public record Plane(Vector normal, float distance) {
 	/**
 	 * Normalizes this plane.
 	 * @return Normalized plane
-	 * @see Vector#normalize()
 	 */
 	public Plane normalize() {
-		final float len = MathsUtil.sqrt(normal.magnitude());
+		final float len = normal.magnitude();
 		if(MathsUtil.isEqual(len, 1)) {
 			return this;
 		}
 		else {
-			final float inv = 1 / len;
+			final float inv = MathsUtil.inverseRoot(len);
 			return new Plane(normal.multiply(inv), distance * inv);
 		}
 	}

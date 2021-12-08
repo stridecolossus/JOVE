@@ -16,7 +16,7 @@ import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
 
 /**
- * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <code>typedef enum</code>.
+ * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
  * <p>
  * An integer enumeration has a {@link ReverseMapping} that can be used to map integer literals to the corresponding enumeration constants.
  * <p>
@@ -25,28 +25,28 @@ import com.sun.jna.TypeConverter;
  * Usage:
  * <p>
  * <pre>
- * 	// Create integer enumeration
- * 	enum Thing implements IntegerEnumeration {
- * 		ONE(1),
- * 		TWO(2),
- * 		...
+ * // Create integer enumeration
+ * enum Thing implements IntegerEnumeration {
+ *     ONE(1),
+ *     TWO(2),
+ *     ...
  *
- * 		private final int value;
+ *     private final int value;
  *
- * 		public int value() {
- * 			return value;
- * 		}
- * 	}
+ *     public int value() {
+ *         return value;
+ *     }
+ * }
  *
- * 	// Map literal to enumeration
- * 	ReverseMapping&lt;Thing&gt; mapping = IntegerEnumeration.mapping(Thing.class);
- * 	Thing thing = mapping.map(1);	// ONE
+ * // Map literal to enumeration
+ * ReverseMapping&lt;Thing&gt; mapping = IntegerEnumeration.mapping(Thing.class);
+ * Thing thing = mapping.map(1);	// ONE
  *
- * 	// Build integer mask from enumeration
- * 	int mask = IntegerEnumeration.mask(Thing.ONE, ...);
+ * // Build integer mask from enumeration
+ * int mask = IntegerEnumeration.mask(Thing.ONE, ...);
  *
- * 	// Enumerate constants from integer mask
- * 	Set&lt;Thing&gt; set = mapping.enumerate(mask);
+ * // Enumerate constants from integer mask
+ * Set&lt;Thing&gt; set = mapping.enumerate(mask);
  * </pre>
  * <p>
  * @author Sarge
@@ -128,7 +128,7 @@ public interface IntegerEnumeration {
 	};
 
 	/**
-	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers to the enumeration constants.
+	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers <i>to</i> the enumeration constants.
 	 * @param <E> Integer enumeration
 	 */
 	final class ReverseMapping<E extends IntegerEnumeration> {

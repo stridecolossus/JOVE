@@ -20,21 +20,21 @@ import org.sarge.jove.common.TransientNativeObject;
  * <p>
  * Usage:
  * <pre>
- * 	// Create memory record
- * 	DeviceMemory mem = ...
+ * // Create memory record
+ * DeviceMemory mem = ...
  *
- *	// Map accessible region
- *	Region region = mem.region(0, size);
+ * // Map accessible region
+ * Region region = mem.region(0, size);
  *
- * 	// Write to memory
- * 	ByteBuffer buffer = region.buffer();
- * 	buffer.put(...);
+ * // Write to memory
+ * ByteBuffer buffer = region.buffer();
+ * buffer.put(...);
  *
- * 	// Release mapping
- * 	region.unmap();
+ * // Release mapping
+ * region.unmap();
  *
- * 	// Release memory
- * 	mem.destroy();
+ * // Release memory
+ * mem.destroy();
  * </pre>
  * @author Sarge
  */

@@ -13,8 +13,7 @@ import com.sun.jna.ptr.IntByReference;
  * <p>
  * The function is of the following form:
  * <p>
- * <code>int function(VulkanLibrary lib, IntByReference count, T data)</code>
- * <p>
+ * <pre>  int function(IntByReference count, T data)</pre>
  * where:
  * <ul>
  * <li><i>count</i> is the size of the data</li>
@@ -25,7 +24,7 @@ import com.sun.jna.ptr.IntByReference;
  * The method is invoked <b>twice</b> to retrieve the data from the native API method:
  * <ol>
  * <li>retrieve the length of the data (the <i>data</i> argument is {@code null})</li>
- * <li>populate the data (passing back the length)</li>
+ * <li>populate the data (passing back <i>count</i>)</li>
  * </ol>
  * @param <T> Data type
  * @author Sarge
@@ -45,22 +44,22 @@ public interface VulkanFunction<T> {
 	 * <p>
 	 * Example to retrieve an array of pointers:
 	 * <pre>
-	 * 	VulkanLibrary lib = ...
-	 *  VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array, ...);
-	 *  Pointer[] array = VulkanFunction.enumerate(func, new IntegerByReference(), Pointer[]::new);
+	 * VulkanLibrary lib = ...
+	 * VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array, ...);
+	 * Pointer[] array = VulkanFunction.enumerate(func, new IntegerByReference(), Pointer[]::new);
 	 * </pre>
 	 * <p>
 	 * This method is equivalent to the following:
 	 * <pre>
-	 *  // Count number of results
-	 *  IntegerByReference count = ...
-	 *  lib.someFunction(count, null, ...);
+	 * // Count number of results
+	 * IntegerByReference count = new IntegerByReference();
+	 * lib.someFunction(count, null, ...);
 	 *
-	 *  // Allocate data
-	 *  Pointer[] array = new Pointer[count.getValue()];
+	 * // Allocate data
+	 * Pointer[] array = new Pointer[count.getValue()];
 	 *
-	 *  // Populate array
-	 *  lib.someFunction(count, array, ...);
+	 * // Populate array
+	 * lib.someFunction(count, array, ...);
 	 * </pre>
 	 * @param <T> Data type
 	 * @param func			Vulkan function
@@ -91,21 +90,21 @@ public interface VulkanFunction<T> {
 	 * <p>
 	 * Usage:
 	 * <pre>
-	 * 	VulkanLibrary lib = ...
-	 *  VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array, ...);
-	 *  SomeStructure[] array = VulkanFunction.enumerate(func, new IntegerByReference(), SomeStructure::new);
+	 * VulkanLibrary lib = ...
+	 * VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array, ...);
+	 * SomeStructure[] array = VulkanFunction.enumerate(func, new IntegerByReference(), SomeStructure::new);
 	 * </pre>
 	 * This adapter is equivalent to the following:
 	 * <pre>
-	 *  // Count number of results
-	 *  IntegerByReference count = ...
-	 *  lib.someFunction(count, null, ...);
+	 * // Count number of results
+	 * IntegerByReference count = new IntegerByReference();
+	 * lib.someFunction(count, null, ...);
 	 *
-	 *  // Allocate JNA array
-	 *  SomeStructure[] array = (SomeStructure[]) new SomeStructure().toArray(count.getValue());
+	 * // Allocate JNA array
+	 * SomeStructure[] array = (SomeStructure[]) new SomeStructure().toArray(count.getValue());
 	 *
-	 *  // Populate array (note passes first element)
-	 *  lib.someFunction(count, array[0], ...);
+	 * // Populate array (note passes first element)
+	 * lib.someFunction(count, array[0], ...);
 	 * </pre>
 	 * <p>
 	 * @param <T> Structure type

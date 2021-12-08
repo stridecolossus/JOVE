@@ -98,8 +98,6 @@ public class Extents {
 				normal.y < 0 ? min.y : max.y,
 				normal.z < 0 ? min.z : max.z
 		);
-		// TODO - signum?
-		// TODO - nasty duplication in n/p cases?
 	}
 
 	/**

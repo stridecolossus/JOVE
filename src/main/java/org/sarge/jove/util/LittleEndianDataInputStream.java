@@ -8,12 +8,13 @@ import java.io.InputStream;
 /**
  * Data input stream with little-endian byte order.
  * <p>
- * Note that this class re-implements input stream rather than extending {@link DataInputStream} since <b>all</b> methods are final and {@link DataInput} is only a marker interface.
+ * Note that this class re-implements rather than extends {@link DataInputStream} since <b>all</b> methods are final and {@link DataInput} is only a marker interface.
  * <p>
  * @author Sarge
  */
 public class LittleEndianDataInputStream extends InputStream implements DataInput {
 	private static final int MASK = 0xff;
+	private static final long LONG_MASK = MASK;
 
 	private final DataInputStream in;
 	private final byte[] buffer = new byte[8];
@@ -93,14 +94,14 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 	public long readLong() throws IOException {
 		in.readFully(buffer, 0, Long.BYTES);
 		return
-				(long) (buffer[7]) 	   	  << 56 |
-				(long) (buffer[6] & MASK) << 48 |
-				(long) (buffer[5] & MASK) << 40 |
-				(long) (buffer[4] & MASK) << 32 |
-				(long) (buffer[3] & MASK) << 24 |
-				(long) (buffer[2] & MASK) << 16 |
-				(long) (buffer[1] & MASK) <<  8 |
-				buffer[0] & MASK;
+				(long) (buffer[7]) 	   	<< 56 |
+				(buffer[6] & LONG_MASK) << 48 |
+				(buffer[5] & LONG_MASK) << 40 |
+				(buffer[4] & LONG_MASK) << 32 |
+				(buffer[3] & LONG_MASK) << 24 |
+				(buffer[2] & LONG_MASK) << 16 |
+				(buffer[1] & LONG_MASK) <<  8 |
+				buffer[0] & LONG_MASK;
 	}
 
 	@Override

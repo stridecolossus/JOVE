@@ -19,7 +19,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>fence</i> is used to synchronise between the host and a queue.
+ * A <i>fence</i> is used to synchronise between application code and Vulkan.
  * @author Sarge
  */
 public class Fence extends AbstractVulkanObject {
@@ -31,7 +31,6 @@ public class Fence extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 * @param flags			Fence flags
 	 * @return New fence
-	 * @throws VulkanException if the fence cannot be created
 	 */
 	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 		// Init descriptor
@@ -51,7 +50,6 @@ public class Fence extends AbstractVulkanObject {
 	 * Resets a group of fences.
 	 * @param dev			Logical device
 	 * @param fences		Fences to reset
-	 * @throws VulkanException if the fences cannot be reset
 	 */
 	public static void reset(DeviceContext dev, Collection<Fence> fences) {
 		final Pointer array = NativeObject.array(fences);
@@ -65,7 +63,6 @@ public class Fence extends AbstractVulkanObject {
 	 * @param fences		Fences
 	 * @param all			Whether to wait for all or any fence
 	 * @param timeout		Timeout (ms)
-	 * @throws VulkanException if the API method fails
 	 */
 	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
 		final Pointer array = NativeObject.array(fences);

@@ -62,7 +62,7 @@ class Block {
 	}
 
 	/**
-	 * Allocates memory from this end of this block.
+	 * Allocates memory from the <i>end</i> of this block.
 	 * @param size Memory size
 	 * @return New memory allocation
 	 * @throws IllegalStateException if this block has been released

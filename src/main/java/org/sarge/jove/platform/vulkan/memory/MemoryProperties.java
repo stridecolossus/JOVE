@@ -18,11 +18,11 @@ import org.sarge.lib.util.Check;
  * <p>
  * Example for the properties of an image:
  * <pre>
- *  MemoryProperties&lt;VkImageUsageFlag&gt; props = new MemoryProperties.Builder&lt;&gt;()
- *  	.usage(VkImageUsage.COLOR_ATTACHMENT)
- *  	.mode(VkSharingMode.CONCURRENT)
- *  	.optimal(VkMemoryProperty.HOST_COHERENT)
- *  	.build()
+ * MemoryProperties&lt;VkImageUsageFlag&gt; props = new MemoryProperties.Builder&lt;&gt;()
+ *     .usage(VkImageUsage.COLOR_ATTACHMENT)
+ *     .mode(VkSharingMode.CONCURRENT)
+ *     .optimal(VkMemoryProperty.HOST_COHERENT)
+ *     .build()
  * </pre>
  * <p>
  * @param <T> Usage enumeration

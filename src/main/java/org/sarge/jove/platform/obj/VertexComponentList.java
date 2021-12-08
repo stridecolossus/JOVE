@@ -3,7 +3,8 @@ package org.sarge.jove.platform.obj;
 import java.util.ArrayList;
 
 /**
- * List of OBJ vertex components that can also be retrieved using negative indices.
+ * List of OBJ vertex components that start at index <b>one</b> and can also be negative.
+ * @author Sarge
  */
 class VertexComponentList<T> extends ArrayList<T> {
 	@Override
