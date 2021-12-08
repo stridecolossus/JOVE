@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Axis.AxisEvent;
+import org.sarge.jove.control.DefaultButton.Action;
 import org.sarge.jove.control.Event.Source;
 
 public class ActionBindingsTest {
@@ -80,12 +81,18 @@ public class ActionBindingsTest {
 	class BindingHelpers {
 		@Test
 		void button() {
+			// Bind a button template to a method
 			final Runnable method = mock(Runnable.class);
-			final Button button = mock(Button.class);
-			when(button.type()).thenReturn(button);
+			final Button button = new DefaultButton("button", Action.PRESS);
 			bindings.bind(button, method);
+
+			// Check matching button is delegated to the handler
 			bindings.accept(button);
 			verify(method).run();
+
+			// Check unmatched event is ignored
+			bindings.accept(button.resolve(0));
+			verifyNoMoreInteractions(method);
 		}
 
 		@Test

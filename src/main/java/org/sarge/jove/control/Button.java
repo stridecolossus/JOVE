@@ -12,7 +12,7 @@ import java.util.function.Predicate;
  * <p>
  * Note that a button is both the event <b>and</b> its {@link #type()}.
  * <p>
- * A button can be treated as a template for the purposes of event matching using the {@link #matches(Button)} method.
+ * A button can be treated as a <i>template</i> for the purposes of event matching using the {@link #matches(Button)} method.
  * <p>
  * The {@link #resolve(int)} method is used to <i>resolve</i> a button to a different action.
  * <p>

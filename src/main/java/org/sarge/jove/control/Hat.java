@@ -1,8 +1,7 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.sarge.jove.control.Button.AbstractButton;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -67,8 +66,8 @@ public class Hat extends AbstractButton {
 	 */
 	protected Hat(String id, Set<HatAction> action) {
 		super(id);
-		this.action = notNull(action);
-		this.name = Button.name(id, Button.name(action.toArray()));
+		this.action = new TreeSet<>(action);
+		this.name = Button.name(id, Button.name(this.action.toArray()));
 	}
 
 	@Override

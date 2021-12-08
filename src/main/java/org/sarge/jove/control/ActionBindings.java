@@ -126,12 +126,16 @@ public class ActionBindings implements Consumer<Event> {
 	}
 
 	/**
-	 * Binds a button to an action handler.
+	 * Binds a button <i>template</i> to an action handler.
 	 * @param button		Button
 	 * @param handler		Event handler
 	 */
 	public void bind(Button button, Runnable handler) {
-		final Consumer<Button> adapter = ignored -> handler.run();
+		final Consumer<Button> adapter = event -> {
+			if(button.matches(event)) {
+				handler.run();
+			}
+		};
 		bindLocal(button.type(), adapter);
 	}
 
