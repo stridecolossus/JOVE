@@ -1,9 +1,9 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.notEmpty;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.sarge.jove.control.Button.AbstractButton;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -26,7 +26,7 @@ public class Hat extends AbstractButton {
 		LEFT(8);
 
 		private static final IntegerEnumeration.ReverseMapping<HatAction> MAPPING = IntegerEnumeration.mapping(HatAction.class);
-		private static final TreeSet<HatAction> EMPTY = new TreeSet<>(Set.of(CENTERED));
+		private static final Set<HatAction> DEFAULT = Set.of(CENTERED);
 
 		private final int value;
 
@@ -40,25 +40,33 @@ public class Hat extends AbstractButton {
 		}
 	}
 
-	private final int id;
+	private final String id;
 	private final String name;
 	private final Set<HatAction> action;
 
 	/**
 	 * Constructor.
-	 * @param id			Hat identifier
-	 * @param action		Hat action mask
+	 * @param id Hat identifier
 	 */
-	public Hat(int id, int action) {
-		this.id = zeroOrMore(id);
-		this.action = action == 0 ? HatAction.EMPTY : HatAction.MAPPING.enumerate(action);
-		this.name = Button.name("Hat", id, Button.name(this.action.toArray()));
+	public Hat(String id) {
+		this(id, HatAction.DEFAULT);
+	}
+
+	/**
+	 * Constructor.
+	 * @param id			Hat identifier
+	 * @param action		Hat action(s)
+	 */
+	private Hat(String id, Set<HatAction> action) {
+		this.id = notEmpty(id);
+		this.action = notNull(action);
+		this.name = Button.name(id, Button.name(action.toArray()));
 	}
 
 	/**
 	 * @return Hat identifier
 	 */
-	public int id() {
+	public String id() {
 		return id;
 	}
 
@@ -72,12 +80,10 @@ public class Hat extends AbstractButton {
 		return action;
 	}
 
-	/**
-	 * Resolves this hat.
-	 * @param action Action mask
-	 * @return New hat
-	 */
-	public Hat resolve(int action) {
-		return new Hat(id, action);
+	@Override
+	public Hat resolve(int action, int mods) {
+		checkUnmodified(mods);
+		final Set<HatAction> set = action == 0 ? HatAction.DEFAULT : HatAction.MAPPING.enumerate(action);
+		return new Hat(id, set);
 	}
 }

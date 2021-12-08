@@ -30,6 +30,15 @@ public interface Button extends Event {
 	Object action();
 
 	/**
+	 * Resolves this button to the given action and modifiers.
+	 * @param action		Action
+	 * @param mods			Modifiers mask
+	 * @return Resolved button
+	 * @throws IllegalArgumentException if the modifiers mask is not zero but the button cannot be modified
+	 */
+	Button resolve(int action, int mods);
+
+	/**
 	 * Builds a hyphen delimited name from the given tokens.
 	 * @param tokens Tokens
 	 * @return Button name
@@ -50,6 +59,10 @@ public interface Button extends Event {
 		@Override
 		public final Object type() {
 			return this;
+		}
+
+		protected void checkUnmodified(int mods) {
+			if(mods != 0) throw new IllegalArgumentException("Button cannot be modified: " + this);
 		}
 
 		@Override

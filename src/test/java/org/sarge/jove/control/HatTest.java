@@ -1,6 +1,7 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Set;
 
@@ -16,28 +17,31 @@ public class HatTest {
 
 	@BeforeEach
 	void before() {
-		hat = new Hat(1, IntegerEnumeration.mask(MASK));
+		hat = new Hat("HAT");
 	}
 
 	@Test
 	void constructor() {
-		assertEquals("Hat-1-UP-RIGHT", hat.name());
-		assertEquals(1, hat.id());
-		assertEquals(MASK, hat.action());
+		assertEquals("HAT-CENTERED", hat.name());
+		assertEquals("HAT", hat.id());
+		assertEquals(Set.of(HatAction.CENTERED), hat.action());
 		assertEquals(hat, hat.type());
 	}
 
 	@Test
-	void centered() {
-		hat = new Hat(1, 0);
-		assertEquals("Hat-1-CENTERED", hat.name());
-		assertEquals(Set.of(HatAction.CENTERED), hat.action());
+	void resolve() {
+		hat = hat.resolve(IntegerEnumeration.mask(MASK), 0);
+		assertEquals("HAT-UP-RIGHT", hat.name());
+		assertEquals(MASK, hat.action());
 	}
 
 	@Test
-	void resolve() {
-		hat = hat.resolve(HatAction.DOWN.value());
-		assertEquals("Hat-1-DOWN", hat.name());
-		assertEquals(Set.of(HatAction.DOWN), hat.action());
+	void resolveInvalidModifiers() {
+		assertThrows(IllegalArgumentException.class, () -> hat.resolve(1, 2));
+	}
+
+	@Test
+	void resolveInvalidActionMask() {
+		assertThrows(IllegalArgumentException.class, () -> hat.resolve(999, 0));
 	}
 }

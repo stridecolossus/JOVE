@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.control.Button;
 import org.sarge.jove.control.DefaultButton;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Hat;
@@ -17,18 +18,20 @@ import org.sarge.jove.control.Hat;
 public class JoystickButtonSourceTest extends AbstractJoystickTest {
 	private JoystickButtonSource src;
 	private Consumer<Event> handler;
+	private Button button;
 	private Hat hat;
 
 	@BeforeEach
 	void before() {
 		src = new JoystickButtonSource(1, lib);
 		handler = mock(Consumer.class);
-		hat = new Hat(1, 0);
+		button = new DefaultButton("Button-0");
+		hat = new Hat("Hat-0");
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(List.of(new DefaultButton("Button-0").resolve(0, 0)), src.buttons());
+		assertEquals(List.of(button), src.buttons());
 		assertEquals(List.of(hat), src.hats());
 	}
 
@@ -42,8 +45,8 @@ public class JoystickButtonSourceTest extends AbstractJoystickTest {
 		src.poll();
 
 		// Check events generated
-		verify(handler).accept(new DefaultButton("Button-0"));
-		verify(handler).accept(new Hat(1, (byte) (1 | 2)));
+		verify(handler).accept(button.resolve(1, 0));
+		verify(handler).accept(hat.resolve((1 | 2), 0));
 
 		// Check buttons updated to new state
 		src.poll();

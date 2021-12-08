@@ -16,9 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.DefaultButton;
-import org.sarge.jove.control.DefaultButton.Modifier;
 import org.sarge.jove.control.Event;
+import org.sarge.jove.control.ModifiedButton;
+import org.sarge.jove.control.ModifiedButton.Modifier;
 import org.sarge.jove.control.PositionEvent;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
@@ -103,7 +103,7 @@ public class MouseDeviceTest {
 			final MouseButtonListener listener = buttons.listener(handler);
 			assertNotNull(listener);
 			listener.button(null, 0, 1, mods);
-			verify(handler).accept(new DefaultButton("Mouse-1").resolve(1, mods));
+			verify(handler).accept(new ModifiedButton("Mouse-1").resolve(1, mods));
 		}
 
 		@Test

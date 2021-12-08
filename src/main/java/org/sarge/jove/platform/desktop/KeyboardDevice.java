@@ -7,9 +7,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.DefaultButton;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.control.ModifiedButton;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 /**
@@ -19,7 +19,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 public class KeyboardDevice extends DesktopDevice {
 	private final KeyboardSource keyboard = new KeyboardSource();
 	private final KeyTable table = KeyTable.instance();
-	private final Map<Integer, DefaultButton> keys = new HashMap<>();
+	private final Map<Integer, ModifiedButton> keys = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -67,14 +67,14 @@ public class KeyboardDevice extends DesktopDevice {
 		@Override
 		protected KeyListener listener(Consumer<Event> handler) {
 			return (ptr, key, scancode, action, mods) -> {
-				final DefaultButton base = keys.computeIfAbsent(key, this::key);
+				final ModifiedButton base = keys.computeIfAbsent(key, this::key);
 				final Button button = base.resolve(action, mods);
 				handler.accept(button);
 			};
 		}
 
-		private DefaultButton key(int code) {
-			return new DefaultButton(table.name(code));
+		private ModifiedButton key(int code) {
+			return new ModifiedButton(table.name(code));
 		}
 
 		@Override

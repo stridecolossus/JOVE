@@ -4,7 +4,9 @@ import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Button;
@@ -20,67 +22,11 @@ import com.sun.jna.ptr.IntByReference;
  * @author Sarge
  */
 public class JoystickButtonSource extends AbstractSource<Button> {
-	/**
-	 * Joystick button implementation.
-	 */
-	private class JoystickButton extends DefaultButton {
-		private byte current;
-
-		/**
-		 * Constructor.
-		 * @param id			Button ID
-		 * @param action		Initial action
-		 */
-		protected JoystickButton(int id, byte action) {
-			super(Button.name("Button", id), Action.map(action), 0);
-			this.current = action;
-		}
-
-		/**
-		 * Updates the state of this button and generates events.
-		 * @param value Button value
-		 */
-		void update(byte value) {
-			// Ignore if not modified
-			if(value == current) {
-				return;
-			}
-
-			// Generate event
-			final Button event = resolve(value, 0);
-			handler.accept(event);
-			current = value;
-		}
-	}
-
-	private class JoystickHat extends Hat {
-		private byte current;
-
-		/**
-		 * Constructor.
-		 * @param id		Hat ID
-		 * @param mask		Initial value
-		 */
-		public JoystickHat(int id, byte mask) {
-			super(id, mask);
-			this.current = mask;
-		}
-
-		void update(byte mask) {
-			if(mask == current) {
-				return;
-			}
-
-			final Hat event = resolve(mask);
-			handler.accept(event);
-			current = mask;
-		}
-	}
-
 	private final int id;
 	private final DesktopLibraryJoystick lib;
-	private final JoystickButton[] buttons;
-	private final JoystickHat[] hats;
+	private final Button[] buttons;
+	private final Hat[] hats;
+	private final Map<Button, Byte> values = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -97,12 +43,22 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 	/**
 	 * @return Joystick buttons
 	 */
-	private JoystickButton[] initButtons() {
-		final byte[] bytes = getButtonArray();
-		return IntStream
-				.range(0, bytes.length)
-				.mapToObj(n -> new JoystickButton(n, bytes[n]))
-				.toArray(JoystickButton[]::new);
+	private Button[] initButtons() {
+		// Retrieve initial button values
+		final byte[] values = getButtonArray();
+
+		// Create buttons
+		final Button[] buttons = IntStream
+				.range(0, values.length)
+				.mapToObj(id -> Button.name("Button", id))
+				.map(DefaultButton::new)
+				.toArray(Button[]::new);
+
+		// Init button states
+		init(buttons);
+		update(values, buttons);
+
+		return buttons;
 	}
 
 	/**
@@ -124,12 +80,22 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 	/**
 	 * @return Joystick hats
 	 */
-	private JoystickHat[] initHats() {
-		final byte[] bytes = getHatArray();
-		return IntStream
-				.range(0, bytes.length)
-				.mapToObj(n -> new JoystickHat(n, bytes[n]))
-				.toArray(JoystickHat[]::new);
+	private Hat[] initHats() {
+		// Retrieve hat values
+		final byte[] values = getHatArray();
+
+		// Create hats
+		final Hat[] hats = IntStream
+				.range(0, values.length)
+				.mapToObj(id -> Button.name("Hat", id))
+				.map(Hat::new)
+				.toArray(Hat[]::new);
+
+		// Init hat values
+		init(hats);
+		update(values, hats);
+
+		return hats;
 	}
 
 	/**
@@ -158,27 +124,53 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 		}
 
 		// Poll events
-		pollButtons();
-		pollHats();
+		update(getButtonArray(), buttons);
+		update(getHatArray(), hats);
 	}
 
 	/**
-	 * Polls joystick buttons.
+	 * Initialises the cached values for the given buttons.
 	 */
-	private void pollButtons() {
-		final byte[] values = getButtonArray();
-		for(int n = 0; n < values.length; ++n) {
-			buttons[n].update(values[n]);
+	private void init(Button[] buttons) {
+		final Byte released = 0;
+		for(Button b : buttons) {
+			values.put(b, released);
 		}
 	}
 
 	/**
-	 * Polls joystick hats.
+	 * Updates buttons and hats.
+	 * @param values		New button values
+	 * @param buttons		Buttons to update
 	 */
-	private void pollHats() {
-		final byte[] values = getHatArray();
+	private void update(byte[]values, Button[] buttons) {
 		for(int n = 0; n < values.length; ++n) {
-			hats[n].update(values[n]);
+			update(buttons[n], values[n]);
 		}
+	}
+
+	/**
+	 * Updates a button and generates events.
+	 * @param button		Button
+	 * @param value			New value
+	 */
+	private void update(Button button, byte value) {
+		// Skip if not modified
+		final Byte prev = values.get(button);
+		if(prev == value) {
+			return;
+		}
+
+		// Update state
+		values.put(button, value);
+
+		// Ignore if no event handler
+		if(handler == null) {
+			return;
+		}
+
+		// Generate event
+		final Button event = button.resolve(value, 0);
+		handler.accept(event);
 	}
 }

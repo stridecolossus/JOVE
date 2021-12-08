@@ -12,9 +12,9 @@ import java.util.stream.IntStream;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.DefaultButton;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.control.ModifiedButton;
 import org.sarge.jove.control.PositionEvent;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
@@ -93,16 +93,16 @@ public class MouseDevice extends DesktopDevice {
 	 */
 	private class MouseButton extends DesktopSource<MouseButtonListener, Button> {
 		@SuppressWarnings("hiding")
-		private final List<DefaultButton> buttons = IntStream
+		private final List<ModifiedButton> buttons = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())
 				.mapToObj(id -> Button.name("Mouse", id))
-				.map(DefaultButton::new)
+				.map(ModifiedButton::new)
 				.collect(toList());
 
 		@Override
 		protected MouseButtonListener listener(Consumer<Event> handler) {
 			return (ptr, index, action, mods) -> {
-				final DefaultButton button = buttons.get(index);
+				final ModifiedButton button = buttons.get(index);
 				final Button event = button.resolve(action, mods);
 				handler.accept(event);
 			};
