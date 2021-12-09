@@ -33,7 +33,7 @@ public class DefaultButton extends AbstractButton {
 	private final Action action;
 
 	/**
-	 * Constructor.
+	 * Constructor for a pressed button.
 	 * @param id Button identifier
 	 */
 	public DefaultButton(String id) {

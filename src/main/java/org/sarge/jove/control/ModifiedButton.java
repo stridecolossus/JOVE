@@ -8,20 +8,8 @@ import org.sarge.jove.util.MathsUtil;
 /**
  * A <i>modified button</i> represents keyboard keys and mouse buttons with an additional keyboard modifier mask.
  * <p>
- * When used as a template both the <i>action</i> and keyboard <i>modifiers</i> are optional:
- * <pre>
- * new ModifiedButton("id", Action.PRESS, 0x01);	// Match specific action and modifier mask
- * new ModifiedButton("id", null, 0x01);		// Match mask
- * new ModifiedButton("id", Action.PRESS, 0);	// Match action
- * new ModifiedButton("id", null, 0);		// Match any action or mask
- * </pre>
- * Also note that a button with a super-set of the specified modifier mask is considered a matching button.
- * In the following example both matches would pass:
- * <pre>
- * ModifiedButton template = new ModifiedButton("id", null, 0x001);
- * template.match(new ModifiedButton("id", Action.PRESS, 0x001));
- * template.match(new ModifiedButton("id", Action.PRESS, 0x011));
- * </pre>
+ * Note that a button with a super-set of the specified modifier mask is considered a matching button.
+ * <p>
  * The {@link #resolve(int, int)} helper can be used to derived a button with a specified action and modifier mask.
  * <p>
  * @author Sarge

@@ -326,14 +326,44 @@ public class MouseDevice extends DesktopDevice {
 The final type of event (for now) is a _button_ that represents keyboard keys, mouse buttons, joystick hats, etc:
 
 ```java
-public class Button implements Event {
-    private final String id;
-    private final String name;
-    private final Action action;
-    private final int mods;
+public interface Button extends Event {
+    /**
+     * Button name delimiter.
+     */
+    String DELIMITER = "-";
+
+    /**
+     * @return Button identifier
+     */
+    String id();
+
+    /**
+     * @return Button name
+     */
+    String name();
+
+    /**
+     * @return Button action
+     */
+    Object action();
+    
+    /**
+     * Resolves this button to the given action.
+     * @param action Action
+     * @return Resolved button
+     */
+    Button resolve(int action);
+}
+```
+
+Which has the following skeleton implementation:
+
+```java
+abstract class AbstractButton implements Button {
+    protected final String id;
 
     @Override
-    public Object type() {
+    public final Object type() {
         return this;
     }
 }
@@ -341,21 +371,103 @@ public class Button implements Event {
 
 Notes:
 
-* A button also has an _action_ and a _keyboard modifiers_ mask.
+* A button also has an arbitrary _action_ object which is used below.
 
-* A button is also its own event type since there are no additional arguments (unlike the axis or position events).
+* A button is also its own event type since it has no additional arguments (unlike the other types of event).
 
-An action is a simple enumeration based on the GLFW action codes:
+* The purpose of the `resolve` method is explained later.
+
+A simple button is represented by the following concrete implementation:
+
+```java
+public class DefaultButton extends AbstractButton {
+    private final Action action;
+
+    public DefaultButton(String id) {
+        this(id, Action.PRESS);
+    }
+
+    protected DefaultButton(String id, Action action) {
+        super(id);
+        this.action = notNull(action);
+    }
+
+    @Override
+    public String name() {
+        return Button.name(id, action);
+    }
+
+    @Override
+    public Action action() {
+        return action;
+    }
+
+    @Override
+    public DefaultButton resolve(int action) {
+        return new DefaultButton(id, Action.map(action));
+    }
+}
+```
+
+Where _action_ is a simple enumeration (based on the GLFW action codes):
 
 ```java
 public enum Action {
     RELEASE,
     PRESS,
-    REPEAT
+    REPEAT;
+
+    private static final Action[] ACTIONS = Action.values();
+
+    public static Action map(int action) {
+        return ACTIONS[action];
+    }
 }
 ```
 
-Similarly for the keyboard modifiers:
+The _name_ of the button is built using the following helper to construct a hyphen-delimited string representation of the button:
+
+```java
+public static String name(Object... tokens) {
+    return Arrays
+        .stream(tokens)
+        .map(String::valueOf)
+        .collect(joining(DELIMITER));
+}
+```
+
+Note that the overridden `action` accessor returns the `Action` enumeration constant rather than `Object`.
+
+Finally this class is extended for buttons with a keyboard modifiers mask:
+
+```java
+public class ModifiedButton extends DefaultButton {
+    private final int mods;
+
+    public ModifiedButton(String id) {
+        this(id, Action.PRESS, 0);
+    }
+
+    protected ModifiedButton(String id, Action action, int mods) {
+        super(id, action);
+        this.mods = mods;
+    }
+
+    @Override
+    public String name() {
+        if(mods == 0) {
+            return super.name();
+        }
+        else {
+            Set<Modifier> set = modifiers();
+            String str = Button.name(set.toArray());
+            return Button.name(super.name(), str);
+        }
+    }
+}
+```
+
+Where the modifiers is another enumeration (again using the GLFW values):
 
 ```java
 public enum Modifier implements IntegerEnumeration {
@@ -368,39 +480,22 @@ public enum Modifier implements IntegerEnumeration {
 }
 ```
 
-The _name_ of the button is built in the constructor by the following method:
+We also provide a convenience `resolve` variant for modified buttons:
 
 ```java
-private String build() {
-    String modifiers = name(modifiers().toArray());
-    return name(id, action.name(), modifiers);
+@Override
+public ModifiedButton resolve(int action) {
+    return resolve(action, mods);
 }
-```
 
-Which uses the following new helper method to construct a hyphen-delimited name:
-
-```java
-public static String name(Object... tokens) {
-    return Arrays
-        .stream(tokens)
-        .map(String::valueOf)
-        .collect(joining(DELIMITER));
-}
-```
-
-Finally we also provide a convenience constructor that generates the _default_ definition of a button:
-
-```java
-public Button(String id, Source source) {
-    this(id, source, Action.PRESS, 0);
-}
-```
-
-And the following factory method that derives a button with specific action and keyboard modifiers:
-
-```java
-public Button resolve(Action action, int mods) {
-    return new Button(id, source, action, mods);
+/**
+ * Helper - Resolves this button for the given action and keyboard modifiers mask.
+ * @param action        Action code
+ * @param mods          Keyboard modifiers mask
+ * @return Resolved button
+ */
+public ModifiedButton resolve(int action, int mods) {
+    return new ModifiedButton(id, Action.map(action), mods);
 }
 ```
 
@@ -411,7 +506,7 @@ private class MouseButton extends DesktopSource<MouseButtonListener> {
     private final List<Button> buttons = IntStream
         .rangeClosed(1, MouseInfo.getNumberOfButtons())
         .mapToObj(id -> Button.name("Mouse", id))
-        .map(Button::new)
+        .map(ModifiedButton::new)
         .collect(toList());
 }
 ```
@@ -428,13 +523,13 @@ The mouse buttons event source looks up a button by index and uses the `resolve`
 
 ```java
 private class MouseButton extends DesktopSource<MouseButtonListener> {
-    private final List<Button> buttons = ...
+    private final List<ModifiedButton> buttons = ...
 
     @Override
     protected MouseButtonListener listener(Consumer<Event> handler) {
         return (ptr, index, action, mods) -> {
-            Button button = buttons.get(index);
-            Button event = button.resolve(DesktopDevice.map(action), mods);
+            ModifiedButton button = buttons.get(index);
+            Button event = button.resolve(action, mods);
             handler.accept(event);
         };
     }
@@ -443,19 +538,6 @@ private class MouseButton extends DesktopSource<MouseButtonListener> {
     protected BiConsumer<Window, MouseButtonListener> method(DesktopLibrary lib) {
         return lib::glfwSetMouseButtonCallback;
     }
-}
-```
-
-Finally we add a helper to map a GLFW action code to the enumeration:
-
-```java
-protected static Action map(int action) {
-    return switch(action) {
-        case 0 -> Action.RELEASE;
-        case 1 -> Action.PRESS;
-        case 2 -> Action.REPEAT;
-        default -> throw new RuntimeException("Unsupported action code: " + action);
-    };
 }
 ```
 
@@ -481,8 +563,8 @@ private class KeyboardSource extends DesktopSource<KeyListener> {
     @Override
     protected KeyListener listener(Consumer<Event> handler) {
         return (ptr, key, scancode, action, mods) -> {
-            Button base = keys.computeIfAbsent(key, this::key);
-            Button button = base.resolve(DesktopDevice.map(action), mods);
+            ModifiedButton base = keys.computeIfAbsent(key, this::key);
+            Button button = base.resolve(action, mods);
             handler.accept(button);
         };
     }
@@ -494,15 +576,15 @@ private class KeyboardSource extends DesktopSource<KeyListener> {
 }
 ```
 
-New key definitions are created by the following helper:
+Where new key definitions are created by the following helper:
 
 ```java
-private Button key(int code) {
-    return new Button(table.name(code), this);
+private ModifiedButton key(int code) {
+    return new ModifiedButton(table.name(code));
 }
 ```
 
-Where `table` maps GLFW key codes to key names specified by a resource file (loader not shown) which is a simple text file illustrated in the following fragment:
+The `table` maps GLFW key codes to key names specified by a resource file (loader not shown) which is a simple text file illustrated in the following fragment:
 
 ```
 SPACE              32
@@ -611,7 +693,7 @@ Note that we also automatically bind the event source to the bindings.
 
 Next we implement convenience methods to bind specific types of event to methods with the appropriate signature.
 
-Generally button events will be bound to a `void` method without any parameters:
+Generally button events will either be bound to a simple `void` method without parameters:
 
 ```java
 public void bind(Button button, Runnable handler) {
@@ -620,7 +702,25 @@ public void bind(Button button, Runnable handler) {
 }
 ```
 
-For position events we define the following interface:
+Or a handler that toggles some property:
+
+```java
+public void bind(Button button, Button.ToggleHandler handler) {
+    Consumer<Button> adapter = event -> handler.handle(event.action() == Action.PRESS);
+    bindLocal(button.type(), adapter);
+}
+```
+
+Where a _toggle handler_ is defined as follows in the `Button` class:
+
+```java
+@FunctionalInterface
+interface ToggleHandler {
+    void handle(boolean pressed);
+}
+```
+
+For position events we define the following functional interface:
 
 ```java
 public class PositionEvent {
@@ -648,6 +748,100 @@ interface Axis {
     public interface Handler {
         void handle(float value);
     }
+}
+```
+
+### Modified Buttons
+
+The final piece of functionality in the bindings class is support for _button templates_ to allow the following logic to be implemented:
+
+1. Find the exact matching binding for a button and the keyboard modifiers.
+
+2. Otherwise find a binding that matches just the button (ignoring the modifiers).
+
+This logic handles the cases for an event where the modifier mask is irrelevant (i.e. a _default_ button) or where bindings are present for both a default button __and__ a _modified button_ binding.
+
+First the button interface is modified with a match test:
+
+```java
+public interface Button extends Event {
+    /**
+     * Matches the given button against this template.
+     * @param button Button
+     * @return Whether matches this template
+     */
+    boolean matches(Button button);
+}
+```
+
+The skeleton implementation matches the button identifier:
+
+```java
+public boolean matches(Button button) {
+    return id.equals(button.id());
+}
+```
+
+And the default button also matches the action:
+
+```java
+public boolean matches(Button button) {
+    return super.matches(button) && action.equals(button.action());
+}
+```
+
+Finally the modified button implementation matches the keyboard modifiers mask:
+
+```java
+public boolean matches(Button button) {
+    return
+            super.matches(button) &&
+            (button instanceof ModifiedButton that) &&
+            MathsUtil.isMask(that.mods, this.mods);
+}
+```
+
+Note that this test matches only the sub-set of the modifiers in the template.  For example, a button with `SHIFT` and `CONTROL` modifiers is matched by a template with just `SHIFT`.
+
+In the bindings class the bind variants for buttons delegate to the following helper which applies the match test:
+
+```java
+private void bindButton(Button button, Consumer<Button> handler) {
+    final Consumer<Button> wrapper = event -> {
+        if(button.matches(event)) {
+            handler.accept(event);
+        }
+    };
+    bindLocal(button.type(), wrapper);
+}
+```
+
+Finally the `accept` method is modified to hand off to the second use-case for modified buttons:
+
+```java
+public void accept(Event e) {
+    final Consumer<Event> handler = bindings.get(e.type());
+    if(handler == null) {
+        if(e instanceof ModifiedButton mod) {
+            accept(mod);
+        }
+    }
+    else {
+        handler.accept(e);
+    }
+}
+```
+
+The new method invokes the _default_ button binding (if present) by essentially stripping the modifier mask:
+
+```java
+private void accept(ModifiedButton button) {
+    final Button def = new DefaultButton(button.id(), button.action());
+    final Consumer<Event> handler = bindings.get(def.type());
+    if(handler == null) {
+        return;
+    }
+    handler.accept(def);
 }
 ```
 
