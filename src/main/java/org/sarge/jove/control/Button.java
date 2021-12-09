@@ -47,7 +47,7 @@ public interface Button extends Event {
 	boolean matches(Button button);
 
 	/**
-	 * Resolves this button to the given action and modifiers.
+	 * Resolves this button to the given action.
 	 * @param action Action
 	 * @return Resolved button
 	 */

@@ -21,6 +21,7 @@ import org.sarge.jove.control.Axis.AxisEvent;
 import org.sarge.jove.control.Button.ToggleHandler;
 import org.sarge.jove.control.DefaultButton.Action;
 import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.control.ModifiedButton.Modifier;
 
 public class ActionBindingsTest {
 	private ActionBindings bindings;
@@ -86,8 +87,30 @@ public class ActionBindingsTest {
 		assertThrows(IllegalArgumentException.class, () -> bindings.bindings(handler));
 	}
 
+	@DisplayName("Bind a handler method to a position source")
+	@Test
+	void position() {
+		final Source<PositionEvent> src = mock(Source.class);
+		final PositionEvent.Handler handler = mock(PositionEvent.Handler.class);
+		bindings.bind(src, handler);
+		bindings.accept(new PositionEvent(src, 1, 2));
+		verify(handler).handle(1, 2);
+		verify(src).bind(bindings);
+	}
+
+	@DisplayName("Bind a handler method to an axis")
+	@Test
+	void axis() {
+		final Axis axis = mock(Axis.class);
+		final Axis.Handler handler = mock(Axis.Handler.class);
+		bindings.bind(axis, handler);
+		bindings.accept(new AxisEvent(axis, 3));
+		verify(handler).handle(3);
+		verify(axis).bind(bindings);
+	}
+
 	@Nested
-	class BindingHelpers {
+	class ButtonTests {
 		private Button button;
 
 		@BeforeEach
@@ -136,26 +159,18 @@ public class ActionBindingsTest {
 			verify(method).handle(false);
 		}
 
-		@DisplayName("Bind a handler method to a position source")
+		@DisplayName("An unmatched modified button event should be delegated to the default button binding if present")
 		@Test
-		void position() {
-			final Source<PositionEvent> src = mock(Source.class);
-			final PositionEvent.Handler handler = mock(PositionEvent.Handler.class);
-			bindings.bind(src, handler);
-			bindings.accept(new PositionEvent(src, 1, 2));
-			verify(handler).handle(1, 2);
-			verify(src).bind(bindings);
-		}
+		void unmodified() {
+			// Bind the unmodified button
+			final Runnable method = mock(Runnable.class);
+			final Button def = new DefaultButton("button", Action.PRESS);
+			bindings.bind(def, method);
 
-		@DisplayName("Bind a handler method to an axis")
-		@Test
-		void axis() {
-			final Axis axis = mock(Axis.class);
-			final Axis.Handler handler = mock(Axis.Handler.class);
-			bindings.bind(axis, handler);
-			bindings.accept(new AxisEvent(axis, 3));
-			verify(handler).handle(3);
-			verify(axis).bind(bindings);
+			// Check the unmodified button is invoked
+			final ModifiedButton mod = new ModifiedButton("button", Action.PRESS, Modifier.CONTROL.value());
+			bindings.accept(mod);
+			verify(method).run();
 		}
 	}
 

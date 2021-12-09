@@ -111,6 +111,6 @@ public class ModifiedButton extends DefaultButton {
 	 * @return Resolved button
 	 */
 	public ModifiedButton resolve(int action, int mods) {
-		return new ModifiedButton(id(), Action.map(action), mods);
+		return new ModifiedButton(id, Action.map(action), mods);
 	}
 }

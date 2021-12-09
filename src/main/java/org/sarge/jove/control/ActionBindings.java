@@ -25,17 +25,18 @@ import org.sarge.lib.util.Check;
  * void handle(float value) { ... }
  * Axis axis = ...
  * ActionBindings bindings = new ActionBindings();
- * bindings.bind(axis, this::handle);
- * </pre>
+ * bindings.bind(axis, this::handle);</pre>
  * <p>
- * Note that action handlers can also be registered using the {@link #add(Consumer)} to initialise actions that initially have no bindings.
+ * Action handlers can be registered using the {@link #add(Consumer)} to initialise actions that initially have no bindings.
+ * Note that handlers are also automatically registered by the various bind methods.
  * <p>
  * Notes:
  * <ul>
- * <li>Binding keys are the {@link Event#type()} of the event</li>
+ * <li>The binding key is the {@link Event#type()} of the event</li>
  * <li>Multiple events can be bound to a single action</li>
  * <li>Events that are not bound are ignored</li>
  * <li>The <i>action bindings</i> class is itself an action handler</li>
+ * <li>Unmatched modified button events are delegated to the default button binding (if present), see {@link #bind(Button, Runnable)}</li>
  * </ul>
  * <p>
  * @see Event
@@ -128,31 +129,51 @@ public class ActionBindings implements Consumer<Event> {
 	}
 
 	/**
+	 * Binds a button to events matching the button template.
+	 * @param button		Button template
+	 * @param handler		Handler
+	 */
+	private void bindButton(Button button, Consumer<Button> handler) {
+		final Consumer<Button> wrapper = event -> {
+			if(button.matches(event)) {
+				handler.accept(event);
+			}
+		};
+		bindLocal(button.type(), wrapper);
+	}
+
+	/**
 	 * Binds a button to an action handler.
+	 * <p>
+	 * Note that for an unmatched <i>modified</i> button this class delegates to the matching <i>default</i> button (if present).
+	 * <p>
+	 * For example, given these bindings:
+	 * <pre>
+	 * new DefaultButton("key", Action.PRESS)
+	 * new ModifiedButton("key", Action.PRESS, IntegerEnumeration.ALT.value())</pre>
+	 * </pre>
+	 * The following event:
+	 * <pre>
+	 * new ModifiedButton("key", Action.PRESS, ...)}</pre>
+	 * is delegated to the first binding if the second is not matched, i.e. by stripping the keyboard modifiers.
+	 * <p>
 	 * @param button		Button template
 	 * @param handler		Event handler
 	 */
 	public void bind(Button button, Runnable handler) {
-		final Consumer<Button> adapter = event -> {
-			if(button.matches(event)) {
-				handler.run();
-			}
-		};
-		bindLocal(button.type(), adapter);
+		final Consumer<Button> adapter = ignored -> handler.run();
+		bindButton(button, adapter);
 	}
 
 	/**
 	 * Binds a button to a toggle handler.
 	 * @param button		Button template
 	 * @param handler		Toggle handler
+	 * @see #bind(Button, Runnable)
 	 */
 	public void bind(Button button, Button.ToggleHandler handler) {
-		final Consumer<Button> adapter = event -> {
-			if(button.matches(event)) {
-				handler.handle(event.action() == Action.PRESS);
-			}
-		};
-		bindLocal(button.type(), adapter);
+		final Consumer<Button> adapter = event -> handler.handle(event.action() == Action.PRESS);
+		bindButton(button, adapter);
 	}
 
 	/**
@@ -203,7 +224,7 @@ public class ActionBindings implements Consumer<Event> {
 
 	/**
 	 * Clears <b>all</b> bindings.
-	 * Note that set of registered action handlers is unchanged.
+	 * Note that the set of registered action handlers is unchanged.
 	 */
 	public void clear() {
 		bindings.clear();
@@ -214,9 +235,25 @@ public class ActionBindings implements Consumer<Event> {
 	public void accept(Event e) {
 		final Consumer<Event> handler = bindings.get(e.type());
 		if(handler == null) {
+			if(e instanceof ModifiedButton mod) {
+				accept(mod);
+			}
+		}
+		else {
+			handler.accept(e);
+		}
+	}
+
+	/**
+	 * Handles a modified button by trying to delegate to the default button.
+	 */
+	private void accept(ModifiedButton button) {
+		final Button def = new DefaultButton(button.id(), button.action());
+		final Consumer<Event> handler = bindings.get(def.type());
+		if(handler == null) {
 			return;
 		}
-		handler.accept(e);
+		handler.accept(def);
 	}
 
 	@Override
