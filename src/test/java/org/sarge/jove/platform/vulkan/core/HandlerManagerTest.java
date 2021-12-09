@@ -25,8 +25,8 @@ import org.sarge.jove.platform.vulkan.core.HandlerManager.Builder;
 import org.sarge.jove.platform.vulkan.core.HandlerManager.Handler;
 import org.sarge.jove.platform.vulkan.core.HandlerManager.Message;
 import org.sarge.jove.platform.vulkan.core.HandlerManager.MessageCallback;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;

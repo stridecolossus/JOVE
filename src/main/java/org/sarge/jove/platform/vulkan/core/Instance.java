@@ -16,8 +16,8 @@ import org.sarge.jove.platform.vulkan.VkExtensionProperties;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.common.Version;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Function;

@@ -8,6 +8,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;

@@ -5,7 +5,6 @@ import static org.sarge.lib.util.Check.notEmpty;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  * A <i>button</i> defines a toggle event such as a keyboard key or mouse button.
@@ -61,9 +60,7 @@ public interface Button extends Event {
 	static String name(Object... tokens) {
 		return Arrays
 				.stream(tokens)
-				.filter(Objects::nonNull)
 				.map(String::valueOf)
-				.filter(Predicate.not(String::isEmpty))
 				.collect(joining(DELIMITER));
 	}
 

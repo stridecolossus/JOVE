@@ -25,7 +25,7 @@ public class JoystickDeviceTest extends AbstractJoystickTest {
 	@BeforeEach
 	void before() {
 		handler = mock(Consumer.class);
-		dev = new JoystickDevice(1, "name", lib);
+		dev = new JoystickDevice(1, "name", desktop);
 	}
 
 	@Test
@@ -72,7 +72,7 @@ public class JoystickDeviceTest extends AbstractJoystickTest {
 		assertNotNull(button);
 
 		// Check initialised to default
-		assertEquals(Action.PRESS, button.action());
+		assertEquals(Action.RELEASE, button.action());
 	}
 
 	@Test

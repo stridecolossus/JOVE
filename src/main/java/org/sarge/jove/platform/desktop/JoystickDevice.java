@@ -24,7 +24,7 @@ import com.sun.jna.ptr.IntByReference;
 public class JoystickDevice implements Device {
 	private final int id;
 	private final String name;
-	private final DesktopLibraryJoystick lib;
+	private final Desktop desktop;
 	private final JoystickAxis[] axes;
 	private final JoystickButtonSource buttons;
 
@@ -32,14 +32,14 @@ public class JoystickDevice implements Device {
 	 * Constructor.
 	 * @param id			Index
 	 * @param name			Joystick name
-	 * @param lib			GLFW library
+	 * @param desktop		Desktop service
 	 */
-	JoystickDevice(int id, String name, DesktopLibraryJoystick lib) {
+	JoystickDevice(int id, String name, Desktop desktop) {
 		this.id = Check.range(id, 0, 16);
 		this.name = notEmpty(name);
-		this.lib = notNull(lib);
+		this.desktop = notNull(desktop);
 		this.axes = initAxes();
-		this.buttons = new JoystickButtonSource(id, lib);
+		this.buttons = new JoystickButtonSource(id, desktop);
 	}
 
 	/**
@@ -110,8 +110,8 @@ public class JoystickDevice implements Device {
 	 * Queries the axis values for this joystick.
 	 */
 	private float[] getAxisArray() {
-		final IntByReference count = new IntByReference();
-		final Pointer ptr = lib.glfwGetJoystickAxes(id, count);
+		final IntByReference count = desktop.factory().integer();
+		final Pointer ptr = desktop.library().glfwGetJoystickAxes(id, count);
 		return ptr.getFloatArray(0, count.getValue());
 	}
 

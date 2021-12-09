@@ -19,8 +19,10 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.WindowListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowResizeListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowStateListener;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class WindowTest {
 	private Window window;
@@ -107,6 +109,12 @@ public class WindowTest {
 
 	@Test
 	void surface() {
+		// Init reference factory
+		final ReferenceFactory factory = mock(ReferenceFactory.class);
+		when(desktop.factory()).thenReturn(factory);
+		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(1)));
+
+		// Retrieve window surface
 		final Handle instance = new Handle(new Pointer(2));
 		final Handle surface = window.surface(instance);
 		assertNotNull(surface);

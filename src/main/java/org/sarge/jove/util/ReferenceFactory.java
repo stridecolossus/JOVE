@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.util;
+package org.sarge.jove.util;
 
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;

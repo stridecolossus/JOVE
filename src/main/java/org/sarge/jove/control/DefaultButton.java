@@ -45,7 +45,7 @@ public class DefaultButton extends AbstractButton {
 	 * @param id 			Button identifier
 	 * @param action		Button action
 	 */
-	protected DefaultButton(String id, Action action) {
+	public DefaultButton(String id, Action action) {
 		super(id);
 		this.action = notNull(action);
 	}

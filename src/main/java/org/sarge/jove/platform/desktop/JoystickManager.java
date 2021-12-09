@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +26,7 @@ public class JoystickManager {
 		void connect(JoystickDevice joystick, boolean connected);
 	}
 
-	private final DesktopLibraryJoystick lib;
+	private final Desktop desktop;
 	private final Collection<JoystickDevice> devices = new ArrayList<>();
 
 	/**
@@ -32,7 +34,7 @@ public class JoystickManager {
 	 * @param desktop Desktop service
 	 */
 	public JoystickManager(Desktop desktop) {
-		this.lib = desktop.library();
+		this.desktop = notNull(desktop);
 		init();
 	}
 
@@ -40,6 +42,7 @@ public class JoystickManager {
 	 * Initialises devices.
 	 */
 	private void init() {
+		final DesktopLibraryJoystick lib = desktop.library();
 		IntStream
 				.range(0, 16)
 				.filter(lib::glfwJoystickPresent)
@@ -53,8 +56,8 @@ public class JoystickManager {
 	 * @return New joystick
 	 */
 	private JoystickDevice create(int id) {
-		final String name = lib.glfwGetJoystickName(id);
-		return new JoystickDevice(id, name, lib);
+		final String name = desktop.library().glfwGetJoystickName(id);
+		return new JoystickDevice(id, name, desktop);
 	}
 
 	/**
@@ -97,6 +100,7 @@ public class JoystickManager {
 	 */
 	public void listener(ConnectionListener listener) {
 		// Disable listener
+		final DesktopLibraryJoystick lib = desktop.library();
 		if(listener == null) {
 			lib.glfwSetJoystickCallback(null);
 			return;

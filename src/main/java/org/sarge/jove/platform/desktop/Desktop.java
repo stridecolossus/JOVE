@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
@@ -72,6 +73,7 @@ public class Desktop {
 	}
 
 	private final DesktopLibrary lib;
+	private final ReferenceFactory factory = ReferenceFactory.DEFAULT;
 
 	/**
 	 * Constructor.
@@ -86,6 +88,13 @@ public class Desktop {
 	 */
 	DesktopLibrary library() {
 		return lib;
+	}
+
+	/**
+	 * @return Reference factory
+	 */
+	ReferenceFactory factory() {
+		return factory;
 	}
 
 	/**
@@ -114,7 +123,7 @@ public class Desktop {
 	 * @return Vulkan extensions supported by this desktop
 	 */
 	public String[] extensions() {
-		final IntByReference size = new IntByReference();
+		final IntByReference size = factory.integer();
 		final Pointer ptr = lib.glfwGetRequiredInstanceExtensions(size);
 		return ptr.getStringArray(0, size.getValue());
 	}

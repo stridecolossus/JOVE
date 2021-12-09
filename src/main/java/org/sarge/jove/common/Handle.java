@@ -18,6 +18,7 @@ public final class Handle {
 	 */
 	public Handle(Pointer ptr) {
 		this(Pointer.nativeValue(ptr));
+		// TODO - ptr is often NULL in unit-tests, should we check here?
 	}
 
 	/**

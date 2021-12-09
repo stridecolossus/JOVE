@@ -11,6 +11,7 @@ import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.DefaultButton;
+import org.sarge.jove.control.DefaultButton.Action;
 import org.sarge.jove.control.Event.AbstractSource;
 import org.sarge.jove.control.Hat;
 
@@ -23,7 +24,7 @@ import com.sun.jna.ptr.IntByReference;
  */
 public class JoystickButtonSource extends AbstractSource<Button> {
 	private final int id;
-	private final DesktopLibraryJoystick lib;
+	private final Desktop desktop;
 	private final Button[] buttons;
 	private final Hat[] hats;
 	private final Map<Button, Byte> values = new HashMap<>();
@@ -31,11 +32,11 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 	/**
 	 * Constructor.
 	 * @param id		Joystick ID
-	 * @param lib		GLFW library
+	 * @param desktop	Desktop service
 	 */
-	JoystickButtonSource(int id, DesktopLibraryJoystick lib) {
+	JoystickButtonSource(int id, Desktop desktop) {
 		this.id = zeroOrMore(id);
-		this.lib = notNull(lib);
+		this.desktop = notNull(desktop);
 		this.buttons = initButtons();
 		this.hats = initHats();
 	}
@@ -51,7 +52,7 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 		final Button[] buttons = IntStream
 				.range(0, values.length)
 				.mapToObj(id -> Button.name("Button", id))
-				.map(DefaultButton::new)
+				.map(name -> new DefaultButton(name, Action.RELEASE))
 				.toArray(Button[]::new);
 
 		// Init button states
@@ -65,8 +66,8 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 	 * Queries the button values for this joystick.
 	 */
 	private byte[] getButtonArray() {
-		final IntByReference count = new IntByReference();
-		final Pointer ptr = lib.glfwGetJoystickButtons(id, count);
+		final IntByReference count = desktop.factory().integer();
+		final Pointer ptr = desktop.library().glfwGetJoystickButtons(id, count);
 		return ptr.getByteArray(0, count.getValue());
 	}
 
@@ -102,8 +103,8 @@ public class JoystickButtonSource extends AbstractSource<Button> {
 	 * Queries the hat values for this joystick.
 	 */
 	private byte[] getHatArray() {
-		final IntByReference count = new IntByReference();
-		final Pointer ptr = lib.glfwGetJoystickHats(id, count);
+		final IntByReference count = desktop.factory().integer();
+		final Pointer ptr = desktop.library().glfwGetJoystickHats(id, count);
 		return ptr.getByteArray(0, count.getValue());
 	}
 

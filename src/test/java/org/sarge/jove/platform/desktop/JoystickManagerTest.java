@@ -14,38 +14,18 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
 import org.sarge.jove.platform.desktop.JoystickManager.ConnectionListener;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-
-public class JoystickManagerTest {
+public class JoystickManagerTest extends AbstractJoystickTest {
 	private JoystickDevice dev;
-	private DesktopLibrary lib;
 	private JoystickManager manager;
 
 	@BeforeEach
 	void before() {
-		// Init GLFW library
-		lib = mock(DesktopLibrary.class);
-
-		// Init joystick API methods
-		final IntByReference count = new IntByReference() {
-			@Override
-			public boolean equals(Object obj) {
-				return true;
-			}
-		};
-		when(lib.glfwGetJoystickAxes(1, count)).thenReturn(new Pointer(0));
-		when(lib.glfwGetJoystickButtons(1, count)).thenReturn(new Pointer(0));
-		when(lib.glfwGetJoystickHats(1, count)).thenReturn(new Pointer(0));
-
 		// Create a joystick
-		dev = new JoystickDevice(1, "name", lib);
+		dev = new JoystickDevice(1, "name", desktop);
 		when(lib.glfwJoystickPresent(1)).thenReturn(true);
 		when(lib.glfwGetJoystickName(1)).thenReturn("name");
 
 		// Create manager
-		final Desktop desktop = mock(Desktop.class);
-		when(desktop.library()).thenReturn(lib);
 		manager = new JoystickManager(desktop);
 	}
 

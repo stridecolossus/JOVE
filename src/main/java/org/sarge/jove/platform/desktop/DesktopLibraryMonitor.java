@@ -14,7 +14,7 @@ interface DesktopLibraryMonitor {
 	 * GLFW display mode.
 	 */
 	@FieldOrder({"width", "height", "red", "green", "blue", "refresh"})
-	class FrameworkDisplayMode extends Structure {
+	class DesktopDisplayMode extends Structure {
 		public int width;
 		public int height;
 		public int red;
@@ -25,7 +25,7 @@ interface DesktopLibraryMonitor {
 
 	/**
 	 * @param count Number of monitors
-	 * @return Monitors
+	 * @return Pointer to array of monitors
 	 */
 	Pointer glfwGetMonitors(IntByReference count);
 
@@ -34,13 +34,13 @@ interface DesktopLibraryMonitor {
 	 * @param count			Number of modes
 	 * @return Display modes for the given monitor
 	 */
-	FrameworkDisplayMode glfwGetVideoModes(Pointer monitor, IntByReference count);
+	DesktopDisplayMode glfwGetVideoModes(Pointer monitor, IntByReference count);
 
 	/**
 	 * @param monitor Monitor
 	 * @return Current display mode of the given monitor
 	 */
-	FrameworkDisplayMode glfwGetVideoMode(Pointer monitor);
+	DesktopDisplayMode glfwGetVideoMode(Monitor monitor);
 
 	/**
 	 * @param monitor		Monitor
@@ -54,8 +54,4 @@ interface DesktopLibraryMonitor {
 	 * @return Monitor name
 	 */
 	String glfwGetMonitorName(Pointer monitor);
-
-	// TODO
-	// - gamma ramp
-	// - changes callback
 }

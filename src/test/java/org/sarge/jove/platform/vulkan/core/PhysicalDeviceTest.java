@@ -28,7 +28,7 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;

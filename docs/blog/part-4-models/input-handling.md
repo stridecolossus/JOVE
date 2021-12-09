@@ -753,15 +753,19 @@ interface Axis {
 
 ### Modified Buttons
 
-The final piece of functionality in the bindings class is support for _button templates_ to allow the following logic to be implemented:
+The final piece of functionality in the bindings class is support for _button templates_ to implement event switching logic:
 
-1. Find the exact matching binding for a button and the keyboard modifiers.
+1. Find the exact matching binding for a button event and its keyboard modifiers.
 
-2. Otherwise find a binding that matches just the button (ignoring the modifiers).
+2. Or find the binding that matches just the button (ignoring the modifiers).
+
+3. Otherwise ignore the event.
 
 This logic handles the cases for an event where the modifier mask is irrelevant (i.e. a _default_ button) or where bindings are present for both a default button __and__ a _modified button_ binding.
 
-First the button interface is modified with a match test:
+Note that we assume that applications would not require matching by button action (i.e. the switching logic only applies to the keyboard modifiers) or would simply bind the entire keyboard device, e.g. for a text editor.
+
+To support button template the button interface is first modified with a match test:
 
 ```java
 public interface Button extends Event {
@@ -801,7 +805,7 @@ public boolean matches(Button button) {
 }
 ```
 
-Note that this test matches only the sub-set of the modifiers in the template.  For example, a button with `SHIFT` and `CONTROL` modifiers is matched by a template with just `SHIFT`.
+Note that this test matches the sub-set of the modifiers in the template.  For example, a button event with `SHIFT` and `CONTROL` modifiers is matched by a template with just `SHIFT`.
 
 In the bindings class the bind variants for buttons delegate to the following helper which applies the match test:
 
@@ -847,13 +851,21 @@ private void accept(ModifiedButton button) {
 
 The new event handling framework and the action bindings class should satisfy the requirements we identified at the start of the chapter:
 
-* The GLFW specifics are now abstracted away (and theoretically could be replaced by an alternative implementation).
+* The GLFW specifics are now largely abstracted away (and theoretically could be replaced by an alternative implementation).
 
-* The event-handling logic is separated from the application code, e.g. binding ESCAPE to the stop method.
+* The event-handling logic is separated from the application code, e.g. binding the ESCAPE key to an arbitrary stop method.
 
 * Binding events to handlers or methods is relatively concise and does not require any casting or switching logic.
 
-Devices that are implemented using GLFW query methods (such as a gamepad controller or joystick) will be addressed in a later chapter.
+There are still further use-cases that will be implemented in later chapters:
+
+* The remaining event types, e.g. window enter/leave.
+
+* Devices using GLFW query methods such as a joystick.
+
+* Multi-position buttons such as joystick hats and gamepad controllers.
+
+* A persistence mechanism for the action bindings.
 
 ---
 

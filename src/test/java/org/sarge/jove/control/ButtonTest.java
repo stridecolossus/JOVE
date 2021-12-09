@@ -3,7 +3,6 @@ package org.sarge.jove.control;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,7 @@ import org.sarge.jove.control.Button.AbstractButton;
 public class ButtonTest {
 	@Test
 	void name() {
-		assertEquals("one-2", Button.name("one", 2, StringUtils.EMPTY, null));
+		assertEquals("one-2", Button.name("one", 2));
 	}
 
 	@Nested

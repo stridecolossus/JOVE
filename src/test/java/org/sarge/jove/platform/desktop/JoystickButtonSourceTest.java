@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.DefaultButton;
+import org.sarge.jove.control.DefaultButton.Action;
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Hat;
 
@@ -23,9 +24,9 @@ public class JoystickButtonSourceTest extends AbstractJoystickTest {
 
 	@BeforeEach
 	void before() {
-		src = new JoystickButtonSource(1, lib);
+		src = new JoystickButtonSource(1, desktop);
 		handler = mock(Consumer.class);
-		button = new DefaultButton("Button-0");
+		button = new DefaultButton("Button-0", Action.RELEASE);
 		hat = new Hat("Hat-0");
 	}
 

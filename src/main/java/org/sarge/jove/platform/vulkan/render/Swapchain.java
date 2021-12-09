@@ -28,12 +28,12 @@ import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;

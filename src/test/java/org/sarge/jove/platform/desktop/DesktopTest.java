@@ -32,6 +32,7 @@ public class DesktopTest {
 	@Test
 	void constructor() {
 		assertEquals(lib, desktop.library());
+		assertNotNull(desktop.factory());
 		verify(lib).glfwInitHint(0x00050001, 0);
 	}
 

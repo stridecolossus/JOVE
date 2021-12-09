@@ -15,8 +15,8 @@ import org.sarge.jove.platform.vulkan.VkApplicationInfo;
 import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.core.Instance.Builder;
-import org.sarge.jove.platform.vulkan.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
