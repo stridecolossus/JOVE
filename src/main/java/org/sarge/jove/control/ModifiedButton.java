@@ -53,11 +53,11 @@ public class ModifiedButton extends DefaultButton {
 	private final int mods;
 
 	/**
-	 * Constructor.
+	 * Constructor for a button without modifiers.
 	 * @param id Button identifier
 	 */
 	public ModifiedButton(String id) {
-		this(id, null, 0);
+		this(id, Action.PRESS, 0);
 	}
 
 	/**

@@ -10,13 +10,15 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis.AxisEvent;
+import org.sarge.jove.control.Axis.Handler;
+import org.sarge.jove.control.DefaultButton.Action;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.lib.util.Check;
 
 /**
  * An <i>action bindings</i> is a mutable set of mappings that bind input events to <i>action</i> handlers.
  * <p>
- * This class provides convenience <i>bind</i> variants to bind events to common handler methods, e.g. {@link #bind(Axis, org.sarge.jove.control.Axis.Handler)} to bind axis events.
+ * This class provides convenience <i>bind</i> variants to bind events to common handler methods, e.g. {@link #bind(Axis, Handler)} to bind axis events.
  * <p>
  * Example:
  * <pre>
@@ -126,14 +128,28 @@ public class ActionBindings implements Consumer<Event> {
 	}
 
 	/**
-	 * Binds a button <i>template</i> to an action handler.
-	 * @param button		Button
+	 * Binds a button to an action handler.
+	 * @param button		Button template
 	 * @param handler		Event handler
 	 */
 	public void bind(Button button, Runnable handler) {
 		final Consumer<Button> adapter = event -> {
 			if(button.matches(event)) {
 				handler.run();
+			}
+		};
+		bindLocal(button.type(), adapter);
+	}
+
+	/**
+	 * Binds a button to a toggle handler.
+	 * @param button		Button template
+	 * @param handler		Toggle handler
+	 */
+	public void bind(Button button, Button.ToggleHandler handler) {
+		final Consumer<Button> adapter = event -> {
+			if(button.matches(event)) {
+				handler.handle(event.action() == Action.PRESS);
 			}
 		};
 		bindLocal(button.type(), adapter);

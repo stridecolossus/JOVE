@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.DefaultButton.Action;
 import org.sarge.jove.control.ModifiedButton.Modifier;
@@ -29,6 +30,7 @@ public class ModifiedButtonTest {
 		assertEquals("button-PRESS-SHIFT-CONTROL", button.name());
 	}
 
+	@DisplayName("Resolved button should retain the modifiers")
 	@Test
 	void resolve() {
 		final ModifiedButton resolved = button.resolve(0);
@@ -38,6 +40,7 @@ public class ModifiedButtonTest {
 		assertEquals("button-RELEASE-SHIFT-CONTROL", resolved.name());
 	}
 
+	@DisplayName("Resolved modifiers should replace the modifiers")
 	@Test
 	void resolveModifiers() {
 		final ModifiedButton resolved = button.resolve(1, Modifier.ALT.value());
@@ -47,35 +50,21 @@ public class ModifiedButtonTest {
 		assertEquals("button-PRESS-ALT", resolved.name());
 	}
 
-	@Test
-	void matches() {
-		assertEquals(true, button.matches(button));
-		assertEquals(false, new ModifiedButton("button").matches(button));
-		assertEquals(false, new ModifiedButton("other").matches(button));
-	}
-
-	@Test
-	void matchesAction() {
-		assertEquals(true, new DefaultButton("button", Action.PRESS).matches(button));
-		assertEquals(false, new DefaultButton("button", Action.RELEASE).matches(button));
-		assertEquals(false, new DefaultButton("button", Action.REPEAT).matches(button));
-	}
-
+	@DisplayName("Modified button template should match buttons with the same id, action and modifiers")
 	@Test
 	void matchesModifiers() {
-		assertEquals(true, new ModifiedButton("button", null, MASK).matches(button));
-		assertEquals(false, new ModifiedButton("button", null, 0).matches(button));
-	}
-	@Test
-	void matchesModifierMasked() {
-		assertEquals(true, new ModifiedButton("button", null, MASK | Modifier.ALT.value()).matches(button));
-		assertEquals(false, new ModifiedButton("button", null, Modifier.SHIFT.value() | Modifier.ALT.value()).matches(button));
-	}
-
-	@Test
-	void matchesActionModifiers() {
-		assertEquals(true, new ModifiedButton("button", Action.PRESS, MASK).matches(button));
+		assertEquals(true, button.matches(button));
+		assertEquals(true, button.matches(new ModifiedButton("button", Action.PRESS, MASK)));
+		assertEquals(false, new ModifiedButton("button").matches(button));
+		assertEquals(false, new ModifiedButton("other", Action.PRESS, MASK).matches(button));
 		assertEquals(false, new ModifiedButton("button", Action.PRESS, 0).matches(button));
 		assertEquals(false, new ModifiedButton("button", Action.RELEASE, MASK).matches(button));
+	}
+
+	@DisplayName("Modified button template should match buttons with a super-set of the modifiers")
+	@Test
+	void matchesModifiersMasked() {
+		assertEquals(true, new ModifiedButton("button", Action.PRESS, MASK | Modifier.ALT.value()).matches(button));
+		assertEquals(false, new ModifiedButton("button", Action.PRESS, Modifier.SHIFT.value() | Modifier.ALT.value()).matches(button));
 	}
 }

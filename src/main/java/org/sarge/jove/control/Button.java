@@ -68,6 +68,18 @@ public interface Button extends Event {
 	}
 
 	/**
+	 * A <i>toggle handler</i> defines the signature for a method bound to a toggled button.
+	 */
+	@FunctionalInterface
+	interface ToggleHandler {
+		/**
+		 * Handles a toggle button event.
+		 * @param pressed Whether the button is pressed
+		 */
+		void handle(boolean pressed);
+	}
+
+	/**
 	 * Skeleton implementation.
 	 */
 	abstract class AbstractButton implements Button {

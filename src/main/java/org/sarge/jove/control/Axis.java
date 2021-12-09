@@ -15,7 +15,7 @@ public interface Axis extends Source<AxisEvent> {
 	float value();
 
 	/**
-	 * Handler for an axis event.
+	 * An <i>axis handler</i> defines the signature for methods to bind to an axis.
 	 */
 	@FunctionalInterface
 	interface Handler {

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.DefaultButton.Action;
 
@@ -25,11 +26,13 @@ public class DefaultButtonTest {
 		assertEquals("button-PRESS", button.name());
 	}
 
+	@DisplayName("Action code should map to the enumeration")
 	@Test
 	void invalidAction() {
 		assertThrows(ArrayIndexOutOfBoundsException.class, () -> Action.map(999));
 	}
 
+	@DisplayName("Button template should match buttons with the same id and action")
 	@Test
 	void matches() {
 		assertEquals(true, button.matches(button));
@@ -37,14 +40,7 @@ public class DefaultButtonTest {
 		assertEquals(false, button.matches(new DefaultButton("other")));
 	}
 
-	@Test
-	void matchesAction() {
-		assertEquals(true, new DefaultButton(BUTTON, null).matches(button));
-		assertEquals(true, new DefaultButton(BUTTON, Action.PRESS).matches(button));
-		assertEquals(false, new DefaultButton(BUTTON, Action.RELEASE).matches(button));
-		assertEquals(false, new DefaultButton(BUTTON, Action.REPEAT).matches(button));
-	}
-
+	@DisplayName("Resolved button should replace the action")
 	@Test
 	void resolve() {
 		final Button resolved = button.resolve(0);
@@ -53,6 +49,7 @@ public class DefaultButtonTest {
 		assertEquals("button-RELEASE", resolved.name());
 	}
 
+	@DisplayName("Resolved button should replace the action is the same button")
 	@Test
 	void resolveSelf() {
 		assertEquals(button, button.resolve(1));
