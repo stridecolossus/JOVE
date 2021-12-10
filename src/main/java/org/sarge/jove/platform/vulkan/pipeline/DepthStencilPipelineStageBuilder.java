@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.VkCompareOp;
 import org.sarge.jove.platform.vulkan.VkPipelineDepthStencilStateCreateInfo;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
@@ -11,10 +12,11 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @see VkPipelineDepthStencilStateCreateInfo
  * @author Sarge
  */
-public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipelineDepthStencilStateCreateInfo> {
+public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo> {
 	private final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
 
-	public DepthStencilStageBuilder() {
+	DepthStencilPipelineStageBuilder(Builder parent) {
+		super(parent);
 		enable(false);
 		write(true);
 		compare(VkCompareOp.LESS_OR_EQUAL);
@@ -29,7 +31,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 	 * Sets whether depth-testing is enabled (default is {@code false}).
 	 * @param enable Whether depth-test is enabled
 	 */
-	public DepthStencilStageBuilder enable(boolean enable) {
+	public DepthStencilPipelineStageBuilder enable(boolean enable) {
 		info.depthTestEnable = VulkanBoolean.of(enable);
 		return this;
 	}
@@ -38,7 +40,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 	 * Sets whether to write to the depth buffer (default is {@code true}).
 	 * @param write Whether to write to the depth buffer
 	 */
-	public DepthStencilStageBuilder write(boolean write) {
+	public DepthStencilPipelineStageBuilder write(boolean write) {
 		info.depthWriteEnable = VulkanBoolean.of(write);
 		return this;
 	}
@@ -47,7 +49,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 	 * Sets the depth-test comparison function (default is {@link VkCompareOp#LESS}).
 	 * @param op Depth-test function
 	 */
-	public DepthStencilStageBuilder compare(VkCompareOp op) {
+	public DepthStencilPipelineStageBuilder compare(VkCompareOp op) {
 		info.depthCompareOp = notNull(op);
 		return this;
 	}

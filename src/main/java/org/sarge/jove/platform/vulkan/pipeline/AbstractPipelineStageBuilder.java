@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 
 /**
@@ -9,15 +7,15 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
  * @param <T> Return type
  * @author Sarge
  */
-abstract class AbstractPipelineBuilder<T> {
+abstract class AbstractPipelineStageBuilder<T> {
 	private Builder parent;
 
 	/**
-	 * Sets the parent builder.
-	 * @param parent Parent
+	 * Constructor.
+	 * @param parent Parent builder
 	 */
-	final void parent(Builder parent) {
-		this.parent = notNull(parent);
+	protected AbstractPipelineStageBuilder(Builder parent) {
+		this.parent = parent;
 	}
 
 	/**

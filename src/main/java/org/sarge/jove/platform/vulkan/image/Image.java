@@ -132,7 +132,7 @@ public interface Image extends NativeObject {
 		private ImageDescriptor descriptor;
 		private MemoryProperties<VkImageUsage> props;
 		private final Set<VkImageCreateFlag> flags = new HashSet<>();
-		private VkSampleCountFlag samples = VkSampleCountFlag.COUNT_1;
+		private VkSampleCount samples = VkSampleCount.COUNT_1;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
 		private VkImageLayout layout = VkImageLayout.UNDEFINED;
 
@@ -176,7 +176,7 @@ public interface Image extends NativeObject {
 		 * @param samples Samples-per-texel
 		 */
 		public Builder samples(int samples) {
-			this.samples = IntegerEnumeration.mapping(VkSampleCountFlag.class).map(samples);
+			this.samples = IntegerEnumeration.mapping(VkSampleCount.class).map(samples);
 			return this;
 		}
 

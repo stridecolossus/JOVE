@@ -31,7 +31,7 @@ public class VkAttachmentDescription2KHR extends VulkanStructure {
 	public Pointer pNext;
 	public int flags;
 	public VkFormat format;
-	public VkSampleCountFlag samples;
+	public VkSampleCount samples;
 	public VkAttachmentLoadOp loadOp;
 	public VkAttachmentStoreOp storeOp;
 	public VkAttachmentLoadOp stencilLoadOp;

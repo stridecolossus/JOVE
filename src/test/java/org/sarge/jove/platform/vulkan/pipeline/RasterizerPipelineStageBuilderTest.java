@@ -10,12 +10,12 @@ import org.sarge.jove.platform.vulkan.VkFrontFace;
 import org.sarge.jove.platform.vulkan.VkPolygonMode;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-public class RasterizerStageBuilderTest {
-	private RasterizerStageBuilder builder;
+public class RasterizerPipelineStageBuilderTest {
+	private RasterizerPipelineStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new RasterizerStageBuilder();
+		builder = new RasterizerPipelineStageBuilder(null);
 	}
 
 	@Test

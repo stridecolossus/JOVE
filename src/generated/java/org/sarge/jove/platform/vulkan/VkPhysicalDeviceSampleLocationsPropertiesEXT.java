@@ -26,7 +26,7 @@ public class VkPhysicalDeviceSampleLocationsPropertiesEXT extends VulkanStructur
 
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
 	public Pointer pNext;
-	public VkSampleCountFlag sampleLocationSampleCounts;
+	public VkSampleCount sampleLocationSampleCounts;
 	public VkExtent2D maxSampleLocationGridSize;
 	public float[] sampleLocationCoordinateRange = new float[2];
 	public int sampleLocationSubPixelBits;

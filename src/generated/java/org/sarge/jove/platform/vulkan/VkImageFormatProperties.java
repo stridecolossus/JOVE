@@ -23,6 +23,6 @@ public class VkImageFormatProperties extends VulkanStructure {
 	public VkExtent3D maxExtent;
 	public int maxMipLevels;
 	public int maxArrayLayers;
-	public VkSampleCountFlag sampleCounts;
+	public VkSampleCount sampleCounts;
 	public long maxResourceSize;
 }

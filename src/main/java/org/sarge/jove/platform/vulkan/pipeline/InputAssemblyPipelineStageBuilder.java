@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkPipelineInputAssemblyStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
@@ -10,15 +11,19 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @see VkPipelineInputAssemblyStateCreateInfo
  * @author Sarge
  */
-public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelineInputAssemblyStateCreateInfo> {
+public class InputAssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo> {
 	private VkPrimitiveTopology topology = VkPrimitiveTopology.TRIANGLE_STRIP;
 	private boolean restart;
+
+	InputAssemblyPipelineStageBuilder(Builder parent) {
+		super(parent);
+	}
 
 	/**
 	 * Sets the primitive topology.
 	 * @param primitive Primitive
 	 */
-	public InputAssemblyStageBuilder topology(Primitive primitive) {
+	public InputAssemblyPipelineStageBuilder topology(Primitive primitive) {
 		this.topology = primitive.topology();
 		return this;
 	}
@@ -27,7 +32,7 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
 	 * Sets whether primitive restart is enabled.
 	 * @param restart Whether restart is enabled
 	 */
-	public InputAssemblyStageBuilder restart(boolean restart) {
+	public InputAssemblyPipelineStageBuilder restart(boolean restart) {
 		this.restart = restart;
 		return this;
 	}

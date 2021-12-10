@@ -7,7 +7,7 @@ import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
 import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
+import org.sarge.jove.platform.vulkan.VkSampleCount;
 
 /**
  * An <i>attachment</i> defines a target for a render pass such as a colour or depth-stencil image.
@@ -68,7 +68,7 @@ public class Attachment {
 		private VkAttachmentDescription desc = new VkAttachmentDescription();
 
 		public Builder() {
-			samples(VkSampleCountFlag.COUNT_1);
+			samples(VkSampleCount.COUNT_1);
 			load(VkAttachmentLoadOp.DONT_CARE);
 			store(VkAttachmentStoreOp.DONT_CARE);
 			stencilLoad(VkAttachmentLoadOp.DONT_CARE);
@@ -90,7 +90,7 @@ public class Attachment {
 		 * Sets the number of samples.
 		 * @param samples Number of samples
 		 */
-		public Builder samples(VkSampleCountFlag samples) {
+		public Builder samples(VkSampleCount samples) {
 			desc.samples = notNull(samples);
 			return this;
 		}

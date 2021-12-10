@@ -12,7 +12,6 @@ import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -22,7 +21,6 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
@@ -130,25 +128,16 @@ public class Pipeline extends AbstractVulkanObject {
 		private RenderPass pass;
 		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
 
-		// Fixed function builders
-		private final VertexInputStageBuilder input = new VertexInputStageBuilder();
-		private final InputAssemblyStageBuilder assembly = new InputAssemblyStageBuilder();
-		// TODO - tessellation
-		private final ViewportStageBuilder viewport = new ViewportStageBuilder();
-		private final RasterizerStageBuilder raster = new RasterizerStageBuilder();
-		private final DepthStencilStageBuilder depth = new DepthStencilStageBuilder();
-		// TODO - multi sample
-		private final ColourBlendStageBuilder blend = new ColourBlendStageBuilder();
+		// Fixed function stages
+		private final VertexInputPipelineStageBuilder input = new VertexInputPipelineStageBuilder(this);
+		private final InputAssemblyPipelineStageBuilder assembly = new InputAssemblyPipelineStageBuilder(this);
+		private final TesselationPipelineStageBuilder tesselation = new TesselationPipelineStageBuilder(this);
+		private final ViewportPipelineStageBuilder viewport = new ViewportPipelineStageBuilder(this);
+		private final RasterizerPipelineStageBuilder raster = new RasterizerPipelineStageBuilder(this);
+		private final MultiSamplePipelineStageBuilder multi = new MultiSamplePipelineStageBuilder(this);
+		private final DepthStencilPipelineStageBuilder depth = new DepthStencilPipelineStageBuilder(this);
+		private final ColourBlendPipelineStageBuilder blend = new ColourBlendPipelineStageBuilder(this);
 		// TODO - dynamic
-
-		public Builder() {
-			input.parent(this);
-			assembly.parent(this);
-			viewport.parent(this);
-			raster.parent(this);
-			depth.parent(this);
-			blend.parent(this);
-		}
 
 		/**
 		 * Sets the layout for this pipeline.
@@ -180,42 +169,56 @@ public class Pipeline extends AbstractVulkanObject {
 		/**
 		 * @return Builder for the vertex input stage
 		 */
-		public VertexInputStageBuilder input() {
+		public VertexInputPipelineStageBuilder input() {
 			return input;
 		}
 
 		/**
 		 * @return Builder for the input assembly stage
 		 */
-		public InputAssemblyStageBuilder assembly() {
+		public InputAssemblyPipelineStageBuilder assembly() {
 			return assembly;
+		}
+
+		/**
+		 * @return Builder for the tesselation stage
+		 */
+		public TesselationPipelineStageBuilder tesselation() {
+			return tesselation;
 		}
 
 		/**
 		 * @return Builder for the viewport stage
 		 */
-		public ViewportStageBuilder viewport() {
+		public ViewportPipelineStageBuilder viewport() {
 			return viewport;
 		}
 
 		/**
 		 * @return Builder for the rasterizer stage
 		 */
-		public RasterizerStageBuilder rasterizer() {
+		public RasterizerPipelineStageBuilder rasterizer() {
 			return raster;
+		}
+
+		/**
+		 * @return Builder for the multi-sample stage
+		 */
+		public MultiSamplePipelineStageBuilder multi() {
+			return multi;
 		}
 
 		/**
 		 * @return Builder for the depth-stencil stage
 		 */
-		public DepthStencilStageBuilder depth() {
+		public DepthStencilPipelineStageBuilder depth() {
 			return depth;
 		}
 
 		/**
 		 * @return Builder for the colour-blend stage
 		 */
-		public ColourBlendStageBuilder blend() {
+		public ColourBlendPipelineStageBuilder blend() {
 			return blend;
 		}
 
@@ -256,19 +259,16 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.stageCount = shaders.size();
 			pipeline.pStages = StructureHelper.first(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
 
-			// Init fixed function pipeline stages
+			// Init fixed function stages
 			pipeline.pVertexInputState = input.get();
 			pipeline.pInputAssemblyState = assembly.get();
+			pipeline.pTessellationState = tesselation.get();
 			pipeline.pViewportState = viewport.get();
 			pipeline.pRasterizationState = raster.get();
+			pipeline.pMultisampleState = multi.get();
 			pipeline.pDepthStencilState = depth.get();
 			pipeline.pColorBlendState = blend.get();
 			// TODO - check number of blend attachments = framebuffers
-
-			// TODO - multi-sampling
-			pipeline.pMultisampleState = new VkPipelineMultisampleStateCreateInfo();
-			pipeline.pMultisampleState.sampleShadingEnable = VulkanBoolean.FALSE;
-//			pipeline.pMultisampleState.rasterizationSamples = VkSampleCountFlag.VK_SAMPLE_COUNT_1_BIT.value();
 
 			// TODO - derive from pipeline (faster to create, faster to bind if same parent)
 			pipeline.basePipelineHandle = null;			// TODO - from existing pipeline

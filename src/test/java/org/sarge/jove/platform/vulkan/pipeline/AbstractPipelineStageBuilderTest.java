@@ -4,12 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 
-public class AbstractPipelineBuilderTest {
+public class AbstractPipelineStageBuilderTest {
 	@Test
 	void build() {
+		// Create parent builder
+		final Builder parent = mock(Builder.class);
+
 		// Create builder
-		final AbstractPipelineBuilder<Object> builder = new AbstractPipelineBuilder<>() {
+		final AbstractPipelineStageBuilder<Object> builder = new AbstractPipelineStageBuilder<>(parent) {
 			@Override
 			protected Object get() {
 				return null;
@@ -17,8 +21,6 @@ public class AbstractPipelineBuilderTest {
 		};
 
 		// Check parent
-		final Pipeline.Builder parent = mock(Pipeline.Builder.class);
-		builder.parent(parent);
 		assertEquals(parent, builder.build());
 	}
 }

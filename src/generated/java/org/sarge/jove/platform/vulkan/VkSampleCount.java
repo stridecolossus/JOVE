@@ -6,7 +6,7 @@ import org.sarge.jove.util.IntegerEnumeration;
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkSampleCountFlag implements IntegerEnumeration {
+public enum VkSampleCount implements IntegerEnumeration {
  	COUNT_1(1),
  	COUNT_2(2),
  	COUNT_4(4),
@@ -17,7 +17,7 @@ public enum VkSampleCountFlag implements IntegerEnumeration {
 
 	private final int value;
 
-	private VkSampleCountFlag(int value) {
+	private VkSampleCount(int value) {
 		this.value = value;
 	}
 

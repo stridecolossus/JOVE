@@ -23,7 +23,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkAttachmentDescription extends VulkanStructure implements ByReference {
 	public int flags;
 	public VkFormat format;
-	public VkSampleCountFlag samples;
+	public VkSampleCount samples;
 	public VkAttachmentLoadOp loadOp;
 	public VkAttachmentStoreOp storeOp;
 	public VkAttachmentLoadOp stencilLoadOp;

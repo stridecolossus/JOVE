@@ -35,7 +35,7 @@ public class VkImageCreateInfo extends VulkanStructure {
 	public VkExtent3D extent;
 	public int mipLevels;
 	public int arrayLayers;
-	public VkSampleCountFlag samples;
+	public VkSampleCount samples;
 	public VkImageTiling tiling;
 	public int usage;
 	public VkSharingMode sharingMode;

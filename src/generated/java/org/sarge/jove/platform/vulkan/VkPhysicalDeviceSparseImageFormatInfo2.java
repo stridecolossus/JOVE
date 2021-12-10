@@ -27,7 +27,7 @@ public class VkPhysicalDeviceSparseImageFormatInfo2 extends VulkanStructure {
 	public Pointer pNext;
 	public VkFormat format;
 	public VkImageType type;
-	public VkSampleCountFlag samples;
+	public VkSampleCount samples;
 	public VkImageUsage usage;
 	public VkImageTiling tiling;
 }

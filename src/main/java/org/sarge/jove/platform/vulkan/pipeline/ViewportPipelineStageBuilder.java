@@ -9,6 +9,7 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
@@ -18,7 +19,7 @@ import org.sarge.lib.util.Percentile;
  * @see VkPipelineViewportStateCreateInfo
  * @author Sarge
  */
-public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
+public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
 	/**
 	 * Transient viewport descriptor.
 	 */
@@ -35,6 +36,10 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 
 	private boolean flip;
 
+	ViewportPipelineStageBuilder(Builder parent) {
+		super(parent);
+	}
+
 	/**
 	 * Sets whether to flip viewport rectangles (default is {@code false}).
 	 * <p>
@@ -43,7 +48,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	 * <p>
 	 * @param flip Whether to flip viewports
 	 */
-	public ViewportStageBuilder flip(boolean flip) {
+	public ViewportPipelineStageBuilder flip(boolean flip) {
 		this.flip = flip;
 		return this;
 	}
@@ -54,7 +59,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	 * @param min		Minimum depth
 	 * @param max		Maximum depth
 	 */
-	public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
+	public ViewportPipelineStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
 		viewports.add(new Viewport(rect, min, max));
 		return this;
 	}
@@ -63,7 +68,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	 * Adds a viewport rectangle with default min/max depth.
 	 * @param rect Viewport rectangle
 	 */
-	public ViewportStageBuilder viewport(Rectangle rect) {
+	public ViewportPipelineStageBuilder viewport(Rectangle rect) {
 		return viewport(rect, false);
 	}
 
@@ -72,7 +77,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	 * @param rect 			Viewport rectangle
 	 * @param scissor		Whether to add a scissor
 	 */
-	public ViewportStageBuilder viewport(Rectangle rect, boolean scissor) {
+	public ViewportPipelineStageBuilder viewport(Rectangle rect, boolean scissor) {
 		viewport(rect, Percentile.ZERO, Percentile.ONE);
 		if(scissor) {
 			scissor(rect);
@@ -84,7 +89,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 	 * Adds a scissor rectangle.
 	 * @param rect Scissor rectangle
 	 */
-	public ViewportStageBuilder scissor(Rectangle rect) {
+	public ViewportPipelineStageBuilder scissor(Rectangle rect) {
 		scissors.add(notNull(rect));
 		return this;
 	}
@@ -139,7 +144,7 @@ public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineView
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = StructureHelper.first(scissors, VkRect2D.ByReference::new, ViewportStageBuilder::populate);
+		info.pScissors = StructureHelper.first(scissors, VkRect2D.ByReference::new, ViewportPipelineStageBuilder::populate);
 
 		return info;
 	}

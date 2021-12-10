@@ -12,14 +12,14 @@ import org.sarge.jove.platform.vulkan.VkBlendOp;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-public class ColourBlendStageBuilderTest {
+public class ColourBlendPipelineStageBuilderTest {
 	private static final float[] CONSTANTS = {1, 2, 3, 4};
 
-	private ColourBlendStageBuilder builder;
+	private ColourBlendPipelineStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new ColourBlendStageBuilder();
+		builder = new ColourBlendPipelineStageBuilder(null);
 	}
 
 	@Test

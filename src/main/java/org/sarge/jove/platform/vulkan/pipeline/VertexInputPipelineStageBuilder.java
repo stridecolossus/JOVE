@@ -17,6 +17,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkVertexInputAttributeDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputBindingDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.StructureHelper;
 
@@ -25,9 +26,13 @@ import org.sarge.jove.util.StructureHelper;
  * @see VkPipelineVertexInputStateCreateInfo
  * @author Sarge
  */
-public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
+public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo> {
 	private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
 	private final List<AttributeBuilder> attributes = new ArrayList<>();
+
+	VertexInputPipelineStageBuilder(Builder parent) {
+		super(parent);
+	}
 
 	/**
 	 * Starts a new binding.
@@ -48,7 +53,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 	 * <p>
 	 * @param layouts Vertex component layouts
 	 */
-	public VertexInputStageBuilder add(List<Layout> layouts) {
+	public VertexInputPipelineStageBuilder add(List<Layout> layouts) {
 		// Add binding
 		final BindingBuilder binding = new BindingBuilder();
 
@@ -155,7 +160,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 		 * Constructs this input binding.
 		 * @throws IllegalArgumentException for a duplicate binding index or if no vertex attributes are specified
 		 */
-		public VertexInputStageBuilder build() {
+		public VertexInputPipelineStageBuilder build() {
 			// Validate binding description
 			if(bindings.containsKey(index)) throw new IllegalArgumentException("Duplicate binding index: " + index);
 			if(locations.isEmpty()) throw new IllegalArgumentException(String.format("No attributes specified for binding: ", index));
@@ -163,7 +168,7 @@ public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineV
 			// Add binding
 			bindings.put(index, this);
 
-			return VertexInputStageBuilder.this;
+			return VertexInputPipelineStageBuilder.this;
 		}
 	}
 

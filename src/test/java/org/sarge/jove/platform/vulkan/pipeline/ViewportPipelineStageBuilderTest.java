@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.lib.util.Percentile;
 
-public class ViewportStageBuilderTest {
-	private ViewportStageBuilder builder;
+public class ViewportPipelineStageBuilderTest {
+	private ViewportPipelineStageBuilder builder;
 	private Rectangle rect;
 
 	@BeforeEach
 	void before() {
-		builder = new ViewportStageBuilder();
+		builder = new ViewportPipelineStageBuilder(null);
 		rect = new Rectangle(1, 2, 3, 4);
 	}
 

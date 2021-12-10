@@ -12,15 +12,15 @@ import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
 
-public class VertexInputStageBuilderTest {
+public class VertexInputPipelineStageBuilderTest {
 	private static final VkFormat FORMAT = VkFormat.B8G8R8_SINT;
 	private static final int STRIDE = 3 * Float.BYTES;
 
-	private VertexInputStageBuilder builder;
+	private VertexInputPipelineStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new VertexInputStageBuilder();
+		builder = new VertexInputPipelineStageBuilder(null);
 	}
 
 	@Test

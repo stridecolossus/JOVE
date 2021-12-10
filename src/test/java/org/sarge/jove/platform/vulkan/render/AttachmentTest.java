@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
 import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkSampleCountFlag;
+import org.sarge.jove.platform.vulkan.VkSampleCount;
 import org.sarge.jove.platform.vulkan.render.Attachment.Builder;
 
 public class AttachmentTest {
@@ -68,7 +68,7 @@ public class AttachmentTest {
 			attachment.populate(desc);
 
 			assertEquals(COLOUR, desc.format);
-			assertEquals(VkSampleCountFlag.COUNT_1, desc.samples);
+			assertEquals(VkSampleCount.COUNT_1, desc.samples);
 			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);
 			assertEquals(VkAttachmentStoreOp.STORE, desc.storeOp);
 			assertEquals(VkAttachmentLoadOp.DONT_CARE, desc.stencilLoadOp);
@@ -92,7 +92,7 @@ public class AttachmentTest {
 			attachment.populate(desc);
 
 			assertEquals(DEPTH, desc.format);
-			assertEquals(VkSampleCountFlag.COUNT_1, desc.samples);
+			assertEquals(VkSampleCount.COUNT_1, desc.samples);
 			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);
 			assertEquals(VkAttachmentStoreOp.DONT_CARE, desc.storeOp);
 			assertEquals(VkAttachmentLoadOp.CLEAR, desc.stencilLoadOp);

@@ -26,11 +26,10 @@ public class VkPipelineMultisampleStateCreateInfo extends VulkanStructure implem
 	public VkStructureType sType = VkStructureType.PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
-	public int rasterizationSamples = VkSampleCountFlag.COUNT_1.value();
-	public VulkanBoolean sampleShadingEnable = VulkanBoolean.FALSE;
-	public float minSampleShading = 1;
+	public VkSampleCount rasterizationSamples;
+	public VulkanBoolean sampleShadingEnable;
+	public float minSampleShading;
 	public Pointer pSampleMask;
-	public VulkanBoolean alphaToCoverageEnable = VulkanBoolean.FALSE;
-	public VulkanBoolean alphaToOneEnable = VulkanBoolean.FALSE;
-	// TODO - fiddled values above!!!
+	public VulkanBoolean alphaToCoverageEnable;
+	public VulkanBoolean alphaToOneEnable;
 }

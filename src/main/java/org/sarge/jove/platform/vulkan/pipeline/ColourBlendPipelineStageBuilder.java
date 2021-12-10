@@ -13,6 +13,7 @@ import org.sarge.jove.platform.vulkan.VkColorComponent;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
@@ -21,12 +22,16 @@ import org.sarge.jove.util.StructureHelper;
  * Builder for the colour-blend pipeline stage.
  * @author Sarge
  */
-public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineColorBlendStateCreateInfo> {
+public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
 	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponent.values());
 
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 	private final float[] constants = new float[4];
 	private VkLogicOp op;
+
+	ColourBlendPipelineStageBuilder(Builder parent) {
+		super(parent);
+	}
 
 	/**
 	 * Starts a new attachment.
@@ -40,7 +45,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 	 * Sets the global colour blending operation.
 	 * @param op Colour-blending operation
 	 */
-	public ColourBlendStageBuilder operation(VkLogicOp op) {
+	public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
 		this.op = notNull(op);
 		return this;
 	}
@@ -50,7 +55,7 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 	 * @param constants Blending constants array
 	 * @throws IllegalArgumentException if the given array does not contain <b>four</b> values
 	 */
-	public ColourBlendStageBuilder constants(float[] constants) {
+	public ColourBlendPipelineStageBuilder constants(float[] constants) {
 		if(constants.length != this.constants.length) throw new IllegalArgumentException(String.format("Expected exactly %d blend constants", this.constants.length));
 		System.arraycopy(constants, 0, this.constants, 0, constants.length);
 		return this;
@@ -213,8 +218,8 @@ public class ColourBlendStageBuilder extends AbstractPipelineBuilder<VkPipelineC
 		 * Constructs this colour-blend attachment.
 		 * @return Colour-blend builder
 		 */
-		public ColourBlendStageBuilder build() {
-			return ColourBlendStageBuilder.this;
+		public ColourBlendPipelineStageBuilder build() {
+			return ColourBlendPipelineStageBuilder.this;
 		}
 	}
 }

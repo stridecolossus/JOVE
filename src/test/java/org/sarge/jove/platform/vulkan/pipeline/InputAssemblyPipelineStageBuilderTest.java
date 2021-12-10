@@ -9,12 +9,12 @@ import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-public class InputAssemblyStageBuilderTest {
-	private InputAssemblyStageBuilder builder;
+public class InputAssemblyPipelineStageBuilderTest {
+	private InputAssemblyPipelineStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new InputAssemblyStageBuilder();
+		builder = new InputAssemblyPipelineStageBuilder(null);
 	}
 
 	@Test

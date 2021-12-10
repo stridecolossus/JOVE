@@ -8,12 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkCompareOp;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-public class DepthStencilStageBuilderTest {
-	private DepthStencilStageBuilder builder;
+public class DepthStencilPipelineStageBuilderTest {
+	private DepthStencilPipelineStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new DepthStencilStageBuilder();
+		builder = new DepthStencilPipelineStageBuilder(null);
 	}
 
 	@Test
