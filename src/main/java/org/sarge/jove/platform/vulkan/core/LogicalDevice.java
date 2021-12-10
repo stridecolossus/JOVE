@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
@@ -23,12 +24,12 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.util.FloatArray;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
 
-import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.StringArray;
 import com.sun.jna.ptr.PointerByReference;
@@ -141,17 +142,16 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 */
 		private record RequiredQueue(Family family, List<Percentile> priorities) {
 			private void populate(VkDeviceQueueCreateInfo info) {
-				// Allocate contiguous memory block for the priorities
-				final Percentile[] array = priorities.toArray(Percentile[]::new);
-				final Memory mem = new Memory(array.length * Float.BYTES);
-				for(int n = 0; n < array.length; ++n) {
-					mem.setFloat(n * Float.BYTES, array[n].floatValue());
-				}
+				// Convert to floating-point
+				final Float[] array = priorities
+						.stream()
+						.map(Percentile::floatValue)
+						.toArray(Float[]::new);
 
 				// Populate queue descriptor
 				info.queueCount = array.length;
 				info.queueFamilyIndex = family.index();
-				info.pQueuePriorities = mem;
+				info.pQueuePriorities = new FloatArray(ArrayUtils.toPrimitive(array));
 			}
 		}
 
@@ -231,12 +231,14 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}
+			if(priorities.isEmpty()) {
+				throw new IllegalArgumentException("Queue priorities cannot be empty");
+			}
 			if(priorities.size() > family.count()) {
 				throw new IllegalArgumentException(String.format("Number of queues exceeds family: avaiable=%d requested=%d", priorities.size(), family.count()));
 			}
 
 			// Register required queue
-			//queues.put(family, List.copyOf(priorities));
 			queues.put(family, new RequiredQueue(family, priorities));
 			return this;
 		}

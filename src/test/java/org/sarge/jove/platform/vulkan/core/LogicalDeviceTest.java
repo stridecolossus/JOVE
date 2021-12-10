@@ -1,22 +1,28 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Percentile;
 
@@ -27,7 +33,9 @@ public class LogicalDeviceTest {
 	private LogicalDevice device;
 	private PhysicalDevice parent;
 	private Queue.Family family;
+	private Queue queue;
 	private VulkanLibrary lib;
+	private PointerByReference ref;
 
 	@BeforeEach
 	void before() {
@@ -40,7 +48,8 @@ public class LogicalDeviceTest {
 
 		// Init reference factory
 		final ReferenceFactory factory = mock(ReferenceFactory.class);
-		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(1)));
+		ref = new PointerByReference(new Pointer(1));
+		when(factory.pointer()).thenReturn(ref);
 		when(instance.factory()).thenReturn(factory);
 
 		// Create parent device
@@ -51,12 +60,11 @@ public class LogicalDeviceTest {
 		family = new Family(1, 2, Set.of());
 		when(parent.families()).thenReturn(List.of(family));
 
+		// Create work queue
+		queue = new Queue(new Handle(1), family);
+
 		// Create logical device
-		device = new LogicalDevice.Builder(parent)
-				.queues(family, List.of(Percentile.HALF, Percentile.ONE))
-				.extension("ext")
-				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.build();
+		device = new LogicalDevice(new Pointer(1), parent, Map.of(family, List.of(queue, queue)));
 	}
 
 	@Test
@@ -70,38 +78,23 @@ public class LogicalDeviceTest {
 	@DisplayName("Query device for available queues")
 	@Test
 	void queues() {
-		// Check queues map
-		final var map = device.queues();
-		assertNotNull(map);
-		assertEquals(Set.of(family), map.keySet());
-
-		// Check allocated queues
-		final var queues = map.get(family);
-		assertEquals(2, queues.size());
-
-		// Check queue
-		final Queue queue = queues.get(0);
-		assertNotNull(queue);
-		assertEquals(family, queue.family());
+		assertEquals(Map.of(family, List.of(queue, queue)), device.queues());
 	}
 
 	@DisplayName("Query device for the first queue of the given family")
 	@Test
 	void queue() {
-		final Queue queue = device.queue(family);
-		assertNotNull(queue);
-		assertEquals(family, queue.family());
+		assertEquals(queue, device.queue(family));
 	}
 
 	@DisplayName("Wait for queue to complete execution")
 	@Test
 	void queueWaitIdle() {
-		final Queue queue = device.queues().get(family).get(0);
 		queue.waitIdle(lib);
 		verify(lib).vkQueueWaitIdle(queue);
 	}
 
-	@DisplayName("Wait for all queues to complete execution")
+	@DisplayName("Wait for all device queues to complete execution")
 	@Test
 	void waitIdle() {
 		device.waitIdle();
@@ -123,6 +116,62 @@ public class LogicalDeviceTest {
 			builder = new LogicalDevice.Builder(parent);
 		}
 
+		@Test
+		void build() {
+			// Init a required device feature
+			final var required = new VkPhysicalDeviceFeatures();
+			required.samplerAnisotropy = VulkanBoolean.TRUE;
+
+			// Create device
+			device = builder
+					.queues(family, List.of(Percentile.HALF, Percentile.ONE))
+					.extension("ext")
+					.layer(ValidationLayer.STANDARD_VALIDATION)
+					.features(DeviceFeatures.of(required))
+					.build();
+
+			// Check device
+			assertNotNull(device);
+			assertEquals(new Handle(1), device.handle());
+			assertEquals(false, device.isDestroyed());
+			assertEquals(parent, device.parent());
+			assertEquals(Map.of(family, List.of(queue, queue)), device.queues());
+
+			// Init expected descriptor
+			final var expected = new VkDeviceCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					// Check descriptor
+					final var actual = (VkDeviceCreateInfo) obj;
+					assertEquals(0, actual.flags);
+
+					// Check device features
+					assertNotNull(actual.pEnabledFeatures);
+					assertEquals(VulkanBoolean.TRUE, actual.pEnabledFeatures.samplerAnisotropy);
+
+					// Check extensions
+					assertEquals(1, actual.enabledExtensionCount);
+					assertNotNull(actual.ppEnabledExtensionNames);
+
+					// Check validation layers
+					assertEquals(1, actual.enabledLayerCount);
+					assertNotNull(actual.ppEnabledLayerNames);
+
+					// Check required queues
+					assertEquals(1, actual.queueCreateInfoCount);
+					assertEquals(0, actual.pQueueCreateInfos.flags);
+					assertEquals(2, actual.pQueueCreateInfos.queueCount);
+					assertEquals(1, actual.pQueueCreateInfos.queueFamilyIndex);
+					assertNotNull(actual.pQueueCreateInfos.pQueuePriorities);
+
+					return true;
+				}
+			};
+
+			// Check API
+			verify(lib).vkCreateDevice(parent, expected, null, ref);
+		}
+
 		@DisplayName("Duplicate queues should be aggregated")
 		@Test
 		void duplicate() {
@@ -130,6 +179,12 @@ public class LogicalDeviceTest {
 			builder.queue(family);
 			device = builder.build();
 			assertEquals(1, device.queues().get(family).size());
+		}
+
+		@DisplayName("Cannot request empty list of queues")
+		@Test
+		void emptyQueues() {
+			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, List.of()));
 		}
 
 		@DisplayName("Cannot request more queues than available")

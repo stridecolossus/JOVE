@@ -1,6 +1,5 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,14 +28,6 @@ public class NativeObjectTest {
 		ptr = new Pointer(1);
 		obj = mock(NativeObject.class);
 		when(obj.handle()).thenReturn(new Handle(ptr));
-	}
-
-	@Test
-	void integers() {
-		final int[] array = {1, 2, 3};
-		final Pointer ptr = NativeObject.array(array);
-		assertNotNull(ptr);
-		assertArrayEquals(array, ptr.getIntArray(0, 3));
 	}
 
 	@Nested

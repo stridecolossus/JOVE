@@ -1,11 +1,11 @@
 package org.sarge.jove.common;
 
-import java.util.Arrays;
 import java.util.Collection;
+
+import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.Memory;
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
@@ -38,37 +38,8 @@ public interface NativeObject {
 				.map(Handle::toPointer)
 				.toArray(Pointer[]::new);
 
-		// Array of pointers as a contiguous memory block
-		class PointerArray extends Memory {
-			private final Pointer[] array;
-
-			PointerArray(Pointer[] array) {
-				super(Native.POINTER_SIZE * array.length);
-				this.array = array;
-				for(int n = 0; n < array.length; ++n) {
-					setPointer(n * Native.POINTER_SIZE, array[n]);
-				}
-			}
-
-			@Override
-			public boolean equals(Object obj) {
-				return (obj == this) || (obj instanceof PointerArray that) && Arrays.equals(this.array, that.array);
-			}
-		}
-
-		// Create contiguous pointer array
+		// Create pointer array
 		return new PointerArray(pointers);
-	}
-
-	/**
-	 * Helper - Creates a JNA pointer to an integer array.
-	 * @param array Integer array
-	 * @return Pointer-to-integer-array
-	 */
-	static Pointer array(int[] array) {
-		final Memory mem = new Memory(array.length * Integer.BYTES);
-		mem.write(0, array, 0, array.length);
-		return mem;
 	}
 
 	/**

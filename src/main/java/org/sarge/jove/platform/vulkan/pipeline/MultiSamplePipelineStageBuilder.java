@@ -6,6 +6,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSampleCount;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.util.IntegerArray;
 import org.sarge.lib.util.Percentile;
 
 /**
@@ -20,11 +21,9 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 		samples(VkSampleCount.COUNT_1);
 		sampleShadingEnable(false);
 		minSampleShading(Percentile.ONE);
+		alphaToCoverageEnable(false);
+		alphaToOneEnable(false);
 	}
-	// TODO - others
-	// - pSampleMask - pointer to int array, samples / 32
-	// - alphaToCoverageEnable
-	// - alphaToOneEnable
 
 	/**
 	 * Sets the number of rasterization samples.
@@ -62,6 +61,34 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 */
 	public MultiSamplePipelineStageBuilder minSampleShading(Percentile min) {
 		info.minSampleShading = min.floatValue();
+		return this;
+	}
+
+	/**
+	 * Sets the sample mask.
+	 * @param mask Sample mask
+	 */
+	public MultiSamplePipelineStageBuilder sampleMask(int[] mask) {
+		// TODO - length = samples / 32
+		info.pSampleMask = new IntegerArray(mask);
+		return this;
+	}
+
+	/**
+	 * Sets whether an temporary coverage value is generated based on the alpha value of the first colour output.
+	 * @param enable Whether <i>alpha to coverage</i> is enabled
+	 */
+	public MultiSamplePipelineStageBuilder alphaToCoverageEnable(boolean enable) {
+		info.alphaToCoverageEnable = VulkanBoolean.of(enable);
+		return this;
+	}
+
+	/**
+	 * Sets whether the alpha component of the first colour output is replaced with one.
+	 * @param enable Whether <i>alpha to one</i> is enabled
+	 */
+	public MultiSamplePipelineStageBuilder alphaToOneEnable(boolean enable) {
+		info.alphaToOneEnable = VulkanBoolean.of(enable);
 		return this;
 	}
 

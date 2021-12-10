@@ -12,6 +12,7 @@ import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
+import org.sarge.jove.util.IntegerArray;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
@@ -103,7 +104,7 @@ public class Work {
 
 			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
 			final int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
-			info.pWaitDstStageMask = NativeObject.array(stages);
+			info.pWaitDstStageMask = new IntegerArray(stages);
 		}
 
 		// Populate signal semaphores

@@ -31,6 +31,7 @@ import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.util.IntegerArray;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.jove.util.ReferenceFactory;
@@ -202,7 +203,7 @@ public class Swapchain extends AbstractVulkanObject {
 		info.pSwapchains = NativeObject.array(List.of(this));
 
 		// Set image indices
-		info.pImageIndices = NativeObject.array(new int[]{index});
+		info.pImageIndices = new IntegerArray(new int[]{index});
 
 		// Present frame
 		final VulkanLibrary lib = device().library();

@@ -25,7 +25,7 @@ public class StructureHelperTest {
 	}
 
 	@Test
-	void array() {
+	void structures() {
 		final MockStructure[] array = StructureHelper.array(List.of(obj, obj), MockStructure::new, populate);
 		assertNotNull(array);
 		assertEquals(2, array.length);

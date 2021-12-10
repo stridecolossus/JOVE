@@ -22,4 +22,9 @@ public class TesselationPipelineStageBuilderTest {
 		assertEquals(0, info.flags);
 		assertEquals(3, info.patchControlPoints);
 	}
+
+	@Test
+	void buildOptional() {
+		assertEquals(null, builder.get());
+	}
 }
