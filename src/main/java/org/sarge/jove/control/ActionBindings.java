@@ -28,7 +28,7 @@ import org.sarge.lib.util.Check;
  * bindings.bind(axis, this::handle);</pre>
  * <p>
  * Action handlers can be registered using the {@link #add(Consumer)} to initialise actions that initially have no bindings.
- * Note that handlers are also automatically registered by the various bind methods.
+ * Note that event sources are also automatically registered by the various bind methods.
  * <p>
  * Notes:
  * <ul>

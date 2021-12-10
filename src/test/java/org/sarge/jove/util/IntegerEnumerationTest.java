@@ -11,7 +11,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
 
 import com.sun.jna.FromNativeContext;
@@ -37,15 +36,20 @@ public class IntegerEnumerationTest {
 		}
 	}
 
+	private ReverseMapping<MockEnum> mapping;
+
+	@BeforeEach
+	void before() {
+		mapping = IntegerEnumeration.mapping(MockEnum.class);
+	}
+
 	@Test
-	void mapping() {
-		final ReverseMapping<MockEnum> mapping = IntegerEnumeration.mapping(MockEnum.class);
+	void constructor() {
 		assertNotNull(mapping);
 	}
 
 	@Test
 	public void map() {
-		final var mapping = IntegerEnumeration.mapping(MockEnum.class);
 		assertEquals(MockEnum.A, mapping.map(0x01));
 		assertEquals(MockEnum.B, mapping.map(0x02));
 		assertEquals(MockEnum.C, mapping.map(0x04));
@@ -53,14 +57,12 @@ public class IntegerEnumerationTest {
 
 	@Test
 	public void mapInvalidLiteral() {
-		final var mapping = IntegerEnumeration.mapping(MockEnum.class);
 		assertThrows(IllegalArgumentException.class, () -> mapping.map(0));
 		assertThrows(IllegalArgumentException.class, () -> mapping.map(999));
 	}
 
 	@Test
 	public void enumerate() {
-		final var mapping = IntegerEnumeration.mapping(MockEnum.class);
 		assertEquals(Set.of(), mapping.enumerate(0));
 		assertEquals(Set.of(MockEnum.A), mapping.enumerate(0b001));
 		assertEquals(Set.of(MockEnum.B), mapping.enumerate(0b010));

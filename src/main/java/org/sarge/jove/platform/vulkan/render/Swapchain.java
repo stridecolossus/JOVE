@@ -189,8 +189,9 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param queue				Presentation queue
 	 * @param index				Swapchain image index
 	 * @param semaphores		Wait semaphores
+	 * @throws SwapchainException if the swapchain image cannot be presented
 	 */
-	public void present(Queue queue, int index, Set<Semaphore> semaphores) {
+	public void present(Queue queue, int index, Set<Semaphore> semaphores) throws SwapchainException {
 		// Create presentation descriptor
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 

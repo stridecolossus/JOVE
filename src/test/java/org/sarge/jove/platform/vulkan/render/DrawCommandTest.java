@@ -82,20 +82,34 @@ public class DrawCommandTest {
 		}
 
 		@Test
-		void indexed() {
-			builder.indexed(2);
+		void instanced() {
 			builder.count(COUNT);
+			builder.instances(2);
+			builder.firstVertex(3);
+			builder.firstInstance(4);
+			execute();
+			verify(lib).vkCmdDraw(buffer, COUNT, 2, 3, 4);
+			execute();
+		}
+
+		@Test
+		void indexed() {
+			builder.count(COUNT);
+			builder.indexed();
+			builder.firstIndex(2);
 			builder.firstVertex(3);
 			execute();
 			verify(lib).vkCmdDrawIndexed(buffer, COUNT, 1, 2, 3, 0);
 		}
 
 		@Test
-		void instanced() {
-			builder.instanced(2, 5);
-			builder.indexed(3);
+		void instancedIndexed() {
 			builder.count(COUNT);
+			builder.indexed();
+			builder.instances(2);
+			builder.firstIndex(3);
 			builder.firstVertex(4);
+			builder.firstInstance(5);
 			execute();
 			verify(lib).vkCmdDrawIndexed(buffer, COUNT, 2, 3, 4, 5);
 			execute();

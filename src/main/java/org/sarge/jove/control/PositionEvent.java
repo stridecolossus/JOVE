@@ -12,7 +12,7 @@ import org.sarge.lib.util.Check;
 @SuppressWarnings("unused")
 public record PositionEvent(Source<PositionEvent> source, float x, float y) implements Event {
 	/**
-	 * A <i>position handler</i> defines the signature for a method bound to a position event.
+	 * A <i>position handler</i> defines the signature for an action handler method that can be bound to position events.
 	 */
 	@FunctionalInterface
 	public interface Handler {

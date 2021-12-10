@@ -8,7 +8,7 @@ import org.sarge.jove.util.MathsUtil;
 /**
  * A <i>modified button</i> represents keyboard keys and mouse buttons with an additional keyboard modifier mask.
  * <p>
- * Note that a button with a super-set of the specified modifier mask is considered a matching button.
+ * Note that a button with a super-set of the modifier mask {@link #matches(Button)} this button.
  * <p>
  * The {@link #resolve(int, int)} helper can be used to derived a button with a specified action and modifier mask.
  * <p>

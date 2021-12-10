@@ -9,9 +9,23 @@ import org.sarge.jove.platform.vulkan.core.Command;
 /**
  * A <i>draw command</i> is used to render a model.
  * <p>
- * The {@link Builder} is used to specify the various parameters of the draw command.
+ * Draw commands are constructed using the {@link Builder} or the convenience factory methods.
  * <p>
- * The convenience {@link #draw(int)} and {@link #indexed(int)} factory methods are used to create simple draw commands (with all parameters defaulted).
+ * Examples:
+ * <pre>
+ * // Draw a triangle
+ * DrawCommand simple = DrawCommand.draw(3);
+ *
+ * // Draw an indexed triangle
+ * DrawCommand indexed = DrawCommand.indexed(3);
+ *
+ * // Draw multiple instances
+ * DrawCommand instanced = new DrawCommand.Builder()
+ *     .indexed()
+ *     .count(3)
+ *     .instances(4)
+ *     .build();
+ * </pre>
  * <p>
  * @author Sarge
  */
@@ -31,7 +45,7 @@ public interface DrawCommand extends Command {
 	 * @return New indexed draw command
 	 */
 	static DrawCommand indexed(int count) {
-		return new Builder().indexed(0).count(count).build();
+		return new Builder().indexed().count(count).build();
 	}
 
 	/**
@@ -51,34 +65,6 @@ public interface DrawCommand extends Command {
 
 	/**
 	 * Builder for a draw command.
-	 * <p>
-	 * Notes:
-	 * <ul>
-	 * <li>By default the draw command created by this builder renders a number of vertices.</li>
-	 * <li>The {@link #indexed(int)} method sets the command as <i>indexed</i>, i.e. a model with an index buffer.</li>
-	 * <li>{@link #instanced(int, int)} sets the command to render multiple <i>instances</i>.</li>
-	 * </ul>
-	 * <p>
-	 * Examples:
-	 * <pre>
-	 *  // Render a triangle
-	 *  DrawCommand triangle = new Builder()
-	 *  	.count(3)
-	 *  	.build();
-	 *
-	 *  // Render an indexed model
-	 *  DrawCommand indexed = new Builder()
-	 *  	.indexed(0)
-	 *  	.count(3)
-	 *  	.firstVertex(1)
-	 *  	.build();
-	 *
-	 *  // Render an instanced model
-	 *  DrawCommand instanced = new Builder()
-	 *  	.count(3)
-	 *  	.instanced(2, 1)
-	 *  	.build();
-	 * </pre>
 	 */
 	public static class Builder {
 		private boolean indexed;
@@ -89,17 +75,24 @@ public interface DrawCommand extends Command {
 		private int firstInstance;
 
 		/**
+		 * Sets this as an <i>indexed</i> draw command.
+		 */
+		public Builder indexed() {
+			indexed = true;
+			return this;
+		}
+
+		/**
 		 * Sets this as an indexed draw command.
 		 * @param firstIndex First index
 		 */
-		public Builder indexed(int firstIndex) {
-			indexed = true;
+		public Builder firstIndex(int firstIndex) {
 			this.firstIndex = zeroOrMore(firstIndex);
 			return this;
 		}
 
 		/**
-		 * Sets the number of vertices/indices.
+		 * Sets the number of vertices to draw.
 		 * @param count Draw count
 		 * @see #indexed(int)
 		 */
@@ -118,12 +111,19 @@ public interface DrawCommand extends Command {
 		}
 
 		/**
-		 * Sets this as an <i>instanced</i> draw command.
-		 * @param instanceCount		Number of instances
-		 * @param firstInstance		First instance
+		 * Sets the number of instances.
+		 * @param instanceCount Number of instances
 		 */
-		public Builder instanced(int instanceCount, int firstInstance) {
+		public Builder instances(int instanceCount) {
 			this.instanceCount = oneOrMore(instanceCount);
+			return this;
+		}
+
+		/**
+		 * Sets the index of the first instance.
+		 * @param firstInstance First instance
+		 */
+		public Builder firstInstance(int firstInstance) {
 			this.firstInstance = zeroOrMore(firstInstance);
 			return this;
 		}
@@ -133,7 +133,6 @@ public interface DrawCommand extends Command {
 		 * @return New draw command
 		 */
 		public DrawCommand build() {
-			// TODO - verification
 			if(indexed) {
 				return (api, buffer) -> api.vkCmdDrawIndexed(buffer, count, instanceCount, firstIndex, firstVertex, firstInstance);
 			}

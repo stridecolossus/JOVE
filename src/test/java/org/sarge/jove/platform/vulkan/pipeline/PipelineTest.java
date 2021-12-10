@@ -106,7 +106,11 @@ public class PipelineTest extends AbstractVulkanTest {
 
 			// Check pipeline
 			assertNotNull(pipeline);
+			assertNotNull(pipeline.handle());
+			assertEquals(false, pipeline.isDestroyed());
+			assertEquals(layout, pipeline.layout());
 
+			// Init expected descriptor
 			final var expected = new VkGraphicsPipelineCreateInfo() {
 				@Override
 				public boolean equals(Object obj) {

@@ -15,6 +15,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
 
@@ -83,7 +84,10 @@ public class SamplerTest extends AbstractVulkanTest {
 					.border(VkBorderColor.FLOAT_TRANSPARENT_BLACK)
 					.minLod(2)
 					.maxLod(3)
+					.mipLodBias(MathsUtil.HALF)
 					.anisotropy(4)
+					.compare(VkCompareOp.GREATER)
+					.unnormalizedCoordinates(true)
 					.build(dev);
 
 			// Init expected descriptor
@@ -95,7 +99,7 @@ public class SamplerTest extends AbstractVulkanTest {
 					assertEquals(VkFilter.LINEAR, info.minFilter);
 					assertEquals(VkFilter.NEAREST, info.magFilter);
 					assertEquals(VkSamplerMipmapMode.NEAREST, info.mipmapMode);
-					assertEquals(0f, info.mipLodBias);
+					assertEquals(MathsUtil.HALF, info.mipLodBias);
 					assertEquals(2f, info.minLod);
 					assertEquals(3f, info.maxLod);
 					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeU);
@@ -104,6 +108,9 @@ public class SamplerTest extends AbstractVulkanTest {
 					assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, info.borderColor);
 					assertEquals(VulkanBoolean.TRUE, info.anisotropyEnable);
 					assertEquals(4f, info.maxAnisotropy);
+					assertEquals(VulkanBoolean.TRUE, info.compareEnable);
+					assertEquals(VkCompareOp.GREATER, info.compareOp);
+					assertEquals(VulkanBoolean.TRUE, info.unnormalizedCoordinates);
 					return true;
 				}
 			};

@@ -2,7 +2,6 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
@@ -38,10 +37,5 @@ public class CubeBuilderTest {
 		// Check vertices
 		assertNotNull(cube.vertices());
 		assertEquals(count * (3 + 2) * Float.BYTES, cube.vertices().length());
-	}
-
-	@Test
-	void primitive() {
-		assertThrows(UnsupportedOperationException.class, () -> builder.primitive(Primitive.LINES));
 	}
 }

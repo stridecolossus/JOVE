@@ -65,7 +65,7 @@ public interface Button extends Event {
 	}
 
 	/**
-	 * A <i>toggle handler</i> defines the signature for a method bound to a toggled button.
+	 * A <i>toggle handler</i> defines the signature of an action handler method that can be method bound to a button.
 	 */
 	@FunctionalInterface
 	interface ToggleHandler {

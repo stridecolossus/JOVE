@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -109,8 +110,9 @@ public class Sampler extends AbstractVulkanObject {
 			mipmap(VkSamplerMipmapMode.LINEAR);
 			maxLod(VK_LOD_CLAMP_NONE);
 			anisotropy(1);
-			compare(VkCompareOp.NEVER);
 			wrap(VkSamplerAddressMode.REPEAT);
+			border(VkBorderColor.FLOAT_TRANSPARENT_BLACK);
+			unnormalizedCoordinates(false);
 		}
 
 		/**
@@ -141,11 +143,20 @@ public class Sampler extends AbstractVulkanObject {
 		}
 
 		/**
+		 * Sets the LOD bias to be added to the LOD calculation (default is zero).
+		 * @param mipLodBias LOD bias
+		 */
+		public Builder mipLodBias(float mipLodBias) {
+			info.mipLodBias = mipLodBias;
+			return this;
+		}
+
+		/**
 		 * Sets the minimum LOD value.
 		 * @param minLod Minimum LOD
 		 */
 		public Builder minLod(float minLod) {
-			info.minLod = minLod;
+			info.minLod = zeroOrMore(minLod);
 			return this;
 		}
 
@@ -155,7 +166,7 @@ public class Sampler extends AbstractVulkanObject {
 		 * @see Sampler#VK_LOD_CLAMP_NONE
 		 */
 		public Builder maxLod(float maxLod) {
-			info.maxLod = maxLod;
+			info.maxLod = zeroOrMore(maxLod);
 			return this;
 		}
 
@@ -208,11 +219,21 @@ public class Sampler extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the comparison operation (default is {@link VkCompareOp#NEVER}).
+		 * Sets and enabled the comparison operation (default is {@link VkCompareOp#NEVER}).
 		 * @param op Comparison operation
 		 */
 		public Builder compare(VkCompareOp op) {
 			info.compareOp = notNull(op);
+			info.compareEnable = VulkanBoolean.TRUE;
+			return this;
+		}
+
+		/**
+		 * Sets whether to use un-normalized texel coordinates (default is {@code false}).
+		 * @param unnormalizedCoordinates Whether to use un-normalized coordinates
+		 */
+		public Builder unnormalizedCoordinates(boolean unnormalizedCoordinates) {
+			info.unnormalizedCoordinates = VulkanBoolean.of(unnormalizedCoordinates);
 			return this;
 		}
 
