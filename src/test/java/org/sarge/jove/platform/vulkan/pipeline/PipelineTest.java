@@ -2,24 +2,25 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder.ShaderStageBuilder;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -76,9 +77,12 @@ public class PipelineTest extends AbstractVulkanTest {
 		void builders() {
 			assertNotNull(builder.input());
 			assertNotNull(builder.assembly());
+			assertNotNull(builder.tesselation());
 			assertNotNull(builder.viewport());
 			assertNotNull(builder.rasterizer());
+			assertNotNull(builder.depth());
 			assertNotNull(builder.blend());
+			assertNotNull(builder.dynamic());
 		}
 
 		@Test
@@ -103,38 +107,47 @@ public class PipelineTest extends AbstractVulkanTest {
 			// Check pipeline
 			assertNotNull(pipeline);
 
-			// Check allocation
-			final ArgumentCaptor<VkGraphicsPipelineCreateInfo[]> captor = ArgumentCaptor.forClass(VkGraphicsPipelineCreateInfo[].class);
-			verify(lib).vkCreateGraphicsPipelines(eq(dev), eq(cache), eq(1), captor.capture(), isNull(), isA(Pointer[].class));
-			assertEquals(1, captor.getValue().length);
+			final var expected = new VkGraphicsPipelineCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					// Check descriptor
+					final var info = (VkGraphicsPipelineCreateInfo) obj;
+					assertNotNull(info);
+					assertEquals(0, info.flags);
 
-			// Check descriptor
-			final VkGraphicsPipelineCreateInfo info = captor.getValue()[0];
-			assertNotNull(info);
-			assertEquals(0, info.flags);
+					// Check derived pipelines
+					assertEquals(null, info.basePipelineHandle);
+					assertEquals(-1, info.basePipelineIndex);
 
-			// Check derived pipelines
-			assertEquals(null, info.basePipelineHandle);
-			assertEquals(-1, info.basePipelineIndex);
+					// Check render pass
+					assertEquals(0, info.subpass);
 
-			// Check render pass
-			// TODO
-			assertEquals(0, info.subpass);
+					// Check mandatory stage descriptors
+					assertNotNull(info.pVertexInputState);
+					assertNotNull(info.pInputAssemblyState);
+					assertNull(info.pTessellationState);
+					assertNotNull(info.pViewportState);
+					assertNotNull(info.pRasterizationState);
+					assertNotNull(info.pMultisampleState);
+					assertNotNull(info.pColorBlendState);
+					assertNull(info.pDynamicState);
 
-			// Check mandatory stage descriptors
-			assertNotNull(info.pVertexInputState);
-			assertNotNull(info.pInputAssemblyState);
-			assertNotNull(info.pViewportState);
-			assertNotNull(info.pRasterizationState);
-			assertNotNull(info.pColorBlendState);
+					// Check viewport stage
+					assertEquals(1, info.pViewportState.viewportCount);
+					assertEquals(1, info.pViewportState.scissorCount);
+					assertNotNull(info.pViewportState.pViewports);
+					assertNotNull(info.pViewportState.pScissors);
 
-			// Check viewport stage
-			assertEquals(1, info.pViewportState.viewportCount);
-			assertEquals(1, info.pViewportState.scissorCount);
+					// Check shader stage descriptor
+					assertEquals(1, info.stageCount);
+					assertNotNull(info.pStages);
 
-			// Check shader stage descriptor
-			assertEquals(1, info.stageCount);
-			assertNotNull(info.pStages);
+					return true;
+				}
+			};
+
+			// Check API
+			verify(lib).vkCreateGraphicsPipelines(dev, cache, 1, new VkGraphicsPipelineCreateInfo[]{expected}, null, new Pointer[1]);
 		}
 
 		private void addVertexShaderStage() {
@@ -171,14 +184,37 @@ public class PipelineTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void duplicateShaderStage() {
+		void shader() {
+			// Start shader stage
+			final ShaderStageBuilder stage = builder.shader(VkShaderStage.VERTEX);
+			assertNotNull(stage);
+
+			// Configure vertex shader
+			final Shader shader = mock(Shader.class);
+			when(shader.handle()).thenReturn(new Handle(1));
+			stage.name("name").shader(shader);
+
+			// Check returns to parent
+			assertEquals(builder, stage.build());
+
+			// Check shader descriptor
+			final var info = new VkPipelineShaderStageCreateInfo();
+			stage.populate(info);
+			assertEquals(0, info.flags);
+			assertEquals(VkShaderStage.VERTEX, info.stage);
+			assertEquals("name", info.pName);
+			assertEquals(shader.handle(), info.module);
+		}
+
+		@Test
+		void shaderMissingShaderModule() {
+			assertThrows(IllegalArgumentException.class, () -> builder.shader(VkShaderStage.VERTEX).build());
+		}
+
+		@Test
+		void shaderDuplicateStage() {
 			addVertexShaderStage();
 			assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage());
 		}
-	}
-
-	@Nested
-	class ShaderStageBuilderTests {
-		// TODO
 	}
 }

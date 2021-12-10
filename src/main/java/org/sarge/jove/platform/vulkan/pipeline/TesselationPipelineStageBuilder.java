@@ -5,6 +5,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 
 /**
  * Builder for the tesselation control pipeline stage.
+ * @see VkPipelineTessellationStateCreateInfo
  * @author Sarge
  */
 public class TesselationPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineTessellationStateCreateInfo> {

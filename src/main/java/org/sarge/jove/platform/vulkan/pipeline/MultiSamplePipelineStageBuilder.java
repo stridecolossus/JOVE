@@ -11,6 +11,7 @@ import org.sarge.lib.util.Percentile;
 
 /**
  * Builder for the multi-sample pipeline stage.
+ * @see VkPipelineMultisampleStateCreateInfo
  * @author Sarge
  */
 public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineMultisampleStateCreateInfo> {

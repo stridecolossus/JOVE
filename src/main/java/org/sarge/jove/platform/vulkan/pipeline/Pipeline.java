@@ -137,7 +137,7 @@ public class Pipeline extends AbstractVulkanObject {
 		private final MultiSamplePipelineStageBuilder multi = new MultiSamplePipelineStageBuilder(this);
 		private final DepthStencilPipelineStageBuilder depth = new DepthStencilPipelineStageBuilder(this);
 		private final ColourBlendPipelineStageBuilder blend = new ColourBlendPipelineStageBuilder(this);
-		// TODO - dynamic
+		private final DynamicStatePipelineStageBuilder dynamic = new DynamicStatePipelineStageBuilder(this);
 
 		/**
 		 * Sets the layout for this pipeline.
@@ -223,6 +223,13 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
+		 * @return Builder for the dynamic state stage
+		 */
+		public DynamicStatePipelineStageBuilder dynamic() {
+			return dynamic;
+		}
+
+		/**
 		 * @param stage Programmable shader stage
 		 * @return Builder for a shader stage
 		 * @throws IllegalArgumentException for a duplicate shader stage
@@ -268,6 +275,8 @@ public class Pipeline extends AbstractVulkanObject {
 			pipeline.pMultisampleState = multi.get();
 			pipeline.pDepthStencilState = depth.get();
 			pipeline.pColorBlendState = blend.get();
+			pipeline.pDynamicState = dynamic.get();
+
 			// TODO - check number of blend attachments = framebuffers
 
 			// TODO - derive from pipeline (faster to create, faster to bind if same parent)
