@@ -4,17 +4,16 @@ import java.util.List;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * Builder for a cube constructed with {@link Primitive#TRIANGLES}.
  * @author Sarge
  */
-public class CubeBuilder extends ModelBuilder {
+public class CubeBuilder {
 	// Vertices
 	private static final Point[] VERTICES = {
 			// Front
@@ -63,27 +62,23 @@ public class CubeBuilder extends ModelBuilder {
 	// Indices of the two triangles for each face
 	private static final int[] TRIANGLES = Quad.strip(1, false).toArray();
 
+	private final List<Component> components;
+
 	private float size = MathsUtil.HALF;
 
 	/**
 	 * Constructor.
-	 * @param Vertex layout
+	 * @param Vertex components
 	 */
-	public CubeBuilder(List<Layout> layout) {
-		super(layout);
-		super.primitive(Primitive.TRIANGLES);
+	public CubeBuilder(List<Component> layout) {
+		this.components = List.copyOf(layout);
 	}
 
 	/**
 	 * Default constructor for a cube with vertex position and texture coordinates.
 	 */
 	public CubeBuilder() {
-		this(List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
-	}
-
-	@Override
-	public CubeBuilder primitive(Primitive primitive) {
-		throw new UnsupportedOperationException();
+		this(List.of(Component.POSITION, Component.COORDINATE));
 	}
 
 	/**
@@ -95,8 +90,16 @@ public class CubeBuilder extends ModelBuilder {
 		return this;
 	}
 
-	@Override
+	/**
+	 * Constructs this cube.
+	 * @return New cube
+	 */
 	public Model build() {
+		// Init model
+		final DefaultModel model = new DefaultModel(Primitive.TRIANGLES);
+		model.layout(components);
+
+		// Build cube
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -109,11 +112,12 @@ public class CubeBuilder extends ModelBuilder {
 				final Colour col = COLOURS[face];
 
 				// Add vertex
-				final Vertex vertex = Vertex.of(pos, normal, coord, col);
-				final Vertex transformed = vertex.transform(layouts);
-				add(transformed);
+				final Vertex data = new Vertex(pos, normal, coord, col);
+				final Vertex vertex = data.transform(components);
+				model.add(vertex);
 			}
 		}
-		return super.build();
+
+		return model;
 	}
 }

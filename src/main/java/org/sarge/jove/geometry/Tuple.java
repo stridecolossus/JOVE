@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.util.MathsUtil;
 
@@ -13,11 +12,16 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>tuple</i> is the base-class for 3-component floating-point values.
  * @author Sarge
  */
-public sealed class Tuple implements Bufferable, Component permits Point, Vector {
+public sealed class Tuple implements Bufferable permits Point, Vector {
 	/**
 	 * Size of a tuple.
 	 */
 	public static final int SIZE = 3;
+
+	/**
+	 * Layout of a tuple.
+	 */
+	public static final Layout LAYOUT = Layout.floats(SIZE);
 
 	public final float x, y, z;
 
@@ -89,11 +93,6 @@ public sealed class Tuple implements Bufferable, Component permits Point, Vector
 	 */
 	public final float dot(Tuple t) {
 		return x * t.x + y * t.y + z * t.z;
-	}
-
-	@Override
-	public Layout layout() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

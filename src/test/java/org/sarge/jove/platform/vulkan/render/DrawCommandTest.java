@@ -5,8 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,10 +45,10 @@ public class DrawCommandTest {
 	@Test
 	void model() {
 		// Create an indexed model
-		final Model.Header header = new Model.Header(List.of(), Primitive.TRIANGLES, COUNT);
 		final Model model = mock(Model.class);
 		when(model.isIndexed()).thenReturn(true);
-		when(model.header()).thenReturn(header);
+		when(model.count()).thenReturn(COUNT);
+		when(model.primitive()).thenReturn(Primitive.TRIANGLES);
 
 		// Check indexed draw command
 		final DrawCommand draw = DrawCommand.of(model);

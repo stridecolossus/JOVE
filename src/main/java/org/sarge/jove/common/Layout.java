@@ -98,7 +98,8 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	}
 
 	/**
-	 * @return Length of this layout (bytes)
+	 * Helper.
+	 * @return Length of a component with this layout (bytes)
 	 */
 	public int length() {
 		return size * bytes;

@@ -59,6 +59,13 @@ public class TupleTest {
 	}
 
 	@Test
+	void layout() {
+		assertEquals(3, Tuple.LAYOUT.size());
+		assertEquals(Float.class, Tuple.LAYOUT.type());
+		assertEquals(Float.BYTES, Tuple.LAYOUT.bytes());
+	}
+
+	@Test
 	void dot() {
 		assertEquals(1 * 1 + 2 * 2 + 3 * 3, tuple.dot(tuple));
 	}

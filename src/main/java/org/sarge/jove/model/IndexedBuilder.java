@@ -1,30 +1,25 @@
 package org.sarge.jove.model;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import org.sarge.jove.common.Layout;
 
 /**
  * An <i>indexed builder</i> performs de-duplication of vertex data.
  * @author Sarge
  */
-public class IndexedBuilder extends ModelBuilder {
+public class IndexedBuilder extends DefaultModel {
 	private final Map<Vertex, Integer> map = new HashMap<>();
-	private final List<Integer> index = new ArrayList<>();
 
 	/**
 	 * Constructor.
-	 * @param layout Vertex layout
+	 * @param primitive Drawing primitive
 	 */
-	public IndexedBuilder(List<Layout> layout) {
-		super(layout);
+	public IndexedBuilder(Primitive primitive) {
+		super(primitive);
 	}
 
 	@Override
-	public ModelBuilder add(Vertex v) {
+	public void add(Vertex v) {
 		final Integer prev = map.get(v);
 		if(prev == null) {
 			// Register new vertex
@@ -39,12 +34,5 @@ public class IndexedBuilder extends ModelBuilder {
 			// Otherwise add index for existing vertex
 			index.add(prev);
 		}
-		return this;
-	}
-
-	@Override
-	public Model build() {
-		final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
-		return build(array.length, array);
 	}
 }

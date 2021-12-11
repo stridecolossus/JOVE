@@ -1,17 +1,17 @@
 package org.sarge.jove.platform.obj;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.sarge.jove.common.Component;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.IndexedBuilder;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.model.ModelBuilder;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 
@@ -23,8 +23,23 @@ class ObjectModel {
 	private final List<Point> positions = new VertexComponentList<>();
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
-	private final List<Vertex> vertices = new ArrayList<>();
-	private final List<Model> models = new ArrayList<>();
+	private final Map<Vertex, Integer> map = new HashMap<>();
+	private final List<DefaultModel> models = new ArrayList<>();
+	private DefaultModel current;
+
+	/**
+	 * Constructor.
+	 */
+	public ObjectModel() {
+		init();
+	}
+
+	/**
+	 * Initialises the current group.
+	 */
+	private void init() {
+		current = new IndexedBuilder(Primitive.TRIANGLES);
+	}
 
 	/**
 	 * Starts a new object group.
@@ -37,39 +52,30 @@ class ObjectModel {
 		positions.clear();
 		normals.clear();
 		coords.clear();
-		vertices.clear();
+		map.clear();
 	}
 
 	/**
-	 * Constructs the model for the current object.
+	 * Constructs the current object.
 	 */
 	private void append() {
 		// Ignore if current group is empty
-		if(vertices.isEmpty()) {
+		if(current.count() == 0) {
 			return;
 		}
 
 		// Init model layout
-		final List<Layout> layout = new ArrayList<>();
-		layout.add(Point.LAYOUT);
+		current.layout(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			layout.add(Vector.LAYOUT);
+			current.layout(Vector.LAYOUT);
 		}
 		if(!coords.isEmpty()) {
-			layout.add(Coordinate2D.LAYOUT);
-		}
-
-		// Create new model builder
-		final ModelBuilder builder = new IndexedBuilder(layout);
-		builder.primitive(Primitive.TRIANGLES);
-
-		// Add vertex data
-		for(Vertex v : vertices) {
-			builder.add(v);
+			current.layout(Coordinate2D.LAYOUT);
 		}
 
 		// Add to models
-		models.add(builder.build());
+		models.add(current);
+		init();
 	}
 
 	/**
@@ -110,22 +116,21 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final List<Component> components = new ArrayList<>();
-		components.add(positions.get(v));
+		final Vertex.Builder builder = new Vertex.Builder();
+		builder.position(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {
-			components.add(normals.get(vn));
+			builder.normal(normals.get(vn));
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
-			components.add(coords.get(vt));
+			builder.coordinate(coords.get(vt));
 		}
 
 		// Construct vertex
-		final Vertex vertex = new Vertex(components);
-		vertices.add(vertex);
+		current.add(builder.build());
 	}
 
 	/**

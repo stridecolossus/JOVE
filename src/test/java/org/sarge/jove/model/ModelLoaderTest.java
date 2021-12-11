@@ -15,21 +15,22 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Model.Header;
 
 class ModelLoaderTest {
 	private ModelLoader loader;
-	private Model model;
+	private DefaultModel model;
 	private ByteArrayOutputStream out;
 
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		final Model.Header header = new Header(List.of(Point.LAYOUT), Primitive.TRIANGLES, 3);
-		final Vertex vertex = Vertex.of(Point.ORIGIN);
-		model = new DefaultModel(header, List.of(vertex), new int[]{0, 0, 0});
+		model = new DefaultModel(Primitive.TRIANGLES);
+		model.layout(Point.LAYOUT);
+		model.add(new Vertex(Point.ORIGIN));
+		model.add(0);
+		model.add(0);
+		model.add(0);
 
 		// Init persistence store
 		out = new ByteArrayOutputStream();
@@ -57,33 +58,18 @@ class ModelLoaderTest {
 		assertNotNull(result);
 
 		// Check header
-		final Header header = result.header();
-		assertNotNull(header);
-		//assertEquals(CompoundLayout.of(Point.LAYOUT), header.layout());
-		assertEquals(Primitive.TRIANGLES, header.primitive());
-		assertEquals(3, header.count());
-
-		// Check layout
-		final List<Layout> layouts = header.layout();
-		assertNotNull(layouts);
-		assertEquals(1, layouts.size());
-
-		final Layout layout = layouts.get(0);
-		assertEquals(3, layout.size());
-		assertEquals(Float.class, layout.type());
-		assertEquals(Float.BYTES, layout.bytes());
-		assertEquals(true, layout.signed());
-		assertEquals(3 * Float.BYTES, layout.length());
+		assertEquals(List.of(Point.LAYOUT), result.layout());
+		assertEquals(Primitive.TRIANGLES, result.primitive());
+		assertEquals(3, result.count());
 
 		// Check vertices
 		assertNotNull(result.vertices());
 		assertEquals(3 * Float.BYTES, result.vertices().length());
 
 		// Check index
-		assertEquals(true, result.isIndexed());
 		assertNotNull(result.index());
-		assertEquals(true, result.index().isPresent());
-		assertEquals(3 * Integer.BYTES, result.index().get().length());
+		assertEquals(true, result.isIndexed());
+		assertEquals(3 * Integer.BYTES, result.index().length());
 	}
 
 	@Test

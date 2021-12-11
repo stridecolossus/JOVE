@@ -1,35 +1,64 @@
 package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.util.Optional;
+import java.util.List;
 
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.Model.AbstractModel;
 
 /**
- * A <i>buffered model</i> is an implementation with the vertices and index stored as a {@link ByteSource}.
+ * A <i>buffered model</i>
+ * TODO
  * @author Sarge
  */
 public class BufferedModel extends AbstractModel {
+	/**
+	 * Creates a buffered model from the given mutable model.
+	 * @param model Model
+	 * @return New buffered model
+	 */
+	public static BufferedModel of(Model model) {
+		final Bufferable index = model.isIndexed() ? model.index() : null;
+		return new BufferedModel(model.layout(), model.primitive(), model.count(), model.vertices(), index);
+	}
+
+	private final List<Layout> layout;
+	private final int count;
 	private final Bufferable vertices;
-	private final Optional<Bufferable> index;
+	private final Bufferable index;
 
 	/**
 	 * Constructor.
-	 * @param header		Model header
-	 * @param vertices		Vertex buffer
-	 * @param index			Optional index buffer
+	 * @param layout			Vertex layout
+	 * @param primitive			Drawing primitive
+	 * @param count				Draw count
+	 * @param vertices			Vertices
+	 * @param index				Optional index
 	 */
-	public BufferedModel(Header header, Bufferable vertices, Optional<Bufferable> index) {
-		super(header);
+	public BufferedModel(List<Layout> layout, Primitive primitive, int count, Bufferable vertices, Bufferable index) {
+		super(primitive);
+		this.layout = List.copyOf(layout);
+		this.count = zeroOrMore(count);
 		this.vertices = notNull(vertices);
-		this.index = notNull(index);
+		this.index = index;
+	}
+
+	@Override
+	public List<Layout> layout() {
+		return layout;
+	}
+
+	@Override
+	public int count() {
+		return count;
 	}
 
 	@Override
 	public boolean isIndexed() {
-		return index.isPresent();
+		return index != null;
 	}
 
 	@Override
@@ -38,7 +67,7 @@ public class BufferedModel extends AbstractModel {
 	}
 
 	@Override
-	public Optional<Bufferable> index() {
+	public Bufferable index() {
 		return index;
 	}
 }

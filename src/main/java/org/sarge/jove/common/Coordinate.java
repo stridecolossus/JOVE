@@ -9,7 +9,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
  * @author Sarge
  */
-public interface Coordinate extends Bufferable, Component {
+public interface Coordinate extends Bufferable {
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
@@ -33,11 +33,6 @@ public interface Coordinate extends Bufferable, Component {
 		 * Layout of a 1D texture coordinate.
 		 */
 		public static final Layout LAYOUT = Layout.floats(1);
-
-		@Override
-		public Layout layout() {
-			return LAYOUT;
-		}
 
 		@Override
 		public int length() {
@@ -74,11 +69,6 @@ public interface Coordinate extends Bufferable, Component {
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
 
 		@Override
-		public Layout layout() {
-			return LAYOUT;
-		}
-
-		@Override
 		public int length() {
 			return 2 * Float.BYTES;
 		}
@@ -106,11 +96,6 @@ public interface Coordinate extends Bufferable, Component {
 		 * Layout of a 3D texture coordinate.
 		 */
 		public static final Layout LAYOUT = Layout.floats(3);
-
-		@Override
-		public Layout layout() {
-			return LAYOUT;
-		}
 
 		@Override
 		public int length() {

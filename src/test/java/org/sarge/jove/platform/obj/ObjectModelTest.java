@@ -95,11 +95,16 @@ public class ObjectModelTest {
 			// Check model
 			final Model result = models.get(0);
 			assertNotNull(result);
-			assertEquals(true, result.isIndexed());
 
 			// Check model header
-			final List layout = List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT);
-			assertEquals(new Model.Header(layout, Primitive.TRIANGLES, 3), result.header());
+			assertEquals(Primitive.TRIANGLES, result.primitive());
+			assertEquals(List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT), result.layout());
+			assertEquals(3, result.count());
+			assertEquals(true, result.isIndexed());
+
+			// Check model data
+			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertices().length());
+			assertEquals(3 * Integer.BYTES, result.index().length());
 		}
 
 		@Test

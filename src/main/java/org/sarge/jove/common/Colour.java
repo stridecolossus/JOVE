@@ -9,7 +9,7 @@ import org.sarge.lib.util.Check;
  * RGBA colour.
  * @author Sarge
  */
-public record Colour(float red, float green, float blue, float alpha) implements Bufferable, Component {
+public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
 	/**
 	 * RGBA string.
 	 */
@@ -29,7 +29,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * Layout of a colour.
 	 */
 	public static final Layout LAYOUT = Layout.floats(4);
-
 
 	/**
 	 * Creates a colour from the given floating-point array representing an RGBA value <b>or</b> a 3-element RGB array with the alpha value initialised to <b>one</b>.
@@ -62,11 +61,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 */
 	public Colour(float red, float green, float blue) {
 		this(red, green, blue, 1);
-	}
-
-	@Override
-	public Layout layout() {
-		return LAYOUT;
 	}
 
 	@Override

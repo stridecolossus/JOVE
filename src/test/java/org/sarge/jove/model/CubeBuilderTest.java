@@ -29,10 +29,10 @@ public class CubeBuilderTest {
 
 		// Check header
 		final int count = 6 * 2 * 3;
-		assertNotNull(cube.header());
-		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), cube.header().layout());
-		assertEquals(Primitive.TRIANGLES, cube.header().primitive());
-		assertEquals(count, cube.header().count());
+		assertEquals(Primitive.TRIANGLES, cube.primitive());
+		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), cube.layout());
+		assertEquals(count, cube.count());
+		assertEquals(false, cube.isIndexed());
 
 		// Check vertices
 		assertNotNull(cube.vertices());

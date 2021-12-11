@@ -6,13 +6,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.DataHelper;
 import org.sarge.jove.io.ResourceLoader;
-import org.sarge.jove.model.Model.Header;
 
 /**
  * The <i>model loader</i> persists a JOVE model.
@@ -48,8 +46,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		final Bufferable index = helper.buffer(in);
 
 		// Create model
-		final Header header = new Header(layouts, primitive, count);
-		return new BufferedModel(header, vertices, Optional.ofNullable(index));
+		return new BufferedModel(layouts, primitive, count, vertices, index);
 	}
 
 	/**
@@ -60,13 +57,12 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 	 */
 	public void save(Model model, DataOutputStream out) throws IOException {
 		// Write model header
-		final Header header = model.header();
 		helper.writeVersion(out);
-		out.writeUTF(header.primitive().name());
-		out.writeInt(header.count());
+		out.writeUTF(model.primitive().name());
+		out.writeInt(model.count());
 
 		// Write vertex layout
-		final List<Layout> layouts = header.layout();
+		final List<Layout> layouts = model.layout();
 		out.writeInt(layouts.size());
 		for(Layout c : layouts) {
 			helper.write(c, out);
@@ -76,9 +72,8 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		helper.write(model.vertices(), out);
 
 		// Write index
-		final var index = model.index();
-		if(index.isPresent()) {
-			helper.write(index.get(), out);
+		if(model.isIndexed()) {
+			helper.write(model.index(), out);
 		}
 		else {
 			out.writeInt(0);

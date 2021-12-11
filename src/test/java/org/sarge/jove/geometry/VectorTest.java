@@ -26,14 +26,6 @@ class VectorTest {
 	}
 
 	@Test
-	void layout() {
-		assertEquals(Vector.LAYOUT, vec.layout());
-		assertEquals(3, Vector.LAYOUT.size());
-		assertEquals(Float.class, Vector.LAYOUT.type());
-		assertEquals(Float.BYTES, Vector.LAYOUT.bytes());
-	}
-
-	@Test
 	void copy() {
 		assertEquals(vec, new Vector(vec));
 	}

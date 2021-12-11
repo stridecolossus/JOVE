@@ -3,52 +3,31 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.lib.util.Check;
 
 /**
- * A <i>model</i> is comprised of a vertex buffer and an optional index buffer structured according to the given header.
+ * A <i>model</i> is comprised of a vertex buffer with a specified layout and an optional index.
  * @author Sarge
  */
 public interface Model {
 	/**
-	 * Descriptor for this model.
+	 * @return Vertex layout
 	 */
-	record Header(List<Layout> layout, Primitive primitive, int count) {
-		/**
-		 * Constructor.
-		 * @param layout			Vertex layout
-		 * @param primitive			Drawing primitive
-		 * @param count				Number of vertices
-		 * @throws IllegalArgumentException if the {@link #count} is invalid for the given {@link #primitive}
-		 * @throws IllegalArgumentException if the layout contains {@link Vector#LAYOUT} and the primitive does not support normals
-		 * @see Primitive#isValidVertexCount(int)
-		 * @see Primitive#isNormalSupported()
-		 */
-		public Header {
-			layout = List.copyOf(layout);
-			Check.notNull(primitive);
-			Check.zeroOrMore(count);
-
-			if(!primitive.isValidVertexCount(count)) {
-				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
-			}
-
-			if(!primitive.isNormalSupported() && layout.stream().anyMatch(e -> e == Vector.LAYOUT)) {
-				throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
-			}
-		}
-	}
+	List<Layout> layout();
 
 	/**
-	 * @return Model header
+	 * @return Drawing primitive
 	 */
-	Header header();
+	Primitive primitive();
+
+	/**
+	 * @return Draw count
+	 */
+	int count();
 
 	/**
 	 * @return Vertex buffer
@@ -57,37 +36,76 @@ public interface Model {
 
 	/**
 	 * @return Whether this is an indexed model
+	 * @see #index()
 	 */
 	boolean isIndexed();
 
 	/**
 	 * @return Index buffer
+	 * @see #isIndexed()
 	 */
-	Optional<Bufferable> index();
+	Bufferable index();
 
 	/**
 	 * Skeleton implementation.
 	 */
 	abstract class AbstractModel implements Model {
-		protected final Header header;
+		private final Primitive primitive;
 
 		/**
 		 * Constructor.
-		 * @param header Model header
+		 * @param primitive Drawing primitive
 		 */
-		protected AbstractModel(Header header) {
-			this.header = notNull(header);
+		protected AbstractModel(Primitive primitive) {
+			this.primitive = notNull(primitive);
 		}
 
 		@Override
-		public final Header header() {
-			return header;
+		public Primitive primitive() {
+			return primitive;
+		}
+
+		/**
+		 * Validates this model.
+		 * @throws IllegalArgumentException if the draw count is not valid for the drawing primitive
+		 * @throws IllegalArgumentException if the layout specifies normals which is not supported by the drawing primitive
+		 * @see Primitive#isValidVertexCount(int)
+		 * @see Primitive#isNormalSupported()
+		 */
+		public void validate() throws IllegalArgumentException {
+			if(!primitive.isValidVertexCount(count())) {
+				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count(), primitive));
+			}
+
+			// TODO
+//			if(!primitive.isNormalSupported() && layout.stream().anyMatch(e -> e == Vector.LAYOUT)) {
+//				throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
+//			}
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(layout(), primitive, count());
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof Model that) &&
+					this.layout().equals(that.layout()) &&
+					primitive.equals(that.primitive()) &&
+					(this.count() == that.count()) &&
+					this.vertices().equals(that.vertices()) &&
+					Objects.equals(this.index(), that.index());
 		}
 
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
-					.append(header)
+					.append(layout())
+					.append(primitive)
+					.append("count", count())
 					.append("indexed", isIndexed())
 					.build();
 		}

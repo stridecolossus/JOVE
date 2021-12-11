@@ -14,7 +14,6 @@ class CoordinateTest {
 		final Coordinate1D one = new Coordinate1D(1);
 		assertEquals(1, one.u());
 		assertEquals(1 * Float.BYTES, one.length());
-		assertEquals(Coordinate1D.LAYOUT, one.layout());
 		assertEquals(Layout.floats(1), Coordinate1D.LAYOUT);
 		assertEquals(true, one.equals(one));
 		assertEquals(true, one.equals(new Coordinate1D(1)));
@@ -28,7 +27,6 @@ class CoordinateTest {
 		assertEquals(1, two.u());
 		assertEquals(2, two.v());
 		assertEquals(2 * Float.BYTES, two.length());
-		assertEquals(Coordinate2D.LAYOUT, two.layout());
 		assertEquals(Layout.floats(2), Coordinate2D.LAYOUT);
 		assertEquals(true, two.equals(two));
 		assertEquals(true, two.equals(new Coordinate2D(1, 2)));
@@ -43,7 +41,6 @@ class CoordinateTest {
 		assertEquals(2, three.v());
 		assertEquals(3, three.w());
 		assertEquals(3 * Float.BYTES, three.length());
-		assertEquals(Coordinate3D.LAYOUT, three.layout());
 		assertEquals(Layout.floats(3), Coordinate3D.LAYOUT);
 		assertEquals(true, three.equals(three));
 		assertEquals(true, three.equals(new Coordinate3D(1, 2, 3)));

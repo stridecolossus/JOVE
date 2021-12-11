@@ -4,41 +4,45 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.model.Model.Header;
 
 public class BufferedModelTest {
 	private BufferedModel model;
-	private Header header;
 	private Bufferable vertices, index;
 
 	@BeforeEach
 	void before() {
-		header = new Header(List.of(Layout.floats(2)), Primitive.TRIANGLES, 3);
 		vertices = mock(Bufferable.class);
 		index = mock(Bufferable.class);
-		model = new BufferedModel(header, vertices, Optional.of(index));
+		model = new BufferedModel(List.of(Layout.floats(3)), Primitive.TRIANGLES, 3, vertices, index);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(header, model.header());
+		assertEquals(List.of(Layout.floats(3)), model.layout());
+		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(3, model.count());
 		assertEquals(true, model.isIndexed());
 		assertEquals(vertices, model.vertices());
-		assertEquals(Optional.of(index), model.index());
+		assertEquals(index, model.index());
 	}
 
 	@Test
 	void unindexed() {
-		model = new BufferedModel(header, vertices, Optional.empty());
-		assertEquals(header, model.header());
+		model = new BufferedModel(List.of(Layout.floats(3)), Primitive.TRIANGLES, 3, vertices, null);
+		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(3, model.count());
 		assertEquals(false, model.isIndexed());
 		assertEquals(vertices, model.vertices());
-		assertEquals(Optional.empty(), model.index());
+		assertEquals(null, model.index());
+	}
+
+	@Test
+	void of() {
+		assertEquals(model, BufferedModel.of(model));
 	}
 }

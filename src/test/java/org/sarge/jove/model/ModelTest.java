@@ -1,52 +1,59 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.model.Model.AbstractModel;
 
 class ModelTest {
-	private Header header;
-	private Layout layout;
+	private Model model;
 
 	@BeforeEach
 	void before() {
-		layout = Layout.floats(2);
-		header = new Header(List.of(layout), Primitive.TRIANGLES, 3);
+		model = new AbstractModel(Primitive.TRIANGLE_STRIP) {
+			@Override
+			public List<Layout> layout() {
+				return List.of();
+			}
+
+			@Override
+			public int count() {
+				return 0;
+			}
+
+			@Override
+			public Bufferable vertices() {
+				return null;
+			}
+
+			@Override
+			public boolean isIndexed() {
+				return false;
+			}
+
+			@Override
+			public Bufferable index() {
+				return null;
+			}
+		};
 	}
 
-	@Nested
-	class HeaderTests {
-		@Test
-		void constructor() {
-			assertEquals(List.of(layout), header.layout());
-			assertEquals(Primitive.TRIANGLES, header.primitive());
-			assertEquals(3, header.count());
-		}
+	@Test
+	void constructor() {
+		assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
+	}
 
-		@Test
-		void invalidVertexCount() {
-			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(layout), Primitive.TRIANGLES, 2));
-		}
-
-		@Test
-		void invalidPrimitiveNormals() {
-			assertThrows(IllegalArgumentException.class, () -> new Header(List.of(Vector.LAYOUT), Primitive.LINES, 2));
-		}
-
-		@Test
-		void equals() {
-			assertEquals(true, header.equals(header));
-			assertEquals(true, header.equals(new Header(List.of(layout), Primitive.TRIANGLES, 3)));
-			assertEquals(false, header.equals(null));
-			assertEquals(false, header.equals(new Header(List.of(layout), Primitive.LINE_STRIP, 3)));
-		}
+	@Test
+	void equals() {
+		assertEquals(model, model);
+		assertNotEquals(model, null);
+		assertNotEquals(model, mock(Model.class));
 	}
 }
