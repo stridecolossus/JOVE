@@ -1,12 +1,9 @@
 package org.sarge.jove.platform.obj;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.IndexedModelBuilder;
@@ -14,6 +11,7 @@ import org.sarge.jove.model.Model;
 import org.sarge.jove.model.ModelBuilder;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.Vertex.Component;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing.
@@ -23,7 +21,6 @@ class ObjectModel {
 	private final List<Point> positions = new VertexComponentList<>();
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
-	private final Map<Vertex, Integer> map = new HashMap<>();
 	private final List<Model> models = new ArrayList<>();
 	private ModelBuilder current;
 
@@ -53,7 +50,6 @@ class ObjectModel {
 		positions.clear();
 		normals.clear();
 		coords.clear();
-		map.clear();
 	}
 
 	/**
@@ -66,13 +62,15 @@ class ObjectModel {
 		}
 
 		// Init model layout
-		current.layout(Point.LAYOUT);
+		final List<Component> components = new ArrayList<>();
+		components.add(Component.POSITION);
 		if(!normals.isEmpty()) {
-			current.layout(Vector.LAYOUT);
+			components.add(Component.NORMAL);
 		}
 		if(!coords.isEmpty()) {
-			current.layout(Coordinate2D.LAYOUT);
+			components.add(Component.COORDINATE);
 		}
+		current.layout(components);
 
 		// Add to models
 		models.add(current.build());

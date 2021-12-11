@@ -15,8 +15,8 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ModelBuilder {
-	private final List<Layout> layout = new ArrayList<>();
 	private Primitive primitive = Primitive.TRIANGLE_STRIP;
+	private final List<Layout> layout = new ArrayList<>();
 	private boolean normals;
 
 	protected final List<Vertex> vertices = new ArrayList<>();
@@ -39,8 +39,8 @@ public class ModelBuilder {
 	}
 
 	/**
-	 * Adds a vertex layout to this model.
-	 * @param layout Vertex layout
+	 * Adds a vertex component to the layout of this model.
+	 * @param layout Vertex component layout
 	 */
 	public ModelBuilder layout(Layout layout) {
 		this.layout.add(notNull(layout));
@@ -48,12 +48,13 @@ public class ModelBuilder {
 	}
 
 	/**
-	 * Helper - Adds the given vertex components.
-	 * @param components Vertex components
+	 * Adds the given list of a vertex components to the layout of this model.
+	 * @param layout Vertex component layout
 	 */
 	public ModelBuilder layout(List<Component> components) {
-		components.stream().map(Component::layout).forEach(this::layout);
-		normals = normals || components.contains(Component.NORMAL);
+		for(Component c : components) {
+			layout(c.layout());
+		}
 		return this;
 	}
 

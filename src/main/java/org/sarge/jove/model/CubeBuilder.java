@@ -1,7 +1,5 @@
 package org.sarge.jove.model;
 
-import java.util.List;
-
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.geometry.Point;
@@ -62,24 +60,7 @@ public class CubeBuilder {
 	// Indices of the two triangles for each face
 	private static final int[] TRIANGLES = Quad.strip(1, false).toArray();
 
-	private final List<Component> components;
-
 	private float size = MathsUtil.HALF;
-
-	/**
-	 * Constructor.
-	 * @param components Vertex components
-	 */
-	public CubeBuilder(List<Component> components) {
-		this.components = List.copyOf(components);
-	}
-
-	/**
-	 * Default constructor for a cube with vertex position and texture coordinates.
-	 */
-	public CubeBuilder() {
-		this(List.of(Component.POSITION, Component.COORDINATE));
-	}
 
 	/**
 	 * Sets the size of this cube.
@@ -98,7 +79,7 @@ public class CubeBuilder {
 		// Init model
 		final ModelBuilder model = new ModelBuilder();
 		model.primitive(Primitive.TRIANGLES);
-		model.layout(components);
+		model.layout(Component.DEFAULT);
 
 		// Build cube
 		for(int face = 0; face < FACES.length; ++face) {
@@ -113,8 +94,7 @@ public class CubeBuilder {
 				final Colour col = COLOURS[face];
 
 				// Add vertex
-				final Vertex data = new Vertex(pos, normal, coord, col);
-				final Vertex vertex = data.transform(components);
+				final Vertex vertex = new Vertex(pos, normal, coord, col);
 				model.add(vertex);
 			}
 		}

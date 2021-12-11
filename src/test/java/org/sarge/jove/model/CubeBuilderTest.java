@@ -3,12 +3,8 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.geometry.Point;
 
 public class CubeBuilderTest {
 	private CubeBuilder builder;
@@ -30,12 +26,12 @@ public class CubeBuilderTest {
 		// Check header
 		final int count = 6 * 2 * 3;
 		assertEquals(Primitive.TRIANGLES, cube.primitive());
-		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), cube.layout());
+		assertEquals(4, cube.layout().size());
 		assertEquals(count, cube.count());
 		assertEquals(false, cube.isIndexed());
 
 		// Check vertices
 		assertNotNull(cube.vertices());
-		assertEquals(count * (3 + 2) * Float.BYTES, cube.vertices().length());
+		assertEquals(count * (3 + 3 + 2 + 4) * Float.BYTES, cube.vertices().length());
 	}
 }
