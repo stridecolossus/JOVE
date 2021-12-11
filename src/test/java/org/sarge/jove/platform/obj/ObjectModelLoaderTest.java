@@ -60,18 +60,15 @@ public class ObjectModelLoaderTest {
 		assertEquals(3, model.count());
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals(List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT), model.layout());
+		assertEquals(true, model.isIndexed());
 
 		// Check vertex buffer
 		assertNotNull(model.vertices());
-		// TODO
-//			assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertices().limit());
-		// TODO - check texture flip
+		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertices().length());
 
 		// Check index buffer
 		assertNotNull(model.index());
-		// TODO
-//		assertEquals(true, model.index().isPresent());
-//			assertEquals(3 * Integer.BYTES, model.indexBuffer().get().limit());
+		assertEquals(3 * Integer.BYTES, model.index().length());
 	}
 
 	@Test
@@ -85,11 +82,5 @@ public class ObjectModelLoaderTest {
 		loader.setUnknownCommandHandler(handler);
 		loader.load(new StringReader("cobblers"));
 		verify(handler).accept("cobblers");
-	}
-
-	@Test
-	void flip() {
-		// TODO
-//		assertEquals(Coordinate.of(new float[]{1, -2, 3}), ObjectModelLoader.FLIP.apply(new float[]{1, 2, 3}));
 	}
 }

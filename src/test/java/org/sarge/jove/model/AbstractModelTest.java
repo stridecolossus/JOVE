@@ -9,20 +9,14 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.model.Model.AbstractModel;
+import org.sarge.jove.geometry.Point;
 
-class ModelTest {
-	private Model model;
+class AbstractModelTest {
+	private AbstractModel model;
 
 	@BeforeEach
 	void before() {
-		model = new AbstractModel(Primitive.TRIANGLE_STRIP) {
-			@Override
-			public List<Layout> layout() {
-				return List.of();
-			}
-
+		model = new AbstractModel(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT)) {
 			@Override
 			public int count() {
 				return 0;
@@ -48,6 +42,13 @@ class ModelTest {
 	@Test
 	void constructor() {
 		assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
+		assertEquals(List.of(Point.LAYOUT), model.layout());
+	}
+
+	@Test
+	void validate() {
+		model.validate(true);
+		model.validate(false);
 	}
 
 	@Test

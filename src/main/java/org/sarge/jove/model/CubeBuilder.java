@@ -68,10 +68,10 @@ public class CubeBuilder {
 
 	/**
 	 * Constructor.
-	 * @param Vertex components
+	 * @param components Vertex components
 	 */
-	public CubeBuilder(List<Component> layout) {
-		this.components = List.copyOf(layout);
+	public CubeBuilder(List<Component> components) {
+		this.components = List.copyOf(components);
 	}
 
 	/**
@@ -96,7 +96,8 @@ public class CubeBuilder {
 	 */
 	public Model build() {
 		// Init model
-		final DefaultModel model = new DefaultModel(Primitive.TRIANGLES);
+		final ModelBuilder model = new ModelBuilder();
+		model.primitive(Primitive.TRIANGLES);
 		model.layout(components);
 
 		// Build cube
@@ -118,6 +119,7 @@ public class CubeBuilder {
 			}
 		}
 
-		return model;
+		// Construct model
+		return model.build();
 	}
 }

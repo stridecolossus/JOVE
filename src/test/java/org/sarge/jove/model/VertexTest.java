@@ -1,7 +1,9 @@
 package org.sarge.jove.model;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteBuffer;
@@ -34,9 +36,20 @@ public class VertexTest {
 	}
 
 	@Test
+	void stream() {
+		assertNotNull(vertex.stream());
+		assertArrayEquals(new Object[]{Point.ORIGIN, Vector.X, Coordinate2D.BOTTOM_LEFT, Colour.BLACK}, vertex.stream().toArray());
+	}
+
+	@Test
 	void transform() {
 		final Vertex expected = new Vertex(Point.ORIGIN, null, null, Colour.BLACK);
 		assertEquals(expected, vertex.transform(List.of(Component.POSITION, Component.COLOUR)));
+	}
+
+	@Test
+	void transformNullComponent() {
+		assertThrows(IllegalArgumentException.class, () -> new Vertex(Point.ORIGIN).transform(Component.DEFAULT));
 	}
 
 	@Test
@@ -71,6 +84,11 @@ public class VertexTest {
 			assertEquals(Vector.LAYOUT, Component.NORMAL.layout());
 			assertEquals(Coordinate2D.LAYOUT, Component.COORDINATE.layout());
 			assertEquals(Colour.LAYOUT, Component.COLOUR.layout());
+		}
+
+		@Test
+		void list() {
+			assertEquals(List.of(Component.POSITION, Component.NORMAL, Component.COORDINATE, Component.COLOUR), Component.DEFAULT);
 		}
 	}
 

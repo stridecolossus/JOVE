@@ -7,11 +7,9 @@ import java.util.List;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.model.Model.AbstractModel;
 
 /**
- * A <i>buffered model</i>
- * TODO
+ * A <i>buffered model</i> is composed of {@link Bufferable} objects for the vertex and index buffers.
  * @author Sarge
  */
 public class BufferedModel extends AbstractModel {
@@ -25,7 +23,6 @@ public class BufferedModel extends AbstractModel {
 		return new BufferedModel(model.layout(), model.primitive(), model.count(), model.vertices(), index);
 	}
 
-	private final List<Layout> layout;
 	private final int count;
 	private final Bufferable vertices;
 	private final Bufferable index;
@@ -39,16 +36,10 @@ public class BufferedModel extends AbstractModel {
 	 * @param index				Optional index
 	 */
 	public BufferedModel(List<Layout> layout, Primitive primitive, int count, Bufferable vertices, Bufferable index) {
-		super(primitive);
-		this.layout = List.copyOf(layout);
+		super(primitive, layout);
 		this.count = zeroOrMore(count);
 		this.vertices = notNull(vertices);
 		this.index = index;
-	}
-
-	@Override
-	public List<Layout> layout() {
-		return layout;
 	}
 
 	@Override

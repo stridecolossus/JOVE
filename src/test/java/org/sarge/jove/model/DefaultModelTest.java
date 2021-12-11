@@ -24,94 +24,63 @@ class DefaultModelTest {
 	@BeforeEach
 	void before() {
 		vertex = mock(Vertex.class);
-		model = new DefaultModel(Primitive.TRIANGLE_STRIP);
+		model = new DefaultModel(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT), List.of(vertex), List.of(0, 0, 0));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
-		assertEquals(List.of(), model.layout());
-		assertEquals(0, model.count());
+		assertEquals(List.of(Point.LAYOUT), model.layout());
+		assertEquals(3, model.count());
+		assertEquals(true, model.isIndexed());
+		assertNotNull(model.vertices());
+		assertNotNull(model.index());
+	}
+
+	@Test
+	void unindexed() {
+		model = new DefaultModel(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT), List.of(vertex, vertex, vertex), List.of());
+		assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
+		assertEquals(List.of(Point.LAYOUT), model.layout());
+		assertEquals(3, model.count());
 		assertEquals(false, model.isIndexed());
 		assertNotNull(model.vertices());
 		assertNotNull(model.index());
 	}
 
 	@Test
-	void layout() {
-		model.layout(Point.LAYOUT);
-		assertEquals(List.of(Point.LAYOUT), model.layout());
+	void invalidVertexCount() {
+		assertThrows(IllegalArgumentException.class, () -> new DefaultModel(Primitive.TRIANGLES, List.of(Point.LAYOUT), List.of(vertex), List.of()));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultModel(Primitive.TRIANGLES, List.of(Point.LAYOUT), List.of(vertex), List.of(0, 0)));
 	}
 
 	@Test
-	void addVertex() {
-		model.add(vertex);
-		assertEquals(1, model.count());
-		assertEquals(false, model.isIndexed());
-	}
-
-	@Test
-	void addIndex() {
-		model.add(vertex);
-		model.add(0);
-		model.add(0);
-		assertEquals(2, model.count());
-		assertEquals(true, model.isIndexed());
-	}
-
-	@Test
-	void addIndexInvalid() {
-		assertThrows(IllegalArgumentException.class, () -> model.add(0));
+	void invalidModelNormals() {
+		model = new DefaultModel(Primitive.LINE_STRIP, List.of(Point.LAYOUT), List.of(vertex), List.of(0, 0));
+		assertThrows(IllegalArgumentException.class, () -> model.validate(true));
 	}
 
 	@Test
 	void vertices() {
-		// Add triangle
-		model.layout(Point.LAYOUT);
-		model.add(vertex);
-		model.add(vertex);
-		model.add(vertex);
-
 		// Check vertices
 		final Bufferable vertices = model.vertices();
 		assertNotNull(vertices);
-		assertEquals(3 * 3 * Float.BYTES, vertices.length());
+		assertEquals(3 * Float.BYTES, vertices.length());
 
 		// Check vertex data
 		final ByteBuffer bb = mock(ByteBuffer.class);
 		vertices.buffer(bb);
-		verify(vertex, times(3)).buffer(bb);
-
-		// Check index
-		assertEquals(false, model.isIndexed());
-		assertEquals(0, model.index().length());
+		verify(vertex).buffer(bb);
 	}
 
 	@Test
 	void index() {
-		// Build indexed triangle
-		model.layout(Point.LAYOUT);
-		model.add(vertex);
-		model.add(0);
-		model.add(0);
-		model.add(0);
-
-		// Check vertices
-		final Bufferable vertices = model.vertices();
-		assertNotNull(vertices);
-		assertEquals(1 * 3 * Float.BYTES, vertices.length());
-
-		// Check vertex data
-		final ByteBuffer bb = mock(ByteBuffer.class);
-		vertices.buffer(bb);
-		verify(vertex, times(1)).buffer(bb);
-
-		// Check index
 		final Bufferable index = model.index();
 		assertNotNull(index);
-		assertEquals(3 * Integer.BYTES, vertices.length());
+		assertEquals(3 * Integer.BYTES, index.length());
 
 		// Check index data
+		final ByteBuffer bb = mock(ByteBuffer.class);
 		final IntBuffer buffer = mock(IntBuffer.class);
 		when(bb.asIntBuffer()).thenReturn(buffer);
 		index.buffer(bb);

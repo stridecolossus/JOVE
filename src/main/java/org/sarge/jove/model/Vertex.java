@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -18,8 +20,18 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 
 /**
- * A <i>vertex</i> is a compound object comprised of a collection of <i>components</i> such as vertex positions, normals, texture coordinates, etc.
- * TODO
+ * A <i>vertex</i> is a compound object comprised of:
+ * <ul>
+ * <li>vertex position</li>
+ * <li>normal</li>
+ * <li>texture coordinate</li>
+ * <li>colour</li>
+ * </ul>
+ * <p>
+ * Notes that all components are optional except for the vertex position.
+ * <p>
+ * The {@link Component} enumeration specifies the elements comprising a vertex and is used to {@link #transform(List)} a vertex to a different layout.
+ * <p>
  * @author Sarge
  */
 public class Vertex implements Bufferable {
@@ -27,10 +39,10 @@ public class Vertex implements Bufferable {
 	 * Vertex components.
 	 */
 	public enum Component {
-		POSITION(Point.LAYOUT),
-		NORMAL(Vector.LAYOUT),
-		COORDINATE(Coordinate2D.LAYOUT),
-		COLOUR(Colour.LAYOUT);
+		POSITION(Point.LAYOUT, Vertex::position, Builder::position),
+		NORMAL(Vector.LAYOUT, Vertex::normal, Builder::normal),
+		COORDINATE(Coordinate2D.LAYOUT, Vertex::coordinate, Builder::coordinate),
+		COLOUR(Colour.LAYOUT, Vertex::colour, Builder::colour);
 
 		/**
 		 * Default vertex components.
@@ -38,16 +50,39 @@ public class Vertex implements Bufferable {
 		public static final List<Component> DEFAULT = Arrays.asList(Component.values());
 
 		private final Layout layout;
+		private final Function<Vertex, ? extends Bufferable> mapper;
+		private final BiConsumer<Builder, Bufferable> setter;
 
-		private Component(Layout layout) {
+		/**
+		 * Constructor.
+		 * @param <T> Component type
+		 * @param layout		Component layout
+		 * @param mapper		Extracts this component from a vertex
+		 * @param setter		Populates this component to a builder
+		 */
+		@SuppressWarnings("unchecked")
+		private <T extends Bufferable> Component(Layout layout, Function<Vertex, T> mapper, BiConsumer<Builder, T> setter) {
 			this.layout = layout;
+			this.mapper = mapper;
+			this.setter = (BiConsumer<Builder, Bufferable>) setter;
 		}
 
 		/**
-		 * @return Layout of this vertex component
+		 * @return Layout of this component
 		 */
 		public Layout layout() {
 			return layout;
+		}
+
+		/**
+		 * Applies this component to the given vertex.
+		 * @param vertex		Vertex
+		 * @param builder		Output builder
+		 */
+		private void apply(Vertex vertex, Builder builder) {
+			final Bufferable obj = mapper.apply(vertex);
+			if(obj == null) throw new IllegalArgumentException(String.format("Vertex component cannot be NULL: this=%s vertex=%s", this, vertex));
+			setter.accept(builder, obj);
 		}
 	}
 
@@ -116,19 +151,14 @@ public class Vertex implements Bufferable {
 	}
 
 	/**
-	 * Transforms this vertex to the given components.
+	 * Transforms this vertex to the given component layout.
 	 * @param transform Vertex component transform
 	 * @return Transformed vertex
 	 */
 	public Vertex transform(List<Component> transform) {
 		final Builder builder = new Builder();
 		for(Component c : transform) {
-			switch(c) {
-				case POSITION -> builder.position(pos);
-				case NORMAL -> builder.normal(normal);
-				case COORDINATE -> builder.coordinate(coord);
-				case COLOUR -> builder.colour(col);
-			}
+			c.apply(this, builder);
 		}
 		return builder.build();
 	}

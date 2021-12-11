@@ -9,9 +9,9 @@ import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.DefaultModel;
-import org.sarge.jove.model.IndexedBuilder;
+import org.sarge.jove.model.IndexedModelBuilder;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.ModelBuilder;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 
@@ -24,8 +24,8 @@ class ObjectModel {
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
 	private final Map<Vertex, Integer> map = new HashMap<>();
-	private final List<DefaultModel> models = new ArrayList<>();
-	private DefaultModel current;
+	private final List<Model> models = new ArrayList<>();
+	private ModelBuilder current;
 
 	/**
 	 * Constructor.
@@ -38,7 +38,8 @@ class ObjectModel {
 	 * Initialises the current group.
 	 */
 	private void init() {
-		current = new IndexedBuilder(Primitive.TRIANGLES);
+		current = new IndexedModelBuilder();
+		current.primitive(Primitive.TRIANGLES);
 	}
 
 	/**
@@ -60,7 +61,7 @@ class ObjectModel {
 	 */
 	private void append() {
 		// Ignore if current group is empty
-		if(current.count() == 0) {
+		if(current.isEmpty()) {
 			return;
 		}
 
@@ -74,7 +75,7 @@ class ObjectModel {
 		}
 
 		// Add to models
-		models.add(current);
+		models.add(current.build());
 		init();
 	}
 

@@ -4,22 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An <i>indexed builder</i> performs de-duplication of vertex data.
+ * An <i>indexed model builder</i> performs de-duplication of vertex data.
  * @author Sarge
  */
-public class IndexedBuilder extends DefaultModel {
+public class IndexedModelBuilder extends ModelBuilder {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
-	/**
-	 * Constructor.
-	 * @param primitive Drawing primitive
-	 */
-	public IndexedBuilder(Primitive primitive) {
-		super(primitive);
-	}
-
 	@Override
-	public void add(Vertex v) {
+	public IndexedModelBuilder add(Vertex v) {
 		final Integer prev = map.get(v);
 		if(prev == null) {
 			// Register new vertex
@@ -34,5 +26,7 @@ public class IndexedBuilder extends DefaultModel {
 			// Otherwise add index for existing vertex
 			index.add(prev);
 		}
+
+		return this;
 	}
 }

@@ -19,18 +19,20 @@ import org.sarge.jove.geometry.Point;
 
 class ModelLoaderTest {
 	private ModelLoader loader;
-	private DefaultModel model;
+	private Model model;
 	private ByteArrayOutputStream out;
 
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		model = new DefaultModel(Primitive.TRIANGLES);
-		model.layout(Point.LAYOUT);
-		model.add(new Vertex(Point.ORIGIN));
-		model.add(0);
-		model.add(0);
-		model.add(0);
+		model = new ModelBuilder()
+				.primitive(Primitive.TRIANGLES)
+				.layout(Point.LAYOUT)
+				.add(new Vertex(Point.ORIGIN))
+				.add(0)
+				.add(0)
+				.add(0)
+				.build();
 
 		// Init persistence store
 		out = new ByteArrayOutputStream();
