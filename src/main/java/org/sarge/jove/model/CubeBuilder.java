@@ -57,8 +57,8 @@ public class CubeBuilder {
 		Colour.WHITE
 	};
 
-	// Indices of the two triangles for each face
-	private static final int[] TRIANGLES = Quad.strip(1, false).toArray();
+	// Indices of the two counter-clockwise triangles for each face
+	private static final int[] TRIANGLES = Triangle.TRIANGLES.index(2, false).toArray();
 
 	private float size = MathsUtil.HALF;
 
@@ -75,7 +75,7 @@ public class CubeBuilder {
 	 * Constructs this cube.
 	 * @return New cube
 	 */
-	public Model build() {
+	public DefaultModel build() {
 		// Init model
 		final ModelBuilder model = new ModelBuilder();
 		model.primitive(Primitive.TRIANGLES);

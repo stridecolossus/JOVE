@@ -85,8 +85,8 @@ public class ModelBuilder {
 	 * @throws IllegalArgumentException if the model is not valid
 	 * @see AbstractModel#validate(boolean)
 	 */
-	public Model build() {
-		final AbstractModel model = new DefaultModel(primitive, layout, vertices, index);
+	public DefaultModel build() {
+		final DefaultModel model = new DefaultModel(primitive, layout, vertices, index);
 		model.validate(normals);
 		return model;
 	}

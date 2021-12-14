@@ -81,7 +81,7 @@ public class GridBuilder {
 	 * @param layout Grid vertex layout
 	 * @return New grid
 	 */
-	public Model build() {
+	public DefaultModel build() {
 		// Init model
 		final ModelBuilder model = new ModelBuilder();
 		model.primitive(Primitive.PATCH);		// TODO - optional? e.g. could build triangles?

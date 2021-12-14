@@ -1,5 +1,8 @@
 package org.sarge.jove.model;
 
+import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.zeroOrMore;
+
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
 
 /**
@@ -52,8 +55,8 @@ public enum Primitive {
 	 * @param topology		Vulkan topology
 	 */
 	private Primitive(int size, VkPrimitiveTopology topology) {
-		this.size = size;
-		this.topology = topology;
+		this.size = zeroOrMore(size);
+		this.topology = notNull(topology);
 	}
 
 	/**

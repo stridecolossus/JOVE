@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 
@@ -17,30 +19,47 @@ public class QuadTest {
 	}
 
 	@Test
-	void stripTriangleStrip() {
-		final IntStream strip = Quad.strip(2, true);
-		assertNotNull(strip);
-		assertArrayEquals(new int[]{0, 1, 2, 1, 2, 3, 2, 3, 4, 3, 4, 5}, strip.toArray());
+	void constructor() {
+		assertNotNull(Quad.STRIP);
 	}
 
+	@DisplayName("Quad indices should be counter-clockwise by default")
 	@Test
-	void stripTriangles() {
-		final IntStream triangles = Quad.strip(2, false);
-		assertNotNull(triangles);
-		assertArrayEquals(new int[]{0, 1, 2, 2, 1, 3, 2, 3, 4, 4, 3, 5}, triangles.toArray());
+	void indices() {
+		final IntStream indices = Quad.indices(false);
+		assertNotNull(indices);
+		assertArrayEquals(new int[]{0, 1, 3, 2}, indices.toArray());
 	}
 
-	@Test
-	void triangle() {
-		final IntStream triangles = Quad.triangle(1);
-		assertNotNull(triangles);
-		assertArrayEquals(new int[]{1, 2, 3}, triangles.toArray());
-	}
-
+	@DisplayName("Quad indices can be clockwise")
 	@Test
 	void clockwise() {
-		final IntStream triangles = Quad.clockwise(1);
-		assertNotNull(triangles);
-		assertArrayEquals(new int[]{2, 1, 3}, triangles.toArray());
+		final IntStream indices = Quad.indices(true);
+		assertNotNull(indices);
+		assertArrayEquals(new int[]{0, 2, 3, 1}, indices.toArray());
+	}
+
+	@DisplayName("A strip of quads should share the last two indices of each quad")
+	@Test
+	void strip() {
+		final int[] expected = {
+				0, 1, 3, 2,
+				2, 3, 5, 4,
+		};
+		final IntStream index = Quad.STRIP.index(2, false);
+		assertNotNull(index);
+		assertEquals(Arrays.toString(expected), Arrays.toString(index.toArray()));
+	}
+
+	@DisplayName("A quad strip can be clockwise")
+	@Test
+	void stripClockwise() {
+		final int[] expected = {
+				0, 2, 3, 1,
+				2, 4, 5, 3,
+		};
+		final IntStream index = Quad.STRIP.index(2, true);
+		assertNotNull(index);
+		assertEquals(Arrays.toString(expected), Arrays.toString(index.toArray()));
 	}
 }

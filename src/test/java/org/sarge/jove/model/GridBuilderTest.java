@@ -11,7 +11,7 @@ import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
 
-public class GridBuilderTest {
+class GridBuilderTest {
 	private GridBuilder builder;
 
 	@BeforeEach

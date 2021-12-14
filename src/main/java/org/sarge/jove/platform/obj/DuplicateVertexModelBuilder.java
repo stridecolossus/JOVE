@@ -1,17 +1,20 @@
-package org.sarge.jove.model;
+package org.sarge.jove.platform.obj;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.sarge.jove.model.ModelBuilder;
+import org.sarge.jove.model.Vertex;
+
 /**
- * An <i>indexed model builder</i> performs de-duplication of vertex data.
+ * Adapter for an OBJ model builder that performs vertex de-duplication.
  * @author Sarge
  */
-public class IndexedModelBuilder extends ModelBuilder {
+class DuplicateVertexModelBuilder extends ModelBuilder {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
 	@Override
-	public IndexedModelBuilder add(Vertex v) {
+	public DuplicateVertexModelBuilder add(Vertex v) {
 		final Integer prev = map.get(v);
 		if(prev == null) {
 			// Register new vertex

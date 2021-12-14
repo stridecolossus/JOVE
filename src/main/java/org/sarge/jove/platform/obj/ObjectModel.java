@@ -6,7 +6,6 @@ import java.util.List;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.IndexedModelBuilder;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.ModelBuilder;
 import org.sarge.jove.model.Primitive;
@@ -35,7 +34,7 @@ class ObjectModel {
 	 * Initialises the current group.
 	 */
 	private void init() {
-		current = new IndexedModelBuilder();
+		current = new DuplicateVertexModelBuilder();
 		current.primitive(Primitive.TRIANGLES);
 	}
 

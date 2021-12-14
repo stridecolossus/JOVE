@@ -1,17 +1,19 @@
-package org.sarge.jove.model;
+package org.sarge.jove.platform.obj;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Vertex;
 
-public class IndexedModelBuilderTests {
-	private IndexedModelBuilder builder;
+class DuplicateVertexModelBuilderTests {
+	private DuplicateVertexModelBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new IndexedModelBuilder();
+		builder = new DuplicateVertexModelBuilder();
 	}
 
 	@Test
