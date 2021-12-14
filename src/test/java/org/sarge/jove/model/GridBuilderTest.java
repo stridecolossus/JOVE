@@ -27,12 +27,46 @@ class GridBuilderTest {
 	}
 
 	@Test
-	void build() {
+	void buildTriangles() {
+		// Construct grid
+		final Model model = builder
+				.size(2)
+				.width(3)
+				.breadth(4)
+				.build();
+
+		// Check grid
+		assertNotNull(model);
+		assertEquals(2 * 3, model.count());
+		assertEquals(true, model.isIndexed());
+		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
+	}
+
+	@Test
+	void buildEmptyIndex() {
+		// Construct grid
+		final Model model = builder
+				.size(2)
+				.index(null)
+				.primitive(Primitive.POINTS) // TODO
+				.build();
+
+		// Check grid
+		assertNotNull(model);
+		assertEquals(4, model.count());
+		assertEquals(false, model.isIndexed());
+	}
+
+	@Test
+	void buildQuadStrip() {
 		// Construct grid
 		final Model model = builder
 				.size(3)
 				.width(4)
 				.breadth(5)
+				.primitive(Primitive.PATCH)
+				.index(Quad.STRIP)
 				.build();
 
 		// Check grid
@@ -48,5 +82,6 @@ class GridBuilderTest {
 
 		// Check index
 		assertEquals(model.count() * Integer.BYTES, model.index().length());
+		// TODO - 0341 1452 3674 4785
 	}
 }

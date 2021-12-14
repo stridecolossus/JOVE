@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
@@ -39,6 +40,8 @@ public class GridBuilder {
 	private float breadth = 1;
 	private int size = 4;
 	private HeightFunction height = HeightFunction.literal(0);
+	private Primitive primitive = Primitive.TRIANGLES;
+	private IndexFactory index = Triangle.TRIANGLES;
 
 	/**
 	 * Sets the grid tile width (in the X axis).
@@ -59,7 +62,7 @@ public class GridBuilder {
 	}
 
 	/**
-	 * Sets the size of the grid (number of tiles in both directions).
+	 * Sets the size of the grid (number of vertices in each direction).
 	 * @param size Grid size
 	 */
 	public GridBuilder size(int size) {
@@ -77,6 +80,24 @@ public class GridBuilder {
 	}
 
 	/**
+	 * Sets the drawing primitive (default is {@link Primitive#TRIANGLES}).
+	 * @param primitive Drawing primitive
+	 */
+	public GridBuilder primitive(Primitive primitive) {
+		this.primitive = notNull(primitive);
+		return this;
+	}
+
+	/**
+	 * Sets the index factory used to generate indices for the grid (default is {@link Triangle#TRIANGLES}).
+	 * @param index Index factory or {@code null} for no index
+	 */
+	public GridBuilder index(IndexFactory index) {
+		this.index = index;
+		return this;
+	}
+
+	/**
 	 * Constructs this grid.
 	 * @param layout Grid vertex layout
 	 * @return New grid
@@ -84,7 +105,7 @@ public class GridBuilder {
 	public DefaultModel build() {
 		// Init model
 		final ModelBuilder model = new ModelBuilder();
-		model.primitive(Primitive.PATCH);		// TODO - optional? e.g. could build triangles?
+		model.primitive(primitive);
 		model.layout(List.of(Component.POSITION, Component.COORDINATE));
 
 		// Calculate half distance in both directions
@@ -112,18 +133,16 @@ public class GridBuilder {
 			}
 		}
 
+		// TODO - if index is null then add vertices using index factory OR as above + index
+
 		// Build index for counter-clockwise quads
-		for(int x = 0; x < quads; ++x) {
-			for(int y = 0; y < quads; ++y) {
-				final int index = x + y * size;
-				model.add(index);
-				model.add(index + size);
-				model.add(index + size + 1);
-				model.add(index + 1);
-			}
+		if(index != null) {
+			IntStream
+					.range(0, quads)
+					.map(row -> row * size)
+					.flatMap(start -> index.strip(quads).map(n -> n + start))
+					.forEach(model::add);
 		}
-		// TODO - option to index as quads, triangles, strip?
-		// TODO - optional flag for whether to create index?
 
 		// Build grid model
 		return model.build();

@@ -8,22 +8,23 @@ import java.util.stream.IntStream;
  * <p>
  * @author Sarge
  */
-@FunctionalInterface
 public interface IndexFactory {
 	/**
-	 * Generates indices for a strip of primitives.
+	 * Generates indices for a primitives in this strip.
+	 * @param index Primitive index
 	 * @param count Number of primitives
 	 * @return Indices
 	 */
-	IntStream index(int count, boolean clockwise);
+	IntStream indices(int index, int count);
 
 	/**
-	 * Helper - Increments a stream of indices.
-	 * @param inc			Increment
-	 * @param stream		Stream
-	 * @return Incremented stream
+	 * Generates indices for a strip.
+	 * @param count Number of primitives
+	 * @return Strip indices
 	 */
-	static IntStream increment(int inc, IntStream stream) {
-		return stream.map(n -> n + inc);
+	default IntStream strip(int count) {
+		return IntStream
+				.range(0, count)
+				.flatMap(n -> indices(n, count));
 	}
 }

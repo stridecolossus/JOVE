@@ -1,6 +1,5 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -23,43 +22,25 @@ public class QuadTest {
 		assertNotNull(Quad.STRIP);
 	}
 
+	private static void compare(int[] expected, IntStream actual) {
+		assertNotNull(actual);
+		assertEquals(Arrays.toString(expected), Arrays.toString(actual.toArray()));
+	}
+
 	@DisplayName("Quad indices should be counter-clockwise by default")
 	@Test
 	void indices() {
-		final IntStream indices = Quad.indices(false);
-		assertNotNull(indices);
-		assertArrayEquals(new int[]{0, 1, 3, 2}, indices.toArray());
-	}
-
-	@DisplayName("Quad indices can be clockwise")
-	@Test
-	void clockwise() {
-		final IntStream indices = Quad.indices(true);
-		assertNotNull(indices);
-		assertArrayEquals(new int[]{0, 2, 3, 1}, indices.toArray());
+		compare(new int[]{0, 2, 3, 1}, Quad.STRIP.strip(1));
 	}
 
 	@DisplayName("A strip of quads should share the last two indices of each quad")
 	@Test
 	void strip() {
 		final int[] expected = {
-				0, 1, 3, 2,
-				2, 3, 5, 4,
+				0, 4, 5, 1,
+				1, 5, 6, 2,
+				2, 6, 7, 3,
 		};
-		final IntStream index = Quad.STRIP.index(2, false);
-		assertNotNull(index);
-		assertEquals(Arrays.toString(expected), Arrays.toString(index.toArray()));
-	}
-
-	@DisplayName("A quad strip can be clockwise")
-	@Test
-	void stripClockwise() {
-		final int[] expected = {
-				0, 2, 3, 1,
-				2, 4, 5, 3,
-		};
-		final IntStream index = Quad.STRIP.index(2, true);
-		assertNotNull(index);
-		assertEquals(Arrays.toString(expected), Arrays.toString(index.toArray()));
+		compare(expected, Quad.STRIP.strip(3));
 	}
 }

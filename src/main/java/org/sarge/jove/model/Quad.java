@@ -24,26 +24,10 @@ public final class Quad {
 	}
 
 	/**
-	 * Generates quad indices.
-	 * @param clockwise Winding order
-	 * @return Quad indices
-	 */
-	public static IntStream indices(boolean clockwise) {
-		if(clockwise) {
-			return IntStream.of(0, 2, 3, 1);
-		}
-		else {
-			return IntStream.of(0, 1, 3, 2);
-		}
-	}
-
-	/**
 	 * Index factory for a quad strip.
 	 */
-	public static final IndexFactory STRIP = (count, clockwise) -> {
-		return IntStream
-				.range(0, count)
-				.map(n -> n * 2)
-				.flatMap(start -> IndexFactory.increment(start, indices(clockwise)));
+	public static final IndexFactory STRIP = (int n, int count) -> {
+		final int next = n + count + 1;
+		return IntStream.of(n, next, next + 1, n + 1);
 	};
 }

@@ -1,7 +1,5 @@
 package org.sarge.jove.model;
 
-import static org.sarge.jove.model.IndexFactory.increment;
-
 import java.util.stream.IntStream;
 
 /**
@@ -13,51 +11,33 @@ public final class Triangle {
 	}
 
 	/**
-	 * Generates the indices for a triangle.
-	 * <p>
-	 * The indices are 012 for a triangle with a <i>counter-clockwise</i> winding order and 021 for a <i>clockwise</i> triangle.
-	 * <p>
-	 * @param index 		Starting index
-	 * @param clockwise		Winding order
-	 * @return Triangle indices
+	 * Index factory for a quad strip comprising a list of {@link Primitive#TRIANGLES}.
 	 */
-	public static IntStream indices(boolean clockwise) {
-		if(clockwise) {
-			return IntStream.of(0, 2, 1);
+	public static final IndexFactory TRIANGLES = new IndexFactory() {
+		@Override
+		public IntStream indices(int index, int count) {
+			final int next = index + count + 1;
+			return IntStream.of(
+					index, next, index + 1,
+					next, next + 1, index + 1
+			);
 		}
-		else {
-			return IntStream.of(0, 1, 2);
-		}
-	}
-
-	/**
-	 * Index factory for a list of {@link Primitive#TRIANGLES}.
-	 */
-	public static final IndexFactory TRIANGLES = (count, clockwise) -> {
-		return IntStream
-				.range(0, count / 2)
-				.map(n -> n * 2)
-				.flatMap(start -> increment(start, alternating(clockwise)));
 	};
 
 	/**
-	 * Helper - Generates indices for two triangles with alternate winding order.
-	 * @param clockwise Winding order
-	 * @return Alternating triangle indices
+	 * Index factory for a quad strip comprised of a {@link Primitive#TRIANGLE_STRIP}.
 	 */
-	private static IntStream alternating(boolean clockwise) {
-		return IntStream.concat(
-				indices(clockwise),
-				increment(1, indices(!clockwise))
-		);
-	}
+	public static final IndexFactory STRIP = new IndexFactory() {
+		@Override
+		public IntStream indices(int index, int count) {
+			return IntStream.of(index, index + count + 1);
+		}
 
-	/**
-	 * Index factory for a {@link Primitive#TRIANGLE_STRIP}.
-	 */
-	public static final IndexFactory STRIP = (count, clockwise) -> {
-		return IntStream
-				.range(0, count)
-				.flatMap(start -> increment(start, indices(clockwise)));
+		@Override
+		public IntStream strip(int count) {
+			return IntStream
+					.rangeClosed(0, count)
+					.flatMap(n -> indices(n, count));
+		}
 	};
 }

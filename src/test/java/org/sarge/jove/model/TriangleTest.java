@@ -21,46 +21,22 @@ public class TriangleTest {
 		assertNotNull(Triangle.STRIP);
 	}
 
-	@DisplayName("A triangle should have 012 indices")
-	@Test
-	void indices() {
-		compare(new int[]{0, 1, 2}, Triangle.indices(false));
-	}
-
-	@DisplayName("A clockwise triangle should have 021 indices")
-	@Test
-	void clockwise() {
-		compare(new int[]{0, 2, 1}, Triangle.indices(true));
-	}
-
-	@DisplayName("A list of triangles should be have alternating winding orders")
+	@DisplayName("Each quad in a strip should be comprised of two triangles with the same winding order")
 	@Test
 	void triangles() {
 		final int[] expected = {
-				0, 1, 2,
-				1, 3, 2
+				0, 3, 1,
+				3, 4, 1,
+				1, 4, 2,
+				4, 5, 2,
 		};
-		compare(expected, Triangle.TRIANGLES.index(2, false));
+		compare(expected, Triangle.TRIANGLES.strip(2));
 	}
 
-	@DisplayName("A clockwise list of triangles should be the opposite orders")
-	@Test
-	void trianglesClockwise() {
-		final int[] expected = {
-				0, 2, 1,
-				1, 2, 3
-		};
-		compare(expected, Triangle.TRIANGLES.index(2, true));
-	}
-
-	@DisplayName("A triangle strip should share the last two indices of the previous triangle")
+	@DisplayName("A strip implemented using a triangle strip should be comprised of alternating indices across the strip")
 	@Test
 	void strip() {
-		final int[] expected = {
-				0, 1, 2,
-				1, 2, 3,
-				2, 3, 4
-		};
-		compare(expected, Triangle.STRIP.index(3, false));
+		final int[] expected = {0, 3, 1, 4, 2, 5};
+		compare(expected, Triangle.STRIP.strip(2));
 	}
 }
