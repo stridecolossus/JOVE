@@ -12,6 +12,14 @@ public final class Triangle {
 
 	/**
 	 * Index factory for a quad strip comprising a list of {@link Primitive#TRIANGLES}.
+	 * <p>
+	 * Each quad in the strip is comprised of two triangles with counter-clockwise winding order.
+	 * <p>
+	 * For example, given the following vertices:
+	 * <pre>
+	 * 0 1
+	 * 2 3</pre>
+	 * The indices of the generated triangles is: 021 and 231.
 	 */
 	public static final IndexFactory TRIANGLES = new IndexFactory() {
 		@Override
@@ -26,6 +34,16 @@ public final class Triangle {
 
 	/**
 	 * Index factory for a quad strip comprised of a {@link Primitive#TRIANGLE_STRIP}.
+	 * <p>
+	 * The generated index is comprised of the indices of the first triangle followed by alternating strip indices.
+	 * <p>
+	 * For example, given the following vertices:
+	 * <pre>
+	 * 0 1 2
+	 * 3 4 5</pre>
+	 * The indices of the generated strip is 031425 etc
+	 * <p>
+	 * Note that this implementation assumes that the index is used to render a triangle strip with alternating triangle winding order.
 	 */
 	public static final IndexFactory STRIP = new IndexFactory() {
 		@Override

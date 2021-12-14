@@ -21,6 +21,16 @@ public class TriangleTest {
 		assertNotNull(Triangle.STRIP);
 	}
 
+	@DisplayName("A single quad should be comprised of two triangles")
+	@Test
+	void quad() {
+		final int[] expected = {
+				0, 2, 1,
+				2, 3, 1
+		};
+		compare(expected, Triangle.TRIANGLES.strip(1));
+	}
+
 	@DisplayName("Each quad in a strip should be comprised of two triangles with the same winding order")
 	@Test
 	void triangles() {

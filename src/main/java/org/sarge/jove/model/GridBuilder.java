@@ -3,6 +3,7 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -13,6 +14,10 @@ import org.sarge.jove.model.Vertex.Component;
 
 /**
  * The <i>grid builder</i> constructs a grid of vertices in the X-Z plane.
+ * TODO
+ * - diagram illustrating size of grid (number of vertices vs number of quads)
+ * - explain difference between primitive and index factory
+ * - static model if no index
  * @author Sarge
  */
 public class GridBuilder {
@@ -114,6 +119,7 @@ public class GridBuilder {
 		final float b = breadth * quads / 2;
 
 		// Build grid vertices
+		final List<Vertex> vertices = new ArrayList<>();
 		for(int x = 0; x < size; ++x) {
 			for(int y = 0; y < size; ++y) {
 				// Determine grid position and height
@@ -129,22 +135,36 @@ public class GridBuilder {
 
 				// Add grid vertex
 				final Vertex vertex = new Vertex(pos, null, coord, null);
-				model.add(vertex);
+				vertices.add(vertex);
 			}
 		}
 
-		// TODO - if index is null then add vertices using index factory OR as above + index
-
-		// Build index for counter-clockwise quads
-		if(index != null) {
-			IntStream
-					.range(0, quads)
-					.map(row -> row * size)
-					.flatMap(start -> index.strip(quads).map(n -> n + start))
-					.forEach(model::add);
+		if(index == null) {
+			// Build grid vertices
+			// TODO - factory from primitive?
+			vertices.forEach(model::add);
+//			index(quads, null).mapToObj(vertices::get).forEach(model::add);
+		}
+		else {
+			// Build indexed grid
+			vertices.forEach(model::add);
+			index(quads, index).forEach(model::add);
 		}
 
 		// Build grid model
 		return model.build();
+	}
+
+	/**
+	 * Generates the grid index.
+	 * @param quads			Number of quads
+	 * @param factory		Index factory
+	 * @return Grid index
+	 */
+	private IntStream index(int quads, IndexFactory factory) {
+		return IntStream
+				.range(0, quads)
+				.map(row -> row * size)
+				.flatMap(start -> factory.strip(quads).map(n -> n + start));
 	}
 }
