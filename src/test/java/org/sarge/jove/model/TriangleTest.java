@@ -17,8 +17,8 @@ public class TriangleTest {
 
 	@Test
 	void constructor() {
-		assertNotNull(Triangle.TRIANGLES);
-		assertNotNull(Triangle.STRIP);
+		assertNotNull(Triangle.INDEX_TRIANGLES);
+		assertNotNull(Triangle.INDEX_STRIP);
 	}
 
 	@DisplayName("A single quad should be comprised of two triangles")
@@ -28,7 +28,7 @@ public class TriangleTest {
 				0, 2, 1,
 				2, 3, 1
 		};
-		compare(expected, Triangle.TRIANGLES.strip(1));
+		compare(expected, Triangle.INDEX_TRIANGLES.strip(1));
 	}
 
 	@DisplayName("Each quad in a strip should be comprised of two triangles with the same winding order")
@@ -40,13 +40,13 @@ public class TriangleTest {
 				1, 4, 2,
 				4, 5, 2,
 		};
-		compare(expected, Triangle.TRIANGLES.strip(2));
+		compare(expected, Triangle.INDEX_TRIANGLES.strip(2));
 	}
 
 	@DisplayName("A strip implemented using a triangle strip should be comprised of alternating indices across the strip")
 	@Test
 	void strip() {
 		final int[] expected = {0, 3, 1, 4, 2, 5};
-		compare(expected, Triangle.STRIP.strip(2));
+		compare(expected, Triangle.INDEX_STRIP.strip(2));
 	}
 }

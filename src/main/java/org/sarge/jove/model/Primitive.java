@@ -14,49 +14,52 @@ public enum Primitive {
 	/**
 	 * Triangles.
 	 */
-	TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST),
+	TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST, Triangle.INDEX_TRIANGLES),
 
 	/**
 	 * Strip of triangles.
 	 */
-	TRIANGLE_STRIP(3, VkPrimitiveTopology.TRIANGLE_STRIP),
+	TRIANGLE_STRIP(3, VkPrimitiveTopology.TRIANGLE_STRIP, Triangle.INDEX_STRIP),
 
 	/**
 	 * Triangle fan.
 	 */
-	TRIANGLE_FAN(3, VkPrimitiveTopology.TRIANGLE_FAN),
+	TRIANGLE_FAN(3, VkPrimitiveTopology.TRIANGLE_FAN, null),		// TODO
 
 	/**
 	 * Points.
 	 */
-	POINTS(1, VkPrimitiveTopology.POINT_LIST),
+	POINTS(1, VkPrimitiveTopology.POINT_LIST, null),
 
 	/**
 	 * Lines.
 	 */
-	LINES(2, VkPrimitiveTopology.LINE_LIST),
+	LINES(2, VkPrimitiveTopology.LINE_LIST, IndexFactory.DEFAULT),
 
 	/**
 	 * Strip of lines.
 	 */
-	LINE_STRIP(2, VkPrimitiveTopology.LINE_STRIP),
+	LINE_STRIP(2, VkPrimitiveTopology.LINE_STRIP, IndexFactory.DEFAULT),
 
 	/**
 	 * Tesselation patch list.
 	 */
-	PATCH(1, VkPrimitiveTopology.PATCH_LIST);
+	PATCH(1, VkPrimitiveTopology.PATCH_LIST, null);
 
 	private final int size;
 	private final VkPrimitiveTopology topology;
+	private final IndexFactory index;
 
 	/**
 	 * Constructor.
 	 * @param size 			Number of vertices per primitive
 	 * @param topology		Vulkan topology
+	 * @param index			Optional index factory
 	 */
-	private Primitive(int size, VkPrimitiveTopology topology) {
+	private Primitive(int size, VkPrimitiveTopology topology, IndexFactory index) {
 		this.size = zeroOrMore(size);
 		this.topology = notNull(topology);
+		this.index = index;
 	}
 
 	/**
@@ -71,6 +74,13 @@ public enum Primitive {
 	 */
 	public VkPrimitiveTopology topology() {
 		return topology;
+	}
+
+	/**
+	 * @return Index factory for this primitive
+	 */
+	public IndexFactory index() {
+		return index;
 	}
 
 	/**

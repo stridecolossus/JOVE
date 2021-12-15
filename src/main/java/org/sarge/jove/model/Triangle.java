@@ -21,7 +21,7 @@ public final class Triangle {
 	 * 2 3</pre>
 	 * The indices of the generated triangles is: 021 and 231.
 	 */
-	public static final IndexFactory TRIANGLES = new IndexFactory() {
+	public static final IndexFactory INDEX_TRIANGLES = new IndexFactory() {
 		@Override
 		public IntStream indices(int index, int count) {
 			final int next = index + count + 1;
@@ -45,7 +45,7 @@ public final class Triangle {
 	 * <p>
 	 * Note that this implementation assumes that the index is used to render a triangle strip with alternating triangle winding order.
 	 */
-	public static final IndexFactory STRIP = new IndexFactory() {
+	public static final IndexFactory INDEX_STRIP = new IndexFactory() {
 		@Override
 		public IntStream indices(int index, int count) {
 			return IntStream.of(index, index + count + 1);
@@ -58,4 +58,5 @@ public final class Triangle {
 					.flatMap(n -> indices(n, count));
 		}
 	};
+	// TODO - degenerate triangle support
 }

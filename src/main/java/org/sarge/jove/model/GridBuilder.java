@@ -1,7 +1,6 @@
 package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +8,7 @@ import java.util.stream.IntStream;
 
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Vertex.Component;
 
@@ -41,37 +41,27 @@ public class GridBuilder {
 		}
 	}
 
-	private float width = 1;
-	private float breadth = 1;
-	private int size = 4;
+	private Dimensions size = new Dimensions(4, 4);
+	private Dimensions tile = new Dimensions(1, 1);
 	private HeightFunction height = HeightFunction.literal(0);
 	private Primitive primitive = Primitive.TRIANGLES;
-	private IndexFactory index = Triangle.TRIANGLES;
-
-	/**
-	 * Sets the grid tile width (in the X axis).
-	 * @param w Width
-	 */
-	public GridBuilder width(float width) {
-		this.width = width;
-		return this;
-	}
-
-	/**
-	 * Sets the grid tile breadth (in the Z axis).
-	 * @param h Tile breadth
-	 */
-	public GridBuilder breadth(float breadth) {
-		this.breadth = breadth;
-		return this;
-	}
+	private IndexFactory index = Triangle.INDEX_TRIANGLES;
 
 	/**
 	 * Sets the size of the grid (number of vertices in each direction).
 	 * @param size Grid size
 	 */
-	public GridBuilder size(int size) {
-		this.size = oneOrMore(size);
+	public GridBuilder size(Dimensions size) {
+		this.size = notNull(size);
+		return this;
+	}
+
+	/**
+	 * Sets the grid tile dimensions.
+	 * @param tile Tile dimensions
+	 */
+	public GridBuilder tile(Dimensions tile) {
+		this.tile = notNull(tile);
 		return this;
 	}
 
@@ -94,13 +84,17 @@ public class GridBuilder {
 	}
 
 	/**
-	 * Sets the index factory used to generate indices for the grid (default is {@link Triangle#TRIANGLES}).
+	 * Sets the index factory used to generate indices for the grid (default is {@link Triangle#INDEX_TRIANGLES}).
 	 * @param index Index factory or {@code null} for no index
 	 */
 	public GridBuilder index(IndexFactory index) {
 		this.index = index;
 		return this;
 	}
+
+	// triangles, quads or isolines
+	// SpacingEqual, SpacingFractionalEven, and SpacingFractionalOdd
+	// https://satellitnorden.wordpress.com/2018/02/12/vulkan-adventures-part-3-return-of-the-triangles-tessellation-tutorial/
 
 	/**
 	 * Constructs this grid.
@@ -114,24 +108,25 @@ public class GridBuilder {
 		model.layout(List.of(Component.POSITION, Component.COORDINATE));
 
 		// Calculate half distance in both directions
-		final int quads = size - 1;
-		final float w = width * quads / 2;
-		final float b = breadth * quads / 2;
+		final int w = size.width();
+		final int h = size.height();
+		final float dx = tile.width() * (w - 1) / 2;
+		final float dy = tile.height() * (h - 1) / 2;
 
 		// Build grid vertices
 		final List<Vertex> vertices = new ArrayList<>();
-		for(int x = 0; x < size; ++x) {
-			for(int y = 0; y < size; ++y) {
+		for(int x = 0; x < w; ++x) {
+			for(int y = 0; y < h; ++y) {			// TODO - swap x-y order?
 				// Determine grid position and height
-				final float px = x * width - w;
-				final float pz = y * breadth - b;
-				final float h = height.height(x, y);
-				final Point pos = new Point(px, h, pz);
+				final float px = x * tile.width() - dx;
+				final float pz = y * tile.height() - dy;
+				final float py = height.height(x, y);
+				final Point pos = new Point(px, py, pz);
 
 				// TODO - normals from height function
 
 				// Calculate texture coordinate
-				final Coordinate coord = new Coordinate2D((float) x / size, (float) y / size);
+				final Coordinate coord = new Coordinate2D((float) x / w, (float) y / h);
 
 				// Add grid vertex
 				final Vertex vertex = new Vertex(pos, null, coord, null);
@@ -140,15 +135,14 @@ public class GridBuilder {
 		}
 
 		if(index == null) {
-			// Build grid vertices
-			// TODO - factory from primitive?
-			vertices.forEach(model::add);
-//			index(quads, null).mapToObj(vertices::get).forEach(model::add);
+			// Build grid without index
+			final IndexFactory factory = primitive.index();
+			build(factory).mapToObj(vertices::get).forEach(model::add);
 		}
 		else {
 			// Build indexed grid
 			vertices.forEach(model::add);
-			index(quads, index).forEach(model::add);
+			build(index).forEach(model::add);
 		}
 
 		// Build grid model
@@ -157,14 +151,15 @@ public class GridBuilder {
 
 	/**
 	 * Generates the grid index.
-	 * @param quads			Number of quads
-	 * @param factory		Index factory
+	 * @param factory Index factory
 	 * @return Grid index
 	 */
-	private IntStream index(int quads, IndexFactory factory) {
+	private IntStream build(IndexFactory factory) {
+		final int w = size.width() - 1;
+		final int h = size.height() - 1;
 		return IntStream
-				.range(0, quads)
-				.map(row -> row * size)
-				.flatMap(start -> factory.strip(quads).map(n -> n + start));
+				.range(0, h)
+				.map(row -> row * h)
+				.flatMap(start -> factory.strip(w).map(n -> n + start));
 	}
 }

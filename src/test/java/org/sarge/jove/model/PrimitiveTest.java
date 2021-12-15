@@ -1,6 +1,8 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ public class PrimitiveTest {
 		assertEquals(true, Primitive.TRIANGLES.isValidVertexCount(3));
 		assertEquals(false, Primitive.TRIANGLES.isValidVertexCount(4));
 		assertEquals(true, Primitive.TRIANGLES.isValidVertexCount(6));
+		assertNotNull(Primitive.TRIANGLES.index());
 	}
 
 	@Test
@@ -26,6 +29,7 @@ public class PrimitiveTest {
 		assertEquals(false, Primitive.TRIANGLE_STRIP.isValidVertexCount(2));
 		assertEquals(true, Primitive.TRIANGLE_STRIP.isValidVertexCount(3));
 		assertEquals(true, Primitive.TRIANGLE_STRIP.isValidVertexCount(4));
+		assertNotNull(Primitive.TRIANGLE_STRIP.index());
 	}
 
 	@Test
@@ -37,6 +41,8 @@ public class PrimitiveTest {
 		assertEquals(false, Primitive.TRIANGLE_FAN.isValidVertexCount(2));
 		assertEquals(true, Primitive.TRIANGLE_FAN.isValidVertexCount(3));
 		assertEquals(true, Primitive.TRIANGLE_FAN.isValidVertexCount(4));
+//		assertNotNull(Primitive.TRIANGLES.index());
+		// TODO
 	}
 
 	@Test
@@ -47,6 +53,7 @@ public class PrimitiveTest {
 		assertEquals(true, Primitive.POINTS.isValidVertexCount(0));
 		assertEquals(true, Primitive.POINTS.isValidVertexCount(1));
 		assertEquals(true, Primitive.POINTS.isValidVertexCount(2));
+		assertNull(Primitive.POINTS.index());
 	}
 
 	@Test
@@ -58,6 +65,7 @@ public class PrimitiveTest {
 		assertEquals(false, Primitive.LINES.isValidVertexCount(1));
 		assertEquals(true, Primitive.LINES.isValidVertexCount(0));
 		assertEquals(true, Primitive.LINES.isValidVertexCount(2));
+		assertNotNull(Primitive.LINES.index());
 	}
 
 	@Test
@@ -68,6 +76,7 @@ public class PrimitiveTest {
 		assertEquals(true, Primitive.LINE_STRIP.isValidVertexCount(0));
 		assertEquals(false, Primitive.LINE_STRIP.isValidVertexCount(1));
 		assertEquals(true, Primitive.LINE_STRIP.isValidVertexCount(2));
+		assertNotNull(Primitive.LINE_STRIP.index());
 	}
 
 	@Test
@@ -78,5 +87,6 @@ public class PrimitiveTest {
 		assertEquals(true, Primitive.PATCH.isValidVertexCount(0));
 		assertEquals(true, Primitive.PATCH.isValidVertexCount(1));
 		assertEquals(true, Primitive.PATCH.isValidVertexCount(2));
+		assertNull(Primitive.PATCH.index());
 	}
 }

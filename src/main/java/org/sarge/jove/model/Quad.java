@@ -20,9 +20,6 @@ public final class Quad {
 	 */
 	public static final List<Coordinate2D> COORDINATES = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
 
-	private Quad() {
-	}
-
 	/**
 	 * Index factory for quad strip with counter-clockwise winding order.
 	 */
@@ -30,4 +27,7 @@ public final class Quad {
 		final int next = n + count + 1;
 		return IntStream.of(n, next, next + 1, n + 1);
 	};
+
+	private Quad() {
+	}
 }

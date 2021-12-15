@@ -21,4 +21,11 @@ public class IndexFactoryTest {
 		assertNotNull(indices);
 		assertArrayEquals(new int[]{2}, indices.toArray());
 	}
+
+	@Test
+	void simple() {
+		final IntStream indices = IndexFactory.DEFAULT.indices(1, 2);
+		assertNotNull(indices);
+		assertArrayEquals(new int[]{1, 2}, indices.toArray());
+	}
 }

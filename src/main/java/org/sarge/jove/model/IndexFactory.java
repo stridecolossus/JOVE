@@ -5,13 +5,10 @@ import java.util.stream.IntStream;
 /**
  * An <i>index factory</i> generates indices for a strip of primitives.
  * <p>
- * In general the factory should assume that vertices are arranged as a grid of quads with incremental indices.
- * <p>
- * For example, for a 3-by-3 grid the vertices are:
+ * In general the factory should assume that vertices are arranged as follows:
  * <pre>
  * 0 1 2
- * 3 4 5
- * 6 7 8</pre>
+ * 3 4 5</pre>
  * @author Sarge
  */
 public interface IndexFactory {
@@ -33,4 +30,9 @@ public interface IndexFactory {
 				.range(0, count)
 				.flatMap(n -> indices(n, count));
 	}
+
+	/**
+	 * Default index factory for a simple incremental index.
+	 */
+	IndexFactory DEFAULT = (index, count) -> IntStream.range(index, index + count);
 }

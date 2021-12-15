@@ -14,12 +14,14 @@ import org.sarge.jove.platform.vulkan.VkMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantTableBuilder;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.StructureHelper;
 
@@ -74,6 +76,7 @@ public class Pipeline extends AbstractVulkanObject {
 			private final VkShaderStage stage;
 			private Shader shader;
 			private String name = "main";
+			private VkSpecializationInfo constants;
 
 			private ShaderStageBuilder(VkShaderStage stage) {
 				this.stage = stage;
@@ -98,6 +101,16 @@ public class Pipeline extends AbstractVulkanObject {
 			}
 
 			/**
+			 * Sets the specialisation constants for this shader.
+			 * @param constants Specialisation constants indexed by ID
+			 * @see ConstantTableBuilder
+			 */
+			public ShaderStageBuilder constants(Map<Integer, Object> constants) {
+				this.constants = ConstantTableBuilder.of(constants);
+				return this;
+			}
+
+			/**
 			 * Constructs this shader pipeline stage.
 			 * @return Parent pipeline builder
 			 * @throws IllegalArgumentException if the shader module has not been configured
@@ -115,6 +128,7 @@ public class Pipeline extends AbstractVulkanObject {
 				info.stage = stage;
 				info.module = shader.handle();
 				info.pName = name;
+				info.pSpecializationInfo = constants;
 			}
 
 			private void validate() {

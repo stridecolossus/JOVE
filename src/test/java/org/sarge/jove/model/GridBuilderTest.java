@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
 
@@ -26,62 +28,63 @@ class GridBuilderTest {
 		assertEquals(3, function.height(1, 2));
 	}
 
+	@DisplayName("Create an indexed grid comprising two triangles per quad")
 	@Test
 	void buildTriangles() {
 		// Construct grid
 		final Model model = builder
-				.size(2)
-				.width(3)
-				.breadth(4)
+				.size(new Dimensions(2, 3))
+				.tile(new Dimensions(4, 5))
 				.build();
 
 		// Check grid
 		assertNotNull(model);
-		assertEquals(2 * 3, model.count());
+		assertEquals(2 * (2 * 3), model.count());
 		assertEquals(true, model.isIndexed());
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
 	}
 
+	@DisplayName("Create an unindexed grid comprising two triangles per quad")
 	@Test
 	void buildEmptyIndex() {
 		// Construct grid
 		final Model model = builder
-				.size(2)
+				.size(new Dimensions(2, 3))
 				.index(null)
-				.primitive(Primitive.POINTS) // TODO
 				.build();
 
 		// Check grid
 		assertNotNull(model);
-		assertEquals(4, model.count());
+		assertEquals(2 * (2 * 3), model.count());
 		assertEquals(false, model.isIndexed());
 	}
 
+	// TODO - triangle strip + degenerates
+
+	@DisplayName("Create an indexed grid of patch control points comprised of quads")
 	@Test
 	void buildQuadStrip() {
 		// Construct grid
 		final Model model = builder
-				.size(3)
-				.width(4)
-				.breadth(5)
+				.size(new Dimensions(2, 3))
 				.primitive(Primitive.PATCH)
 				.index(Quad.STRIP)
 				.build();
 
 		// Check grid
 		assertNotNull(model);
-		assertEquals((2 * 2) * 4, model.count());
+		assertEquals(2 * 4, model.count());
 		assertEquals(Primitive.PATCH, model.primitive());
 		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
 		assertEquals(true, model.isIndexed());
 
 		// Check vertices
-		assertEquals((3 * 3) * (3 + 2) * Float.BYTES, model.vertices().length());
+		assertEquals((2 * 3) * (3 + 2) * Float.BYTES, model.vertices().length());
 		// TODO - check actual vertex data, but how?
 
 		// Check index
-		assertEquals(model.count() * Integer.BYTES, model.index().length());
+		assertEquals((2 * 4) * Integer.BYTES, model.index().length());
 		// TODO - 0341 1452 3674 4785
 	}
 }
