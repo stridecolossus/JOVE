@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -193,10 +195,16 @@ public class PipelineTest extends AbstractVulkanTest {
 			final ShaderStageBuilder stage = builder.shader(VkShaderStage.VERTEX);
 			assertNotNull(stage);
 
+			// Configure method
+			stage.name("name");
+
 			// Configure vertex shader
 			final Shader shader = mock(Shader.class);
 			when(shader.handle()).thenReturn(new Handle(1));
-			stage.name("name").shader(shader);
+			stage.shader(shader);
+
+			// Configure constants
+			stage.constants(Map.of(1, 2));
 
 			// Check returns to parent
 			assertEquals(builder, stage.build());
@@ -208,6 +216,7 @@ public class PipelineTest extends AbstractVulkanTest {
 			assertEquals(VkShaderStage.VERTEX, info.stage);
 			assertEquals("name", info.pName);
 			assertEquals(shader.handle(), info.module);
+			assertNotNull(info.pSpecializationInfo);
 		}
 
 		@Test

@@ -1,9 +1,10 @@
 package org.sarge.jove.platform.vulkan;
 
+import java.nio.ByteBuffer;
+
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary.VulkanStructure;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,12 +17,9 @@ import com.sun.jna.Structure.FieldOrder;
 	"dataSize",
 	"pData"
 })
-public class VkSpecializationInfo extends VulkanStructure {
-	public static class ByValue extends VkSpecializationInfo implements Structure.ByValue { }
-	public static class ByReference extends VkSpecializationInfo implements Structure.ByReference { }
-	
+public class VkSpecializationInfo extends VulkanStructure implements ByReference {
 	public int mapEntryCount;
-	public Pointer pMapEntries;
+	public VkSpecializationMapEntry pMapEntries;
 	public long dataSize;
-	public Pointer pData;
+	public ByteBuffer pData;
 }

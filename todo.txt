@@ -13,6 +13,7 @@ demo
 - solar system, scene graph
 - terrain rendering, tiled, LOD, tesselation shader, loader from gray-scale, oct-tree?
 - geometry shader, normals, bounding volumes (spheres as x2 circles)
+- galaxy demo using point cloud
 
 scene
 - is Ray.Intersection what we actually need? would need ray + volume in intersection record to be useful in stream processing?
@@ -35,6 +36,7 @@ other features
 - texture fonts?
 - terrain grid from height-map
 - OpenAL audio
+- shader storage buffer (SSBO)
 
 current
 - add pipeline cache

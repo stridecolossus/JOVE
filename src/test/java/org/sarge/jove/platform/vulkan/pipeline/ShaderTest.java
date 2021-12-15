@@ -2,26 +2,25 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
-import org.sarge.jove.platform.vulkan.pipeline.Shader;
+import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
+import org.sarge.jove.platform.vulkan.VkSpecializationMapEntry;
+import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantTableBuilder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-
-import com.sun.jna.ptr.PointerByReference;
 
 public class ShaderTest extends AbstractVulkanTest {
 	private static final byte[] CODE = new byte[]{42};
@@ -35,25 +34,22 @@ public class ShaderTest extends AbstractVulkanTest {
 
 	@Test
 	void create() {
-		// Check API
-		final var captor = ArgumentCaptor.forClass(VkShaderModuleCreateInfo.class);
-		verify(lib).vkCreateShaderModule(eq(dev), captor.capture(), isNull(), isA(PointerByReference.class));
-
-		// Create shader
-		final Shader shader = Shader.create(dev, CODE);
+		// Check shader
 		assertNotNull(shader);
 		assertNotNull(shader.handle());
 
-		// Check descriptor
-		final var info = captor.getValue();
-		assertNotNull(info);
-		assertEquals(CODE.length, info.codeSize);
-
-		// Check code buffer
-		assertNotNull(info.pCode);
-		assertEquals(1, info.pCode.limit());
-		assertEquals(1, info.pCode.capacity());
-		assertEquals((byte) 42, info.pCode.rewind().get());
+		// Check API
+		final var expected = new VkShaderModuleCreateInfo() {
+			@Override
+			public boolean equals(Object obj) {
+				final var info = (VkShaderModuleCreateInfo) obj;
+				assertNotNull(info);
+				assertEquals(CODE.length, info.codeSize);
+				assertNotNull(info.pCode);
+				return true;
+			}
+		};
+		verify(lib).vkCreateShaderModule(dev, expected, null, POINTER);
 	}
 
 	@Test
@@ -83,11 +79,67 @@ public class ShaderTest extends AbstractVulkanTest {
 			final Shader shader = loader.load(new ByteArrayInputStream(CODE));
 			assertNotNull(shader);
 		}
+	}
 
-		@SuppressWarnings("resource")
+	@Nested
+	class ConstantTableBuilderTests {
+		private ConstantTableBuilder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new ConstantTableBuilder();
+		}
+
 		@Test
-		void loadInvalidFile() throws Exception {
-			loader.load(new FileInputStream("./src/test/resources/thiswayup.jpg"));
+		void buildEmpty() {
+			assertNull(builder.build());
+		}
+
+		@Test
+		void build() {
+			// Build constants
+			final VkSpecializationInfo info = builder
+					.add(1, 1)
+					.add(2, 2f)
+					.add(3, true)
+					.build();
+
+			// Check constants
+			assertNotNull(info);
+			assertEquals(3, info.mapEntryCount);
+
+			// Check an entry
+			final VkSpecializationMapEntry entry = info.pMapEntries;
+			assertEquals(1, entry.constantID);
+			assertEquals(0, entry.offset);
+			assertEquals(Integer.BYTES, entry.size);
+
+			// Check data size
+			final int size = 4 + 4 + 4;
+			assertEquals(size, info.dataSize);
+
+			// Check data buffer
+			final ByteBuffer bb = ByteBuffer.allocate(size);
+			bb.putInt(1);
+			bb.putFloat(2f);
+			bb.putInt(1);
+			assertEquals(bb, info.pData);
+		}
+
+		@Test
+		void buildDuplicateConstant() {
+			builder.add(1, 2);
+			assertThrows(IllegalArgumentException.class, () -> builder.add(1, 2));
+		}
+
+		@Test
+		void buildInvalidConstantType() {
+			assertThrows(IllegalArgumentException.class, () -> builder.add(1, new Object()));
+		}
+
+		@Test
+		void of() {
+			assertNotNull(ConstantTableBuilder.of(Map.of(1, 2)));
 		}
 	}
 }

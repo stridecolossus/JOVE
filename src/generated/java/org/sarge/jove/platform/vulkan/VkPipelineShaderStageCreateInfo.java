@@ -26,6 +26,6 @@ public class VkPipelineShaderStageCreateInfo extends VulkanStructure implements 
 	public int flags;
 	public VkShaderStage stage;
 	public Handle module;
-	public String pName = "main";
-	public Pointer pSpecializationInfo;
+	public String pName;
+	public VkSpecializationInfo pSpecializationInfo;
 }
