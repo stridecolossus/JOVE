@@ -115,9 +115,9 @@ public class View extends AbstractVulkanObject {
 		 */
 		private static VkImageViewType type(Image image) {
 			return switch(image.descriptor().type()) {
-				case ONE_D -> VkImageViewType.ONE_D;
-				case TWO_D -> VkImageViewType.TWO_D;
-				case THREE_D -> VkImageViewType.THREE_D;
+				case ONE_D		-> VkImageViewType.ONE_D;
+				case TWO_D		-> VkImageViewType.TWO_D;
+				case THREE_D	-> VkImageViewType.THREE_D;
 			};
 		}
 

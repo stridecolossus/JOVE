@@ -7,6 +7,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkBufferMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
@@ -206,6 +207,17 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public ViewportPipelineStageBuilder viewport() {
 			return viewport;
+		}
+
+		/**
+		 * Helper - Configures a single viewport and scissor with the <i>global flip</i> of the Y axis enabled.
+		 * @param rect Viewport/scissor rectangle
+		 * @see ViewportPipelineStageBuilder#flip(boolean)
+		 */
+		public Builder viewport(Rectangle rect) {
+			viewport.flip(true);
+			viewport.viewport(rect, true);
+			return this;
 		}
 
 		/**

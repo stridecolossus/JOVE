@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
@@ -38,12 +39,17 @@ public class ComponentMappingBuilderTest {
 	}
 
 	@Test
+	void mapEmptyMapping() {
+		assertThrows(IllegalArgumentException.class, () -> ComponentMappingBuilder.build(StringUtils.EMPTY));
+	}
+
+	@Test
 	void mapInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> ComponentMappingBuilder.build("RGB"));
+		assertThrows(IllegalArgumentException.class, () -> ComponentMappingBuilder.build("12345"));
 	}
 
 	@Test
 	void mapInvalidSwizzle() {
-		assertThrows(IllegalArgumentException.class, () -> ComponentMappingBuilder.build("XXXX"));
+		assertThrows(IllegalArgumentException.class, () -> ComponentMappingBuilder.build("?"));
 	}
 }

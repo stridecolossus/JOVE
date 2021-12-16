@@ -37,7 +37,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 
 		// Determine component mapping
 		final String components = switch(image.getType()) {
-			case TYPE_BYTE_GRAY -> "R"; 		// TODO - will this work?
+			case TYPE_BYTE_GRAY -> "R";
 			case TYPE_4BYTE_ABGR, TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> "ABGR";
 			default -> throw new RuntimeException("Unsupported image format: " + image);
 		};

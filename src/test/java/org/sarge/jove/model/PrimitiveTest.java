@@ -1,92 +1,84 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
-public class PrimitiveTest {
-	@Test
-	public void triangle() {
-		assertEquals(3, Primitive.TRIANGLES.size());
-		assertEquals(false, Primitive.TRIANGLES.isStrip());
-		assertEquals(true, Primitive.TRIANGLES.isNormalSupported());
-		assertEquals(true, Primitive.TRIANGLES.isValidVertexCount(0));
-		assertEquals(false, Primitive.TRIANGLES.isValidVertexCount(2));
-		assertEquals(true, Primitive.TRIANGLES.isValidVertexCount(3));
-		assertEquals(false, Primitive.TRIANGLES.isValidVertexCount(4));
-		assertEquals(true, Primitive.TRIANGLES.isValidVertexCount(6));
-		assertNotNull(Primitive.TRIANGLES.index());
+class PrimitiveTest {
+	@DisplayName("Primitives specify the number of vertices")
+	@ParameterizedTest
+	@EnumSource(Primitive.class)
+	void size(Primitive primitive) {
+		final int expected = switch(primitive) {
+			case POINTS, PATCH -> 1;
+			case LINES, LINE_STRIP -> 2;
+			default -> 3;
+		};
+		assertEquals(expected, primitive.size());
 	}
 
-	@Test
-	public void triangleStrip() {
-		assertEquals(3, Primitive.TRIANGLE_STRIP.size());
-		assertEquals(true, Primitive.TRIANGLE_STRIP.isStrip());
-		assertEquals(true, Primitive.TRIANGLE_STRIP.isNormalSupported());
-		assertEquals(true, Primitive.TRIANGLE_STRIP.isValidVertexCount(0));
-		assertEquals(false, Primitive.TRIANGLE_STRIP.isValidVertexCount(2));
-		assertEquals(true, Primitive.TRIANGLE_STRIP.isValidVertexCount(3));
-		assertEquals(true, Primitive.TRIANGLE_STRIP.isValidVertexCount(4));
-		assertNotNull(Primitive.TRIANGLE_STRIP.index());
+	@DisplayName("Strip-based primitives can be distingished")
+	@ParameterizedTest
+	@EnumSource(value=Primitive.class, names={"TRIANGLE_STRIP", "TRIANGLE_FAN", "LINE_STRIP"})
+	void isStrip(Primitive primitive) {
+		assertEquals(true, primitive.isStrip());
 	}
 
-	@Test
-	public void triangleFan() {
-		assertEquals(3, Primitive.TRIANGLE_FAN.size());
-		assertEquals(true, Primitive.TRIANGLE_FAN.isStrip());
-		assertEquals(true, Primitive.TRIANGLE_FAN.isNormalSupported());
-		assertEquals(true, Primitive.TRIANGLE_FAN.isValidVertexCount(0));
-		assertEquals(false, Primitive.TRIANGLE_FAN.isValidVertexCount(2));
-		assertEquals(true, Primitive.TRIANGLE_FAN.isValidVertexCount(3));
-		assertEquals(true, Primitive.TRIANGLE_FAN.isValidVertexCount(4));
-//		assertNotNull(Primitive.TRIANGLES.index());
-		// TODO
+	@DisplayName("Non strip-based primitives can be distingished")
+	@ParameterizedTest
+	@EnumSource(value=Primitive.class, names={"TRIANGLE_STRIP", "TRIANGLE_FAN", "LINE_STRIP"}, mode=EXCLUDE)
+	void isNotStrip(Primitive primitive) {
+		assertEquals(false, primitive.isStrip());
 	}
 
-	@Test
-	public void point() {
-		assertEquals(1, Primitive.POINTS.size());
-		assertEquals(false, Primitive.POINTS.isStrip());
-		assertEquals(false, Primitive.POINTS.isNormalSupported());
-		assertEquals(true, Primitive.POINTS.isValidVertexCount(0));
-		assertEquals(true, Primitive.POINTS.isValidVertexCount(1));
-		assertEquals(true, Primitive.POINTS.isValidVertexCount(2));
-		assertNull(Primitive.POINTS.index());
+	@DisplayName("Triangle-based primitives should support normals")
+	@ParameterizedTest
+	@EnumSource(value=Primitive.class, names={"TRIANGLES", "TRIANGLE_STRIP", "TRIANGLE_FAN"})
+	void isNormalSupport(Primitive primitive) {
+		assertEquals(true, primitive.isNormalSupported());
 	}
 
-	@Test
-	public void line() {
-		assertEquals(2, Primitive.LINES.size());
-		assertEquals(false, Primitive.LINES.isStrip());
-		assertEquals(false, Primitive.LINES.isNormalSupported());
-		assertEquals(true, Primitive.LINES.isValidVertexCount(0));
-		assertEquals(false, Primitive.LINES.isValidVertexCount(1));
-		assertEquals(true, Primitive.LINES.isValidVertexCount(0));
-		assertEquals(true, Primitive.LINES.isValidVertexCount(2));
-		assertNotNull(Primitive.LINES.index());
+	@DisplayName("Non triangle-based primitives should not support normals")
+	@ParameterizedTest
+	@EnumSource(value=Primitive.class, names={"TRIANGLES", "TRIANGLE_STRIP", "TRIANGLE_FAN"}, mode=EXCLUDE)
+	void isNotNormalSupport(Primitive primitive) {
+		assertEquals(false, primitive.isNormalSupported());
 	}
 
-	@Test
-	public void lineStrip() {
-		assertEquals(2, Primitive.LINE_STRIP.size());
-		assertEquals(true, Primitive.LINE_STRIP.isStrip());
-		assertEquals(false, Primitive.LINE_STRIP.isNormalSupported());
-		assertEquals(true, Primitive.LINE_STRIP.isValidVertexCount(0));
-		assertEquals(false, Primitive.LINE_STRIP.isValidVertexCount(1));
-		assertEquals(true, Primitive.LINE_STRIP.isValidVertexCount(2));
-		assertNotNull(Primitive.LINE_STRIP.index());
+	@DisplayName("All primitives should be valid for zero vertices or a multiple of the primitive size")
+	@ParameterizedTest
+	@EnumSource(Primitive.class)
+	void isValidVertexCount(Primitive primitive) {
+		assertEquals(true, primitive.isValidVertexCount(0));
+		assertEquals(true, primitive.isValidVertexCount(primitive.size()));
+		assertEquals(true, primitive.isValidVertexCount(2 * primitive.size()));
 	}
 
+	@DisplayName("Non strip-based primitives require exact multiples of the primitive size")
+	@ParameterizedTest
+	@EnumSource(value=Primitive.class, names={"TRIANGLES", "LINES"})
+	void invalidVertexCount(Primitive primitive) {
+		assertEquals(false, primitive.isValidVertexCount(1));
+		assertEquals(false, primitive.isValidVertexCount(primitive.size() + 1));
+	}
+
+	@DisplayName("Triangle-based primitives should provide an index factory")
 	@Test
-	public void patch() {
-		assertEquals(1, Primitive.PATCH.size());
-		assertEquals(false, Primitive.PATCH.isStrip());
-		assertEquals(false, Primitive.PATCH.isNormalSupported());
-		assertEquals(true, Primitive.PATCH.isValidVertexCount(0));
-		assertEquals(true, Primitive.PATCH.isValidVertexCount(1));
-		assertEquals(true, Primitive.PATCH.isValidVertexCount(2));
-		assertNull(Primitive.PATCH.index());
+	void index() {
+		assertEquals(Optional.of(Triangle.INDEX_TRIANGLES), Primitive.TRIANGLES.index());
+		assertEquals(Optional.of(Triangle.INDEX_STRIP), Primitive.TRIANGLE_STRIP.index());
+	}
+
+	@DisplayName("Other primitives should NOT provide an index factory")
+	@ParameterizedTest
+	@EnumSource(value=Primitive.class, names={"TRIANGLES", "TRIANGLE_STRIP"}, mode=EXCLUDE)
+	void unindexed(Primitive primitive) {
+		assertEquals(Optional.empty(), primitive.index());
 	}
 }

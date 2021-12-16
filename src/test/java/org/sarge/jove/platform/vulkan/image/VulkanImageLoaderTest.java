@@ -132,13 +132,6 @@ public class VulkanImageLoaderTest {
 	}
 
 	@Test
-	void loadInvalidTypeSize() throws IOException {
-		header(999, 1, 1, 0);
-		init();
-		assertThrows(UnsupportedOperationException.class, () -> loader.load(in));
-	}
-
-	@Test
 	void loadInvalidLayerCount() throws IOException {
 		header(1, 999, 1, 0);
 		init();

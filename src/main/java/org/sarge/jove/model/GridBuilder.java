@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.Coordinate;
@@ -42,7 +43,7 @@ public class GridBuilder {
 	}
 
 	private Dimensions size = new Dimensions(4, 4);
-	private Dimensions tile = new Dimensions(1, 1);
+	private float tile = 1;
 	private HeightFunction height = HeightFunction.literal(0);
 	private Primitive primitive = Primitive.TRIANGLES;
 	private IndexFactory index = Triangle.INDEX_TRIANGLES;
@@ -57,11 +58,11 @@ public class GridBuilder {
 	}
 
 	/**
-	 * Sets the grid tile dimensions.
-	 * @param tile Tile dimensions
+	 * Sets the grid tile size.
+	 * @param tile Tile size
 	 */
-	public GridBuilder tile(Dimensions tile) {
-		this.tile = notNull(tile);
+	public GridBuilder tile(float tile) {
+		this.tile = tile;
 		return this;
 	}
 
@@ -110,23 +111,23 @@ public class GridBuilder {
 		// Calculate half distance in both directions
 		final int w = size.width();
 		final int h = size.height();
-		final float dx = tile.width() * (w - 1) / 2;
-		final float dy = tile.height() * (h - 1) / 2;
+		final float dx = tile * (w - 1) / 2;
+		final float dy = tile * (h - 1) / 2;
 
-		// Build grid vertices
+		// Build grid vertices (column major)
 		final List<Vertex> vertices = new ArrayList<>();
-		for(int x = 0; x < w; ++x) {
-			for(int y = 0; y < h; ++y) {			// TODO - swap x-y order?
+		for(int row = 0; row < h; ++row) {
+			for(int col = 0; col < w; ++col) {
 				// Determine grid position and height
-				final float px = x * tile.width() - dx;
-				final float pz = y * tile.height() - dy;
-				final float py = height.height(x, y);
-				final Point pos = new Point(px, py, pz);
+				final float x = col * tile - dx;
+				final float z = row * tile - dy;
+				final float y = height.height(col, row);
+				final Point pos = new Point(x, y, z);
 
 				// TODO - normals from height function
 
 				// Calculate texture coordinate
-				final Coordinate coord = new Coordinate2D((float) x / w, (float) y / h);
+				final Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 
 				// Add grid vertex
 				final Vertex vertex = new Vertex(pos, null, coord, null);
@@ -135,9 +136,14 @@ public class GridBuilder {
 		}
 
 		if(index == null) {
-			// Build grid without index
-			final IndexFactory factory = primitive.index();
-			build(factory).mapToObj(vertices::get).forEach(model::add);
+			// Build grid without index according to the drawing primitive
+			final Optional<IndexFactory> factory = primitive.index();
+			if(factory.isPresent()) {
+				build(factory.get()).mapToObj(vertices::get).forEach(model::add);
+			}
+			else {
+				vertices.forEach(model::add);
+			}
 		}
 		else {
 			// Build indexed grid
@@ -156,10 +162,9 @@ public class GridBuilder {
 	 */
 	private IntStream build(IndexFactory factory) {
 		final int w = size.width() - 1;
-		final int h = size.height() - 1;
 		return IntStream
-				.range(0, h)
-				.map(row -> row * h)
+				.range(0, size.height() - 1)
+				.map(row -> row * size.height())
 				.flatMap(start -> factory.strip(w).map(n -> n + start));
 	}
 }

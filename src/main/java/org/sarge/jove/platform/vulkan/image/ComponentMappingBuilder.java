@@ -18,12 +18,15 @@ public final class ComponentMappingBuilder {
 	/**
 	 * Identity component mapping.
 	 */
-	public static final VkComponentMapping IDENTITY;
+	public static final VkComponentMapping IDENTITY = build(identity());
 
-	static {
+	/**
+	 * @return Identity swizzles
+	 */
+	private static VkComponentSwizzle[] identity() {
 		final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
 		Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
-		IDENTITY = build(swizzle);
+		return swizzle;
 	}
 
 	private ComponentMappingBuilder() {
@@ -43,18 +46,18 @@ public final class ComponentMappingBuilder {
 	 * </ul>
 	 * @param mapping Mapping specification
 	 * @return Component mapping
-	 * @throws IllegalArgumentException if the mapping is empty or is not 4 characters in length
+	 * @throws IllegalArgumentException if the mapping is empty or is longer than 4 characters in length
 	 * @throws IllegalArgumentException if a channel swizzle is not supported
 	 */
 	public static VkComponentMapping build(String mapping) {
-		// Validate
-		if(mapping.length() != SIZE) throw new IllegalArgumentException(String.format("Invalid component mapping [%s]", mapping));
+		final int len = mapping.length();
+		if(len == 0) throw new IllegalArgumentException("Component mapping cannot be empty");
+		if(len > SIZE) throw new IllegalArgumentException(String.format("Invalid component mapping length [%s]", mapping));
 
-		// Build swizzle array
-		final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
-		Arrays.setAll(swizzle, n -> swizzle(mapping.charAt(n)));
-
-		// Build component mapping
+		final VkComponentSwizzle[] swizzle = identity();
+		for(int n = 0; n < len; ++n) {
+			swizzle[n] = swizzle(mapping.charAt(n));
+		}
 		return build(swizzle);
 	}
 

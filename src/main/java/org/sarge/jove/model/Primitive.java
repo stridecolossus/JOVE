@@ -3,6 +3,8 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
+import java.util.Optional;
+
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
 
 /**
@@ -34,12 +36,12 @@ public enum Primitive {
 	/**
 	 * Lines.
 	 */
-	LINES(2, VkPrimitiveTopology.LINE_LIST, IndexFactory.DEFAULT),
+	LINES(2, VkPrimitiveTopology.LINE_LIST, null),
 
 	/**
 	 * Strip of lines.
 	 */
-	LINE_STRIP(2, VkPrimitiveTopology.LINE_STRIP, IndexFactory.DEFAULT),
+	LINE_STRIP(2, VkPrimitiveTopology.LINE_STRIP, null),
 
 	/**
 	 * Tesselation patch list.
@@ -79,8 +81,8 @@ public enum Primitive {
 	/**
 	 * @return Index factory for this primitive
 	 */
-	public IndexFactory index() {
-		return index;
+	public Optional<IndexFactory> index() {
+		return Optional.ofNullable(index);
 	}
 
 	/**

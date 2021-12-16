@@ -54,7 +54,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final int levelCount = in.readInt();
 
 		// Validate
-		validate(1, typeSize, "TypeSize");
+//		validate(1, typeSize, "TypeSize");
 		validate(1, layerCount, "LayerCount");
 		if((faceCount == Image.CUBEMAP_ARRAY_LAYERS) && !extents.size().isSquare()) {
 			throw new IllegalArgumentException("Cubemap images must be square");
@@ -189,7 +189,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 			in.readShort();								// Bit offset
 			final byte len = in.readByte();				// Bit length
 			components[n] = channel(in.readByte());		// Channel
-			validate(len, 7, "BitLength");
+//			validate(7, len, "BitLength");
 
 			// Skip sample position and lower/upper bounds
 			in.readInt();

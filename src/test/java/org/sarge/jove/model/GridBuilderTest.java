@@ -34,7 +34,7 @@ class GridBuilderTest {
 		// Construct grid
 		final Model model = builder
 				.size(new Dimensions(2, 3))
-				.tile(new Dimensions(4, 5))
+				.tile(4)
 				.build();
 
 		// Check grid

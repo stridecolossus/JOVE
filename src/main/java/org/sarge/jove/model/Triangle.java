@@ -19,7 +19,7 @@ public final class Triangle {
 	 * <pre>
 	 * 0 1
 	 * 2 3</pre>
-	 * The indices of the generated triangles is: 021 and 231.
+	 * The indices of the generated triangles is {@code 021} and {@code 231}.
 	 */
 	public static final IndexFactory INDEX_TRIANGLES = new IndexFactory() {
 		@Override
@@ -41,7 +41,7 @@ public final class Triangle {
 	 * <pre>
 	 * 0 1 2
 	 * 3 4 5</pre>
-	 * The indices of the generated strip is 031425 etc
+	 * The indices of the generated strip is {@code 031425} etc.
 	 * <p>
 	 * Note that this implementation assumes that the index is used to render a triangle strip with alternating triangle winding order.
 	 */
