@@ -2,6 +2,7 @@ package org.sarge.jove.io;
 
 import java.util.List;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
@@ -52,6 +53,16 @@ public interface ImageData {
 	 * @return Image data
 	 */
 	Bufferable data();
+
+	/**
+	 * Retrieves the pixel at the given image coordinates.
+	 * TODO - little endian
+	 * @param x
+	 * @param y
+	 * @return Pixel
+	 * @throws ArrayIndexOutOfBoundsException if the coordinates are invalid for this image
+	 */
+	int pixel(int x, int y);
 
 	/**
 	 * An <i>image level</i> specifies a MIP level of this image.
@@ -137,7 +148,7 @@ public interface ImageData {
 	/**
 	 * Default implementation.
 	 */
-	record DefaultImageData(Extents extents, String components, Layout layout, int format, List<Level> levels, int layers, Bufferable data) implements ImageData {
+	record DefaultImageData(Extents extents, String components, Layout layout, int format, List<Level> levels, int layers, byte[] image) implements ImageData {
 		/**
 		 * Constructor.
 		 * @param extents			Image extents
@@ -146,8 +157,9 @@ public interface ImageData {
 		 * @param format			Vulkan format hint
 		 * @param levels			MIP levels
 		 * @param layers			Number of array layers
-		 * @param data				Image data
+		 * @param image				Image data
 		 * @throws IllegalArgumentException if the size of the components and layout do not match
+		 * @throws IllegalArgumentException if the length of the data buffer does not match the image extents
 		 */
 		public DefaultImageData {
 			Check.notNull(extents);
@@ -155,13 +167,62 @@ public interface ImageData {
 			Check.notNull(layout);
 			Check.notEmpty(levels);
 			Check.oneOrMore(layers);
-			Check.notNull(data);
-
+			Check.notNull(image);
 			levels = List.copyOf(levels);
 
 			if(components.length() != layout.size()) {
 				throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", components, layout));
 			}
+
+//			final int expected = extents.size.area() * layout.length();
+//			if(levels.get(0).length != expected) {
+//				throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, image.length));
+//			}
+
+			final int total = levels.stream().mapToInt(Level::length).sum();
+			if(image.length != total) {
+				throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, image.length));
+			}
+
+			// TODO - validate levels? or at least < biggest?
+		}
+
+		@Override
+		public Bufferable data() {
+			return Bufferable.of(image);
+		}
+
+		// TODO - layers/levels!
+		@Override
+		public int pixel(int x, int y) {
+			// TODO
+			final int index = (x + y * extents.size.width()) * layout.length();
+			return (image[index] & 0xff) | ((image[index + 1] & 0xff) << 8);
+//			return switch(layout.bytes()) {
+//				case 1 -> image[index];
+//				case 2 -> (image[index] & 0xff) | ((image[index + 1] & 0xff) << 8);
+//				default -> throw new UnsupportedOperationException(); // TODO
+//			};
+			// TODO - do this properly ~ layout!
+		}
+//		return
+//				(buffer[1] & MASK) <<  8 |
+//				(buffer[0] & MASK);
+//	    public int getRGB(Object inData) {
+//	        return (getAlpha(inData) << 24)
+//	            | (getRed(inData) << 16)
+//	            | (getGreen(inData) << 8)
+//	            | (getBlue(inData) << 0);
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append(components)
+					.append(extents)
+					.append("format", format)
+					.append("levels", levels.size())
+					.append("layers", layers)
+					.build();
 		}
 	}
 }

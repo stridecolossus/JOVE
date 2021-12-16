@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
@@ -98,7 +97,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final Layout layout = Layout.bytes(components.length());
 
 		// Create image
-		return new DefaultImageData(extents, components, layout, format, index, faceCount, Bufferable.of(data));
+		return new DefaultImageData(extents, components, layout, format, index, faceCount, data);
 	}
 
 	/**

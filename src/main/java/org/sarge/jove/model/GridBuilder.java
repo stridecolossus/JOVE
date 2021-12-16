@@ -11,6 +11,7 @@ import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Vertex.Component;
 
 /**
@@ -28,6 +29,8 @@ public class GridBuilder {
 	public interface HeightFunction {
 		/**
 		 * Calculates the height at the given coordinates.
+		 * @param row Row
+		 * @param col Column
 		 * @return Height
 		 */
 		float height(int x, int y);
@@ -39,6 +42,22 @@ public class GridBuilder {
 		 */
 		static HeightFunction literal(float height) {
 			return (x, y) -> height;
+		}
+
+		/**
+		 * Creates a height function that maps to the given image, i.e. equivalent to a texture sampler.
+		 * @param image Image
+		 * @return Image height function
+		 * @see ImageData#pixel(int, int)
+		 */
+		static HeightFunction of(Dimensions size, ImageData image) {
+			final Dimensions dim = image.extents().size();
+			final float w = dim.width() / size.width();
+			final float h = dim.height() / size.height();
+			return (row, col) -> {
+				final int pixel = image.pixel((int) (col * w), (int) (row * h));
+				return pixel / 65535.0f; // (float) Short.MAX_VALUE; // TODO
+			};
 		}
 	}
 
@@ -65,6 +84,7 @@ public class GridBuilder {
 		this.tile = tile;
 		return this;
 	}
+	// TODO - dimensions for tile w/h and float scalar
 
 	/**
 	 * Sets the function used to set the height of grid vertices (default is zero).
@@ -112,7 +132,7 @@ public class GridBuilder {
 		final int w = size.width();
 		final int h = size.height();
 		final float dx = tile * (w - 1) / 2;
-		final float dy = tile * (h - 1) / 2;
+		final float dz = tile * (h - 1) / 2;
 
 		// Build grid vertices (column major)
 		final List<Vertex> vertices = new ArrayList<>();
@@ -120,7 +140,7 @@ public class GridBuilder {
 			for(int col = 0; col < w; ++col) {
 				// Determine grid position and height
 				final float x = col * tile - dx;
-				final float z = row * tile - dy;
+				final float z = row * tile - dz;
 				final float y = height.height(col, row);
 				final Point pos = new Point(x, y, z);
 

@@ -13,7 +13,6 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.ImageData.DefaultImageData;
@@ -61,7 +60,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		final var levels = List.of(new Level(0, data.length));
 
 		// Create image
-		return new DefaultImageData(new Extents(size), components, layout, 0, levels, 1, Bufferable.of(data));
+		return new DefaultImageData(new Extents(size), components, layout, 0, levels, 1, data);
 	}
 
 	/**

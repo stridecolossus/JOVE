@@ -3,7 +3,6 @@ package org.sarge.jove.io;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 
 import java.util.List;
 
@@ -18,13 +17,18 @@ import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.io.ImageData.Level;
 
 public class ImageDataTest {
+	private static final Extents EXTENTS = new Extents(new Dimensions(2, 3));
+	private static final List<Level> LEVELS = List.of(new Level(0, 2 * 3 * 4));
+	private static final Layout LAYOUT = Layout.bytes(4);
+	private static final byte[] DATA = new byte[2 * 3 * 4];
+
 	@Nested
 	class DefaultImageDataTests {
 		private ImageData image;
 
 		@BeforeEach
 		void before() {
-			image = new DefaultImageData(new Extents(new Dimensions(2, 3)), "RGBA", Layout.bytes(4), 42, List.of(new Level(1, 2)), 1, mock(Bufferable.class));
+			image = new DefaultImageData(EXTENTS, "RGBA", LAYOUT, 42, LEVELS, 1, DATA);
 		}
 
 		@Test
@@ -34,13 +38,35 @@ public class ImageDataTest {
 			assertEquals(Layout.bytes(4), image.layout());
 			assertEquals(42, image.format());
 			assertEquals(1, image.layers());
-			assertEquals(List.of(new Level(1, 2)), image.levels());
+			assertEquals(List.of(new Level(0, 2 * 3 * 4)), image.levels());
 			assertNotNull(image.data());
 		}
 
 		@Test
 		void invalidComponentLayout() {
-			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(new Extents(new Dimensions(2, 3)), "RGBA", Layout.bytes(3), 42, List.of(new Level(1, 2)), 1, mock(Bufferable.class)));
+			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", Layout.bytes(3), 0, LEVELS, 1, DATA));
+		}
+
+		@Test
+		void invalidDataLength() {
+			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", LAYOUT, 0, LEVELS, 1, new byte[0]));
+		}
+
+		@Test
+		void data() {
+			final Bufferable data = image.data();
+			assertNotNull(data);
+			assertEquals(DATA.length, data.length());
+		}
+
+		@Test
+		void pixel() {
+			image.pixel(0, 0);
+		}
+
+		@Test
+		void pixelInvalidCoordinate() {
+			assertThrows(ArrayIndexOutOfBoundsException.class, () -> image.pixel(2, 3));
 		}
 	}
 
