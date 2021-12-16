@@ -1,3 +1,41 @@
+---
+title: Terrain Tesselation
+---
+
+## Overview
+
+During the course of this blog we have implemented the majority of the basic Vulkan components that would be used by most applications, and have reached the end of the Vulkan tutorial.  From here on we will be implementing more advanced features such as lighting, shadows, and geometry shaders.
+
+Later in this section we will also address the complexity caused by the number of objects that are currently required to render each element of a scene (descriptor sets, render sequences, etc) by the introduction of a _scene graph_ and supporting framework.
+
+In the first chapter we will render a terrain model derived from a height-map image, and then implement level of detail (LOD) functionality for the grid mesh using a _tesselation_ shader.  We will also introduce _push constants_ as a more efficient mechanism for uploading data to the hardware, and _specialization constants_ to parameterise shader configuration.
+
+This will require the following new components:
+
+* A model builder for a terrain grid.
+
+* The tesselation pipeline stage.
+
+* The addition of push constants to the pipeline layout.
+
+* A command to update push constants.
+
+* A builder for specialisation constants.
+
+---
+
+## Terrain Grid
+
+
+
+
+
+
+
+
+
+---
+
 ## Push Constants
 
 ### Overview
@@ -272,6 +310,19 @@ public class BufferWrapper {
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Integration
 

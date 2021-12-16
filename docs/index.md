@@ -41,3 +41,6 @@ The [introduction](blog/part-1-intro/introduction) in the first section outlines
     - [Input Handling](blog/part-4-models/input-handling)
     - [Skybox](blog/part-4-models/skybox)
     
+- Part 5 - Terrain
+    - [Terrain Tesselation](blog/part-5-terrain/tesselation)
+
