@@ -103,11 +103,7 @@ public class Pipeline extends AbstractVulkanObject {
 			/**
 			 * Adds specialisation constants to parameterise this shader.
 			 * <p>
-			 * Notes:
-			 * <ul>
-			 * <li>Supported types are scalar (integer, float) and boolean values</li>
-			 * <li>TODO</li>
-			 * </ul>
+			 * Note that supported types are scalar (integer, float) and boolean values.
 			 * <p>
 			 * @param constants Specialisation constants indexed by ID
 			 * @throws IllegalArgumentException for a duplicate constant ID
