@@ -29,6 +29,7 @@ public class GridBuilder {
 	/**
 	 * A <i>height function</i> is used to set the height of grid vertices (Y axis).
 	 */
+	@FunctionalInterface
 	public interface HeightFunction {
 		/**
 		 * Calculates the height at the given coordinates.
@@ -157,11 +158,6 @@ public class GridBuilder {
 	 * @return New grid
 	 */
 	public DefaultModel build() {
-		// Init model
-		final ModelBuilder model = new ModelBuilder();
-		model.primitive(primitive);
-		model.layout(List.of(Component.POSITION, Component.COORDINATE));
-
 		// Calculate half distance in both directions
 		final int w = size.width();
 		final int h = size.height();
@@ -189,6 +185,12 @@ public class GridBuilder {
 			}
 		}
 
+		// Init model
+		final ModelBuilder model = new ModelBuilder();
+		model.primitive(primitive);
+		model.layout(List.of(Component.POSITION, Component.COORDINATE));
+
+		// Add vertices and index
 		if(index == null) {
 			// Build grid without index according to the drawing primitive
 			final Optional<IndexFactory> factory = primitive.index();
@@ -219,6 +221,6 @@ public class GridBuilder {
 		return IntStream
 				.range(0, size.height() - 1)
 				.map(row -> row * size.height())
-				.flatMap(start -> factory.strip(w).map(n -> n + start));
+				.flatMap(start -> factory.strip(start, w));
 	}
 }

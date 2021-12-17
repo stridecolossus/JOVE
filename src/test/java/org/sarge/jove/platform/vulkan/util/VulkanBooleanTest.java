@@ -13,6 +13,12 @@ public class VulkanBooleanTest {
 	}
 
 	@Test
+	void toInteger() {
+		assertEquals(1, VulkanBoolean.TRUE.toInteger());
+		assertEquals(0, VulkanBoolean.FALSE.toInteger());
+	}
+
+	@Test
 	void ofInteger() {
 		assertEquals(VulkanBoolean.TRUE, VulkanBoolean.of(1));
 		assertEquals(VulkanBoolean.FALSE, VulkanBoolean.of(0));

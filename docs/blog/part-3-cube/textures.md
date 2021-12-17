@@ -61,7 +61,7 @@ The default drawing primitive is a _triangle strip_ with vertices ordered as fol
 
 ```
 0---2---4-- etc
-|   |   |
+| / | / |
 1---3---5
 ```
 
@@ -71,7 +71,9 @@ Notes:
 
 * By default the Y direction is inverted in the Vulkan coordinate system.
 
-* The triangles in a strip have an _alternating_ winding order.
+* The triangles in a strip have a counter-clockwise winding order by default.
+
+* However a triangle strip is rendered with an _alternating_ winding order.
 
 After changing the number of vertices to 4 in the drawing command we should see something like the following:
 

@@ -21,15 +21,12 @@ public final class Triangle {
 	 * 2 3</pre>
 	 * The indices of the generated triangles is {@code 021} and {@code 231}.
 	 */
-	public static final IndexFactory INDEX_TRIANGLES = new IndexFactory() {
-		@Override
-		public IntStream indices(int index, int count) {
-			final int next = index + count + 1;
-			return IntStream.of(
-					index, next, index + 1,
-					next, next + 1, index + 1
-			);
-		}
+	public static final IndexFactory INDEX_TRIANGLES = (index, count) -> {
+		final int next = index + count + 1;
+		return IntStream.of(
+				index, next, index + 1,
+				next, next + 1, index + 1
+		);
 	};
 
 	/**
@@ -52,10 +49,10 @@ public final class Triangle {
 		}
 
 		@Override
-		public IntStream strip(int count) {
+		public IntStream strip(int start, int count) {
 			return IntStream
 					.rangeClosed(0, count)
-					.flatMap(n -> indices(n, count));
+					.flatMap(n -> indices(start + n, count));
 		}
 	};
 	// TODO - degenerate triangle support

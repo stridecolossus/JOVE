@@ -14,10 +14,10 @@ public class IndexFactoryTest {
 	void strip() {
 		// Create index factory
 		final IndexFactory factory = spy(IndexFactory.class);
-		when(factory.indices(0, 1)).then(inv -> IntStream.of(2));
+		when(factory.indices(1, 1)).then(inv -> IntStream.of(2));
 
 		// Check strip
-		final IntStream indices = factory.strip(1);
+		final IntStream indices = factory.strip(1, 1);
 		assertNotNull(indices);
 		assertArrayEquals(new int[]{2}, indices.toArray());
 	}

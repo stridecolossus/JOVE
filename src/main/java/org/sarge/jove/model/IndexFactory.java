@@ -15,6 +15,7 @@ import java.util.stream.IntStream;
  * </pre>
  * @author Sarge
  */
+@FunctionalInterface
 public interface IndexFactory {
 	/**
 	 * Generates indices for a primitives in this strip.
@@ -26,13 +27,14 @@ public interface IndexFactory {
 
 	/**
 	 * Generates indices for a strip.
+	 * @param start Starting index
 	 * @param count Number of quads in this strip
 	 * @return Strip indices
 	 */
-	default IntStream strip(int count) {
+	default IntStream strip(int start, int count) {
 		return IntStream
 				.range(0, count)
-				.flatMap(n -> indices(n, count));
+				.flatMap(n -> indices(start + n, count));
 	}
 
 	/**

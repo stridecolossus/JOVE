@@ -4,11 +4,11 @@ title: Terrain Tesselation
 
 ## Overview
 
-During the course of this blog we have implemented the majority of the basic Vulkan components that would be used by most applications, and have reached the end of the Vulkan tutorial.  From here on we will be implementing more advanced features such as lighting, shadows, and geometry shaders.
+During the course of this blog we have implemented the majority of the basic Vulkan components that would be used by most applications, and have reached the end of the Vulkan tutorial.  From here on we will be implementing more advanced features such as lighting, shadows, etc.
 
-Later in this section we will also address the complexity caused by the number of objects that are currently required to render each element of a scene (descriptor sets, render sequences, etc) by the introduction of a _scene graph_ and supporting framework.
+Later in this section we will also address the complexity caused by the number of objects that are currently required to render each element of a scene (descriptor sets, render sequences, pools, etc) by the introduction of a _scene graph_ and supporting framework.
 
-In the first chapter we will render a terrain model derived from a height-map image, and then implement level of detail (LOD) functionality for the grid mesh using a _tesselation_ shader.  We will also introduce _push constants_ as a more efficient mechanism for uploading data to the hardware, and _specialization constants_ to parameterise shader configuration.
+In this first chapter we will start a new demo to render a terrain model derived from a height-map image, and then implement level of detail (LOD) functionality for the grid mesh using a _tesselation_ shader.  We will also introduce _push constants_ as a more efficient mechanism for uploading data to the hardware, and _specialization constants_ to parameterise the shader configuration.
 
 This will require the following new components:
 
@@ -16,9 +16,7 @@ This will require the following new components:
 
 * The tesselation pipeline stage.
 
-* The addition of push constants to the pipeline layout.
-
-* A command to update push constants.
+* The addition of push constants to the pipeline layout and a command to update the data.
 
 * A builder for specialisation constants.
 
@@ -26,13 +24,399 @@ This will require the following new components:
 
 ## Terrain Grid
 
+### Grid Builder
 
+Before we introduce tesselation we will first render a static terrain model.
 
+We start with a new model builder that constructs a _grid_ of _quads_ in the X-Z plane:
 
+```java
+public class GridBuilder {
+    private Dimensions size = new Dimensions(4, 4);
+    private Dimensions tile = new Dimensions(1, 1);
+    private float scale = 1;
+    private HeightFunction height = HeightFunction.literal(0);
+    private Primitive primitive = Primitive.TRIANGLES;
+    private IndexFactory index = Triangle.INDEX_TRIANGLES;
 
+    public DefaultModel build() {
+        ...
+    }
+}
+```
 
+Where:
 
+* _size_ is the dimensions of the grid, i.e. the number of vertices in each direction.
 
+* _tile_ is the dimensions of each quad comprising the grid scaled by the _scale_ parameter.
+
+* And _height_ generates the height (Y coordinate) of each vertex.
+
+* The purpose of the `IndexFactory` is covered below.
+
+The _height function_ is a simple interface that determines the height of a grid vertex:
+
+```java
+@FunctionalInterface
+public interface HeightFunction {
+    /**
+     * Calculates the height at the given coordinates.
+     * @param row Row
+     * @param col Column
+     * @return Height
+     */
+    float height(int x, int y);
+}
+```
+
+We provide a default implementation for a constant value:
+
+```java
+static HeightFunction literal(float height) {
+    return (x, y) -> height;
+}
+```
+
+Note that the builder uses this implementation to set the height of all vertices to zero by default.
+
+The grid is centred on the origin of the model so we first calculate the _half distances_ of the vertices relative to the origin:
+
+```java
+public DefaultModel build() {
+    int w = size.width();
+    int h = size.height();
+    float dx = tile.width() * scale * (w - 1) / 2;
+    float dz = tile.height() * scale * (h - 1) / 2;
+
+    ...
+
+    return model.build();
+}
+```
+
+Next the builder iterates through the grid to generate the vertices (in row major order):
+
+```java
+List<Vertex> vertices = new ArrayList<>();
+for(int row = 0; row < h; ++row) {
+    for(int col = 0; col < w; ++col) {
+        ...
+    }
+}
+```
+
+The position and height of each vertex is determined as follows:
+
+```java
+float x = col * tile.width() * scale - dx;
+float z = row * tile.height() * scale - dz;
+float y = height.height(col, row);
+Point pos = new Point(x, y, z);
+```
+
+And the texture coordinate is simply mapped from the row and column indices:
+
+```java
+Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
+```
+
+Finally we create the vertex:
+
+```java
+Vertex vertex = new Vertex(pos, null, coord, null);
+vertices.add(vertex);
+```
+
+### Index Factory
+
+To generate an index for the model the following factory abstraction is introduced:
+
+```java
+@FunctionalInterface
+public interface IndexFactory {
+    /**
+     * Generates indices for a primitives in this strip.
+     * @param index Primitive index
+     * @param count Number of quads in the strip
+     * @return Indices
+     */
+    IntStream indices(int index, int count);
+
+    /**
+     * Generates indices for a strip.
+     * @param count Number of quads in this strip
+     * @return Strip indices
+     */
+    default IntStream strip(int count) {
+        return IntStream
+            .range(0, count)
+            .flatMap(n -> indices(n, count));
+    }
+}
+```
+
+This interface is implemented in a new helper class to generate an index for a list of triangles:
+
+```java
+public final class Triangle {
+    public static final IndexFactory INDEX_TRIANGLES = (index, count) -> {
+        int next = index + count + 1;
+        return IntStream.of(
+            index, next, index + 1,
+            next, next + 1, index + 1
+        );
+    };
+}
+```
+
+Note that the generated index is comprised of two counter-clockwise triangles per quad.
+
+A triangle _strip_ has a slightly different implementation:
+
+```java
+public static final IndexFactory INDEX_STRIP = new IndexFactory() {
+    @Override
+    public IntStream indices(int index, int count) {
+        return IntStream.of(index, index + count + 1);
+    }
+
+    @Override
+    public IntStream strip(int count) {
+        return IntStream
+            .rangeClosed(0, count)
+            .flatMap(n -> indices(n, count));
+    }
+};
+```
+
+Here we override the default `strip` method to also append the final two indices of the triangle strip in the same manner as we did way back in the [Cube Demo](blog/part-3-cube/textures) chapter.  We refactor the cube builder to use the new factory.
+
+Finally the primitive enumeration is modified to provide an index factory:
+
+```java
+public enum Primitive {
+    TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST, Triangle.INDEX_TRIANGLES),
+    TRIANGLE_STRIP(3, VkPrimitiveTopology.TRIANGLE_STRIP, Triangle.INDEX_STRIP),
+    ...
+
+    public Optional<IndexFactory> index() {
+        return Optional.ofNullable(index);
+    }
+}
+```
+
+The remaining primitives return an empty index factory, the purpose of this addition should become clear shortly.
+
+### Grid Index
+
+The grid builder will support the following use-cases for the index:
+
+1. The general case of a grid comprising the vertices with an index generated by the configured factory.
+
+2. An unindexed grid consisting of duplicate vertices looked up via the index of the primitive (the index is `null` and the index factory of the primitive is one of the implementations above).
+
+3. The degenerate case for an unindexed grid consisting of point vertices (a `null` index, the primitive does not provide a factory).
+
+This is slightly convoluted but provides the flexibility to configure the index behaviour which will be used later when we come to tesselation.
+
+Note that the setter for the _index_ property of the builder accept a `null` value.
+
+The builder first initialises the grid model:
+
+```java
+ModelBuilder model = new ModelBuilder();
+model.primitive(primitive);
+model.layout(List.of(Component.POSITION, Component.COORDINATE));
+```
+
+For the default use-case the builder simply adds all the vertices to the model and builds the index buffer:
+
+```java
+if(index == null) {
+    ...
+}
+else {
+    vertices.forEach(model::add);
+    buildIndex(index).forEach(model::add);
+}
+```
+
+The `buildIndex` helper invokes the factory to generate a strip for each row of the grid:
+
+```java
+private IntStream buildInex(IndexFactory factory) {
+    int w = size.width() - 1;
+    return IntStream
+        .range(0, size.height() - 1)
+        .map(row -> row * size.height())
+        .flatMap(start -> factory.strip(w).map(n -> n + start));
+}
+```
+
+For the other cases (where the index factory is `null`) the builder constructs an unindexed model according to the primitive index or simply adds all the vertices:
+
+```java
+Optional<IndexFactory> factory = primitive.index();
+if(factory.isPresent()) {
+    build(factory.get()).mapToObj(vertices::get).forEach(model::add);
+}
+else {
+    vertices.forEach(model::add);
+}
+```
+
+### Height Maps
+
+To generate height data for the terrain grid we will load a _height map_ image.  Although the height of a given vertex can easily be sampled from the image there are several cases where an application will need to programatically 'sample' the height-map, e.g. to generate surface normals or to initialise tesselation factors (as we will see later).
+
+Therefore we essentially emulate a texture sampler by implementing a height function that looks up a pixel from an image.  In any case the image class should support the ability to retrieve pixel data for other use cases.
+
+The height-map function is created using a new factory method:
+
+```java
+static HeightFunction heightmap(Dimensions size, ImageData image, int component) {
+    // Map grid coordinates to image dimensions
+    Dimensions dim = image.extents().size();
+    float w = dim.width() / size.width();
+    float h = dim.height() / size.height();
+
+    // Calculate height scalar
+    float scale = 1 / (float) MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
+
+    // Create function
+    return (row, col) -> {
+        int x = (int) (col * w);
+        int y = (int) (row * h);
+        return image.pixel(x, y, component) * scale;
+    };
+}
+```
+
+Where _size_ is the grid dimensions and _component_ is the index of the pixel component to retrieve.
+
+This function maps the grid dimensions to those of the image to determine the pixel coordinates and delegates to the new `pixel` method of the image class.  The purpose of the `scale` is to normalise the pixel value to a 0..1 height coordinate.
+
+The implementation for a KTX image is as follows:
+
+```java
+public int pixel(int x, int y, int component) {
+    int offset = levels.get(0).offset;
+    int start = (x + y * extents.size.width()) * layout.length();
+    int index = offset + start + (component * layout.bytes());
+    return LittleEndianDataInputStream.convert(image, index, layout.bytes());
+}
+```
+
+Note that the pixel is retrieved from the _first_ MIP level (i.e. the 'full' image) and ignores any array layers.
+
+Since KTX images are little-endian by default the pixel value is transformed using a new utility method:
+
+```java
+public static int convert(byte[] bytes, int offset, int len) {
+    int value = bytes[offset] & MASK;
+    for(int n = 1; n < len; ++n) {
+        value = value | (bytes[offset + n] & MASK) << (n * 8);
+    }
+    return value;
+}
+```
+
+### Integration
+
+In the new application we retain the following from the previous skybox demo:
+
+* The essential Vulkan components (devices, swapchain, etc).
+
+* The orbital camera controller.
+
+* The uniform buffer for the matrices.
+
+* The rendering pipeline, descriptor sets and render sequence for the model.
+
+Next we create the terrain model:
+
+```java
+@Bean
+public static Model model() {
+    return new GridBuilder()
+        .size(new Dimensions(64, 64))
+        .scale(0.25f)
+        .build();
+}
+```
+
+The vertex shader is the same as the previous demos and the fragment shader simply generates a constant colour for all fragments.  This should render a flat plane since the height of each vertex is zero.
+
+Next we load the height map image and configure the height-map function to generate the height of the grid vertices:
+
+```java
+@Bean
+public static Model model(ImageData heightmap) {
+    Dimensions size = new Dimensions(64, 64);
+    return new GridBuilder()
+        .size(size)
+        .scale(0.25f)
+        .height(GridBuilder.HeightFunction.heightmap(size, heightmap, 0))
+        .build();
+}
+```
+
+The height-map image is either gray-scale (i.e. a single colour channel) or an RGBA image.  Note that in either case the height function 'samples' the first channel of the image.
+
+TODO - R16 UINT to UNORM fiddle?
+
+The fragment shader is replaced with following GLSL code to generate a colour based on the `height` of a fragment:
+
+```glsl
+#version 450
+
+layout(location = 0) in vec2 fragCoords;
+layout(location = 1) in float height;
+
+layout(location = 0) out vec4 outColour;
+
+void main() {
+    const vec4 green = vec4(0.2, 0.5, 0.1, 1.0);
+    const vec4 brown = vec4(0.6, 0.5, 0.2, 1.0);
+    const vec4 white = vec4(1.0);
+    
+    vec4 col = mix(green, brown, smoothstep(0.0, 0.4, height));
+    outColour = mix(col, white, smoothstep(0.6, 0.9, height));
+}
+```
+
+This should render lower vertices as green, progressing to brown as the height increases, and white for the highest values (this code is based on the example in the Vulkan Cookbook).
+
+The _height_ is an output of the vertex shader:
+
+```glsl
+#version 450
+
+layout(binding = 1) uniform UniformBuffer {
+    mat4 model;
+    mat4 view;
+    mat4 projection;
+} ubo;
+
+layout(location = 0) in vec3 pos;
+layout(location = 1) in vec2 coord;
+
+layout(location = 0) out vec2 outCoord;
+layout(location = 1) out float height;
+
+void main() {
+    gl_Position = proj * view * model * vec4(pos, 1.0);
+    outCoord = coord;
+    height = pos.y;
+}
+```
+
+Note that we pass through the texture coordinates of the grid but these are unused for the moment.
+
+If all goes well we should see something along the lines of this:
+
+![terrain.grid.png]
 
 ---
 
@@ -42,9 +426,9 @@ This will require the following new components:
 
 We will next introduce _push constants_ as an alternative (and more efficient) means of updating the view matrices.
 
-Push constants are used to send data to shaders with the following constraints:
+Push constants are used to send data to shaders with some constraints:
 
-* The amount of data is usually relatively small (specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure).
+* The maximum amount of data is usually relatively small (specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure).
 
 * Push constants are updated and stored within the command buffer itself.
 
@@ -311,19 +695,6 @@ public class BufferWrapper {
 }
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ### Integration
 
 First the uniform buffer is replaced with a push constants layout declaration in the vertex shaders:
@@ -392,75 +763,185 @@ public Task matrix(PushUpdateCommand update) {
 }
 ```
 
-In the render sequence we perform the update before starting the render pass:
-
-```java
-begin()
-add(update)
-add(fb.begin())
-    ...
-add(FrameBuffer.END)
-end();
-```
-
-Up to this point we have created and recorded the command buffers _once_ since both the scene and the render sequence are static.  However if one were to run the demo application as it stands nothing will be rendered because the push constants are updated in the command buffer itself.  We therefore need to re-record the command sequence for _every_ frame to apply the updates.
-
-In any case a real-world application would generally be rendering a dynamic scene (i.e. adding and removing geometry) requiring command buffers to be recorded prior to each frame (often as a separate multi-threaded activity).
-
-For the moment we will record the render sequence on demand.  We first factor out the code that allocates and record the command buffer to a separate, temporary component:
-
-```java
-@Component
-class Sequence {
-    @Autowired private Command.Pool graphics;
-    @Autowired private List<FrameBuffer> buffers;
-    @Autowired private PushUpdateCommand update;
-    ...
-
-    private List<Command.Buffer> commands;
-
-    @PostConstruct
-    void init() {
-        commands = graphics.allocate(2);
-    }
-}
-```
-
-The `@PostConstruct` annotation specifies that the method is invoked by the container after the object has been instantiated, which we use to allocate the command buffers.
-
-Next we add a factory method that selects and records a command buffer given the swapchain image index:
-
-```java
-public Command.Buffer get(int index) {
-    Command.Buffer cmd = commands.get(index);
-    if(cmd.isReady()) {
-        cmd.reset();
-    }
-    record(cmd, index);
-    return cmd;
-}
-```
-
-Where `record` wraps up the existing render sequence code.
-
-Note that for the purpose of progressing the demo application we are reusing the command buffers (as opposed to allocating new instances for example).  This requires a command buffer to be `reset` before it can be re-recorded, which entails the following temporary change to the command pool:
-
-```java
-return Pool.create(dev, queue, VkCommandPoolCreateFlag.RESET_COMMAND_BUFFER);
-```
-
-In general using this approach is discouraged in favour of resetting the entire command pool and/or implementing some sort of caching strategy.
-
-The demo application should now run as before using push constants to update the view matrices.
-
-However during the course of this chapter we have introduced several new problems:
-
-* The temporary code to manage the command buffers is very ugly and requires individual buffers to be programatically reset.
-
-* The code to record the command buffers is a mess due to the large number of dependencies.
-
-* We still have multiple arrays of frame buffers, descriptor sets and command buffers.
-
-These issues are all related and will be addressed in the next chapter before we add any further objects to the scene.
+Finally the update command is added to the render sequence before starting the render pass.
 
 ---
+
+## Tesselation
+
+---
+
+## Specialisation Constants
+
+The new shaders contain a number of hard coded parameters (such as the TODO) which would ideally be programatically configured (possibly from a properties file).
+
+Additionally we would like to centralise common or shared parameters to avoid hard-coding the same information in multiple locations or having to replicate shaders with different parameters.
+
+Vulkan provides _specialisation constants_ for these requirements which can be used to parameterise a shader when it is instantiated.
+
+The set of specialisation constants is created via a new builder in the shader class:
+
+```java
+static class ConstantTableBuilder {
+    private final Map<Integer, Entry> map = new HashMap<>();
+    private int offset;
+    
+    public ConstantTableBuilder add(int id, Object value) {
+        ...
+    }
+    
+    public VkSpecializationInfo build() {
+        ...
+    }    
+}
+```
+
+The `add` method creates a new entry in the table and increments the `offset` into the data:
+
+```java
+public ConstantTableBuilder add(int id, Object value) {
+    // Create transient entry
+    Entry entry = new Entry(id, value, offset);
+    map.put(id, entry);
+
+    // Increment offset (also validates constant type)
+    int size = entry.size();
+    offset += size;
+
+    return this;
+}
+```
+
+An _entry_ is a local transient record for each constant:
+
+```java
+private record Entry(int id, Object value, int offset) {
+    private void populate(VkSpecializationMapEntry entry) {
+        entry.constantID = id;
+        entry.offset = offset;
+        entry.size = size();
+    }
+}
+```
+
+The _size_ of a constant is determined as follows:
+
+```java
+private int size() {
+    if(value instanceof Integer) {
+        return Integer.BYTES;
+    }
+    else
+    if(value instanceof Float) {
+        return Float.BYTES;
+    }
+    else
+    if(value instanceof Boolean) {
+        return Integer.BYTES;
+    }
+    else {
+        throw new IllegalArgumentException(...);
+    }
+}
+```
+
+Notes:
+
+* The constant values are stored as anonymous Java objects.
+
+* Only scalar and boolean values are supported.
+
+* Booleans are represented as integer values.
+
+The `build` method constructs the Vulkan descriptor for the set of constants:
+
+```java
+public VkSpecializationInfo build() {
+    // Ignore if no constants
+    if(map.isEmpty()) {
+        return null;
+    }
+
+    // Populate map entries
+    var info = new VkSpecializationInfo();
+    Collection<Entry> values = map.values();
+    info.mapEntryCount = map.size();
+    info.pMapEntries = StructureHelper.first(values, VkSpecializationMapEntry::new, Entry::populate);
+
+    // Populate constant data
+    ...
+
+    return info;
+}
+```
+
+The constants data is essentially a byte array indexed by the _offset_ of each constant:
+
+```java
+int size = values.stream().mapToInt(Entry::size).sum();
+info.dataSize = size;
+info.pData = BufferWrapper.allocate(size);
+values.forEach(e -> e.append(info.pData));
+```
+
+Where `append` adds each constant to the data buffer:
+
+```java
+private void append(ByteBuffer bb) {
+    if(value instanceof Integer n) {
+        bb.putInt(n);
+    }
+    else
+    if(value instanceof Float f) {
+        bb.putFloat(f);
+    }
+    else
+    if(value instanceof Boolean b) {
+        VulkanBoolean bool = VulkanBoolean.of(b);
+        bb.putInt(bool.toInteger());
+    }
+    else {
+        assert false;
+    }
+}
+```
+
+Finally we implement a convenience method to add a map of constants:
+
+```java
+public ConstantTableBuilder add(Map<Integer, Object> map) {
+    for(var entry : map.entrySet()) {
+        add(entry.getKey(), entry.getValue());
+    }
+    return this;
+}
+```
+
+The set of specialisation constants are applied to a shader during pipeline configuration:
+
+```java
+public class ShaderStageBuilder {
+    private final ConstantTableBuilder constants = new ConstantTableBuilder();
+    
+    ...
+    
+    public ShaderStageBuilder constants(Map<Integer, Object> constants) {
+        this.constants.add(constants);
+        return this;
+    }
+ 
+    void populate(VkPipelineShaderStageCreateInfo info) {
+        ...
+        info.pSpecializationInfo = constants.build();
+    }
+}
+```
+
+TODO - integration example
+
+---
+
+## Summary
+
+In this chapter we rendered a terrain grid using tesselation shaders, and implemented push constants and specialisation constants.
+

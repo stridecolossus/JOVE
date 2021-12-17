@@ -18,6 +18,7 @@ import org.sarge.jove.platform.vulkan.VkSpecializationMapEntry;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -91,20 +92,9 @@ public class Shader extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Builder for shader specialisation constants.
+	 * A <i>constants table</i> is a mutable set of <i>specialisation constants</i> for a shader.
 	 */
-	public static class ConstantTableBuilder {
-		/**
-		 * Helper - Creates specialisation constants for the given map.
-		 * @param map Constants map indexed by ID
-		 * @return Specialisation constants descriptor
-		 * @throws IllegalArgumentException for an invalid constant type
-		 * @see #add(Map)
-		 */
-		public static VkSpecializationInfo of(Map<Integer, Object> map) {
-			return new ConstantTableBuilder().add(map).build();
-		}
-
+	static class ConstantsTable {
 		/**
 		 * Constant table entry.
 		 */
@@ -156,16 +146,17 @@ public class Shader extends AbstractVulkanObject {
 			 * Populates the data buffer.
 			 */
 			private void append(ByteBuffer bb) {
-				if(value instanceof Integer ) {
-					bb.putInt((int) value);
+				if(value instanceof Integer n) {
+					bb.putInt(n);
 				}
 				else
-				if(value instanceof Float) {
-					bb.putFloat((float) value);
+				if(value instanceof Float f) {
+					bb.putFloat(f);
 				}
 				else
-				if(value instanceof Boolean) {
-					bb.putInt((boolean) value == true ? 1 : 0);
+				if(value instanceof Boolean b) {
+					final VulkanBoolean bool = VulkanBoolean.of(b);
+					bb.putInt(bool.toInteger());
 				}
 				else {
 					assert false;
@@ -183,7 +174,7 @@ public class Shader extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException for a duplicate constant ID
 		 * @throws IllegalArgumentException for an invalid constant type
 		 */
-		public ConstantTableBuilder add(int id, Object value) {
+		public ConstantsTable add(int id, Object value) {
 			// Validate
 			Check.zeroOrMore(id);
 			Check.notNull(value);
@@ -205,16 +196,18 @@ public class Shader extends AbstractVulkanObject {
 		 * @param map Constants map indexed by ID
 		 * @see #add(int, Object)
 		 */
-		public ConstantTableBuilder add(Map<Integer, Object> map) {
-			map.entrySet().forEach(e -> add(e.getKey(), e.getValue()));
+		public ConstantsTable add(Map<Integer, Object> map) {
+			for(var entry : map.entrySet()) {
+				add(entry.getKey(), entry.getValue());
+			}
 			return this;
 		}
 
 		/**
-		 * Constructs this table of constants.
+		 * Creates the descriptor for this table.
 		 * @return Specialisation constants descriptor or {@code null} if empty
 		 */
-		public VkSpecializationInfo build() {
+		VkSpecializationInfo build() {
 			// Ignore if no constants
 			if(map.isEmpty()) {
 				return null;

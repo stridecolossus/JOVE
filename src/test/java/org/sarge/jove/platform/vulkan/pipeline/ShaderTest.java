@@ -11,7 +11,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -19,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
 import org.sarge.jove.platform.vulkan.VkSpecializationMapEntry;
-import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantTableBuilder;
+import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantsTable;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ShaderTest extends AbstractVulkanTest {
@@ -59,7 +58,7 @@ public class ShaderTest extends AbstractVulkanTest {
 	}
 
 	@Nested
-	class LoaderTests {
+	class LoaderTest {
 		private Shader.Loader loader;
 
 		@BeforeEach
@@ -82,12 +81,12 @@ public class ShaderTest extends AbstractVulkanTest {
 	}
 
 	@Nested
-	class ConstantTableBuilderTests {
-		private ConstantTableBuilder builder;
+	class ConstantsTableTest {
+		private ConstantsTable builder;
 
 		@BeforeEach
 		void before() {
-			builder = new ConstantTableBuilder();
+			builder = new ConstantsTable();
 		}
 
 		@Test
@@ -135,11 +134,6 @@ public class ShaderTest extends AbstractVulkanTest {
 		@Test
 		void buildInvalidConstantType() {
 			assertThrows(IllegalArgumentException.class, () -> builder.add(1, new Object()));
-		}
-
-		@Test
-		void of() {
-			assertNotNull(ConstantTableBuilder.of(Map.of(1, 2)));
 		}
 	}
 }

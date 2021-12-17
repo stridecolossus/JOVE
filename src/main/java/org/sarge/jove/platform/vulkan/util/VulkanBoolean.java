@@ -89,6 +89,13 @@ public final class VulkanBoolean {
 		return this == TRUE;
 	}
 
+	/**
+	 * @return Native value
+	 */
+	public int toInteger() {
+		return value;
+	}
+
 	@Override
 	public int hashCode() {
 		return value;

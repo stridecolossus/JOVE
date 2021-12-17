@@ -30,7 +30,7 @@ public class QuadTest {
 	@DisplayName("Quad indices should be counter-clockwise by default")
 	@Test
 	void indices() {
-		compare(new int[]{0, 2, 3, 1}, Quad.STRIP.strip(1));
+		compare(new int[]{0, 2, 3, 1}, Quad.STRIP.strip(0, 1));
 	}
 
 	@DisplayName("A strip of quads should share the last two indices of each quad")
@@ -41,6 +41,6 @@ public class QuadTest {
 				1, 5, 6, 2,
 				2, 6, 7, 3,
 		};
-		compare(expected, Quad.STRIP.strip(3));
+		compare(expected, Quad.STRIP.strip(0, 3));
 	}
 }

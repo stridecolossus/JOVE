@@ -58,7 +58,7 @@ public class CubeBuilder {
 	};
 
 	// Indices of the two counter-clockwise triangles for each face
-	private static final int[] TRIANGLES = Triangle.INDEX_TRIANGLES.strip(1).toArray();
+	private static final int[] TRIANGLES = Triangle.INDEX_TRIANGLES.strip(0, 1).toArray();
 
 	private float size = MathsUtil.HALF;
 
