@@ -16,6 +16,20 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 	private static final int MASK = 0xff;
 	private static final long LONG_MASK = MASK;
 
+	/**
+	 * Helper - Converts a little endian integer represented by the given byte array to a big endian integer.
+	 * @param bytes		Byte array
+	 * @param len		Number of bytes
+	 * @return Big endian integer
+	 */
+	public static int convert(byte[] bytes, int offset, int len) {
+		int value = bytes[offset] & MASK;
+		for(int n = 1; n < len; ++n) {
+			value = value | (bytes[offset + n] & MASK) << (n * 8);
+		}
+		return value;
+	}
+
 	private final DataInputStream in;
 	private final byte[] buffer = new byte[8];
 
@@ -75,19 +89,13 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 	@Override
 	public int readUnsignedShort() throws IOException {
 		in.readFully(buffer, 0, Short.BYTES);
-		return
-				(buffer[1] & MASK) <<  8 |
-				(buffer[0] & MASK);
+		return convert(buffer, 0, Short.BYTES);
 	}
 
 	@Override
 	public int readInt() throws IOException {
 		in.readFully(buffer, 0, Integer.BYTES);
-		return
-				(buffer[3]) 	   << 24 |
-				(buffer[2] & MASK) << 16 |
-				(buffer[1] & MASK) <<  8 |
-				(buffer[0] & MASK);
+		return convert(buffer, 0, Integer.BYTES);
 	}
 
 	@Override

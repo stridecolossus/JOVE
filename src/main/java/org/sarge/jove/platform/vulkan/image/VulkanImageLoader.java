@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import java.io.DataInput;
@@ -9,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.ImageData;
@@ -20,7 +20,10 @@ import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.util.LittleEndianDataInputStream;
 
 /**
- * KTX image loader.
+ * Loader for a KTX image.
+ * <p>
+ * TODO - skipped
+ * <p>
  * @see <a href="https://www.khronos.org/registry/KTX/specs/2.0/ktxspec_v2.html">KTX2 specification</a>
  * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#formats-compatibility">Formats compatibility</a>
  * @see <a href="https://github.com/KhronosGroup/3D-Formats-Guidelines/blob/main/KTXDeveloperGuide.md">Developer Guide</a>
@@ -53,7 +56,6 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final int levelCount = in.readInt();
 
 		// Validate
-//		validate(1, typeSize, "TypeSize");
 		validate(1, layerCount, "LayerCount");
 		if((faceCount == Image.CUBEMAP_ARRAY_LAYERS) && !extents.size().isSquare()) {
 			throw new IllegalArgumentException("Cubemap images must be square");
@@ -79,13 +81,13 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final List<Level> index = loadIndex(in, levelCount);
 
 		// Load DFD
-		final String components = loadFormatDescriptor(in, formatByteLength);
+		final Sample[] samples = loadFormatDescriptor(in, formatByteLength, typeSize);
 
 		// Load key-values
 		loadKeyValues(in, keyValuesByteLength);
 
 		// Load compression
-		// TODO
+		// TODO - compression?
 		if(compressionByteLength != 0) throw new UnsupportedOperationException();
 
 		// Load image data
@@ -93,8 +95,9 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final byte[] data = new byte[len];
 		in.readFully(data, 0, len);
 
-		// Determine image layout (assume compacted byte components)
-		final Layout layout = Layout.bytes(components.length());
+		// Build image layout
+		final Layout layout = Layout.bytes(samples.length, samples[0].bytes());
+		final String components = Arrays.stream(samples).map(Sample::channel).collect(joining());
 
 		// Create image
 		return new DefaultImageData(extents, components, layout, format, index, faceCount, data);
@@ -138,20 +141,31 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 	}
 
 	/**
+	 * Image sample descriptor.
+	 */
+	private record Sample(String channel, int bits) {
+		private int bytes() {
+			return (bits + 1) / Byte.SIZE;
+		}
+	}
+
+	/**
 	 * Loads the data format descriptor (DFD).
-	 * @param in
-	 * @param total Expected DFD size
-	 * @return Image components
+	 * @param in			Data
+	 * @param total 		Expected DFD size
+	 * @param typeSize		Expected number of bytes per sample
+	 * @return Image samples
 	 * @see <a href="https://www.khronos.org/registry/DataFormat/specs/1.0/chunked/index.html">Khronos DFD documentation</a>
 	 * @see <a href="https://www.khronos.org/registry/DataFormat/api/1.1/khr_df.h">Enumerations header</a>
 	 */
-	static String loadFormatDescriptor(DataInput in, int total) throws IOException {
+	@SuppressWarnings("unused")
+	static Sample[] loadFormatDescriptor(DataInput in, int total, int typeSize) throws IOException {
 		// Check DFD size
 		if(in.readInt() != total) throw new IllegalArgumentException("Invalid DFD length");
 
 		// Skip if empty
 		if(total == 0) {
-			return Colour.RGBA;
+			return new Sample[]{};
 		}
 
 		// Load header
@@ -167,10 +181,6 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		// Validate
 		validate(type, 0, "DescriptorType");
 		validate(ver, 2, "Version");
-		validate(model, 1, "ColorModel");
-		validate(primaries, 1, "Primaries");
-		//validate(transferFunction, 2, "TransferFunction");
-		validate(flags, 0, "Flags");
 
 		// Skip texel dimensions
 		final byte[] array = new byte[4];
@@ -182,22 +192,28 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 
 		// Load samples
 		final int num = (blockSize - 24) /  16;
-		final char[] components = new char[num];
+		final Sample[] samples = new Sample[num];
 		for(int n = 0; n < num; ++n) {
 			// Load sample information
-			in.readShort();								// Bit offset
-			final byte len = in.readByte();				// Bit length
-			components[n] = channel(in.readByte());		// Channel
-//			validate(7, len, "BitLength");
+			in.readShort();								// Bit offset (assumes compacted)
+			final byte bits = in.readByte();
+			final char channel = channel(in.readByte());
+			samples[n] = new Sample(String.valueOf(channel), bits);
+
+			// Validate type size
+			if(samples[n].bytes() != typeSize) {
+				throw new UnsupportedOperationException(String.format("Invalid bit length for channel [%c]: typeSize=%d bits=%d", channel, typeSize, bits));
+			}
 
 			// Skip sample position and lower/upper bounds
 			in.readInt();
 			in.readInt();
 			in.readInt();
+
+			// Create sample
 		}
 
-		// Build components string
-		return new String(components);
+		return samples;
 	}
 
 	/**
@@ -211,6 +227,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 			case 0 -> 'R';
 			case 1 -> 'G';
 			case 2 -> 'B';
+			// TODO - depth/stencil
 			// 13 -> stencil
 			// 14 -> depth
 			case 15 -> 'A';

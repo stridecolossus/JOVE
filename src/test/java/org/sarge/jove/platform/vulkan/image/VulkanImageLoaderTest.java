@@ -22,6 +22,7 @@ import org.sarge.jove.platform.vulkan.VkFormat;
 
 public class VulkanImageLoaderTest {
 	private static final int FORMAT = VkFormat.R8G8B8A8_SRGB.value();
+	private static final int DFD = 24 + 4 * 16;
 
 	private VulkanImageLoader loader;
 	private DataInputStream in;
@@ -76,7 +77,7 @@ public class VulkanImageLoaderTest {
 
 		// Write format descriptor offsets
 		out.writeInt(0);
-		out.writeInt(0);
+		out.writeInt(DFD);
 
 		// Write key-value offsets
 		out.writeInt(0);
@@ -97,7 +98,7 @@ public class VulkanImageLoaderTest {
 		out.writeLong(half);
 
 		// Write format descriptor size
-		out.writeInt(0);
+		initDescriptor();
 
 		// Write image data
 		final int total = len + half;
@@ -112,7 +113,7 @@ public class VulkanImageLoaderTest {
 		assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
 		assertEquals("RGBA", image.components());
 		assertEquals(FORMAT, image.format());
-		assertEquals(Layout.bytes(4), image.layout());
+		assertEquals(Layout.bytes(4, 1), image.layout());
 		assertEquals(1, image.layers());
 
 		// Check MIP levels (ordered by MIP level with offsets smallest first)
@@ -152,17 +153,15 @@ public class VulkanImageLoaderTest {
 		assertThrows(UnsupportedOperationException.class, () -> loader.load(in));
 	}
 
-	@Test
-	void loadDescriptor() throws IOException {
+	private void initDescriptor() throws IOException {
 		// Write DFD size
-		final int size = 24 + 4 * 16;
-		out.writeInt(size);
+		out.writeInt(DFD);
 
 		// Write header
 		out.writeShort(0);					// Vendor
 		out.writeShort(0);					// Type
 		out.writeShort(2);					// Version
-		out.writeShort(size);				// Block size
+		out.writeShort(DFD);				// Block size
 		out.writeByte(1);					// Model (RGBSDA)
 		out.writeByte(1);					// Primaries (BT709)
 		out.writeByte(2);					// Transfer function (SRGB)
@@ -189,14 +188,25 @@ public class VulkanImageLoaderTest {
 
 		// Load descriptor
 		init();
-		assertEquals("RGBA", loader.loadFormatDescriptor(in, size));
+	}
+
+	@Test
+	void loadDescriptor() throws IOException {
+		initDescriptor();
+		loader.loadFormatDescriptor(in, DFD, 1);
 	}
 
 	@Test
 	void loadDescriptorInvalidLength() throws IOException {
 		out.writeInt(999);
 		init();
-		assertThrows(IllegalArgumentException.class, () -> loader.loadFormatDescriptor(in, 1));
+		assertThrows(IllegalArgumentException.class, () -> loader.loadFormatDescriptor(in, 1, 1));
+	}
+
+	@Test
+	void loadDescriptorInvalidBitLength() throws IOException {
+		initDescriptor();
+		assertThrows(UnsupportedOperationException.class, () -> loader.loadFormatDescriptor(in, DFD, 2));
 	}
 
 	@Test

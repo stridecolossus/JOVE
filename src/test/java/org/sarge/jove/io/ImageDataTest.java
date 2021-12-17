@@ -19,7 +19,7 @@ import org.sarge.jove.io.ImageData.Level;
 public class ImageDataTest {
 	private static final Extents EXTENTS = new Extents(new Dimensions(2, 3));
 	private static final List<Level> LEVELS = List.of(new Level(0, 2 * 3 * 4));
-	private static final Layout LAYOUT = Layout.bytes(4);
+	private static final Layout LAYOUT = Layout.bytes(4, 1);
 	private static final byte[] DATA = new byte[2 * 3 * 4];
 
 	@Nested
@@ -35,7 +35,7 @@ public class ImageDataTest {
 		void constructor() {
 			assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
 			assertEquals("RGBA", image.components());
-			assertEquals(Layout.bytes(4), image.layout());
+			assertEquals(Layout.bytes(4, 1), image.layout());
 			assertEquals(42, image.format());
 			assertEquals(1, image.layers());
 			assertEquals(List.of(new Level(0, 2 * 3 * 4)), image.levels());
@@ -44,7 +44,7 @@ public class ImageDataTest {
 
 		@Test
 		void invalidComponentLayout() {
-			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", Layout.bytes(3), 0, LEVELS, 1, DATA));
+			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", Layout.bytes(3, 1), 0, LEVELS, 1, DATA));
 		}
 
 		@Test
@@ -61,12 +61,17 @@ public class ImageDataTest {
 
 		@Test
 		void pixel() {
-			image.pixel(0, 0);
+			image.pixel(0, 0, 0);
 		}
 
 		@Test
 		void pixelInvalidCoordinate() {
-			assertThrows(ArrayIndexOutOfBoundsException.class, () -> image.pixel(2, 3));
+			assertThrows(ArrayIndexOutOfBoundsException.class, () -> image.pixel(2, 3, 0));
+		}
+
+		@Test
+		void pixelInvalidComponentIndex() {
+			assertThrows(IllegalArgumentException.class, () -> image.pixel(0, 0, 4));
 		}
 	}
 

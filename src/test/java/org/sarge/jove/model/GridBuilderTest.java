@@ -2,17 +2,20 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
@@ -28,7 +31,7 @@ class GridBuilderTest {
 	@DisplayName("Create a simple grid with no index factory applied (points)")
 	@Test
 	void buildNotIndexed() {
-		final Model model = builder.tile(3).primitive(Primitive.POINTS).index(null).build();
+		final Model model = builder.tile(new Dimensions(1, 2)).scale(3).primitive(Primitive.POINTS).index(null).build();
 		assertNotNull(model);
 		assertEquals(4 * 4, model.count());
 		assertEquals(false, model.isIndexed());
@@ -75,14 +78,23 @@ class GridBuilderTest {
 			// Create a height-map image
 			final ImageData image = mock(ImageData.class);
 			when(image.extents()).thenReturn(new ImageData.Extents(new Dimensions(8, 8)));
-			when(image.pixel(2, 2)).thenReturn(1);
+			when(image.components()).thenReturn("RGBA");
+			when(image.layout()).thenReturn(new Layout(1, Byte.class, 2, false));
+			when(image.pixel(2, 2, 1)).thenReturn(65535);
 
 			// Create height-map function
-			final HeightFunction function = HeightFunction.of(new Dimensions(4, 4), image);
+			final HeightFunction function = HeightFunction.heightmap(new Dimensions(4, 4), image, 1);
 			assertNotNull(function);
 
 			// Check grid coordinates are mapped to the height-map
-			assertEquals(1 / 65535.0f, function.height(1, 1)); // TODO
+			assertEquals(1, function.height(1, 1));
+		}
+
+		@Test
+		void imageInvalidComponentIndex() {
+			final ImageData image = mock(ImageData.class);
+			when(image.components()).thenReturn(StringUtils.EMPTY);
+			assertThrows(IllegalArgumentException.class, () -> HeightFunction.heightmap(new Dimensions(4, 4), image, 0));
 		}
 	}
 }

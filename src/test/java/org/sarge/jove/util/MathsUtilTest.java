@@ -74,6 +74,13 @@ class MathsUtilTest {
 	}
 
 	@Test
+	void max() {
+		assertEquals(255, MathsUtil.unsignedMaximum(8));
+		assertEquals(65535, MathsUtil.unsignedMaximum(16));
+		assertEquals(4_294_967_295L, MathsUtil.unsignedMaximum(32));
+	}
+
+	@Test
 	void clamp() {
 		assertEquals(1, MathsUtil.clamp(0, 1, 2));
 		assertEquals(1, MathsUtil.clamp(1, 1, 2));

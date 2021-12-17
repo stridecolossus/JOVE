@@ -161,5 +161,12 @@ class LittleEndianDataInputStreamTest {
 		// Check string
 		assertEquals(str, in.readUTF());
 	}
+
+	@Test
+	void littleEndian() {
+		init(Integer.MAX_VALUE, Integer.BYTES);
+		assertEquals(Integer.MAX_VALUE, LittleEndianDataInputStream.convert(bytes, 0, Integer.BYTES));
+		assertEquals(Short.MAX_VALUE, LittleEndianDataInputStream.convert(bytes, 2, Short.BYTES));
+	}
 }
 

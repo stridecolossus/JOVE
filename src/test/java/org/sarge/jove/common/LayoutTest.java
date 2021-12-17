@@ -24,26 +24,23 @@ public class LayoutTest {
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(true, layout.signed());
 		assertEquals(3 * Float.BYTES, layout.length());
+		assertEquals("3Float4", layout.toString());
 	}
 
 	@Test
 	void floats() {
-		layout = Layout.floats(3);
-		assertEquals(3, layout.size());
-		assertEquals(Float.class, layout.type());
-		assertEquals(Float.BYTES, layout.bytes());
-		assertEquals(true, layout.signed());
-		assertEquals(3 * Float.BYTES, layout.length());
+		assertEquals(layout, Layout.floats(3));
 	}
 
 	@Test
 	void bytes() {
-		layout = Layout.bytes(3);
+		layout = Layout.bytes(3, 2);
 		assertEquals(3, layout.size());
 		assertEquals(Byte.class, layout.type());
-		assertEquals(1, layout.bytes());
+		assertEquals(2, layout.bytes());
 		assertEquals(false, layout.signed());
-		assertEquals(3, layout.length());
+		assertEquals(3 * 2, layout.length());
+		assertEquals("3Byte2U", layout.toString());
 	}
 
 	@Test

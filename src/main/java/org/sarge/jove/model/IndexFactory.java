@@ -5,10 +5,14 @@ import java.util.stream.IntStream;
 /**
  * An <i>index factory</i> generates indices for a strip of primitives.
  * <p>
- * In general the factory should assume that vertices are arranged as follows:
+ * In general the factory assumes that the vertices are arranged as a <i>quad</i> strip with alternating row indices.
+ * <p>
+ * For triangle based primitives each quad is assumed to consist of <b>two</b> triangles with counter-clockwise winding order as illustrated in the following example:
  * <pre>
- * 0 1 2
- * 3 4 5</pre>
+ * 0 - 1 - 2
+ * | / | / |
+ * 3 - 4 - 5
+ * </pre>
  * @author Sarge
  */
 public interface IndexFactory {

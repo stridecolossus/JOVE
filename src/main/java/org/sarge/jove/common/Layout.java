@@ -24,6 +24,8 @@ import org.sarge.lib.util.Check;
  *     Layout.floats(3);
  * </pre>
  * <p>
+ * The {@link #toString()} representation of a layout is a compacted string with a {@code U} suffix for unsigned types, for example the above layout is represented as {@code 3Float4}.
+ * <p>
  * @author Sarge
  */
 public record Layout(int size, Class<?> type, int bytes, boolean signed) {
@@ -38,11 +40,12 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 
 	/**
 	 * Creates an unsigned byte layout with {@link #size} components.
-	 * @param size Number of bytes
+	 * @param size 		Number of components
+	 * @param bytes		Number of bytes per component
 	 * @return New byte layout
 	 */
-	public static Layout bytes(int size) {
-		return new Layout(size, Byte.class, Byte.BYTES, false);
+	public static Layout bytes(int size, int bytes) {
+		return new Layout(size, Byte.class, bytes, false);
 	}
 
 	/**
@@ -103,5 +106,17 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	 */
 	public int length() {
 		return size * bytes;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder str = new StringBuilder();
+		str.append(size);
+		str.append(type.getSimpleName());
+		str.append(bytes);
+		if(!signed) {
+			str.append("U");
+		}
+		return str.toString();
 	}
 }

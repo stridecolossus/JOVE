@@ -47,7 +47,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 
 		// Init image properties
 		final Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
-		final Layout layout = new Layout(components.length(), Byte.class, 1, false);
+		final Layout layout = Layout.bytes(components.length(), 1);
 
 		// Inject alpha channel as required
 		final byte[] data = switch(image.getType()) {

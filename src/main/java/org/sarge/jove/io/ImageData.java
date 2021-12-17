@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.util.LittleEndianDataInputStream;
 import org.sarge.lib.util.Check;
 
 /**
@@ -56,13 +57,15 @@ public interface ImageData {
 
 	/**
 	 * Retrieves the pixel at the given image coordinates.
-	 * TODO - little endian
-	 * @param x
-	 * @param y
+	 * <p>
+	 * Note that the pixel is sampled from the <b>first</b> layer and MIP level.
+	 * <p>
+	 * @param component RGBA component index
 	 * @return Pixel
 	 * @throws ArrayIndexOutOfBoundsException if the coordinates are invalid for this image
+	 * @throws IllegalArgumentException if the component index is invalid for this image
 	 */
-	int pixel(int x, int y);
+	int pixel(int x, int y, int component);
 
 	/**
 	 * An <i>image level</i> specifies a MIP level of this image.
@@ -192,34 +195,23 @@ public interface ImageData {
 			return Bufferable.of(image);
 		}
 
-		// TODO - layers/levels!
 		@Override
-		public int pixel(int x, int y) {
-			// TODO
-			final int index = (x + y * extents.size.width()) * layout.length();
-			return (image[index] & 0xff) | ((image[index + 1] & 0xff) << 8);
-//			return switch(layout.bytes()) {
-//				case 1 -> image[index];
-//				case 2 -> (image[index] & 0xff) | ((image[index + 1] & 0xff) << 8);
-//				default -> throw new UnsupportedOperationException(); // TODO
-//			};
-			// TODO - do this properly ~ layout!
+		public int pixel(int x, int y, int component) {
+			Check.range(component, 0, components.length() - 1);
+			final int offset = levels.get(0).offset;
+			final int start = (x + y * extents.size.width()) * layout.length();
+			final int index = offset + start + (component * layout.bytes());
+			return LittleEndianDataInputStream.convert(image, index, layout.bytes());
 		}
-//		return
-//				(buffer[1] & MASK) <<  8 |
-//				(buffer[0] & MASK);
-//	    public int getRGB(Object inData) {
-//	        return (getAlpha(inData) << 24)
-//	            | (getRed(inData) << 16)
-//	            | (getGreen(inData) << 8)
-//	            | (getBlue(inData) << 0);
+		// TODO - assumes little endian => convert to interface/skeleton
 
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
 					.append(components)
-					.append(extents)
+					.append(layout)
 					.append("format", format)
+					.append(extents)
 					.append("levels", levels.size())
 					.append("layers", layers)
 					.build();
