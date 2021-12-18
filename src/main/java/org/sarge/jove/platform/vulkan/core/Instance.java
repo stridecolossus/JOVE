@@ -81,7 +81,7 @@ public class Instance extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * @return Manager for Diagnostic handlers
+	 * @return Manager for diagnostic handlers
 	 */
 	public HandlerManager manager() {
 		return manager;
@@ -97,7 +97,7 @@ public class Instance extends AbstractTransientNativeObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("handle", handle)
-				.append("manager", manager)
+				.append(manager)
 				.build();
 	}
 

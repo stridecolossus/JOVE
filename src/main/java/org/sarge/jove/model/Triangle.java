@@ -38,7 +38,7 @@ public final class Triangle {
 	 * <pre>
 	 * 0 1 2
 	 * 3 4 5</pre>
-	 * The indices of the generated strip is {@code 031425} etc.
+	 * The indices of the generated strip is {@code 03 14 25} etc.
 	 * <p>
 	 * Note that this implementation assumes that the index is used to render a triangle strip with alternating triangle winding order.
 	 */

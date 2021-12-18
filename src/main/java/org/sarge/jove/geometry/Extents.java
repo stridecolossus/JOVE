@@ -145,7 +145,10 @@ public class Extents {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj == this) || ((obj instanceof Extents that) && min.equals(that.min) && max.equals(that.max));
+		return
+				(obj == this) ||
+				(obj instanceof Extents that) &&
+				min.equals(that.min) && max.equals(that.max);
 	}
 
 	@Override

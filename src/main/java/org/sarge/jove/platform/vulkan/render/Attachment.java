@@ -163,12 +163,12 @@ public class Attachment {
 			if(desc.finalLayout == null) throw new IllegalArgumentException("No final layout specified");
 
 			// Create attachment
-			final Attachment attachment = new Attachment(desc);
-
-			// Prevent fiddling
-			desc = null;
-
-			return attachment;
+			try {
+				return new Attachment(desc);
+			}
+			finally {
+				desc = null;
+			}
 		}
 	}
 }

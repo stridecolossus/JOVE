@@ -30,7 +30,6 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>Vulkan buffer</i> is used to copy data to/from the hardware.
- * TODO - doc
  * @author Sarge
  */
 public class VulkanBuffer extends AbstractVulkanObject {
@@ -40,7 +39,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param len			Length (bytes)
 	 * @param dev			Memory properties
 	 * @return New vertex buffer
-	 * @throws IllegalArgumentException if the buffer length is zero
+	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
 	public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsage> props) {
 		// TODO

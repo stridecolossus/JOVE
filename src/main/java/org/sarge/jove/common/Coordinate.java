@@ -46,7 +46,10 @@ public interface Coordinate extends Bufferable {
 
 		@Override
 		public boolean equals(Object obj) {
-			return (obj == this) || ((obj instanceof Coordinate1D that) && MathsUtil.isEqual(this.u, that.u));
+			return
+					(obj == this) ||
+					(obj instanceof Coordinate1D that) &&
+					MathsUtil.isEqual(this.u, that.u);
 		}
 	}
 

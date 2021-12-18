@@ -26,7 +26,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
  */
 public class MouseDevice extends DesktopDevice {
 	private final MouseWheel wheel = new MouseWheel();
-	private final MouseButton buttons = new MouseButton();
+	private final MouseButtonSource buttons = new MouseButtonSource();
 	private final MousePointer ptr = new MousePointer();
 
 	/**
@@ -86,12 +86,17 @@ public class MouseDevice extends DesktopDevice {
 		protected BiConsumer<Window, MousePositionListener> method(DesktopLibrary lib) {
 			return lib::glfwSetCursorPosCallback;
 		}
+
+		@Override
+		public String toString() {
+			return "Pointer";
+		}
 	}
 
 	/**
 	 * Mouse buttons event source.
 	 */
-	private class MouseButton extends DesktopSource<MouseButtonListener, Button> {
+	private class MouseButtonSource extends DesktopSource<MouseButtonListener, Button> {
 		@SuppressWarnings("hiding")
 		private final List<ModifiedButton> buttons = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())

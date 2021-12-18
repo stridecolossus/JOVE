@@ -52,6 +52,7 @@ public record PositionEvent(Source<PositionEvent> source, float x, float y) impl
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
+				.append(source)
 				.append(String.format("%f,%f", x, y))
 				.build();
 	}

@@ -212,10 +212,8 @@ public final class Matrix implements Transform, Bufferable {
 	private boolean equals(Matrix that) {
 		final int order = this.order();
 		for(int r = 0; r < order; ++r) {
-			for(int c = 0; c < order; ++c) {
-				if(!MathsUtil.isEqual(this.matrix[r][c], that.matrix[r][c])) {
-					return false;
-				}
+			if(!MathsUtil.isEqual(this.matrix[r], that.matrix[r])) {
+				return false;
 			}
 		}
 		return true;
@@ -315,7 +313,7 @@ public final class Matrix implements Transform, Bufferable {
 				return matrix;
 			}
 			finally {
-				matrix = null; // TODO - would we want to allow builder to be re-used? => some sort of reset method
+				matrix = null;
 			}
 		}
 	}

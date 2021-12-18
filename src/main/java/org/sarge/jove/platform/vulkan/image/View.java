@@ -6,7 +6,6 @@ import static org.sarge.lib.util.Check.notNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientNativeObject;
 import org.sarge.jove.io.ImageData;
-import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageViewType;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
@@ -123,7 +122,7 @@ public class View extends AbstractVulkanObject {
 
 		private final Image image;
 		private VkImageViewType type;
-		private VkComponentMapping mapping = ComponentMappingBuilder.IDENTITY;
+		private ComponentMapping mapping = ComponentMapping.IDENTITY;
 		private SubResource subresource;
 
 		/**
@@ -148,9 +147,9 @@ public class View extends AbstractVulkanObject {
 		/**
 		 * Sets the component mapping for the view.
 		 * @param mapping Component mapping
-		 * @see ComponentMappingBuilder
+		 * @see ComponentMapping
 		 */
-		public Builder mapping(VkComponentMapping mapping) {
+		public Builder mapping(ComponentMapping mapping) {
 			this.mapping = notNull(mapping);
 			return this;
 		}
@@ -160,7 +159,7 @@ public class View extends AbstractVulkanObject {
 		 * @param image Image
 		 */
 		public Builder mapping(ImageData image) {
-			final VkComponentMapping mapping = ComponentMappingBuilder.build(image.components());
+			final var mapping = new ComponentMapping(image.components());
 			return mapping(mapping);
 		}
 
@@ -183,7 +182,7 @@ public class View extends AbstractVulkanObject {
 			info.viewType = type;
 			info.format = image.descriptor().format();
 			info.image = image.handle();
-			info.components = mapping;
+			info.components = mapping.build();
 			info.subresourceRange = SubResource.toRange(subresource);
 
 			// Allocate image view

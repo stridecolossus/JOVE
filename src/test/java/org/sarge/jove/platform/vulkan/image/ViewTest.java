@@ -110,7 +110,7 @@ public class ViewTest extends AbstractVulkanTest {
 			// Build view
 			view = builder
 					.type(VkImageViewType.CUBE)
-					.mapping(ComponentMappingBuilder.build("BGRA"))
+					.mapping(new ComponentMapping("BGRA"))
 					.subresource(res)
 					.build();
 

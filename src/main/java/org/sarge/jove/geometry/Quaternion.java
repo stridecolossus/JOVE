@@ -9,7 +9,7 @@ import org.sarge.jove.util.MathsUtil;
  * Rotation represented by a quaternion.
  * @author Sarge
  */
-public class Quaternion implements Transform {
+public final class Quaternion implements Transform {
 	/**
 	 * Identity quaternion.
 	 */

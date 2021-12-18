@@ -4,7 +4,7 @@ package org.sarge.jove.platform.obj;
  * A <i>parser</i> handles an OBJ command.
  * @author Sarge
  */
-public interface Parser {
+interface Parser {
 	/**
 	 * Parses the given command.
 	 * @param args 		Arguments (including the command token)

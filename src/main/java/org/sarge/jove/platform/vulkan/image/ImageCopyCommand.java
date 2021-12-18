@@ -65,6 +65,7 @@ public class ImageCopyCommand implements Command {
 		buffer.require(VkBufferUsage.TRANSFER_DST);
 		return (lib, cmd) -> lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
 	}
+	// TODO - better to specify this in the builder so can test DST at instantiation time (but also provide this helper)
 
 	/**
 	 * A <i>copy region</i> specifies a portion of the image to be copied.

@@ -22,7 +22,7 @@ import com.sun.jna.ptr.IntByReference;
  * Event source for joystick buttons.
  * @author Sarge
  */
-public class JoystickButtonSource extends AbstractSource<Button> {
+class JoystickButtonSource extends AbstractSource<Button> {
 	private final int id;
 	private final Desktop desktop;
 	private final Button[] buttons;

@@ -9,33 +9,18 @@ import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
  * The <i>component mapping builder</i> is a helper used to construct the component mapping for an image view.
  * @author Sarge
  */
-public final class ComponentMappingBuilder {
-	/**
-	 * Number of components.
-	 */
-	private static final int SIZE = 4;
-
+public final class ComponentMapping {
 	/**
 	 * Identity component mapping.
 	 */
-	public static final VkComponentMapping IDENTITY = build(identity());
+	public static final ComponentMapping IDENTITY = new ComponentMapping();
+
+	private final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
 
 	/**
-	 * @return Identity swizzles
-	 */
-	private static VkComponentSwizzle[] identity() {
-		final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
-		Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
-		return swizzle;
-	}
-
-	private ComponentMappingBuilder() {
-	}
-
-	/**
-	 * Builds a component mapping from the given specification.
+	 * Constructor.
 	 * <p>
-	 * The mapping specification string specifies the component swizzle for each channel on an RGBA image.
+	 * The {@link #mapping} specification string specifies the component swizzle for each channel of an RGBA image.
 	 * <p>
 	 * The character corresponding to each channel is one of the following:
 	 * <ul>
@@ -45,27 +30,31 @@ public final class ComponentMappingBuilder {
 	 * <li>{@code 0} for {@link VkComponentSwizzle#ZERO}</li>
 	 * </ul>
 	 * @param mapping Mapping specification
-	 * @return Component mapping
 	 * @throws IllegalArgumentException if the mapping is empty or is longer than 4 characters in length
 	 * @throws IllegalArgumentException if a channel swizzle is not supported
 	 */
-	public static VkComponentMapping build(String mapping) {
+	public ComponentMapping(String mapping) {
 		final int len = mapping.length();
 		if(len == 0) throw new IllegalArgumentException("Component mapping cannot be empty");
-		if(len > SIZE) throw new IllegalArgumentException(String.format("Invalid component mapping length [%s]", mapping));
+		if(len > swizzle.length) throw new IllegalArgumentException(String.format("Invalid component mapping length [%s]", mapping));
 
-		final VkComponentSwizzle[] swizzle = identity();
 		for(int n = 0; n < len; ++n) {
 			swizzle[n] = swizzle(mapping.charAt(n));
 		}
-		return build(swizzle);
 	}
 
 	/**
-	 * @param swizzle Component mapping array
-	 * @return New component mapping
+	 * Identity constructor.
 	 */
-	private static VkComponentMapping build(VkComponentSwizzle[] swizzle) {
+	private ComponentMapping() {
+		Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
+	}
+
+	/**
+	 * Creates the Vulkan descriptor for this component mapping.
+	 * @return Component mapping
+	 */
+	public VkComponentMapping build() {
 		final VkComponentMapping components = new VkComponentMapping();
 		components.r = swizzle[0];
 		components.g = swizzle[1];
@@ -91,5 +80,23 @@ public final class ComponentMappingBuilder {
 			case '0' -> VkComponentSwizzle.ZERO;
 			default -> throw new IllegalArgumentException("Unsupported swizzle mapping: " + mapping);
 		};
+	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(swizzle);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof ComponentMapping that) &&
+				Arrays.equals(this.swizzle, that.swizzle);
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.toString(swizzle);
 	}
 }
