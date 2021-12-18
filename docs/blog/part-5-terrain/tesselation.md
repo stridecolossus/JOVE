@@ -145,13 +145,14 @@ public interface IndexFactory {
 
     /**
      * Generates indices for a strip.
+     * @param start Starting index
      * @param count Number of quads in this strip
      * @return Strip indices
      */
-    default IntStream strip(int count) {
+    default IntStream strip(int start, int count) {
         return IntStream
             .range(0, count)
-            .flatMap(n -> indices(n, count));
+            .flatMap(n -> indices(start + n, count));
     }
 }
 ```
@@ -182,15 +183,15 @@ public static final IndexFactory INDEX_STRIP = new IndexFactory() {
     }
 
     @Override
-    public IntStream strip(int count) {
+    public IntStream strip(int start, int count) {
         return IntStream
             .rangeClosed(0, count)
-            .flatMap(n -> indices(n, count));
+            .flatMap(n -> indices(start + n, count));
     }
 };
 ```
 
-Here we override the default `strip` method to also append the final two indices of the triangle strip in the same manner as we did way back in the [Cube Demo](blog/part-3-cube/textures) chapter.  We refactor the cube builder to use the new factory.
+Here we override the default `strip` method to also append the final two indices of the triangle strip in the same manner as we did way back in the [Cube Demo](/JOVE/blog/part-3-cube/textures) chapter.  We refactor the cube builder to use the new factory.
 
 Finally the primitive enumeration is modified to provide an index factory:
 
@@ -322,6 +323,14 @@ public static int convert(byte[] bytes, int offset, int len) {
 }
 ```
 
+Finally the KTX loader is improved to handle height-map images with one channel but multiple bytes per channel, e.g. `R16_UINT`:
+
+* The number of bytes in the image layout is derived from the samples section of the DFD (previously was assumed to be one byte).
+
+* This value is validated against the `typeSize` from the header, which also implicitly ensures that __all__ channels have the same size.
+
+* The format hint is fiddled to a normalised type since some of the images have an integral image format which is not supported by Vulkan.
+
 ### Integration
 
 In the new application we retain the following from the previous skybox demo:
@@ -416,7 +425,7 @@ Note that we pass through the texture coordinates of the grid but these are unus
 
 If all goes well we should see something along the lines of this:
 
-![terrain.grid.png]
+![Terrain Grid](terrain.grid.png)
 
 ---
 
@@ -702,7 +711,8 @@ First the uniform buffer is replaced with a push constants layout declaration in
 ```glsl
 #version 450
 
-layout(location = 0) in vec3 inPosition;
+layout(location=0) in vec3 pos;
+layout(location=1) in vec2 coords;
 
 layout(push_constant) uniform Matrices {
     mat4 model;
@@ -710,12 +720,11 @@ layout(push_constant) uniform Matrices {
     mat4 projection;
 };
 
-layout(location = 0) out vec3 outCoords;
+layout(location=0) out vec2 outCoords;
 
 void main() {
-    vec3 pos = mat3(view) * inPosition;
-    gl_Position = (projection * vec4(pos, 0.0)).xyzz;
-    outCoords = inPosition;
+    gl_Position = projection * view * model * vec4(pos, 1.0);
+    outCoords = coords;
 }
 ```
 
@@ -782,11 +791,11 @@ Vulkan provides _specialisation constants_ for these requirements which can be u
 The set of specialisation constants is created via a new builder in the shader class:
 
 ```java
-static class ConstantTableBuilder {
+static class ConstantsTable {
     private final Map<Integer, Entry> map = new HashMap<>();
     private int offset;
     
-    public ConstantTableBuilder add(int id, Object value) {
+    public ConstantsTable add(int id, Object value) {
         ...
     }
     
@@ -799,7 +808,7 @@ static class ConstantTableBuilder {
 The `add` method creates a new entry in the table and increments the `offset` into the data:
 
 ```java
-public ConstantTableBuilder add(int id, Object value) {
+public ConstantsTable add(int id, Object value) {
     // Create transient entry
     Entry entry = new Entry(id, value, offset);
     map.put(id, entry);
@@ -909,7 +918,7 @@ private void append(ByteBuffer bb) {
 Finally we implement a convenience method to add a map of constants:
 
 ```java
-public ConstantTableBuilder add(Map<Integer, Object> map) {
+public ConstantsTable add(Map<Integer, Object> map) {
     for(var entry : map.entrySet()) {
         add(entry.getKey(), entry.getValue());
     }
@@ -921,7 +930,7 @@ The set of specialisation constants are applied to a shader during pipeline conf
 
 ```java
 public class ShaderStageBuilder {
-    private final ConstantTableBuilder constants = new ConstantTableBuilder();
+    private final ConstantsTable constants = new ConstantsTable();
     
     ...
     

@@ -239,6 +239,8 @@ public void enumeration(String name, Map<String, Long> values) {
 }
 ```
 
+For example `VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT` becomes the much more concise `RELEASE_RESOURCES`.
+
 The generator then replaces the key names of the enumeration values as follows:
 
 ```java
@@ -261,19 +263,9 @@ for(Entry<String, Long> entry : values.entrySet()) {
 }
 ```
 
-Notes:
+The second transform step strips names that begin the `VK` prefix, e.g. for `VkResult` which does not follow the pattern of the other enumerations.
 
-* For example `VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT` becomes the much more concise `RELEASE_RESOURCES`.
-
-* The second transform step strips names that begin the `VK` prefix, e.g. for `VkResult` which does not follow the pattern of the other enumerations.
-
-* Most of the Vulkan enumerations also contain some _synthetic_ constants that are presumably used by the native layer but are irrelevant for our purposes.
-
-The synthetic constants consist of some or all of the following:
-
-```java
-private static final Set<String> IGNORE = Set.of("BEGIN_RANGE", "END_RANGE", "RANGE_SIZE", "MAX_ENUM");
-```
+Most of the Vulkan enumerations also contain some _synthetic_ constants (e.g. `BEGIN_RANGE`) that are presumably used by the native layer but are irrelevant for our purposes, these are removed by the `STRIP` test.
 
 The final transformation method handles an edge case for constants that would end up starting with a numeric, which of course would be an invalid Java name:
 

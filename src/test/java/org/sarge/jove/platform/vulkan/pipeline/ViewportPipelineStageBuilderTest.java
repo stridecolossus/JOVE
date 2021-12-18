@@ -23,6 +23,7 @@ public class ViewportPipelineStageBuilderTest {
 	void build() {
 		// Build descriptor
 		final var descriptor = builder
+				.flip(false)
 				.viewport(rect, new Percentile(0.1f), new Percentile(0.2f))
 				.scissor(rect)
 				.get();

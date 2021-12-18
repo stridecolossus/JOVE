@@ -578,15 +578,19 @@ public class ModelBuilder {
 }
 ```
 
-To construct the cube we extend the model builder:
+This is composed into a builder for a cube:
 
 ```java
-public class CubeBuilder extends ModelBuilder {
+public class CubeBuilder {
     private float size = MathsUtil.HALF;
-
-    public CubeBuilder(List<Layout> layouts) {
-        super(layouts);
-        super.primitive(Primitive.TRIANGLES);
+    
+    public DefaultModel build() {
+        ModelBuilder model = new ModelBuilder();
+        model.primitive(Primitive.TRIANGLES);
+        
+        ...
+        
+        return model.build();
     }
 }
 ```

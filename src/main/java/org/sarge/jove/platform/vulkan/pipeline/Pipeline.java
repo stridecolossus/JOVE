@@ -213,12 +213,10 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Helper - Configures a single viewport and scissor with the <i>global flip</i> of the Y axis enabled.
+		 * Helper - Configures a single viewport and scissor with the given rectangle.
 		 * @param rect Viewport/scissor rectangle
-		 * @see ViewportPipelineStageBuilder#flip(boolean)
 		 */
 		public Builder viewport(Rectangle rect) {
-			viewport.flip(true);
 			viewport.viewport(rect, true);
 			return this;
 		}

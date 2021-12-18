@@ -34,14 +34,14 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	private final List<Viewport> viewports = new ArrayList<>();
 	private final List<Rectangle> scissors = new ArrayList<>();
 
-	private boolean flip;
+	private boolean flip = true;
 
 	ViewportPipelineStageBuilder(Builder parent) {
 		super(parent);
 	}
 
 	/**
-	 * Sets whether to flip viewport rectangles (default is {@code false}).
+	 * Sets whether to flip viewport rectangles (default is {@code true}).
 	 * <p>
 	 * This method is used to over-ride the default behaviour for Vulkan where the Y axis points <b>down</b> by default.
 	 * @see <a href="https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/">article</a>
