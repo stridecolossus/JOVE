@@ -25,14 +25,11 @@ class ModelLoaderTest {
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		model = new ModelBuilder()
-				.primitive(Primitive.TRIANGLES)
-				.layout(Point.LAYOUT)
-				.add(new Vertex(Point.ORIGIN))
+		model = new MutableModel(Primitive.TRIANGLES, List.of(Point.LAYOUT))
+				.add(new Vertex().position(Point.ORIGIN))
 				.add(0)
 				.add(0)
-				.add(0)
-				.build();
+				.add(0);
 
 		// Init persistence store
 		out = new ByteArrayOutputStream();
@@ -65,13 +62,13 @@ class ModelLoaderTest {
 		assertEquals(3, result.count());
 
 		// Check vertices
-		assertNotNull(result.vertices());
-		assertEquals(3 * Float.BYTES, result.vertices().length());
+		assertNotNull(result.vertexBuffer());
+		assertEquals(3 * Float.BYTES, result.vertexBuffer().length());
 
 		// Check index
-		assertNotNull(result.index());
+		assertNotNull(result.indexBuffer());
 		assertEquals(true, result.isIndexed());
-		assertEquals(3 * Integer.BYTES, result.index().length());
+		assertEquals(3 * Integer.BYTES, result.indexBuffer().length());
 	}
 
 	@Test

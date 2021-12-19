@@ -36,6 +36,7 @@ public abstract class AbstractModel implements Model {
 		return layout;
 	}
 
+	// TODO - when?
 	/**
 	 * Validates this model.
 	 * @param normals Whether this model explicitly contains vertex normals
@@ -67,15 +68,15 @@ public abstract class AbstractModel implements Model {
 				this.layout().equals(that.layout()) &&
 				primitive.equals(that.primitive()) &&
 				(this.count() == that.count()) &&
-				this.vertices().equals(that.vertices()) &&
-				Objects.equals(this.index(), that.index());
+				this.vertexBuffer().equals(that.vertexBuffer()) &&
+				Objects.equals(this.indexBuffer(), that.indexBuffer());
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append(layout())
 				.append(primitive)
+				.append(layout)
 				.append("count", count())
 				.append("indexed", isIndexed())
 				.build();

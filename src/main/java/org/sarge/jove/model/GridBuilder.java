@@ -12,7 +12,6 @@ import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
-import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -157,7 +156,7 @@ public class GridBuilder {
 	 * @param layout Grid vertex layout
 	 * @return New grid
 	 */
-	public DefaultModel build() {
+	public MutableModel build() {
 		// Calculate half distance in both directions
 		final int w = size.width();
 		final int h = size.height();
@@ -180,15 +179,13 @@ public class GridBuilder {
 				final Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 
 				// Add grid vertex
-				final Vertex vertex = new Vertex(pos, null, coord, null);
+				final Vertex vertex = new Vertex().position(pos).coordinate(coord);
 				vertices.add(vertex);
 			}
 		}
 
 		// Init model
-		final ModelBuilder model = new ModelBuilder();
-		model.primitive(primitive);
-		model.layout(List.of(Component.POSITION, Component.COORDINATE));
+		final MutableModel model = new MutableModel(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 
 		// Add vertices and index
 		if(index == null) {
@@ -207,8 +204,7 @@ public class GridBuilder {
 			build(index).forEach(model::add);
 		}
 
-		// Build grid model
-		return model.build();
+		return model;
 	}
 
 	/**

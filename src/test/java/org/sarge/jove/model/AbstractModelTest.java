@@ -23,7 +23,7 @@ class AbstractModelTest {
 			}
 
 			@Override
-			public Bufferable vertices() {
+			public Bufferable vertexBuffer() {
 				return null;
 			}
 
@@ -33,7 +33,7 @@ class AbstractModelTest {
 			}
 
 			@Override
-			public Bufferable index() {
+			public Bufferable indexBuffer() {
 				return null;
 			}
 		};

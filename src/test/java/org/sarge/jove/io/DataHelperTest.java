@@ -64,7 +64,10 @@ public class DataHelperTest {
 	@Test
 	void loadBufferableEmpty() throws IOException {
 		when(in.readInt()).thenReturn(0);
-		assertEquals(null, helper.buffer(in));
+		final Bufferable empty = helper.buffer(in);
+		assertNotNull(empty);
+		assertEquals(0, empty.length());
+		assertThrows(UnsupportedOperationException.class, () -> empty.buffer(null));
 	}
 
 	@Test

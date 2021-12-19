@@ -4,7 +4,6 @@ import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Vertex.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -75,11 +74,9 @@ public class CubeBuilder {
 	 * Constructs this cube.
 	 * @return New cube
 	 */
-	public DefaultModel build() {
+	public MutableModel build() {
 		// Init model
-		final ModelBuilder model = new ModelBuilder();
-		model.primitive(Primitive.TRIANGLES);
-		model.layout(Component.DEFAULT);
+		final MutableModel model = new MutableModel(Primitive.TRIANGLES, Vertex.DEFAULT_LAYOUT);
 
 		// Build cube
 		for(int face = 0; face < FACES.length; ++face) {
@@ -94,12 +91,15 @@ public class CubeBuilder {
 				final Colour col = COLOURS[face];
 
 				// Add vertex
-				final Vertex vertex = new Vertex(pos, normal, coord, col);
+				final Vertex vertex = new Vertex()
+						.position(pos)
+						.normal(normal)
+						.coordinate(coord)
+						.colour(col);
 				model.add(vertex);
 			}
 		}
 
-		// Construct model
-		return model.build();
+		return model;
 	}
 }

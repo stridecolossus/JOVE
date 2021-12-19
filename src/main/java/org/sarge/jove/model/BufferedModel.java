@@ -13,16 +13,6 @@ import org.sarge.jove.common.Layout;
  * @author Sarge
  */
 public class BufferedModel extends AbstractModel {
-	/**
-	 * Creates a buffered model from the given mutable model.
-	 * @param model Model
-	 * @return New buffered model
-	 */
-	public static BufferedModel of(Model model) {
-		final Bufferable index = model.isIndexed() ? model.index() : null;
-		return new BufferedModel(model.layout(), model.primitive(), model.count(), model.vertices(), index);
-	}
-
 	private final int count;
 	private final Bufferable vertices;
 	private final Bufferable index;
@@ -33,13 +23,21 @@ public class BufferedModel extends AbstractModel {
 	 * @param primitive			Drawing primitive
 	 * @param count				Draw count
 	 * @param vertices			Vertices
-	 * @param index				Optional index
+	 * @param index				Index
 	 */
 	public BufferedModel(List<Layout> layout, Primitive primitive, int count, Bufferable vertices, Bufferable index) {
 		super(primitive, layout);
 		this.count = zeroOrMore(count);
 		this.vertices = notNull(vertices);
-		this.index = index;
+		this.index = notNull(index);
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param model Model to copy
+	 */
+	public BufferedModel(Model model) {
+		this(model.layout(), model.primitive(), model.count(), model.vertexBuffer(), model.indexBuffer());
 	}
 
 	@Override
@@ -49,16 +47,16 @@ public class BufferedModel extends AbstractModel {
 
 	@Override
 	public boolean isIndexed() {
-		return index != null;
+		return index.length() > 0;
 	}
 
 	@Override
-	public Bufferable vertices() {
+	public Bufferable vertexBuffer() {
 		return vertices;
 	}
 
 	@Override
-	public Bufferable index() {
+	public Bufferable indexBuffer() {
 		return index;
 	}
 }

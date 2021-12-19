@@ -2,6 +2,7 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -23,26 +24,27 @@ public class BufferedModelTest {
 
 	@Test
 	void constructor() {
+		when(index.length()).thenReturn(3);
 		assertEquals(List.of(Layout.floats(3)), model.layout());
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals(3, model.count());
 		assertEquals(true, model.isIndexed());
-		assertEquals(vertices, model.vertices());
-		assertEquals(index, model.index());
+		assertEquals(vertices, model.vertexBuffer());
+		assertEquals(index, model.indexBuffer());
 	}
 
 	@Test
 	void unindexed() {
-		model = new BufferedModel(List.of(Layout.floats(3)), Primitive.TRIANGLES, 3, vertices, null);
+		when(index.length()).thenReturn(0);
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals(3, model.count());
 		assertEquals(false, model.isIndexed());
-		assertEquals(vertices, model.vertices());
-		assertEquals(null, model.index());
+		assertEquals(vertices, model.vertexBuffer());
+		assertEquals(index, model.indexBuffer());
 	}
 
 	@Test
 	void of() {
-		assertEquals(model, BufferedModel.of(model));
+		assertEquals(model, new BufferedModel(model));
 	}
 }

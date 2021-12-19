@@ -28,7 +28,7 @@ public interface Model {
 	/**
 	 * @return Vertex buffer
 	 */
-	Bufferable vertices();
+	Bufferable vertexBuffer();
 
 	/**
 	 * @return Whether this is an indexed model
@@ -40,5 +40,5 @@ public interface Model {
 	 * @return Index buffer
 	 * @see #isIndexed()
 	 */
-	Bufferable index();
+	Bufferable indexBuffer();
 }

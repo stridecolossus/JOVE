@@ -1,20 +1,28 @@
 package org.sarge.jove.platform.obj;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.sarge.jove.model.ModelBuilder;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.MutableModel;
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 
 /**
  * Adapter for an OBJ model builder that performs vertex de-duplication.
  * @author Sarge
  */
-class DuplicateVertexModelBuilder extends ModelBuilder {
+class DuplicateVertexModel extends MutableModel {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
+	public DuplicateVertexModel() {
+		super(Primitive.TRIANGLES, List.of(Point.LAYOUT, Vertex.NORMALS, Coordinate2D.LAYOUT));
+	}
+
 	@Override
-	public DuplicateVertexModelBuilder add(Vertex v) {
+	public DuplicateVertexModel add(Vertex v) {
 		final Integer prev = map.get(v);
 		if(prev == null) {
 			// Register new vertex

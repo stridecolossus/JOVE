@@ -22,6 +22,18 @@ import org.sarge.jove.common.Layout;
 public class DataHelper {
 	private static final int VERSION = 1;
 
+	private static final Bufferable EMPTY = new Bufferable() {
+		@Override
+		public int length() {
+			return 0;
+		}
+
+		@Override
+		public void buffer(ByteBuffer bb) {
+			throw new UnsupportedOperationException();
+		}
+	};
+
 	private final int ver;
 
 	/**
@@ -70,8 +82,10 @@ public class DataHelper {
 	public Bufferable buffer(DataInput in) throws IOException {
 		// Read buffer size
 		final int len = in.readInt();
+
+		// Ignore if empty buffer
 		if(len == 0) {
-			return null;
+			return EMPTY;
 		}
 
 		// Load bytes
@@ -88,10 +102,18 @@ public class DataHelper {
 	 * @param out	Output stream
 	 */
 	public void write(Bufferable obj, DataOutput out) throws IOException {
+		// Output length
 		final int len = obj.length();
+		out.writeInt(len);
+
+		// Stop if empty buffer
+		if(len == 0) {
+			return;
+		}
+
+		// Write buffer
 		final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferWrapper.ORDER);
 		obj.buffer(bb);
-		out.writeInt(len);
 		out.write(bb.array());
 	}
 

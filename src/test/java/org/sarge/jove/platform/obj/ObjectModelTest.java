@@ -103,13 +103,8 @@ public class ObjectModelTest {
 			assertEquals(true, result.isIndexed());
 
 			// Check model data
-			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertices().length());
-			assertEquals(3 * Integer.BYTES, result.index().length());
-		}
-
-		@Test
-		void empty() {
-			assertEquals(List.of(), model.build());
+			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertexBuffer().length());
+			assertEquals(3 * Integer.BYTES, result.indexBuffer().length());
 		}
 
 		@Test

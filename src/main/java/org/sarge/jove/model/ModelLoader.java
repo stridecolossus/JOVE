@@ -69,11 +69,11 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		}
 
 		// Write VBO
-		helper.write(model.vertices(), out);
+		helper.write(model.vertexBuffer(), out);
 
 		// Write index
 		if(model.isIndexed()) {
-			helper.write(model.index(), out);
+			helper.write(model.indexBuffer(), out);
 		}
 		else {
 			out.writeInt(0);

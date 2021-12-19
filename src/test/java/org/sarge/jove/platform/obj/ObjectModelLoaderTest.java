@@ -31,6 +31,7 @@ public class ObjectModelLoaderTest {
 		// Create an OBJ file
 		final String data = """
 				# comment
+				o empty
 
 				v 1 2 3
 				v 4 5 6
@@ -44,6 +45,8 @@ public class ObjectModelLoaderTest {
 				vt 3 4
 				vt 5 6
 
+				o group
+				s ignored
 				f 1/1/1 2/2/2 3/3/3
 		""";
 
@@ -63,12 +66,10 @@ public class ObjectModelLoaderTest {
 		assertEquals(true, model.isIndexed());
 
 		// Check vertex buffer
-		assertNotNull(model.vertices());
-		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertices().length());
+		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertexBuffer().length());
 
 		// Check index buffer
-		assertNotNull(model.index());
-		assertEquals(3 * Integer.BYTES, model.index().length());
+		assertEquals(3 * Integer.BYTES, model.indexBuffer().length());
 	}
 
 	@Test

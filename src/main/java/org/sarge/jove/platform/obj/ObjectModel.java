@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.model.ModelBuilder;
-import org.sarge.jove.model.Primitive;
+import org.sarge.jove.model.MutableModel;
 import org.sarge.jove.model.Vertex;
-import org.sarge.jove.model.Vertex.Component;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing.
@@ -21,29 +21,19 @@ class ObjectModel {
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
 	private final List<Model> models = new ArrayList<>();
-	private ModelBuilder current;
-
-	/**
-	 * Constructor.
-	 */
-	public ObjectModel() {
-		init();
-	}
-
-	/**
-	 * Initialises the current group.
-	 */
-	private void init() {
-		current = new DuplicateVertexModelBuilder();
-		current.primitive(Primitive.TRIANGLES);
-	}
+	private MutableModel current = new DuplicateVertexModel();
 
 	/**
 	 * Starts a new object group.
 	 */
 	public void start() {
+		// Ignore if current group is empty
+		if(current.isEmpty()) {
+			return;
+		}
+
 		// Build current model group
-		append();
+		buildCurrentGroup();
 
 		// Reset transient model
 		positions.clear();
@@ -54,26 +44,23 @@ class ObjectModel {
 	/**
 	 * Constructs the current object.
 	 */
-	private void append() {
-		// Ignore if current group is empty
-		if(current.isEmpty()) {
-			return;
-		}
-
+	private void buildCurrentGroup() {
 		// Init model layout
-		final List<Component> components = new ArrayList<>();
-		components.add(Component.POSITION);
+		final List<Layout> layout = new ArrayList<>();
+		layout.add(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			components.add(Component.NORMAL);
+			layout.add(Vertex.NORMALS);
 		}
 		if(!coords.isEmpty()) {
-			components.add(Component.COORDINATE);
+			layout.add(Coordinate2D.LAYOUT);
 		}
-		current.layout(components);
+		// TODO - transform vertices
 
-		// Add to models
-		models.add(current.build());
-		init();
+		// Add model
+		models.add(current);
+
+		// Start new model
+		current = new DuplicateVertexModel();
 	}
 
 	/**
@@ -114,21 +101,21 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final Vertex.Builder builder = new Vertex.Builder();
-		builder.position(positions.get(v));
+		final Vertex vertex = new Vertex();
+		vertex.position(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {
-			builder.normal(normals.get(vn));
+			vertex.normal(normals.get(vn));
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
-			builder.coordinate(coords.get(vt));
+			vertex.coordinate(coords.get(vt));
 		}
 
 		// Construct vertex
-		current.add(builder.build());
+		current.add(vertex);
 	}
 
 	/**
@@ -136,7 +123,7 @@ class ObjectModel {
 	 * @return Model(s)
 	 */
 	public List<Model> build() {
-		append();
+		buildCurrentGroup();
 		return new ArrayList<>(models);
 	}
 	// TODO - check all groups have same layout
