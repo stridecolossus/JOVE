@@ -9,7 +9,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.IntUnaryOperator;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.ImageData;
@@ -99,8 +101,11 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final Layout layout = Layout.bytes(samples.length, samples[0].bytes());
 		final String components = Arrays.stream(samples).map(Sample::channel).collect(joining());
 
+		// Init pixel mapper
+		final IntUnaryOperator pixel = n -> LittleEndianDataInputStream.convert(data, n, layout.bytes());
+
 		// Create image
-		return new DefaultImageData(extents, components, layout, format, index, faceCount, data);
+		return new DefaultImageData(extents, components, layout, format, index, faceCount, Bufferable.of(data), pixel);
 	}
 
 	/**

@@ -1,12 +1,12 @@
 package org.sarge.jove.io;
 
 import java.util.List;
+import java.util.function.IntUnaryOperator;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.util.LittleEndianDataInputStream;
 import org.sarge.lib.util.Check;
 
 /**
@@ -151,7 +151,7 @@ public interface ImageData {
 	/**
 	 * Default implementation.
 	 */
-	record DefaultImageData(Extents extents, String components, Layout layout, int format, List<Level> levels, int layers, byte[] image) implements ImageData {
+	record DefaultImageData(Extents extents, String components, Layout layout, int format, List<Level> levels, int layers, Bufferable data, IntUnaryOperator pixel) implements ImageData {
 		/**
 		 * Constructor.
 		 * @param extents			Image extents
@@ -160,7 +160,8 @@ public interface ImageData {
 		 * @param format			Vulkan format hint
 		 * @param levels			MIP levels
 		 * @param layers			Number of array layers
-		 * @param image				Image data
+		 * @param data				Image data buffer
+		 * @param pixel				Pixel mapper
 		 * @throws IllegalArgumentException if the size of the components and layout do not match
 		 * @throws IllegalArgumentException if the length of the data buffer does not match the image extents
 		 */
@@ -168,31 +169,29 @@ public interface ImageData {
 			Check.notNull(extents);
 			Check.notEmpty(components);
 			Check.notNull(layout);
-			Check.notEmpty(levels);
-			Check.oneOrMore(layers);
-			Check.notNull(image);
 			levels = List.copyOf(levels);
+			Check.oneOrMore(layers);
+			Check.notNull(data);
 
+			// Check number of components and layout match
 			if(components.length() != layout.size()) {
 				throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", components, layout));
 			}
 
+			// Check
+			// TODO
 //			final int expected = extents.size.area() * layout.length();
 //			if(levels.get(0).length != expected) {
 //				throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, image.length));
 //			}
 
+			// Check overall image buffer matches MIP levels
 			final int total = levels.stream().mapToInt(Level::length).sum();
-			if(image.length != total) {
-				throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, image.length));
+			if(data.length() != total) {
+				throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, data.length()));
 			}
 
 			// TODO - validate levels? or at least < biggest?
-		}
-
-		@Override
-		public Bufferable data() {
-			return Bufferable.of(image);
 		}
 
 		@Override
@@ -201,9 +200,8 @@ public interface ImageData {
 			final int offset = levels.get(0).offset;
 			final int start = (x + y * extents.size.width()) * layout.length();
 			final int index = offset + start + (component * layout.bytes());
-			return LittleEndianDataInputStream.convert(image, index, layout.bytes());
+			return pixel.applyAsInt(index);
 		}
-		// TODO - assumes little endian => convert to interface/skeleton
 
 		@Override
 		public String toString() {

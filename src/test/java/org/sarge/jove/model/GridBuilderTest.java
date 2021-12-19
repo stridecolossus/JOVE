@@ -37,14 +37,14 @@ class GridBuilderTest {
 		assertEquals(false, model.isIndexed());
 	}
 
-	@DisplayName("Create an indexed grid that delegates to the index factory of the primitive (two triangles per quad)")
+	@DisplayName("Create an unindexed grid with duplicate vertices (delegates to the index factory of the primitive")
 	@Test
 	void buildDefault() {
 		final Model model = builder.build();
 		assertNotNull(model);
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals((3 * 3) * (2 * 3), model.count());
-		assertEquals(true, model.isIndexed());
+		assertEquals(false, model.isIndexed());
 	}
 
 	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import java.util.function.IntUnaryOperator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -25,10 +26,12 @@ public class ImageDataTest {
 	@Nested
 	class DefaultImageDataTests {
 		private ImageData image;
+		private IntUnaryOperator pixel;
 
 		@BeforeEach
 		void before() {
-			image = new DefaultImageData(EXTENTS, "RGBA", LAYOUT, 42, LEVELS, 1, DATA);
+			pixel = n -> DATA[n];
+			image = new DefaultImageData(EXTENTS, "RGBA", LAYOUT, 42, LEVELS, 1, Bufferable.of(DATA), pixel);
 		}
 
 		@Test
@@ -44,24 +47,17 @@ public class ImageDataTest {
 
 		@Test
 		void invalidComponentLayout() {
-			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", Layout.bytes(3, 1), 0, LEVELS, 1, DATA));
+			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", Layout.bytes(3, 1), 0, LEVELS, 1, Bufferable.of(DATA), pixel));
 		}
 
 		@Test
 		void invalidDataLength() {
-			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", LAYOUT, 0, LEVELS, 1, new byte[0]));
-		}
-
-		@Test
-		void data() {
-			final Bufferable data = image.data();
-			assertNotNull(data);
-			assertEquals(DATA.length, data.length());
+			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", LAYOUT, 0, LEVELS, 1, Bufferable.of(new byte[0]), pixel));
 		}
 
 		@Test
 		void pixel() {
-			image.pixel(0, 0, 0);
+			assertEquals(0, image.pixel(0, 0, 0));
 		}
 
 		@Test
