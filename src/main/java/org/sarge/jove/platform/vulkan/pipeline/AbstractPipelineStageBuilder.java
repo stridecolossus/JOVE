@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
  * @author Sarge
  */
 abstract class AbstractPipelineStageBuilder<T> {
-	private Builder parent;
+	private final Builder parent;
 
 	/**
 	 * Constructor.

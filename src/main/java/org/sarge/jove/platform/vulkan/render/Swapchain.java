@@ -272,7 +272,7 @@ public class Swapchain extends AbstractVulkanObject {
 			space(DEFAULT_COLOUR_SPACE);
 			arrays(1);
 			mode(VkSharingMode.EXCLUSIVE);
-			usage(VkImageUsage.COLOR_ATTACHMENT);
+			usage(VkImageUsageFlag.COLOR_ATTACHMENT);
 			alpha(VkCompositeAlphaFlagKHR.OPAQUE);
 			presentation(DEFAULT_PRESENTATION_MODE);
 			clipped(true);
@@ -365,7 +365,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param usage Image usage
 		 * @throws IllegalArgumentException if the usage flag is not supported by the surface
 		 */
-		public Builder usage(VkImageUsage usage) {
+		public Builder usage(VkImageUsageFlag usage) {
 			validate(caps.supportedUsageFlags, usage);
 			info.imageUsage = notNull(usage);
 			return this;

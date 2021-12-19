@@ -8,7 +8,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkImageUsage;
+import org.sarge.jove.platform.vulkan.VkImageUsageFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
@@ -18,7 +18,7 @@ public class MemorySelectorTest extends AbstractVulkanTest {
 	private MemorySelector selector;
 	private MemoryType type;
 	private VkMemoryRequirements reqs;
-	private MemoryProperties.Builder<VkImageUsage> props;
+	private MemoryProperties.Builder<VkImageUsageFlag> props;
 
 	@BeforeEach
 	void before() {
@@ -28,7 +28,7 @@ public class MemorySelectorTest extends AbstractVulkanTest {
 		reqs.size = 42;
 
 		// Init memory properties
-		props = new MemoryProperties.Builder<VkImageUsage>().usage(VkImageUsage.COLOR_ATTACHMENT);
+		props = new MemoryProperties.Builder<VkImageUsageFlag>().usage(VkImageUsageFlag.COLOR_ATTACHMENT);
 
 		// Create memory type
 		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of(VkMemoryProperty.DEVICE_LOCAL));

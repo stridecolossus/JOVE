@@ -210,7 +210,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			caps.maxImageCount = 1;
 			caps.supportedTransforms = IntegerEnumeration.mask(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
 			caps.maxImageArrayLayers = 1;
-			caps.supportedUsageFlags = IntegerEnumeration.mask(VkImageUsage.COLOR_ATTACHMENT);
+			caps.supportedUsageFlags = IntegerEnumeration.mask(VkImageUsageFlag.COLOR_ATTACHMENT);
 			caps.supportedCompositeAlpha = IntegerEnumeration.mask(VkCompositeAlphaFlagKHR.OPAQUE);
 			when(props.capabilities()).thenReturn(caps);
 
@@ -255,7 +255,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertEquals(3, info.imageExtent.height);
 
 			assertEquals(1, info.imageArrayLayers);
-			assertEquals(VkImageUsage.COLOR_ATTACHMENT, info.imageUsage);
+			assertEquals(VkImageUsageFlag.COLOR_ATTACHMENT, info.imageUsage);
 			assertEquals(VkSharingMode.EXCLUSIVE, info.imageSharingMode);
 			assertEquals(0, info.queueFamilyIndexCount);
 			assertEquals(null, info.pQueueFamilyIndices);
@@ -307,7 +307,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 		@Test
 		void invalidImageUsage() {
-			assertThrows(IllegalArgumentException.class, () -> builder.usage(VkImageUsage.DEPTH_STENCIL_ATTACHMENT));
+			assertThrows(IllegalArgumentException.class, () -> builder.usage(VkImageUsageFlag.DEPTH_STENCIL_ATTACHMENT));
 		}
 
 		@Test

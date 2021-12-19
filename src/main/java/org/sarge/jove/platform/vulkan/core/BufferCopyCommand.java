@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsage;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -58,8 +58,8 @@ public class BufferCopyCommand implements Command {
 	 * @throws IllegalStateException if the buffers are not a valid source and destination
 	 */
 	public Command invert() {
-		src.require(VkBufferUsage.TRANSFER_DST);
-		dest.require(VkBufferUsage.TRANSFER_SRC);
+		src.require(VkBufferUsageFlag.TRANSFER_DST);
+		dest.require(VkBufferUsageFlag.TRANSFER_SRC);
 		return new BufferCopyCommand(dest, src, regions);
 	}
 
@@ -101,7 +101,7 @@ public class BufferCopyCommand implements Command {
 		 * @param src Source buffer
 		 */
 		public BufferCopyCommand.Builder source(VulkanBuffer src) {
-			src.require(VkBufferUsage.TRANSFER_SRC);
+			src.require(VkBufferUsageFlag.TRANSFER_SRC);
 			this.src = notNull(src);
 			return this;
 		}
@@ -111,7 +111,7 @@ public class BufferCopyCommand implements Command {
 		 * @param dest Destination buffer
 		 */
 		public BufferCopyCommand.Builder destination(VulkanBuffer dest) {
-			dest.require(VkBufferUsage.TRANSFER_DST);
+			dest.require(VkBufferUsageFlag.TRANSFER_DST);
 			this.dest = notNull(dest);
 			return this;
 		}

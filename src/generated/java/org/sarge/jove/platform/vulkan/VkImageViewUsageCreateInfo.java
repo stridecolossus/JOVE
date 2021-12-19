@@ -21,5 +21,5 @@ public class VkImageViewUsageCreateInfo extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.IMAGE_VIEW_USAGE_CREATE_INFO;
 	public Pointer pNext;
-	public VkImageUsage usage;
+	public VkImageUsageFlag usage;
 }

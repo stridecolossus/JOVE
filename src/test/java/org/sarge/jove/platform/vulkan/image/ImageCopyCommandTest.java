@@ -15,7 +15,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsage;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkImageAspect;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkOffset3D;
@@ -127,7 +127,7 @@ public class ImageCopyCommandTest {
 					.build();
 
 			// Check buffer is validated
-			verify(buffer).require(VkBufferUsage.TRANSFER_SRC, VkBufferUsage.TRANSFER_DST);
+			verify(buffer).require(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST);
 
 			// Init expected copy descriptor
 			final var expected = new VkBufferImageCopy() {
@@ -144,14 +144,14 @@ public class ImageCopyCommandTest {
 
 			// Perform copy operation
 			copy.execute(lib, cmd);
-			verify(buffer).require(VkBufferUsage.TRANSFER_SRC);
+			verify(buffer).require(VkBufferUsageFlag.TRANSFER_SRC);
 
 			// Check API
 			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
 
 			// Perform reverse copy operation
 			copy.invert().execute(lib, cmd);
-			verify(buffer).require(VkBufferUsage.TRANSFER_DST);
+			verify(buffer).require(VkBufferUsageFlag.TRANSFER_DST);
 			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
 		}
 

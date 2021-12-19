@@ -130,7 +130,7 @@ public interface Image extends NativeObject {
 	 */
 	class Builder {
 		private ImageDescriptor descriptor;
-		private MemoryProperties<VkImageUsage> props;
+		private MemoryProperties<VkImageUsageFlag> props;
 		private final Set<VkImageCreateFlag> flags = new HashSet<>();
 		private VkSampleCount samples = VkSampleCount.COUNT_1;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
@@ -149,7 +149,7 @@ public interface Image extends NativeObject {
 		 * Sets the memory properties for this image.
 		 * @param props Memory properties
 		 */
-		public Builder properties(MemoryProperties<VkImageUsage> props) {
+		public Builder properties(MemoryProperties<VkImageUsageFlag> props) {
 			this.props = notNull(props);
 			return this;
 		}

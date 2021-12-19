@@ -250,7 +250,7 @@ for(Entry<String, Long> entry : values.entrySet()) {
     String key = StringUtils
         .removeStart(entry.getKey(), prefix)
         .transform(str -> StringUtils.removeStart(str, "VK_"))
-        .transform(str -> StringUtils.removeEnd(str, "_BIT"))
+        .transform(str -> StringUtils.remove(str, "_BIT"))
         .transform(Generator::ensureStartsAlpha);
 
     // Skip synthetic constants
@@ -430,8 +430,8 @@ public enum VkImageUsageFlag implements IntegerEnumeration {
     DEPTH_STENCIL_ATTACHMENT(32),
     TRANSIENT_ATTACHMENT(64),
     INPUT_ATTACHMENT(128),
-    SHADING_RATE_IMAGE_BIT_NV(256),
-    FRAGMENT_DENSITY_MAP_BIT_EXT(512);
+    SHADING_RATE_IMAGE_NV(256),
+    FRAGMENT_DENSITY_MAP_EXT(512);
 
     private final int value;
     

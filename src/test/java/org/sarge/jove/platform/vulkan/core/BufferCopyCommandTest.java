@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkBufferCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsage;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.BufferCopyCommand.Builder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -39,8 +39,8 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 
 	@Test
 	void constructor() {
-		verify(src).require(VkBufferUsage.TRANSFER_SRC);
-		verify(dest).require(VkBufferUsage.TRANSFER_DST);
+		verify(src).require(VkBufferUsageFlag.TRANSFER_SRC);
+		verify(dest).require(VkBufferUsageFlag.TRANSFER_DST);
 	}
 
 	@Test
@@ -72,8 +72,8 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 	void invert() {
 		final Command inverse = copy.invert();
 		assertNotNull(inverse);
-		verify(src).require(VkBufferUsage.TRANSFER_DST);
-		verify(dest).require(VkBufferUsage.TRANSFER_SRC);
+		verify(src).require(VkBufferUsageFlag.TRANSFER_DST);
+		verify(dest).require(VkBufferUsageFlag.TRANSFER_SRC);
 		inverse.execute(lib, mock(Command.Buffer.class));
 	}
 
@@ -98,8 +98,8 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 			assertNotNull(builder.build());
 
 			// Check buffers
-			verify(src, times(2)).require(VkBufferUsage.TRANSFER_SRC);
-			verify(dest, times(2)).require(VkBufferUsage.TRANSFER_DST);
+			verify(src, times(2)).require(VkBufferUsageFlag.TRANSFER_SRC);
+			verify(dest, times(2)).require(VkBufferUsageFlag.TRANSFER_DST);
 		}
 
 		@Test

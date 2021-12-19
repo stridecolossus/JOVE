@@ -121,15 +121,11 @@ Therefore we need to factor out the nested builders into their own source files 
 Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its `build` method) and a package-private `get` method that constructs the resultant object.  We wrap this up in the following template class:
 
 ```java
-abstract class AbstractPipelineBuilder<T> {
-    private Builder parent;
+abstract class AbstractPipelineStageBuilder<T> {
+    private final Builder parent;
 
-    /**
-     * Sets the parent builder.
-     * @param parent Parent
-     */
-    void parent(Builder parent) {
-        this.parent = notNull(parent);
+    protected AbstractPipelineStageBuilder(Builder parent) {
+        this.parent = parent;
     }
 
     /**
@@ -150,20 +146,11 @@ abstract class AbstractPipelineBuilder<T> {
 For example the viewport stage builder (which we complete below) is declared as follows:
 
 ```java
-public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
+public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
     @Override
     VkPipelineViewportStateCreateInfo get() {
         ...
     }
-}
-```
-
-The pipeline builder initialises the parent of each nested pipeline stage in the constructor:
-
-```java
-public Builder() {
-    viewport.parent(this);
-    ...
 }
 ```
 
@@ -176,7 +163,7 @@ To avoid making this chapter overly long we only cover the implementation of the
 The only fixed-function that we __must__ configure is the _viewport pipeline stage_ that defines the drawing regions of the frame buffers and rasterizer:
 
 ```java
-public class ViewportStageBuilder extends AbstractPipelineBuilder<VkPipelineViewportStateCreateInfo> {
+public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
     private final List<Viewport> viewports = new ArrayList<>();
     private final List<Rectangle> scissors = new ArrayList<>();
 }

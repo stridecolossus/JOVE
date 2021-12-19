@@ -6,7 +6,7 @@ import org.sarge.jove.util.IntegerEnumeration;
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkImageUsage implements IntegerEnumeration {
+public enum VkImageUsageFlag implements IntegerEnumeration {
  	TRANSFER_SRC(1),
  	TRANSFER_DST(2),
  	SAMPLED(4),
@@ -20,7 +20,7 @@ public enum VkImageUsage implements IntegerEnumeration {
 
 	private final int value;
 
-	private VkImageUsage(int value) {
+	private VkImageUsageFlag(int value) {
 		this.value = value;
 	}
 

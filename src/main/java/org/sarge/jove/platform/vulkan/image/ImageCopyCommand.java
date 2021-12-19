@@ -12,7 +12,7 @@ import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsage;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkOffset3D;
 import org.sarge.jove.platform.vulkan.core.Command;
@@ -44,7 +44,7 @@ public class ImageCopyCommand implements Command {
 		this.buffer = notNull(buffer);
 		this.regions = Arrays.copyOf(regions, regions.length);
 		this.layout = notNull(layout);
-		buffer.require(VkBufferUsage.TRANSFER_SRC, VkBufferUsage.TRANSFER_DST);
+		buffer.require(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST);
 	}
 
 	// TODO
@@ -53,7 +53,7 @@ public class ImageCopyCommand implements Command {
 
 	@Override
 	public void execute(VulkanLibrary lib, Command.Buffer cb) {
-		buffer.require(VkBufferUsage.TRANSFER_SRC);
+		buffer.require(VkBufferUsageFlag.TRANSFER_SRC);
 		lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
 	}
 
@@ -62,7 +62,7 @@ public class ImageCopyCommand implements Command {
 	 * @return Inverse copy command
 	 */
 	public Command invert() {
-		buffer.require(VkBufferUsage.TRANSFER_DST);
+		buffer.require(VkBufferUsageFlag.TRANSFER_DST);
 		return (lib, cmd) -> lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
 	}
 	// TODO - better to specify this in the builder so can test DST at instantiation time (but also provide this helper)

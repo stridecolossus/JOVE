@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkBufferUsage;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkIndexType;
@@ -34,7 +34,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class VulkanBufferTest extends AbstractVulkanTest {
-	private static final Set<VkBufferUsage> FLAGS = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_SRC, VkBufferUsage.UNIFORM_BUFFER);
+	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.VERTEX_BUFFER, VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.UNIFORM_BUFFER);
 	private static final long SIZE = 3;
 
 	private VulkanBuffer buffer;
@@ -80,7 +80,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void create() {
-		final MemoryProperties<VkBufferUsage> props = new MemoryProperties<>(FLAGS, VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
+		final MemoryProperties<VkBufferUsageFlag> props = new MemoryProperties<>(FLAGS, VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
 		buffer = VulkanBuffer.create(dev, allocator, SIZE, props);
 		assertNotNull(buffer);
 		assertEquals(FLAGS, buffer.usage());
@@ -95,7 +95,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		// Create staging buffer
 		final VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
 		assertNotNull(staging);
-		assertEquals(Set.of(VkBufferUsage.TRANSFER_SRC), staging.usage());
+		assertEquals(Set.of(VkBufferUsageFlag.TRANSFER_SRC), staging.usage());
 		assertEquals(SIZE, staging.length());
 
 		// Check data is copied to buffer
@@ -144,7 +144,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsage.INDEX_BUFFER), mem, SIZE);
+			index = new VulkanBuffer(new Pointer(2), dev, Set.of(VkBufferUsageFlag.INDEX_BUFFER), mem, SIZE);
 			cb = mock(Command.Buffer.class);
 		}
 
@@ -166,7 +166,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void copy() {
-			final var flags = Set.of(VkBufferUsage.VERTEX_BUFFER, VkBufferUsage.TRANSFER_DST);
+			final var flags = Set.of(VkBufferUsageFlag.VERTEX_BUFFER, VkBufferUsageFlag.TRANSFER_DST);
 			final VulkanBuffer dest = new VulkanBuffer(new Pointer(2), dev, flags, mem, SIZE);
 			final Command cmd = buffer.copy(dest);
 			assertNotNull(cmd);

@@ -41,7 +41,7 @@ public class VkSwapchainCreateInfoKHR extends VulkanStructure {
 	public VkColorSpaceKHR imageColorSpace;
 	public VkExtent2D imageExtent;
 	public int imageArrayLayers;
-	public VkImageUsage imageUsage;
+	public VkImageUsageFlag imageUsage;
 	public VkSharingMode imageSharingMode;
 	public int queueFamilyIndexCount;
 	public Pointer pQueueFamilyIndices;

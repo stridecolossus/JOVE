@@ -28,6 +28,6 @@ public class VkPhysicalDeviceImageFormatInfo2 extends VulkanStructure {
 	public VkFormat format;
 	public VkImageType type;
 	public VkImageTiling tiling;
-	public VkImageUsage usage;
+	public VkImageUsageFlag usage;
 	public int flags;
 }

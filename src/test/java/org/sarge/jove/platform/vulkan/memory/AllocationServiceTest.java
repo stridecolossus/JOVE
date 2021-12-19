@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkImageUsage;
+import org.sarge.jove.platform.vulkan.VkImageUsageFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -25,7 +25,7 @@ public class AllocationServiceTest extends AbstractVulkanTest {
 	void before() {
 		// Init request
 		reqs = new VkMemoryRequirements();
-		props = new MemoryProperties.Builder<VkImageUsage>().usage(VkImageUsage.COLOR_ATTACHMENT).build();
+		props = new MemoryProperties.Builder<VkImageUsageFlag>().usage(VkImageUsageFlag.COLOR_ATTACHMENT).build();
 
 		// Init selector
 		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of());

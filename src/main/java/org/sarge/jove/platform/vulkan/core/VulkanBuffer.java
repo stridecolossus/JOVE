@@ -41,7 +41,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @return New vertex buffer
 	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
-	public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsage> props) {
+	public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsageFlag> props) {
 		// TODO
 		if(props.mode() == VkSharingMode.CONCURRENT) throw new UnsupportedOperationException();
 		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
@@ -82,8 +82,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public static VulkanBuffer staging(LogicalDevice dev, AllocationService allocator, Bufferable data) {
 		// Init memory properties
-		final var props = new MemoryProperties.Builder<VkBufferUsage>()
-				.usage(VkBufferUsage.TRANSFER_SRC)
+		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+				.usage(VkBufferUsageFlag.TRANSFER_SRC)
 				.required(VkMemoryProperty.HOST_VISIBLE)
 				.required(VkMemoryProperty.HOST_COHERENT)
 				.build();
@@ -99,7 +99,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		return buffer;
 	}
 
-	private final Set<VkBufferUsage> usage;
+	private final Set<VkBufferUsageFlag> usage;
 	private final DeviceMemory mem;
 	private final long len;
 
@@ -111,7 +111,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param mem			Buffer memory
 	 * @param len			Length of this buffer (bytes)
 	 */
-	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsage> usage, DeviceMemory mem, long len) {
+	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsageFlag> usage, DeviceMemory mem, long len) {
 		super(handle, dev);
 		this.usage = Set.copyOf(notEmpty(usage));
 		this.mem = notNull(mem);
@@ -121,7 +121,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Usage flags for this buffer
 	 */
-	public Set<VkBufferUsage> usage() {
+	public Set<VkBufferUsageFlag> usage() {
 		return usage;
 	}
 
@@ -150,10 +150,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 	/**
 	 * @return This buffer as a uniform buffer resource
-	 * @throws IllegalStateException if this buffer is not a {@link VkBufferUsage#UNIFORM_BUFFER}
+	 * @throws IllegalStateException if this buffer is not a {@link VkBufferUsageFlag#UNIFORM_BUFFER}
 	 */
 	public DescriptorResource uniform() {
-		require(VkBufferUsage.UNIFORM_BUFFER);
+		require(VkBufferUsageFlag.UNIFORM_BUFFER);
 
 		return new DescriptorResource() {
 			@Override
@@ -188,11 +188,11 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param buffers		Buffers to bind
 	 * @return Command to bind the given buffers
 	 * @throws IllegalStateException if any buffer cannot be used as a VBO
-	 * @see VkBufferUsage#VERTEX_BUFFER
+	 * @see VkBufferUsageFlag#VERTEX_BUFFER
 	 */
 	public static Command bindVertexBuffers(int start, Collection<VulkanBuffer> buffers) {
 		for(VulkanBuffer vbo : buffers) {
-			vbo.require(VkBufferUsage.VERTEX_BUFFER);
+			vbo.require(VkBufferUsageFlag.VERTEX_BUFFER);
 		}
 		final Pointer array = NativeObject.array(buffers);
 		return (api, cmd) -> api.vkCmdBindVertexBuffers(cmd, start, buffers.size(), array, new long[]{0});
@@ -203,10 +203,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param type Index type
 	 * @return Command to bind this index buffer
 	 * @throws IllegalStateException if this buffer cannot be used as an index
-	 * @see VkBufferUsage#INDEX_BUFFER
+	 * @see VkBufferUsageFlag#INDEX_BUFFER
 	 */
 	public Command bindIndexBuffer(VkIndexType type) {
-		require(VkBufferUsage.INDEX_BUFFER);
+		require(VkBufferUsageFlag.INDEX_BUFFER);
 		// TODO - verify type is logical, but how? buffer memory does not enforce its 'layout'
 		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, 0, type);
 	}
@@ -226,8 +226,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @throws IllegalStateException if this buffer does not support <b>any</b> of the given usage flags
 	 */
-	public void require(VkBufferUsage... flags) {
-		final Collection<VkBufferUsage> required = Arrays.asList(flags);
+	public void require(VkBufferUsageFlag... flags) {
+		final Collection<VkBufferUsageFlag> required = Arrays.asList(flags);
 		if(Collections.disjoint(required, usage)) {
 			throw new IllegalStateException(String.format("Invalid usage for buffer: required=%s buffer=%s", required, this));
 		}

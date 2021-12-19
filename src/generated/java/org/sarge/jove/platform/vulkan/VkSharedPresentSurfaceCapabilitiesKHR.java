@@ -21,5 +21,5 @@ public class VkSharedPresentSurfaceCapabilitiesKHR extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.SHARED_PRESENT_SURFACE_CAPABILITIES_KHR;
 	public Pointer pNext;
-	public VkImageUsage sharedPresentSupportedUsageFlags;
+	public VkImageUsageFlag sharedPresentSupportedUsageFlags;
 }

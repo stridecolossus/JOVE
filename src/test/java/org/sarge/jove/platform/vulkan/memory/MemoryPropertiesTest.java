@@ -11,12 +11,12 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkImageUsage;
+import org.sarge.jove.platform.vulkan.VkImageUsageFlag;
 import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties.Builder;
 
 public class MemoryPropertiesTest {
-	private static final Set<VkImageUsage> USAGE = Set.of(VkImageUsage.COLOR_ATTACHMENT);
+	private static final Set<VkImageUsageFlag> USAGE = Set.of(VkImageUsageFlag.COLOR_ATTACHMENT);
 	private static final Set<VkMemoryProperty> REQUIRED = Set.of(HOST_VISIBLE);
 	private static final Set<VkMemoryProperty> OPTIMAL = Set.of(HOST_VISIBLE, HOST_CACHED);
 
@@ -52,7 +52,7 @@ public class MemoryPropertiesTest {
 		@Test
 		void build() {
 			final MemoryProperties result = builder
-					.usage(VkImageUsage.COLOR_ATTACHMENT)
+					.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
 					.mode(CONCURRENT)
 					.required(HOST_VISIBLE)
 					.optimal()

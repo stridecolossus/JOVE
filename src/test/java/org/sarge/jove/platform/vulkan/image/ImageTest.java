@@ -98,14 +98,14 @@ public class ImageTest extends AbstractVulkanTest {
 	class BuilderTests {
 		private Image.Builder builder;
 		private AllocationService allocator;
-		private MemoryProperties<VkImageUsage> props;
+		private MemoryProperties<VkImageUsageFlag> props;
 
 		@BeforeEach
 		void before() {
 			// Init image memory properties
 			props = new MemoryProperties.Builder()
 					.mode(VkSharingMode.CONCURRENT)
-					.usage(VkImageUsage.COLOR_ATTACHMENT)
+					.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
 					.build();
 
 			// Init memory allocator
