@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,13 +25,13 @@ class MutableModelTest {
 	void before() {
 		vertex = new Vertex().position(Point.ORIGIN).colour(Colour.WHITE);
 		index = new IntegerList();
-		model = new MutableModel(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT, Colour.LAYOUT));
+		model = new MutableModel(Primitive.TRIANGLES, List.of(Point.LAYOUT, Colour.LAYOUT));
 	}
 
 	@Test
 	void constructor() {
 		// Check header
-		assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
+		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals(List.of(Point.LAYOUT, Colour.LAYOUT), model.layout());
 		assertEquals(0, model.count());
 		assertEquals(false, model.isIndexed());
@@ -70,6 +71,57 @@ class MutableModelTest {
 	@Test
 	void addIndexInvalid() {
 		assertThrows(IllegalArgumentException.class, () -> model.add(0));
+	}
+
+	private void triangle() {
+		for(int n = 0; n < 3; ++n) {
+			model.add(vertex);
+		}
+	}
+
+	private void triangleIndex() {
+		for(int n = 0; n < 3; ++n) {
+			model.add(n);
+		}
+	}
+
+	@Test
+	void iterator() {
+		// Add two triangles
+		triangle();
+		triangleIndex();
+		triangleIndex();
+
+		// Check iterator
+		final Iterator<int[]> iterator = model.iterator();
+		assertNotNull(iterator);
+		assertArrayEquals(new int[]{0, 1, 2}, iterator.next());
+		assertArrayEquals(new int[]{0, 1, 2}, iterator.next());
+		assertEquals(false, iterator.hasNext());
+	}
+
+	@Test
+	void iteratorStripPrimitive() {
+		// Create triangle strip model with two triangles
+		model = new MutableModel(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT, Colour.LAYOUT));
+		model.add(vertex);
+		triangle();
+		triangleIndex();
+		model.add(3);
+
+		// Check iterator
+		final Iterator<int[]> iterator = model.iterator();
+		assertNotNull(iterator);
+		assertArrayEquals(new int[]{0, 1, 2}, iterator.next());
+		assertArrayEquals(new int[]{1, 2, 3}, iterator.next());
+		assertEquals(false, iterator.hasNext());
+	}
+
+	@Test
+	void iteratorEmptyIndex() {
+		final Iterator<int[]> iterator = model.iterator();
+		assertNotNull(iterator);
+		assertEquals(false, iterator.hasNext());
 	}
 
 //	@Test

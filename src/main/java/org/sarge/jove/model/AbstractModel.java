@@ -13,8 +13,8 @@ import org.sarge.jove.common.Layout;
  * @author Sarge
  */
 public abstract class AbstractModel implements Model {
-	private final Primitive primitive;
-	private final List<Layout> layout;
+	protected final Primitive primitive;
+	protected final List<Layout> layout;
 
 	/**
 	 * Constructor.
@@ -45,12 +45,12 @@ public abstract class AbstractModel implements Model {
 	 * @see Primitive#isValidVertexCount(int)
 	 * @see Primitive#isNormalSupported()
 	 */
-	protected void validate(boolean normals) throws IllegalArgumentException {
+	protected void validate() throws IllegalArgumentException {
 		if(!primitive.isValidVertexCount(count())) {
 			throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count(), primitive));
 		}
 
-		if(normals && !primitive.isNormalSupported()) {
+		if(layout.contains(Vertex.NORMALS) && !primitive.isNormalSupported()) {
 			throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
 		}
 	}

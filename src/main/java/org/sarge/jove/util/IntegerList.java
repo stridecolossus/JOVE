@@ -70,6 +70,17 @@ public class IntegerList {
 	}
 
 	/**
+	 * Copies a <i>slice</i> of this list to the given array.
+	 * @param offset		Offset
+	 * @param out			Output array
+	 * @throws ArrayIndexOutOfBoundsException if the offset and output array exceeds the size of this list
+	 */
+	public void slice(int offset, int[] out) {
+		if(offset + out.length > size) throw new ArrayIndexOutOfBoundsException(String.format("Invalid slice: offset=%d len=%d size=%d", offset, out.length, size));
+		System.arraycopy(array, offset, out, 0, out.length);
+	}
+
+	/**
 	 * Converts this list to a bufferable object.
 	 * Note that changes to the list are reflected in the bufferable object.
 	 * @return Bufferable list

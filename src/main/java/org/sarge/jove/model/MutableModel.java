@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -13,8 +14,7 @@ import org.sarge.jove.common.Layout;
 import org.sarge.jove.util.IntegerList;
 
 /**
- * TODO
- * A <i>mutable model</i> is comprised of vertices and an optional index buffer.
+ * A <i>mutable model</i> is used to construct a model.
  * <p>
  * Notes:
  * <ul>
@@ -95,10 +95,34 @@ public class MutableModel extends AbstractModel {
 		return this;
 	}
 
+	/**
+	 * Iterates over the polygon indices of this model.
+	 * @return Polygon indices iterator
+	 */
+	public Iterator<int[]> iterator() {
+		final int size = primitive.size();
+		final int inc = primitive.isStrip() ? 1 : size;
+		final int[] indices = new int[size];
+
+		return new Iterator<>() {
+			private int offset;
+
+			public boolean hasNext() {
+				return offset + size <= index.size();
+			}
+
+			public int[] next() {
+				index.slice(offset, indices);
+				offset += inc;
+				return indices;
+			}
+		};
+	}
+
 	@Override
 	public Bufferable vertexBuffer() {
 		return new Bufferable() {
-			private final int len = vertices.size() * Layout.stride(layout());
+			private final int len = vertices.size() * Layout.stride(layout);
 
 			@Override
 			public int length() {

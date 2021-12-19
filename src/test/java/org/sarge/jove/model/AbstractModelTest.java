@@ -47,8 +47,7 @@ class AbstractModelTest {
 
 	@Test
 	void validate() {
-		model.validate(true);
-		model.validate(false);
+		model.validate();
 	}
 
 	@Test

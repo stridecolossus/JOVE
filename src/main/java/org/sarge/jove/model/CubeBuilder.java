@@ -76,7 +76,7 @@ public class CubeBuilder {
 	 */
 	public MutableModel build() {
 		// Init model
-		final MutableModel model = new MutableModel(Primitive.TRIANGLES, Vertex.DEFAULT_LAYOUT);
+		final MutableModel model = new MutableModel(Primitive.TRIANGLES, Vertex.LAYOUT);
 
 		// Build cube
 		for(int face = 0; face < FACES.length; ++face) {

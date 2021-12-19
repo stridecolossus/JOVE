@@ -49,6 +49,23 @@ public class IntegerListTest {
 	}
 
 	@Test
+	void slice() {
+		list.add(1);
+		list.add(2);
+		list.add(3);
+		final int[] slice = new int[2];
+		list.slice(1, slice);
+		assertArrayEquals(new int[]{2, 3}, slice);
+	}
+
+	@Test
+	void sliceInvalidLength() {
+		list.add(1);
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> list.slice(0, new int[2]));
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> list.slice(1, new int[1]));
+	}
+
+	@Test
 	void growth() {
 		list = new IntegerList(2, 3);
 		list.add(1);

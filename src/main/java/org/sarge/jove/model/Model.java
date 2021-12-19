@@ -6,7 +6,7 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 
 /**
- * A <i>model</i> is comprised of a vertex buffer with a specified layout and an optional index.
+ * A <i>model</i> is comprised of a vertex buffer with a specified layout and an optional index buffer.
  * @author Sarge
  */
 public interface Model {
