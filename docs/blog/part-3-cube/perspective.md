@@ -466,25 +466,35 @@ If the transformation code is correct we should now see the quad in 3D with the 
 
 ### Model
 
-We next introduce the _model_ class which composes vertex data and associated properties:
+We next introduce the _model_ class which composes a vertex buffer and the properties of the model:
 
 ```java
 public interface Model {
-    Header header();
-    Bufferable vertices();
+    /**
+     * @return Drawing primitive
+     */
+    Primitive primitive();
+
+    /**
+     * @return Draw count
+     */
+    int count();
+
+    /**
+     * @return Vertex layout
+     */
+    List<Layout> layout();
+
+    /**
+     * @return Vertex buffer
+     */
+    Bufferable vertexBuffer();
 }
 ```
 
-The _header_ is a descriptor for the properties of the model:
+Where _layout_ specifies the structure of each vertex in the model.
 
-```java
-public record Header(List<Layout> layout, Primitive primitive, int count) {
-}
-```
-
-The _layout_ field specifies the structure of the vertices and _count_ is the draw count of the model.
-
-Rather than fiddling the code-generated `VkPrimitiveTopology` enumeration we implement a wrapper:
+Rather than fiddling the code-generated `VkPrimitiveTopology` enumeration we implement a wrapper for the drawing primitive which can then provide additional helpers:
 
 ```java
 public enum Primitive {
@@ -494,45 +504,37 @@ public enum Primitive {
 
     private final int size;
     private final VkPrimitiveTopology topology;
-}
-```
-
-The following methods on the new enumeration are used to validate the model in the constructor of the header (not shown):
-
-```java
-public boolean isStrip() {
-    return switch(this) {
-        case TRIANGLE_STRIP, TRIANGLE_FAN, LINE_STRIP -> true;
-        default -> false;
-    };
-}
-
-public boolean isNormalSupported() {
-    return switch(this) {
-        case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
-        default -> false;
-    };
-}
-
-public boolean isValidVertexCount(int count) {
-    if(isStrip()) {
-        return (count == 0) || (count >= size);
-    }
-    else {
-        return (count % size) == 0;
+    
+    /**
+     * @return Whether this primitive is a strip
+     */
+    public boolean isStrip() {
+        return switch(this) {
+            case TRIANGLE_STRIP, TRIANGLE_FAN, LINE_STRIP -> true;
+            default -> false;
+        };
     }
 }
 ```
 
-We create a template implementation which is extended by the following default model class:
+The model is constructed by the following mutable implementation which (for the moment) is essentially just a wrapper for the list of vertex data:
 
 ```java
-public class DefaultModel extends AbstractModel {
-    private final List<Vertex> vertices;
+public class MutableModel extends AbstractModel {
+    protected final List<Vertex> vertices = new ArrayList<>();
 
-    public DefaultModel(Header header, List<Vertex> vertices) {
-        super(header);
-        this.vertices = List.copyOf(vertices);
+    public MutableModel(Primitive primitive, List<Layout> layout) {
+        super(primitive, layout);
+    }
+
+    @Override
+    public int count() {
+        return vertices.size();
+    }
+
+    public MutableModel add(Vertex v) {
+        vertices.add(notNull(v));
+        return this;
     }
 }
 ```
@@ -542,7 +544,7 @@ The interleaved vertex buffer is generated from the model in the same manner as 
 ```java
 public Bufferable vertices() {
     return new Bufferable() {
-        private final int len = vertices.size() * Layout.stride(header.layout());
+        private final int len = vertices.size() * Layout.stride(layout);
 
         @Override
         public int length() {
@@ -561,36 +563,16 @@ public Bufferable vertices() {
 
 ### Cube Builder
 
-To construct a model we provide the ubiquitous builder which is essentially a wrapper for a mutable list of vertices:
-
-```java
-public class ModelBuilder {
-    private final List<Vertex> vertices = new ArrayList<>();
-    private final List<Layout> layouts;
-    private Primitive primitive = Primitive.TRIANGLE_STRIP;
-
-    ...
-
-    public DefaultModel build() {
-        Header header = new Header(layouts, primitive, vertices.size());
-        return new DefaultModel(header, vertices);
-    }
-}
-```
-
-This is composed into a builder for a cube:
+The new mutable model implementation is now used to construct a cube model:
 
 ```java
 public class CubeBuilder {
     private float size = MathsUtil.HALF;
     
-    public DefaultModel build() {
-        ModelBuilder model = new ModelBuilder();
-        model.primitive(Primitive.TRIANGLES);
-        
+    public MutableModel build() {
+        MutableModel model = new MutableModel(Primitive.TRIANGLES, Vertex.LAYOUT);
         ...
-        
-        return model.build();
+        return model;
     }
 }
 ```
@@ -626,7 +608,7 @@ private static final int[][] FACES = {
 };
 ```
 
-Each quad is comprised of two triangles specified as follows:
+A quad is comprised of two triangles specified as follows:
 
 ```java
 public final class Quad {
@@ -651,62 +633,101 @@ private static final int[] TRIANGLES = Stream
 In the `build` method we iterate over the array of faces to lookup the vertex components for each triangle:
 
 ```java
-public Model build() {
-    for(int face = 0; face < FACES.length; ++face) {
-        for(int corner : TRIANGLES) {
-            int index = FACES[face][corner];
-            Point pos = VERTICES[index].scale(size);
-            Vector normal = NORMALS[face];
-            Coordinate coord = Quad.COORDINATES.get(corner);
-            Colour col = COLOURS[face];
-            ...
-        }
+for(int face = 0; face < FACES.length; ++face) {
+    for(int corner : TRIANGLES) {
+        int index = FACES[face][corner];
+        Point pos = VERTICES[index].scale(size);
+        Vector normal = NORMALS[face];
+        Coordinate coord = Quad.COORDINATES.get(corner);
+        Colour col = COLOURS[face];
+        ...
     }
-    return super.build();
 }
 ```
 
-Each vertex is then transformed (see below) to the target layout and added to the cube model:
+Finally each vertex is added to the cube model:
 
 ```java
-Vertex vertex = Vertex.of(pos, normal, coord, col);
-Vertex transformed = vertex.transform(layouts);
-add(transformed);
+Vertex vertex = new Vertex(pos, normal, coord, col);
+model.add(vertex);
 ```
 
 ### Vertex Transformation
 
-The cube builder creates vertices containing all components (position, normal, texture coordinate, colour), however for the demo application we only require the vertex position and texture coordinates.  Additionally applications may require vertex components to be re-ordered if (for example) the shader cannot be modified to suit a given model.
-
-Therefore we introduce a _transform_ method to the `Vertex` class to apply a new layout:
+The observant reader will have noticed that the cube builder creates vertices containing __all__ components (position, normal, etc) and the model was initialised with the default vertex layout:
 
 ```java
-public Vertex transform(List<Layout> layouts) {
-    return layouts
-        .stream()
-        .map(this::map)
-        .collect(collectingAndThen(toList(), Vertex::new));
+public class Vertex implements Bufferable {
+    /**
+     * Vertex normals component.
+     */
+    public static final Layout NORMALS = Layout.floats(Vector.SIZE);
+
+    /**
+     * Default vertex layout.
+     */
+    public static final List<Layout> LAYOUT = List.of(Point.LAYOUT, NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
 }
 ```
 
-The vertex component matching each entry in the layout transformation is determined as follows:
+However for the demo application we only require the vertex position and texture coordinates.  Additionally applications may require vertex components to be swizzled or stripped if (for example) the shader cannot be modified to suit a given model.
+
+Therefore we implement a _transform_ mutator method on the model class to 'select' vertex components according to a given layout.  This may seem slightly backward but is simpler to comprehend (and test) than mixing the logic to construct the model and manage the layout of the components.
+
+First the following mutator is added to the vertex class to transform the array of components given an indices mapping:
 
 ```java
-private Component map(Layout layout) {
-    for(Component c : components) {
-        if(c.layout() == layout) {
-            return c;
+public void transform(int[] transform) {
+    Bufferable[] prev = components;
+    components = new Bufferable[transform.length];
+    Arrays.setAll(components, n -> prev[transform[n]]);
+}
+```
+
+In the new _transform_ method we first define an index mapping from the existing layout to the target layout:
+
+```java
+public MutableModel transform(List<Layout> target) {
+    // Init mapping from previous layout to this model (comparing by identity)
+    Layout[] array = layout.toArray(Layout[]::new);
+    ToIntFunction<Layout> mapper = e -> {
+        for(int n = 0; n < array.length; ++n) {
+            if(e == array[n]) {
+                return n;
+            }
         }
-    }
-    throw new IllegalArgumentException(...);
+        throw new IllegalArgumentException(...);
+    };
+
+    ...
+
+    return this;
 }
 ```
 
-Notes:
+Note that layout instances are compared by _identity_ to prevent vertex components with equivalent layouts being considered the same (for example points and normals).
 
-* The resultant vertex component is matched by _identity_ of the layout since (for example) points and vector normals have equivalent layouts but are different instances.
+Next this mapping is used to generate the vertex transform indices which are then applied to the vertex data:
 
-* The component is the _first_ matching layout of the transformation, i.e. the behaviour of duplicate layouts is undefined.
+```java
+// Build transform indices
+int[] transform = target
+    .stream()
+    .mapToInt(mapper)
+    .toArray();
+
+// Apply transform to vertex data
+for(Vertex v : vertices) {
+    v.transform(transform);
+}
+```
+
+And finally the model layout is updated:
+
+```java
+layout.clear();
+layout.addAll(target);
+```
 
 ### Integration #3
 
