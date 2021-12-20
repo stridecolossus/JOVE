@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
@@ -22,59 +22,51 @@ public class VertexTest {
 
 	@BeforeEach
 	void before() {
-		vertex = new Vertex();
+		vertex = new Vertex(Point.ORIGIN, Colour.WHITE);
 	}
 
 	@Test
-	void constructor() {
-		assertNotNull(vertex.components());
-		assertEquals(0, vertex.components().count());
-	}
-
-	@Test
-	void add() {
-		vertex.add(Point.ORIGIN);
-		vertex.add(Colour.WHITE);
+	void components() {
 		assertEquals(Point.ORIGIN, vertex.component(0));
 		assertEquals(Colour.WHITE, vertex.component(1));
+	}
+
+	@Test
+	void stream() {
+		assertNotNull(vertex.components());
 		assertArrayEquals(new Object[]{Point.ORIGIN, Colour.WHITE}, vertex.components().toArray());
 	}
 
 	@Test
 	void componentInvalidIndex() {
-		assertThrows(IndexOutOfBoundsException.class, () -> vertex.component(0));
+		assertThrows(IndexOutOfBoundsException.class, () -> vertex.component(999));
 	}
 
-	@Nested
-	class TransformTests {
-		@BeforeEach
-		void before() {
-			vertex.add(Point.ORIGIN);
-			vertex.add(Colour.WHITE);
-		}
-
-		@Test
-		void transform() {
-			vertex.transform(new int[]{1, 0});
-			assertArrayEquals(new Object[]{Colour.WHITE, Point.ORIGIN}, vertex.components().toArray());
-		}
-
-		@Test
-		void transformRemoveComponent() {
-			vertex.transform(new int[]{1});
-			assertArrayEquals(new Object[]{Colour.WHITE}, vertex.components().toArray());
-		}
-
-		@Test
-		void transformInvalidIndex() {
-			assertThrows(IndexOutOfBoundsException.class, () -> vertex.transform(new int[]{999}));
-		}
+	@DisplayName("Vertex can be re-ordered")
+	@Test
+	void transform() {
+		vertex.transform(new int[]{1, 0});
+		assertArrayEquals(new Object[]{Colour.WHITE, Point.ORIGIN}, vertex.components().toArray());
 	}
 
+	@DisplayName("Vertex components can be removed")
+	@Test
+	void transformRemoveComponent() {
+		vertex.transform(new int[]{1});
+		assertArrayEquals(new Object[]{Colour.WHITE}, vertex.components().toArray());
+	}
+
+	@DisplayName("Cannot apply a transform with an invalid index")
+	@Test
+	void transformInvalidIndex() {
+		assertThrows(IndexOutOfBoundsException.class, () -> vertex.transform(new int[]{999}));
+	}
+
+	@DisplayName("Vertex can be written to an NIO buffer")
 	@Test
 	void buffer() {
 		// Add vertex data
-		vertex.add(new Point(1, 2, 3));
+		vertex = new Vertex(new Point(1, 2, 3));
 
 		// Buffer vertex
 		final ByteBuffer bb = ByteBuffer.allocate(3 * Float.BYTES);
@@ -90,17 +82,10 @@ public class VertexTest {
 
 	@Test
 	void equals() {
-		vertex.add(Point.ORIGIN);
 		assertEquals(vertex, vertex);
-		assertEquals(vertex, Vertex.of(Point.ORIGIN));
+		assertEquals(vertex, new Vertex(Point.ORIGIN, Colour.WHITE));
 		assertNotEquals(vertex, null);
 		assertNotEquals(vertex, new Vertex());
-	}
-
-	@Test
-	void of() {
-		vertex.add(Point.ORIGIN);
-		assertEquals(vertex, Vertex.of(Point.ORIGIN));
 	}
 
 	@Test

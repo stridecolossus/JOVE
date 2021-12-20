@@ -13,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.IntegerList;
@@ -25,7 +24,7 @@ class MutableModelTest {
 
 	@BeforeEach
 	void before() {
-		vertex = Vertex.of(Point.ORIGIN, Colour.WHITE);
+		vertex = new Vertex(Point.ORIGIN, Colour.WHITE);
 		index = new IntegerList();
 		model = new MutableModel(Primitive.TRIANGLES, List.of(Point.LAYOUT, Colour.LAYOUT));
 	}
@@ -140,14 +139,17 @@ class MutableModelTest {
 
 	@Test
 	void transform() {
-		// Add a vertex with a different layout to the model
-		final Vertex prev = Vertex.of(Colour.WHITE, Coordinate2D.BOTTOM_LEFT, Point.ORIGIN);
-		model.add(prev);
+		// Add a vertex
+		model.add(vertex);
 
-		// Transform vertex to this model
-		model.transform(List.of(Colour.LAYOUT, Coordinate2D.LAYOUT, Point.LAYOUT));
+		// Transform model
+		final List<Layout> target = List.of(Point.LAYOUT);
+		model.transform(target);
+		assertEquals(target, model.layout());
 		assertEquals(1, model.count());
-		assertEquals(vertex, prev);
+
+		// Check vertex is also transformed
+		assertArrayEquals(new Object[]{Point.ORIGIN}, vertex.components().toArray());
 	}
 
 	@Test
@@ -157,9 +159,9 @@ class MutableModelTest {
 
 	@Test
 	void transformInvalidVertexComponent() {
-		final Vertex invalid = Vertex.of();
+		final Vertex invalid = new Vertex();
 		model.add(invalid);
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> model.transform(Vertex.LAYOUT));
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> model.transform(List.of(Point.LAYOUT)));
 	}
 
 	@Test

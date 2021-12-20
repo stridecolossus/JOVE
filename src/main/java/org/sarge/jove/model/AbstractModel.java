@@ -2,6 +2,7 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,7 +24,7 @@ public abstract class AbstractModel implements Model {
 	 */
 	protected AbstractModel(Primitive primitive, List<Layout> layout) {
 		this.primitive = notNull(primitive);
-		this.layout = List.copyOf(layout);
+		this.layout = new ArrayList<>(layout);
 	}
 
 	@Override
@@ -33,7 +34,7 @@ public abstract class AbstractModel implements Model {
 
 	@Override
 	public final List<Layout> layout() {
-		return layout;
+		return List.copyOf(layout);
 	}
 
 	// TODO - when?

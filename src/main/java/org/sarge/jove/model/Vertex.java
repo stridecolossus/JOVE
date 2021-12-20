@@ -3,9 +3,8 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.sarge.jove.common.Bufferable;
@@ -34,53 +33,40 @@ public class Vertex {
 	 */
 	public static final List<Layout> LAYOUT = List.of(Point.LAYOUT, NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
 
-	/**
-	 * Helper - Creates a vertex with the given components.
-	 * @param components Vertex components
-	 * @return New vertex
-	 */
-	public static Vertex of(Bufferable... components) {
-		final Vertex vertex = new Vertex();
-		for(Bufferable b : components) {
-			vertex.add(b);
-		}
-		return vertex;
-	}
+	private Bufferable[] components;
 
-	private final List<Bufferable> components = new ArrayList<>();
+	/**
+	 * Constructor.
+	 * @param components Vertex components
+	 */
+	public Vertex(Bufferable... components) {
+		this.components = notNull(components);
+	}
 
 	/**
 	 * Retrieves a vertex component by index.
 	 * @param index Component index
 	 * @return Vertex component
-	 * @throws IndexOutOfBoundsException for an invalid index
+	 * @throws ArrayIndexOutOfBoundsException for an invalid index
 	 */
 	public Bufferable component(int index) {
-		return components.get(index);
+		return components[index];
 	}
 
 	/**
 	 * @return Vertex components
 	 */
 	public Stream<Bufferable> components() {
-		return components.stream();
-	}
-
-	/**
-	 * Adds a component to this vertex.
-	 * @param component Vertex component
-	 */
-	public void add(Bufferable component) {
-		components.add(notNull(component));
+		return Arrays.stream(components);
 	}
 
 	/**
 	 * Writes this vertex to the given buffer.
-	 * @param bb Buffer
+	 * @param buffer Buffer
 	 */
-	public void buffer(ByteBuffer bb) {
-		for(Bufferable b : components) {
-			b.buffer(bb);
+	public void buffer(ByteBuffer buffer) {
+		for(Bufferable obj : components) {
+			obj.buffer(buffer);
 		}
 	}
 
@@ -90,19 +76,14 @@ public class Vertex {
 	 * @throws ArrayIndexOutOfBoundsException for an invalid component index
 	 */
 	public void transform(int[] transform) {
-		// Reset vertex
-		final Bufferable[] prev = components.toArray(Bufferable[]::new);
-		components.clear();
-
-		// Apply components transform
-		for(int n : transform) {
-			components.add(prev[n]);
-		}
+		final Bufferable[] prev = components;
+		components = new Bufferable[transform.length];
+		Arrays.setAll(components, n -> prev[transform[n]]);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(components);
+		return Arrays.hashCode(components);
 	}
 
 	@Override
@@ -110,11 +91,11 @@ public class Vertex {
 		return
 				(obj == this) ||
 				(obj instanceof Vertex that) &&
-				this.components.equals(that.components);
+				Arrays.equals(this.components, that.components);
 	}
 
 	@Override
 	public String toString() {
-		return components.toString();
+		return Arrays.toString(components);
 	}
 }

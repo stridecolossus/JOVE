@@ -57,31 +57,31 @@ public interface Bufferable {
 }
 ```
 
-A _vertex_ is a compound bufferable comprised of an arbitrary collection of _components_ such as positions and texture coordinates:
+A _vertex_ is a compound bufferable comprised of an arbitrary array of _components_ such as positions and texture coordinates:
 
 ```java
-public class Vertex implements Bufferable {
-    private final List<Bufferable> components;
+public class Vertex {
+    private Bufferable[] components;
 
-    @Override
-    public int length() {
-        return components.stream().mapToInt(Component::length).sum();
+    public Vertex(Bufferable... components) {
+        this.components = notNull(components);
     }
 
-    @Override
     public void buffer(ByteBuffer buffer) {
-        for(Component obj : components) {
+        for(Bufferable obj : components) {
             obj.buffer(buffer);
         }
     }
 }
 ```
 
-Note that this implementation assumes that vertex data is _interleaved_.
+Notes:
 
-### Vertex Components
+* The vertex class does not implement `Bufferable` but does provide the `buffer` method to output the vertex components to an NIO buffer.
 
-We can now implement vertex components to support the triangle demo.
+* This implementation assumes vertex data is _interleaved_.
+
+We can now implement the _vertex components_ needed to deliver the triangle demo.
 
 In general a vertex is comprised of the following components:
 - position
@@ -456,9 +456,9 @@ The triangle vertices are specified as a simple array:
 
 ```java
 Vertex[] vertices = {
-    Vertex.of(new Point(0, -0.5f, 0), new Colour(1, 0, 0, 1)),
-    Vertex.of(new Point(0.5f, 0.5f, 0), new Colour(0, 0, 1, 1)),
-    Vertex.of(new Point(-0.5f, 0.5f, 0), new Colour(0, 1, 0, 1)),
+    new Vertex(new Point(0, -0.5f, 0), new Colour(1, 0, 0, 1)),
+    new Vertex(new Point(0.5f, 0.5f, 0), new Colour(0, 0, 1, 1)),
+    new Vertex(new Point(-0.5f, 0.5f, 0), new Colour(0, 1, 0, 1)),
 };
 ```
 

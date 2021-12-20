@@ -19,8 +19,8 @@ class DuplicateVertexModelTest {
 	@Test
 	void build() {
 		// Create some vertices
-		final Vertex vertex = Vertex.of(Point.ORIGIN);
-		final Vertex other = Vertex.of(new Point(1, 2, 3));
+		final Vertex vertex = new Vertex(Point.ORIGIN);
+		final Vertex other = new Vertex(new Point(1, 2, 3));
 
 		// Build an indexed model that re-uses some vertices
 		model.add(vertex);

@@ -19,7 +19,7 @@ public class BufferedModelTest {
 	void before() {
 		vertices = mock(Bufferable.class);
 		index = mock(Bufferable.class);
-		model = new BufferedModel(List.of(Layout.floats(3)), Primitive.TRIANGLES, 3, vertices, index);
+		model = new BufferedModel(Primitive.TRIANGLES, List.of(Layout.floats(3)), 3, vertices, index);
 	}
 
 	@Test

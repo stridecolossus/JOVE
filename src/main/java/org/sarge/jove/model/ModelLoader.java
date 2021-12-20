@@ -46,7 +46,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		final Bufferable index = helper.buffer(in);
 
 		// Create model
-		return new BufferedModel(layouts, primitive, count, vertices, index);
+		return new BufferedModel(primitive, layouts, count, vertices, index);
 	}
 
 	/**

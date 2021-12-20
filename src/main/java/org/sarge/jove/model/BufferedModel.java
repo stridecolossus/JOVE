@@ -19,13 +19,13 @@ public class BufferedModel extends AbstractModel {
 
 	/**
 	 * Constructor.
-	 * @param layout			Vertex layout
 	 * @param primitive			Drawing primitive
+	 * @param layout			Vertex layout
 	 * @param count				Draw count
 	 * @param vertices			Vertices
 	 * @param index				Index
 	 */
-	public BufferedModel(List<Layout> layout, Primitive primitive, int count, Bufferable vertices, Bufferable index) {
+	public BufferedModel(Primitive primitive, List<Layout> layout, int count, Bufferable vertices, Bufferable index) {
 		super(primitive, layout);
 		this.count = zeroOrMore(count);
 		this.vertices = notNull(vertices);
@@ -37,7 +37,7 @@ public class BufferedModel extends AbstractModel {
 	 * @param model Model to copy
 	 */
 	public BufferedModel(Model model) {
-		this(model.layout(), model.primitive(), model.count(), model.vertexBuffer(), model.indexBuffer());
+		this(model.primitive(), model.layout(), model.count(), model.vertexBuffer(), model.indexBuffer());
 	}
 
 	@Override

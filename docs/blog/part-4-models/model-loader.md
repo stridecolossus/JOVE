@@ -290,7 +290,6 @@ The parser for the face command (f) iterates over the face vertices (which we as
 ```java
 public void parse(String[] args, ObjectModel model) {
     for(int n = 0; n < 3; ++n) {
-        // Tokenize face
         String face = args[n + 1];
         ...
     }
@@ -333,7 +332,7 @@ Finally we delegate to a new mutator on the model to add a vertex given the thre
 ```java
 public void vertex(int v, Integer vn, Integer vt) {
     // Add vertex position
-    final List<Component> components = new ArrayList<>();
+    List<Component> components = new ArrayList<>();
     components.add(positions.get(v));
 
     // Add optional normal
@@ -366,33 +365,34 @@ The OBJ builder constructs the JOVE model(s) from the transient data:
 public class ObjectModel {
     ...
     private final List<Model> models = new ArrayList<>();
+    private MutableModel current = new MutableModel();
 
     public List<Model> build() {
-        append();
+        buildCurrentGroup();
         return new ArrayList<>(models);
     }
 }
 ```
 
-The `append` method first determines the layout of the model:
+The `buildCurrentGroup` method initialises the layout of the current model and instantiates the next group:
 
 ```java
-private void append() {
-    // Ignore if current group is empty
-    if(vertices.isEmpty()) {
-        return;
-    }
-
+private void buildCurrentGroup() {
     // Init model layout
     List<Layout> layout = new ArrayList<>();
     layout.add(Point.LAYOUT);
     if(!normals.isEmpty()) {
-        layout.add(Vector.LAYOUT);
+        layout.add(Vertex.NORMALS);
     }
     if(!coords.isEmpty()) {
         layout.add(Coordinate2D.LAYOUT);
     }
-    ...
+
+    // Add model
+    models.add(current);
+
+    // Start new model
+    current = new MutableModel();
 }
 ```
 
@@ -416,14 +416,18 @@ Although not required for the current demo application the OBJ format supports c
 
 ```java
 public void start() {
+    // Ignore if current group is empty
+    if(current.isEmpty()) {
+        return;
+    }
+
     // Build current model group
-    append();
+    buildCurrentGroup();
 
     // Reset transient model
     positions.clear();
     normals.clear();
     coords.clear();
-    vertices.clear();
 }
 ```
 
@@ -468,13 +472,13 @@ public interface Model {
 In the default model implementation the index is a simple integer array:
 
 ```java
-public class DefaultModel extends AbstractModel {
+public class MutableModel extends AbstractModel {
     private final List<Vertex> vertices;
-    private final Optional<int[]> index;
+    private final int[] index;
 
     @Override
     public boolean isIndexed() {
-        return index.isPresent();
+        return index.length() > 0;
     }
 }
 ```
@@ -484,10 +488,6 @@ The bufferable object for the index is generated as follows:
 ```java
 @Override
 public Optional<Bufferable> index() {
-    return index.map(DefaultModel::index);
-}
-
-private static Bufferable index(int[] index) {
     return new Bufferable() {
         private final int len = index.length * Integer.BYTES;
 
@@ -559,16 +559,7 @@ public Builder add(Vertex v) {
 }
 ```
 
-The indexed builder creates the index array and delegates to the base-class to construct the model:
-
-```java
-public DefaultModel build() {
-    final int[] array = index.stream().mapToInt(Integer::intValue).toArray();
-    return build(array, array.length);
-}
-```
-
-Finally we add a new method on the buffer class to bind an index buffer to the pipeline:
+Finally we add a new method on the buffer class to bind the index buffer to the pipeline:
 
 ```java
 public Command bindIndexBuffer() {
@@ -580,8 +571,6 @@ public Command bindIndexBuffer() {
 Notes:
 
 * The index `mapping` assumes we have a decent hashing implementation in the vertex class.
-
-* We refactor the base-class model builder to accept the optional index.
 
 * For the moment we assume 32-bit integer indices, we may want to support other sizes in future.
 
@@ -650,9 +639,19 @@ Which uses the following helper to output the length of the data followed by the
 
 ```java
 private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOException {
-    byte[] array = Bufferable.toArray(src);
-    out.writeInt(array.length);
-    out.write(array);
+    // Output length
+    final int len = obj.length();
+    out.writeInt(len);
+
+    // Stop if empty buffer
+    if(len == 0) {
+        return;
+    }
+
+    // Write buffer
+    final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferWrapper.ORDER);
+    obj.buffer(bb);
+    out.write(bb.array());
 }
 ```
 
@@ -667,17 +666,7 @@ static byte[] toArray(Bufferable obj) {
 }
 ```
 
-Finally we output the optional index buffer using the same helper:
-
-```java
-var index = model.index();
-if(index.isPresent()) {
-    writeBuffer(index.get(), out);
-}
-else {
-    out.writeInt(0);
-}
-```
+Finally we output the optional index buffer using the same helper.
 
 We _could_ have implemented the model loader using Java serialization, which might have resulted in simpler code but is generally quite nasty to debug, at least our custom format is relatively straight-forward to implement and follow.
 
@@ -688,13 +677,13 @@ Obviously when we load this data back we do not want to reuse the existing model
 ```java
 public class BufferedModel extends AbstractModel {
     private final Bufferable vertices;
-    private final Optional<Bufferable> index;
+    private final Bufferable index;
 
     ...
 
     @Override
     public boolean isIndexed() {
-        return index.isPresent();
+        return index.length() > 0;
     }
 
     @Override
@@ -773,14 +762,10 @@ The `loadBuffer` helper is the inverse of `writeBuffer` above (with an additiona
 private static Bufferable loadBuffer(DataInputStream in) throws IOException {
     // Read buffer size
     int len = in.readInt();
-    if(len == 0) {
-        return null;
-    }
 
     // Load bytes
-    byte[] bytes = new byte[len];
-    int actual = in.read(bytes);
-    if(actual != len) throw new IOException(...);
+    final byte[] bytes = new byte[len];
+    in.readFully(bytes);
 
     // Convert to buffer
     return Bufferable.of(bytes);

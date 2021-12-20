@@ -26,7 +26,7 @@ class ModelLoaderTest {
 	void before() {
 		// Create a model to persist
 		model = new MutableModel(Primitive.TRIANGLES, List.of(Point.LAYOUT))
-				.add(Vertex.of(Point.ORIGIN))
+				.add(new Vertex(Point.ORIGIN))
 				.add(0)
 				.add(0)
 				.add(0);

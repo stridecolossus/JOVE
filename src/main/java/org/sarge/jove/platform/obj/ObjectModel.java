@@ -3,6 +3,7 @@ package org.sarge.jove.platform.obj;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout;
@@ -101,20 +102,21 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final Vertex vertex = new Vertex();
-		vertex.add(positions.get(v));
+		final List<Bufferable> components = new ArrayList<>();
+		components.add(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {
-			vertex.add(normals.get(vn));
+			components.add(normals.get(vn));
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
-			vertex.add(coords.get(vt));
+			components.add(coords.get(vt));
 		}
 
 		// Construct vertex
+		final Vertex vertex = new Vertex(components.toArray(Bufferable[]::new));
 		current.add(vertex);
 	}
 
