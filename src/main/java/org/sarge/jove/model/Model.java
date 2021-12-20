@@ -11,11 +11,6 @@ import org.sarge.jove.common.Layout;
  */
 public interface Model {
 	/**
-	 * @return Vertex layout
-	 */
-	List<Layout> layout();
-
-	/**
 	 * @return Drawing primitive
 	 */
 	Primitive primitive();
@@ -24,6 +19,11 @@ public interface Model {
 	 * @return Draw count
 	 */
 	int count();
+
+	/**
+	 * @return Vertex layout
+	 */
+	List<Layout> layout();
 
 	/**
 	 * @return Vertex buffer

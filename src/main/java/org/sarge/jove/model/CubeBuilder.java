@@ -91,11 +91,7 @@ public class CubeBuilder {
 				final Colour col = COLOURS[face];
 
 				// Add vertex
-				final Vertex vertex = new Vertex()
-						.position(pos)
-						.normal(normal)
-						.coordinate(coord)
-						.colour(col);
+				final Vertex vertex = Vertex.of(pos, normal, coord, col);
 				model.add(vertex);
 			}
 		}

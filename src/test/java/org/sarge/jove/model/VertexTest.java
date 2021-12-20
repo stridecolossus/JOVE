@@ -4,53 +4,103 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Vertex.Component;
 
 public class VertexTest {
 	private Vertex vertex;
 
 	@BeforeEach
 	void before() {
-		vertex = new Vertex()
-				.position(Point.ORIGIN)
-				.normal(Vector.X)
-				.coordinate(Coordinate2D.BOTTOM_LEFT)
-				.colour(Colour.BLACK);
+		vertex = new Vertex();
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(Vector.X, vertex.normal());
-	}
-
-	@Test
-	void components() {
 		assertNotNull(vertex.components());
-		assertArrayEquals(new Object[]{Point.ORIGIN, Vector.X, Coordinate2D.BOTTOM_LEFT, Colour.BLACK}, vertex.components().toArray());
+		assertEquals(0, vertex.components().count());
 	}
 
 	@Test
-	void retain() {
-		Vertex.retain(List.of(vertex), List.of(Component.NORMAL, Component.COLOUR));
-		assertArrayEquals(new Object[]{Vector.X, Colour.BLACK}, vertex.components().toArray());
-		assertEquals(Vector.X, vertex.normal());
-		assertEquals((3 + 4) * Float.BYTES, vertex.length());
+	void add() {
+		vertex.add(Point.ORIGIN);
+		vertex.add(Colour.WHITE);
+		assertEquals(Point.ORIGIN, vertex.component(0));
+		assertEquals(Colour.WHITE, vertex.component(1));
+		assertArrayEquals(new Object[]{Point.ORIGIN, Colour.WHITE}, vertex.components().toArray());
 	}
 
 	@Test
-	void normals() {
-		assertEquals(Layout.floats(3), Vertex.NORMALS);
+	void componentInvalidIndex() {
+		assertThrows(IndexOutOfBoundsException.class, () -> vertex.component(0));
+	}
+
+	@Nested
+	class TransformTests {
+		@BeforeEach
+		void before() {
+			vertex.add(Point.ORIGIN);
+			vertex.add(Colour.WHITE);
+		}
+
+		@Test
+		void transform() {
+			vertex.transform(new int[]{1, 0});
+			assertArrayEquals(new Object[]{Colour.WHITE, Point.ORIGIN}, vertex.components().toArray());
+		}
+
+		@Test
+		void transformRemoveComponent() {
+			vertex.transform(new int[]{1});
+			assertArrayEquals(new Object[]{Colour.WHITE}, vertex.components().toArray());
+		}
+
+		@Test
+		void transformInvalidIndex() {
+			assertThrows(IndexOutOfBoundsException.class, () -> vertex.transform(new int[]{999}));
+		}
+	}
+
+	@Test
+	void buffer() {
+		// Add vertex data
+		vertex.add(new Point(1, 2, 3));
+
+		// Buffer vertex
+		final ByteBuffer bb = ByteBuffer.allocate(3 * Float.BYTES);
+		vertex.buffer(bb);
+		assertEquals(0, bb.remaining());
+
+		// Check buffered data
+		bb.flip();
+		assertEquals(1, bb.getFloat());
+		assertEquals(2, bb.getFloat());
+		assertEquals(3, bb.getFloat());
+	}
+
+	@Test
+	void equals() {
+		vertex.add(Point.ORIGIN);
+		assertEquals(vertex, vertex);
+		assertEquals(vertex, Vertex.of(Point.ORIGIN));
+		assertNotEquals(vertex, null);
+		assertNotEquals(vertex, new Vertex());
+	}
+
+	@Test
+	void of() {
+		vertex.add(Point.ORIGIN);
+		assertEquals(vertex, Vertex.of(Point.ORIGIN));
 	}
 
 	@Test
@@ -59,30 +109,7 @@ public class VertexTest {
 	}
 
 	@Test
-	void length() {
-		assertEquals((3 + 3 + 2 + 4) * Float.BYTES, vertex.length());
-	}
-
-	@Test
-	void buffer() {
-		// Buffer vertex
-		final ByteBuffer bb = ByteBuffer.allocate(vertex.length());
-		vertex.buffer(bb);
-		assertEquals(0, bb.remaining());
-
-		// Check buffered data
-		final ByteBuffer expected = ByteBuffer.allocate(vertex.length());
-		expected.putFloat(0).putFloat(0).putFloat(0);
-		expected.putFloat(1).putFloat(0).putFloat(0);
-		expected.putFloat(0).putFloat(1);
-		expected.putFloat(0).putFloat(0).putFloat(0).putFloat(1);
-		assertEquals(expected.flip(), bb.flip());
-	}
-
-	@Test
-	void equals() {
-		assertEquals(vertex, vertex);
-		assertNotEquals(vertex, null);
-		assertNotEquals(vertex, new Vertex().position(Point.ORIGIN));
+	void normals() {
+		assertEquals(Layout.floats(3), Vertex.NORMALS);
 	}
 }

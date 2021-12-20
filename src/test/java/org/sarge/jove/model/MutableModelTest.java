@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.IntegerList;
 
@@ -23,7 +25,7 @@ class MutableModelTest {
 
 	@BeforeEach
 	void before() {
-		vertex = new Vertex().position(Point.ORIGIN).colour(Colour.WHITE);
+		vertex = Vertex.of(Point.ORIGIN, Colour.WHITE);
 		index = new IntegerList();
 		model = new MutableModel(Primitive.TRIANGLES, List.of(Point.LAYOUT, Colour.LAYOUT));
 	}
@@ -135,6 +137,30 @@ class MutableModelTest {
 //		model = new MutableModel(Primitive.LINE_STRIP, List.of(Point.LAYOUT), List.of(vertex), List.of(0, 0));
 //		assertThrows(IllegalArgumentException.class, () -> model.validate(true));
 //	}
+
+	@Test
+	void transform() {
+		// Add a vertex with a different layout to the model
+		final Vertex prev = Vertex.of(Colour.WHITE, Coordinate2D.BOTTOM_LEFT, Point.ORIGIN);
+		model.add(prev);
+
+		// Transform vertex to this model
+		model.transform(List.of(Colour.LAYOUT, Coordinate2D.LAYOUT, Point.LAYOUT));
+		assertEquals(1, model.count());
+		assertEquals(vertex, prev);
+	}
+
+	@Test
+	void transformInvalidLayout() {
+		assertThrows(IllegalArgumentException.class, () -> model.transform(List.of(Layout.floats(1))));
+	}
+
+	@Test
+	void transformInvalidVertexComponent() {
+		final Vertex invalid = Vertex.of();
+		model.add(invalid);
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> model.transform(Vertex.LAYOUT));
+	}
 
 	@Test
 	void vertexBuffer() {

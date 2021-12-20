@@ -102,16 +102,16 @@ class ObjectModel {
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
 		final Vertex vertex = new Vertex();
-		vertex.position(positions.get(v));
+		vertex.add(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {
-			vertex.normal(normals.get(vn));
+			vertex.add(normals.get(vn));
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
-			vertex.coordinate(coords.get(vt));
+			vertex.add(coords.get(vt));
 		}
 
 		// Construct vertex

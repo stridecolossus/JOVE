@@ -182,7 +182,7 @@ public class GridBuilder {
 				final Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 
 				// Add grid vertex
-				final Vertex vertex = new Vertex().position(pos).coordinate(coord);
+				final Vertex vertex = Vertex.of(pos, coord);
 				vertices.add(vertex);
 			}
 		}

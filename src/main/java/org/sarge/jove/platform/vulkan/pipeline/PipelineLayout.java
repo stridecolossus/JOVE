@@ -166,6 +166,9 @@ public class PipelineLayout extends AbstractVulkanObject {
 					.max()
 					.orElse(0);
 
+			// Check that overall range is supported by the hardware
+			// TODO - limits => context
+
 			// Enumerate pipeline stages
 			final Set<VkShaderStage> stages = ranges
 					.stream()
