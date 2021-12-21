@@ -16,6 +16,8 @@ import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 
+import com.sun.jna.Callback;
+
 public class DesktopDeviceTest {
 	private DesktopDevice dev;
 	private Window window;
@@ -38,9 +40,9 @@ public class DesktopDeviceTest {
 	@Nested
 	class DesktopSourceTests {
 		private DesktopLibrary lib;
-		private DesktopSource<Object, Event> src;
-		private BiConsumer<Window, Object> method;
-		private Object listener;
+		private DesktopSource<Callback, Event> src;
+		private BiConsumer<Window, Callback> method;
+		private Callback listener;
 		private Consumer<Event> handler;
 
 		@BeforeEach
@@ -50,7 +52,7 @@ public class DesktopDeviceTest {
 
 			// Init dependencies
 			method = mock(BiConsumer.class);
-			listener = new Object();
+			listener = mock(Callback.class);
 			handler = mock(Consumer.class);
 
 			// Init window
@@ -61,12 +63,12 @@ public class DesktopDeviceTest {
 			// Create source
 			src = dev.new DesktopSource<>() {
 				@Override
-				protected BiConsumer<Window, Object> method(DesktopLibrary lib) {
+				protected BiConsumer<Window, Callback> method(DesktopLibrary lib) {
 					return method;
 				}
 
 				@Override
-				protected Object listener(Consumer<Event> handler) {
+				protected Callback listener(Consumer<Event> handler) {
 					return listener;
 				}
 			};
@@ -76,6 +78,7 @@ public class DesktopDeviceTest {
 		void bind() {
 			src.bind(handler);
 			verify(method).accept(window, listener);
+			verify(window).register(handler, listener);
 		}
 
 		@Test

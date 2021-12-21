@@ -34,7 +34,6 @@ sphere builder
 
 other features
 - texture fonts?
-- terrain grid from height-map
 - OpenAL audio
 - shader storage buffer (SSBO)
 

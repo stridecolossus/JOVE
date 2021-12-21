@@ -21,6 +21,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowResizeListener
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowStateListener;
 import org.sarge.jove.util.ReferenceFactory;
 
+import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -105,6 +106,12 @@ public class WindowTest {
 		verify(lib).glfwSetWindowFocusCallback(window, null);
 		verify(lib).glfwSetWindowIconifyCallback(window, null);
 		verify(lib).glfwSetWindowSizeCallback(window, null);
+	}
+
+	@Test
+	void register() {
+		// TODO - can we effectively test this?
+		window.register(new Object(), mock(Callback.class));
 	}
 
 	@Test

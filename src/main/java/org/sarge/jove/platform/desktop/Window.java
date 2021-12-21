@@ -4,7 +4,9 @@ import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -167,7 +169,7 @@ public class Window extends AbstractTransientNativeObject {
 	private final Descriptor descriptor;
 	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
 	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
-	private final Set<Callback> listeners = new HashSet<>();
+	private final Map<Object, Set<Callback>> registry = new WeakHashMap<>();
 
 	/**
 	 * Constructor.
@@ -214,7 +216,6 @@ public class Window extends AbstractTransientNativeObject {
 	 * @param listener Listener for window state changes or {@code null} to remove the listener
 	 */
 	public void listener(WindowListener listener) {
-		listeners.clear();
 		final DesktopLibrary lib = desktop.library();
 		if(listener == null) {
 			lib.glfwSetCursorEnterCallback(this, null);
@@ -233,11 +234,7 @@ public class Window extends AbstractTransientNativeObject {
 	/**
 	 * Helper - Registers a window listener.
 	 * <p>
-	 * Notes:
-	 * <ul>
-	 * <li>This method keeps a reference to the listener in order to prevent it being garbage-collected and de-registered by GLFW</li>
-	 * <li>Note that JNA callbacks <b>must</b> contain a single public method, i.e. the same {@link WindowListener} cannot be passed to each API method</li>
-	 * </ul>
+	 * Note that JNA callbacks <b>must</b> contain a single public method, i.e. the same {@link WindowListener} cannot be passed to each API method</li>
 	 * <p>
 	 * @param <T> Callback type
 	 * @param method		GLFW registration method
@@ -245,7 +242,21 @@ public class Window extends AbstractTransientNativeObject {
 	 */
 	private <T extends Callback> void listener(BiConsumer<Window, T> method, T listener) {
 		method.accept(this, listener);
-		listeners.add(listener);
+		register("window.listeners", listener);
+	}
+
+	/**
+	 * Registers a JNA callback listener attached to this window.
+	 * <p>
+	 * The set of listeners is <i>weakly</i> referenced by the given key.
+	 * This prevents callbacks being garbage collected and thus de-registered by GLFW until the key itself becomes stale.
+	 * <p>
+	 * @param key			Key
+	 * @param listener		Listener
+	 */
+	protected void register(Object key, Callback listener) {
+		final Set<Callback> set = registry.computeIfAbsent(key, ignored -> new HashSet<>());
+		set.add(notNull(listener));
 	}
 
 	/**
@@ -265,13 +276,6 @@ public class Window extends AbstractTransientNativeObject {
 
 	@Override
 	protected void release() {
-		// Detach listeners
-		if(!listeners.isEmpty()) {
-			listener(null);
-		}
-
-		// Destroy window
-		final DesktopLibrary lib = desktop.library();
-		lib.glfwDestroyWindow(this);
+		desktop.library().glfwDestroyWindow(this);
 	}
 }

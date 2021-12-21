@@ -7,6 +7,8 @@ import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Device;
 import org.sarge.jove.control.Event.Source;
 
+import com.sun.jna.Callback;
+
 /**
  * Base-class for a device attached to a GLFW window.
  * @author Sarge
@@ -26,10 +28,7 @@ abstract class DesktopDevice implements Device {
 	 * Template implementation for a source based on a GLFW callback.
 	 * @param <T> GLFW callback
 	 */
-	abstract class DesktopSource<T, E extends Event> implements Source<E> {
-		@SuppressWarnings("unused")
-		private T listener;
-
+	abstract class DesktopSource<T extends Callback, E extends Event> implements Source<E> {
 		/**
 		 * Creates a listener that generates events and delegates to the given handler.
 		 * @param handler Event handler
@@ -46,19 +45,19 @@ abstract class DesktopDevice implements Device {
 
 		@Override
 		public final void bind(Consumer<Event> handler) {
-			if(handler == null) {
-				bind((T) null);
-			}
-			else {
-				bind(listener(handler));
-			}
-		}
-
-		private void bind(T listener) {
+			// Retrieve listener registration method
 			final DesktopLibrary lib = window.desktop().library();
 			final BiConsumer<Window, T> method = method(lib);
-			method.accept(window, listener);
-			this.listener = listener;
+
+			// Register listener
+			if(handler == null) {
+				method.accept(window, null);
+			}
+			else {
+				final T listener = listener(handler);
+				method.accept(window, listener);
+				window.register(handler, listener);
+			}
 		}
 	}
 }
