@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Bufferable;
 
 class BufferHelperTest {
 	private static final byte[] BYTES = {1, 2, 3};
@@ -57,5 +58,18 @@ class BufferHelperTest {
 	void arrayDirect() {
 		final ByteBuffer bb = ByteBuffer.allocate(3).put(BYTES);
 		assertArrayEquals(BYTES, BufferHelper.array(bb));
+	}
+
+	@Test
+	void insert() {
+		// Create a bufferable object to insert
+		final Bufferable obj = mock(Bufferable.class);
+		when(obj.length()).thenReturn(3);
+
+		// Insert and check buffer updated
+		final ByteBuffer bb = mock(ByteBuffer.class);
+		BufferHelper.insert(2, obj, bb);
+		verify(bb).position(2 * 3);
+		verify(obj).buffer(bb);
 	}
 }

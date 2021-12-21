@@ -605,61 +605,11 @@ public static PushUpdateCommand of(PipelineLayout layout) {
 }
 ```
 
-### Buffer Wrapper
+### Buffer Helper
 
-As a further convenience for applying updates to push constants (or to uniform buffers) we introduce a wrapper for a data buffer:
+To populate the data buffer for the push constants we take the opportunity to implement a new helper utility for managing NIO buffers.
 
-```java
-public class BufferWrapper {
-    private final ByteBuffer bb;
-
-    public BufferWrapper rewind() {
-        bb.rewind();
-        return this;
-    }
-
-    public BufferWrapper append(Bufferable data) {
-        data.buffer(bb);
-        return this;
-    }
-}
-```
-
-The following method provides a random access approach to insert data into the buffer:
-
-```java
-public BufferWrapper insert(int index, Bufferable data) {
-    int pos = index * data.length();
-    bb.position(pos);
-    data.buffer(bb);
-    return this;
-}
-```
-
-This can be used to populate push constants or a uniform buffer that is essentially an array of some data type (used below).
-
-In the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
-
-```java
-static Bufferable of(Structure struct) {
-    return new Bufferable() {
-        @Override
-        public int length() {
-            return struct.size();
-        }
-
-        @Override
-        public void buffer(ByteBuffer bb) {
-            byte[] array = struct.getPointer().getByteArray(0, struct.size());
-            BufferHelper.write(array, bb);
-        }
-    };
-}
-```
-
-This allows arbitrary JNA structures to be used to populate push constants or a uniform buffer which will become useful in later chapters.
-
-The wrapper class uses the new `BufferHelper` utility which provides the following method to allocate a __direct__ byte buffer:
+A __direct__ byte buffer is allocated as follows:
 
 ```java
 public final class BufferHelper {
@@ -697,7 +647,7 @@ public static void write(byte[] array, ByteBuffer bb) {
 }
 ```
 
-Finally we add support for converting an NIO buffer to a byte array:
+The utility class also supports conversion of an NIO buffer to a byte array:
 
 ```java
 public static byte[] array(ByteBuffer bb) {
@@ -716,7 +666,7 @@ public static byte[] array(ByteBuffer bb) {
 }
 ```
 
-And for wrapping an array with a buffer:
+And the reverse operation to wrap an array with a buffer:
 
 ```java
 public static ByteBuffer buffer(byte[] array) {
@@ -729,6 +679,39 @@ public static ByteBuffer buffer(byte[] array) {
 Note that direct NIO buffers generally do not support the optional bulk methods.
 
 Existing code that transforms to/from byte buffers is refactored using the new utility methods, e.g. shaders.
+
+As a further convenience for applying updates to push constants (or to uniform buffers) the following method is used to insert data into a buffer:
+
+```java
+public static void insert(int index, Bufferable data, ByteBuffer bb) {
+    int pos = index * data.length();
+    bb.position(pos);
+    data.buffer(bb);
+}
+```
+
+This is useful for buffers that are essentially an 'array' of some type of bufferable object (which we use below).
+
+Finally in the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
+
+```java
+static Bufferable of(Structure struct) {
+    return new Bufferable() {
+        @Override
+        public int length() {
+            return struct.size();
+        }
+
+        @Override
+        public void buffer(ByteBuffer bb) {
+            byte[] array = struct.getPointer().getByteArray(0, struct.size());
+            BufferHelper.write(array, bb);
+        }
+    };
+}
+```
+
+This allows arbitrary JNA structures to be used to populate push constants or a uniform buffer which will become useful in later chapters.
 
 ### Integration
 
@@ -770,18 +753,15 @@ In the camera configuration we use the new helper class to update the matrix dat
 ```java
 @Bean
 public Task matrix(PushUpdateCommand update) {
-    // Init model rotation
-    Matrix model = ...
-
-    // Add projection matrix
-    BufferWrapper buffer = new BufferWrapper(update.data());
-    buffer.insert(2, projection);
+    // Init projection matrix
+    ByteBuffer data = update.data();
+    BufferHelper.insert(2, projection, data);
 
     // Update modelview matrix
     return () -> {
-        buffer.rewind();
-        buffer.append(model);
-        buffer.append(cam.matrix());
+        data.rewind();
+        Rotation.matrix(rot).buffer(data);
+        cam.matrix().buffer(data);
     };
 }
 ```
