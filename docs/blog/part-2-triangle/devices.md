@@ -46,9 +46,16 @@ public record Queue(Pointer handle, Family family) {
      * A <i>queue family</i> defines the properties of a group of queues.
      */
     public record Family(int index, int count, Set<VkQueueFlag> flags) {
+        public Family {
+            Check.zeroOrMore(index);
+            Check.oneOrMore(count);
+            flags = Set.copyOf(flags);
+        }
     }
 }
 ```
+
+Note that the constructor for the family copies the set of queue flags and rewrites the constructor argument.  This is the standard approach for ensuring that a record class is immutable (although unfortunately this is currently flagged as a warning in our IDE).
 
 ### Enumerating the Physical Devices
 

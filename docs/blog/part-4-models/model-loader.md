@@ -624,7 +624,7 @@ Which uses the following helper to output the length of the data followed by the
 ```java
 private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOException {
     // Output length
-    final int len = obj.length();
+    int len = obj.length();
     out.writeInt(len);
 
     // Stop if empty buffer
@@ -633,20 +633,9 @@ private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOE
     }
 
     // Write buffer
-    final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferWrapper.ORDER);
+    ByteBuffer bb = ByteBuffer.allocate(len).order(ByteOrder.nativeOrder());
     obj.buffer(bb);
     out.write(bb.array());
-}
-```
-
-The intermediate byte-array is created using another new helper on the `Bufferable` interface:
-
-```java
-static byte[] toArray(Bufferable obj) {
-    int len = obj.length();
-    ByteBuffer bb = ByteBuffer.allocate(len).order(ORDER);
-    obj.buffer(bb);
-    return bb.array();
 }
 ```
 

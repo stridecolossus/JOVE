@@ -253,12 +253,12 @@ else {
 The `buildIndex` helper invokes the factory to generate a strip for each row of the grid:
 
 ```java
-private IntStream buildInex(IndexFactory factory) {
+private IntStream buildIndex(IndexFactory factory) {
     int w = size.width() - 1;
     return IntStream
         .range(0, size.height() - 1)
         .map(row -> row * size.height())
-        .flatMap(start -> factory.strip(w).map(n -> n + start));
+        .flatMap(start -> factory.strip(start, w));
 }
 ```
 
@@ -460,10 +460,7 @@ The _offset_ and _size_ of a push constant range must be a multiple of four byte
 
 ```java
 public PushConstantRange {
-    Check.zeroOrMore(offset);
-    Check.oneOrMore(size);
-    Check.notEmpty(stages);
-    stages = Set.copyOf(stages);
+    ...
     validate(offset);
     validate(size);
 }
@@ -472,8 +469,6 @@ static void validate(int size) {
     if((size % 4) != 0) throw new IllegalArgumentException(...);
 }
 ```
-
-Note that the constructor copies the set of pipeline stages and rewrites the constructor argument.  This is the standard approach for ensuring that a record class is immutable (although unfortunately this is currently flagged as a warning in our IDE).
 
 The builder for the pipeline layout is modified to include a list of push constant ranges:
 
@@ -597,7 +592,7 @@ Finally we add a convenience factory method to create a backing buffer appropria
 
 ```java
 public static ByteBuffer data(PipelineLayout layout) {
-    return BufferWrapper.allocate(layout.max());
+    return BufferHelper.allocate(layout.max());
 }
 ```
 
@@ -605,7 +600,7 @@ And a second helper to update the entire push constants buffer:
 
 ```java
 public static PushUpdateCommand of(PipelineLayout layout) {
-    final ByteBuffer data = data(layout);
+    ByteBuffer data = data(layout);
     return new PushUpdateCommand(layout, 0, data, layout.stages());
 }
 ```
@@ -656,7 +651,7 @@ static Bufferable of(Structure struct) {
         @Override
         public void buffer(ByteBuffer bb) {
             byte[] array = struct.getPointer().getByteArray(0, struct.size());
-            BufferWrapper.write(array, bb);
+            BufferHelper.write(array, bb);
         }
     };
 }
@@ -664,7 +659,30 @@ static Bufferable of(Structure struct) {
 
 This allows arbitrary JNA structures to be used to populate push constants or a uniform buffer which will become useful in later chapters.
 
-The `write` method is a static helper on the new class:
+The wrapper class uses the new `BufferHelper` utility which provides the following method to allocate a __direct__ byte buffer:
+
+```java
+public final class BufferHelper {
+    /**
+     * Native byte order for a bufferable object.
+     */
+    public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
+
+    private BufferHelper() {
+    }
+
+    /**
+     * Allocates a <b>direct</b> byte buffer of the given length with {@link #NATIVE_ORDER}.
+     * @param len Buffer length
+     * @return New byte buffer
+     */
+    public static ByteBuffer allocate(int len) {
+        return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
+    }
+}
+```
+
+A byte array can be written to a buffer:
 
 ```java
 public static void write(byte[] array, ByteBuffer bb) {
@@ -679,29 +697,42 @@ public static void write(byte[] array, ByteBuffer bb) {
 }
 ```
 
-Note that direct NIO buffers generally do not support the optional bulk methods.
-
-Finally we also implement helpers to allocate and populate direct buffers:
+Finally we add support for converting an NIO buffer to a byte array:
 
 ```java
-public class BufferWrapper {
-    public static final ByteOrder ORDER = ByteOrder.nativeOrder();
-
-    public static ByteBuffer allocate(int len) {
-        return ByteBuffer.allocateDirect(len).order(ORDER);
+public static byte[] array(ByteBuffer bb) {
+    if(bb.isDirect()) {
+        bb.rewind();
+        int len = bb.limit();
+        byte[] bytes = new byte[len];
+        for(int n = 0; n < len; ++n) {
+            bytes[n] = bb.get();
+        }
+        return bytes;
     }
-
-    public static ByteBuffer buffer(byte[] array) {
-        ByteBuffer bb = allocate(array.length);
-        write(array, bb);
-        return bb;
+    else {
+        return bb.array();
     }
 }
 ```
 
+And for wrapping an array with a buffer:
+
+```java
+public static ByteBuffer buffer(byte[] array) {
+    ByteBuffer bb = allocate(array.length);
+    write(array, bb);
+    return bb;
+}
+```
+
+Note that direct NIO buffers generally do not support the optional bulk methods.
+
+Existing code that transforms to/from byte buffers is refactored using the new utility methods, e.g. shaders.
+
 ### Integration
 
-First the uniform buffer is replaced with a push constants layout declaration in the vertex shaders:
+To use the push constants in the demo application the uniform buffer is first replaced with the following layout declaration in the vertex shader:
 
 ```glsl
 layout(push_constant) uniform Matrices {

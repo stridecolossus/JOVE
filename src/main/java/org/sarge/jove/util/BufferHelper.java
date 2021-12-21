@@ -1,6 +1,4 @@
-package org.sarge.jove.common;
-
-import static org.sarge.lib.util.Check.notNull;
+package org.sarge.jove.util;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -41,19 +39,42 @@ import java.nio.ByteOrder;
  * <p>
  * @author Sarge
  */
-public class BufferWrapper {
+public final class BufferHelper {
 	/**
 	 * Native byte order for a bufferable object.
 	 */
-	public static final ByteOrder ORDER = ByteOrder.nativeOrder();
+	public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
+
+	private BufferHelper() {
+	}
 
 	/**
-	 * Allocates a direct byte buffer of the given length with native order.
+	 * Allocates a <b>direct</b> byte buffer of the given length with {@link #NATIVE_ORDER}.
 	 * @param len Buffer length
 	 * @return New byte buffer
 	 */
 	public static ByteBuffer allocate(int len) {
-		return ByteBuffer.allocateDirect(len).order(ORDER);
+		return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
+	}
+
+	/**
+	 * Converts a byte buffer to an array.
+	 * @param bb Byte buffer
+	 * @return Byte array
+	 */
+	public static byte[] array(ByteBuffer bb) {
+		if(bb.isDirect()) {
+			bb.rewind();
+			final int len = bb.limit();
+			final byte[] bytes = new byte[len];
+			for(int n = 0; n < len; ++n) {
+				bytes[n] = bb.get();
+			}
+			return bytes;
+		}
+		else {
+			return bb.array();
+		}
 	}
 
 	/**
@@ -73,83 +94,13 @@ public class BufferWrapper {
 	}
 
 	/**
-	 * Constructor given an array.
-	 * @param array Array
+	 * Creates a byte buffer wrapping the given byte array.
+	 * @param array Byte array
+	 * @return Byte buffer
 	 */
 	public static ByteBuffer buffer(byte[] array) {
 		final ByteBuffer bb = allocate(array.length);
 		write(array, bb);
 		return bb;
-	}
-
-	private final ByteBuffer bb;
-
-	/**
-	 * Constructor.
-	 * @param bb Byte buffer
-	 */
-	public BufferWrapper(ByteBuffer bb) {
-		this.bb = notNull(bb);
-	}
-
-	/**
-	 * @return Underlying byte buffer
-	 */
-	public ByteBuffer buffer() {
-		return bb;
-	}
-
-	/**
-	 * Converts this buffer to an array.
-	 * @return Array
-	 */
-	public byte[] array() {
-		if(bb.isDirect()) {
-			bb.rewind();
-			final int len = bb.limit();
-			final byte[] bytes = new byte[len];
-			for(int n = 0; n < len; ++n) {
-				bytes[n] = bb.get();
-			}
-			return bytes;
-		}
-		else {
-			return bb.array();
-		}
-	}
-
-	/**
-	 * Rewinds this buffer.
-	 */
-	public BufferWrapper rewind() {
-		bb.rewind();
-		return this;
-	}
-
-	/**
-	 * Adds the given data to this buffer.
-	 * @param data Data
-	 * @see Bufferable#buffer(ByteBuffer)
-	 */
-	public BufferWrapper append(Bufferable data) {
-		data.buffer(bb);
-		return this;
-	}
-
-	/**
-	 * Inserts a data <i>element</i> into this buffer.
-	 * @param index			Element index
-	 * @param data			Data
-	 */
-	public BufferWrapper insert(int index, Bufferable data) {
-		final int pos = index * data.length();
-		bb.position(pos);
-		data.buffer(bb);
-		return this;
-	}
-
-	@Override
-	public String toString() {
-		return bb.toString();
 	}
 }

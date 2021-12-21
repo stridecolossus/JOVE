@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
-import org.sarge.jove.common.BufferWrapper;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.io.FileDataSource;
 import org.sarge.jove.io.ResourceLoader;
@@ -20,6 +19,7 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.util.BufferHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -43,7 +43,7 @@ public class PipelineCache extends AbstractVulkanObject {
 		final VkPipelineCacheCreateInfo info = new VkPipelineCacheCreateInfo();
 		if(data != null) {
 			info.initialDataSize = data.length;
-			info.pInitialData = BufferWrapper.buffer(data);
+			info.pInitialData = BufferHelper.buffer(data);
 		}
 		// TODO - info.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT
 
@@ -78,7 +78,7 @@ public class PipelineCache extends AbstractVulkanObject {
 		final DeviceContext dev = super.device();
 		final VulkanFunction<ByteBuffer> func = (count, data) -> dev.library().vkGetPipelineCacheData(dev, this, count, data);
 		final IntByReference count = dev.factory().integer();
-		return VulkanFunction.invoke(func, count, BufferWrapper::allocate);
+		return VulkanFunction.invoke(func, count, BufferHelper::allocate);
 	}
 
 	/**
@@ -141,8 +141,8 @@ public class PipelineCache extends AbstractVulkanObject {
 
 		// TODO
 		public void write(PipelineCache cache, OutputStream out) throws IOException {
-			final BufferWrapper buffer = new BufferWrapper(cache.data());
-			out.write(buffer.array());
+			final byte[] array = BufferHelper.array(cache.data());
+			out.write(array);
 		}
 	}
 

@@ -7,9 +7,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.sarge.jove.common.BufferWrapper;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.util.BufferHelper;
 
 /**
  * Data resource loader utilities.
@@ -112,7 +112,7 @@ public class DataHelper {
 		}
 
 		// Write buffer
-		final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferWrapper.ORDER);
+		final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferHelper.NATIVE_ORDER);
 		obj.buffer(bb);
 		out.write(bb.array());
 	}

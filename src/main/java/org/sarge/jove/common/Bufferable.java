@@ -2,6 +2,8 @@ package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
 
+import org.sarge.jove.util.BufferHelper;
+
 import com.sun.jna.Structure;
 
 /**
@@ -34,7 +36,7 @@ public interface Bufferable {
 
 			@Override
 			public void buffer(ByteBuffer bb) {
-				BufferWrapper.write(bytes, bb);
+				BufferHelper.write(bytes, bb);
 			}
 		};
 	}
@@ -54,7 +56,7 @@ public interface Bufferable {
 			@Override
 			public void buffer(ByteBuffer bb) {
 				final byte[] array = struct.getPointer().getByteArray(0, struct.size());
-				BufferWrapper.write(array, bb);
+				BufferHelper.write(array, bb);
 			}
 		};
 	}

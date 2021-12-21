@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sarge.jove.common.BufferWrapper;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
@@ -19,6 +18,7 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -40,7 +40,7 @@ public class Shader extends AbstractVulkanObject {
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
 		info.codeSize = code.length;
-		info.pCode = BufferWrapper.buffer(code);
+		info.pCode = BufferHelper.buffer(code);
 
 		// Allocate shader
 		final VulkanLibrary lib = dev.library();
@@ -222,7 +222,7 @@ public class Shader extends AbstractVulkanObject {
 			// Populate constant data
 			final int size = values.stream().mapToInt(Entry::size).sum();
 			info.dataSize = size;
-			info.pData = BufferWrapper.allocate(size);
+			info.pData = BufferHelper.allocate(size);
 			values.forEach(e -> e.append(info.pData));
 
 			return info;

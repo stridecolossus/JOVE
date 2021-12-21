@@ -12,12 +12,12 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.BufferWrapper;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.PushConstantRange;
 import org.sarge.jove.platform.vulkan.pipeline.PushUpdateCommand.Builder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
@@ -31,7 +31,7 @@ class PushUpdateCommandTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		data = BufferWrapper.allocate(4);
+		data = BufferHelper.allocate(4);
 		layout = new PipelineLayout(new Pointer(1), dev, 8, STAGES);
 		update = new PushUpdateCommand(layout, 4, data, STAGES);
 	}
@@ -50,7 +50,7 @@ class PushUpdateCommandTest extends AbstractVulkanTest {
 
 	@Test
 	void of() {
-		final ByteBuffer bb = BufferWrapper.allocate(8);
+		final ByteBuffer bb = BufferHelper.allocate(8);
 		final PushUpdateCommand expected = new PushUpdateCommand(layout, 0, bb, STAGES);
 		assertEquals(expected, PushUpdateCommand.of(layout));
 	}
@@ -70,12 +70,12 @@ class PushUpdateCommandTest extends AbstractVulkanTest {
 
 	@Test
 	void constructorInvalidDataBufferAlignment() {
-		assertThrows(IllegalArgumentException.class, () -> new PushUpdateCommand(layout, 0, BufferWrapper.allocate(1), STAGES));
+		assertThrows(IllegalArgumentException.class, () -> new PushUpdateCommand(layout, 0, BufferHelper.allocate(1), STAGES));
 	}
 
 	@Test
 	void constructorEmptyDataBuffer() {
-		assertThrows(IllegalArgumentException.class, () -> new PushUpdateCommand(layout, 0, BufferWrapper.allocate(0), STAGES));
+		assertThrows(IllegalArgumentException.class, () -> new PushUpdateCommand(layout, 0, BufferHelper.allocate(0), STAGES));
 	}
 
 	@Test
@@ -101,7 +101,7 @@ class PushUpdateCommandTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			builder = new Builder();
-			whole = BufferWrapper.allocate(8);
+			whole = BufferHelper.allocate(8);
 		}
 
 		@Test

@@ -8,11 +8,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.BufferWrapper;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.PushConstantRange;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
@@ -28,7 +28,7 @@ public class PushUpdateCommand implements Command {
 	 * @see PipelineLayout#max()
 	 */
 	public static ByteBuffer data(PipelineLayout layout) {
-		return BufferWrapper.allocate(layout.max());
+		return BufferHelper.allocate(layout.max());
 	}
 
 	/**

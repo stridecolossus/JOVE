@@ -22,13 +22,13 @@ If the reader has no interest in the _why_ and wants to get straight to the nitt
 
 ## Background
 
-For several years as a personal project we had developed a Java-based OpenGL library and suite of demo applications.  With the advent of Vulkan we decided to archive this project and start afresh with a Vulkan implementation which we named __JOVE__.
+For several years as a personal project we had developed a Java-based OpenGL library and suite of demo applications.  With the advent of Vulkan we decided to archive this project and start afresh with a Vulkan implementation named __JOVE__.
 
 This is obviously not a small amount of effort, our rationale for such an undertaking is:
 
 * A general interest in 3D graphics and mathematics.
 
-* The challenge of abstracting a complex native library to an object orientated (OO) design.
+* The challenge of adapting a complex native library to an object orientated (OO) design.
 
 * A personal project that can picked up or put aside as mood dictates.
 
@@ -78,33 +78,35 @@ Some of these might seem high-flown or even pointless for a personal project.  H
 
 On the other hand this _is_ a personal project and we allow ourselves some freedom in our decisions that might not be possible under the constraints of a real-world project - we can reinvent as many wheels as we choose if there is sufficient reason (or challenge) in doing so.
 
-Finally we collect some design decisions for common patterns applied throughout the JOVE library:
+Finally we collect some design decisions for common use-cases throughout the JOVE library:
 
 * Most of the Vulkan domain classes are instantiated via the API and are often highly configurable.  Therefore the _builder_ pattern and/or static factory methods are used extensively to create Vulkan components.  However constructors are often package-private for testability.
 
 * Generally all classes are _immutable_ by default unless there is a compelling reason to provide setters and mutator methods.  This usually simplifies the design and also has the benefit of mitigating risk for multi-threaded code (Vulkan is designed to support multi-threaded applications from the outset).  In any case the Vulkan API is extremely well-designed (considering the limitations of defining abstract data types in C) and the majority of the components are immutable by design, e.g. pipelines, semaphores, etc.
 
+* Unless explicitly stated otherwise __all__ mutable components are considered __not__ thread safe.
+
 * JOVE components will follow the Vulkan naming convention.
 
-* Data transfer operations are generally implemented using NIO buffers since this is the most convenient 'primitive' supported by the JNA library.
+* Data transfer operations are implemented using NIO buffers since this is the most convenient 'primitive' supported by the JNA library.
 
 ---
 
 ## Code Presentation
 
-Source code is generally presented as fragments interspersed with commentary, rather than (for example) links to the source files followed by a discussion.
+Source code is presented as fragments interspersed with commentary, rather than (for example) links to the source files followed by a discussion.
 
 We also follow these additional coding guidelines:
 
 * Method arguments can be assumed to be non-null by default unless explicitly specified (and documented) as optional.  Additionally null pointer exceptions are not declared in the method documentation.
 
-* The `var` keyword is used to avoid duplication where the type is complex or long-winded (and is also present in the statement).
+* The `var` keyword is used to avoid duplication where the type is complex or long-winded (but is also present in the statement).
 
 * Local variables are `final` by default.
 
-* The latest Java features are used where appropriate or convenient, e.g. lambdas rather than anonymous classes.
+* Latest Java features are used where appropriate or convenient, e.g. lambdas rather than anonymous classes.
 
-* If we do break a coding guideline this should be explicitly documented in the code.
+* If a coding guideline is broken then this should be explicitly documented in the code.
 
 The following are silently omitted unless their inclusion better illustrates the code:
 
@@ -112,13 +114,15 @@ The following are silently omitted unless their inclusion better illustrates the
 
 * Local variable `final` modifiers
 
-* Argument validation
+* Validation
 
-* Trivial getters, setters, equals, hash-code and `toString` implementations
+* Trivial constructors, getters and setters
+
+* Trivial equals, hash-code and `toString` implementations
 
 * Exception error messages
 
-* Warning suppression
+* Warnings suppression
 
 * Method `@Override` annotations
 
@@ -126,7 +130,7 @@ The following are silently omitted unless their inclusion better illustrates the
 
 * Package structure
 
-Note that the presented code represents the state of the JOVE library at that stage of development, even if that code is eventually refactored, replaced, classes renamed, etc.  i.e. we have not refactored the blog.
+Note that the presented code represents the state of the JOVE library at that stage of development, even if that code is eventually refactored, replaced, removed, etc.  i.e. the blog is not refactored.
 
 ---
 
@@ -143,13 +147,13 @@ The JOVE library and associated demo applications are implemented as Maven proje
 Besides Vulkan itself the JOVE project also uses the following supporting libraries:
 
 | __dependency__ | __purpose__ |  __scope__ |
-| Apache Commons        | General helpful utilities and supporting classes | all |
-| Library               | Argument validation (another personal project) | all |
-| JUnit                 | Unit-testing framework | testing |
-| Mockito               | Mocking and stubbing | testing |
-| JNA                   | Interaction with native libraries | JOVE |
-| GLFW                  | Management of native windows and input-devices | JOVE |
-| Spring Boot           | Dependency injection | demos only |
+| Apache Commons & Collections  | General helpful utilities and supporting classes | all |
+| Library                       | Argument validation (another personal project) | all |
+| JUnit                         | Unit-testing framework | testing |
+| Mockito                       | Mocking and stubbing | testing |
+| JNA                           | Interaction with native libraries | JOVE |
+| GLFW                          | Management of native windows and input-devices | JOVE |
+| Spring Boot                   | Dependency injection | demos only |
 
 Where _scope_ indicates whether the library is used to support JOVE, unit-testing or demo applications.
 
