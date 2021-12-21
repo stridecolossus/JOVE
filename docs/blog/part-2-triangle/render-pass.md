@@ -355,81 +355,43 @@ FrameBuffer[] buffers = swapchain
 
 Although we are perhaps half-way to our goal of rendering a triangle it is already apparent that our demo is becoming unwieldy:
 
-* The code is one large, imperative method.
+* The main application code is one large, imperative method.
 
-* The nature of a Vulkan application means that the various components are inherently highly inter-dependant.
+* The nature of a Vulkan application means that the various collaborating components are inherently highly inter-dependant, we are forced to structure the code based on the inter-dependencies resulting in convoluted and brittle code.
 
-* We are forced to order the code based on the component inter-dependencies which results in convoluted and brittle code.
+* All components are created and managed in a single source file rather than being factoring out to discrete, coherent classes.
 
-What we have is a 'God class' which will become harder to navigate and maintain as we add more code to the demo.
+What we have is a 'God class' which will become harder to navigate and maintain as we add more code to the demo.  We _could_ abandon OO design principles and just follow the often seen C/C++ practice of declaring all components as mutable class members in a single class, but this only hides (and obfuscates) the inter-dependencies and does not address the shear volume of code.
 
-The obvious solution is to use a _dependency injection_ framework that manages all the components and dependencies, freeing development to focus on each component in relative isolation.
+The obvious solution is to use a _dependency injection_ framework that manages the components and dependencies for us, freeing development to focus on each component in relative isolation.  For this we will use [Spring Boot](https://spring.io/projects/spring-boot) which is one of the most popular and best supported dependency injection frameworks.
 
-For this we will use [Spring Boot](https://spring.io/projects/spring-boot) which is one of the most popular and best supported dependency injection frameworks (and also one we have used extensively elsewhere).  Note that only the demo applications will be dependant on the new framework and not the JOVE library itself.
+Note that only the demo applications will be dependant on this framework and not the JOVE library itself.
 
 ### Project
 
-We use [Spring Initializr](https://start.spring.io/) to generate a Maven POM for a new demo project.
-
-This new demo will be separate from the main JOVE library so we manually add a project dependency:
-
-```xml
-<dependency>
-    <groupId>org.sarge.jove</groupId>
-    <artifactId>JOVE</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-</dependency>
-```
-
-We also fiddle the `jvmArguments` for the compiler plugin to support JVM preview features:
-
-```xml
-<plugin>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-maven-plugin</artifactId>
-    <configuration>
-        <jvmArguments>
-            --enable-preview -XX:+ShowCodeDetailsInExceptionMessages
-        </jvmArguments>
-    </configuration>
-</plugin>
-```
-
-The initializer generates the main class of the application for us:
+The [Spring Initializr](https://start.spring.io/) is used to generate a POM and main class for a new Spring-based project:
 
 ```java
-package org.sarge.jove.demo.triangle;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
 @SpringBootApplication
 public class TriangleDemo {
     public static void main(String[] args) {
-        ToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
         SpringApplication.run(TriangleDemo.class, args);
     }
 }
 ```
 
-We also add the line to set the Apache `ToStringBuilder` style.
-
 This should run the new application though it obviously doesn't do anything yet.
 
-### Desktop
+Spring Boot is essentially a _container_ for the components that comprise the application, and is responsible for handling the lifecycle of each component and _auto-wiring_ the dependencies at instantiation time.  When the application is started Spring performs a _component scan_ of the project to identify the _beans_ to be managed by the container, which by default starts at the package containing the main class.
 
-Spring Boot performs a _component scan_ of the project to identify objects to be managed by the container, which by default starts at the package containing the main class.  The `@Configuration` annotation denotes a class that contains a number of Spring _beans_ identified by the `@Bean` annotation.
-
-We start by factoring out the various desktop components into a Spring _configuration class_:
+We start by factoring out the various desktop components into a Spring _configuration_ class:
 
 ```java
 @Configuration
 class DesktopConfiguration {
     @Bean
     public static Desktop desktop() {
-        final Desktop desktop = Desktop.create();
+        Desktop desktop = Desktop.create();
         if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
         return desktop;
     }
@@ -445,25 +407,27 @@ class DesktopConfiguration {
 
     @Bean
     public static Surface surface(Instance instance, Window window) {
-        final Handle handle = window.surface(instance.handle());
+        Handle handle = window.surface(instance.handle());
         return new Surface(handle, instance);
     }
 }
 ```
 
+The `@Configuration` annotation denotes a class that contains components to be managed by the container declared by the `@Bean` annotation.  Note that Spring beans are generally singleton instances.
+
 Here we can see the benefits of using dependency injection:
 
 * The code to instantiate each component is now factored out into neater, more concise factory methods.
 
-* We only need to _declare_ the dependencies in the signature of each bean method and the container injects the arguments for us.
+* The dependencies of each component are _declared_ in the signature of each bean method and the container _injects_ the relevant arguments for us (or throws an error if a bean does not exist).
 
-* We no longer need to worry about the ordering of component instantiation (which is also handled by the container), e.g. for the troublesome `surface` handle.
+* Components are instantiated by the container in logical order inferred from the dependencies, e.g. for the troublesome surface handle.
 
-Note that Spring beans are generally singleton instances.
+This should result in code that is both simpler to develop and (more importantly) considerably easier to refactor and fix.  In particular we no longer need to be concerned about dependencies when new components are added or existing components are modified.
 
-This should hopefully result in code that is both simpler to develop and (more importantly) considerably easier to refactor and fix.
+However one disadvantage of this approach is that we cannot easily recreate the swapchain when it is invalidated, e.g. when the window is minimised or resized.  This functionality is deferred to a future chapter.
 
-### Vulkan
+### Integration
 
 The configuration class for the Vulkan library and instance is relatively trivial:
 
@@ -501,8 +465,6 @@ application.title: Triangle Demo
 
 We refactor the window title in the desktop configuration class similarly.
 
-### Devices
-
 The next configuration class factors out the code to instantiate the physical and logical devices:
 
 ```java
@@ -517,7 +479,7 @@ class DeviceConfiguration {
 }
 ```
 
-In this case we also use _constructor dependency injection_ to inject the surface handle for the `presentation` queue selector.
+In this case we also use _constructor injection_ to inject the surface handle for the `presentation` queue selector.
 
 The bean methods for the devices are straight-forward:
 
@@ -561,7 +523,9 @@ The swapchain, render pass and frame buffers are instantiated similarly.
 
 ### Cleanup
 
-Spring provides another couple of bonuses when we address cleanup of the various Vulkan components, the following bean processor is registered to release all native JOVE objects:
+Spring provides a couple of other bonuses when we address cleanup of the various Vulkan components.
+
+The following bean processor is registered to release all native JOVE objects:
 
 ```java
 @Bean

@@ -24,7 +24,7 @@ import org.sarge.jove.util.IntegerList;
  * <li>Generated buffers are implemented as <b>direct</b> NIO buffers</li>
  * </ul>
  * <p>
- * The {@link #transform(List)} method is used to transform arbitrary vertex data to the layout of this model.
+ * The {@link #transform(List)} method is used to transform the vertex data and layout of a model.
  * <p>
  * @author Sarge
  */
@@ -114,8 +114,8 @@ public class MutableModel extends AbstractModel {
 	 * model.add(vertex);
 	 * ...
 	 *
-	 * // Transform model and vertices
-	 * model.transform(List.of(Point.LAYOUT, Colour.LAYOUT));
+	 * // Apply a transform to a re-ordered subset of the components
+	 * model.transform(List.of(Colour.LAYOUT, Point.LAYOUT));
 	 * </pre>
 	 * <p>
 	 * Note that the transformation compares layouts by <b>identity</b> to avoid matching different vertex components with the same layout, e.g. points and normals.
@@ -126,7 +126,7 @@ public class MutableModel extends AbstractModel {
 	 * @see Vertex#transform(int[])
 	 */
 	public MutableModel transform(List<Layout> target) {
-		// Init mapping from previous layout to this model (comparing by identity)
+		// Init mapping from previous layout (comparing by identity)
 		final Layout[] array = layout.toArray(Layout[]::new);
 		final ToIntFunction<Layout> mapper = e -> {
 			for(int n = 0; n < array.length; ++n) {
@@ -156,7 +156,7 @@ public class MutableModel extends AbstractModel {
 	}
 
 	/**
-	 * Iterates over the polygons for this this model according to the configured primitive.
+	 * Iterates over the polygons of this model according to the drawing primitive.
 	 * @return Polygon iterator
 	 */
 	public Iterator<int[]> iterator() {

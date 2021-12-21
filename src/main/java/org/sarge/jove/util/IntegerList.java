@@ -26,7 +26,7 @@ import org.sarge.lib.util.Check;
 public class IntegerList {
 	private int[] array;
 	private int size;
-	private float growth;
+	private final float growth;
 
 	/**
 	 * Constructor with default initial capacity and growth factor.
@@ -132,7 +132,7 @@ public class IntegerList {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(array, size);
+		return Objects.hash(array);
 	}
 
 	@Override

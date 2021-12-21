@@ -16,7 +16,7 @@ In this first section we set the scene for the project:
 
 * How do we bind to the native Vulkan libraries?
 
-If the reader has no interest in the _why_ and wants to get straight to the nitty-gritty of the _how_ this chapter can easily be skipped.
+If the reader has no interest in the _why_ and wants to get straight to the nitty-gritty of the _how_ then this chapter can easily be skipped.
 
 ---
 
@@ -34,10 +34,6 @@ This is obviously not a small amount of effort, our rationale for such an undert
 
 * A test-bed for learning new development approaches, technologies and Java features.
 
----
-
-## Tutorial Structure
-
 We have attempted to structure this blog so that each chapter builds on the preceding sections to incrementally deliver the functionality of the JOVE library, roughly following the [Vulkan tutorial](https://vulkan-tutorial.com/).
 
 Each chapter generally consists of:
@@ -49,8 +45,6 @@ Each chapter generally consists of:
 * One or more _integration_ steps where we use the new functionality to extend the demo applications.
 
 * A retrospective of any identified improvements and enhancements that lead to refactoring of existing code.
-
-Development of JOVE will be inherently complex with Vulkan requiring many inter-dependant components.  To adhere to the minimal functionality principle we will often develop temporary or skeleton implementations that are refactored later on.  For example, the graphics pipeline _requires_ a pipeline layout object (which has no relevance for the early demos), initially the implementation is an empty skeleton sufficient to progress the project.
 
 ---
 
@@ -86,11 +80,13 @@ On the other hand this _is_ a personal project and we allow ourselves some freed
 
 Finally we collect some design decisions for common patterns applied throughout the JOVE library:
 
-* Most of the Vulkan domain classes are instantiated via the API (and are often highly configurable), we make extensive use of the _builder_ pattern and/or static factory methods to create Vulkan components.  However constructors are often package-private for testability.
+* Most of the Vulkan domain classes are instantiated via the API and are often highly configurable.  Therefore the _builder_ pattern and/or static factory methods are used extensively to create Vulkan components.  However constructors are often package-private for testability.
+
+* Generally all classes are _immutable_ by default unless there is a compelling reason to provide setters and mutator methods.  This usually simplifies the design and also has the benefit of mitigating risk for multi-threaded code (Vulkan is designed to support multi-threaded applications from the outset).  In any case the Vulkan API is extremely well-designed (considering the limitations of defining abstract data types in C) and the majority of the components are immutable by design, e.g. pipelines, semaphores, etc.
+
+* JOVE components will follow the Vulkan naming convention.
 
 * Data transfer operations are generally implemented using NIO buffers since this is the most convenient 'primitive' supported by the JNA library.
-
-* Generally all classes are immutable by default unless there is a compelling reason to provide setters and mutator methods.  This usually simplifies the design and also has the benefit of mitigating risk for multi-threaded code (and Vulkan is designed to support multi-threaded applications from the outset).  In any case the majority of the Vulkan components are immutable by design, e.g. pipelines, semaphores, etc.
 
 ---
 
@@ -100,23 +96,35 @@ Source code is generally presented as fragments interspersed with commentary, ra
 
 We also follow these additional coding guidelines:
 
-* The `var` keyword is used where the type is already present to avoid duplication, e.g. `var thing = new Thing()`.
+* Method arguments can be assumed to be non-null by default unless explicitly specified (and documented) as optional.  Additionally null pointer exceptions are not declared in the method documentation.
+
+* The `var` keyword is used to avoid duplication where the type is complex or long-winded (and is also present in the statement).
+
 * Local variables are `final` by default.
+
 * The latest Java features are used where appropriate or convenient, e.g. lambdas rather than anonymous classes.
+
 * If we do break a coding guideline this should be explicitly documented in the code.
 
 The following are silently omitted unless their inclusion better illustrates the code:
 
 * In-code comments and JavaDoc
+
 * Local variable `final` modifiers
+
 * Argument validation
-* Trivial getters and setters
-* Trivial equals, hash-code and `toString` implementations
-* Exception error messages.
+
+* Trivial getters, setters, equals, hash-code and `toString` implementations
+
+* Exception error messages
+
 * Warning suppression
+
 * Method `@Override` annotations
+
 * Unit-tests
-* Package structure.
+
+* Package structure
 
 Note that the presented code represents the state of the JOVE library at that stage of development, even if that code is eventually refactored, replaced, classes renamed, etc.  i.e. we have not refactored the blog.
 

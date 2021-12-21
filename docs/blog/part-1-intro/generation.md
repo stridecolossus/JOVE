@@ -756,6 +756,8 @@ Which is specified by an application argument:
 Path root = Paths.get(args[1]);
 ```
 
+Note that __all__ the generated components reside in a single package in a separate source folder.
+
 In the end we decided not to code generate the API methods for a variety of reasons:
 
 1. Although we could re-use the type mapping for structures we anticipate that we _will_ want to manually fiddle with the signatures of the API methods, so we might as well craft them by hand.

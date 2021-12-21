@@ -396,22 +396,6 @@ private void buildCurrentGroup() {
 }
 ```
 
-And then constructs an indexed model from the vertex data:
-
-```java
-// Create new model builder
-ModelBuilder builder = new IndexedBuilder(layout);
-builder.primitive(Primitive.TRIANGLES);
-
-// Add vertex data
-for(Vertex v : vertices) {
-    builder.add(v);
-}
-
-// Add to models
-models.add(builder.build());
-```
-
 Although not required for the current demo application the OBJ format supports construction of multiple models from a single file.  The following method builds the JOVE model for the current group and then resets the transient OBJ model:
 
 ```java
@@ -431,7 +415,7 @@ public void start() {
 }
 ```
 
-Notes that some OBJ files start with a group declaration, so the `append` method ignores the case where no vertex data has been added to the current group.
+Notes that some OBJ files start with a group declaration, so the `start` method ignores the case where no vertex data has been added to the current group.
 
 To complete the loader we register the remaining command parsers:
 
@@ -465,7 +449,7 @@ public interface Model {
     /**
      * @return Index buffer
      */
-    Optional<Bufferable> index();
+    Bufferable index();
 }
 ```
 
@@ -487,7 +471,7 @@ The bufferable object for the index is generated as follows:
 
 ```java
 @Override
-public Optional<Bufferable> index() {
+public Bufferable index() {
     return new Bufferable() {
         private final int len = index.length * Integer.BYTES;
 
@@ -520,10 +504,10 @@ public void buffer(ByteBuffer bb) {
 }
 ```
 
-Next we implement a new model builder sub-class that maintains the mapping of vertices to indices:
+Next we implement a new sub-class that handles the duplicate vertices:
 
 ```java
-public class IndexedBuilder extends Builder {
+public class DuplicateVertexModel extends MutableModel {
     private final Map<Vertex, Integer> map = new HashMap<>();
     private final List<Integer> index = new ArrayList<>();
 }
@@ -540,7 +524,7 @@ The de-duplication process for a given vertex is:
 This is implemented in the overloaded `add` method as follows:
 
 ```java
-public Builder add(Vertex v) {
+public DuplicateVertexModel add(Vertex v) {
     Integer prev = map.get(v);
     if(prev == null) {
         // Register new vertex
@@ -672,7 +656,7 @@ We _could_ have implemented the model loader using Java serialization, which mig
 
 ### Buffered Models
 
-Obviously when we load this data back we do not want to reuse the existing model class since we only require the underlying buffers.  We therefore introduce a new _buffered model_ implementation that simply composes the two bufferable objects:
+Obviously when this data is loaded back we do not want to reuse the mutable model class since we only require the underlying buffers.  We therefore introduce a new _buffered model_ implementation that simply composes the VBO and index:
 
 ```java
 public class BufferedModel extends AbstractModel {

@@ -39,7 +39,7 @@ public class GridBuilder {
     private Primitive primitive = Primitive.TRIANGLES;
     private IndexFactory index;
 
-    public DefaultModel build() {
+    public MutableModel build() {
         ...
     }
 }
@@ -83,7 +83,7 @@ Note that the builder uses this implementation to set the height of all vertices
 The grid is centred on the origin of the model so we first calculate the _half distances_ of the vertices relative to the origin:
 
 ```java
-public DefaultModel build() {
+public MutableModel build() {
     int w = size.width();
     int h = size.height();
     float dx = tile.width() * scale * (w - 1) / 2;
@@ -91,7 +91,7 @@ public DefaultModel build() {
 
     ...
 
-    return model.build();
+    return model;
 }
 ```
 
@@ -124,7 +124,7 @@ Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 Finally we create the vertex:
 
 ```java
-Vertex vertex = new Vertex(pos, null, coord, null);
+Vertex vertex = new Vertex(pos, coord);
 vertices.add(vertex);
 ```
 
@@ -226,9 +226,7 @@ Note that the setter for the _index_ property of the builder accept a `null` val
 The builder first initialises the grid model:
 
 ```java
-ModelBuilder model = new ModelBuilder();
-model.primitive(primitive);
-model.layout(List.of(Component.POSITION, Component.COORDINATE));
+MutableModel model = new MutableModel(primitive, List.of(Component.POSITION, Component.COORDINATE));
 ```
 
 The model vertices and index are then generated for the above use cases as follows:
@@ -458,7 +456,7 @@ public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages)
 }
 ```
 
-The _offset_ and _size_ of a push constant range must be a multiply of four bytes which we validate in the constructor:
+The _offset_ and _size_ of a push constant range must be a multiple of four bytes which is validated in the constructor:
 
 ```java
 public PushConstantRange {
@@ -706,23 +704,11 @@ public class BufferWrapper {
 First the uniform buffer is replaced with a push constants layout declaration in the vertex shaders:
 
 ```glsl
-#version 450
-
-layout(location=0) in vec3 pos;
-layout(location=1) in vec2 coords;
-
 layout(push_constant) uniform Matrices {
     mat4 model;
     mat4 view;
     mat4 projection;
 };
-
-layout(location=0) out vec2 outCoords;
-
-void main() {
-    gl_Position = projection * view * model * vec4(pos, 1.0);
-    outCoords = coords;
-}
 ```
 
 In the pipeline configuration we remove the uniform buffer and replace it with a single push constants range sized to the three matrices:
