@@ -41,7 +41,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 	@Test
 	void constructor() {
 		assertEquals(false, layout.isDestroyed());
-		assertEquals(4, layout.max());
+		assertEquals(4, layout.pushConstantsSize());
 		assertEquals(STAGES, layout.stages());
 	}
 
@@ -108,6 +108,9 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			final DescriptorLayout set = mock(DescriptorLayout.class);
 			when(set.handle()).thenReturn(new Handle(1));
 
+			// Init push constants max size
+			dev.limits().maxPushConstantsSize = 4;
+
 			// Create push constants range
 			final PushConstantRange range = new PushConstantRange(0, 4, Set.of(VkShaderStage.VERTEX));
 
@@ -142,6 +145,13 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 		@Test
 		void buildEmpty() {
 			assertNotNull(builder.build(dev));
+		}
+
+		@Test
+		void buildPushConstantRangeExceedsMaximum() {
+			dev.limits().maxPushConstantsSize = 4;
+			builder.add(new PushConstantRange(0, 8, Set.of(VkShaderStage.VERTEX)));
+			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
 		}
 	}
 }

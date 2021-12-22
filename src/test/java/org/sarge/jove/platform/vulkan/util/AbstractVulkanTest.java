@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.ReferenceFactory;
@@ -53,5 +54,6 @@ public abstract class AbstractVulkanTest {
 		when(dev.handle()).thenReturn(new Handle(1));
 		when(dev.library()).thenReturn(lib);
 		when(dev.factory()).thenReturn(factory);
+		when(dev.limits()).thenReturn(new VkPhysicalDeviceLimits());
 	}
 }

@@ -18,6 +18,7 @@ import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
@@ -71,6 +72,11 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	@Override
 	public ReferenceFactory factory() {
 		return parent.instance().factory();
+	}
+
+	@Override
+	public VkPhysicalDeviceLimits limits() {
+		return parent.properties().limits();
 	}
 
 	/**

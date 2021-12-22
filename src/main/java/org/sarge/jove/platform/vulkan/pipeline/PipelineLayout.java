@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
@@ -31,31 +32,31 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class PipelineLayout extends AbstractVulkanObject {
-	private final int max;
+	private final int push;
 	private final Set<VkShaderStage> stages;
 
 	/**
 	 * Constructor.
 	 * @param handle		Pipeline handle
 	 * @param dev			Logical device
-	 * @param max			Maximum push constants buffer length
+	 * @param push			Push constants buffer length
 	 * @param stages		Pipeline shader stages for push constants
 	 */
-	PipelineLayout(Pointer handle, DeviceContext dev, int max, Set<VkShaderStage> stages) {
+	PipelineLayout(Pointer handle, DeviceContext dev, int push, Set<VkShaderStage> stages) {
 		super(handle, dev);
-		this.max = zeroOrMore(max);
+		this.push = zeroOrMore(push);
 		this.stages = Set.copyOf(stages);
 	}
 
 	/**
-	 * @return Maximum length of the push constants buffer for this layout
+	 * @return Size of the push constants buffer for this layout
 	 */
-	public int max() {
-		return max;
+	public int pushConstantsSize() {
+		return push;
 	}
 
 	/**
-	 * @return Shader stages used by the push constants of this layout
+	 * @return Push constant pipeline stages
 	 */
 	Set<VkShaderStage> stages() {
 		return stages;
@@ -166,8 +167,9 @@ public class PipelineLayout extends AbstractVulkanObject {
 					.max()
 					.orElse(0);
 
-			// Check that overall range is supported by the hardware
-			// TODO - limits => context
+			// Check that overall size is supported by the hardware
+			final VkPhysicalDeviceLimits limits = dev.limits();
+			if(max > limits.maxPushConstantsSize) throw new IllegalArgumentException(String.format("Push constants length exceeds maximum: len=%d max=%d", max, limits.maxPushConstantsSize));
 
 			// Enumerate pipeline stages
 			final Set<VkShaderStage> stages = ranges

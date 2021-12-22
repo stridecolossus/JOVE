@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
@@ -56,6 +57,11 @@ public class LogicalDeviceTest {
 		parent = mock(PhysicalDevice.class);
 		when(parent.instance()).thenReturn(instance);
 
+		// Init device limits
+		final var props = mock(PhysicalDevice.Properties.class);
+		when(parent.properties()).thenReturn(props);
+		when(props.limits()).thenReturn(new VkPhysicalDeviceLimits());
+
 		// Create queue family
 		family = new Family(1, 2, Set.of());
 		when(parent.families()).thenReturn(List.of(family));
@@ -72,6 +78,7 @@ public class LogicalDeviceTest {
 		assertEquals(parent, device.parent());
 		assertEquals(lib, device.library());
 		assertEquals(parent.instance().factory(), device.factory());
+		assertNotNull(device.limits());
 		assertEquals(false, device.isDestroyed());
 	}
 

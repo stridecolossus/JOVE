@@ -28,7 +28,7 @@ public class PushUpdateCommand implements Command {
 	 * @see PipelineLayout#max()
 	 */
 	public static ByteBuffer data(PipelineLayout layout) {
-		return BufferHelper.allocate(layout.max());
+		return BufferHelper.allocate(layout.pushConstantsSize());
 	}
 
 	/**
@@ -62,24 +62,26 @@ public class PushUpdateCommand implements Command {
 		this.offset = zeroOrMore(offset);
 		this.data = notNull(data);
 		this.stages = IntegerEnumeration.mask(stages);
-		validate();
-		Check.notEmpty(stages);
-		if(!layout.stages().containsAll(stages)) {
-			throw new IllegalArgumentException(String.format("Invalid pipeline stages for this layout: stages=%s layout=%s", stages, layout.stages()));
-		}
+		validate(stages);
 	}
 
-	private void validate() {
+	private void validate(Set<VkShaderStage> stages) {
 		// Check data buffer
 		final int size = data.capacity();
 		if(size == 0) throw new IllegalArgumentException("Buffer cannot be empty");
-		if(offset + size > layout.max()) {
-			throw new IllegalArgumentException(String.format("Buffer exceeds maximum push constants length: max=%s buffer=%s", layout.max(), data));
+		if(offset + size > layout.pushConstantsSize()) {
+			throw new IllegalArgumentException(String.format("Buffer exceeds push constants size: offset=%d size=%s max=%s", offset, size, layout.pushConstantsSize()));
 		}
 
 		// Check alignment
 		PushConstantRange.validate(offset);
 		PushConstantRange.validate(size);
+
+		// Check pipeline stages is a subset of the layout
+		Check.notEmpty(stages);
+		if(!layout.stages().containsAll(stages)) {
+			throw new IllegalArgumentException(String.format("Invalid push constant pipeline stages for this layout: stages=%s layout=%s", stages, this.stages));
+		}
 	}
 
 	/**
