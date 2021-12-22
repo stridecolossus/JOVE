@@ -4,12 +4,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +22,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
+import org.sarge.jove.platform.vulkan.VkPipelineCreateFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
@@ -35,12 +39,13 @@ public class PipelineTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		layout = mock(PipelineLayout.class);
-		pipeline = new Pipeline(new Pointer(1), dev, layout);
+		pipeline = new Pipeline(new Pointer(1), dev, layout, Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(layout, pipeline.layout());
+		assertEquals(Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES), pipeline.flags());
 		assertEquals(false, pipeline.isDestroyed());
 	}
 
@@ -87,21 +92,24 @@ public class PipelineTest extends AbstractVulkanTest {
 			assertNotNull(builder.dynamic());
 		}
 
+		private void init() {
+			builder
+					.layout(layout)
+					.pass(pass)
+					.viewport(viewport)
+					.shader(VkShaderStage.VERTEX)
+						.shader(mock(Shader.class))
+						.build();
+		}
+
 		@Test
 		void build() {
 			// Create pipeline cache
 			final PipelineCache cache = mock(PipelineCache.class);
 
 			// Build pipeline
-			pipeline = builder
-					.layout(layout)
-					.pass(pass)
-					.cache(cache)
-					.viewport(viewport)
-					.shader(VkShaderStage.VERTEX)
-						.shader(mock(Shader.class))
-						.build()
-					.build(dev);
+			init();
+			pipeline = builder.cache(cache).build(dev);
 
 			// Check pipeline
 			assertNotNull(pipeline);
@@ -153,6 +161,21 @@ public class PipelineTest extends AbstractVulkanTest {
 			verify(lib).vkCreateGraphicsPipelines(dev, cache, 1, new VkGraphicsPipelineCreateInfo[]{expected}, null, new Pointer[1]);
 		}
 
+		@Test
+		void buildAll() {
+			// Build pipeline
+			init();
+
+			// Build a second pipeline
+			builder.begin();
+			init();
+
+			// Check builder creates two pipelines
+			final List<Pipeline> pipelines = builder.buildAll(dev);
+			assertNotNull(pipelines);
+			assertEquals(2, pipelines.size());
+		}
+
 		private void addVertexShaderStage() {
 			builder
 				.shader(VkShaderStage.VERTEX)
@@ -186,45 +209,66 @@ public class PipelineTest extends AbstractVulkanTest {
 				.build(dev);
 		}
 
-		@Test
-		void shader() {
-			// Start shader stage
-			final ShaderStageBuilder stage = builder.shader(VkShaderStage.VERTEX);
-			assertNotNull(stage);
+		@Nested
+		class ShaderStageBuilderTests {
+			@Test
+			void shader() {
+				// Start shader stage
+				final ShaderStageBuilder stage = builder.shader(VkShaderStage.VERTEX);
+				assertNotNull(stage);
 
-			// Configure method
-			stage.name("name");
+				// Configure method
+				stage.name("name");
 
-			// Configure vertex shader
-			final Shader shader = mock(Shader.class);
-			when(shader.handle()).thenReturn(new Handle(1));
-			stage.shader(shader);
+				// Configure vertex shader
+				final Shader shader = mock(Shader.class);
+				when(shader.handle()).thenReturn(new Handle(1));
+				stage.shader(shader);
 
-			// Configure constants
-			stage.constants(Map.of(1, 2));
+				// Configure constants
+				stage.constants(Map.of(1, 2));
 
-			// Check returns to parent
-			assertEquals(builder, stage.build());
+				// Check returns to parent
+				assertEquals(builder, stage.build());
 
-			// Check shader descriptor
-			final var info = new VkPipelineShaderStageCreateInfo();
-			stage.populate(info);
-			assertEquals(0, info.flags);
-			assertEquals(VkShaderStage.VERTEX, info.stage);
-			assertEquals("name", info.pName);
-			assertEquals(shader.handle(), info.module);
-			assertNotNull(info.pSpecializationInfo);
+				// Check shader descriptor
+				final var info = new VkPipelineShaderStageCreateInfo();
+				stage.populate(info);
+				assertEquals(0, info.flags);
+				assertEquals(VkShaderStage.VERTEX, info.stage);
+				assertEquals("name", info.pName);
+				assertEquals(shader.handle(), info.module);
+				assertNotNull(info.pSpecializationInfo);
+			}
+
+			@Test
+			void shaderMissingShaderModule() {
+				assertThrows(IllegalArgumentException.class, () -> builder.shader(VkShaderStage.VERTEX).build());
+			}
+
+			@Test
+			void shaderDuplicateStage() {
+				addVertexShaderStage();
+				assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage());
+			}
 		}
 
-		@Test
-		void shaderMissingShaderModule() {
-			assertThrows(IllegalArgumentException.class, () -> builder.shader(VkShaderStage.VERTEX).build());
-		}
+		@Nested
+		class DerivativePipelineTests {
+			@Test
+			void derivative() {
+				init();
+				pipeline = builder.derive(pipeline).build(dev);
+				assertNotNull(pipeline);
+				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.DERIVATIVE));
+			}
 
-		@Test
-		void shaderDuplicateStage() {
-			addVertexShaderStage();
-			assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage());
+			@Test
+			void derivativeInvalidBasePipeline() {
+				final Pipeline base = mock(Pipeline.class);
+				when(base.flags()).thenReturn(Set.of());
+				assertThrows(IllegalArgumentException.class, () -> builder.derive(base));
+			}
 		}
 	}
 }
