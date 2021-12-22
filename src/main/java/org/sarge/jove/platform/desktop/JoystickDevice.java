@@ -28,6 +28,8 @@ public class JoystickDevice implements Device {
 	private final JoystickAxis[] axes;
 	private final JoystickButtonSource buttons;
 
+	// TODO - is the actual joystick itself a position event or 2 x axes???
+
 	/**
 	 * Constructor.
 	 * @param id			Index

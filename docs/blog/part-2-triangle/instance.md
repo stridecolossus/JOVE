@@ -883,8 +883,7 @@ public static class Builder {
         check(lib.vkCreateInstance(info, null, ref));
     
         // Create instance domain wrapper
-        Handle handle = new Handle(ref.getValue());
-        return new Instance(handle, lib, factory);
+        return new Instance(handle.getValue(), lib, factory);
     }
 }
 ```

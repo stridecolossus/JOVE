@@ -271,29 +271,51 @@ Therefore we essentially emulate a texture sampler by implementing a height func
 The height-map function is created using a new factory method:
 
 ```java
+/**
+ * Creates a height function based on a height-map image (i.e. equivalent to a texture sampler).
+ * @param size          Grid dimensions
+ * @param image         Image
+ * @param component     Component channel index for height values
+ * @return Image height function
+ * @throws IllegalArgumentException if the component index is invalid for the given image
+ */
 static HeightFunction heightmap(Dimensions size, ImageData image, int component) {
-    // Map grid coordinates to image dimensions
-    Dimensions dim = image.extents().size();
-    float w = dim.width() / size.width();
-    float h = dim.height() / size.height();
-
-    // Calculate height scalar
-    float scale = 1 / (float) MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
-
-    // Create function
-    return (row, col) -> {
-        int x = (int) (col * w);
-        int y = (int) (row * h);
-        return image.pixel(x, y, component) * scale;
-    };
 }
 ```
 
-Where _size_ is the grid dimensions and _component_ is the index of the pixel component to retrieve.
+This function first maps the grid dimensions to those of the image:
 
-This function maps the grid dimensions to those of the image to determine the pixel coordinates and delegates to the new `pixel` method of the image class.  The purpose of the `scale` is to normalise the pixel value to a 0..1 height coordinate.
+```java
+Dimensions dim = image.extents().size();
+float w = dim.width() / size.width();
+float h = dim.height() / size.height();
+```
 
-The implementation for a KTX image is as follows:
+Next the `scale` normalises pixel values to a 0..1 height coordinate:
+
+```java
+float scale = 1 / (float) MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
+```
+
+Where `unsignedMaximum` calculates the maximum unsigned integer value for a given number of bits:
+
+```java
+public static long unsignedMaximum(int bits) {
+    return (1L << bits) - 1;
+}
+```
+
+Finally the pixel coordinate is calculated and the method delegates to a new `pixel` method on the image class:
+
+```java
+return (row, col) -> {
+    int x = (int) (col * w);
+    int y = (int) (row * h);
+    return image.pixel(x, y, component) * scale;
+};
+```
+
+The implementation of `pixel` for a KTX image is as follows:
 
 ```java
 public int pixel(int x, int y, int component) {
@@ -318,13 +340,13 @@ public static int convert(byte[] bytes, int offset, int len) {
 }
 ```
 
-Finally the KTX loader is improved to handle height-map images with one channel but multiple bytes per channel, e.g. `R16_UINT`:
+Finally the KTX loader is improved to handle height-map images with one channel and/or multiple bytes per channel:
 
 * The number of bytes in the image layout is derived from the samples section of the DFD (previously was assumed to be one byte).
 
 * This value is validated against the `typeSize` from the header, which also implicitly ensures that __all__ channels have the same size.
 
-* The format hint is fiddled to a normalised type since some of the images have an integral image format which is not supported by Vulkan.
+* The format hint is fiddled to a normalised type since some of the images have an integral image format which is not supported by Vulkan samplers, e.g. `R16_UINT`
 
 ### Integration
 
@@ -352,7 +374,7 @@ public static Model model() {
 
 The vertex shader is the same as the previous demos and the fragment shader simply generates a constant colour for all fragments.  This should render a flat plane since the height of each vertex is zero.
 
-Next we load the height map image and configure the height-map function to generate the height of the grid vertices:
+Next we load the height-map image and use it to generate the grid:
 
 ```java
 @Bean
@@ -366,9 +388,7 @@ public static Model model(ImageData heightmap) {
 }
 ```
 
-The height-map image is either gray-scale (i.e. a single colour channel) or an RGBA image.  Note that in either case the height function 'samples' the first channel of the image.
-
-TODO - R16 UINT to UNORM fiddle?
+The height-map image is either gray-scale (i.e. a single colour channel) or an RGBA image.  Note that in either case the height function uses the __first__ channel of the image.
 
 The fragment shader is replaced with following GLSL code to generate a colour based on the `height` of a fragment:
 
@@ -771,6 +791,10 @@ Finally the update command is added to the render sequence before starting the r
 ---
 
 ## Tesselation
+
+TODO
+
+also wire frame => shared pipelines + action to toggle
 
 ---
 

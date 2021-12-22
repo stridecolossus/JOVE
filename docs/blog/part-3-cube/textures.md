@@ -51,10 +51,10 @@ We will first modify the demo to render a quad and implement texture coordinates
 First we will change the vertex data to render a coloured quad with white in the bottom-right corner:
 
 ```java
-Vertex.of(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1)),
-Vertex.of(new Point(-0.5f, +0.5f, 0), new Colour(0, 1, 0, 1)),
-Vertex.of(new Point(+0.5f, -0.5f, 0), new Colour(0, 0, 1, 1)),
-Vertex.of(new Point(+0.5f, +0.5f, 0), new Colour(1, 1, 1, 1)),
+new Vertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1)),
+new Vertex(new Point(-0.5f, +0.5f, 0), new Colour(0, 1, 0, 1)),
+new Vertex(new Point(+0.5f, -0.5f, 0), new Colour(0, 0, 1, 1)),
+new Vertex(new Point(+0.5f, +0.5f, 0), new Colour(1, 1, 1, 1)),
 ```
 
 The default drawing primitive is a _triangle strip_ with vertices ordered as follows:
@@ -120,7 +120,7 @@ public static final Coordinate2D
 We can now replace the colour data in the quad with texture coordinates as shown here for the top-left vertex:
 
 ```java
-Vertex.of(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT)
+new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT)
 ```
 
 ### Component Layout
@@ -892,24 +892,27 @@ private void populate(VkImageMemoryBarrier barrier) {
 
 The last piece of functionality we will need is some means of determining the _component mapping_ for an image when we created the texture view.
 
-Native images have channels in `ABGR` order whereas Vulkan textures are `RGBA`, the component mapping allows the image view to _swizzle_ the image channels as required.
+Native images have channels in `ABGR` order whereas Vulkan textures are generally `RGBA`, the component mapping allows the image view to _swizzle_ the image channels as required.
 
 We implement a new helper class that constructs the appropriate component mapping from the _components_ property of the image layout:
 
 ```java
-public final class ComponentMappingBuilder {
-    private static final int SIZE = 4;
+public final class ComponentMapping {
+    private final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
 
-    public static VkComponentMapping build(String mapping) {
+    private ComponentMapping() {
+    }
+
+    private void populate(String mapping) {
         // Validate
-        if(mapping.length() != SIZE) throw new IllegalArgumentException(...);
+        final int len = mapping.length();
+        if(len == 0) throw new IllegalArgumentException("Component mapping cannot be empty");
+        if(len > swizzle.length) throw new IllegalArgumentException(String.format("Invalid component mapping length [%s]", mapping));
 
-        // Build swizzle array
-        VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
-        Arrays.setAll(swizzle, n -> swizzle(mapping.charAt(n)));
-
-        // Build component mapping
-        return build(swizzle);
+        // Init swizzle array
+        for(int n = 0; n < len; ++n) {
+            swizzle[n] = swizzle(mapping.charAt(n));
+        }
     }
 }
 ```
@@ -931,10 +934,10 @@ private static VkComponentSwizzle swizzle(char mapping) {
 }
 ```
 
-And the component mapping is constructed from the array as follows:
+The resultant component mapping descriptor is constructed from the array as follows:
 
 ```java
-private static VkComponentMapping build(VkComponentSwizzle[] swizzle) {
+public VkComponentMapping build() {
     VkComponentMapping components = new VkComponentMapping();
     components.r = swizzle[0];
     components.g = swizzle[1];
@@ -944,19 +947,24 @@ private static VkComponentMapping build(VkComponentSwizzle[] swizzle) {
 }
 ```
 
-Finally we re-implement the identity component mapping which replaces the previously hard-coded constant in the view builder:
+The component mapping is the constructed from the string representation using a factory method:
 
 ```java
-public final class ComponentMappingBuilder {
-    /**
-     * Identity component mapping.
-     */
-    public static final VkComponentMapping IDENTITY;
+public static ComponentMapping of(String mapping) {
+    final ComponentMapping instance = new ComponentMapping();
+    instance.populate(mapping);
+    return instance;
+}
+```
+
+Finally the identity component mapping is replaced:
+
+```java
+public final class ComponentMapping {
+    public static final ComponentMapping IDENTITY = new ComponentMapping();
 
     static {
-        VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
-        Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
-        IDENTITY = build(swizzle);
+        Arrays.fill(IDENTITY.swizzle, VkComponentSwizzle.IDENTITY);
     }
 }
 ```
@@ -1077,7 +1085,7 @@ new Barrier.Builder()
 The component mapping is determined from the image by the new helper:
 
 ```java
-VkComponentMapping mapping = ComponentMappingBuilder.build(image.components());
+VkComponentMapping mapping = new ComponentMapping(image.components()).build();
 ```
 
 This swizzles the `ABGR` channels of the native image to the `RGBA` default expected by Vulkan.

@@ -372,7 +372,7 @@ public boolean test(PhysicalDevice dev) {
 For the presentation case we implement a factory method that matches the rendering surface:
 
 ```java
-public static Selector of(Handle surface) {
+public static Selector of(Pointer surface) {
     return new Selector() {
         @Override
         protected Predicate<Family> predicate(PhysicalDevice dev) {
@@ -385,7 +385,7 @@ public static Selector of(Handle surface) {
 This delegates to the following helper on the physical device:
 
 ```java
-public boolean isPresentationSupported(Handle surface, Family family) {
+public boolean isPresentationSupported(Pointer surface, Family family) {
     VulkanLibrary lib = this.library();
     IntByReference supported = instance.factory().integer();
     check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this.handle(), family.index(), surface, supported));
@@ -631,7 +631,7 @@ private Queue[] queues(Pointer dev, RequiredQueue required) {
     Queue[] queues = new Queue[count];
     for(int n = 0; n < count; ++n) {
         lib.vkGetDeviceQueue(dev, required.family.index(), n, ref);
-        queues[n] = new Queue(new Handle(ref.getValue()), required.family);
+        queues[n] = new Queue(ref.getValue(), required.family);
     }
 
     return queues;

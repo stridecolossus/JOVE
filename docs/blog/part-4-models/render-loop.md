@@ -27,10 +27,6 @@ In this chapter we will address these issues by implementing the following:
 
 * A GLFW keyboard handler to gracefully exit the application.
 
-A complication of particular importance is that GLFW event processing __must__ be performed on the main application thread.  We cannot (for example) wrap up the application loop as a separate thread or use the task executor framework.
-
-Note that GLFW does not return any errors or exceptions if a thread-safe method is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
-
 ---
 
 ## Refactoring
@@ -163,6 +159,21 @@ Notes:
 * For the moment we hard-code the ESCAPE key.
 
 * Although not used elsewhere in the application the listener is registered with the container to prevent it being garbage collected (and unregistered by GLFW).
+
+A complication of particular importance is that GLFW event processing __must__ be performed on the main application thread.  Therefore the application loop cannot be a separate thread or implemented using the task executor framework (for example).
+
+We add another task to process the GLFW window event queue on the main thread:
+
+```java
+class DesktopConfiguration {
+    @Bean
+    public static Task poll(Desktop desktop) {
+        return desktop::poll;
+    }
+}
+```
+
+Note that GLFW does not return any errors or exceptions if a thread-safe method is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
 
 ### Frame Tracker
 
@@ -301,19 +312,6 @@ Notes:
 * Here we use `@Component` which defines a class to be instantiated by the container.
 
 * We also add a `waitIdle` call after the loop has finished to correctly cleanup Vulkan resources.
-
-Finally we add a further task to process the GLFW window event queue:
-
-```java
-class DesktopConfiguration {
-    @Bean
-    public static Task poll(Desktop desktop) {
-        return desktop::poll;
-    }
-}
-```
-
-Again note that the GLFW listener and polling must be performed on the main application thread.
 
 When we now run the demo we should finally be able to move the window and close the application gracefully.
 

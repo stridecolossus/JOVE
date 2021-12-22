@@ -127,7 +127,7 @@ public final class MathsUtil {
 	}
 
 	/**
-	 * Calculates the maximum unsigned integer value comprising the given number of bits.
+	 * Calculates the maximum unsigned integer value for the given number of bits.
 	 * @param bits Number of bits
 	 * @return Maximum unsigned value
 	 */

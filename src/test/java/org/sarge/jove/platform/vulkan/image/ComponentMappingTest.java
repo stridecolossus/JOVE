@@ -20,8 +20,8 @@ class ComponentMappingTest {
 	}
 
 	@Test
-	void map() {
-		final ComponentMapping mapping = new ComponentMapping("ABGR");
+	void of() {
+		final ComponentMapping mapping = ComponentMapping.of("ABGR");
 		final VkComponentMapping descriptor = mapping.build();
 		assertNotNull(descriptor);
 		assertEquals(VkComponentSwizzle.A, descriptor.r);
@@ -32,7 +32,7 @@ class ComponentMappingTest {
 
 	@Test
 	void special() {
-		final ComponentMapping mapping = new ComponentMapping("10==");
+		final ComponentMapping mapping = ComponentMapping.of("10==");
 		final VkComponentMapping descriptor = mapping.build();
 		assertNotNull(descriptor);
 		assertEquals(VkComponentSwizzle.ONE, descriptor.r);
@@ -43,16 +43,16 @@ class ComponentMappingTest {
 
 	@Test
 	void mapEmptyMapping() {
-		assertThrows(IllegalArgumentException.class, () -> new ComponentMapping(StringUtils.EMPTY));
+		assertThrows(IllegalArgumentException.class, () -> ComponentMapping.of(StringUtils.EMPTY));
 	}
 
 	@Test
 	void mapInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> new ComponentMapping("12345"));
+		assertThrows(IllegalArgumentException.class, () -> ComponentMapping.of("12345"));
 	}
 
 	@Test
 	void mapInvalidSwizzle() {
-		assertThrows(IllegalArgumentException.class, () -> new ComponentMapping("?"));
+		assertThrows(IllegalArgumentException.class, () -> ComponentMapping.of("?"));
 	}
 }

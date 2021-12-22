@@ -204,9 +204,9 @@ There are a couple of issues here:
 
 The upside-down texture is due to the fact that OBJ texture coordinates (and OpenGL) assume an origin at the bottom-left of the image, whereas for Vulkan the 'start' of the texture image is the top-left corner.
 
-We _could_ fiddle the texture coordinates in the shader or simply flip the texture image, but neither of these resolves the actual root problem (and inverting the image would only make loading slower).  Instead we will flip the vertical coordinate _once_ when the model is loaded.
+We _could_ fiddle the texture coordinates in the shader, or flip the texture using an editor application, or invert it programatically at load time, but none of these resolve the actual root problem.  Flipping the image just adds extra effort and inverting at load-time would only make loading slower.  Instead we will flip the vertical texture coordinates _once_ when the model is loaded.
 
-We introduce a sort of adapter method that flips the vertical component of the texture coordinates before it is instantiated:
+The following adapter method flips the vertical component of each texture coordinate before it is instantiated:
 
 ```java
 private static Coordinate2D flip(float[] array) {
@@ -215,13 +215,13 @@ private static Coordinate2D flip(float[] array) {
 }
 ```
 
-And modify the texture coordinate parser in the OBJ loader:
+And the parser in the OBJ loader is updated accordingly:
 
 ```java
 add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, ObjectModel::coordinate));
 ```
 
-We assume that this will apply to all OBJ models, we can always make it an optional feature if that assumption turns out to be incorrect.
+We assume that this will apply to all OBJ models, it can always be made an optional feature if that assumption turns out to be incorrect.
 
 The model now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so we are not rendering the model inside-out for example).
 

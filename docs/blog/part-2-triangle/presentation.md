@@ -99,7 +99,7 @@ public Set<VkPresentModeKHR> loadModes() {
 The presentation modes are returned as an integer array which is mapped to the corresponding enumeration:
 
 ```java
-IntegerEnumeration.ReverseMapping<VkPresentModeKHR> mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);
+var mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);
 return Arrays
     .stream(array)
     .mapToObj(mapping::map)
@@ -419,7 +419,7 @@ interface Library {
 We add the following to acquire the index of the next image to be rendered:
 
 ```java
-public int acquire(Semaphore semaphore, Fence fence) throws AcquireException {
+public int acquire(Semaphore semaphore, Fence fence) throws SwapchainException {
     // Acquire swapchain image
     DeviceContext dev = super.device();
     VulkanLibrary lib = dev.library();
@@ -427,7 +427,7 @@ public int acquire(Semaphore semaphore, Fence fence) throws AcquireException {
 
     // Check result
     boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
-    if(!ok) throw new AcquireException(result);
+    if(!ok) throw new SwapchainException(result);
 
     return index.getValue();
 }
@@ -441,7 +441,7 @@ Notes:
 
 * Acquiring the swapchain image is (probably) the only API method that can return multiple success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  We decide that a _suboptimal_ return value is considered as valid.
 
-* The `AcquireException` is sub-class of a Vulkan exception and is used to indicate that the swapchain has become invalid, e.g. the surface has been resized or minimised.
+* The `SwapchainException` is sub-class of a Vulkan exception and is used to indicate that the swapchain has become invalid, e.g. the surface has been resized or minimised.
 
 When an image has been rendered it can be presented to the surface, which requires population of a Vulkan descriptor for the presentation task:
 

@@ -59,6 +59,7 @@ public interface IntegerEnumeration {
 
 	/**
 	 * Retrieves the reverse mapping for the given integer enumeration.
+	 * This method is thread-safe.
 	 * @param <E> Integer enumeration
 	 * @param clazz Enumeration class
 	 * @return Reverse mapping

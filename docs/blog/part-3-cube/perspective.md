@@ -203,8 +203,6 @@ public Resource uniform() {
 }
 ```
 
-The `require` method is an invariant test that throws an exception if the buffer does not support the required usage flag.
-
 To make the process of loading the matrix into the buffer slightly more convenient we add the following helper:
 
 ```java
@@ -737,7 +735,9 @@ In the demo we replace the hard-coded quad vertices with a cube model:
 public class VertexBufferConfiguration {
     @Bean
     public static Model cube() {
-        return new CubeBuilder().build();
+        return new CubeBuilder()
+            .transform(List.of(Point.LAYOUT, Coordinate2D.LAYOUT))
+            .build();
     }
 }
 ```
@@ -773,10 +773,10 @@ The vertex input and assembly stages are now specified by the cube model in the 
 return new Pipeline.Builder()
     ...
     .input()
-        .add(model.header().layout())
+        .add(model.layout())
         .build()
     .assembly()
-        .topology(model.header().primitive())
+        .topology(model.primitive())
         .build()
     .build(dev);
 ```
@@ -784,7 +784,7 @@ return new Pipeline.Builder()
 Finally we modify the draw command in the render sequence:
 
 ```java
-int count = model.header().count();
+int count = model.count();
 Command draw = (api, handle) -> api.vkCmdDraw(handle, count, 1, 0, 0);
 ```
 

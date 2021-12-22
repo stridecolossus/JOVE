@@ -73,9 +73,10 @@ public class MemorySelector {
 				.or(() -> find(candidates, props.required()))
 				.orElseThrow(() -> new AllocationException(String.format("No available memory type: requirements=%s properties=%s", reqs, props)));
 	}
+	// TODO - cache candidates for reqs.memoryTypeBits?
 
 	/**
-	 * Finds a memory type with the given properties.
+	 * Finds a memory type matching the given properties.
 	 */
 	private static Optional<MemoryType> find(List<MemoryType> types, Set<VkMemoryProperty> props) {
 		if(props.isEmpty()) {

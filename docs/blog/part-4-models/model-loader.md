@@ -594,15 +594,14 @@ out.writeInt(VERSION);
 Next we write the header information of the model:
 
 ```java
-Header header = model.header();
-out.writeUTF(header.primitive().name());
-out.writeInt(header.count());
+out.writeUTF(model.primitive().name());
+out.writeInt(model.count());
 ```
 
 Followed by the vertex layout of the model:
 
 ```java
-List<Layout> layout = header.layout();
+List<Layout> layout = model.layout();
 out.writeInt(layout.size());
 for(Layout c : layout) {
     out.writeInt(c.size());
@@ -726,7 +725,7 @@ Bufferable index = loadBuffer(in);
 And finally we create the new buffered model:
 
 ```java
-return new BufferedModel(new Header(layout, primitive, count), vertices, Optional.ofNullable(index));
+return new BufferedModel(primitive, layout, count, vertices, index);
 ```
 
 The `loadBuffer` helper is the inverse of `writeBuffer` above (with an additional check for an empty buffer):

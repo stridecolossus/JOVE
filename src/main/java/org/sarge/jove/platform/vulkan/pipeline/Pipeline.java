@@ -257,7 +257,8 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
-		 * @param stage Programmable shader stage
+		 * Starts a new programmable shader pipeline stage.
+		 * @param stage Shader stage
 		 * @return Builder for a shader stage
 		 * @throws IllegalArgumentException for a duplicate shader stage
 		 */
@@ -272,8 +273,8 @@ public class Pipeline extends AbstractVulkanObject {
 		 * Constructs this pipeline.
 		 * @param dev Logical device
 		 * @return New pipeline
-		 * @throws IllegalArgumentException if the pipeline layout or render pass has not been specified
-		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader has been specified
+		 * @throws IllegalArgumentException if the pipeline layout or render pass have not been specified
+		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader stage has been configured
 		 */
 		public Pipeline build(LogicalDevice dev) {
 			// Create descriptor

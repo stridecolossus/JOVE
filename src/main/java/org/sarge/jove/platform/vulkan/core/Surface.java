@@ -85,7 +85,7 @@ public class Surface extends AbstractTransientNativeObject {
 		 */
 		public VkSurfaceCapabilitiesKHR capabilities() {
 			final VulkanLibrary lib = instance.library();
-			final VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR();
+			final var caps = new VkSurfaceCapabilitiesKHR();
 			check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, Surface.this, caps));
 			return caps;
 		}
@@ -136,7 +136,7 @@ public class Surface extends AbstractTransientNativeObject {
 			final int[] array = VulkanFunction.invoke(func, count, int[]::new);
 
 			// Convert to enumeration
-			final IntegerEnumeration.ReverseMapping<VkPresentModeKHR> mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);
+			final var mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);
 			return Arrays
 					.stream(array)
 					.mapToObj(mapping::map)
