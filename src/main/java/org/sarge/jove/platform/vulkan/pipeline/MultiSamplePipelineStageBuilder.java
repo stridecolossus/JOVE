@@ -9,21 +9,23 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.IntegerArray;
 import org.sarge.lib.util.Percentile;
 
+import com.sun.jna.Pointer;
+
 /**
  * Builder for the multi-sample pipeline stage.
  * @see VkPipelineMultisampleStateCreateInfo
  * @author Sarge
  */
 public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineMultisampleStateCreateInfo> {
-	private final VkPipelineMultisampleStateCreateInfo info = new VkPipelineMultisampleStateCreateInfo();
+	private VkSampleCount rasterizationSamples = VkSampleCount.COUNT_1;
+	private boolean sampleShadingEnable;
+	private float minSampleShading = 1;
+	private boolean alphaToCoverageEnable;
+	private boolean alphaToOneEnable;
+	private Pointer mask;
 
 	MultiSamplePipelineStageBuilder(Builder parent) {
 		super(parent);
-		samples(VkSampleCount.COUNT_1);
-		sampleShadingEnable(false);
-		minSampleShading(Percentile.ONE);
-		alphaToCoverageEnable(false);
-		alphaToOneEnable(false);
 	}
 
 	/**
@@ -31,37 +33,37 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param samples Sample count
 	 * @see #samples(int)
 	 */
-	public MultiSamplePipelineStageBuilder samples(VkSampleCount samples) {
-		info.rasterizationSamples = notNull(samples);
+	public MultiSamplePipelineStageBuilder rasterizationSamples(VkSampleCount rasterizationSamples) {
+		this.rasterizationSamples = notNull(rasterizationSamples);
 		return this;
 	}
 
 	/**
 	 * Sets the number of rasterization samples.
-	 * @param samples Sample count
+	 * @param rasterizationSamples Sample count
 	 * @throws IllegalArgumentException if the number of samples is not valid {@link VkSampleCount}
 	 * @see #samples(VkSampleCount)
 	 */
-	public MultiSamplePipelineStageBuilder samples(int samples) {
-		final VkSampleCount count = VkSampleCount.valueOf("COUNT_" + samples);
-		return samples(count);
+	public MultiSamplePipelineStageBuilder samples(int rasterizationSamples) {
+		final VkSampleCount count = VkSampleCount.valueOf("COUNT_" + rasterizationSamples);
+		return rasterizationSamples(count);
 	}
 
 	/**
 	 * Sets whether multi-sample shading is enabled (default is {@code false}).
-	 * @param enable Whether sample shading is enabled
+	 * @param sampleShadingEnable Whether sample shading is enabled
 	 */
-	public MultiSamplePipelineStageBuilder sampleShadingEnable(boolean enable) {
-		info.sampleShadingEnable = VulkanBoolean.of(enable);
+	public MultiSamplePipelineStageBuilder sampleShadingEnable(boolean sampleShadingEnable) {
+		this.sampleShadingEnable = sampleShadingEnable;
 		return this;
 	}
 
 	/**
 	 * Sets the minimum fraction of sample shading (default is one).
-	 * @param min Minimum sample shading fraction
+	 * @param minSampleShading Minimum sample shading fraction
 	 */
-	public MultiSamplePipelineStageBuilder minSampleShading(Percentile min) {
-		info.minSampleShading = min.floatValue();
+	public MultiSamplePipelineStageBuilder minSampleShading(Percentile minSampleShading) {
+		this.minSampleShading = minSampleShading.floatValue();
 		return this;
 	}
 
@@ -71,30 +73,37 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 */
 	public MultiSamplePipelineStageBuilder sampleMask(int[] mask) {
 		// TODO - length = samples / 32
-		info.pSampleMask = new IntegerArray(mask);
+		this.mask = new IntegerArray(mask);
 		return this;
 	}
 
 	/**
 	 * Sets whether an temporary coverage value is generated based on the alpha value of the first colour output.
-	 * @param enable Whether <i>alpha to coverage</i> is enabled
+	 * @param alphaToCoverageEnable Whether <i>alpha to coverage</i> is enabled
 	 */
-	public MultiSamplePipelineStageBuilder alphaToCoverageEnable(boolean enable) {
-		info.alphaToCoverageEnable = VulkanBoolean.of(enable);
+	public MultiSamplePipelineStageBuilder alphaToCoverageEnable(boolean alphaToCoverageEnable) {
+		this.alphaToCoverageEnable = alphaToCoverageEnable;
 		return this;
 	}
 
 	/**
 	 * Sets whether the alpha component of the first colour output is replaced with one.
-	 * @param enable Whether <i>alpha to one</i> is enabled
+	 * @param alphaToOneEnable Whether <i>alpha to one</i> is enabled
 	 */
-	public MultiSamplePipelineStageBuilder alphaToOneEnable(boolean enable) {
-		info.alphaToOneEnable = VulkanBoolean.of(enable);
+	public MultiSamplePipelineStageBuilder alphaToOneEnable(boolean alphaToOneEnable) {
+		this.alphaToOneEnable = alphaToOneEnable;
 		return this;
 	}
 
 	@Override
 	VkPipelineMultisampleStateCreateInfo get() {
+		final var info = new VkPipelineMultisampleStateCreateInfo();
+		info.rasterizationSamples = rasterizationSamples;
+		info.sampleShadingEnable = VulkanBoolean.of(sampleShadingEnable);
+		info.minSampleShading = minSampleShading;
+		info.alphaToCoverageEnable = VulkanBoolean.of(alphaToCoverageEnable);
+		info.alphaToOneEnable = VulkanBoolean.of(alphaToOneEnable);
+		info.pSampleMask = mask;
 		return info;
 	}
 }

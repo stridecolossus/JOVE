@@ -16,16 +16,15 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @author Sarge
  */
 public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineRasterizationStateCreateInfo> {
-	private final VkPipelineRasterizationStateCreateInfo info = new VkPipelineRasterizationStateCreateInfo();
+	private boolean depthClampEnable;
+	private boolean rasterizerDiscardEnable;
+	private VkPolygonMode polygonMode = VkPolygonMode.FILL;
+	private VkCullMode cullMode = VkCullMode.BACK;
+	private VkFrontFace frontFace = VkFrontFace.COUNTER_CLOCKWISE;
+	private float lineWidth = 1;
 
 	RasterizerPipelineStageBuilder(Builder parent) {
 		super(parent);
-		depthClamp(false);
-		discard(false);
-		polygon(VkPolygonMode.FILL);
-		cull(VkCullMode.BACK);
-		winding(VkFrontFace.COUNTER_CLOCKWISE);
-		lineWidth(1);
 	}
 
 	/**
@@ -34,45 +33,44 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 	 * TODO - check feature
 	 */
 	public RasterizerPipelineStageBuilder depthClamp(boolean depthClampEnable) {
-		info.depthClampEnable = VulkanBoolean.of(depthClampEnable);
+		this.depthClampEnable = depthClampEnable;
 		return this;
 	}
 
 	/**
-	 * Sets whether geometry is discarded by the rasterizer (basically disabling output to the framebuffer).
-	 * @param rasterizerDiscardEnable Whether to discard geometry (default is {@code false})
+	 * Sets whether geometry is discarded by the rasterizer (default is {@code false}).
+	 * @param rasterizerDiscardEnable Whether to discard geometry
 	 */
 	public RasterizerPipelineStageBuilder discard(boolean rasterizerDiscardEnable) {
-		info.rasterizerDiscardEnable = VulkanBoolean.of(rasterizerDiscardEnable);
+		this.rasterizerDiscardEnable = rasterizerDiscardEnable;
 		return this;
 	}
 
 	/**
-	 * Sets the polygon fill mode.
-	 * @param polygonMode Polygon mode (default is {@link VkPolygonMode#FILL})
+	 * Sets the polygon fill mode (default is {@link VkPolygonMode#FILL}).
+	 * @param polygonMode Polygon mode
 	 * TODO - check feature if not fill, line, point
 	 */
 	public RasterizerPipelineStageBuilder polygon(VkPolygonMode polygonMode) {
-		info.polygonMode = notNull(polygonMode);
+		this.polygonMode = notNull(polygonMode);
 		return this;
 	}
 
 	/**
-	 * Sets the face culling mode.
-	 * @param cullMode Face culling mode (default is {@link VkCullMode#BACK})
+	 * Sets the face culling mode (default is {@link VkCullMode#BACK}).
+	 * @param cullMode Face culling mode
 	 */
 	public RasterizerPipelineStageBuilder cull(VkCullMode cullMode) {
-		info.cullMode = notNull(cullMode);
+		this.cullMode = notNull(cullMode);
 		return this;
 	}
 
 	/**
-	 * Sets the vertex winding order for front-facing faces.
-	 * @param frontFace Winding order (default is {@link VkFrontFace#COUNTER_CLOCKWISE})
-	 * @see #clockwise(boolean)
+	 * Sets the vertex winding order for front-facing faces (default is {@link VkFrontFace#COUNTER_CLOCKWISE}).
+	 * @param frontFace Winding order
 	 */
 	public RasterizerPipelineStageBuilder winding(VkFrontFace frontFace) {
-		info.frontFace = notNull(frontFace);
+		this.frontFace = notNull(frontFace);
 		return this;
 	}
 
@@ -93,18 +91,25 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 	}
 
 	/**
-	 * Sets the line width.
-	 * @param lineWidth Line width (default is {@code one})
+	 * Sets the line width (default is {@code one}).
+	 * @param lineWidth Line width
 	 * @throws IllegalArgumentException if the line width is less-than one
 	 * TODO - check feature if > 1
 	 */
 	public RasterizerPipelineStageBuilder lineWidth(float lineWidth) {
-		info.lineWidth = oneOrMore(lineWidth);
+		this.lineWidth = oneOrMore(lineWidth);
 		return this;
 	}
 
 	@Override
 	VkPipelineRasterizationStateCreateInfo get() {
+		final var info = new VkPipelineRasterizationStateCreateInfo();
+		info.depthClampEnable = VulkanBoolean.of(depthClampEnable);
+		info.rasterizerDiscardEnable = VulkanBoolean.of(rasterizerDiscardEnable);
+		info.polygonMode = polygonMode;
+		info.cullMode = cullMode;
+		info.frontFace = frontFace;
+		info.lineWidth = lineWidth;
 		return info;
 	}
 }

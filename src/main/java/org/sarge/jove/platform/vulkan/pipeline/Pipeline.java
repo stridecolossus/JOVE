@@ -28,7 +28,6 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantsTable;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
@@ -52,7 +51,7 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @param layout		Pipeline layout
 	 * @param flags			Pipeline flags
 	 */
-	Pipeline(Pointer handle, LogicalDevice dev, PipelineLayout layout, Set<VkPipelineCreateFlag> flags) {
+	Pipeline(Pointer handle, DeviceContext dev, PipelineLayout layout, Set<VkPipelineCreateFlag> flags) {
 		super(handle, dev);
 		this.layout = notNull(layout);
 		this.flags = Set.copyOf(flags);
@@ -177,7 +176,7 @@ public class Pipeline extends AbstractVulkanObject {
 			private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
 			private final VkGraphicsPipelineCreateInfo info = new VkGraphicsPipelineCreateInfo();
 
-			private Pipeline create(Pointer handle, LogicalDevice dev) {
+			private Pipeline create(Pointer handle, DeviceContext dev) {
 				return new Pipeline(handle, dev, layout, flags);
 			}
 		}
@@ -192,8 +191,9 @@ public class Pipeline extends AbstractVulkanObject {
 		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
 
 		// Derivative
-		private Handle base;
-		private int baseIndex = -1;
+		private Entry base;
+		private Handle baseHandle;
+		private int baseIndex;
 
 		// Fixed function stages
 		private final VertexInputPipelineStageBuilder input = new VertexInputPipelineStageBuilder(this);
@@ -218,6 +218,8 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		private void init() {
 			entry = new Entry();
+			baseHandle = null;
+			baseIndex = -1;
 			entries.add(entry);
 		}
 
@@ -263,6 +265,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @see #derive(Pipeline)
 		 */
 		public Builder allowDerivatives() {
+			base = entry;
 			return flag(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
 		}
 
@@ -273,19 +276,36 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public Builder derive(Pipeline base) {
 			if(!base.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) throw new IllegalArgumentException("Cannot derive from pipeline: " + base);
-			this.base = base.handle();
+			this.baseHandle = base.handle();
 			flag(VkPipelineCreateFlag.DERIVATIVE);
 			return this;
 		}
 
 		/**
-		 * Derives this pipeline from the most recent pipeline in this group that allows derivatives.
+		 * Derives this pipeline from the <b>most recent</b> pipeline in this builder that allows derivatives.
+		 * Note that this method <i>clones</i> the base pipeline.
+		 * @throws IllegalStateException if there is no pipeline to derive from
 		 * @see #allowDerivatives()
 		 */
 		public Builder derive() {
-			//this.baseIndex = zeroOrMore(index);
-			// TODO - validate index and is allowed
+			// Check a base pipeline is present
+			if(base == null) throw new IllegalStateException("No pipeline that allows derivatives");
+
+			// Complete current entry
+			complete();
+
+			// Create new derived entry
+			init();
 			flag(VkPipelineCreateFlag.DERIVATIVE);
+
+			// Clone base pipeline
+			entry.layout = base.layout;
+			entry.flags.addAll(base.flags);
+			entry.flags.remove(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
+
+			// Init derivative index
+			baseIndex = entries.indexOf(base);
+
 			return this;
 		}
 
@@ -369,7 +389,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public ShaderStageBuilder shader(VkShaderStage stage) {
 			final var shader = new ShaderStageBuilder(stage);
-			if(shaders.containsKey(stage)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
+			if(shaders.containsKey(stage) && (baseIndex == -1)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
 			shaders.put(stage, shader);
 			return shader;
 		}
@@ -418,19 +438,18 @@ public class Pipeline extends AbstractVulkanObject {
 			info.pDynamicState = dynamic.get();
 
 			// Init derivative pipeline
-			if((base != null) && (baseIndex >= 0)) throw new IllegalArgumentException("Cannot specify a base pipeline and a derivative index");
-			info.basePipelineHandle = base;
+			if((baseHandle != null) && (baseIndex >= 0)) throw new IllegalArgumentException("Cannot specify a base pipeline and a derivative index");
+			info.basePipelineHandle = baseHandle;
 			info.basePipelineIndex = baseIndex;
 		}
 
 		/**
-		 * Constructs the pipeline(s).
+		 * Constructs multiple pipelines.
 		 * @param dev Logical device
-		 * @return New pipeline(s)
-		 * @throws IllegalArgumentException if a pipeline layout or render pass have not been specified
-		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader stage has been configured
+		 * @return New pipelines
+		 * @see #build(DeviceContext)
 		 */
-		public List<Pipeline> buildAll(LogicalDevice dev) {
+		public List<Pipeline> buildAll(DeviceContext dev) {
 			// Complete last pipeline
 			complete();
 
@@ -454,12 +473,15 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
-		 *
-		 * @param dev
-		 * @return
+		 * Convenience variant to constructs a single pipeline.
+		 * @param dev Logical device
+		 * @return New pipeline
+		 * @throws IllegalArgumentException if the pipeline layout or render pass have not been specified
+		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader stage has been configured
+		 * @throws IllegalStateException if multiple pipelines were configured
 		 */
-		public Pipeline build(LogicalDevice dev) {
-			if(entries.size() != 1) throw new IllegalArgumentException("Expected exactly one pipeline");
+		public Pipeline build(DeviceContext dev) {
+			if(entries.size() != 1) throw new IllegalStateException("Expected exactly one pipeline");
 			final List<Pipeline> pipelines = buildAll(dev);
 			return pipelines.get(0);
 		}
@@ -479,7 +501,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @param pPipelines		Returned pipeline handle(s)
 		 * @return Result code
 		 */
-		int vkCreateGraphicsPipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
+		int vkCreateGraphicsPipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
 
 		/**
 		 * Destroys a pipeline.

@@ -258,9 +258,9 @@ public class PipelineTest extends AbstractVulkanTest {
 			@Test
 			void derivative() {
 				init();
-				pipeline = builder.derive(pipeline).build(dev);
-				assertNotNull(pipeline);
-				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.DERIVATIVE));
+				final Pipeline derivative = builder.derive(pipeline).build(dev);
+				assertNotNull(derivative);
+				assertTrue(derivative.flags().contains(VkPipelineCreateFlag.DERIVATIVE));
 			}
 
 			@Test
@@ -268,6 +268,36 @@ public class PipelineTest extends AbstractVulkanTest {
 				final Pipeline base = mock(Pipeline.class);
 				when(base.flags()).thenReturn(Set.of());
 				assertThrows(IllegalArgumentException.class, () -> builder.derive(base));
+			}
+
+			@Test
+			void allowDerivatives() {
+				init();
+				builder.allowDerivatives();
+				pipeline = builder.build(dev);
+				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
+			}
+
+			@Test
+			void derive() {
+				// Create a pipeline that can be derived from
+				init();
+				builder.allowDerivatives();
+
+				// Derive from this pipeline
+				builder.derive();
+
+				// Check that shaders can be overridden
+				addVertexShaderStage();
+
+				// Construct pipelines
+				builder.buildAll(dev);
+			}
+
+			@Test
+			void deriveCannotFindBasePipeline() {
+				init();
+				assertThrows(IllegalStateException.class, () -> builder.derive());
 			}
 		}
 	}
