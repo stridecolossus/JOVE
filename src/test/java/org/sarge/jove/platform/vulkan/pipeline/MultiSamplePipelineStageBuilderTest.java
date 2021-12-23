@@ -16,7 +16,7 @@ public class MultiSamplePipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new MultiSamplePipelineStageBuilder(null);
+		builder = new MultiSamplePipelineStageBuilder();
 	}
 
 	@Test

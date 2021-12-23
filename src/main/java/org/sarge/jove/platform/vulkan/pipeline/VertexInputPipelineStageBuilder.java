@@ -17,7 +17,6 @@ import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkVertexInputAttributeDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputBindingDescription;
 import org.sarge.jove.platform.vulkan.VkVertexInputRate;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.StructureHelper;
 
@@ -26,12 +25,14 @@ import org.sarge.jove.util.StructureHelper;
  * @see VkPipelineVertexInputStateCreateInfo
  * @author Sarge
  */
-public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo> {
+public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo, VertexInputPipelineStageBuilder> {
 	private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
 	private final List<AttributeBuilder> attributes = new ArrayList<>();
 
-	VertexInputPipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(VertexInputPipelineStageBuilder builder) {
+		bindings.putAll(builder.bindings);
+		attributes.addAll(builder.attributes);
 	}
 
 	/**

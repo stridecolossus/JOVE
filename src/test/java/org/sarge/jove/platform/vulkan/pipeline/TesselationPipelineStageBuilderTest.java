@@ -12,7 +12,7 @@ public class TesselationPipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new TesselationPipelineStageBuilder(null);
+		builder = new TesselationPipelineStageBuilder();
 	}
 
 	@Test

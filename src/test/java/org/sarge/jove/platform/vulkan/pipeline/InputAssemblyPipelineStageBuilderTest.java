@@ -14,7 +14,7 @@ public class InputAssemblyPipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new InputAssemblyPipelineStageBuilder(null);
+		builder = new InputAssemblyPipelineStageBuilder();
 	}
 
 	@Test

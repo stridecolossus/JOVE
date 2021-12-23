@@ -9,7 +9,6 @@ import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkRect2D;
 import org.sarge.jove.platform.vulkan.VkViewport;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
@@ -19,7 +18,7 @@ import org.sarge.lib.util.Percentile;
  * @see VkPipelineViewportStateCreateInfo
  * @author Sarge
  */
-public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
+public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo, ViewportPipelineStageBuilder> {
 	/**
 	 * Transient viewport descriptor.
 	 */
@@ -36,8 +35,11 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 
 	private boolean flip = true;
 
-	ViewportPipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(ViewportPipelineStageBuilder builder) {
+		viewports.addAll(builder.viewports);
+		scissors.addAll(builder.scissors);
+		flip = builder.flip;
 	}
 
 	/**

@@ -13,7 +13,7 @@ public class DepthStencilPipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new DepthStencilPipelineStageBuilder(null);
+		builder = new DepthStencilPipelineStageBuilder();
 	}
 
 	@Test

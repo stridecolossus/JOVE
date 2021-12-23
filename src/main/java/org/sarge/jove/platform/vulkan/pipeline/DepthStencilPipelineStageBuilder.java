@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.VkCompareOp;
 import org.sarge.jove.platform.vulkan.VkPipelineDepthStencilStateCreateInfo;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
@@ -12,7 +11,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @see VkPipelineDepthStencilStateCreateInfo
  * @author Sarge
  */
-public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo> {
+public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo, DepthStencilPipelineStageBuilder> {
 	private boolean depthTestEnable;
 	private boolean depthWriteEnable = true;
 	private VkCompareOp depthCompareOp = VkCompareOp.LESS_OR_EQUAL;
@@ -22,8 +21,11 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	// front/back
 	// min/max bounds
 
-	DepthStencilPipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(DepthStencilPipelineStageBuilder builder) {
+		depthTestEnable = builder.depthTestEnable;
+		depthWriteEnable = builder.depthWriteEnable;
+		depthCompareOp = builder.depthCompareOp;
 	}
 
 	/**

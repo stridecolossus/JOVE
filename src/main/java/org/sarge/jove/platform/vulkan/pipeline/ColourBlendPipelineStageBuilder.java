@@ -13,7 +13,6 @@ import org.sarge.jove.platform.vulkan.VkColorComponent;
 import org.sarge.jove.platform.vulkan.VkLogicOp;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
 import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
@@ -22,15 +21,18 @@ import org.sarge.jove.util.StructureHelper;
  * Builder for the colour-blend pipeline stage.
  * @author Sarge
  */
-public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
+public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo, ColourBlendPipelineStageBuilder> {
 	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponent.values());
 
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 	private final float[] constants = new float[4];
 	private VkLogicOp op;
 
-	ColourBlendPipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(ColourBlendPipelineStageBuilder builder) {
+		attachments.addAll(builder.attachments);
+		System.arraycopy(builder.constants, 0, constants, 0, constants.length);
+		op = builder.op;
 	}
 
 	/**

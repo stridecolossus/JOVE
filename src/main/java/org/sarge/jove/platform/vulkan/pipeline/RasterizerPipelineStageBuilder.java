@@ -7,7 +7,6 @@ import org.sarge.jove.platform.vulkan.VkCullMode;
 import org.sarge.jove.platform.vulkan.VkFrontFace;
 import org.sarge.jove.platform.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPolygonMode;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
@@ -15,7 +14,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @see VkPipelineRasterizationStateCreateInfo
  * @author Sarge
  */
-public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineRasterizationStateCreateInfo> {
+public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineRasterizationStateCreateInfo, RasterizerPipelineStageBuilder> {
 	private boolean depthClampEnable;
 	private boolean rasterizerDiscardEnable;
 	private VkPolygonMode polygonMode = VkPolygonMode.FILL;
@@ -23,8 +22,14 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 	private VkFrontFace frontFace = VkFrontFace.COUNTER_CLOCKWISE;
 	private float lineWidth = 1;
 
-	RasterizerPipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(RasterizerPipelineStageBuilder builder) {
+		depthClampEnable = builder.depthClampEnable;
+		rasterizerDiscardEnable = builder.rasterizerDiscardEnable;
+		polygonMode = builder.polygonMode;
+		cullMode = builder.cullMode;
+		frontFace = builder.frontFace;
+		lineWidth = builder.lineWidth;
 	}
 
 	/**

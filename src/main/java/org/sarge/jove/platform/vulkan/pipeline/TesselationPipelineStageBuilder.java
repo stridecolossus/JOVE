@@ -1,18 +1,18 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import org.sarge.jove.platform.vulkan.VkPipelineTessellationStateCreateInfo;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 
 /**
  * Builder for the tesselation control pipeline stage.
  * @see VkPipelineTessellationStateCreateInfo
  * @author Sarge
  */
-public class TesselationPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineTessellationStateCreateInfo> {
+public class TesselationPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineTessellationStateCreateInfo, TesselationPipelineStageBuilder> {
 	private int points;
 
-	TesselationPipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(TesselationPipelineStageBuilder builder) {
+		points = builder.points;
 	}
 
 	/**

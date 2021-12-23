@@ -19,7 +19,7 @@ public class ColourBlendPipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new ColourBlendPipelineStageBuilder(null);
+		builder = new ColourBlendPipelineStageBuilder();
 	}
 
 	@Test

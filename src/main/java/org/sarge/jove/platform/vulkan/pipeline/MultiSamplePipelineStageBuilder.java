@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSampleCount;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.IntegerArray;
 import org.sarge.lib.util.Percentile;
@@ -16,7 +15,7 @@ import com.sun.jna.Pointer;
  * @see VkPipelineMultisampleStateCreateInfo
  * @author Sarge
  */
-public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineMultisampleStateCreateInfo> {
+public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineMultisampleStateCreateInfo, MultiSamplePipelineStageBuilder> {
 	private VkSampleCount rasterizationSamples = VkSampleCount.COUNT_1;
 	private boolean sampleShadingEnable;
 	private float minSampleShading = 1;
@@ -24,8 +23,14 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	private boolean alphaToOneEnable;
 	private Pointer mask;
 
-	MultiSamplePipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(MultiSamplePipelineStageBuilder builder) {
+		rasterizationSamples = builder.rasterizationSamples;
+		sampleShadingEnable = builder.sampleShadingEnable;
+		minSampleShading = builder.minSampleShading;
+		alphaToCoverageEnable = builder.alphaToCoverageEnable;
+		alphaToOneEnable = builder.alphaToOneEnable;
+		mask = builder.mask;
 	}
 
 	/**

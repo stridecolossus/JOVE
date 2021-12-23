@@ -15,7 +15,7 @@ public class RasterizerPipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new RasterizerPipelineStageBuilder(null);
+		builder = new RasterizerPipelineStageBuilder();
 	}
 
 	@Test

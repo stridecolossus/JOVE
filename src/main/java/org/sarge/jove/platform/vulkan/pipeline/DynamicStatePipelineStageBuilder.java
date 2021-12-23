@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkDynamicState;
 import org.sarge.jove.platform.vulkan.VkPipelineDynamicStateCreateInfo;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.util.IntegerArray;
 
 /**
@@ -15,11 +14,12 @@ import org.sarge.jove.util.IntegerArray;
  * @see VkPipelineDynamicStateCreateInfo
  * @author Sarge
  */
-public class DynamicStatePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDynamicStateCreateInfo> {
+public class DynamicStatePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDynamicStateCreateInfo, DynamicStatePipelineStageBuilder> {
 	private final Set<VkDynamicState> states = new HashSet<>();
 
-	DynamicStatePipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(DynamicStatePipelineStageBuilder builder) {
+		states.addAll(builder.states);
 	}
 
 	/**

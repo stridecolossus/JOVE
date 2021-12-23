@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,7 +12,6 @@ import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +27,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder.ShaderStageBuilder;
+import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantsTable;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -109,7 +110,7 @@ public class PipelineTest extends AbstractVulkanTest {
 
 			// Build pipeline
 			init();
-			pipeline = builder.cache(cache).build(dev);
+			pipeline = builder.build(cache, dev);
 
 			// Check pipeline
 			assertNotNull(pipeline);
@@ -161,22 +162,7 @@ public class PipelineTest extends AbstractVulkanTest {
 			verify(lib).vkCreateGraphicsPipelines(dev, cache, 1, new VkGraphicsPipelineCreateInfo[]{expected}, null, new Pointer[1]);
 		}
 
-		@Test
-		void buildAll() {
-			// Build pipeline
-			init();
-
-			// Build a second pipeline
-			builder.begin();
-			init();
-
-			// Check builder creates two pipelines
-			final List<Pipeline> pipelines = builder.buildAll(dev);
-			assertNotNull(pipelines);
-			assertEquals(2, pipelines.size());
-		}
-
-		private void addVertexShaderStage() {
+		private void addVertexShaderStage(Pipeline.Builder builder) {
 			builder
 				.shader(VkShaderStage.VERTEX)
 					.shader(mock(Shader.class))
@@ -186,19 +172,19 @@ public class PipelineTest extends AbstractVulkanTest {
 		@Test
 		void buildIncomplete() {
 			// Check empty builder
-			assertThrows(IllegalArgumentException.class, "pipeline layout", () -> builder.build(dev));
+			assertThrows(IllegalArgumentException.class, "pipeline layout", () -> builder.build(null, dev));
 
 			// Add layout
 			builder.layout(layout);
-			assertThrows(IllegalArgumentException.class, "render pass", () -> builder.build(dev));
+			assertThrows(IllegalArgumentException.class, "render pass", () -> builder.build(null, dev));
 
 			// Add render-pass
 			builder.pass(pass);
-			assertThrows(IllegalStateException.class, "vertex shader", () -> builder.build(dev));
+			assertThrows(IllegalStateException.class, "vertex shader", () -> builder.build(null, dev));
 
 			// Add shader
-			addVertexShaderStage();
-			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build(dev));
+			addVertexShaderStage(builder);
+			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build(null, dev));
 
 			// Add viewport stage, should now build successfully
 			builder
@@ -206,7 +192,7 @@ public class PipelineTest extends AbstractVulkanTest {
 					.viewport(viewport)
 					.scissor(viewport)
 					.build()
-				.build(dev);
+				.build(null, dev);
 		}
 
 		@Nested
@@ -226,7 +212,9 @@ public class PipelineTest extends AbstractVulkanTest {
 				stage.shader(shader);
 
 				// Configure constants
-				stage.constants(Map.of(1, 2));
+				final ConstantsTable constants = new ConstantsTable();
+				constants.add(1, 2);
+				stage.constants(constants);
 
 				// Check returns to parent
 				assertEquals(builder, stage.build());
@@ -248,8 +236,8 @@ public class PipelineTest extends AbstractVulkanTest {
 
 			@Test
 			void shaderDuplicateStage() {
-				addVertexShaderStage();
-				assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage());
+				addVertexShaderStage(builder);
+				assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage(builder));
 			}
 		}
 
@@ -258,7 +246,7 @@ public class PipelineTest extends AbstractVulkanTest {
 			@Test
 			void derivative() {
 				init();
-				final Pipeline derivative = builder.derive(pipeline).build(dev);
+				final Pipeline derivative = builder.derive(pipeline).build(null, dev);
 				assertNotNull(derivative);
 				assertTrue(derivative.flags().contains(VkPipelineCreateFlag.DERIVATIVE));
 			}
@@ -274,7 +262,7 @@ public class PipelineTest extends AbstractVulkanTest {
 			void allowDerivatives() {
 				init();
 				builder.allowDerivatives();
-				pipeline = builder.build(dev);
+				pipeline = builder.build(null, dev);
 				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
 			}
 
@@ -285,19 +273,29 @@ public class PipelineTest extends AbstractVulkanTest {
 				builder.allowDerivatives();
 
 				// Derive from this pipeline
-				builder.derive();
+				final Pipeline.Builder derived = builder.derive();
+				assertNotNull(derived);
+				assertNotSame(derived, builder);
 
 				// Check that shaders can be overridden
-				addVertexShaderStage();
+				addVertexShaderStage(derived);
 
 				// Construct pipelines
-				builder.buildAll(dev);
+				final List<Pipeline> pipelines = Pipeline.Builder.build(List.of(builder, derived), null, dev);
+				assertNotNull(pipelines);
+				assertEquals(2, pipelines.size());
+
+				// Check derived pipeline
+				pipeline = pipelines.get(1);
+				assertNotNull(pipeline);
+				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.DERIVATIVE));
 			}
 
 			@Test
 			void deriveCannotFindBasePipeline() {
 				init();
-				assertThrows(IllegalStateException.class, () -> builder.derive());
+				builder.allowDerivatives();
+				assertThrows(IllegalStateException.class, () -> Pipeline.Builder.build(List.of(builder.derive()), null, dev));
 			}
 		}
 	}

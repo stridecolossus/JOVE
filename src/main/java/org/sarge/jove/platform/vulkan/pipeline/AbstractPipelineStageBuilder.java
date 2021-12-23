@@ -7,16 +7,22 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
  * @param <T> Return type
  * @author Sarge
  */
-abstract class AbstractPipelineStageBuilder<T> {
-	private final Builder parent;
+abstract class AbstractPipelineStageBuilder<T, B> {
+	private Builder parent;
 
 	/**
-	 * Constructor.
+	 * Sets the parent builder.
 	 * @param parent Parent builder
 	 */
-	protected AbstractPipelineStageBuilder(Builder parent) {
+	protected void parent(Builder parent) {
 		this.parent = parent;
 	}
+
+	/**
+	 * Clones the properties of this builder.
+	 * @param builder Builder to clone
+	 */
+	abstract void init(B builder);
 
 	/**
 	 * @return Result of this builder

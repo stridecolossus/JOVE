@@ -14,7 +14,7 @@ public class DynamicStatePipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new DynamicStatePipelineStageBuilder(null);
+		builder = new DynamicStatePipelineStageBuilder();
 	}
 
 	@Test

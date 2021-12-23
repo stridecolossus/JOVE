@@ -20,7 +20,7 @@ public class VertexInputPipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new VertexInputPipelineStageBuilder(null);
+		builder = new VertexInputPipelineStageBuilder();
 	}
 
 	@Test

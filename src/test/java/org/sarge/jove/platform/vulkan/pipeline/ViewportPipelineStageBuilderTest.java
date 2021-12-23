@@ -15,7 +15,7 @@ public class ViewportPipelineStageBuilderTest {
 
 	@BeforeEach
 	void before() {
-		builder = new ViewportPipelineStageBuilder(null);
+		builder = new ViewportPipelineStageBuilder();
 		rect = new Rectangle(1, 2, 3, 4);
 	}
 

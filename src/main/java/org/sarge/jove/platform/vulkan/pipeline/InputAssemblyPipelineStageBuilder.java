@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkPipelineInputAssemblyStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
@@ -11,12 +10,14 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @see VkPipelineInputAssemblyStateCreateInfo
  * @author Sarge
  */
-public class InputAssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo> {
+public class InputAssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo, InputAssemblyPipelineStageBuilder> {
 	private VkPrimitiveTopology topology = VkPrimitiveTopology.TRIANGLE_STRIP;
 	private boolean restart;
 
-	InputAssemblyPipelineStageBuilder(Builder parent) {
-		super(parent);
+	@Override
+	void init(InputAssemblyPipelineStageBuilder builder) {
+		topology = builder.topology;
+		restart = builder.restart;
 	}
 
 	/**
