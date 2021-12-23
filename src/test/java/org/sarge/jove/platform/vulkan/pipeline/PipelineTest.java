@@ -281,21 +281,14 @@ public class PipelineTest extends AbstractVulkanTest {
 				addVertexShaderStage(derived);
 
 				// Construct pipelines
-				final List<Pipeline> pipelines = Pipeline.Builder.build(List.of(builder, derived), null, dev);
+				final List<Pipeline> pipelines = Pipeline.Builder.build(List.of(derived), null, dev);
 				assertNotNull(pipelines);
 				assertEquals(2, pipelines.size());
 
 				// Check derived pipeline
-				pipeline = pipelines.get(1);
+				pipeline = pipelines.get(0);
 				assertNotNull(pipeline);
 				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.DERIVATIVE));
-			}
-
-			@Test
-			void deriveCannotFindBasePipeline() {
-				init();
-				builder.allowDerivatives();
-				assertThrows(IllegalStateException.class, () -> Pipeline.Builder.build(List.of(builder.derive()), null, dev));
 			}
 		}
 	}

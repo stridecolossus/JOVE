@@ -5,11 +5,14 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -455,20 +458,27 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @return New pipelines
 		 * @throws IllegalArgumentException if the pipeline layout or render pass have not been specified
 		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader stage has been configured
-		 * @throws IllegalStateException if the base builder for a derived pipeline is not present in the given list
 		 */
 		public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
+			// Include base builders if not already present
+			final List<Builder> list = new ArrayList<>(builders);
+			builders
+					.stream()
+					.map(b -> b.base)
+					.filter(Objects::nonNull)
+					.filter(Predicate.not(list::contains))
+					.forEach(list::add);
+
 			// Init index for derived pipelines
-			for(Builder b : builders) {
+			for(Builder b : list) {
 				if(b.base != null) {
-					b.baseIndex = builders.indexOf(b.base);
-					if(b.baseIndex == -1) throw new IllegalStateException("Base pipeline is not present");
+					b.baseIndex = list.indexOf(b.base);
+					assert b.baseIndex >= 0;
 				}
 			}
-			// TODO - could automatically add base builders?
 
 			// Build array of descriptors
-			final VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(builders, VkGraphicsPipelineCreateInfo::new, Builder::populate);
+			final VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(list, VkGraphicsPipelineCreateInfo::new, Builder::populate);
 
 			// Allocate pipelines
 			final VulkanLibrary lib = dev.library();
@@ -478,7 +488,7 @@ public class Pipeline extends AbstractVulkanObject {
 			// Create pipelines
 			return IntStream
 					.range(0, array.length)
-					.mapToObj(n -> create(handles[n], builders.get(n), dev))
+					.mapToObj(n -> create(handles[n], list.get(n), dev))
 					.collect(toList());
 		}
 
