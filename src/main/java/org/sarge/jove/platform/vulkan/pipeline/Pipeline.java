@@ -262,7 +262,7 @@ public class Pipeline extends AbstractVulkanObject {
 		public Builder derive(Pipeline base) {
 			if(!base.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) throw new IllegalArgumentException("Cannot derive from pipeline: " + base);
 			this.baseHandle = base.handle();
-			derive(this);
+			derivative(this);
 			return this;
 		}
 
@@ -279,7 +279,7 @@ public class Pipeline extends AbstractVulkanObject {
 
 			// Create derived builder
 			final Builder builder = new Builder();
-			derive(builder);
+			derivative(builder);
 			builder.base = this;
 
 			// Clone pipeline properties
@@ -307,7 +307,7 @@ public class Pipeline extends AbstractVulkanObject {
 		/**
 		 * Sets this pipeline as derived.
 		 */
-		private static void derive(Builder builder) {
+		private static void derivative(Builder builder) {
 			builder.flags.add(VkPipelineCreateFlag.DERIVATIVE);
 		}
 

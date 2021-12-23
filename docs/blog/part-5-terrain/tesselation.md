@@ -794,11 +794,308 @@ Finally the update command is added to the render sequence before starting the r
 
 TODO
 
-also wire frame => shared pipelines + action to toggle
+wire frame pipeline
+action to toggle (below)
 
 ---
 
-## Specialisation Constants
+## Pipeline Enhancements
+
+### Derived Pipelines
+
+The wireframe terrain model is useful for visually testing the tesselation shader but we would like to be able to toggle between filled and wireframe modes.  This implies the following new requirements:
+
+1. The _polygon mode_ is a property of the rasterizer pipeline stage which requires _two_ pipelines.
+
+2. However both pipelines will be identical except for the polygon mode, ideally we would prefer to _override_ this property in the builder to avoid having to repeat all the common configuration.
+
+3. Multiple pipelines can be created in one operation (the current implementation is limited to a single pipeline).
+
+4. Additionally Vulkan supports _derivative_ pipelines which provides a hint to the hardware that a derived (or child) pipeline shares common properties with its parent, potentially improving performance when pipelines are instantiated and when switching pipeline bindings in the render sequence.
+
+To support these requirements we will add functionality to the pipeline builder to support derivative pipelines and refactor the existing code to allow properties to be overridden.
+
+A pipeline that allows derivatives (i.e. the parent) is identified by a flag at instantiation-time:
+
+```java
+public static class Builder {
+    private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
+    private Handle baseHandle;
+
+    ...
+
+    public Builder flag(VkPipelineCreateFlag flag) {
+        this.flags.add(flag);
+        return this;
+    }
+    
+    public Builder allowDerivatives() {
+        return flag(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
+    }
+}
+```
+
+A pipeline derived from an _existing_ parent is configured by the following new method:
+
+```java
+public Builder derive(Pipeline base) {
+    if(!base.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) {
+        throw new IllegalArgumentException(...);
+    }
+    baseHandle = base.handle();
+    derivative(this);
+    return this;
+}
+```
+
+Where `derivative` is a trivial helper:
+
+```java
+private static void derivative(Builder builder) {
+    builder.flags.add(VkPipelineCreateFlag.DERIVATIVE);
+}
+```
+
+The base pipeline is populated in the `build` method:
+
+```java
+info.basePipelineHandle = baseHandle;
+```
+
+Note that the set of `flags` is also added to the pipeline domain object.
+
+Vulkan provides a second method to derive a pipeline by _index_ within an array of pipelines created in a single operation.  We first implement a new static factory method to create an array of pipelines:
+
+```java
+public static List<Pipeline> build(List<Builder> builders, DeviceContext dev) {
+    // Build array of descriptors
+    VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(builders, VkGraphicsPipelineCreateInfo::new, Builder::populate);
+
+    // Allocate pipelines
+    VulkanLibrary lib = dev.library();
+    Pointer[] handles = new Pointer[array.length];
+    check(lib.vkCreateGraphicsPipelines(dev, null, array.length, array, null, handles));
+
+    // Create pipelines
+    return IntStream
+        .range(0, array.length)
+        .mapToObj(n -> create(handles[n], list.get(n), dev))
+        .collect(toList());
+}
+```
+
+Where `create` is a local helper to instantiate each pipeline:
+
+```java
+private static Pipeline create(Pointer handle, Builder builder, DeviceContext dev) {
+    return new Pipeline(handle, dev, builder.layout, builder.flags);
+}
+```
+
+And `populate` encapsulates construction of the pipeline descriptor.
+
+The existing `build` method is refactored using the new factory as a convenience for constructing a single pipeline.
+
+Next the pipeline builder is extended to support derivation of a pipeline during construction:
+
+```java
+public static class Builder {
+    private Builder base;
+    private int baseIndex = -1;
+
+    public Builder derive() {
+        // Validate
+        if(!flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) throw new IllegalStateException(...);
+    
+        // Create derived builder
+        Builder builder = new Builder();
+        derivative(builder);
+        builder.base = this;
+        
+        // Clone pipeline properties
+        ...
+        
+        return builder;
+    }
+}
+```
+
+Note that this method creates a __new__ builder for the derivative pipeline with a reference to the its parent.
+
+In the new build method we can populate the `basePipelineIndex` of the pipeline descriptor by looking up the index within the array.  As a convenience we first ensure that the given list of builders also contains the parents:
+
+```java
+public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
+    List<Builder> list = new ArrayList<>(builders);
+    builders
+            .stream()
+            .map(b -> b.base)
+            .filter(Objects::nonNull)
+            .filter(Predicate.not(list::contains))
+            .forEach(list::add);
+            
+    ...
+}
+```
+
+Next the index of the parent is determined for all derived pipelines:
+
+```java
+for(Builder b : list) {
+    if(b.base != null) {
+        b.baseIndex = list.indexOf(b.base);
+        assert b.baseIndex >= 0;
+    }
+}
+```
+
+And finally the index is populated in the descriptor:
+
+```java
+if(base != null) {
+    if(baseHandle != null) throw new IllegalArgumentException(...);
+    assert baseIndex >= 0;
+}
+info.basePipelineHandle = baseHandle;
+info.basePipelineIndex = baseIndex;
+```
+
+Note that the two mechanisms for deriving a pipeline are mutually exclusive.
+
+To allow the properties of a pipeline to be overridden the `derive` method clones from the parent builder:
+
+```java
+public Builder derive() {
+    ...
+    
+    // Clone pipeline properties
+    builder.layout = layout;
+    builder.pass = pass;
+    builder.flags.addAll(flags);
+
+    // Clone pipeline stages
+    for(ShaderStageBuilder b : shaders.values()) {
+        builder.shaders.put(b.stage, new ShaderStageBuilder(b));
+    }
+    builder.input.init(input);
+    builder.assembly.init(assembly);
+    ...
+
+    return builder;
+}
+```
+
+The `init` method is added to the nested pipeline stage builders to clone the configuration.  We are also forced to refactor some of the nested builders that previously operated directly on the underlying Vulkan descriptor to support cloning (since JNA structures cannot easily be cloned).
+
+The pipeline configuration is modified to create two pipelines where the wireframe is derived:
+
+```java
+@Bean
+public List<Pipeline> pipelines(...) {
+    // Init main pipeline
+    var pipeline = new Pipeline.Builder()
+    ...
+
+    // Derive wireframe pipeline
+    var wireframe = pipeline
+        .derive()
+        .rasterizer()
+            .polygon(VkPolygonMode.LINE)
+            .build();
+
+    // Build pipelines
+    return Pipeline.Builder.build(List.of(pipeline, wireframe), dev);
+}
+```
+
+TODO - toggle action, render sequence mod
+
+### Pipeline Cache
+
+A _pipeline cache_ stores the results of pipeline construction and can be reused between pipelines and between runs of an application, allowing the hardware to possibly optimise pipeline construction.  
+
+The domain object is relatively trivial:
+
+```java
+public class PipelineCache extends AbstractVulkanObject {
+    @Override
+    protected Destructor<PipelineCache> destructor(VulkanLibrary lib) {
+        return lib::vkDestroyPipelineCache;
+    }
+}
+```
+
+A cache object is instantiated using a factory method:
+
+```java
+public static PipelineCache create(DeviceContext dev, byte[] data) {
+    // Build create descriptor
+    VkPipelineCacheCreateInfo info = new VkPipelineCacheCreateInfo();
+    if(data != null) {
+        info.initialDataSize = data.length;
+        info.pInitialData = BufferHelper.buffer(data);
+    }
+
+    // Create cache
+    VulkanLibrary lib = dev.library();
+    PointerByReference ref = dev.factory().pointer();
+    check(lib.vkCreatePipelineCache(dev, info, null, ref));
+
+    // Create domain object
+    return new PipelineCache(ref.getValue(), dev);
+}
+```
+
+Where `data` is the previously persisted cache (the data itself is platform specific).
+
+The following method retrieves the cache data after construction of the pipeline (generally before application termination):
+
+```java
+public ByteBuffer data() {
+    DeviceContext dev = super.device();
+    VulkanFunction<ByteBuffer> func = (count, data) -> dev.library().vkGetPipelineCacheData(dev, this, count, data);
+    IntByReference count = dev.factory().integer();
+    return VulkanFunction.invoke(func, count, BufferHelper::allocate);
+}
+```
+
+Caches can also be merged such that a single instance can be reused across multiple pipelines:
+
+```java
+public void merge(Collection<PipelineCache> caches) {
+    DeviceContext dev = super.device();
+    VulkanLibrary lib = dev.library();
+    check(lib.vkMergePipelineCaches(dev, this, caches.size(), NativeObject.array(caches)));
+}
+```
+
+To persist a cache we implement the following simple loader:
+
+```java
+public static class Loader implements ResourceLoader<InputStream, PipelineCache> {
+    private final DeviceContext dev;
+
+    @Override
+    public InputStream map(InputStream in) throws IOException {
+        return in;
+    }
+
+    @Override
+    public PipelineCache load(InputStream in) throws IOException {
+        byte[] data = in.readAllBytes();
+        return create(dev, data);
+    }
+
+    public void write(PipelineCache cache, OutputStream out) throws IOException {
+        byte[] array = BufferHelper.array(cache.data());
+        out.write(array);
+    }
+}
+```
+
+TODO - cache manager, file source helper, integration
+
+### Specialisation Constants
 
 The new shaders contain a number of hard coded parameters (such as the TODO) which would ideally be programatically configured (possibly from a properties file).
 
