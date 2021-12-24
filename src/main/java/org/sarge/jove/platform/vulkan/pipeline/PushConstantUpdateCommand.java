@@ -11,7 +11,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.PushConstantRange;
 import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
@@ -20,7 +19,7 @@ import org.sarge.lib.util.Check;
  * A <i>push update command</i> is used to populate a segment of push constants.
  * @author Sarge
  */
-public class PushUpdateCommand implements Command {
+public class PushConstantUpdateCommand implements Command {
 	/**
 	 * Helper - Creates a data buffer for the whole of the push constants of the given pipeline layout.
 	 * @param layout Pipeline layout
@@ -37,9 +36,9 @@ public class PushUpdateCommand implements Command {
 	 * @return New update command
 	 * @see #data(PipelineLayout)
 	 */
-	public static PushUpdateCommand of(PipelineLayout layout) {
+	public static PushConstantUpdateCommand of(PipelineLayout layout) {
 		final ByteBuffer data = data(layout);
-		return new PushUpdateCommand(layout, 0, data, layout.stages());
+		return new PushConstantUpdateCommand(layout, 0, data, layout.stages());
 	}
 
 	private final PipelineLayout layout;
@@ -57,7 +56,7 @@ public class PushUpdateCommand implements Command {
 	 * @throws IllegalArgumentException if {@link #offset} and {@link #data} buffer are not correctly aligned
 	 * @throws IllegalArgumentException if {@link #stages} is empty or is not a valid subset of the pipeline layout
 	 */
-	public PushUpdateCommand(PipelineLayout layout, int offset, ByteBuffer data, Set<VkShaderStage> stages) {
+	public PushConstantUpdateCommand(PipelineLayout layout, int offset, ByteBuffer data, Set<VkShaderStage> stages) {
 		this.layout = notNull(layout);
 		this.offset = zeroOrMore(offset);
 		this.data = notNull(data);
@@ -101,7 +100,7 @@ public class PushUpdateCommand implements Command {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof PushUpdateCommand that) &&
+				(obj instanceof PushConstantUpdateCommand that) &&
 				(this.layout == that.layout) &&
 				(this.offset == that.offset) &&
 				(this.stages == that.stages) &&
@@ -136,7 +135,7 @@ public class PushUpdateCommand implements Command {
 	 * <li>{@link #data(ByteBuffer, int, int)} specifies an arbitrary <i>slice</i> of a buffer to be used for the command</li>
 	 * <li>{@link #data(ByteBuffer, PushConstantRange)} slices a buffer for the corresponding push constants range</li>
 	 * </ul>
-	 * Note that the convenience {@link PushUpdateCommand#data()} factory method can be used to create a buffer for the push constants of a given layout.
+	 * Note that the convenience {@link PushConstantUpdateCommand#data()} factory method can be used to create a buffer for the push constants of a given layout.
 	 */
 	public static class Builder {
 		private int offset;
@@ -199,11 +198,11 @@ public class PushUpdateCommand implements Command {
 		 * @param layout Pipeline layout
 		 * @return New update command
 		 * @throws IllegalArgumentException if no data buffer has been specified for this update
-		 * @see PushUpdateCommand#PushUpdateCommand(PipelineLayout, int, ByteBuffer, Set)
+		 * @see PushConstantUpdateCommand#PushUpdateCommand(PipelineLayout, int, ByteBuffer, Set)
 		 */
-		public PushUpdateCommand build(PipelineLayout layout) {
+		public PushConstantUpdateCommand build(PipelineLayout layout) {
 			if(data == null) throw new IllegalArgumentException("No data buffer specified");
-			return new PushUpdateCommand(layout, offset, data, stages);
+			return new PushConstantUpdateCommand(layout, offset, data, stages);
 		}
 	}
 }

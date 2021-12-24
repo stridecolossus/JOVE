@@ -8,7 +8,7 @@ During the course of this blog we have implemented the majority of the basic Vul
 
 Later in this section we will also address the complexity caused by the number of objects that are currently required to render each element of a scene (descriptor sets, render sequences, pools, etc) by the introduction of a _scene graph_ and supporting framework.
 
-In this first chapter we will start a new demo to render a terrain model derived from a height-map image, and then implement level of detail (LOD) functionality for the grid mesh using a _tesselation_ shader.  We will also introduce _push constants_ as a more efficient mechanism for uploading data to the hardware, and _specialization constants_ to parameterise the shader configuration.
+In this first chapter we will start a new demo to render a terrain model derived from a height-map image, and then implement level of detail (LOD) functionality for the grid mesh using a _tesselation_ shader.
 
 This will require the following new components:
 
@@ -16,9 +16,17 @@ This will require the following new components:
 
 * The tesselation pipeline stage.
 
-* The addition of push constants to the pipeline layout and a command to update the data.
+* A new method to lookup pixel data from a height-map image.
 
-* A builder for specialisation constants.
+We will also introduce the following supporting features and improvements:
+
+* The addition of _push constants_ as a more efficient mechanism for uploading volatile data to the hardware.
+
+* A builder for _specialisation constants_ to parameterise shader configuration.
+
+* Enhancements to the pipeline builder to support _pipeline derivation_ for similar rendering use-cases.
+
+* A _pipeline cache_ to improve the time taken to create pipelines.
 
 ---
 
@@ -448,7 +456,7 @@ If all goes well we should see something along the lines of this:
 
 ### Overview
 
-We will next introduce _push constants_ as an alternative (and more efficient) means of updating the view matrices.
+We next introduce _push constants_ as an alternative and more efficient means of updating the view matrices.
 
 Push constants are used to send data to shaders with some constraints:
 
@@ -460,7 +468,7 @@ Push constants are used to send data to shaders with some constraints:
 
 ### Push Constant Range
 
-We start with a _push constant range_ which specifies a portion of the push constants and the shaders stages where that data is used:
+We start with a _push constant range_ which specifies a portion of the push constants and the shader stages where that data is used:
 
 ```java
 public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages) {
@@ -515,11 +523,7 @@ public PipelineLayout build(DeviceContext dev) {
 }
 ```
 
-Note that multiple ranges can be specified:
-
-1. This enabled the application to update some or all of the push constants at different shader stages.
-
-2. And also allows the hardware to perform optimisations.
+Note that multiple ranges can be specified which allows the application to update some or all of the push constants at different shader stages and also enables the hardware to perform optimisations.
 
 In the `build` method we also determine the overall size of the push constants and associated shaders stages (which are added to the pipeline layout constructor):
 
@@ -530,6 +534,9 @@ int max = ranges
     .mapToInt(PushConstantRange::length)
     .max()
     .orElse(0);
+
+// Check that overall size is supported by the hardware
+if(max > dev.limits().maxPushConstantsSize) throw new IllegalArgumentException(...);
 
 // Enumerate pipeline stages
 Set<VkShaderStage> stages = ranges
@@ -542,14 +549,16 @@ Set<VkShaderStage> stages = ranges
 return new PipelineLayout(layout.getValue(), dev, max, stages);
 ```
 
-These new properties are used to validate push constant update commands which are addressed next.
+Note that the overall size of the push constants data buffer is validated against the hardware limit which is often quite small (256 bytes on the development environment).
+
+These new properties are also used to validate the push constant update command which is addressed next.
 
 ### Update Command
 
 Push constants are backed by a data buffer and are updated using a new command:
 
 ```java
-public class PushUpdateCommand implements Command {
+public class PushConstantUpdateCommand implements Command {
     private final PipelineLayout layout;
     private final int offset;
     private final ByteBuffer data;
@@ -585,8 +594,8 @@ public static class Builder {
 
     ...
     
-    public PushUpdateCommand build(PipelineLayout layout) {
-        return new PushUpdateCommand(layout, offset, data, stages);
+    public PushConstantUpdateCommand build(PipelineLayout layout) {
+        return new PushConstantUpdateCommand(layout, offset, data, stages);
     }
 }
 ```
@@ -619,9 +628,9 @@ public static ByteBuffer data(PipelineLayout layout) {
 And a second helper to update the entire push constants buffer:
 
 ```java
-public static PushUpdateCommand of(PipelineLayout layout) {
+public static PushConstantUpdateCommand of(PipelineLayout layout) {
     ByteBuffer data = data(layout);
-    return new PushUpdateCommand(layout, 0, data, layout.stages());
+    return new PushConstantUpdateCommand(layout, 0, data, layout.stages());
 }
 ```
 
@@ -698,9 +707,9 @@ public static ByteBuffer buffer(byte[] array) {
 
 Note that direct NIO buffers generally do not support the optional bulk methods.
 
-Existing code that transforms to/from byte buffers is refactored using the new utility methods, e.g. shaders.
+Existing code that transforms to/from byte buffers is refactored using the new utility methods, e.g. shader SPIV code.
 
-As a further convenience for applying updates to push constants (or to uniform buffers) the following method is used to insert data into a buffer:
+As a further convenience for applying updates to push constants (or to uniform buffers) the following method can be used to insert data into a buffer:
 
 ```java
 public static void insert(int index, Bufferable data, ByteBuffer bb) {
@@ -795,6 +804,7 @@ Finally the update command is added to the render sequence before starting the r
 TODO
 
 wire frame pipeline
+requires non-fill app config
 action to toggle (below)
 
 ---
@@ -805,11 +815,11 @@ action to toggle (below)
 
 The wireframe terrain model is useful for visually testing the tesselation shader but we would like to be able to toggle between filled and wireframe modes.  This implies the following new requirements:
 
-1. The _polygon mode_ is a property of the rasterizer pipeline stage which requires _two_ pipelines.
+1. The _polygon mode_ is a property of the rasterizer pipeline stage which means the terrain needs _two_ pipelines.
 
 2. However both pipelines will be identical except for the polygon mode, ideally we would prefer to _override_ this property in the builder to avoid having to repeat all the common configuration.
 
-3. Multiple pipelines can be created in one operation (the current implementation is limited to a single pipeline).
+3. We note that Vulkan supports the creation of multiple pipelines in one operation but the current implementation is limited to a single pipeline.
 
 4. Additionally Vulkan supports _derivative_ pipelines which provides a hint to the hardware that a derived (or child) pipeline shares common properties with its parent, potentially improving performance when pipelines are instantiated and when switching pipeline bindings in the render sequence.
 
@@ -834,6 +844,8 @@ public static class Builder {
     }
 }
 ```
+
+Note that the set of `flags` is also added to the pipeline domain object.
 
 A pipeline derived from an _existing_ parent is configured by the following new method:
 
@@ -862,9 +874,7 @@ The base pipeline is populated in the `build` method:
 info.basePipelineHandle = baseHandle;
 ```
 
-Note that the set of `flags` is also added to the pipeline domain object.
-
-Vulkan provides a second method to derive a pipeline by _index_ within an array of pipelines created in a single operation.  We first implement a new static factory method to create an array of pipelines:
+Vulkan provides a second method to derive a pipeline by _index_ within an array of pipelines created in a single operation.  We first implement a new static factory method to create multiple pipelines:
 
 ```java
 public static List<Pipeline> build(List<Builder> builders, DeviceContext dev) {
@@ -922,7 +932,7 @@ public static class Builder {
 
 Note that this method creates a __new__ builder for the derivative pipeline with a reference to the its parent.
 
-In the new build method we can populate the `basePipelineIndex` of the pipeline descriptor by looking up the index within the array.  As a convenience we first ensure that the given list of builders also contains the parents:
+In the new build method we populate the `basePipelineIndex` in the pipeline descriptor by looking up the index from the array.  As a convenience we first ensure that the given list of builders also contains the parents:
 
 ```java
 public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
@@ -987,7 +997,7 @@ public Builder derive() {
 
 The `init` method is added to the nested pipeline stage builders to clone the configuration.  We are also forced to refactor some of the nested builders that previously operated directly on the underlying Vulkan descriptor to support cloning (since JNA structures cannot easily be cloned).
 
-The pipeline configuration is modified to create two pipelines where the wireframe is derived:
+The pipeline configuration is modified to derive a second wireframe pipeline:
 
 ```java
 @Bean
@@ -1008,7 +1018,7 @@ public List<Pipeline> pipelines(...) {
 }
 ```
 
-TODO - toggle action, render sequence mod
+TODO - toggle action, render sequence mod, changes to builder API
 
 ### Pipeline Cache
 
@@ -1069,7 +1079,16 @@ public void merge(Collection<PipelineCache> caches) {
 }
 ```
 
-To persist a cache we implement the following simple loader:
+Finally we add a new API library for the cache:
+
+```java
+int  vkCreatePipelineCache(DeviceContext device, VkPipelineCacheCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineCache);
+int  vkMergePipelineCaches(DeviceContext device, PipelineCache dstCache, int srcCacheCount, Pointer pSrcCaches);
+int  vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntByReference pDataSize, ByteBuffer pData);
+void vkDestroyPipelineCache(DeviceContext device, PipelineCache cache, Pointer pAllocator);
+```
+
+To persist a cache we implement a simple loader:
 
 ```java
 public static class Loader implements ResourceLoader<InputStream, PipelineCache> {
@@ -1204,7 +1223,7 @@ The constants data is essentially a byte array indexed by the _offset_ of each c
 ```java
 int size = values.stream().mapToInt(Entry::size).sum();
 info.dataSize = size;
-info.pData = BufferWrapper.allocate(size);
+info.pData = BufferHelper.allocate(size);
 values.forEach(e -> e.append(info.pData));
 ```
 
@@ -1249,8 +1268,8 @@ public class ShaderStageBuilder {
     
     ...
     
-    public ShaderStageBuilder constants(Map<Integer, Object> constants) {
-        this.constants.add(constants);
+    public ShaderStageBuilder constants(ConstantsTable constants) {
+        this.constants = notNull(constants);
         return this;
     }
  
@@ -1267,5 +1286,17 @@ TODO - integration example
 
 ## Summary
 
-In this chapter we rendered a terrain grid using tesselation shaders, and implemented push constants and specialisation constants.
+In this chapter we rendered a terrain grid using tesselation shaders which implemented the following:
+
+* A model builder for the terrain grid.
+
+* The tesselation pipeline stage.
+
+* Push constants.
+
+* Derived pipelines.
+
+* A persistent pipeline cache.
+
+* Support for specialisation constants.
 

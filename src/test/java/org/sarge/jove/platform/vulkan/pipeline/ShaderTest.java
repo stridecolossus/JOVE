@@ -82,22 +82,36 @@ public class ShaderTest extends AbstractVulkanTest {
 
 	@Nested
 	class ConstantsTableTest {
-		private ConstantsTable builder;
+		private ConstantsTable table;
 
 		@BeforeEach
 		void before() {
-			builder = new ConstantsTable();
+			table = new ConstantsTable();
+		}
+
+		@Test
+		void add() {
+			table.add(1, 1);
+			table.add(2, 2f);
+			table.add(3, true);
+		}
+
+		@Test
+		void addTable() {
+			final ConstantsTable other = new ConstantsTable();
+			other.add(1, 2);
+			table.add(other);
 		}
 
 		@Test
 		void buildEmpty() {
-			assertNull(builder.build());
+			assertNull(table.build());
 		}
 
 		@Test
 		void build() {
 			// Build constants
-			final VkSpecializationInfo info = builder
+			final VkSpecializationInfo info = table
 					.add(1, 1)
 					.add(2, 2f)
 					.add(3, true)
@@ -127,13 +141,13 @@ public class ShaderTest extends AbstractVulkanTest {
 
 		@Test
 		void buildDuplicateConstant() {
-			builder.add(1, 2);
-			assertThrows(IllegalArgumentException.class, () -> builder.add(1, 2));
+			table.add(1, 2);
+			assertThrows(IllegalArgumentException.class, () -> table.add(1, 2));
 		}
 
 		@Test
 		void buildInvalidConstantType() {
-			assertThrows(IllegalArgumentException.class, () -> builder.add(1, new Object()));
+			assertThrows(IllegalArgumentException.class, () -> table.add(1, new Object()));
 		}
 	}
 }

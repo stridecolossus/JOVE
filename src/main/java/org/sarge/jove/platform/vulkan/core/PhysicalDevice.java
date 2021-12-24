@@ -261,6 +261,7 @@ public class PhysicalDevice implements NativeObject {
 		}
 
 		/**
+		 * The <i>pipeline cache ID</i> is a universally unique identifier for this device.
 		 * @return Pipeline cache ID
 		 */
 		public String cache() {

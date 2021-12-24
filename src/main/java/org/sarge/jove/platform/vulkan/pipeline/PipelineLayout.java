@@ -20,7 +20,6 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
-import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -65,51 +64,6 @@ public class PipelineLayout extends AbstractVulkanObject {
 	@Override
 	protected Destructor<PipelineLayout> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyPipelineLayout;
-	}
-
-	/**
-	 * A <i>push constant range</i> specifies a segment of the push constant buffer that can be used at given pipeline stages.
-	 */
-	public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages) {
-		/**
-		 * Constructor.
-		 * @param offset		Offset (bytes)
-		 * @param size			Size (bytes)
-		 * @param stages		Pipeline shader stage(s) that can access this range
-		 */
-		public PushConstantRange {
-			Check.zeroOrMore(offset);
-			Check.oneOrMore(size);
-			Check.notEmpty(stages);
-			stages = Set.copyOf(stages);
-			validate(offset);
-			validate(size);
-		}
-
-		/**
-		 * Tests that the given offset/size satisfies the alignment rules for push constants.
-		 * TODO - link
-		 * @param size Size/offset
-		 */
-		static void validate(int size) {
-			if((size % 4) != 0) throw new IllegalArgumentException("Push constants offset/size must be multiples of four");
-		}
-
-		/**
-		 * @return Length of this push constant range, i.e. offset + size
-		 */
-		public int length() {
-			return offset + size;
-		}
-
-		/**
-		 * Populates a push constant range descriptor.
-		 */
-		void populate(VkPushConstantRange range) {
-			range.stageFlags = IntegerEnumeration.mask(stages);
-			range.size = size;
-			range.offset = offset;
-		}
 	}
 
 	/**

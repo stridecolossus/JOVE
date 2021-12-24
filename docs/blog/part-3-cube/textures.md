@@ -316,9 +316,11 @@ Notes:
 
 * The _layout_ class is reused to specify the structure of the image data.
 
-* We impose the constraint that all images are assumed to be structured with one byte per channel.
+We impose the following assumptions:
 
-* We also provide a default implementation of an image (not shown).
+* One byte per channel.
+
+* Colour images contain an alpha channel.
 
 The AWT helper is used to load the Java image:
 
@@ -336,8 +338,8 @@ Next the Vulkan layout for the image is determined from the type of image (faili
 
 ```java
 String components = switch(image.getType()) {
-    case TYPE_BYTE_GRAY -> "RRR1";
-    case TYPE_4BYTE_ABGR, TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> "ABGR";
+    case TYPE_BYTE_GRAY -> "R";
+    case TYPE_4BYTE_ABGR, TYPE_BYTE_INDEXED -> "ABGR";
     default -> throw new RuntimeException(...);
 };
 ```
@@ -354,10 +356,7 @@ The image properties are next extracted from the Java image:
 ```java
 Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
 Layout layout = new Layout(components, Byte.class, 1, false);
-Bufferable data = switch(image.getType()) {
-    case TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> alpha(bytes, size.area());
-    default -> Bufferable.of(bytes);
-};
+Bufferable data = Bufferable.of(bytes);
 ```
 
 And finally the image domain object is instantiated:
@@ -366,7 +365,7 @@ And finally the image domain object is instantiated:
 return new DefaultImageData(new Extents(size), components, layout, 0, levels, Bufferable.of(data));
 ```
 
-For the default case of an image that already contains an alpha channel the image data array is wrapped by a new factory method:
+The bufferable object for the image data buffer is a wrapper for the underlying array:
 
 ```java
 static Bufferable of(byte[] bytes) {
@@ -384,7 +383,7 @@ static Bufferable of(byte[] bytes) {
 }
 ```
 
-Which delegates to another helper to write a byte-array to a buffer:
+Which delegates to another helper to write the array to an NIO buffer:
 
 ```java
 static void write(byte[] bytes, ByteBuffer bb) {
@@ -396,23 +395,6 @@ static void write(byte[] bytes, ByteBuffer bb) {
     else {
         bb.put(bytes);
     }
-}
-```
-
-Vulkan requires all colour images to have an alpha channel whereas native images are not necessarily transparent.  Adding an alpha channel proved to be somewhat harder than anticipated, the Java library does not seem to provide a mechanism to simply attach a new channel.  We could redraw the image into a `TYPE_4BYTE_ABGR` image which would do the job but is pretty nasty (and slow).  Instead we opted for the simpler if uglier approach of injected an alpha channel on demand:
-
-```java
-private static byte[] alpha(byte[] bytes, int size) {
-    byte[] result = new byte[bytes.length + size];
-    int index = 0;
-    for(int n = 0; n < bytes.length; n += 3) {
-        result[index++] = Byte.MAX_VALUE;
-        result[index++] = bytes[n];
-        result[index++] = bytes[n + 1];
-        result[index++] = bytes[n + 2];
-    }
-    assert index == result.length;
-    return result;
 }
 ```
 
@@ -1085,7 +1067,7 @@ new Barrier.Builder()
 The component mapping is determined from the image by the new helper:
 
 ```java
-VkComponentMapping mapping = new ComponentMapping(image.components()).build();
+VkComponentMapping mapping = ComponentMapping.of(image.components());
 ```
 
 This swizzles the `ABGR` channels of the native image to the `RGBA` default expected by Vulkan.

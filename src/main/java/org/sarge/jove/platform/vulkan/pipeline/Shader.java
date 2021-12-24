@@ -195,10 +195,23 @@ public class Shader extends AbstractVulkanObject {
 		 * Adds a map of constants.
 		 * @param map Constants map indexed by ID
 		 * @see #add(int, Object)
+		 * @throws IllegalArgumentException for a duplicate constant ID
+		 * @throws IllegalArgumentException for an invalid constant type
 		 */
 		public ConstantsTable add(Map<Integer, Object> map) {
 			for(var entry : map.entrySet()) {
 				add(entry.getKey(), entry.getValue());
+			}
+			return this;
+		}
+
+		/**
+		 * Merges the given constants into this table.
+		 * @param table Constants to add
+		 */
+		public ConstantsTable add(ConstantsTable table) {
+			for(Entry entry : table.map.values()) {
+				add(entry.id, entry.value);
 			}
 			return this;
 		}
