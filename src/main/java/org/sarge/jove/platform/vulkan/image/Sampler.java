@@ -113,9 +113,6 @@ public class Sampler extends AbstractVulkanObject {
 			wrap(VkSamplerAddressMode.REPEAT);
 			border(VkBorderColor.FLOAT_TRANSPARENT_BLACK);
 			unnormalizedCoordinates(false);
-
-			// TODO
-			info.compareOp = VkCompareOp.NEVER;
 		}
 
 		/**
@@ -227,7 +224,6 @@ public class Sampler extends AbstractVulkanObject {
 		 */
 		public Builder compare(VkCompareOp op) {
 			info.compareOp = notNull(op);
-			info.compareEnable = VulkanBoolean.TRUE;
 			return this;
 		}
 
@@ -247,10 +243,20 @@ public class Sampler extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the minimum LOD is greater-than the maximum LOD
 		 */
 		public Sampler build(LogicalDevice dev) {
+			// Validate
 			if(info.minLod > info.maxLod) throw new IllegalArgumentException("Invalid min/max LOD");
+
+			// Enable comparisons as required
+			if(info.compareOp != null) {
+				info.compareEnable = VulkanBoolean.TRUE;
+			}
+
+			// Instantiate sampler
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference handle = dev.factory().pointer();
 			check(lib.vkCreateSampler(dev, info, null, handle));
+
+			// Create domain object
 			return new Sampler(handle.getValue(), dev);
 		}
 	}

@@ -55,15 +55,16 @@ public class GridBuilder {
 		}
 
 		/**
-		 * Creates a height function based on a height-map image (i.e. equivalent to a texture sampler).
+		 * Creates a function that looks up values from the given height-map image.
 		 * @param size			Grid dimensions
 		 * @param image 		Image
 		 * @param component		Component channel index for height values
+		 * @param scale			Height scalar
 		 * @return Image height function
 		 * @throws IllegalArgumentException if the component index is invalid for the given image
 		 * @see ImageData#pixel(int, int, int)
 		 */
-		static HeightFunction heightmap(Dimensions size, ImageData image, int component) {
+		static HeightFunction heightmap(Dimensions size, ImageData image, int component, float scale) {
 			// Validate
 			Check.zeroOrMore(component);
 			if(component >= image.components().length()) throw new IllegalArgumentException(String.format("Invalid component index: component=%d image=%s", component, image));
@@ -73,14 +74,14 @@ public class GridBuilder {
 			final float w = dim.width() / size.width();
 			final float h = dim.height() / size.height();
 
-			// Calculate height scalar
-			final float scale = 1 / (float) MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
+			// Calculate height normalisation scalar
+			final float normalize = scale / MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
 
 			// Create function
 			return (row, col) -> {
 				final int x = (int) (col * w);
 				final int y = (int) (row * h);
-				return image.pixel(x, y, component) * scale * 2.5f;
+				return image.pixel(x, y, component) * normalize;
 			};
 		}
 	}

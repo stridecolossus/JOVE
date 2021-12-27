@@ -139,7 +139,7 @@ public class SamplerTest extends AbstractVulkanTest {
 					assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, info.borderColor);
 					assertEquals(VulkanBoolean.FALSE, info.anisotropyEnable);
 					assertEquals(1f, info.maxAnisotropy);
-					assertEquals(null, info.compareEnable);		// TODO - dodgy?
+					assertEquals(null, info.compareEnable);
 					assertEquals(null, info.compareOp);
 					assertEquals(VulkanBoolean.FALSE, info.unnormalizedCoordinates);
 					return true;

@@ -92,7 +92,7 @@ class CameraTest {
 		final Matrix rot = new Matrix.Builder()
 				.identity()
 				.row(0, Vector.X)
-				.row(1, Vector.Y.invert())
+				.row(1, Vector.Y)
 				.row(2, Vector.Z)
 				.build();
 

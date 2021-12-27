@@ -71,20 +71,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * @param rect Viewport rectangle
 	 */
 	public ViewportPipelineStageBuilder viewport(Rectangle rect) {
-		return viewport(rect, false);
-	}
-
-	/**
-	 * Helper - Adds a viewport rectangle with default min/max depth and optionally a scissor with the same dimensions.
-	 * @param rect 			Viewport rectangle
-	 * @param scissor		Whether to add a scissor
-	 */
-	public ViewportPipelineStageBuilder viewport(Rectangle rect, boolean scissor) {
-		viewport(rect, Percentile.ZERO, Percentile.ONE);
-		if(scissor) {
-			scissor(rect);
-		}
-		return this;
+		return viewport(rect, Percentile.ZERO, Percentile.ONE);
 	}
 
 	/**
@@ -93,6 +80,16 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 */
 	public ViewportPipelineStageBuilder scissor(Rectangle rect) {
 		scissors.add(notNull(rect));
+		return this;
+	}
+
+	/**
+	 * Convenience helper to add a viewport rectangle with default min/max depth <b>and</b> a scissor with the same dimensions.
+	 * @param rect Viewport/scissor rectangle
+	 */
+	public ViewportPipelineStageBuilder viewportScissor(Rectangle rect) {
+		viewport(rect);
+		scissor(rect);
 		return this;
 	}
 

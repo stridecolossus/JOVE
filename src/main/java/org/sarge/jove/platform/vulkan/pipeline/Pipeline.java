@@ -17,7 +17,6 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.VkBufferMemoryBarrier;
 import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
 import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
@@ -337,15 +336,6 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public ViewportPipelineStageBuilder viewport() {
 			return viewport;
-		}
-
-		/**
-		 * Helper - Configures a single viewport and scissor with the given rectangle.
-		 * @param rect Viewport/scissor rectangle
-		 */
-		public Builder viewport(Rectangle rect) {
-			viewport.viewport(rect, true);
-			return this;
 		}
 
 		/**

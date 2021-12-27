@@ -62,8 +62,6 @@ class GridBuilderTest {
 		assertEquals(Primitive.PATCH, model.primitive());
 		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
 		assertEquals(true, model.isIndexed());
-
-		//model.vertices().forEach(System.out::println);
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")
@@ -91,18 +89,18 @@ class GridBuilderTest {
 			when(image.pixel(2, 2, 1)).thenReturn(65535);
 
 			// Create height-map function
-			final HeightFunction function = HeightFunction.heightmap(new Dimensions(4, 4), image, 1);
+			final HeightFunction function = HeightFunction.heightmap(new Dimensions(4, 4), image, 1, 2);
 			assertNotNull(function);
 
 			// Check grid coordinates are mapped to the height-map
-			assertEquals(1, function.height(1, 1));
+			assertEquals(2, function.height(1, 1));
 		}
 
 		@Test
 		void imageInvalidComponentIndex() {
 			final ImageData image = mock(ImageData.class);
 			when(image.components()).thenReturn(StringUtils.EMPTY);
-			assertThrows(IllegalArgumentException.class, () -> HeightFunction.heightmap(new Dimensions(4, 4), image, 0));
+			assertThrows(IllegalArgumentException.class, () -> HeightFunction.heightmap(new Dimensions(4, 4), image, 0, 1));
 		}
 	}
 }

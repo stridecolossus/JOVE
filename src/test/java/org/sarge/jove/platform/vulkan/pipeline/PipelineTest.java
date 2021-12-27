@@ -97,7 +97,9 @@ public class PipelineTest extends AbstractVulkanTest {
 			builder
 					.layout(layout)
 					.pass(pass)
-					.viewport(viewport)
+					.viewport()
+						.viewportScissor(viewport)
+						.build()
 					.shader(VkShaderStage.VERTEX)
 						.shader(mock(Shader.class))
 						.build();

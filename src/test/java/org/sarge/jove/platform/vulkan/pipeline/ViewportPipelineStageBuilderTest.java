@@ -52,8 +52,8 @@ public class ViewportPipelineStageBuilderTest {
 	}
 
 	@Test
-	void viewportAndScissor() {
-		final var descriptor = builder.viewport(rect, true).get();
+	void viewportScissor() {
+		final var descriptor = builder.viewportScissor(rect).get();
 		assertEquals(1, descriptor.scissorCount);
 	}
 
