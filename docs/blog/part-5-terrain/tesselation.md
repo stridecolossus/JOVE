@@ -32,7 +32,7 @@ We will also introduce the following supporting features and improvements:
 
 ### Grid Builder
 
-Before we introduce tesselation we will first render a static terrain model.
+Before we introduce tesselation we will first render a static terrain model as a baseline for the demo application.
 
 We start with a new model builder that constructs a _grid_ of _quads_ in the X-Z plane:
 
@@ -163,7 +163,7 @@ public interface IndexFactory {
 }
 ```
 
-This interface is implemented in a new helper class to generate an index for a list of triangles:
+This interface is implemented in a new helper class to generate an index for a _list_ of triangles:
 
 ```java
 public final class Triangle {
@@ -177,7 +177,7 @@ public final class Triangle {
 }
 ```
 
-Note that the generated index is comprised of two counter-clockwise triangles per quad.
+Note that the generated index is comprised of two counter-clockwise triangles per quad (similar to the cube demo).
 
 A triangle _strip_ has a slightly different implementation:
 
@@ -197,9 +197,9 @@ public static final IndexFactory INDEX_STRIP = new IndexFactory() {
 };
 ```
 
-Here we override the default `strip` method to also append the final two indices of the triangle strip in the same manner as we did way back in the [Cube Demo](/JOVE/blog/part-3-cube/textures) chapter.  We refactor the cube builder to use the new factory.
+Here the default `strip` method is overridden to append the final two indices of the triangle strip in the same manner as we did way back in the [Cube Demo](/JOVE/blog/part-3-cube/textures) chapter.  
 
-Finally the primitive enumeration is modified to provide an index factory:
+Finally the primitive enumeration is modified to provide an index factory where appropriate:
 
 ```java
 public enum Primitive {
@@ -232,10 +232,10 @@ Note that the setter for the _index_ property of the builder accept a `null` val
 The builder first initialises the grid model:
 
 ```java
-MutableModel model = new MutableModel(primitive, List.of(Component.POSITION, Component.COORDINATE));
+MutableModel model = new MutableModel(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 ```
 
-The model vertices and index are then generated for the above use cases as follows:
+The index is then generated for the above use cases as follows:
 
 ```java
 if(index == null) {
@@ -282,10 +282,11 @@ The height-map function is created using a new factory method:
  * @param size          Grid dimensions
  * @param image         Image
  * @param component     Component channel index for height values
+ * @param scale         Height scalar
  * @return Image height function
  * @throws IllegalArgumentException if the component index is invalid for the given image
  */
-static HeightFunction heightmap(Dimensions size, ImageData image, int component) {
+static HeightFunction heightmap(Dimensions size, ImageData image, int component, float scale) {
 }
 ```
 
@@ -297,10 +298,10 @@ float w = dim.width() / size.width();
 float h = dim.height() / size.height();
 ```
 
-Next the `scale` normalises pixel values to a 0..1 height coordinate:
+Next a scalar is calculated to normalise and scale the pixel values:
 
 ```java
-float scale = 1 / (float) MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
+float normalise = scale / MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
 ```
 
 Where `unsignedMaximum` calculates the maximum unsigned integer value for a given number of bits:
@@ -317,7 +318,7 @@ Finally the pixel coordinate is calculated and the method delegates to a new `pi
 return (row, col) -> {
     int x = (int) (col * w);
     int y = (int) (row * h);
-    return image.pixel(x, y, component) * scale;
+    return image.pixel(x, y, component) * normalise;
 };
 ```
 
@@ -362,11 +363,13 @@ In the new application we retain the following from the previous skybox demo:
 
 * The orbital camera controller.
 
-* The uniform buffer for the matrices.
+* The uniform buffer for the three matrices.
 
-* The rendering pipeline, descriptor sets and render sequence for the model.
+* The rendering pipeline and render sequence for the model.
 
-Next we create the terrain model:
+* The descriptor sets for the texture sampler.
+
+First we create the terrain grid:
 
 ```java
 @Bean
@@ -394,67 +397,35 @@ public static Model model(ImageData heightmap) {
 }
 ```
 
-The height-map image is either gray-scale (i.e. a single colour channel) or an RGBA image.  Note that in either case the height function uses the __first__ channel of the image.
-
-
-
-
-
-
-
-
-
-The fragment shader is replaced with following GLSL code to generate a colour based on the `height` of a fragment:
+Finally we change the fragment shader to also sample the height-map image:
 
 ```glsl
 #version 450
 
-layout(location = 0) in vec2 fragCoords;
-layout(location = 1) in float height;
-
-layout(location = 0) out vec4 outColour;
+layout(binding=0) uniform sampler2D heightMap;
+layout(location=0) in vec2 inCoord;
+layout(location=0) out vec4 outColour;
 
 void main() {
-    const vec4 green = vec4(0.2, 0.5, 0.1, 1.0);
-    const vec4 brown = vec4(0.6, 0.5, 0.2, 1.0);
-    const vec4 white = vec4(1.0);
-    
-    vec4 col = mix(green, brown, smoothstep(0.0, 0.4, height));
-    outColour = mix(col, white, smoothstep(0.6, 0.9, height));
+    outColour = texture(heightMap, inCoord).r;
 }
 ```
 
-This should render lower vertices as green, progressing to brown as the height increases, and white for the highest values (this code is based on the example in the Vulkan Cookbook).
+The sampler is modified to clamp texture coordinates:
 
-The _height_ is an output of the vertex shader:
-
-```glsl
-#version 450
-
-layout(binding = 1) uniform UniformBuffer {
-    mat4 model;
-    mat4 view;
-    mat4 projection;
-} ubo;
-
-layout(location = 0) in vec3 pos;
-layout(location = 1) in vec2 coord;
-
-layout(location = 0) out vec2 outCoord;
-layout(location = 1) out float height;
-
-void main() {
-    gl_Position = proj * view * model * vec4(pos, 1.0);
-    outCoord = coord;
-    height = pos.y;
+```java
+public Sampler sampler() {
+    return new Sampler.Builder()
+        .wrap(VkSamplerAddressMode.CLAMP_TO_EDGE)
+        .build(dev);
 }
 ```
 
-Note that we pass through the texture coordinates of the grid but these are unused for the moment.
+The demo should produce something along the lines of the following:
 
-If all goes well we should see something along the lines of this:
+![Static Terrain](terrain.grid.png)
 
-![Terrain Grid](terrain.grid.png)
+Note that height-map image is either a gray-scale (i.e. single colour channel) or an RGBA image, in either case the height function and sampler select the __first__ channel of the image (which is why the terrain is red in the image above).
 
 ---
 
@@ -641,114 +612,6 @@ public static PushConstantUpdateCommand of(PipelineLayout layout) {
 }
 ```
 
-### Buffer Helper
-
-To populate the data buffer for the push constants we take the opportunity to implement a new helper utility for managing NIO buffers.
-
-A __direct__ byte buffer is allocated as follows:
-
-```java
-public final class BufferHelper {
-    /**
-     * Native byte order for a bufferable object.
-     */
-    public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
-
-    private BufferHelper() {
-    }
-
-    /**
-     * Allocates a <b>direct</b> byte buffer of the given length with {@link #NATIVE_ORDER}.
-     * @param len Buffer length
-     * @return New byte buffer
-     */
-    public static ByteBuffer allocate(int len) {
-        return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
-    }
-}
-```
-
-A byte array can be written to a buffer:
-
-```java
-public static void write(byte[] array, ByteBuffer bb) {
-    if(bb.isDirect()) {
-        for(byte b : array) {
-            bb.put(b);
-        }
-    }
-    else {
-        bb.put(array);
-    }
-}
-```
-
-The utility class also supports conversion of an NIO buffer to a byte array:
-
-```java
-public static byte[] array(ByteBuffer bb) {
-    if(bb.isDirect()) {
-        bb.rewind();
-        int len = bb.limit();
-        byte[] bytes = new byte[len];
-        for(int n = 0; n < len; ++n) {
-            bytes[n] = bb.get();
-        }
-        return bytes;
-    }
-    else {
-        return bb.array();
-    }
-}
-```
-
-And the reverse operation to wrap an array with a buffer:
-
-```java
-public static ByteBuffer buffer(byte[] array) {
-    ByteBuffer bb = allocate(array.length);
-    write(array, bb);
-    return bb;
-}
-```
-
-Note that direct NIO buffers generally do not support the optional bulk methods.
-
-Existing code that transforms to/from byte buffers is refactored using the new utility methods, e.g. shader SPIV code.
-
-As a further convenience for applying updates to push constants (or to uniform buffers) the following method can be used to insert data into a buffer:
-
-```java
-public static void insert(int index, Bufferable data, ByteBuffer bb) {
-    int pos = index * data.length();
-    bb.position(pos);
-    data.buffer(bb);
-}
-```
-
-This is useful for buffers that are essentially an 'array' of some type of bufferable object (which we use below).
-
-Finally in the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
-
-```java
-static Bufferable of(Structure struct) {
-    return new Bufferable() {
-        @Override
-        public int length() {
-            return struct.size();
-        }
-
-        @Override
-        public void buffer(ByteBuffer bb) {
-            byte[] array = struct.getPointer().getByteArray(0, struct.size());
-            BufferHelper.write(array, bb);
-        }
-    };
-}
-```
-
-This allows arbitrary JNA structures to be used to populate push constants or a uniform buffer which will become useful in later chapters.
-
 ### Integration
 
 To use the push constants in the demo application the uniform buffer is first replaced with the following layout declaration in the vertex shader:
@@ -784,20 +647,17 @@ public static PushUpdateCommand update(PipelineLayout layout) {
 }
 ```
 
-In the camera configuration the new helper class is used to update the matrix data in the push constants:
+In the camera configuration the push constants are updated once per frame:
 
 ```java
 @Bean
 public Task matrix(PushUpdateCommand update) {
-    // Init projection matrix
     ByteBuffer data = update.data();
-    BufferHelper.insert(2, projection, data);
-
-    // Update modelview matrix
     return () -> {
         data.rewind();
-        Rotation.matrix(rot).buffer(data);
+        Matrix.IDENTITY.buffer(data);
         cam.matrix().buffer(data);
+        projection.buffer(data);
     };
 }
 ```
@@ -822,27 +682,24 @@ In the pipeline this is comprised of three stages:
 
 Note that tesselation is an optional pipeline stage, i.e. the tesselator is enabled when the pipeline contains both shaders.
 
-In the demo we will generate a low-polygon terrain model and employ LOD tesselation to increase the number of vertices dependant on the distance to the camera.  
+In the demo we will generate a low-polygon terrain model and employ LOD tesselation to increase the number of vertices dependant on the distance to the camera.
 
 ### Terrain Model
 
-The terrain model is a grid of _patches_ with an index specifying each quad of the terrain.  Note that the model contains just the texture coordinates since these essentially represent both the position _and_ the coordinate of each vertex used in the control shader.
+The terrain model is a grid of _patches_ with an index specifying each quad of the terrain.
 
 The existing grid builder does not require any modifications, the only changes needed are the addition of the `PATCH` primitive and an index factory that generates a quad-strip:
 
 ```java
 public final class Quad {
-    public static final IndexFactory STRIP = (int n, int count) -> {
+    public static final IndexFactory STRIP = (n, count) -> {
         int next = n + count + 1;
         return IntStream.of(n, next, next + 1, n + 1);
     };
 }
 ```
 
-TODO - cover texture coordinates here???
-TODO - strip vertices???
-
-The model configuration class is modified to generate a grid with quad control points:
+The model configuration class is modified to generate a grid of patches with quad control points:
 
 ```java
 public static Model model() {
@@ -852,6 +709,24 @@ public static Model model() {
         .primitive(Primitive.PATCH)
         .index(Quad.STRIP)
         .build();
+}
+```
+
+Note that the height function is removed so patch vertices will have a Y (or height value) of zero.
+
+The vertex shader is now largely relegated to passing through the geometry to the tesselation stages:
+
+```glsl
+#version 450
+
+layout(location=0) in vec3 inPosition;
+layout(location=1) in vec2 inCoord;
+
+layout(location=0) out vec2 outCoord;
+
+void main() {
+    gl_Position = vec4(inPosition, 1.0);
+    outCoord = inCoord;
 }
 ```
 
@@ -868,7 +743,7 @@ layout(location=0) in vec2 inCoord[];
 
 layout(vertices=4) out;
 
-layout(location=0) out vec2 outCoord[];
+layout(location=0) out vec2 outCoord[4];
 
 void main() {
     if(gl_InvocationID == 0) {
@@ -889,7 +764,7 @@ Notes:
 
 * The `layout(vertices=4) out` declaration specifies the number of control points to be processed by the shader (a quad in this case).
 
-* Since the shader is executed once per vertex it is common practice to the wrap the calculation of the tesselation levels in the conditional statement using the built-in GLSL `gl_InvocationID` variable.
+* Note that this shader is executed for each vertex but the tesselation levels only need to be calculated once per primitive.  It is common practice to the wrap the calculation of the tesselation levels in the conditional statement using the built-in GLSL `gl_InvocationID` variable.
 
 Configuration of the tesselation stage in the pipeline is very trivial:
 
@@ -921,17 +796,17 @@ public class TesselationPipelineStageBuilder ... {
 
 ### Evaluation Shader
 
-The tesselation evaluation shader is executed for each primitive generated by the tesselator and is where the magic happens.
+After the fixed function tesselator stage has generated the geometry the evaluation shader is executed to transform each vertex of the tesselated primitives.
 
-For the terrain demo the shader implementation comprises the following steps:
+For the terrain demo the shader implementation will perform the following:
 
-1. Interpolate the position and texture coordinate of each tesselated quad vertex.
+1. Interpolate the position and texture coordinate of the tesselated vertex.
 
-2. Sample the height-map to determine the height of each vertex.
+2. Sample the height-map to determine the height of the vertex.
 
 3. Apply perspective projection.
 
-Note that obviously for this first attempt (with tesselation essentially disabled) the interpolation should simply copy the incoming quads.
+Note that obviously for this first attempt (with tesselation essentially disabled) the results of the interpolation should simply map one-to-one to the grid vertices.
 
 The shader starts with a layout declaration that specifies the structure of the incoming geometry generated by the previous stages:
 
@@ -941,7 +816,7 @@ layout(quads, equal_spacing, ccw) in;
 
 This layout specifies that each patch is a quad with a counter-clockwise winding order (matching the index factory used above).  The purpose of the spacing argument is documented in [Tesselator Spacing](https://www.khronos.org/registry/vulkan/specs/1.0-wsi_extensions/html/chap22.html#tessellation-tessellator-spacing).
 
-Next the shader defines the required resources and the input/output data:
+Next the shader declares the required resources and the input/output data:
 
 ```glsl
 layout(location=0) in vec2 inCoords[];
@@ -960,32 +835,31 @@ layout(location=1) out vec2 outCoord;
 
 Note that the incoming texture coordinates are an _array_ of the four vertices of each quad.
 
-The shader uses the `mix` function to interpolate the texture coordinate in each direction:
+The shader first interpolates the texture coordinate across the top and bottom edges of the quad:
 
 ```glsl
 void main() {
-vec2 coords1 = mix(inCoords[0], inCoords[3], gl_TessCoord.x);
-vec2 coords2 = mix(inCoords[1], inCoords[2], gl_TessCoord.x);
+vec2 coords1 = mix(inCoords[1], inCoords[0], gl_TessCoord.x);
+vec2 coords2 = mix(inCoords[2], inCoords[3], gl_TessCoord.x);
+```
+
+The `mix` function performs the interpolation according to the built-in `gl_TessCoord` texture coordinate generated by the tesselator.
+
+These values are then interpolated again in the other direction to calculate the final texture coordinate:
+
+```glsl
 vec2 coord = mix(coords1, coords2, gl_TessCoord.y);
 ```
 
-And similarly for the vertex position:
+The vertex position is interpolated similarly but in this case using the built-in `gl_in` positions array generated by the tesselator.
 
-```glsl
-vec4 pos1 = mix(gl_in[0].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x);
-vec4 pos2 = mix(gl_in[1].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
-vec4 pos = mix(pos1, pos2, gl_TessCoord.y);
-```
-
-The height of each vertex is sampled from the height-map:
+The height of each vertex is then sampled from the red channel of the height-map (as we did previously):
 
 ```glsl
 pos.y +=texture(heightMap, coord).r * 2.5;
 ```
 
-Note that the height is sampled from the red channel of the texture and scaled.
-
-And finally we apply perspective projection and output the vertex data:
+And finally the shader applies perspective projection and outputs the resultant vertex:
 
 ```glsl
 gl_Position = projection * view * model * pos;
@@ -1000,7 +874,7 @@ The complete evaluation shader is as follows:
 
 layout(quads, equal_spacing, ccw) in;
 
-layout(location=0) in vec2 inCoords[];
+layout(location=0) in vec2 inCoord[];
 
 layout(set=0, binding=0) uniform sampler2D heightMap;
 
@@ -1010,53 +884,29 @@ layout(push_constant) uniform Matrices {
     mat4 projection;
 };
 
-layout(location=0) out vec3 outPosition;
-layout(location=1) out vec2 outCoord;
+layout(location=0) out vec2 outCoord;
 
 void main() {
-    // Interpolate texture coordinates
-    vec2 coords1 = mix(inCoords[0], inCoords[3], gl_TessCoord.x);
-    vec2 coords2 = mix(inCoords[1], inCoords[2], gl_TessCoord.x);
+    // Interpolate texture coordinate
+    vec2 coords1 = mix(inCoord[1], inCoord[0], gl_TessCoord.x);
+    vec2 coords2 = mix(inCoord[2], inCoord[3], gl_TessCoord.x);
     vec2 coord = mix(coords1, coords2, gl_TessCoord.y);
-    
-    // Interpolate positions
-    vec4 pos1 = mix(gl_in[0].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x);
-    vec4 pos2 = mix(gl_in[1].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
+
+    // Interpolate position
+    vec4 pos1 = mix(gl_in[1].gl_Position, gl_in[0].gl_Position, gl_TessCoord.x);
+    vec4 pos2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x);
     vec4 pos = mix(pos1, pos2, gl_TessCoord.y);
 
     // Lookup vertex height
     pos.y += texture(heightMap, coord).r * 2.5;
 
-    // Apply perspective projection
+    // Output vertex
     gl_Position = projection * view * model * pos;
-    outPosition = pos.xyz;
     outCoord = coord;
 }
 ```
 
 ### Integration
-
-The vertex shader is now largely relegated to passing through the geometry to the later stages:
-
-```glsl
-#version 450
-
-layout(location=0) in vec3 inPosition;
-layout(location=1) in vec2 inCoord;
-
-layout(location=0) out vec2 outCoord;
-
-void main() {
-    gl_Position = vec4(inPosition, 1.0);
-    outCoord = inCoord;
-}
-```
-
-Notes:
-
-* The pipeline layout is configured to make the push constants available to the tesselation evaluation stage.
-
-* The fragment shader is the same as the previous iteration.
 
 The pipeline configuration is modified to include the two new shaders and the tesselation stage:
 
@@ -1082,16 +932,6 @@ public Pipeline pipeline(...) {
 
 The rasterizer stage is also configured to render the geometry as a wire-frame which should help to diagnose how well (or not) the tesselation shaders are working.  Note that this requires the `fillModeNonSolid` device feature to be enabled.
 
-TODO - needed?
-
-```java
-public Sampler sampler() {
-    return new Sampler.Builder()
-        .wrap(VkSamplerAddressMode.CLAMP_TO_EDGE)
-        .build(dev);
-}
-```
-
 The binding for the sampler is configured to be available to the relevant pipelines stages:
 
 ```java
@@ -1099,17 +939,37 @@ public class DescriptorConfiguration {
     private final Binding samplerBinding = new Binding.Builder()
         .binding(0)
         .type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
+        .stage(VkShaderStage.TESSELLATION_CONTROL)
         .stage(VkShaderStage.TESSELLATION_EVALUATION)
         .stage(VkShaderStage.FRAGMENT)
         .build();
 }
 ```
 
-TODO - model transform since not origin aligned, needs to be flipped?
-TODO - pic
-TODO - problems
+Finally the pipeline layout is configured to make the push constants available to the tesselation evaluation stage only.
+
+The fragment shader is the same as the previous iteration.
+
+If all goes well the demo should render the same terrain as the previous iteration but as a wire-frame:
+
+![Wireframe Terrain](terrain.wireframe.png)
+
+However there is plenty going on behind the scenes when using tesselation shaders with several failure cases:
+
+* The configuration of the grid is unfortunately replicated in several locations but has to match in all the following cases:
+    * The drawing primitive and index factory used to generate the model.
+    * The number of control points specified in the configuration pipeline stages (4 for quads).
+    * And the layout declaration in the evaluation shader.
+
+* Similarly the primitive winding order is:
+    * Implicit in the index factory for the quad strip.
+    * Explicitly declared in the layout of the evaluation shader.
+    * And dictates the interpolation logic for the vertices.
+
+* The RenderDoc debugger (see below) can be very useful here to inspect the vertex data generated by the tesselator.
 
 ### Level of Detail
+
 
 
 TODO
@@ -1119,6 +979,8 @@ requires non-fill app config
 action to toggle (below)
 primitive order is platform specific
 winding order issue?
+
+This should render lower vertices as green, progressing to brown as the height increases, and white for the highest values (this code is based on the example in the Vulkan Cookbook).
 
 ---
 

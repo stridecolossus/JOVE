@@ -23,7 +23,7 @@ public final class Quad {
 	/**
 	 * Index factory for quad strip with counter-clockwise winding order.
 	 */
-	public static final IndexFactory STRIP = (int n, int count) -> {
+	public static final IndexFactory STRIP = (n, count) -> {
 		final int next = n + count + 1;
 		return IntStream.of(n, next, next + 1, n + 1);
 	};

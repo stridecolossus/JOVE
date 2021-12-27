@@ -75,13 +75,13 @@ public class GridBuilder {
 			final float h = dim.height() / size.height();
 
 			// Calculate height normalisation scalar
-			final float normalize = scale / MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
+			final float normalise = scale / MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
 
 			// Create function
 			return (row, col) -> {
 				final int x = (int) (col * w);
 				final int y = (int) (row * h);
-				return image.pixel(x, y, component) * normalize;
+				return image.pixel(x, y, component) * normalise;
 			};
 		}
 	}
@@ -180,7 +180,7 @@ public class GridBuilder {
 				// TODO - normals from height function
 
 				// Calculate texture coordinate
-				final Coordinate coord = new Coordinate2D((float) col / (w-1), (float) row / (h-1));
+				final Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 
 				// Add grid vertex
 				final Vertex vertex = new Vertex(pos, coord);
