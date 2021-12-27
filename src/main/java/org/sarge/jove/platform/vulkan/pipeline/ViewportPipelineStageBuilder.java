@@ -33,7 +33,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	private final List<Viewport> viewports = new ArrayList<>();
 	private final List<Rectangle> scissors = new ArrayList<>();
 
-	private boolean flip = true;
+	private boolean flip; // = true;
 
 	@Override
 	void init(ViewportPipelineStageBuilder builder) {

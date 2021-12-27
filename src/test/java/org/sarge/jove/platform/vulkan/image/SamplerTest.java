@@ -122,7 +122,31 @@ public class SamplerTest extends AbstractVulkanTest {
 
 		@Test
 		void buildDefaults() {
+			final VkSamplerCreateInfo expected = new VkSamplerCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final VkSamplerCreateInfo info = (VkSamplerCreateInfo) obj;
+					assertNotNull(info);
+					assertEquals(VkFilter.LINEAR, info.minFilter);
+					assertEquals(VkFilter.LINEAR, info.magFilter);
+					assertEquals(VkSamplerMipmapMode.LINEAR, info.mipmapMode);
+					assertEquals(0f, info.mipLodBias);
+					assertEquals(0f, info.minLod);
+					assertEquals(1000f, info.maxLod);
+					assertEquals(VkSamplerAddressMode.REPEAT, info.addressModeU);
+					assertEquals(VkSamplerAddressMode.REPEAT, info.addressModeV);
+					assertEquals(VkSamplerAddressMode.REPEAT, info.addressModeW);
+					assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, info.borderColor);
+					assertEquals(VulkanBoolean.FALSE, info.anisotropyEnable);
+					assertEquals(1f, info.maxAnisotropy);
+					assertEquals(null, info.compareEnable);		// TODO - dodgy?
+					assertEquals(null, info.compareOp);
+					assertEquals(VulkanBoolean.FALSE, info.unnormalizedCoordinates);
+					return true;
+				}
+			};
 			assertNotNull(builder.build(dev));
+			verify(lib).vkCreateSampler(dev, expected, null, POINTER);
 		}
 
 		@Test

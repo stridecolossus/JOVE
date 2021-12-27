@@ -28,18 +28,9 @@ class GridBuilderTest {
 		builder = new GridBuilder();
 	}
 
-	@DisplayName("Create a simple grid with no index factory applied (points)")
-	@Test
-	void buildNotIndexed() {
-		final Model model = builder.tile(new Dimensions(1, 2)).scale(3).primitive(Primitive.POINTS).index(null).build();
-		assertNotNull(model);
-		assertEquals(4 * 4, model.count());
-		assertEquals(false, model.isIndexed());
-	}
-
 	@DisplayName("Create an unindexed grid with duplicate vertices (delegates to the index factory of the primitive")
 	@Test
-	void buildDefault() {
+	void build() {
 		final Model model = builder.build();
 		assertNotNull(model);
 		assertEquals(Primitive.TRIANGLES, model.primitive());
@@ -47,15 +38,32 @@ class GridBuilderTest {
 		assertEquals(false, model.isIndexed());
 	}
 
+	@DisplayName("Create a simple grid with no index factory applied (points)")
+	@Test
+	void buildNotIndexed() {
+		final MutableModel model = builder
+				.tile(new Dimensions(1, 2))
+				.scale(3)
+				.primitive(Primitive.POINTS)
+				.index(null)
+				.build();
+
+		assertNotNull(model);
+		assertEquals(4 * 4, model.count());
+		assertEquals(false, model.isIndexed());
+	}
+
 	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
 	@Test
 	void buildQuadStrip() {
-		final Model model = builder.primitive(Primitive.PATCH).index(Quad.STRIP).build();
+		final MutableModel model = builder.primitive(Primitive.PATCH).index(Quad.STRIP).build();
 		assertNotNull(model);
 		assertEquals((3 * 3) * 4, model.count());
 		assertEquals(Primitive.PATCH, model.primitive());
 		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
 		assertEquals(true, model.isIndexed());
+
+		//model.vertices().forEach(System.out::println);
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")

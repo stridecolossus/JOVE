@@ -43,7 +43,7 @@ public class GridBuilder {
 		 * @param col Column
 		 * @return Height
 		 */
-		float height(int x, int y);
+		float height(int row, int col);
 
 		/**
 		 * Creates a height function that returns a literal height for all tiles.
@@ -80,7 +80,7 @@ public class GridBuilder {
 			return (row, col) -> {
 				final int x = (int) (col * w);
 				final int y = (int) (row * h);
-				return image.pixel(x, y, component) * scale;
+				return image.pixel(x, y, component) * scale * 2.5f;
 			};
 		}
 	}
@@ -173,13 +173,13 @@ public class GridBuilder {
 				// Determine grid position and height
 				final float x = col * tile.width() * scale - dx;
 				final float z = row * tile.height() * scale - dz;
-				final float y = height.height(col, row);
+				final float y = height.height(row, col);
 				final Point pos = new Point(x, y, z);
 
 				// TODO - normals from height function
 
 				// Calculate texture coordinate
-				final Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
+				final Coordinate coord = new Coordinate2D((float) col / (w-1), (float) row / (h-1));
 
 				// Add grid vertex
 				final Vertex vertex = new Vertex(pos, coord);

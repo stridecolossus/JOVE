@@ -113,6 +113,9 @@ public class Sampler extends AbstractVulkanObject {
 			wrap(VkSamplerAddressMode.REPEAT);
 			border(VkBorderColor.FLOAT_TRANSPARENT_BLACK);
 			unnormalizedCoordinates(false);
+
+			// TODO
+			info.compareOp = VkCompareOp.NEVER;
 		}
 
 		/**
@@ -214,12 +217,12 @@ public class Sampler extends AbstractVulkanObject {
 		 */
 		public Builder anisotropy(float anisotropy) {
 			info.maxAnisotropy = oneOrMore(anisotropy);
-			info.anisotropyEnable = VulkanBoolean.TRUE;
+			info.anisotropyEnable = VulkanBoolean.of(anisotropy > 1);
 			return this;
 		}
 
 		/**
-		 * Sets and enabled the comparison operation (default is {@link VkCompareOp#NEVER}).
+		 * Sets and enables the comparison operation (default is {@link VkCompareOp#NEVER}).
 		 * @param op Comparison operation
 		 */
 		public Builder compare(VkCompareOp op) {

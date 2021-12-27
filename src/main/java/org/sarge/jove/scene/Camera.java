@@ -135,6 +135,7 @@ public class Camera {
 		if(dirty) {
 			update();
 			dirty = false;
+//System.out.println(pos+" "+dir);
 		}
 		return matrix;
 	}
@@ -149,7 +150,8 @@ public class Camera {
 
 		// Determine up axis
 		// TODO - tutorial has dir.cross(right), Y is inverted, add global flip flag here as well?  Note cannot invert UP axis?
-		final Vector y = right.cross(dir).normalize();
+//		final Vector y = right.cross(dir).normalize();
+		final Vector y = dir.cross(right).normalize();
 
 		// Build translation component
 		final Matrix trans = Matrix.translation(new Vector(pos).invert());
