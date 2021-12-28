@@ -18,13 +18,13 @@ This will require the following new components:
 
 We will also introduce the following supporting features and improvements:
 
-* The addition of _push constants_ as a more efficient mechanism for uploading volatile data to the hardware.
-
 * A builder for _specialisation constants_ to parameterise shader configuration.
 
 * Enhancements to the pipeline builder to support _pipeline derivation_ for similar rendering use-cases.
 
 * A _pipeline cache_ to improve the time taken to create pipelines.
+
+This shader code in this chapter is heavily based on the Vulkan Cookbook and the [Vulkan Samples](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/api/terrain_tessellation) example.
 
 ---
 
@@ -429,246 +429,9 @@ Note that height-map image is either a gray-scale (i.e. single colour channel) o
 
 ---
 
-## Push Constants
-
-### Overview
-
-We next introduce _push constants_ as an alternative and more efficient means of updating the view matrices.
-
-Push constants are used to send data to shaders with some constraints:
-
-* The maximum amount of data is usually relatively small (specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure).
-
-* Push constants are updated and stored within the command buffer itself.
-
-* Push constants have alignment restrictions, see [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
-
-### Push Constant Range
-
-We start with a _push constant range_ which specifies a portion of the push constants and the shader stages where that data is used:
-
-```java
-public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages) {
-    public int length() {
-        return offset + size;
-    }
-
-    void populate(VkPushConstantRange range) {
-        range.stageFlags = IntegerEnumeration.mask(stages);
-        range.size = size;
-        range.offset = offset;
-    }
-}
-```
-
-The _offset_ and _size_ of a push constant range must be a multiple of four bytes which is validated in the constructor:
-
-```java
-public PushConstantRange {
-    ...
-    validate(offset);
-    validate(size);
-}
-
-static void validate(int size) {
-    if((size % 4) != 0) throw new IllegalArgumentException(...);
-}
-```
-
-The builder for the pipeline layout is modified to include a list of push constant ranges:
-
-```java
-public static class Builder {
-    ...
-    private final List<PushConstantRange> ranges = new ArrayList<>();
-
-    public Builder add(PushConstantRange range) {
-        ranges.add(range);
-        return this;
-    }
-}
-```
-
-The ranges are populated in the usual manner:
-
-```java
-public PipelineLayout build(DeviceContext dev) {
-    ...
-    info.pushConstantRangeCount = ranges.size();
-    info.pPushConstantRanges = StructureHelper.first(ranges, VkPushConstantRange::new, PushConstantRange::populate);
-    ...
-}
-```
-
-Note that multiple ranges can be specified which allows the application to update some or all of the push constants at different shader stages and also enables the hardware to perform optimisations.
-
-In the `build` method we also determine the overall size of the push constants and associated shaders stages (which are added to the pipeline layout constructor):
-
-```java
-// Determine overall size of the push constants data
-int max = ranges
-    .stream()
-    .mapToInt(PushConstantRange::length)
-    .max()
-    .orElse(0);
-
-// Check that overall size is supported by the hardware
-if(max > dev.limits().maxPushConstantsSize) throw new IllegalArgumentException(...);
-
-// Enumerate pipeline stages
-Set<VkShaderStage> stages = ranges
-    .stream()
-    .map(PushConstantRange::stages)
-    .flatMap(Set::stream)
-    .collect(toSet());
-
-// Create layout
-return new PipelineLayout(layout.getValue(), dev, max, stages);
-```
-
-Note that the size of the data buffer is validated against the hardware limit which is often quite small (256 bytes on the development environment).
-
-These new properties are also used to validate the push constant update command which is addressed next.
-
-### Update Command
-
-
-Push constants are backed by a data buffer updated using a new command:
-
-```java
-public class PushConstantUpdateCommand implements Command {
-    private final PipelineLayout layout;
-    private final int offset;
-    private final ByteBuffer data;
-    private final int stages;
-
-    @Override
-    public void execute(VulkanLibrary lib, Buffer buffer) {
-        data.rewind();
-        lib.vkCmdPushConstants(buffer, layout, stages, offset, data.limit(), data);
-    }
-}
-```
-
-Notes:
-
-* The data buffer is rewound before updates are applied, generally Vulkan seems to automatically rewind buffers as required (e.g. for updating the uniform buffer) but not in this case.
-
-* The constructor applies validation (not shown) to verify alignments, buffer sizes, etc.
-
-The new API method is added to the library for the pipeline layout:
-
-```java
-void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, ByteBuffer pValues);
-```
-
-The constructor is public but we also provide a builder:
-
-```java
-public static class Builder {
-    private int offset;
-    private ByteBuffer data;
-    private final Set<VkShaderStage> stages = new HashSet<>();
-
-    ...
-    
-    public PushConstantUpdateCommand build(PipelineLayout layout) {
-        return new PushConstantUpdateCommand(layout, offset, data, stages);
-    }
-}
-```
-
-We provide builder methods to update all the push constants or an arbitrary _slice_ of the backing data buffer:
-
-```java
-public Builder data(ByteBuffer data, int offset, int size) {
-    this.data = data.slice(offset, size);
-    return this;
-}
-```
-
-And the following convenience method to update a slice specified by a corresponding range:
-
-```java
-public Builder data(ByteBuffer data, PushConstantRange range) {
-    return data(data, range.offset(), range.size());
-}
-```
-
-Finally we add a convenience factory method to create a backing buffer appropriate to the pipeline layout:
-
-```java
-public static ByteBuffer data(PipelineLayout layout) {
-    return BufferHelper.allocate(layout.max());
-}
-```
-
-And a second helper to update the entire buffer:
-
-```java
-public static PushConstantUpdateCommand of(PipelineLayout layout) {
-    ByteBuffer data = data(layout);
-    return new PushConstantUpdateCommand(layout, 0, data, layout.stages());
-}
-```
-
-### Integration
-
-To use the push constants in the demo application the uniform buffer is first replaced with the following layout declaration in the vertex shader:
-
-```glsl
-layout(push_constant) uniform Matrices {
-    mat4 model;
-    mat4 view;
-    mat4 projection;
-};
-```
-
-In the pipeline configuration we remove the uniform buffer and replace it with a single push constant range sized to the three matrices:
-
-```java
-@Bean
-PipelineLayout layout(DescriptorLayout layout) {
-    int len = 3 * Matrix.IDENTITY.length();
-
-    return new PipelineLayout.Builder()
-        .add(layout)
-        .add(new PushConstantRange(0, len, Set.of(VkShaderStage.VERTEX)))
-        .build(dev);
-}
-```
-
-Next we create a command to update the whole of the push constants buffer:
-
-```java
-@Bean
-public static PushUpdateCommand update(PipelineLayout layout) {
-    return PushUpdateCommand.of(layout);
-}
-```
-
-In the camera configuration the push constants are updated once per frame:
-
-```java
-@Bean
-public Task matrix(PushUpdateCommand update) {
-    ByteBuffer data = update.data();
-    return () -> {
-        data.rewind();
-        Matrix.IDENTITY.buffer(data);
-        cam.matrix().buffer(data);
-        projection.buffer(data);
-    };
-}
-```
-
-Finally the update command is added to the render sequence before starting the render pass.
-
----
-
 ## Tesselation
 
-### Introduction
+### Overview
 
 Tesselation is the process of generating drawing primitives from an arbitrary geometric object known as a _patch_ which is comprised of a number of _control points_.
 
@@ -764,7 +527,7 @@ Notes:
 
 * The `layout(vertices=4) out` declaration specifies the number of control points to be processed by the shader (a quad in this case).
 
-* Note that this shader is executed for each vertex but the tesselation levels only need to be calculated once per primitive.  It is common practice to the wrap the calculation of the tesselation levels in the conditional statement using the built-in GLSL `gl_InvocationID` variable.
+* Note that this shader is executed for each vertex but the tesselation levels are generally only calculated once per primitive.  It is common practice to the wrap the calculation of the tesselation levels in the conditional statement using the built-in GLSL `gl_InvocationID` variable.
 
 Configuration of the tesselation stage in the pipeline is very trivial:
 
@@ -823,7 +586,7 @@ layout(location=0) in vec2 inCoords[];
 
 layout(set=0, binding=0) uniform sampler2D heightMap;
 
-layout(push_constant) uniform Matrices {
+layout(set=0, binding=1) uniform UniformBuffer {
     mat4 model;
     mat4 view;
     mat4 projection;
@@ -835,15 +598,23 @@ layout(location=1) out vec2 outCoord;
 
 Note that the incoming texture coordinates are an _array_ of the four vertices of each quad.
 
-The shader first interpolates the texture coordinate across the top and bottom edges of the quad:
+The shader first interpolates the texture coordinate along the left and right-hand edges of each quad.  The indices in the terrain model have a counter-clockwise winding order, so for a quad with the following vertices and index:
+
+```
+A - B   0 - 3   
+| / |   | / |   
+C - D   1 - 2   
+```
+
+The left edge is AC and the right-hand is BD when viewed from above the terrain (i.e. the negative Y direction).  To ensure the resultant vertices have the correct winding order the interpolation is performed in the negative Z direction.  The two edges therefore map to to indices 1,0 and 2,3 respectively.
+
+The `mix` function performs this interpolation parametrised by the built-in `gl_TessCoord` texture coordinate generated by the tesselator.
 
 ```glsl
 void main() {
 vec2 coords1 = mix(inCoords[1], inCoords[0], gl_TessCoord.x);
 vec2 coords2 = mix(inCoords[2], inCoords[3], gl_TessCoord.x);
 ```
-
-The `mix` function performs the interpolation according to the built-in `gl_TessCoord` texture coordinate generated by the tesselator.
 
 These values are then interpolated again in the other direction to calculate the final texture coordinate:
 
@@ -878,7 +649,7 @@ layout(location=0) in vec2 inCoord[];
 
 layout(set=0, binding=0) uniform sampler2D heightMap;
 
-layout(push_constant) uniform Matrices {
+layout(set=0, binding=1) uniform UniformBuffer {
     mat4 model;
     mat4 view;
     mat4 projection;
@@ -946,7 +717,7 @@ public class DescriptorConfiguration {
 }
 ```
 
-Finally the pipeline layout is configured to make the push constants available to the tesselation evaluation stage only.
+Finally the pipeline layout is configured to make the uniform buffer available to the tesselation evaluation stage only.
 
 The fragment shader is the same as the previous iteration.
 
@@ -956,31 +727,87 @@ If all goes well the demo should render the same terrain as the previous iterati
 
 However there is plenty going on behind the scenes when using tesselation shaders with several failure cases:
 
-* The configuration of the grid is unfortunately replicated in several locations but has to match in all the following cases:
-    * The drawing primitive and index factory used to generate the model.
-    * The number of control points specified in the configuration pipeline stages (4 for quads).
-    * And the layout declaration in the evaluation shader.
+The configuration of the grid is spread across several locations which must all correspond:
+    1. The number of control points is specified in the tesselation pipeline stage (4 for quads).
+    2. Which must obviously match the drawing primitive and index factory used to generate the terrain model.
+    3. And the `quads` layout declaration in the evaluation shader.
 
-* Similarly the primitive winding order is:
-    * Implicit in the index factory for the quad strip.
-    * Explicitly declared in the layout of the evaluation shader.
-    * And dictates the interpolation logic for the vertices.
+Similarly the primitive winding order is:
+    1. Implicit in the index factory for the quad strip (counter-clockwise).
+    2. Explicitly declared by the `ccw` property of the layout for the evaluation shader.
+    3. And dictates the interpolation logic for the vertices (as illustrated above).
 
-* The RenderDoc debugger (see below) can be very useful here to inspect the vertex data generated by the tesselator.
+The RenderDoc debugger (see below) can be very useful here to inspect the vertex data generated by the tesselator.  We also used the fake texture coordinate trick used in the [Textures](JOVE/blog/part-3-cube/textures) chapter to test the generated vertex data.
 
 ### Level of Detail
 
+The final step is to calculate the LOD tesselation levels for each quad to increase the number of vertices as the model nears the camera.
 
+Within the conditional statement the control shader first samples the height for each vertex and then calculates the __squared__ distance from the camera:
 
-TODO
+```glsl
+float distance[4];
+for(int n = 0; n < 4; ++n) {
+    float h = texture(heightMap, inCoord[n]).r;
+    vec4 pos = view * model * (gl_in[gl_InvocationID].gl_Position + vec4(0.0, h, 0.0, 0.0));
+    distance[n] = dot(pos, pos);
+}
+```
 
-wire frame pipeline
-requires non-fill app config
-action to toggle (below)
-primitive order is platform specific
-winding order issue?
+Note this requires the shader to have access to the sampler and the uniform buffer.
 
-This should render lower vertices as green, progressing to brown as the height increases, and white for the highest values (this code is based on the example in the Vulkan Cookbook).
+Next the _outer_ tesselation levels for each _edge_ of the quad are calculated as follows:
+
+```glsl
+gl_TessLevelOuter[0] = factor(distance[3], distance[0]);
+gl_TessLevelOuter[1] = factor(distance[0], distance[1]);
+gl_TessLevelOuter[2] = factor(distance[1], distance[2]);
+gl_TessLevelOuter[3] = factor(distance[2], distance[3]);
+```
+
+Where `factor` is a simple helper method:
+
+```glsl
+float factor(float a, float b) {
+    float dist = min(a, b);
+    return max(1.0, 20.0 - dist);
+}
+```
+
+Since we want the tesselation factor to increase with decreasing distance we need to invert the calculated factor.  The hard-coded value of 20 exaggerates the tesselation for the demo, a real-world terrain shader would use a much more subtle formula.
+
+The _inner_ tesselation levels are then interpolated from the outer levels:
+
+```glsl
+gl_TessLevelInner[0] = mix(gl_TessLevelOuter[0], gl_TessLevelOuter[3], 0.5);
+gl_TessLevelInner[1] = mix(gl_TessLevelOuter[2], gl_TessLevelOuter[1], 0.5);
+```
+
+With the wireframe pipeline still in place the demo should now render an increasing polygon count for the parts of the terrain that are closer to the camera:
+
+![Tesselated Terrain](terrain.tesselated.png)
+
+As a final aesthetic change the fragment shader is modified to generate a colour dependant on the height of each vertex:
+
+```glsl
+void main() {
+    const vec4 green = vec4(0.2, 0.5, 0.1, 1.0);
+    const vec4 brown = vec4(0.6, 0.5, 0.2, 1.0);
+    const vec4 white = vec4(1.0);
+
+    float height = texture(heightMap, inCoord).r;
+    vec4 col = mix(green, brown, smoothstep(0.0, 0.4, height));
+    outColour = mix(col, white, smoothstep(0.6, 0.9, height));
+}
+```
+
+This should render lower vertices as green, progressing to brown as the height increases, and white for the highest values (based on the example in the Vulkan Cookbook).
+
+Although the effect of the tesselation is less visible without the wireframe the filled terrain (with an exaggerated height scale) looks something like this:
+
+![Tesselated Terrain Filled](terrain.filled.png)
+
+Note that the shader code presented in this chapter is just about the simplest implementation to illustrate tesselation, there are many improvements that could be made to improve rendering quality and performance.  In particular the filled terrain model will exhibit gaps due to adjacent triangles having different tesselation levels.
 
 ---
 
@@ -1289,11 +1116,11 @@ TODO - cache manager, file source helper, integration
 
 ### Specialisation Constants
 
-The new shaders contain a number of hard coded parameters (such as the TODO) which would ideally be programatically configured (possibly from a properties file).
+The new shaders contain a number of hard coded parameters (such as the tesselation factor and height scalar) which would ideally be programatically configured (possibly from a properties file).
 
-Additionally we would like to centralise common or shared parameters to avoid hard-coding the same information in multiple locations or having to replicate shaders with different parameters.
+Additionally in general we would like to centralise common or shared parameters to avoid hard-coding the same information in multiple locations or having to replicate shaders with different parameters.
 
-Vulkan provides _specialisation constants_ for these requirements which can be used to parameterise a shader when it is instantiated.
+Vulkan provides _specialisation constants_ for these requirements which are be used to parameterise a shader when it is instantiated.
 
 The set of specialisation constants is created via a new builder in the shader class:
 
@@ -1397,7 +1224,9 @@ The constants data is essentially a byte array indexed by the _offset_ of each c
 int size = values.stream().mapToInt(Entry::size).sum();
 info.dataSize = size;
 info.pData = BufferHelper.allocate(size);
-values.forEach(e -> e.append(info.pData));
+for(Entry entry : values) {
+    entry.append(info.pData);
+}
 ```
 
 Where `append` adds each constant to the data buffer:
@@ -1453,7 +1282,37 @@ public class ShaderStageBuilder {
 }
 ```
 
-TODO - integration example
+For example in the evaluation shader we can replace the hard-coded height scale with the following constant declaration:
+
+```glsl
+layout(constant_id=1) const float HeightScale = 2.5;
+```
+
+Note that the constant also has a default value if it is not explicitly configured by the application.
+
+The set of constants used in both tesselation shaders is initialised in the pipeline configuration class:
+
+```java
+class PipelineConfiguration {
+    ...
+    private final ConstantsTable constants = new ConstantsTable();
+
+    public PipelineConfiguration(...) {
+        ...
+        constants.add(0, 20f);
+        constants.add(1, 2.5f);
+    }
+}
+```
+
+Finally the shaders are parameterised when the pipeline is constructed, for example:
+
+```java
+shader(VkShaderStage.TESSELLATION_EVALUATION)
+    .shader(evaluation)
+    .constants(constants)
+    .build()
+```
 
 ### Render Doc
 
@@ -1479,13 +1338,11 @@ Notes:
 
 ## Summary
 
-In this chapter we rendered a terrain grid using tesselation shaders which implemented the following:
+In this chapter we rendered a terrain grid using tesselation shaders by implementation of the following:
 
 * A model builder for the terrain grid.
 
 * The tesselation pipeline stage.
-
-* Push constants.
 
 * Derived pipelines.
 

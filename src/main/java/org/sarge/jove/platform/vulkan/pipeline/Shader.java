@@ -93,8 +93,9 @@ public class Shader extends AbstractVulkanObject {
 
 	/**
 	 * A <i>constants table</i> is a mutable set of <i>specialisation constants</i> for a shader.
+	 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#pipelines-specialization-constants">Vulkan documentation</a>
 	 */
-	static class ConstantsTable {
+	public static class ConstantsTable {
 		/**
 		 * Constant table entry.
 		 */
@@ -236,7 +237,9 @@ public class Shader extends AbstractVulkanObject {
 			final int size = values.stream().mapToInt(Entry::size).sum();
 			info.dataSize = size;
 			info.pData = BufferHelper.allocate(size);
-			values.forEach(e -> e.append(info.pData));
+			for(Entry entry : values) {
+				entry.append(info.pData);
+			}
 
 			return info;
 		}
