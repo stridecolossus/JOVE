@@ -1,14 +1,15 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
@@ -20,7 +21,6 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.StructureHelper;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -92,30 +92,40 @@ public class Shader extends AbstractVulkanObject {
 	}
 
 	/**
-	 * A <i>constants table</i> is a mutable set of <i>specialisation constants</i> for a shader.
-	 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#pipelines-specialization-constants">Vulkan documentation</a>
+	 * Constructs the descriptor for the given specialisation constants.
+	 * @param constants Specialisation constants indexed by ID
+	 * @return Specialisation constants descriptor or {@code null} if empty
 	 */
-	public static class ConstantsTable {
-		/**
-		 * Constant table entry.
-		 */
-		private record Entry(int id, Object value, int offset) {
-			/**
-			 * Constructor.
-			 * @param id			Constant ID
-			 * @param value			Value
-			 * @param offset		Offset
-			 */
-			public Entry {
-				Check.zeroOrMore(id);
-				Check.notNull(value);
-				assert offset >= 0;
+	public static VkSpecializationInfo constants(Map<Integer, Object> constants) {
+		// Skip if empty
+		if(constants.isEmpty()) {
+			return null;
+		}
+
+		// Table entry
+		class Constant {
+			private final int id;
+			private final Object value;
+			private final int size;
+			private int offset;
+
+			private Constant(Entry<Integer, Object> entry) {
+				this.id = entry.getKey();
+				this.value = entry.getValue();
+				this.size = size();
 			}
 
 			/**
-			 * Determines the size of the value.
-			 * @param value Value
-			 * @return Constant size (bytes)
+			 * Populates the descriptor for this constant.
+			 */
+			private void populate(VkSpecializationMapEntry entry) {
+				entry.constantID = id;
+				entry.offset = offset;
+				entry.size = size;
+			}
+
+			/**
+			 * @return Size of this constant (bytes)
 			 */
 			private int size() {
 				if(value instanceof Integer) {
@@ -130,34 +140,25 @@ public class Shader extends AbstractVulkanObject {
 					return Integer.BYTES;
 				}
 				else {
-					throw new IllegalArgumentException("Invalid constant type: " + value.getClass().getName());
+					throw new IllegalArgumentException("Invalid constant type: " + value.getClass());
 				}
 			}
 
 			/**
-			 * Populates a map entry.
+			 * Adds this constant to the data buffer.
 			 */
-			private void populate(VkSpecializationMapEntry entry) {
-				entry.constantID = id;
-				entry.offset = offset;
-				entry.size = size();
-			}
-
-			/**
-			 * Populates the data buffer.
-			 */
-			private void append(ByteBuffer bb) {
+			private void append(ByteBuffer buffer) {
 				if(value instanceof Integer n) {
-					bb.putInt(n);
+					buffer.putInt(n);
 				}
 				else
 				if(value instanceof Float f) {
-					bb.putFloat(f);
+					buffer.putFloat(f);
 				}
 				else
 				if(value instanceof Boolean b) {
 					final VulkanBoolean bool = VulkanBoolean.of(b);
-					bb.putInt(bool.toInteger());
+					buffer.putInt(bool.toInteger());
 				}
 				else {
 					assert false;
@@ -165,84 +166,29 @@ public class Shader extends AbstractVulkanObject {
 			}
 		}
 
-		private final Map<Integer, Entry> map = new HashMap<>();
-		private int offset;
+		// Convert to table of constants
+		final List<Constant> table = constants.entrySet().stream().map(Constant::new).collect(toList());
 
-		/**
-		 * Adds a specialisation constant.
-		 * @param id		Constant ID
-		 * @param value		Value
-		 * @throws IllegalArgumentException for a duplicate constant ID
-		 * @throws IllegalArgumentException for an invalid constant type
-		 */
-		public ConstantsTable add(int id, Object value) {
-			// Validate
-			Check.zeroOrMore(id);
-			Check.notNull(value);
-			if(map.containsKey(id)) throw new IllegalArgumentException("Duplicate constant: id=" + id);
-
-			// Create transient entry
-			final Entry entry = new Entry(id, value, offset);
-			map.put(id, entry);
-
-			// Increment offset (also validates constant type)
-			final int size = entry.size();
-			offset += size;
-
-			return this;
+		// Patch offsets and calculate total size
+		int size = 0;
+		for(Constant e : table) {
+			e.offset = size;
+			size += e.size;
 		}
 
-		/**
-		 * Adds a map of constants.
-		 * @param map Constants map indexed by ID
-		 * @see #add(int, Object)
-		 * @throws IllegalArgumentException for a duplicate constant ID
-		 * @throws IllegalArgumentException for an invalid constant type
-		 */
-		public ConstantsTable add(Map<Integer, Object> map) {
-			for(var entry : map.entrySet()) {
-				add(entry.getKey(), entry.getValue());
-			}
-			return this;
+		// Populate map entries
+		final var info = new VkSpecializationInfo();
+		info.mapEntryCount = constants.size();
+		info.pMapEntries = StructureHelper.pointer(table, VkSpecializationMapEntry::new, Constant::populate);
+
+		// Populate constant data
+		info.dataSize = size;
+		info.pData = BufferHelper.allocate(size);
+		for(Constant entry : table) {
+			entry.append(info.pData);
 		}
 
-		/**
-		 * Merges the given constants into this table.
-		 * @param table Constants to add
-		 */
-		public ConstantsTable add(ConstantsTable table) {
-			for(Entry entry : table.map.values()) {
-				add(entry.id, entry.value);
-			}
-			return this;
-		}
-
-		/**
-		 * Creates the descriptor for this table.
-		 * @return Specialisation constants descriptor or {@code null} if empty
-		 */
-		VkSpecializationInfo build() {
-			// Ignore if no constants
-			if(map.isEmpty()) {
-				return null;
-			}
-
-			// Populate map entries
-			final var info = new VkSpecializationInfo();
-			final Collection<Entry> values = map.values();
-			info.mapEntryCount = map.size();
-			info.pMapEntries = StructureHelper.first(values, VkSpecializationMapEntry::new, Entry::populate);
-
-			// Populate constant data
-			final int size = values.stream().mapToInt(Entry::size).sum();
-			info.dataSize = size;
-			info.pData = BufferHelper.allocate(size);
-			for(Entry entry : values) {
-				entry.append(info.pData);
-			}
-
-			return info;
-		}
+		return info;
 	}
 
 	/**

@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -11,6 +10,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -18,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
 import org.sarge.jove.platform.vulkan.VkSpecializationMapEntry;
-import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantsTable;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ShaderTest extends AbstractVulkanTest {
@@ -81,73 +81,44 @@ public class ShaderTest extends AbstractVulkanTest {
 	}
 
 	@Nested
-	class ConstantsTableTest {
-		private ConstantsTable table;
-
-		@BeforeEach
-		void before() {
-			table = new ConstantsTable();
+	class SpecialisationConstantTests {
+		@Test
+		void empty() {
+			assertEquals(null, Shader.constants(Map.of()));
 		}
 
 		@Test
-		void add() {
-			table.add(1, 1);
-			table.add(2, 2f);
-			table.add(3, true);
+		void invalid() {
+			assertThrows(IllegalArgumentException.class, () -> Shader.constants(Map.of(0, "doh")));
 		}
 
 		@Test
-		void addTable() {
-			final ConstantsTable other = new ConstantsTable();
-			other.add(1, 2);
-			table.add(other);
-		}
+		void constants() {
+			// Build constants table
+			final Map<Integer, Object> map = new LinkedHashMap<>();
+			map.put(1, 1);			// Integer
+			map.put(2, 2f);			// Float
+			map.put(3, true);		// Boolean
 
-		@Test
-		void buildEmpty() {
-			assertNull(table.build());
-		}
-
-		@Test
-		void build() {
-			// Build constants
-			final VkSpecializationInfo info = table
-					.add(1, 1)
-					.add(2, 2f)
-					.add(3, true)
-					.build();
-
-			// Check constants
+			// Create constants
+			final VkSpecializationInfo info = Shader.constants(map);
 			assertNotNull(info);
 			assertEquals(3, info.mapEntryCount);
+			assertEquals(4 + 4 + 4, info.dataSize);
 
-			// Check an entry
+			// Check first entry
 			final VkSpecializationMapEntry entry = info.pMapEntries;
+			assertNotNull(entry);
 			assertEquals(1, entry.constantID);
 			assertEquals(0, entry.offset);
-			assertEquals(Integer.BYTES, entry.size);
-
-			// Check data size
-			final int size = 4 + 4 + 4;
-			assertEquals(size, info.dataSize);
+			assertEquals(4, entry.size);
 
 			// Check data buffer
-			final ByteBuffer bb = ByteBuffer.allocate(size);
+			final ByteBuffer bb = ByteBuffer.allocate(12);
 			bb.putInt(1);
 			bb.putFloat(2f);
 			bb.putInt(1);
 			assertEquals(bb, info.pData);
-		}
-
-		@Test
-		void buildDuplicateConstant() {
-			table.add(1, 2);
-			assertThrows(IllegalArgumentException.class, () -> table.add(1, 2));
-		}
-
-		@Test
-		void buildInvalidConstantType() {
-			assertThrows(IllegalArgumentException.class, () -> table.add(1, new Object()));
 		}
 	}
 }

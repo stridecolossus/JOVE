@@ -17,20 +17,12 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkBufferMemoryBarrier;
-import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
-import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
-import org.sarge.jove.platform.vulkan.VkMemoryBarrier;
-import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkPipelineCreateFlag;
-import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantsTable;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.StructureHelper;
@@ -105,7 +97,7 @@ public class Pipeline extends AbstractVulkanObject {
 			private final VkShaderStage stage;
 			private Shader shader;
 			private String name = "main";
-			private ConstantsTable constants = new ConstantsTable();
+			private VkSpecializationInfo constants;
 
 			private ShaderStageBuilder(VkShaderStage stage) {
 				this.stage = stage;
@@ -145,7 +137,7 @@ public class Pipeline extends AbstractVulkanObject {
 			 * @throws IllegalArgumentException for a duplicate constant ID
 			 * @throws IllegalArgumentException for an invalid or {@code null} constant
 			 */
-			public ShaderStageBuilder constants(ConstantsTable constants) {
+			public ShaderStageBuilder constants(VkSpecializationInfo constants) {
 				this.constants = notNull(constants);
 				return this;
 			}
@@ -168,7 +160,7 @@ public class Pipeline extends AbstractVulkanObject {
 				info.stage = stage;
 				info.module = shader.handle();
 				info.pName = name;
-				info.pSpecializationInfo = constants.build();
+				info.pSpecializationInfo = constants;
 			}
 
 			private void validate() {
@@ -405,7 +397,7 @@ public class Pipeline extends AbstractVulkanObject {
 			// Init shader pipeline stages
 			if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 			info.stageCount = shaders.size();
-			info.pStages = StructureHelper.first(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
+			info.pStages = StructureHelper.pointer(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
 
 			// Init fixed function stages
 			info.pVertexInputState = input.get();

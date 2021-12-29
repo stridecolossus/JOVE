@@ -12,6 +12,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collector.Characteristics;
 
 import com.sun.jna.Structure;
+import com.sun.jna.Structure.ByReference;
 
 /**
  * Helper for JNA structure arrays.
@@ -55,7 +56,7 @@ public final class StructureHelper {
 	}
 
 	/**
-	 * Transforms the given collection to a contiguous array of JNA structures.
+	 * Transforms the given collection to a contiguous <i>array</i> of JNA structures.
 	 * @param <T> Data type
 	 * @param <R> Resultant structure type
 	 * @param data			Data collection
@@ -73,7 +74,7 @@ public final class StructureHelper {
 		@SuppressWarnings("unchecked")
 		final R[] array = (R[]) identity.get().toArray(data.size());
 
-		// Populate array
+		// Populate array (use iterator since cannot easily convert collection to generic array using Array#newInstance)
 		final Iterator<T> itr = data.iterator();
 		for(final R element : array) {
 			populate.accept(itr.next(), element);
@@ -84,23 +85,35 @@ public final class StructureHelper {
 	}
 
 	/**
-	 * Converts the given collection to a contiguous array referenced by the <b>first</b> element.
+	 * Converts the given collection to a contiguous <i>pointer-to-array</i> referenced by the <b>first</b> element.
 	 * @param <T> Data type
 	 * @param <R> Resultant JNA structure type
 	 * @param data			Data collection
 	 * @param identity		Identity constructor
 	 * @param populate		Population function
-	 * @return <b>First</b> element of the array or {@code null} if the data is empty
+	 * @return Pointer-to-array or {@code null} if the data is empty
+	 * @throws IllegalArgumentException if the type is not a {@link ByReference} structure
 	 */
-	public static <T, R extends Structure> R first(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+	public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+		// Construct array
 		final R[] array = array(data, identity, populate);
+
+		// Handle empty case
 		if(array == null) {
 			return null;
 		}
-		else {
-			return array[0];
+
+		// Convert to pointer-to-array
+		final R ptr = array[0];
+
+		// Check valid structure
+		if(!(ptr instanceof ByReference)) {
+			throw new IllegalArgumentException("Pointer-to-array must be a by-reference structure: " + ptr.getClass());
 		}
+
+		return ptr;
 	}
+	// TODO - currently requires manually fiddled by-reference for pointer-to-array of structures
 
 	/**
 	 * Helper - Creates a collector that constructs a contiguous array of JNA structures.

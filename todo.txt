@@ -41,3 +41,5 @@ current
 - add pipeline cache
 - short/int index buffer, extends indexed model, extends model
 - check out old blog
+- manually fiddled by-reference for pointer-to-array of structure
+

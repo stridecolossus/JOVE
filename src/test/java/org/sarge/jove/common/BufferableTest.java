@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.util.MockStructure;
 
 public class BufferableTest {
 	private ByteBuffer bb;

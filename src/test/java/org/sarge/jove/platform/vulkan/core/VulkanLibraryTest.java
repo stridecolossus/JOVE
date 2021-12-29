@@ -8,11 +8,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.MockStructure;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.MockStructure;
 
 public class VulkanLibraryTest {
 	@Test

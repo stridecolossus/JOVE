@@ -2,6 +2,7 @@ package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -12,7 +13,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.MockStructure;
 
 public class StructureHelperTest {
 	private Object obj;
@@ -25,7 +25,7 @@ public class StructureHelperTest {
 	}
 
 	@Test
-	void structures() {
+	void array() {
 		final MockStructure[] array = StructureHelper.array(List.of(obj, obj), MockStructure::new, populate);
 		assertNotNull(array);
 		assertEquals(2, array.length);
@@ -34,13 +34,18 @@ public class StructureHelperTest {
 	}
 
 	@Test
-	void first() {
+	void pointer() {
 		final MockStructure[] array = new MockStructure[2];
-		final MockStructure first = StructureHelper.first(List.of(obj, obj), MockStructure::new, populate);
-		assertNotNull(first);
-		first.toArray(array);
+		final MockStructure ptr = StructureHelper.pointer(List.of(obj, obj), MockStructure.ByReference::new, populate);
+		assertNotNull(ptr);
+		ptr.toArray(array);
 		verify(populate).accept(obj, array[0]);
 		verify(populate).accept(obj, array[1]);
+	}
+
+	@Test
+	void pointerNotReference() {
+		assertThrows(IllegalArgumentException.class, () -> StructureHelper.pointer(List.of(obj), MockStructure::new, populate));
 	}
 
 	@Test

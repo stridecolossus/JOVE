@@ -107,7 +107,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 			// Add push constant ranges
 			info.pushConstantRangeCount = ranges.size();
-			info.pPushConstantRanges = StructureHelper.first(ranges, VkPushConstantRange::new, PushConstantRange::populate);
+			info.pPushConstantRanges = StructureHelper.pointer(ranges, VkPushConstantRange::new, PushConstantRange::populate);
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();

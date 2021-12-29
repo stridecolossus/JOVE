@@ -25,9 +25,9 @@ import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.VkPipelineCreateFlag;
 import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder.ShaderStageBuilder;
-import org.sarge.jove.platform.vulkan.pipeline.Shader.ConstantsTable;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -214,8 +214,7 @@ public class PipelineTest extends AbstractVulkanTest {
 				stage.shader(shader);
 
 				// Configure constants
-				final ConstantsTable constants = new ConstantsTable();
-				constants.add(1, 2);
+				final var constants = new VkSpecializationInfo();
 				stage.constants(constants);
 
 				// Check returns to parent
@@ -228,7 +227,7 @@ public class PipelineTest extends AbstractVulkanTest {
 				assertEquals(VkShaderStage.VERTEX, info.stage);
 				assertEquals("name", info.pName);
 				assertEquals(shader.handle(), info.module);
-				assertNotNull(info.pSpecializationInfo);
+				assertEquals(constants, info.pSpecializationInfo);
 			}
 
 			@Test

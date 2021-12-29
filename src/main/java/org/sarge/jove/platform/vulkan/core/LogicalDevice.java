@@ -271,7 +271,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 
 			// Add queue descriptors
 			info.queueCreateInfoCount = queues.size();
-			info.pQueueCreateInfos = StructureHelper.first(queues.values(), VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
+			info.pQueueCreateInfos = StructureHelper.pointer(queues.values(), VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
 
 			// Allocate device
 			final Instance instance = parent.instance();

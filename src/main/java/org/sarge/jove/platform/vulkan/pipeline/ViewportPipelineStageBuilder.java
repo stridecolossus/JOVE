@@ -139,11 +139,11 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 		// Add viewports
 		final var info = new VkPipelineViewportStateCreateInfo();
 		info.viewportCount = count;
-		info.pViewports = StructureHelper.first(viewports, VkViewport::new, this::populate);
+		info.pViewports = StructureHelper.pointer(viewports, VkViewport::new, this::populate);
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = StructureHelper.first(scissors, VkRect2D.ByReference::new, ViewportPipelineStageBuilder::populate);
+		info.pScissors = StructureHelper.pointer(scissors, VkRect2D.ByReference::new, ViewportPipelineStageBuilder::populate);
 
 		return info;
 	}

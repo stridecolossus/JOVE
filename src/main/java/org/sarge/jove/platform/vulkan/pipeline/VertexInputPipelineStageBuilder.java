@@ -95,11 +95,11 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 
 		// Add binding descriptions
 		info.vertexBindingDescriptionCount = bindings.size();
-		info.pVertexBindingDescriptions = StructureHelper.first(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
+		info.pVertexBindingDescriptions = StructureHelper.pointer(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
 
 		// Add attributes
 		info.vertexAttributeDescriptionCount = attributes.size();
-		info.pVertexAttributeDescriptions = StructureHelper.first(attributes, VkVertexInputAttributeDescription::new, AttributeBuilder::populate);
+		info.pVertexAttributeDescriptions = StructureHelper.pointer(attributes, VkVertexInputAttributeDescription::new, AttributeBuilder::populate);
 
 		return info;
 	}

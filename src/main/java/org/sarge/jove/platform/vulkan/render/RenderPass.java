@@ -130,16 +130,16 @@ public class RenderPass extends AbstractVulkanObject {
 
 			// Add attachments
 			info.attachmentCount = attachments.size();
-			info.pAttachments = StructureHelper.first(attachments, VkAttachmentDescription::new, Attachment::populate);
+			info.pAttachments = StructureHelper.pointer(attachments, VkAttachmentDescription::new, Attachment::populate);
 
 			// Add sub-passes
 			info.subpassCount = subpasses.size();
-			info.pSubpasses = StructureHelper.first(subpasses, VkSubpassDescription::new, this::subpass);
+			info.pSubpasses = StructureHelper.pointer(subpasses, VkSubpassDescription::new, this::subpass);
 
 			// Add dependencies
 			final List<Entry<Subpass, SubpassDependency>> dependencies = subpasses.stream().flatMap(Helper::stream).collect(toList());
 			info.dependencyCount = dependencies.size();
-			info.pDependencies = StructureHelper.first(dependencies, VkSubpassDependency::new, this::dependency);
+			info.pDependencies = StructureHelper.pointer(dependencies, VkSubpassDependency::new, this::dependency);
 
 			return info;
 		}
@@ -154,7 +154,7 @@ public class RenderPass extends AbstractVulkanObject {
 			// Populate colour attachments
 			final List<Reference> colour = subpass.colour();
 			desc.colorAttachmentCount = colour.size();
-			desc.pColorAttachments = StructureHelper.first(colour, VkAttachmentReference::new, this::reference);
+			desc.pColorAttachments = StructureHelper.pointer(colour, VkAttachmentReference::new, this::reference);
 
 			// Populate depth attachment
 			desc.pDepthStencilAttachment = subpass.depth().map(this::depth).orElse(null);

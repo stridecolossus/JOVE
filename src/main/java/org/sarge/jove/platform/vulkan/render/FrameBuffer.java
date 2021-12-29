@@ -145,7 +145,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 
 		// Init clear values
 		info.clearValueCount = clear.size();
-		info.pClearValues = StructureHelper.first(clear, VkClearValue::new, ClearValue::populate);
+		info.pClearValues = StructureHelper.pointer(clear, VkClearValue::new, ClearValue::populate);
 
 		// Create command
 		return (lib, handle) -> lib.vkCmdBeginRenderPass(handle, info, VkSubpassContents.INLINE);

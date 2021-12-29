@@ -237,7 +237,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 			final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
 			info.flags = IntegerEnumeration.mask(flags);
 			info.poolSizeCount = pool.size();
-			info.pPoolSizes = StructureHelper.first(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
+			info.pPoolSizes = StructureHelper.pointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 			info.maxSets = max;
 
 			// Allocate pool
