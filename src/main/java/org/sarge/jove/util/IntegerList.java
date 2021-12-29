@@ -39,7 +39,7 @@ public class IntegerList {
 	 * Constructor.
 	 * @param capacity		Initial capacity
 	 * @param growth		Growth factor
-	 * @throws IllegalArgumentException if the growth factor is zero or not positive
+	 * @throws IllegalArgumentException if the growth factor is zero or negative
 	 */
 	public IntegerList(int capacity, float growth) {
 		Check.oneOrMore(capacity);

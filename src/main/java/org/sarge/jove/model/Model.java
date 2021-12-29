@@ -32,7 +32,7 @@ public interface Model {
 
 	/**
 	 * @return Whether this is an indexed model
-	 * @see #index()
+	 * @see #indexBuffer()
 	 */
 	boolean isIndexed();
 

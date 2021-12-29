@@ -127,14 +127,14 @@ public class MutableModel extends AbstractModel {
 	 */
 	public MutableModel transform(List<Layout> target) {
 		// Init mapping from previous layout (comparing by identity)
-		final Layout[] array = layout.toArray(Layout[]::new);
+		final Layout[] array = this.layout().toArray(Layout[]::new);
 		final ToIntFunction<Layout> mapper = e -> {
 			for(int n = 0; n < array.length; ++n) {
 				if(e == array[n]) {
 					return n;
 				}
 			}
-			throw new IllegalArgumentException(String.format("Vertex component not present in model layout: layout=%s target=%s", layout, target));
+			throw new IllegalArgumentException(String.format("Vertex component not present in model layout: layout=%s target=%s", layout(), target));
 		};
 
 		// Build transform indices
@@ -149,8 +149,7 @@ public class MutableModel extends AbstractModel {
 		}
 
 		// Update model layout
-		layout.clear();
-		layout.addAll(target);
+		layout(target);
 
 		return this;
 	}
@@ -160,6 +159,7 @@ public class MutableModel extends AbstractModel {
 	 * @return Polygon iterator
 	 */
 	public Iterator<int[]> iterator() {
+		final Primitive primitive = this.primitive();
 		final int size = primitive.size();
 		final int inc = primitive.isStrip() ? 1 : size;
 		final int[] indices = new int[size];
@@ -182,7 +182,7 @@ public class MutableModel extends AbstractModel {
 	@Override
 	public Bufferable vertexBuffer() {
 		return new Bufferable() {
-			private final int len = vertices.size() * Layout.stride(layout);
+			private final int len = vertices.size() * Layout.stride(layout());
 
 			@Override
 			public int length() {

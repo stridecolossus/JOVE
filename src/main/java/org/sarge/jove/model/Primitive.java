@@ -26,7 +26,7 @@ public enum Primitive {
 	/**
 	 * Triangle fan.
 	 */
-	TRIANGLE_FAN(3, VkPrimitiveTopology.TRIANGLE_FAN, null),		// TODO
+	TRIANGLE_FAN(3, VkPrimitiveTopology.TRIANGLE_FAN, null),		// TODO - fan index?
 
 	/**
 	 * Points.

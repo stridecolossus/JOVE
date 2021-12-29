@@ -9,6 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 
 class AbstractModelTest {
@@ -43,6 +45,13 @@ class AbstractModelTest {
 	void constructor() {
 		assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
 		assertEquals(List.of(Point.LAYOUT), model.layout());
+	}
+
+	@Test
+	void layout() {
+		final List<Layout> layout = List.of(Coordinate2D.LAYOUT);
+		model.layout(layout);
+		assertEquals(layout, model.layout());
 	}
 
 	@Test

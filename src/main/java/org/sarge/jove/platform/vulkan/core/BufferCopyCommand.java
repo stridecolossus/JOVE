@@ -99,6 +99,7 @@ public class BufferCopyCommand implements Command {
 		/**
 		 * Sets the source buffer.
 		 * @param src Source buffer
+		 * @throws IllegalStateException if the buffer is not a copy source
 		 */
 		public BufferCopyCommand.Builder source(VulkanBuffer src) {
 			src.require(VkBufferUsageFlag.TRANSFER_SRC);
@@ -109,6 +110,7 @@ public class BufferCopyCommand implements Command {
 		/**
 		 * Sets the destination buffer.
 		 * @param dest Destination buffer
+		 * @throws IllegalStateException if the buffer is not a copy destination
 		 */
 		public BufferCopyCommand.Builder destination(VulkanBuffer dest) {
 			dest.require(VkBufferUsageFlag.TRANSFER_DST);

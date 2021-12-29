@@ -1028,7 +1028,14 @@ public List<Pipeline> pipelines(...) {
 }
 ```
 
-TODO - toggle action, render sequence mod, changes to builder API
+The configuration class for the render sequence is next modified as follows:
+* Inject the _list_ of pipelines.
+* Add an index member.
+* Add a toggle handler that flips the index.
+* Expose the handler as a bean.
+* Bind it to the space bar.
+
+Since the render sequence is recorded per frame we can now switch the pipeline at runtime.  Cool.
 
 ### Pipeline Cache
 
