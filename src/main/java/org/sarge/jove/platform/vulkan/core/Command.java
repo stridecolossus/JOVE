@@ -384,7 +384,7 @@ public interface Command {
 		 */
 		public void submit(Batch batch, Fence fence) {
 			final VulkanLibrary lib = super.device().library();
-			final VkSubmitInfo[] array = batch.submit();
+			final VkSubmitInfo[] array = batch.build();
 			check(lib.vkQueueSubmit(queue, array.length, array, fence));
 		}
 

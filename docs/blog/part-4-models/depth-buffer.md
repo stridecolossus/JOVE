@@ -726,18 +726,21 @@ And a convenience setter to point the camera at a given target location:
 ```java
 public void look(Point pt) {
     if(pos.equals(pt)) throw new IllegalArgumentException(...);
-    dir = Vector.between(pt, pos).normalize();
+    Vector look = Vector.between(pt, pos).normalize();
+    direction(look);
 }
 ```
 
-We next add some transient members to the camera class to support the view transform:
+Note that this camera model would be subject to gimbal locking, e.g. if the direction is set to the _up_ axis.  Validation is added (not shown) to the relevant setters to prevent this occurring.  Later on we will replace the _direction_ property with a more advanced implementation for the camera orientation to mitigate this problem.
+
+Next the following transient members are added to the camera class to support the view transform:
 
 ```java
 public class Camera {
     ...
-    private Vector right;
+    private Vector right = Vector.X;
     private Matrix matrix;
-    private boolean dirty;
+    private boolean dirty = true;
 }
 ```
 
@@ -767,11 +770,9 @@ private void update() {
     right = up.cross(dir).normalize();
 
     // Determine up axis
-    Vector y = right.cross(dir).normalize();
+    Vector y = dir.cross(right).normalize();
 }
 ```
-
-Note that the computed Y axis is inverted to account for the global flip.
 
 From the three axes we can now build the view transform matrix as before:
 
@@ -791,7 +792,7 @@ Matrix rot = new Matrix.Builder()
 matrix = rot.multiply(trans);
 ```
 
-We add a new camera object to the configuration class:
+We add a camera to the configuration class:
 
 ```java
 public class CameraConfiguration {

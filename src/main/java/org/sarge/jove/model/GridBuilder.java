@@ -99,8 +99,10 @@ public class GridBuilder {
 	 * Note that {@link #size} specifies the number of <i>vertices</i> in each direction, i.e. one more than the number of <i>quads</i> comprising the grid.
 	 * <p>
 	 * @param size Grid size
+	 * @throws IllegalArgumentException if the size is not greater-than one
 	 */
 	public GridBuilder size(Dimensions size) {
+		if((size.width() < 2) || (size.height() < 2)) throw new IllegalArgumentException("Size must be greater than one");
 		this.size = notNull(size);
 		return this;
 	}

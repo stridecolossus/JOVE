@@ -159,7 +159,7 @@ public class Work {
 		 * @return Submit descriptors
 		 * @throws IllegalArgumentException if all batches do not submit to the same queue family
 		 */
-		public VkSubmitInfo[] submit() {
+		VkSubmitInfo[] build() {
 			return StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
 		}
 

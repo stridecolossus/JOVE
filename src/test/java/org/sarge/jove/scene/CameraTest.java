@@ -67,6 +67,12 @@ class CameraTest {
 	}
 
 	@Test
+	void directionLock() {
+		assertThrows(IllegalStateException.class, () -> cam.direction(Vector.Y));
+		assertThrows(IllegalStateException.class, () -> cam.direction(Vector.Y.invert()));
+	}
+
+	@Test
 	void look() {
 		cam.look(new Point(0, 0, -1));
 		cam.update();
@@ -78,6 +84,12 @@ class CameraTest {
 	@Test
 	void lookInvalid() {
 		assertThrows(IllegalArgumentException.class, () -> cam.look(Point.ORIGIN));
+	}
+
+	@Test
+	void lookLock() {
+		assertThrows(IllegalStateException.class, () -> cam.look(new Point(Vector.Y)));
+		assertThrows(IllegalStateException.class, () -> cam.look(new Point(Vector.Y.invert())));
 	}
 
 	@Test

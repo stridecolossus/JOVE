@@ -76,7 +76,7 @@ public class WorkTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void submit() {
+		void build() {
 			// Create work
 			final Work work = new Work.Builder(pool)
 					.add(buffer)
@@ -89,7 +89,7 @@ public class WorkTest extends AbstractVulkanTest {
 			assertNotNull(batch);
 
 			// Submit work
-			final VkSubmitInfo[] array = batch.submit();
+			final VkSubmitInfo[] array = batch.build();
 			assertNotNull(array);
 			assertEquals(1, array.length);
 

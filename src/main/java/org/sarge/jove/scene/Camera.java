@@ -18,15 +18,11 @@ public class Camera {
 
 	// Axes
 	private Vector up = Vector.Y;
-	private Vector right;
+	private Vector right = Vector.X;
 
 	// Matrix
 	private Matrix matrix;
-	private boolean dirty;
-
-	public Camera() {
-		update();
-	}
+	private boolean dirty = true;
 
 	/**
 	 * @return Camera position
@@ -81,8 +77,10 @@ public class Camera {
 	/**
 	 * Sets the camera view direction.
 	 * @param dir View direction (assumes normalized)
+	 * @throws IllegalStateException if the direction would result in gimbal lock
 	 */
 	public void direction(Vector dir) {
+		validate(dir, up);
 		this.dir = notNull(dir);
 		dirty();
 	}
@@ -91,18 +89,21 @@ public class Camera {
 	 * Helper - Points the camera at the given location.
 	 * @param pt Camera point-of-interest
 	 * @throws IllegalArgumentException if the location is the same as the current position of the camera
+	 * @throws IllegalStateException if the direction would result in gimbal lock
 	 */
 	public void look(Point pt) {
 		if(pos.equals(pt)) throw new IllegalArgumentException("Cannot point camera at its current position");
-		dir = Vector.between(pt, pos).normalize();
-		dirty();
+		final Vector look = Vector.between(pt, pos).normalize();
+		direction(look);
 	}
 
 	/**
 	 * Sets the up axis of this camera (default is {@link Vector#Y}).
 	 * @param up Camera up axis (assumes normalized)
+	 * @throws IllegalStateException if the up vector would result in gimbal lock
 	 */
 	public void up(Vector up) {
+		validate(dir, up);
 		this.up = notNull(up);
 		dirty();
 	}
@@ -137,6 +138,15 @@ public class Camera {
 			dirty = false;
 		}
 		return matrix;
+	}
+
+	/**
+	 * @throws IllegalStateException if the camera would be gimbal locked
+	 */
+	private static void validate(Vector dir, Vector up) {
+		if(dir.equals(up) || dir.equals(up.invert())) {
+			throw new IllegalStateException("Camera gimbal lock: dir=%s up=%s this=%s");
+		}
 	}
 
 	/**

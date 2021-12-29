@@ -2,42 +2,27 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.function.Function;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>mutable rotation</i> specifies a counter-clockwise rotation about an axis.
  * <p>
- * Calculation of the resultant rotation matrix is delegated to a <i>mapper</i> function which is {@link Quaternion#of(Rotation)} by default.
+ * The rotation matrix is constructed by the {@link #build()} method which delegates to {@link Quaternion#of(Rotation)} by default.
  * <p>
- * @see Quaternion#of(Rotation)
- * @see Rotation#matrix(Rotation)
  * @author Sarge
  */
-public class MutableRotation implements Transform, Rotation {
+public class MutableRotation implements Rotation {
 	private final Vector axis;
-	private final Function<Rotation, Transform> mapper;
 	private float angle;
 	private boolean dirty = true;
 
 	/**
 	 * Constructor.
-	 * @param axis			Rotation axis
-	 * @param mapper		Matrix mapper
-	 */
-	public MutableRotation(Vector axis, Function<Rotation, Transform> mapper) {
-		this.axis = notNull(axis);
-		this.mapper = notNull(mapper);
-	}
-
-	/**
-	 * Constructor for a rotation based on a quaternion.
 	 * @param axis Rotation axis
 	 */
 	public MutableRotation(Vector axis) {
-		this(axis, Quaternion::of);
+		this.axis = notNull(axis);
 	}
 
 	@Override
@@ -67,7 +52,15 @@ public class MutableRotation implements Transform, Rotation {
 	@Override
 	public Matrix matrix() {
 		dirty = false;
-		return mapper.apply(this).matrix();
+		return build();
+	}
+
+	/**
+	 * Constructs the rotation matrix.
+	 * @return Rotation matrix
+	 */
+	protected Matrix build() {
+		return Quaternion.of(this).matrix();
 	}
 
 	@Override

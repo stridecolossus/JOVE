@@ -1052,7 +1052,7 @@ public void zoom(float inc) {
 }
 ```
 
-Note that the increment is _subtracted_ from the radius.
+Note that the camera controllers will still be subject to gimbal locking at the extreme edges of the viewport (see the previous chapter).
 
 ---
 

@@ -266,12 +266,12 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void submit() {
 			final Batch batch = mock(Batch.class);
-			final VkSubmitInfo[] info = new VkSubmitInfo[1];
-			when(batch.submit()).thenReturn(info);
+			final VkSubmitInfo[] array = new VkSubmitInfo[1];
+			when(batch.build()).thenReturn(array);
 
 			final Fence fence = mock(Fence.class);
 			pool.submit(batch, fence);
-			verify(lib).vkQueueSubmit(queue, 1, info, fence);
+			verify(lib).vkQueueSubmit(queue, 1, array, fence);
 		}
 
 		@Test

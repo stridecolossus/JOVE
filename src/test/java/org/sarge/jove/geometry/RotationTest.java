@@ -16,6 +16,7 @@ class RotationTest {
 		assertNotNull(rot);
 		assertEquals(Vector.Y, rot.axis());
 		assertEquals(PI, rot.angle());
+		assertNotNull(rot.matrix());
 	}
 
 	@Nested
@@ -28,7 +29,7 @@ class RotationTest {
 					.set(2, 2, -1)
 					.build();
 
-			assertEquals(expected, Rotation.matrix(new DefaultRotation(Vector.X, PI)));
+			assertEquals(expected, new DefaultRotation(Vector.X, PI).matrix());
 		}
 
 		@Test
@@ -39,7 +40,7 @@ class RotationTest {
 					.set(2, 2, -1)
 					.build();
 
-			assertEquals(expected, Rotation.matrix(new DefaultRotation(Vector.Y, PI)));
+			assertEquals(expected, new DefaultRotation(Vector.Y, PI).matrix());
 		}
 
 		@Test
@@ -50,12 +51,12 @@ class RotationTest {
 					.set(1, 1, -1)
 					.build();
 
-			assertEquals(expected, Rotation.matrix(new DefaultRotation(Vector.Z, PI)));
+			assertEquals(expected, new DefaultRotation(Vector.Z, PI).matrix());
 		}
 
 		@Test
 		void matrixInvalidArbitraryAxis() {
-			assertThrows(UnsupportedOperationException.class, () -> Rotation.matrix(new DefaultRotation(new Vector(1, 2, 3), PI)));
+			assertThrows(UnsupportedOperationException.class, () -> new DefaultRotation(new Vector(1, 2, 3), PI).matrix());
 		}
 	}
 }

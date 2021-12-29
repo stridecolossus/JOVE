@@ -42,8 +42,8 @@ public class QuaternionTest {
 
 	@Test
 	void matrix() {
-		final Matrix expected = Rotation.matrix(new DefaultRotation(Vector.Y, PI));
-		assertEquals(expected, quaternion.matrix());
+		final Rotation rot = new DefaultRotation(Vector.Y, PI);
+		assertEquals(rot.matrix(), quaternion.matrix());
 	}
 
 	@Test
