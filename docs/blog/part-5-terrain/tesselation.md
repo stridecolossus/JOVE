@@ -2,6 +2,16 @@
 title: Terrain Tesselation
 ---
 
+## Contents
+
+- [Overview](#overview)
+- [Terrain Grid](#terrain-grid)
+- [Enhancements](#enhancements)
+
+---
+
+https://gist.github.com/jonschlinkert/ac5d8122bfaaa394f896#sub-sub-heading
+
 ## Overview
 
 During the course of this blog we have implemented the majority of the basic Vulkan components that would be used by most applications, and have reached the end of the Vulkan tutorial.  From here on we will be implementing more advanced features such as lighting, shadows, etc.  Later we will also address the complexity caused by the number of objects that are currently required to render each element of a scene (descriptor sets, render sequences, pools, etc) by the introduction of a _scene graph_ and supporting framework.
@@ -1122,52 +1132,48 @@ Additionally in general we would like to centralise common or shared parameters 
 
 Vulkan provides _specialisation constants_ for these requirements which are be used to parameterise a shader when it is instantiated.
 
-The set of specialisation constants is created via a new builder in the shader class:
+The descriptor for a set of specialisation constants is constructed using a new factory method on the shader class:
 
 ```java
-static class ConstantsTable {
-    private final Map<Integer, Entry> map = new HashMap<>();
+public static VkSpecializationInfo constants(Map<Integer, Object> constants) {
+    // Skip if empty
+    if(constants.isEmpty()) {
+        return null;
+    }
+
+    var info = new VkSpecializationInfo();
+    ...
+
+    return info;
+}
+```
+
+Where _constants_ is a map of arbitrary values indexed by identifier.
+
+The method first transforms the map to a list:
+
+```java
+List<Constant> table = constants.entrySet().stream().map(Constant::new).collect(toList());
+```
+
+Where each constant is an instance of a local class constructed from each map entry:
+
+```java
+class Constant {
+    private final int id;
+    private final Object value;
+    private final int size;
     private int offset;
-    
-    public ConstantsTable add(int id, Object value) {
-        ...
-    }
-    
-    public VkSpecializationInfo build() {
-        ...
-    }    
-}
-```
 
-The `add` method creates a new entry in the table and increments the `offset` into the data:
-
-```java
-public ConstantsTable add(int id, Object value) {
-    // Create transient entry
-    Entry entry = new Entry(id, value, offset);
-    map.put(id, entry);
-
-    // Increment offset (also validates constant type)
-    int size = entry.size();
-    offset += size;
-
-    return this;
-}
-```
-
-An _entry_ is a local transient record for each constant:
-
-```java
-private record Entry(int id, Object value, int offset) {
-    private void populate(VkSpecializationMapEntry entry) {
-        entry.constantID = id;
-        entry.offset = offset;
-        entry.size = size();
+    private Constant(Entry<Integer, Object> entry) {
+        this.id = entry.getKey();
+        this.value = entry.getValue();
+        this.size = size();
     }
 }
 ```
 
-The _size_ of a constant is determined as follows:
+The _size_ of each constant is determined as follows:
 
 ```java
 private int size() {
@@ -1190,60 +1196,63 @@ private int size() {
 
 Notes:
 
-* The constant values are stored as anonymous Java objects.
-
 * Only scalar and boolean values are supported.
 
 * Booleans are represented as integer values.
 
-The `build` method constructs the Vulkan descriptor for the set of constants:
+The _offset_ of each constant within the data buffer is determined by the following simple loop (which also calculates the total length of the buffer):
 
 ```java
-public VkSpecializationInfo build() {
-    // Ignore if no constants
-    if(map.isEmpty()) {
-        return null;
-    }
-
-    // Populate map entries
-    var info = new VkSpecializationInfo();
-    Collection<Entry> values = map.values();
-    info.mapEntryCount = map.size();
-    info.pMapEntries = StructureHelper.first(values, VkSpecializationMapEntry::new, Entry::populate);
-
-    // Populate constant data
-    ...
-
-    return info;
+int size = 0;
+for(Constant e : table) {
+    e.offset = size;
+    size += e.size;
 }
 ```
 
-The constants data is essentially a byte array indexed by the _offset_ of each constant:
+Each constant has a descriptor:
 
 ```java
-int size = values.stream().mapToInt(Entry::size).sum();
+var info = new VkSpecializationInfo();
+info.mapEntryCount = constants.size();
+info.pMapEntries = StructureHelper.pointer(table, VkSpecializationMapEntry::new, Constant::populate);
+```
+
+Which is populated from the local class:
+
+```java
+private void populate(VkSpecializationMapEntry entry) {
+    entry.constantID = id;
+    entry.offset = offset;
+    entry.size = size;
+}
+```
+
+Finally the data buffer for the specialisation constants is allocated and filled:
+
+```java
 info.dataSize = size;
 info.pData = BufferHelper.allocate(size);
-for(Entry entry : values) {
+for(Constant entry : table) {
     entry.append(info.pData);
 }
 ```
 
-Where `append` adds each constant to the data buffer:
+Where `append` is another helper on the local class:
 
 ```java
-private void append(ByteBuffer bb) {
+private void append(ByteBuffer buffer) {
     if(value instanceof Integer n) {
-        bb.putInt(n);
+        buffer.putInt(n);
     }
     else
     if(value instanceof Float f) {
-        bb.putFloat(f);
+        buffer.putFloat(f);
     }
     else
     if(value instanceof Boolean b) {
-        VulkanBoolean bool = VulkanBoolean.of(b);
-        bb.putInt(bool.toInteger());
+        final VulkanBoolean bool = VulkanBoolean.of(b);
+        buffer.putInt(bool.toInteger());
     }
     else {
         assert false;
@@ -1251,33 +1260,22 @@ private void append(ByteBuffer bb) {
 }
 ```
 
-Finally we implement a convenience method to add a map of constants:
-
-```java
-public ConstantsTable add(Map<Integer, Object> map) {
-    for(var entry : map.entrySet()) {
-        add(entry.getKey(), entry.getValue());
-    }
-    return this;
-}
-```
-
-The set of specialisation constants are applied to a shader during pipeline configuration:
+The specialisation constants are applied to a shader during pipeline configuration:
 
 ```java
 public class ShaderStageBuilder {
-    private final ConstantsTable constants = new ConstantsTable();
+    private VkSpecializationInfo constants;
     
     ...
     
-    public ShaderStageBuilder constants(ConstantsTable constants) {
+    public ShaderStageBuilder constants(VkSpecializationInfo constants) {
         this.constants = notNull(constants);
         return this;
     }
  
     void populate(VkPipelineShaderStageCreateInfo info) {
         ...
-        info.pSpecializationInfo = constants.build();
+        info.pSpecializationInfo = constants;
     }
 }
 ```
@@ -1294,18 +1292,11 @@ The set of constants used in both tesselation shaders is initialised in the pipe
 
 ```java
 class PipelineConfiguration {
-    ...
-    private final ConstantsTable constants = new ConstantsTable();
-
-    public PipelineConfiguration(...) {
-        ...
-        constants.add(0, 20f);
-        constants.add(1, 2.5f);
-    }
+    private final VkSpecializationInfo constants = Shader.constants(Map.of(0, 20f, 1, 2.5f));
 }
 ```
 
-Finally the shaders are parameterised when the pipeline is constructed, for example:
+Finally the relevant shaders are parameterised when the pipeline is constructed, for example:
 
 ```java
 shader(VkShaderStage.TESSELLATION_EVALUATION)
