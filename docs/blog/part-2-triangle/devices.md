@@ -565,7 +565,7 @@ public LogicalDevice build() {
 
     // Add queue descriptors
     info.queueCreateInfoCount = queues.size();
-    info.pQueueCreateInfos = StructureHelper.first(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
+    info.pQueueCreateInfos = StructureHelper.pointer(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
     ...
 }
 ```
@@ -841,26 +841,40 @@ Notes:
 
 - _identity_ generates an instance of the structure used to allocate the array.
 
-- the _populate_ method 'fills' a JNA structure from the corresponding domain object (note that JNA structures do not support copying or cloning).
+- And _populate_ 'fills' a JNA structure from the corresponding domain object (note that JNA structures do not support copying or cloning).
+
+- This implementation uses an iterator since there is no simple means of instantiating a generic array (without passing additional arguments or peeking at the data collection).
 
 For the case where the API method requires a pointer-to-array argument we provide the following alternative:
 
 ```java
-public static <T, R extends Structure> R first(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+    // Construct array
     R[] array = array(data, identity, populate);
+
+    // Handle empty case
     if(array == null) {
         return null;
     }
-    else {
-        return array[0];
+
+    // Convert to pointer-to-array
+    R ptr = array[0];
+
+    // Check valid structure
+    if(!(ptr instanceof ByReference)) {
+        throw new IllegalArgumentException("Pointer-to-array must be a by-reference structure: " + ptr.getClass());
     }
+
+    return ptr;
 }
 ```
+
+Note that a pointer-to-array mandates that the structure is a JNA by-reference type.
 
 In the logical device we use this helper to build the array of required queue descriptors:
 
 ```java
-info.pQueueCreateInfos = StructureHelper.first(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
+info.pQueueCreateInfos = StructureHelper.pointer(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
 ```
 
 Finally we also provide a generalised custom stream collector:

@@ -10,11 +10,11 @@ title: Terrain Tesselation
 
 ---
 
-https://gist.github.com/jonschlinkert/ac5d8122bfaaa394f896#sub-sub-heading
-
 ## Overview
 
-During the course of this blog we have implemented the majority of the basic Vulkan components that would be used by most applications, and have reached the end of the Vulkan tutorial.  From here on we will be implementing more advanced features such as lighting, shadows, etc.  Later we will also address the complexity caused by the number of objects that are currently required to render each element of a scene (descriptor sets, render sequences, pools, etc) by the introduction of a _scene graph_ and supporting framework.
+During the course of this blog we have implemented the majority of the basic Vulkan components that would be used by most applications, and have reached the end of the Vulkan tutorial.  From here on we will be implementing more advanced features such as lighting, shadows, etc.
+
+Later we will also address the complexity caused by the number of objects that are currently required to render each element of a scene (descriptor sets, render sequences, pools, etc) by the introduction of a _scene graph_ and supporting framework.
 
 In this first chapter we will start a new demo to render a terrain model derived from a height-map image, and then implement level of detail (LOD) functionality for the grid mesh using a _tesselation_ shader.
 
@@ -280,7 +280,7 @@ private IntStream buildIndex(IndexFactory factory) {
 
 ### Height Maps
 
-To generate height data for the terrain grid we will load a _height map_ image.  Although the height of a given vertex can easily be sampled from the image there are several cases where an application will need to programatically 'sample' the height-map, e.g. to generate surface normals or to initialise tesselation factors (as we will see later).
+To generate height data for the terrain grid we will load a _height map_ image.  Although the height of a given vertex can easily be sampled from the image there are several cases where an application will need to programatically 'sample' the height-map, e.g. to generate surface normals.
 
 Therefore we essentially emulate a texture sampler by implementing a height function that looks up a pixel from an image.  In any case the image class should support the ability to retrieve pixel data for other use cases.
 
@@ -739,7 +739,7 @@ However there is plenty going on behind the scenes when using tesselation shader
 
 The configuration of the grid is spread across several locations which must all correspond:
 1. The number of control points is specified in the tesselation pipeline stage (4 for quads).
-2. Which must obviously match the drawing primitive and index factory used to generate the terrain model.
+2. Which must obviously match the drawing primitive and index factory.
 3. And the `quads` layout declaration in the evaluation shader.
 
 Similarly the primitive winding order is:
@@ -1005,7 +1005,7 @@ public Builder derive() {
 }
 ```
 
-The `init` method is added to the nested pipeline stage builders to clone the configuration.  We are also forced to refactor some of the nested builders that previously operated directly on the underlying Vulkan descriptor to support cloning (since JNA structures cannot easily be cloned).
+The `init` method is added to the nested pipeline stage builders to clone the configuration.  We are also forced to refactor some of the nested builders that previously operated directly on the underlying Vulkan descriptor to support cloning (since JNA structures cannot easily be copied).
 
 In the demo application the pipeline configuration is modified to derive a second wireframe pipeline:
 

@@ -682,7 +682,7 @@ We modify the render pass builder to populate the dependencies:
 ```java
 List<Entry<Subpass, SubpassDependency>> dependencies = subpasses.stream().flatMap(Helper::stream).collect(toList());
 info.dependencyCount = dependencies.size();
-info.pDependencies = StructureHelper.first(dependencies, VkSubpassDependency::new, this::dependency);
+info.pDependencies = StructureHelper.pointer(dependencies, VkSubpassDependency::new, this::dependency);
 ```
 
 The purpose of the first line is to generate a flattened list of dependencies zipped up with the parent sub-pass (for which we use a map entry):

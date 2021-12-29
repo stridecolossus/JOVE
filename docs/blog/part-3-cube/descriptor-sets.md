@@ -74,7 +74,7 @@ public static Layout create(LogicalDevice dev, List<Binding> bindings) {
     // Init layout descriptor
     VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
     info.bindingCount = bindings.size();
-    info.pBindings = StructureHelper.first(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
+    info.pBindings = StructureHelper.pointer(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
 
     // Allocate layout
     VulkanLibrary lib = dev.library();

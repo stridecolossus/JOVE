@@ -224,11 +224,11 @@ VkPipelineViewportStateCreateInfo get() {
     // Add viewports
     final var info = new VkPipelineViewportStateCreateInfo();
     info.viewportCount = count;
-    info.pViewports = StructureHelper.first(viewports, VkViewport::new, Viewport::populate);
+    info.pViewports = StructureHelper.pointer(viewports, VkViewport::new, Viewport::populate);
 
     // Add scissors
     info.scissorCount = count;
-    info.pScissors = StructureHelper.first(scissors, VkRect2D.ByReference::new, VulkanHelper::populate);
+    info.pScissors = StructureHelper.pointer(scissors, VkRect2D.ByReference::new, VulkanHelper::populate);
 
     return info;
 }
@@ -398,7 +398,7 @@ We then populate the array of programmable shader stages:
 ```java
 if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 pipeline.stageCount = shaders.size();
-pipeline.pStages = StructureHelper.first(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
+pipeline.pStages = StructureHelper.pointer(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
 ```
 
 Finally we invoke the API to instantiate the pipeline:

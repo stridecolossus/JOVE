@@ -1,17 +1,8 @@
-pipeline
-- re-build pipeline after window viewport/focus change
-- check for depth attachment in frame-buffer::create
-
-model
-- sphere/conic builder, uses unit circle, add pole, add ring with N points / segment
-- extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
-
 demo
 - skydome
 - instancing, cubes then tree model
 - lighting, materials
 - solar system, scene graph
-- terrain rendering, tiled, LOD, tesselation shader, loader from gray-scale, oct-tree?
 - geometry shader, normals, bounding volumes (spheres as x2 circles)
 - galaxy demo using point cloud
 
@@ -30,16 +21,28 @@ sphere builder
 - https://www.mbsoftworks.sk/tutorials/opengl4/022-cylinder-and-sphere/
 - http://in4k.untergrund.net/html_articles/hugi_27_-_coding_corner_polaris_sphere_tessellation_101.htm
 - https://lindenreid.wordpress.com/2017/12/03/simple-mesh-tessellation-triangulation-tutorial/
-- add degenerate triangle
+- sphere/conic builder, uses unit circle, add pole, add ring with N points / segment
+- extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
 
-other features
+other possible features
 - texture fonts?
 - OpenAL audio
 - shader storage buffer (SSBO)
 
-current
-- add pipeline cache
-- short/int index buffer, extends indexed model, extends model
-- check out old blog
-- manually fiddled by-reference for pointer-to-array of structure
+features todo
+- object tracker
+- custom application properties? using Jackson, or SnakeYAML, JSON, etc
 
+blog
+- pipeline cache
+- check out old blog
+
+todo
+- interpolator revamp
+- joystick from desktop service
+- predicate builder for physical device?
+- manually fiddled by-reference for pointer-to-array of structure
+- short/int index buffer, extends indexed model, extends model
+- degenerate triangles for strip
+- re-build swapchain and pipeline after window viewport/focus change
+- check for depth attachment in frame-buffer::create

@@ -64,7 +64,7 @@ The ranges are populated in the usual manner:
 public PipelineLayout build(DeviceContext dev) {
     ...
     info.pushConstantRangeCount = ranges.size();
-    info.pPushConstantRanges = StructureHelper.first(ranges, VkPushConstantRange::new, PushConstantRange::populate);
+    info.pPushConstantRanges = StructureHelper.pointer(ranges, VkPushConstantRange::new, PushConstantRange::populate);
     ...
 }
 ```

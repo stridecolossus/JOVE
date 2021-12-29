@@ -458,6 +458,7 @@ public class Pipeline extends AbstractVulkanObject {
 					assert b.baseIndex >= 0;
 				}
 			}
+			// TODO - can we do not patch the index? but how to correlate list and array?
 
 			// Build array of descriptors
 			final VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(list, VkGraphicsPipelineCreateInfo::new, Builder::populate);

@@ -197,11 +197,11 @@ private VkRenderPassCreateInfo populate() {
 
     // Add attachments
     info.attachmentCount = attachments.size();
-    info.pAttachments = StructureHelper.first(attachments, VkAttachmentDescription::new, Attachment::populate);
+    info.pAttachments = StructureHelper.pointer(attachments, VkAttachmentDescription::new, Attachment::populate);
 
     // Add sub-passes
     info.subpassCount = subpasses.size();
-    info.pSubpasses = StructureHelper.first(subpasses, VkSubpassDescription::new, this::subpass);
+    info.pSubpasses = StructureHelper.pointer(subpasses, VkSubpassDescription::new, this::subpass);
 
     return info;
 }
@@ -217,7 +217,7 @@ private void subpass(Subpass subpass, VkSubpassDescription desc) {
     // Populate colour attachments
     List<Reference> colour = subpass.colour();
     desc.colorAttachmentCount = colour.size();
-    desc.pColorAttachments = StructureHelper.first(colour, VkAttachmentReference::new, this::reference);
+    desc.pColorAttachments = StructureHelper.pointer(colour, VkAttachmentReference::new, this::reference);
 
     // Populate depth attachment
     desc.pDepthStencilAttachment = subpass.depth().map(this::depth).orElse(null);

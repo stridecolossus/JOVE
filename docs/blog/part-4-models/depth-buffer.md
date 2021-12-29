@@ -372,7 +372,7 @@ Collection<ClearValue> clear = attachments
 
 // Init clear values
 info.clearValueCount = clear.size();
-info.pClearValues = StructureHelper.first(clear, VkClearValue::new, ClearValue::populate);
+info.pClearValues = StructureHelper.pointer(clear, VkClearValue::new, ClearValue::populate);
 ```
 
 ### Integration
@@ -613,13 +613,13 @@ Notes:
 
 * The Y coordinate of the viewport origin is also shifted to the bottom of the viewport.
 
-* The _flip_ setting is __on__ by default and can be assumed to be active from this point onwards.
+However we eventually decided against using the global flip as the default setting for a couple of reasons:
 
-However note this is a breaking change since flipping the Y axis also essentially flips the triangle winding order.  This entails the following modifications to existing code:
+1. This is a breaking change for existing code since flipping the Y axis also essentially flips the triangle winding order.
 
-* The Y component of the vertex positions in the cube builder.
+2. The implementation actually flips the _coordinate space_ rather than simply flipping the frame buffer.  This means that __all__ code still needs to be aware that the global flip is enabled (e.g. for the camera model and view transform later on) which seems to defeat the object.
 
-* The model rotation applied to the chalet model.
+Therefore the _flip_ setting is disabled by default and we just accept that the Y direction is __down__ from this point forwards.
 
 ### Vector
 
