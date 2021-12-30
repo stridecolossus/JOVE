@@ -332,7 +332,7 @@ Finally we delegate to a new mutator on the model to add a vertex given the thre
 ```java
 public void vertex(int v, Integer vn, Integer vt) {
     // Add vertex position
-    List<Component> components = new ArrayList<>();
+    List<Bufferable> components = new ArrayList<>();
     components.add(positions.get(v));
 
     // Add optional normal
@@ -346,7 +346,7 @@ public void vertex(int v, Integer vn, Integer vt) {
     }
 
     // Construct vertex
-    final Vertex vertex = new Vertex(components);
+    Vertex vertex = new Vertex(components.toArray(Bufferable[]::new));
     vertices.add(vertex);
 }
 ```

@@ -293,13 +293,7 @@ TODO
 
 ### Overview
 
-The process of loading the cubemap texture is quite slow for several reasons:
-
-1. Each cubemap texture is loaded and copied separately.
-
-2. The native image loader has considerable overhead.
-
-3. Images without an alpha channel have to be transformed at runtime.
+The process of loading the cubemap texture is quite slow since the native image loader has considerable overhead and each cubemap texture is loaded and copied separately.
 
 Ideally we would prefer a file format that provides:
 

@@ -612,7 +612,7 @@ public SubResource build() {
 }
 ```
 
-A slight irritation that only came to light during this chapter is that there are two slightly different Vulkan descriptors for sub-resources even though the fields are almost identical.  We add two factory methods to transform a sub-resource to either:
+A slight irritation that only came to light during this chapter is that there are two slightly different Vulkan descriptors for sub-resources even though the fields are almost identical.  We add two factory methods to transform a sub-resource to either (spot the difference):
 
 ```java
 static VkImageSubresourceRange toRange(SubResource res) {
@@ -648,7 +648,6 @@ public class ImageCopyCommand implements Command {
 
     @Override
     public void execute(VulkanLibrary lib, Command.Buffer cb) {
-        buffer.require(VkBufferUsage.TRANSFER_SRC);
         lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
     }
 }
@@ -802,12 +801,6 @@ public class Barrier implements Command {
     private final int src, dest;
     private final VkImageMemoryBarrier[] images;
 
-    /**
-     * Constructor.
-     * @param src           Source pipeline stages
-     * @param dest          Destination pipeline stages
-     * @param images        Image memory barriers
-     */
     private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, VkImageMemoryBarrier[] images) {
         this.src = IntegerEnumeration.mask(src);
         this.dest = IntegerEnumeration.mask(dest);
@@ -991,25 +984,30 @@ VkFormat format = FormatBuilder.format(image.layout());
 
 The resultant image is a `TYPE_4BYTE_ABGR` buffered image which maps to the `R8G8B8A8_UNORM` format.
 
-Next we create a texture with a configuration suitable to the image:
+Next we create a texture with a configuration suitable to the image starting with the descriptor:
 
 ```java
-// Create descriptor
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
     .type(VkImageType.TWO_D)
     .aspect(VkImageAspect.COLOR)
     .extents(image.extents())
     .format(format)
     .build();
+```
 
-// Init image memory properties
+The memory properties specifies a texture using device memory that can be written to and sampled from:
+
+```java
 var props = new MemoryProperties.Builder<VkImageUsage>()
     .usage(VkImageUsage.TRANSFER_DST)
     .usage(VkImageUsage.SAMPLED)
     .required(VkMemoryProperty.DEVICE_LOCAL)
     .build();
+```
 
-// Create texture
+And we create the texture image:
+
+```java
 Image texture = new Image.Builder()
     .descriptor(descriptor)
     .properties(props)

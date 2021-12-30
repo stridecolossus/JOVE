@@ -167,7 +167,11 @@ static Projection perspective(float fov) {
 }
 ```
 
-This code is based on the example from the Vulkan Cookbook.
+Notes:
+
+* This code is based on the example from the Vulkan Cookbook.
+
+* The matrix assumes the Y axis points __down__ the viewport.
 
 We also add a convenience constant for a perspective projection with a default 60 degree field-of-view:
 
@@ -720,12 +724,7 @@ for(Vertex v : vertices) {
 }
 ```
 
-And finally the model layout is updated:
-
-```java
-layout.clear();
-layout.addAll(target);
-```
+The model layout also becomes mutable to support transformations.
 
 ### Integration #3
 

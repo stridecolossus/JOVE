@@ -28,6 +28,7 @@ import org.sarge.lib.util.Check;
 public class ImageCopyCommand implements Command {
 	private final Image image;
 	private final VulkanBuffer buffer;
+	private final boolean inverse;
 	private final VkBufferImageCopy[] regions;
 	private final VkImageLayout layout;
 
@@ -35,25 +36,29 @@ public class ImageCopyCommand implements Command {
 	 * Constructor.
 	 * @param image				Image
 	 * @param buffer			Buffer
+	 * @param inverse			Whether copy direction is inverted
 	 * @param regions			Copy region(s)
 	 * @param layout			Image layout
 	 * @throws IllegalStateException if the buffer cannot be used for copy operations
 	 */
-	private ImageCopyCommand(Image image, VulkanBuffer buffer, VkBufferImageCopy[] regions, VkImageLayout layout) {
+	private ImageCopyCommand(Image image, VulkanBuffer buffer, boolean inverse, VkBufferImageCopy[] regions, VkImageLayout layout) {
 		this.image = notNull(image);
 		this.buffer = notNull(buffer);
+		this.inverse = inverse;
 		this.regions = Arrays.copyOf(regions, regions.length);
 		this.layout = notNull(layout);
-		buffer.require(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST);
+		validate();
 	}
 
-	// TODO
+	private void validate() {
+		buffer.require(inverse ? VkBufferUsageFlag.TRANSFER_DST : VkBufferUsageFlag.TRANSFER_SRC);
+	}
+	// TODO - validation
 	// dstImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
 	// srcImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
 
 	@Override
 	public void execute(VulkanLibrary lib, Command.Buffer cb) {
-		buffer.require(VkBufferUsageFlag.TRANSFER_SRC);
 		lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
 	}
 
@@ -65,7 +70,6 @@ public class ImageCopyCommand implements Command {
 		buffer.require(VkBufferUsageFlag.TRANSFER_DST);
 		return (lib, cmd) -> lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
 	}
-	// TODO - better to specify this in the builder so can test DST at instantiation time (but also provide this helper)
 
 	/**
 	 * A <i>copy region</i> specifies a portion of the image to be copied.
@@ -216,6 +220,7 @@ public class ImageCopyCommand implements Command {
 	public static class Builder {
 		private VulkanBuffer buffer;
 		private Image image;
+		private boolean inverse;
 		private VkImageLayout layout;
 		private final List<CopyRegion> regions = new ArrayList<>();
 
@@ -234,6 +239,14 @@ public class ImageCopyCommand implements Command {
 		 */
 		public Builder image(Image image) {
 			this.image = notNull(image);
+			return this;
+		}
+
+		/**
+		 * Inverts the direction of this builder.
+		 */
+		public Builder invert() {
+			inverse = !inverse;
 			return this;
 		}
 
@@ -311,7 +324,7 @@ public class ImageCopyCommand implements Command {
 			final VkBufferImageCopy[] array = StructureHelper.array(regions, VkBufferImageCopy::new, CopyRegion::populate);
 
 			// Create copy command
-			return new ImageCopyCommand(image, buffer, array, layout);
+			return new ImageCopyCommand(image, buffer, inverse, array, layout);
 		}
 	}
 }

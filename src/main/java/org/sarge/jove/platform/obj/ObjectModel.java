@@ -24,6 +24,8 @@ class ObjectModel {
 	private final List<Model> models = new ArrayList<>();
 	private MutableModel current = new DuplicateVertexModel();
 
+	// TODO - extends MutableModel + above + linked list to previous model(s)?
+
 	/**
 	 * Starts a new object group.
 	 */

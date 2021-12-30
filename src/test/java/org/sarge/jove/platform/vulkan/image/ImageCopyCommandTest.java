@@ -112,12 +112,16 @@ public class ImageCopyCommandTest {
 
 	@Nested
 	class BuilderTests {
-		@Test
-		void copy() {
-			// Init MIP levels
-			final ImageData data = mock(ImageData.class);
-			when(data.levels()).thenReturn(List.of(new ImageData.Level(1, 2)));
+		private ImageData data;
 
+		@BeforeEach
+		void before() {
+			data = mock(ImageData.class);
+			when(data.levels()).thenReturn(List.of(new ImageData.Level(1, 2)));
+		}
+
+		@Test
+		void build() {
 			// Create command to copy the buffer to the whole of the image
 			final ImageCopyCommand copy = builder
 					.image(image)
@@ -127,7 +131,7 @@ public class ImageCopyCommandTest {
 					.build();
 
 			// Check buffer is validated
-			verify(buffer).require(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST);
+			verify(buffer).require(VkBufferUsageFlag.TRANSFER_SRC);
 
 			// Init expected copy descriptor
 			final var expected = new VkBufferImageCopy() {
@@ -144,15 +148,26 @@ public class ImageCopyCommandTest {
 
 			// Perform copy operation
 			copy.execute(lib, cmd);
-			verify(buffer).require(VkBufferUsageFlag.TRANSFER_SRC);
-
-			// Check API
 			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
 
 			// Perform reverse copy operation
 			copy.invert().execute(lib, cmd);
 			verify(buffer).require(VkBufferUsageFlag.TRANSFER_DST);
 			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
+		}
+
+		@Test
+		void buildInvert() {
+			final ImageCopyCommand copy = builder
+					.image(image)
+					.buffer(buffer)
+					.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+					.region(data)
+					.invert()
+					.build();
+
+			verify(buffer).require(VkBufferUsageFlag.TRANSFER_DST);
+			copy.execute(lib, cmd);
 		}
 
 		@Test
