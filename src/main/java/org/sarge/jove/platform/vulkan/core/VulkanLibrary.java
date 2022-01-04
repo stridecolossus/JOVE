@@ -1,8 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.util.List;
 import java.util.Map;
 
 import org.sarge.jove.common.Handle;
@@ -21,7 +18,6 @@ import com.sun.jna.DefaultTypeMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
-import com.sun.jna.Structure;
 import com.sun.jna.TypeMapper;
 
 /**
@@ -78,59 +74,6 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 		};
 
 		return Native.load(name, VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
-	}
-
-	/**
-	 * Base-class Vulkan JNA structure.
-	 * Note that this class <b>must</b> be defined as a member of the associated API in order for the type mapper to work correctly.
-	 */
-	abstract class VulkanStructure extends Structure {
-		/**
-		 * Constructor.
-		 */
-		protected VulkanStructure() {
-			super(MAPPER);
-		}
-
-		@Override
-		public List<Field> getFieldList() {
-			return super.getFieldList();
-		}
-
-		@Override
-		public Structure[] toArray(int size) {
-			// TODO - hmmm didn't have to do this previously?
-			if(size == 0) {
-				return (Structure[]) Array.newInstance(getClass(), 0);
-			}
-
-			// Allocate array
-			final Structure[] array = super.toArray(size);
-
-			// Patch structure type field
-			getFieldList()
-					.stream()
-					.filter(f -> f.getName().equals("sType"))
-					.findAny()
-					.ifPresent(f -> patch(f, array));
-
-			return array;
-		}
-
-		/**
-		 * Initialises the type field of all elements in the array.
-		 */
-		private void patch(Field sType, Structure[] array) {
-			try {
-				final Object value = sType.get(this);
-				for(Structure struct : array) {
-					sType.set(struct, value);
-				}
-			}
-			catch(Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
 	}
 
 	/**

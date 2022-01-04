@@ -4,15 +4,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.MockStructure;
 
 public class VulkanLibraryTest {
 	@Test
@@ -46,28 +43,5 @@ public class VulkanLibraryTest {
 	void create() {
 		final VulkanLibrary api = VulkanLibrary.create();
 		assertNotNull(api);
-	}
-
-	@Nested
-	class StructureTests {
-		private MockStructure struct;
-
-		@BeforeEach
-		void before() {
-			struct = new MockStructure();
-		}
-
-		@Test
-		void getFieldList() {
-			assertNotNull(struct.getFieldList());
-		}
-
-		@Test
-		void toArray() {
-			final MockStructure[] array = (MockStructure[]) struct.toArray(2);
-			assertNotNull(array);
-			assertEquals(2, array.length);
-			assertEquals(struct.sType, array[0].sType);
-		}
 	}
 }

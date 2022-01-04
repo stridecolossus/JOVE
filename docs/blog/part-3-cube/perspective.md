@@ -2,6 +2,16 @@
 title: Perspective Projection
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Perspective Projection](#perspective-projection)
+- [Cube Model](#cube-model)
+
+---
+
 ## Overview
 
 In the final chapter in this section we will introduce _perspective projection_ so that fragments that are more distant in the scene appear correctly foreshortened.
@@ -875,7 +885,7 @@ Matrix v = Matrix.rotation(Vector.X, MathsUtil.toRadians(30));
 Matrix model = h.multiply(v);
 ```
 
-Finally we inject the projection-view matrix and uniform buffer objects so we can compose the final matrix to be passed to the shader:
+Finally the projection-view matrix and uniform buffer objects are injected to compose the final matrix to be passed to the shader:
 
 ```java
 Matrix m = matrix.multiply(model);
@@ -898,9 +908,7 @@ Note that there are still a couple of problems with the render loop that we will
 
 ## Summary
 
-In this chapter we rendered a 3D rotating textured cube.
-
-We implemented the following:
+In this chapter we rendered a 3D rotating textured cube and implementing the following:
 
 * The matrix class
 

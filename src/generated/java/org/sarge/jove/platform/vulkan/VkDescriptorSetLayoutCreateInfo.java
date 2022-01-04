@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary.VulkanStructure;
+import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;

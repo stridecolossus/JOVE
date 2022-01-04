@@ -2,8 +2,6 @@ package org.sarge.jove.common;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
  * Template implementation for a native object managed by the application.
  * @author Sarge
@@ -46,6 +44,6 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(handle).build();
+		return handle.toString();
 	}
 }

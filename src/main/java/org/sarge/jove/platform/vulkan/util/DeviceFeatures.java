@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toSet;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
@@ -74,9 +73,9 @@ public interface DeviceFeatures {
 			@Override
 			public Collection<String> features() {
 				return features
-						.getFieldList()
+						.getFieldOrder()
 						.stream()
-						.map(Field::getName)
+						//.map(Field::getName)
 						.filter(this::isEnabled)
 						.collect(toSet());
 			}

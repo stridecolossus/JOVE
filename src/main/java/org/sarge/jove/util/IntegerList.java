@@ -146,6 +146,9 @@ public class IntegerList {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("size", size).build();
+		return new ToStringBuilder(this)
+				.append("size", size)
+				.append("capacity", array.length)
+				.build();
 	}
 }

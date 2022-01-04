@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import java.nio.ByteBuffer;
 
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary.VulkanStructure;
+import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
