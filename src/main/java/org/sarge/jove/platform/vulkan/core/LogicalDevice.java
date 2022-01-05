@@ -165,7 +165,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private final Map<Family, RequiredQueue> queues = new HashMap<>();
-		private DeviceFeatures required;
+		private DeviceFeatures required = DeviceFeatures.EMPTY;
 
 		/**
 		 * Constructor.
@@ -259,7 +259,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
 
 			// Add required features
-			info.pEnabledFeatures = DeviceFeatures.populate(required);
+			info.pEnabledFeatures = required.descriptor();
 
 			// Add required extensions
 			info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));

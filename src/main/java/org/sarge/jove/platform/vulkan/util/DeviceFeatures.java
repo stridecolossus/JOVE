@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.util;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
@@ -13,15 +14,19 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
  */
 public interface DeviceFeatures {
 	/**
-	 * @return Enabled features
+	 * @return Feature names
 	 */
-	Collection<String> features();
+	Set<String> features();
+
+	/**
+	 * @return Descriptor for this set of features
+	 */
+	VkPhysicalDeviceFeatures descriptor();
 
 	/**
 	 * Tests whether this set contains the given features.
 	 * @param features Required features
 	 * @return Whether this set contains the given features
-	 * @see #contains(String)
 	 */
 	boolean contains(DeviceFeatures features);
 
@@ -31,25 +36,62 @@ public interface DeviceFeatures {
 	abstract class AbstractDeviceFeatures implements DeviceFeatures {
 		@Override
 		public boolean equals(Object obj) {
-			return (obj == this) || (obj instanceof DeviceFeatures that) && this.features().equals(that.features());
+			return
+					(obj == this) ||
+					(obj instanceof DeviceFeatures that) &&
+					this.features().equals(that.features());
 		}
 
 		@Override
 		public String toString() {
-			return features().toString();
+			return descriptor().toString();
 		}
 	}
 
 	/**
+	 * Empty set of features.
+	 */
+	DeviceFeatures EMPTY = new DeviceFeatures() {
+		@Override
+		public Set<String> features() {
+			return Set.of();
+		}
+
+		@Override
+		public VkPhysicalDeviceFeatures descriptor() {
+			return null;
+		}
+
+		@Override
+		public boolean contains(DeviceFeatures features) {
+			return features.equals(this);
+		}
+	};
+
+	/**
 	 * Creates a set of <i>required</i> device features.
 	 * @param required Required feature names
-	 * @return New required device features
+	 * @return Required device features
 	 */
 	static DeviceFeatures of(Collection<String> required) {
 		return new AbstractDeviceFeatures() {
 			@Override
-			public Collection<String> features() {
-				return required;
+			public Set<String> features() {
+				return Set.copyOf(required);
+			}
+
+			@Override
+			public VkPhysicalDeviceFeatures descriptor() {
+				// Skip if empty
+				if(required.isEmpty()) {
+					return null;
+				}
+
+				// Build descriptor
+				final var struct = new VkPhysicalDeviceFeatures();
+				required.forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
+
+				return struct;
 			}
 
 			@Override
@@ -60,9 +102,9 @@ public interface DeviceFeatures {
 	}
 
 	/**
-	 * Creates a set of <i>supported</i> device features.
+	 * Creates a set of <i>supported</i> device features from the given Vulkan descriptor.
 	 * @param features Supported features
-	 * @return New supported device features
+	 * @return Supported device features
 	 */
 	static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
 		// Init structure
@@ -71,13 +113,17 @@ public interface DeviceFeatures {
 		// Create wrapper
 		return new AbstractDeviceFeatures() {
 			@Override
-			public Collection<String> features() {
+			public Set<String> features() {
 				return features
 						.getFieldOrder()
 						.stream()
-						//.map(Field::getName)
 						.filter(this::isEnabled)
 						.collect(toSet());
+			}
+
+			@Override
+			public VkPhysicalDeviceFeatures descriptor() {
+				return features.copy();
 			}
 
 			@Override
@@ -89,26 +135,5 @@ public interface DeviceFeatures {
 				return features.readField(field) == VulkanBoolean.TRUE;
 			}
 		};
-	}
-
-	/**
-	 * Helper - Populates a required features structure.
-	 * @param required Required features
-	 * @return Device features or {@code null} if the argument is {@code null}
-	 */
-	static VkPhysicalDeviceFeatures populate(DeviceFeatures required) {
-		// Ignore if not specified
-		if(required == null) {
-			return null;
-		}
-
-		// Enumerate required features
-		final var struct = new VkPhysicalDeviceFeatures();
-		required
-				.features()
-				.stream()
-				.forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
-
-		return struct;
 	}
 }
