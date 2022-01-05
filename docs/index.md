@@ -4,7 +4,7 @@ title: A Java implementation of the Vulkan API
 
 ## Introduction
 
-This tutorial/blog documents the design and development of a Java-based implementation of the Vulkan API.  Following the excellent [Vulkan tutorial](https://vulkan-tutorial.com/) we start from first principles and cover the challenges faced and decisions made as the project progresses.
+This blog documents the design and development of a Java-based implementation of the Vulkan API.  Following the excellent [Vulkan tutorial](https://vulkan-tutorial.com/) we start from first principles and cover the challenges faced and decisions made as the project progresses.
 
 The content is organised into chapters that cover a specific piece of Vulkan functionality, e.g. texture sampling.  Chapters are grouped into sections that work towards a specific goal such as rendering a triangle.
 
