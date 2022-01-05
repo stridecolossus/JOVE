@@ -2,6 +2,17 @@
 title: The Graphics Pipeline
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Pipeline](#building-the-pipeline)
+- [Shaders](#shaders)
+- [Integration](#integration)
+
+---
+
 ## Overview
 
 The _graphics pipeline_ configures the various _stages_ executed by the hardware to render a fragment.

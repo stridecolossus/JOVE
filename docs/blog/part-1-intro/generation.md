@@ -2,6 +2,16 @@
 title: Code Generating the Vulkan API
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Technology](#technology)
+- [Code Generation](#generation-game)
+
+---
+
 ## Overview
 
 For many years we had been developing a personal project for an OpenGL based library and a suite of example applications.  This software was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).  We intended to retire the OpenGL project and start afresh with a Vulkan based 3D engine.  LWJGL had recently implemented a Vulkan port and we expected to be able to use the new bindings to get to grips with the Vulkan API.

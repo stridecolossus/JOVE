@@ -2,6 +2,17 @@
 title: Vertex Buffers
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Vertex Data](#vertex-data)
+- [Vertex Configuration](#vertex-configuration)
+- [Integration](#integration)
+
+---
+
 ## Overview
 
 In this chapter we will replace the hard-coded triangle data in the shader with a _vertex buffer_ (also known as a _vertex buffer object_ or VBO).

@@ -2,6 +2,17 @@
 title: The Vulkan Instance
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Instance](#vulkan-instance)
+- [Diagnostics Handlers](#diagnostics-handler)
+- [Testing Issues](#testing-issues)
+
+---
+
 ## Overview
 
 The first step in the development of JOVE is to create the Vulkan _instance_ - the starting point for everything that follows.
@@ -40,7 +51,7 @@ Finally we will address some issues around unit-testing Vulkan and JNA based cod
 
 ---
 
-## Creating the Vulkan Instance
+## Vulkan Instance
 
 ### Vulkan Library
 

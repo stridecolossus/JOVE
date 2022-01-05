@@ -2,6 +2,17 @@
 title: Depth Buffers
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Rendering](#rendering-the-model)
+- [Depth Buffer](#depth-buffer)
+- [Improvements](#improvements)
+
+---
+
 ## Overview
 
 In this chapter we will render the OBJ model constructed previously and resolve various visual problems that arise.
@@ -16,7 +27,7 @@ We will also implement several improvements to the existing code including the i
 
 ---
 
-## Model Render
+## Rendering the Model
 
 ### Configuration
 

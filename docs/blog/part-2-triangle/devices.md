@@ -2,6 +2,19 @@
 title: Vulkan Devices
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Physical Devices](#physical-devices)
+- [Rendering Surface](#rendering-surface)
+- [Device Selection](#device-selection)
+- [Logical Device](#logical-device)
+- [Improvements](#improvements)
+
+---
+
 ## Overview
 
 Hardware components that support Vulkan are represented by a _physical device_ which defines the capabilities of that component (rendering, data transfer, etc).  In general there will be a single physical device (i.e. the GPU) or perhaps also an on-board graphics device for a laptop.

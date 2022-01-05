@@ -2,6 +2,16 @@
 title: Model Loader
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Model Loader](#model-loader)
+- [Improvements](#improvements)
+
+---
+
 ## Overview
 
 In this chapter we will create an OBJ loader to construct a JOVE representation of the chalet model used in the tutorial.

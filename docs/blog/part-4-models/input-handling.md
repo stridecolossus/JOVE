@@ -2,6 +2,17 @@
 title: Input Handling
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [InputEvents](#input-events)
+- [Action Bindings](#action-bindings)
+- [Camera Controllers](#camera-controllers)
+
+---
+
 ## Overview
 
 In this chapter we will design a framework for input event handling and implement an orbital camera controller.
@@ -208,7 +219,7 @@ This prevents an active listener from being garbage collected and de-registered 
 An _axis_ is an event source with a companion class for the associated events:
 
 ```java
-public interface Axis extends Source {
+public interface Axis extends Source<AxisEvent> {
     record AxisEvent(Axis axis, float value) implements Event {
         @Override
         public Object type() {
@@ -870,7 +881,7 @@ There are still further use-cases that will be implemented in later chapters:
 
 ---
 
-## Camera Controller
+## Camera Controllers
 
 ### Default Implementation
 
@@ -1054,9 +1065,7 @@ public void zoom(float inc) {
 
 Note that the camera controllers will still be subject to gimbal locking at the extreme edges of the viewport (see the previous chapter).
 
----
-
-## Integration
+### Integration
 
 To integrate the new event framework and camera controller we add the following to the camera configuration class:
 

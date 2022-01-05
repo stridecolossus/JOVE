@@ -2,6 +2,16 @@
 title: The Render Loop and Synchronisation
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Refactoring](#refactoring)
+- [synchronisation](#synchronisation)
+
+---
+
 ## Overview
 
 Before we start the next demo application there are several issues with the existing, crude render loop we have implemented so far.

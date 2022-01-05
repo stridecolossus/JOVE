@@ -2,6 +2,18 @@
 title: Introduction
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Background](#background)
+- [Approach](#approach)
+- [Code Presentation](#code-presentation)
+- [Technology Choices](#technology-choices)
+
+---
+
 ## Overview
 
 In this first section we set the scene for the project:
@@ -50,9 +62,9 @@ Each chapter generally consists of:
 
 ## Approach
 
-Although this is a personal project we _will_ strive to apply best practice to our design and development (as we would if it were a professional contract).
+Although this is a personal project we _will_ strive to apply best practice to our design and development as we would if it were a professional contract.
 
-In general our goals for this (or any other) project are:
+In general our goals are:
 
 * Maintainability - The prime directive: code should be designed and implemented such that it can be easily extended, refactored and fixed.
 
@@ -62,11 +74,11 @@ In general our goals for this (or any other) project are:
 
 To attempt to achieve these goals our approach and principles are as follows:
 
-* Implement the minimal functionality (or MVP) to deliver the next objective of the project.
+* Implement the minimal functionality required to deliver each feature.
 
-* Aggressive refactoring of existing code where we find we have made questionable design decisions or poorly implemented functionality.
+* Aggressive refactoring of existing components to avoid code duplication and complexity, or where better understanding of Vulkan invalidates previous design decisions or assumptions.
 
-* Comprehensive argument validation to identify invalid or illogical usage of the software components.
+* Comprehensive argument and state validation to identify incorrect or illogical usage of the software components.
 
 * High test coverage with unit-tests developed _test-first_ or _test-in-parallel_ with the source code.
 

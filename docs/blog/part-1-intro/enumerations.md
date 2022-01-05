@@ -2,6 +2,17 @@
 title: Enumerations
 ---
 
+---
+
+## Contents
+
+- [Background](#background)
+- [Reverse Mapping](#reverse-mapping)
+- [Type Conversion](#type-conversion)
+- [Default Values](#default-values)
+
+---
+
 ## Background
 
 When we first started using the code generated enumerations we realised there were a couple of flaws in our thinking:
@@ -100,7 +111,7 @@ final class ReverseMapping<E extends IntegerEnumeration> {
 }
 ```
 
-## Type Converter
+## Type Conversion
 
 To use integer enumerations in API methods and structures we implement a JNA _type converter_ which maps a Java type to/from its native equivalent:
 
@@ -154,23 +165,17 @@ static VulkanLibrary create() {
 }
 ```
 
-The only fly in the ointment is that this mapper also needs to be applied to __every__ JNA structure in its constructor.
-
-We introduce an intermediate base-class for Vulkan structures:
+The only fly in the ointment is that this mapper also needs to be applied to __every__ JNA structure to enable integer enumerations to be used as structure fields, therefore the following intermediate base-class is introduced for all code-generated structures:
 
 ```java
-abstract class VulkanStructure extends Structure {
+public abstract class VulkanStructure extends Structure {
     protected VulkanStructure() {
         super(MAPPER);
     }
 }
 ```
 
-Note that this new base-class __must__ be defined as a member of the JNA library for the mapper to work correctly.
-
-Finally we modify the structure template accordingly and re-generate the code.
-
-## Default Value
+## Default Values
 
 The final complication when mapping from a native enumeration value is that a default or unspecified value (i.e. zero) may not be a valid enumeration constant.
 

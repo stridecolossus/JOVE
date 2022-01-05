@@ -2,6 +2,16 @@
 title: The Render Pass
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Render Pass](#render-pass)
+- [Dependency Injection](#dependency-injection)
+
+---
+
 ## Overview
 
 In this chapter we will develop the remaining components required to complete the presentation functionality started in the previous chapter.

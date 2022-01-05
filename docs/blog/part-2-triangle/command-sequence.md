@@ -2,6 +2,16 @@
 title: Rendering Commands
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Commands](#commands)
+- [Integration](#integration)
+
+---
+
 ## Overview
 
 We are on the last lap for the goal of this phase of development - rendering a simple triangle.

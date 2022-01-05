@@ -2,6 +2,16 @@
 title: Descriptor Sets
 ---
 
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Descriptor Sets](#descriptor-sets)
+- [Integration](#integration)
+
+---
+
 ## Overview
 
 The final piece of functionality we need to support texture sampling is the _descriptor set_.
@@ -736,7 +746,7 @@ We have jumped through a number of hoops in the last couple of chapters and ther
 
 Here are some of the problems that we encountered:
 
-* The image loader is very crude and somewhat brittle - the native image _should_ be a `TYPE_3BYTE_BGR`, transformed to `TYPE_4BYTE_ABGR` when the alpha channel is added, which maps to the `R8G8B8A8_UNORM` format.  It is definitely worth using the debugger to step through image loading and the complex barrier transition logic.
+* The image loader is very crude and somewhat brittle - the image _should_ be a `TYPE_4BYTE_BGR` which maps to the `R8G8B8A8_UNORM` Vulkan format.  It is definitely worth using the debugger to step through image loading and the complex barrier transition logic.
 
 * Ensure the image data is being copied to the vertex buffer and not the other way around (yes we really did this).
 
