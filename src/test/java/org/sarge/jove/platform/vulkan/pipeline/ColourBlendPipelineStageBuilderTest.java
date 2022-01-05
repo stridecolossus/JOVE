@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -63,5 +64,14 @@ public class ColourBlendPipelineStageBuilderTest {
 	@Test
 	void invalidColourWriteMask() {
 		assertThrows(IllegalArgumentException.class, () -> builder.attachment().mask("cobblers"));
+	}
+
+	@Test
+	void copy() {
+		final var copy = new ColourBlendPipelineStageBuilder();
+		copy.copy(builder);
+		assertNotNull(copy);
+		assertNotNull(copy.get());
+		assertNotSame(builder.get(), copy.get());
 	}
 }

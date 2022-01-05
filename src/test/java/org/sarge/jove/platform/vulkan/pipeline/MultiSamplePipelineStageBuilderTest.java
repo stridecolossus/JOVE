@@ -1,7 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,5 +52,14 @@ public class MultiSamplePipelineStageBuilderTest {
 		assertEquals(null, info.pSampleMask);
 		assertEquals(VulkanBoolean.FALSE, info.alphaToCoverageEnable);
 		assertEquals(VulkanBoolean.FALSE, info.alphaToOneEnable);
+	}
+
+	@Test
+	void copy() {
+		final var copy = new MultiSamplePipelineStageBuilder();
+		copy.copy(builder);
+		assertNotNull(copy);
+		assertNotNull(copy.get());
+		assertNotSame(builder.get(), copy.get());
 	}
 }

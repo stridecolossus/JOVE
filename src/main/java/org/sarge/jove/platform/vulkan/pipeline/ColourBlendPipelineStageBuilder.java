@@ -29,7 +29,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	private VkLogicOp op;
 
 	@Override
-	void init(ColourBlendPipelineStageBuilder builder) {
+	void copy(ColourBlendPipelineStageBuilder builder) {
 		attachments.addAll(builder.attachments);
 		System.arraycopy(builder.constants, 0, constants, 0, constants.length);
 		op = builder.op;
@@ -63,10 +63,6 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 		return this;
 	}
 
-	/**
-	 * Constructs the colour-blend stage descriptor.
-	 * @return New descriptor
-	 */
 	@Override
 	VkPipelineColorBlendStateCreateInfo get() {
 		// Create descriptor

@@ -35,7 +35,7 @@ public class IntegerListTest {
 	}
 
 	@Test
-	void constructorInvalidGrowthFactor() {
+	static void constructorInvalidGrowthFactor() {
 		assertThrows(IllegalArgumentException.class, () -> new IntegerList(1, 0));
 		assertThrows(IllegalArgumentException.class, () -> new IntegerList(1, -1));
 	}

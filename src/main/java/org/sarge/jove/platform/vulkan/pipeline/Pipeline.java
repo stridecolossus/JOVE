@@ -181,7 +181,7 @@ public class Pipeline extends AbstractVulkanObject {
 
 		// Fixed function stages
 		private final VertexInputPipelineStageBuilder input = new VertexInputPipelineStageBuilder();
-		private final InputAssemblyPipelineStageBuilder assembly = new InputAssemblyPipelineStageBuilder();
+		private final AssemblyPipelineStageBuilder assembly = new AssemblyPipelineStageBuilder();
 		private final TesselationPipelineStageBuilder tesselation = new TesselationPipelineStageBuilder();
 		private final ViewportPipelineStageBuilder viewport = new ViewportPipelineStageBuilder();
 		private final RasterizerPipelineStageBuilder raster = new RasterizerPipelineStageBuilder();
@@ -260,7 +260,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @see #derive()
 		 */
 		public Builder derive(Pipeline base) {
-			checkAllowDerivatives(base.flags);
+			checkAllowDerivatives(base.flags());
 			this.baseHandle = base.handle();
 			derivative(this);
 			return this;
@@ -291,15 +291,15 @@ public class Pipeline extends AbstractVulkanObject {
 			for(ShaderStageBuilder b : shaders.values()) {
 				builder.shaders.put(b.stage, new ShaderStageBuilder(b));
 			}
-			builder.input.init(input);
-			builder.assembly.init(assembly);
-			builder.tesselation.init(tesselation);
-			builder.viewport.init(viewport);
-			builder.raster.init(raster);
-			builder.multi.init(multi);
-			builder.depth.init(depth);
-			builder.blend.init(blend);
-			builder.dynamic.init(dynamic);
+			builder.input.copy(input);
+			builder.assembly.copy(assembly);
+			builder.tesselation.copy(tesselation);
+			builder.viewport.copy(viewport);
+			builder.raster.copy(raster);
+			builder.multi.copy(multi);
+			builder.depth.copy(depth);
+			builder.blend.copy(blend);
+			builder.dynamic.copy(dynamic);
 
 			return builder;
 		}
@@ -321,7 +321,7 @@ public class Pipeline extends AbstractVulkanObject {
 		/**
 		 * @return Builder for the input assembly stage
 		 */
-		public InputAssemblyPipelineStageBuilder assembly() {
+		public AssemblyPipelineStageBuilder assembly() {
 			return assembly;
 		}
 

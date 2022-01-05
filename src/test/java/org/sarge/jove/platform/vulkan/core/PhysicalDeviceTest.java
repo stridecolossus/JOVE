@@ -2,14 +2,14 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -23,10 +23,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkFormatProperties;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Properties;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.util.ReferenceFactory;
 
@@ -60,8 +62,6 @@ public class PhysicalDeviceTest {
 		dev = new PhysicalDevice(new Pointer(42), instance, List.of(family));
 	}
 
-	// TODO - test enumerate, queues, etc
-
 	@Test
 	void constructor() {
 		assertNotNull(dev.handle());
@@ -77,41 +77,58 @@ public class PhysicalDeviceTest {
 	}
 
 	@Test
-	void properties() {
-		// Init properties
-		final Answer<Void> answer = inv -> {
-			final VkPhysicalDeviceProperties props = inv.getArgument(1);
-			props.deviceName = "device".getBytes();
-			props.pipelineCacheUUID = "cache".getBytes();
-			props.deviceType = VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-			return null;
-		};
-		doAnswer(answer).when(lib).vkGetPhysicalDeviceProperties(eq(dev), any());
-
-		// Retrieve properties
-		final var props = dev.properties();
-		assertNotNull(props);
-		clearInvocations(lib);
-
-		// Check cached
-		assertEquals(props, dev.properties());
-		verifyNoInteractions(lib);
-
-		// Check properties
-		assertEquals("device", props.name());
-		assertEquals("cache", props.cache());
-		assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, props.type());
-		assertNotNull(props.limits());
-	}
-
-	@Test
-	void formatProperties() {
+	void format() {
 		final VkFormatProperties props = dev.properties(VkFormat.D32_SFLOAT);
 		verify(lib).vkGetPhysicalDeviceFormatProperties(dev, VkFormat.D32_SFLOAT, props);
 	}
 
 	@Nested
-	class SelectorTests {
+	class PropertiesTest {
+		private Properties props;
+		private VkPhysicalDeviceLimits limits;
+
+		@BeforeEach
+		void before() {
+			// Init device limits
+			limits = new VkPhysicalDeviceLimits();
+
+			// Init properties
+			final Answer<Void> answer = inv -> {
+				final VkPhysicalDeviceProperties props = inv.getArgument(1);
+				props.deviceName = "device".getBytes();
+				props.pipelineCacheUUID = "cache".getBytes();
+				props.deviceType = VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+				props.limits = limits;
+				return null;
+			};
+			doAnswer(answer).when(lib).vkGetPhysicalDeviceProperties(eq(dev), any(VkPhysicalDeviceProperties.class));
+
+			// Retrieve properties
+			props = dev.properties();
+		}
+
+		@Test
+		void constructor() {
+			assertNotNull(props);
+			assertEquals("device", props.name());
+			assertEquals("cache", props.cache());
+			assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, props.type());
+		}
+
+		@Test
+		void cached() {
+			assertSame(props, dev.properties());
+		}
+
+		@Test
+		void limits() {
+			assertNotNull(props.limits());
+			assertNotSame(limits, props.limits());
+		}
+	}
+
+	@Nested
+	class SelectorTest {
 		private Predicate<Family> predicate;
 
 		@BeforeEach
@@ -174,5 +191,11 @@ public class PhysicalDeviceTest {
 			// Check API
 			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev, family.index(), surface, supported);
 		}
+	}
+
+	@Test
+	void enumerate() {
+		// TODO
+		//PhysicalDevice.devices(instance);
 	}
 }

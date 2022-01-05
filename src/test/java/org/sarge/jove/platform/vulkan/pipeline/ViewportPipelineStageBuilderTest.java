@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -52,8 +53,8 @@ public class ViewportPipelineStageBuilderTest {
 	}
 
 	@Test
-	void viewportScissor() {
-		final var descriptor = builder.viewportScissor(rect).get();
+	void viewportAndScissor() {
+		final var descriptor = builder.viewportAndScissor(rect).get();
 		assertEquals(1, descriptor.scissorCount);
 	}
 
@@ -79,5 +80,15 @@ public class ViewportPipelineStageBuilderTest {
 	void createRequiresScissor() {
 		builder.viewport(rect);
 		assertThrows(IllegalArgumentException.class, () -> builder.get());
+	}
+
+	@Test
+	void copy() {
+		final var copy = new ViewportPipelineStageBuilder();
+		builder.viewportAndScissor(rect);
+		copy.copy(builder);
+		assertNotNull(copy);
+		assertNotNull(copy.get());
+		assertNotSame(builder.get(), copy.get());
 	}
 }

@@ -1,7 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,5 +27,15 @@ public class TesselationPipelineStageBuilderTest {
 	@Test
 	void buildOptional() {
 		assertEquals(null, builder.get());
+	}
+
+	@Test
+	void copy() {
+		final var copy = new TesselationPipelineStageBuilder();
+		builder.points(42);
+		copy.copy(builder);
+		assertNotNull(copy);
+		assertNotNull(copy.get());
+		assertNotSame(builder.get(), copy.get());
 	}
 }

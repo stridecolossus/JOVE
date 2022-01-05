@@ -12,20 +12,22 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @author Sarge
  */
 public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo, DepthStencilPipelineStageBuilder> {
-	private boolean depthTestEnable;
-	private boolean depthWriteEnable = true;
-	private VkCompareOp depthCompareOp = VkCompareOp.LESS_OR_EQUAL;
-	// TODO - other fields
-	// depth bounds test
-	// stencil test
-	// front/back
-	// min/max bounds
+	private VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
+
+	DepthStencilPipelineStageBuilder() {
+		enable(false);
+		write(true);
+		compare(VkCompareOp.LESS_OR_EQUAL);
+		// TODO - other fields
+		// depth bounds test
+		// stencil test
+		// front/back
+		// min/max bounds
+	}
 
 	@Override
-	void init(DepthStencilPipelineStageBuilder builder) {
-		depthTestEnable = builder.depthTestEnable;
-		depthWriteEnable = builder.depthWriteEnable;
-		depthCompareOp = builder.depthCompareOp;
+	void copy(DepthStencilPipelineStageBuilder builder) {
+		this.info = builder.info.copy();
 	}
 
 	/**
@@ -33,7 +35,7 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 * @param depthTestEnable Whether depth-test is enabled
 	 */
 	public DepthStencilPipelineStageBuilder enable(boolean depthTestEnable) {
-		this.depthTestEnable = depthTestEnable;
+		info.depthTestEnable = VulkanBoolean.of(depthTestEnable);
 		return this;
 	}
 
@@ -42,7 +44,7 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 * @param depthWriteEnable Whether to write to the depth buffer
 	 */
 	public DepthStencilPipelineStageBuilder write(boolean depthWriteEnable) {
-		this.depthWriteEnable = depthWriteEnable;
+		info.depthWriteEnable = VulkanBoolean.of(depthWriteEnable);
 		return this;
 	}
 
@@ -51,16 +53,12 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 * @param depthCompareOp Comparison function
 	 */
 	public DepthStencilPipelineStageBuilder compare(VkCompareOp depthCompareOp) {
-		this.depthCompareOp = notNull(depthCompareOp);
+		info.depthCompareOp = notNull(depthCompareOp);
 		return this;
 	}
 
 	@Override
 	VkPipelineDepthStencilStateCreateInfo get() {
-		final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
-		info.depthTestEnable = VulkanBoolean.of(depthTestEnable);
-		info.depthWriteEnable = VulkanBoolean.of(depthWriteEnable);
-		info.depthCompareOp = depthCompareOp;
 		return info;
 	}
 }

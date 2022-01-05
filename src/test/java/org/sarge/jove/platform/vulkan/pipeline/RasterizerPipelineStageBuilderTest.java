@@ -1,7 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,5 +63,14 @@ public class RasterizerPipelineStageBuilderTest {
 //		assertEquals(0, info.depthBiasConstantFactor);
 //		assertEquals(0, info.depthBiasClamp);
 //		assertEquals(0, info.depthBiasSlopeFactor);
+	}
+
+	@Test
+	void copy() {
+		final var copy = new RasterizerPipelineStageBuilder();
+		copy.copy(builder);
+		assertNotNull(copy);
+		assertNotNull(copy.get());
+		assertNotSame(builder.get(), copy.get());
 	}
 }

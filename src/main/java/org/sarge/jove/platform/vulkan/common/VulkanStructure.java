@@ -35,6 +35,9 @@ public abstract class VulkanStructure extends Structure {
 		@SuppressWarnings("unchecked")
 		final T copy = (T) Structure.newInstance(this.getClass());
 
+		// Init this structure
+		write();
+
 		// Read backing data
 		final int size = this.size();
 		final byte[] data = getPointer().getByteArray(0, size);

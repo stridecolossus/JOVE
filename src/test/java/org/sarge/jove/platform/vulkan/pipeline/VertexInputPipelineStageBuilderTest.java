@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.List;
@@ -123,5 +124,14 @@ public class VertexInputPipelineStageBuilderTest {
 						.format(FORMAT);
 
 		assertThrows(IllegalArgumentException.class, "Duplicate location", () -> attribute.build());
+	}
+
+	@Test
+	void copy() {
+		final var copy = new VertexInputPipelineStageBuilder();
+		copy.copy(builder);
+		assertNotNull(copy);
+		assertNotNull(copy.get());
+		assertNotSame(builder.get(), copy.get());
 	}
 }

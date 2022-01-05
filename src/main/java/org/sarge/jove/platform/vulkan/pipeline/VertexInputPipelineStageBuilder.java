@@ -30,7 +30,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	private final List<AttributeBuilder> attributes = new ArrayList<>();
 
 	@Override
-	void init(VertexInputPipelineStageBuilder builder) {
+	void copy(VertexInputPipelineStageBuilder builder) {
 		bindings.putAll(builder.bindings);
 		attributes.addAll(builder.attributes);
 	}

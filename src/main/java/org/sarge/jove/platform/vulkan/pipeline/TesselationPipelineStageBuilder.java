@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static org.sarge.lib.util.Check.oneOrMore;
+
 import org.sarge.jove.platform.vulkan.VkPipelineTessellationStateCreateInfo;
 
 /**
@@ -11,7 +13,7 @@ public class TesselationPipelineStageBuilder extends AbstractPipelineStageBuilde
 	private int points;
 
 	@Override
-	void init(TesselationPipelineStageBuilder builder) {
+	void copy(TesselationPipelineStageBuilder builder) {
 		points = builder.points;
 	}
 
@@ -20,7 +22,7 @@ public class TesselationPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param points Number of control points
 	 */
 	public TesselationPipelineStageBuilder points(int points) {
-		this.points = points;
+		this.points = oneOrMore(points);
 		return this;
 	}
 

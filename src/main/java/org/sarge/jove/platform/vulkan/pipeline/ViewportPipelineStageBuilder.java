@@ -32,14 +32,13 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 
 	private final List<Viewport> viewports = new ArrayList<>();
 	private final List<Rectangle> scissors = new ArrayList<>();
-
-	private boolean flip; // = true;
+	private boolean flip;
 
 	@Override
-	void init(ViewportPipelineStageBuilder builder) {
+	void copy(ViewportPipelineStageBuilder builder) {
+		flip = builder.flip;
 		viewports.addAll(builder.viewports);
 		scissors.addAll(builder.scissors);
-		flip = builder.flip;
 	}
 
 	/**
@@ -87,7 +86,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * Convenience helper to add a viewport rectangle with default min/max depth <b>and</b> a scissor with the same dimensions.
 	 * @param rect Viewport/scissor rectangle
 	 */
-	public ViewportPipelineStageBuilder viewportScissor(Rectangle rect) {
+	public ViewportPipelineStageBuilder viewportAndScissor(Rectangle rect) {
 		viewport(rect);
 		scissor(rect);
 		return this;

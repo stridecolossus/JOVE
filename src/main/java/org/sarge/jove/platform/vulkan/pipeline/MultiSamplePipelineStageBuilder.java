@@ -8,29 +8,25 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.IntegerArray;
 import org.sarge.lib.util.Percentile;
 
-import com.sun.jna.Pointer;
-
 /**
  * Builder for the multi-sample pipeline stage.
  * @see VkPipelineMultisampleStateCreateInfo
  * @author Sarge
  */
 public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineMultisampleStateCreateInfo, MultiSamplePipelineStageBuilder> {
-	private VkSampleCount rasterizationSamples = VkSampleCount.COUNT_1;
-	private boolean sampleShadingEnable;
-	private float minSampleShading = 1;
-	private boolean alphaToCoverageEnable;
-	private boolean alphaToOneEnable;
-	private Pointer mask;
+	private VkPipelineMultisampleStateCreateInfo info = new VkPipelineMultisampleStateCreateInfo();
+
+	public MultiSamplePipelineStageBuilder() {
+		samples(1);
+		sampleShadingEnable(false);
+		minSampleShading(Percentile.ONE);
+		alphaToCoverageEnable(false);
+		alphaToOneEnable(false);
+	}
 
 	@Override
-	void init(MultiSamplePipelineStageBuilder builder) {
-		rasterizationSamples = builder.rasterizationSamples;
-		sampleShadingEnable = builder.sampleShadingEnable;
-		minSampleShading = builder.minSampleShading;
-		alphaToCoverageEnable = builder.alphaToCoverageEnable;
-		alphaToOneEnable = builder.alphaToOneEnable;
-		mask = builder.mask;
+	void copy(MultiSamplePipelineStageBuilder builder) {
+		this.info = builder.info.copy();
 	}
 
 	/**
@@ -39,7 +35,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @see #samples(int)
 	 */
 	public MultiSamplePipelineStageBuilder rasterizationSamples(VkSampleCount rasterizationSamples) {
-		this.rasterizationSamples = notNull(rasterizationSamples);
+		info.rasterizationSamples = notNull(rasterizationSamples);
 		return this;
 	}
 
@@ -59,7 +55,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param sampleShadingEnable Whether sample shading is enabled
 	 */
 	public MultiSamplePipelineStageBuilder sampleShadingEnable(boolean sampleShadingEnable) {
-		this.sampleShadingEnable = sampleShadingEnable;
+		info.sampleShadingEnable = VulkanBoolean.of(sampleShadingEnable);
 		return this;
 	}
 
@@ -68,7 +64,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param minSampleShading Minimum sample shading fraction
 	 */
 	public MultiSamplePipelineStageBuilder minSampleShading(Percentile minSampleShading) {
-		this.minSampleShading = minSampleShading.floatValue();
+		info.minSampleShading = minSampleShading.floatValue();
 		return this;
 	}
 
@@ -78,7 +74,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 */
 	public MultiSamplePipelineStageBuilder sampleMask(int[] mask) {
 		// TODO - length = samples / 32
-		this.mask = new IntegerArray(mask);
+		info.pSampleMask = new IntegerArray(mask);
 		return this;
 	}
 
@@ -87,7 +83,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param alphaToCoverageEnable Whether <i>alpha to coverage</i> is enabled
 	 */
 	public MultiSamplePipelineStageBuilder alphaToCoverageEnable(boolean alphaToCoverageEnable) {
-		this.alphaToCoverageEnable = alphaToCoverageEnable;
+		info.alphaToCoverageEnable = VulkanBoolean.of(alphaToCoverageEnable);
 		return this;
 	}
 
@@ -96,19 +92,12 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param alphaToOneEnable Whether <i>alpha to one</i> is enabled
 	 */
 	public MultiSamplePipelineStageBuilder alphaToOneEnable(boolean alphaToOneEnable) {
-		this.alphaToOneEnable = alphaToOneEnable;
+		info.alphaToOneEnable = VulkanBoolean.of(alphaToOneEnable);
 		return this;
 	}
 
 	@Override
 	VkPipelineMultisampleStateCreateInfo get() {
-		final var info = new VkPipelineMultisampleStateCreateInfo();
-		info.rasterizationSamples = rasterizationSamples;
-		info.sampleShadingEnable = VulkanBoolean.of(sampleShadingEnable);
-		info.minSampleShading = minSampleShading;
-		info.alphaToCoverageEnable = VulkanBoolean.of(alphaToCoverageEnable);
-		info.alphaToOneEnable = VulkanBoolean.of(alphaToOneEnable);
-		info.pSampleMask = mask;
 		return info;
 	}
 }

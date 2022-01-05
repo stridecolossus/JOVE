@@ -18,7 +18,7 @@ public class DynamicStatePipelineStageBuilder extends AbstractPipelineStageBuild
 	private final Set<VkDynamicState> states = new HashSet<>();
 
 	@Override
-	void init(DynamicStatePipelineStageBuilder builder) {
+	void copy(DynamicStatePipelineStageBuilder builder) {
 		states.addAll(builder.states);
 	}
 

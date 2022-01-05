@@ -1,33 +1,37 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static org.sarge.lib.util.Check.notNull;
+
+import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 
 /**
  * Base-class for a nested pipeline stage builder.
- * @param <T> Return type
+ * @param <R> Return type
+ * @param <T> Builder type
  * @author Sarge
  */
-abstract class AbstractPipelineStageBuilder<T, B> {
+abstract class AbstractPipelineStageBuilder<R extends VulkanStructure, T extends AbstractPipelineStageBuilder<R, T>> {
 	private Builder parent;
 
 	/**
-	 * Sets the parent builder.
-	 * @param parent Parent builder
+	 * Copies from the given builder.
+	 * @param builder Builder to copy
 	 */
-	protected void parent(Builder parent) {
-		this.parent = parent;
-	}
-
-	/**
-	 * Clones the properties of this builder.
-	 * @param builder Builder to clone
-	 */
-	abstract void init(B builder);
+	abstract void copy(T builder);
 
 	/**
 	 * @return Result of this builder
 	 */
-	abstract T get();
+	abstract R get();
+
+	/**
+	 * Sets the parent of this builder.
+	 * @param parent Parent builder
+	 */
+	final void parent(Builder parent) {
+		this.parent = notNull(parent);
+	}
 
 	/**
 	 * Constructs this object.
