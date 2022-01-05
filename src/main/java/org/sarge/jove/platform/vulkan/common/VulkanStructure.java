@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import java.lang.reflect.Array;
 import java.util.List;
 
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -22,16 +21,6 @@ public abstract class VulkanStructure extends Structure {
 	@Override
 	public List<String> getFieldOrder() {
 		return super.getFieldOrder();
-	}
-
-	@Override
-	public Structure[] toArray(int size) {
-		if(size == 0) {
-			return (Structure[]) Array.newInstance(getClass(), 0);		// TODO - only really needed for some tests?
-		}
-		else {
-			return super.toArray(size);
-		}
 	}
 
 	/**

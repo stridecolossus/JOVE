@@ -105,16 +105,6 @@ public class PhysicalDeviceTest {
 	}
 
 	@Test
-	void extensions() {
-		assertEquals(Set.of(), dev.extensions());
-	}
-
-	@Test
-	void layers() {
-		assertEquals(Set.of(), dev.layers());
-	}
-
-	@Test
 	void formatProperties() {
 		final VkFormatProperties props = dev.properties(VkFormat.D32_SFLOAT);
 		verify(lib).vkGetPhysicalDeviceFormatProperties(dev, VkFormat.D32_SFLOAT, props);
