@@ -269,6 +269,7 @@ public class PhysicalDevice implements NativeObject {
 		}
 
 		/**
+		 * Note that the returned descriptor is mutable, this method clones a new instance on <b>every</b> invocation.
 		 * @return Device limits
 		 */
 		public VkPhysicalDeviceLimits limits() {

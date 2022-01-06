@@ -873,6 +873,55 @@ public static PoolAllocator create(LogicalDevice dev, Allocator allocator, float
 }
 ```
 
+The `VkPhysicalDeviceLimits` structure is a child of `VkPhysicalDeviceProperties` wrapped by the `Properties` helper class of the physical device:
+
+```java
+public class PhysicalDevice ... {
+    public class Properties {
+        private final VkPhysicalDeviceProperties struct = new VkPhysicalDeviceProperties();
+        ...
+
+        public VkPhysicalDeviceLimits limits() {
+            return struct.limits;
+        }
+    }
+}
+```
+
+However this implementation directly exposes the limits which as a JNA structure is a mutable object, potentially allowing an application to accidentally monkey with the data.  Ideally we would also wrap this information in another immutable domain object, however this structure is absolutely huge and the wrapper approach is simply not viable.  Unfortunately neither is there an obvious means of making a JNA structure immutable.
+
+Instead we introduce a mechanism to _clone_ a JNA structure by copying the underlying memory:
+
+```java
+public abstract class VulkanStructure extends Structure {
+    public <T extends VulkanStructure> T copy() {
+        // Create copy
+        T copy = (T) Structure.newInstance(this.getClass());
+        write();
+
+        // Read backing data
+        int size = this.size();
+        byte[] data = getPointer().getByteArray(0, size);
+
+        // Write to copy
+        copy.getPointer().write(0, data, 0, size);
+        copy.read();
+
+        return copy;
+    }
+}
+```
+
+The accessor for the device `limits` is modified accordingly to clone on demand:
+
+```java
+public VkPhysicalDeviceLimits limits() {
+    return struct.limits.copy();
+}
+```
+
+Obviously this is not an ideal solution since the developer needs to be aware that the accessor clones a new copy on every invocation.
+
 ### Allocation Request Routing
 
 We also anticipate that an application will require different allocation strategies depending on the use-cases for device memory.
