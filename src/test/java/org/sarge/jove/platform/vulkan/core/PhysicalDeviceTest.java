@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -16,16 +17,19 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkFormatProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
+import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
 import org.sarge.jove.platform.vulkan.VkQueueFlag;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Properties;
@@ -131,6 +135,7 @@ public class PhysicalDeviceTest {
 	class SelectorTest {
 		private Predicate<Family> predicate;
 
+		@SuppressWarnings("unchecked")
 		@BeforeEach
 		void before() {
 			predicate = mock(Predicate.class);
@@ -195,7 +200,44 @@ public class PhysicalDeviceTest {
 
 	@Test
 	void enumerate() {
-		// TODO
-		//PhysicalDevice.devices(instance);
+		// Init number of results
+		final IntByReference count = new IntByReference(1);
+		when(instance.factory().integer()).thenReturn(count);
+
+		// Return the device handle
+		final Pointer handle = new Pointer(1);
+		final Answer<Integer> answer = inv -> {
+			final Pointer[] array = inv.getArgument(2);
+			array[0] = handle;
+			return 0;
+		};
+		doAnswer(answer).when(lib).vkEnumeratePhysicalDevices(instance, count, new Pointer[1]);
+
+		// Return the queue families for this device
+		final Answer<Integer> families = inv -> {
+			final VkQueueFamilyProperties props = inv.getArgument(2);
+			props.queueCount = 1;
+			props.queueFlags = VkQueueFlag.GRAPHICS.value();
+			return 0;
+		};
+		doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(eq(handle), eq(count), any(VkQueueFamilyProperties.class));
+
+		// Enumerate devices
+		final Stream<PhysicalDevice> stream = PhysicalDevice.devices(instance);
+		assertNotNull(stream);
+
+		// Retrieve device
+		final List<PhysicalDevice> list = stream.collect(toList());
+		assertEquals(1, list.size());
+
+		// Check device
+		final PhysicalDevice dev = list.get(0);
+		assertNotNull(dev);
+		assertEquals(new Handle(handle), dev.handle());
+		assertEquals(instance, dev.instance());
+
+		// Check queue families
+		final Family expected = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
+		assertEquals(List.of(expected), dev.families());
 	}
 }

@@ -15,7 +15,7 @@ title: Memory Allocation
 
 ## Overview
 
-In the following chapters we will be implementing vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.
+In the following chapters we will be implementing vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).  A Vulkan implementation specifies a set of _memory types_ such that the application can select the appropriate memory type depending on the usage scenario.
 
 The [Vulkan documentation](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html) suggests implementing a _fallback strategy_ when selecting the memory type.  The application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
 

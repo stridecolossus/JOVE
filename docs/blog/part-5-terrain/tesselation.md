@@ -828,17 +828,17 @@ Note that the shader code presented in this chapter is just about the simplest i
 
 ### Derived Pipelines
 
-The wireframe terrain model is useful for visually testing the tesselation shader but we would like to be able to toggle between filled and wireframe modes.  This implies the following new requirements:
+The wireframe terrain model is useful for visually testing the tesselation shader but we would like to be able to toggle between filled and wireframe modes.  The _polygon mode_ is a property of the rasterizer pipeline stage which implies the demo needs _two_ pipelines to switch between modes.
 
-1. The _polygon mode_ is a property of the rasterizer pipeline stage which means the demo needs _two_ pipelines to switch between modes.
+As things stand we could configure two separate pipeline builders which would be identical except for the polygon mode, but this would require the common configuration to be replicated.  To avoid code duplication a _single_ builder could be used to create each pipeline in two separate operations, where the second pipeline _overrides_ the polygon mode.
 
-2. However both pipelines will be identical except for the polygon mode, ideally we would prefer to _override_ this property in the builder to avoid having to repeat all the common configuration.
+However we note the following: 
 
-3. We note that Vulkan supports the creation of multiple pipelines in one operation but the current implementation is limited to a single pipeline.
+1. The API method allows multiple pipelines to be created in one operation but the current implementation is limited to a single instance.
 
-4. Additionally Vulkan supports _derivative_ pipelines which provide a hint to the hardware that a derived (or child) pipeline shares common properties with its parent, potentially improving performance when pipelines are instantiated and when switching pipeline bindings in the render sequence.
+2. Vulkan supports _derivative_ pipelines which provide a hint to the hardware that a derived (or child) pipeline shares common properties with its parent, potentially improving performance when the pipelines are instantiated and when switching bindings in the render sequence.
 
-To support these requirements we will add functionality to the pipeline builder to support derivative pipelines and refactor the existing code to allow configuration to be overridden.
+To support all these use cases functionality will be added to the pipeline builder to support derivative pipelines and to allow configuration to be overridden.
 
 A pipeline that allows derivatives (i.e. the parent) is identified by a flag at instantiation-time:
 
@@ -862,7 +862,15 @@ public static class Builder {
 
 Note that the set of `flags` is also added to the pipeline domain object.
 
-A pipeline derived from an _existing_ parent is specified by the following new method:
+Vulkan offers two methods to derive pipelines:
+
+1. Derive from an _existing_ pipeline instance.
+
+2. Create an array of pipelines where derived pipelines specify the parent by _index_ within the array.
+
+Note that these two mechanisms are mutually exclusive.
+
+A pipeline derived from an existing parent instance is specified by the following new method on the builder:
 
 ```java
 public Builder derive(Pipeline base) {
@@ -889,7 +897,7 @@ The base pipeline is populated in the `build` method:
 info.basePipelineHandle = baseHandle;
 ```
 
-Vulkan provides a second method to derive a pipeline by _index_ within an array of pipelines created in a single operation.  We first implement a new static factory method to create multiple pipelines:
+To support the second method to derive pipelines by index we first implement a new factory method to create multiple pipelines:
 
 ```java
 public static List<Pipeline> build(List<Builder> builders, DeviceContext dev) {
@@ -982,8 +990,6 @@ if(base != null) {
 info.basePipelineHandle = baseHandle;
 info.basePipelineIndex = baseIndex;
 ```
-
-Note that the two mechanisms for deriving a pipeline are mutually exclusive.
 
 To allow the properties of a pipeline to be overridden the `derive` method clones from the parent builder:
 

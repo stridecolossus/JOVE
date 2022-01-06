@@ -245,7 +245,7 @@ protected Tuple(float[] array) {
 Next we abstract the common pattern by implementing a new generic parser:
 
 ```java
-class VertexComponentParser<T extends Vertex.Component> implements Parser {
+class VertexComponentParser<T extends Bufferable> implements Parser {
     private final float[] array;
     private final Function<float[], T> ctor;
     private final BiConsumer<ObjectModel, T> consumer;

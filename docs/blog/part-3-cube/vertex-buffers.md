@@ -636,13 +636,13 @@ public Pipeline pipeline(...) {
                 .index(0)
                 .stride(Point.LAYOUT.length() + Colour.LAYOUT.length())
                 .build()
-            .attribute()
+            .attribute()            // Position
                 .binding(0)
                 .location(0)
                 .format(VkFormat.R32G32B32_SFLOAT)
                 .offset(0)
                 .build()
-            .attribute()
+            .attribute()            // Colour
                 .binding(0)
                 .location(1)
                 .format(VkFormat.R32G32B32A32_SFLOAT)
