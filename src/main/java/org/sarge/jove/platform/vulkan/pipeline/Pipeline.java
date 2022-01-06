@@ -80,7 +80,7 @@ public class Pipeline extends AbstractVulkanObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append(handle)
+				.appendSuper(super.toString())
 				.append(layout)
 				.append(flags)
 				.build();

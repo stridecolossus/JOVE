@@ -248,7 +248,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("handle", this.handle())
+				.appendSuper(super.toString())
 				.append("len", len)
 				.append("usage", usage)
 				.append("mem", mem)

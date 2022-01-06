@@ -14,9 +14,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
+import org.sarge.jove.model.Vertex;
 
 public class ObjectModelLoaderTest {
 	private ObjectModelLoader loader;
@@ -62,7 +62,7 @@ public class ObjectModelLoaderTest {
 		// Check header
 		assertEquals(3, model.count());
 		assertEquals(Primitive.TRIANGLES, model.primitive());
-		assertEquals(List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT), model.layout());
+		assertEquals(List.of(Point.LAYOUT, Vertex.NORMALS, Coordinate2D.LAYOUT), model.layout());
 		assertEquals(true, model.isIndexed());
 
 		// Check vertex buffer
@@ -79,6 +79,7 @@ public class ObjectModelLoaderTest {
 
 	@Test
 	void setUnknownCommandHandler() throws IOException {
+		@SuppressWarnings("unchecked")
 		final Consumer<String> handler = mock(Consumer.class);
 		loader.setUnknownCommandHandler(handler);
 		loader.load(new StringReader("cobblers"));

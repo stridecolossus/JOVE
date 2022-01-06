@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
@@ -220,6 +221,16 @@ public class Swapchain extends AbstractVulkanObject {
 	@Override
 	protected void release() {
 		attachments.forEach(View::destroy);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
+				.append("extents", extents)
+				.append("format", format)
+				.append("attachments", attachments.size())
+				.build();
 	}
 
 	/**

@@ -101,7 +101,7 @@ public class BufferCopyCommand implements Command {
 		 * @param src Source buffer
 		 * @throws IllegalStateException if the buffer is not a copy source
 		 */
-		public BufferCopyCommand.Builder source(VulkanBuffer src) {
+		public Builder source(VulkanBuffer src) {
 			src.require(VkBufferUsageFlag.TRANSFER_SRC);
 			this.src = notNull(src);
 			return this;
@@ -112,7 +112,7 @@ public class BufferCopyCommand implements Command {
 		 * @param dest Destination buffer
 		 * @throws IllegalStateException if the buffer is not a copy destination
 		 */
-		public BufferCopyCommand.Builder destination(VulkanBuffer dest) {
+		public Builder destination(VulkanBuffer dest) {
 			dest.require(VkBufferUsageFlag.TRANSFER_DST);
 			this.dest = notNull(dest);
 			return this;
@@ -125,7 +125,7 @@ public class BufferCopyCommand implements Command {
 		 * @param size				Region length
 		 * @throws IllegalArgumentException if the copy region is invalid for either buffer
 		 */
-		public BufferCopyCommand.Builder region(long srcOffset, long destOffset, long size) {
+		public Builder region(long srcOffset, long destOffset, long size) {
 			// Validate
 			Check.oneOrMore(size);
 			validate(src, srcOffset, size);

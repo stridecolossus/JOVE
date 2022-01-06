@@ -21,8 +21,8 @@ import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.util.StructureHelper;
 
@@ -268,8 +268,8 @@ public class DescriptorSet implements NativeObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("handle", handle)
-				.append("resources", entries.values())
+				.appendSuper(super.toString())
+				.append(entries.values())
 				.build();
 	}
 

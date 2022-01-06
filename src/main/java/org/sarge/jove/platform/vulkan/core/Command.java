@@ -410,7 +410,7 @@ public interface Command {
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
-					.append("handle", handle())
+					.appendSuper(super.toString())
 					.append("queue", queue)
 					.append("buffers", buffers.size())
 					.build();

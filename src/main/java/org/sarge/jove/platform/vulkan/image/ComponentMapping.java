@@ -6,7 +6,9 @@ import org.sarge.jove.platform.vulkan.VkComponentMapping;
 import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
 
 /**
- * The <i>component mapping</i> is a helper class used to construct the component mapping for an image view.
+ * The <i>component mapping</i> is a helper class used to construct the RGBA swizzle for an image view.
+ * @see VkComponentMapping
+ * @see VkComponentSwizzle
  * @author Sarge
  */
 public final class ComponentMapping {
@@ -32,7 +34,7 @@ public final class ComponentMapping {
 	 * @param mapping Mapping specification
 	 * @return Component mapping
 	 * @throws IllegalArgumentException if the mapping is empty or is longer than 4 characters in length
-	 * @throws IllegalArgumentException if a channel swizzle is not supported
+	 * @throws IllegalArgumentException for an unsupported channel swizzle character
 	 */
 	public static ComponentMapping of(String mapping) {
 		final ComponentMapping instance = new ComponentMapping();

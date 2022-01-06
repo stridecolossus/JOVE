@@ -4,7 +4,7 @@ import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 
 /**
- * A <i>resource</i> defines an object that can be applied to a descriptor set.
+ * A <i>descriptor resource</i> defines an object that can be applied to a descriptor set.
  * @author Sarge
  */
 public interface DescriptorResource {

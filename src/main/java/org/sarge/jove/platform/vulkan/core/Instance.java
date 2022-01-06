@@ -96,7 +96,7 @@ public class Instance extends AbstractTransientNativeObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("handle", handle)
+				.appendSuper(super.toString())
 				.append(manager)
 				.build();
 	}
