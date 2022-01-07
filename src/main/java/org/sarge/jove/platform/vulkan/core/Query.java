@@ -34,7 +34,7 @@ import com.sun.jna.ptr.PointerByReference;
  * Queries are allocated as <i>slots</i> from a {@link Pool}.
  * Note that a query pool <b>must</b> be reset before each sample <b>outside</b> the render pass.
  * <p>
- * The {@link ResultBuilder} is used to configure an the results of a query and writes the data to a given buffer.
+ * The {@link ResultBuilder} is used to configure the results of a query and to write the data to a destination buffer.
  * <p>
  * Usage:
  * <pre>
@@ -49,11 +49,11 @@ import com.sun.jna.ptr.PointerByReference;
  * Query query = pool.query(1);
  *
  * // Instrument the render sequence with the query
- * RenderPass pass = ...
+ * FrameBuffer frame = ...
  * Command.Buffer buffer = ...
  * buffer
  *     .add(pool.reset())
- *     .add(pass.begin())
+ *     .add(frame.begin())
  *         .add(query.begin())
  *             ...
  *         .add(query.end())

@@ -32,6 +32,7 @@ other possible features
 features todo
 - object tracker
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
+- screenshots, how? render to off-screen attachment?
 
 blog
 - pipeline cache
