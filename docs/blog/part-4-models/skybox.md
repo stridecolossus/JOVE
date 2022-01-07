@@ -866,18 +866,25 @@ Replacing the code that loaded each cube face separately with a compound KTX cub
 
 With support for mipmap images in place now is a good point to enable anisotropy to further improve the texture quality.  However anisotropy is an optional Vulkan feature that needs to be specifically enabled when creating the logical device.
 
-Therefore we introduce a new mechanism to specify the features _supported_ by the hardware and the features _required_ for a given application.  We make the assumption that required features would be specified by feature _names_ possibly loaded from a configuration file.
+The features supported by the hardware are specified by the `VkPhysicalDeviceFeatures` structure, which somewhat surprisingly is comprised of over fifty boolean fields as opposed to (say) a number of bit-field enumerations.  We make the assumption that applications would prefer to specify requirements by feature _names_ (possibly loaded from a configuration file) rather than forcing the developer to programatically locate and manipulate structure fields.
+
+Therefore we introduce a new abstraction to specify the features _supported_ by the hardware (wrapping the structure) and the features _required_ for a given application (feature names).
 
 ### Helper Class
 
-First we define the following interface (and a skeleton implementation) for device features:
+First the following interface (and skeleton implementation) define a set of device features for both cases:
 
 ```java
 public interface DeviceFeatures {
     /**
-     * @return Features
+     * @return Feature names
      */
-    Collection<String> features();
+    Set<String> features();
+
+    /**
+     * @return Descriptor for this set of features
+     */
+    VkPhysicalDeviceFeatures descriptor();
 
     /**
      * Tests whether this set contains the given features.
@@ -888,14 +895,19 @@ public interface DeviceFeatures {
 }
 ```
 
-A set of _required_ features can be created from the feature names using the following factory:
+The _required_ device features can be created from a set of feature _names_ using the following factory:
 
 ```java
 static DeviceFeatures of(Collection<String> required) {
     return new AbstractDeviceFeatures() {
         @Override
-        public Collection<String> features() {
-            return required;
+        public Set<String> features() {
+            return Set.copyOf(required);
+        }
+
+        @Override
+        public VkPhysicalDeviceFeatures descriptor() {
+            ...
         }
 
         @Override
@@ -906,7 +918,26 @@ static DeviceFeatures of(Collection<String> required) {
 }
 ```
 
-The features supported by the hardware is specified by the `VkPhysicalDeviceFeatures` structure.  Somewhat surprisingly this structure is comprised of over fifty fields specifying each device feature as a boolean, as opposed to (say) a number of bit-field enumerations.  Therefore we implement a wrapper class to access the fields by _name_ rather than forcing the developer to programatically find and set flags:
+A Vulkan descriptor for the device features can be constructed from the names as follows:
+
+```
+public VkPhysicalDeviceFeatures descriptor() {
+    // Skip if empty
+    if(required.isEmpty()) {
+        return null;
+    }
+
+    // Build descriptor
+    var struct = new VkPhysicalDeviceFeatures();
+    required.forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
+
+    return struct;
+}
+```
+
+Note the use of the the JNA `writeField` to populate a structure field via reflection.
+
+The _supported_ device features is essentially a wrapper for the underlying structure:
 
 ```java
 static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
@@ -915,40 +946,37 @@ static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
 
     // Create wrapper
     return new AbstractDeviceFeatures() {
-        ...
+        @Override
+        public Set<String> features() {
+            ...
+        }
+
+        @Override
+        public VkPhysicalDeviceFeatures descriptor() {
+            return features.copy();
+        }
+
+        @Override
+        public boolean contains(DeviceFeatures required) {
+            return required.features().stream().allMatch(this::isEnabled);
+        }
+
+        private boolean isEnabled(String field) {
+            return features.readField(field) == VulkanBoolean.TRUE;
+        }
     };
 }
 ```
 
-In the wrapper we will use several JNA methods to access the structure fields, the constructor invokes the `write` method for this reason.
-
-The JNA `getFieldList` method reflects the fields of the structure which we use use to enumerate the names of the supported features:
+The JNA `getFieldOrder` method is used to reflect the names of the enabled features:
 
 ```java
-public Collection<String> features() {
+public Set<String> features() {
     return features
-        .getFieldList()
+        .getFieldOrder()
         .stream()
-        .map(Field::getName)
         .filter(this::isEnabled)
         .collect(toSet());
-}
-```
-
-Which uses the following helper to test whether a given feature is enabled:
-
-```java
-private boolean isEnabled(String field) {
-    return features.readField(field) == VulkanBoolean.TRUE;
-}
-```
-
-Finally we implement the comparison method using the same helper:
-
-```java
-@Override
-public boolean contains(DeviceFeatures required) {
-    return required.features().stream().allMatch(this::isEnabled);
 }
 ```
 
@@ -980,7 +1008,7 @@ public static Predicate<PhysicalDevice> predicate(DeviceFeatures features) {
 }
 ```
 
-In the builder for the logical device we populate the relevant field in the create descriptor:
+In the builder for the logical device the relevant field is populated in the create descriptor:
 
 ```java
 public LogicalDevice build() {

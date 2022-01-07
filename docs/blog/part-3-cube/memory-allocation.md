@@ -15,7 +15,7 @@ title: Memory Allocation
 
 ## Overview
 
-In the following chapters we will be implementing vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.
+In the following chapters we will be implementing vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).  A Vulkan implementation specifies a set of _memory types_ such that the application can select the appropriate memory type depending on the usage scenario.
 
 The [Vulkan documentation](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html) suggests implementing a _fallback strategy_ when selecting the memory type.  The application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
 
@@ -872,6 +872,55 @@ public static PoolAllocator create(LogicalDevice dev, Allocator allocator, float
     return new PoolAllocator(delegate, limits.maxMemoryAllocationCount, policy);
 }
 ```
+
+The `VkPhysicalDeviceLimits` structure is a child of `VkPhysicalDeviceProperties` wrapped by the `Properties` helper class of the physical device:
+
+```java
+public class PhysicalDevice ... {
+    public class Properties {
+        private final VkPhysicalDeviceProperties struct = new VkPhysicalDeviceProperties();
+        ...
+
+        public VkPhysicalDeviceLimits limits() {
+            return struct.limits;
+        }
+    }
+}
+```
+
+However this implementation directly exposes the limits which as a JNA structure is a mutable object, potentially allowing an application to accidentally monkey with the data.  Ideally we would also wrap this information in another immutable domain object, however this structure is absolutely huge and the wrapper approach is simply not viable.  Unfortunately neither is there an obvious means of making a JNA structure immutable.
+
+Instead we introduce a mechanism to _clone_ a JNA structure by copying the underlying memory:
+
+```java
+public abstract class VulkanStructure extends Structure {
+    public <T extends VulkanStructure> T copy() {
+        // Create copy
+        T copy = (T) Structure.newInstance(this.getClass());
+        write();
+
+        // Read backing data
+        int size = this.size();
+        byte[] data = getPointer().getByteArray(0, size);
+
+        // Write to copy
+        copy.getPointer().write(0, data, 0, size);
+        copy.read();
+
+        return copy;
+    }
+}
+```
+
+The accessor for the device `limits` is modified accordingly to clone on demand:
+
+```java
+public VkPhysicalDeviceLimits limits() {
+    return struct.limits.copy();
+}
+```
+
+Obviously this is not an ideal solution since the developer needs to be aware that the accessor clones a new copy on every invocation.
 
 ### Allocation Request Routing
 

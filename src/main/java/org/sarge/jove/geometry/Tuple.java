@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -17,11 +16,6 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 	 * Size of a tuple.
 	 */
 	public static final int SIZE = 3;
-
-	/**
-	 * Layout of a tuple.
-	 */
-	public static final Layout LAYOUT = Layout.floats(SIZE);
 
 	public final float x, y, z;
 

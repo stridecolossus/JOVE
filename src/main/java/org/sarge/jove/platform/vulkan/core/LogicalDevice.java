@@ -115,7 +115,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("handle", handle)
+				.appendSuper(super.toString())
 				.append("parent", parent)
 				.append("queues", queues.size())
 				.build();

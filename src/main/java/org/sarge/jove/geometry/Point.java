@@ -1,5 +1,7 @@
 package org.sarge.jove.geometry;
 
+import org.sarge.jove.common.Layout;
+
 /**
  * A <i>point</i> is a position in 3D space.
  * @author Sarge
@@ -9,6 +11,11 @@ public final class Point extends Tuple {
 	 * Origin point.
 	 */
 	public static final Point ORIGIN = new Point(0, 0, 0);
+
+	/**
+	 * Layout for a point.
+	 */
+	public static final Layout LAYOUT = Layout.floats(SIZE);
 
 	/**
 	 * Constructor.

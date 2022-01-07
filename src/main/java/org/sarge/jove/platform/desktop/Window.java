@@ -10,6 +10,7 @@ import java.util.WeakHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
@@ -277,5 +278,13 @@ public class Window extends AbstractTransientNativeObject {
 	@Override
 	protected void release() {
 		desktop.library().glfwDestroyWindow(this);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
+				.append(descriptor)
+				.build();
 	}
 }

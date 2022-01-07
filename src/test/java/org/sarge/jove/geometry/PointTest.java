@@ -31,7 +31,7 @@ class PointTest {
 	}
 
 	@Test
-	void origin() {
+	static void origin() {
 		assertEquals(new Point(0, 0, 0), Point.ORIGIN);
 	}
 
@@ -53,11 +53,18 @@ class PointTest {
 	}
 
 	@Test
+	static void layout() {
+		assertEquals(3, Point.LAYOUT.size());
+		assertEquals(Float.class, Point.LAYOUT.type());
+		assertEquals(Float.BYTES, Point.LAYOUT.bytes());
+	}
+
+	@Test
 	public void equals() {
 		assertEquals(true, pos.equals(pos));
 		assertEquals(true, pos.equals(new Point(1, 2, 3)));
 		assertEquals(false, pos.equals(null));
 		assertEquals(false, pos.equals(Point.ORIGIN));
-		assertEquals(false, pos.equals(new Vector(1, 2, 3)));
+		assertEquals(false, pos.equals(new Point(3, 4, 5)));
 	}
 }

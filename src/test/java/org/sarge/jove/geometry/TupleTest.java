@@ -41,7 +41,7 @@ public class TupleTest {
 	}
 
 	@Test
-	void arrayInvalidLength() {
+	static void arrayInvalidLength() {
 		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[0]));
 		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[]{1, 2, 3, 4}));
 	}
@@ -56,13 +56,6 @@ public class TupleTest {
 	@Test
 	void getInvalidComponentIndex() {
 		assertThrows(IndexOutOfBoundsException.class, () -> tuple.get(3));
-	}
-
-	@Test
-	void layout() {
-		assertEquals(3, Tuple.LAYOUT.size());
-		assertEquals(Float.class, Tuple.LAYOUT.type());
-		assertEquals(Float.BYTES, Tuple.LAYOUT.bytes());
 	}
 
 	@Test

@@ -15,6 +15,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
+import org.sarge.jove.model.Vertex;
 
 public class ObjectModelTest {
 	private ObjectModel model;
@@ -98,7 +99,7 @@ public class ObjectModelTest {
 
 			// Check model header
 			assertEquals(Primitive.TRIANGLES, result.primitive());
-			assertEquals(List.of(Point.LAYOUT, Vector.LAYOUT, Coordinate2D.LAYOUT), result.layout());
+			assertEquals(List.of(Point.LAYOUT, Vertex.NORMALS, Coordinate2D.LAYOUT), result.layout());
 			assertEquals(3, result.count());
 			assertEquals(true, result.isIndexed());
 

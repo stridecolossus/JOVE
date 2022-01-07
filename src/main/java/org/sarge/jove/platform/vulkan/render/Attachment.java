@@ -45,6 +45,7 @@ public class Attachment {
 		attachment.initialLayout = desc.initialLayout;
 		attachment.finalLayout = desc.finalLayout;
 	}
+	// TODO - factor out fields rather than using descriptor? builder can manipulate directly => make this class final?
 
 	@Override
 	public int hashCode() {

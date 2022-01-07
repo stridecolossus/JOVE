@@ -80,7 +80,7 @@ public class Pipeline extends AbstractVulkanObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append(handle)
+				.appendSuper(super.toString())
 				.append(layout)
 				.append(flags)
 				.build();
@@ -175,9 +175,9 @@ public class Pipeline extends AbstractVulkanObject {
 		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
 
 		// Derivatives
-		private Handle baseHandle;
-		private Builder base;
-		private int baseIndex = -1;
+		private Handle base;			// Derive from existing pipeline instance
+		private Builder peer;			// Derive from a peer builder within an array of pipelines
+		private int index = -1;			// Patched peer index
 
 		// Fixed function stages
 		private final VertexInputPipelineStageBuilder input = new VertexInputPipelineStageBuilder();
@@ -261,7 +261,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public Builder derive(Pipeline base) {
 			checkAllowDerivatives(base.flags());
-			this.baseHandle = base.handle();
+			this.base = base.handle();
 			derivative(this);
 			return this;
 		}
@@ -280,7 +280,7 @@ public class Pipeline extends AbstractVulkanObject {
 			// Create derived builder
 			final Builder builder = new Builder();
 			derivative(builder);
-			builder.base = this;
+			builder.peer = this;
 
 			// Clone pipeline properties
 			builder.layout = layout;
@@ -382,7 +382,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public ShaderStageBuilder shader(VkShaderStage stage) {
 			final var shader = new ShaderStageBuilder(stage);
-			if(shaders.containsKey(stage) && (base == null)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
+			if(shaders.containsKey(stage) && (peer == null)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
 			shaders.put(stage, shader);
 			return shader;
 		}
@@ -420,12 +420,12 @@ public class Pipeline extends AbstractVulkanObject {
 			info.pDynamicState = dynamic.get();
 
 			// Init derivative pipeline
-			if(base != null) {
-				if(baseHandle != null) throw new IllegalArgumentException("Cannot specify a base pipeline and a derivative index");
-				assert baseIndex >= 0;
+			if(peer != null) {
+				if(base != null) throw new IllegalArgumentException("Cannot specify a base pipeline and a derivative index");
+				assert index >= 0;
 			}
-			info.basePipelineHandle = baseHandle;
-			info.basePipelineIndex = baseIndex;
+			info.basePipelineHandle = base;
+			info.basePipelineIndex = index;
 		}
 
 		/**
@@ -451,23 +451,22 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader stage has been configured
 		 */
 		public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
-			// Include base builders if not already present
+			// Include peer builders if not already present
 			final List<Builder> list = new ArrayList<>(builders);
 			builders
 					.stream()
-					.map(b -> b.base)
+					.map(b -> b.peer)
 					.filter(Objects::nonNull)
 					.filter(Predicate.not(list::contains))
 					.forEach(list::add);
 
-			// Init index for derived pipelines
+			// Patch peer index for derived pipelines
 			for(Builder b : list) {
-				if(b.base != null) {
-					b.baseIndex = list.indexOf(b.base);
-					assert b.baseIndex >= 0;
+				if(b.peer != null) {
+					b.index = list.indexOf(b.peer);
+					assert b.index >= 0;
 				}
 			}
-			// TODO - can we do not patch the index? but how to correlate list and array?
 
 			// Build array of descriptors
 			final VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(list, VkGraphicsPipelineCreateInfo::new, Builder::populate);

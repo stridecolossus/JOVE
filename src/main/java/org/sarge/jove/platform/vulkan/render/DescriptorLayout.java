@@ -95,7 +95,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append("bindings", bindings.values())
+				.append(bindings.values())
 				.build();
 	}
 }

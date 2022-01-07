@@ -159,6 +159,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
 				.append("pass", pass)
 				.append("attachments", attachments)
 				.append("extents", extents)

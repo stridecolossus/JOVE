@@ -197,8 +197,8 @@ class Block {
 			return new ToStringBuilder(this)
 					.append("offset", offset)
 					.append("size", size)
-					.append("mem", mem)
 					.append("mapped", mapped == this)
+					.append("mem", mem)
 					.build();
 		}
 	}
