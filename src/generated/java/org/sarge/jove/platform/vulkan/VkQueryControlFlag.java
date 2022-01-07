@@ -7,11 +7,10 @@ import org.sarge.jove.util.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkQueryControlFlag implements IntegerEnumeration {
- 	VK_QUERY_CONTROL_PRECISE_BIT(1), 	
- 	VK_QUERY_CONTROL_FLAG_BITS_MAX_ENUM(2147483647); 	
+ 	PRECISE(1);
 
 	private final int value;
-	
+
 	private VkQueryControlFlag(int value) {
 		this.value = value;
 	}

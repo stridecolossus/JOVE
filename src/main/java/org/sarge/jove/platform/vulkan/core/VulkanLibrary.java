@@ -96,6 +96,6 @@ interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library, Logica
 	// Aggregate library
 }
 
-interface UtilityLibrary extends VulkanBuffer.Library, Command.Library, Semaphore.Library, Fence.Library {
+interface UtilityLibrary extends VulkanBuffer.Library, Command.Library, Semaphore.Library, Fence.Library, Query.Library {
 	// Aggregate library
 }

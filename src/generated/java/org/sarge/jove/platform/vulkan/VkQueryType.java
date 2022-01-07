@@ -7,18 +7,14 @@ import org.sarge.jove.util.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkQueryType implements IntegerEnumeration {
- 	VK_QUERY_TYPE_OCCLUSION(0), 	
- 	VK_QUERY_TYPE_PIPELINE_STATISTICS(1), 	
- 	VK_QUERY_TYPE_TIMESTAMP(2), 	
- 	VK_QUERY_TYPE_TRANSFORM_FEEDBACK_STREAM_EXT(1000028004), 	
- 	VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_NV(1000165000), 	
- 	VK_QUERY_TYPE_BEGIN_RANGE(0), 	
- 	VK_QUERY_TYPE_END_RANGE(2), 	
- 	VK_QUERY_TYPE_RANGE_SIZE(3), 	
- 	VK_QUERY_TYPE_MAX_ENUM(2147483647); 	
+ 	OCCLUSION(0),
+ 	PIPELINE_STATISTICS(1),
+ 	TIMESTAMP(2),
+ 	TRANSFORM_FEEDBACK_STREAM_EXT(1000028004),
+ 	ACCELERATION_STRUCTURE_COMPACTED_SIZE_NV(1000165000);
 
 	private final int value;
-	
+
 	private VkQueryType(int value) {
 		this.value = value;
 	}
