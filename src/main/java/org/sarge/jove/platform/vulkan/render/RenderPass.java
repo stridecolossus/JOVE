@@ -264,26 +264,5 @@ public class RenderPass extends AbstractVulkanObject {
 		 * @param contents				Sub-pass contents
 		 */
 		void vkCmdNextSubpass(Buffer commandBuffer, VkSubpassContents contents);
-
-		/**
-		 * Command - Draws vertices.
-		 * @param commandBuffer			Command buffer
-		 * @param vertexCount			Number of vertices
-		 * @param instanceCount			Number of instances
-		 * @param firstVertex			First vertex index
-		 * @param firstInstance			First index index
-		 */
-		void vkCmdDraw(Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
-
-		/**
-		 * Command - Draws indexed vertices.
-		 * @param commandBuffer			Command buffer
-		 * @param indexCount			Number of indices
-		 * @param instanceCount			Number of instances
-		 * @param firstIndex			First index
-		 * @param firstVertex			First vertex index
-		 * @param firstInstance			First instance
-		 */
-		void vkCmdDrawIndexed(Buffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance);
 	}
 }

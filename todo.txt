@@ -33,6 +33,7 @@ features todo
 - object tracker
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - screenshots, how? render to off-screen attachment?
+- indirect draw (pp 281 programming guide), count <-- host/device buffer
 
 blog
 - pipeline cache

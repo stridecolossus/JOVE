@@ -4,7 +4,9 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import org.sarge.jove.model.Model;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 
 /**
  * A <i>draw command</i> is used to render a model.
@@ -66,30 +68,12 @@ public interface DrawCommand extends Command {
 	/**
 	 * Builder for a draw command.
 	 */
-	public static class Builder {
-		private boolean indexed;
+	class Builder {
 		private int count;
+		private Integer index;
 		private int firstVertex;
-		private int firstIndex;
 		private int instanceCount = 1;
 		private int firstInstance;
-
-		/**
-		 * Sets this as an <i>indexed</i> draw command.
-		 */
-		public Builder indexed() {
-			indexed = true;
-			return this;
-		}
-
-		/**
-		 * Sets this as an indexed draw command.
-		 * @param firstIndex First index
-		 */
-		public Builder firstIndex(int firstIndex) {
-			this.firstIndex = zeroOrMore(firstIndex);
-			return this;
-		}
 
 		/**
 		 * Sets the number of vertices to draw.
@@ -98,6 +82,22 @@ public interface DrawCommand extends Command {
 		 */
 		public Builder count(int count) {
 			this.count = oneOrMore(count);
+			return this;
+		}
+
+		/**
+		 * Sets this as an <i>indexed</i> draw command starting at the <b>first</b> index.
+		 */
+		public Builder indexed() {
+			return indexed(0);
+		}
+
+		/**
+		 * Sets this as an <i>indexed</i> draw command.
+		 * @param firstIndex First index
+		 */
+		public Builder indexed(int firstIndex) {
+			this.index = zeroOrMore(firstIndex);
 			return this;
 		}
 
@@ -133,12 +133,124 @@ public interface DrawCommand extends Command {
 		 * @return New draw command
 		 */
 		public DrawCommand build() {
-			if(indexed) {
-				return (api, buffer) -> api.vkCmdDrawIndexed(buffer, count, instanceCount, firstIndex, firstVertex, firstInstance);
-			}
-			else {
+			if(index == null) {
 				return (api, buffer) -> api.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
 			}
+			else {
+				return (api, buffer) -> api.vkCmdDrawIndexed(buffer, count, instanceCount, index, firstVertex, firstInstance);
+			}
 		}
+	}
+
+	/**
+	 * Builder for an <i>indirect</i> draw command.
+	 */
+	class IndirectBuilder {
+		private boolean indexed;
+		private long offset;
+		private int count = 1;
+		private int stride;
+
+		/**
+		 * Sets this as an indexed draw command.
+		 */
+		public IndirectBuilder indexed() {
+			indexed = true;
+			return this;
+		}
+
+		/**
+		 * Sets the buffer offset.
+		 * @param offset Buffer offset
+		 */
+		public IndirectBuilder offset(long offset) {
+			this.offset = zeroOrMore(offset);
+			return this;
+		}
+
+		/**
+		 * Sets the draw count.
+		 * @param count Draw count
+		 */
+		public IndirectBuilder count(int count) {
+			this.count = oneOrMore(count);
+			return this;
+		}
+
+		/**
+		 * Sets the vertex stride.
+		 * @param stride Vertex stride
+		 */
+		public IndirectBuilder stride(int stride) {
+			this.stride = zeroOrMore(stride);
+			return this;
+		}
+
+		/**
+		 * Constructs this indirect draw command.
+		 * @param buffer Indirect buffer
+		 * @return New indirect draw command
+		 * @throws IllegalArgumentException if the {@code offset} is invalid for the given buffer
+		 * @throws IllegalArgumentException if the buffer is not an {@link VkBufferUsageFlag#INDIRECT_BUFFER}
+		 */
+		public DrawCommand build(VulkanBuffer buffer) {
+			// Validate
+			buffer.require(VkBufferUsageFlag.INDIRECT_BUFFER);
+			if(offset > buffer.length()) throw new IllegalArgumentException(String.format("Invalid buffer offset: offset=%d buffer=%s", offset, buffer));
+
+			// Create command
+			if(indexed) {
+				return (api, cmd) -> api.vkCmdDrawIndexedIndirect(cmd, buffer, offset, count, stride);
+			}
+			else {
+				return (api, cmd) -> api.vkCmdDrawIndirect(cmd, buffer, offset, count, stride);
+			}
+		}
+	}
+
+	/**
+	 * Drawing API.
+	 */
+	interface Library {
+		/**
+		 * Draws vertices.
+		 * @param commandBuffer			Command buffer
+		 * @param vertexCount			Number of vertices
+		 * @param instanceCount			Number of instances
+		 * @param firstVertex			First vertex index
+		 * @param firstInstance			First index index
+		 */
+		void vkCmdDraw(Command.Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
+
+		/**
+		 * Draws indexed vertices.
+		 * @param commandBuffer			Command buffer
+		 * @param indexCount			Number of indices
+		 * @param instanceCount			Number of instances
+		 * @param firstIndex			First index
+		 * @param firstVertex			First vertex index
+		 * @param firstInstance			First instance
+		 */
+		void vkCmdDrawIndexed(Command.Buffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance);
+
+		/**
+		 * Indirect draw.
+		 * @param commandBuffer			Command buffer
+		 * @param buffer				Indirect buffer
+		 * @param offset				Buffer offset
+		 * @param drawCount				Draw count
+		 * @param stride				Stride
+		 */
+		void vkCmdDrawIndirect(Command.Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
+
+		/**
+		 * Indirect indexed draw.
+		 * @param commandBuffer			Command buffer
+		 * @param buffer				Indirect buffer
+		 * @param offset				Buffer offset
+		 * @param drawCount				Draw count
+		 * @param stride				Stride
+		 */
+		void vkCmdDrawIndexedIndirect(Command.Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
 	}
 }
