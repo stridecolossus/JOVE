@@ -286,21 +286,11 @@ public class QueryTest extends AbstractVulkanTest {
 				final Command copy = builder.build(buffer, 0);
 				assertNotNull(copy);
 				verify(buffer).require(VkBufferUsageFlag.TRANSFER_DST);
+				verify(buffer).validate(8L);
 
 				// Execute command
 				copy.execute(lib, cmd);
 				verify(lib).vkCmdCopyQueryPoolResults(cmd, pool, 0, 2, buffer, 0, 4, 0);
-			}
-
-			@Test
-			void buildInvalidBufferLength() {
-				when(buffer.length()).thenReturn(0L);
-				assertThrows(IllegalStateException.class, () -> builder.build(buffer, 0));
-			}
-
-			@Test
-			void buildInvalidBufferOffset() {
-				assertThrows(IllegalStateException.class, () -> builder.build(buffer, 1));
 			}
 		}
 	}

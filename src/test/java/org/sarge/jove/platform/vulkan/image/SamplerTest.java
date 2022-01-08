@@ -51,12 +51,7 @@ public class SamplerTest extends AbstractVulkanTest {
 
 		@Test
 		void populate() {
-			// Populate write descriptor
-			final var write = new VkWriteDescriptorSet();
-			res.populate(write);
-
-			// Check descriptor
-			final VkDescriptorImageInfo info = write.pImageInfo;
+			final var info = (VkDescriptorImageInfo) res.populate();
 			assertNotNull(info);
 			assertEquals(sampler.handle(), info.sampler);
 			assertEquals(view.handle(), info.imageView);

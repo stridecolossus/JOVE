@@ -140,6 +140,8 @@ public interface DrawCommand extends Command {
 				return (api, buffer) -> api.vkCmdDrawIndexed(buffer, count, instanceCount, index, firstVertex, firstInstance);
 			}
 		}
+		// TODO - maxDrawIndexedIndexValue - UINT32
+		// TODO - restart mask, not UINT32???
 	}
 
 	/**
@@ -196,7 +198,7 @@ public interface DrawCommand extends Command {
 		public DrawCommand build(VulkanBuffer buffer) {
 			// Validate
 			buffer.require(VkBufferUsageFlag.INDIRECT_BUFFER);
-			if(offset > buffer.length()) throw new IllegalArgumentException(String.format("Invalid buffer offset: offset=%d buffer=%s", offset, buffer));
+			buffer.validate(offset);
 
 			// Create command
 			if(indexed) {
@@ -206,6 +208,8 @@ public interface DrawCommand extends Command {
 				return (api, cmd) -> api.vkCmdDrawIndirect(cmd, buffer, offset, count, stride);
 			}
 		}
+		// TODO - maxDrawIndirectCount (1)
+		// TODO - multiDrawIndirect => count > 1
 	}
 
 	/**

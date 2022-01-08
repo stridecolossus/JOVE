@@ -41,17 +41,12 @@ public interface DeviceFeatures {
 					(obj instanceof DeviceFeatures that) &&
 					this.features().equals(that.features());
 		}
-
-		@Override
-		public String toString() {
-			return descriptor().toString();
-		}
 	}
 
 	/**
 	 * Empty set of features.
 	 */
-	DeviceFeatures EMPTY = new DeviceFeatures() {
+	DeviceFeatures EMPTY = new AbstractDeviceFeatures() {
 		@Override
 		public Set<String> features() {
 			return Set.of();
@@ -65,6 +60,11 @@ public interface DeviceFeatures {
 		@Override
 		public boolean contains(DeviceFeatures features) {
 			return features.equals(this);
+		}
+
+		@Override
+		public String toString() {
+			return "EMPTY";
 		}
 	};
 
@@ -97,6 +97,11 @@ public interface DeviceFeatures {
 			@Override
 			public boolean contains(DeviceFeatures features) {
 				return required.containsAll(features.features());
+			}
+
+			@Override
+			public String toString() {
+				return required.toString();
 			}
 		};
 	}
@@ -133,6 +138,11 @@ public interface DeviceFeatures {
 
 			private boolean isEnabled(String field) {
 				return features.readField(field) == VulkanBoolean.TRUE;
+			}
+
+			@Override
+			public String toString() {
+				return features().toString();
 			}
 		};
 	}

@@ -385,9 +385,8 @@ public class Query {
 			// Create accessor
 			return buffer -> {
 				// Validate buffer
-				// TODO - rewind?
 				final int size = buffer.remaining();
-				validate(size, buffer);
+				if(count * stride > size) throw new IllegalStateException(String.format("Insufficient buffer space for query: query=%s buffer=%s", ResultBuilder.this, buffer));
 
 				// Execute query
 				check(lib.vkGetQueryPoolResults(dev, pool, start, count, size, buffer, stride, mask));
@@ -408,9 +407,8 @@ public class Query {
 			// Validate buffer
 			Check.notNull(buffer);
 			Check.zeroOrMore(offset);
-			if(offset > buffer.length()) throw new IllegalArgumentException(String.format("Invalid buffer offset: buffer=%s offset=%d", buffer, offset));
-			validate(buffer.length() - offset, buffer);
 			buffer.require(VkBufferUsageFlag.TRANSFER_DST);
+			buffer.validate(offset + count * stride);
 
 			// Validate query result
 			final int mask = validate();
@@ -440,18 +438,6 @@ public class Query {
 
 			// Build flags mask
 			return IntegerEnumeration.mask(flags);
-		}
-
-		/**
-		 * Validates the destination results buffer.
-		 * @param size			Buffer size
-		 * @param buffer		Data buffer
-		 * @throws IllegalStateException if the buffer is too small for this query
-		 */
-		private void validate(long size, Object buffer) {
-			if(count * stride > size) {
-				throw new IllegalStateException(String.format("Insufficient buffer space for query: query=%s buffer=%s", ResultBuilder.this, buffer));
-			}
 		}
 
 		@Override

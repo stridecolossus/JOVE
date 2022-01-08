@@ -128,20 +128,13 @@ public class BufferCopyCommand implements Command {
 		public Builder region(long srcOffset, long destOffset, long size) {
 			// Validate
 			Check.oneOrMore(size);
-			validate(src, srcOffset, size);
-			validate(dest, destOffset, size);
+			src.validate(srcOffset + size - 1);
+			dest.validate(destOffset + size - 1);
 
 			// Create copy region descriptor
 			regions.add(new CopyRegion(srcOffset, destOffset, size));
 
 			return this;
-		}
-
-		private static void validate(VulkanBuffer buffer, long offset, long size) {
-			Check.zeroOrMore(offset);
-			if(offset + size > buffer.length()) {
-				throw new IllegalArgumentException(String.format("Invalid buffer offset: offset=%d size=%d buffer=%s", offset, size, buffer));
-			}
 		}
 
 		/**

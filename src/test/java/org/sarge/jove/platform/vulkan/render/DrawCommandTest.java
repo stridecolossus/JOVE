@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -127,8 +126,6 @@ class DrawCommandTest {
 		@DisplayName("Indirect draw")
 		@Test
 		void build() {
-			when(buffer.length()).thenReturn(2L);
-
 			builder
 					.offset(2)
 					.count(3)
@@ -138,6 +135,7 @@ class DrawCommandTest {
 
 			verify(lib).vkCmdDrawIndirect(cmd, buffer, 2, 3, 4);
 			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
+			verify(buffer).validate(2);
 		}
 
 		@DisplayName("Indirect indexed draw")
@@ -146,12 +144,6 @@ class DrawCommandTest {
 			builder.indexed().build(buffer).execute(lib, cmd);
 			verify(lib).vkCmdDrawIndexedIndirect(cmd, buffer, 0, 1, 0);
 			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
-		}
-
-		@DisplayName("Indirect draw")
-		@Test
-		void buildInvalidOffset() {
-			assertThrows(IllegalArgumentException.class, () -> builder.offset(1).build(buffer));
 		}
 	}
 }

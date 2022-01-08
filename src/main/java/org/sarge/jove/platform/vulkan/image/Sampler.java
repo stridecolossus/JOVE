@@ -54,12 +54,12 @@ public class Sampler extends AbstractVulkanObject {
 			}
 
 			@Override
-			public void populate(VkWriteDescriptorSet write) {
+			public VkDescriptorImageInfo populate() {
 				final var info = new VkDescriptorImageInfo();
 				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
 				info.sampler = Sampler.this.handle();
 				info.imageView = view.handle();
-				write.pImageInfo = info;
+				return info;
 			}
 		};
 	}

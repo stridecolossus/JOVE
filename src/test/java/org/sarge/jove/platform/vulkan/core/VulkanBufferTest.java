@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -23,7 +24,6 @@ import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 import org.sarge.jove.platform.vulkan.VkSharingMode;
-import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
@@ -35,6 +35,7 @@ import com.sun.jna.Pointer;
 
 public class VulkanBufferTest extends AbstractVulkanTest {
 	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.VERTEX_BUFFER, VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.UNIFORM_BUFFER);
+//	private static final VkBufferUsageFlag[] FLAGS = {VkBufferUsageFlag.VERTEX_BUFFER, VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.UNIFORM_BUFFER};
 	private static final long SIZE = 3;
 
 	private VulkanBuffer buffer;
@@ -71,6 +72,29 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		assertEquals(FLAGS, buffer.usage());
 		assertEquals(mem, buffer.memory());
 		assertEquals(SIZE, buffer.length());
+	}
+
+	@Test
+	void validate() {
+		buffer.validate(0);
+		buffer.validate(2);
+	}
+
+	@Test
+	void validateInvalidOffset() {
+		assertThrows(IllegalArgumentException.class, () -> buffer.validate(SIZE));
+		assertThrows(IllegalArgumentException.class, () -> buffer.validate(-1));
+	}
+
+	@Test
+	void require() {
+		buffer.require(FLAGS.toArray(VkBufferUsageFlag[]::new));
+		buffer.require(VkBufferUsageFlag.VERTEX_BUFFER);
+	}
+
+	@Test
+	void requireNotSupported() {
+		assertThrows(IllegalStateException.class, () -> buffer.require(VkBufferUsageFlag.STORAGE_BUFFER));
 	}
 
 	@Test
@@ -111,12 +135,12 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	}
 
 	@Nested
-	class UniformBufferTests {
+	class DescriptorResourceTests {
 		private DescriptorResource uniform;
 
 		@BeforeEach
 		void before() {
-			uniform = buffer.uniform();
+			uniform = buffer.resource(VkDescriptorType.UNIFORM_BUFFER, 1);
 		}
 
 		@Test
@@ -126,13 +150,25 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void populate() {
-			final var write = new VkWriteDescriptorSet();
-			uniform.populate(write);
+		void invalidDescriptorType() {
+			assertThrows(IllegalArgumentException.class, () -> buffer.resource(VkDescriptorType.SAMPLER, 0));
+		}
 
-			final VkDescriptorBufferInfo info = write.pBufferInfo;
+		@Test
+		void unsupportedBufferUsage() {
+			assertThrows(IllegalStateException.class, () -> buffer.resource(VkDescriptorType.STORAGE_BUFFER, 0));
+		}
+
+		@Test
+		void invalidBufferOffset() {
+			assertThrows(IllegalArgumentException.class, () -> buffer.resource(VkDescriptorType.UNIFORM_BUFFER, 3));
+		}
+
+		@Test
+		void populate() {
+			final var info = (VkDescriptorBufferInfo) uniform.populate();
 			assertEquals(buffer.handle(), info.buffer);
-			assertEquals(0, info.offset);
+			assertEquals(1, info.offset);
 			assertEquals(buffer.length(), info.range);
 		}
 	}
@@ -158,7 +194,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void bindIndexBuffer() {
-			final Command cmd = index.bindIndexBuffer(VkIndexType.UINT32);
+			final Command cmd = index.bindIndexBuffer(VkIndexType.UINT32, 0);
 			assertNotNull(cmd);
 			cmd.execute(lib, cb);
 			verify(lib).vkCmdBindIndexBuffer(cb, index, 0, VkIndexType.UINT32);

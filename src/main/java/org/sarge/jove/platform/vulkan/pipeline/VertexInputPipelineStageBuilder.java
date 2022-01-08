@@ -29,6 +29,13 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
 	private final List<AttributeBuilder> attributes = new ArrayList<>();
 
+// TODO - limits
+//	public int maxVertexInputAttributes;
+//	public int maxVertexInputBindings;
+//	public int maxVertexInputAttributeOffset;
+//	public int maxVertexInputBindingStride;
+//	public int maxVertexOutputComponents;
+
 	@Override
 	void copy(VertexInputPipelineStageBuilder builder) {
 		bindings.putAll(builder.bindings);

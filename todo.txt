@@ -33,7 +33,6 @@ features todo
 - object tracker
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - screenshots, how? render to off-screen attachment?
-- indirect draw (pp 281 programming guide), count <-- host/device buffer
 
 blog
 - pipeline cache
@@ -45,6 +44,26 @@ todo
 - predicate builder for physical device?
 - manually fiddled by-reference for pointer-to-array of structure
 - short/int index buffer, extends indexed model, extends model
-- degenerate triangles for strip
+- degenerate triangles for strip? and/or primitive restart?
 - re-build swapchain and pipeline after window viewport/focus change
 - check for depth attachment in frame-buffer::create
+
+features/limits
+- uniform buffer: max range [short+1]
+- rasterizer: lineWidthRange[1.0, 64.0], lineWidthGranularity, wideLines, strictLines, fillModeNonSolid
+- points: pointSizeRange, pointSizeGranularity, largePoints 
+- queues: discreteQueuePriorities?
+- images: maxImageArrayLayers, dimensions
+- viewport: max[16], size[16384 x 16384], bound, etc, multiViewport 
+- tesselation: max patch size[32], others
+- sampler: max LOD bias[15], max anisotropy[16], samplerAnisotropy
+- indirect draw: multiDrawIndirect
+- depth: depthClamp, depthBiasClamp
+- queries: occlusionQueryPrecise, pipelineStatisticsQuery
+
+maxDrawIndexedIndexValue
+maxDrawIndirectCount
+4,294,967,295
+
+max int
+2,147,483,647

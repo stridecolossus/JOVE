@@ -34,6 +34,12 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	private final List<Rectangle> scissors = new ArrayList<>();
 	private boolean flip;
 
+// TODO - limits
+//	public int maxViewports;
+//	public int[] maxViewportDimensions = new int[2];
+//	public float[] viewportBoundsRange = new float[2];
+//	public int viewportSubPixelBits;
+
 	@Override
 	void copy(ViewportPipelineStageBuilder builder) {
 		flip = builder.flip;

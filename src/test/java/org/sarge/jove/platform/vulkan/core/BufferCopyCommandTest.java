@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +40,8 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 	void constructor() {
 		verify(src).require(VkBufferUsageFlag.TRANSFER_SRC);
 		verify(dest).require(VkBufferUsageFlag.TRANSFER_DST);
+		verify(src).validate(1);
+		verify(dest).validate(2);
 	}
 
 	@Test
@@ -87,22 +88,6 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void build() {
-			// Build copy command
-			builder
-					.source(src)
-					.destination(dest)
-					.region(0, 0, 1);
-
-			// Check command
-			assertNotNull(builder.build());
-
-			// Check buffers
-			verify(src, times(2)).require(VkBufferUsageFlag.TRANSFER_SRC);
-			verify(dest, times(2)).require(VkBufferUsageFlag.TRANSFER_DST);
-		}
-
-		@Test
 		void buildMissingSource() {
 			builder.destination(dest);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
@@ -126,23 +111,6 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 			builder.source(src);
 			builder.destination(dest);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@Test
-		void regionInvalidSourceSize() {
-			builder.source(src);
-			builder.destination(dest);
-			assertThrows(IllegalArgumentException.class, () -> builder.region(0, 0, 3));
-			assertThrows(IllegalArgumentException.class, () -> builder.region(1, 0, 2));
-		}
-
-		@Test
-		void regionDestinationTooSmall() {
-			builder.source(src);
-			builder.destination(dest);
-			when(src.length()).thenReturn(999L);
-			assertThrows(IllegalArgumentException.class, () -> builder.region(0, 0, 4));
-			assertThrows(IllegalArgumentException.class, () -> builder.region(0, 1, 3));
 		}
 	}
 }

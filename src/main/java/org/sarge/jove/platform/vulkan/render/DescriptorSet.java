@@ -13,6 +13,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkCopyDescriptorSet;
+import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
+import org.sarge.jove.platform.vulkan.VkDescriptorImageInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutCreateInfo;
@@ -27,6 +29,7 @@ import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -119,8 +122,18 @@ public class DescriptorSet implements NativeObject {
 			write.descriptorCount = 1;		// Number of elements in resource
 			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
 
-			// Populate resource
-			res.populate(write);
+			// Init resource descriptor
+			final Structure info = res.populate();
+			if(info instanceof VkDescriptorBufferInfo buffer) {
+				write.pBufferInfo = buffer;
+			}
+			else
+			if(info instanceof VkDescriptorImageInfo image) {
+				write.pImageInfo = image;
+			}
+			else {
+				throw new UnsupportedOperationException("Unsupported descriptor resource: " + info.getClass());
+			}
 		}
 	}
 

@@ -24,6 +24,7 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -140,6 +141,28 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
+	 * Helper - Validates the given offset for this buffer.
+	 * @param offset Buffer offset
+	 * @throws IllegalArgumentException if the {@link #offset} exceeds the {@link #length()} of this buffer
+	 */
+	public void validate(long offset) {
+		Check.zeroOrMore(offset);
+		if(offset >= len) throw new IllegalArgumentException(String.format("Invalid buffer offset: offset=%d buffer=%s", offset, this));
+	}
+
+	/**
+	 * Validates that this buffer supports the given usage flags.
+	 * @throws IllegalStateException if this buffer does not support <b>any</b> of the given usage flags
+	 */
+	public void require(VkBufferUsageFlag... flags) {
+		final Collection<VkBufferUsageFlag> required = Arrays.asList(flags);
+		if(Collections.disjoint(required, usage)) {
+			throw new IllegalStateException(String.format("Invalid usage for buffer: required=%s buffer=%s", required, this));
+		}
+	}
+	// TODO - should this be ALL?
+
+	/**
 	 * Helper - Provides access to the underlying buffer (mapping the buffer memory as required).
 	 * @return Underlying buffer
 	 */
@@ -149,25 +172,41 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return This buffer as a uniform buffer resource
-	 * @throws IllegalStateException if this buffer is not a {@link VkBufferUsageFlag#UNIFORM_BUFFER}
+	 * Creates a descriptor set resource for this buffer of the given type.
+	 * @param type			Resource type
+	 * @param offset		Buffer offset
+	 * @return Buffer resource
+	 * @throws IllegalStateException if {@link #type} is not supported by this buffer
+	 * @throws IllegalArgumentException if {@link #type} is invalid for buffers
+	 * @throws IllegalArgumentException if {@link #offset} is invalid for this buffer
 	 */
-	public DescriptorResource uniform() {
-		require(VkBufferUsageFlag.UNIFORM_BUFFER);
+	public DescriptorResource resource(VkDescriptorType type, long offset) {
+		// Map to buffer usage
+		final VkBufferUsageFlag usage = switch(type) {
+			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> VkBufferUsageFlag.UNIFORM_BUFFER;
+			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> VkBufferUsageFlag.STORAGE_BUFFER;
+			// TODO - other buffers, e.g. texel
+			default -> throw new IllegalArgumentException("Invalid descriptor type: " + type);
+		};
 
+		// Validate
+		require(usage);
+		validate(offset);
+
+		// Create resource wrapper
 		return new DescriptorResource() {
 			@Override
 			public VkDescriptorType type() {
-				return VkDescriptorType.UNIFORM_BUFFER;
+				return type;
 			}
 
 			@Override
-			public void populate(VkWriteDescriptorSet write) {
+			public VkDescriptorBufferInfo populate() {
 				final var info = new VkDescriptorBufferInfo();
 				info.buffer = handle();
-				info.offset = 0;
-				info.range = len;
-				write.pBufferInfo = info;
+				info.offset = offset;
+				info.range = len;					// TODO - maxUniformBufferRange, needs to be a separate parameter otherwise offset MUST be zero!
+				return info;
 			}
 		};
 	}
@@ -176,7 +215,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * Creates a command to bind this buffer as a vertex buffer (VBO).
 	 * @param binding Binding index
 	 * @return Command to bind this buffer
-	 * @throws IllegalStateException if this buffer cannot be used as a VBO
+	 * @throws IllegalStateException if this buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
 	 */
 	public Command bindVertexBuffer(int binding) {
 		return bindVertexBuffers(binding, List.of(this));
@@ -187,8 +226,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param start 		Start binding index
 	 * @param buffers		Buffers to bind
 	 * @return Command to bind the given buffers
-	 * @throws IllegalStateException if any buffer cannot be used as a VBO
-	 * @see VkBufferUsageFlag#VERTEX_BUFFER
+	 * @throws IllegalStateException if any buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
 	 */
 	public static Command bindVertexBuffers(int start, Collection<VulkanBuffer> buffers) {
 		for(VulkanBuffer vbo : buffers) {
@@ -197,18 +235,20 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		final Pointer array = NativeObject.array(buffers);
 		return (api, cmd) -> api.vkCmdBindVertexBuffers(cmd, start, buffers.size(), array, new long[]{0});
 	}
+	// TODO - offsets
 
 	/**
 	 * Creates a command to bind this buffer as an index buffer.
-	 * @param type Index type
+	 * @param type 			Index data type
+	 * @param offset		Buffer offset
 	 * @return Command to bind this index buffer
-	 * @throws IllegalStateException if this buffer cannot be used as an index
-	 * @see VkBufferUsageFlag#INDEX_BUFFER
+	 * @throws IllegalStateException if this buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
 	 */
-	public Command bindIndexBuffer(VkIndexType type) {
+	public Command bindIndexBuffer(VkIndexType type, long offset) {
 		require(VkBufferUsageFlag.INDEX_BUFFER);
+		validate(offset);
 		// TODO - verify type is logical, but how? buffer memory does not enforce its 'layout'
-		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, 0, type);
+		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, offset, type);
 	}
 
 	/**
@@ -221,16 +261,6 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public BufferCopyCommand copy(VulkanBuffer dest) {
 		return BufferCopyCommand.of(this, dest);
-	}
-
-	/**
-	 * @throws IllegalStateException if this buffer does not support <b>any</b> of the given usage flags
-	 */
-	public void require(VkBufferUsageFlag... flags) {
-		final Collection<VkBufferUsageFlag> required = Arrays.asList(flags);
-		if(Collections.disjoint(required, usage)) {
-			throw new IllegalStateException(String.format("Invalid usage for buffer: required=%s buffer=%s", required, this));
-		}
 	}
 
 	@Override
