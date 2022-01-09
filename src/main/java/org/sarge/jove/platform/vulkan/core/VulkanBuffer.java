@@ -9,15 +9,19 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkBufferCopy;
+import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkIndexType;
+import org.sarge.jove.platform.vulkan.VkMemoryProperty;
+import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
+import org.sarge.jove.platform.vulkan.VkSharingMode;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
@@ -58,21 +62,22 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 		// Allocate buffer
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference handle = dev.factory().pointer();
-		check(lib.vkCreateBuffer(dev, info, null, handle));
+		final PointerByReference ref = dev.factory().pointer();
+		check(lib.vkCreateBuffer(dev, info, null, ref));
 
 		// Query memory requirements
 		final var reqs = new VkMemoryRequirements();
-		lib.vkGetBufferMemoryRequirements(dev, handle.getValue(), reqs);
+		lib.vkGetBufferMemoryRequirements(dev, ref.getValue(), reqs);
 
 		// Allocate buffer memory
 		final DeviceMemory mem = allocator.allocate(reqs, props);
 
 		// Bind memory
-		check(lib.vkBindBufferMemory(dev, handle.getValue(), mem, 0L));
+		check(lib.vkBindBufferMemory(dev, ref.getValue(), mem, 0L));
 
 		// Create buffer
-		return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem, len);
+		final Handle handle = new Handle(ref.getValue());
+		return new VulkanBuffer(handle, dev, props.usage(), mem, len);
 	}
 
 	/**
@@ -112,11 +117,19 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param mem			Buffer memory
 	 * @param len			Length of this buffer (bytes)
 	 */
-	VulkanBuffer(Pointer handle, LogicalDevice dev, Set<VkBufferUsageFlag> usage, DeviceMemory mem, long len) {
+	protected VulkanBuffer(Handle handle, DeviceContext dev, Set<VkBufferUsageFlag> usage, DeviceMemory mem, long len) {
 		super(handle, dev);
 		this.usage = Set.copyOf(notEmpty(usage));
 		this.mem = notNull(mem);
 		this.len = oneOrMore(len);
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param buffer Buffer to copy
+	 */
+	protected VulkanBuffer(VulkanBuffer buffer) {
+		this(buffer.handle(), buffer.device(), buffer.usage(), buffer.memory(), buffer.length());
 	}
 
 	/**
@@ -172,86 +185,6 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Creates a descriptor set resource for this buffer of the given type.
-	 * @param type			Resource type
-	 * @param offset		Buffer offset
-	 * @return Buffer resource
-	 * @throws IllegalStateException if {@link #type} is not supported by this buffer
-	 * @throws IllegalArgumentException if {@link #type} is invalid for buffers
-	 * @throws IllegalArgumentException if {@link #offset} is invalid for this buffer
-	 */
-	public DescriptorResource resource(VkDescriptorType type, long offset) {
-		// Map to buffer usage
-		final VkBufferUsageFlag usage = switch(type) {
-			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> VkBufferUsageFlag.UNIFORM_BUFFER;
-			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> VkBufferUsageFlag.STORAGE_BUFFER;
-			// TODO - other buffers, e.g. texel
-			default -> throw new IllegalArgumentException("Invalid descriptor type: " + type);
-		};
-
-		// Validate
-		require(usage);
-		validate(offset);
-
-		// Create resource wrapper
-		return new DescriptorResource() {
-			@Override
-			public VkDescriptorType type() {
-				return type;
-			}
-
-			@Override
-			public VkDescriptorBufferInfo populate() {
-				final var info = new VkDescriptorBufferInfo();
-				info.buffer = handle();
-				info.offset = offset;
-				info.range = len;					// TODO - maxUniformBufferRange, needs to be a separate parameter otherwise offset MUST be zero!
-				return info;
-			}
-		};
-	}
-
-	/**
-	 * Creates a command to bind this buffer as a vertex buffer (VBO).
-	 * @param binding Binding index
-	 * @return Command to bind this buffer
-	 * @throws IllegalStateException if this buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
-	 */
-	public Command bindVertexBuffer(int binding) {
-		return bindVertexBuffers(binding, List.of(this));
-	}
-
-	/**
-	 * Creates a command to bind a collection of vertex buffers.
-	 * @param start 		Start binding index
-	 * @param buffers		Buffers to bind
-	 * @return Command to bind the given buffers
-	 * @throws IllegalStateException if any buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
-	 */
-	public static Command bindVertexBuffers(int start, Collection<VulkanBuffer> buffers) {
-		for(VulkanBuffer vbo : buffers) {
-			vbo.require(VkBufferUsageFlag.VERTEX_BUFFER);
-		}
-		final Pointer array = NativeObject.array(buffers);
-		return (api, cmd) -> api.vkCmdBindVertexBuffers(cmd, start, buffers.size(), array, new long[]{0});
-	}
-	// TODO - offsets
-
-	/**
-	 * Creates a command to bind this buffer as an index buffer.
-	 * @param type 			Index data type
-	 * @param offset		Buffer offset
-	 * @return Command to bind this index buffer
-	 * @throws IllegalStateException if this buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
-	 */
-	public Command bindIndexBuffer(VkIndexType type, long offset) {
-		require(VkBufferUsageFlag.INDEX_BUFFER);
-		validate(offset);
-		// TODO - verify type is logical, but how? buffer memory does not enforce its 'layout'
-		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, offset, type);
-	}
-
-	/**
 	 * Helper - Creates a command to copy this buffer to the given destination buffer.
 	 * Note that this method does not enforce any restrictions on the <i>usage</i> of either buffer (other than they must be a valid source and destination).
 	 * @param dest Destination buffer
@@ -273,6 +206,17 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		if(!mem.isDestroyed()) {
 			mem.destroy();
 		}
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof VulkanBuffer that) &&
+				(this.len == that.length()) &&
+				this.usage.equals(that.usage()) &&
+				this.mem.equals(that.memory()) &&
+				super.equals(obj);
 	}
 
 	@Override

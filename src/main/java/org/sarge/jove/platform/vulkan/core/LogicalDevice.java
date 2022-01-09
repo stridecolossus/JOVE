@@ -51,7 +51,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * @param queues 		Work queues
 	 */
 	LogicalDevice(Pointer handle, PhysicalDevice parent, Map<Family, List<Queue>> queues) {
-		super(new Handle(handle));
+		super(handle);
 		this.parent = parent;
 		this.lib = parent.instance().library();
 		this.queues = Map.copyOf(queues);

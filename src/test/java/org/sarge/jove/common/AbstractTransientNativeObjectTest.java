@@ -17,7 +17,7 @@ public class AbstractTransientNativeObjectTest {
 	void before() {
 		ptr = new Pointer(42);
 		destroyed = false;
-		obj = new AbstractTransientNativeObject(new Handle(ptr)) {
+		obj = new AbstractTransientNativeObject(ptr) {
 			@Override
 			protected void release() {
 				destroyed = true;

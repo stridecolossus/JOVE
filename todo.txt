@@ -57,13 +57,6 @@ features/limits
 - viewport: max[16], size[16384 x 16384], bound, etc, multiViewport 
 - tesselation: max patch size[32], others
 - sampler: max LOD bias[15], max anisotropy[16], samplerAnisotropy
-- indirect draw: multiDrawIndirect
+- indirect draw: multiDrawIndirect, maxDrawIndirectCount
 - depth: depthClamp, depthBiasClamp
 - queries: occlusionQueryPrecise, pipelineStatisticsQuery
-
-maxDrawIndexedIndexValue
-maxDrawIndirectCount
-4,294,967,295
-
-max int
-2,147,483,647

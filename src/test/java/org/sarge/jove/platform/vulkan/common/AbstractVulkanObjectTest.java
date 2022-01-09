@@ -19,10 +19,11 @@ import com.sun.jna.Pointer;
 public class AbstractVulkanObjectTest {
 	private AbstractVulkanObject obj;
 	private DeviceContext dev;
-	private Destructor destructor;
+	private Destructor<AbstractVulkanObject> destructor;
 	private Pointer ptr;
 	private boolean released;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		// Create object handle
@@ -39,7 +40,7 @@ public class AbstractVulkanObjectTest {
 		// Create object
 		obj = new AbstractVulkanObject(ptr, dev) {
 			@Override
-			protected Destructor destructor(VulkanLibrary lib) {
+			protected Destructor<AbstractVulkanObject> destructor(VulkanLibrary lib) {
 				return destructor;
 			}
 
@@ -65,5 +66,17 @@ public class AbstractVulkanObjectTest {
 		assertEquals(true, obj.isDestroyed());
 		verify(destructor).destroy(dev, obj, null);
 		assertTrue(released);
+	}
+
+	@Test
+	void hash() {
+		assertEquals(1, obj.hashCode());
+	}
+
+	@Test
+	void equals() {
+		assertEquals(true, obj.equals(obj));
+		assertEquals(false, obj.equals(null));
+		assertEquals(false, obj.equals(mock(AbstractVulkanObject.class)));
 	}
 }

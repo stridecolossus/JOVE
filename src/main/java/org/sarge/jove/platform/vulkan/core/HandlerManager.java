@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackData;
@@ -188,7 +187,7 @@ public class HandlerManager {
 		 * @param handle Handle
 		 */
 		private Handler(Pointer handle) {
-			super(new Handle(handle));
+			super(handle);
 		}
 
 		@Override
