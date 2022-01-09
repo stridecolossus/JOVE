@@ -39,20 +39,34 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @throws IllegalStateException if the index is larger than the hardware limit
 	 */
 	public Command bind(long offset) {
-		// Validate index buffer
 		validate(offset);
+		validate();
+		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, offset, type);
+	}
 
-		// Validate draw count
-		final long count = this.length() / ((type == VkIndexType.UINT32) ? Integer.BYTES : Short.BYTES);
-		final long max = this.device().limits().maxDrawIndexedIndexValue;		// TODO - cloned!!!
-		if((max > -1) && (count > max)) {
+	/**
+	 * @throws IllegalStateException if the index is larger than the hardware limit
+	 */
+	private void validate() {
+		// Ignore short index
+		if(type == VkIndexType.UINT16) {
+			return;
+		}
+
+		// Lookup maximum index length
+		final int max = this.device().limits().maxDrawIndexedIndexValue;		// TODO - cloned!!!
+
+		// Ignore maximum unsigned integer value
+		if(max == -1) {
+			return;
+		}
+
+		// Validate size of this index
+		final long count = this.length() / Integer.BYTES;
+		if(count > max) {
 			throw new IllegalStateException(String.format("Index too large: count=%d max=%d index=%s", count, max, this));
 		}
-		// TODO - max is unsignedMaximum(32 bits) => -1 !!!
 		// TODO - mod by offset?
-
-		// Create command
-		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, offset, type);
 	}
 
 	@Override

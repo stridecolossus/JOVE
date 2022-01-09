@@ -42,15 +42,16 @@ public class IndexBufferTest extends AbstractVulkanTest {
 		assertEquals(VkIndexType.UINT32, index.type());
 	}
 
-	private void max(int max) {
-		dev.limits().maxDrawIndexedIndexValue = max;
-	}
-
 	@Test
 	void bind() {
-		max(1);
+		// Init maximum index length
+		dev.limits().maxDrawIndexedIndexValue = -1;
+
+		// Create bind command
 		final Command bind = index.bind(0);
 		assertNotNull(bind);
+
+		// Bind index
 		bind.execute(lib, cmd);
 		verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT32);
 	}
@@ -58,7 +59,6 @@ public class IndexBufferTest extends AbstractVulkanTest {
 	@Test
 	void bindShort() {
 		index = new IndexBuffer(buffer, VkIndexType.UINT16);
-		max(2);
 		final Command bind = index.bind(0);
 		assertNotNull(bind);
 		bind.execute(lib, cmd);
