@@ -69,7 +69,7 @@ public class ObjectModelLoaderTest {
 		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertexBuffer().length());
 
 		// Check index buffer
-		assertEquals(3 * Integer.BYTES, model.indexBuffer().length());
+		assertEquals(3 * Short.BYTES, model.indexBuffer().length());
 	}
 
 	@Test

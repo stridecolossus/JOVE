@@ -40,8 +40,9 @@ public class TupleTest {
 		assertEquals(3, tuple.z);
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
-	static void arrayInvalidLength() {
+	void arrayInvalidLength() {
 		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[0]));
 		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[]{1, 2, 3, 4}));
 	}

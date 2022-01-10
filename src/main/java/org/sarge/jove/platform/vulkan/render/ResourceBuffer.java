@@ -7,6 +7,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 
@@ -24,6 +25,7 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 	 * @param type			Descriptor type
 	 * @param offset		Buffer offset
 	 * @throws IllegalStateException if {@link #type} is not supported by this buffer
+	 * @throws IllegalStateException if this resource is too large for the hardware
 	 * @throws IllegalArgumentException if the {@link #offset} exceeds the {@link #length()} of this buffer
 	 * @see #usage(VkDescriptorType)
 	 */
@@ -31,8 +33,9 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 		super(buffer);
 		this.type = notNull(type);
 		this.offset = zeroOrMore(offset);
-		validate(offset);
 		require(map(type));
+		validate(offset);
+		validate();
 	}
 
 	/**
@@ -47,6 +50,21 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 			// TODO - other buffers, e.g. texel
 			default -> throw new IllegalArgumentException("Invalid descriptor type: " + type);
 		};
+	}
+
+	/**
+	 * @throws IllegalStateException if this resource is too large for the hardware
+	 */
+	private void validate() {
+		final VkPhysicalDeviceLimits limits = super.device().limits(); // TODO - cloned
+		final int max = switch(type) {
+			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> limits.maxUniformBufferRange;
+			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> limits.maxStorageBufferRange;
+			default -> Integer.MAX_VALUE;
+		};
+		if(length() > max) {
+			throw new IllegalStateException(String.format("Resource buffer too large: max=%d this=%s", max, this));
+		}
 	}
 
 	@Override

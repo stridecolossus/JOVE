@@ -105,7 +105,7 @@ public class ObjectModelTest {
 
 			// Check model data
 			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertexBuffer().length());
-			assertEquals(3 * Integer.BYTES, result.indexBuffer().length());
+			assertEquals(3 * Short.BYTES, result.indexBuffer().length());
 		}
 
 		@Test

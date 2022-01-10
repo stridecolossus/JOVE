@@ -8,12 +8,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 
+@SuppressWarnings("static-method")
 class BufferHelperTest {
 	private static final byte[] BYTES = {1, 2, 3};
+
+	@Test
+	void isShortIndex() {
+		final int max = 65535;
+		assertEquals(true, BufferHelper.isShortIndex(0));
+		assertEquals(true, BufferHelper.isShortIndex(max - 1));
+		assertEquals(false, BufferHelper.isShortIndex(max));
+	}
 
 	@Test
 	void allocate() {
@@ -22,6 +32,7 @@ class BufferHelperTest {
 		assertEquals(3, bb.capacity());
 		assertEquals(0, bb.position());
 		assertEquals(true, bb.isDirect());
+		assertEquals(ByteOrder.LITTLE_ENDIAN, bb.order());
 	}
 
 	@Test

@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.IntegerList;
 
 /**
@@ -102,6 +103,14 @@ public class MutableModel extends AbstractModel {
 	}
 
 	/**
+	 * Adds a primitive restart index.
+	 */
+	public MutableModel restart() {
+		index.add(-1);
+		return this;
+	}
+
+	/**
 	 * Transforms the layout of this model and <b>all</b> vertices to the given layout.
 	 * <p>
 	 * Example:
@@ -172,6 +181,7 @@ public class MutableModel extends AbstractModel {
 			}
 
 			public int[] next() {
+				// TODO - skip primitive restarts
 				index.slice(offset, indices);
 				offset += inc;
 				return indices;
@@ -200,6 +210,23 @@ public class MutableModel extends AbstractModel {
 
 	@Override
 	public Bufferable indexBuffer() {
-		return index.bufferable();
+		final boolean small = BufferHelper.isShortIndex(index.size());
+
+		return new Bufferable() {
+			@Override
+			public int length() {
+				return index.size() * (small ? Short.BYTES : Integer.BYTES);
+			}
+
+			@Override
+			public void buffer(ByteBuffer bb) {
+				if(small) {
+					index.buffer(bb.asShortBuffer());
+				}
+				else {
+					index.buffer(bb.asIntBuffer());
+				}
+			}
+		};
 	}
 }

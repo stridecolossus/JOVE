@@ -15,17 +15,15 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.util.IntegerList;
+import org.sarge.jove.util.MathsUtil;
 
 class MutableModelTest {
 	private MutableModel model;
 	private Vertex vertex;
-	private IntegerList index;
 
 	@BeforeEach
 	void before() {
 		vertex = new Vertex(Point.ORIGIN, Colour.WHITE);
-		index = new IntegerList();
 		model = new MutableModel(Primitive.TRIANGLES, List.of(Point.LAYOUT, Colour.LAYOUT));
 	}
 
@@ -67,6 +65,14 @@ class MutableModelTest {
 		assertEquals(1, model.count());
 		assertEquals(true, model.isIndexed());
 		assertArrayEquals(new int[]{0}, model.index().toArray());
+	}
+
+	@Test
+	void restart() {
+		model.restart();
+		assertEquals(1, model.count());
+		assertEquals(true, model.isIndexed());
+		assertArrayEquals(new int[]{-1}, model.index().toArray());
 	}
 
 	@Test
@@ -196,6 +202,21 @@ class MutableModelTest {
 		// Check index
 		final Bufferable index = model.indexBuffer();
 		assertNotNull(index);
-		assertEquals(2 * Integer.BYTES, index.length());
+		assertEquals(2 * Short.BYTES, index.length());
+	}
+
+	@Test
+	void indexBufferInteger() {
+		// Init large index
+		final int len = (int) MathsUtil.unsignedMaximum(Short.SIZE);
+		model.add(vertex);
+		for(int n = 0; n < len; ++n) {
+			model.add(0);
+		}
+
+		// Check index
+		final Bufferable index = model.indexBuffer();
+		assertNotNull(index);
+		assertEquals(len * Integer.BYTES, index.length());
 	}
 }

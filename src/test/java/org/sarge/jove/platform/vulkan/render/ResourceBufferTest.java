@@ -35,6 +35,9 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 		when(buffer.usage()).thenReturn(FLAGS);
 		when(buffer.length()).thenReturn(SIZE);
 
+		// Init limit
+		dev.limits().maxUniformBufferRange = (int) SIZE;
+
 		// Create resource buffer
 		res = new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 0);
 	}
@@ -62,6 +65,12 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 	@Test
 	void invalidBufferOffset() {
 		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, SIZE));
+	}
+
+	@Test
+	void invalidBufferLength() {
+		dev.limits().maxUniformBufferRange = 1;
+		assertThrows(IllegalStateException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 0));
 	}
 
 	@Test

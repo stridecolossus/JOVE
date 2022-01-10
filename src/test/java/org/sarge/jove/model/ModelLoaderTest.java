@@ -38,6 +38,7 @@ class ModelLoaderTest {
 		loader = new ModelLoader();
 	}
 
+	@SuppressWarnings("resource")
 	@Test
 	void map() throws IOException {
 		assertNotNull(loader.map(mock(InputStream.class)));
@@ -68,7 +69,7 @@ class ModelLoaderTest {
 		// Check index
 		assertNotNull(result.indexBuffer());
 		assertEquals(true, result.isIndexed());
-		assertEquals(3 * Integer.BYTES, result.indexBuffer().length());
+		assertEquals(3 * Short.BYTES, result.indexBuffer().length());
 	}
 
 	@Test

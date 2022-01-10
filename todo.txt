@@ -49,7 +49,6 @@ todo
 - check for depth attachment in frame-buffer::create
 
 features/limits
-- uniform buffer: max range [short+1]
 - rasterizer: lineWidthRange[1.0, 64.0], lineWidthGranularity, wideLines, strictLines, fillModeNonSolid
 - points: pointSizeRange, pointSizeGranularity, largePoints 
 - queues: discreteQueuePriorities?
@@ -60,3 +59,4 @@ features/limits
 - indirect draw: multiDrawIndirect, maxDrawIndirectCount
 - depth: depthClamp, depthBiasClamp
 - queries: occlusionQueryPrecise, pipelineStatisticsQuery
+

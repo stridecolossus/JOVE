@@ -7,6 +7,7 @@ import static org.sarge.jove.util.MathsUtil.TWO_PI;
 
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("static-method")
 class MathsUtilTest {
 	@Test
 	void isEqual() {

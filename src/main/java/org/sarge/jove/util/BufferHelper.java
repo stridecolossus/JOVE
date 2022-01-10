@@ -23,7 +23,21 @@ public final class BufferHelper {
 	 */
 	public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
 
+	/**
+	 * Maximum length of a {@code short} buffer.
+	 */
+	private static final long SHORT = MathsUtil.unsignedMaximum(Short.SIZE);
+
 	private BufferHelper() {
+	}
+
+	/**
+	 * Determines whether the given draw count can be represented by a <i>short</i> index.
+	 * @param count Draw count
+	 * @return Whether index is short
+	 */
+	public static boolean isShortIndex(int count) {
+		return count < BufferHelper.SHORT;
 	}
 
 	/**

@@ -4,17 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
+import org.mockito.ArgumentCaptor;
 
 public class IntegerListTest {
 	private static final int CAPACITY = 5;
@@ -34,8 +35,9 @@ public class IntegerListTest {
 		assertEquals(0, list.stream().count());
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
-	static void constructorInvalidGrowthFactor() {
+	void constructorInvalidGrowthFactor() {
 		assertThrows(IllegalArgumentException.class, () -> new IntegerList(1, 0));
 		assertThrows(IllegalArgumentException.class, () -> new IntegerList(1, -1));
 	}
@@ -77,37 +79,55 @@ public class IntegerListTest {
 	}
 
 	@Test
-	void bufferable() {
-		// Create bufferable wrapper
-		final Bufferable obj = list.bufferable();
-		assertNotNull(obj);
-
-		// Add some values
-		list.add(1);
-		list.add(2);
-		assertEquals(2 * Integer.BYTES, obj.length());
-
-		// Check can be buffered
-		final ByteBuffer bb = mock(ByteBuffer.class);
-		final IntBuffer buffer = mock(IntBuffer.class);
-		when(bb.asIntBuffer()).thenReturn(buffer);
-		obj.buffer(bb);
-		verify(buffer).put(new int[]{1, 2, 0, 0, 0}, 0, 2);
-
-		// Check direct buffers
-		when(buffer.isDirect()).thenReturn(true);
-		when(buffer.put(anyInt())).thenReturn(buffer);
-		obj.buffer(bb);
-		verify(buffer).put(1);
-		verify(buffer).put(2);
-	}
-
-	@Test
 	void clear() {
 		list.add(1);
 		list.clear();
 		assertEquals(0, list.size());
 		assertEquals(0, list.stream().count());
 		assertEquals(CAPACITY, list.capacity());
+	}
+
+	@Test
+	void bufferInteger() {
+		// Buffer list
+		final IntBuffer buffer = mock(IntBuffer.class);
+		list.add(3);
+		list.buffer(buffer);
+
+		// Check array
+		final ArgumentCaptor<int[]> captor = ArgumentCaptor.forClass(int[].class);
+		verify(buffer).put(captor.capture(), eq(0), eq(1));
+
+		// Check array started with the expected value
+		final int[] array = captor.getValue();
+		assertNotNull(array);
+		assertTrue(array.length >= 1);
+		assertEquals(3, array[0]);
+	}
+
+	@Test
+	void bufferIntegerDirect() {
+		final IntBuffer buffer = mock(IntBuffer.class);
+		when(buffer.isDirect()).thenReturn(true);
+		list.add(3);
+		list.buffer(buffer);
+		verify(buffer).put(3);
+	}
+
+	@Test
+	void bufferShort() {
+		final ShortBuffer buffer = mock(ShortBuffer.class);
+		list.add(3);
+		list.buffer(buffer);
+		verify(buffer).put(new short[]{3}, 0, 1);
+	}
+
+	@Test
+	void bufferShortDirect() {
+		final ShortBuffer buffer = mock(ShortBuffer.class);
+		when(buffer.isDirect()).thenReturn(true);
+		list.add(3);
+		list.buffer(buffer);
+		verify(buffer).put((short) 3);
 	}
 }

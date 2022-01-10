@@ -1,25 +1,26 @@
 package org.sarge.jove.util;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
 import org.sarge.lib.util.Check;
 
 /**
  * An <i>integer list</i> is a simple mutable list abstraction for primitive integers.
  * <p>
- * Notes:
- * <ul>
- * <li>only a minimal set of operations are provided rather than implementing the whole {@link List} interface</li>
- * <li>this class is <b>not</b> thread-safe</li>
- * <li>an integer list can also be written to an NIO buffer using the {@link #bufferable()} converter</li>
- * </ul>
+ * Only a minimal set of operations are provided rather than implementing the whole {@link List} interface.
+ * <p>
+ * This class is <b>not</b> thread-safe.
+ * <p>
+ * An integer list can be written to an NIO buffer using the {@link #buffer(IntBuffer)} method.
+ * <p>
+ * A list can be written as {@code short} values via {@link #buffer(ShortBuffer)} to support (for example) a <i>small</i> index buffer.
+ * Note that values are silently truncated to {@code short} integers.
  * <p>
  * @author Sarge
  */
@@ -81,33 +82,6 @@ public class IntegerList {
 	}
 
 	/**
-	 * Converts this list to a bufferable object.
-	 * Note that changes to the list are reflected in the bufferable object.
-	 * @return Bufferable list
-	 */
-	public Bufferable bufferable() {
-		return new Bufferable() {
-			@Override
-			public int length() {
-				return size * Integer.BYTES;
-			}
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				final IntBuffer buffer = bb.asIntBuffer();
-				if(buffer.isDirect()) {
-					for(int n = 0; n < size; ++n) {
-						buffer.put(array[n]);
-					}
-				}
-				else {
-					buffer.put(array, 0, size);
-				}
-			}
-		};
-	}
-
-	/**
 	 * Adds an integer growing the list as required.
 	 * @param n Integer to add
 	 */
@@ -128,6 +102,41 @@ public class IntegerList {
 	 */
 	public void clear() {
 		size = 0;
+	}
+
+	/**
+	 * Copies this list of integers to the given NIO buffer.
+	 * @param buffer Buffer
+	 */
+	public void buffer(IntBuffer buffer) {
+		if(buffer.isDirect()) {
+			for(int n : array) {
+				buffer.put(n);
+			}
+		}
+		else {
+			buffer.put(array, 0, size);
+		}
+	}
+
+	/**
+	 * Copies this list to the given NIO buffer as <b>short</i> integer values.
+	 * Note that values are silently truncated to {@code short} integers.
+	 * @param buffer Buffer
+	 */
+	public void buffer(ShortBuffer buffer) {
+		if(buffer.isDirect()) {
+			for(int n = 0; n < size; ++n) {
+				buffer.put((short) array[n]);
+			}
+		}
+		else {
+			final short[] shorts = new short[size];
+			for(int n = 0; n < size; ++n) {
+				shorts[n] = (short) array[n];
+			}
+			buffer.put(shorts, 0, size);
+		}
 	}
 
 	@Override
