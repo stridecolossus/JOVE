@@ -54,13 +54,15 @@ We then create the VBO and index buffer objects for the model:
 
 ```java
 @Bean
-public VulkanBuffer vbo(Model model) {
-    return buffer(model.vertices(), VkBufferUsage.VERTEX_BUFFER);
+public VertexBuffer vbo(Model model) {
+    VulkanBuffer buffer = buffer(model.vertices(), VkBufferUsage.VERTEX_BUFFER);
+    return new VertexBuffer(buffer);
 }
 
 @Bean
 public VulkanBuffer index(Model model) {
-    return buffer(model.index().get(), VkBufferUsage.INDEX_BUFFER);
+    VulkanBuffer buffer = buffer(model.index().get(), VkBufferUsage.INDEX_BUFFER);
+    return new IndexBuffer(buffer);
 }
 ```
 
@@ -91,27 +93,27 @@ private VulkanBuffer buffer(Bufferable data, VkBufferUsage usage) {
 }
 ```
 
-In the render configuration we inject and bind the index buffer:
+In the render configuration the index buffer is injected and bound to the pipeline:
 
 ```java
-.add(index.bindIndexBuffer())
+add(index.bind())
 ```
 
-To initialise the projection matrix (now that we have removed the animation) we add the following temporary code:
+The following temporary code is added to initialise the projection matrix (having removed the animation):
 
 ```java
 @Component
 static class ApplicationLoop implements CommandLineRunner {
     @Autowired
-    public void init(Matrix matrix, VulkanBuffer uniform) {
+    public void init(Matrix matrix, ResourceBuffer uniform) {
         uniform.load(matrix);
     }
 }
 ```
 
-The `@Autowired` annotation is used to instruct the container to invoke the method once the component has been instantiated.
+The `@Autowired` annotation instructs the container to invoke the method once the component has been instantiated.
 
-Finally we need to update the drawing command for the indexed model, we take the opportunity to implement a convenience builder on the `DrawCommand` class:
+Finally the drawing command must be updated for the indexed model, we take the opportunity to implement a convenience builder on the `DrawCommand` class:
 
 ```java
 public static class Builder {

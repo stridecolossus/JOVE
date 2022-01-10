@@ -106,7 +106,7 @@ Finally we factor out the rotation logic into another task and delete the origin
 
 ```java
 @Bean
-public static Task update(Matrix matrix, VulkanBuffer uniform, ApplicationConfiguration cfg) {
+public static Task update(Matrix matrix, ResourceBuffer uniform, ApplicationConfiguration cfg) {
     long period = cfg.getPeriod();
     long start = System.currentTimeMillis();
     return () -> {

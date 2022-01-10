@@ -618,7 +618,7 @@ public Buffer sequence(...) {
         .begin()
             .add(frame.begin())
             .add(pipeline.bind())
-            .add(vbo.bindVertexBuffer())
+            .add(vbo.bind())
             .add(draw)
             .add(FrameBuffer.END)
         .end();
@@ -652,8 +652,6 @@ public Pipeline pipeline(...) {
 ```
 
 There is a lot of mucking about and hard-coded data here that we will address in the next chapter.
-
-### Vertex Shader
 
 The final change to the demo is to remove the hard coded vertex data in the shader and configure the incoming VBO, which involves:
 

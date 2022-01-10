@@ -8,7 +8,7 @@ title: Model Loader
 
 - [Overview](#overview)
 - [Model Loader](#model-loader)
-- [Improvements](#improvements)
+- [Indexed Models](#indexed-models)
 
 ---
 
@@ -439,13 +439,13 @@ Where the `GROUP` parser delegates to the `start` method to begin a new group.
 
 ---
 
-## Improvements
+## Indexed Models
 
-### Indexed Builder
+### De-Duplication
 
 From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to introduce an _index buffer_ to the model to reduce the total amount of data, at the expense of a second buffer for the index itself.
 
-We first add an optional index buffer to the model definition:
+First an optional index buffer is added to the model definition:
 
 ```java
 public interface Model {
@@ -514,7 +514,7 @@ public void buffer(ByteBuffer bb) {
 }
 ```
 
-Next we implement a new sub-class that handles the duplicate vertices:
+Duplicate vertices are handled in a new model sub-class:
 
 ```java
 public class DuplicateVertexModel extends MutableModel {
@@ -553,22 +553,102 @@ public DuplicateVertexModel add(Vertex v) {
 }
 ```
 
-Finally we add a new method on the buffer class to bind the index buffer to the pipeline:
+Note that the index `mapping` assumes the vertex class has a decently efficient hashing implementation.
+
+The OBJ loader is refactored to use the new indexed builder which reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
+
+### Index Buffer
+
+An index buffer is similar to the existing implementation but requires a different `bind` method and additionally has a data type (for short or integer indices), therefore we introduce a new sub-class:
 
 ```java
-public Command bindIndexBuffer() {
-    require(VkBufferUsage.INDEX_BUFFER);
-    return (api, buffer) -> api.vkCmdBindIndexBuffer(buffer, this, 0, VkIndexType.UINT32);
+public class IndexBuffer extends VulkanBuffer {
+    private final VkIndexType type;
+
+    public IndexBuffer(VulkanBuffer buffer, VkIndexType type) {
+        super(buffer);
+        this.type = notNull(type);
+        require(VkBufferUsageFlag.INDEX_BUFFER);
+    }
+
+    public Command bind(long offset) {
+        return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, 0, type);
+    }
 }
 ```
 
-Notes:
+Note that although the above class supports both short and integer index types the model implementation assumes 32-bit values, we defer support for both data types until a later chapter.
 
-* The index `mapping` assumes we have a decent hashing implementation in the vertex class.
+The new vertex buffer implementation is also factored out from the base-class:
 
-* For the moment we assume 32-bit integer indices, we may want to support other sizes in future.
+```java
+public class VertexBuffer extends VulkanBuffer {
+    /**
+     * Constructor.
+     * @param buffer Underlying buffer
+     * @throws IllegalStateException if this buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
+     */
+    public VertexBuffer(VulkanBuffer buffer) {
+        super(buffer);
+        require(VkBufferUsageFlag.VERTEX_BUFFER);
+    }
 
-We refactor the OBJ loader to use the new indexed builder which reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
+    /**
+     * Creates a command to bind this buffer as a vertex buffer (VBO).
+     * @param binding Binding index
+     * @return Command to bind this buffer
+     */
+    public Command bind(int binding) {
+        ...
+    }
+}
+```
+
+Similarly for a buffer that is used as a descriptor set resource (e.g. a uniform buffer):
+
+```java
+public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
+    private final VkDescriptorType type;
+    private final long offset;
+
+    public ResourceBuffer(VulkanBuffer buffer, VkDescriptorType type, long offset) {
+        super(buffer);
+        this.type = notNull(type);
+        this.offset = zeroOrMore(offset);
+        require(map(type));
+    }
+
+    @Override
+    public VkDescriptorBufferInfo populate() {
+        ...
+    }
+}
+```
+
+Where `map` determines the buffer usage flag for a given type of descriptor:
+
+```java
+public static VkBufferUsageFlag map(VkDescriptorType type) {
+    return switch(type) {
+        case UNIFORM_BUFFER -> VkBufferUsageFlag.UNIFORM_BUFFER;
+        default -> throw new IllegalArgumentException(...);
+    };
+}
+```
+
+Finally a copy constructor is added to the base-class to support the new buffer implementations:
+
+```java
+public class VulkanBuffer extends AbstractVulkanObject {
+    /**
+     * Copy constructor.
+     * @param buffer Buffer to copy
+     */
+    protected VulkanBuffer(VulkanBuffer buffer) {
+        this(buffer.handle(), buffer.device(), buffer.usage(), buffer.memory(), buffer.length());
+    }
+}
+```
 
 ### Model Persistence
 

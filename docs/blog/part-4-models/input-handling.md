@@ -1116,7 +1116,7 @@ Finally we modify the matrix bean to apply the local rotation to the chalet mode
 
 ```java
 @Bean
-public Task matrix(VulkanBuffer uniform) {
+public Task matrix(ResourceBuffer uniform) {
     Matrix x = Rotation.matrix(Vector.X, MathsUtil.toRadians(90));
     Matrix y = Rotation.matrix(Vector.Y, MathsUtil.toRadians(-120));
     Matrix model = y.multiply(x);

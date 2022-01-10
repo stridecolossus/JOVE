@@ -43,20 +43,23 @@ todo
 - joystick from desktop service
 - predicate builder for physical device?
 - manually fiddled by-reference for pointer-to-array of structure
-- short/int index buffer, extends indexed model, extends model
 - degenerate triangles for strip? and/or primitive restart?
 - re-build swapchain and pipeline after window viewport/focus change
 - check for depth attachment in frame-buffer::create
 
 features/limits
+pipeline stages:
 - rasterizer: lineWidthRange[1.0, 64.0], lineWidthGranularity, wideLines, strictLines, fillModeNonSolid
-- points: pointSizeRange, pointSizeGranularity, largePoints 
-- queues: discreteQueuePriorities?
-- images: maxImageArrayLayers, dimensions
 - viewport: max[16], size[16384 x 16384], bound, etc, multiViewport 
 - tesselation: max patch size[32], others
+- depth: depthClamp, depthBiasClamp
+- input: max bindings, attrs
+- descriptor set limits, frame buffer dimensions, shader I/O max, num of colour attachments, etc 
+other:
+- points: pointSizeRange, pointSizeGranularity, largePoints
+- queues: discreteQueuePriorities?
+- images: maxImageArrayLayers, dimensions
 - sampler: max LOD bias[15], max anisotropy[16], samplerAnisotropy
 - indirect draw: multiDrawIndirect, maxDrawIndirectCount
-- depth: depthClamp, depthBiasClamp
 - queries: occlusionQueryPrecise, pipelineStatisticsQuery
 
