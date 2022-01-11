@@ -192,8 +192,8 @@ public interface DrawCommand extends Command {
 		 * Constructs this indirect draw command.
 		 * @param buffer Indirect buffer
 		 * @return New indirect draw command
-		 * @throws IllegalArgumentException if the {@code offset} is invalid for the given buffer
-		 * @throws IllegalArgumentException if the buffer is not an {@link VkBufferUsageFlag#INDIRECT_BUFFER}
+		 * @throws IllegalArgumentException if {@link #offset} is invalid for the given buffer
+		 * @throws IllegalArgumentException if {@link #buffer} is not an {@link VkBufferUsageFlag#INDIRECT_BUFFER}
 		 */
 		public DrawCommand build(VulkanBuffer buffer) {
 			// Validate

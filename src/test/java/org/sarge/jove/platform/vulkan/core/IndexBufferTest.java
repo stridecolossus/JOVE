@@ -45,15 +45,15 @@ public class IndexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void constructorShortIndex() {
-		index = new IndexBuffer(buffer, true);
+		index = new IndexBuffer(buffer);
 		assertEquals(VkIndexType.UINT16, index.type());
 	}
 
 	@Test
 	void constructorShortIndexTooLarge() {
-		final int large = (int) MathsUtil.unsignedMaximum(Short.SIZE);
-		buffer = new VulkanBuffer(new Handle(1), dev, Set.of(VkBufferUsageFlag.INDEX_BUFFER), mem, large);
-		assertThrows(IllegalArgumentException.class, () -> new IndexBuffer(buffer, true));
+		final long len = 2 * MathsUtil.unsignedMaximum(Short.SIZE);
+		buffer = new VulkanBuffer(new Handle(1), dev, Set.of(VkBufferUsageFlag.INDEX_BUFFER), mem, len);
+		assertThrows(IllegalArgumentException.class, () -> new IndexBuffer(buffer, VkIndexType.UINT16));
 	}
 
 	@Test

@@ -36,7 +36,7 @@ public final class BufferHelper {
 	 * @param count Draw count
 	 * @return Whether index is short
 	 */
-	public static boolean isShortIndex(int count) {
+	public static boolean isShortIndex(long count) {
 		return count < BufferHelper.SHORT;
 	}
 

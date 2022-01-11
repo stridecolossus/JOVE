@@ -174,6 +174,7 @@ public interface Image extends NativeObject {
 		/**
 		 * Sets the number of samples (default is {@code 1}).
 		 * @param samples Samples-per-texel
+		 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 		 */
 		public Builder samples(int samples) {
 			this.samples = IntegerEnumeration.mapping(VkSampleCount.class).map(samples);

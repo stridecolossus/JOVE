@@ -38,8 +38,7 @@ public class TesselationPipelineStageBuilder extends AbstractPipelineStageBuilde
 	}
 }
 
-// TODO -
-// maxTessellationPatchSize
+// TODO - maxTessellationPatchSize
 //public int maxTessellationGenerationLevel;
 //public int maxTessellationPatchSize;
 //public int maxTessellationControlPerVertexInputComponents;

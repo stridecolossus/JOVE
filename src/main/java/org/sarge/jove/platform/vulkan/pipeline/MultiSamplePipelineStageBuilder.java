@@ -6,6 +6,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.sarge.jove.platform.vulkan.VkSampleCount;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.IntegerArray;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Percentile;
 
 /**
@@ -42,12 +43,12 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	/**
 	 * Sets the number of rasterization samples.
 	 * @param rasterizationSamples Sample count
-	 * @throws IllegalArgumentException if the number of samples is not valid {@link VkSampleCount}
+	 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 	 * @see #samples(VkSampleCount)
 	 */
 	public MultiSamplePipelineStageBuilder samples(int rasterizationSamples) {
-		final VkSampleCount count = VkSampleCount.valueOf("COUNT_" + rasterizationSamples);
-		return rasterizationSamples(count);
+		info.rasterizationSamples = IntegerEnumeration.mapping(VkSampleCount.class).map(rasterizationSamples);
+		return this;
 	}
 
 	/**

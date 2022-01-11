@@ -3,20 +3,27 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkIndexType;
+import org.sarge.jove.util.BufferHelper;
 
 /**
  * An <i>index buffer</i> binds an index to the pipeline.
- * TODO - data sizes
+ * <p>
+ * An index buffer is represented as {@code short} or {@code int} values depending on the length of the data, specified by {@link VkIndexType}.
+ * <p>
+ * The {@link #IndexBuffer(VulkanBuffer)} constructor assumes that a buffer that is longer than an <b>unsigned short</b> has a {@link VkIndexType#UINT32} data type.
+ * <p>
+ * This behaviour can be overridden by the alternative {@link #IndexBuffer(VulkanBuffer, VkIndexType)} constructor.
+ * <p>
+ * @see BufferHelper#isShortIndex(long)
  * @author Sarge
  */
 public class IndexBuffer extends VulkanBuffer {
 	private final VkIndexType type;
 
 	/**
-	 * Constructor.
+	 * Constructor given a specific index data type.
 	 * @param buffer		Buffer
 	 * @param type			Index type
 	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
@@ -35,22 +42,27 @@ public class IndexBuffer extends VulkanBuffer {
 			throw new UnsupportedOperationException("Invalid index type: " + type);
 		}
 
-		if((type == VkIndexType.UINT16) && (length() > Short.MAX_VALUE)) {
+		if((type == VkIndexType.UINT16) && (type(this) == VkIndexType.UINT32)) {
 			throw new IllegalArgumentException("Index is too large for short data type: " + this);
 		}
 	}
 
 	/**
 	 * Constructor.
-	 * @param buffer			Buffer
-	 * @param shortIndex		Whether this a {@link VkIndexType#UINT16} index comprised of {@code short} values
+	 * @param buffer Buffer
 	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
-	 * @throws IllegalArgumentException if the index is too large
-	 * @see #IndexBuffer(VulkanBuffer, VkIndexType)
-	 * @see Model#isShortIndex(Model)
 	 */
-	public IndexBuffer(VulkanBuffer buffer, boolean shortIndex) {
-		this(buffer, shortIndex ? VkIndexType.UINT16 : VkIndexType.UINT32);
+	public IndexBuffer(VulkanBuffer buffer) {
+		this(buffer, type(buffer));
+	}
+
+	/**
+	 * Determines the index data type depending on the length of the given buffer.
+	 * @param buffer Buffer
+	 * @return Index data type
+	 */
+	private static VkIndexType type(VulkanBuffer buffer) {
+		return BufferHelper.isShortIndex(buffer.length() / Short.BYTES) ? VkIndexType.UINT16 : VkIndexType.UINT32;
 	}
 
 	/**
@@ -64,7 +76,7 @@ public class IndexBuffer extends VulkanBuffer {
 	 * Creates a command to bind this buffer.
 	 * @param offset Buffer offset
 	 * @return Command to bind this index buffer
-	 * @throws IllegalStateException if the index is larger than the hardware limit
+	 * @throws IllegalStateException if the index is larger than the {@code maxDrawIndexedIndexValue} hardware limit
 	 */
 	public Command bind(long offset) {
 		validate(offset);
