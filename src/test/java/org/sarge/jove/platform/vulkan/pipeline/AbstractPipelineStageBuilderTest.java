@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 import org.sarge.jove.util.MockStructure;
 
 public class AbstractPipelineStageBuilderTest {
-	private AbstractPipelineStageBuilder<MockStructure, ?> builder;
+	private AbstractPipelineStageBuilder<MockStructure> builder;
 
 	@SuppressWarnings("unchecked")
 	@BeforeEach

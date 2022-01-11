@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @see VkPipelineDepthStencilStateCreateInfo
  * @author Sarge
  */
-public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo, DepthStencilPipelineStageBuilder> {
+public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo> {
 	private VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
 
 	DepthStencilPipelineStageBuilder() {
@@ -25,7 +25,6 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 		// min/max bounds
 	}
 
-	@Override
 	void copy(DepthStencilPipelineStageBuilder builder) {
 		this.info = builder.info.copy();
 	}

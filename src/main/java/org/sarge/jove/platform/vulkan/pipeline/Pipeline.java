@@ -194,6 +194,42 @@ public class Pipeline extends AbstractVulkanObject {
 		 * Constructor.
 		 */
 		public Builder() {
+			init();
+		}
+
+		/**
+		 * Copy constructor.
+		 * @param peer Peer builder
+		 */
+		private Builder(Builder peer) {
+			// Clone properties
+			layout = peer.layout;
+			pass = peer.pass;
+			flags.addAll(peer.flags);
+
+			// Init as derivative
+			this.peer = peer;
+			derivative(this);
+
+			// Clone pipeline stages
+			for(ShaderStageBuilder b : peer.shaders.values()) {
+				shaders.put(b.stage, new ShaderStageBuilder(b));
+			}
+
+			// Clone pipeline properties
+			input.copy(peer.input);
+			assembly.copy(peer.assembly);
+			tesselation.copy(peer.tesselation);
+			viewport.copy(peer.viewport);
+			raster.copy(peer.raster);
+			multi.copy(peer.multi);
+			depth.copy(peer.depth);
+			blend.copy(peer.blend);
+			dynamic.copy(peer.dynamic);
+			init();
+		}
+
+		private void init() {
 			input.parent(this);
 			assembly.parent(this);
 			tesselation.parent(this);
@@ -274,33 +310,9 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @see #derive(Pipeline)
 		 */
 		public Builder derive() {
-			// Validate
 			checkAllowDerivatives(flags);
-
-			// Create derived builder
-			final Builder builder = new Builder();
+			final Builder builder = new Builder(this);
 			derivative(builder);
-			builder.peer = this;
-
-			// Clone pipeline properties
-			builder.layout = layout;
-			builder.pass = pass;
-			builder.flags.addAll(flags);
-
-			// Clone pipeline stages
-			for(ShaderStageBuilder b : shaders.values()) {
-				builder.shaders.put(b.stage, new ShaderStageBuilder(b));
-			}
-			builder.input.copy(input);
-			builder.assembly.copy(assembly);
-			builder.tesselation.copy(tesselation);
-			builder.viewport.copy(viewport);
-			builder.raster.copy(raster);
-			builder.multi.copy(multi);
-			builder.depth.copy(depth);
-			builder.blend.copy(blend);
-			builder.dynamic.copy(dynamic);
-
 			return builder;
 		}
 

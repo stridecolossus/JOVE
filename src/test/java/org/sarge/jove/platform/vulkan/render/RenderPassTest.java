@@ -4,10 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
@@ -17,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkAccess;
-import org.sarge.jove.platform.vulkan.VkAttachmentDescription;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
@@ -32,7 +28,10 @@ public class RenderPassTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create an attachment
-		attachment = mock(Attachment.class);
+		attachment = new Attachment.Builder()
+				.format(FORMAT)
+				.finalLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
+				.build();
 
 		// Create a sub-pass with a dependency on the start of the render-pass
 		subpass = new Subpass.Builder()
@@ -74,7 +73,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 		// Check attachments
 		assertEquals(1, info.attachmentCount);
 		assertNotNull(info.pAttachments);
-		verify(attachment).populate(info.pAttachments);
+		assertEquals(FORMAT, info.pAttachments.format);
+		assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, info.pAttachments.finalLayout);
 
 		// Check sub-passes
 		assertEquals(1, info.subpassCount);
@@ -102,7 +102,10 @@ public class RenderPassTest extends AbstractVulkanTest {
 	@Test
 	void createMultiple() {
 		// Create another attachment
-		final Attachment other = mock(Attachment.class);
+		final Attachment other = new Attachment.Builder()
+				.format(FORMAT)
+				.finalLayout(VkImageLayout.GENERAL)
+				.build();
 
 		// Create a second sub-pass
 		final Subpass depth = new Subpass.Builder()
@@ -114,9 +117,6 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 		// Check attachments
 		assertEquals(List.of(attachment, other), pass.attachments());
-
-		// Check attachments populated
-		verify(attachment, times(2)).populate(isA(VkAttachmentDescription.class));
 	}
 
 	@DisplayName("Create a render-pass with a self-referential sub-pass")

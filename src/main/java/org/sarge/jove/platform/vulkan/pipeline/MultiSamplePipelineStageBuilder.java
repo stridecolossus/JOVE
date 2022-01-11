@@ -14,7 +14,7 @@ import org.sarge.lib.util.Percentile;
  * @see VkPipelineMultisampleStateCreateInfo
  * @author Sarge
  */
-public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineMultisampleStateCreateInfo, MultiSamplePipelineStageBuilder> {
+public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineMultisampleStateCreateInfo> {
 	private VkPipelineMultisampleStateCreateInfo info = new VkPipelineMultisampleStateCreateInfo();
 
 	public MultiSamplePipelineStageBuilder() {
@@ -25,7 +25,6 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 		alphaToOneEnable(false);
 	}
 
-	@Override
 	void copy(MultiSamplePipelineStageBuilder builder) {
 		this.info = builder.info.copy();
 	}

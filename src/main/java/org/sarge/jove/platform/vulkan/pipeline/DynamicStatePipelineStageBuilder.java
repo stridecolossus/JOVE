@@ -14,10 +14,9 @@ import org.sarge.jove.util.IntegerArray;
  * @see VkPipelineDynamicStateCreateInfo
  * @author Sarge
  */
-public class DynamicStatePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDynamicStateCreateInfo, DynamicStatePipelineStageBuilder> {
+public class DynamicStatePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDynamicStateCreateInfo> {
 	private final Set<VkDynamicState> states = new HashSet<>();
 
-	@Override
 	void copy(DynamicStatePipelineStageBuilder builder) {
 		states.addAll(builder.states);
 	}

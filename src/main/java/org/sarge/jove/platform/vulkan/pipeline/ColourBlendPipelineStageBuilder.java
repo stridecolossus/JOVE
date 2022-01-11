@@ -21,14 +21,13 @@ import org.sarge.jove.util.StructureHelper;
  * Builder for the colour-blend pipeline stage.
  * @author Sarge
  */
-public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo, ColourBlendPipelineStageBuilder> {
+public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
 	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponent.values());
 
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 	private final float[] constants = new float[4];
 	private VkLogicOp op;
 
-	@Override
 	void copy(ColourBlendPipelineStageBuilder builder) {
 		attachments.addAll(builder.attachments);
 		System.arraycopy(builder.constants, 0, constants, 0, constants.length);

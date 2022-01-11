@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @see VkPipelineRasterizationStateCreateInfo
  * @author Sarge
  */
-public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineRasterizationStateCreateInfo, RasterizerPipelineStageBuilder> {
+public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineRasterizationStateCreateInfo> {
 	private VkPipelineRasterizationStateCreateInfo info;
 
 	public RasterizerPipelineStageBuilder() {
@@ -31,7 +31,6 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 		this.info = notNull(info);
 	}
 
-	@Override
 	void copy(RasterizerPipelineStageBuilder builder) {
 		this.info = builder.info.copy();
 	}

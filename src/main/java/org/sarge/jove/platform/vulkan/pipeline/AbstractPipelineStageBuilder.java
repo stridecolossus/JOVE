@@ -11,14 +11,8 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
  * @param <T> Builder type
  * @author Sarge
  */
-abstract class AbstractPipelineStageBuilder<R extends VulkanStructure, T extends AbstractPipelineStageBuilder<R, T>> {
+abstract class AbstractPipelineStageBuilder<R extends VulkanStructure> {
 	private Builder parent;
-
-	/**
-	 * Copies from the given builder.
-	 * @param builder Builder to copy
-	 */
-	abstract void copy(T builder);
 
 	/**
 	 * @return Result of this builder

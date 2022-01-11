@@ -18,7 +18,7 @@ import org.sarge.lib.util.Percentile;
  * @see VkPipelineViewportStateCreateInfo
  * @author Sarge
  */
-public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo, ViewportPipelineStageBuilder> {
+public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
 	/**
 	 * Transient viewport descriptor.
 	 */
@@ -40,7 +40,6 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 //	public float[] viewportBoundsRange = new float[2];
 //	public int viewportSubPixelBits;
 
-	@Override
 	void copy(ViewportPipelineStageBuilder builder) {
 		flip = builder.flip;
 		viewports.addAll(builder.viewports);

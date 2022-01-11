@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @see VkPipelineInputAssemblyStateCreateInfo
  * @author Sarge
  */
-public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo, AssemblyPipelineStageBuilder> {
+public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo> {
 	private VkPipelineInputAssemblyStateCreateInfo info = new VkPipelineInputAssemblyStateCreateInfo();
 
 	AssemblyPipelineStageBuilder() {
@@ -17,7 +17,6 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 		restart(false);
 	}
 
-	@Override
 	void copy(AssemblyPipelineStageBuilder builder) {
 		this.info = builder.info.copy();
 	}

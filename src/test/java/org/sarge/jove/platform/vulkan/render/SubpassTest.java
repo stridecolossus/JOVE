@@ -18,6 +18,7 @@ import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency.Dependency;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class SubpassTest {
 	private Subpass subpass;
@@ -27,8 +28,8 @@ public class SubpassTest {
 	@BeforeEach
 	void before() {
 		// Create attachment references
-		colour = new Reference(mock(Attachment.class), VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-		depth = new Reference(mock(Attachment.class), VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		colour = reference(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+		depth = reference(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
 		// Create a sub-pass dependency
 		final Dependency dep = new Dependency(Set.of(VkPipelineStage.FRAGMENT_SHADER), Set.of(VkAccess.SHADER_READ));
@@ -38,6 +39,15 @@ public class SubpassTest {
 		subpass = new Subpass(List.of(colour), depth, List.of(dependency));
 	}
 
+	private static Reference reference(VkImageLayout layout) {
+		final Attachment attachment = new Attachment.Builder()
+				.format(AbstractVulkanTest.FORMAT)
+				.finalLayout(layout)
+				.build();
+
+		return new Reference(attachment, layout);
+	}
+
 	@Test
 	void constructor() {
 		assertEquals(List.of(colour), subpass.colour());
@@ -45,6 +55,7 @@ public class SubpassTest {
 		assertEquals(List.of(dependency), subpass.dependencies());
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	void empty() {
 		assertThrows(IllegalArgumentException.class, () -> new Subpass(List.of(), null, List.of()));
@@ -55,6 +66,7 @@ public class SubpassTest {
 		assertThrows(IllegalArgumentException.class, () -> new Subpass(List.of(colour), colour, List.of()));
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	void emptyPipelineStages() {
 		assertThrows(IllegalArgumentException.class, () -> new Dependency(Set.of(), Set.of()));

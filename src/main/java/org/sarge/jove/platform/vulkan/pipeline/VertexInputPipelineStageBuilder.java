@@ -25,7 +25,7 @@ import org.sarge.jove.util.StructureHelper;
  * @see VkPipelineVertexInputStateCreateInfo
  * @author Sarge
  */
-public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo, VertexInputPipelineStageBuilder> {
+public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo> {
 	private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
 	private final List<AttributeBuilder> attributes = new ArrayList<>();
 
@@ -36,7 +36,6 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 //	public int maxVertexInputBindingStride;
 //	public int maxVertexOutputComponents;
 
-	@Override
 	void copy(VertexInputPipelineStageBuilder builder) {
 		bindings.putAll(builder.bindings);
 		attributes.addAll(builder.attributes);
