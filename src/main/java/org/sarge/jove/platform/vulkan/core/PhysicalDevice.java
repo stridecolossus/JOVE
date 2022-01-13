@@ -138,7 +138,7 @@ public class PhysicalDevice implements NativeObject {
 		final VulkanLibrary lib = instance.library();
 		final IntByReference supported = instance.factory().integer();
 		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported));
-		return VulkanBoolean.of(supported.getValue()).toBoolean();
+		return VulkanBoolean.of(supported.getValue()).isTrue();
 	}
 
 	/**

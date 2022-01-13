@@ -5,11 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-public class VulkanBooleanTest {
+@SuppressWarnings("static-method")
+class VulkanBooleanTest {
 	@Test
-	void toBoolean() {
-		assertEquals(true, VulkanBoolean.TRUE.toBoolean());
-		assertEquals(false, VulkanBoolean.FALSE.toBoolean());
+	void isTrue() {
+		assertEquals(true, VulkanBoolean.TRUE.isTrue());
+		assertEquals(false, VulkanBoolean.FALSE.isTrue());
 	}
 
 	@Test
@@ -45,7 +46,7 @@ public class VulkanBooleanTest {
 	@Nested
 	class ConverterTests {
 		@Test
-		void converter() {
+		void nativeType() {
 			assertEquals(Integer.class, VulkanBoolean.CONVERTER.nativeType());
 		}
 

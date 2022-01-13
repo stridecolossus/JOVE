@@ -83,9 +83,9 @@ public final class VulkanBoolean {
 	}
 
 	/**
-	 * @return Value of this boolean
+	 * @return Whether this boolean is {@link #TRUE}
 	 */
-	public boolean toBoolean() {
+	public boolean isTrue() {
 		return this == TRUE;
 	}
 
@@ -108,6 +108,6 @@ public final class VulkanBoolean {
 
 	@Override
 	public String toString() {
-		return String.valueOf(toBoolean());
+		return String.valueOf(isTrue());
 	}
 }

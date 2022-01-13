@@ -37,6 +37,7 @@ features todo
 blog
 - pipeline cache
 - check out old blog
+- index of VK/JOVE objects by chapter
 
 todo
 - interpolator revamp

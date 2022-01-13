@@ -175,7 +175,7 @@ public interface DrawCommand extends Command {
 		 * @param count Draw count
 		 */
 		public IndirectBuilder count(int count) {
-			this.count = oneOrMore(count);
+			this.count = zeroOrMore(count);
 			return this;
 		}
 
@@ -192,13 +192,24 @@ public interface DrawCommand extends Command {
 		 * Constructs this indirect draw command.
 		 * @param buffer Indirect buffer
 		 * @return New indirect draw command
-		 * @throws IllegalArgumentException if {@link #offset} is invalid for the given buffer
-		 * @throws IllegalArgumentException if {@link #buffer} is not an {@link VkBufferUsageFlag#INDIRECT_BUFFER}
+		 * @throws IllegalArgumentException if the buffer is not an {@link VkBufferUsageFlag#INDIRECT_BUFFER}
+		 * @throws IllegalArgumentException if the offset is invalid for the given buffer
+		 * @throws IllegalArgumentException if the draw count exceeds the hardware limit
 		 */
 		public DrawCommand build(VulkanBuffer buffer) {
 			// Validate
 			buffer.require(VkBufferUsageFlag.INDIRECT_BUFFER);
 			buffer.validate(offset);
+
+			// Check indirect multi-draw is supported
+			if(count > 1) {
+				final int max = buffer.device().limits().maxDrawIndirectCount;   // TODO - clone
+				if(count > max) {
+					throw new IllegalArgumentException(String.format("Indirect draw count exceeds hardware limit: count=%d max=%d", count, max));
+				}
+				// TODO - maxDrawIndirectCount (1)
+				// TODO - multiDrawIndirect => count > 1
+			}
 
 			// Create command
 			if(indexed) {
@@ -208,8 +219,6 @@ public interface DrawCommand extends Command {
 				return (api, cmd) -> api.vkCmdDrawIndirect(cmd, buffer, offset, count, stride);
 			}
 		}
-		// TODO - maxDrawIndirectCount (1)
-		// TODO - multiDrawIndirect => count > 1
 	}
 
 	/**

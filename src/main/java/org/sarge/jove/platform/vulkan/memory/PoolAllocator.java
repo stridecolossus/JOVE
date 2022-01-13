@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.lib.util.Check;
 
@@ -38,12 +37,12 @@ public class PoolAllocator implements Allocator {
 	 * @return New pool allocator
 	 * @see PhysicalDevice.Properties#limits()
 	 */
-	public static PoolAllocator create(LogicalDevice dev, Allocator allocator, float expand) {
+	public static PoolAllocator create(DeviceContext dev, Allocator allocator, float expand) {
 		// Init allocator if not specified
 		final Allocator delegate = allocator == null ? new DefaultAllocator(dev) : allocator;
 
 		// Create paged allocation policy
-		final VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
+		final VkPhysicalDeviceLimits limits = dev.limits();
 		final AllocationPolicy paged = new PageAllocationPolicy(limits.bufferImageGranularity);
 		final AllocationPolicy grow = AllocationPolicy.expand(expand);
 		final AllocationPolicy policy = grow.then(paged);

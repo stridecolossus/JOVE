@@ -1,11 +1,13 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,17 +16,15 @@ import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.DrawCommand.Builder;
 import org.sarge.jove.platform.vulkan.render.DrawCommand.IndirectBuilder;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-class DrawCommandTest {
-	private VulkanLibrary lib;
+class DrawCommandTest extends AbstractVulkanTest {
 	private Command.Buffer cmd;
 
 	@BeforeEach
 	void before() {
-		lib = mock(VulkanLibrary.class);
 		cmd = mock(Command.Buffer.class);
 	}
 
@@ -121,11 +121,15 @@ class DrawCommandTest {
 		void before() {
 			builder = new IndirectBuilder();
 			buffer = mock(VulkanBuffer.class);
+			when(buffer.device()).thenReturn(dev);
 		}
 
 		@DisplayName("Indirect draw")
 		@Test
 		void build() {
+			dev.limits().maxDrawIndirectCount = 3; // TODO
+
+			// Invoke indirect draw
 			builder
 					.offset(2)
 					.count(3)
@@ -133,6 +137,7 @@ class DrawCommandTest {
 					.build(buffer)
 					.execute(lib, cmd);
 
+			// Check API
 			verify(lib).vkCmdDrawIndirect(cmd, buffer, 2, 3, 4);
 			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
 			verify(buffer).validate(2);
@@ -144,6 +149,22 @@ class DrawCommandTest {
 			builder.indexed().build(buffer).execute(lib, cmd);
 			verify(lib).vkCmdDrawIndexedIndirect(cmd, buffer, 0, 1, 0);
 			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
+		}
+
+		@DisplayName("Draw count cannot exceed the hardware limit")
+		@Test
+		void buildInvalidDrawCount() {
+			builder.count(2);
+			assertThrows(IllegalArgumentException.class, () -> builder.build(buffer));
+		}
+
+		@Disabled
+		@DisplayName("Draw count other than zero or one must be a supported device feature")
+		@Test
+		void buildDrawCountNotSupported() {
+			// TODO - disable device feature
+			builder.count(2);
+			assertThrows(IllegalArgumentException.class, () -> builder.build(buffer));
 		}
 	}
 }
