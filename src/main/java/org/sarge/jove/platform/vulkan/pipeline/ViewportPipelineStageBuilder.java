@@ -18,6 +18,7 @@ import org.sarge.lib.util.Percentile;
  * @see VkPipelineViewportStateCreateInfo
  * @author Sarge
  */
+//@DeviceLimit(feature="multiViewport", value="viewports")
 public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
 	/**
 	 * Transient viewport descriptor.
@@ -137,8 +138,10 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 		final int count = viewports.size();
 		if(count == 0) throw new IllegalArgumentException("No viewports specified");
 		if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
-		// TODO - count < limits.maxViewports
-		// TODO - count = 1 unless multiple viewports feature
+		if(count > 1) {
+			// TODO - count < limits.maxViewports
+			// TODO - multiViewport
+		}
 
 		// Add viewports
 		final var info = new VkPipelineViewportStateCreateInfo();
