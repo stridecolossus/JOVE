@@ -17,6 +17,7 @@ import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 public class ResourceBufferTest extends AbstractVulkanTest {
 	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.UNIFORM_BUFFER);
@@ -36,7 +37,7 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 		when(buffer.length()).thenReturn(SIZE);
 
 		// Init limit
-		dev.limits().maxUniformBufferRange = (int) SIZE;
+		property(new VulkanProperty.Key("maxUniformBufferRange"), SIZE, true);
 
 		// Create resource buffer
 		res = new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 0);
@@ -69,8 +70,8 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void invalidBufferLength() {
-		dev.limits().maxUniformBufferRange = 1;
-		assertThrows(IllegalStateException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 0));
+		property(new VulkanProperty.Key("maxUniformBufferRange"), 1, true);
+		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 0));
 	}
 
 	@Test

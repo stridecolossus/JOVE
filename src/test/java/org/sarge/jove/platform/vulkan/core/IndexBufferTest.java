@@ -15,6 +15,7 @@ import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.jove.util.MathsUtil;
 
 public class IndexBufferTest extends AbstractVulkanTest {
@@ -64,7 +65,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 	@Test
 	void bind() {
 		// Init maximum index length
-		dev.limits().maxDrawIndexedIndexValue = -1;
+		property(new VulkanProperty.Key("maxDrawIndexedIndexValue"), 1L, true);
 
 		// Create bind command
 		final Command bind = index.bind(0);
@@ -86,6 +87,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void bindInvalidLength() {
+		property(new VulkanProperty.Key("maxDrawIndexedIndexValue"), 0L, true);
 		assertThrows(IllegalStateException.class, () -> index.bind(0));
 	}
 

@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -101,6 +102,14 @@ public class Sampler extends AbstractVulkanObject {
 	 * Builder for a sampler.
 	 */
 	public static class Builder {
+		static final VulkanProperty.Key ANISOTROPY = new VulkanProperty.Key.Builder()
+				.name("maxSamplerAnisotropy")
+				.feature("samplerAnisotropy")
+				.min(1)
+				.build();
+
+		static final VulkanProperty.Key LOD_BIAS = new VulkanProperty.Key("maxSamplerLodBias");
+
 		private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
 
 		public Builder() {
@@ -145,13 +154,11 @@ public class Sampler extends AbstractVulkanObject {
 		 * Sets the LOD bias to be added to the LOD calculation (default is zero).
 		 * @param mipLodBias LOD bias
 		 */
-		// @VulkanProperty(range="maxSamplerLodBias")
-		// TODO - value is implicit = parameter name
-		// TODO - VkPhysicalDevicePortabilitySubsetFeaturesKHR::samplerMipLodBias
 		public Builder mipLodBias(float mipLodBias) {
 			info.mipLodBias = mipLodBias;
 			return this;
 		}
+		// TODO - VkPhysicalDevicePortabilitySubsetFeaturesKHR::samplerMipLodBias
 
 		/**
 		 * Sets the minimum LOD value.
@@ -214,7 +221,6 @@ public class Sampler extends AbstractVulkanObject {
 		 * Sets the number of texel samples for anisotropy filtering (default is disabled).
 		 * @param anisotropy Number of texel samples
 		 */
-		// @VulkanProperty(feature="samplerAnisotropy" value="maxAnisotropy" range="maxSamplerAnisotropy")
 		public Builder anisotropy(float anisotropy) {
 			info.maxAnisotropy = oneOrMore(anisotropy);
 			info.anisotropyEnable = VulkanBoolean.of(anisotropy > 1);
@@ -247,23 +253,15 @@ public class Sampler extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the minimum LOD is greater-than the maximum LOD
 		 */
 		public Sampler build(DeviceContext dev) {
-//			// Enable comparisons as required
-//			if(info.compareOp != null) {
-//				info.compareEnable = VulkanBoolean.TRUE;
-//			}
-
 			// Validate
 			if(info.minLod > info.maxLod) {
 				throw new IllegalArgumentException("Invalid min/max LOD");
 			}
-			/*
-			if(info.anisotropyEnable.isTrue()) {
-				dev.property("samplerAnisotropy").validate(info.maxAnisotropy);
-			}
-			if(info.mipLodBias > 0) {
-				dev.property("maxSamplerLodBias").validate(info.mipLodBias);
-			}
-			*/
+
+			// Validate device limits
+			final VulkanProperty.Provider provider = dev.provider();
+			provider.property(ANISOTROPY).validate(info.maxAnisotropy);
+			provider.property(LOD_BIAS).validate(info.mipLodBias);
 
 			// Instantiate sampler
 			final VulkanLibrary lib = dev.library();

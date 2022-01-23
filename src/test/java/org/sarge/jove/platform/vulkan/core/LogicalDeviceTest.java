@@ -62,6 +62,9 @@ public class LogicalDeviceTest {
 		when(parent.properties()).thenReturn(props);
 		when(props.limits()).thenReturn(new VkPhysicalDeviceLimits());
 
+		// Init enabled features
+		final DeviceFeatures features = mock(DeviceFeatures.class);
+
 		// Create queue family
 		family = new Family(1, 2, Set.of());
 		when(parent.families()).thenReturn(List.of(family));
@@ -70,7 +73,7 @@ public class LogicalDeviceTest {
 		queue = new Queue(new Handle(1), family);
 
 		// Create logical device
-		device = new LogicalDevice(new Pointer(1), parent, Map.of(family, List.of(queue, queue)));
+		device = new LogicalDevice(new Pointer(1), parent, features, Map.of(family, List.of(queue, queue)));
 	}
 
 	@Test
@@ -78,7 +81,8 @@ public class LogicalDeviceTest {
 		assertEquals(parent, device.parent());
 		assertEquals(lib, device.library());
 		assertEquals(parent.instance().factory(), device.factory());
-		assertNotNull(device.limits());
+		assertNotNull(device.features());
+		assertNotNull(device.provider());
 		assertEquals(false, device.isDestroyed());
 	}
 

@@ -7,9 +7,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 /**
  * A <i>resource buffer</i> wraps a Vulkan buffer as a descriptor resource, e.g. a {@link VkBufferUsageFlag#UNIFORM_BUFFER}.
@@ -56,15 +56,24 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 	 * @throws IllegalStateException if this resource is too large for the hardware
 	 */
 	private void validate() {
-		final VkPhysicalDeviceLimits limits = super.device().limits(); // TODO - cloned
-		final int max = switch(type) {
-			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> limits.maxUniformBufferRange;
-			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> limits.maxStorageBufferRange;
-			default -> Integer.MAX_VALUE;
+		// Determine max property key for this type of buffer
+		final String key = switch(type) {
+			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> "maxUniformBufferRange";
+			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> "maxStorageBufferRange";
+			default -> null;
 		};
-		if(length() > max) {
-			throw new IllegalStateException(String.format("Resource buffer too large: max=%d this=%s", max, this));
+
+		// Ignore if none
+		if(key == null) {
+			return;
 		}
+
+		// Validate buffer size
+		super
+				.device()
+				.provider()
+				.property(new VulkanProperty.Key(key))
+				.validate(length());
 	}
 
 	@Override

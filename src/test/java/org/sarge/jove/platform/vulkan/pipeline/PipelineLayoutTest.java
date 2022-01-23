@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -22,11 +21,13 @@ import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 import com.sun.jna.Pointer;
 
 class PipelineLayoutTest extends AbstractVulkanTest {
 	private static final Set<VkShaderStage> STAGES = Set.of(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT);
+	private static final VulkanProperty.Key PROPERTY = new VulkanProperty.Key("maxPushConstantsSize");
 
 	private PipelineLayout layout;
 
@@ -63,11 +64,11 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			final DescriptorLayout set = mock(DescriptorLayout.class);
 			when(set.handle()).thenReturn(new Handle(1));
 
-			// Init push constants max size
-			dev.limits().maxPushConstantsSize = 4;
-
 			// Create push constants range
 			final PushConstantRange range = new PushConstantRange(0, 4, Set.of(VkShaderStage.VERTEX));
+
+			// Init push constants max size
+			property(PROPERTY, 4, true);
 
 			// Create layout
 			final PipelineLayout layout = builder
@@ -80,6 +81,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			assertNotNull(layout.handle());
 
 			// Check pipeline allocation
+			// TODO - refactor test
 			final ArgumentCaptor<VkPipelineLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineLayoutCreateInfo.class);
 			verify(lib).vkCreatePipelineLayout(eq(dev), captor.capture(), isNull(), eq(POINTER));
 
@@ -99,14 +101,8 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 		@Test
 		void buildEmpty() {
+			property(PROPERTY, 0, true);
 			assertNotNull(builder.build(dev));
-		}
-
-		@Test
-		void buildPushConstantRangeExceedsMaximum() {
-			dev.limits().maxPushConstantsSize = 4;
-			builder.add(new PushConstantRange(0, 8, Set.of(VkShaderStage.VERTEX)));
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
 		}
 	}
 }

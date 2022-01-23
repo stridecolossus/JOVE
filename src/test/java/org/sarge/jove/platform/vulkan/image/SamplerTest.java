@@ -66,6 +66,8 @@ public class SamplerTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			builder = new Sampler.Builder();
+			property(Sampler.Builder.ANISOTROPY, 4, true);
+			property(Sampler.Builder.LOD_BIAS, 1, true);
 		}
 
 		@Test

@@ -1,12 +1,15 @@
 package org.sarge.jove.platform.vulkan.util;
 
+import static org.mockito.ArgumentMatchers.anyFloat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.ReferenceFactory;
@@ -49,11 +52,41 @@ public abstract class AbstractVulkanTest {
 		when(factory.integer()).thenReturn(INTEGER);
 		when(factory.pointer()).thenReturn(POINTER);
 
+		// Init properties and features
+		final VulkanProperty.Provider provider = mock(VulkanProperty.Provider.class);
+
 		// Create logical device
 		dev = mock(LogicalDevice.class);
 		when(dev.handle()).thenReturn(new Handle(1));
 		when(dev.library()).thenReturn(lib);
 		when(dev.factory()).thenReturn(factory);
-		when(dev.limits()).thenReturn(new VkPhysicalDeviceLimits());
+		when(dev.provider()).thenReturn(provider);
+	}
+
+	/**
+	 * Sets a device property.
+	 * @param key			Property key
+	 * @param value			Value
+	 * @param enabled		Whether the optional feature is enabled
+	 */
+	protected void property(VulkanProperty.Key key, Number value, boolean enabled) {
+		// Create property
+		final VulkanProperty prop = mock(VulkanProperty.class);
+		when(dev.provider().property(key)).thenReturn(prop);
+		when(prop.get()).thenReturn(value);
+
+		// Mock disabled features
+		if(!enabled) {
+			doThrow(IllegalStateException.class).when(prop).validate();
+		}
+
+		// Mock argument validation
+		final Answer<Void> answer = inv -> {
+			if(!enabled) throw new IllegalStateException("Mocked property disabled");
+			final float arg = inv.getArgument(0);
+			if(arg > value.floatValue()) throw new IllegalArgumentException("Mocked property out-of-range");
+			return null;
+		};
+		doAnswer(answer).when(prop).validate(anyFloat());
 	}
 }

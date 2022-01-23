@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
@@ -20,6 +19,7 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -70,6 +70,8 @@ public class PipelineLayout extends AbstractVulkanObject {
 	 * Builder for a pipeline layout.
 	 */
 	public static class Builder {
+		private static final VulkanProperty.Key MAX_PUSH_CONSTANTS = new VulkanProperty.Key("maxPushConstantsSize");
+
 		private final List<DescriptorLayout> sets = new ArrayList<>();
 		private final List<PushConstantRange> ranges = new ArrayList<>();
 
@@ -122,8 +124,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 					.orElse(0);
 
 			// Check that overall size is supported by the hardware
-			final VkPhysicalDeviceLimits limits = dev.limits();
-			if(max > limits.maxPushConstantsSize) throw new IllegalArgumentException(String.format("Push constants length exceeds maximum: len=%d max=%d", max, limits.maxPushConstantsSize));
+			dev.provider().property(MAX_PUSH_CONSTANTS).validate(max);
 
 			// Enumerate pipeline stages
 			final Set<VkShaderStage> stages = ranges

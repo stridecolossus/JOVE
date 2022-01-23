@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -127,7 +126,8 @@ class DrawCommandTest extends AbstractVulkanTest {
 		@DisplayName("Indirect draw")
 		@Test
 		void build() {
-			dev.limits().maxDrawIndirectCount = 3; // TODO
+			// Init device limit
+			property(IndirectBuilder.MULTIDRAW, 3f, true);
 
 			// Invoke indirect draw
 			builder
@@ -146,6 +146,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 		@DisplayName("Indirect indexed draw")
 		@Test
 		void indexed() {
+			property(IndirectBuilder.MULTIDRAW, 1f, true);
 			builder.indexed().build(buffer).execute(lib, cmd);
 			verify(lib).vkCmdDrawIndexedIndirect(cmd, buffer, 0, 1, 0);
 			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
@@ -154,17 +155,17 @@ class DrawCommandTest extends AbstractVulkanTest {
 		@DisplayName("Draw count cannot exceed the hardware limit")
 		@Test
 		void buildInvalidDrawCount() {
+			property(IndirectBuilder.MULTIDRAW, 1f, true);
 			builder.count(2);
 			assertThrows(IllegalArgumentException.class, () -> builder.build(buffer));
 		}
 
-		@Disabled
 		@DisplayName("Draw count other than zero or one must be a supported device feature")
 		@Test
 		void buildDrawCountNotSupported() {
-			// TODO - disable device feature
+			property(IndirectBuilder.MULTIDRAW, 2f, false);
 			builder.count(2);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(buffer));
+			assertThrows(IllegalStateException.class, () -> builder.build(buffer));
 		}
 	}
 }

@@ -10,6 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.lib.util.Check;
 
 /**
@@ -41,14 +42,18 @@ public class PoolAllocator implements Allocator {
 		// Init allocator if not specified
 		final Allocator delegate = allocator == null ? new DefaultAllocator(dev) : allocator;
 
+		// Lookup configuration properties
+		final VulkanProperty.Provider provider = dev.provider();
+		final long granularity = provider.property("bufferImageGranularity").get();
+		final int max = provider.property("maxMemoryAllocationCount").get();
+
 		// Create paged allocation policy
-		final VkPhysicalDeviceLimits limits = dev.limits();
-		final AllocationPolicy paged = new PageAllocationPolicy(limits.bufferImageGranularity);
+		final AllocationPolicy paged = new PageAllocationPolicy(granularity);
 		final AllocationPolicy grow = AllocationPolicy.expand(expand);
 		final AllocationPolicy policy = grow.then(paged);
 
 		// Create pool allocator
-		return new PoolAllocator(delegate, limits.maxMemoryAllocationCount, policy);
+		return new PoolAllocator(delegate, max, policy);
 	}
 
 	private final Allocator allocator;

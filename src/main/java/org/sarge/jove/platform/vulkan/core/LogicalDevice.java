@@ -18,13 +18,13 @@ import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty.Provider;
 import org.sarge.jove.util.FloatArray;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.jove.util.StructureHelper;
@@ -42,6 +42,8 @@ import com.sun.jna.ptr.PointerByReference;
 public class LogicalDevice extends AbstractTransientNativeObject implements DeviceContext {
 	private final PhysicalDevice parent;
 	private final VulkanLibrary lib;
+	private final DeviceFeatures features;
+	private final Provider provider;
 	private final Map<Family, List<Queue>> queues;
 
 	/**
@@ -50,10 +52,12 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * @param parent 		Parent physical device
 	 * @param queues 		Work queues
 	 */
-	LogicalDevice(Pointer handle, PhysicalDevice parent, Map<Family, List<Queue>> queues) {
+	LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues) {
 		super(handle);
 		this.parent = parent;
 		this.lib = parent.instance().library();
+		this.features = notNull(features);
+		this.provider = new Provider(parent.properties().limits(), features);
 		this.queues = Map.copyOf(queues);
 	}
 
@@ -74,9 +78,16 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		return parent.instance().factory();
 	}
 
+	/**
+	 * @return Device features enabled on this device
+	 */
+	public DeviceFeatures features() {
+		return features;
+	}
+
 	@Override
-	public VkPhysicalDeviceLimits limits() {
-		return parent.properties().limits();
+	public Provider provider() {
+		return provider;
 	}
 
 	/**
@@ -290,7 +301,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 					.collect(groupingBy(Queue::family));
 
 			// Create logical device
-			return new LogicalDevice(handle.getValue(), parent, map);
+			return new LogicalDevice(handle.getValue(), parent, required, map);
 		}
 
 		/**

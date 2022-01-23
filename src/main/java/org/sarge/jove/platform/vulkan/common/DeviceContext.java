@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.jove.util.ReferenceFactory;
 
 /**
@@ -26,7 +26,7 @@ public interface DeviceContext {
 	ReferenceFactory factory();
 
 	/**
-	 * @return Device limits
+	 * @return Provider for Vulkan properties
 	 */
-	VkPhysicalDeviceLimits limits();
+	VulkanProperty.Provider provider();
 }
