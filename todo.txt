@@ -40,6 +40,8 @@ blog
 - index of VK/JOVE objects by chapter
 
 todo
+- queries blog
+- pipeline cache could use Java prefs? and/or user home folder?
 - interpolator revamp
 - joystick from desktop service
 - predicate builder for physical device?
@@ -60,7 +62,7 @@ other:
 - points: pointSizeRange, pointSizeGranularity, largePoints
 - queues: discreteQueuePriorities?
 - images: maxImageArrayLayers, dimensions
-- sampler: max LOD bias[15], max anisotropy[16], samplerAnisotropy
-- indirect draw: multiDrawIndirect, maxDrawIndirectCount
+- [DONE] sampler: max LOD bias[15], max anisotropy[16], samplerAnisotropy
+- [DONE] indirect draw: multiDrawIndirect, maxDrawIndirectCount
 - queries: occlusionQueryPrecise, pipelineStatisticsQuery
 

@@ -43,4 +43,5 @@ The [introduction](blog/part-1-intro/introduction) in the first section outlines
     
 - Part 5 - Terrain
     - [Terrain Tesselation](blog/part-5-terrain/tesselation)
+    - [Pipeline Improvements](blog/part-5-terrain/improvements)
 

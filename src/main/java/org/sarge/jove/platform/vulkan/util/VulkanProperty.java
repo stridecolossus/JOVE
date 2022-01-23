@@ -24,12 +24,14 @@ import org.sarge.lib.util.Check;
  * The following field types are supported:
  * <p>
  * <table border=1>
- * <tr><th>type</th><th>notes</th></tr>
- * <tr><td>numeric</td><td>maximum value; {@code float}, {@code int} or a {@code long}</td></tr>
- * <tr><td>{@link VulkanBoolean}</td><td>cannot be validated</td></tr>
- * <tr><td>int[]</td><td>assumes a two-element array specifying a min/max range</td></tr>
- * <tr><td>float[]</td><td>either a two-element array specifying a min/max range <b>or</b> a quantised range of possible values</td></tr>
+ * <tr><th>type</th><th>example</th><th>notes</th></tr>
+ * <tr><td>numeric</td><td>{@link VkPhysicalDeviceLimits#maxSamplerAnisotropy}</td><td>maximum value; {@code float}, {@code int} or a {@code long}</td></tr>
+ * <tr><td>{@link VulkanBoolean}</td><td>{@link VkPhysicalDeviceLimits#strictLines}</td><td>cannot be validated</td></tr>
+ * <tr><td>int[]</td><td>{@link VkPhysicalDeviceLimits#maxViewportDimensions}</td><td>range</td></tr>
+ * <tr><td>float[]</td><td>{@link VkPhysicalDeviceLimits#lineWidthRange} and {@link VkPhysicalDeviceLimits#lineWidthGranularity}</td><td>either a <i>range</i> <b>or</b> a quantised array of possible values</td></tr>
  * </table>
+ * <p>
+ * Where <i>range</i> is a two-element array specifying a min/max range.
  * <p>
  * Usage:
  * <pre>
@@ -186,6 +188,15 @@ public class VulkanProperty {
 
 	/**
 	 * A <i>property key</i> is a descriptor for a compound property.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>The property {@link #name} is the field name from the {@link VkPhysicalDeviceLimits} structure</li>
+	 * <li>{@link #granularity} is the range step size for a floating-point array type field or {@code null} otherwise, e.g. {@link VkPhysicalDeviceLimits#lineWidthGranularity}</li>
+	 * <li>{@link #feature} is the associated device feature name or {@code null} if the property is not optional</li>
+	 * <li>{@link #min} is the minimal value for numeric types</li>
+	 * </ul>
+	 * @see DeviceFeatures
 	 */
 	public record Key(String name, float min, String granularity, String feature) {
 		/**
