@@ -42,6 +42,7 @@ blog
 todo
 - queries blog
 - pipeline cache could use Java prefs? and/or user home folder?
+- VK properties -> improvements? e.g. for max range length, also buffer helper is used in spec constants
 - interpolator revamp
 - joystick from desktop service
 - predicate builder for physical device?

@@ -27,6 +27,8 @@ This chapter introduces various improvements to the pipeline and shader code use
 
 * A builder for _specialisation constants_ to parameterise shader configuration.
 
+* Support for _occlusion queries_ .
+
 ---
 
 ## Push Constants
@@ -773,9 +775,20 @@ shader(VkShaderStage.TESSELLATION_EVALUATION)
 
 ## Queries
 
-TODO
-occlusion queries
-integration
+### Overview
+
+Vulkan provides a _query_ API that allows an application to perform the following:
+* _occlusion_ queries.
+* retrieve pipeline statistics.
+* inject timestamps into a command sequence.
+* and some other extensions that are out-of-scope for this project.
+
+A _query_ is generally implemented as a pair of commands that wrap a segment of a rendering sequence, except for timestamps which consist of a single atomic command.
+Queries are allocated from a _query pool_ which is essentially an array of available _slots_ for the results (which are either integer or long values).
+
+After execution the results of the query can be retrieved on-demand to an arbitrary NIO buffer or copied asynchronously to a `TRANSFER_DST` Vulkan buffer.
+
+A new JNA library is added for the query API:
 
 ```java
 interface Library {
@@ -789,6 +802,190 @@ interface Library {
     void vkCmdCopyQueryPoolResults(Command.Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, int flags);
 }
 ```
+
+### Queries
+
+We start with an outline class for a query and its parent pool:
+
+```java
+public class Query {
+    private final int slot;
+    private final Pool pool;
+
+    public static class Pool extends AbstractVulkanObject {
+        private final int slots;
+
+        @Override
+        protected Destructor<Pool> destructor(VulkanLibrary lib) {
+            return lib::vkDestroyQueryPool;
+        }
+    }
+}
+```
+
+A query instance is created by the following factory method on the pool:
+
+```java
+public Query query(int slot) {
+    if(slot >= slots) throw new IllegalArgumentException(...);
+    return new Query(slot, this);
+}
+```
+
+Commands to perform the query can then be allocated from this instance:
+
+```java
+public Command begin(VkQueryControlFlag... flags) {
+    int mask = IntegerEnumeration.mask(flags);
+    return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, pool, slot, mask);
+}
+
+public Command end() {
+    return (lib, buffer) -> lib.vkCmdEndQuery(buffer, pool, slot);
+}
+
+public Command timestamp(VkPipelineStage stage) {
+    return (lib, buffer) -> lib.vkCmdWriteTimestamp(buffer, stage, pool, slot);
+}
+```
+
+### Query Pool
+
+A query pool is created as normal via a builder:
+
+```java
+public static class Builder {
+    private VkQueryType type;
+    private int slots = 1;
+    private final Set<VkQueryPipelineStatisticFlag> stats = new HashSet<>();
+    
+    public Pool build(DeviceContext dev) {
+        ...
+    }
+}
+```
+
+The `build` method first populates a descriptor for the pool:
+
+```java
+public Pool build(DeviceContext dev) {
+    var info = new VkQueryPoolCreateInfo();
+    info.queryType = type;
+    info.queryCount = slots;
+    ...
+}
+```
+
+The `stats` property of the builder is only relevant for a `PIPELINE_STATISTICS` query:
+
+```java
+if(type == VkQueryType.PIPELINE_STATISTICS) {
+    if(stats.isEmpty()) throw new IllegalArgumentException(...);
+    info.pipelineStatistics = IntegerEnumeration.mask(stats);
+}
+else {
+    if(!stats.isEmpty()) throw new IllegalArgumentException(...);
+}
+```
+
+Finally the pool is allocated via the API and wrapped by the domain object:
+
+```java
+// Instantiate query pool
+PointerByReference ref = dev.factory().pointer();
+VulkanLibrary lib = dev.library();
+check(lib.vkCreateQueryPool(dev, info, null, ref));
+
+// Create pool
+return new Pool(ref.getValue(), dev, slots);
+```
+
+### Query Results
+
+Retrieval of the results of one-or-more queries is slightly complicated:
+
+* There are two supported mechanisms: on-demand or asynchronous copy to a buffer.
+
+* Multiple results can be retrieved by specifying a _range_ of query slots, i.e. essentially an array of results.
+
+* Results can be integer or long data types.
+
+Therefore we implement retrieval of the results as a builder that is instantiated from the pool:
+
+```java
+public class Pool ... {
+    public ResultBuilder result() {
+        return new ResultBuilder(this);
+    }
+}
+```
+
+The builder for the results specifies the data type and the range of slots to be populated:
+
+```java
+public static class ResultBuilder {
+    private final Pool pool;
+    private int start;
+    private int count;
+    private long stride = Integer.BYTES;
+    private final Set<VkQueryResultFlag> flags = new HashSet<>();
+}
+```
+
+The builder also provides a convenience method to initialise the results to a long data type (which requires a specific query flag as well as the `stride` field):
+
+```java
+public ResultBuilder longs() {
+    flag(VkQueryResultFlag.LONG);
+    stride(Long.BYTES);
+    return this;
+}
+```
+
+Since query results can be retrieved using two different mechanism the builder provides __two__ build methods, 
+for the case where the results are retrieved on-demand the application provides an NIO buffer:
+
+```java
+public Consumer<ByteBuffer> build() {
+    int mask = validate();
+    DeviceContext dev = pool.device();
+    Library lib = dev.library();
+
+    return buffer -> {
+        check(lib.vkGetQueryPoolResults(dev, pool, start, count, size, buffer, stride, mask));
+    };
+}
+```
+
+The `validate` method (not shown) checks that the `stride` is a multiple of the specified data type and builds the flags bit-mask.
+
+The second variant generates a command that is injected into the render sequence to asynchronously copy the results to a given Vulkan buffer:
+
+```java
+public Command build(VulkanBuffer buffer, long offset) {
+    buffer.require(VkBufferUsageFlag.TRANSFER_DST);
+    int mask = validate();
+    return (lib, cmd) -> {
+        lib.vkCmdCopyQueryPoolResults(cmd, pool, start, count, buffer, offset, stride, mask);
+    };
+}
+```
+
+Finally the query slots are reset before each execution using the following command factory on the pool class:
+
+```java
+public Command reset(int start, int num) {
+    if(start + num > slots) throw new IllegalArgumentException(...);
+    return (lib, buffer) -> lib.vkCmdResetQueryPool(buffer, this, start, num);
+}
+```
+
+Note that the slots __must__ be reset before the query begins and this command __must__ be invoked before the start of a render pass.
+
+### Integration
+
+TODO
+
 
 
 ---
