@@ -9,7 +9,7 @@ import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
 /**
- * A <i>vulkan function</i> abstracts an API method used to retrieve data from Vulkan via the <i>two-stage invocation</i> approach.
+ * A <i>Vulkan function</i> abstracts an API method used to retrieve data from Vulkan via the <i>two-stage invocation</i> approach.
  * <p>
  * The function is of the following form:
  * <p>

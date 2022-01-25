@@ -2,8 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,7 +11,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
@@ -80,23 +77,29 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			assertNotNull(layout);
 			assertNotNull(layout.handle());
 
-			// Check pipeline allocation
-			// TODO - refactor test
-			final ArgumentCaptor<VkPipelineLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineLayoutCreateInfo.class);
-			verify(lib).vkCreatePipelineLayout(eq(dev), captor.capture(), isNull(), eq(POINTER));
+			// Init expected create descriptor
+			final var expected = new VkPipelineLayoutCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					// Check descriptor
+					final var actual = (VkPipelineLayoutCreateInfo) obj;
+					assertNotNull(actual);
+					assertEquals(0, actual.flags);
 
-			// Check descriptor
-			final VkPipelineLayoutCreateInfo info = captor.getValue();
-			assertNotNull(info);
-			assertEquals(0, info.flags);
+					// Check descriptor-set layouts
+					assertEquals(1, actual.setLayoutCount);
+					assertEquals(NativeObject.array(Set.of(set)), actual.pSetLayouts);
 
-			// Check descriptor-set layouts
-			assertEquals(1, info.setLayoutCount);
-			assertEquals(NativeObject.array(Set.of(set)), info.pSetLayouts);
+					// Check push constants
+					assertEquals(1, actual.pushConstantRangeCount);
+					assertNotNull(actual.pPushConstantRanges);
 
-			// Check push constants
-			assertEquals(1, info.pushConstantRangeCount);
-			assertNotNull(info.pPushConstantRanges);
+					return true;
+				}
+			};
+
+			// Check pipeline allocation API
+			verify(lib).vkCreatePipelineLayout(dev, expected, null, POINTER);
 		}
 
 		@Test
